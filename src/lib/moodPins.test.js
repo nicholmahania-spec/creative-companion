@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { pinFaceStyle, pinVisualKind, pinFaceCssText } from './moodPins'
+import {
+  pinFaceStyle,
+  pinVisualKind,
+  pinFaceCssText,
+  pinImageUrl,
+} from './moodPins'
 
 describe('mood pin visuals', () => {
   it('treats data-URL and http images as image kind', () => {
@@ -29,5 +34,12 @@ describe('mood pin visuals', () => {
     const style = pinFaceStyle({ type: 'quote', visual: '#4F46E5' })
     expect(style.backgroundColor).toBe('#4F46E5')
     expect(style.backgroundImage).toBeUndefined()
+  })
+
+  it('pinImageUrl returns only image faces', () => {
+    expect(
+      pinImageUrl({ type: 'image', visual: 'https://example.com/a.jpg' })
+    ).toBe('https://example.com/a.jpg')
+    expect(pinImageUrl({ type: 'quote', visual: '#111' })).toBeNull()
   })
 })

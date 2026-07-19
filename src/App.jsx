@@ -73,7 +73,11 @@ import {
   printElementById,
   slugifyFilename,
 } from './lib/exportFiles'
-import { pinFaceStyle, readImageFilesAsPins } from './lib/moodPins'
+import {
+  pinFaceStyle,
+  pinImageUrl,
+  readImageFilesAsPins,
+} from './lib/moodPins'
 import {
   isSessionOpen,
   closeSession,
@@ -1684,6 +1688,8 @@ function App() {
                 className="btn btn-secondary header-more"
                 aria-expanded={moreOpen}
                 aria-haspopup="menu"
+                aria-controls="tools-menu"
+                id="tools-menu-button"
                 onClick={() => {
                   setMoreOpen(!moreOpen)
                   setAccountOpen(false)
@@ -1692,7 +1698,7 @@ function App() {
                 Tools
               </button>
               {moreOpen && (
-                <div className="more-menu" role="menu">
+                <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">
                   <button
                     type="button"
                     role="menuitem"
@@ -1748,8 +1754,10 @@ function App() {
                 className={`account-chip${accountOpen ? ' is-open' : ''}${
                   activeView === 'settings' ? ' is-active' : ''
                 }`}
+                id="account-menu-button"
                 aria-expanded={accountOpen}
                 aria-haspopup="menu"
+                aria-controls="account-menu"
                 onClick={() => {
                   setAccountOpen(!accountOpen)
                   setMoreOpen(false)
@@ -1767,7 +1775,7 @@ function App() {
                 </span>
               </button>
               {accountOpen && (
-                <div className="account-menu" role="menu">
+                <div className="account-menu" role="menu" id="account-menu" aria-labelledby="account-menu-button">
                   <p className="account-menu-email">
                     {accessName || (CLOUD ? 'Signed in' : 'This device')}
                   </p>
@@ -2576,10 +2584,25 @@ function App() {
                           <button
                             type="button"
                             className="mood-pin-media mood-pin-media-btn"
-                            style={face}
+                            style={
+                              pinImageUrl(item)
+                                ? { backgroundColor: '#E8E4F8' }
+                                : face
+                            }
                             aria-label={`View pin${item.note ? `: ${item.note}` : ''}`}
                             onClick={() => setBoardLightbox(item)}
-                          ></button>
+                          >
+                            {pinImageUrl(item) ? (
+                              <img
+                                className="mood-pin-img"
+                                src={pinImageUrl(item)}
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                draggable={false}
+                              />
+                            ) : null}
+                          </button>
                         ) : (
                           <div
                             className="mood-pin-face"
@@ -2622,6 +2645,7 @@ function App() {
                                 type="button"
                                 className="btn btn-ghost mood-pin-order"
                                 title="Move earlier in pack"
+                                aria-label="Move pin earlier in pack"
                                 onClick={() => movePackPin(item.id, 'up')}
                               >
                                 ↑
@@ -2630,6 +2654,7 @@ function App() {
                                 type="button"
                                 className="btn btn-ghost mood-pin-order"
                                 title="Move later in pack"
+                                aria-label="Move pin later in pack"
                                 onClick={() => movePackPin(item.id, 'down')}
                               >
                                 ↓
@@ -2638,6 +2663,8 @@ function App() {
                                 type="button"
                                 className={`btn btn-ghost mood-pin-order${item.packHero ? ' is-on' : ''}`}
                                 title="Hero pin (first in pack)"
+                                aria-label="Set as hero pin"
+                                aria-pressed={!!item.packHero}
                                 onClick={() => {
                                   const r = setPackHeroPin(item.id)
                                   if (r.ok) flashToast('Hero pin set')
@@ -2712,10 +2739,19 @@ function App() {
               >
                 Close
               </button>
-              <div
-                className="board-lightbox-visual"
-                style={pinFaceStyle(boardLightbox)}
-              />
+              {pinImageUrl(boardLightbox) ? (
+                <img
+                  className="board-lightbox-visual board-lightbox-img"
+                  src={pinImageUrl(boardLightbox)}
+                  alt={boardLightbox.note || 'Board pin'}
+                  decoding="async"
+                />
+              ) : (
+                <div
+                  className="board-lightbox-visual"
+                  style={pinFaceStyle(boardLightbox)}
+                />
+              )}
               {boardLightbox.note ? (
                 <p className="board-lightbox-note">{boardLightbox.note}</p>
               ) : null}
@@ -4212,54 +4248,80 @@ function App() {
 
       {showOnboarding && (
         <div
-          className="export-overlay"
+          className="export-overlay onboard-overlay"
           role="dialog"
           aria-modal="true"
           aria-labelledby="onboard-title"
+          aria-describedby="onboard-desc"
         >
           <div className="export-panel onboard-panel">
-            <p className="onboard-eyebrow">
-              {CLOUD ? 'Signed in · cloud desk' : 'Saved on this device'}
-            </p>
-            <h2 id="onboard-title" style={{ marginTop: 0 }}>
-              One project. One step. Ship a pack.
-            </h2>
-            <p className="view-lede">
-              Name the work and <strong>one shippable step</strong> for the next
-              25 minutes. You leave with a brand pack PDF.
-            </p>
-            <ol className="onboard-path" aria-label="Your path">
-              {JOURNEY_STEPS.map((s) => (
-                <li key={s.id}>
-                  <span className="onboard-path-num" aria-hidden="true">
-                    {s.num}
-                  </span>
-                  <span className="onboard-path-label">{s.label}</span>
-                </li>
-              ))}
-            </ol>
-            <label className="onboard-label">
+            <div className="onboard-layout">
+              <div className="onboard-copy">
+                <p className="onboard-eyebrow">
+                  {CLOUD ? 'Signed in · cloud desk' : 'Saved on this device'}
+                </p>
+                <h2 id="onboard-title" className="onboard-title">
+                  One project. One step. Ship a pack.
+                </h2>
+                <p id="onboard-desc" className="view-lede onboard-lede">
+                  Name the work and <strong>one shippable step</strong> for the
+                  next 25 minutes. You leave with a brand pack PDF.
+                </p>
+                <ol className="onboard-path" aria-label="Your path">
+                  {JOURNEY_STEPS.map((s) => (
+                    <li key={s.id}>
+                      <span className="onboard-path-num" aria-hidden="true">
+                        {s.num}
+                      </span>
+                      <span className="onboard-path-label">{s.label}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <div className="onboard-specimen" aria-hidden="true">
+                <div className="login-pack-specimen onboard-pack-mini">
+                  <div className="login-pack-cover">
+                    <span className="login-pack-kicker">Brand pack</span>
+                    <strong className="login-pack-name">Your project</strong>
+                    <p className="login-pack-tagline">Direction you can ship</p>
+                  </div>
+                  <div className="login-pack-swatches">
+                    <i style={{ background: '#1C1917' }} />
+                    <i style={{ background: '#0F766E' }} />
+                    <i style={{ background: '#D6D3D1' }} />
+                    <i style={{ background: '#FAFAF9' }} />
+                  </div>
+                  <p className="login-pack-foot">PDF · end of the path</p>
+                </div>
+              </div>
+            </div>
+            <label className="onboard-label" htmlFor="onboard-name">
               Project name
               <input
+                id="onboard-name"
                 value={onboardName}
                 onChange={(e) => setOnboardName(e.target.value)}
                 placeholder="e.g. Soft Signal covers"
                 className="onboard-input"
                 autoFocus
+                autoComplete="off"
               />
             </label>
-            <label className="onboard-label">
+            <label className="onboard-label" htmlFor="onboard-step">
               First step (do this now)
               <input
+                id="onboard-step"
                 value={onboardFirstStep}
                 onChange={(e) => setOnboardFirstStep(e.target.value)}
                 placeholder="e.g. Write 3 cover rules in one pass"
                 className="onboard-input"
+                autoComplete="off"
               />
             </label>
-            <label className="onboard-label">
+            <label className="onboard-label" htmlFor="onboard-brief">
               Brief <span className="onboard-optional">(optional)</span>
               <textarea
+                id="onboard-brief"
                 value={onboardBrief}
                 onChange={(e) => setOnboardBrief(e.target.value)}
                 placeholder="Who is this for? Outcome? Constraint?"

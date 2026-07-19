@@ -43,6 +43,15 @@ export function pinVisualKind(pin = {}) {
 }
 
 /**
+ * Raw image URL for a pin (data URL / https), or null if not an image face.
+ */
+export function pinImageUrl(pin = {}) {
+  if (pinVisualKind(pin) !== 'image') return null
+  const visual = String(pin?.visual || '').trim()
+  return visual || null
+}
+
+/**
  * Inline style object for a pin face (board cards, brand thumbs, pack preview).
  */
 export function pinFaceStyle(pin = {}) {

@@ -16,28 +16,38 @@ test.describe('Creative Companion path smoke', () => {
       test.skip(true, 'Cloud auth configured — path smoke needs credentials')
     }
 
-    // Local setup or unlock
-    if (body.includes('Create an access password') || body.includes('access password')) {
-      const inputs = page.locator('input')
+    // Local setup or unlock (copy may be "Protect this desk" / "open your desk")
+    const onLogin =
+      body.includes('Create an access password') ||
+      body.includes('access password') ||
+      body.includes('Protect this desk') ||
+      body.includes('Unlock desk') ||
+      body.includes('Create access')
+    if (onLogin || (await page.locator('.login-form, .login-page').count())) {
+      const inputs = page.locator('.login-form input, .login-page input')
       const n = await inputs.count()
       if (n >= 3) {
         await inputs.nth(0).fill('E2E Tester')
         await inputs.nth(1).fill('testpass123')
         await inputs.nth(2).fill('testpass123')
+      } else if (n >= 2) {
+        // password + confirm only
+        await inputs.nth(0).fill('testpass123')
+        await inputs.nth(1).fill('testpass123')
       } else if (n >= 1) {
         await inputs.nth(0).fill('testpass123')
       }
       await page.locator('button[type="submit"]').first().click()
-      await page.waitForTimeout(800)
+      await page.waitForTimeout(900)
     }
 
     // Onboarding
     const onboardPrimary = page.locator('.onboard-primary, .onboard-panel .btn-primary')
     if (await onboardPrimary.count()) {
-      const name = page.locator('.onboard-panel input, .onboard-input').first()
+      const name = page.locator('#onboard-name, .onboard-panel input, .onboard-input').first()
       if (await name.count()) {
         await name.fill('E2E Pack Project')
-        const step = page.locator('.onboard-panel input, .onboard-input').nth(1)
+        const step = page.locator('#onboard-step, .onboard-panel input, .onboard-input').nth(1)
         if (await step.count()) await step.fill('Write pack tagline')
       }
       await onboardPrimary.first().click()
@@ -85,7 +95,10 @@ test.describe('Creative Companion path smoke', () => {
       page.locator('h1.page-title', { hasText: 'Pack' })
     ).toBeVisible({ timeout: 10000 })
     await expect(
-      page.getByRole('button', { name: 'Download pack', exact: true })
+      page.getByRole('button', { name: 'Download PDF', exact: true })
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Print / Save as PDF', exact: true })
     ).toBeVisible()
   })
 })

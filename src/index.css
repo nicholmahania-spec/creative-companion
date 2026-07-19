@@ -9262,3 +9262,79 @@ html[data-reduce-motion='true'] *::after {
   font-weight: 600;
   color: var(--text-muted);
 }
+
+/* v0.2.60 pin lazy images + onboard polish */
+.mood-pin-media-btn {
+  position: relative;
+  overflow: hidden;
+}
+.mood-pin-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+}
+.board-lightbox-img {
+  display: block;
+  object-fit: contain;
+  background: var(--bg-muted);
+  max-height: min(70vh, 32rem);
+}
+
+.onboard-overlay .onboard-panel {
+  width: min(34rem, 100%);
+  max-width: 36rem;
+}
+.onboard-layout {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+@media (min-width: 640px) {
+  .onboard-layout {
+    grid-template-columns: 1.2fr 0.85fr;
+    align-items: start;
+  }
+}
+.onboard-title {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+.onboard-lede {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.onboard-specimen {
+  display: none;
+}
+@media (min-width: 640px) {
+  .onboard-specimen {
+    display: block;
+  }
+}
+.onboard-pack-mini {
+  margin: 0;
+  transform: scale(0.96);
+  transform-origin: top right;
+  box-shadow: var(--shadow-2);
+}
+.onboard-pack-mini .login-pack-cover {
+  padding: 0.85rem 0.8rem 0.65rem;
+}
+.onboard-pack-mini .login-pack-name {
+  font-size: 1.05rem;
+}
+.onboard-label input:focus,
+.onboard-label textarea:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
+}
