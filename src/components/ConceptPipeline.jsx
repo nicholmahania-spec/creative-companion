@@ -78,11 +78,17 @@ export default function ConceptPipeline({
       }
       reader.readAsDataURL(file)
     })
-    flashToast?.(
-      stage === 'iteration'
-        ? 'Iteration added'
-        : `${files.length} sketch${files.length > 1 ? 'es' : ''} added`
-    )
+    if (stage === 'iteration') {
+      const g = awardAndBroadcast('concept_lock', { label: 'Iteration' })
+      flashToast?.(`Iteration added · +${g.gained} XP`)
+    } else {
+      const g = awardAndBroadcast('mood_pin', {
+        label: `${files.length} sketch${files.length > 1 ? 'es' : ''}`,
+      })
+      flashToast?.(
+        `${files.length} sketch${files.length > 1 ? 'es' : ''} · +${g.gained} XP`
+      )
+    }
   }
 
   const applyToBrand = () => {
@@ -369,7 +375,10 @@ export default function ConceptPipeline({
                     lockConceptItem(lockTarget, lockNote)
                     setLockTarget(null)
                     setLockNote('')
-                    flashToast?.('Locked into plan')
+                    const g = awardAndBroadcast('concept_lock', {
+                      label: 'Concept locked',
+                    })
+                    flashToast?.(`Locked into plan · +${g.gained} XP`)
                   }}
                 >
                   Lock in

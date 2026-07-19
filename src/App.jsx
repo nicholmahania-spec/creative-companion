@@ -29,10 +29,12 @@ import LoginPage from './components/LoginPage'
 import BuddyMate from './components/BuddyMate'
 import ConceptPipeline from './components/ConceptPipeline'
 import ForcedBreakOverlay from './components/ForcedBreakOverlay'
+import GameHUD from './components/GameHUD'
 import {
   breakMinutesForWork,
   POMODORO_WORK_MIN,
 } from './lib/forcedBreak'
+import { pickBreakPlan } from './lib/breakKit'
 import { markBreak, minutesSinceBreak, loadSessionStart, loadWellness } from './lib/buddy'
 import { awardAndBroadcast } from './lib/buddyGame'
 import {
@@ -102,6 +104,10 @@ function App() {
   const clearToEmpty = useAppStore((s) => s.clearToEmpty)
   const renameProject = useAppStore((s) => s.renameProject)
   const deleteProject = useAppStore((s) => s.deleteProject)
+  const breakKit = useAppStore((s) => s.breakKit)
+  const completeBreakKitItem = useAppStore((s) => s.completeBreakKitItem)
+  const breakKitRef = useRef(breakKit)
+  breakKitRef.current = breakKit
 
   // ——— Ephemeral UI (not persisted) ———
   const [activeView, setActiveView] = useState('flow')
@@ -111,7 +117,7 @@ function App() {
   const [isFocusRunning, setIsFocusRunning] = useState(false)
   const [sessionComplete, setSessionComplete] = useState(false)
   const [pomodoroWorkStartedAt, setPomodoroWorkStartedAt] = useState(null)
-  /** @type {null | { totalSec: number, leftSec: number, workMinutes: number, breakMinutes: number }} */
+  /** @type {null | { totalSec: number, leftSec: number, workMinutes: number, breakMinutes: number, planItems: array, completedIds: string[] }} */
   const [forcedBreak, setForcedBreak] = useState(null)
   const focusMinutes = Math.floor(focusLeft / 60)
   const focusSeconds = focusLeft % 60
@@ -325,10 +331,11 @@ function App() {
     setStepDueOpen(false)
     setBuddyWinPulse((n) => n + 1)
     const g = awardAndBroadcast('step_complete', { label: 'Step done' })
+    const comboBit = g.combo > 1 ? ` · ${g.combo}x combo` : ''
     flashToast(
       g.levelUp
-        ? `Step complete · Level ${g.newLevel}!`
-        : `Step complete · +${g.gained} XP`
+        ? `Step complete · Level ${g.newLevel}!${comboBit}`
+        : `Step complete · +${g.gained} XP${comboBit}`
     )
     setStepFocusKey((k) => k + 1)
   }
@@ -423,6 +430,11 @@ function App() {
     }
 
     const totalSec = breakMin * 60
+    const plan = pickBreakPlan(breakKitRef.current || [], breakMin)
+    const planItems =
+      plan.empty && plan.fallback?.length
+        ? plan.fallback
+        : plan.items || []
     setIsFocusRunning(false)
     setSessionComplete(true)
     setPomodoroWorkStartedAt(null)
@@ -434,11 +446,40 @@ function App() {
       workMinutes: workMin,
       breakMinutes: breakMin,
       reason,
+      planItems,
+      completedIds: [],
     })
     playBreakChime()
+    const kitN = planItems.length
     flashToast(
-      `Break locked: ${breakMin} min (you worked ~${Math.round(workMin)} min)`
+      kitN > 0
+        ? `Break locked: ${breakMin} min · ${kitN} kit item${kitN === 1 ? '' : 's'} for this window`
+        : `Break locked: ${breakMin} min (you worked ~${Math.round(workMin)} min)`
     )
+  }
+
+  const completeBreakPlanItem = (item) => {
+    if (!item?.id) return
+    const isFallback = String(item.id).startsWith('_')
+    if (!isFallback) {
+      completeBreakKitItem(item.id)
+      awardAndBroadcast('break_kit', { label: item.title })
+    } else {
+      // Generic body fallbacks still count as tiny care XP
+      if (item.id === '_water') {
+        awardAndBroadcast('water', { label: 'Break water' })
+      } else {
+        awardAndBroadcast('break_kit', { label: item.title })
+      }
+    }
+    setForcedBreak((fb) => {
+      if (!fb) return null
+      if (fb.completedIds?.includes(item.id)) return fb
+      return {
+        ...fb,
+        completedIds: [...(fb.completedIds || []), item.id],
+      }
+    })
   }
 
   const endForcedBreak = (emergency = false) => {
@@ -733,6 +774,10 @@ function App() {
       projectId: activeProjectId,
       dueDate: captureDue || '',
     })
+    const g = awardAndBroadcast('task_capture', {
+      label: quickInput.trim().slice(0, 40),
+    })
+    flashToast(`Captured · +${g.gained} XP`)
     setQuickInput('')
     setCaptureDue('')
     setActiveView('flow')
@@ -753,6 +798,8 @@ function App() {
     if (!isFocusRunning) {
       setPomodoroWorkStartedAt(Date.now())
       setIsFocusRunning(true)
+      const g = awardAndBroadcast('focus_start', { label: 'Focus' })
+      flashToast(`Focus on · +${g.gained} XP`)
     } else {
       setIsFocusRunning(false)
     }
@@ -768,6 +815,7 @@ function App() {
         onboardName.trim(),
         onboardBrief.trim() || 'Direction TBD — capture first, polish later.'
       )
+      awardAndBroadcast('project_create', { label: onboardName.trim() })
     }
     setOnboarded(true)
     localStorage.setItem('cc-onboarded', '1')
@@ -807,6 +855,7 @@ function App() {
     const files = Array.from(fileList || []).filter((f) =>
       f.type.startsWith('image/')
     )
+    if (!files.length) return
     files.forEach((file, i) => {
       const reader = new FileReader()
       reader.onload = (ev) => {
@@ -819,6 +868,14 @@ function App() {
       }
       reader.readAsDataURL(file)
     })
+    const g = awardAndBroadcast('mood_pin', {
+      label: `${files.length} image${files.length > 1 ? 's' : ''}`,
+    })
+    flashToast(
+      files.length > 1
+        ? `${files.length} images · +${g.gained} XP`
+        : `Image pinned · +${g.gained} XP`
+    )
   }
 
   const downloadExportHtml = () => {
@@ -897,6 +954,8 @@ function App() {
     a.download = `${exportPanel.projectName.replace(/\s+/g, '-').toLowerCase()}-brand-direction.html`
     a.click()
     URL.revokeObjectURL(url)
+    const g = awardAndBroadcast('export_pack', { label: 'Brand pack' })
+    flashToast(`Pack downloaded · +${g.gained} XP`)
   }
 
   const creativeResetItems = [
@@ -1007,7 +1066,10 @@ function App() {
     setDoneOpen(false)
     setActiveView('flow')
     setStepFocusKey((k) => k + 1)
-    flashToast(`${n} micro-steps ready — do #1 only`)
+    const g = awardAndBroadcast('breakdown', {
+      label: `${n} micro-steps`,
+    })
+    flashToast(`${n} micro-steps ready · +${g.gained} XP — do #1 only`)
   }
 
   const finishBreakdownToStep = () => {
@@ -1034,7 +1096,8 @@ function App() {
     a.download = `creative-companion-backup-${toISODate()}.json`
     a.click()
     URL.revokeObjectURL(url)
-    flashToast('Backup downloaded')
+    const g = awardAndBroadcast('export_pack', { label: 'Backup' })
+    flashToast(`Backup downloaded · +${g.gained} XP`)
   }
 
   const handleImportBackup = (file) => {
@@ -1096,7 +1159,8 @@ function App() {
     })
     setBoardUrl('')
     setBoardAddMode(null)
-    flashToast('Pin added')
+    const g = awardAndBroadcast('mood_pin', { label: 'URL pin' })
+    flashToast(`Pin added · +${g.gained} XP`)
   }
 
   const submitBoardNote = () => {
@@ -1110,7 +1174,8 @@ function App() {
     })
     setBoardNote('')
     setBoardAddMode(null)
-    flashToast('Note pin added')
+    const g = awardAndBroadcast('mood_pin', { label: 'Note pin' })
+    flashToast(`Pin added · +${g.gained} XP`)
   }
 
   const handleSignOut = async () => {
@@ -1196,6 +1261,9 @@ function App() {
           leftSeconds={forcedBreak.leftSec}
           workMinutes={forcedBreak.workMinutes}
           breakMinutes={forcedBreak.breakMinutes}
+          planItems={forcedBreak.planItems || []}
+          completedIds={forcedBreak.completedIds || []}
+          onCompleteItem={completeBreakPlanItem}
           onEmergencyUnlock={() => endForcedBreak(true)}
         />
       )}
@@ -1206,7 +1274,9 @@ function App() {
               <span className="logo-mark" aria-hidden="true" />
               Creative Companion
             </div>
-            <p className="logo-sub">Simple path: Project → Work → Ideas → Brand → Finish</p>
+            <p className="logo-sub">
+              Ship work · earn XP · daily quests · keep the streak
+            </p>
           </div>
           <div className="header-actions">
             {isFocusRunning && activeView !== 'insights' && (
@@ -1285,7 +1355,14 @@ function App() {
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
+                      const next = !bodyDoubling
                       toggleBodyDoubling()
+                      if (next) {
+                        const g = awardAndBroadcast('helper_on', {
+                          label: 'Helper',
+                        })
+                        flashToast(`Helper on · +${g.gained} XP`)
+                      }
                       setMoreOpen(false)
                     }}
                   >
@@ -1348,6 +1425,10 @@ function App() {
                     className="more-menu-item"
                     onClick={() => {
                       createNewProject()
+                      const g = awardAndBroadcast('project_create', {
+                        label: 'New project',
+                      })
+                      flashToast(`New project · +${g.gained} XP`)
                       setActiveView('project')
                       setMoreOpen(false)
                     }}
@@ -1435,6 +1516,8 @@ function App() {
             </div>
           </div>
         </div>
+
+        <GameHUD />
 
         {/* Numbered path — always visible */}
         <nav className="journey-bar" aria-label="Your path through the app">
@@ -1674,7 +1757,12 @@ function App() {
                         className="btn btn-secondary"
                         onClick={() => {
                           breakIntoSteps(nextTask.id)
-                          flashToast('Split into 3 micro-steps')
+                          {
+                            const g = awardAndBroadcast('micro_steps', {
+                              label: 'Split step',
+                            })
+                            flashToast(`Split into 3 · +${g.gained} XP`)
+                          }
                           setStepFocusKey((k) => k + 1)
                         }}
                       >
@@ -1816,7 +1904,12 @@ function App() {
                   onClick={() => {
                     if (!nextTask) return
                     breakIntoSteps(nextTask.id)
-                    flashToast('Split into 3 micro-steps')
+                    {
+                      const g = awardAndBroadcast('micro_steps', {
+                        label: 'Split step',
+                      })
+                      flashToast(`Split into 3 · +${g.gained} XP`)
+                    }
                     setStepFocusKey((k) => k + 1)
                   }}
                 >
@@ -2062,7 +2155,6 @@ function App() {
                     onChange={(e) => {
                       uploadMoodFiles(e.target.files)
                       e.target.value = ''
-                      flashToast('Images added')
                     }}
                   />
                 </label>
@@ -2183,6 +2275,10 @@ function App() {
                       note: 'Dropped reference',
                       visual: data.trim(),
                     })
+                    const g = awardAndBroadcast('mood_pin', {
+                      label: 'Dropped pin',
+                    })
+                    flashToast(`Pin added · +${g.gained} XP`)
                   }
                 }}
               >
@@ -2339,6 +2435,10 @@ function App() {
                       note: currentSpark,
                       visual: projectPalette[0] || '#4F46E5',
                     })
+                    const g = awardAndBroadcast('mood_pin', {
+                      label: 'Spark pin',
+                    })
+                    flashToast(`Pinned · +${g.gained} XP`)
                     setActiveView('studio')
                   }}
                 >
@@ -3297,8 +3397,11 @@ function App() {
                   className="btn btn-secondary"
                   onClick={() => {
                     createNewProject()
+                    const g = awardAndBroadcast('project_create', {
+                      label: 'New project',
+                    })
                     setActiveView('project')
-                    flashToast('New project ready')
+                    flashToast(`New project · +${g.gained} XP`)
                   }}
                 >
                   New project

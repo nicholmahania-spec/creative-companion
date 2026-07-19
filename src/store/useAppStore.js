@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { addDays, toISODate } from '../lib/dates'
+import { createBreakItem, seedBreakKit } from '../lib/breakKit'
 
 export const sparkPrompts = [
   'What if your next illustration series explored the feeling of quiet belonging?',
@@ -172,6 +173,11 @@ const useAppStore = create(
        * stage: sketch | develop | iteration | locked
        */
       conceptItems: [],
+      /**
+       * Break Kit — life micro-tasks (meds, todos, errands) for forced breaks.
+       * See lib/breakKit.js
+       */
+      breakKit: seedBreakKit.map((i) => ({ ...i })),
       theme: 'warm', // warm | deep
       bodyDoubling: false,
       onboarded: false,
@@ -185,6 +191,47 @@ const useAppStore = create(
         forceBreaksEnabled: true, // Pomodoro desk lock after work cycles
         queueCollapsed: true, // collapse queue after breakdown / by default when busy
         showHowItWorks: true,
+      },
+
+      addBreakKitItem: (payload) => {
+        const item = createBreakItem(payload || {})
+        if (!item) return { ok: false, error: 'Add a short title' }
+        set((state) => ({
+          breakKit: [item, ...(state.breakKit || [])],
+        }))
+        return { ok: true, item }
+      },
+
+      removeBreakKitItem: (id) =>
+        set((state) => ({
+          breakKit: (state.breakKit || []).filter((i) => i.id !== id),
+        })),
+
+      updateBreakKitItem: (id, patch) =>
+        set((state) => ({
+          breakKit: (state.breakKit || []).map((i) =>
+            i.id === id ? { ...i, ...patch, id: i.id } : i
+          ),
+        })),
+
+      /**
+       * Mark a break-kit item done (during break or anytime).
+       * Recurring → stamps lastDoneAt for today; one-shot → completed.
+       */
+      completeBreakKitItem: (id) => {
+        const now = new Date().toISOString()
+        let found = null
+        set((state) => ({
+          breakKit: (state.breakKit || []).map((i) => {
+            if (i.id !== id) return i
+            found = i
+            if (i.recurring) {
+              return { ...i, lastDoneAt: now }
+            }
+            return { ...i, completed: true, lastDoneAt: now }
+          }),
+        }))
+        return { ok: Boolean(found), item: found }
       },
 
       addProject: (project) =>
@@ -335,6 +382,7 @@ const useAppStore = create(
           tasks: s.tasks,
           moodItems: s.moodItems,
           conceptItems: s.conceptItems || [],
+          breakKit: s.breakKit || [],
           theme: s.theme,
           prefs: s.prefs,
           sparkIndex: s.sparkIndex,
@@ -380,6 +428,9 @@ const useAppStore = create(
           tasks: data.tasks,
           moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
           conceptItems: Array.isArray(data.conceptItems) ? data.conceptItems : [],
+          breakKit: Array.isArray(data.breakKit)
+            ? data.breakKit
+            : seedBreakKit.map((i) => ({ ...i })),
           theme: data.theme === 'deep' ? 'deep' : 'warm',
           prefs: {
             soundEnabled: true,
@@ -460,6 +511,7 @@ const useAppStore = create(
           tasks: seedTasks.map((t) => ({ ...t })),
           moodItems: seedMoodItems.map((m) => ({ ...m })),
           conceptItems: [],
+          breakKit: seedBreakKit.map((i) => ({ ...i })),
           theme: 'warm',
           bodyDoubling: false,
           onboarded: false,
@@ -502,6 +554,7 @@ const useAppStore = create(
           tasks: [],
           moodItems: [],
           conceptItems: [],
+          breakKit: [],
           bodyDoubling: false,
           onboarded: true,
           sparkIndex: 0,
@@ -814,6 +867,7 @@ const useAppStore = create(
         tasks: state.tasks,
         moodItems: state.moodItems,
         conceptItems: state.conceptItems || [],
+        breakKit: state.breakKit || [],
         theme: state.theme,
         onboarded: state.onboarded,
         sparkIndex: state.sparkIndex,

@@ -1,24 +1,47 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { breakReasonCopy, formatBreakClock } from '../lib/forcedBreak'
+import { breakPlanCopy, kindMeta } from '../lib/breakKit'
 
 /**
  * Full-screen lock until forced break countdown completes.
- * Parent owns the timer; emergency unlock requires typing a phrase.
+ * Shows Break Kit items that fit this window — check them off while you rest.
  */
 export default function ForcedBreakOverlay({
   totalSeconds,
   leftSeconds,
   workMinutes,
   breakMinutes,
+  planItems = [],
+  completedIds = [],
+  onCompleteItem,
   onEmergencyUnlock,
 }) {
   const [showEmergency, setShowEmergency] = useState(false)
   const [emergencyText, setEmergencyText] = useState('')
   const copy = breakReasonCopy(workMinutes, breakMinutes)
+  const planMeta = useMemo(
+    () =>
+      breakPlanCopy(
+        {
+          items: planItems,
+          usedMinutes: planItems.reduce(
+            (s, i) => s + (Number(i.minutes) || 0),
+            0
+          ),
+          empty: planItems.length === 0,
+        },
+        breakMinutes
+      ),
+    [planItems, breakMinutes]
+  )
   const progress =
     totalSeconds > 0
       ? Math.min(100, ((totalSeconds - leftSeconds) / totalSeconds) * 100)
       : 0
+
+  const doneSet = useMemo(() => new Set(completedIds), [completedIds])
+  const allDone =
+    planItems.length > 0 && planItems.every((i) => doneSet.has(i.id))
 
   const tryEmergency = () => {
     if (emergencyText.trim().toLowerCase() === 'end break now') {
@@ -44,7 +67,6 @@ export default function ForcedBreakOverlay({
         <p id="forced-break-body" className="forced-break-body">
           {copy.body}
         </p>
-        <p className="forced-break-tip">{copy.tip}</p>
 
         <div className="forced-break-clock" aria-live="polite">
           {formatBreakClock(leftSeconds)}
@@ -55,18 +77,74 @@ export default function ForcedBreakOverlay({
             style={{ width: `${progress}%` }}
           />
         </div>
+
+        <div className="forced-break-kit">
+          <p className="forced-break-kit-head">{planMeta.headline}</p>
+          <p className="forced-break-kit-sub">{planMeta.sub}</p>
+
+          {planItems.length > 0 ? (
+            <ul className="forced-break-kit-list">
+              {planItems.map((item) => {
+                const meta = kindMeta(item.kind)
+                const done = doneSet.has(item.id)
+                const isFallback = String(item.id).startsWith('_')
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      className={`forced-break-kit-item${
+                        done ? ' is-done' : ''
+                      }`}
+                      onClick={() => {
+                        if (done) return
+                        onCompleteItem?.(item)
+                      }}
+                      disabled={done}
+                      aria-pressed={done}
+                    >
+                      <span
+                        className="forced-break-kit-check"
+                        aria-hidden="true"
+                      >
+                        {done ? '✓' : '○'}
+                      </span>
+                      <span className="forced-break-kit-body">
+                        <span className="forced-break-kit-kind">
+                          {meta.icon} {meta.label}
+                          {!isFallback && item.minutes
+                            ? ` · ~${item.minutes}m`
+                            : ''}
+                        </span>
+                        <strong className="forced-break-kit-title">
+                          {item.title}
+                        </strong>
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          ) : (
+            <ul className="forced-break-checklist">
+              <li>Stand up if you can</li>
+              <li>Drink water</li>
+              <li>Bathroom if you need it</li>
+              <li>Rest your eyes (look far away)</li>
+            </ul>
+          )}
+
+          {allDone && (
+            <p className="forced-break-kit-done" role="status">
+              Kit clear — keep resting until the timer ends.
+            </p>
+          )}
+        </div>
+
         <p className="forced-break-hint">
           {leftSeconds > 0
-            ? 'Walk · water · stretch · look away from the screen'
+            ? 'Screen stays locked until the clock hits zero'
             : 'Break complete — unlocking…'}
         </p>
-
-        <ul className="forced-break-checklist">
-          <li>Stand up if you can</li>
-          <li>Drink water</li>
-          <li>Bathroom if you need it</li>
-          <li>Rest your eyes (look far away)</li>
-        </ul>
 
         {!showEmergency ? (
           <button
