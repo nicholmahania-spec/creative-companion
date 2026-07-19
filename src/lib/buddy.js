@@ -591,58 +591,24 @@ export function describeActivity(activity = {}) {
  * phase: clarify | structure | visual | refine
  */
 export function designProcessTip(phase, activity = {}) {
-  const step = short(activity.nextTaskTitle, 48)
-  const project = short(activity.projectName, 28) || 'this project'
+  const step = short(activity.nextTaskTitle, 42) || 'your current step'
+  const project = short(activity.projectName, 24) || 'this project'
   const view = activity.view || 'flow'
-  const pins = Number(activity.pinsCount) || 0
 
   if (phase === 'clarify') {
-    return [
-      'Step 1 — Clarify (before you decorate the void).',
-      `For ${project}, one line each: who is it for, what should they do/feel, what's the real constraint?`,
-      step
-        ? `If "${step}" can't wear those answers, rewrite the step. Vague steps birth vague UI.`
-        : 'Then make a Work step that ships a decision—not "touch brand vibes."',
-      'Why: pretty-but-useless is my least favorite genre.',
-    ].join(' ')
+    return `Clarify “${step}” on ${project}: who is it for, what they do/feel, one constraint. If the step can’t answer that, rewrite the step — not the decoration.`
   }
-
   if (phase === 'structure') {
-    return [
-      'Step 2 — Structure (wireframe in words, not 47 layers).',
-      view === 'brand'
-        ? 'Brand journey: cover → message → palette → type → do/don’t → export. Fill the next empty hole only.'
-        : 'List blocks top to bottom: header, main thing, proof, ONE primary CTA. Entry → action → success.',
-      step ? `Glue it to "${step}" or admit you're freelancing from the plot.` : '',
-      'Why: layout is strategy. Shadows are not a personality.',
-    ]
-      .filter(Boolean)
-      .join(' ')
+    return view === 'brand'
+      ? `Structure for “${step}”: fill the next empty Brand hole only (message → palette → type → do/don’t).`
+      : `Structure “${step}”: list blocks top→bottom (main thing + one CTA). No polish until the path is words.`
   }
-
   if (phase === 'visual') {
-    return [
-      'Step 3 — Visual (taste with rules).',
-      view === 'studio' || pins > 0
-        ? 'Steal with intention: 1–2 refs, 3–5 color roles, one display + one UI font. Caption the pins or they\'re just a Pinterest nap.'
-        : 'One accent for actions. Body text that passes contrast. Whitespace is free—use it like you mean it.',
-      step ? `Does this look support "${step}", or just your ego?` : '',
-      'Why: restraint reads expensive; rainbow buttons read template.',
-    ]
-      .filter(Boolean)
-      .join(' ')
+    return `Visual for “${step}”: one accent for actions, readable body type, intentional space. Does this look serve the step — or just look busy?`
   }
-
   if (phase === 'refine') {
-    return [
-      'Step 4 — Refine (two directions, not seventeen moods).',
-      'A) calmer editorial hierarchy  B) bolder product CTA path. Pick one. Twin primaries will make me monologue.',
-      'Audit: contrast, focus order, empty states, delete buttons not snuggling the main CTA.',
-      'Ship one complete slice. Half-finished everything is a lifestyle, not a strategy.',
-      'Why: criteria beat vibes when the caffeine wears off.',
-    ].join(' ')
+    return `Refine “${step}”: pick A (calmer) or B (bolder). Ship one complete slice. Twin primaries = thrash.`
   }
-
   return activityTip(activity)
 }
 
@@ -652,7 +618,7 @@ export function designProcessTip(phase, activity = {}) {
  */
 export function activityTip(activity = {}) {
   const view = activity.view || 'flow'
-  const step = short(activity.nextTaskTitle, 52)
+  const step = short(activity.nextTaskTitle, 48)
   const energy = activity.nextTaskEnergy || 'med'
   const queue = Number(activity.queueCount) || 0
   const done = Number(activity.doneCount) || 0
@@ -665,83 +631,67 @@ export function activityTip(activity = {}) {
 
   if (focusOn) {
     return step
-      ? `Focus block: execute only "${step}". No tool-hopping. Why: split attention destroys visual judgment.`
-      : 'Focus block: one atomic design action until the timer ends. Why: containers beat open-ended polish.'
+      ? `Timer on: only “${step}”.`
+      : 'Timer on: one atomic design action.'
   }
 
   if (view === 'studio') {
-    if (!step) {
-      return pins > 0
-        ? `Mood board: curate, do not hoard. Keep pins that define mood/material; remove noise. Then return to Work with one decision. Why: refs should constrain choices.`
-        : 'Mood board: pin 2–3 images with a note on why (tone, not "pretty"). Why: captioned refs become a design system seed.'
-    }
-    return `Board in service of "${step}". Ask per pin: hierarchy cue, color story, or composition? If neither, drop it. Why: boards without criteria become procrastination.`
+    return step
+      ? `Board for “${step}”: keep pins that constrain. Drop the rest.`
+      : pins > 0
+        ? `Curate ${project} board, then back to Work with one decision.`
+        : 'Pin 2–3 refs with a one-line why. Then Work.'
   }
 
   if (view === 'brand') {
-    return `Brand template for ${project}: treat it as an identity system, not a form to finish. Complete one layer (tagline or palette roles) with contrast in mind. Export when the story is coherent. Why: incomplete but consistent beats complete but conflicting.`
+    return `Brand for ${project}: finish one layer (tagline or palette). Consistent incomplete > conflicting complete.`
   }
 
   if (view === 'spark') {
     return step
-      ? `Spark is provocation only. If it supports "${step}", pin with a caption; otherwise advance. Why: ideation without a job-to-be-done is noise.`
-      : 'Use one spark as a constraint (mood or metaphor), pin it, return to Work. Why: inspiration must attach to a deliverable.'
+      ? `If this spark helps “${step}”, pin it. Else skip.`
+      : 'One spark → pin → back to Work.'
   }
 
   if (view === 'insights') {
     return step
-      ? `Timer is a craft container for "${step}". Prefer 25 for deep layout, 2 for a micro-decision. Why: timeboxes force shipping over tinkering.`
-      : 'Set a step on Work first, then run a short focus block. Why: timers without a target amplify anxiety.'
+      ? `Timer is a container for “${step}”. 25 for layout, 2 for a decision.`
+      : 'Set a Work step first, then start a timer.'
   }
 
   if (view === 'calendar') {
     return hasDeadline
-      ? `Deadline for ${project} is a milestone, not a vibe. Work backward: what must be true one week out? Capture that as Work steps. Why: dates need dependencies.`
-      : 'No deadline yet. If the client has one, set it; else set a personal review date. Why: invisible time is missed hierarchy in planning.'
+      ? `Deadline on ${project}: work backward into Work steps.`
+      : 'Set a deadline or a personal review date, then Work.'
   }
 
   if (view === 'project') {
-    return `Project setup: brief = audience + outcome + constraints. Then leave for Work. Why: briefs prevent decorative rabbit holes.`
+    return 'Brief = audience + outcome + constraint. Then go to Work.'
   }
 
   if (view === 'settings') {
-    return 'Settings are infrastructure. Backup if the work matters, then return to the craft surface (Work / Brand). Why: tools serve the product, not the reverse.'
+    return 'Backup if it matters. Then return to Work or Brand.'
   }
 
-  // Work
   if (view === 'flow' || !view) {
     if (!step) {
-      if (done > 0) {
-        return 'Queue clear. Capture the next user-facing outcome, or break the project into micro-steps if scope is still a blob. Why: empty desks need a job-to-be-done.'
-      }
-      return `No current step for ${project}. Clarify the outcome in one sentence, then either capture it or run micro-steps. Why: designers stall when the problem is undefined.`
+      return done > 0
+        ? 'Queue clear. Capture the next shippable outcome — or micro-steps if scope is still a blob.'
+        : `No step on ${project}. One sentence outcome, then capture it.`
     }
-
     if (dueSoon) {
-      return `"${step}" is time-sensitive. Scope to the minimum shippable: one hierarchy decision or one screen block. Why: deadlines reward ruthless prioritization.`
+      return `“${step}” is time-sensitive. Ship the minimum: one decision or one block.`
     }
-
     if (isMicro) {
-      return `Micro-step "${step}" is correctly sized. Finish messy if needed, then mark complete. Why: small closed loops build systems.`
+      return `Micro-step “${step}” — finish messy, mark complete.`
     }
-
     if (energy === 'low') {
-      return `Low-energy step "${step}": choose a low-cognition task (rename labels, check contrast, tidy spacing). Or Split ×3. Why: match cognitive load to capacity.`
+      return `Low energy on “${step}”: labels, contrast, spacing — or Split ×3.`
     }
-
-    if (energy === 'high') {
-      return `High-energy step "${step}": good for exploration or hard layout. If energy is not there, park it and take a structure-only pass. Why: force-fitting deep work wastes sessions.`
-    }
-
     if (queue >= 5) {
-      return `Queue has ${queue} waiting. Tunnel vision on "${step}" only. Why: open loops tax working memory and blur hierarchy of attention.`
+      return `${queue} waiting. Tunnel vision on “${step}” only.`
     }
-
-    return [
-      `Current craft focus: "${step}".`,
-      'If scope is fuzzy → Clarify. If layout is fuzzy → Structure. If style is fuzzy → Visual. If almost done → Refine.',
-      'Why: name the design problem before adding pixels.',
-    ].join(' ')
+    return `On “${step}”: fuzzy scope → Clarify · layout → Structure · style → Visual · almost done → Refine.`
   }
 
   return pick(IDLE)

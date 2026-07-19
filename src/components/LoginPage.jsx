@@ -131,27 +131,27 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
     <div className="login-page">
       <div className="login-layout">
         <aside className="login-proof" aria-hidden="true">
-          <p className="login-proof-eyebrow">Your work loop</p>
+          <p className="login-proof-eyebrow">For designers who scatter</p>
           <h2 className="login-proof-title">
-            One current step.
+            One next design step.
             <br />
-            Complete it.
+            A desk that stays with you.
             <br />
-            Next rises.
+            Leave with a brand pack.
           </h2>
           <div className="login-proof-card">
             <span className="login-proof-badge">Do this now</span>
             <p className="login-proof-step">
-              Name the feeling the cover must land — one sentence
+              Write the one shippable step for the next 25 minutes
             </p>
             <div className="login-proof-actions">
               <span className="login-proof-btn">Complete step</span>
             </div>
           </div>
           <ul className="login-proof-list">
-            <li>Capture messy ideas</li>
-            <li>Break overwhelm into micro-steps</li>
-            <li>Pin refs · export brand direction</li>
+            <li>Body-double Helper when you need presence</li>
+            <li>Project → Work → Ideas → Brand → Finish</li>
+            <li>Forced breaks + export a real direction pack</li>
           </ul>
         </aside>
 
@@ -160,7 +160,9 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
             <span className="logo-mark" aria-hidden="true" />
             <div>
               <h1 className="login-title">Creative Companion</h1>
-              <p className="login-tag">Creative work tool for ADHD brains</p>
+              <p className="login-tag">
+                Body-double desk for ADHD creative work
+              </p>
             </div>
           </div>
 

@@ -43,6 +43,7 @@ import {
   getJourneyStep,
   getNextJourney,
 } from './lib/journey'
+import { PROCESS_PHASES, getProcessPhase } from './lib/processGuide'
 import {
   isSessionOpen,
   closeSession,
@@ -127,6 +128,8 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardName, setOnboardName] = useState('')
   const [onboardBrief, setOnboardBrief] = useState('')
+  const [onboardFirstStep, setOnboardFirstStep] = useState('')
+  const [processPhase, setProcessPhase] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -811,16 +814,33 @@ function App() {
 
   const finishOnboarding = (mode) => {
     if (mode === 'custom' && onboardName.trim()) {
-      createNewProject(
+      const project = createNewProject(
         onboardName.trim(),
-        onboardBrief.trim() || 'Direction TBD — capture first, polish later.'
+        onboardBrief.trim() ||
+          'Audience + outcome + constraint — fill as you go.'
       )
       awardAndBroadcast('project_create', { label: onboardName.trim() })
+      const stepTitle =
+        onboardFirstStep.trim() ||
+        'Write the one shippable design step for the next 25 minutes'
+      addTask({
+        id: Date.now() + 1,
+        title: stepTitle,
+        energy: 'med',
+        meta: 'First step · do this now',
+        completed: false,
+        seeded: false,
+        projectId: project?.id || useAppStore.getState().currentProjectId,
+        dueDate: '',
+      })
+      awardAndBroadcast('task_capture', { label: 'First step' })
     }
     setOnboarded(true)
     localStorage.setItem('cc-onboarded', '1')
     setShowOnboarding(false)
+    setBodyDoubling(true)
     setActiveView('flow')
+    flashToast('One step on your desk — complete it when ready')
   }
 
   const escapeHtml = (s) =>
@@ -1301,7 +1321,8 @@ function App() {
               Creative Companion
             </div>
             <p className="logo-sub">
-              Ship work · earn XP · daily quests · keep the streak
+              One next design step · a desk that stays with you · leave with a
+              brand pack
             </p>
           </div>
           <div className="header-actions">
@@ -1660,9 +1681,9 @@ function App() {
             )}
 
             {showHowItWorks ? (
-              <section className="product-card" aria-label="How the loop works">
+              <section className="product-card" aria-label="How this desk works">
                 <div className="product-card-top">
-                  <p className="product-card-eyebrow">How this works</p>
+                  <p className="product-card-eyebrow">What this desk is for</p>
                   <button
                     type="button"
                     className="product-card-dismiss"
@@ -1671,26 +1692,29 @@ function App() {
                     Got it
                   </button>
                 </div>
+                <p className="product-card-title" style={{ marginBottom: '0.65rem' }}>
+                  One design step owns the screen. Complete it. Next rises.
+                </p>
                 <ol className="product-steps">
                   <li>
                     <span className="product-step-num">1</span>
                     <span>
-                      <strong>Do the current step</strong>
-                      <em>Only what&apos;s on the card</em>
+                      <strong>Do only the current step</strong>
+                      <em>Not the whole project — just this card</em>
                     </span>
                   </li>
                   <li>
                     <span className="product-step-num">2</span>
                     <span>
                       <strong>Complete it</strong>
-                      <em>Next open step rises</em>
+                      <em>Helper stays for presence; breaks protect your body</em>
                     </span>
                   </li>
                   <li>
                     <span className="product-step-num">3</span>
                     <span>
-                      <strong>Dump more below</strong>
-                      <em>Or open Stuck when blocked</em>
+                      <strong>Ship a pack from Finish</strong>
+                      <em>Ideas → Brand → export when the story holds</em>
                     </span>
                   </li>
                 </ol>
@@ -1701,9 +1725,63 @@ function App() {
                 className="how-it-works-link"
                 onClick={revealHowItWorks}
               >
-                How the work loop works
+                What is this desk for?
               </button>
             )}
+
+            {/* Process mode — changes the Work UI, not only Helper chat */}
+            <section className="process-rail" aria-label="Design process">
+              <p className="process-rail-label">Design process</p>
+              <div className="process-rail-chips">
+                {PROCESS_PHASES.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`process-chip${
+                      processPhase === p.id ? ' is-active' : ''
+                    }`}
+                    onClick={() =>
+                      setProcessPhase((cur) => (cur === p.id ? null : p.id))
+                    }
+                    aria-pressed={processPhase === p.id}
+                  >
+                    {p.short}
+                  </button>
+                ))}
+              </div>
+              {processPhase && getProcessPhase(processPhase) && (
+                <div className="process-guide-panel">
+                  <div className="process-guide-head">
+                    <strong>{getProcessPhase(processPhase).title}</strong>
+                    <button
+                      type="button"
+                      className="text-link"
+                      onClick={() => setProcessPhase(null)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <p className="process-guide-prompt">
+                    {nextTask
+                      ? `For “${String(nextTask.title).slice(0, 60)}${
+                          String(nextTask.title).length > 60 ? '…' : ''
+                        }”: ${getProcessPhase(processPhase).prompt}`
+                      : getProcessPhase(processPhase).prompt}
+                  </p>
+                  <ul className="process-guide-checks">
+                    {getProcessPhase(processPhase).checks.map((c) => (
+                      <li key={c}>{c}</li>
+                    ))}
+                  </ul>
+                  {bodyDoubling && (
+                    <p className="process-guide-hint">
+                      Helper can coach this phase — open the corner bot → More →
+                      Process, or ask Recommend.
+                    </p>
+                  )}
+                </div>
+              )}
+            </section>
 
             {/* Current step owns the fold */}
             <section
@@ -3374,50 +3452,69 @@ function App() {
             </div>
 
             <section className="panel brand-section finish-hero-panel">
-              <div className="brand-section-label">You made it</div>
+              <div className="brand-section-label">Ship moment</div>
               <h2 className="panel-title" style={{ marginBottom: '0.5rem' }}>
                 {activeProject?.name || 'Your project'}
               </h2>
-              <p className="empty-state-body" style={{ marginBottom: '1rem' }}>
-                Path: Project → Work → Ideas → Brand → <strong>Finish</strong>.
-                Pick one action below. Nothing is lost when you log out if you
-                saved a backup or use cloud save.
+              <p className="empty-state-body" style={{ marginBottom: '0.75rem' }}>
+                You held one step still and walked the path. The thing only this
+                desk gives you: a <strong>brand direction pack</strong> you can
+                hand to a client, a teammate, or tomorrow-you.
               </p>
+              <ul className="finish-ship-list">
+                <li>
+                  Steps closed this project:{' '}
+                  <strong>{completedCount}</strong>
+                  {deskTasks.length > 0
+                    ? ` / ${deskTasks.length}`
+                    : ''}
+                </li>
+                <li>
+                  Pins: <strong>{deskMood.length}</strong>
+                  {activeProject?.tagline
+                    ? ` · Tagline: “${activeProject.tagline}”`
+                    : ''}
+                </li>
+                <li>
+                  Next: export the pack, then rest — or pick <em>one</em> next
+                  Work step.
+                </li>
+              </ul>
               <div className="finish-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={loadSoftSignalDemo}
-                >
-                  Load Soft Signal design demo
-                </button>
                 <button
                   type="button"
                   className="btn btn-primary"
                   onClick={openExportPanel}
                 >
-                  1 · Save or print brand pack
+                  Export brand pack
                 </button>
                 <button
                   type="button"
                   className="btn btn-secondary"
                   onClick={downloadDataBackup}
                 >
-                  2 · Download full backup (JSON)
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setActiveView('brand')}
-                >
-                  Back to Brand (edit more)
+                  Download full backup
                 </button>
                 <button
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => setActiveView('flow')}
                 >
-                  Back to Work
+                  One more Work step
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActiveView('brand')}
+                >
+                  Edit Brand
+                </button>
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={loadSoftSignalDemo}
+                >
+                  Load Soft Signal demo
                 </button>
               </div>
             </section>
@@ -4116,26 +4213,33 @@ function App() {
         >
           <div className="export-panel onboard-panel">
             <p className="onboard-eyebrow">
-              {CLOUD ? 'Signed in · saved to your account' : 'Saved on this device'}
+              {CLOUD ? 'Signed in · cloud desk' : 'Saved on this device'}
             </p>
             <h2 id="onboard-title" style={{ marginTop: 0 }}>
-              Name your project
+              Start with one step
             </h2>
             <p className="view-lede">
-              Easy path: <strong>1 Project → 2 Work → 3 Ideas → 4 Brand → 5
-              Finish</strong>.{' '}
-              {CLOUD
-                ? 'Your work saves to your account.'
-                : 'Your work stays on this computer.'}
+              Name the project, then the <strong>one shippable step</strong> for
+              the next 25 minutes. You&apos;ll land on Work with that step ready —
+              not a blank board.
             </p>
             <label className="onboard-label">
               Project name
               <input
                 value={onboardName}
                 onChange={(e) => setOnboardName(e.target.value)}
-                placeholder="e.g. 100 Families spring booklet"
+                placeholder="e.g. Soft Signal covers"
                 className="onboard-input"
                 autoFocus
+              />
+            </label>
+            <label className="onboard-label">
+              First step (do this now)
+              <input
+                value={onboardFirstStep}
+                onChange={(e) => setOnboardFirstStep(e.target.value)}
+                placeholder="e.g. Write 3 cover rules in one pass"
+                className="onboard-input"
               />
             </label>
             <label className="onboard-label">
@@ -4143,7 +4247,7 @@ function App() {
               <textarea
                 value={onboardBrief}
                 onChange={(e) => setOnboardBrief(e.target.value)}
-                placeholder="Who is this for? What should it feel like?"
+                placeholder="Who is this for? Outcome? Constraint?"
                 rows={2}
                 className="onboard-input"
               />
@@ -4155,14 +4259,14 @@ function App() {
                 disabled={!onboardName.trim()}
                 onClick={() => finishOnboarding('custom')}
               >
-                Start with this project
+                Open Work with this step
               </button>
               <button
                 type="button"
                 className="text-link onboard-demo"
                 onClick={() => finishOnboarding('demo')}
               >
-                Or explore with demo projects
+                Or explore demo projects
               </button>
             </div>
           </div>
