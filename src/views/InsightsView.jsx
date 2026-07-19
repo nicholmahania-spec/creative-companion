@@ -22,12 +22,15 @@ export default function InsightsView(props) {
     completedCount,
     deskTasks,
     prefs = {},
+    openForceBreakConsent,
   } = props
 
   const toggleForceBreaks = () => {
     const next = !forceBreaksEnabled
     if (next && !prefs.forceBreaksConsented) {
-      setPref('forceBreaksConsented', true)
+      // Shared desk consent banner (App) — no silent auto-consent
+      openForceBreakConsent?.()
+      return
     }
     setPref('forceBreaksEnabled', next)
     if (!next && forcedBreak) {
@@ -131,36 +134,34 @@ export default function InsightsView(props) {
       </section>
       <section className="panel brand-section">
         <div className="brand-section-label">After</div>
-        <div className="help-grid help-grid-3">
+        <div className="timer-after-actions">
           <button
             type="button"
-            className="help-card"
+            className="btn btn-primary"
             disabled={!nextTask}
             onClick={() => {
               if (nextTask) toggleTask(nextTask.id)
               setActiveView('flow')
             }}
           >
-            <strong>Mark step done</strong>
-            <span>Complete current desk step</span>
+            Mark step done
           </button>
           <button
             type="button"
-            className="help-card"
+            className="text-link"
             onClick={() => setActiveView('flow')}
           >
-            <strong>Back to Work</strong>
-            <span>
-              {completedCount}/{deskTasks.length || 0} done
-            </span>
+            Back to Work
+            {deskTasks.length
+              ? ` · ${completedCount}/${deskTasks.length} done`
+              : ''}
           </button>
           <button
             type="button"
-            className="help-card"
+            className="text-link"
             onClick={() => toggleBodyDoubling()}
           >
-            <strong>Helper</strong>
-            <span>{bodyDoubling ? 'On' : 'Turn on'}</span>
+            {bodyDoubling ? 'Helper on' : 'Turn Helper on'}
           </button>
         </div>
       </section>

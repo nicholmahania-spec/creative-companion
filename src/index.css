@@ -10526,3 +10526,19 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   width: 2.65rem !important;
   height: 2.65rem !important;
 }
+
+/* Timer After — not a feature-card grid */
+.timer-after-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+}
+
+/* Pack title ceremony */
+.pack-view .page-title-display {
+  font-size: clamp(1.85rem, 4vw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.12;
+}

@@ -15,6 +15,7 @@ export default function SettingsView(props) {
     createNewProject,
     locale: localeProp,
     requestConfirm,
+    openForceBreakConsent,
   } = props
   const aiStatus = helperAiStatus()
   const locale = normalizeLocale(localeProp || prefs.locale || 'en')
@@ -188,7 +189,8 @@ export default function SettingsView(props) {
                 onClick={() => {
                   const next = !forceBreaksEnabled
                   if (next && !prefs.forceBreaksConsented) {
-                    setPref('forceBreaksConsented', true)
+                    openForceBreakConsent?.()
+                    return
                   }
                   setPref('forceBreaksEnabled', next)
                   if (!next && forcedBreak) {

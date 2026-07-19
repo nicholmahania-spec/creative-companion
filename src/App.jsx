@@ -3091,6 +3091,7 @@ function App() {
               completedCount={completedCount}
               deskTasks={deskTasks}
               prefs={prefs}
+              openForceBreakConsent={() => setForceBreakConsentOpen(true)}
             />
           </Suspense>
 
@@ -4119,6 +4120,7 @@ function App() {
                   },
                 })
               }
+              openForceBreakConsent={() => setForceBreakConsentOpen(true)}
             />
           </Suspense>
         )}
