@@ -26,6 +26,7 @@ import {
   versionLabel,
 } from './lib/version'
 import LoginPage from './components/LoginPage'
+import BuddyMate from './components/BuddyMate'
 import {
   isSessionOpen,
   closeSession,
@@ -143,6 +144,7 @@ function App() {
   const [pwCurrent, setPwCurrent] = useState('')
   const [pwNext, setPwNext] = useState('')
   const [accountOpen, setAccountOpen] = useState(false)
+  const [buddyWinPulse, setBuddyWinPulse] = useState(0)
   const moreWrapRef = useRef(null)
   const accountWrapRef = useRef(null)
   const importFileRef = useRef(null)
@@ -154,7 +156,7 @@ function App() {
   const queueCollapsed = prefs.queueCollapsed !== false
   const soundEnabled = prefs.soundEnabled !== false
   const reduceMotion = !!prefs.reduceMotion
-  const bodyDoubleSilent = !!prefs.bodyDoubleSilent
+
 
   const activeProjectId = currentProjectId
   const activeProject = projects.find((p) => p.id === activeProjectId)
@@ -298,6 +300,7 @@ function App() {
     if (!nextTask) return
     toggleTask(nextTask.id)
     setStepDueOpen(false)
+    setBuddyWinPulse((n) => n + 1)
     flashToast('Step complete · next one is ready')
     setStepFocusKey((k) => k + 1)
   }
@@ -1067,7 +1070,7 @@ function App() {
             )}
             {bodyDoubling && (
               <span className="mate-on-badge" aria-live="polite">
-                {bodyDoubleSilent ? 'Presence' : 'With you'}
+                Buddy on
               </span>
             )}
             {CLOUD && syncState === 'error' && (
@@ -1137,9 +1140,9 @@ function App() {
                     }}
                   >
                     <strong>
-                      {bodyDoubling ? 'Body double off' : 'Body double'}
+                      {bodyDoubling ? 'Buddy off' : 'Desk buddy'}
                     </strong>
-                    <span>Quiet presence — not a chatbot</span>
+                    <span>Interactive bot · body checks + progress</span>
                   </button>
                   <button
                     type="button"
@@ -1715,7 +1718,7 @@ function App() {
                   className="text-link"
                   onClick={() => toggleBodyDoubling()}
                 >
-                  {bodyDoubling ? 'Body double off' : 'Body double'}
+                  {bodyDoubling ? 'Buddy off' : 'Desk buddy'}
                 </button>
               </div>
             </section>
@@ -3072,8 +3075,11 @@ function App() {
               <div className="brand-section-label">Presence &amp; sound</div>
               <div className="settings-row">
                 <div>
-                  <strong>Body double</strong>
-                  <span>Quiet company — not a chatbot</span>
+                  <strong>Desk buddy (body double)</strong>
+                  <span>
+                    Little bot that checks water, food, bathroom &amp; cheers
+                    progress — not silent, not AI chat
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -3085,24 +3091,6 @@ function App() {
                   <span className="pref-switch-knob" />
                   <span className="sr-only">
                     {bodyDoubling ? 'On' : 'Off'}
-                  </span>
-                </button>
-              </div>
-              <div className="settings-row">
-                <div>
-                  <strong>Silent presence</strong>
-                  <span>Header badge only — hide floating card</span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={bodyDoubleSilent}
-                  className={`pref-switch${bodyDoubleSilent ? ' is-on' : ''}`}
-                  onClick={() => setPref('bodyDoubleSilent', !bodyDoubleSilent)}
-                >
-                  <span className="pref-switch-knob" />
-                  <span className="sr-only">
-                    {bodyDoubleSilent ? 'On' : 'Off'}
                   </span>
                 </button>
               </div>
@@ -3827,40 +3815,15 @@ function App() {
       )}
 
       {/* Body double — presence only, NOT a chatbot */}
-      {bodyDoubling && !bodyDoubleSilent && (
-        <div
-          className="studio-mate"
-          role="status"
-          aria-live="polite"
-          style={{
-            animation:
-              isFocusRunning && !reduceMotion
-                ? 'softPulse 4s infinite ease-in-out'
-                : 'none',
-          }}
-        >
-          <div className="studio-mate-top">
-            <div>
-              <strong>Body double</strong>
-              <span className="studio-mate-live">
-                {isFocusRunning ? 'With you in focus' : 'Present · not a chat'}
-              </span>
-            </div>
-            <button
-              type="button"
-              className="studio-mate-x"
-              onClick={() => setBodyDoubling(false)}
-              aria-label="Turn off body double"
-            >
-              ×
-            </button>
-          </div>
-          <p className="studio-mate-msg">
-            {isFocusRunning
-              ? 'Timer on. Stay with the current step.'
-              : 'Quiet company. No chat. No replies.'}
-          </p>
-        </div>
+      {bodyDoubling && (
+        <BuddyMate
+          onClose={() => setBodyDoubling(false)}
+          isFocusRunning={isFocusRunning}
+          completedCount={completedCount}
+          nextTaskTitle={nextTask?.title || ''}
+          reduceMotion={reduceMotion}
+          pulseWin={buddyWinPulse}
+        />
       )}
 
       {showBreakdown && (

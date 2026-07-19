@@ -4388,6 +4388,365 @@ html[data-reduce-motion='true'] *::after {
   border-top: none;
 }
 
+/* ——— Interactive desk buddy (body double) ——— */
+.buddy-panel {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 120;
+  width: min(320px, calc(100vw - 1.5rem));
+  max-height: min(72vh, 520px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-3), 0 0 0 1px rgba(79, 70, 229, 0.06);
+  overflow: hidden;
+}
+
+.buddy-panel.is-focus {
+  box-shadow: var(--shadow-3), 0 0 0 2px rgba(13, 148, 136, 0.35);
+}
+
+.buddy-panel-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 0.75rem 0.55rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, rgba(79, 70, 229, 0.08), transparent);
+}
+
+.buddy-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.buddy-name {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.buddy-status {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.buddy-top-actions {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.buddy-icon-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.buddy-icon-btn:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+.buddy-chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 7.5rem;
+  max-height: 11rem;
+}
+
+.buddy-bubble {
+  max-width: 92%;
+  padding: 0.5rem 0.7rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.buddy-bubble-buddy {
+  align-self: flex-start;
+  background: var(--accent-glow);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+}
+
+.buddy-bubble-you {
+  align-self: flex-end;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  border-bottom-right-radius: 4px;
+}
+
+.buddy-wellness {
+  padding: 0.45rem 0.75rem 0.35rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.buddy-wellness-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.buddy-wellness-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.buddy-check {
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--bg-canvas);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.45rem 0.25rem;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.buddy-check:hover {
+  border-color: var(--accent-primary);
+  background: #fff;
+}
+
+.buddy-check.is-due {
+  border-color: rgba(224, 123, 26, 0.55);
+  background: rgba(251, 191, 36, 0.15);
+  animation: buddyPulse 1.8s ease-in-out infinite;
+}
+
+.buddy-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.45rem 0.65rem 0.7rem;
+}
+
+.buddy-quick-btn {
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.35rem 0.55rem;
+  cursor: pointer;
+  color: var(--accent-deep);
+}
+
+.buddy-quick-btn:hover {
+  background: var(--accent-glow);
+}
+
+.buddy-fab {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 120;
+  width: 3.4rem;
+  height: 3.4rem;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  background: linear-gradient(145deg, #818cf8, #4f46e5);
+  box-shadow: var(--shadow-3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.buddy-fab-dot {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+/* Bot character face */
+.buddy-face {
+  position: relative;
+  width: 2.6rem;
+  height: 2.6rem;
+  flex-shrink: 0;
+  border-radius: 42% 42% 38% 38%;
+  background: linear-gradient(165deg, #c7d2fe 0%, #818cf8 45%, #4f46e5 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    0 4px 12px rgba(79, 70, 229, 0.35);
+}
+
+.buddy-face.is-compact {
+  width: 2.15rem;
+  height: 2.15rem;
+}
+
+.buddy-antenna {
+  position: absolute;
+  top: -0.35rem;
+  left: 50%;
+  width: 3px;
+  height: 0.55rem;
+  margin-left: -1.5px;
+  background: #a5b4fc;
+  border-radius: 2px;
+}
+
+.buddy-antenna::after {
+  content: '';
+  position: absolute;
+  top: -0.28rem;
+  left: 50%;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-left: -0.2rem;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.7);
+}
+
+.buddy-eye {
+  position: absolute;
+  top: 42%;
+  width: 0.38rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: #0f172a;
+}
+
+.buddy-eye-l {
+  left: 28%;
+}
+
+.buddy-eye-r {
+  right: 28%;
+}
+
+.buddy-mouth {
+  position: absolute;
+  left: 50%;
+  bottom: 26%;
+  width: 0.7rem;
+  height: 0.28rem;
+  margin-left: -0.35rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: #312e81;
+}
+
+.buddy-blush {
+  position: absolute;
+  top: 52%;
+  width: 0.35rem;
+  height: 0.22rem;
+  border-radius: 50%;
+  background: rgba(244, 114, 182, 0.45);
+}
+
+.buddy-blush-l {
+  left: 14%;
+}
+
+.buddy-blush-r {
+  right: 14%;
+}
+
+.buddy-face.mood-cheer .buddy-mouth {
+  width: 0.85rem;
+  margin-left: -0.42rem;
+  height: 0.35rem;
+  background: #3730a3;
+}
+
+.buddy-face.mood-nudge .buddy-eye {
+  height: 0.28rem;
+  border-radius: 40%;
+}
+
+.buddy-face.mood-focus .buddy-eye {
+  width: 0.42rem;
+  height: 0.32rem;
+}
+
+.buddy-face.mood-idle:not(.no-motion),
+.buddy-face.mood-cheer:not(.no-motion) {
+  animation: buddyBob 3.2s ease-in-out infinite;
+}
+
+.buddy-face.mood-nudge:not(.no-motion) {
+  animation: buddyWiggle 0.9s ease-in-out infinite;
+}
+
+@keyframes buddyBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes buddyWiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  33% {
+    transform: rotate(-4deg);
+  }
+  66% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes buddyPulse {
+  0%,
+  100% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25);
+  }
+}
+
+.app.deep .buddy-panel {
+  background: var(--bg-elevated);
+}
+
+.app.deep .buddy-check:hover {
+  background: var(--bg-muted);
+}
+
 /* Auto-save chip */
 .autosave-chip {
   position: fixed;
