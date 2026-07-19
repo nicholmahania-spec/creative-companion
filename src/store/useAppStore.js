@@ -87,6 +87,11 @@ export function blankWorkspaceState() {
       helperQuiet: false,
       /** Pack / PDF: hide Creative Companion footer watermark */
       hidePackWatermark: false,
+      /**
+       * Toasts: quiet (default) hides micro successes; all shows pin/role/helper chatter.
+       * Errors and exports always show.
+       */
+      toastMode: 'quiet',
     },
   }
 }

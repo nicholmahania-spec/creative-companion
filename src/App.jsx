@@ -45,6 +45,7 @@ const GameHUD = lazy(() => import('./components/GameHUD'))
 const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const SettingsView = lazy(() => import('./views/SettingsView'))
+const SparkView = lazy(() => import('./views/SparkView'))
 import {
   breakMinutesForWork,
   POMODORO_WORK_MIN,
@@ -276,6 +277,7 @@ function App() {
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
   const showProgress = !!prefs.showProgress
   const hidePackWatermark = !!prefs.hidePackWatermark
+  // toastMode read inside flashToast
   const forceBreaksEnabledRef = useRef(forceBreaksEnabled)
   forceBreaksEnabledRef.current = forceBreaksEnabled
 
@@ -422,10 +424,19 @@ function App() {
   const hideHowItWorks = () => setPref('showHowItWorks', false)
   const revealHowItWorks = () => setPref('showHowItWorks', true)
 
-  const flashToast = (msg) => {
+  const toastMode = prefs.toastMode === 'all' ? 'all' : 'quiet'
+
+  /** @param {string} msg @param {{ micro?: boolean, important?: boolean }} [opts] */
+  const flashToast = (msg, opts = {}) => {
+    if (!msg) return
+    // Quiet (default): skip micro successes; always show important/errors
+    if (toastMode === 'quiet' && opts.micro && !opts.important) return
     setActionToast(msg)
     window.setTimeout(() => setActionToast(''), 3200)
   }
+
+  /** Micro feedback — only when user enables “All toasts” */
+  const flashMicro = (msg) => flashToast(msg, { micro: true })
 
   /** Award XP in background; only surface XP text when Progress bar is on */
   const notifyAction = (baseMsg, action, meta = {}) => {
@@ -460,7 +471,7 @@ function App() {
       awardAndBroadcast('step_complete', { label: 'Step done' })
     }
     setRecentUndo({ id: doneId, title: doneTitle, at: Date.now() })
-    flashToast('Step complete')
+    flashToast('Step complete', { important: true })
     setStepFocusKey((k) => k + 1)
   }
 
@@ -1157,7 +1168,10 @@ function App() {
             : `Pack downloaded · +${g.gained} XP`
         )
       } else {
-        flashToast(kind === 'backup' ? 'Backup saved' : 'Pack downloaded')
+        flashToast(
+          kind === 'backup' ? 'Backup saved' : 'Pack downloaded',
+          { important: true }
+        )
       }
     }
 
@@ -1732,6 +1746,9 @@ function App() {
                       toggleBodyDoubling()
                       if (next) {
                         awardAndBroadcast('helper_on', { label: 'Helper' })
+                        flashMicro('Helper on')
+                      } else {
+                        flashMicro('Helper off')
                       }
                       setMoreOpen(false)
                     }}
@@ -2514,6 +2531,7 @@ function App() {
                         if (packIds.length > 1) {
                           useAppStore.getState().reorderPackPins(packIds)
                         }
+                        flashMicro('Board order updated')
                       }
                     }
                     return
@@ -2624,6 +2642,10 @@ function App() {
                                 flashToast(
                                   r.error || 'Pack full (6 pins max)'
                                 )
+                              else
+                                flashMicro(
+                                  r.inPack ? 'In pack' : 'Removed from pack'
+                                )
                             }}
                           >
                             {item.inPack ? '★ Pack' : '☆ Pack'}
@@ -2657,6 +2679,7 @@ function App() {
                                 onClick={() => {
                                   const r = setPackHeroPin(item.id)
                                   if (!r.ok) flashToast(r.error || 'Could not set hero')
+                                  else flashMicro('Hero pin set')
                                 }}
                               >
                                 Hero
@@ -2808,68 +2831,19 @@ function App() {
           </div>
         )}
 
-        {/* ===== SPARK (help tool) ===== */}
+        {/* ===== SPARK (lazy) ===== */}
         {activeView === 'spark' && (
-          <div className="spark-view">
-            <button
-              type="button"
-              className="back-link"
-              onClick={() => setActiveView('flow')}
-            >
-              ← Work
-            </button>
-            <div className="flow-top">
-              <div>
-                <h1 className="page-title">Spark</h1>
-                <p className="page-sub">
-                  One prompt · pin it · return to your current step
-                </p>
-              </div>
-            </div>
-            {nextTask && (
-              <p className="mood-linked-step" style={{ marginBottom: '1rem' }}>
-                <span className="task-badge">For</span>{' '}
-                <span className="mood-linked-title">{nextTask.title}</span>
-              </p>
-            )}
-            <section className="panel brand-section">
-              <div className="brand-section-label">Prompt</div>
-              <div className="spark-card">
-                <p>{currentSpark}</p>
-              </div>
-              <div className="spark-actions">
-                <button
-                  type="button"
-                  onClick={nextSpark}
-                  className="btn btn-primary"
-                >
-                  Another spark
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    addMoodPin({
-                      type: 'quote',
-                      note: currentSpark,
-                      visual: projectPalette[0] || '#4F46E5',
-                    })
-                    notifyAction('Pinned', 'mood_pin', { label: 'Spark pin' })
-                    setActiveView('studio')
-                  }}
-                >
-                  Pin to mood board
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => setActiveView('flow')}
-                >
-                  Done — back to step
-                </button>
-              </div>
-            </section>
-          </div>
+          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
+            <SparkView
+              setActiveView={setActiveView}
+              nextTask={nextTask}
+              currentSpark={currentSpark}
+              nextSpark={nextSpark}
+              addMoodPin={addMoodPin}
+              projectPalette={projectPalette}
+              notifyAction={notifyAction}
+            />
+          </Suspense>
         )}
 
         {/* ===== FOCUS (lazy) ===== */}
@@ -3236,6 +3210,7 @@ function App() {
                       onClick={() => {
                         const n = normalizeHex(c) || c
                         setColorRole(brandRoleAssign, n)
+                        flashMicro(`${brandRoleAssign} → ${n}`)
                       }}
                     ></button>
                   ))}
@@ -3352,6 +3327,7 @@ function App() {
                     if (!pair) return
                     updateBrandField('typeHeading', pair.heading)
                     updateBrandField('typeBody', pair.body)
+                    flashMicro(`Type · ${pair.label}`)
                   }}
                 >
                   {TYPE_PAIRS.map((p) => (
@@ -3458,6 +3434,7 @@ function App() {
                       const reader = new FileReader()
                       reader.onload = () => {
                         setLogoImage(reader.result)
+                        flashMicro('Mark image added')
                       }
                       reader.readAsDataURL(file)
                     }}
@@ -3469,6 +3446,7 @@ function App() {
                     className="btn btn-ghost"
                     onClick={() => {
                       setLogoImage('')
+                      flashMicro('Mark removed')
                     }}
                   >
                     Remove mark

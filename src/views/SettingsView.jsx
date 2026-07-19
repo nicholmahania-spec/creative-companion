@@ -235,6 +235,27 @@ export default function SettingsView(props) {
                 </span>
               </button>
             </div>
+            <div className="settings-row">
+              <div>
+                <strong>Toast detail</strong>
+                <span>
+                  Quiet hides micro feedback (stars, roles, helper). Errors and
+                  pack download always show.
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() =>
+                  setPref(
+                    'toastMode',
+                    prefs.toastMode === 'all' ? 'quiet' : 'all'
+                  )
+                }
+              >
+                {prefs.toastMode === 'all' ? 'Use quiet' : 'Show all'}
+              </button>
+            </div>
           </section>
 
           <section className="panel brand-section">
@@ -533,8 +554,8 @@ export default function SettingsView(props) {
               Pack and download when offline.
             </p>
             <p className="panel-hint" style={{ margin: 0 }}>
-              <strong>What&apos;s new:</strong> Quieter toasts, offline shell
-              cache, axe a11y checks in CI, main-bundle perf budget.
+              <strong>1.0:</strong> Full path desk + pack export, quiet/all
+              toasts, offline SPA, axe + e2e CI, perf budget. See docs/RELEASE_1.0.md.
             </p>
           </section>
         </div>
