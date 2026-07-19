@@ -5485,7 +5485,7 @@ html[data-reduce-motion='true'] *::after {
   --bh-sage-deep: #5f6d5d;
   --bh-blush: #e8a89a;
   --bh-ink: #1a1a1a;
-  width: min(268px, calc(100vw - 1.25rem));
+  width: min(300px, calc(100vw - 1.25rem));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5553,65 +5553,91 @@ html[data-reduce-motion='true'] *::after {
     inset 0 3px 0 rgba(255, 255, 255, 0.55);
 }
 
-/* One unified cute character: face nestled into plush body */
-.buddy-figure {
+/* Full 3D mascot — one character, chat on the belly */
+.buddy-mascot {
+  --buddy-studio: #f0ebe0;
   position: relative;
-  width: 100%;
-  max-width: 15.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  filter: drop-shadow(0 16px 24px rgba(26, 26, 26, 0.14));
-}
-
-.buddy-figure.is-cute {
-  padding-bottom: 0.35rem;
-}
-
-/* Face sits ON the body (snowman stack), no white sticker ring */
-.bf-head-wrap {
-  position: relative;
-  z-index: 6;
-  width: 8.25rem;
-  height: 8.25rem;
-  margin-bottom: -2.85rem;
-  border-radius: 50%;
+  width: min(288px, calc(100vw - 1.5rem));
+  aspect-ratio: 4 / 5;
+  border-radius: 28px;
+  background: var(--buddy-studio);
+  box-shadow:
+    0 18px 40px rgba(26, 26, 26, 0.14),
+    0 0 0 1px rgba(200, 190, 170, 0.35);
   overflow: hidden;
-  background: transparent;
-  box-shadow: 0 10px 18px rgba(26, 26, 26, 0.1);
 }
 
-.bf-head-img {
-  display: block;
-  width: 118%;
-  height: 118%;
-  margin: -6% 0 0 -9%;
+.buddy-mascot-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   object-position: center 42%;
   pointer-events: none;
   user-select: none;
+  z-index: 1;
 }
 
-.bf-heart {
+/* Chat plate sits on the soft belly region of the art */
+.buddy-belly-ui {
   position: absolute;
-  font-size: 0.85rem;
-  color: #e8a89a;
-  opacity: 0.9;
-  animation: bfHeartFloat 1.2s ease-out infinite;
+  z-index: 3;
+  left: 16%;
+  right: 16%;
+  top: 48%;
+  bottom: 11%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0.55rem 0.55rem 0.5rem;
+  border-radius: 42% 42% 40% 40% / 36% 36% 48% 48%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 253, 248, 0.55) 0%,
+    rgba(255, 252, 246, 0.88) 18%,
+    rgba(250, 246, 238, 0.94) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 6px 16px rgba(26, 26, 26, 0.06);
+  overflow: hidden;
+  backdrop-filter: blur(1.5px);
+}
+
+.buddy-mascot-bang {
+  position: absolute;
+  top: 8%;
+  right: 14%;
+  z-index: 4;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #e07b1a;
+  text-shadow: 0 1px 0 #fff;
+  animation: buddyWiggle 0.7s ease-in-out infinite;
   pointer-events: none;
-  z-index: 7;
 }
 
-.bf-heart-1 {
-  top: 0.65rem;
-  left: 0.2rem;
+.buddy-mascot-heart {
+  position: absolute;
+  z-index: 4;
+  font-size: 0.9rem;
+  color: #e8a89a;
+  pointer-events: none;
+  animation: bfHeartFloat 1.2s ease-out infinite;
 }
 
-.bf-heart-2 {
-  top: 1.15rem;
-  right: 0.15rem;
-  animation-delay: 0.25s;
-  font-size: 0.7rem;
+.buddy-mascot-heart.h1 {
+  top: 12%;
+  left: 12%;
+}
+
+.buddy-mascot-heart.h2 {
+  top: 18%;
+  right: 12%;
+  font-size: 0.72rem;
+  animation-delay: 0.2s;
 }
 
 @keyframes bfHeartFloat {
@@ -5626,137 +5652,52 @@ html[data-reduce-motion='true'] *::after {
   }
 }
 
-.bf-bang {
-  position: absolute;
-  top: 0.35rem;
-  right: 0.2rem;
-  z-index: 8;
-  font-size: 1.15rem;
-  font-weight: 900;
-  color: #e07b1a;
-  text-shadow: 0 1px 0 #fff;
-  animation: buddyWiggle 0.7s ease-in-out infinite;
+.buddy-mascot.mood-idle:not(.no-motion),
+.buddy-mascot.mood-cheer:not(.no-motion) {
+  animation: buddyBob 3.2s ease-in-out infinite;
 }
 
-/* Arms from shoulder line (where head meets body) */
-.bf-arm {
-  position: absolute;
-  top: 7.15rem;
-  z-index: 5;
-  width: 0.5rem;
-  height: 2.35rem;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #2a2a2a, #141414);
+.buddy-mascot.mood-nudge:not(.no-motion) {
+  animation: buddyWiggle 0.8s ease-in-out infinite;
 }
 
-.bf-arm-l {
-  left: 0.55rem;
-  transform: rotate(32deg);
-  transform-origin: top center;
-}
-
-.bf-arm-r {
-  right: 0.55rem;
-  transform: rotate(-32deg);
-  transform-origin: top center;
-}
-
-.bf-hand {
-  position: absolute;
-  bottom: -0.38rem;
-  left: 50%;
-  width: 1rem;
-  height: 1rem;
-  margin-left: -0.5rem;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fffcf6, #ebe4d6);
-  box-shadow: 0 2px 5px rgba(26, 26, 26, 0.1);
-}
-
-/* Plush body — same cream family as face so it reads as one creature */
-.bf-belly {
-  position: relative;
-  z-index: 2;
-  width: 14.75rem;
-  height: 15.75rem;
-  max-width: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  /* Soft oval body, slightly wider at middle */
-  border-radius: 50% 50% 46% 46% / 46% 46% 50% 50%;
-  background:
-    radial-gradient(ellipse 70% 40% at 50% 22%, #fffefb 0%, transparent 60%),
-    linear-gradient(175deg, #fbf8f1 0%, #f3efe6 50%, #e8e1d2 100%);
-  border: 2.5px solid rgba(210, 200, 180, 0.65);
+.buddy-shell.is-focus .buddy-mascot {
   box-shadow:
-    0 14px 32px rgba(26, 26, 26, 0.12),
-    inset 0 3px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -14px 28px rgba(180, 165, 140, 0.1);
-  overflow: hidden;
+    0 18px 40px rgba(26, 26, 26, 0.14),
+    0 0 0 3px rgba(13, 148, 136, 0.4);
 }
 
-/* Soft collar under chin so head + body blend */
-.bf-belly::after {
-  content: '';
-  position: absolute;
-  top: -0.15rem;
-  left: 50%;
-  z-index: 3;
-  width: 4.2rem;
-  height: 1.1rem;
-  margin-left: -2.1rem;
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse at 50% 100%,
-    rgba(243, 239, 230, 0.95) 0%,
-    transparent 70%
-  );
-  pointer-events: none;
+.buddy-shell.is-hyper .buddy-mascot {
+  box-shadow:
+    0 18px 40px rgba(26, 26, 26, 0.14),
+    0 0 0 3px rgba(245, 158, 11, 0.5);
 }
 
-.bf-belly::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  box-shadow: inset 0 0 32px 8px rgba(180, 165, 140, 0.09);
-  z-index: 1;
-}
-
-.bf-belly-screen {
-  position: relative;
-  z-index: 2;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  /* Extra top pad so chat clears the overlapping head */
-  padding: 2.85rem 1.45rem 1.2rem;
-  margin: 0.35rem 0.7rem 0.5rem;
-  overflow: hidden;
+.buddy-shell.is-levelup .buddy-mascot {
+  box-shadow:
+    0 18px 40px rgba(26, 26, 26, 0.14),
+    0 0 0 3px rgba(251, 191, 36, 0.55);
 }
 
 .bf-belly-meta {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.1rem;
-  margin-bottom: 0.3rem;
+  gap: 0.08rem;
+  margin-bottom: 0.25rem;
   text-align: center;
   flex-shrink: 0;
 }
 
 .bf-name {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #3d3a35;
 }
 
 .bf-status {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 600;
   color: #7d8b7a;
   line-height: 1.25;
@@ -5768,8 +5709,8 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .bf-xp {
-  width: 55%;
-  margin-top: 0.2rem;
+  width: 62%;
+  margin-top: 0.15rem;
 }
 
 .bf-xp .buddy-xp-bar {
@@ -5799,72 +5740,58 @@ html[data-reduce-motion='true'] *::after {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.1rem 0.05rem 0.25rem;
+  gap: 0.3rem;
+  padding: 0.05rem 0.1rem 0.2rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(125, 139, 122, 0.4) transparent;
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    #000 8%,
-    #000 92%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    #000 8%,
-    #000 92%,
-    transparent 100%
-  );
+  scrollbar-color: rgba(125, 139, 122, 0.35) transparent;
 }
 
 .bf-line {
   max-width: 100%;
-  padding: 0.4rem 0.55rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
+  padding: 0.38rem 0.5rem;
+  border-radius: 11px;
+  font-size: 0.68rem;
   font-weight: 600;
-  line-height: 1.35;
-  color: var(--bh-ink);
+  line-height: 1.32;
+  color: #2a2722;
 }
 
 .bf-line-buddy {
   align-self: stretch;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(125, 139, 122, 0.18);
-  border-radius: 14px 14px 14px 5px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(125, 139, 122, 0.14);
+  border-radius: 12px 12px 12px 5px;
   box-shadow: 0 1px 2px rgba(26, 26, 26, 0.04);
 }
 
 .bf-line-you {
   align-self: flex-end;
-  background: rgba(125, 139, 122, 0.2);
-  color: var(--bh-sage-deep);
-  border-radius: 14px 14px 5px 14px;
-  font-size: 0.66rem;
+  background: rgba(125, 139, 122, 0.18);
+  color: #5f6d5d;
+  border-radius: 12px 12px 5px 12px;
+  font-size: 0.64rem;
 }
 
 .bf-pockets {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.25rem;
-  margin-top: 0.15rem;
-  padding-top: 0.3rem;
-  border-top: 1px dashed rgba(125, 139, 122, 0.28);
+  gap: 0.22rem;
+  margin-top: 0.12rem;
+  padding-top: 0.28rem;
+  border-top: 1px dashed rgba(125, 139, 122, 0.25);
   flex-shrink: 0;
 }
 
 .bf-pocket-btn {
-  border: 1px solid rgba(125, 139, 122, 0.32);
+  border: 1px solid rgba(125, 139, 122, 0.28);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.72);
   font: inherit;
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  padding: 0.34rem 0.25rem;
+  padding: 0.32rem 0.2rem;
   cursor: pointer;
-  color: var(--bh-sage-deep);
+  color: #5f6d5d;
   transition: background 0.15s ease, transform 0.1s ease;
 }
 
@@ -5874,35 +5801,32 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .bf-pocket-btn.is-accent {
-  background: rgba(125, 139, 122, 0.22);
-  border-color: rgba(95, 109, 93, 0.4);
-  color: var(--bh-ink);
+  background: rgba(125, 139, 122, 0.2);
+  border-color: rgba(95, 109, 93, 0.38);
+  color: #2a2722;
 }
 
-.bf-legs {
-  display: flex;
-  justify-content: center;
-  gap: 1.25rem;
-  margin-top: -0.55rem;
-  z-index: 1;
+.app.deep .buddy-mascot {
+  --buddy-studio: #1a2230;
 }
 
-.bf-leg {
-  width: 1.05rem;
-  height: 0.85rem;
-  border-radius: 50% 50% 45% 45%;
-  background: radial-gradient(circle at 40% 30%, #fffcf6, #e0d8c8);
-  border: 1.5px solid rgba(200, 190, 170, 0.55);
-  box-shadow: 0 3px 6px rgba(26, 26, 26, 0.1);
+.app.deep .buddy-belly-ui {
+  background: linear-gradient(
+    180deg,
+    rgba(30, 38, 52, 0.55) 0%,
+    rgba(26, 34, 48, 0.9) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
-.buddy-figure.is-cute.mood-idle:not(.no-motion) .bf-head-wrap,
-.buddy-figure.is-cute.mood-cheer:not(.no-motion) .bf-head-wrap {
-  animation: buddyBob 3s ease-in-out infinite;
+.app.deep .bf-name {
+  color: var(--text-primary);
 }
 
-.buddy-figure.is-cute.mood-nudge:not(.no-motion) .bf-head-wrap {
-  animation: buddyWiggle 0.75s ease-in-out infinite;
+.app.deep .bf-line-buddy {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
 }
 
 .buddy-fab.is-cute {

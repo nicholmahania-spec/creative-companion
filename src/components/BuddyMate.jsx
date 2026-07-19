@@ -44,7 +44,7 @@ import {
 import useAppStore from '../store/useAppStore'
 
 const BUDDY_BASE = `${import.meta.env.BASE_URL}buddy/`
-const HEAD_SRC = `${BUDDY_BASE}helper-head.jpg`
+const BODY_SRC = `${BUDDY_BASE}helper-body-raw.jpg`
 const FAB_SRC = `${BUDDY_BASE}helper-fab.jpg`
 
 /**
@@ -604,126 +604,108 @@ export default function BuddyMate({
         </div>
       </div>
 
-      {/* Cute character: illustrated head + soft cream belly chat */}
+      {/* One full mascot — chat sits on the belly of the art */}
       <div
-        className={`buddy-figure is-cute mood-${mood}${
+        className={`buddy-mascot mood-${mood}${
           reduceMotion ? ' no-motion' : ''
         }`}
       >
-        <div className="bf-head-wrap">
-          <img
-            className="bf-head-img"
-            src={HEAD_SRC}
-            alt=""
-            width={200}
-            height={200}
-            draggable={false}
-          />
-          {mood === 'nudge' && (
-            <span className="bf-bang" aria-hidden="true">
-              !
+        <img
+          className="buddy-mascot-art"
+          src={BODY_SRC}
+          alt=""
+          draggable={false}
+        />
+        {mood === 'nudge' && (
+          <span className="buddy-mascot-bang" aria-hidden="true">
+            !
+          </span>
+        )}
+        {mood === 'cheer' && (
+          <>
+            <span className="buddy-mascot-heart h1" aria-hidden="true">
+              ♡
             </span>
-          )}
-          {mood === 'cheer' && (
-            <>
-              <span className="bf-heart bf-heart-1" aria-hidden="true">
-                ♡
-              </span>
-              <span className="bf-heart bf-heart-2" aria-hidden="true">
-                ♡
-              </span>
-            </>
-          )}
-        </div>
+            <span className="buddy-mascot-heart h2" aria-hidden="true">
+              ♡
+            </span>
+          </>
+        )}
 
-        <span className="bf-arm bf-arm-l" aria-hidden="true">
-          <span className="bf-hand" />
-        </span>
-        <span className="bf-arm bf-arm-r" aria-hidden="true">
-          <span className="bf-hand" />
-        </span>
-
-        <div className="bf-belly">
-          <div className="bf-belly-screen">
-            <div className="bf-belly-meta">
-              <strong className="bf-name">Little Helper</strong>
-              <span className="bf-status" title={statusLine}>
-                {statusLine}
-              </span>
-              <div
-                className="bf-xp"
-                aria-label={`${game.xp || 0} XP`}
-                title={gameSummaryLine(game)}
-              >
-                <div className="buddy-xp-bar">
-                  <div
-                    className="buddy-xp-fill"
-                    style={{ width: `${xp.percent}%` }}
-                  />
-                </div>
+        <div className="buddy-belly-ui">
+          <div className="bf-belly-meta">
+            <strong className="bf-name">Little Helper</strong>
+            <span className="bf-status" title={statusLine}>
+              {statusLine}
+            </span>
+            <div
+              className="bf-xp"
+              aria-label={`${game.xp || 0} XP`}
+              title={gameSummaryLine(game)}
+            >
+              <div className="buddy-xp-bar">
+                <div
+                  className="buddy-xp-fill"
+                  style={{ width: `${xp.percent}%` }}
+                />
               </div>
-            </div>
-
-            {levelBurst && (
-              <p className="buddy-levelup-banner bf-levelup" role="status">
-                Level {xp.level}! ✨
-              </p>
-            )}
-
-            {(hyper === 'soft' || hyper === 'strong' || hyper === 'hard') && (
-              <div className={`buddy-hyper-banner bf-hyper level-${hyper}`}>
-                {hyper === 'hard'
-                  ? 'Long stretch — break is okay'
-                  : hyper === 'strong'
-                    ? 'Deep focus · body might want a minute'
-                    : '25+ min · stretch when you can'}
-              </div>
-            )}
-
-            <div className="bf-chat" ref={listRef}>
-              {messages.map((m) => (
-                <div key={m.id} className={`bf-line bf-line-${m.from}`}>
-                  {m.text}
-                </div>
-              ))}
-            </div>
-
-            <div className="bf-pockets" aria-label="Main actions">
-              <button
-                type="button"
-                className="bf-pocket-btn is-accent"
-                onClick={() => reply('recommend')}
-              >
-                Recommend
-              </button>
-              <button
-                type="button"
-                className="bf-pocket-btn is-accent"
-                onClick={() => reply('critique')}
-              >
-                Critique
-              </button>
-              <button
-                type="button"
-                className="bf-pocket-btn"
-                onClick={() => reply('stuck')}
-              >
-                Stuck
-              </button>
-              <button
-                type="button"
-                className="bf-pocket-btn"
-                onClick={() => reply('break')}
-              >
-                Break
-              </button>
             </div>
           </div>
-        </div>
 
-        <div className="bf-legs" aria-hidden="true">
-          <span className="bf-leg bf-leg-l" />
-          <span className="bf-leg bf-leg-r" />
+          {levelBurst && (
+            <p className="buddy-levelup-banner bf-levelup" role="status">
+              Level {xp.level}! ✨
+            </p>
+          )}
+
+          {(hyper === 'soft' || hyper === 'strong' || hyper === 'hard') && (
+            <div className={`buddy-hyper-banner bf-hyper level-${hyper}`}>
+              {hyper === 'hard'
+                ? 'Long stretch — break is okay'
+                : hyper === 'strong'
+                  ? 'Deep focus · body might want a minute'
+                  : '25+ min · stretch when you can'}
+            </div>
+          )}
+
+          <div className="bf-chat" ref={listRef}>
+            {messages.map((m) => (
+              <div key={m.id} className={`bf-line bf-line-${m.from}`}>
+                {m.text}
+              </div>
+            ))}
+          </div>
+
+          <div className="bf-pockets" aria-label="Main actions">
+            <button
+              type="button"
+              className="bf-pocket-btn is-accent"
+              onClick={() => reply('recommend')}
+            >
+              Recommend
+            </button>
+            <button
+              type="button"
+              className="bf-pocket-btn is-accent"
+              onClick={() => reply('critique')}
+            >
+              Critique
+            </button>
+            <button
+              type="button"
+              className="bf-pocket-btn"
+              onClick={() => reply('stuck')}
+            >
+              Stuck
+            </button>
+            <button
+              type="button"
+              className="bf-pocket-btn"
+              onClick={() => reply('break')}
+            >
+              Break
+            </button>
+          </div>
         </div>
       </div>
 
