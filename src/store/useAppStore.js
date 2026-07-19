@@ -182,6 +182,7 @@ const useAppStore = create(
         soundEnabled: true,
         reduceMotion: false,
         bodyDoubleSilent: false, // true = badge only, no floating card copy
+        forceBreaksEnabled: true, // Pomodoro desk lock after work cycles
         queueCollapsed: true, // collapse queue after breakdown / by default when busy
         showHowItWorks: true,
       },
@@ -316,6 +317,7 @@ const useAppStore = create(
             soundEnabled: true,
             reduceMotion: false,
             bodyDoubleSilent: false,
+            forceBreaksEnabled: true,
             queueCollapsed: true,
             showHowItWorks: true,
             ...state.prefs,
@@ -383,6 +385,7 @@ const useAppStore = create(
             soundEnabled: true,
             reduceMotion: false,
             bodyDoubleSilent: false,
+            forceBreaksEnabled: true,
             queueCollapsed: true,
             showHowItWorks: true,
             ...(data.prefs || {}),
@@ -466,6 +469,7 @@ const useAppStore = create(
             soundEnabled: true,
             reduceMotion: false,
             bodyDoubleSilent: false,
+            forceBreaksEnabled: true,
             queueCollapsed: true,
             showHowItWorks: true,
           },

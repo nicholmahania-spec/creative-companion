@@ -175,6 +175,10 @@ function App() {
   const queueCollapsed = prefs.queueCollapsed !== false
   const soundEnabled = prefs.soundEnabled !== false
   const reduceMotion = !!prefs.reduceMotion
+  /** Pomodoro desk lock — default on; user can disable */
+  const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
+  const forceBreaksEnabledRef = useRef(forceBreaksEnabled)
+  forceBreaksEnabledRef.current = forceBreaksEnabled
 
 
   const activeProjectId = currentProjectId
@@ -404,6 +408,20 @@ function App() {
     if (forcedBreakRef.current) return
     const workMin = Math.max(1, Number(workMinutes) || POMODORO_WORK_MIN)
     const breakMin = breakMinutesForWork(workMin)
+
+    // User turned lockouts off — soft landing only
+    if (!forceBreaksEnabledRef.current) {
+      setIsFocusRunning(false)
+      setSessionComplete(true)
+      setPomodoroWorkStartedAt(null)
+      markBreak()
+      playBreakChime()
+      flashToast(
+        `Work block done (~${Math.round(workMin)} min). Forced lockouts are off — stretch if you can.`
+      )
+      return
+    }
+
     const totalSec = breakMin * 60
     setIsFocusRunning(false)
     setSessionComplete(true)
@@ -2401,15 +2419,40 @@ function App() {
               </div>
               {sessionComplete && !forcedBreak && (
                 <p className="session-done">
-                  Work block done — a required break lock should open. Rest, then
-                  continue.
+                  {forceBreaksEnabled
+                    ? 'Work block done — a required break lock should open. Rest, then continue.'
+                    : 'Work block done. Forced lockouts are off — take a stretch if you want.'}
                 </p>
               )}
-              <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
-                After each Pomodoro, the desk locks for a 5–10 minute break
-                (longer if you worked longer). Helper on = auto lock after 25
-                min without a break too.
-              </p>
+              <div className="settings-row" style={{ marginTop: '0.85rem' }}>
+                <div>
+                  <strong>Force break lockouts</strong>
+                  <span>
+                    When on: desk locks 5–10 min after a Pomodoro (or 25+ min with
+                    helper on)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={forceBreaksEnabled}
+                  className={`pref-switch${forceBreaksEnabled ? ' is-on' : ''}`}
+                  onClick={() => {
+                    const next = !forceBreaksEnabled
+                    setPref('forceBreaksEnabled', next)
+                    flashToast(
+                      next
+                        ? 'Forced breaks on — desk will lock after cycles'
+                        : 'Forced breaks off — no lockout'
+                    )
+                  }}
+                >
+                  <span className="pref-switch-knob" />
+                  <span className="sr-only">
+                    {forceBreaksEnabled ? 'On' : 'Off'}
+                  </span>
+                </button>
+              </div>
             </section>
             <section className="panel brand-section">
               <div className="brand-section-label">After</div>
@@ -3368,10 +3411,10 @@ function App() {
               <div className="brand-section-label">Presence &amp; sound</div>
               <div className="settings-row">
                 <div>
-                  <strong>Design buddy + forced breaks</strong>
+                  <strong>Design buddy</strong>
                   <span>
-                    Coach + Pomodoro: after ~25 min work, desk locks for a 5–10
-                    min break (longer if you worked longer)
+                    Coach + time tips. Forced lockouts are a separate switch
+                    below (or on the Timer page)
                   </span>
                 </div>
                 <button
@@ -3402,6 +3445,37 @@ function App() {
                   <span className="pref-switch-knob" />
                   <span className="sr-only">
                     {soundEnabled ? 'On' : 'Off'}
+                  </span>
+                </button>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <strong>Force break lockouts</strong>
+                  <span>
+                    Lock the whole desk for 5–10 min after a Pomodoro (or after
+                    25+ min with the helper on). Turn off if you only want soft
+                    reminders.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={forceBreaksEnabled}
+                  className={`pref-switch${forceBreaksEnabled ? ' is-on' : ''}`}
+                  onClick={() => {
+                    const next = !forceBreaksEnabled
+                    setPref('forceBreaksEnabled', next)
+                    if (!next && forcedBreak) {
+                      endForcedBreak(true)
+                    }
+                    flashToast(
+                      next ? 'Forced break lockouts on' : 'Forced break lockouts off'
+                    )
+                  }}
+                >
+                  <span className="pref-switch-knob" />
+                  <span className="sr-only">
+                    {forceBreaksEnabled ? 'On' : 'Off'}
                   </span>
                 </button>
               </div>
