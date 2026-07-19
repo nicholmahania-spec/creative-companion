@@ -247,6 +247,166 @@ export function idleLine() {
   return pick(IDLE)
 }
 
+const VIEW_LABELS = {
+  flow: 'Work',
+  studio: 'the mood board',
+  project: 'Projects',
+  brand: 'Brand',
+  spark: 'Spark',
+  insights: 'the focus timer',
+  calendar: 'Deadlines',
+  settings: 'Settings',
+}
+
+function short(title, n = 48) {
+  const t = String(title || '').trim()
+  if (!t) return ''
+  return t.length > n ? `${t.slice(0, n)}…` : t
+}
+
+/**
+ * Snapshot of what the person is doing (from the app).
+ * Used for friendly, contextual tips — not AI.
+ */
+export function describeActivity(activity = {}) {
+  const view = activity.view || 'flow'
+  const place = VIEW_LABELS[view] || 'the app'
+  const step = short(activity.nextTaskTitle, 40)
+  if (step && view === 'flow') {
+    return `You're on Work, looking at: "${step}".`
+  }
+  if (step) {
+    return `You're on ${place}. Your open step is still: "${step}".`
+  }
+  return `You're on ${place}.`
+}
+
+/**
+ * One helpful tip based on current screen + step + queue.
+ * Plain English, best-friend tone.
+ */
+export function activityTip(activity = {}) {
+  const view = activity.view || 'flow'
+  const step = short(activity.nextTaskTitle, 52)
+  const energy = activity.nextTaskEnergy || 'med'
+  const queue = Number(activity.queueCount) || 0
+  const done = Number(activity.doneCount) || 0
+  const pins = Number(activity.pinsCount) || 0
+  const project = short(activity.projectName, 28) || 'this project'
+  const hasDeadline = !!activity.projectDeadline
+  const dueSoon = activity.stepDueSoon
+  const isMicro = !!activity.isMicroStep
+  const focusOn = !!activity.isFocusRunning
+
+  // Timer running — tip about protecting focus
+  if (focusOn) {
+    return step
+      ? `Timer's running. Just this: "${step}". Nothing else until it dings.`
+      : "Timer's on. Stay with one tiny job until it ends. I've got the clock."
+  }
+
+  // View-specific tips
+  if (view === 'studio') {
+    if (!step) {
+      return pins > 0
+        ? "You've got pins on the board. When you're ready, head back to Work and pick a next step."
+        : "Board time — drop one image that feels right, then bounce back to Work so it doesn't become a rabbit hole."
+    }
+    return pins > 2
+      ? `Nice collection. Pin one more only if it helps "${step}" — then go complete that step.`
+      : `You're collecting refs. Ask: does this pin help "${step}"? If yes, keep it. If not, skip it.`
+  }
+
+  if (view === 'brand') {
+    return `Brand is a lot of fields. Fill one thing for ${project} — tagline or a color — then stop. Export later is fine.`
+  }
+
+  if (view === 'spark') {
+    return step
+      ? `If a spark fits "${step}", pin it. If not, hit another spark or go back to Work. Don't live here.`
+      : 'Grab one spark that feels useful, pin it if you want, then get back to Work.'
+  }
+
+  if (view === 'insights') {
+    return step
+      ? `Start a 25 or 2 min timer and stay with "${step}". The timer is a container, not a test.`
+      : 'No open step yet — hop to Work, add one, then start a short timer.'
+  }
+
+  if (view === 'calendar') {
+    return hasDeadline
+      ? `Deadline is set for ${project}. Use it as a compass, not a panic button. What's the next small step?`
+      : `No project deadline yet. Pick a date if it helps — or go set one tiny task due date on Work.`
+  }
+
+  if (view === 'project') {
+    return `Projects page is for setup. Rename, brief, deadline — then go to Work. Don't nest here all day.`
+  }
+
+  if (view === 'settings') {
+    return "Settings is fine for a minute. When you're done, Work is where the real progress lives."
+  }
+
+  // Work view — richest tips
+  if (view === 'flow' || !view) {
+    if (!step) {
+      if (done > 0) {
+        return "Queue looks clear — nice. Dump one messy idea below, or break the project into micro-steps if the whole thing feels huge."
+      }
+      return `Nothing on the desk for ${project} yet. Either dump one raw idea, or hit "break into micro-steps" if it's too big to start.`
+    }
+
+    if (dueSoon) {
+      return `"${step}" has a due date coming up. Don't do everything — do the smallest next piece of that one thing.`
+    }
+
+    if (isMicro) {
+      return `This is a micro-step: "${step}". Perfect size. Mark it done when it's honestly finished, even if ugly.`
+    }
+
+    if (energy === 'low') {
+      return `"${step}" is marked low energy. Shrink it: five minutes, messy, incomplete is fine. Or split it into three.`
+    }
+
+    if (energy === 'high') {
+      return `"${step}" wants high energy. If you don't have that today, swap in a smaller piece or wait for a better window.`
+    }
+
+    if (queue >= 5) {
+      return `You've got ${queue} things waiting after this. Ignore them. Only "${step}" matters right now.`
+    }
+
+    if (queue === 0 && done === 0) {
+      return `Just one thing open: "${step}". That's a gift. Stay with it until you can check it off.`
+    }
+
+    return [
+      `You're on: "${step}".`,
+      energy === 'med' ? 'Med energy is fine — steady, not heroic.' : '',
+      'If it feels huge, hit Split ×3. If it feels clear, do a messy first pass and mark complete.',
+    ]
+      .filter(Boolean)
+      .join(' ')
+  }
+
+  return pick(IDLE)
+}
+
+/** Idle check-in that mentions what you're doing */
+export function idleLineWithActivity(activity = {}) {
+  const tip = activityTip(activity)
+  // Sometimes pure idle, sometimes activity tip
+  if (Math.random() < 0.55) return tip
+  const place = VIEW_LABELS[activity.view] || 'your desk'
+  return pick([
+    `Still here. You're on ${place}. Need a tip or a break?`,
+    `Hey — checking in while you're on ${place}. You good?`,
+    activity.nextTaskTitle
+      ? `Still with you. That step "${short(activity.nextTaskTitle, 36)}" is waiting whenever you're ready.`
+      : `Still with you on ${place}. No rush.`,
+  ])
+}
+
 export function timeBlindLine(sessionStart, now = Date.now()) {
   const clock = formatClock(new Date(now))
   const desk = formatDuration(now - sessionStart)

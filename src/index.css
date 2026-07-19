@@ -4449,6 +4449,47 @@ html[data-reduce-motion='true'] *::after {
   box-shadow: var(--shadow-3), 0 0 0 2px rgba(245, 158, 11, 0.4);
 }
 
+.buddy-tracking {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.75rem 0.45rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(79, 70, 229, 0.06);
+}
+
+.buddy-tracking-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.buddy-tracking-value {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--accent-deep);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app.deep .buddy-tracking {
+  background: rgba(129, 140, 248, 0.1);
+}
+
+.app.deep .buddy-tracking-value {
+  color: var(--accent-soft);
+}
+
+.buddy-quick-tip {
+  background: var(--accent-glow) !important;
+  border-color: rgba(79, 70, 229, 0.25) !important;
+}
+
 .buddy-time-strip {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;

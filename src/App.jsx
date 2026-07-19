@@ -3824,6 +3824,25 @@ function App() {
           nextTaskTitle={nextTask?.title || ''}
           reduceMotion={reduceMotion}
           pulseWin={buddyWinPulse}
+          activity={{
+            view: activeView,
+            projectName: activeProject?.name || '',
+            projectDeadline: projectDeadline || '',
+            nextTaskTitle: nextTask?.title || '',
+            nextTaskEnergy: nextTask?.energy || 'med',
+            isMicroStep: !!nextTask?.parentId,
+            stepDueSoon: !!(
+              nextTask?.dueDate &&
+              ['overdue', 'today', 'soon'].includes(
+                deadlineUrgency(nextTask.dueDate) || ''
+              )
+            ),
+            queueCount: queueTasks.length,
+            doneCount: doneTasks.length,
+            openCount: openTasks.length,
+            pinsCount: deskMood.length,
+            isFocusRunning,
+          }}
         />
       )}
 

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  activityTip,
   buddyMood,
   confirmLine,
+  describeActivity,
   formatClock,
   formatDuration,
   greetingLine,
   hyperfocusLevel,
   hyperfocusLine,
-  idleLine,
+  idleLineWithActivity,
   loadSessionStart,
   loadWellness,
   markBreak,
@@ -25,7 +27,7 @@ import {
 
 /**
  * Interactive body-double buddy (rule-based, not AI chat).
- * Body care + progress + time blindness + hyperfocus breaks.
+ * Tracks current page + step for helpful tips; body care; time/hyperfocus.
  */
 export default function BuddyMate({
   onClose,
@@ -35,7 +37,18 @@ export default function BuddyMate({
   nextTaskTitle = '',
   reduceMotion = false,
   pulseWin = 0,
+  activity = {},
 }) {
+  const activityLive = useMemo(
+    () => ({
+      ...activity,
+      isFocusRunning,
+      nextTaskTitle: activity.nextTaskTitle || nextTaskTitle,
+      doneCount: activity.doneCount ?? completedCount,
+    }),
+    [activity, isFocusRunning, nextTaskTitle, completedCount]
+  )
+
   const [sessionStart] = useState(() => loadSessionStart())
   const [now, setNow] = useState(() => Date.now())
   const [wellness, setWellness] = useState(() => loadWellness())
@@ -57,15 +70,17 @@ export default function BuddyMate({
   const lastFocus = useRef(isFocusRunning)
   const lastTimePing = useRef(Date.now())
   const lastHyperLevel = useRef(null)
+  const lastView = useRef(null)
+  const lastStepKey = useRef('')
   const spotIdRef = useRef(spot?.id)
+  const activityRef = useRef(activityLive)
+  activityRef.current = activityLive
 
   const overdue = useMemo(() => overdueKinds(wellness), [wellness])
   const deskMs = now - sessionStart
-  const deskMins = minutesAtDesk(sessionStart, now)
   const sinceBreak = minutesSinceBreak(wellness, sessionStart, now)
   const hyper = hyperfocusLevel(sinceBreak)
 
-  /** Move to a new corner/edge so the buddy is harder to ignore */
   const repark = useCallback((forceExpand = false) => {
     setSpot((prev) => {
       const next = pickBuddySpot(prev?.id || spotIdRef.current)
@@ -92,7 +107,6 @@ export default function BuddyMate({
     setMessages((m) => [...m.slice(-14), { id, from: 'you', text }])
   }, [])
 
-  // Live clock (time blindness surface)
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 15000)
     return () => window.clearInterval(t)
@@ -114,12 +128,65 @@ export default function BuddyMate({
     )
   }, [overdue, isFocusRunning, recentWin, hyper])
 
-  // Step completed — hop so you notice the cheer
+  // New page → tip about what you're doing
+  useEffect(() => {
+    const view = activityLive.view
+    if (!view) return
+    if (lastView.current === null) {
+      lastView.current = view
+      // After greeting, soft intro tip
+      const t = window.setTimeout(() => {
+        pushBuddy(
+          `${describeActivity(activityRef.current)} ${activityTip(activityRef.current)}`,
+          { move: false }
+        )
+      }, 1400)
+      return () => window.clearTimeout(t)
+    }
+    if (lastView.current === view) return
+    lastView.current = view
+    const t = window.setTimeout(() => {
+      pushBuddy(activityTip(activityRef.current), { move: true, expand: true })
+    }, 600)
+    return () => window.clearTimeout(t)
+  }, [activityLive.view, pushBuddy])
+
+  // Current step changed → acknowledge + tip
+  useEffect(() => {
+    const key = `${activityLive.nextTaskTitle || ''}|${activityLive.view || ''}`
+    if (!activityLive.nextTaskTitle) {
+      lastStepKey.current = key
+      return
+    }
+    if (lastStepKey.current === key) return
+    const isFirst = lastStepKey.current === ''
+    lastStepKey.current = key
+    if (isFirst) return
+    const t = window.setTimeout(() => {
+      const a = activityRef.current
+      pushBuddy(
+        `Okay, new focus: "${String(a.nextTaskTitle).slice(0, 50)}${
+          String(a.nextTaskTitle).length > 50 ? '…' : ''
+        }". ${activityTip(a)}`,
+        { move: true }
+      )
+    }, 500)
+    return () => window.clearTimeout(t)
+  }, [activityLive.nextTaskTitle, activityLive.view, pushBuddy])
+
   useEffect(() => {
     if (completedCount > lastCompleted.current) {
       lastCompleted.current = completedCount
       setRecentWin(true)
-      pushBuddy(progressLine('step'), { move: true, expand: true })
+      const a = activityRef.current
+      const follow =
+        a.nextTaskTitle
+          ? ` Next up looks like: "${String(a.nextTaskTitle).slice(0, 40)}…". One at a time.`
+          : ' Desk is clear for a second — nice. Add something if you want.'
+      pushBuddy(`${progressLine('step')}${follow}`, {
+        move: true,
+        expand: true,
+      })
       const t = window.setTimeout(() => setRecentWin(false), 4000)
       return () => window.clearTimeout(t)
     }
@@ -134,10 +201,15 @@ export default function BuddyMate({
     return () => window.clearTimeout(t)
   }, [pulseWin, pushBuddy])
 
-  // Timer started / stopped
   useEffect(() => {
     if (isFocusRunning && !lastFocus.current) {
-      pushBuddy(progressLine('timer'), { move: true })
+      const a = activityRef.current
+      pushBuddy(
+        a.nextTaskTitle
+          ? `${progressLine('timer')} You're on: "${String(a.nextTaskTitle).slice(0, 42)}".`
+          : progressLine('timer'),
+        { move: true }
+      )
     }
     if (!isFocusRunning && lastFocus.current && focusLeft === 0) {
       pushBuddy(
@@ -148,7 +220,7 @@ export default function BuddyMate({
     lastFocus.current = isFocusRunning
   }, [isFocusRunning, focusLeft, pushBuddy])
 
-  // Time blindness pings + hyperfocus escalation + wellness
+  // Periodic: wellness / hyperfocus / activity-aware idle
   useEffect(() => {
     const tick = () => {
       const t = Date.now()
@@ -158,8 +230,8 @@ export default function BuddyMate({
       const breakMins = minutesSinceBreak(w, sessionStart, t)
       const level = hyperfocusLevel(breakMins)
       const od = overdueKinds(w)
+      const act = activityRef.current
 
-      // Escalate hyperfocus when crossing thresholds — hop + expand
       if (level && level !== lastHyperLevel.current) {
         lastHyperLevel.current = level
         pushBuddy(hyperfocusLine(breakMins), { move: true, expand: true })
@@ -167,31 +239,27 @@ export default function BuddyMate({
       }
       if (!level) lastHyperLevel.current = null
 
-      // Soft time-blindness every ~12 min — always repark
       if (t - lastTimePing.current >= 12 * 60 * 1000) {
         lastTimePing.current = t
-        pushBuddy(timeBlindLine(sessionStart, t), { move: true, expand: true })
+        const timeBit = timeBlindLine(sessionStart, t)
+        const tip = activityTip(act)
+        pushBuddy(`${timeBit} ${tip}`, { move: true, expand: true })
         return
       }
 
-      // Wellness or idle — hop so check-ins aren't ignoreable
       if (od.length) {
         pushBuddy(wellnessLine(od[0]), { move: true, expand: true })
       } else if (level === 'soft' || level === 'strong') {
         pushBuddy(hyperfocusLine(breakMins), { move: true, expand: true })
       } else {
-        pushBuddy(idleLine(), { move: true })
+        pushBuddy(idleLineWithActivity(act), { move: true })
       }
     }
 
     const interval = window.setInterval(tick, 3 * 60 * 1000)
-
-    // First orientation after 2 min
     const first = window.setTimeout(() => {
       pushBuddy(timeBlindLine(sessionStart), { move: true, expand: true })
     }, 2 * 60 * 1000)
-
-    // First wellness if overdue at 90s
     const well = window.setTimeout(() => {
       const od = overdueKinds(loadWellness())
       if (od.length)
@@ -221,25 +289,36 @@ export default function BuddyMate({
   }
 
   const reply = (key) => {
+    const a = activityRef.current
     if (key === 'stuck') {
       pushYou("I'm stuck")
-      pushBuddy(progressLine('stuck'))
+      pushBuddy(
+        `${progressLine('stuck')} ${
+          a.nextTaskTitle
+            ? `Your step is "${String(a.nextTaskTitle).slice(0, 40)}". Make it smaller or walk away for two minutes.`
+            : ''
+        }`.trim()
+      )
+      return
+    }
+    if (key === 'tip') {
+      pushYou('Give me a tip')
+      pushBuddy(
+        `${describeActivity(a)} ${activityTip(a)}`,
+        { move: true }
+      )
       return
     }
     if (key === 'time') {
       pushYou('What time is it?')
-      pushBuddy(whatTimeLine(sessionStart))
+      pushBuddy(
+        `${whatTimeLine(sessionStart)} ${describeActivity(a)}`
+      )
       return
     }
     if (key === 'ok') {
       pushYou("I'm okay for now")
-      pushBuddy(
-        nextTaskTitle
-          ? `Cool. It's ${formatClock()}. Your next thing is still: "${nextTaskTitle.slice(0, 56)}${
-              nextTaskTitle.length > 56 ? '…' : ''
-            }". Just that. Nothing else.`
-          : `Cool. It's ${formatClock()}. When you're ready, toss one idea on the Work page or break something into smaller steps.`
-      )
+      pushBuddy(activityTip(a))
       return
     }
     if (key === 'break') {
@@ -252,18 +331,12 @@ export default function BuddyMate({
       const br = minutesSinceBreak(loadWellness(), sessionStart)
       pushBuddy(
         [
-          `You've been here about ${desk}, and roughly ${br} minutes since a real break.`,
+          describeActivity(a),
+          `You've been here about ${desk}, roughly ${br} minutes since a real break.`,
           completedCount > 0
             ? `You finished ${completedCount} step${completedCount === 1 ? '' : 's'}. That's not nothing.`
             : "You haven't checked anything off yet — and showing up still counts.",
-          nextTaskTitle
-            ? `Right now the job is: "${nextTaskTitle.slice(0, 48)}${
-                nextTaskTitle.length > 48 ? '…' : ''
-              }".`
-            : "You don't have a next step open. Add one when you feel like it.",
-          hyper
-            ? "You've been in it a while — breaks are allowed. I'm not judging."
-            : "Pace feels okay from here. Keep going if it feels good.",
+          activityTip(a),
         ].join(' ')
       )
     }
@@ -273,6 +346,26 @@ export default function BuddyMate({
     isFocusRunning && focusLeft > 0
       ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')} left`
       : null
+
+  const trackingLabel = useMemo(() => {
+    const a = activityLive
+    const place =
+      {
+        flow: 'Work',
+        studio: 'Board',
+        project: 'Projects',
+        brand: 'Brand',
+        spark: 'Spark',
+        insights: 'Timer',
+        calendar: 'Deadlines',
+        settings: 'Settings',
+      }[a.view] || 'App'
+    if (a.nextTaskTitle) {
+      const t = String(a.nextTaskTitle)
+      return `${place} · ${t.length > 28 ? `${t.slice(0, 28)}…` : t}`
+    }
+    return place
+  }, [activityLive])
 
   const posStyle = spotStyle(spot)
 
@@ -308,7 +401,7 @@ export default function BuddyMate({
       style={posStyle}
       key={`panel-${spot?.id}-${hop}`}
       role="complementary"
-      aria-label="Desk buddy for time blindness and body double"
+      aria-label="Desk buddy tracking what you are doing"
     >
       <div className="buddy-panel-top">
         <div className="buddy-identity">
@@ -317,10 +410,8 @@ export default function BuddyMate({
             <strong className="buddy-name">Your buddy</strong>
             <span className="buddy-status">
               {isFocusRunning
-                ? `Timer on${focusLabel ? ` · ${focusLabel}` : ''} · I'm with you`
-                : hyper
-                  ? `${sinceBreak} min since your last break · checking in`
-                  : "Here if you need me · friend, not a lecture"}
+                ? `Timer on${focusLabel ? ` · ${focusLabel}` : ''} · with you`
+                : trackingLabel}
             </span>
           </div>
         </div>
@@ -344,11 +435,17 @@ export default function BuddyMate({
         </div>
       </div>
 
-      {/* Time blindness strip — always visible */}
+      <div className="buddy-tracking" title="What I'm paying attention to">
+        <span className="buddy-tracking-label">I see you on</span>
+        <strong className="buddy-tracking-value">{trackingLabel}</strong>
+      </div>
+
       <div className="buddy-time-strip" aria-live="polite">
         <div className="buddy-time-block">
           <span className="buddy-time-label">Time now</span>
-          <strong className="buddy-time-value">{formatClock(new Date(now))}</strong>
+          <strong className="buddy-time-value">
+            {formatClock(new Date(now))}
+          </strong>
         </div>
         <div className="buddy-time-block">
           <span className="buddy-time-label">Been here</span>
@@ -417,6 +514,13 @@ export default function BuddyMate({
       </div>
 
       <div className="buddy-quick">
+        <button
+          type="button"
+          className="buddy-quick-btn buddy-quick-tip"
+          onClick={() => reply('tip')}
+        >
+          Tip for this
+        </button>
         <button
           type="button"
           className="buddy-quick-btn"
