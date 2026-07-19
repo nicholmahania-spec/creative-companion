@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-19T06:28:27.305895Z",
-  "demoLabel": "Soft Signal Studio \u2014 all 7 design stages",
+  "exportedAt": "2026-07-19T06:31:00.133397Z",
+  "demoLabel": "Soft Signal Studio \u2014 all 7 stages complete",
   "designStages": [
     {
       "n": 1,
@@ -56,8 +56,8 @@
       "voice": "Warm, plain-spoken, steady. Good-producer energy: clear direction, zero shame. Short sentences. Never corporate, never chaos-for-clicks.",
       "typeHeading": "Plus Jakarta Sans Bold",
       "typeBody": "Plus Jakarta Sans Regular",
-      "doUse": "Soft indigo + teal \u00b7 cream field \u00b7 near-black text \u00b7 generous space \u00b7 caption-first video \u00b7 real booth photos \u00b7 short CTAs (\u2018Book a calm session\u2019)",
-      "dontUse": "Hustle slogans \u00b7 neon cyber gradients \u00b7 stock diversity clich\u00e9s \u00b7 mic silhouettes \u00b7 FOMO timers \u00b7 dense waveforms \u00b7 more than one primary CTA",
+      "doUse": "Soft indigo + teal \u00b7 cream field \u00b7 near-black text \u00b7 generous space \u00b7 caption-first video \u00b7 real booth photos \u00b7 short CTAs (\u2018Book a calm session\u2019) \u00b7 EPISODE COVERS (stage 7 locked): 1) Title \u2264 2 lines, largest type on cover. 2) Guest/episode meta under title \u2014 never competing size. 3) Mark top-left; one teal accent bar max; no waveform clutter. Good: calm indigo field, Soft Signal + Ep title, guest line quiet, mark breathing room. Too busy: neon gradients, multiple CTAs, dense waveforms, guest photo fighting title.",
+      "dontUse": "Hustle slogans \u00b7 neon cyber gradients \u00b7 stock diversity clich\u00e9s \u00b7 mic silhouettes \u00b7 FOMO timers \u00b7 dense waveforms \u00b7 more than one primary CTA \u00b7 waveform clutter on covers \u00b7 dual title weights \u00b7 neon cover gradients",
       "deadline": "2026-08-09",
       "tasks": [],
       "conceptPackage": {
@@ -68,7 +68,7 @@
         "visualDirection": "Soft pulse listening mark + clean wordmark. Indigo primary, teal growth accent, cream field, near-black type. Soft corners throughout.",
         "doUse": "Space \u00b7 short labels \u00b7 caption-first \u00b7 indigo/teal \u00b7 real rooms \u00b7 one primary CTA",
         "dontUse": "Hustle \u00b7 mic clich\u00e9s \u00b7 aggressive angles \u00b7 clutter \u00b7 FOMO \u00b7 dual CTAs",
-        "notes": "Deliverables: mark, wordmark, color/type system, voice, episode cover template, booking CTA language."
+        "notes": "Stage 7 DELIVERED: episode cover template rules locked. Export brand pack from Finish. Deliverables: mark, wordmark, color/type system, voice, episode cover template, booking CTA language."
       }
     }
   ],
@@ -78,7 +78,7 @@
       "id": 9101,
       "title": "Discover: write project brief (audience, pain, success metric)",
       "energy": "med",
-      "meta": "Stage 1 \u00b7 Discover \u00b7 Project brief",
+      "meta": "Stage 1 \u00b7 Discover \u00b7 Project brief \u00b7 closed",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -88,7 +88,7 @@
       "id": 9102,
       "title": "Discover: list constraints (mono sticker \u2192 bold hoodie)",
       "energy": "low",
-      "meta": "Stage 1 \u00b7 Discover",
+      "meta": "Stage 1 \u00b7 Discover \u00b7 closed",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -198,8 +198,8 @@
       "id": 9113,
       "title": "Deliver: finalize episode cover template rules",
       "energy": "med",
-      "meta": "Stage 7 \u00b7 Deliver \u00b7 current focus",
-      "completed": false,
+      "meta": "Stage 7 \u00b7 Deliver \u00b7 current focus \u00b7 closed",
+      "completed": true,
       "seeded": false,
       "projectId": 9001,
       "dueDate": "2026-08-09"
@@ -208,8 +208,8 @@
       "id": 9201,
       "title": "Write 3 cover rules (title size, guest crop, margins)",
       "energy": "low",
-      "meta": "Micro-step \u00b7 Deliver",
-      "completed": false,
+      "meta": "Micro-step \u00b7 Deliver \u00b7 closed",
+      "completed": true,
       "seeded": false,
       "projectId": 9001,
       "parentId": 9113,
@@ -219,8 +219,8 @@
       "id": 9202,
       "title": "Describe 1 good cover vs 1 too-busy cover",
       "energy": "low",
-      "meta": "Micro-step \u00b7 Deliver",
-      "completed": false,
+      "meta": "Micro-step \u00b7 Deliver \u00b7 closed",
+      "completed": true,
       "seeded": false,
       "projectId": 9001,
       "parentId": 9113,
@@ -230,8 +230,8 @@
       "id": 9203,
       "title": "Export brand pack from Finish",
       "energy": "low",
-      "meta": "Micro-step \u00b7 Deliver",
-      "completed": false,
+      "meta": "Micro-step \u00b7 Deliver \u00b7 closed",
+      "completed": true,
       "seeded": false,
       "projectId": 9001,
       "parentId": 9113,
@@ -352,8 +352,8 @@
       "minutes": 3,
       "notes": "",
       "recurring": false,
-      "completed": false,
-      "lastDoneAt": null,
+      "completed": true,
+      "lastDoneAt": "2026-07-19T06:31:00.133242Z",
       "archived": false
     }
   ],
@@ -368,5 +368,15 @@
   },
   "sparkIndex": 0,
   "onboarded": true,
-  "currentSpark": "What if Soft Signal\u2019s mark felt like being listened to, not performed for?"
+  "currentSpark": "What if Soft Signal\u2019s mark felt like being listened to, not performed for?",
+  "stage7Status": "closed",
+  "stage7Deliverables": {
+    "coverRules": [
+      "Title \u2264 2 lines, largest type on cover",
+      "Guest/episode meta under title \u2014 never competing size",
+      "Mark top-left; one teal accent bar max; no waveform clutter"
+    ],
+    "goodCover": "Calm indigo field, Soft Signal + Ep title, quiet guest line, mark with breathing room",
+    "busyCover": "Neon gradients, multiple CTAs, dense waveforms, guest photo fighting title"
+  }
 }
