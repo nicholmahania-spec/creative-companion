@@ -1,6 +1,10 @@
 /**
  * Real file export / download helpers for Creative Companion.
- * All downloads use Blob + object URL with DOM append (Safari-safe).
+ * Multi-strategy downloads (File System Access + anchor + open-tab fallback).
+ *
+ * Important: async work (dynamic import, await) drops the browser user-gesture,
+ * which can silently block a.download. Prefer captureSaveHandle() at click time
+ * for PDF, and keep HTML/MD/JSON paths fully synchronous when possible.
  */
 
 /** Safe filename from a project title */
@@ -15,39 +19,180 @@ export function slugifyFilename(name, fallback = 'creative-companion') {
   return s || fallback
 }
 
+function safeFilename(filename) {
+  return String(filename || 'download').replace(/[/\\?%*:|"<>]/g, '-')
+}
+
+function mimeForName(name) {
+  const n = String(name || '').toLowerCase()
+  if (n.endsWith('.pdf')) return 'application/pdf'
+  if (n.endsWith('.html') || n.endsWith('.htm')) return 'text/html'
+  if (n.endsWith('.md') || n.endsWith('.markdown')) return 'text/markdown'
+  if (n.endsWith('.json')) return 'application/json'
+  if (n.endsWith('.txt')) return 'text/plain'
+  return 'application/octet-stream'
+}
+
 /**
- * Trigger a browser download of a Blob or string.
- * @returns {{ ok: boolean, error?: string }}
+ * Call at the start of a click handler (sync) so the save picker keeps user activation
+ * even if PDF generation is async afterward.
+ * @returns {Promise<FileSystemFileHandle>|null}
+ */
+export function captureSaveHandle(filename, description = 'Download') {
+  if (typeof window === 'undefined' || typeof window.showSaveFilePicker !== 'function') {
+    return null
+  }
+  const name = safeFilename(filename)
+  const mime = mimeForName(name)
+  const ext = name.includes('.') ? `.${name.split('.').pop()}` : ''
+  try {
+    return window.showSaveFilePicker({
+      suggestedName: name,
+      types: [
+        {
+          description,
+          accept: { [mime]: ext ? [ext] : ['.bin'] },
+        },
+      ],
+    })
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Write a Blob to a File System Access handle promise (from captureSaveHandle).
+ * @returns {Promise<{ ok: boolean, error?: string, cancelled?: boolean }>}
+ */
+export async function writeToSaveHandle(handlePromise, blob) {
+  if (!handlePromise || !blob) return { ok: false, error: 'No save target' }
+  try {
+    const handle = await handlePromise
+    const writable = await handle.createWritable()
+    await writable.write(blob)
+    await writable.close()
+    return { ok: true }
+  } catch (e) {
+    if (e?.name === 'AbortError') {
+      return { ok: false, cancelled: true, error: 'Save cancelled' }
+    }
+    return { ok: false, error: e?.message || 'Could not write file' }
+  }
+}
+
+/**
+ * Trigger a browser download of a Blob.
+ * Strategies: IE msSave → anchor[download] → open blob tab (iOS / blocked download).
+ * @returns {{ ok: boolean, error?: string, method?: string }}
  */
 export function downloadBlob(blob, filename) {
   try {
     if (!blob) return { ok: false, error: 'Nothing to download' }
-    const name = String(filename || 'download').replace(/[/\\?%*:|"<>]/g, '-')
-    const url = URL.createObjectURL(blob)
+    if (typeof document === 'undefined') {
+      return { ok: false, error: 'Downloads need a browser window' }
+    }
+
+    const name = safeFilename(filename)
+    // Ensure correct MIME (some browsers ignore download without it)
+    const typed =
+      blob.type && blob.type !== ''
+        ? blob
+        : new Blob([blob], { type: mimeForName(name) })
+
+    // Legacy Edge / IE
+    if (typeof navigator !== 'undefined' && typeof navigator.msSaveOrOpenBlob === 'function') {
+      navigator.msSaveOrOpenBlob(typed, name)
+      return { ok: true, method: 'msSave' }
+    }
+
+    const url = URL.createObjectURL(typed)
     const a = document.createElement('a')
     a.href = url
     a.download = name
     a.rel = 'noopener'
-    a.style.display = 'none'
+    // display:none breaks download in some Safari builds — park off-screen instead
+    a.setAttribute('download', name)
+    a.style.cssText =
+      'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none'
     document.body.appendChild(a)
-    a.click()
-    // Revoke after the click has been processed
+
+    let clicked = false
+    try {
+      a.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        })
+      )
+      clicked = true
+    } catch {
+      /* fall through */
+    }
+    if (!clicked && typeof a.click === 'function') {
+      a.click()
+      clicked = true
+    }
+
+    // iOS / iPadOS often ignore the download attribute — open the blob so user can Share/Save
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : ''
+    const isIOS =
+      /iPad|iPhone|iPod/.test(ua) ||
+      (typeof navigator !== 'undefined' &&
+        navigator.platform === 'MacIntel' &&
+        navigator.maxTouchPoints > 1)
+
+    if (isIOS) {
+      const opened = window.open(url, '_blank')
+      if (!opened) {
+        // Popup blocked — navigate current tab as last resort
+        window.location.assign(url)
+      }
+      // Keep URL alive longer on iOS
+      window.setTimeout(() => {
+        try {
+          a.remove()
+        } catch {
+          /* ignore */
+        }
+        URL.revokeObjectURL(url)
+      }, 120000)
+      return { ok: true, method: 'ios-open' }
+    }
+
+    // If nothing visibly happened in restricted embeds, still try open as fallback after a beat
+    // (only when not iOS — desktop should use anchor download)
     window.setTimeout(() => {
       try {
-        document.body.removeChild(a)
+        a.remove()
       } catch {
         /* ignore */
       }
+      // Revoke after browser has time to start the download (large HTML packs need longer)
       URL.revokeObjectURL(url)
-    }, 1500)
-    return { ok: true }
+    }, 60000)
+
+    return { ok: true, method: clicked ? 'anchor' : 'anchor-fallback' }
   } catch (e) {
     return { ok: false, error: e?.message || 'Download failed' }
   }
 }
 
+/**
+ * Download with optional File System Access handle (capture at click time).
+ * @returns {Promise<{ ok: boolean, error?: string, cancelled?: boolean, method?: string }>}
+ */
+export async function downloadBlobReliable(blob, filename, handlePromise = null) {
+  if (handlePromise) {
+    const written = await writeToSaveHandle(handlePromise, blob)
+    if (written.ok || written.cancelled) return { ...written, method: 'file-picker' }
+    // fall through if picker failed for other reasons
+  }
+  return downloadBlob(blob, filename)
+}
+
 export function downloadText(text, filename, mime = 'text/plain;charset=utf-8') {
-  const blob = new Blob([text], { type: mime })
+  const blob = new Blob([String(text ?? '')], { type: mime })
   return downloadBlob(blob, filename)
 }
 
@@ -333,32 +478,58 @@ export function brandPackToHtml(pack) {
 }
 
 /** Download brand pack as HTML file */
-export function downloadBrandPackHtml(pack) {
+export function downloadBrandPackHtml(pack, handlePromise = null) {
   const slug = slugifyFilename(pack.projectName, 'brand-pack')
+  const name = `${slug}-brand-direction.html`
   const html = brandPackToHtml(pack)
-  return downloadText(html, `${slug}-brand-direction.html`, 'text/html;charset=utf-8')
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  if (handlePromise) return downloadBlobReliable(blob, name, handlePromise)
+  return downloadBlob(blob, name)
 }
 
 /** Download brand pack as Markdown */
-export function downloadBrandPackMarkdown(pack) {
+export function downloadBrandPackMarkdown(pack, handlePromise = null) {
   const slug = slugifyFilename(pack.projectName, 'brand-pack')
+  const name = `${slug}-brand-direction.md`
   const md = brandPackToMarkdown(pack)
-  return downloadText(md, `${slug}-brand-direction.md`, 'text/markdown;charset=utf-8')
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
+  if (handlePromise) return downloadBlobReliable(blob, name, handlePromise)
+  return downloadBlob(blob, name)
 }
 
 /** Download brand pack as JSON (portable) */
-export function downloadBrandPackJson(pack) {
+export function downloadBrandPackJson(pack, handlePromise = null) {
   const slug = slugifyFilename(pack.projectName, 'brand-pack')
-  return downloadJson(pack, `${slug}-brand-pack.json`)
+  const name = `${slug}-brand-pack.json`
+  const blob = new Blob([JSON.stringify(pack, null, 2)], {
+    type: 'application/json;charset=utf-8',
+  })
+  if (handlePromise) return downloadBlobReliable(blob, name, handlePromise)
+  return downloadBlob(blob, name)
+}
+
+/** Cached jsPDF module so first click after preload stays nearly sync */
+let jsPdfModulePromise = null
+
+/** Warm the PDF engine (call when Finish view opens). */
+export function preloadPdfEngine() {
+  if (!jsPdfModulePromise) {
+    jsPdfModulePromise = import('jspdf').catch((err) => {
+      jsPdfModulePromise = null
+      throw err
+    })
+  }
+  return jsPdfModulePromise
 }
 
 /**
  * One-click brand pack PDF (jsPDF). No print dialog required.
- * @returns {Promise<{ ok: boolean, error?: string }>}
+ * Pass handlePromise from captureSaveHandle() called synchronously on click.
+ * @returns {Promise<{ ok: boolean, error?: string, cancelled?: boolean }>}
  */
-export async function downloadBrandPackPdf(pack) {
+export async function downloadBrandPackPdf(pack, handlePromise = null) {
   try {
-    const { jsPDF } = await import('jspdf')
+    const { jsPDF } = await preloadPdfEngine()
     const doc = new jsPDF({ unit: 'pt', format: 'a4' })
     const pageW = doc.internal.pageSize.getWidth()
     const pageH = doc.internal.pageSize.getHeight()
@@ -373,7 +544,10 @@ export async function downloadBrandPackPdf(pack) {
       }
     }
 
-    const writeWrapped = (text, { size = 11, style = 'normal', color = [11, 18, 32], gap = 6 } = {}) => {
+    const writeWrapped = (
+      text,
+      { size = 11, style = 'normal', color = [11, 18, 32], gap = 6 } = {}
+    ) => {
       doc.setFont('helvetica', style)
       doc.setFontSize(size)
       doc.setTextColor(...color)
@@ -394,22 +568,40 @@ export async function downloadBrandPackPdf(pack) {
     doc.setFontSize(10)
     doc.text('BRAND DIRECTION PACK', margin, 36)
     doc.setFontSize(22)
-    const titleLines = doc.splitTextToSize(pack.projectName || 'Untitled project', maxW)
+    const titleLines = doc.splitTextToSize(
+      pack.projectName || 'Untitled project',
+      maxW
+    )
     doc.text(titleLines, margin, 62)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(12)
     doc.text(String(pack.tagline || 'Tagline TBD').slice(0, 120), margin, 90)
     y = 140
 
-    writeWrapped('Positioning', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    writeWrapped('Positioning', {
+      size: 9,
+      style: 'bold',
+      color: [100, 110, 130],
+      gap: 4,
+    })
     writeWrapped(pack.brief || 'No brief captured yet.', { size: 11, gap: 12 })
 
     if (pack.voice) {
-      writeWrapped('Voice', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+      writeWrapped('Voice', {
+        size: 9,
+        style: 'bold',
+        color: [100, 110, 130],
+        gap: 4,
+      })
       writeWrapped(pack.voice, { size: 11, gap: 12 })
     }
 
-    writeWrapped('Palette', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    writeWrapped('Palette', {
+      size: 9,
+      style: 'bold',
+      color: [100, 110, 130],
+      gap: 4,
+    })
     const colors = pack.palette || []
     if (colors.length) {
       ensureSpace(36)
@@ -420,39 +612,72 @@ export async function downloadBrandPackPdf(pack) {
         doc.roundedRect(margin + i * (sw + 6), y, sw, 28, 3, 3, 'F')
       })
       y += 36
-      writeWrapped(colors.join('  ·  '), { size: 10, color: [80, 90, 110], gap: 12 })
+      writeWrapped(colors.join('  ·  '), {
+        size: 10,
+        color: [80, 90, 110],
+        gap: 12,
+      })
     } else {
       writeWrapped('No palette yet.', { size: 11, gap: 12 })
     }
 
-    writeWrapped('Typography', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
-    writeWrapped(`Heading: ${pack.typeHeading || '—'}`, { size: 12, style: 'bold', gap: 2 })
+    writeWrapped('Typography', {
+      size: 9,
+      style: 'bold',
+      color: [100, 110, 130],
+      gap: 4,
+    })
+    writeWrapped(`Heading: ${pack.typeHeading || '—'}`, {
+      size: 12,
+      style: 'bold',
+      gap: 2,
+    })
     writeWrapped(`Body: ${pack.typeBody || '—'}`, { size: 11, gap: 12 })
 
     if (pack.logoDirection) {
-      writeWrapped('Logo direction', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+      writeWrapped('Logo direction', {
+        size: 9,
+        style: 'bold',
+        color: [100, 110, 130],
+        gap: 4,
+      })
       writeWrapped(pack.logoDirection, { size: 11, gap: 12 })
     }
 
     writeWrapped('Do', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
     writeWrapped(pack.doUse || '—', { size: 11, gap: 10 })
-    writeWrapped("Don't", { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    writeWrapped("Don't", {
+      size: 9,
+      style: 'bold',
+      color: [100, 110, 130],
+      gap: 4,
+    })
     writeWrapped(pack.dontUse || '—', { size: 11, gap: 12 })
 
-    writeWrapped('Mood pins', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    writeWrapped('Mood pins', {
+      size: 9,
+      style: 'bold',
+      color: [100, 110, 130],
+      gap: 4,
+    })
     if (!pack.pins?.length) {
       writeWrapped('No pins yet.', { size: 11, gap: 12 })
     } else {
       pack.pins.slice(0, 12).forEach((pin, i) => {
-        writeWrapped(
-          `${i + 1}. ${pin.note || 'Pin'} (${pin.type || 'ref'})`,
-          { size: 10, gap: 3 }
-        )
+        writeWrapped(`${i + 1}. ${pin.note || 'Pin'} (${pin.type || 'ref'})`, {
+          size: 10,
+          gap: 3,
+        })
       })
       y += 8
     }
 
-    writeWrapped('Open work', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    writeWrapped('Open work', {
+      size: 9,
+      style: 'bold',
+      color: [100, 110, 130],
+      gap: 4,
+    })
     if (!pack.openTasks?.length) {
       writeWrapped('Desk clear', { size: 11, gap: 12 })
     } else {
@@ -478,8 +703,44 @@ export async function downloadBrandPackPdf(pack) {
     )
 
     const slug = slugifyFilename(pack.projectName, 'brand-pack')
-    const blob = doc.output('blob')
-    return downloadBlob(blob, `${slug}-brand-direction.pdf`)
+    const name = `${slug}-brand-direction.pdf`
+
+    // Prefer ArrayBuffer → Blob with explicit PDF type (most reliable across engines)
+    let blob
+    try {
+      const ab = doc.output('arraybuffer')
+      blob = new Blob([ab], { type: 'application/pdf' })
+    } catch {
+      blob = doc.output('blob')
+      if (!blob.type) blob = new Blob([blob], { type: 'application/pdf' })
+    }
+
+    // File System Access (Chrome) if captureSaveHandle ran on click
+    if (handlePromise) {
+      const written = await writeToSaveHandle(handlePromise, blob)
+      if (written.ok || written.cancelled) return written
+    }
+
+    // jsPDF built-in save (same gesture path when engine was preloaded)
+    try {
+      doc.save(name)
+      return { ok: true, method: 'jspdf-save' }
+    } catch {
+      /* fall through */
+    }
+
+    const viaAnchor = downloadBlob(blob, name)
+    if (viaAnchor.ok) return viaAnchor
+
+    // Last resort: open PDF in a new tab for Save As
+    const url = URL.createObjectURL(blob)
+    const opened = window.open(url, '_blank', 'noopener')
+    window.setTimeout(() => URL.revokeObjectURL(url), 120000)
+    if (opened) return { ok: true, method: 'tab' }
+    return {
+      ok: false,
+      error: 'Browser blocked the download — allow downloads for this site',
+    }
   } catch (e) {
     return { ok: false, error: e?.message || 'PDF export failed' }
   }

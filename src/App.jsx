@@ -46,12 +46,15 @@ import {
 import { PROCESS_PHASES, getProcessPhase } from './lib/processGuide'
 import {
   buildBrandPackSnapshot,
+  captureSaveHandle,
   downloadBrandPackHtml,
   downloadBrandPackMarkdown,
   downloadBrandPackJson,
   downloadBrandPackPdf,
   downloadWorkspaceBackup,
+  preloadPdfEngine,
   printElementById,
+  slugifyFilename,
 } from './lib/exportFiles'
 import {
   isSessionOpen,
@@ -572,10 +575,11 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked, bodyDoubling, forcedBreak])
 
-  // XP when you reach Finish step
+  // XP when you reach Finish step + warm PDF engine so download keeps user-gesture
   useEffect(() => {
     if (activeView === 'finish' && unlocked) {
       awardAndBroadcast('journey_finish', { label: 'Finish step' })
+      void preloadPdfEngine().catch(() => {})
     }
   }, [activeView, unlocked])
 
@@ -882,6 +886,7 @@ function App() {
 
   const runExport = (kind) => {
     const pack = buildCurrentBrandPack()
+    const slug = slugifyFilename(pack.projectName, 'brand-pack')
     const finishOk = (label) => {
       const g = awardAndBroadcast('export_pack', { label })
       flashToast(
@@ -891,22 +896,73 @@ function App() {
       )
     }
 
+    // Capture File System Access handle WHILE we still have the user-gesture.
+    // Critical for PDF (async jsPDF load) and helps Chrome when anchor download is blocked.
+    const saveName =
+      kind === 'pdf'
+        ? `${slug}-brand-direction.pdf`
+        : kind === 'html'
+          ? `${slug}-brand-direction.html`
+          : kind === 'md'
+            ? `${slug}-brand-direction.md`
+            : kind === 'json'
+              ? `${slug}-brand-pack.json`
+              : kind === 'backup'
+                ? `creative-companion-backup-${new Date().toISOString().slice(0, 10)}.json`
+                : null
+    const handlePromise = saveName
+      ? captureSaveHandle(saveName, 'Creative Companion export')
+      : null
+
     if (kind === 'pdf') {
+      // Warm engine if not already (preload also runs when Finish opens)
+      void preloadPdfEngine()
       flashToast('Building PDF…')
-      void downloadBrandPackPdf(pack).then((result) => {
+      void downloadBrandPackPdf(pack, handlePromise).then((result) => {
         if (result.ok) finishOk('Brand PDF')
+        else if (result.cancelled) flashToast('Save cancelled')
         else flashToast(result.error || 'PDF failed')
       })
       return
     }
 
-    let result = { ok: false, error: 'Unknown export' }
-    if (kind === 'html') result = downloadBrandPackHtml(pack)
-    else if (kind === 'md') result = downloadBrandPackMarkdown(pack)
-    else if (kind === 'json') result = downloadBrandPackJson(pack)
-    else if (kind === 'backup') {
-      result = downloadWorkspaceBackup(exportAllData())
-    } else if (kind === 'print') {
+    if (kind === 'html') {
+      void Promise.resolve(downloadBrandPackHtml(pack, handlePromise)).then(
+        (result) => {
+          if (result.ok) finishOk('Brand HTML')
+          else if (result.cancelled) flashToast('Save cancelled')
+          else flashToast(result.error || 'Download failed')
+        }
+      )
+      return
+    }
+    if (kind === 'md') {
+      void Promise.resolve(downloadBrandPackMarkdown(pack, handlePromise)).then(
+        (result) => {
+          if (result.ok) finishOk('Brand Markdown')
+          else if (result.cancelled) flashToast('Save cancelled')
+          else flashToast(result.error || 'Download failed')
+        }
+      )
+      return
+    }
+    if (kind === 'json') {
+      void Promise.resolve(downloadBrandPackJson(pack, handlePromise)).then(
+        (result) => {
+          if (result.ok) finishOk('Brand JSON')
+          else if (result.cancelled) flashToast('Save cancelled')
+          else flashToast(result.error || 'Download failed')
+        }
+      )
+      return
+    }
+    if (kind === 'backup') {
+      const result = downloadWorkspaceBackup(exportAllData())
+      if (result.ok) finishOk('Workspace backup')
+      else flashToast(result.error || 'Download failed')
+      return
+    }
+    if (kind === 'print') {
       if (!exportPanel) openExportPanel()
       window.setTimeout(() => {
         const r = printElementById('direction-sheet')
@@ -917,19 +973,7 @@ function App() {
       }, exportPanel ? 50 : 120)
       return
     }
-    if (result.ok) {
-      finishOk(
-        kind === 'html'
-          ? 'Brand HTML'
-          : kind === 'md'
-            ? 'Brand Markdown'
-            : kind === 'json'
-              ? 'Brand JSON'
-              : 'Workspace backup'
-      )
-    } else {
-      flashToast(result.error || 'Download failed')
-    }
+    flashToast('Unknown export')
   }
 
   const uploadMoodFiles = (fileList) => {
