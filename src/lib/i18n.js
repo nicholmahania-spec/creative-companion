@@ -130,6 +130,32 @@ const EN = {
     onboardTitle: 'One project. One step. Ship a pack.',
     onboardLede:
       'Name the work and one step you can finish in about 25 minutes. Leave with a brand pack PDF.',
+    thinPackBanner:
+      'Pack is thin — add a tagline, palette, or ★ Pack pins on Board.',
+    continuePrint: 'Print anyway',
+    continueDownload: 'Download anyway',
+    cancel: 'Cancel',
+    continue: 'Continue',
+    deleteProject: 'Delete project',
+    deleteProjectConfirm:
+      'Delete this project and its tasks & pins? Cannot be undone.',
+    forceBreaksTitle: 'Force break lockouts',
+    forceBreaksHint:
+      'Hard lock after Pomodoro / long sessions. Soft tips still work if off.',
+    forceBreaksConsent:
+      'Desk will lock 5–10 minutes after a focus block. You can turn this off anytime.',
+    enable: 'Enable',
+    helperQuiet: 'Helper quiet mode',
+    helperQuietHint: 'No timed pings — only when you open Helper',
+    timerSound: 'Timer sound',
+    timerSoundHint: 'Chime when a focus session ends',
+    collapseQueue: 'Collapse queue by default',
+    collapseQueueHint: 'Only show the current step',
+    presenceSound: 'Presence & sound',
+    setDeadline: 'Set deadline',
+    setDeadlineTo: 'Set project deadline to',
+    lightThemeOn: 'Light (warm paper) — on',
+    darkThemeOn: 'Dark (deep charcoal) — on',
   },
 }
 

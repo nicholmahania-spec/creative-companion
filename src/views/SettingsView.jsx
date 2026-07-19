@@ -14,9 +14,14 @@ export default function SettingsView(props) {
     versionLabel, APP_BUILD, APP_BUILD_DATE, STORAGE_EXPLAIN, notifyAction,
     createNewProject,
     locale: localeProp,
+    requestConfirm,
   } = props
   const aiStatus = helperAiStatus()
   const locale = normalizeLocale(localeProp || prefs.locale || 'en')
+  const ask = (label, onConfirm) => {
+    if (typeof requestConfirm === 'function') requestConfirm(label, onConfirm)
+    else if (window.confirm(label)) onConfirm?.()
+  }
 
   return (
         <div className="settings-view">
@@ -75,11 +80,11 @@ export default function SettingsView(props) {
             </div>
             <div className="settings-row">
               <div>
-                <strong>Theme</strong>
+                <strong>{i18nT(locale, 'ui.theme')}</strong>
                 <span>
                   {theme === 'warm'
-                    ? 'Light (warm paper) — currently on'
-                    : 'Dark (deep charcoal) — currently on'}
+                    ? i18nT(locale, 'ui.lightThemeOn')
+                    : i18nT(locale, 'ui.darkThemeOn')}
                 </span>
               </div>
               <button
@@ -87,13 +92,15 @@ export default function SettingsView(props) {
                 className="btn btn-secondary btn-sm"
                 onClick={() => toggleTheme()}
               >
-                {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
+                {theme === 'warm'
+                  ? i18nT(locale, 'ui.switchDark')
+                  : i18nT(locale, 'ui.switchLight')}
               </button>
             </div>
             <div className="settings-row">
               <div>
-                <strong>Reduce motion</strong>
-                <span>Less animation</span>
+                <strong>{i18nT(locale, 'ui.reduceMotion')}</strong>
+                <span>{i18nT(locale, 'ui.reduceMotionHint')}</span>
               </div>
               <button
                 type="button"
@@ -111,14 +118,13 @@ export default function SettingsView(props) {
           </section>
 
           <section className="panel brand-section" id="settings-presence">
-            <div className="brand-section-label">Presence &amp; sound</div>
+            <div className="brand-section-label">
+              {i18nT(locale, 'ui.presenceSound')}
+            </div>
             <div className="settings-row">
               <div>
-                <strong>Helper</strong>
-                <span>
-                  Corner coach (Coach · Critique · Break). Forced desk lockouts
-                  are the separate switch below.
-                </span>
+                <strong>{i18nT(locale, 'ui.helper')}</strong>
+                <span>{i18nT(locale, 'ui.helperHint')}</span>
               </div>
               <button
                 type="button"
@@ -135,10 +141,8 @@ export default function SettingsView(props) {
             </div>
             <div className="settings-row">
               <div>
-                <strong>Helper quiet mode</strong>
-                <span>
-                  No timed pings or hyperfocus nags — only when you open Helper
-                </span>
+                <strong>{i18nT(locale, 'ui.helperQuiet')}</strong>
+                <span>{i18nT(locale, 'ui.helperQuietHint')}</span>
               </div>
               <button
                 type="button"
@@ -155,8 +159,8 @@ export default function SettingsView(props) {
             </div>
             <div className="settings-row">
               <div>
-                <strong>Timer sound</strong>
-                <span>Chime when a focus session ends</span>
+                <strong>{i18nT(locale, 'ui.timerSound')}</strong>
+                <span>{i18nT(locale, 'ui.timerSoundHint')}</span>
               </div>
               <button
                 type="button"
@@ -173,11 +177,8 @@ export default function SettingsView(props) {
             </div>
             <div className="settings-row">
               <div>
-                <strong>Force break lockouts</strong>
-                <span>
-                  Hard lock only: full-desk freeze after Pomodoro / long Helper
-                  sessions. Soft tips still work if this is off.
-                </span>
+                <strong>{i18nT(locale, 'ui.forceBreaksTitle')}</strong>
+                <span>{i18nT(locale, 'ui.forceBreaksHint')}</span>
               </div>
               <button
                 type="button"
@@ -187,10 +188,6 @@ export default function SettingsView(props) {
                 onClick={() => {
                   const next = !forceBreaksEnabled
                   if (next && !prefs.forceBreaksConsented) {
-                    const ok = window.confirm(
-                      'Forced breaks lock the whole desk for 5–10 minutes after a Pomodoro (or long Helper sessions). You can turn this off anytime. Enable?'
-                    )
-                    if (!ok) return
                     setPref('forceBreaksConsented', true)
                   }
                   setPref('forceBreaksEnabled', next)
@@ -214,8 +211,8 @@ export default function SettingsView(props) {
             <div className="brand-section-label">Work</div>
             <div className="settings-row">
               <div>
-                <strong>Collapse queue by default</strong>
-                <span>Only show the current step</span>
+                <strong>{i18nT(locale, 'ui.collapseQueue')}</strong>
+                <span>{i18nT(locale, 'ui.collapseQueueHint')}</span>
               </div>
               <button
                 type="button"
@@ -441,14 +438,10 @@ export default function SettingsView(props) {
                   const file = e.target.files?.[0]
                   e.target.value = ''
                   if (!file) return
-                  if (
-                    !window.confirm(
-                      'Replace all data on this device with the backup? Current work will be overwritten.'
-                    )
-                  ) {
-                    return
-                  }
-                  handleImportBackup(file)
+                  ask(
+                    'Replace all data on this device with the backup? Current work will be overwritten.',
+                    () => handleImportBackup(file)
+                  )
                 }}
               />
             </div>
@@ -462,15 +455,14 @@ export default function SettingsView(props) {
                   type="button"
                   className="btn btn-ghost settings-danger"
                   onClick={() => {
-                    if (
-                      window.confirm(
-                        'Wipe this desk and start empty (one blank project)? This cannot be undone unless you have a backup.'
-                      )
-                    ) {
-                      clearToEmpty()
-                      setActiveView('flow')
-                      flashToast('Empty desk ready')
-                    }
+                    ask(
+                      'Wipe this desk and start empty (one blank project)? Download a backup first if needed.',
+                      () => {
+                        clearToEmpty()
+                        setActiveView('flow')
+                        flashToast('Empty desk ready')
+                      }
+                    )
                   }}
                 >
                   Start empty desk
@@ -479,16 +471,15 @@ export default function SettingsView(props) {
                   type="button"
                   className="btn btn-ghost settings-danger"
                   onClick={() => {
-                    if (
-                      window.confirm(
-                        'Full reset: clear all data and show first-run setup again?'
-                      )
-                    ) {
-                      clearAllData()
-                      setShowOnboarding(true)
-                      setActiveView('project')
-                      flashToast('Reset — set up your real project')
-                    }
+                    ask(
+                      'Full reset: clear all data and show first-run setup again?',
+                      () => {
+                        clearAllData()
+                        setShowOnboarding(true)
+                        setActiveView('project')
+                        flashToast('Reset — set up your real project')
+                      }
+                    )
                   }}
                 >
                   Full reset + setup

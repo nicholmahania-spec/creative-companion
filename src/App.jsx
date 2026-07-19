@@ -91,6 +91,7 @@ import {
   localeDir,
   isRtl,
 } from './lib/i18n'
+import { useModalFocus } from './lib/useModalFocus'
 import {
   isSessionOpen,
   closeSession,
@@ -229,6 +230,11 @@ function App() {
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [lastExportNote, setLastExportNote] = useState('')
+  /** @type {null | 'print' | 'pdf'} */
+  const [thinPackPrompt, setThinPackPrompt] = useState(null)
+  /** @type {null | { kind: string, label: string, onConfirm: () => void }} */
+  const [deskConfirm, setDeskConfirm] = useState(null)
+  const [forceBreakConsentOpen, setForceBreakConsentOpen] = useState(false)
   const [boardLightbox, setBoardLightbox] = useState(null)
   const [demoTour, setDemoTour] = useState(null)
   const [navDir, setNavDir] = useState('none')
@@ -640,30 +646,17 @@ function App() {
       return
     }
 
-    // First lockout: short explainer once, then consent
+    // First lockout: inline consent (no window.confirm)
     if (!prefs.forceBreaksConsented) {
-      const ok = window.confirm(
-        [
-          'Forced break (one-time notice)',
-          '',
-          'After a focus block the desk locks for 5–10 minutes so you rest.',
-          'Emergency unlock exists if you type the phrase on the overlay.',
-          'Turn this off anytime in Settings → Force break lockouts.',
-          '',
-          'Start this break now?',
-        ].join('\n')
-      )
       setPref('forceBreaksExplained', true)
-      if (!ok) {
-        setPref('forceBreaksEnabled', false)
-        setIsFocusRunning(false)
-        setSessionComplete(true)
-        setPomodoroWorkStartedAt(null)
-        markBreak()
-        flashToast('Forced lockouts off — re-enable in Settings')
-        return
-      }
-      setPref('forceBreaksConsented', true)
+      setIsFocusRunning(false)
+      setSessionComplete(true)
+      setPomodoroWorkStartedAt(null)
+      markBreak()
+      playBreakChime()
+      setForceBreakConsentOpen(true)
+      flashToast('Review forced break lockouts before the next cycle')
+      return
     }
 
     const totalSec = breakMin * 60
@@ -797,58 +790,72 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked, bodyDoubling, forcedBreak])
 
-  // Focus trap for modal overlays (export, breakdown, lightbox)
+  // Focus traps — lightbox / export / breakdown / onboard
+  const getLightboxRoot = useCallback(
+    () => document.querySelector('.board-lightbox-overlay'),
+    []
+  )
+  const getExportRoot = useCallback(
+    () => document.querySelector('.export-overlay.no-print-hide, .export-overlay.portfolio-export, .export-overlay:not(.onboard-overlay)'),
+    []
+  )
+  const getBreakdownRoot = useCallback(
+    () =>
+      document
+        .querySelector('.export-overlay .breakdown-panel')
+        ?.closest('.export-overlay') || null,
+    []
+  )
+  const getOnboardRoot = useCallback(
+    () => document.querySelector('.onboard-overlay'),
+    []
+  )
+  useModalFocus(!!boardLightbox, getLightboxRoot, {
+    initialSelector: '.board-lightbox-close',
+  })
+  useModalFocus(!!exportPanel && !showBreakdown, getExportRoot, {
+    initialSelector: '.export-panel-header button, button',
+  })
+  useModalFocus(!!showBreakdown, getBreakdownRoot, {
+    initialSelector: '.export-panel-header button, button',
+  })
+  useModalFocus(!!showOnboarding, getOnboardRoot, {
+    initialSelector: '#onboard-name',
+  })
+
+  // Path keys 1–5 jump journey (when not typing)
   useEffect(() => {
-    const overlay =
-      document.querySelector('.board-lightbox-overlay') ||
-      (exportPanel && document.querySelector('.export-overlay.portfolio-export, .export-overlay')) ||
-      (showBreakdown && document.querySelector('.export-overlay .breakdown-panel')?.closest('.export-overlay')) ||
-      null
-    // Prefer most specific overlay currently open
-    let root = null
-    if (boardLightbox) root = document.querySelector('.board-lightbox-overlay')
-    else if (exportPanel) root = document.querySelector('.export-overlay.no-print-hide, .export-overlay')
-    else if (showBreakdown) root = document.querySelector('.export-overlay')
-    if (!root) return undefined
-
-    const prevFocus = document.activeElement
-    const focusableSel =
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    const getFocusable = () =>
-      [...root.querySelectorAll(focusableSel)].filter(
-        (el) => !el.hasAttribute('disabled') && el.offsetParent !== null
-      )
-    const closeBtn = root.querySelector(
-      '.board-lightbox-close, .export-panel-header button, button'
-    )
-    window.requestAnimationFrame(() => closeBtn?.focus?.())
-
     const onKey = (e) => {
-      if (e.key !== 'Tab') return
-      const focusable = getFocusable()
-      if (focusable.length < 1) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const t = e.target
+      const tag = t?.tagName?.toLowerCase?.() || ''
+      if (
+        tag === 'input' ||
+        tag === 'textarea' ||
+        tag === 'select' ||
+        t?.isContentEditable
+      ) {
+        return
       }
+      if (boardLightbox || exportPanel || showBreakdown || showOnboarding || demoTour)
+        return
+      const n = Number(e.key)
+      if (n < 1 || n > 5) return
+      const step = JOURNEY_STEPS[n - 1]
+      if (!step?.view) return
+      e.preventDefault()
+      setActiveView(step.view)
     }
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      if (prevFocus && typeof prevFocus.focus === 'function') {
-        try {
-          prevFocus.focus()
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-  }, [exportPanel, showBreakdown, boardLightbox])
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [
+    boardLightbox,
+    exportPanel,
+    showBreakdown,
+    showOnboarding,
+    demoTour,
+    setActiveView,
+  ])
 
   // Lightbox: ← → between board pins
   useEffect(() => {
@@ -1545,15 +1552,8 @@ function App() {
   const downloadDataBackup = () => runExport('backup')
 
   /** Load the Soft Signal design-run demo (full path through the product). */
-  const loadSoftSignalDemo = async () => {
+  const runSoftSignalImport = async () => {
     try {
-      if (
-        !window.confirm(
-          'Load Soft Signal as a demo project? This merges demo content into this browser workspace — export a backup first if you care about current work.'
-        )
-      ) {
-        return
-      }
       const res = await fetch(
         `${import.meta.env.BASE_URL}demos/soft-signal-workspace.json`
       )
@@ -1575,6 +1575,18 @@ function App() {
     } catch (e) {
       flashToast(e?.message || 'Could not load Soft Signal demo')
     }
+  }
+
+  const loadSoftSignalDemo = () => {
+    setDeskConfirm({
+      kind: 'demo',
+      label:
+        'Load Soft Signal demo? Merges into this workspace — export a backup first if needed.',
+      onConfirm: () => {
+        setDeskConfirm(null)
+        void runSoftSignalImport()
+      },
+    })
   }
 
   const handleImportBackup = (file) => {
@@ -1610,20 +1622,22 @@ function App() {
       flashToast('Keep at least one project')
       return
     }
-    if (
-      !window.confirm(
-        `Delete “${activeProject.name}” and its tasks & pins? This cannot be undone.`
-      )
-    ) {
-      return
-    }
-    const result = deleteProject(activeProject.id)
-    if (result.ok) {
-      flashToast('Project deleted')
-      setActiveView('project')
-    } else {
-      flashToast(result.error || 'Could not delete')
-    }
+    const id = activeProject.id
+    const name = activeProject.name
+    setDeskConfirm({
+      kind: 'delete-project',
+      label: `${i18nT(locale, 'ui.deleteProjectConfirm')} (“${name}”)`,
+      onConfirm: () => {
+        const result = deleteProject(id)
+        if (result.ok) {
+          flashToast('Project deleted')
+          setActiveView('project')
+        } else {
+          flashToast(result.error || 'Could not delete')
+        }
+        setDeskConfirm(null)
+      },
+    })
   }
 
   const submitBoardUrl = () => {
@@ -2166,14 +2180,17 @@ function App() {
                       type="button"
                       className="text-link step-remove-link"
                       onClick={() => {
-                        if (
-                          window.confirm(
-                            'Remove this step from the desk? This cannot be undone.'
-                          )
-                        ) {
-                          removeTask(nextTask.id)
-                          flashToast('Step removed')
-                        }
+                        const id = nextTask.id
+                        setDeskConfirm({
+                          kind: 'remove-step',
+                          label:
+                            'Remove this step from the desk? Cannot be undone.',
+                          onConfirm: () => {
+                            removeTask(id)
+                            flashToast('Step removed')
+                            setDeskConfirm(null)
+                          },
+                        })
                       }}
                     >
                       Remove step
@@ -2451,13 +2468,15 @@ function App() {
                         className="text-link"
                         style={{ marginTop: 0 }}
                         onClick={() => {
-                          if (
-                            window.confirm(
-                              'Delete this completed step permanently?'
-                            )
-                          ) {
-                            removeTask(t.id)
-                          }
+                          const id = t.id
+                          setDeskConfirm({
+                            kind: 'delete-done',
+                            label: 'Delete this completed step permanently?',
+                            onConfirm: () => {
+                              removeTask(id)
+                              setDeskConfirm(null)
+                            },
+                          })
                         }}
                       >
                         Delete
@@ -3760,6 +3779,49 @@ function App() {
                   })()}
                   <div className="finish-actions pack-primary-stack">
                     <p className="pack-client-kicker">{i18nT(locale, 'ui.clientHandoff')}</p>
+                    {thinPackPrompt && (
+                      <div
+                        className="thin-pack-prompt"
+                        role="alertdialog"
+                        aria-labelledby="thin-pack-title"
+                      >
+                        <p id="thin-pack-title" className="thin-pack-prompt-body">
+                          {i18nT(locale, 'ui.thinPackBanner')}
+                        </p>
+                        <div className="thin-pack-prompt-actions">
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={() => {
+                              const kind = thinPackPrompt
+                              setThinPackPrompt(null)
+                              runExport(kind === 'print' ? 'print' : 'pdf')
+                            }}
+                          >
+                            {thinPackPrompt === 'print'
+                              ? i18nT(locale, 'ui.continuePrint')
+                              : i18nT(locale, 'ui.continueDownload')}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => setThinPackPrompt(null)}
+                          >
+                            {i18nT(locale, 'ui.cancel')}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => {
+                              setThinPackPrompt(null)
+                              setActiveView('studio')
+                            }}
+                          >
+                            Board
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <button
                       type="button"
                       className="btn btn-primary pack-print-btn"
@@ -3767,10 +3829,8 @@ function App() {
                         const packSnap = buildCurrentBrandPack()
                         const ready = packReadiness(packSnap)
                         if (ready.thin) {
-                          const go = window.confirm(
-                            i18nT(locale, 'ui.thinPackConfirmPrint')
-                          )
-                          if (!go) return
+                          setThinPackPrompt('print')
+                          return
                         }
                         runExport('print')
                       }}
@@ -3784,10 +3844,8 @@ function App() {
                         const packSnap = buildCurrentBrandPack()
                         const ready = packReadiness(packSnap)
                         if (ready.thin) {
-                          const go = window.confirm(
-                            i18nT(locale, 'ui.thinPackConfirmDownload')
-                          )
-                          if (!go) return
+                          setThinPackPrompt('pdf')
+                          return
                         }
                         runExport('pdf')
                       }}
@@ -3996,6 +4054,16 @@ function App() {
               STORAGE_EXPLAIN={STORAGE_EXPLAIN}
               notifyAction={notifyAction}
               createNewProject={createNewProject}
+              requestConfirm={(label, onConfirm) =>
+                setDeskConfirm({
+                  kind: 'settings',
+                  label,
+                  onConfirm: () => {
+                    onConfirm?.()
+                    setDeskConfirm(null)
+                  },
+                })
+              }
             />
           </Suspense>
         )}
@@ -4563,6 +4631,71 @@ function App() {
 
       {savePulse && (
         <div className="autosave-chip">✓ Saved on this device</div>
+      )}
+
+      {forceBreakConsentOpen && (
+        <div
+          className="desk-confirm-banner force-break-consent"
+          role="alertdialog"
+          aria-labelledby="force-break-consent-title"
+        >
+          <p id="force-break-consent-title" className="desk-confirm-body">
+            {i18nT(locale, 'ui.forceBreaksConsent')}
+          </p>
+          <div className="desk-confirm-actions">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setPref('forceBreaksConsented', true)
+                setPref('forceBreaksEnabled', true)
+                setForceBreakConsentOpen(false)
+                flashToast('Forced break lockouts on')
+              }}
+            >
+              {i18nT(locale, 'ui.enable')}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                setPref('forceBreaksEnabled', false)
+                setForceBreakConsentOpen(false)
+                flashToast('Forced lockouts off — re-enable in Settings')
+              }}
+            >
+              {i18nT(locale, 'ui.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {deskConfirm && (
+        <div
+          className="desk-confirm-banner"
+          role="alertdialog"
+          aria-labelledby="desk-confirm-title"
+        >
+          <p id="desk-confirm-title" className="desk-confirm-body">
+            {deskConfirm.label}
+          </p>
+          <div className="desk-confirm-actions">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => deskConfirm.onConfirm?.()}
+            >
+              {i18nT(locale, 'ui.continue')}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setDeskConfirm(null)}
+            >
+              {i18nT(locale, 'ui.cancel')}
+            </button>
+          </div>
+        </div>
       )}
 
       {actionToast && (

@@ -27,10 +27,6 @@ export default function InsightsView(props) {
   const toggleForceBreaks = () => {
     const next = !forceBreaksEnabled
     if (next && !prefs.forceBreaksConsented) {
-      const ok = window.confirm(
-        'Forced breaks lock the whole desk for 5–10 minutes after a Pomodoro (or long Helper sessions). You can turn this off anytime. Enable?'
-      )
-      if (!ok) return
       setPref('forceBreaksConsented', true)
     }
     setPref('forceBreaksEnabled', next)

@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import EmptyIllustration from '../components/EmptyIllustration'
+
 /** Lazy-loaded CalendarView */
 export default function CalendarView(props) {
   const {
@@ -19,6 +21,8 @@ export default function CalendarView(props) {
     activeProject,
     upcomingDeadlines: upcomingProp,
   } = props
+
+  const [pendingDeadline, setPendingDeadline] = useState(null)
 
   const projectUrgency = projectDeadline
     ? deadlineUrgency(projectDeadline)
@@ -52,6 +56,33 @@ export default function CalendarView(props) {
               </p>
             </div>
           </div>
+
+          {pendingDeadline && (
+            <div className="desk-confirm-banner cal-deadline-confirm" role="status">
+              <p className="desk-confirm-body">
+                Set project deadline to {formatShortDate(pendingDeadline)}?
+              </p>
+              <div className="desk-confirm-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => {
+                    setProjectDeadline(pendingDeadline)
+                    setPendingDeadline(null)
+                  }}
+                >
+                  Set deadline
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setPendingDeadline(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           <section className="panel brand-section">
             <div className="brand-section-label">Active project due</div>
@@ -165,15 +196,8 @@ export default function CalendarView(props) {
                           type="button"
                           className="cal-daynum cal-daynum-btn"
                           title="Set project deadline to this day"
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                `Set project deadline to ${formatShortDate(cell.date)}?`
-                              )
-                            ) {
-                              setProjectDeadline(cell.date)
-                            }
-                          }}
+                          onClick={() => setPendingDeadline(cell.date)}
+                          aria-pressed={pendingDeadline === cell.date}
                         >
                           {cell.day}
                         </button>
