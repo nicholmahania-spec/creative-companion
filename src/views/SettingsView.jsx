@@ -1,4 +1,5 @@
 import { helperAiStatus } from '../lib/helperAi'
+import { LOCALES, normalizeLocale, t as i18nT } from '../lib/i18n'
 
 /** Lazy-loaded Settings view */
 export default function SettingsView(props) {
@@ -12,8 +13,10 @@ export default function SettingsView(props) {
     clearToEmpty, clearAllData, setShowOnboarding, loadSoftSignalDemo,
     versionLabel, APP_BUILD, APP_BUILD_DATE, STORAGE_EXPLAIN, notifyAction,
     createNewProject,
+    locale: localeProp,
   } = props
   const aiStatus = helperAiStatus()
+  const locale = normalizeLocale(localeProp || prefs.locale || 'en')
 
   return (
         <div className="settings-view">
@@ -52,6 +55,24 @@ export default function SettingsView(props) {
 
           <section className="panel brand-section" id="settings-appearance">
             <div className="brand-section-label">Appearance</div>
+            <div className="settings-row">
+              <div>
+                <strong>{i18nT(locale, 'language')}</strong>
+                <span>{i18nT(locale, 'languageHint')}</span>
+              </div>
+              <select
+                className="field-input settings-locale-select"
+                value={locale}
+                aria-label={i18nT(locale, 'language')}
+                onChange={(e) => setPref('locale', normalizeLocale(e.target.value))}
+              >
+                {LOCALES.map((L) => (
+                  <option key={L.id} value={L.id}>
+                    {L.native}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="settings-row">
               <div>
                 <strong>Theme</strong>

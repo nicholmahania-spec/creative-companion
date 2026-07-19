@@ -92,6 +92,8 @@ export function blankWorkspaceState() {
        * Errors and exports always show.
        */
       toastMode: 'quiet',
+      /** Product UI locale for wordmark + path labels */
+      locale: 'en',
     },
   }
 }

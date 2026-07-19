@@ -1,14 +1,20 @@
+import PathMarkMotion from './PathMarkMotion'
+import { t, normalizeLocale } from '../lib/i18n'
+
 /**
- * Product lockup — SVG path mark + wordmark.
- * Mark uses currentColor so light/dark chrome stays correct.
+ * Product lockup — animated path mark + localized wordmark.
  */
 export default function LogoLockup({
-  title = 'Creative Companion',
+  locale = 'en',
+  title,
   compact = false,
   className = '',
   markOnly = false,
+  reduceMotion = false,
 }) {
-  const base = import.meta.env.BASE_URL || '/'
+  const loc = normalizeLocale(locale)
+  const wordmark = title || t(loc, 'productName')
+
   return (
     <div
       className={`logo-lockup${compact ? ' is-compact' : ''}${
@@ -16,10 +22,12 @@ export default function LogoLockup({
       } ${className}`.trim()}
     >
       <span className="logo-lockup-mark" aria-hidden="true">
-        <img src={`${base}mark.svg`} alt="" width={22} height={22} />
+        <PathMarkMotion size={compact ? 20 : 22} reduceMotion={reduceMotion} />
       </span>
       {!markOnly && (
-        <span className="logo-lockup-wordmark">{title}</span>
+        <span className="logo-lockup-wordmark" lang={loc}>
+          {wordmark}
+        </span>
       )}
     </div>
   )

@@ -9855,3 +9855,80 @@ html[data-reduce-motion="true"] .btn-primary:hover:not(:disabled) {
   stroke: var(--accent-growth);
   fill: none;
 }
+
+/* ——— Choreographed page transitions v1.5 ——— */
+.view-enter {
+  animation: viewEnterForward var(--motion-enter, 320ms cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+main[data-nav-dir="forward"] .view-enter {
+  animation-name: viewEnterForward;
+}
+main[data-nav-dir="back"] .view-enter {
+  animation-name: viewEnterBack;
+}
+main[data-nav-dir="none"] .view-enter {
+  animation-name: viewEnterFade;
+}
+
+@keyframes viewEnterForward {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes viewEnterBack {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes viewEnterFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+html[data-reduce-motion="true"] main .view-enter {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  main .view-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Path mark Lottie host */
+.path-mark-lottie,
+.path-mark-lottie svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+.path-mark-static {
+  display: block;
+  color: inherit;
+}
+.app.deep .path-mark-lottie path,
+.app.deep .path-mark-lottie rect {
+  stroke: #fafaf9 !important;
+}
+.settings-locale-select {
+  max-width: 10rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.4rem 0.55rem;
+}
+.journey-step.is-active .journey-num {
+  transition: transform var(--motion-press, 120ms ease);
+}
+main[data-nav-dir="forward"] .journey-step.is-active .journey-num,
+main[data-nav-dir="back"] .journey-step.is-active .journey-num {
+  animation: journeyPulse 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes journeyPulse {
+  0% { transform: scale(0.88); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+html[data-reduce-motion="true"] .journey-step.is-active .journey-num {
+  animation: none !important;
+}

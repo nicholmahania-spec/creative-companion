@@ -13,6 +13,7 @@ import {
 } from '../lib/cloudSync'
 import { versionLabel } from '../lib/version'
 import LogoLockup from './LogoLockup'
+import { t as i18nT } from '../lib/i18n'
 
 /**
  * Login / access gate.
@@ -164,9 +165,9 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
 
         <div className="login-card">
           <div className="login-brand">
-            <LogoLockup />
+            <LogoLockup reduceMotion={false} />
             <p className="login-tag">
-              Helper desk for ADHD creative work
+              {i18nT('en', 'tagline')}
             </p>
           </div>
 

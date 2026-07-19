@@ -83,6 +83,13 @@ import {
 import LogoLockup from './components/LogoLockup'
 import EmptyIllustration from './components/EmptyIllustration'
 import {
+  LOCALES,
+  normalizeLocale,
+  t as i18nT,
+  pathLabel,
+  pathPlain,
+} from './lib/i18n'
+import {
   isSessionOpen,
   closeSession,
   getSession,
@@ -222,6 +229,8 @@ function App() {
   const [lastExportNote, setLastExportNote] = useState('')
   const [boardLightbox, setBoardLightbox] = useState(null)
   const [demoTour, setDemoTour] = useState(null)
+  const [navDir, setNavDir] = useState('none')
+  const prevJourneyIdx = useRef(0)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
@@ -281,6 +290,7 @@ function App() {
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
   const showProgress = !!prefs.showProgress
   const hidePackWatermark = !!prefs.hidePackWatermark
+  const locale = normalizeLocale(prefs.locale || 'en')
   // toastMode read inside flashToast
   const forceBreaksEnabledRef = useRef(forceBreaksEnabled)
   forceBreaksEnabledRef.current = forceBreaksEnabled
@@ -862,6 +872,25 @@ function App() {
       ? 'true'
       : 'false'
   }, [reduceMotion])
+
+  useEffect(() => {
+    document.documentElement.lang = locale
+  }, [locale])
+
+  // Directional page choreography (path order)
+  useEffect(() => {
+    const order = ['project', 'flow', 'studio', 'brand', 'finish']
+    const idx = order.indexOf(activeView)
+    if (idx < 0) {
+      setNavDir('none')
+      return
+    }
+    const prev = prevJourneyIdx.current
+    if (idx > prev) setNavDir('forward')
+    else if (idx < prev) setNavDir('back')
+    else setNavDir('none')
+    prevJourneyIdx.current = idx
+  }, [activeView])
 
   // Close More / Account menus on outside click / Escape
   useEffect(() => {
@@ -1686,7 +1715,7 @@ function App() {
       <header className="header header-redesign">
         <div className="header-content header-content-simple">
           <div className="brand-block">
-            <LogoLockup className="logo" />
+            <LogoLockup className="logo" locale={locale} reduceMotion={reduceMotion} />
           </div>
           <div className="header-actions">
             {activeProjects.length > 1 && (
@@ -1890,11 +1919,13 @@ function App() {
         )}
         <nav
           className={`journey-bar${journeyActive ? '' : ' is-tools'}`}
-          aria-label="Your path through Creative Companion"
+          aria-label={i18nT(locale, 'pathAria')}
         >
           <ol className="journey-bar-list">
             {JOURNEY_STEPS.map((step) => {
               const active = journeyActive === step.id
+              const label = pathLabel(locale, step.id) || step.label
+              const plain = pathPlain(locale, step.id) || step.plain
               const hasContent =
                 (step.id === 'project' &&
                   !!(activeProject?.name && activeProject.name !== 'My project')) ||
@@ -1919,15 +1950,15 @@ function App() {
                     }`}
                     onClick={() => setActiveView(step.view)}
                     aria-current={active ? 'step' : undefined}
-                    aria-label={`Step ${step.num}: ${step.label}. ${step.plain}${
+                    aria-label={`Step ${step.num}: ${label}. ${plain}${
                       hasContent ? ' Has content.' : ''
                     }`}
-                    title={step.plain}
+                    title={plain}
                   >
                     <span className="journey-num" aria-hidden="true">
                       {step.num}
                     </span>
-                    <span className="journey-label">{step.label}</span>
+                    <span className="journey-label">{label}</span>
                   </button>
                 </li>
               )
@@ -1941,10 +1972,10 @@ function App() {
         </nav>
       </header>
 
-      <main className="main" id="main-content" tabIndex={-1}>
+      <main className="main" id="main-content" tabIndex={-1} data-nav-dir={navDir}>
         {/* ===== WORK — one step owns the fold ===== */}
         {activeView === 'flow' && (
-          <div className="flow-view surface-desk view-enter">
+          <div className="flow-view surface-desk view-enter" data-nav-dir={navDir}>
             <div className="flow-top flow-top-compact">
               <div>
                 <h1 className="page-title work-page-title">Work</h1>
@@ -2377,7 +2408,7 @@ function App() {
 
         {/* ===== BOARD — path step 3 ===== */}
         {activeView === 'studio' && (
-          <div className="studio-view surface-wall view-enter">
+          <div className="studio-view surface-wall view-enter" data-nav-dir={navDir}>
             <div className="flow-top">
               <div>
                 <h1 className="page-title">Board</h1>
@@ -2958,7 +2989,7 @@ function App() {
 
         {/* ===== BRAND IDENTITY TEMPLATE ===== */}
         {activeView === 'brand' && (
-          <div className="brand-layout surface-document system-view view-enter">
+          <div className="brand-layout surface-document system-view view-enter" data-nav-dir={navDir}>
             <div className="brand-template-top">
               <div>
                 <h1 className="page-title">System</h1>
@@ -3580,7 +3611,7 @@ function App() {
 
         {/* ===== PACK — end of path ===== */}
         {activeView === 'finish' && (
-          <div className="finish-view surface-document pack-view view-enter">
+          <div className="finish-view surface-document pack-view view-enter" data-nav-dir={navDir}>
             <div className="flow-top">
               <div>
                 <p className="pack-eyebrow">Brand leave-behind</p>
@@ -3878,6 +3909,7 @@ function App() {
               soundEnabled={soundEnabled}
               showHowItWorks={showHowItWorks}
               showProgress={showProgress}
+              locale={locale}
               queueCollapsed={queueCollapsed}
               forceBreaksEnabled={forceBreaksEnabled}
               setPref={setPref}
@@ -3911,7 +3943,7 @@ function App() {
 
 {/* ===== PROJECTS ===== */}
         {activeView === 'project' && (
-          <div className="project-view surface-desk view-enter">
+          <div className="project-view surface-desk view-enter" data-nav-dir={navDir}>
             <div className="flow-top">
               <div>
                 <h1 className="page-title">Project</h1>
