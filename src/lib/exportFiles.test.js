@@ -179,16 +179,18 @@ describe('downloadBrandPackVectorPdf', () => {
         },
       ],
     })
-    // Prefer File System path that we cancel — avoids writing a PDF to cwd
-    const cancelledHandle = Promise.reject(
-      Object.assign(new Error('AbortError'), { name: 'AbortError' })
-    )
+    // Cancelled FS write — avoids pdf.save writing a file into the repo cwd
+    const cancelledHandle = Promise.resolve().then(() => {
+      const err = new Error('Save cancelled')
+      err.name = 'AbortError'
+      throw err
+    })
     const result = await downloadBrandPackVectorPdf(pack, cancelledHandle, {
       hideWatermark: true,
     })
-    // Cancelled still proves generation reached write step
-    expect(result.cancelled || result.ok || result.error).toBeTruthy()
+    expect(result.cancelled || result.ok || typeof result.error === 'string').toBe(
+      true
+    )
     if (result.ok) expect(result.mode).toBe('vector')
-    if (result.cancelled) expect(result.mode || 'vector').toBeTruthy()
   })
 })
