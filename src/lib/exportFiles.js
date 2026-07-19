@@ -249,7 +249,7 @@ export function buildBrandPackSnapshot({
       ? palette
       : p.palette?.length
         ? p.palette
-        : ['#4F46E5', '#0D9488', '#1A1A1A', '#F4F1EA']
+        : ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9']
 
   return {
     exportedAt: new Date().toISOString(),
@@ -430,7 +430,7 @@ export function brandPackToHtml(pack) {
     .map((t) => `<li>${esc(t.title)}</li>`)
     .join('')
 
-  const coverBg = pack.palette?.[0] || '#4F46E5'
+  const coverBg = pack.palette?.[0] || '#1C1917'
   const coverFg = coverTextColor(coverBg)
   const cover = esc(coverBg)
   const paletteRow = (pack.palette || [])
@@ -559,7 +559,7 @@ export function brandPackToHtml(pack) {
     border-radius: 999px; border: 1px solid rgba(11,18,32,.12);
     background: #fff; padding: .5rem 1rem; cursor: pointer;
   }
-  .actions button.primary { background: #4F46E5; color: #fff; border-color: #4F46E5; }
+  .actions button.primary { background: #1C1917; color: #fff; border-color: #1C1917; }
   @media print {
     body { background: #fff; }
     .sheet { padding: 0; max-width: none; }
@@ -731,8 +731,8 @@ function coverTextColor(bgHex) {
  */
 export function buildDirectionSheetMarkup(pack) {
   const p = pack || {}
-  const palette = p.palette?.length ? p.palette : ['#4F46E5', '#0D9488', '#0B1220', '#F4F5F9']
-  const cover = palette[0] || '#4F46E5'
+  const palette = p.palette?.length ? p.palette : ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9']
+  const cover = palette[0] || '#1C1917'
   const coverFg = coverTextColor(cover)
   const pins = (p.pins || []).slice(0, 8)
   const tasks = (p.openTasks || []).slice(0, 8)

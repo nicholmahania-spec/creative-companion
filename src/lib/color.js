@@ -1,6 +1,10 @@
 /** Color helpers for palette builder + WCAG contrast checker */
 
-export const DEFAULT_PALETTE = ['#4F46E5', '#0D9488', '#0B1220', '#F4F5F9']
+/** Stone desk defaults — brand color lives on pack, not indigo SaaS */
+export const DEFAULT_PALETTE = ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9']
+
+/** @deprecated alias — same as DEFAULT_PALETTE */
+export const STONE_PALETTE = DEFAULT_PALETTE
 
 export function normalizeHex(input) {
   if (!input) return null

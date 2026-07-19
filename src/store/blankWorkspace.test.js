@@ -24,6 +24,9 @@ describe('blank workspace defaults', () => {
     expect(p.dontUse).toBe('')
     expect(p.tasks).toEqual([])
     expect(p.palette.length).toBeGreaterThan(0)
+    // Stone defaults — not indigo SaaS residue
+    expect(p.palette[0].toUpperCase()).toBe('#1C1917')
+    expect(p.palette.join(' ').toUpperCase()).not.toMatch(/#4F46E5/)
   })
 
   it('blankWorkspaceState is empty desk with one blank project', () => {

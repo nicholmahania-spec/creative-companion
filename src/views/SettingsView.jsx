@@ -46,7 +46,7 @@ export default function SettingsView(props) {
           <nav className="settings-jump" aria-label="Settings sections">
             {[
               ['appearance', i18nT(locale, 'ui.appearance')],
-              ['presence', i18nT(locale, 'ui.presence')],
+              ['presence', i18nT(locale, 'ui.presenceSound')],
               ['work-prefs', i18nT(locale, 'ui.workPrefs')],
               ['account', i18nT(locale, 'ui.account')],
               ['data', i18nT(locale, 'ui.data')],

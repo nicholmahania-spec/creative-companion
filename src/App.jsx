@@ -1219,8 +1219,21 @@ function App() {
     setOnboarded(true)
     localStorage.setItem('cc-onboarded', '1')
     setShowOnboarding(false)
-    setBodyDoubling(true)
+    // Quiet first session — Helper stays off until user opts in (Tools or Settings)
+    setBodyDoubling(false)
     setActiveView('flow')
+    // Land attention on the capture strip (new-user “type something” path)
+    window.setTimeout(() => {
+      const el =
+        document.getElementById('desk-capture') ||
+        document.getElementById('current-step')
+      try {
+        el?.focus?.({ preventScroll: false })
+        el?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+      } catch {
+        /* ignore */
+      }
+    }, 80)
   }
 
   const buildCurrentBrandPack = () =>
@@ -1678,7 +1691,7 @@ function App() {
       note,
       visual:
         projectPalette[0] ||
-        'linear-gradient(135deg, #4F46E5, #0D9488)',
+        'linear-gradient(135deg, #1C1917, #0F766E)',
     })
     setBoardNote('')
     setBoardAddMode(null)
@@ -2099,24 +2112,24 @@ function App() {
                     {i18nT(locale, 'ui.packDest')}
                   </p>
                   <div className="step-focus-actions step-focus-actions-empty">
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() =>
+                        document.getElementById('desk-capture')?.focus()
+                      }
+                    >
+                      {i18nT(locale, 'ui.dumpIdea')}
+                    </button>
                     {deskTasks.length === 0 && (
                       <button
                         type="button"
-                        className="btn btn-primary"
+                        className="btn btn-secondary"
                         onClick={openBreakdown}
                       >
                         {i18nT(locale, 'ui.breakMicro')}
                       </button>
                     )}
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() =>
-                        document.getElementById('desk-capture')?.focus()
-                      }
-                    >
-                      Dump an idea
-                    </button>
                   </div>
                 </div>
               ) : (
@@ -4633,14 +4646,14 @@ function App() {
                 disabled={!onboardName.trim()}
                 onClick={() => finishOnboarding('custom')}
               >
-                Open Work with this step
+                Open Work — start this step
               </button>
               <button
                 type="button"
                 className="text-link onboard-demo"
                 onClick={() => finishOnboarding('empty')}
               >
-                Skip — empty desk (no first step yet)
+                Skip setup — empty desk (type a step on Work)
               </button>
             </div>
           </div>

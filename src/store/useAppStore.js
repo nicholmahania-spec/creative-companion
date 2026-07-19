@@ -13,10 +13,10 @@ export const sparkPrompts = [
 ]
 
 export const defaultProjectPalette = [
-  '#4F46E5',
-  '#0D9488',
-  '#0B1220',
-  '#F4F5F9',
+  '#1C1917',
+  '#0F766E',
+  '#A8A29E',
+  '#FAFAF9',
 ]
 
 /** Default brand identity template fields on each project */

@@ -51,20 +51,20 @@ export default function SparkView({
               addMoodPin({
                 type: 'quote',
                 note: currentSpark,
-                visual: projectPalette[0] || '#4F46E5',
+                visual: projectPalette[0] || '#1C1917',
               })
               notifyAction('Pinned', 'mood_pin', { label: 'Spark pin' })
               setActiveView('studio')
             }}
           >
-            Pin to mood board
+            Pin to Board
           </button>
           <button
             type="button"
             className="btn btn-ghost"
             onClick={() => setActiveView('flow')}
           >
-            Done — back to step
+            Done — back to Work
           </button>
         </div>
       </section>
