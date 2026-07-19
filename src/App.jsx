@@ -3503,51 +3503,13 @@ function App() {
                   Work step.
                 </li>
               </ul>
-              <div className="finish-actions finish-export-grid">
+              <div className="finish-actions">
                 <button
                   type="button"
                   className="btn btn-primary"
                   onClick={() => runExport('pdf')}
                 >
-                  Download brand pack (PDF)
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => runExport('html')}
-                >
-                  Download brand pack (HTML)
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => runExport('md')}
-                >
-                  Download brand pack (Markdown)
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => runExport('json')}
-                >
-                  Download brand pack (JSON)
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    openExportPanel()
-                    window.setTimeout(() => runExport('print'), 100)
-                  }}
-                >
-                  Print preview
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={downloadDataBackup}
-                >
-                  Full workspace backup (JSON)
+                  Download brand pack
                 </button>
                 <button
                   type="button"
@@ -3556,26 +3518,71 @@ function App() {
                 >
                   Preview pack
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setActiveView('flow')}
-                >
-                  One more Work step
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setActiveView('brand')}
-                >
-                  Edit Brand
-                </button>
+                <div className="finish-secondary-row">
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setActiveView('flow')}
+                  >
+                    One more Work step
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setActiveView('brand')}
+                  >
+                    Edit Brand
+                  </button>
+                </div>
+                <details className="finish-more-formats">
+                  <summary>More formats &amp; backup</summary>
+                  <div className="finish-more-formats-list">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => runExport('html')}
+                    >
+                      HTML
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => runExport('md')}
+                    >
+                      Markdown
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => runExport('json')}
+                    >
+                      Pack JSON
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        openExportPanel()
+                        window.setTimeout(() => runExport('print'), 100)
+                      }}
+                    >
+                      Print
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={downloadDataBackup}
+                    >
+                      Full workspace backup
+                    </button>
+                  </div>
+                  <p className="panel-hint" style={{ marginTop: '0.5rem' }}>
+                    PDF is the default handoff. HTML is offline-friendly.
+                    Markdown fits docs/Notion. Pack JSON is portable data;
+                    workspace backup restores the whole desk.
+                  </p>
+                </details>
               </div>
-              <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
-                HTML opens offline and includes Print/PDF. Markdown is for docs
-                and Notion. JSON is for backup/import. Use full workspace backup
-                to restore everything later.
-              </p>
             </section>
 
             <section className="panel brand-section">

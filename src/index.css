@@ -2200,6 +2200,59 @@ h3 {
   max-width: 22rem;
 }
 
+.finish-secondary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.finish-secondary-row .btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.85rem;
+}
+
+.finish-more-formats {
+  margin-top: 0.35rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.65rem;
+}
+
+.finish-more-formats > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  list-style: none;
+  user-select: none;
+}
+
+.finish-more-formats > summary::-webkit-details-marker {
+  display: none;
+}
+
+.finish-more-formats > summary::before {
+  content: '▸ ';
+  opacity: 0.7;
+}
+
+.finish-more-formats[open] > summary::before {
+  content: '▾ ';
+}
+
+.finish-more-formats-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.finish-more-formats-list .btn {
+  font-size: 0.8rem;
+  padding: 0.45rem 0.75rem;
+}
+
 .finish-map {
   margin: 0;
   padding-left: 1.25rem;
@@ -7758,11 +7811,7 @@ html[data-reduce-motion='true'] *::after {
   }
 }
 
-.finish-export-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
+/* finish-export-grid removed — Finish uses a short primary stack + details */
 
 @keyframes chipIn {
   from { opacity: 0; transform: translateY(-6px); }
