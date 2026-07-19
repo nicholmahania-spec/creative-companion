@@ -860,25 +860,41 @@ export function resolveDirectionSheetForCapture(pack) {
 /**
  * Rasterize a DOM node into a multi-page A4 PDF blob (preview-faithful).
  */
-export async function canvasPagesToPdfBlob(canvas) {
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @param {{ fitSinglePage?: boolean }} [opts] — scale to one A4 page when true (default)
+ */
+export async function canvasPagesToPdfBlob(canvas, opts = {}) {
+  const fitSinglePage = opts.fitSinglePage !== false
   await preloadPdfEngine()
   const { jsPDF } = await jsPdfModulePromise
-  const pdf = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait', compress: true })
+  const pdf = new jsPDF({
+    unit: 'pt',
+    format: 'a4',
+    orientation: 'portrait',
+    compress: true,
+  })
   const pageW = pdf.internal.pageSize.getWidth()
   const pageH = pdf.internal.pageSize.getHeight()
-  const margin = 28
+  // Print-friendlier margins (was 28pt)
+  const margin = 42
   const contentW = pageW - margin * 2
   const contentH = pageH - margin * 2
 
-  const imgW = contentW
-  const imgH = (canvas.height * imgW) / canvas.width
-  const imgData = canvas.toDataURL('image/jpeg', 0.93)
+  let imgW = contentW
+  let imgH = (canvas.height * imgW) / canvas.width
+  const imgData = canvas.toDataURL('image/jpeg', 0.94)
 
-  // Single page if it fits; else slice the tall image across pages
-  if (imgH <= contentH) {
-    pdf.addImage(imgData, 'JPEG', margin, margin, imgW, imgH, undefined, 'FAST')
+  // Prefer a single page for brand packs (scale down if needed)
+  if (fitSinglePage || imgH <= contentH) {
+    if (imgH > contentH) {
+      const scale = contentH / imgH
+      imgW *= scale
+      imgH *= scale
+    }
+    const x = margin + (contentW - imgW) / 2
+    pdf.addImage(imgData, 'JPEG', x, margin, imgW, imgH, undefined, 'FAST')
   } else {
-    // Draw full image, shift up each page (classic multi-page html2canvas pattern)
     let heightLeft = imgH
     let y = margin
     pdf.addImage(imgData, 'JPEG', margin, y, imgW, imgH, undefined, 'FAST')

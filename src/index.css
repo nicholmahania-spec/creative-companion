@@ -8434,3 +8434,125 @@ html[data-reduce-motion='true'] *::after {
     max-height: 92vh;
   }
 }
+
+/* Artboard role assignment + project meter */
+.direction-palette.is-clickable {
+  gap: 0;
+}
+
+.palette-swatch-btn {
+  flex: 1;
+  min-height: 52px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  background: #ccc;
+}
+
+.palette-swatch-btn:disabled {
+  cursor: default;
+}
+
+.swatch-role-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0c0a09;
+  font-size: 0.62rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-pick-chip {
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.15rem 0.25rem 0.15rem 0;
+  padding: 0.28rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.role-pick-chip.is-active {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.role-pick-chip i {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.role-hex {
+  font-size: 0.62rem;
+  font-weight: 650;
+  opacity: 0.75;
+  margin-left: 0.15rem;
+}
+
+.artboard-role-hint {
+  margin: 0 0 0.45rem;
+}
+
+.type-specimen-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+}
+
+.project-pack-meter {
+  margin: 0 0 0.75rem;
+}
+
+.project-pack-meter-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  color: var(--text-secondary);
+}
+
+.project-pack-meter-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  overflow: hidden;
+}
+
+.project-pack-meter-fill {
+  height: 100%;
+  background: var(--text-primary);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.step-more-details {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.step-more-details summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.step-more-details .btn {
+  margin-top: 0.35rem;
+}

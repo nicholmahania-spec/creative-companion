@@ -419,6 +419,41 @@ const useAppStore = create(
         return { ok: true }
       },
 
+      /** Soft-archive: hide from default lists, keep data. */
+      archiveProject: (id) => {
+        const { projects, currentProjectId } = get()
+        const activeList = projects.filter((p) => !p.archived)
+        if (activeList.length <= 1 && activeList[0]?.id === id) {
+          return { ok: false, error: 'Keep at least one active project' }
+        }
+        const target = projects.find((p) => p.id === id)
+        if (!target) return { ok: false, error: 'Project not found' }
+        let nextId = currentProjectId
+        if (currentProjectId === id) {
+          nextId =
+            projects.find((p) => p.id !== id && !p.archived)?.id ||
+            projects.find((p) => p.id !== id)?.id
+        }
+        set({
+          projects: projects.map((p) =>
+            p.id === id
+              ? { ...p, archived: true, active: false }
+              : { ...p, active: p.id === nextId }
+          ),
+          currentProjectId: nextId,
+        })
+        return { ok: true }
+      },
+
+      unarchiveProject: (id) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === id ? { ...p, archived: false } : p
+          ),
+        }))
+        return { ok: true }
+      },
+
       clearAllData: () => {
         const blank = blankWorkspaceState()
         set({ ...blank, onboarded: false })

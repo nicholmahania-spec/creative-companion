@@ -127,6 +127,8 @@ function App() {
   const clearToEmpty = useAppStore((s) => s.clearToEmpty)
   const renameProject = useAppStore((s) => s.renameProject)
   const deleteProject = useAppStore((s) => s.deleteProject)
+  const archiveProject = useAppStore((s) => s.archiveProject)
+  const unarchiveProject = useAppStore((s) => s.unarchiveProject)
   const breakKit = useAppStore((s) => s.breakKit)
   const completeBreakKitItem = useAppStore((s) => s.completeBreakKitItem)
   const breakKitRef = useRef(breakKit)
@@ -454,9 +456,12 @@ function App() {
     return () => window.clearTimeout(t)
   }, [recentUndo])
 
+  const activeProjects = (projects || []).filter((p) => !p.archived)
+  const archivedProjects = (projects || []).filter((p) => p.archived)
+
   const projectPills = (
     <div className="project-pills" role="tablist" aria-label="Project">
-      {(projects || []).map((p) => (
+      {activeProjects.map((p) => (
         <button
           key={p.id}
           type="button"
@@ -543,18 +548,27 @@ function App() {
       return
     }
 
-    // First lockout ever: require consent (Settings can also set this)
+    // First lockout: short explainer once, then consent
     if (!prefs.forceBreaksConsented) {
       const ok = window.confirm(
-        'Forced breaks lock the whole desk for 5–10 minutes after a focus block so you rest. Continue with this break?'
+        [
+          'Forced break (one-time notice)',
+          '',
+          'After a focus block the desk locks for 5–10 minutes so you rest.',
+          'Emergency unlock exists if you type the phrase on the overlay.',
+          'Turn this off anytime in Settings → Force break lockouts.',
+          '',
+          'Start this break now?',
+        ].join('\n')
       )
+      setPref('forceBreaksExplained', true)
       if (!ok) {
         setPref('forceBreaksEnabled', false)
         setIsFocusRunning(false)
         setSessionComplete(true)
         setPomodoroWorkStartedAt(null)
         markBreak()
-        flashToast('Forced lockouts off — you can re-enable in Settings')
+        flashToast('Forced lockouts off — re-enable in Settings')
         return
       }
       setPref('forceBreaksConsented', true)
@@ -1501,14 +1515,14 @@ function App() {
             </div>
           </div>
           <div className="header-actions">
-            {(projects || []).length > 1 && (
+            {activeProjects.length > 1 && (
               <select
                 className="header-project-select"
                 value={activeProjectId || ''}
                 onChange={(e) => selectProject(Number(e.target.value) || e.target.value)}
                 aria-label="Project"
               >
-                {(projects || []).map((p) => (
+                {activeProjects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
                   </option>
@@ -1849,27 +1863,29 @@ function App() {
                         className="btn btn-secondary"
                         onClick={() => {
                           breakIntoSteps(nextTask.id)
-                          awardAndBroadcast('micro_steps', {
+                          notifyAction('Split into 3', 'micro_steps', {
                             label: 'Split step',
                           })
-                          flashToast('Split into 3')
                           setStepFocusKey((k) => k + 1)
                         }}
                       >
                         Split if too big
                       </button>
                     )}
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={() => {
-                        setProcessOpen((o) => !o)
-                        if (!processPhase) setProcessPhase('clarify')
-                      }}
-                      aria-expanded={processOpen}
-                    >
-                      Design mode
-                    </button>
+                    <details className="step-more-details">
+                      <summary>More on this step</summary>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => {
+                          setProcessOpen((o) => !o)
+                          if (!processPhase) setProcessPhase('clarify')
+                        }}
+                        aria-expanded={processOpen}
+                      >
+                        Design checklist
+                      </button>
+                    </details>
                     <button
                       type="button"
                       className="text-link step-due-toggle"
@@ -2629,10 +2645,7 @@ function App() {
                       note: currentSpark,
                       visual: projectPalette[0] || '#4F46E5',
                     })
-                    const g = awardAndBroadcast('mood_pin', {
-                      label: 'Spark pin',
-                    })
-                    flashToast(`Pinned · +${g.gained} XP`)
+                    notifyAction('Pinned', 'mood_pin', { label: 'Spark pin' })
                     setActiveView('studio')
                   }}
                 >
@@ -3037,7 +3050,13 @@ function App() {
               editable
               onTaglineChange={(v) => updateBrandField('tagline', v)}
               onBriefChange={(v) => updateProjectBrief(v)}
-              onRoleAssign={(role, hex) => setColorRole(role, hex)}
+              onVoiceChange={(v) => updateBrandField('voice', v)}
+              onDoChange={(v) => updateBrandField('doUse', v)}
+              onDontChange={(v) => updateBrandField('dontUse', v)}
+              onRoleAssign={(role, hex) => {
+                setColorRole(role, hex)
+                flashToast(`${role} → ${hex}`)
+              }}
               onLogoImage={(res) => {
                 if (res?.error) flashToast(res.error)
                 else if (res?.ok) {
@@ -3734,11 +3753,10 @@ function App() {
                   className="btn btn-secondary"
                   onClick={() => {
                     createNewProject()
-                    const g = awardAndBroadcast('project_create', {
+                    notifyAction('New project', 'project_create', {
                       label: 'New project',
                     })
                     setActiveView('project')
-                    flashToast(`New project · +${g.gained} XP`)
                   }}
                 >
                   New project
@@ -4269,28 +4287,56 @@ function App() {
             </div>
             <section className="panel brand-section">
               <div className="brand-section-label">Readiness</div>
-              <ul className="pack-ready-list project-ready-list">
-                <li className={deskTasks.some((t) => !t.completed) ? 'is-ok' : 'is-miss'}>
-                  {deskTasks.some((t) => !t.completed) ? '✓' : '○'} Open Work step
-                </li>
-                <li className={deskMood.some((m) => m.inPack) ? 'is-ok' : 'is-miss'}>
-                  {deskMood.some((m) => m.inPack) ? '✓' : '○'} Starred pack pins (
-                  {deskMood.filter((m) => m.inPack).length}/6)
-                </li>
-                <li className={activeProject?.tagline?.trim() ? 'is-ok' : 'is-miss'}>
-                  {activeProject?.tagline?.trim() ? '✓' : '○'} Tagline
-                </li>
-                <li className={(projectPalette || []).length >= 2 ? 'is-ok' : 'is-miss'}>
-                  {(projectPalette || []).length >= 2 ? '✓' : '○'} Palette
-                </li>
-                <li className={activeProject?.brief?.trim() ? 'is-ok' : 'is-miss'}>
-                  {activeProject?.brief?.trim() ? '✓' : '○'} Brief / positioning
-                </li>
-              </ul>
-              <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                {completedCount}/{deskTasks.length || 0} steps done · one brief
-                field feeds System positioning.
-              </p>
+              {(() => {
+                const checks = [
+                  deskTasks.some((t) => !t.completed),
+                  deskMood.some((m) => m.inPack),
+                  !!activeProject?.tagline?.trim(),
+                  (projectPalette || []).length >= 2,
+                  !!activeProject?.brief?.trim(),
+                ]
+                const pct = Math.round(
+                  (checks.filter(Boolean).length / checks.length) * 100
+                )
+                return (
+                  <>
+                    <div className="project-pack-meter" aria-label={`Pack readiness ${pct}%`}>
+                      <div className="project-pack-meter-top">
+                        <span>Pack readiness</span>
+                        <strong>{pct}%</strong>
+                      </div>
+                      <div className="project-pack-meter-bar">
+                        <div
+                          className="project-pack-meter-fill"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                    <ul className="pack-ready-list project-ready-list">
+                      <li className={checks[0] ? 'is-ok' : 'is-miss'}>
+                        {checks[0] ? '✓' : '○'} Open Work step
+                      </li>
+                      <li className={checks[1] ? 'is-ok' : 'is-miss'}>
+                        {checks[1] ? '✓' : '○'} Starred pack pins (
+                        {deskMood.filter((m) => m.inPack).length}/6)
+                      </li>
+                      <li className={checks[2] ? 'is-ok' : 'is-miss'}>
+                        {checks[2] ? '✓' : '○'} Tagline
+                      </li>
+                      <li className={checks[3] ? 'is-ok' : 'is-miss'}>
+                        {checks[3] ? '✓' : '○'} Palette
+                      </li>
+                      <li className={checks[4] ? 'is-ok' : 'is-miss'}>
+                        {checks[4] ? '✓' : '○'} Brief / positioning
+                      </li>
+                    </ul>
+                    <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
+                      {completedCount}/{deskTasks.length || 0} steps done · brief
+                      feeds System positioning.
+                    </p>
+                  </>
+                )
+              })()}
               {projectPills}
             </section>
             <section className="panel brand-section">
@@ -4348,6 +4394,44 @@ function App() {
                 />
               </div>
 
+              <div className="project-actions-row" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  disabled={!activeProject || activeProjects.length < 2}
+                  onClick={() => {
+                    if (!activeProject) return
+                    const r = archiveProject(activeProject.id)
+                    if (r.ok) flashToast('Project archived')
+                    else flashToast(r.error || 'Could not archive')
+                  }}
+                >
+                  Archive project
+                </button>
+                {archivedProjects.length > 0 && (
+                  <select
+                    className="header-project-select"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const id = e.target.value
+                      if (!id) return
+                      unarchiveProject(Number(id) || id)
+                      selectProject(Number(id) || id)
+                      flashToast('Project restored')
+                      e.target.value = ''
+                    }}
+                    aria-label="Restore archived project"
+                  >
+                    <option value="">Restore archived…</option>
+                    {archivedProjects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
               <div className="field-block" style={{ marginBottom: '1rem' }}>
                 <label className="field-label" htmlFor="proj-deadline-field">
                   Deadline
@@ -4402,26 +4486,28 @@ function App() {
                 <button
                   type="button"
                   className="link-row"
-                  onClick={() => setActiveView('concept')}
+                  onClick={() => setActiveView('studio')}
                 >
-                  <span className="link-row-label">3 · Ideas</span>
-                  <span className="link-row-meta">Sketches &amp; plan</span>
+                  <span className="link-row-label">3 · Board</span>
+                  <span className="link-row-meta">
+                    {deskMood.filter((m) => m.inPack).length} pack pins
+                  </span>
                 </button>
                 <button
                   type="button"
                   className="link-row"
                   onClick={() => setActiveView('brand')}
                 >
-                  <span className="link-row-label">4 · Brand</span>
-                  <span className="link-row-meta">Colors &amp; words</span>
+                  <span className="link-row-label">4 · System</span>
+                  <span className="link-row-meta">Artboard &amp; roles</span>
                 </button>
                 <button
                   type="button"
                   className="link-row"
                   onClick={() => setActiveView('finish')}
                 >
-                  <span className="link-row-label">5 · Finish</span>
-                  <span className="link-row-meta">Share &amp; log out</span>
+                  <span className="link-row-label">5 · Pack</span>
+                  <span className="link-row-meta">Preview &amp; download</span>
                 </button>
               </div>
 
