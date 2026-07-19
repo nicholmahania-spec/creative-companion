@@ -2559,13 +2559,94 @@ h3 {
 
 .settings-row .btn {
   flex-shrink: 0;
-  min-width: 5.5rem;
 }
 
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
+}
+
+/* Preference switches (Settings) */
+.pref-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 1.55rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  transition: background var(--transition);
+}
+
+.pref-switch-knob {
+  position: absolute;
+  top: 0.18rem;
+  left: 0.18rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(11, 18, 32, 0.2);
+  transition: transform var(--transition);
+}
+
+.pref-switch.is-on {
+  background: var(--accent-primary);
+  box-shadow: none;
+}
+
+.pref-switch.is-on .pref-switch-knob {
+  transform: translateX(1.15rem);
+}
+
+.app.deep .pref-switch-knob {
+  background: #f1f5f9;
+}
+
+.btn-sm {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8125rem;
+  min-width: 0;
+}
+
+/* Onboarding — single primary path */
+.onboard-eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+}
+
+.onboard-optional {
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.onboard-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.onboard-primary {
+  width: 100%;
+  justify-content: center;
+}
+
+.onboard-demo {
+  text-align: center;
+  margin: 0;
+  font-size: 0.875rem;
 }
 
 /* Header Settings active state */

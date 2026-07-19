@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import useAppStore from './store/useAppStore'
 import {
   DEFAULT_PALETTE,
@@ -20,7 +20,11 @@ import {
   deadlineUrgency,
   daysUntil,
 } from './lib/dates'
-import { APP_BUILD, APP_BUILD_DATE, versionLabel } from './lib/version'
+import {
+  APP_BUILD,
+  APP_BUILD_DATE,
+  versionLabel,
+} from './lib/version'
 
 function App() {
   // ——— Zustand (persisted studio state) ———
@@ -103,6 +107,7 @@ function App() {
   const [doneOpen, setDoneOpen] = useState(false)
   const [actionToast, setActionToast] = useState('')
   const [stepFocusKey, setStepFocusKey] = useState(0)
+  const moreWrapRef = useRef(null)
 
   const showHowItWorks = prefs.showHowItWorks !== false
   const queueCollapsed = prefs.queueCollapsed !== false
@@ -347,17 +352,41 @@ function App() {
       : 'false'
   }, [reduceMotion])
 
+  // Close More menu on outside click / Escape
+  useEffect(() => {
+    if (!moreOpen) return
+    const onPointer = (e) => {
+      if (moreWrapRef.current && !moreWrapRef.current.contains(e.target)) {
+        setMoreOpen(false)
+      }
+    }
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMoreOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [moreOpen])
+
   // First-run gate (zustand onboarded)
   useEffect(() => {
     if (!onboarded) setShowOnboarding(true)
   }, [onboarded])
 
-  // Autosave pulse when persisted store updates
+  // Autosave pulse — skip first mount so load doesn’t flash “Saved”
+  const savePulseReady = useRef(false)
   useEffect(() => {
+    if (!savePulseReady.current) {
+      savePulseReady.current = true
+      return
+    }
     setSavePulse(true)
-    const t = window.setTimeout(() => setSavePulse(false), 1800)
+    const t = window.setTimeout(() => setSavePulse(false), 1400)
     return () => window.clearTimeout(t)
-  }, [tasks, moodItems, activeProjectId, projects, theme])
+  }, [tasks, moodItems, activeProjectId, projects, theme, prefs])
 
   const addQuickTask = () => {
     if (!quickInput.trim()) return
@@ -718,7 +747,7 @@ function App() {
           <div className="header-actions">
             {bodyDoubling && (
               <span className="mate-on-badge" aria-live="polite">
-                {bodyDoubleSilent ? 'Presence on' : 'Sitting with you'}
+                {bodyDoubleSilent ? 'Presence' : 'With you'}
               </span>
             )}
             <button
@@ -726,48 +755,32 @@ function App() {
               className="btn btn-ghost header-help"
               onClick={() => setShowCreativeReset(true)}
             >
-              I&apos;m stuck
+              Stuck?
             </button>
-            <button
-              type="button"
-              className={`btn btn-ghost header-help${
-                activeView === 'settings' ? ' is-nav-active' : ''
-              }`}
-              onClick={() => setActiveView('settings')}
-            >
-              Settings
-            </button>
-            <div className="more-wrap">
+            <div className="more-wrap" ref={moreWrapRef}>
               <button
                 type="button"
                 className="btn btn-secondary header-more"
                 aria-expanded={moreOpen}
+                aria-haspopup="menu"
                 onClick={() => setMoreOpen(!moreOpen)}
               >
                 More
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu">
-                  <p className="more-menu-intro">
-                    Main work is on <strong>Work</strong>,{' '}
-                    <strong>Board</strong>, and <strong>Projects</strong>. Use
-                    these when you stall, need focus, or want to package the
-                    brand.
-                  </p>
-
-                  <p className="more-menu-group">When you stall</p>
+                  <p className="more-menu-group">Help</p>
                   <button
                     type="button"
                     role="menuitem"
                     className="more-menu-item"
-                    onClick={openBreakdown}
+                    onClick={() => {
+                      openBreakdown()
+                      setMoreOpen(false)
+                    }}
                   >
-                    <strong>Break project into micro-steps</strong>
-                    <span>
-                      Guided ADHD breakdown: goal → done line → editable step
-                      list on your desk. Use when the whole project feels too
-                      big.
-                    </span>
+                    <strong>Break into micro-steps</strong>
+                    <span>When the whole project is too big</span>
                   </button>
                   <button
                     type="button"
@@ -779,14 +792,9 @@ function App() {
                     }}
                   >
                     <strong>
-                      {bodyDoubling
-                        ? 'Turn off body double'
-                        : 'Body double'}
+                      {bodyDoubling ? 'Body double off' : 'Body double'}
                     </strong>
-                    <span>
-                      Quiet company on screen so you&apos;re not alone — not a
-                      chat bot. Use when starting feels hard.
-                    </span>
+                    <span>Quiet presence — not a chatbot</span>
                   </button>
                   <button
                     type="button"
@@ -798,10 +806,7 @@ function App() {
                     }}
                   >
                     <strong>Spark · ⌘K</strong>
-                    <span>
-                      One creative prompt when you don&apos;t know what to do
-                      next. Optional — skip if the step is clear.
-                    </span>
+                    <span>One prompt, then return</span>
                   </button>
                   <button
                     type="button"
@@ -813,13 +818,10 @@ function App() {
                     }}
                   >
                     <strong>Focus timer</strong>
-                    <span>
-                      Hold a work block (2 or 25 min) on your current step. Use
-                      when you need a container, not more ideas.
-                    </span>
+                    <span>2 or 25 min container</span>
                   </button>
 
-                  <p className="more-menu-group">Brand &amp; delivery</p>
+                  <p className="more-menu-group">Brand</p>
                   <button
                     type="button"
                     role="menuitem"
@@ -829,11 +831,8 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Brand identity template</strong>
-                    <span>
-                      Colors, type, voice, logo direction — the full system.
-                      Use when the project needs a shareable identity.
-                    </span>
+                    <strong>Brand template</strong>
+                    <span>Color, type, voice, logo direction</span>
                   </button>
                   <button
                     type="button"
@@ -844,14 +843,9 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Export identity pack</strong>
-                    <span>
-                      Download/print what you filled in Brand. Use to share with
-                      a client or keep a snapshot.
-                    </span>
+                    <strong>Export pack</strong>
+                    <span>Print / HTML snapshot</span>
                   </button>
-
-                  <p className="more-menu-group">Time</p>
                   <button
                     type="button"
                     role="menuitem"
@@ -861,11 +855,8 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Deadline calendar</strong>
-                    <span>
-                      See project due dates and step due dates by month. Use so
-                      deadlines stay visible without another app.
-                    </span>
+                    <strong>Deadlines</strong>
+                    <span>Project + step due dates</span>
                   </button>
 
                   <p className="more-menu-group">Setup</p>
@@ -880,10 +871,19 @@ function App() {
                     }}
                   >
                     <strong>New project</strong>
-                    <span>
-                      Start another client or personal lane. Use when work
-                      shouldn&apos;t mix with the current desk.
-                    </span>
+                    <span>Separate client or personal lane</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setActiveView('settings')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <strong>Settings</strong>
+                    <span>Theme, sound, data backup</span>
                   </button>
                   <button
                     type="button"
@@ -897,9 +897,7 @@ function App() {
                     <strong>
                       {theme === 'warm' ? 'Dark mode' : 'Light mode'}
                     </strong>
-                    <span>
-                      Screen comfort only. Doesn&apos;t change your work data.
-                    </span>
+                    <span>Screen comfort only</span>
                   </button>
                 </div>
               )}
@@ -914,41 +912,12 @@ function App() {
           <div className="flow-view">
             <div className="flow-top">
               <div>
-                <h1 className="page-title">Work loop</h1>
+                <h1 className="page-title">Work</h1>
                 <p className="page-sub">
-                  One project. One next step. Break big work into micro-steps
-                  when overwhelm hits.
+                  One project · one current step · complete it · next rises
                 </p>
               </div>
               <div className="flow-top-actions">
-                {/* Context primary CTA */}
-                {!nextTask && deskTasks.length === 0 ? (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={openBreakdown}
-                  >
-                    Break project into micro-steps
-                  </button>
-                ) : nextTask ? (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={completeCurrentStep}
-                  >
-                    Complete current step
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() =>
-                      document.getElementById('desk-capture')?.focus()
-                    }
-                  >
-                    Add next entry
-                  </button>
-                )}
                 <div className="flow-progress">
                   <div className="flow-progress-bar" aria-hidden="true">
                     <div
@@ -1033,13 +1002,12 @@ function App() {
 
             {/* 01 Capture */}
             <section className="panel brand-section">
-              <div className="brand-section-label">01 · Capture</div>
+              <div className="brand-section-label">Capture</div>
               <div className="panel-head" style={{ marginBottom: '0.75rem' }}>
                 <div>
-                  <h2 className="panel-title">Add an entry</h2>
+                  <h2 className="panel-title">Dump an idea</h2>
                   <p className="panel-hint">
-                    Project:{' '}
-                    <strong>{activeProject?.name || 'None selected'}</strong>
+                    {activeProject?.name || 'No project'} · lands on this desk
                   </p>
                 </div>
                 {projectPills}
@@ -1056,9 +1024,9 @@ function App() {
                 <button
                   type="button"
                   onClick={addQuickTask}
-                  className="btn btn-primary"
+                  className="btn btn-secondary"
                 >
-                  Add entry
+                  Add
                 </button>
               </div>
               <div className="capture-desk-meta">
@@ -1110,7 +1078,7 @@ function App() {
               key={stepFocusKey}
               id="current-step"
             >
-              <div className="brand-section-label">02 · Current step</div>
+              <div className="brand-section-label">Current step</div>
               {!nextTask ? (
                 <div className="empty-state">
                   <p className="empty-state-title">
@@ -1120,8 +1088,8 @@ function App() {
                   </p>
                   <p className="empty-state-body">
                     {doneTasks.length > 0
-                      ? 'Add another entry above, or break the project into new micro-steps.'
-                      : 'Empty project? Start with micro-steps. Or add one entry above.'}
+                      ? 'Add another idea above, or break the project into micro-steps.'
+                      : 'Empty? Break the project down, or dump one idea above.'}
                   </p>
                   <div className="step-focus-actions" style={{ marginTop: '0.85rem' }}>
                     {deskTasks.length === 0 && (
@@ -1130,7 +1098,7 @@ function App() {
                         className="btn btn-primary"
                         onClick={openBreakdown}
                       >
-                        Break project into micro-steps
+                        Break into micro-steps
                       </button>
                     )}
                     <button
@@ -1140,7 +1108,7 @@ function App() {
                         document.getElementById('desk-capture')?.focus()
                       }
                     >
-                      Add an entry
+                      Focus capture
                     </button>
                   </div>
                 </div>
@@ -1165,7 +1133,7 @@ function App() {
                     aria-label="Edit current step"
                   />
                   <label className="field-label" htmlFor="step-due">
-                    Step due date (optional)
+                    Due (optional)
                   </label>
                   <input
                     id="step-due"
@@ -1182,7 +1150,7 @@ function App() {
                       className="btn btn-primary"
                       onClick={completeCurrentStep}
                     >
-                      Mark complete
+                      Complete step
                     </button>
                     {!nextTask.parentId && (
                       <button
@@ -1194,7 +1162,7 @@ function App() {
                           setStepFocusKey((k) => k + 1)
                         }}
                       >
-                        Split into 3 steps
+                        Split ×3
                       </button>
                     )}
                     <button
@@ -1212,11 +1180,11 @@ function App() {
               )}
             </section>
 
-            {/* 03 Need help? — max 3 primary tools */}
+            {/* Help — max 3 primary tools */}
             <section className="panel brand-section help-panel">
-              <div className="brand-section-label">03 · Need help?</div>
+              <div className="brand-section-label">Stuck?</div>
               <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                Use one tool, then return here. More tools live under More.
+                Pick one tool, then come back here.
               </p>
               <div className="help-grid help-grid-3">
                 <button
@@ -1301,7 +1269,7 @@ function App() {
               </div>
             </section>
 
-            {/* 04 Queue — collapsed by default when busy */}
+            {/* Queue — collapsed by default when busy */}
             <section className="panel brand-section">
               <button
                 type="button"
@@ -1316,7 +1284,7 @@ function App() {
                 }
               >
                 <span className="brand-section-label" style={{ margin: 0 }}>
-                  04 · Queue · {queueTasks.length} waiting
+                  Queue · {queueTasks.length} waiting
                 </span>
                 <span className="section-toggle-hint">
                   {queueTasks.length === 0
@@ -1362,7 +1330,7 @@ function App() {
               )}
             </section>
 
-            {/* 05 Completed — collapsed by default */}
+            {/* Completed — collapsed by default */}
             <section className="panel brand-section">
               <button
                 type="button"
@@ -1371,7 +1339,7 @@ function App() {
                 aria-expanded={doneOpen}
               >
                 <span className="brand-section-label" style={{ margin: 0 }}>
-                  05 · Completed · {doneTasks.length}
+                  Done · {doneTasks.length}
                 </span>
                 <span className="section-toggle-hint">
                   {doneTasks.length === 0 ? '' : doneOpen ? 'Hide' : 'Show'}
@@ -1426,7 +1394,7 @@ function App() {
               className="back-link"
               onClick={() => setActiveView('flow')}
             >
-              ← Back to work loop
+              ← Work
             </button>
 
             <div className="flow-top">
@@ -1441,7 +1409,7 @@ function App() {
             </div>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">01 · Project</div>
+              <div className="brand-section-label">Project</div>
               <div className="panel-head" style={{ marginBottom: 0 }}>
                 <div>
                   <h2 className="panel-title">
@@ -1467,7 +1435,7 @@ function App() {
             </section>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">02 · Add references</div>
+              <div className="brand-section-label">Add references</div>
               <div className="mood-add-grid">
                 <label className="mood-add-card btn-like">
                   <strong>Upload images</strong>
@@ -1577,7 +1545,7 @@ function App() {
 
             <section className="panel brand-section">
               <div className="brand-section-label">
-                03 · Board · {deskMood.length}
+                Board · {deskMood.length}
               </div>
               <div
                 className={`mood-board${deskMood.length ? ' has-pins' : ''}${
@@ -1674,7 +1642,7 @@ function App() {
             </section>
 
             <section className="panel brand-section help-panel">
-              <div className="brand-section-label">04 · Next</div>
+              <div className="brand-section-label">Next</div>
               <div className="help-grid help-grid-3">
                 <button
                   type="button"
@@ -1717,7 +1685,7 @@ function App() {
               className="back-link"
               onClick={() => setActiveView('flow')}
             >
-              ← Back to work loop
+              ← Work
             </button>
             <div className="flow-top">
               <div>
@@ -1734,7 +1702,7 @@ function App() {
               </p>
             )}
             <section className="panel brand-section">
-              <div className="brand-section-label">01 · Prompt</div>
+              <div className="brand-section-label">Prompt</div>
               <div className="spark-card">
                 <p>{currentSpark}</p>
               </div>
@@ -1780,13 +1748,13 @@ function App() {
               className="back-link"
               onClick={() => setActiveView('flow')}
             >
-              ← Back to work loop
+              ← Work
             </button>
             <div className="flow-top">
               <div>
                 <h1 className="page-title">Focus timer</h1>
                 <p className="page-sub">
-                  Hold the pocket · then complete the current step
+                  Hold attention · then complete the current step
                 </p>
               </div>
             </div>
@@ -1797,7 +1765,7 @@ function App() {
               </div>
             )}
             <section className="panel focus-panel brand-section">
-              <div className="brand-section-label">01 · Timer</div>
+              <div className="brand-section-label">Timer</div>
               <div className="insights-timer">
                 {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
               </div>
@@ -1812,14 +1780,20 @@ function App() {
                   className="btn btn-primary"
                   disabled={focusLeft === 0 && !isFocusRunning}
                 >
-                  {isFocusRunning ? 'Pause' : 'Start 25 min'}
+                  {isFocusRunning
+                    ? 'Pause'
+                    : focusLeft > 0 && focusLeft < 25 * 60
+                      ? 'Resume'
+                      : focusLeft === 2 * 60
+                        ? 'Start 2 min'
+                        : 'Start'}
                 </button>
                 <button
                   type="button"
                   onClick={() => resetFocus(25)}
                   className="btn btn-secondary"
                 >
-                  Reset 25
+                  25 min
                 </button>
                 <button
                   type="button"
@@ -1834,7 +1808,7 @@ function App() {
               )}
             </section>
             <section className="panel brand-section">
-              <div className="brand-section-label">02 · After</div>
+              <div className="brand-section-label">After</div>
               <div className="help-grid help-grid-3">
                 <button
                   type="button"
@@ -1879,7 +1853,7 @@ function App() {
               className="back-link"
               onClick={() => setActiveView('flow')}
             >
-              ← Back to work loop
+              ← Work
             </button>
 
             <div className="flow-top">
@@ -1893,7 +1867,7 @@ function App() {
             </div>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">01 · Active project due</div>
+              <div className="brand-section-label">Active project due</div>
               <p className="panel-hint" style={{ marginBottom: '0.55rem' }}>
                 {activeProject?.name || 'No project'}
               </p>
@@ -1929,7 +1903,7 @@ function App() {
             </section>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">02 · Month</div>
+              <div className="brand-section-label">Month</div>
               <div className="cal-nav">
                 <button
                   type="button"
@@ -2034,7 +2008,7 @@ function App() {
             </section>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">03 · Upcoming list</div>
+              <div className="brand-section-label">Upcoming</div>
               {upcomingDeadlines.length === 0 ? (
                 <p className="empty-state-body" style={{ margin: 0 }}>
                   No deadlines yet. Set a project deadline above, or add a due
@@ -2088,7 +2062,7 @@ function App() {
               className="back-link"
               onClick={() => setActiveView('flow')}
             >
-              ← Back to desk
+              ← Work
             </button>
 
             <div className="brand-template-top">
@@ -2595,20 +2569,19 @@ function App() {
               className="back-link"
               onClick={() => setActiveView('flow')}
             >
-              ← Back to Work
+              ← Work
             </button>
             <div className="flow-top">
               <div>
                 <h1 className="page-title">Settings</h1>
                 <p className="page-sub">
-                  Control stimulation, presence, and your data. Everything saves
-                  on this device only — no account, no cloud.
+                  Preferences and data. Local-only — no account, no cloud.
                 </p>
               </div>
             </div>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">01 · Appearance</div>
+              <div className="brand-section-label">Appearance</div>
               <div className="settings-row">
                 <div>
                   <strong>Theme</strong>
@@ -2616,106 +2589,135 @@ function App() {
                 </div>
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-secondary btn-sm"
                   onClick={() => toggleTheme()}
                 >
-                  {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
+                  {theme === 'warm' ? 'Use dark' : 'Use light'}
                 </button>
               </div>
               <div className="settings-row">
                 <div>
                   <strong>Reduce motion</strong>
-                  <span>Less animation (easier on focus)</span>
+                  <span>Less animation</span>
                 </div>
                 <button
                   type="button"
-                  className={`btn ${reduceMotion ? 'btn-primary' : 'btn-secondary'}`}
+                  role="switch"
+                  aria-checked={reduceMotion}
+                  className={`pref-switch${reduceMotion ? ' is-on' : ''}`}
                   onClick={() => setPref('reduceMotion', !reduceMotion)}
                 >
-                  {reduceMotion ? 'On' : 'Off'}
+                  <span className="pref-switch-knob" />
+                  <span className="sr-only">
+                    {reduceMotion ? 'On' : 'Off'}
+                  </span>
                 </button>
               </div>
             </section>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">02 · Presence &amp; sound</div>
+              <div className="brand-section-label">Presence &amp; sound</div>
               <div className="settings-row">
                 <div>
                   <strong>Body double</strong>
-                  <span>Quiet company while you work — not a chatbot</span>
+                  <span>Quiet company — not a chatbot</span>
                 </div>
                 <button
                   type="button"
-                  className={`btn ${bodyDoubling ? 'btn-primary' : 'btn-secondary'}`}
+                  role="switch"
+                  aria-checked={bodyDoubling}
+                  className={`pref-switch${bodyDoubling ? ' is-on' : ''}`}
                   onClick={() => toggleBodyDoubling()}
                 >
-                  {bodyDoubling ? 'On' : 'Off'}
+                  <span className="pref-switch-knob" />
+                  <span className="sr-only">
+                    {bodyDoubling ? 'On' : 'Off'}
+                  </span>
                 </button>
               </div>
               <div className="settings-row">
                 <div>
                   <strong>Silent presence</strong>
-                  <span>Header badge only — no floating message card</span>
+                  <span>Header badge only — hide floating card</span>
                 </div>
                 <button
                   type="button"
-                  className={`btn ${bodyDoubleSilent ? 'btn-primary' : 'btn-secondary'}`}
+                  role="switch"
+                  aria-checked={bodyDoubleSilent}
+                  className={`pref-switch${bodyDoubleSilent ? ' is-on' : ''}`}
                   onClick={() => setPref('bodyDoubleSilent', !bodyDoubleSilent)}
                 >
-                  {bodyDoubleSilent ? 'On' : 'Off'}
+                  <span className="pref-switch-knob" />
+                  <span className="sr-only">
+                    {bodyDoubleSilent ? 'On' : 'Off'}
+                  </span>
                 </button>
               </div>
               <div className="settings-row">
                 <div>
                   <strong>Timer sound</strong>
-                  <span>Soft chime when a focus session ends</span>
+                  <span>Chime when a focus session ends</span>
                 </div>
                 <button
                   type="button"
-                  className={`btn ${soundEnabled ? 'btn-primary' : 'btn-secondary'}`}
+                  role="switch"
+                  aria-checked={soundEnabled}
+                  className={`pref-switch${soundEnabled ? ' is-on' : ''}`}
                   onClick={() => setPref('soundEnabled', !soundEnabled)}
                 >
-                  {soundEnabled ? 'On' : 'Off'}
+                  <span className="pref-switch-knob" />
+                  <span className="sr-only">
+                    {soundEnabled ? 'On' : 'Off'}
+                  </span>
                 </button>
               </div>
             </section>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">03 · Work loop</div>
+              <div className="brand-section-label">Work</div>
               <div className="settings-row">
                 <div>
                   <strong>Collapse queue by default</strong>
-                  <span>Hide waiting steps so you only see the current one</span>
+                  <span>Only show the current step</span>
                 </div>
                 <button
                   type="button"
-                  className={`btn ${queueCollapsed ? 'btn-primary' : 'btn-secondary'}`}
+                  role="switch"
+                  aria-checked={queueCollapsed}
+                  className={`pref-switch${queueCollapsed ? ' is-on' : ''}`}
                   onClick={() => setPref('queueCollapsed', !queueCollapsed)}
                 >
-                  {queueCollapsed ? 'On' : 'Off'}
+                  <span className="pref-switch-knob" />
+                  <span className="sr-only">
+                    {queueCollapsed ? 'On' : 'Off'}
+                  </span>
                 </button>
               </div>
               <div className="settings-row">
                 <div>
                   <strong>Show “How this works”</strong>
-                  <span>Intro card on the Work screen</span>
+                  <span>Intro card on Work</span>
                 </div>
                 <button
                   type="button"
-                  className={`btn ${showHowItWorks ? 'btn-primary' : 'btn-secondary'}`}
+                  role="switch"
+                  aria-checked={showHowItWorks}
+                  className={`pref-switch${showHowItWorks ? ' is-on' : ''}`}
                   onClick={() => setPref('showHowItWorks', !showHowItWorks)}
                 >
-                  {showHowItWorks ? 'On' : 'Off'}
+                  <span className="pref-switch-knob" />
+                  <span className="sr-only">
+                    {showHowItWorks ? 'On' : 'Off'}
+                  </span>
                 </button>
               </div>
             </section>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">04 · Your data</div>
+              <div className="brand-section-label">Your data</div>
               <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                All projects, tasks, pins, and brand fields live in this
-                browser&apos;s storage. Clearing site data or switching devices
-                can wipe them — download a backup if it matters.
+                Everything lives in this browser. Clearing site data or
+                switching devices can wipe it — backup if it matters.
               </p>
               <div className="settings-actions">
                 <button
@@ -2741,7 +2743,7 @@ function App() {
                     }
                   }}
                 >
-                  Reset to demo data
+                  Reset to demo
                 </button>
                 <button
                   type="button"
@@ -2762,37 +2764,58 @@ function App() {
                 </button>
               </div>
             </section>
+
+            <section className="panel brand-section">
+              <div className="brand-section-label">About</div>
+              <div className="settings-row">
+                <div>
+                  <strong>Version</strong>
+                  <span>
+                    {versionLabel()}
+                    {APP_BUILD_DATE ? ` · ${APP_BUILD_DATE}` : ''}
+                    {APP_BUILD ? ` · ${APP_BUILD}` : ''}
+                  </span>
+                </div>
+              </div>
+              <p className="panel-hint" style={{ margin: 0 }}>
+                Creative Companion is a local work loop for ADHD creative work —
+                not a chatbot, not a cloud app.
+              </p>
+            </section>
           </div>
         )}
 
         {/* ===== PROJECTS ===== */}
         {activeView === 'project' && (
           <div className="project-view">
-            <button
-              type="button"
-              className="back-link"
-              onClick={() => setActiveView('flow')}
-            >
-              ← Back to desk
-            </button>
-            <section className="panel">
-              <div className="panel-head">
+            <div className="flow-top">
+              <div>
+                <h1 className="page-title">Projects</h1>
+                <p className="page-sub">
+                  Switch lane, set brief &amp; deadline — then work on Work
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={openBreakdown}
+              >
+                Break into micro-steps
+              </button>
+            </div>
+            <section className="panel brand-section">
+              <div className="brand-section-label">Active project</div>
+              <div className="panel-head" style={{ marginBottom: '0.85rem' }}>
                 <div>
-                  <h1 className="panel-title page-title-in-panel">Projects</h1>
+                  <h2 className="panel-title">
+                    {activeProject?.name || 'Project'}
+                  </h2>
                   <p className="panel-hint">
-                    Switch project, edit brief, break overwhelm into micro-steps
+                    {deskTasks.filter((t) => !t.completed).length} open on desk
                   </p>
                 </div>
                 {projectPills}
               </div>
-              <button
-                type="button"
-                className="btn btn-primary"
-                style={{ marginBottom: '1rem' }}
-                onClick={openBreakdown}
-              >
-                Break this project into micro-steps
-              </button>
 
               <div className="field-block" style={{ marginBottom: '1rem' }}>
                 <label className="field-label" htmlFor="project-brief">
@@ -2810,7 +2833,7 @@ function App() {
 
               <div className="field-block" style={{ marginBottom: '1rem' }}>
                 <label className="field-label" htmlFor="proj-deadline-field">
-                  Project deadline
+                  Deadline
                 </label>
                 <div className="deadline-edit-row">
                   <input
@@ -2835,26 +2858,26 @@ function App() {
                   value={quickInput}
                   onChange={(e) => setQuickInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
-                  placeholder="Quick add to this project’s desk…"
+                  placeholder="Quick add to this desk…"
                   aria-label="Add to desk"
                 />
                 <button
                   type="button"
                   onClick={addQuickTask}
-                  className="btn btn-primary"
+                  className="btn btn-secondary"
                 >
-                  Add idea
+                  Add
                 </button>
               </div>
 
-              <p className="list-heading">Jump to</p>
+              <p className="list-heading">Go to</p>
               <div className="link-list">
                 <button
                   type="button"
                   className="link-row is-primary"
                   onClick={() => setActiveView('flow')}
                 >
-                  <span className="link-row-label">Desk</span>
+                  <span className="link-row-label">Work</span>
                   <span className="link-row-meta">
                     {deskTasks.filter((t) => !t.completed).length} open
                   </span>
@@ -2864,7 +2887,7 @@ function App() {
                   className="link-row"
                   onClick={() => setActiveView('studio')}
                 >
-                  <span className="link-row-label">Mood board</span>
+                  <span className="link-row-label">Board</span>
                   <span className="link-row-meta">
                     {deskMood.length} pins
                   </span>
@@ -2924,13 +2947,20 @@ function App() {
       </footer>
 
       {showOnboarding && (
-        <div className="export-overlay" role="dialog" aria-modal="true">
+        <div
+          className="export-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="onboard-title"
+        >
           <div className="export-panel onboard-panel">
-            <h2 style={{ marginTop: 0 }}>Name your first project</h2>
+            <p className="onboard-eyebrow">No login · local only</p>
+            <h2 id="onboard-title" style={{ marginTop: 0 }}>
+              Start your work loop
+            </h2>
             <p className="view-lede">
-              Creative Companion is a work loop for ADHD creative work: dump
-              ideas, break into micro-steps, do one next step. Not a chatbot.
-              Data stays on this device only.
+              Dump ideas → one current step → complete it. Not a chatbot. Your
+              data never leaves this device.
             </p>
             <label className="onboard-label">
               Project name
@@ -2939,35 +2969,34 @@ function App() {
                 onChange={(e) => setOnboardName(e.target.value)}
                 placeholder="e.g. 100 Families spring booklet"
                 className="onboard-input"
+                autoFocus
               />
             </label>
             <label className="onboard-label">
-              Brief (optional)
+              Brief <span className="onboard-optional">(optional)</span>
               <textarea
                 value={onboardBrief}
                 onChange={(e) => setOnboardBrief(e.target.value)}
                 placeholder="Who is this for? What should it feel like?"
-                rows={3}
+                rows={2}
                 className="onboard-input"
               />
             </label>
-            <div className="export-panel-actions" style={{ justifyContent: 'stretch' }}>
+            <div className="onboard-actions">
               <button
                 type="button"
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
-                onClick={() => finishOnboarding('demo')}
-              >
-                Use demo projects
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                style={{ flex: 1 }}
+                className="btn btn-primary onboard-primary"
                 disabled={!onboardName.trim()}
                 onClick={() => finishOnboarding('custom')}
               >
                 Start with this project
+              </button>
+              <button
+                type="button"
+                className="text-link onboard-demo"
+                onClick={() => finishOnboarding('demo')}
+              >
+                Or explore with demo projects
               </button>
             </div>
           </div>
@@ -3170,8 +3199,8 @@ function App() {
           </div>
           <p className="studio-mate-msg">
             {isFocusRunning
-              ? 'Timer on. Stay with the top desk item.'
-              : 'I’m just here so you’re not alone at the desk. No replies.'}
+              ? 'Timer on. Stay with the current step.'
+              : 'Quiet company. No chat. No replies.'}
           </p>
         </div>
       )}
