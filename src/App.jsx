@@ -93,6 +93,7 @@ import {
   isRtl,
 } from './lib/i18n'
 import { useModalFocus } from './lib/useModalFocus'
+import { BRAND_KITS, getBrandKit } from './lib/brandKits'
 import {
   isSessionOpen,
   closeSession,
@@ -237,6 +238,9 @@ function App() {
   const [deskConfirm, setDeskConfirm] = useState(null)
   const [forceBreakConsentOpen, setForceBreakConsentOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [commandOpen, setCommandOpen] = useState(false)
+  const [commandQuery, setCommandQuery] = useState('')
+  const commandInputRef = useRef(null)
   const [resumeBanner, setResumeBanner] = useState(null)
   const [boardLightbox, setBoardLightbox] = useState(null)
   const [demoTour, setDemoTour] = useState(null)
@@ -519,6 +523,113 @@ function App() {
     setStepFocusKey((k) => k + 1)
   }
 
+  const applyBrandKit = useCallback(
+    (kitId) => {
+      const kit = getBrandKit(kitId)
+      if (!kit) return
+      setProjectPalette([...kit.palette])
+      updateBrandField('voice', kit.voice)
+      updateBrandField('typeHeading', kit.typeHeading)
+      updateBrandField('typeBody', kit.typeBody)
+      updateBrandField('doUse', kit.doUse)
+      updateBrandField('dontUse', kit.dontUse)
+      flashToast(`Direction kit: ${kit.name}`)
+      setActiveView('brand')
+    },
+    [setProjectPalette, updateBrandField, setActiveView]
+  )
+
+  const commandActions = useMemo(() => {
+    const acts = [
+      {
+        id: 'complete',
+        label: 'Complete current step',
+        hint: 'C',
+        run: () => completeCurrentStep(),
+        when: () => !!nextTask,
+      },
+      {
+        id: 'capture',
+        label: 'New capture on Work',
+        hint: 'N',
+        run: () => {
+          setActiveView('flow')
+          window.setTimeout(
+            () => document.getElementById('desk-capture')?.focus?.(),
+            60
+          )
+        },
+      },
+      {
+        id: 'work',
+        label: 'Go to Work',
+        hint: '2',
+        run: () => setActiveView('flow'),
+      },
+      {
+        id: 'board',
+        label: 'Go to Board',
+        hint: '3',
+        run: () => setActiveView('studio'),
+      },
+      {
+        id: 'system',
+        label: 'Go to System',
+        hint: '4',
+        run: () => setActiveView('brand'),
+      },
+      {
+        id: 'pack',
+        label: 'Go to Pack',
+        hint: '5',
+        run: () => setActiveView('finish'),
+      },
+      {
+        id: 'project',
+        label: 'Go to Project',
+        hint: '1',
+        run: () => setActiveView('project'),
+      },
+      {
+        id: 'spark',
+        label: 'Open Spark',
+        hint: '',
+        run: () => setActiveView('spark'),
+      },
+      {
+        id: 'timer',
+        label: 'Open Focus timer',
+        hint: '',
+        run: () => setActiveView('insights'),
+      },
+      {
+        id: 'helper',
+        label: bodyDoubling ? 'Turn Helper off' : 'Turn Helper on',
+        hint: '',
+        run: () => toggleBodyDoubling(),
+      },
+      {
+        id: 'keys',
+        label: 'Keyboard shortcuts',
+        hint: '?',
+        run: () => setShortcutsOpen(true),
+      },
+      {
+        id: 'settings',
+        label: 'Open Settings',
+        hint: '',
+        run: () => setActiveView('settings'),
+      },
+    ]
+    return acts.filter((a) => (a.when ? a.when() : true))
+  }, [nextTask, bodyDoubling, setActiveView, toggleBodyDoubling])
+
+  const commandFiltered = useMemo(() => {
+    const q = commandQuery.trim().toLowerCase()
+    if (!q) return commandActions
+    return commandActions.filter((a) => a.label.toLowerCase().includes(q))
+  }, [commandActions, commandQuery])
+
   // Auto-clear undo window
   useEffect(() => {
     if (!recentUndo) return undefined
@@ -548,17 +659,25 @@ function App() {
     </div>
   )
 
-  // Keyboard: ⌘K spark · Esc dismiss overlays (priority: topmost first)
+  // Keyboard: ⌘K command palette · Esc dismiss overlays (priority: topmost first)
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.metaKey && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
-        setActiveView('spark')
+        setCommandOpen(true)
+        setCommandQuery('')
         setMoreOpen(false)
+        window.requestAnimationFrame(() => commandInputRef.current?.focus?.())
         return
       }
       if (e.key !== 'Escape') return
       // Topmost dialogs first
+      if (commandOpen) {
+        e.preventDefault()
+        setCommandOpen(false)
+        setCommandQuery('')
+        return
+      }
       if (shortcutsOpen) {
         e.preventDefault()
         setShortcutsOpen(false)
@@ -612,6 +731,7 @@ function App() {
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [
+    commandOpen,
     shortcutsOpen,
     demoTour,
     deskConfirm,
@@ -872,7 +992,8 @@ function App() {
         demoTour ||
         deskConfirm ||
         forceBreakConsentOpen ||
-        thinPackPrompt
+        thinPackPrompt ||
+        commandOpen
       ) {
         return
       }
@@ -931,6 +1052,7 @@ function App() {
     deskConfirm,
     forceBreakConsentOpen,
     thinPackPrompt,
+    commandOpen,
     shortcutsOpen,
     nextTask,
     recentUndo,
@@ -2008,6 +2130,22 @@ function App() {
                   >
                     <strong>Keyboard</strong>
                     <span>C complete · N capture · 1–5 path · ?</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setMoreOpen(false)
+                      setCommandOpen(true)
+                      setCommandQuery('')
+                      window.requestAnimationFrame(() =>
+                        commandInputRef.current?.focus?.()
+                      )
+                    }}
+                  >
+                    <strong>Command palette</strong>
+                    <span>⌘K · jump anywhere</span>
                   </button>
                 </div>
               )}
@@ -4262,6 +4400,32 @@ function App() {
                 </button>
               </div>
             </div>
+
+            <section className="panel brand-section brand-kits-panel">
+              <div className="brand-section-label">Direction kits</div>
+              <p className="panel-hint" style={{ marginTop: 0 }}>
+                Seed palette, voice, type, and do/don&apos;t — then edit on System.
+              </p>
+              <div className="brand-kits-grid">
+                {BRAND_KITS.map((kit) => (
+                  <button
+                    key={kit.id}
+                    type="button"
+                    className="brand-kit-card"
+                    onClick={() => applyBrandKit(kit.id)}
+                  >
+                    <span className="brand-kit-swatches" aria-hidden="true">
+                      {kit.palette.slice(0, 4).map((c) => (
+                        <i key={c} style={{ background: c }} />
+                      ))}
+                    </span>
+                    <strong className="brand-kit-name">{kit.name}</strong>
+                    <span className="brand-kit-blurb">{kit.blurb}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
             <section className="panel brand-section">
               <div className="brand-section-label">
                 {i18nT(locale, 'ui.pathReadiness')}
@@ -4834,6 +4998,72 @@ function App() {
         </div>
       )}
 
+      {commandOpen && (
+        <div
+          className="export-overlay command-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="command-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setCommandOpen(false)
+              setCommandQuery('')
+            }
+          }}
+        >
+          <div className="export-panel command-panel">
+            <h3 id="command-title" className="sr-only">
+              Command palette
+            </h3>
+            <input
+              ref={commandInputRef}
+              className="field-input command-input"
+              value={commandQuery}
+              onChange={(e) => setCommandQuery(e.target.value)}
+              placeholder="Jump, complete, Helper…"
+              aria-label="Filter commands"
+              autoComplete="off"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const first = commandFiltered[0]
+                  if (first) {
+                    e.preventDefault()
+                    setCommandOpen(false)
+                    setCommandQuery('')
+                    first.run()
+                  }
+                }
+              }}
+            />
+            <ul className="command-list" role="listbox">
+              {commandFiltered.length === 0 && (
+                <li className="command-empty">No matches</li>
+              )}
+              {commandFiltered.map((a) => (
+                <li key={a.id}>
+                  <button
+                    type="button"
+                    className="command-item"
+                    role="option"
+                    onClick={() => {
+                      setCommandOpen(false)
+                      setCommandQuery('')
+                      a.run()
+                    }}
+                  >
+                    <span>{a.label}</span>
+                    {a.hint ? <kbd>{a.hint}</kbd> : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className="panel-hint" style={{ margin: '0.55rem 0 0' }}>
+              Enter runs the first match · Esc closes
+            </p>
+          </div>
+        </div>
+      )}
+
       {shortcutsOpen && (
         <div
           className="export-overlay shortcuts-overlay"
@@ -4875,7 +5105,7 @@ function App() {
               </li>
               <li>
                 <kbd>⌘</kbd>
-                <kbd>K</kbd> Spark
+                <kbd>K</kbd> Command palette
               </li>
               <li>
                 <kbd>Esc</kbd> Close / tuck Helper

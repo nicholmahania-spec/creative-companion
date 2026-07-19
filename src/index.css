@@ -10622,3 +10622,129 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   width: 100%;
   margin-top: 0.35rem;
 }
+
+/* Command palette */
+.command-panel {
+  max-width: 26rem;
+  width: min(92vw, 26rem);
+  padding-top: 0.85rem;
+}
+
+.command-input {
+  width: 100%;
+  margin-bottom: 0.55rem;
+  font-weight: 600;
+}
+
+.command-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: min(50vh, 18rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.command-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.command-item:hover,
+.command-item:focus-visible {
+  background: var(--bg-muted);
+  outline: none;
+}
+
+.command-item kbd {
+  font-size: 0.72rem;
+  font-weight: 750;
+  padding: 0.12rem 0.35rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-canvas);
+  color: var(--text-muted);
+}
+
+.command-empty {
+  padding: 0.65rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Brand direction kits on Project */
+.brand-kits-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+}
+
+@media (max-width: 520px) {
+  .brand-kits-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.brand-kit-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.brand-kit-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-1);
+}
+
+.brand-kit-swatches {
+  display: flex;
+  gap: 0.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.brand-kit-swatches i {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 4px;
+  border: 1px solid rgba(12, 10, 9, 0.08);
+}
+
+.brand-kit-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brand-kit-blurb {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
