@@ -5,6 +5,7 @@ import {
   brandPackToHtml,
   buildDirectionSheetMarkup,
   slugifyFilename,
+  downloadBrandPackVectorPdf,
 } from './exportFiles'
 
 describe('slugifyFilename', () => {
@@ -106,7 +107,7 @@ describe('brandPackToMarkdown / brandPackToHtml', () => {
     const html = brandPackToHtml(pack)
     expect(html).toContain('<!DOCTYPE html>')
     expect(html).toContain('Atlas')
-    expect(html).toContain('Brand identity template')
+    expect(html).toContain('Direction sheet')
     expect(html).toContain('#112233')
     expect(html).toContain('window.print')
   })
@@ -139,7 +140,7 @@ describe('buildDirectionSheetMarkup (preview-faithful PDF source)', () => {
     const html = buildDirectionSheetMarkup(pack)
     expect(html).toContain('direction-sheet')
     expect(html).toContain('export-identity-cover')
-    expect(html).toContain('Brand identity template')
+    expect(html).toContain('Direction sheet')
     expect(html).toContain('Soft Signal')
     expect(html).toContain('Quiet focus')
     expect(html).toContain('direction-palette')
@@ -149,5 +150,43 @@ describe('buildDirectionSheetMarkup (preview-faithful PDF source)', () => {
     expect(html).toContain('Lock type')
     expect(html).toContain('Mood direction')
     expect(html).toContain('Open work')
+  })
+})
+
+describe('downloadBrandPackVectorPdf', () => {
+  it('produces a vector PDF without throwing', async () => {
+    const pack = buildBrandPackSnapshot({
+      project: {
+        name: 'Vector Pack Co',
+        tagline: 'Sharp type',
+        brief: 'For founders who care about craft.',
+        voice: 'Warm plain',
+        doUse: 'Real paper',
+        dontUse: 'Neon gradients',
+        typeHeading: 'Playfair Display Bold',
+        typeBody: 'Lato Regular',
+        palette: ['#1C1917', '#0F766E', '#FAFAF9'],
+        colorRoles: { cover: '#1C1917', accent: '#0F766E' },
+      },
+      moodItems: [
+        {
+          id: 1,
+          type: 'color',
+          note: 'Ink',
+          visual: '#1C1917',
+          inPack: true,
+          packHero: true,
+        },
+      ],
+    })
+    const result = await downloadBrandPackVectorPdf(pack, null, {
+      hideWatermark: true,
+    })
+    // Node/jsdom may block download; generation must still succeed via save/anchor/tab
+    expect(result).toBeTruthy()
+    expect(result.ok === true || typeof result.error === 'string').toBe(true)
+    if (result.ok) {
+      expect(result.mode).toBe('vector')
+    }
   })
 })

@@ -7,7 +7,8 @@
  * for PDF, and keep HTML/MD/JSON paths fully synchronous when possible.
  */
 
-import { pinFaceCssText } from './moodPins'
+import { pinFaceCssText, pinVisualKind } from './moodPins'
+import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
 
 /** Safe filename from a project title */
 export function slugifyFilename(name, fallback = 'creative-companion') {
@@ -283,9 +284,12 @@ export function buildBrandPackSnapshot({
       note: m.note,
       visual: m.visual,
       inPack: !!m.inPack,
+      packHero: !!m.packHero,
     })),
     pinsUsedFallback: usedFallback,
     pinsStarredCount: starredCount,
+    colorRoles: p.colorRoles || null,
+    logoImage: p.logoImage || '',
   }
 }
 
@@ -571,7 +575,7 @@ export function brandPackToHtml(pack) {
     </div>
     <article class="direction-sheet">
       <div class="export-identity-cover">
-        <div class="kicker">Brand identity template</div>
+        <div class="kicker">Direction sheet</div>
         <h1 class="direction-title">${esc(pack.projectName)}</h1>
         <p class="direction-brief">${esc(pack.tagline || 'Tagline TBD')}</p>
       </div>
@@ -766,7 +770,7 @@ export function buildDirectionSheetMarkup(pack) {
 
   return `<article class="direction-sheet" id="direction-sheet-pdf-clone">
     <div class="export-identity-cover" style="background:${esc(cover)};color:${coverFg}">
-      <div class="kicker" style="color:inherit;opacity:0.85">Brand identity template</div>
+      <div class="kicker" style="color:inherit;opacity:0.85">Direction sheet</div>
       <h1 class="direction-title" style="color:inherit">${esc(p.projectName || 'Untitled project')}</h1>
       <p class="direction-brief" style="color:inherit;opacity:0.92">${esc(p.tagline || 'Tagline TBD')}</p>
     </div>
@@ -926,15 +930,30 @@ export async function canvasPagesToPdfBlob(canvas, opts = {}) {
 }
 
 /**
- * One-click brand pack PDF that matches the Export pack preview layout/style.
- * Captures the live #direction-sheet when open, otherwise a CSS-identical clone.
+ * Default Download PDF = vector direction pack.
+ * Pass options.mode = 'preview' for html2canvas raster match.
+ */
+export async function downloadBrandPackPdf(
+  pack,
+  handlePromise = null,
+  options = {}
+) {
+  if (options.mode === 'preview' || options.mode === 'raster') {
+    return downloadBrandPackPdfRaster(pack, handlePromise, options)
+  }
+  return downloadBrandPackVectorPdf(pack, handlePromise, options)
+}
+
+/**
+ * Raster PDF that matches on-screen preview (html2canvas → JPEG).
+ * Prefer vector download for client handoff.
  *
  * @param {object} pack - brand pack snapshot
  * @param {Promise|null} handlePromise - from captureSaveHandle() on click
  * @param {{ element?: HTMLElement|null }} [options]
  * @returns {Promise<{ ok: boolean, error?: string, cancelled?: boolean, method?: string }>}
  */
-export async function downloadBrandPackPdf(pack, handlePromise = null, options = {}) {
+export async function downloadBrandPackPdfRaster(pack, handlePromise = null, options = {}) {
   let cleanup = () => {}
   try {
     await preloadPdfEngine()
@@ -1087,6 +1106,327 @@ export function downloadWorkspaceBackup(workspace) {
     },
     `creative-companion-backup-${day}.json`
   )
+}
+
+/**
+ * Map type face labels to jsPDF built-in fonts (vector text).
+ * Real family names still print as labels so the pack remains honest.
+ */
+function pdfFontForLabel(label, role = 'body') {
+  const s = String(label || '').toLowerCase()
+  if (
+    s.includes('baskerville') ||
+    s.includes('playfair') ||
+    s.includes('fraunces') ||
+    s.includes('georgia') ||
+    s.includes('serif')
+  ) {
+    return { family: 'times', style: role === 'heading' ? 'bold' : 'normal' }
+  }
+  return { family: 'helvetica', style: role === 'heading' ? 'bold' : 'normal' }
+}
+
+function packCoverHex(pack) {
+  const roles = pack?.colorRoles || {}
+  const auto = mapPaletteRoles(pack?.palette || [])
+  return (
+    normalizeHex(roles.cover) ||
+    normalizeHex(auto.cover) ||
+    normalizeHex((pack?.palette || [])[0]) ||
+    '#1C1917'
+  )
+}
+
+/**
+ * Vector brand pack PDF — text + fills as PDF primitives (selectable type).
+ * Pin photos / logo images embed as images when data URLs are available.
+ *
+ * @param {object} pack
+ * @param {Promise|null} handlePromise
+ * @param {{ hideWatermark?: boolean }} [options]
+ */
+export async function downloadBrandPackVectorPdf(
+  pack,
+  handlePromise = null,
+  options = {}
+) {
+  try {
+    if (!jsPdfModulePromise) {
+      jsPdfModulePromise = import('jspdf').catch((err) => {
+        jsPdfModulePromise = null
+        throw err
+      })
+    }
+    const jsPdfMod = await jsPdfModulePromise
+    const { jsPDF } = jsPdfMod
+    const hideWatermark = !!options.hideWatermark
+    const margin = 48
+    const pageW = 612
+    const pageH = 792
+    const contentW = pageW - margin * 2
+    const bottom = pageH - margin
+    const pdf = new jsPDF({
+      unit: 'pt',
+      format: 'letter',
+      compress: true,
+    })
+
+    let y = margin
+    const ensureSpace = (need) => {
+      if (y + need <= bottom) return
+      pdf.addPage()
+      y = margin
+    }
+
+    const setFont = (label, role = 'body', size = 11) => {
+      const f = pdfFontForLabel(label, role)
+      pdf.setFont(f.family, f.style)
+      pdf.setFontSize(size)
+    }
+
+    const writeWrapped = (text, { size = 11, role = 'body', color = [12, 10, 9], label } = {}) => {
+      const str = String(text || '').trim()
+      if (!str) return
+      setFont(label || pack?.typeBody, role, size)
+      pdf.setTextColor(color[0], color[1], color[2])
+      const lines = pdf.splitTextToSize(str, contentW)
+      const lineH = size * 1.35
+      ensureSpace(lines.length * lineH + 4)
+      pdf.text(lines, margin, y)
+      y += lines.length * lineH + 6
+    }
+
+    const kicker = (label) => {
+      ensureSpace(22)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(8)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text(String(label).toUpperCase(), margin, y)
+      y += 14
+    }
+
+    // ——— Cover band ———
+    const cover = packCoverHex(pack)
+    const coverRgb = hexToRgb(cover) || [28, 25, 23]
+    const fg = bestTextOn(cover)
+    const fgRgb = hexToRgb(fg) || [250, 250, 249]
+    const coverH = 118
+    pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
+    pdf.rect(0, 0, pageW, coverH + margin * 0.35, 'F')
+    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(8)
+    pdf.text('DIRECTION SHEET', margin, margin + 8)
+    setFont(pack?.typeHeading, 'heading', 22)
+    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
+    const titleLines = pdf.splitTextToSize(
+      pack?.projectName || 'Untitled project',
+      contentW
+    )
+    pdf.text(titleLines, margin, margin + 36)
+    const tag = String(pack?.tagline || '').trim() || 'Tagline TBD'
+    setFont(pack?.typeBody, 'body', 12)
+    const tagLines = pdf.splitTextToSize(tag, contentW)
+    pdf.text(tagLines, margin, margin + 36 + titleLines.length * 24 + 8)
+    y = coverH + margin * 0.55 + 12
+
+    // Logo image
+    if (pack?.logoImage && String(pack.logoImage).startsWith('data:image')) {
+      try {
+        ensureSpace(56)
+        pdf.addImage(pack.logoImage, 'PNG', margin, y, 48, 48)
+        y += 56
+      } catch {
+        /* skip bad image */
+      }
+    }
+
+    if (pack?.brief) {
+      kicker('Positioning')
+      writeWrapped(pack.brief, { size: 11, label: pack.typeBody })
+    }
+    if (pack?.voice) {
+      kicker('Voice')
+      writeWrapped(pack.voice, { size: 11, label: pack.typeBody })
+    }
+
+    // Palette
+    kicker('Palette')
+    const colors = (pack?.palette || []).map((c) => normalizeHex(c) || c).filter(Boolean)
+    if (colors.length) {
+      const swH = 28
+      const swW = contentW / colors.length
+      ensureSpace(swH + 28)
+      colors.forEach((hex, i) => {
+        const rgb = hexToRgb(hex) || [136, 136, 136]
+        pdf.setFillColor(rgb[0], rgb[1], rgb[2])
+        pdf.rect(margin + i * swW, y, swW + 0.3, swH, 'F')
+      })
+      y += swH + 10
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(8)
+      pdf.setTextColor(80, 80, 80)
+      const hexLine = colors.join('  ·  ')
+      const hexLines = pdf.splitTextToSize(hexLine, contentW)
+      pdf.text(hexLines, margin, y)
+      y += hexLines.length * 11 + 8
+    }
+
+    // Roles
+    const roles = {
+      ...mapPaletteRoles(colors),
+      ...(pack?.colorRoles || {}),
+    }
+    const roleKeys = ['cover', 'text', 'accent', 'quiet']
+    ensureSpace(36)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    pdf.setTextColor(80, 80, 80)
+    const roleLine = roleKeys
+      .map((k) => {
+        const h = normalizeHex(roles[k]) || roles[k] || '—'
+        return `${k}: ${h}`
+      })
+      .join('   ')
+    const roleLines = pdf.splitTextToSize(roleLine, contentW)
+    pdf.text(roleLines, margin, y)
+    y += roleLines.length * 11 + 10
+
+    // Type
+    kicker('Typography')
+    writeWrapped(
+      `${pack?.typeHeading || 'Heading'}  /  ${pack?.typeBody || 'Body'}`,
+      { size: 12, role: 'heading', label: pack?.typeHeading }
+    )
+    writeWrapped(
+      'Specimen faces above are production labels. PDF embeds standard Helvetica/Times for portability; install the named faces for full match.',
+      { size: 9, color: [90, 90, 90] }
+    )
+
+    if (pack?.logoDirection) {
+      kicker('Logo direction')
+      writeWrapped(pack.logoDirection, { size: 11 })
+    }
+
+    // Do / Don't
+    const doT = String(pack?.doUse || '').trim()
+    const dontT = String(pack?.dontUse || '').trim()
+    if (doT || dontT) {
+      kicker('Do / Don’t')
+      const colW = (contentW - 16) / 2
+      ensureSpace(40)
+      const y0 = y
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(9)
+      pdf.setTextColor(12, 10, 9)
+      pdf.text('DO', margin, y)
+      pdf.text("DON'T", margin + colW + 16, y)
+      y += 12
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(10)
+      const doLines = pdf.splitTextToSize(doT || '—', colW)
+      const dontLines = pdf.splitTextToSize(dontT || '—', colW)
+      pdf.text(doLines, margin, y)
+      pdf.text(dontLines, margin + colW + 16, y)
+      y = y0 + 12 + Math.max(doLines.length, dontLines.length) * 13 + 12
+    }
+
+    // Mood pins
+    const pins = pack?.pins || []
+    if (pins.length) {
+      kicker('Mood direction')
+      const cols = 3
+      const gap = 10
+      const cellW = (contentW - gap * (cols - 1)) / cols
+      const cellH = 72
+      for (let i = 0; i < pins.length; i++) {
+        if (i % cols === 0) ensureSpace(cellH + 28)
+        const col = i % cols
+        const x = margin + col * (cellW + gap)
+        if (col === 0 && i > 0) y += cellH + 22
+        const pin = pins[i]
+        const kind = pinVisualKind(pin)
+        pdf.setDrawColor(220, 220, 220)
+        pdf.setFillColor(250, 250, 249)
+        pdf.roundedRect(x, y, cellW, cellH, 3, 3, 'FD')
+        if (kind === 'image' && String(pin.visual || '').startsWith('data:image')) {
+          try {
+            pdf.addImage(pin.visual, 'JPEG', x + 2, y + 2, cellW - 4, cellH - 4)
+          } catch {
+            /* skip */
+          }
+        } else if (kind === 'color' || kind === 'gradient') {
+          const hex = normalizeHex(pin.visual) || '#D6D3D1'
+          const rgb = hexToRgb(hex) || [214, 211, 209]
+          pdf.setFillColor(rgb[0], rgb[1], rgb[2])
+          pdf.rect(x + 2, y + 2, cellW - 4, cellH - 4, 'F')
+        }
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(7)
+        pdf.setTextColor(70, 70, 70)
+        const note = String(pin.note || 'Pin').slice(0, 80)
+        const noteLines = pdf.splitTextToSize(
+          (pin.packHero ? '★ ' : '') + note,
+          cellW
+        )
+        pdf.text(noteLines.slice(0, 2), x, y + cellH + 10)
+        if (i === pins.length - 1) y += cellH + 24
+      }
+    }
+
+    if (!hideWatermark) {
+      ensureSpace(28)
+      y = Math.max(y, bottom - 20)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(8)
+      pdf.setTextColor(140, 140, 140)
+      const foot = `Creative Companion · Vector direction pack · ${new Date().toLocaleDateString()}`
+      pdf.text(foot, margin, Math.min(y, bottom - 8))
+    }
+
+    const slug = slugifyFilename(pack?.projectName, 'brand-pack')
+    const name = `${slug}-brand-direction.pdf`
+    let blob
+    try {
+      const ab = pdf.output('arraybuffer')
+      blob = new Blob([ab], { type: 'application/pdf' })
+    } catch {
+      blob = pdf.output('blob')
+      if (!blob.type) blob = new Blob([blob], { type: 'application/pdf' })
+    }
+
+    if (handlePromise) {
+      const written = await writeToSaveHandle(handlePromise, blob)
+      if (written.ok || written.cancelled) {
+        return { ...written, method: 'file-picker', mode: 'vector' }
+      }
+    }
+    try {
+      pdf.save(name)
+      return { ok: true, method: 'jspdf-save', mode: 'vector' }
+    } catch {
+      /* fall through */
+    }
+    const viaAnchor = downloadBlob(blob, name)
+    if (viaAnchor.ok) {
+      return { ...viaAnchor, method: viaAnchor.method || 'anchor', mode: 'vector' }
+    }
+    return { ok: false, error: 'Browser blocked the download' }
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Vector PDF failed' }
+  }
+}
+
+/**
+ * Raster preview-match PDF (html2canvas). Prefer vector for clients.
+ * @deprecated for client handoff — use downloadBrandPackVectorPdf
+ */
+export async function downloadBrandPackPreviewPdf(
+  pack,
+  handlePromise = null,
+  options = {}
+) {
+  return downloadBrandPackPdfRaster(pack, handlePromise, options)
 }
 
 /**

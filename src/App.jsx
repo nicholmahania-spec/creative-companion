@@ -68,6 +68,7 @@ import {
   downloadBrandPackMarkdown,
   downloadBrandPackJson,
   downloadBrandPackPdf,
+  downloadBrandPackPdfRaster,
   downloadWorkspaceBackup,
   packReadiness,
   preloadPdfEngine,
@@ -1185,7 +1186,7 @@ function App() {
     // Capture File System Access handle WHILE we still have the user-gesture.
     // Critical for PDF (async jsPDF load) and helps Chrome when anchor download is blocked.
     const saveName =
-      kind === 'pdf'
+      kind === 'pdf' || kind === 'pdf-preview'
         ? `${slug}-brand-direction.pdf`
         : kind === 'html'
           ? `${slug}-brand-direction.html`
@@ -1201,11 +1202,34 @@ function App() {
       : null
 
     if (kind === 'pdf') {
-      // Prefer live System artboard; else open export panel BrandArtboard
+      // Vector direction pack (text + swatches as PDF primitives)
+      void preloadPdfEngine()
+      flashToast('Building vector PDF…', { important: true })
+      void (async () => {
+        const result = await downloadBrandPackPdf(pack, handlePromise, {
+          hideWatermark: hidePackWatermark,
+          mode: 'vector',
+        })
+        if (result.ok) {
+          setLastExportNote(
+            `Vector PDF saved · ${new Date().toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit',
+            })}`
+          )
+          finishOk('Vector PDF')
+        } else if (result.cancelled) flashToast('Save cancelled')
+        else flashToast(result.error || 'PDF failed')
+      })()
+      return
+    }
+
+    if (kind === 'pdf-preview') {
+      // Raster snapshot matching on-screen artboard (optional)
       const hasSystem = document.getElementById('system-artboard')
       if (!hasSystem && !exportPanel) openExportPanel()
       void preloadPdfEngine()
-      flashToast('Capturing pack preview as PDF…')
+      flashToast('Capturing preview PDF…', { important: true })
       void (async () => {
         await new Promise((r) =>
           requestAnimationFrame(() => requestAnimationFrame(r))
@@ -1220,11 +1244,18 @@ function App() {
           document.getElementById('system-artboard') ||
           document.getElementById('direction-sheet') ||
           document.getElementById('pack-preview-artboard')
-        const result = await downloadBrandPackPdf(pack, handlePromise, {
+        const result = await downloadBrandPackPdfRaster(pack, handlePromise, {
           element: live || null,
         })
-        if (result.ok) finishOk('Brand PDF')
-        else if (result.cancelled) flashToast('Save cancelled')
+        if (result.ok) {
+          setLastExportNote(
+            `Preview PDF saved · ${new Date().toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit',
+            })}`
+          )
+          finishOk('Preview PDF')
+        } else if (result.cancelled) flashToast('Save cancelled')
         else flashToast(result.error || 'PDF failed')
       })()
       return
@@ -3672,12 +3703,13 @@ function App() {
                         runExport('pdf')
                       }}
                     >
-                      Download PDF (preview match)
+                      Download vector PDF
                     </button>
                     <p className="pack-export-hint">
-                      <strong>Print / Save as PDF</strong> is best for clients
-                      (paper CSS, sharper type). <strong>Download</strong> is a
-                      raster snapshot of the on-screen pack.
+                      <strong>Print</strong> uses paper CSS (often best on
+                      screen). <strong>Download vector PDF</strong> is real
+                      text + color fills (selectable, sharp zoom). Preview-match
+                      raster is under More formats.
                     </p>
                     {lastExportNote ? (
                       <p className="pack-export-confirm" role="status">
@@ -3720,6 +3752,13 @@ function App() {
                     <details className="finish-more-formats">
                       <summary>More formats &amp; backup</summary>
                       <div className="finish-more-formats-list">
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => runExport('pdf-preview')}
+                        >
+                          Preview PDF (raster)
+                        </button>
                         <button
                           type="button"
                           className="btn btn-secondary"
@@ -4521,7 +4560,7 @@ function App() {
                 className="btn btn-primary"
                 onClick={() => runExport('pdf')}
               >
-                Download PDF
+                Download vector PDF
               </button>
               <button
                 type="button"

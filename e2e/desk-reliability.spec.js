@@ -58,10 +58,10 @@ test.describe('Desk reliability', () => {
       page.getByRole('button', { name: 'Print / Save as PDF', exact: true })
     ).toBeVisible()
     await expect(
-      page.getByRole('button', { name: /Download PDF/i })
+      page.getByRole('button', { name: /Download vector PDF|Download PDF/i })
     ).toBeVisible()
     await expect(
-      page.getByText(/best for clients|paper CSS|raster snapshot/i)
+      page.locator('.pack-export-hint').filter({ hasText: /vector PDF/i })
     ).toBeVisible()
   })
 
