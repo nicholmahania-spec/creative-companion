@@ -18,38 +18,30 @@ function readPkgVersion() {
 
 function gitMeta() {
   try {
-    const count = execSync('git rev-list --count HEAD', {
-      encoding: 'utf8',
-      cwd: root,
-    }).trim()
     const sha = execSync('git rev-parse --short HEAD', {
       encoding: 'utf8',
       cwd: root,
     }).trim()
-    return { count: parseInt(count, 10) || 0, sha: sha || 'dev' }
+    return { sha: sha || 'dev' }
   } catch {
-    return { count: 0, sha: 'dev' }
+    return { sha: 'dev' }
   }
 }
 
 /**
- * Display version auto-advances with every commit:
- * package.json major.minor + git commit count as patch
- * e.g. package 0.2.0 + 5 commits → 0.2.5
+ * App version = package.json (source of truth).
  *
- * Bump major/minor in package.json for product waves:
- *   npm run bump -- --minor
+ * Bump before each update:
+ *   npm run bump          → patch  0.2.0 → 0.2.1
+ *   npm run bump:minor    → minor  0.2.1 → 0.3.0
+ *   npm run bump:major    → major  0.3.0 → 1.0.0
+ *
+ * Footer shows v{package.json version}; git SHA + date are build metadata.
  */
 function resolveAppVersion() {
-  const pkgVer = readPkgVersion()
-  const { count, sha } = gitMeta()
-  const [maj, min] = pkgVer.split('.')
-  const major = maj || '0'
-  const minor = min || '0'
-  // +1 so the commit that ships this code counts after it's on main
-  const patch = Math.max(count, 0)
+  const { sha } = gitMeta()
   return {
-    version: `${major}.${minor}.${patch}`,
+    version: readPkgVersion(),
     build: sha,
     date: new Date().toISOString().slice(0, 10),
   }
