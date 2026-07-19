@@ -7,6 +7,8 @@
  * for PDF, and keep HTML/MD/JSON paths fully synchronous when possible.
  */
 
+import { pinFaceCssText } from './moodPins'
+
 /** Safe filename from a project title */
 export function slugifyFilename(name, fallback = 'creative-companion') {
   const s = String(name || '')
@@ -339,12 +341,8 @@ export function brandPackToHtml(pack) {
   const pinsHtml = (pack.pins || [])
     .slice(0, 8)
     .map((p) => {
-      if (p.type === 'image' && p.visual) {
-        const src = String(p.visual).replace(/'/g, '%27')
-        return `<div class="direction-pin"><div class="direction-pin-visual" style="background-image:url('${src}');background-size:cover;background-position:center"></div><div class="direction-pin-note">${esc(p.note)}</div></div>`
-      }
-      const bg = esc(p.visual || '#EDE6FF')
-      return `<div class="direction-pin"><div class="direction-pin-visual" style="background:${bg}"></div><div class="direction-pin-note">${esc(p.note)}</div></div>`
+      const css = pinFaceCssText(p).replace(/"/g, "'")
+      return `<div class="direction-pin"><div class="direction-pin-visual" style="${css}"></div><div class="direction-pin-note">${esc(p.note || 'Pin')}</div></div>`
     })
     .join('')
 
@@ -667,23 +665,15 @@ export function buildDirectionSheetMarkup(pack) {
   const pinsHtml = pins.length
     ? `<div class="direction-pins">${pins
         .map((pin) => {
-          const isImage = pin.type === 'image' && pin.visual
-          const bgImg = isImage
-            ? `background-image:url('${String(pin.visual).replace(/'/g, '%27')}');background-size:cover;background-position:center;`
-            : ''
-          const bgColor =
-            pin.type === 'quote'
-              ? esc(pin.visual || '#EDE6FF')
-              : isImage
-                ? 'transparent'
-                : esc(pin.visual || '#EDE6FF')
+          // Escape quotes in data URLs / CSS for style attribute
+          const css = pinFaceCssText(pin).replace(/"/g, "'")
           return `<div class="direction-pin">
-            <div class="direction-pin-visual" style="${bgImg}background-color:${bgColor}"></div>
+            <div class="direction-pin-visual" style="${css}"></div>
             <div class="direction-pin-note">${esc(pin.note || 'Pin')}</div>
           </div>`
         })
         .join('')}</div>`
-    : `<p class="surface-meta">No pins in this project yet.</p>`
+    : `<p class="surface-meta">No pins yet — upload images on the Board (Ideas).</p>`
 
   const tasksHtml = tasks.length
     ? tasks.map((t) => `<li>${esc(t.title)}</li>`).join('')

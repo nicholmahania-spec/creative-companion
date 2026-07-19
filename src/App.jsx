@@ -56,6 +56,7 @@ import {
   printElementById,
   slugifyFilename,
 } from './lib/exportFiles'
+import { pinFaceStyle, readImageFilesAsPins } from './lib/moodPins'
 import {
   isSessionOpen,
   closeSession,
@@ -988,30 +989,31 @@ function App() {
   }
 
   const uploadMoodFiles = (fileList) => {
-    const files = Array.from(fileList || []).filter((f) =>
-      f.type.startsWith('image/')
-    )
-    if (!files.length) return
-    files.forEach((file, i) => {
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        addMoodPin({
-          id: Date.now() + i,
-          type: 'image',
-          note: file.name.replace(/\.[^.]+$/, '') || 'Upload',
-          visual: ev.target?.result,
-        })
+    const list = Array.from(fileList || [])
+    if (!list.length) return
+    void readImageFilesAsPins(list).then(({ pins, skipped }) => {
+      if (!pins.length) {
+        flashToast(
+          skipped.length
+            ? `No images added · ${skipped[0]}`
+            : 'No images found — use PNG, JPG, WEBP, or GIF'
+        )
+        return
       }
-      reader.readAsDataURL(file)
+      pins.forEach((pin) => addMoodPin(pin))
+      const g = awardAndBroadcast('mood_pin', {
+        label: `${pins.length} image${pins.length > 1 ? 's' : ''}`,
+      })
+      const skipNote =
+        skipped.length > 0
+          ? ` · ${skipped.length} skipped`
+          : ''
+      flashToast(
+        pins.length > 1
+          ? `${pins.length} images pinned${skipNote} · +${g.gained} XP`
+          : `Image pinned${skipNote} · +${g.gained} XP`
+      )
     })
-    const g = awardAndBroadcast('mood_pin', {
-      label: `${files.length} image${files.length > 1 ? 's' : ''}`,
-    })
-    flashToast(
-      files.length > 1
-        ? `${files.length} images · +${g.gained} XP`
-        : `Image pinned · +${g.gained} XP`
-    )
   }
 
   const creativeResetItems = [
@@ -2272,11 +2274,14 @@ function App() {
               <div className="brand-section-label">Add references</div>
               <div className="mood-add-layout">
                 <label className="mood-add-hero btn-like">
-                  <strong>Upload images</strong>
-                  <span>Screenshots, photos, comps — primary way to pin</span>
+                  <strong>Upload real images</strong>
+                  <span>
+                    From your device — PNG, JPG, WEBP, GIF (screenshots, comps,
+                    photos). Drag onto the board below too.
+                  </span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
                     multiple
                     className="sr-only"
                     onChange={(e) => {
@@ -2413,47 +2418,42 @@ function App() {
                   <div className="empty-state">
                     <p className="empty-state-title">Board is empty</p>
                     <p className="empty-state-body">
-                      Use step 02 to upload, paste a URL, or add a note pin.
-                      Drag files here anytime.
+                      Upload real images from your computer (or phone), paste an
+                      image URL, or add a color/note pin. Drag &amp; drop images
+                      here. Pins feed Mood direction in Brand + your pack.
                     </p>
                   </div>
                 ) : (
                   deskMood.map((item, index) => {
                     const isHero = index === 0
-                    const isGradient =
-                      typeof item.visual === 'string' &&
-                      item.visual.includes('gradient')
-                    const isQuote = item.type === 'quote' || isGradient
+                    const face = pinFaceStyle(item)
+                    const isImageFace = Boolean(face.backgroundImage?.includes('url('))
+                    const isQuote =
+                      !isImageFace ||
+                      item.type === 'quote' ||
+                      item.type === 'color' ||
+                      item.type === 'note'
                     return (
                       <article
                         key={item.id || index}
-                        className={`mood-card${isQuote ? ' is-quote' : ''}${
+                        className={`mood-card${isQuote && !isImageFace ? ' is-quote' : ''}${
                           isHero ? ' is-hero' : ''
                         }`}
                       >
-                        {isQuote ? (
+                        {isImageFace ? (
+                          <div
+                            className="mood-pin-media"
+                            style={face}
+                          />
+                        ) : (
                           <div
                             className="mood-pin-face"
-                            style={{
-                              background: isGradient
-                                ? item.visual
-                                : undefined,
-                              backgroundColor: !isGradient
-                                ? item.visual || '#0F172A'
-                                : undefined,
-                            }}
+                            style={face}
                           >
                             <p className="mood-pin-caption">
                               {item.note || 'Note'}
                             </p>
                           </div>
-                        ) : (
-                          <div
-                            className="mood-pin-media"
-                            style={{
-                              backgroundImage: `url(${item.visual})`,
-                            }}
-                          />
                         )}
                         <div className="mood-pin-tools">
                           <input
@@ -3401,38 +3401,42 @@ function App() {
             <section className="panel brand-section">
               <div className="brand-section-label">06 · Mood (from board)</div>
               {deskMood.length === 0 ? (
-                <p className="empty-state-body" style={{ margin: 0 }}>
-                  No pins yet.{' '}
-                  <button
-                    type="button"
-                    className="text-link"
-                    style={{ marginTop: 0 }}
-                    onClick={() => setActiveView('studio')}
-                  >
-                    Open mood board
-                  </button>
-                </p>
+                <div className="brand-mood-empty">
+                  <p className="empty-state-body" style={{ margin: 0 }}>
+                    Mood direction comes from real pins on the Board. Upload
+                    screenshots, comps, or photos — they show here and in your
+                    brand pack.
+                  </p>
+                  <div className="finish-secondary-row" style={{ marginTop: '0.75rem' }}>
+                    <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+                      Upload images
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif,image/*"
+                        multiple
+                        className="sr-only"
+                        onChange={(e) => {
+                          uploadMoodFiles(e.target.files)
+                          e.target.value = ''
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setActiveView('studio')}
+                    >
+                      Open Board
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <div className="brand-mood-row">
-                  {deskMood.slice(0, 4).map((p) => (
+                  {deskMood.slice(0, 6).map((p) => (
                     <div
                       key={p.id}
                       className="brand-mood-thumb"
-                      style={
-                        p.type === 'image'
-                          ? {
-                              backgroundImage: `url(${p.visual})`,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center',
-                            }
-                          : {
-                              background:
-                                typeof p.visual === 'string' &&
-                                p.visual.includes('gradient')
-                                  ? p.visual
-                                  : p.visual || '#0B1220',
-                            }
-                      }
+                      style={pinFaceStyle(p)}
                       title={p.note}
                     />
                   ))}
@@ -4461,23 +4465,21 @@ function App() {
 
               <div className="kicker">Mood direction</div>
               {exportPanel.pins.length === 0 ? (
-                <p className="surface-meta">No pins in this project yet.</p>
+                <p className="surface-meta">
+                  No pins yet — upload images on Board (Ideas), then re-open
+                  preview.
+                </p>
               ) : (
                 <div className="direction-pins">
                   {exportPanel.pins.map((p) => (
                     <div key={p.id} className="direction-pin">
                       <div
                         className="direction-pin-visual"
-                        style={{
-                          backgroundImage:
-                            p.type === 'image' ? `url(${p.visual})` : 'none',
-                          backgroundColor:
-                            p.type === 'quote' ? p.visual : '#EDE6FF',
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }}
+                        style={pinFaceStyle(p)}
                       />
-                      <div className="direction-pin-note">{p.note}</div>
+                      <div className="direction-pin-note">
+                        {p.note || 'Pin'}
+                      </div>
                     </div>
                   ))}
                 </div>
