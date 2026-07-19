@@ -215,23 +215,15 @@ function esc(s) {
  * Snapshot of brand/work for exports (from app state pieces).
  */
 /**
- * Pins for the pack: starred (inPack) first, else first N mood items as fallback.
+ * Pins for the pack: starred (inPack) only — no silent fallback.
  * @returns {{ pins: object[], usedFallback: boolean, starredCount: number }}
  */
 export function selectPackPins(moodItems = [], limit = 6) {
-  const list = moodItems || []
-  const starred = list.filter((m) => m.inPack)
-  if (starred.length > 0) {
-    return {
-      pins: starred.slice(0, limit),
-      usedFallback: false,
-      starredCount: starred.length,
-    }
-  }
+  const starred = (moodItems || []).filter((m) => m.inPack)
   return {
-    pins: list.slice(0, limit),
-    usedFallback: list.length > 0,
-    starredCount: 0,
+    pins: starred.slice(0, limit),
+    usedFallback: false,
+    starredCount: starred.length,
   }
 }
 

@@ -6,6 +6,8 @@ import {
   buildPairChecks,
   bestTextOn,
   formatRatio,
+  mapPaletteRoles,
+  fontFamilyFromLabel,
 } from './lib/color'
 import {
   BREAKDOWN_DEPTHS,
@@ -27,7 +29,6 @@ import {
 } from './lib/version'
 import LoginPage from './components/LoginPage'
 import BuddyMate from './components/BuddyMate'
-import ConceptPipeline from './components/ConceptPipeline'
 import ForcedBreakOverlay from './components/ForcedBreakOverlay'
 import GameHUD from './components/GameHUD'
 import {
@@ -42,6 +43,7 @@ import {
   journeyIdForView,
   getJourneyStep,
   getNextJourney,
+  toolsLabelForView,
 } from './lib/journey'
 import { PROCESS_PHASES, getProcessPhase } from './lib/processGuide'
 import {
@@ -176,7 +178,8 @@ function App() {
   const [onboardFirstStep, setOnboardFirstStep] = useState('')
   const [processPhase, setProcessPhase] = useState(null)
   const [processOpen, setProcessOpen] = useState(false)
-  const [brandEditSection, setBrandEditSection] = useState(null)
+  const [brandEditSection, setBrandEditSection] = useState('essentials')
+  const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -342,8 +345,16 @@ function App() {
     }
   }, [projectPalette.length, checkBgIndex])
 
+  const paletteRoles = useMemo(
+    () => mapPaletteRoles(projectPalette),
+    [projectPalette]
+  )
+
   const checkBg =
-    projectPalette[checkBgIndex] || projectPalette[0] || '#FFFFFF'
+    projectPalette[checkBgIndex] ||
+    paletteRoles.background ||
+    projectPalette[0] ||
+    '#FFFFFF'
 
   const contrastPairs = useMemo(
     () => buildPairChecks(projectPalette, checkBg),
@@ -378,18 +389,34 @@ function App() {
 
   const completeCurrentStep = () => {
     if (!nextTask) return
-    toggleTask(nextTask.id)
+    const doneId = nextTask.id
+    const doneTitle = nextTask.title
+    toggleTask(doneId)
     setStepDueOpen(false)
     setBuddyWinPulse((n) => n + 1)
-    const g = awardAndBroadcast('step_complete', { label: 'Step done' })
-    const comboBit = g.combo > 1 ? ` · ${g.combo}x combo` : ''
-    flashToast(
-      g.levelUp
-        ? `Step complete · Level ${g.newLevel}!${comboBit}`
-        : `Step complete · +${g.gained} XP${comboBit}`
-    )
+    // Quiet complete: award silently if progress bar on; never lead with XP
+    if (showProgress) {
+      awardAndBroadcast('step_complete', { label: 'Step done' })
+    }
+    setRecentUndo({ id: doneId, title: doneTitle, at: Date.now() })
+    flashToast('Step complete')
     setStepFocusKey((k) => k + 1)
   }
+
+  const undoLastComplete = () => {
+    if (!recentUndo?.id) return
+    toggleTask(recentUndo.id)
+    flashToast('Undone')
+    setRecentUndo(null)
+    setStepFocusKey((k) => k + 1)
+  }
+
+  // Auto-clear undo window
+  useEffect(() => {
+    if (!recentUndo) return undefined
+    const t = window.setTimeout(() => setRecentUndo(null), 6000)
+    return () => window.clearTimeout(t)
+  }, [recentUndo])
 
   const projectPills = (
     <div className="project-pills" role="tablist" aria-label="Project">
@@ -478,6 +505,23 @@ function App() {
         `Work block done (~${Math.round(workMin)} min). Forced lockouts are off — stretch if you can.`
       )
       return
+    }
+
+    // First lockout ever: require consent (Settings can also set this)
+    if (!prefs.forceBreaksConsented) {
+      const ok = window.confirm(
+        'Forced breaks lock the whole desk for 5–10 minutes after a focus block so you rest. Continue with this break?'
+      )
+      if (!ok) {
+        setPref('forceBreaksEnabled', false)
+        setIsFocusRunning(false)
+        setSessionComplete(true)
+        setPomodoroWorkStartedAt(null)
+        markBreak()
+        flashToast('Forced lockouts off — you can re-enable in Settings')
+        return
+      }
+      setPref('forceBreaksConsented', true)
     }
 
     const totalSec = breakMin * 60
@@ -611,10 +655,9 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked, bodyDoubling, forcedBreak])
 
-  // XP when you reach Finish step + warm PDF engine so download keeps user-gesture
+  // Warm PDF engine on Pack (no XP for merely opening the page)
   useEffect(() => {
     if (activeView === 'finish' && unlocked) {
-      awardAndBroadcast('journey_finish', { label: 'Finish step' })
       void preloadPdfEngine().catch(() => {})
     }
   }, [activeView, unlocked])
@@ -1378,7 +1421,7 @@ function App() {
           <div className="brand-block">
             <div className="logo">
               <span className="logo-mark" aria-hidden="true" />
-              Companion
+              Creative Companion
             </div>
           </div>
           <div className="header-actions">
@@ -1517,22 +1560,12 @@ function App() {
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
-                      setActiveView('concept')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <strong>Direction sketches</strong>
-                    <span>Optional pipeline (off-path)</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
                       createNewProject()
-                      awardAndBroadcast('project_create', {
-                        label: 'New project',
-                      })
+                      if (showProgress) {
+                        awardAndBroadcast('project_create', {
+                          label: 'New project',
+                        })
+                      }
                       flashToast('New project')
                       setActiveView('project')
                       setMoreOpen(false)
@@ -1540,18 +1573,6 @@ function App() {
                   >
                     <strong>New project</strong>
                     <span>Start another name</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setShowCreativeReset(true)
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <strong>Stuck?</strong>
-                    <span>Quick reset options</span>
                   </button>
                 </div>
               )}
@@ -1636,7 +1657,10 @@ function App() {
 
         {showProgress && <GameHUD />}
 
-        <nav className="journey-bar" aria-label="Your path">
+        <nav
+          className={`journey-bar${journeyActive ? '' : ' is-tools'}`}
+          aria-label="Your path"
+        >
           {JOURNEY_STEPS.map((step) => {
             const active = journeyActive === step.id
             return (
@@ -1655,6 +1679,11 @@ function App() {
               </button>
             )
           })}
+          {!journeyActive && (
+            <span className="journey-tools-pill" role="status">
+              Tools · {toolsLabelForView(activeView)}
+            </span>
+          )}
         </nav>
       </header>
 
@@ -2786,15 +2815,38 @@ function App() {
           </div>
         )}
 
-        {/* ===== CONCEPT PIPELINE ===== */}
+        {/* ===== CONCEPT PIPELINE — frozen (redline) ===== */}
         {activeView === 'concept' && (
-          <ConceptPipeline
-            projectPills={projectPills}
-            openTasks={openTasks}
-            flashToast={flashToast}
-            onGoWork={() => setActiveView('flow')}
-            onGoBrand={() => setActiveView('brand')}
-          />
+          <div className="settings-view surface-document">
+            <button
+              type="button"
+              className="back-link"
+              onClick={() => setActiveView('studio')}
+            >
+              ← Board
+            </button>
+            <h1 className="page-title">Direction sketches</h1>
+            <p className="page-sub">
+              This pipeline is frozen while Board + System are the path for
+              direction. Use Board for refs and System for the brand pack.
+            </p>
+            <div className="finish-secondary-row" style={{ marginTop: '1rem' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setActiveView('studio')}
+              >
+                Open Board
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setActiveView('brand')}
+              >
+                Open System
+              </button>
+            </div>
+          </div>
         )}
 
         {/* ===== BRAND IDENTITY TEMPLATE ===== */}
@@ -2836,9 +2888,8 @@ function App() {
               <div
                 className="export-identity-cover"
                 style={{
-                  background:
-                    projectPalette[0] || 'var(--accent-primary)',
-                  color: bestTextOn(projectPalette[0] || '#4F46E5'),
+                  background: paletteRoles.cover,
+                  color: bestTextOn(paletteRoles.cover),
                 }}
               >
                 <div className="kicker" style={{ color: 'inherit', opacity: 0.85 }}>
@@ -2861,23 +2912,43 @@ function App() {
                   <p className="direction-brief">{activeProject.voice}</p>
                 </>
               ) : null}
-              <div className="kicker">Palette</div>
+              <div className="kicker">Palette roles</div>
               <div className="direction-palette">
                 {projectPalette.map((c, i) => (
                   <div key={`${c}-a-${i}`} style={{ background: c }} title={c} />
                 ))}
               </div>
+              <div className="palette-roles-row">
+                <span><i style={{ background: paletteRoles.cover }} /> Cover</span>
+                <span><i style={{ background: paletteRoles.text }} /> Text</span>
+                <span><i style={{ background: paletteRoles.accent }} /> Accent</span>
+                <span><i style={{ background: paletteRoles.quiet }} /> Quiet</span>
+              </div>
               <div className="direction-hex">{projectPalette.join(' · ')}</div>
               <div className="kicker">Typography</div>
-              <p className="direction-type">
-                <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+              <div className="type-specimen">
+                <p
+                  className="type-specimen-h"
+                  style={{
+                    fontFamily: fontFamilyFromLabel(
+                      activeProject?.typeHeading || 'Plus Jakarta Sans Bold'
+                    ),
+                  }}
+                >
                   {activeProject?.typeHeading || 'Plus Jakarta Sans Bold'}
-                </span>
-                <span className="surface-meta">
-                  {' '}
-                  · {activeProject?.typeBody || 'Plus Jakarta Sans Regular'}
-                </span>
-              </p>
+                </p>
+                <p
+                  className="type-specimen-b"
+                  style={{
+                    fontFamily: fontFamilyFromLabel(
+                      activeProject?.typeBody || 'Plus Jakarta Sans Regular'
+                    ),
+                  }}
+                >
+                  {activeProject?.typeBody || 'Plus Jakarta Sans Regular'} — body
+                  for UI and long copy. The quick brown fox jumps.
+                </p>
+              </div>
               {activeProject?.logoDirection ? (
                 <>
                   <div className="kicker">Logo direction</div>
@@ -2899,19 +2970,14 @@ function App() {
                 </div>
               </div>
               <div className="kicker">Mood direction</div>
-              {(deskMood.filter((m) => m.inPack).length
-                ? deskMood.filter((m) => m.inPack)
-                : deskMood
-              ).slice(0, 6).length === 0 ? (
+              {deskMood.filter((m) => m.inPack).length === 0 ? (
                 <p className="surface-meta">
-                  No pins yet — star images on Board.
+                  No starred pins — open Board and tap ★ Pack (max 6).
                 </p>
               ) : (
                 <div className="direction-pins">
-                  {(deskMood.filter((m) => m.inPack).length
-                    ? deskMood.filter((m) => m.inPack)
-                    : deskMood
-                  )
+                  {deskMood
+                    .filter((m) => m.inPack)
                     .slice(0, 6)
                     .map((pin) => (
                       <div key={pin.id} className="direction-pin">
@@ -3461,8 +3527,8 @@ function App() {
                   <div
                     className="pack-thumb-cover"
                     style={{
-                      background: projectPalette[0] || '#4F46E5',
-                      color: bestTextOn(projectPalette[0] || '#4F46E5'),
+                      background: paletteRoles.cover,
+                      color: bestTextOn(paletteRoles.cover),
                     }}
                   >
                     <span className="pack-thumb-kicker">Brand pack</span>
@@ -3477,10 +3543,8 @@ function App() {
                     </div>
                   </div>
                   <div className="pack-thumb-pins">
-                    {(deskMood.filter((m) => m.inPack).length
-                      ? deskMood.filter((m) => m.inPack)
-                      : deskMood
-                    )
+                    {deskMood
+                      .filter((m) => m.inPack)
                       .slice(0, 4)
                       .map((pin) => (
                         <span
@@ -3688,15 +3752,17 @@ function App() {
             <button
               type="button"
               className="back-link"
-              onClick={() => setActiveView('flow')}
+              onClick={() => setActiveView('project')}
             >
-              ← Work
+              ← Path
             </button>
             <div className="flow-top">
               <div>
                 <h1 className="page-title">Settings</h1>
                 <p className="page-sub">
-                  Preferences and data. Local-only — no account, no cloud.
+                  {CLOUD
+                    ? 'Preferences, account, and data for your cloud desk.'
+                    : 'Preferences and data for this device.'}
                 </p>
               </div>
             </div>
@@ -3793,6 +3859,13 @@ function App() {
                   className={`pref-switch${forceBreaksEnabled ? ' is-on' : ''}`}
                   onClick={() => {
                     const next = !forceBreaksEnabled
+                    if (next && !prefs.forceBreaksConsented) {
+                      const ok = window.confirm(
+                        'Forced breaks lock the whole desk for 5–10 minutes after a Pomodoro (or long Helper sessions). You can turn this off anytime. Enable?'
+                      )
+                      if (!ok) return
+                      setPref('forceBreaksConsented', true)
+                    }
                     setPref('forceBreaksEnabled', next)
                     if (!next && forcedBreak) {
                       endForcedBreak(true)
@@ -4419,6 +4492,17 @@ function App() {
         <div className="action-toast" role="status">
           {actionToast}
         </div>
+      )}
+
+      {recentUndo && (
+        <button
+          type="button"
+          className="undo-chip"
+          onClick={undoLastComplete}
+        >
+          Undo complete · {String(recentUndo.title || '').slice(0, 28)}
+          {String(recentUndo.title || '').length > 28 ? '…' : ''}
+        </button>
       )}
 
       {exportPanel && (

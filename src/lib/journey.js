@@ -52,7 +52,7 @@ export const JOURNEY_STEPS = [
   },
 ]
 
-/** Map any app view to the journey step id */
+/** Map path views to journey step id. Tools return null (do not fake Work active). */
 export function journeyIdForView(view) {
   switch (view) {
     case 'project':
@@ -65,16 +65,26 @@ export function journeyIdForView(view) {
       return 'system'
     case 'finish':
       return 'pack'
-    // Off-path tools — soft highlight nearest craft context
-    case 'insights':
-    case 'calendar':
-      return 'work'
-    case 'concept':
-    case 'spark':
-      return 'board'
-    case 'settings':
     default:
       return null
+  }
+}
+
+/** Label for off-path Tools pages (path bar truth) */
+export function toolsLabelForView(view) {
+  switch (view) {
+    case 'insights':
+      return 'Timer'
+    case 'calendar':
+      return 'Calendar'
+    case 'spark':
+      return 'Spark'
+    case 'settings':
+      return 'Settings'
+    case 'concept':
+      return 'Sketches (frozen)'
+    default:
+      return 'Tools'
   }
 }
 

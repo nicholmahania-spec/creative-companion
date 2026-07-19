@@ -66,6 +66,56 @@ export function bestTextOn(bgHex) {
   return white >= black ? '#FFFFFF' : '#0B1220'
 }
 
+/**
+ * Map unordered palette swatches to roles for System artboard / pack cover.
+ * Never assumes palette[0] is cover-safe.
+ */
+export function mapPaletteRoles(palette = []) {
+  const colors = (palette || []).map((c) => normalizeHex(c)).filter(Boolean)
+  if (!colors.length) {
+    return {
+      cover: '#1C1917',
+      text: '#0C0A09',
+      accent: '#0F766E',
+      quiet: '#F5F5F4',
+      background: '#FAFAF9',
+      swatches: [],
+    }
+  }
+  const scored = colors
+    .map((hex) => ({ hex, L: relativeLuminance(hex) }))
+    .sort((a, b) => a.L - b.L)
+  const darkest = scored[0].hex
+  const lightest = scored[scored.length - 1].hex
+  // Cover: darkest that still allows readable text, else darkest overall
+  let cover = darkest
+  for (const s of scored) {
+    if (s.L <= 0.35) {
+      cover = s.hex
+      break
+    }
+  }
+  // Accent: mid luminance if available
+  const mid = scored[Math.floor(scored.length / 2)]?.hex || darkest
+  return {
+    cover,
+    text: darkest,
+    accent: mid,
+    quiet: lightest,
+    background: lightest,
+    swatches: colors,
+  }
+}
+
+/** "Plus Jakarta Sans Bold" → CSS font-family stack for specimens */
+export function fontFamilyFromLabel(label) {
+  const s = String(label || '')
+    .replace(/\s+(Thin|ExtraLight|Light|Regular|Medium|SemiBold|Semibold|Bold|ExtraBold|Black|Italic|Oblique).*$/i, '')
+    .trim()
+  if (!s) return 'var(--font-sans), system-ui, sans-serif'
+  return `"${s.replace(/"/g, '')}", var(--font-sans), system-ui, sans-serif`
+}
+
 export function buildPairChecks(palette, bgHex) {
   const bg = normalizeHex(bgHex) || '#FFFFFF'
   return (palette || [])

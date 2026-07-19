@@ -31,7 +31,15 @@ describe('buildBrandPackSnapshot', () => {
         { id: 1, title: 'Write tagline', completed: false },
         { id: 2, title: 'Pick type pair', completed: true },
       ],
-      moodItems: [{ id: 9, type: 'color', note: 'Indigo calm', visual: '#4F46E5' }],
+      moodItems: [
+        {
+          id: 9,
+          type: 'color',
+          note: 'Indigo calm',
+          visual: '#4F46E5',
+          inPack: true,
+        },
+      ],
     })
 
     expect(pack.projectName).toBe('Test Pack')
@@ -53,6 +61,19 @@ describe('buildBrandPackSnapshot', () => {
     expect(pack.brief).toBe('')
     expect(pack.openTasks).toEqual([])
     expect(pack.pins).toEqual([])
+  })
+
+  it('includes only starred pack pins (no fallback)', () => {
+    const pack = buildBrandPackSnapshot({
+      moodItems: [
+        { id: 1, type: 'image', note: 'A', visual: '#111', inPack: false },
+        { id: 2, type: 'image', note: 'B', visual: '#222', inPack: true },
+      ],
+    })
+    expect(pack.pins).toHaveLength(1)
+    expect(pack.pins[0].note).toBe('B')
+    expect(pack.pinsStarredCount).toBe(1)
+    expect(pack.pinsUsedFallback).toBe(false)
   })
 })
 
@@ -105,7 +126,15 @@ describe('buildDirectionSheetMarkup (preview-faithful PDF source)', () => {
         palette: ['#4F46E5', '#0D9488'],
       },
       tasks: [{ id: 1, title: 'Lock type', completed: false }],
-      moodItems: [{ id: 2, type: 'color', note: 'Indigo', visual: '#4F46E5' }],
+      moodItems: [
+        {
+          id: 2,
+          type: 'color',
+          note: 'Indigo',
+          visual: '#4F46E5',
+          inPack: true,
+        },
+      ],
     })
     const html = buildDirectionSheetMarkup(pack)
     expect(html).toContain('direction-sheet')
