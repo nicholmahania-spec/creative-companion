@@ -47,6 +47,15 @@ src/
   lib/dates.js         # deadlines + calendar helpers
 ```
 
+## Deploy (GitHub Pages)
+
+CI workflow: `.github/workflows/deploy-pages.yml` builds on every push to `main` and publishes to Pages.
+
+**Live URL (after first successful run):**  
+https://nicholmahania-spec.github.io/creative-companion/
+
+> Private repos: GitHub Pages may require a **public** repo or a paid plan. If the workflow fails on “Pages is disabled,” make the repo public or use Vercel/Netlify instead.
+
 ## Deploy (Vercel or Netlify)
 
 Configs are already in the repo (`vercel.json`, `netlify.toml`). SPA rewrites send all routes to `index.html`.
