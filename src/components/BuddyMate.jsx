@@ -43,6 +43,10 @@ import {
 } from '../lib/breakKit'
 import useAppStore from '../store/useAppStore'
 
+const BUDDY_BASE = `${import.meta.env.BASE_URL}buddy/`
+const HEAD_SRC = `${BUDDY_BASE}helper-head.jpg`
+const FAB_SRC = `${BUDDY_BASE}helper-fab.jpg`
+
 /**
  * Design buddy — UI/UX & graphic design coach (scripted system persona).
  * Process: clarify → structure → visual → refine. Tracks craft context.
@@ -487,7 +491,7 @@ export default function BuddyMate({
     return (
       <button
         type="button"
-        className={`buddy-fab buddy-float${
+        className={`buddy-fab buddy-float is-cute${
           hyper === 'hard' || hyper === 'strong' ? ' is-alert' : ''
         }${levelBurst ? ' is-levelup' : ''}${
           hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''
@@ -501,7 +505,14 @@ export default function BuddyMate({
         aria-label={`Open design buddy, level ${xp.level}`}
         title={`Level ${xp.level} · ${game.xp || 0} XP`}
       >
-        <BuddyFace mood={mood} reduceMotion={reduceMotion} compact />
+        <img
+          className="buddy-fab-img"
+          src={FAB_SRC}
+          alt=""
+          width={72}
+          height={72}
+          draggable={false}
+        />
         <span className="buddy-fab-level">{xp.level}</span>
         {(overdue.length > 0 || hyper === 'hard' || hyper === 'strong') && (
           <span className="buddy-fab-dot" aria-hidden="true" />
@@ -593,33 +604,37 @@ export default function BuddyMate({
         </div>
       </div>
 
-      {/* Character body IS the chatbox — head on top, chat on the belly */}
+      {/* Cute character: illustrated head + soft cream belly chat */}
       <div
-        className={`buddy-figure is-character mood-${mood}${
+        className={`buddy-figure is-cute mood-${mood}${
           reduceMotion ? ' no-motion' : ''
         }`}
       >
-        <span className="bf-pencil" aria-hidden="true">
-          <span className="bf-pencil-wood" />
-          <span className="bf-pencil-tip" />
-        </span>
-        <span className="bf-beret" aria-hidden="true">
-          <span className="bf-beret-stem" />
-        </span>
-        <div className="bf-head" aria-hidden="true">
-          <span className="bf-visor">
-            <span className="bf-eye bf-eye-l" />
-            <span className="bf-eye bf-eye-r" />
-            <span className="bf-mouth" />
-            <span className="bf-blush bf-blush-l" />
-            <span className="bf-blush bf-blush-r" />
-          </span>
-          {mood === 'cheer' && <span className="bf-spark bf-spark-1" />}
-          {mood === 'cheer' && <span className="bf-spark bf-spark-2" />}
-          {mood === 'nudge' && <span className="bf-bang">!</span>}
+        <div className="bf-head-wrap">
+          <img
+            className="bf-head-img"
+            src={HEAD_SRC}
+            alt=""
+            width={200}
+            height={200}
+            draggable={false}
+          />
+          {mood === 'nudge' && (
+            <span className="bf-bang" aria-hidden="true">
+              !
+            </span>
+          )}
+          {mood === 'cheer' && (
+            <>
+              <span className="bf-heart bf-heart-1" aria-hidden="true">
+                ♡
+              </span>
+              <span className="bf-heart bf-heart-2" aria-hidden="true">
+                ♡
+              </span>
+            </>
+          )}
         </div>
-
-        <span className="bf-neck" aria-hidden="true" />
 
         <span className="bf-arm bf-arm-l" aria-hidden="true">
           <span className="bf-hand" />
@@ -628,7 +643,6 @@ export default function BuddyMate({
           <span className="bf-hand" />
         </span>
 
-        {/* Egg belly = chat surface (not a card) */}
         <div className="bf-belly">
           <div className="bf-belly-screen">
             <div className="bf-belly-meta">
@@ -652,7 +666,7 @@ export default function BuddyMate({
 
             {levelBurst && (
               <p className="buddy-levelup-banner bf-levelup" role="status">
-                Level {xp.level}!
+                Level {xp.level}! ✨
               </p>
             )}
 
@@ -668,10 +682,7 @@ export default function BuddyMate({
 
             <div className="bf-chat" ref={listRef}>
               {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`bf-line bf-line-${m.from}`}
-                >
+                <div key={m.id} className={`bf-line bf-line-${m.from}`}>
                   {m.text}
                 </div>
               ))}
@@ -1003,46 +1014,4 @@ export default function BuddyMate({
   )
 }
 
-/**
- * Little Helper — compact face for FAB (minimized).
- */
-function BuddyFace({ mood = 'idle', reduceMotion = false, compact = false }) {
-  return (
-    <div
-      className={`buddy-helper mood-${mood}${compact ? ' is-compact' : ''}${
-        reduceMotion ? ' no-motion' : ''
-      }`}
-      aria-hidden="true"
-    >
-      <span className="bh-pencil">
-        <span className="bh-pencil-wood" />
-        <span className="bh-pencil-tip" />
-      </span>
-      <span className="bh-beret">
-        <span className="bh-beret-stem" />
-      </span>
-      <span className="bh-head">
-        <span className="bh-visor">
-          <span className="bh-eye bh-eye-l" />
-          <span className="bh-eye bh-eye-r" />
-          <span className="bh-mouth" />
-          <span className="bh-blush bh-blush-l" />
-          <span className="bh-blush bh-blush-r" />
-        </span>
-      </span>
-      <span className="bh-body">
-        <span className="bh-pocket">
-          <span className="bh-pen bh-pen-ink" />
-          <span className="bh-pen bh-pen-g" />
-          <span className="bh-pen bh-pen-p" />
-        </span>
-        <span className="bh-badge" title="Little Helper" />
-      </span>
-      <span className="bh-arm bh-arm-l" />
-      <span className="bh-arm bh-arm-r" />
-      {mood === 'cheer' && <span className="bh-spark bh-spark-1" />}
-      {mood === 'cheer' && <span className="bh-spark bh-spark-2" />}
-      {mood === 'nudge' && <span className="bh-bang">!</span>}
-    </div>
-  )
-}
+/* Compact CSS face kept as fallback if images fail to load elsewhere */
