@@ -80,7 +80,7 @@ export function blankWorkspaceState() {
       forceBreaksEnabled: true,
       forceBreaksConsented: false,
       queueCollapsed: true,
-      showHowItWorks: true,
+      showHowItWorks: false,
       /** XP / quest bar — off by default (redesign brief) */
       showProgress: false,
       /** Helper: no timed pings / hyperfocus nags */
@@ -295,7 +295,7 @@ const useAppStore = create(
             bodyDoubleSilent: false,
             forceBreaksEnabled: true,
             queueCollapsed: true,
-            showHowItWorks: true,
+            showHowItWorks: false,
             ...state.prefs,
             [key]: value,
           },
@@ -365,7 +365,7 @@ const useAppStore = create(
             bodyDoubleSilent: false,
             forceBreaksEnabled: true,
             queueCollapsed: true,
-            showHowItWorks: true,
+            showHowItWorks: false,
             ...(data.prefs || {}),
           },
           sparkIndex,

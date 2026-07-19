@@ -290,7 +290,7 @@ function App() {
   const skipNextCloudPush = useRef(false)
   const lastSyncErrorToast = useRef('')
 
-  const showHowItWorks = prefs.showHowItWorks !== false
+  const showHowItWorks = !!prefs.showHowItWorks
   const queueCollapsed = prefs.queueCollapsed !== false
   const soundEnabled = prefs.soundEnabled !== false
   const [osReduceMotion, setOsReduceMotion] = useState(() => {
@@ -2139,7 +2139,10 @@ function App() {
                       {i18nT(locale, 'ui.doThisNow')}
                     </span>
                     <span className="task-meta">
-                      {(nextTask.energy || 'med')} energy
+                      {({ high: 'High', med: 'Medium', low: 'Low' }[
+                        nextTask.energy || 'med'
+                      ] || 'Medium')}{' '}
+                      energy
                       {nextTask.parentId ? ' · micro-step' : ''}
                       {nextTask.dueDate
                         ? ` · ${urgencyLabel(nextTask.dueDate)}`
@@ -2283,9 +2286,9 @@ function App() {
                       onChange={(e) => setCaptureEnergy(e.target.value)}
                       aria-label="Energy level"
                     >
-                      <option value="high">High energy</option>
-                      <option value="med">Med energy</option>
-                      <option value="low">Low energy</option>
+                      <option value="high">High</option>
+                      <option value="med">Medium</option>
+                      <option value="low">Low</option>
                     </select>
                     <label className="capture-due-label">
                       Due
@@ -2445,7 +2448,10 @@ function App() {
                           <span className="task-step-num">Step {i + 2}</span>
                           <span className="task-title">{task.title}</span>
                           <span className="task-meta">
-                            {(task.energy || 'med')} energy
+                            {({ high: 'High', med: 'Medium', low: 'Low' }[
+                              task.energy || 'med'
+                            ] || 'Medium')}{' '}
+                            energy
                             {task.dueDate
                               ? ` · ${formatShortDate(task.dueDate)}`
                               : ''}
@@ -3118,7 +3124,7 @@ function App() {
               <div className="brand-template-actions">
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="text-link"
                   onClick={() => setActiveView('studio')}
                 >
                   Board
@@ -3679,7 +3685,7 @@ function App() {
                   <div className="finish-secondary-row" style={{ marginTop: '0.75rem' }}>
                     <button
                       type="button"
-                      className="btn btn-primary"
+                      className="btn btn-secondary"
                       onClick={() => setActiveView('studio')}
                     >
                       Open Board
@@ -3901,7 +3907,11 @@ function App() {
                       />
                       <span>Hide tool watermark (client handoff)</span>
                     </label>
-                    <div className="finish-secondary-row">
+                    <details className="pack-more-actions">
+                      <summary className="text-link pack-more-summary">
+                        More actions
+                      </summary>
+                      <div className="finish-secondary-row pack-more-row">
                       <button
                         type="button"
                         className="btn btn-ghost"
@@ -3923,7 +3933,8 @@ function App() {
                       >
                         Work
                       </button>
-                    </div>
+                      </div>
+                    </details>
                     <details className="finish-more-formats">
                       <summary>More formats &amp; backup</summary>
                       <div className="finish-more-formats-list">
@@ -4127,7 +4138,9 @@ function App() {
               </div>
             </div>
             <section className="panel brand-section">
-              <div className="brand-section-label">Readiness</div>
+              <div className="brand-section-label">
+                {i18nT(locale, 'ui.pathReadiness')}
+              </div>
               {(() => {
                 const checks = [
                   deskTasks.some((t) => !t.completed),
@@ -4136,23 +4149,18 @@ function App() {
                   (projectPalette || []).length >= 2,
                   !!activeProject?.brief?.trim(),
                 ]
-                const pct = Math.round(
-                  (checks.filter(Boolean).length / checks.length) * 100
-                )
+                const readyN = checks.filter(Boolean).length
                 return (
                   <>
-                    <div className="project-pack-meter" aria-label={`Path readiness ${pct}%`}>
-                      <div className="project-pack-meter-top">
-                        <span>Path readiness</span>
-                        <strong>{pct}%</strong>
-                      </div>
-                      <div className="project-pack-meter-bar">
-                        <div
-                          className="project-pack-meter-fill"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
+                    <p
+                      className="panel-hint project-ready-count"
+                      aria-label={`${readyN} of 5 ready`}
+                    >
+                      <strong>
+                        {readyN} of 5
+                      </strong>{' '}
+                      ready
+                    </p>
                     <ul className="pack-ready-list project-ready-list">
                       <li className={checks[0] ? 'is-ok' : 'is-miss'}>
                         {checks[0] ? (
@@ -4628,17 +4636,22 @@ function App() {
                 autoComplete="off"
               />
             </label>
-            <label className="onboard-label" htmlFor="onboard-brief">
-              Brief <span className="onboard-optional">(optional)</span>
-              <textarea
-                id="onboard-brief"
-                value={onboardBrief}
-                onChange={(e) => setOnboardBrief(e.target.value)}
-                placeholder="Who is this for? Outcome? Constraint?"
-                rows={2}
-                className="onboard-input"
-              />
-            </label>
+            <details className="onboard-brief-details">
+              <summary className="text-link">
+                Add brief later? (optional)
+              </summary>
+              <label className="onboard-label" htmlFor="onboard-brief">
+                Brief
+                <textarea
+                  id="onboard-brief"
+                  value={onboardBrief}
+                  onChange={(e) => setOnboardBrief(e.target.value)}
+                  placeholder="Who is this for? Outcome? Constraint?"
+                  rows={2}
+                  className="onboard-input"
+                />
+              </label>
+            </details>
             <div className="onboard-actions">
               <button
                 type="button"

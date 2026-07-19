@@ -807,7 +807,7 @@ export default function BuddyMate({
               className="buddy-compact-body"
               mood={panelMood}
               reduceMotion={reduceMotion}
-              height={132}
+              height={96}
               shape="body"
               fallbackSrc={HELPER_FALLBACK}
             />

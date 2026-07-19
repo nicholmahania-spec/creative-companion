@@ -148,7 +148,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
             <div className="login-pack-swatches" aria-hidden="true">
               <i style={{ background: '#1C1917' }} />
               <i style={{ background: '#0F766E' }} />
-              <i style={{ background: '#D6D3D1' }} />
+              <i style={{ background: '#A8A29E' }} />
               <i style={{ background: '#FAFAF9' }} />
             </div>
             <div className="login-pack-pins" aria-hidden="true">
@@ -168,6 +168,9 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
             <LogoLockup reduceMotion={false} />
             <p className="login-tag">
               {i18nT('en', 'tagline')}
+            </p>
+            <p className="login-path-line" aria-hidden="true">
+              Project → Work → Board → System → Pack
             </p>
           </div>
 
