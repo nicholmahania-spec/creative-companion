@@ -62,7 +62,7 @@ export default function InsightsView(props) {
       </div>
       {nextTask && (
         <div className="mood-linked-step" style={{ marginBottom: '1rem' }}>
-          <span className="task-badge">Work on</span>
+          <span className="task-badge">Working on</span>
           <p className="mood-linked-title">{nextTask.title}</p>
         </div>
       )}
@@ -151,7 +151,7 @@ export default function InsightsView(props) {
             className="text-link"
             onClick={() => setActiveView('flow')}
           >
-            Back to Work
+            Back to Sketch
             {deskTasks.length
               ? ` · ${completedCount}/${deskTasks.length} done`
               : ''}

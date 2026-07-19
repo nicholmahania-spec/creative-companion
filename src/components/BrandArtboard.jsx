@@ -300,7 +300,7 @@ export default function BrandArtboard({
       <div className="kicker">Mood direction</div>
       {orderedPins.length === 0 ? (
         <p className="surface-meta">
-          No starred pins — open Board and tap ★ Pack (max 6).
+          No starred pins — open Research and tap ★ for the pack (max 6).
         </p>
       ) : (
         <div className="direction-pins">

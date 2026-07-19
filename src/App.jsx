@@ -128,6 +128,7 @@ function App() {
   const addProject = useAppStore((s) => s.addProject)
   const setCurrentProject = useAppStore((s) => s.setCurrentProject)
   const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
+  const updateDirection = useAppStore((s) => s.updateDirection)
   const setLogoDirection = useAppStore((s) => s.setLogoDirection)
   const updatePaletteColor = useAppStore((s) => s.updatePaletteColor)
   const addPaletteColor = useAppStore((s) => s.addPaletteColor)
@@ -183,6 +184,7 @@ function App() {
         'project',
         'studio',
         'brand',
+        'review',
         'finish',
         'concept',
         'spark',
@@ -194,7 +196,7 @@ function App() {
     } catch {
       /* private mode */
     }
-    // First visit: Project (path 1), not Work
+    // First visit: Define (path 1)
     return 'project'
   })
   const setActiveView = useCallback((view) => {
@@ -538,10 +540,9 @@ function App() {
       updateBrandField('typeBody', kit.typeBody)
       updateBrandField('doUse', kit.doUse)
       updateBrandField('dontUse', kit.dontUse)
-      flashToast(`Direction kit: ${kit.name}`)
-      setActiveView('brand')
+      flashToast(`Direction kit: ${kit.name} — continue Research or open Design`)
     },
-    [setProjectPalette, updateBrandField, setActiveView]
+    [setProjectPalette, updateBrandField]
   )
 
   const commandActions = useMemo(() => {
@@ -555,7 +556,7 @@ function App() {
       },
       {
         id: 'capture',
-        label: 'New capture on Work',
+        label: 'New capture on Sketch',
         hint: 'N',
         run: () => {
           setActiveView('flow')
@@ -2288,6 +2289,9 @@ function App() {
                     (sparkIndex || 0) > 0 ||
                     deskMood.some(
                       (m) => m.type === 'quote' || /spark/i.test(m.note || '')
+                    ) ||
+                    (activeProject?.directions || []).some((d) =>
+                      String(d.title || d.note || '').trim()
                     )
                   )) ||
                 (step.id === 'sketch' && deskTasks.length > 0) ||
@@ -2525,6 +2529,76 @@ function App() {
                 </div>
               )}
             </section>
+
+            {/* A/B/C draft options from Ideate */}
+            {(activeProject?.directions || []).some((d) =>
+              String(d.title || '').trim()
+            ) && (
+              <section className="panel brand-section sketch-directions-panel">
+                <div className="brand-section-label">Draft options (from Ideate)</div>
+                <div className="sketch-dir-chips">
+                  {(activeProject.directions || [])
+                    .filter((d) => String(d.title || '').trim())
+                    .map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        className={`sketch-dir-chip${d.chosen ? ' is-chosen' : ''}`}
+                        onClick={() => {
+                          addTask({
+                            id: Date.now() + Math.random(),
+                            title: `Draft ${d.label}: ${d.title}`,
+                            energy: 'med',
+                            meta: d.note || 'Direction option',
+                            completed: false,
+                            seeded: false,
+                            projectId:
+                              activeProject?.id ||
+                              useAppStore.getState().currentProjectId,
+                            dueDate: '',
+                          })
+                          flashToast(`Queued draft ${d.label}`)
+                        }}
+                      >
+                        {d.label}
+                        {d.chosen ? ' ★' : ''} · {d.title}
+                      </button>
+                    ))}
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  style={{ marginTop: '0.65rem' }}
+                  onClick={() => {
+                    const filled = (activeProject?.directions || []).filter(
+                      (d) => String(d.title || '').trim()
+                    )
+                    if (!filled.length) {
+                      flashToast('Capture A/B/C titles on Ideate first')
+                      return
+                    }
+                    const base = Date.now()
+                    filled.forEach((d, i) => {
+                      addTask({
+                        id: base + i + 1,
+                        title: `Draft ${d.label}: ${d.title}`,
+                        energy: 'med',
+                        meta: d.note || 'Direction option',
+                        completed: false,
+                        seeded: false,
+                        projectId:
+                          activeProject?.id ||
+                          useAppStore.getState().currentProjectId,
+                        dueDate: '',
+                      })
+                    })
+                    flashToast(`Queued ${filled.length} draft options`)
+                  }}
+                >
+                  Queue all A/B/C drafts
+                </button>
+              </section>
+            )}
 
             {/* Compact capture — secondary to current step */}
             <section className="capture-strip" aria-label="Capture">
@@ -2826,11 +2900,11 @@ function App() {
             <section className="panel brand-section board-wall-panel">
               <div className="board-wall-head">
                 <div className="brand-section-label" style={{ margin: 0 }}>
-                  Board · {deskMood.length}
+                  Refs · {deskMood.length}
                 </div>
                 {deskMood.length > 0 && (
                   <span className="panel-hint board-pack-count" style={{ margin: 0 }}>
-                    Pack {deskMood.filter((m) => m.inPack).length}/6
+                    Leave-behind {deskMood.filter((m) => m.inPack).length}/6
                     {deskMood.filter((m) => m.inPack).length >= 6
                       ? ' · full'
                       : ''}
@@ -3111,7 +3185,7 @@ function App() {
                 </button>
                 {deskMood.length > 0 && (
                   <details className="board-pack-bulk">
-                    <summary className="text-link">Pack tools</summary>
+                    <summary className="text-link">Leave-behind tools</summary>
                     <div className="board-pack-bulk-actions">
                       <button
                         type="button"
@@ -3342,6 +3416,8 @@ function App() {
               addMoodPin={addMoodPin}
               projectPalette={projectPalette}
               notifyAction={notifyAction}
+              directions={activeProject?.directions}
+              updateDirection={updateDirection}
             />
           </Suspense>
         )}
@@ -3968,15 +4044,17 @@ function App() {
               className="panel brand-section"
               hidden={brandEditSection !== 'pins'}
             >
-              <div className="brand-section-label">Pack pins (starred on Board)</div>
+              <div className="brand-section-label">
+                Leave-behind pins (starred on Research)
+              </div>
               {(() => {
                 const packPins = deskMood.filter((m) => m.inPack)
                 if (packPins.length === 0) {
                   return (
                 <div className="brand-mood-empty">
                   <p className="empty-state-body" style={{ margin: 0 }}>
-                    Star pins on the Board with ★ Pack (max 6). Only starred
-                    pins appear here and in your brand pack.
+                    Star pins on Research with ★ (max 6). Only starred pins
+                    appear here and in your leave-behind PDF.
                   </p>
                   <div className="finish-secondary-row" style={{ marginTop: '0.75rem' }}>
                     <button
@@ -3984,7 +4062,7 @@ function App() {
                       className="btn btn-secondary"
                       onClick={() => setActiveView('studio')}
                     >
-                      Open Board
+                      Open Research
                     </button>
                   </div>
                 </div>
@@ -4295,7 +4373,7 @@ function App() {
                               setActiveView('studio')
                             }}
                           >
-                            Board
+                            Research
                           </button>
                         </div>
                       </div>
@@ -4382,14 +4460,14 @@ function App() {
                         className="btn btn-ghost"
                         onClick={() => setActiveView('brand')}
                       >
-                        Edit system
+                        Edit Design
                       </button>
                       <button
                         type="button"
                         className="btn btn-ghost"
                         onClick={() => setActiveView('flow')}
                       >
-                        Work
+                        Sketch
                       </button>
                       </div>
                     </details>
@@ -4601,13 +4679,6 @@ function App() {
                 >
                   {i18nT(locale, 'ui.openWork') || 'Go to Research'}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => setActiveView('finish')}
-                >
-                  {i18nT(locale, 'ui.openPack')}
-                </button>
               </div>
             </div>
 
@@ -4688,7 +4759,7 @@ function App() {
                             className="pack-ready-fix"
                             onClick={() => setActiveView('studio')}
                           >
-                            ○ Star pack pins on Board — fix
+                            ○ Star leave-behind pins on Research — fix
                           </button>
                         )}
                       </li>
@@ -4725,7 +4796,9 @@ function App() {
                           <button
                             type="button"
                             className="pack-ready-fix"
-                            onClick={() => goSystemSection('essentials')}
+                            onClick={() => {
+                              document.getElementById('project-brief')?.focus()
+                            }}
                           >
                             ○ Brief / positioning — fix
                           </button>
@@ -4734,7 +4807,7 @@ function App() {
                     </ul>
                     <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
                       {completedCount}/{deskTasks.length || 0} steps done · brief
-                      feeds System positioning.
+                      feeds Design positioning.
                     </p>
                   </>
                 )
@@ -5018,7 +5091,7 @@ function App() {
           <div className="export-panel demo-tour-panel">
             <p className="onboard-eyebrow">Soft Signal · sample tour</p>
             <div className="demo-tour-dots" aria-hidden="true">
-              {[0, 1, 2, 3, 4].map((i) => (
+              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
                 <span key={i} className={i <= demoTour.step ? 'is-on' : ''} />
               ))}
             </div>
@@ -5068,14 +5141,24 @@ function App() {
                   else setDemoTour({ step: s + 1 })
                 }}
               >
-                {demoTour.step >= 4 ? 'Open Pack · done' : 'Go · next tip'}
+                {demoTour.step >= 6
+                  ? 'Open Deliver · done'
+                  : 'Go · next tip'}
               </button>
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => {
-                  const views = ['project', 'flow', 'studio', 'brand', 'finish']
-                  setActiveView(views[demoTour.step])
+                  const views = [
+                    'project',
+                    'studio',
+                    'spark',
+                    'flow',
+                    'brand',
+                    'review',
+                    'finish',
+                  ]
+                  setActiveView(views[demoTour.step] || 'project')
                   setDemoTour(null)
                 }}
               >
@@ -5187,14 +5270,14 @@ function App() {
                 disabled={!onboardName.trim()}
                 onClick={() => finishOnboarding('custom')}
               >
-                Open Work — start this step
+                Start on Define
               </button>
               <button
                 type="button"
                 className="text-link onboard-demo"
                 onClick={() => finishOnboarding('empty')}
               >
-                Skip setup — empty desk (type a step on Work)
+                Skip setup — empty desk (capture a Sketch step later)
               </button>
             </div>
           </div>
@@ -5334,7 +5417,7 @@ function App() {
                 <kbd>C</kbd> Complete current step
               </li>
               <li>
-                <kbd>N</kbd> New capture (Work)
+                <kbd>N</kbd> New capture (Sketch)
               </li>
               <li>
                 <kbd>U</kbd> Undo last complete
@@ -5619,7 +5702,7 @@ function App() {
                   <li>Name the goal</li>
                   <li>Write what “done” looks like</li>
                   <li>Pick how many steps (5 / 8 / 12)</li>
-                  <li>Edit the list, then add to your Work queue</li>
+                  <li>Edit the list, then add to your Sketch queue</li>
                 </ol>
                 <button
                   type="button"
@@ -5781,7 +5864,7 @@ function App() {
                     disabled={!bdSteps.some((s) => s.trim())}
                     onClick={commitBreakdown}
                   >
-                    Add {bdSteps.filter((s) => s.trim()).length} steps to Work
+                    Add {bdSteps.filter((s) => s.trim()).length} steps to Sketch
                   </button>
                 </div>
               </div>

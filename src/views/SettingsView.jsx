@@ -210,7 +210,7 @@ export default function SettingsView(props) {
           </section>
 
           <section className="panel brand-section" id="settings-work-prefs">
-            <div className="brand-section-label">Work</div>
+            <div className="brand-section-label">Sketch prefs</div>
             <div className="settings-row">
               <div>
                 <strong>{i18nT(locale, 'ui.collapseQueue')}</strong>
@@ -232,7 +232,7 @@ export default function SettingsView(props) {
             <div className="settings-row">
               <div>
                 <strong>Show “How this works”</strong>
-                <span>Intro card on Work</span>
+                <span>Intro card on Sketch</span>
               </div>
               <button
                 type="button"
@@ -525,13 +525,13 @@ export default function SettingsView(props) {
               </p>
             )}
             <p className="panel-hint" style={{ margin: '0.65rem 0 0' }}>
-              Pack watermark toggle lives on{' '}
+              Leave-behind watermark toggle lives on{' '}
               <button
                 type="button"
                 className="text-link"
                 onClick={() => setActiveView('finish')}
               >
-                Pack
+                Deliver
               </button>{' '}
               (client handoff).
             </p>
@@ -551,14 +551,14 @@ export default function SettingsView(props) {
             </div>
             <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
               Creative Companion is a desk for ADHD creative work: one step at
-              a time, optional Helper, optional forced breaks, and brand pack
-              export
+              a time, optional Helper, optional forced breaks, and brand
+              leave-behind export
               {CLOUD ? ' — with optional cloud sync when configured.' : '.'}
             </p>
             <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
               <strong>Offline:</strong> After one online visit, the app shell
               and assets cache locally. Your desk data is on this device — open
-              Pack and download when offline.
+              Deliver and download when offline.
             </p>
             <p className="panel-hint" style={{ margin: 0 }}>
               <strong>1.0:</strong> Full path desk + pack export, quiet/all

@@ -628,12 +628,13 @@ export default function BuddyMate({
     const a = activityLive
     const place =
       {
-        flow: 'Work',
-        studio: 'Board',
-        project: 'Project',
-        brand: 'System',
-        finish: 'Pack',
-        spark: 'Spark',
+        flow: 'Sketch',
+        studio: 'Research',
+        project: 'Define',
+        brand: 'Design',
+        finish: 'Deliver',
+        spark: 'Ideate',
+        review: 'Review',
         insights: 'Timer',
         calendar: 'Deadlines',
         settings: 'Settings',

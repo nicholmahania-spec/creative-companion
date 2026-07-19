@@ -43,6 +43,15 @@ export const defaultBrandIdentity = {
   },
 }
 
+/** Three Ideate direction slots (A/B/C) */
+export function blankDirections() {
+  return [
+    { id: 'a', label: 'A', title: '', note: '', chosen: false },
+    { id: 'b', label: 'B', title: '', note: '', chosen: false },
+    { id: 'c', label: 'C', title: '', note: '', chosen: false },
+  ]
+}
+
 /** Fresh real desk — no sample clients or fake tasks */
 export function createBlankProject(name = 'My project', brief = '') {
   const id = Date.now()
@@ -52,6 +61,7 @@ export function createBlankProject(name = 'My project', brief = '') {
     active: true,
     brief: brief || '',
     logoDirection: '',
+    directions: blankDirections(),
     palette: [...defaultProjectPalette],
     deadline: '',
     ...defaultBrandIdentity,
@@ -211,6 +221,29 @@ const useAppStore = create(
               ? { ...p, logoDirection: direction }
               : p
           ),
+        })),
+
+      /** Update one Ideate direction slot (a/b/c) */
+      updateDirection: (dirId, patch) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const dirs = Array.isArray(p.directions)
+              ? p.directions.map((d) => ({ ...d }))
+              : blankDirections()
+            const idx = dirs.findIndex(
+              (d) => d.id === dirId || d.label?.toLowerCase() === String(dirId).toLowerCase()
+            )
+            if (idx < 0) return p
+            dirs[idx] = { ...dirs[idx], ...patch }
+            // Choosing one un-chooses others
+            if (patch.chosen === true) {
+              dirs.forEach((d, i) => {
+                if (i !== idx) d.chosen = false
+              })
+            }
+            return { ...p, directions: dirs }
+          }),
         })),
 
       /** Replace full palette for active project (max 8) */

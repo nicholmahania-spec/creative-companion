@@ -80,7 +80,7 @@ describe('i18n wordmark + path + catalog', () => {
       expect(ui.continuePrint || ui.continue).toBeTruthy()
       // not English raw for cancel when locale has override
       if (id === 'es') expect(ui.cancel).toBe('Cancelar')
-      if (id === 'ar') expect(ui.openPack).toMatch(/حزمة/)
+      if (id === 'ar') expect(ui.openPack).toMatch(/تسليم/)
     }
   })
 })

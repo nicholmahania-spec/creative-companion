@@ -261,11 +261,13 @@ export function idleLine() {
 }
 
 const VIEW_LABELS = {
-  flow: 'Work',
-  studio: 'the mood board',
-  project: 'Projects',
-  brand: 'Brand',
-  spark: 'Spark',
+  flow: 'Sketch',
+  studio: 'Research',
+  project: 'Define',
+  brand: 'Design',
+  finish: 'Deliver',
+  spark: 'Ideate',
+  review: 'Review',
   insights: 'the focus timer',
   calendar: 'Deadlines',
   settings: 'Settings',
@@ -416,7 +418,7 @@ export function recommendForTask(activity = {}) {
         ? 'Pin 3–5 refs max, each with a one-line note: mood, layout idea, or color role — not "nice."'
         : 'You have enough pins. Cluster them into 2 mood directions and discard outliers.',
       'Name the pattern you are stealing ethically (grid, crop, tone) so the board becomes rules.',
-      'Return to Work with one decision written as a step.',
+      'Return to Sketch with one decision written as a step.',
       'Why: uncaptioned boards become aesthetic scrolling.',
     ],
     export: [
@@ -523,7 +525,7 @@ export function critiqueForTask(activity = {}) {
         ? 'Risk: board bloat. Too many pins without captions freezes decisions.'
         : 'Watch for: collecting without criteria — mood boards that never constrain choices.',
       'Ask: which two pins disagree? That tension is a direction choice, not a failure.',
-      'If you have not written a decision step on Work, research is incomplete.',
+      'If you have not written a decision step on Sketch, research is incomplete.',
     ],
     export: [
       'Watch for: shipping incomplete contrast, missing hex list, empty do/don’t.',
@@ -578,7 +580,7 @@ export function describeActivity(activity = {}) {
   const domain = classifyTask(activity)
   const domainLabel = DOMAIN_LABEL[domain]
   if (step && view === 'flow') {
-    return `Caught you on Work (${project || 'mystery project'}) wrestling "${step}" — that's ${domainLabel} energy.`
+    return `Caught you on Sketch (${project || 'mystery project'}) wrestling "${step}" — that's ${domainLabel} energy.`
   }
   if (step) {
     return `You're on ${place} with "${step}" still open. Domain: ${domainLabel}. Spicy.`
@@ -657,40 +659,48 @@ export function activityTip(activity = {}) {
 
   if (view === 'studio') {
     return step
-      ? `Board for “${step}”: keep pins that constrain. Drop the rest.`
+      ? `Research for “${step}”: keep pins that constrain. Drop the rest.`
       : pins > 0
-        ? `Curate ${project} board, then back to Work with one decision.`
-        : 'Pin 2–3 refs with a one-line why. Then Work.'
+        ? `Curate ${project} refs, then back to Sketch with one decision.`
+        : 'Pin 2–3 refs with a one-line why. Then Sketch.'
   }
 
   if (view === 'brand') {
-    return `Brand for ${project}: finish one layer (tagline or palette). Consistent incomplete > conflicting complete.`
+    return `Design for ${project}: finish one layer (tagline or palette). Consistent incomplete > conflicting complete.`
   }
 
   if (view === 'spark') {
     return step
-      ? `If this spark helps “${step}”, pin it. Else skip.`
-      : 'One spark → pin → back to Work.'
+      ? `If this spark helps “${step}”, pin it or fill A/B/C. Else skip.`
+      : 'One spark → pin or A/B/C → then Sketch.'
+  }
+
+  if (view === 'review') {
+    return 'Show the leave-behind. Ask if it feels right. Then Deliver.'
+  }
+
+  if (view === 'finish') {
+    return 'Vector PDF or print. Hand off. Note what you learned.'
   }
 
   if (view === 'insights') {
     return step
       ? `Timer is a container for “${step}”. 25 for layout, 2 for a decision.`
-      : 'Set a Work step first, then start a timer.'
+      : 'Set a Sketch step first, then start a timer.'
   }
 
   if (view === 'calendar') {
     return hasDeadline
-      ? `Deadline on ${project}: work backward into Work steps.`
-      : 'Set a deadline or a personal review date, then Work.'
+      ? `Deadline on ${project}: work backward into Sketch steps.`
+      : 'Set a deadline or a personal review date, then Sketch.'
   }
 
   if (view === 'project') {
-    return 'Brief = audience + outcome + constraint. Then go to Work.'
+    return 'Brief = audience + outcome + constraint. Then go to Research.'
   }
 
   if (view === 'settings') {
-    return 'Backup if it matters. Then return to Work or Brand.'
+    return 'Backup if it matters. Then return to Sketch or Design.'
   }
 
   if (view === 'flow' || !view) {

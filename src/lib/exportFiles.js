@@ -259,6 +259,17 @@ export function buildBrandPackSnapshot({
     tagline: p.tagline || '',
     voice: p.voice || '',
     logoDirection: p.logoDirection || '',
+    directions: Array.isArray(p.directions)
+      ? p.directions
+          .filter((d) => String(d?.title || d?.note || '').trim())
+          .map((d) => ({
+            id: d.id,
+            label: d.label || d.id,
+            title: d.title || '',
+            note: d.note || '',
+            chosen: !!d.chosen,
+          }))
+      : [],
     typeHeading: p.typeHeading || 'Plus Jakarta Sans Bold',
     typeBody: p.typeBody || 'Plus Jakarta Sans Regular',
     doUse: p.doUse || '',
@@ -321,7 +332,7 @@ export function packReadiness(pack) {
     },
     {
       id: 'pins',
-      label: '★ Pack pins',
+      label: '★ Leave-behind pins',
       ok: hasPins,
       view: 'studio',
       section: null,
@@ -376,6 +387,17 @@ export function brandPackToMarkdown(pack) {
   )
   if (pack.logoDirection) {
     lines.push('## Logo direction', '', pack.logoDirection, '')
+  }
+  if (pack.directions?.length) {
+    lines.push('## Ideate directions', '')
+    pack.directions.forEach((d) => {
+      lines.push(
+        `- **${d.label || d.id}${d.chosen ? ' ★' : ''}:** ${d.title || '—'}${
+          d.note ? ` — ${d.note}` : ''
+        }`
+      )
+    })
+    lines.push('')
   }
   lines.push(
     '## Do',
@@ -794,7 +816,7 @@ export function buildDirectionSheetMarkup(pack) {
           </div>`
         })
         .join('')}</div>`
-    : `<p class="surface-meta">No pins yet — upload images on the Board (Ideas).</p>`
+    : `<p class="surface-meta">No pins yet — upload images on Research.</p>`
 
   const tasksHtml = tasks.length
     ? tasks.map((t) => `<li>${esc(t.title)}</li>`).join('')
@@ -1348,6 +1370,16 @@ export async function downloadBrandPackVectorPdf(
     if (pack?.logoDirection) {
       kicker('Logo direction')
       writeWrapped(pack.logoDirection, { size: 11 })
+    }
+
+    const dirs = pack?.directions || []
+    if (dirs.length) {
+      kicker('Ideate directions')
+      dirs.forEach((d) => {
+        const head = `${d.label || d.id}${d.chosen ? ' ★ chosen' : ''}: ${d.title || '—'}`
+        writeWrapped(head, { size: 11, role: 'heading' })
+        if (d.note) writeWrapped(d.note, { size: 10, color: [70, 70, 70] })
+      })
     }
 
     // Do / Don't

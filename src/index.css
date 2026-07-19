@@ -9276,6 +9276,70 @@ html[data-reduce-motion='true'] *::after {
   line-height: 1.45;
   font-family: inherit;
 }
+
+/* Ideate A/B/C direction cards */
+.ideate-directions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+}
+@media (max-width: 720px) {
+  .ideate-directions {
+    grid-template-columns: 1fr;
+  }
+}
+.ideate-dir-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-muted);
+}
+.ideate-dir-card.is-chosen {
+  border-color: var(--accent-growth, #0f766e);
+  box-shadow: 0 0 0 1px var(--accent-growth, #0f766e);
+}
+.ideate-dir-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.ideate-dir-letter {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+.sketch-dir-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.sketch-dir-chip {
+  appearance: none;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-muted);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  max-width: 100%;
+}
+.sketch-dir-chip.is-chosen {
+  border-color: var(--accent-growth, #0f766e);
+  font-weight: 600;
+}
+.sketch-dir-chip:hover {
+  border-color: var(--text-secondary);
+}
+.review-pack-preview {
+  margin-top: 0.5rem;
+}
 .project-brief-readonly {
   margin: 0;
   padding: 0.65rem 0.75rem;
