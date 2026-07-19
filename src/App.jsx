@@ -25,6 +25,14 @@ import {
   APP_BUILD_DATE,
   versionLabel,
 } from './lib/version'
+import LoginPage from './components/LoginPage'
+import {
+  isSessionOpen,
+  closeSession,
+  getSession,
+  changeAccessPassword,
+  STORAGE_EXPLAIN,
+} from './lib/auth'
 
 function App() {
   // ——— Zustand (persisted studio state) ———
@@ -112,6 +120,12 @@ function App() {
   const [stepFocusKey, setStepFocusKey] = useState(0)
   const [stepDueOpen, setStepDueOpen] = useState(false)
   const [projectNameDraft, setProjectNameDraft] = useState('')
+  const [unlocked, setUnlocked] = useState(() => isSessionOpen())
+  const [accessName, setAccessName] = useState(
+    () => getSession()?.name || ''
+  )
+  const [pwCurrent, setPwCurrent] = useState('')
+  const [pwNext, setPwNext] = useState('')
   const moreWrapRef = useRef(null)
   const importFileRef = useRef(null)
 
@@ -378,10 +392,10 @@ function App() {
     }
   }, [moreOpen])
 
-  // First-run gate (zustand onboarded)
+  // First-run project gate (after access unlock)
   useEffect(() => {
-    if (!onboarded) setShowOnboarding(true)
-  }, [onboarded])
+    if (unlocked && !onboarded) setShowOnboarding(true)
+  }, [unlocked, onboarded])
 
   // Keep rename field in sync with active project
   useEffect(() => {
@@ -778,6 +792,19 @@ function App() {
     flashToast('Note pin added')
   }
 
+  if (!unlocked) {
+    return (
+      <div className={`app ${theme} login-shell`}>
+        <LoginPage
+          onUnlocked={(name) => {
+            setAccessName(name || '')
+            setUnlocked(true)
+          }}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className={`app ${theme} view-${activeView}`}>
       <header className="header">
@@ -959,6 +986,19 @@ function App() {
                       {theme === 'warm' ? 'Dark mode' : 'Light mode'}
                     </strong>
                     <span>Screen comfort only</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      closeSession()
+                      setMoreOpen(false)
+                      setUnlocked(false)
+                    }}
+                  >
+                    <strong>Sign out / lock</strong>
+                    <span>Require password next visit</span>
                   </button>
                 </div>
               )}
@@ -2803,10 +2843,79 @@ function App() {
             </section>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">Your data</div>
+              <div className="brand-section-label">Access</div>
               <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                Everything lives in this browser. Clearing site data or
-                switching devices can wipe it — backup if it matters.
+                {accessName ? `Signed in as ${accessName}. ` : ''}
+                Password unlocks this browser only — not a cloud account.
+                Closing the tab signs you out.
+              </p>
+              <div className="settings-actions" style={{ marginBottom: '1rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    closeSession()
+                    setUnlocked(false)
+                    flashToast('Locked')
+                  }}
+                >
+                  Sign out / lock
+                </button>
+              </div>
+              <div className="field-block" style={{ marginBottom: '0.65rem' }}>
+                <label className="field-label" htmlFor="pw-current">
+                  Change password
+                </label>
+                <input
+                  id="pw-current"
+                  type="password"
+                  className="field-input"
+                  value={pwCurrent}
+                  onChange={(e) => setPwCurrent(e.target.value)}
+                  placeholder="Current password"
+                  autoComplete="current-password"
+                />
+              </div>
+              <div className="capture-row" style={{ marginBottom: '0.5rem' }}>
+                <input
+                  type="password"
+                  className="field-input"
+                  value={pwNext}
+                  onChange={(e) => setPwNext(e.target.value)}
+                  placeholder="New password (6+ chars)"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  disabled={!pwCurrent || pwNext.length < 6}
+                  onClick={async () => {
+                    const result = await changeAccessPassword(pwCurrent, pwNext)
+                    if (result.ok) {
+                      setPwCurrent('')
+                      setPwNext('')
+                      flashToast('Password updated')
+                    } else {
+                      flashToast(result.error || 'Could not update')
+                    }
+                  }}
+                >
+                  Update
+                </button>
+              </div>
+            </section>
+
+            <section className="panel brand-section">
+              <div className="brand-section-label">Your data</div>
+              <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
+                {STORAGE_EXPLAIN.summary}
+              </p>
+              <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
+                Browser storage key:{' '}
+                <code className="settings-code">
+                  {STORAGE_EXPLAIN.workDataKey}
+                </code>
+                . Use backup when switching devices.
               </p>
               <div className="settings-actions">
                 <button
@@ -3103,7 +3212,9 @@ function App() {
         <span className="app-footer-sep" aria-hidden="true">
           ·
         </span>
-        <span className="app-footer-meta">Local-only</span>
+        <span className="app-footer-meta">
+          {accessName ? `${accessName} · ` : ''}Local-only
+        </span>
       </footer>
 
       {showOnboarding && (
@@ -3114,13 +3225,13 @@ function App() {
           aria-labelledby="onboard-title"
         >
           <div className="export-panel onboard-panel">
-            <p className="onboard-eyebrow">No login · local only</p>
+            <p className="onboard-eyebrow">Local only · this device</p>
             <h2 id="onboard-title" style={{ marginTop: 0 }}>
               Start your work loop
             </h2>
             <p className="view-lede">
-              Dump ideas → one current step → complete it. Not a chatbot. Your
-              data never leaves this device.
+              Dump ideas → one current step → complete it. Not a chatbot. Work
+              is saved in this browser only.
             </p>
             <label className="onboard-label">
               Project name
