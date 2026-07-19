@@ -45,6 +45,14 @@ import {
 } from './lib/journey'
 import { PROCESS_PHASES, getProcessPhase } from './lib/processGuide'
 import {
+  buildBrandPackSnapshot,
+  downloadBrandPackHtml,
+  downloadBrandPackMarkdown,
+  downloadBrandPackJson,
+  downloadWorkspaceBackup,
+  printElementById,
+} from './lib/exportFiles'
+import {
   isSessionOpen,
   closeSession,
   getSession,
@@ -850,25 +858,62 @@ function App() {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
 
-  const openExportPanel = () => {
-    setExportPanel({
-      projectName: activeProject?.name || 'Untitled project',
-      brief: activeProject?.brief?.trim() || '',
-      logoDirection: activeProject?.logoDirection || '',
-      tagline: activeProject?.tagline?.trim() || '',
-      voice: activeProject?.voice?.trim() || '',
-      doUse: activeProject?.doUse?.trim() || '',
-      dontUse: activeProject?.dontUse?.trim() || '',
-      openTasks: deskTasks.filter((t) => !t.completed).slice(0, 5),
-      doneCount: completedCount,
-      totalCount: deskTasks.length,
-      progressPercent,
-      pins: deskMood.slice(0, 6),
-      palette: [...projectPalette],
-      typeHeading:
-        activeProject?.typeHeading || 'Plus Jakarta Sans Bold',
-      typeBody: activeProject?.typeBody || 'Plus Jakarta Sans Regular',
+  const buildCurrentBrandPack = () =>
+    buildBrandPackSnapshot({
+      project: activeProject,
+      tasks: deskTasks,
+      moodItems: deskMood,
+      palette: projectPalette,
     })
+
+  const openExportPanel = () => {
+    const pack = buildCurrentBrandPack()
+    setExportPanel({
+      ...pack,
+      // keep UI fields used by direction sheet
+      openTasks: pack.openTasks.slice(0, 8),
+      pins: pack.pins.slice(0, 8),
+    })
+  }
+
+  const runExport = (kind) => {
+    const pack = buildCurrentBrandPack()
+    let result = { ok: false, error: 'Unknown export' }
+    if (kind === 'html') result = downloadBrandPackHtml(pack)
+    else if (kind === 'md') result = downloadBrandPackMarkdown(pack)
+    else if (kind === 'json') result = downloadBrandPackJson(pack)
+    else if (kind === 'backup') {
+      result = downloadWorkspaceBackup(exportAllData())
+    } else if (kind === 'print') {
+      if (!exportPanel) openExportPanel()
+      window.setTimeout(() => {
+        const r = printElementById('direction-sheet')
+        if (r.ok) {
+          awardAndBroadcast('export_pack', { label: 'Print / PDF' })
+          flashToast('Print dialog open — choose Save as PDF if you want a file')
+        } else flashToast(r.error || 'Print failed')
+      }, exportPanel ? 50 : 120)
+      return
+    }
+    if (result.ok) {
+      const g = awardAndBroadcast('export_pack', {
+        label:
+          kind === 'html'
+            ? 'Brand HTML'
+            : kind === 'md'
+              ? 'Brand Markdown'
+              : kind === 'json'
+                ? 'Brand JSON'
+                : 'Workspace backup',
+      })
+      flashToast(
+        kind === 'backup'
+          ? `Backup downloaded · +${g.gained} XP`
+          : `Downloaded · +${g.gained} XP`
+      )
+    } else {
+      flashToast(result.error || 'Download failed')
+    }
   }
 
   const uploadMoodFiles = (fileList) => {
@@ -898,85 +943,7 @@ function App() {
     )
   }
 
-  const downloadExportHtml = () => {
-    if (!exportPanel) return
-    const pinsHtml = exportPanel.pins
-      .map((p) => {
-        if (p.type === 'image' && p.visual) {
-          const src = String(p.visual).replace(/'/g, '%27')
-          return `<div class="pin"><div class="swatch" style="background-image:url('${src}');background-size:cover"></div><p>${escapeHtml(p.note)}</p></div>`
-        }
-        return `<div class="pin"><div class="swatch" style="background:${escapeHtml(p.visual || '#863BFF')}"></div><p>${escapeHtml(p.note)}</p></div>`
-      })
-      .join('')
-    const tasksHtml = exportPanel.openTasks
-      .map((t) => `<li>${escapeHtml(t.title)}</li>`)
-      .join('')
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${escapeHtml(exportPanel.projectName)} — Brand Identity</title>
-<style>
-  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#0B1220;background:#EEF0F6;margin:0;padding:2.5rem}
-  .sheet{max-width:760px;margin:0 auto;background:#fff;border:1px solid rgba(11,18,32,.08);border-radius:16px;padding:2.25rem;box-shadow:0 8px 28px rgba(11,18,32,.08)}
-  .cover{border-radius:12px;padding:2rem 1.75rem;margin:0 0 1.75rem;color:#fff}
-  .cover .label{font-size:.75rem;font-weight:700;opacity:.85;margin:0 0 .5rem}
-  .cover h1{font-size:2rem;font-weight:700;letter-spacing:-.03em;margin:0 0 .4rem}
-  .cover .tag{font-size:1.05rem;opacity:.92;margin:0;font-weight:500}
-  h1{font-weight:700;font-size:1.75rem;letter-spacing:-.025em;margin:0 0 .35rem}
-  .kicker{font-size:.8125rem;font-weight:600;color:rgba(11,18,32,.55);margin:1.25rem 0 .4rem}
-  .brief{color:rgba(11,18,32,.65);line-height:1.55;margin:0 0 1rem}
-  .row{display:flex;gap:0;height:64px;border-radius:10px;overflow:hidden;margin:.65rem 0}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
-  .box{border:1px solid rgba(11,18,32,.08);border-radius:10px;padding:1rem}
-  .box h3{margin:0 0 .35rem;font-size:.8rem;font-weight:700;color:rgba(11,18,32,.5)}
-  .box p{margin:0;line-height:1.45;color:rgba(11,18,32,.75);font-size:.95rem}
-  .type-display{font-size:1.75rem;font-weight:700;letter-spacing:-.03em;margin:.25rem 0}
-  .type-body{font-size:1rem;color:rgba(11,18,32,.65)}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1rem 0}
-  .pin{border:1px solid rgba(36,30,48,.1);border-radius:2px 10px 10px 2px;overflow:hidden}
-  .swatch{height:88px;background:#EDE6FF}
-  .pin p{margin:0;padding:.55rem .65rem;font-size:.8rem}
-  ul{margin:.5rem 0 0;padding-left:1.1rem;color:rgba(36,30,48,.62)}
-  .foot{margin-top:2rem;font-size:.75rem;color:rgba(36,30,48,.4)}
-  @media print{body{background:#fff;padding:0}.sheet{box-shadow:none;border:none}}
-</style></head><body><div class="sheet">
-  <div class="cover" style="background:${escapeHtml(exportPanel.palette[0] || '#4F46E5')}">
-    <p class="label">Brand identity template</p>
-    <h1>${escapeHtml(exportPanel.projectName)}</h1>
-    <p class="tag">${escapeHtml(exportPanel.tagline || 'Tagline TBD')}</p>
-  </div>
-  <div class="kicker">Positioning</div>
-  <p class="brief">${escapeHtml(exportPanel.brief || 'No brief captured yet.')}</p>
-  ${exportPanel.voice ? `<div class="kicker">Voice</div><p class="brief">${escapeHtml(exportPanel.voice)}</p>` : ''}
-  <div class="kicker">Palette</div>
-  <div class="row">${exportPanel.palette.map((c) => `<div style="flex:1;background:${c}"></div>`).join('')}</div>
-  <p class="brief">${exportPanel.palette.map((c) => escapeHtml(c)).join(' · ')}</p>
-  <div class="kicker">Typography</div>
-  <div class="type-display">${escapeHtml(exportPanel.typeHeading)}</div>
-  <div class="type-body">${escapeHtml(exportPanel.typeBody)}</div>
-  ${
-    exportPanel.logoDirection
-      ? `<div class="kicker">Logo direction</div><p class="brief">${escapeHtml(exportPanel.logoDirection)}</p>`
-      : ''
-  }
-  <div class="grid2">
-    <div class="box"><h3>Do</h3><p>${escapeHtml(exportPanel.doUse || '—')}</p></div>
-    <div class="box"><h3>Don’t</h3><p>${escapeHtml(exportPanel.dontUse || '—')}</p></div>
-  </div>
-  <div class="kicker">Mood direction</div>
-  <div class="grid">${pinsHtml || '<p class="brief">No pins yet.</p>'}</div>
-  <div class="kicker">Open work</div>
-  <ul>${tasksHtml || '<li>Desk clear</li>'}</ul>
-  <p class="foot">Creative Companion · ${exportPanel.progressPercent}% of desk checked · ${new Date().toLocaleDateString()}</p>
-</div></body></html>`
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${exportPanel.projectName.replace(/\s+/g, '-').toLowerCase()}-brand-direction.html`
-    a.click()
-    URL.revokeObjectURL(url)
-    const g = awardAndBroadcast('export_pack', { label: 'Brand pack' })
-    flashToast(`Pack downloaded · +${g.gained} XP`)
-  }
+  const downloadExportHtml = () => runExport('html')
 
   const creativeResetItems = [
     {
@@ -1105,20 +1072,7 @@ function App() {
     }, 60)
   }
 
-  const downloadDataBackup = () => {
-    const data = exportAllData()
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `creative-companion-backup-${toISODate()}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    const g = awardAndBroadcast('export_pack', { label: 'Backup' })
-    flashToast(`Backup downloaded · +${g.gained} XP`)
-  }
+  const downloadDataBackup = () => runExport('backup')
 
   /** Load the Soft Signal design-run demo (full path through the product). */
   const loadSoftSignalDemo = async () => {
@@ -3480,20 +3434,51 @@ function App() {
                   Work step.
                 </li>
               </ul>
-              <div className="finish-actions">
+              <div className="finish-actions finish-export-grid">
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={openExportPanel}
+                  onClick={() => runExport('html')}
                 >
-                  Export brand pack
+                  Download brand pack (HTML)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => runExport('md')}
+                >
+                  Download brand pack (Markdown)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => runExport('json')}
+                >
+                  Download brand pack (JSON)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    openExportPanel()
+                    window.setTimeout(() => runExport('print'), 100)
+                  }}
+                >
+                  Print / Save PDF
                 </button>
                 <button
                   type="button"
                   className="btn btn-secondary"
                   onClick={downloadDataBackup}
                 >
-                  Download full backup
+                  Full workspace backup (JSON)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={openExportPanel}
+                >
+                  Preview pack
                 </button>
                 <button
                   type="button"
@@ -3517,6 +3502,11 @@ function App() {
                   Load Soft Signal demo
                 </button>
               </div>
+              <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
+                HTML opens offline and includes Print/PDF. Markdown is for docs
+                and Notion. JSON is for backup/import. Use full workspace backup
+                to restore everything later.
+              </p>
             </section>
 
             <section className="panel brand-section">
@@ -4421,17 +4411,38 @@ function App() {
             <div className="export-panel-actions no-print">
               <button
                 type="button"
-                className="btn btn-secondary"
-                onClick={downloadExportHtml}
+                className="btn btn-primary"
+                onClick={() => runExport('html')}
               >
                 Download HTML
               </button>
               <button
                 type="button"
-                className="btn btn-primary"
-                onClick={() => window.print()}
+                className="btn btn-secondary"
+                onClick={() => runExport('md')}
+              >
+                Download Markdown
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => runExport('json')}
+              >
+                Download JSON
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => runExport('print')}
               >
                 Print / Save PDF
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setExportPanel(null)}
+              >
+                Close
               </button>
             </div>
           </div>
