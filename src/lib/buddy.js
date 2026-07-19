@@ -278,6 +278,296 @@ function short(title, n = 48) {
 }
 
 /**
+ * Infer craft domain from task title + current view.
+ * Used so recommendations/critique fit the actual job.
+ */
+export function classifyTask(activity = {}) {
+  const text = `${activity.nextTaskTitle || ''} ${activity.projectName || ''} ${
+    activity.view || ''
+  }`.toLowerCase()
+  const view = activity.view || 'flow'
+
+  const rules = [
+    {
+      id: 'logo',
+      re: /logo|wordmark|mark|monogram|icon system|favicon|brand mark/,
+    },
+    {
+      id: 'color',
+      re: /color|palette|swatch|contrast|hex|hue|tint|brand color/,
+    },
+    {
+      id: 'type',
+      re: /type|typo|font|lettering|typeset|headline|serif|sans/,
+    },
+    {
+      id: 'layout',
+      re: /layout|wire|grid|composition|spacing|hierarchy|mock|screen|ui|ux|interface|page|nav|menu|dashboard/,
+    },
+    {
+      id: 'copy',
+      re: /copy|tagline|headline|voice|tone|messaging|words|writing|content|microcopy|cta text/,
+    },
+    {
+      id: 'research',
+      re: /research|audit|competitor|interview|ref|mood|inspiration|discover|explore/,
+    },
+    {
+      id: 'export',
+      re: /export|print|pdf|pack|deliver|handoff|ship|share|client review/,
+    },
+    {
+      id: 'illustration',
+      re: /illustrat|draw|icon|graphic|poster|cover|artwork|visual system/,
+    },
+    {
+      id: 'photo',
+      re: /photo|image|crop|retouch|asset|stock/,
+    },
+    {
+      id: 'motion',
+      re: /motion|animat|prototype|interaction|micro-interaction|hover|transition/,
+    },
+    {
+      id: 'breakdown',
+      re: /break|micro-step|overwhelm|plan|scope|steps/,
+    },
+  ]
+
+  for (const r of rules) {
+    if (r.re.test(text)) return r.id
+  }
+
+  // View fallbacks when title is vague
+  if (view === 'studio') return 'research'
+  if (view === 'brand') return 'copy'
+  if (view === 'spark') return 'research'
+  if (view === 'insights') return 'layout'
+  if (view === 'calendar') return 'export'
+  if (view === 'project') return 'breakdown'
+  return 'general'
+}
+
+const DOMAIN_LABEL = {
+  logo: 'logo / mark',
+  color: 'color system',
+  type: 'typography',
+  layout: 'UI layout / hierarchy',
+  copy: 'verbal identity / UX writing',
+  research: 'research & reference',
+  export: 'delivery / export',
+  illustration: 'illustration / graphics',
+  photo: 'imagery',
+  motion: 'motion / interaction',
+  breakdown: 'scope & planning',
+  general: 'design craft',
+}
+
+/**
+ * Task-appropriate recommendations (what to do next).
+ */
+export function recommendForTask(activity = {}) {
+  const domain = classifyTask(activity)
+  const step = short(activity.nextTaskTitle, 56)
+  const project = short(activity.projectName, 28) || 'this project'
+  const pins = Number(activity.pinsCount) || 0
+  const view = activity.view || 'flow'
+  const energy = activity.nextTaskEnergy || 'med'
+  const isMicro = !!activity.isMicroStep
+  const label = DOMAIN_LABEL[domain] || DOMAIN_LABEL.general
+
+  const head = step
+    ? `Recommendation for "${step}" (${label}):`
+    : `Recommendation for ${project} · ${label}:`
+
+  const byDomain = {
+    logo: [
+      'Sketch 6–9 thumbnails in 10 minutes before any digital polish — quantity first.',
+      'Lock a single metaphor (e.g. shelter, growth, invitation) and reject marks that do not serve it.',
+      'Test the mark at 24px and one-color; if it dies, simplify geometry.',
+      'Why: logos fail from premature detail, not from too few roughs.',
+    ],
+    color: [
+      'Assign roles, not pretty swatches: background, body text, primary action, quiet border, optional highlight.',
+      'Check body text on the main background for WCAG AA (~4.5:1). Fix contrast before adding accents.',
+      'Use one accent for CTAs only — if everything is accent, nothing is hierarchy.',
+      'Why: systems beat palettes that only look good in a grid.',
+    ],
+    type: [
+      'Pair one display/heading face with one highly legible UI/body face — stop at two families.',
+      'Define a type ramp: H1 / H2 / body / caption / button with consistent scale (e.g. 1.25).',
+      'Set line-length ~45–75 characters for body; avoid decorative fonts for long UI copy.',
+      'Why: type hierarchy is navigation for the eye.',
+    ],
+    layout: [
+      'Text-wireframe the screen top-to-bottom before pixels: header, primary content, proof, single CTA.',
+      'One primary action per view. Secondary actions are ghost/text — never twin primaries.',
+      'Use an 8pt spacing rhythm; align to a simple column grid. Cut any element that does not support the user job.',
+      'Why: layout is strategy expressed as space.',
+    ],
+    copy: [
+      'Write the CTA and empty-state first — they expose whether the product job is clear.',
+      'One idea per sentence. Voice: say what the user gains, not what the brand is.',
+      'Put the tagline through a "would a stranger understand in 3 seconds?" test.',
+      'Why: unclear words make polished UI feel broken.',
+    ],
+    research: [
+      pins < 3
+        ? 'Pin 3–5 refs max, each with a one-line note: mood, layout idea, or color role — not "nice."'
+        : 'You have enough pins. Cluster them into 2 mood directions and discard outliers.',
+      'Name the pattern you are stealing ethically (grid, crop, tone) so the board becomes rules.',
+      'Return to Work with one decision written as a step.',
+      'Why: uncaptioned boards become aesthetic scrolling.',
+    ],
+    export: [
+      'Export only when identity answers: who, tone, palette roles, type pair, do/don’t.',
+      'Prefer a short pack a client can skim over a complete but confusing dump.',
+      'Check contrast and hex list on the export sheet before sending.',
+      'Why: delivery is a UX problem for the stakeholder.',
+    ],
+    illustration: [
+      'Define the job of the graphic: explain, delight, or brand signal — pick one.',
+      'Limit the illustration to the brand palette; avoid a second secret rainbow.',
+      'Leave safe margin and a clear focal point; complexity should serve storytelling.',
+      'Why: illustration without a job becomes decoration tax.',
+    ],
+    photo: [
+      'Crop for subject and breath; avoid center-everything by default.',
+      'Match color grade loosely to brand neutrals so photos do not fight the UI.',
+      'Add alt/caption intent even for internal comps — it forces clarity of subject.',
+      'Why: imagery is content hierarchy, not wallpaper.',
+    ],
+    motion: [
+      'Motion should clarify state change (enter, success, error) — not entertain.',
+      'Keep durations short (150–300ms UI); ease-out for exits of attention.',
+      'Respect reduced-motion: essential feedback must work without animation.',
+      'Why: gratuitous motion harms accessibility and trust.',
+    ],
+    breakdown: [
+      'Split by user-visible outcomes, not tool actions ("choose type pair" not "open Figma").',
+      'Order steps so each unlocks the next; put research before polish.',
+      'Cap the list — better 8 honest steps than 20 vague ones.',
+      'Why: bad breakdowns recreate overwhelm with extra checkboxes.',
+    ],
+    general: [
+      'Name the user job in one sentence, then do the smallest shippable slice.',
+      'Prefer hierarchy (type, space, contrast) over new decoration.',
+      'If stuck between options, write two directions in one line each and pick one for 25 minutes.',
+      'Why: criteria beat vibes when energy is limited.',
+    ],
+  }
+
+  const lines = byDomain[domain] || byDomain.general
+  const energyNote =
+    energy === 'low'
+      ? ' Energy note: keep this pass low-cognition (lists, contrast check, renames).'
+      : energy === 'high'
+        ? ' Energy note: good window for exploration or hard composition.'
+        : ''
+  const microNote = isMicro
+    ? ' This is already a micro-step — finish it ugly if needed, then close it.'
+    : ''
+  const viewNote =
+    view === 'studio' && domain !== 'research'
+      ? ' You are on the board — only gather what serves this task, then leave.'
+      : view === 'brand' && domain === 'general'
+        ? ' On Brand: fill the next empty system field with intent, not completeness anxiety.'
+        : ''
+
+  return `${head} ${lines.join(' ')}${energyNote}${microNote}${viewNote}`
+}
+
+/**
+ * Task-appropriate critique (risks / what usually goes wrong).
+ */
+export function critiqueForTask(activity = {}) {
+  const domain = classifyTask(activity)
+  const step = short(activity.nextTaskTitle, 56)
+  const project = short(activity.projectName, 28) || 'this project'
+  const pins = Number(activity.pinsCount) || 0
+  const queue = Number(activity.queueCount) || 0
+  const label = DOMAIN_LABEL[domain] || DOMAIN_LABEL.general
+
+  const head = step
+    ? `Critique lens on "${step}" (${label}):`
+    : `Critique lens for ${project} (${label}):`
+
+  const byDomain = {
+    logo: [
+      'Watch for: trends over meaning, gradients that die in one-color print, detail that vanishes small.',
+      'Ask: would this still read as the same idea if it were a rubber stamp?',
+      'If you are polishing paths before 6 rough directions exist, you are refining too early.',
+    ],
+    color: [
+      'Watch for: accent everywhere, low-contrast body text, palette as decoration not roles.',
+      'Ask: which color is the only "action" color? If you cannot answer, hierarchy is muddy.',
+      'Brand-builder tip: fix text-on-bg pairs before adding a sixth swatch.',
+    ],
+    type: [
+      'Watch for: too many weights, display fonts in UI chrome, uneven scale jumps.',
+      'Ask: can a user scan H1 → body → CTA without hunting?',
+      'If everything is bold, nothing is emphasis — that is a hierarchy failure, not a style.',
+    ],
+    layout: [
+      'Watch for: twin primary buttons, equal card weight, decorative lines instead of structure.',
+      'Ask: what is the single focal point and primary action on this view?',
+      'If you are styling shadows before the wireframe is solid, reverse the order.',
+    ],
+    copy: [
+      'Watch for: brand poetry with no user verb, passive voice, three ideas in one line.',
+      'Ask: what should the person do or feel after reading this once?',
+      'Taglines that need a paragraph of explanation are not ready.',
+    ],
+    research: [
+      pins > 8
+        ? 'Risk: board bloat. Too many pins without captions freezes decisions.'
+        : 'Watch for: collecting without criteria — mood boards that never constrain choices.',
+      'Ask: which two pins disagree? That tension is a direction choice, not a failure.',
+      'If you have not written a decision step on Work, research is incomplete.',
+    ],
+    export: [
+      'Watch for: shipping incomplete contrast, missing hex list, empty do/don’t.',
+      'Ask: can a stranger apply this brand tomorrow without a call?',
+      'Pretty export of unclear decisions still fails the stakeholder.',
+    ],
+    illustration: [
+      'Watch for: style drift from brand palette, cluttered focal point, illustration fighting type.',
+      'Ask: if we removed the graphic, would the message still land? If yes, it may be optional.',
+    ],
+    photo: [
+      'Watch for: mixed color grades, faces cut by UI, images as pure wallpaper.',
+      'Ask: does the crop support the story or only fill a rectangle?',
+    ],
+    motion: [
+      'Watch for: motion without meaning, long durations, ignoring reduced-motion.',
+      'Ask: what state change does this animation explain?',
+    ],
+    breakdown: [
+      'Watch for: steps that are tools ("open Figma") instead of outcomes ("choose type pair").',
+      'Ask: does each step unlock the next for a user or stakeholder?',
+      queue > 8
+        ? 'Queue is heavy — critique the list length, not your discipline.'
+        : 'Prefer fewer sharper steps over a novel of tasks.',
+    ],
+    general: [
+      'Watch for: decorating before defining the user job; twin priorities; endless polish.',
+      'Ask: what would make this "done enough" for a first share?',
+      'If the step title is vague, the craft will scatter — rewrite the step as an outcome.',
+    ],
+  }
+
+  const lines = byDomain[domain] || byDomain.general
+  return `${head} ${lines.filter(Boolean).join(' ')} Why this matters: critique protects quality without expanding scope.`
+}
+
+/**
+ * Combined coach response: recommend + critique for current task.
+ */
+export function coachOnTask(activity = {}) {
+  return `${recommendForTask(activity)} — ${critiqueForTask(activity)}`
+}
+
+/**
  * Snapshot of what the person is doing (from the app).
  */
 export function describeActivity(activity = {}) {
@@ -285,13 +575,15 @@ export function describeActivity(activity = {}) {
   const place = VIEW_LABELS[view] || 'the app'
   const step = short(activity.nextTaskTitle, 40)
   const project = short(activity.projectName, 24)
+  const domain = classifyTask(activity)
+  const domainLabel = DOMAIN_LABEL[domain]
   if (step && view === 'flow') {
-    return `Context: Work · project ${project || '—'} · current step "${step}".`
+    return `Context: Work · ${project || 'project'} · step "${step}" · domain: ${domainLabel}.`
   }
   if (step) {
-    return `Context: ${place} · open step still "${step}".`
+    return `Context: ${place} · step "${step}" · domain: ${domainLabel}.`
   }
-  return `Context: ${place}${project ? ` · ${project}` : ''}.`
+  return `Context: ${place}${project ? ` · ${project}` : ''} · domain: ${domainLabel}.`
 }
 
 /**

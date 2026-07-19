@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   activityTip,
   buddyMood,
+  classifyTask,
+  coachOnTask,
   confirmLine,
+  critiqueForTask,
   describeActivity,
   designProcessTip,
   formatClock,
@@ -19,6 +22,7 @@ import {
   overdueKinds,
   pickBuddySpot,
   progressLine,
+  recommendForTask,
   spotStyle,
   timeBlindLine,
   twoDirectionsTip,
@@ -135,10 +139,10 @@ export default function BuddyMate({
     if (!view) return
     if (lastView.current === null) {
       lastView.current = view
-      // After greeting, soft intro tip
       const t = window.setTimeout(() => {
+        const a = activityRef.current
         pushBuddy(
-          `${describeActivity(activityRef.current)} ${activityTip(activityRef.current)}`,
+          `${describeActivity(a)} ${activityTip(a)} ${recommendForTask(a)}`,
           { move: false }
         )
       }, 1400)
@@ -147,12 +151,16 @@ export default function BuddyMate({
     if (lastView.current === view) return
     lastView.current = view
     const t = window.setTimeout(() => {
-      pushBuddy(activityTip(activityRef.current), { move: true, expand: true })
+      const a = activityRef.current
+      pushBuddy(
+        `${describeActivity(a)} ${activityTip(a)} Try Recommend or Critique for task-specific notes.`,
+        { move: true, expand: true }
+      )
     }, 600)
     return () => window.clearTimeout(t)
   }, [activityLive.view, pushBuddy])
 
-  // Current step changed → acknowledge + tip
+  // Current step changed → acknowledge + task-fit recommend/critique
   useEffect(() => {
     const key = `${activityLive.nextTaskTitle || ''}|${activityLive.view || ''}`
     if (!activityLive.nextTaskTitle) {
@@ -165,11 +173,12 @@ export default function BuddyMate({
     if (isFirst) return
     const t = window.setTimeout(() => {
       const a = activityRef.current
+      const domain = classifyTask(a)
       pushBuddy(
-        `Okay, new focus: "${String(a.nextTaskTitle).slice(0, 50)}${
+        `New focus: "${String(a.nextTaskTitle).slice(0, 50)}${
           String(a.nextTaskTitle).length > 50 ? '…' : ''
-        }". ${activityTip(a)}`,
-        { move: true }
+        }". I am treating this as ${domain} work. ${recommendForTask(a)} ${critiqueForTask(a)}`,
+        { move: true, expand: true }
       )
     }, 500)
     return () => window.clearTimeout(t)
@@ -304,7 +313,29 @@ export default function BuddyMate({
     }
     if (key === 'tip') {
       pushYou('Coach me on this')
-      pushBuddy(`${describeActivity(a)} ${activityTip(a)}`, { move: true })
+      pushBuddy(
+        `${describeActivity(a)} ${activityTip(a)} ${recommendForTask(a)}`,
+        { move: true }
+      )
+      return
+    }
+    if (key === 'recommend') {
+      pushYou('Recommend next moves')
+      pushBuddy(`${describeActivity(a)} ${recommendForTask(a)}`, {
+        move: true,
+      })
+      return
+    }
+    if (key === 'critique') {
+      pushYou('Critique this task')
+      pushBuddy(`${describeActivity(a)} ${critiqueForTask(a)}`, {
+        move: true,
+      })
+      return
+    }
+    if (key === 'full') {
+      pushYou('Full review')
+      pushBuddy(`${describeActivity(a)} ${coachOnTask(a)}`, { move: true })
       return
     }
     if (key === 'clarify') {
@@ -356,6 +387,7 @@ export default function BuddyMate({
             ? `Closed ${completedCount} step${completedCount === 1 ? '' : 's'} this session.`
             : 'No steps closed yet — define one shippable outcome.',
           activityTip(a),
+          recommendForTask(a),
         ].join(' ')
       )
     }
@@ -532,33 +564,67 @@ export default function BuddyMate({
         </button>
       </div>
 
+      <div className="buddy-process" aria-label="Task review">
+        <p className="buddy-wellness-label">For this task</p>
+        <div className="buddy-process-row">
+          <button
+            type="button"
+            className="buddy-quick-btn buddy-quick-tip"
+            onClick={() => reply('recommend')}
+          >
+            Recommend
+          </button>
+          <button
+            type="button"
+            className="buddy-quick-btn buddy-quick-tip"
+            onClick={() => reply('critique')}
+          >
+            Critique
+          </button>
+          <button
+            type="button"
+            className="buddy-quick-btn buddy-quick-tip"
+            onClick={() => reply('full')}
+          >
+            Full review
+          </button>
+          <button
+            type="button"
+            className="buddy-quick-btn"
+            onClick={() => reply('tip')}
+          >
+            Coach me
+          </button>
+        </div>
+      </div>
+
       <div className="buddy-process" aria-label="Design process">
         <p className="buddy-wellness-label">Design process</p>
         <div className="buddy-process-row">
           <button
             type="button"
-            className="buddy-quick-btn buddy-quick-tip"
+            className="buddy-quick-btn"
             onClick={() => reply('clarify')}
           >
             1 Clarify
           </button>
           <button
             type="button"
-            className="buddy-quick-btn buddy-quick-tip"
+            className="buddy-quick-btn"
             onClick={() => reply('structure')}
           >
             2 Structure
           </button>
           <button
             type="button"
-            className="buddy-quick-btn buddy-quick-tip"
+            className="buddy-quick-btn"
             onClick={() => reply('visual')}
           >
             3 Visual
           </button>
           <button
             type="button"
-            className="buddy-quick-btn buddy-quick-tip"
+            className="buddy-quick-btn"
             onClick={() => reply('refine')}
           >
             4 Refine
@@ -567,13 +633,6 @@ export default function BuddyMate({
       </div>
 
       <div className="buddy-quick">
-        <button
-          type="button"
-          className="buddy-quick-btn"
-          onClick={() => reply('tip')}
-        >
-          Coach me
-        </button>
         <button
           type="button"
           className="buddy-quick-btn"
