@@ -49,6 +49,7 @@ import {
   downloadBrandPackHtml,
   downloadBrandPackMarkdown,
   downloadBrandPackJson,
+  downloadBrandPackPdf,
   downloadWorkspaceBackup,
   printElementById,
 } from './lib/exportFiles'
@@ -881,6 +882,24 @@ function App() {
 
   const runExport = (kind) => {
     const pack = buildCurrentBrandPack()
+    const finishOk = (label) => {
+      const g = awardAndBroadcast('export_pack', { label })
+      flashToast(
+        kind === 'backup'
+          ? `Backup saved · +${g.gained} XP`
+          : `Pack downloaded · +${g.gained} XP`
+      )
+    }
+
+    if (kind === 'pdf') {
+      flashToast('Building PDF…')
+      void downloadBrandPackPdf(pack).then((result) => {
+        if (result.ok) finishOk('Brand PDF')
+        else flashToast(result.error || 'PDF failed')
+      })
+      return
+    }
+
     let result = { ok: false, error: 'Unknown export' }
     if (kind === 'html') result = downloadBrandPackHtml(pack)
     else if (kind === 'md') result = downloadBrandPackMarkdown(pack)
@@ -899,20 +918,14 @@ function App() {
       return
     }
     if (result.ok) {
-      const g = awardAndBroadcast('export_pack', {
-        label:
-          kind === 'html'
-            ? 'Brand HTML'
-            : kind === 'md'
-              ? 'Brand Markdown'
-              : kind === 'json'
-                ? 'Brand JSON'
-                : 'Workspace backup',
-      })
-      flashToast(
-        kind === 'backup'
-          ? `Backup downloaded · +${g.gained} XP`
-          : `Downloaded · +${g.gained} XP`
+      finishOk(
+        kind === 'html'
+          ? 'Brand HTML'
+          : kind === 'md'
+            ? 'Brand Markdown'
+            : kind === 'json'
+              ? 'Brand JSON'
+              : 'Workspace backup'
       )
     } else {
       flashToast(result.error || 'Download failed')
@@ -3439,6 +3452,13 @@ function App() {
                 <button
                   type="button"
                   className="btn btn-primary"
+                  onClick={() => runExport('pdf')}
+                >
+                  Download brand pack (PDF)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
                   onClick={() => runExport('html')}
                 >
                   Download brand pack (HTML)
@@ -3465,7 +3485,7 @@ function App() {
                     window.setTimeout(() => runExport('print'), 100)
                   }}
                 >
-                  Print / Save PDF
+                  Print preview
                 </button>
                 <button
                   type="button"
@@ -4215,12 +4235,13 @@ function App() {
               {CLOUD ? 'Signed in · cloud desk' : 'Saved on this device'}
             </p>
             <h2 id="onboard-title" style={{ marginTop: 0 }}>
-              Start with one step
+              One project. One step. Ship a pack.
             </h2>
             <p className="view-lede">
-              Name the project, then the <strong>one shippable step</strong> for
-              the next 25 minutes. You&apos;ll land on Work with that step ready —
-              not a blank board.
+              Creative Companion is a <strong>design desk</strong> — not a
+              scoreboard. Name the project and the <strong>one shippable step</strong>{' '}
+              for the next 25 minutes. Work → Ideas → Brand → Finish. XP and
+              streaks are optional fuel; the product is the brand pack you export.
             </p>
             <label className="onboard-label">
               Project name
@@ -4421,6 +4442,13 @@ function App() {
               <button
                 type="button"
                 className="btn btn-primary"
+                onClick={() => runExport('pdf')}
+              >
+                Download PDF
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
                 onClick={() => runExport('html')}
               >
                 Download HTML
@@ -4444,7 +4472,7 @@ function App() {
                 className="btn btn-secondary"
                 onClick={() => runExport('print')}
               >
-                Print / Save PDF
+                Print preview
               </button>
               <button
                 type="button"

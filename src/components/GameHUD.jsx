@@ -11,7 +11,7 @@ import {
 } from '../lib/buddyGame'
 
 /**
- * Always-on productivity game strip: level, daily goal, quests, streak, combo.
+ * Optional progress strip (XP, quests, streak). Secondary to shipping work.
  */
 export default function GameHUD({ compact = false }) {
   const [game, setGame] = useState(() => refreshGameDay())
@@ -100,7 +100,11 @@ export default function GameHUD({ compact = false }) {
       </button>
 
       {open && (
-        <div className="game-hud-panel" role="region" aria-label="Productivity game">
+        <div className="game-hud-panel" role="region" aria-label="Progress extras">
+          <p className="game-hud-promise">
+            Real product: finish one step, then export a brand pack. XP is just a
+            side meter.
+          </p>
           <div className="game-hud-panel-grid">
             <div className="game-hud-stat">
               <span className="game-hud-stat-label">Level</span>
@@ -198,8 +202,9 @@ export default function GameHUD({ compact = false }) {
           )}
 
           <p className="game-hud-foot">
-            Earn XP by finishing steps, focus blocks, captures, pins, breaks, and
-            Break Kit items. Combos stack when you ship steps within 45 minutes.
+            XP follows real work: closed steps, focus blocks, pins, breaks, and
+            exports. Combos stack when you ship steps within 45 minutes. Ignore
+            the meter if it gets in the way — ship the pack instead.
           </p>
         </div>
       )}

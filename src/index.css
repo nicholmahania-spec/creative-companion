@@ -1542,6 +1542,18 @@ h3 {
   color: var(--accent-soft);
 }
 
+.game-hud-promise {
+  margin: 0 0 0.65rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.4;
+  color: var(--text);
+  background: rgba(79, 70, 229, 0.08);
+  border: 1px solid rgba(79, 70, 229, 0.14);
+  border-radius: 10px;
+}
+
 .game-hud-foot {
   margin: 0;
   font-size: 0.68rem;
@@ -6438,13 +6450,23 @@ html[data-reduce-motion='true'] *::after {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.35rem;
-  padding: 0.15rem 0.65rem 0.55rem;
+  padding: 0.15rem 0.65rem 0.35rem;
   border-top: 1px solid rgba(125, 139, 122, 0.12);
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.35),
     rgba(243, 239, 230, 0.55)
   );
+}
+
+.buddy-ai-hint {
+  margin: 0;
+  padding: 0 0.75rem 0.55rem;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: rgba(95, 109, 93, 0.78);
+  line-height: 1.3;
 }
 
 .buddy-act {
@@ -6465,7 +6487,14 @@ html[data-reduce-motion='true'] *::after {
     box-shadow 0.15s ease;
 }
 
-.buddy-act:hover {
+.buddy-act:disabled {
+  opacity: 0.55;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
+}
+
+.buddy-act:hover:not(:disabled) {
   background: #fff;
   border-color: rgba(95, 109, 93, 0.4);
   transform: translateY(-1px);

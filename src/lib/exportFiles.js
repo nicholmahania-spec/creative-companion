@@ -352,6 +352,159 @@ export function downloadBrandPackJson(pack) {
   return downloadJson(pack, `${slug}-brand-pack.json`)
 }
 
+/**
+ * One-click brand pack PDF (jsPDF). No print dialog required.
+ * @returns {Promise<{ ok: boolean, error?: string }>}
+ */
+export async function downloadBrandPackPdf(pack) {
+  try {
+    const { jsPDF } = await import('jspdf')
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+    const pageW = doc.internal.pageSize.getWidth()
+    const pageH = doc.internal.pageSize.getHeight()
+    const margin = 48
+    const maxW = pageW - margin * 2
+    let y = margin
+
+    const ensureSpace = (need = 24) => {
+      if (y + need > pageH - margin) {
+        doc.addPage()
+        y = margin
+      }
+    }
+
+    const writeWrapped = (text, { size = 11, style = 'normal', color = [11, 18, 32], gap = 6 } = {}) => {
+      doc.setFont('helvetica', style)
+      doc.setFontSize(size)
+      doc.setTextColor(...color)
+      const lines = doc.splitTextToSize(String(text || ''), maxW)
+      const lineH = size * 1.35
+      ensureSpace(lines.length * lineH + gap)
+      doc.text(lines, margin, y)
+      y += lines.length * lineH + gap
+    }
+
+    // Cover band
+    const coverHex = String(pack.palette?.[0] || '#4F46E5')
+    const coverRgb = hexToRgb(coverHex) || [79, 70, 229]
+    doc.setFillColor(...coverRgb)
+    doc.rect(0, 0, pageW, 120, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('BRAND DIRECTION PACK', margin, 36)
+    doc.setFontSize(22)
+    const titleLines = doc.splitTextToSize(pack.projectName || 'Untitled project', maxW)
+    doc.text(titleLines, margin, 62)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(12)
+    doc.text(String(pack.tagline || 'Tagline TBD').slice(0, 120), margin, 90)
+    y = 140
+
+    writeWrapped('Positioning', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    writeWrapped(pack.brief || 'No brief captured yet.', { size: 11, gap: 12 })
+
+    if (pack.voice) {
+      writeWrapped('Voice', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+      writeWrapped(pack.voice, { size: 11, gap: 12 })
+    }
+
+    writeWrapped('Palette', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    const colors = pack.palette || []
+    if (colors.length) {
+      ensureSpace(36)
+      const sw = Math.min(48, maxW / colors.length - 4)
+      colors.forEach((hex, i) => {
+        const rgb = hexToRgb(hex) || [200, 200, 200]
+        doc.setFillColor(...rgb)
+        doc.roundedRect(margin + i * (sw + 6), y, sw, 28, 3, 3, 'F')
+      })
+      y += 36
+      writeWrapped(colors.join('  ·  '), { size: 10, color: [80, 90, 110], gap: 12 })
+    } else {
+      writeWrapped('No palette yet.', { size: 11, gap: 12 })
+    }
+
+    writeWrapped('Typography', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    writeWrapped(`Heading: ${pack.typeHeading || '—'}`, { size: 12, style: 'bold', gap: 2 })
+    writeWrapped(`Body: ${pack.typeBody || '—'}`, { size: 11, gap: 12 })
+
+    if (pack.logoDirection) {
+      writeWrapped('Logo direction', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+      writeWrapped(pack.logoDirection, { size: 11, gap: 12 })
+    }
+
+    writeWrapped('Do', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    writeWrapped(pack.doUse || '—', { size: 11, gap: 10 })
+    writeWrapped("Don't", { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    writeWrapped(pack.dontUse || '—', { size: 11, gap: 12 })
+
+    writeWrapped('Mood pins', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    if (!pack.pins?.length) {
+      writeWrapped('No pins yet.', { size: 11, gap: 12 })
+    } else {
+      pack.pins.slice(0, 12).forEach((pin, i) => {
+        writeWrapped(
+          `${i + 1}. ${pin.note || 'Pin'} (${pin.type || 'ref'})`,
+          { size: 10, gap: 3 }
+        )
+      })
+      y += 8
+    }
+
+    writeWrapped('Open work', { size: 9, style: 'bold', color: [100, 110, 130], gap: 4 })
+    if (!pack.openTasks?.length) {
+      writeWrapped('Desk clear', { size: 11, gap: 12 })
+    } else {
+      pack.openTasks.slice(0, 20).forEach((t) => {
+        writeWrapped(`• ${t.title}${t.dueDate ? ` (due ${t.dueDate})` : ''}`, {
+          size: 10,
+          gap: 3,
+        })
+      })
+      y += 8
+    }
+
+    ensureSpace(28)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.setTextColor(120, 130, 145)
+    doc.text(
+      `Creative Companion · ${pack.progressPercent ?? 0}% steps done · ${new Date(
+        pack.exportedAt || Date.now()
+      ).toLocaleDateString()}`,
+      margin,
+      y
+    )
+
+    const slug = slugifyFilename(pack.projectName, 'brand-pack')
+    const blob = doc.output('blob')
+    return downloadBlob(blob, `${slug}-brand-direction.pdf`)
+  } catch (e) {
+    return { ok: false, error: e?.message || 'PDF export failed' }
+  }
+}
+
+/** Parse #RGB / #RRGGBB to [r,g,b] */
+function hexToRgb(hex) {
+  const s = String(hex || '').trim().replace(/^#/, '')
+  if (s.length === 3) {
+    const r = parseInt(s[0] + s[0], 16)
+    const g = parseInt(s[1] + s[1], 16)
+    const b = parseInt(s[2] + s[2], 16)
+    if ([r, g, b].some((n) => Number.isNaN(n))) return null
+    return [r, g, b]
+  }
+  if (s.length === 6) {
+    const r = parseInt(s.slice(0, 2), 16)
+    const g = parseInt(s.slice(2, 4), 16)
+    const b = parseInt(s.slice(4, 6), 16)
+    if ([r, g, b].some((n) => Number.isNaN(n))) return null
+    return [r, g, b]
+  }
+  return null
+}
+
 /** Full workspace backup */
 export function downloadWorkspaceBackup(workspace) {
   const day = new Date().toISOString().slice(0, 10)

@@ -3,11 +3,8 @@ import {
   activityTip,
   buddyMood,
   classifyTask,
-  coachOnTask,
   confirmLine,
-  critiqueForTask,
   describeActivity,
-  designProcessTip,
   formatClock,
   formatDuration,
   greetingLine,
@@ -26,7 +23,6 @@ import {
   recommendForTask,
   spotStyle,
   timeBlindLine,
-  twoDirectionsTip,
   wellnessLine,
   whatTimeLine,
 } from '../lib/buddy'
@@ -42,6 +38,10 @@ import {
   isBreakItemOpen,
   kindMeta,
 } from '../lib/breakKit'
+import {
+  coachWithHelper,
+  isHelperAiConfigured,
+} from '../lib/helperAi'
 import useAppStore from '../store/useAppStore'
 
 const BUDDY_BASE = `${import.meta.env.BASE_URL}buddy/`
@@ -99,10 +99,12 @@ export default function BuddyMate({
   const [game, setGame] = useState(() => loadGame())
   const [levelBurst, setLevelBurst] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
+  const [aiBusy, setAiBusy] = useState(false)
   const listRef = useRef(null)
   const shellRef = useRef(null)
   const autoMinRef = useRef(null)
   const msgId = useRef(2)
+  const aiReqRef = useRef(0)
   const lastCompleted = useRef(completedCount)
   const lastFocus = useRef(isFocusRunning)
   const lastTimePing = useRef(Date.now())
@@ -334,7 +336,7 @@ export default function BuddyMate({
       pushBuddy(
         `New focus: "${String(a.nextTaskTitle).slice(0, 50)}${
           String(a.nextTaskTitle).length > 50 ? '…' : ''
-        }". I am treating this as ${domain} work. ${recommendForTask(a)} ${critiqueForTask(a)}`,
+        }". Treating as ${domain}. ${recommendForTask(a)} Open me for Critique or full review.`,
         { move: true, expand: false }
       )
     }, 500)
@@ -465,67 +467,69 @@ export default function BuddyMate({
     )
   }
 
+  /** Live AI coach when VITE_XAI_API_KEY is set; scripted fallback otherwise. */
+  const replyAi = useCallback(
+    async (intent, youLabel, extra = {}) => {
+      if (youLabel) pushYou(youLabel)
+      const a = activityRef.current
+      const req = ++aiReqRef.current
+      setAiBusy(true)
+      pushBuddy(
+        isHelperAiConfigured()
+          ? 'Thinking through this step…'
+          : 'One sec — desk coach mode…',
+        { move: true, expand: true }
+      )
+      try {
+        const result = await coachWithHelper(intent, a, extra)
+        if (req !== aiReqRef.current) return
+        pushBuddy(result.text, { move: true, expand: true })
+      } catch {
+        if (req !== aiReqRef.current) return
+        pushBuddy(activityTip(a), { move: true, expand: true })
+      } finally {
+        if (req === aiReqRef.current) setAiBusy(false)
+      }
+    },
+    [pushBuddy, pushYou]
+  )
+
   const reply = (key) => {
     const a = activityRef.current
     if (key === 'stuck') {
-      pushYou("I'm stuck")
-      pushBuddy(
-        `${progressLine('stuck')} ${
-          a.nextTaskTitle
-            ? `Current step: "${String(a.nextTaskTitle).slice(0, 40)}".`
-            : ''
-        }`.trim()
-      )
+      void replyAi('stuck', "I'm stuck")
       return
     }
     if (key === 'tip') {
-      pushYou('Coach me on this')
-      pushBuddy(
-        `${describeActivity(a)} ${activityTip(a)} ${recommendForTask(a)}`,
-        { move: true }
-      )
+      void replyAi('tip', 'Coach me on this')
       return
     }
     if (key === 'recommend') {
-      pushYou('Recommend next moves')
-      pushBuddy(`${describeActivity(a)} ${recommendForTask(a)}`, {
-        move: true,
-      })
+      void replyAi('recommend', 'Recommend next moves')
       return
     }
     if (key === 'critique') {
-      pushYou('Critique this task')
-      pushBuddy(`${describeActivity(a)} ${critiqueForTask(a)}`, {
-        move: true,
-      })
+      void replyAi('critique', 'Critique this task')
       return
     }
     if (key === 'full') {
-      pushYou('Full review')
-      pushBuddy(`${describeActivity(a)} ${coachOnTask(a)}`, { move: true })
+      void replyAi('full', 'Full review')
       return
     }
     if (key === 'clarify') {
-      pushYou('Clarify')
-      pushBuddy(designProcessTip('clarify', a), { move: true })
+      void replyAi('clarify', 'Clarify')
       return
     }
     if (key === 'structure') {
-      pushYou('Structure')
-      pushBuddy(designProcessTip('structure', a), { move: true })
+      void replyAi('structure', 'Structure')
       return
     }
     if (key === 'visual') {
-      pushYou('Visual')
-      pushBuddy(designProcessTip('visual', a), { move: true })
+      void replyAi('visual', 'Visual')
       return
     }
     if (key === 'refine') {
-      pushYou('Refine')
-      pushBuddy(
-        `${designProcessTip('refine', a)} ${twoDirectionsTip(a)}`,
-        { move: true }
-      )
+      void replyAi('refine', 'Refine')
       return
     }
     if (key === 'time') {
@@ -543,20 +547,16 @@ export default function BuddyMate({
       return
     }
     if (key === 'progress') {
-      pushYou('How am I doing?')
       const desk = formatDuration(Date.now() - sessionStart)
       const br = minutesSinceBreak(loadWellness(), sessionStart)
-      pushBuddy(
-        [
-          describeActivity(a),
-          `Desk time ~${desk}; about ${br} min since a real break.`,
+      void replyAi('progress', 'How am I doing?', {
+        deskLabel: `Desk time ~${desk}`,
+        breakLabel: `about ${br} min since a real break`,
+        closedLabel:
           completedCount > 0
             ? `Closed ${completedCount} step${completedCount === 1 ? '' : 's'} this session.`
             : 'No steps closed yet — define one shippable outcome.',
-          activityTip(a),
-          recommendForTask(a),
-        ].join(' ')
-      )
+      })
     }
   }
 
@@ -794,6 +794,7 @@ export default function BuddyMate({
               type="button"
               className="buddy-act buddy-act-primary"
               onClick={() => reply('recommend')}
+              disabled={aiBusy}
             >
               Recommend
             </button>
@@ -801,6 +802,7 @@ export default function BuddyMate({
               type="button"
               className="buddy-act buddy-act-primary"
               onClick={() => reply('critique')}
+              disabled={aiBusy}
             >
               Critique
             </button>
@@ -808,6 +810,7 @@ export default function BuddyMate({
               type="button"
               className="buddy-act"
               onClick={() => reply('stuck')}
+              disabled={aiBusy}
             >
               Stuck
             </button>
@@ -815,10 +818,18 @@ export default function BuddyMate({
               type="button"
               className="buddy-act"
               onClick={() => reply('break')}
+              disabled={aiBusy}
             >
               Break
             </button>
           </div>
+          <p className="buddy-ai-hint" title="Live coaching when VITE_XAI_API_KEY is set">
+            {aiBusy
+              ? 'Helper is thinking…'
+              : isHelperAiConfigured()
+                ? 'Live coach on · falls back offline'
+                : 'Desk coach · add VITE_XAI_API_KEY for live AI'}
+          </p>
 
           <button
             type="button"
@@ -965,6 +976,7 @@ export default function BuddyMate({
                       type="button"
                       className="buddy-quick-btn"
                       onClick={() => reply(k)}
+                      disabled={aiBusy}
                     >
                       {k[0].toUpperCase() + k.slice(1)}
                     </button>
@@ -977,13 +989,15 @@ export default function BuddyMate({
                   type="button"
                   className="buddy-quick-btn"
                   onClick={() => reply('full')}
+                  disabled={aiBusy}
                 >
-                  Full roast
+                  Full review
                 </button>
                 <button
                   type="button"
                   className="buddy-quick-btn"
                   onClick={() => reply('tip')}
+                  disabled={aiBusy}
                 >
                   Coach
                 </button>
@@ -998,6 +1012,7 @@ export default function BuddyMate({
                   type="button"
                   className="buddy-quick-btn"
                   onClick={() => reply('progress')}
+                  disabled={aiBusy}
                 >
                   Progress
                 </button>

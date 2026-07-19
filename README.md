@@ -14,6 +14,7 @@ npm run dev
 ```bash
 npm run build    # → dist/
 npm run preview
+npm test         # smoke tests (export, process, blank defaults, Helper fallback)
 ```
 
 ### Optional: Supabase backend
@@ -25,6 +26,15 @@ npm run preview
 
 Without env vars, the app uses a **local browser password gate** and saves only in `localStorage`.
 
+### Optional: live Helper (SpaceXAI / xAI)
+
+1. Create a key at [console.x.ai](https://console.x.ai)  
+2. In `.env.local`: `VITE_XAI_API_KEY=...` (model: `grok-4.5`)  
+3. Restart `npm run dev`
+
+Without a key, Helper uses **built-in scripted coaching** (Recommend / Critique / process phases still work).  
+**Note:** Vite exposes `VITE_*` keys in the browser bundle — fine for local demos; use a server proxy for production secrets.
+
 ## What’s in the app
 
 | Area | Purpose |
@@ -35,7 +45,9 @@ Without env vars, the app uses a **local browser password gate** and saves only 
 | **Board** | Mood board: upload / URL / note pins with captions |
 | **Projects** | Multiple lanes, brief, project deadline |
 | **Deadlines** | Month calendar for project + step due dates |
-| **Brand identity template** | Tagline, voice, do/don’t, palette builder, contrast checker, type, logo notes, export |
+| **Brand identity template** | Tagline, voice, do/don’t, palette, type, logo notes |
+| **Finish exports** | One-click **PDF**, HTML, Markdown, JSON brand pack + workspace backup |
+| **Helper** | Compact design coach (scripted, or live via xAI when keyed) |
 
 ## Stack
 
