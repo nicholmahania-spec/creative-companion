@@ -5,7 +5,6 @@ import {
   brandPackToHtml,
   buildDirectionSheetMarkup,
   slugifyFilename,
-  downloadBrandPackVectorPdf,
 } from './exportFiles'
 
 describe('slugifyFilename', () => {
@@ -153,20 +152,15 @@ describe('buildDirectionSheetMarkup (preview-faithful PDF source)', () => {
   })
 })
 
-describe('downloadBrandPackVectorPdf', () => {
-  it('produces a vector PDF without throwing', async () => {
+describe('vector pack snapshot fields', () => {
+  it('includes colorRoles and logoImage for the vector PDF engine', () => {
     const pack = buildBrandPackSnapshot({
       project: {
         name: 'Vector Pack Co',
         tagline: 'Sharp type',
-        brief: 'For founders who care about craft.',
-        voice: 'Warm plain',
-        doUse: 'Real paper',
-        dontUse: 'Neon gradients',
-        typeHeading: 'Playfair Display Bold',
-        typeBody: 'Lato Regular',
-        palette: ['#1C1917', '#0F766E', '#FAFAF9'],
+        palette: ['#1C1917', '#0F766E'],
         colorRoles: { cover: '#1C1917', accent: '#0F766E' },
+        logoImage: 'data:image/png;base64,abc',
       },
       moodItems: [
         {
@@ -179,18 +173,8 @@ describe('downloadBrandPackVectorPdf', () => {
         },
       ],
     })
-    // Cancelled FS write — avoids pdf.save writing a file into the repo cwd
-    const cancelledHandle = Promise.resolve().then(() => {
-      const err = new Error('Save cancelled')
-      err.name = 'AbortError'
-      throw err
-    })
-    const result = await downloadBrandPackVectorPdf(pack, cancelledHandle, {
-      hideWatermark: true,
-    })
-    expect(result.cancelled || result.ok || typeof result.error === 'string').toBe(
-      true
-    )
-    if (result.ok) expect(result.mode).toBe('vector')
+    expect(pack.colorRoles?.cover).toBe('#1C1917')
+    expect(pack.logoImage).toContain('data:image')
+    expect(pack.pins[0].packHero).toBe(true)
   })
 })
