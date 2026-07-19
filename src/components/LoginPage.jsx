@@ -170,8 +170,8 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
             <p className="login-pack-foot">PDF · direction sheet you can ship</p>
           </div>
           <ul className="login-proof-list">
-            <li>Project → Work → Board → System → Pack</li>
-            <li>Star pins · set voice · download PDF</li>
+            <li>Define → Research → Ideate → Sketch → Design → Review → Deliver</li>
+            <li>One process · refs · drafts · pack PDF</li>
           </ul>
         </aside>
 
@@ -182,7 +182,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
               {i18nT(locale, 'tagline')}
             </p>
             <p className="login-path-line" aria-hidden="true">
-              Project → Work → Board → System → Pack
+              Define → Research → Ideate → Sketch → Design → Review → Deliver
             </p>
           </div>
 

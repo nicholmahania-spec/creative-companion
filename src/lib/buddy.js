@@ -587,27 +587,47 @@ export function describeActivity(activity = {}) {
 }
 
 /**
- * 4-step design process coaching (system prompt behavior, scripted).
- * phase: clarify | structure | visual | refine
+ * 7-step design process coaching (system prompt behavior, scripted).
+ * define | research | ideate | sketch | design | review | deliver
+ * Legacy aliases: clarify→define, structure→sketch, visual→design, refine→review
  */
 export function designProcessTip(phase, activity = {}) {
   const step = short(activity.nextTaskTitle, 42) || 'your current step'
   const project = short(activity.projectName, 24) || 'this project'
   const view = activity.view || 'flow'
+  const p =
+    phase === 'clarify'
+      ? 'define'
+      : phase === 'structure'
+        ? 'sketch'
+        : phase === 'visual'
+          ? 'design'
+          : phase === 'refine'
+            ? 'review'
+            : phase
 
-  if (phase === 'clarify') {
-    return `Clarify “${step}” on ${project}: who is it for, what they do/feel, one constraint. If the step can’t answer that, rewrite the step — not the decoration.`
+  if (p === 'define') {
+    return `Define “${step}” on ${project}: who is it for, what they feel/do, one constraint. Goal in one sentence before any pretty pictures.`
   }
-  if (phase === 'structure') {
+  if (p === 'research') {
+    return `Research for ${project}: pin real refs (not vibes only). Star ≤6 for the pack. Set a timer so you don’t live in the rabbit hole.`
+  }
+  if (p === 'ideate') {
+    return `Ideate “${step}”: force 5–8 messy directions. Opposite ideas count. Don’t marry the first spark.`
+  }
+  if (p === 'sketch') {
     return view === 'brand'
-      ? `Structure for “${step}”: fill the next empty Brand hole only (message → palette → type → do/don’t).`
-      : `Structure “${step}”: list blocks top→bottom (main thing + one CTA). No polish until the path is words.`
+      ? `Sketch/draft next hole only on Design (message → palette → type). Low detail.`
+      : `Sketch “${step}”: 2–3 rough options max. One primary path in words before polish.`
   }
-  if (phase === 'visual') {
-    return `Visual for “${step}”: one accent for actions, readable body type, intentional space. Does this look serve the step — or just look busy?`
+  if (p === 'design') {
+    return `Design “${step}”: one accent for actions, readable body type, intentional space. Does this look serve the goal — or only look busy?`
   }
-  if (phase === 'refine') {
-    return `Refine “${step}”: pick A (calmer) or B (bolder). Ship one complete slice. Twin primaries = thrash.`
+  if (p === 'review') {
+    return `Review “${step}”: ask “Does this feel clear / hopeful?” not “Do you like it?” Fix what serves the goal.`
+  }
+  if (p === 'deliver') {
+    return `Deliver ${project}: print or vector PDF, organized handoff, one line — what worked and what felt like you.`
   }
   return activityTip(activity)
 }

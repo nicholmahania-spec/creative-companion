@@ -19,9 +19,9 @@ export default function SparkView({
       </button>
       <div className="flow-top">
         <div>
-          <h1 className="page-title">Spark</h1>
+          <h1 className="page-title">Ideate</h1>
           <p className="page-sub">
-            One prompt · pin it · return to your current step
+            Step 3 — many directions fast. Pin sparks to Research. No judging.
           </p>
         </div>
       </div>

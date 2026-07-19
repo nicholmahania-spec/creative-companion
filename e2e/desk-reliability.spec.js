@@ -50,10 +50,10 @@ test.describe('Desk reliability', () => {
     await unlockAndOnboard(page)
     const path = page.getByRole('navigation', { name: /Your path/i })
     await expect(path).toBeVisible()
-    await path.getByRole('button', { name: /Step 5: Pack/i }).click()
-    await expect(page.locator('h1.page-title', { hasText: 'Pack' })).toBeVisible(
-      { timeout: 10000 }
-    )
+    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await expect(
+      page.locator('h1.page-title', { hasText: 'Deliver' })
+    ).toBeVisible({ timeout: 10000 })
     await expect(
       page.getByRole('button', { name: 'Print / Save as PDF', exact: true })
     ).toBeVisible()
@@ -76,12 +76,15 @@ test.describe('Desk reliability', () => {
   test('Esc closes export preview overlay', async ({ page }) => {
     await unlockAndOnboard(page)
     const path = page.getByRole('navigation', { name: /Your path/i })
-    await path.getByRole('button', { name: /Step 5: Pack/i }).click()
-    await expect(page.locator('h1.page-title', { hasText: 'Pack' })).toBeVisible(
-      { timeout: 10000 }
-    )
+    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await expect(
+      page.locator('h1.page-title', { hasText: 'Deliver' })
+    ).toBeVisible({ timeout: 10000 })
     // Preview full lives under More actions (v1.15+)
-    await page.locator('summary.pack-more-summary, details.pack-more-actions summary').first().click()
+    await page
+      .locator('summary.pack-more-summary, details.pack-more-actions summary')
+      .first()
+      .click()
     await page.getByRole('button', { name: 'Preview full' }).click()
     await expect(page.getByRole('dialog', { name: /Brand direction pack/i })).toBeVisible({
       timeout: 8000,

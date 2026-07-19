@@ -56,11 +56,13 @@ test.describe('Path accessibility', () => {
     await expect(path).toBeVisible()
     // Ordered steps with accessible names
     for (const label of [
-      /Step 1: Project/i,
-      /Step 2: Work/i,
-      /Step 3: Board/i,
-      /Step 4: System/i,
-      /Step 5: Pack/i,
+      /Step 1: Define/i,
+      /Step 2: Research/i,
+      /Step 3: Ideate/i,
+      /Step 4: Sketch/i,
+      /Step 5: Design/i,
+      /Step 6: Review/i,
+      /Step 7: Deliver/i,
     ]) {
       await expect(path.getByRole('button', { name: label })).toBeVisible()
     }
@@ -82,11 +84,13 @@ test.describe('Path accessibility', () => {
     await unlockAndOnboard(page)
     const path = page.getByRole('navigation', { name: /Your path/i })
     const steps = [
-      [/Step 1: Project/i, 'Project'],
-      [/Step 2: Work/i, null], // Work may not use h1 "Work"
-      [/Step 3: Board/i, 'Board'],
-      [/Step 4: System/i, 'System'],
-      [/Step 5: Pack/i, 'Pack'],
+      [/Step 1: Define/i, 'Define'],
+      [/Step 2: Research/i, 'Research'],
+      [/Step 3: Ideate/i, 'Ideate'],
+      [/Step 4: Sketch/i, 'Sketch'],
+      [/Step 5: Design/i, 'Design'],
+      [/Step 6: Review/i, 'Review'],
+      [/Step 7: Deliver/i, 'Deliver'],
     ]
     for (const [nav, heading] of steps) {
       await path.getByRole('button', { name: nav }).click()

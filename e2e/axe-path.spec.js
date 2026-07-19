@@ -78,11 +78,13 @@ test.describe('axe path', () => {
     await expect(path).toBeVisible()
 
     const steps = [
-      [/Step 1: Project/i, 'Project'],
-      [/Step 2: Work/i, 'Work'],
-      [/Step 3: Board/i, 'Board'],
-      [/Step 4: System/i, 'System'],
-      [/Step 5: Pack/i, 'Pack'],
+      [/Step 1: Define/i, 'Define'],
+      [/Step 2: Research/i, 'Research'],
+      [/Step 3: Ideate/i, 'Ideate'],
+      [/Step 4: Sketch/i, 'Sketch'],
+      [/Step 5: Design/i, 'Design'],
+      [/Step 6: Review/i, 'Review'],
+      [/Step 7: Deliver/i, 'Deliver'],
     ]
 
     for (const [nav, label] of steps) {

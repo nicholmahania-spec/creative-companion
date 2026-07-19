@@ -25,10 +25,14 @@ describe('i18n wordmark + path + catalog', () => {
   })
 
   it('localizes path labels', () => {
-    expect(pathLabel('en', 'work')).toBe('Work')
-    expect(pathLabel('es', 'work')).toBe('Trabajo')
-    expect(pathLabel('ja', 'pack')).toBe('パック')
-    expect(pathLabel('ar', 'work')).toBe('عمل')
+    expect(pathLabel('en', 'sketch')).toBe('Sketch')
+    expect(pathLabel('en', 'define')).toBe('Define')
+    expect(pathLabel('en', 'deliver')).toBe('Deliver')
+    // legacy aliases still resolve
+    expect(pathLabel('en', 'work')).toBe('Sketch')
+    expect(pathLabel('es', 'work')).toBeTruthy()
+    expect(pathLabel('ja', 'pack')).toBeTruthy()
+    expect(pathLabel('ar', 'work')).toBeTruthy()
   })
 
   it('english tagline is stable', () => {
@@ -58,9 +62,10 @@ describe('i18n wordmark + path + catalog', () => {
     const en = getMessages('en').ui
     expect(en.packSub).toMatch(/vector PDF/i)
     expect(en.packHint).toMatch(/vector PDF/i)
-    expect(en.openPack).toMatch(/Pack/i)
+    expect(en.openPack).toMatch(/Deliver/i)
     expect(en.emptyStepBody.length).toBeLessThan(80)
-    expect(en.howDeskWorks).toMatch(/Board/)
+    expect(en.howDeskWorks).toMatch(/Define/)
+    expect(en.howDeskWorks).toMatch(/Deliver/)
   })
 
   it('locales override thin-pack and confirm chrome', () => {

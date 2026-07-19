@@ -53,25 +53,29 @@ test.describe('Offline desk', () => {
     await expect(path).toBeVisible()
 
     // Warm views
-    await path.getByRole('button', { name: /Step 3: Board/i }).click()
-    await expect(page.getByRole('heading', { name: 'Board' })).toBeVisible()
-    await path.getByRole('button', { name: /Step 5: Pack/i }).click()
-    await expect(page.locator('h1.page-title', { hasText: 'Pack' })).toBeVisible(
+    await path.getByRole('button', { name: /Step 2: Research/i }).click()
+    await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
+    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await expect(
+      page.locator('h1.page-title', { hasText: 'Deliver' })
+    ).toBeVisible(
       { timeout: 10000 },
     )
 
     await context.setOffline(true)
 
-    await path.getByRole('button', { name: /Step 2: Work/i }).click()
+    await path.getByRole('button', { name: /Step 4: Sketch/i }).click()
     await expect(
       page.locator('#current-step, #desk-capture, .step-focus-panel').first(),
     ).toBeVisible({ timeout: 8000 })
 
-    await path.getByRole('button', { name: /Step 1: Project/i }).click()
-    await expect(page.getByRole('heading', { name: 'Project' })).toBeVisible()
+    await path.getByRole('button', { name: /Step 1: Define/i }).click()
+    await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
 
-    await path.getByRole('button', { name: /Step 5: Pack/i }).click()
-    await expect(page.locator('h1.page-title', { hasText: 'Pack' })).toBeVisible()
+    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await expect(
+      page.locator('h1.page-title', { hasText: 'Deliver' })
+    ).toBeVisible()
     await expect(
       page.getByRole('button', { name: 'Download vector PDF', exact: true }),
     ).toBeVisible()

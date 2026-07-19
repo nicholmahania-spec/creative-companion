@@ -37,7 +37,15 @@ describe('helperAi scripted fallback', () => {
   })
 
   it('process phases return design process tips', () => {
-    for (const phase of ['clarify', 'structure', 'visual', 'refine']) {
+    for (const phase of [
+      'define',
+      'research',
+      'ideate',
+      'sketch',
+      'design',
+      'review',
+      'deliver',
+    ]) {
       const t = scriptedCoachReply(phase, activity)
       expect(t.length).toBeGreaterThan(15)
     }

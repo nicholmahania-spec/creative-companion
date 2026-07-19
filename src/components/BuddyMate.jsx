@@ -55,7 +55,7 @@ const HELPER_FALLBACK = BODY_SRC || FAB_SRC
 
 /**
  * Design buddy — UI/UX & graphic design coach (scripted system persona).
- * Process: clarify → structure → visual → refine. Tracks craft context.
+ * Process: Define → Research → Ideate → Sketch → Design → Review → Deliver.
  * Break Kit: meds, todos, tasks packed into forced-break windows.
  */
 export default function BuddyMate({
@@ -551,20 +551,28 @@ export default function BuddyMate({
       void replyAi('full', 'Full review')
       return
     }
-    if (key === 'clarify') {
-      void replyAi('clarify', 'Clarify')
-      return
-    }
-    if (key === 'structure') {
-      void replyAi('structure', 'Structure')
-      return
-    }
-    if (key === 'visual') {
-      void replyAi('visual', 'Visual')
-      return
-    }
-    if (key === 'refine') {
-      void replyAi('refine', 'Refine')
+    if (
+      key === 'define' ||
+      key === 'research' ||
+      key === 'ideate' ||
+      key === 'sketch' ||
+      key === 'design' ||
+      key === 'review' ||
+      key === 'deliver' ||
+      /* legacy */
+      key === 'clarify' ||
+      key === 'structure' ||
+      key === 'visual' ||
+      key === 'refine'
+    ) {
+      const map = {
+        clarify: 'define',
+        structure: 'sketch',
+        visual: 'design',
+        refine: 'review',
+      }
+      const phase = map[key] || key
+      void replyAi(phase, phase[0].toUpperCase() + phase.slice(1))
       return
     }
     if (key === 'time') {
@@ -1038,7 +1046,15 @@ export default function BuddyMate({
               <div className="buddy-process" aria-label="Process">
                 <p className="buddy-wellness-label">Process</p>
                 <div className="buddy-process-row">
-                  {['clarify', 'structure', 'visual', 'refine'].map((k) => (
+                  {[
+                    'define',
+                    'research',
+                    'ideate',
+                    'sketch',
+                    'design',
+                    'review',
+                    'deliver',
+                  ].map((k) => (
                     <button
                       key={k}
                       type="button"

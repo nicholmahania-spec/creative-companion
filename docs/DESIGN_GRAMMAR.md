@@ -3,19 +3,23 @@
 **Last updated:** v1.11 (2026-07-19)  
 **Product:** ADHD creative desk — one step on screen, one brand pack at the end.
 
-## Path (only five stops)
+## Path (exactly seven design-process steps)
 
-| # | Label | Job |
-|---|--------|-----|
-| 1 | **Project** | Name the work. Who is it for? |
-| 2 | **Work** | One step only. Complete it. Next rises. |
-| 3 | **Board** | Upload refs. Star up to 6 for the pack. |
-| 4 | **System** | Colors, voice, type, do/don’t — live artboard. |
-| 5 | **Pack** | Preview, print, or download vector PDF. |
+Nothing more, nothing less — the professional graphic design process:
 
-Tools (Timer, Calendar, Spark, Settings) are **off-path**. Path bar shows “Tools · …” when there.
+| # | Label | Desk | Job |
+|---|--------|------|-----|
+| 1 | **Define** | Project | Goal, audience, must-haves |
+| 2 | **Research** | Board | Refs, mood, star ≤6 for pack |
+| 3 | **Ideate** | Spark | Many directions, no judging |
+| 4 | **Sketch** | Work | One draft step; complete; next rises |
+| 5 | **Design** | System | Type, color, voice, live artboard |
+| 6 | **Review** | Review | Feedback, readiness, revise |
+| 7 | **Deliver** | Pack | Print / vector PDF, handoff, eval |
 
-**Keyboard:** digits `1`–`5` jump path steps when focus is not in a field.
+Tools (Timer, Calendar, Settings) are **off-path**. Spark is **on-path** as Ideate.
+
+**Keyboard:** digits `1`–`7` jump process steps when focus is not in a field.
 
 ## Color
 

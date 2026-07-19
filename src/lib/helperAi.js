@@ -27,7 +27,7 @@ const SYSTEM_PROMPT = `You are Helper, the design buddy inside Creative Companio
 
 Voice: warm, slightly sassy, concise. Max ~120 words. No markdown headings. Prefer short paragraphs or 2–4 bullets with plain dashes.
 
-Process spine: clarify → structure → visual → refine.
+Process spine (nothing more/less): Define → Research → Ideate → Sketch → Design → Review → Deliver.
 Product promise: one shippable step at a time, then brand pack export — not XP or productivity theatre.
 
 Coach craft (hierarchy, type, color roles, contrast, copy clarity, scope). Never invent fake client names or fake project data. If context is thin, ask one sharp question and give one safe next move.
@@ -155,14 +155,24 @@ export function scriptedCoachReply(intent, activity = {}, extra = {}) {
           ? `Current step: "${String(a.nextTaskTitle).slice(0, 40)}".`
           : ''
       } ${recommendForTask(a)}`.trim()
+    case 'define':
     case 'clarify':
-      return designProcessTip('clarify', a)
+      return designProcessTip('define', a)
+    case 'research':
+      return designProcessTip('research', a)
+    case 'ideate':
+      return designProcessTip('ideate', a)
+    case 'sketch':
     case 'structure':
-      return designProcessTip('structure', a)
+      return designProcessTip('sketch', a)
+    case 'design':
     case 'visual':
-      return designProcessTip('visual', a)
+      return designProcessTip('design', a)
+    case 'review':
     case 'refine':
-      return `${designProcessTip('refine', a)} ${twoDirectionsTip(a)}`
+      return `${designProcessTip('review', a)} ${twoDirectionsTip(a)}`
+    case 'deliver':
+      return designProcessTip('deliver', a)
     case 'progress': {
       const desk = extra.deskLabel || ''
       const br = extra.breakLabel || ''
@@ -208,10 +218,17 @@ function intentUserPrompt(intent, activity = {}, extra = {}) {
     full: 'Short recommend + critique for the current task.',
     tip: 'One sharp craft tip plus the single best next move.',
     stuck: 'Unstick them: one tiny action they can finish in under 10 minutes.',
-    clarify: 'Coach the clarify phase: audience, outcome, constraint.',
-    structure: 'Coach structure: blocks, primary action, path in words.',
-    visual: 'Coach visual system: color roles, type pair, space.',
-    refine: 'Coach refine: two directions, pick one, ship a slice.',
+    define: 'Coach Define: audience, goal in one sentence, must-haves.',
+    research: 'Coach Research: refs, mood, timed discovery.',
+    ideate: 'Coach Ideate: many directions, no judging yet.',
+    sketch: 'Coach Sketch: 2–3 rough drafts, low detail.',
+    design: 'Coach Design: type, color roles, hierarchy, space.',
+    review: 'Coach Review: specific feedback questions, revise for the goal.',
+    deliver: 'Coach Deliver: files, handoff, one-line evaluation.',
+    clarify: 'Coach Define: audience, goal, constraint.',
+    structure: 'Coach Sketch: structure in words before polish.',
+    visual: 'Coach Design: color roles, type, space.',
+    refine: 'Coach Review: pick direction, fix from feedback.',
     progress: 'Honest status check + one next move. Do not lead with XP.',
   }
   lines.push(jobs[intent] || jobs.tip)

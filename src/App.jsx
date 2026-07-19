@@ -60,7 +60,11 @@ import {
   getNextJourney,
   toolsLabelForView,
 } from './lib/journey'
-import { PROCESS_PHASES, getProcessPhase } from './lib/processGuide'
+import {
+  PROCESS_PHASES,
+  getProcessPhase,
+  processPhaseForView,
+} from './lib/processGuide'
 import {
   buildBrandPackSnapshot,
   captureSaveHandle,
@@ -561,40 +565,46 @@ function App() {
         },
       },
       {
-        id: 'work',
-        label: 'Go to Work',
-        hint: '2',
-        run: () => setActiveView('flow'),
-      },
-      {
-        id: 'board',
-        label: 'Go to Board',
-        hint: '3',
-        run: () => setActiveView('studio'),
-      },
-      {
-        id: 'system',
-        label: 'Go to System',
-        hint: '4',
-        run: () => setActiveView('brand'),
-      },
-      {
-        id: 'pack',
-        label: 'Go to Pack',
-        hint: '5',
-        run: () => setActiveView('finish'),
-      },
-      {
-        id: 'project',
-        label: 'Go to Project',
+        id: 'define',
+        label: '1 Define',
         hint: '1',
         run: () => setActiveView('project'),
       },
       {
-        id: 'spark',
-        label: 'Open Spark',
-        hint: '',
+        id: 'research',
+        label: '2 Research',
+        hint: '2',
+        run: () => setActiveView('studio'),
+      },
+      {
+        id: 'ideate',
+        label: '3 Ideate',
+        hint: '3',
         run: () => setActiveView('spark'),
+      },
+      {
+        id: 'sketch',
+        label: '4 Sketch',
+        hint: '4',
+        run: () => setActiveView('flow'),
+      },
+      {
+        id: 'design',
+        label: '5 Design',
+        hint: '5',
+        run: () => setActiveView('brand'),
+      },
+      {
+        id: 'review',
+        label: '6 Review',
+        hint: '6',
+        run: () => setActiveView('review'),
+      },
+      {
+        id: 'deliver',
+        label: '7 Deliver',
+        hint: '7',
+        run: () => setActiveView('finish'),
       },
       {
         id: 'timer',
@@ -1035,7 +1045,7 @@ function App() {
         return
       }
       const n = Number(e.key)
-      if (n < 1 || n > 5) return
+      if (n < 1 || n > 7) return
       const step = JOURNEY_STEPS[n - 1]
       if (!step?.view) return
       e.preventDefault()
@@ -1139,7 +1149,15 @@ function App() {
 
   // Directional page choreography (path order)
   useEffect(() => {
-    const order = ['project', 'flow', 'studio', 'brand', 'finish']
+    const order = [
+      'project',
+      'studio',
+      'spark',
+      'flow',
+      'brand',
+      'review',
+      'finish',
+    ]
     const idx = order.indexOf(activeView)
     if (idx < 0) {
       setNavDir('none')
@@ -1327,6 +1345,12 @@ function App() {
   useEffect(() => {
     setProjectNameDraft(activeProject?.name || '')
   }, [activeProject?.id, activeProject?.name])
+
+  // Path view → process phase (7-step alignment)
+  useEffect(() => {
+    const p = processPhaseForView(activeView)
+    if (p) setProcessPhase(p.id)
+  }, [activeView])
 
   // Autosave pulse — skip first mount so load doesn’t flash “Saved”
   const savePulseReady = useRef(false)
@@ -2249,16 +2273,26 @@ function App() {
               const label = pathLabel(locale, step.id) || step.label
               const plain = pathPlain(locale, step.id) || step.plain
               const hasContent =
-                (step.id === 'project' &&
-                  !!(activeProject?.name && activeProject.name !== 'My project')) ||
-                (step.id === 'work' && deskTasks.length > 0) ||
-                (step.id === 'board' && deskMood.length > 0) ||
-                (step.id === 'system' &&
+                (step.id === 'define' &&
+                  !!(
+                    (activeProject?.name &&
+                      activeProject.name !== 'My project') ||
+                    activeProject?.brief?.trim()
+                  )) ||
+                (step.id === 'research' && deskMood.length > 0) ||
+                (step.id === 'ideate' && false) ||
+                (step.id === 'sketch' && deskTasks.length > 0) ||
+                (step.id === 'design' &&
                   !!(
                     activeProject?.tagline?.trim() ||
                     (projectPalette || []).length >= 2
                   )) ||
-                (step.id === 'pack' &&
+                (step.id === 'review' &&
+                  !!(
+                    activeProject?.tagline?.trim() &&
+                    deskMood.some((m) => m.inPack)
+                  )) ||
+                (step.id === 'deliver' &&
                   !!(
                     activeProject?.tagline?.trim() ||
                     deskMood.some((m) => m.inPack)
@@ -2300,7 +2334,9 @@ function App() {
           <div className="flow-view surface-desk view-enter" data-nav-dir={navDir}>
             <div className="flow-top flow-top-compact">
               <div>
-                <h1 className="page-title work-page-title">{i18nT(locale, 'path.work')}</h1>
+                <h1 className="page-title work-page-title">
+                  {i18nT(locale, 'path.sketch')}
+                </h1>
                 <p className="work-context-line">
                   <strong>{activeProject?.name || 'Project'}</strong>
                   {projectDeadline
@@ -2419,11 +2455,11 @@ function App() {
                           className="btn btn-ghost"
                           onClick={() => {
                             setProcessOpen((o) => !o)
-                            if (!processPhase) setProcessPhase('clarify')
+                            if (!processPhase) setProcessPhase('sketch')
                           }}
                           aria-expanded={processOpen}
                         >
-                          Local design checklist
+                          Process checklist
                         </button>
                         <button
                           type="button"
@@ -2543,53 +2579,55 @@ function App() {
               </div>
             </section>
 
-            {/* Optional design mode (process checklist) — below the fold */}
-            {processOpen && (
-              <section className="process-rail process-rail-optional" aria-label="Design mode">
-                <div className="process-rail-chips">
-                  {PROCESS_PHASES.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      className={`process-chip${
-                        processPhase === p.id ? ' is-active' : ''
-                      }`}
-                      onClick={() => setProcessPhase(p.id)}
-                      aria-pressed={processPhase === p.id}
-                    >
-                      {p.short}
-                    </button>
-                  ))}
+            {/* 7-step process checklist — Sketch step (desk) */}
+            <section
+              className="process-rail process-rail-optional"
+              aria-label="Design process"
+            >
+              <div className="process-rail-chips">
+                {PROCESS_PHASES.map((p) => (
                   <button
+                    key={p.id}
                     type="button"
-                    className="text-link"
+                    className={`process-chip${
+                      (processPhase || 'sketch') === p.id ? ' is-active' : ''
+                    }`}
                     onClick={() => {
-                      setProcessOpen(false)
-                      setProcessPhase(null)
+                      setProcessPhase(p.id)
+                      if (p.view) setActiveView(p.view)
                     }}
+                    aria-pressed={(processPhase || 'sketch') === p.id}
                   >
-                    Close
+                    {p.short}
                   </button>
-                </div>
-                {processPhase && getProcessPhase(processPhase) && (
+                ))}
+              </div>
+              {(() => {
+                const phase =
+                  getProcessPhase(processPhase || 'sketch') ||
+                  processPhaseForView('flow')
+                if (!phase) return null
+                return (
                   <div className="process-guide-panel">
-                    <strong>{getProcessPhase(processPhase).title}</strong>
+                    <strong>
+                      {phase.label} · {phase.title}
+                    </strong>
                     <p className="process-guide-prompt">
                       {nextTask
                         ? `For “${String(nextTask.title).slice(0, 60)}”: ${
-                            getProcessPhase(processPhase).prompt
+                            phase.prompt
                           }`
-                        : getProcessPhase(processPhase).prompt}
+                        : phase.prompt}
                     </p>
                     <ul className="process-guide-checks">
-                      {getProcessPhase(processPhase).checks.map((c) => (
+                      {phase.checks.map((c) => (
                         <li key={c}>{c}</li>
                       ))}
                     </ul>
                   </div>
-                )}
-              </section>
-            )}
+                )
+              })()}
+            </section>
 
             {showHowItWorks && (
               <section className="product-card product-card-quiet" aria-label="How this desk works">
@@ -2762,7 +2800,9 @@ function App() {
           <div className="studio-view surface-wall view-enter" data-nav-dir={navDir}>
             <div className="flow-top">
               <div>
-                <h1 className="page-title">Board</h1>
+                <h1 className="page-title">
+                  {i18nT(locale, 'path.research')}
+                </h1>
                 <p className="page-sub">
                   {i18nT(locale, 'ui.boardSub')}
                   {deskMood.filter((m) => m.inPack).length > 0
@@ -3358,7 +3398,9 @@ function App() {
           <div className="brand-layout surface-document system-view view-enter" data-nav-dir={navDir}>
             <div className="brand-template-top">
               <div>
-                <h1 className="page-title">System</h1>
+                <h1 className="page-title">
+                  {i18nT(locale, 'path.design')}
+                </h1>
                 <p className="page-sub">
                   {i18nT(locale, 'ui.systemSub')}{' '}
                   <strong>{activeProject?.name || 'this project'}</strong>
@@ -3973,13 +4015,134 @@ function App() {
           </div>
         )}
 
-        {/* ===== PACK — end of path ===== */}
+        {/* ===== REVIEW — step 6 ===== */}
+        {activeView === 'review' && (
+          <div className="review-view surface-desk view-enter" data-nav-dir={navDir}>
+            <div className="flow-top">
+              <div>
+                <h1 className="page-title">{i18nT(locale, 'path.review')}</h1>
+                <p className="page-sub">
+                  Show the work. Ask if it feels right. Revise for the goal — not
+                  every opinion.
+                </p>
+              </div>
+              <div className="finish-secondary-row">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActiveView('brand')}
+                >
+                  Back to Design
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setActiveView('finish')}
+                >
+                  Go to Deliver
+                </button>
+              </div>
+            </div>
+            <section className="panel brand-section">
+              <div className="brand-section-label">Review checklist</div>
+              <ul className="process-guide-checks review-checks">
+                {(getProcessPhase('review')?.checks || []).map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
+              <p className="process-guide-prompt">
+                {getProcessPhase('review')?.prompt}
+              </p>
+            </section>
+            <section className="panel brand-section">
+              <div className="brand-section-label">Pack readiness</div>
+              {(() => {
+                const packSnap = buildCurrentBrandPack()
+                const ready = packReadiness(packSnap)
+                return (
+                  <>
+                    <p className="panel-hint">
+                      <strong>
+                        {ready.okCount}/{ready.checks.length}
+                      </strong>{' '}
+                      ready
+                      {ready.thin ? ' · still thin for client handoff' : ''}
+                    </p>
+                    <ul className="pack-ready-list">
+                      {ready.checks.map((c) => (
+                        <li
+                          key={c.id}
+                          className={c.ok ? 'is-ok' : 'is-miss'}
+                        >
+                          {c.ok ? (
+                            <span>✓ {c.label}</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="pack-ready-fix"
+                              onClick={() => {
+                                if (c.view === 'studio') setActiveView('studio')
+                                else if (c.view === 'brand')
+                                  goSystemSection(c.section || 'essentials')
+                                else if (c.view) setActiveView(c.view)
+                              }}
+                            >
+                              ○ {c.label} — fix
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )
+              })()}
+            </section>
+            <section className="panel brand-section">
+              <div className="brand-section-label">Ask for feedback</div>
+              <p className="panel-hint" style={{ marginTop: 0 }}>
+                Specific beats “do you like it?” — e.g. “Does this feel hopeful?”
+                “Is anything confusing?”
+              </p>
+              <div className="finish-secondary-row">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    if (!bodyDoubling) toggleBodyDoubling()
+                    flashToast('Helper on — open Critique')
+                  }}
+                >
+                  Open Helper for Critique
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={async () => {
+                    try {
+                      const md = packBriefMarkdown(buildCurrentBrandPack())
+                      await navigator.clipboard.writeText(md)
+                      flashToast('Brief copied — send to a reviewer')
+                    } catch {
+                      flashToast('Could not copy brief')
+                    }
+                  }}
+                >
+                  Copy brief to share
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* ===== DELIVER — step 7 ===== */}
         {activeView === 'finish' && (
           <div className="finish-view surface-document pack-view view-enter" data-nav-dir={navDir}>
             <div className="flow-top">
               <div>
                 <p className="pack-eyebrow">{i18nT(locale, 'ui.packEyebrow')}</p>
-                <h1 className="page-title page-title-display">{i18nT(locale, 'ui.packTitle')}</h1>
+                <h1 className="page-title page-title-display">
+                  {i18nT(locale, 'path.deliver')}
+                </h1>
                 <p className="page-sub">
                   {activeProject?.name || 'Your project'} · {i18nT(locale, 'ui.packSub')}
                 </p>
@@ -4378,7 +4541,9 @@ function App() {
           <div className="project-view surface-desk view-enter" data-nav-dir={navDir}>
             <div className="flow-top">
               <div>
-                <h1 className="page-title">Project</h1>
+                <h1 className="page-title">
+                  {i18nT(locale, 'path.define')}
+                </h1>
                 <p className="page-sub">
                   {i18nT(locale, 'ui.projectSub')}
                 </p>
@@ -5089,7 +5254,7 @@ function App() {
             </div>
             <ul className="shortcuts-list">
               <li>
-                <kbd>1</kbd>–<kbd>5</kbd> Path steps
+                <kbd>1</kbd>–<kbd>7</kbd> Process steps
               </li>
               <li>
                 <kbd>C</kbd> Complete current step
