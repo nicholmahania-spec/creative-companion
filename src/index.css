@@ -2914,6 +2914,45 @@ h3 {
   line-height: 1.4;
 }
 
+.login-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+}
+
+.login-mode-tab {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.login-mode-tab.is-active {
+  background: var(--bg-elevated);
+  color: var(--accent-deep);
+  box-shadow: var(--shadow-1);
+}
+
+.login-info {
+  margin: 0 0 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--accent-growth);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 /* Onboarding — single primary path */
 .onboard-eyebrow {
   margin: 0 0 0.35rem;

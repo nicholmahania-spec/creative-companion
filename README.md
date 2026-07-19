@@ -1,8 +1,8 @@
 # Creative Companion
 
-A local creative work desk for ADHD brains: capture ideas, break projects into micro-steps, do one next step, collect visual refs, manage deadlines, and export a brand identity pack.
+A creative work desk for ADHD brains: capture ideas, break projects into micro-steps, do one next step, collect visual refs, manage deadlines, and export a brand identity pack.
 
-Not a chatbot. Data stays in the browser (`localStorage` via Zustand).
+Not a chatbot. Works **local-only** by default, or with **Supabase** for real accounts + multi-device sync.
 
 ## Run locally
 
@@ -15,6 +15,15 @@ npm run dev
 npm run build    # → dist/
 npm run preview
 ```
+
+### Optional: Supabase backend
+
+1. Create a project at [supabase.com](https://supabase.com)  
+2. Run `supabase/schema.sql` in the SQL Editor  
+3. Copy `.env.example` → `.env.local` and set URL + anon key  
+4. Full steps: **[docs/SUPABASE.md](docs/SUPABASE.md)**
+
+Without env vars, the app uses a **local browser password gate** and saves only in `localStorage`.
 
 ## What’s in the app
 

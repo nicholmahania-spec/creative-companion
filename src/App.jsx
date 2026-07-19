@@ -33,6 +33,14 @@ import {
   changeAccessPassword,
   STORAGE_EXPLAIN,
 } from './lib/auth'
+import { isSupabaseConfigured, supabase } from './lib/supabase'
+import {
+  pullWorkspace,
+  pushWorkspace,
+  signOutCloud,
+} from './lib/cloudSync'
+
+const CLOUD = isSupabaseConfigured()
 
 function App() {
   // ——— Zustand (persisted studio state) ———
@@ -74,6 +82,7 @@ function App() {
   const setPref = useAppStore((s) => s.setPref)
   const exportAllData = useAppStore((s) => s.exportAllData)
   const importAllData = useAppStore((s) => s.importAllData)
+  const hydrateFromPayload = useAppStore((s) => s.hydrateFromPayload)
   const clearAllData = useAppStore((s) => s.clearAllData)
   const clearToEmpty = useAppStore((s) => s.clearToEmpty)
   const renameProject = useAppStore((s) => s.renameProject)
@@ -120,14 +129,23 @@ function App() {
   const [stepFocusKey, setStepFocusKey] = useState(0)
   const [stepDueOpen, setStepDueOpen] = useState(false)
   const [projectNameDraft, setProjectNameDraft] = useState('')
-  const [unlocked, setUnlocked] = useState(() => isSessionOpen())
-  const [accessName, setAccessName] = useState(
-    () => getSession()?.name || ''
+  const [unlocked, setUnlocked] = useState(() =>
+    CLOUD ? false : isSessionOpen()
   )
+  const [accessName, setAccessName] = useState(() =>
+    CLOUD ? '' : getSession()?.name || ''
+  )
+  const [cloudUser, setCloudUser] = useState(null)
+  const [authReady, setAuthReady] = useState(!CLOUD)
+  const [cloudHydrating, setCloudHydrating] = useState(false)
+  const [syncState, setSyncState] = useState('idle') // idle | syncing | ok | error
+  const [syncError, setSyncError] = useState('')
   const [pwCurrent, setPwCurrent] = useState('')
   const [pwNext, setPwNext] = useState('')
   const moreWrapRef = useRef(null)
   const importFileRef = useRef(null)
+  const cloudSyncReady = useRef(false)
+  const skipNextCloudPush = useRef(false)
 
   const showHowItWorks = prefs.showHowItWorks !== false
   const queueCollapsed = prefs.queueCollapsed !== false
@@ -392,10 +410,130 @@ function App() {
     }
   }, [moreOpen])
 
+  // Supabase session bootstrap
+  useEffect(() => {
+    if (!CLOUD || !supabase) {
+      setAuthReady(true)
+      return
+    }
+    let alive = true
+    supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return
+      const session = data.session
+      if (session?.user) {
+        setCloudUser(session.user)
+        setAccessName(session.user.email || 'Account')
+        setUnlocked(true)
+      }
+      setAuthReady(true)
+    })
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!alive) return
+      if (session?.user) {
+        setCloudUser(session.user)
+        setAccessName(session.user.email || 'Account')
+        setUnlocked(true)
+      } else {
+        setCloudUser(null)
+        setAccessName('')
+        setUnlocked(false)
+        cloudSyncReady.current = false
+      }
+    })
+    return () => {
+      alive = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  // Pull cloud workspace after sign-in
+  useEffect(() => {
+    if (!CLOUD || !unlocked || !cloudUser) return
+    let cancelled = false
+    ;(async () => {
+      setCloudHydrating(true)
+      setSyncError('')
+      const result = await pullWorkspace()
+      if (cancelled) return
+      if (!result.ok) {
+        setSyncState('error')
+        setSyncError(result.error || 'Could not load cloud desk')
+        setCloudHydrating(false)
+        cloudSyncReady.current = true
+        return
+      }
+      if (result.payload && Array.isArray(result.payload.projects)) {
+        skipNextCloudPush.current = true
+        hydrateFromPayload(result.payload)
+        setSyncState('ok')
+      } else {
+        // Cloud empty → seed from local cache if any real work exists
+        const local = exportAllData()
+        const hasLocal =
+          Array.isArray(local.projects) &&
+          local.projects.length > 0 &&
+          (local.onboarded ||
+            (local.tasks || []).some((t) => !t.seeded) ||
+            local.projects.some((p) => !p.seeded))
+        if (hasLocal && local.onboarded) {
+          const push = await pushWorkspace(local)
+          setSyncState(push.ok ? 'ok' : 'error')
+          if (!push.ok) setSyncError(push.error || 'Upload failed')
+        } else {
+          setSyncState('ok')
+        }
+      }
+      setCloudHydrating(false)
+      cloudSyncReady.current = true
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run on user change only
+  }, [CLOUD, unlocked, cloudUser?.id])
+
+  // Debounced push to Supabase when desk changes
+  useEffect(() => {
+    if (!CLOUD || !unlocked || !cloudUser || !cloudSyncReady.current) return
+    if (skipNextCloudPush.current) {
+      skipNextCloudPush.current = false
+      return
+    }
+    if (cloudHydrating) return
+    setSyncState('syncing')
+    const t = window.setTimeout(async () => {
+      const payload = exportAllData()
+      const result = await pushWorkspace(payload)
+      if (result.ok) {
+        setSyncState('ok')
+        setSyncError('')
+      } else {
+        setSyncState('error')
+        setSyncError(result.error || 'Sync failed')
+      }
+    }, 1200)
+    return () => window.clearTimeout(t)
+  }, [
+    CLOUD,
+    unlocked,
+    cloudUser?.id,
+    cloudHydrating,
+    projects,
+    tasks,
+    moodItems,
+    theme,
+    prefs,
+    currentProjectId,
+    onboarded,
+    exportAllData,
+  ])
+
   // First-run project gate (after access unlock)
   useEffect(() => {
-    if (unlocked && !onboarded) setShowOnboarding(true)
-  }, [unlocked, onboarded])
+    if (unlocked && !cloudHydrating && !onboarded) setShowOnboarding(true)
+  }, [unlocked, onboarded, cloudHydrating])
 
   // Keep rename field in sync with active project
   useEffect(() => {
@@ -792,15 +930,69 @@ function App() {
     flashToast('Note pin added')
   }
 
+  const handleSignOut = async () => {
+    if (CLOUD) {
+      await signOutCloud()
+      setCloudUser(null)
+      setUnlocked(false)
+      setAccessName('')
+      cloudSyncReady.current = false
+      flashToast('Signed out')
+      return
+    }
+    closeSession()
+    setUnlocked(false)
+    setAccessName('')
+    flashToast('Locked')
+  }
+
+  if (!authReady) {
+    return (
+      <div className={`app ${theme} login-shell`}>
+        <div className="login-page">
+          <div className="login-card">
+            <p className="login-lede" style={{ margin: 0 }}>
+              Loading…
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!unlocked) {
     return (
       <div className={`app ${theme} login-shell`}>
         <LoginPage
-          onUnlocked={(name) => {
-            setAccessName(name || '')
+          cloud={CLOUD}
+          onUnlocked={(result) => {
+            if (result?.mode === 'cloud') {
+              setCloudUser(result.user || null)
+              setAccessName(result.name || result.user?.email || 'Account')
+              setUnlocked(true)
+              return
+            }
+            setAccessName(result?.name || '')
             setUnlocked(true)
           }}
         />
+      </div>
+    )
+  }
+
+  if (cloudHydrating) {
+    return (
+      <div className={`app ${theme} login-shell`}>
+        <div className="login-page">
+          <div className="login-card">
+            <p className="login-lede" style={{ marginBottom: '0.5rem' }}>
+              Loading your desk from the cloud…
+            </p>
+            <p className="login-fineprint" style={{ margin: 0 }}>
+              Syncing projects, tasks, and pins
+            </p>
+          </div>
+        </div>
       </div>
     )
   }
@@ -992,13 +1184,16 @@ function App() {
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
-                      closeSession()
                       setMoreOpen(false)
-                      setUnlocked(false)
+                      handleSignOut()
                     }}
                   >
-                    <strong>Sign out / lock</strong>
-                    <span>Require password next visit</span>
+                    <strong>{CLOUD ? 'Sign out' : 'Sign out / lock'}</strong>
+                    <span>
+                      {CLOUD
+                        ? 'End cloud session on this device'
+                        : 'Require password next visit'}
+                    </span>
                   </button>
                 </div>
               )}
@@ -2843,79 +3038,123 @@ function App() {
             </section>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">Access</div>
-              <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
+              <div className="brand-section-label">
+                {CLOUD ? 'Account & sync' : 'Access'}
+              </div>
+              <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
                 {accessName ? `Signed in as ${accessName}. ` : ''}
-                Password unlocks this browser only — not a cloud account.
-                Closing the tab signs you out.
+                {CLOUD
+                  ? 'Your desk syncs to Supabase. This browser also keeps a local cache.'
+                  : 'Local password unlocks this browser only. Add Supabase env vars for cloud accounts.'}
               </p>
+              {CLOUD && (
+                <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
+                  Sync:{' '}
+                  <strong>
+                    {syncState === 'syncing'
+                      ? 'Saving…'
+                      : syncState === 'error'
+                        ? 'Error'
+                        : syncState === 'ok'
+                          ? 'Up to date'
+                          : 'Idle'}
+                  </strong>
+                  {syncError ? ` — ${syncError}` : ''}
+                </p>
+              )}
               <div className="settings-actions" style={{ marginBottom: '1rem' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={() => {
-                    closeSession()
-                    setUnlocked(false)
-                    flashToast('Locked')
-                  }}
+                  onClick={handleSignOut}
                 >
-                  Sign out / lock
+                  {CLOUD ? 'Sign out' : 'Sign out / lock'}
                 </button>
+                {CLOUD && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={async () => {
+                      setSyncState('syncing')
+                      const result = await pushWorkspace(exportAllData())
+                      if (result.ok) {
+                        setSyncState('ok')
+                        setSyncError('')
+                        flashToast('Synced to cloud')
+                      } else {
+                        setSyncState('error')
+                        setSyncError(result.error || 'Sync failed')
+                        flashToast(result.error || 'Sync failed')
+                      }
+                    }}
+                  >
+                    Sync now
+                  </button>
+                )}
               </div>
-              <div className="field-block" style={{ marginBottom: '0.65rem' }}>
-                <label className="field-label" htmlFor="pw-current">
-                  Change password
-                </label>
-                <input
-                  id="pw-current"
-                  type="password"
-                  className="field-input"
-                  value={pwCurrent}
-                  onChange={(e) => setPwCurrent(e.target.value)}
-                  placeholder="Current password"
-                  autoComplete="current-password"
-                />
-              </div>
-              <div className="capture-row" style={{ marginBottom: '0.5rem' }}>
-                <input
-                  type="password"
-                  className="field-input"
-                  value={pwNext}
-                  onChange={(e) => setPwNext(e.target.value)}
-                  placeholder="New password (6+ chars)"
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  disabled={!pwCurrent || pwNext.length < 6}
-                  onClick={async () => {
-                    const result = await changeAccessPassword(pwCurrent, pwNext)
-                    if (result.ok) {
-                      setPwCurrent('')
-                      setPwNext('')
-                      flashToast('Password updated')
-                    } else {
-                      flashToast(result.error || 'Could not update')
-                    }
-                  }}
-                >
-                  Update
-                </button>
-              </div>
+              {!CLOUD && (
+                <>
+                  <div className="field-block" style={{ marginBottom: '0.65rem' }}>
+                    <label className="field-label" htmlFor="pw-current">
+                      Change local password
+                    </label>
+                    <input
+                      id="pw-current"
+                      type="password"
+                      className="field-input"
+                      value={pwCurrent}
+                      onChange={(e) => setPwCurrent(e.target.value)}
+                      placeholder="Current password"
+                      autoComplete="current-password"
+                    />
+                  </div>
+                  <div className="capture-row" style={{ marginBottom: '0.5rem' }}>
+                    <input
+                      type="password"
+                      className="field-input"
+                      value={pwNext}
+                      onChange={(e) => setPwNext(e.target.value)}
+                      placeholder="New password (6+ chars)"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      disabled={!pwCurrent || pwNext.length < 6}
+                      onClick={async () => {
+                        const result = await changeAccessPassword(
+                          pwCurrent,
+                          pwNext
+                        )
+                        if (result.ok) {
+                          setPwCurrent('')
+                          setPwNext('')
+                          flashToast('Password updated')
+                        } else {
+                          flashToast(result.error || 'Could not update')
+                        }
+                      }}
+                    >
+                      Update
+                    </button>
+                  </div>
+                </>
+              )}
             </section>
 
             <section className="panel brand-section">
               <div className="brand-section-label">Your data</div>
               <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
-                {STORAGE_EXPLAIN.summary}
+                {CLOUD
+                  ? 'Cloud: Supabase workspace for your account. Cache: this browser’s localStorage for speed. JSON export is still the best portable backup.'
+                  : STORAGE_EXPLAIN.summary}
               </p>
               <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                Browser storage key:{' '}
+                Browser cache key:{' '}
                 <code className="settings-code">
                   {STORAGE_EXPLAIN.workDataKey}
                 </code>
-                . Use backup when switching devices.
+                {CLOUD ? ' · Cloud table: user_workspaces' : ''}
               </p>
               <div className="settings-actions">
                 <button
@@ -3213,7 +3452,14 @@ function App() {
           ·
         </span>
         <span className="app-footer-meta">
-          {accessName ? `${accessName} · ` : ''}Local-only
+          {accessName ? `${accessName} · ` : ''}
+          {CLOUD
+            ? syncState === 'syncing'
+              ? 'Syncing…'
+              : syncState === 'error'
+                ? 'Sync error'
+                : 'Cloud'
+            : 'Local-only'}
         </span>
       </footer>
 

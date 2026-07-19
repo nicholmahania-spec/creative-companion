@@ -320,7 +320,64 @@ const useAppStore = create(
           prefs: s.prefs,
           sparkIndex: s.sparkIndex,
           onboarded: s.onboarded,
+          currentSpark: s.currentSpark,
         }
+      },
+
+      /**
+       * Apply a workspace payload (cloud pull or import).
+       * Empty / invalid payload returns { ok: false }.
+       */
+      hydrateFromPayload: (data) => {
+        if (!data || typeof data !== 'object') {
+          return { ok: false, error: 'Empty workspace' }
+        }
+        if (!Array.isArray(data.projects) || data.projects.length === 0) {
+          return { ok: false, error: 'No projects in workspace' }
+        }
+        if (!Array.isArray(data.tasks)) {
+          return { ok: false, error: 'No tasks in workspace' }
+        }
+        const projects = data.projects.map((p) => ({
+          logoDirection: '',
+          palette: [...defaultProjectPalette],
+          deadline: '',
+          ...defaultBrandIdentity,
+          ...p,
+        }))
+        const currentProjectId =
+          data.currentProjectId &&
+          projects.some((p) => p.id === data.currentProjectId)
+            ? data.currentProjectId
+            : projects[0].id
+        const sparkIndex =
+          typeof data.sparkIndex === 'number' ? data.sparkIndex : 0
+        set({
+          projects: projects.map((p) => ({
+            ...p,
+            active: p.id === currentProjectId,
+          })),
+          currentProjectId,
+          tasks: data.tasks,
+          moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
+          theme: data.theme === 'deep' ? 'deep' : 'warm',
+          prefs: {
+            soundEnabled: true,
+            reduceMotion: false,
+            bodyDoubleSilent: false,
+            queueCollapsed: true,
+            showHowItWorks: true,
+            ...(data.prefs || {}),
+          },
+          sparkIndex,
+          currentSpark:
+            data.currentSpark ||
+            sparkPrompts[sparkIndex % sparkPrompts.length] ||
+            sparkPrompts[0],
+          onboarded: data.onboarded !== false,
+          bodyDoubling: false,
+        })
+        return { ok: true }
       },
 
       /**
@@ -330,53 +387,7 @@ const useAppStore = create(
       importAllData: (raw) => {
         try {
           const data = typeof raw === 'string' ? JSON.parse(raw) : raw
-          if (!data || typeof data !== 'object') {
-            return { ok: false, error: 'Invalid backup file' }
-          }
-          if (!Array.isArray(data.projects) || data.projects.length === 0) {
-            return { ok: false, error: 'Backup has no projects' }
-          }
-          if (!Array.isArray(data.tasks)) {
-            return { ok: false, error: 'Backup has no tasks array' }
-          }
-          const projects = data.projects.map((p) => ({
-            logoDirection: '',
-            palette: [...defaultProjectPalette],
-            deadline: '',
-            ...defaultBrandIdentity,
-            ...p,
-          }))
-          const currentProjectId =
-            data.currentProjectId &&
-            projects.some((p) => p.id === data.currentProjectId)
-              ? data.currentProjectId
-              : projects[0].id
-          const sparkIndex =
-            typeof data.sparkIndex === 'number' ? data.sparkIndex : 0
-          set({
-            projects: projects.map((p) => ({
-              ...p,
-              active: p.id === currentProjectId,
-            })),
-            currentProjectId,
-            tasks: data.tasks,
-            moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
-            theme: data.theme === 'deep' ? 'deep' : 'warm',
-            prefs: {
-              soundEnabled: true,
-              reduceMotion: false,
-              bodyDoubleSilent: false,
-              queueCollapsed: true,
-              showHowItWorks: true,
-              ...(data.prefs || {}),
-            },
-            sparkIndex,
-            currentSpark:
-              sparkPrompts[sparkIndex % sparkPrompts.length] || sparkPrompts[0],
-            onboarded: data.onboarded !== false,
-            bodyDoubling: false,
-          })
-          return { ok: true }
+          return get().hydrateFromPayload(data)
         } catch (e) {
           return {
             ok: false,

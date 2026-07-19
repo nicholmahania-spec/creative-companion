@@ -1,7 +1,7 @@
 {
   "name": "creative-companion-react",
   "private": true,
-  "version": "0.2.5",
+  "version": "0.2.6",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,6 +12,7 @@
     "bump:major": "node scripts/bump-version.mjs --major"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.7",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zustand": "^5.0.14"
