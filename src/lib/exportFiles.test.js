@@ -3,6 +3,7 @@ import {
   buildBrandPackSnapshot,
   brandPackToMarkdown,
   brandPackToHtml,
+  buildDirectionSheetMarkup,
   slugifyFilename,
 } from './exportFiles'
 
@@ -84,8 +85,40 @@ describe('brandPackToMarkdown / brandPackToHtml', () => {
     const html = brandPackToHtml(pack)
     expect(html).toContain('<!DOCTYPE html>')
     expect(html).toContain('Atlas')
-    expect(html).toContain('Brand direction pack')
+    expect(html).toContain('Brand identity template')
     expect(html).toContain('#112233')
     expect(html).toContain('window.print')
+  })
+})
+
+describe('buildDirectionSheetMarkup (preview-faithful PDF source)', () => {
+  it('mirrors Export pack preview structure and classes', () => {
+    const pack = buildBrandPackSnapshot({
+      project: {
+        name: 'Soft Signal',
+        tagline: 'Quiet focus',
+        brief: 'ADHD-friendly desk',
+        doUse: 'Soft contrast',
+        dontUse: 'Neon',
+        typeHeading: 'Display Bold',
+        typeBody: 'Body Regular',
+        palette: ['#4F46E5', '#0D9488'],
+      },
+      tasks: [{ id: 1, title: 'Lock type', completed: false }],
+      moodItems: [{ id: 2, type: 'color', note: 'Indigo', visual: '#4F46E5' }],
+    })
+    const html = buildDirectionSheetMarkup(pack)
+    expect(html).toContain('direction-sheet')
+    expect(html).toContain('export-identity-cover')
+    expect(html).toContain('Brand identity template')
+    expect(html).toContain('Soft Signal')
+    expect(html).toContain('Quiet focus')
+    expect(html).toContain('direction-palette')
+    expect(html).toContain('export-do-dont')
+    expect(html).toContain('direction-pins')
+    expect(html).toContain('direction-tasks')
+    expect(html).toContain('Lock type')
+    expect(html).toContain('Mood direction')
+    expect(html).toContain('Open work')
   })
 })

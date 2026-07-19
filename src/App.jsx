@@ -915,14 +915,25 @@ function App() {
       : null
 
     if (kind === 'pdf') {
-      // Warm engine if not already (preload also runs when Finish opens)
+      // Open the real preview when missing so PDF can capture the live sheet
+      if (!exportPanel) openExportPanel()
       void preloadPdfEngine()
-      flashToast('Building PDF…')
-      void downloadBrandPackPdf(pack, handlePromise).then((result) => {
+      flashToast('Capturing pack preview as PDF…')
+      // Wait for React to paint #direction-sheet (or fall back to CSS clone)
+      void (async () => {
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+        // Give the overlay one more tick if we just opened it
+        if (!document.getElementById('direction-sheet')) {
+          await new Promise((r) => setTimeout(r, 80))
+        }
+        const live = document.getElementById('direction-sheet')
+        const result = await downloadBrandPackPdf(pack, handlePromise, {
+          element: live || null,
+        })
         if (result.ok) finishOk('Brand PDF')
         else if (result.cancelled) flashToast('Save cancelled')
         else flashToast(result.error || 'PDF failed')
-      })
+      })()
       return
     }
 
