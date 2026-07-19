@@ -20,6 +20,12 @@ import {
   deadlineUrgency,
   daysUntil,
 } from './lib/dates'
+import {
+  APP_VERSION,
+  APP_BUILD,
+  APP_BUILD_DATE,
+  versionLabel,
+} from './lib/version'
 
 function App() {
   // ——— Zustand (persisted studio state) ———
@@ -2904,6 +2910,23 @@ function App() {
           </div>
         )}
       </main>
+
+      <footer className="app-footer" role="contentinfo">
+        <span className="app-footer-brand">Creative Companion</span>
+        <span className="app-footer-sep" aria-hidden="true">
+          ·
+        </span>
+        <span
+          className="app-footer-version"
+          title={`Build ${APP_BUILD}${APP_BUILD_DATE ? ` · ${APP_BUILD_DATE}` : ''}`}
+        >
+          {versionLabel()}
+        </span>
+        <span className="app-footer-sep" aria-hidden="true">
+          ·
+        </span>
+        <span className="app-footer-meta">Local-only</span>
+      </footer>
 
       {showOnboarding && (
         <div className="export-overlay" role="dialog" aria-modal="true">

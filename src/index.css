@@ -993,10 +993,51 @@ h3 {
 
 .main {
   flex: 1;
-  padding: 1.85rem 1.5rem 4rem;
+  padding: 1.85rem 1.5rem 2.5rem;
   max-width: 780px;
   margin: 0 auto;
   width: 100%;
+}
+
+/* Global version footer — every view */
+.app-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.45rem;
+  margin-top: auto;
+  padding: 0.85rem 1.25rem 1.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-elevated, #fff) 72%, transparent);
+}
+
+.app-footer-brand {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.app-footer-version {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-deep, var(--accent-primary));
+  font-weight: 700;
+}
+
+.app-footer-sep {
+  opacity: 0.4;
+  user-select: none;
+}
+
+.app-footer-meta {
+  opacity: 0.85;
+}
+
+.app.deep .app-footer {
+  background: color-mix(in srgb, var(--bg-elevated, #0f172a) 55%, transparent);
 }
 
 .app.view-studio .main {
