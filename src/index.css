@@ -8352,3 +8352,85 @@ html[data-reduce-motion='true'] *::after {
     gap: 0.25rem;
   }
 }
+
+/* Board pack bar + drag */
+.board-pack-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  margin: 0 0 0.65rem;
+}
+
+.mood-card.is-pack-pin {
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.mood-card.is-pack-hero {
+  box-shadow: 0 0 0 2px var(--text-primary);
+}
+
+.mood-card.is-dragging {
+  opacity: 0.55;
+}
+
+.mood-card[draggable='true'] {
+  cursor: grab;
+}
+
+.pack-ready-fix {
+  font: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.pack-ready-fix:hover {
+  color: var(--text-primary);
+}
+
+.export-artboard-wrap {
+  max-height: min(70vh, 720px);
+  overflow: auto;
+}
+
+.export-open-work {
+  margin-top: 0.75rem;
+  padding: 0 0.25rem 0.5rem;
+}
+
+/* Helper FAB safe area — keep above Complete on mobile */
+.buddy-shell.buddy-float,
+.buddy-fab {
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  right: max(0.75rem, env(safe-area-inset-right, 0px));
+}
+
+@media (max-width: 640px) {
+  .buddy-shell.buddy-float.is-compact-dock {
+    bottom: max(4.5rem, calc(env(safe-area-inset-bottom, 0px) + 3.5rem));
+  }
+  .journey-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
+  }
+  .journey-step {
+    flex: 0 0 auto;
+  }
+  .export-overlay {
+    padding: 0.75rem;
+    align-items: flex-start;
+  }
+  .export-panel.portfolio-export {
+    max-height: 92vh;
+  }
+}

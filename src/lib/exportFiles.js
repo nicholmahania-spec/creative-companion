@@ -289,7 +289,10 @@ export function buildBrandPackSnapshot({
   }
 }
 
-/** Thin-pack readiness for Pack page warnings */
+/**
+ * Thin-pack readiness for Pack page.
+ * Each check can deep-link: view + optional System accordion section.
+ */
 export function packReadiness(pack) {
   const hasName = !!(pack?.projectName && pack.projectName !== 'Untitled project')
   const hasTagline = !!(pack?.tagline && String(pack.tagline).trim())
@@ -298,11 +301,41 @@ export function packReadiness(pack) {
   const hasPins = (pack?.pins || []).length > 0
   const hasVoice = !!(pack?.voice && String(pack.voice).trim())
   const checks = [
-    { id: 'tagline', label: 'Tagline', ok: hasTagline },
-    { id: 'palette', label: 'Palette', ok: hasPalette },
-    { id: 'pins', label: 'Mood pins', ok: hasPins },
-    { id: 'voice', label: 'Voice', ok: hasVoice },
-    { id: 'brief', label: 'Positioning', ok: hasBrief },
+    {
+      id: 'tagline',
+      label: 'Tagline',
+      ok: hasTagline,
+      view: 'brand',
+      section: 'essentials',
+    },
+    {
+      id: 'palette',
+      label: 'Palette',
+      ok: hasPalette,
+      view: 'brand',
+      section: 'colors',
+    },
+    {
+      id: 'pins',
+      label: '★ Pack pins',
+      ok: hasPins,
+      view: 'studio',
+      section: null,
+    },
+    {
+      id: 'voice',
+      label: 'Voice',
+      ok: hasVoice,
+      view: 'brand',
+      section: 'voice',
+    },
+    {
+      id: 'brief',
+      label: 'Positioning',
+      ok: hasBrief,
+      view: 'brand',
+      section: 'essentials',
+    },
   ]
   const okCount = checks.filter((c) => c.ok).length
   const thin = okCount < 3
@@ -772,8 +805,12 @@ export function buildDirectionSheetMarkup(pack) {
  * @returns {{ el: HTMLElement, cleanup: () => void }}
  */
 export function resolveDirectionSheetForCapture(pack) {
-  // Prefer live export modal, then System artboard (same layout)
-  for (const id of ['direction-sheet', 'system-artboard']) {
+  // Prefer System artboard, then export modal artboard (BrandArtboard id)
+  for (const id of [
+    'system-artboard',
+    'direction-sheet',
+    'pack-preview-artboard',
+  ]) {
     const live = document.getElementById(id)
     if (live) {
       const rect = live.getBoundingClientRect()

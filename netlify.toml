@@ -2,9 +2,17 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "22"
+
+# Helper AI proxy (set XAI_API_KEY in Netlify env — not VITE_*)
+[[redirects]]
+  from = "/api/xai/chat/completions"
+  to = "/.netlify/functions/xai-proxy"
+  status = 200
+  force = true
 
 # SPA: all routes → index.html
 [[redirects]]

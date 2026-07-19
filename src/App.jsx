@@ -164,6 +164,14 @@ function App() {
       /* ignore */
     }
   }, [])
+
+  const goSystemSection = useCallback(
+    (section) => {
+      if (section) setBrandEditSection(section)
+      setActiveView('brand')
+    },
+    [setActiveView]
+  )
   const [quickInput, setQuickInput] = useState('')
   const [captureEnergy, setCaptureEnergy] = useState('med')
   const [focusLeft, setFocusLeft] = useState(POMODORO_WORK_MIN * 60)
@@ -207,6 +215,8 @@ function App() {
   const [boardUrl, setBoardUrl] = useState('')
   const [boardNote, setBoardNote] = useState('')
   const [boardAddMode, setBoardAddMode] = useState(null) // 'url' | 'note' | null
+  const [boardSelectIds, setBoardSelectIds] = useState(() => new Set())
+  const [boardDragId, setBoardDragId] = useState(null)
   const [queueOpen, setQueueOpen] = useState(false)
   const [doneOpen, setDoneOpen] = useState(false)
   const [actionToast, setActionToast] = useState('')
@@ -681,6 +691,38 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked, bodyDoubling, forcedBreak])
 
+  // Focus trap + Escape for export pack modal
+  useEffect(() => {
+    if (!exportPanel) return undefined
+    const root = document.querySelector('.export-overlay')
+    const closeBtn = root?.querySelector('button')
+    closeBtn?.focus?.()
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setExportPanel(null)
+        return
+      }
+      if (e.key !== 'Tab' || !root) return
+      const focusable = [
+        ...root.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        ),
+      ].filter((el) => !el.hasAttribute('disabled'))
+      if (focusable.length < 2) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [exportPanel])
+
   // Warm PDF engine on Pack (no XP for merely opening the page)
   useEffect(() => {
     if (activeView === 'finish' && unlocked) {
@@ -918,8 +960,7 @@ function App() {
     if (!isFocusRunning) {
       setPomodoroWorkStartedAt(Date.now())
       setIsFocusRunning(true)
-      const g = awardAndBroadcast('focus_start', { label: 'Focus' })
-      flashToast(`Focus on · +${g.gained} XP`)
+      notifyAction('Focus on', 'focus_start', { label: 'Focus' })
     } else {
       setIsFocusRunning(false)
     }
@@ -1023,18 +1064,25 @@ function App() {
       : null
 
     if (kind === 'pdf') {
-      // Open the real preview when missing so PDF can capture the live sheet
-      if (!exportPanel) openExportPanel()
+      // Prefer live System artboard; else open export panel BrandArtboard
+      const hasSystem = document.getElementById('system-artboard')
+      if (!hasSystem && !exportPanel) openExportPanel()
       void preloadPdfEngine()
       flashToast('Capturing pack preview as PDF…')
-      // Wait for React to paint #direction-sheet (or fall back to CSS clone)
       void (async () => {
-        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
-        // Give the overlay one more tick if we just opened it
-        if (!document.getElementById('direction-sheet')) {
-          await new Promise((r) => setTimeout(r, 80))
+        await new Promise((r) =>
+          requestAnimationFrame(() => requestAnimationFrame(r))
+        )
+        if (
+          !document.getElementById('system-artboard') &&
+          !document.getElementById('direction-sheet')
+        ) {
+          await new Promise((r) => setTimeout(r, 100))
         }
-        const live = document.getElementById('direction-sheet')
+        const live =
+          document.getElementById('system-artboard') ||
+          document.getElementById('direction-sheet') ||
+          document.getElementById('pack-preview-artboard')
         const result = await downloadBrandPackPdf(pack, handlePromise, {
           element: live || null,
         })
@@ -1250,6 +1298,13 @@ function App() {
   /** Load the Soft Signal design-run demo (full path through the product). */
   const loadSoftSignalDemo = async () => {
     try {
+      if (
+        !window.confirm(
+          'Load Soft Signal as a demo project? This merges demo content into this browser workspace — export a backup first if you care about current work.'
+        )
+      ) {
+        return
+      }
       const res = await fetch(
         `${import.meta.env.BASE_URL}demos/soft-signal-workspace.json`
       )
@@ -1259,11 +1314,10 @@ function App() {
       if (result.ok) {
         setBodyDoubling(true)
         setActiveView('project')
-        const g = awardAndBroadcast('project_create', {
-          label: 'Soft Signal demo',
-        })
-        flashToast(
-          `Soft Signal Studio loaded · walk Project → Finish · +${g.gained} XP`
+        notifyAction(
+          'Soft Signal demo loaded · walk Project → Pack',
+          'project_create',
+          { label: 'Soft Signal demo' }
         )
       } else {
         flashToast(result.error || 'Could not load demo')
@@ -2279,6 +2333,50 @@ function App() {
               <div className="brand-section-label">
                 Board · {deskMood.length}
               </div>
+              {deskMood.length > 0 && (
+                <div className="board-pack-bar">
+                  <span className="panel-hint" style={{ margin: 0 }}>
+                    Pack {deskMood.filter((m) => m.inPack).length}/6
+                    {deskMood.filter((m) => m.inPack).length >= 6
+                      ? ' · full'
+                      : ''}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      const open = deskMood.filter((m) => !m.inPack)
+                      let added = 0
+                      for (const p of open) {
+                        if (deskMood.filter((m) => m.inPack).length + added >= 6)
+                          break
+                        const r = toggleMoodPinInPack(p.id)
+                        if (r.ok && r.inPack) added++
+                      }
+                      flashToast(
+                        added
+                          ? `Starred ${added} for pack`
+                          : deskMood.filter((m) => m.inPack).length >= 6
+                            ? 'Pack full (6 max)'
+                            : 'Nothing to star'
+                      )
+                    }}
+                  >
+                    Star more (fill to 6)
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      const starred = deskMood.filter((m) => m.inPack)
+                      starred.forEach((p) => toggleMoodPinInPack(p.id))
+                      flashToast('Cleared pack stars')
+                    }}
+                  >
+                    Clear stars
+                  </button>
+                </div>
+              )}
               <div
                 className={`mood-board${deskMood.length ? ' has-pins' : ''}${
                   deskMood.length === 1 ? ' single-pin' : ''
@@ -2290,6 +2388,29 @@ function App() {
                     uploadMoodFiles(e.dataTransfer.files)
                     return
                   }
+                  const pinId = e.dataTransfer.getData('text/cc-pin-id')
+                  if (pinId) {
+                    const target = e.target.closest('[data-pin-id]')
+                    const targetId = target?.getAttribute('data-pin-id')
+                    if (targetId && targetId !== pinId) {
+                      const starred = deskMood
+                        .filter((m) => m.inPack)
+                        .sort(
+                          (a, b) => (a.packOrder ?? 0) - (b.packOrder ?? 0)
+                        )
+                      const ids = starred.map((m) => m.id)
+                      const from = ids.indexOf(Number(pinId) || pinId)
+                      const to = ids.indexOf(Number(targetId) || targetId)
+                      if (from >= 0 && to >= 0) {
+                        const next = [...ids]
+                        const [moved] = next.splice(from, 1)
+                        next.splice(to, 0, moved)
+                        useAppStore.getState().reorderPackPins(next)
+                        flashToast('Pack order updated')
+                      }
+                    }
+                    return
+                  }
                   const data =
                     e.dataTransfer.getData('text/uri-list') ||
                     e.dataTransfer.getData('text')
@@ -2299,10 +2420,9 @@ function App() {
                       note: 'Dropped reference',
                       visual: data.trim(),
                     })
-                    const g = awardAndBroadcast('mood_pin', {
+                    notifyAction('Pin added', 'mood_pin', {
                       label: 'Dropped pin',
                     })
-                    flashToast(`Pin added · +${g.gained} XP`)
                   }
                 }}
               >
@@ -2327,9 +2447,23 @@ function App() {
                     return (
                       <article
                         key={item.id || index}
+                        data-pin-id={item.id}
+                        draggable={!!item.inPack}
+                        onDragStart={(e) => {
+                          if (!item.inPack) return
+                          e.dataTransfer.setData(
+                            'text/cc-pin-id',
+                            String(item.id)
+                          )
+                          e.dataTransfer.effectAllowed = 'move'
+                          setBoardDragId(item.id)
+                        }}
+                        onDragEnd={() => setBoardDragId(null)}
                         className={`mood-card${isQuote && !isImageFace ? ' is-quote' : ''}${
                           isHero ? ' is-hero' : ''
-                        }`}
+                        }${item.inPack ? ' is-pack-pin' : ''}${
+                          boardDragId === item.id ? ' is-dragging' : ''
+                        }${item.packHero ? ' is-pack-hero' : ''}`}
                       >
                         {isImageFace ? (
                           <div
@@ -2358,10 +2492,15 @@ function App() {
                             aria-pressed={!!item.inPack}
                             onClick={() => {
                               const r = toggleMoodPinInPack(item.id)
-                              if (!r.ok) flashToast(r.error || 'Could not star')
+                              if (!r.ok)
+                                flashToast(
+                                  r.error || 'Pack full (6 pins max)'
+                                )
                               else
                                 flashToast(
-                                  r.inPack ? 'In pack' : 'Removed from pack'
+                                  r.inPack
+                                    ? `In pack (${deskMood.filter((m) => m.inPack).length + (r.inPack && !item.inPack ? 1 : 0)}/6)`
+                                    : 'Removed from pack'
                                 )
                             }}
                           >
@@ -2856,39 +2995,7 @@ function App() {
           </div>
         )}
 
-        {/* ===== CONCEPT PIPELINE — frozen (redline) ===== */}
-        {activeView === 'concept' && (
-          <div className="settings-view surface-document">
-            <button
-              type="button"
-              className="back-link"
-              onClick={() => setActiveView('studio')}
-            >
-              ← Board
-            </button>
-            <h1 className="page-title">Direction sketches</h1>
-            <p className="page-sub">
-              This pipeline is frozen while Board + System are the path for
-              direction. Use Board for refs and System for the brand pack.
-            </p>
-            <div className="finish-secondary-row" style={{ marginTop: '1rem' }}>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setActiveView('studio')}
-              >
-                Open Board
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setActiveView('brand')}
-              >
-                Open System
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Concept pipeline removed from UI — Board + System only */}
 
         {/* ===== BRAND IDENTITY TEMPLATE ===== */}
         {activeView === 'brand' && (
@@ -3492,7 +3599,24 @@ function App() {
                               key={c.id}
                               className={c.ok ? 'is-ok' : 'is-miss'}
                             >
-                              {c.ok ? '✓' : '○'} {c.label}
+                              {c.ok ? (
+                                <span>
+                                  ✓ {c.label}
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="pack-ready-fix"
+                                  onClick={() => {
+                                    if (c.view === 'studio') setActiveView('studio')
+                                    else if (c.view === 'brand')
+                                      goSystemSection(c.section || 'essentials')
+                                    else if (c.view) setActiveView(c.view)
+                                  }}
+                                >
+                                  ○ {c.label} — fix
+                                </button>
+                              )}
                             </li>
                           ))}
                         </ul>
@@ -4485,114 +4609,39 @@ function App() {
               </button>
             </div>
 
-            <article className="direction-sheet" id="direction-sheet">
-              <div
-                className="export-identity-cover"
-                style={{
-                  background: exportPanel.palette[0] || '#4F46E5',
-                  color: bestTextOn(exportPanel.palette[0] || '#4F46E5'),
+            <div className="export-artboard-wrap">
+              <BrandArtboard
+                id="direction-sheet"
+                project={{
+                  name: exportPanel.projectName,
+                  tagline: exportPanel.tagline,
+                  brief: exportPanel.brief,
+                  voice: exportPanel.voice,
+                  typeHeading: exportPanel.typeHeading,
+                  typeBody: exportPanel.typeBody,
+                  logoDirection: exportPanel.logoDirection,
+                  doUse: exportPanel.doUse,
+                  dontUse: exportPanel.dontUse,
+                  colorRoles: activeProject?.colorRoles,
+                  logoImage: activeProject?.logoImage,
                 }}
-              >
-                <div className="kicker" style={{ color: 'inherit', opacity: 0.85 }}>
-                  Brand identity template
-                </div>
-                <h1 className="direction-title" style={{ color: 'inherit' }}>
-                  {exportPanel.projectName}
-                </h1>
-                <p className="direction-brief" style={{ color: 'inherit', opacity: 0.92 }}>
-                  {exportPanel.tagline || 'Tagline TBD'}
-                </p>
+                palette={exportPanel.palette || projectPalette}
+                pins={exportPanel.pins || []}
+                editable={false}
+              />
+              <div className="export-open-work">
+                <div className="kicker">Open work</div>
+                <ul className="direction-tasks">
+                  {exportPanel.openTasks.length === 0 ? (
+                    <li>Desk clear for this project</li>
+                  ) : (
+                    exportPanel.openTasks.map((t) => (
+                      <li key={t.id}>{t.title}</li>
+                    ))
+                  )}
+                </ul>
               </div>
-
-              <div className="kicker">Positioning</div>
-              <p className="direction-brief">
-                {exportPanel.brief || 'No brief yet.'}
-              </p>
-              {exportPanel.voice && (
-                <>
-                  <div className="kicker">Voice</div>
-                  <p className="direction-brief">{exportPanel.voice}</p>
-                </>
-              )}
-
-              <div className="kicker">Palette</div>
-              <div className="direction-palette">
-                {exportPanel.palette.map((c, i) => (
-                  <div key={`${c}-${i}`} style={{ background: c }} title={c} />
-                ))}
-              </div>
-              <div className="direction-hex">
-                {exportPanel.palette.join(' · ')}
-              </div>
-
-              <div className="kicker">Typography</div>
-              <p className="direction-type">
-                <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-                  {exportPanel.typeHeading}
-                </span>
-                <span className="surface-meta"> · {exportPanel.typeBody}</span>
-              </p>
-
-              {exportPanel.logoDirection && (
-                <>
-                  <div className="kicker">Logo direction</div>
-                  <p className="direction-brief">{exportPanel.logoDirection}</p>
-                </>
-              )}
-
-              <div className="export-do-dont">
-                <div>
-                  <div className="kicker">Do</div>
-                  <p className="direction-brief">
-                    {exportPanel.doUse || '—'}
-                  </p>
-                </div>
-                <div>
-                  <div className="kicker">Don&apos;t</div>
-                  <p className="direction-brief">
-                    {exportPanel.dontUse || '—'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="kicker">Mood direction</div>
-              {exportPanel.pins.length === 0 ? (
-                <p className="surface-meta">
-                  No pins yet — upload images on Board (Ideas), then re-open
-                  preview.
-                </p>
-              ) : (
-                <div className="direction-pins">
-                  {exportPanel.pins.map((p) => (
-                    <div key={p.id} className="direction-pin">
-                      <div
-                        className="direction-pin-visual"
-                        style={pinFaceStyle(p)}
-                      />
-                      <div className="direction-pin-note">
-                        {p.note || 'Pin'}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="kicker">Open work</div>
-              <ul className="direction-tasks">
-                {exportPanel.openTasks.length === 0 ? (
-                  <li>Desk clear for this project</li>
-                ) : (
-                  exportPanel.openTasks.map((t) => (
-                    <li key={t.id}>{t.title}</li>
-                  ))
-                )}
-              </ul>
-
-              <footer className="direction-foot">
-                Creative Companion · Brand identity ·{' '}
-                {new Date().toLocaleDateString()}
-              </footer>
-            </article>
+            </div>
 
             <div className="export-panel-actions no-print">
               <button

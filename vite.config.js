@@ -61,4 +61,20 @@ export default defineConfig({
     __APP_BUILD__: JSON.stringify(meta.build),
     __APP_BUILD_DATE__: JSON.stringify(meta.date),
   },
+  // Dev: /api/xai/* → api.x.ai/v1/* with server-side XAI_API_KEY
+  server: {
+    proxy: {
+      '/api/xai': {
+        target: 'https://api.x.ai',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/xai/, '/v1'),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            const key = (process.env.XAI_API_KEY || '').trim()
+            if (key) proxyReq.setHeader('Authorization', `Bearer ${key}`)
+          })
+        },
+      },
+    },
+  },
 })

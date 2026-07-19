@@ -35,12 +35,19 @@ Coach craft (hierarchy, type, color roles, contrast, copy clarity, scope). Never
 You are not a general chatbot. Stay on the design desk.`
 
 /** @returns {string} */
+/**
+ * Prefer same-origin proxy (no browser key). Client key only for local demos.
+ * Proxy: VITE_XAI_USE_PROXY=true | VITE_XAI_BASE_URL | window.__CC_XAI_BASE__
+ * Dev Vite: /api/xai → api.x.ai with XAI_API_KEY on the machine.
+ * Netlify: /api/xai/chat/completions → function with XAI_API_KEY.
+ */
 export function getHelperApiKey() {
   try {
-    // Optional runtime proxy injection (server-side secret stays off the client bundle)
     if (typeof window !== 'undefined' && window.__CC_XAI_API_KEY__) {
       return String(window.__CC_XAI_API_KEY__).trim()
     }
+    // When using proxy, do not require a client key
+    if (usesHelperProxy()) return 'proxy'
     const vite = String(import.meta.env?.VITE_XAI_API_KEY || '').trim()
     if (vite) return vite
   } catch {
@@ -49,7 +56,25 @@ export function getHelperApiKey() {
   return ''
 }
 
-/** Optional OpenAI-compatible base URL override for a same-origin proxy */
+export function usesHelperProxy() {
+  try {
+    if (typeof window !== 'undefined' && window.__CC_XAI_BASE__) return true
+    if (String(import.meta.env?.VITE_XAI_USE_PROXY || '').trim() === 'true') {
+      return true
+    }
+    const base = String(import.meta.env?.VITE_XAI_BASE_URL || '').trim()
+    if (base) return true
+    // Default: try same-origin proxy path in browser (dev vite proxy or Netlify)
+    if (typeof window !== 'undefined' && !import.meta.env?.VITE_XAI_API_KEY) {
+      return true
+    }
+  } catch {
+    /* ignore */
+  }
+  return false
+}
+
+/** OpenAI-compatible base URL (…/v1 style for direct; /api/xai for proxy) */
 export function getHelperApiBase() {
   try {
     if (typeof window !== 'undefined' && window.__CC_XAI_BASE__) {
@@ -57,6 +82,7 @@ export function getHelperApiBase() {
     }
     const vite = String(import.meta.env?.VITE_XAI_BASE_URL || '').trim()
     if (vite) return vite.replace(/\/$/, '')
+    if (usesHelperProxy()) return '/api/xai'
   } catch {
     /* ignore */
   }
@@ -64,7 +90,10 @@ export function getHelperApiBase() {
 }
 
 export function isHelperAiConfigured() {
-  return Boolean(getHelperApiKey())
+  // Proxy may work without client key; direct needs key
+  if (usesHelperProxy()) return true
+  const k = getHelperApiKey()
+  return Boolean(k && k !== 'proxy')
 }
 
 /**
@@ -168,13 +197,15 @@ export async function callXaiChat({
   const key = getHelperApiKey()
   if (!key) throw new Error('No API key')
   const base = getHelperApiBase()
+  const headers = { 'Content-Type': 'application/json' }
+  // Proxy injects Authorization server-side; only send client key for direct api.x.ai
+  if (key !== 'proxy') {
+    headers.Authorization = `Bearer ${key}`
+  }
 
   const res = await fetch(`${base}/chat/completions`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${key}`,
-    },
+    headers,
     body: JSON.stringify({
       model,
       temperature,
