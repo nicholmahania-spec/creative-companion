@@ -35,12 +35,31 @@ export default function SettingsView(props) {
             </div>
           </div>
 
-          <section className="panel brand-section">
+          <nav className="settings-jump" aria-label="Settings sections">
+            {[
+              ['appearance', 'Appearance'],
+              ['presence', 'Presence'],
+              ['work-prefs', 'Work'],
+              ['account', 'Account'],
+              ['data', 'Data'],
+              ['about', 'About'],
+            ].map(([id, label]) => (
+              <a key={id} className="settings-jump-link" href={`#settings-${id}`}>
+                {label}
+              </a>
+            ))}
+          </nav>
+
+          <section className="panel brand-section" id="settings-appearance">
             <div className="brand-section-label">Appearance</div>
             <div className="settings-row">
               <div>
                 <strong>Theme</strong>
-                <span>Light or dark screen comfort</span>
+                <span>
+                  {theme === 'warm'
+                    ? 'Light (warm paper) — currently on'
+                    : 'Dark (deep charcoal) — currently on'}
+                </span>
               </div>
               <button
                 type="button"
@@ -49,15 +68,6 @@ export default function SettingsView(props) {
               >
                 {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
               </button>
-            </div>
-            <div className="settings-row">
-              <div>
-                <strong>Screen</strong>
-                <span>
-                  {theme === 'warm' ? 'Light' : 'Dark'}
-                  {theme === 'warm' ? ' (warm paper)' : ' (deep charcoal)'}
-                </span>
-              </div>
             </div>
             <div className="settings-row">
               <div>
@@ -79,7 +89,7 @@ export default function SettingsView(props) {
             </div>
           </section>
 
-          <section className="panel brand-section">
+          <section className="panel brand-section" id="settings-presence">
             <div className="brand-section-label">Presence &amp; sound</div>
             <div className="settings-row">
               <div>
@@ -179,7 +189,7 @@ export default function SettingsView(props) {
             </div>
           </section>
 
-          <section className="panel brand-section">
+          <section className="panel brand-section" id="settings-work-prefs">
             <div className="brand-section-label">Work</div>
             <div className="settings-row">
               <div>
@@ -258,7 +268,7 @@ export default function SettingsView(props) {
             </div>
           </section>
 
-          <section className="panel brand-section">
+          <section className="panel brand-section" id="settings-account">
             <div className="brand-section-label">
               {CLOUD ? 'Account & sync' : 'Access'}
             </div>
@@ -363,7 +373,7 @@ export default function SettingsView(props) {
             )}
           </section>
 
-          <section className="panel brand-section">
+          <section className="panel brand-section" id="settings-data">
             <div className="brand-section-label">Your data</div>
             <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
               {CLOUD
@@ -530,7 +540,7 @@ export default function SettingsView(props) {
             </div>
           </section>
 
-          <section className="panel brand-section">
+          <section className="panel brand-section" id="settings-about">
             <div className="brand-section-label">About</div>
             <div className="settings-row">
               <div>

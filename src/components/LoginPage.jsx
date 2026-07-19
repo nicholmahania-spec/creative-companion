@@ -140,8 +140,8 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
           <div className="login-pack-specimen">
             <div className="login-pack-cover">
               <span className="login-pack-kicker">Brand pack</span>
-              <strong className="login-pack-name">Soft Signal</strong>
-              <p className="login-pack-tagline">Quiet confidence, no hard sell</p>
+              <strong className="login-pack-name">Your project</strong>
+              <p className="login-pack-tagline">Direction you can hand to a client</p>
             </div>
             <div className="login-pack-swatches" aria-hidden="true">
               <i style={{ background: '#1C1917' }} />
@@ -167,7 +167,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
             <div>
               <h1 className="login-title">Creative Companion</h1>
               <p className="login-tag">
-                Body-double desk for ADHD creative work
+                Helper desk for ADHD creative work
               </p>
             </div>
           </div>
@@ -271,6 +271,8 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                   type="button"
                   className="login-show-pw"
                   onClick={() => setShowPassword((s) => !s)}
+                  aria-pressed={showPassword}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? 'Hide' : 'Show'}
                 </button>
@@ -333,15 +335,16 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
           </form>
 
           <div className="login-note">
-            <strong>Where is my information saved?</strong>
-            <p>
+            <p className="login-note-one">
               {useCloud
-                ? 'Your desk syncs to your account in the cloud. This browser also keeps a local cache so it feels fast. Export a JSON backup anytime.'
-                : STORAGE_EXPLAIN.summary}
+                ? 'Work syncs to your account · local cache for speed. Export a JSON backup anytime.'
+                : 'Work stays on this device. Export a JSON backup if it matters.'}
             </p>
             <p className="login-note-meta">
-              {useCloud ? 'Synced account · ' : 'This device only · '}
+              {useCloud ? 'Synced · ' : 'Local · '}
               {versionLabel()}
+              {' · '}
+              Details in Settings after unlock
             </p>
           </div>
         </div>

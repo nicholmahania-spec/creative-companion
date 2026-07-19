@@ -9338,3 +9338,94 @@ html[data-reduce-motion='true'] *::after {
   outline: 2px solid var(--accent-primary);
   outline-offset: 1px;
 }
+
+
+/* ——— Redline v1.0.0 craft pass ——— */
+.work-page-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 0.2rem;
+}
+.app.is-pack-view .app-footer {
+  display: none;
+}
+.system-artboard-sticky {
+  margin-bottom: 1rem;
+}
+@media (min-width: 960px) {
+  .system-view {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.95fr);
+    gap: 1.25rem 1.5rem;
+    align-items: start;
+  }
+  .system-view .brand-template-top {
+    grid-column: 1 / -1;
+  }
+  .system-artboard-sticky {
+    position: sticky;
+    top: 4.5rem;
+    max-height: calc(100vh - 5.5rem);
+    overflow: auto;
+    grid-row: 2 / span 20;
+    grid-column: 1;
+  }
+  .system-view .system-edit-label,
+  .system-view .system-accordion-nav,
+  .system-view .panel.brand-section,
+  .system-view .brand-export-bar {
+    grid-column: 2;
+  }
+}
+.pack-leave-details {
+  padding: 0.85rem 1rem;
+}
+.pack-leave-summary {
+  cursor: pointer;
+  list-style: none;
+  margin: 0;
+}
+.pack-leave-summary::-webkit-details-marker {
+  display: none;
+}
+.login-note-one {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.settings-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin: 0 0 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 0.45rem 0;
+  background: color-mix(in srgb, var(--bg-canvas) 92%, transparent);
+  backdrop-filter: blur(6px);
+}
+.settings-jump-link {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  color: var(--text-secondary);
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+}
+.settings-jump-link:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.journey-step.is-done:not(.is-active) .journey-num {
+  background: color-mix(in srgb, var(--accent-growth) 22%, var(--bg-muted));
+  color: var(--accent-growth);
+}

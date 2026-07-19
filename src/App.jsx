@@ -1569,7 +1569,7 @@ function App() {
 
   if (!authReady) {
     return (
-      <div className={`app ${theme} login-shell`}>
+      <div className={`app ${theme}${activeView === 'finish' ? ' is-pack-view' : ''}`}>
         <div className="login-page">
           <div className="login-card">
             <p className="login-lede" style={{ margin: 0 }}>
@@ -1626,7 +1626,7 @@ function App() {
     <div
       className={`app ${theme} view-${activeView}${
         forcedBreak ? ' is-break-locked' : ''
-      }`}
+      }${activeView === 'finish' ? ' is-pack-view' : ''}`}
     >
       {forcedBreak && (
         <Suspense fallback={null}>
@@ -1822,7 +1822,7 @@ function App() {
                       setAccountOpen(false)
                     }}
                   >
-                    {theme === 'warm' ? 'Dark' : 'Light'}
+                    {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
                   </button>
                   <button
                     type="button"
@@ -1857,14 +1857,33 @@ function App() {
           <ol className="journey-bar-list">
             {JOURNEY_STEPS.map((step) => {
               const active = journeyActive === step.id
+              const hasContent =
+                (step.id === 'project' &&
+                  !!(activeProject?.name && activeProject.name !== 'My project')) ||
+                (step.id === 'work' && deskTasks.length > 0) ||
+                (step.id === 'board' && deskMood.length > 0) ||
+                (step.id === 'system' &&
+                  !!(
+                    activeProject?.tagline?.trim() ||
+                    (projectPalette || []).length >= 2
+                  )) ||
+                (step.id === 'pack' &&
+                  !!(
+                    activeProject?.tagline?.trim() ||
+                    deskMood.some((m) => m.inPack)
+                  ))
               return (
                 <li key={step.id} className="journey-bar-item">
                   <button
                     type="button"
-                    className={`journey-step${active ? ' is-active' : ''}`}
+                    className={`journey-step${active ? ' is-active' : ''}${
+                      hasContent && !active ? ' is-done' : ''
+                    }`}
                     onClick={() => setActiveView(step.view)}
                     aria-current={active ? 'step' : undefined}
-                    aria-label={`Step ${step.num}: ${step.label}. ${step.plain}`}
+                    aria-label={`Step ${step.num}: ${step.label}. ${step.plain}${
+                      hasContent ? ' Has content.' : ''
+                    }`}
                     title={step.plain}
                   >
                     <span className="journey-num" aria-hidden="true">
@@ -1890,6 +1909,7 @@ function App() {
           <div className="flow-view surface-desk">
             <div className="flow-top flow-top-compact">
               <div>
+                <h1 className="page-title work-page-title">Work</h1>
                 <p className="work-context-line">
                   <strong>{activeProject?.name || 'Project'}</strong>
                   {projectDeadline
@@ -2008,7 +2028,7 @@ function App() {
                           }}
                           aria-expanded={processOpen}
                         >
-                          Design checklist
+                          Local design checklist
                         </button>
                         <button
                           type="button"
@@ -2932,19 +2952,26 @@ function App() {
               </div>
             </div>
 
-            {/* ARTBOARD — shared pack source of truth */}
-            <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
-            <BrandArtboard
-              id="system-artboard"
-              project={activeProject || {}}
-              palette={projectPalette}
-              pins={deskMood.filter((m) => m.inPack)}
-              editable={false}
-              hideWatermark={hidePackWatermark}
-            />
-            </Suspense>
+            {/* ARTBOARD — sticky preview on wide screens */}
+            <div
+              className="system-artboard-sticky"
+              tabIndex={0}
+              role="region"
+              aria-label="Live pack artboard preview"
+            >
+              <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
+                <BrandArtboard
+                  id="system-artboard"
+                  project={activeProject || {}}
+                  palette={projectPalette}
+                  pins={deskMood.filter((m) => m.inPack)}
+                  editable={false}
+                  hideWatermark={hidePackWatermark}
+                />
+              </Suspense>
+            </div>
 
-            <p className="system-edit-label">Edit fields (artboard above is live preview)</p>
+            <p className="system-edit-label">Edit</p>
             <div className="system-accordion-nav" role="tablist">
               {[
                 ['essentials', 'Tagline'],
@@ -3710,9 +3737,11 @@ function App() {
               </div>
             </section>
 
-            <section className="panel brand-section">
-              <div className="brand-section-label">Start over or leave</div>
-              <div className="finish-actions">
+            <details className="pack-leave-details panel brand-section">
+              <summary className="brand-section-label pack-leave-summary">
+                Leave desk
+              </summary>
+              <div className="finish-actions" style={{ marginTop: '0.75rem' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -3734,11 +3763,11 @@ function App() {
                   {CLOUD ? 'Log out' : 'Log out / lock'}
                 </button>
               </div>
-              <p className="panel-hint" style={{ marginTop: '0.85rem' }}>
-                Log out ends this session. Use download backup if you need a
+              <p className="panel-hint" style={{ marginTop: '0.65rem' }}>
+                Log out ends this session. Download a backup first if you need a
                 file on your computer.
               </p>
-            </section>
+            </details>
 
             <section className="panel panel-compact pack-path-map">
               <p className="list-heading">Your path</p>
@@ -3869,9 +3898,9 @@ function App() {
                 )
                 return (
                   <>
-                    <div className="project-pack-meter" aria-label={`Pack readiness ${pct}%`}>
+                    <div className="project-pack-meter" aria-label={`Path readiness ${pct}%`}>
                       <div className="project-pack-meter-top">
-                        <span>Pack readiness</span>
+                        <span>Path readiness</span>
                         <strong>{pct}%</strong>
                       </div>
                       <div className="project-pack-meter-bar">

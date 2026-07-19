@@ -61,7 +61,7 @@ test.describe('Creative Companion path smoke', () => {
     // Project
     await path.getByRole('button', { name: /Step 1: Project/i }).click()
     await expect(page.getByRole('heading', { name: 'Project' })).toBeVisible()
-    await expect(page.getByText(/Pack readiness/i)).toBeVisible()
+    await expect(page.getByText(/Path readiness/i)).toBeVisible()
 
     // Work
     await path.getByRole('button', { name: /Step 2: Work/i }).click()
