@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+  <rect fill="#F4F1EA" width="640" height="480"/>
+  <text x="32" y="48" font-family="system-ui" font-size="18" fill="#7D8B7A">SOFT SIGNAL · sketch A · wordmark</text>
+  <ellipse cx="320" cy="220" rx="140" ry="90" fill="none" stroke="#4F46E5" stroke-width="3" stroke-dasharray="8 6"/>
+  <path d="M200 240 Q320 180 440 240" fill="none" stroke="#0D9488" stroke-width="4"/>
+  <text x="240" y="320" font-family="Georgia, serif" font-size="36" fill="#1A1A1A">soft signal</text>
+  <text x="250" y="350" font-family="system-ui" font-size="14" fill="#666">soft monoline · no hard corners</text>
+</svg>

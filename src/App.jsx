@@ -1100,6 +1100,32 @@ function App() {
     flashToast(`Backup downloaded · +${g.gained} XP`)
   }
 
+  /** Load the Soft Signal design-run demo (full path through the product). */
+  const loadSoftSignalDemo = async () => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.BASE_URL}demos/soft-signal-workspace.json`
+      )
+      if (!res.ok) throw new Error('Demo file missing')
+      const data = await res.json()
+      const result = importAllData(data)
+      if (result.ok) {
+        setBodyDoubling(true)
+        setActiveView('project')
+        const g = awardAndBroadcast('project_create', {
+          label: 'Soft Signal demo',
+        })
+        flashToast(
+          `Soft Signal Studio loaded · walk Project → Finish · +${g.gained} XP`
+        )
+      } else {
+        flashToast(result.error || 'Could not load demo')
+      }
+    } catch (e) {
+      flashToast(e?.message || 'Could not load Soft Signal demo')
+    }
+  }
+
   const handleImportBackup = (file) => {
     if (!file) return
     const reader = new FileReader()
@@ -3360,6 +3386,13 @@ function App() {
               <div className="finish-actions">
                 <button
                   type="button"
+                  className="btn btn-secondary"
+                  onClick={loadSoftSignalDemo}
+                >
+                  Load Soft Signal design demo
+                </button>
+                <button
+                  type="button"
                   className="btn btn-primary"
                   onClick={openExportPanel}
                 >
@@ -3854,13 +3887,23 @@ function App() {
                   Step 1 — pick or name your project, then go to Work
                 </p>
               </div>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setActiveView('flow')}
-              >
-                Go to Work
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={loadSoftSignalDemo}
+                  title="Load the Soft Signal fictional design run"
+                >
+                  Load Soft Signal demo
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setActiveView('flow')}
+                >
+                  Go to Work
+                </button>
+              </div>
             </div>
             <section className="panel brand-section">
               <div className="brand-section-label">Active project</div>

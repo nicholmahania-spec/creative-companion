@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "exportedAt": "2026-07-19T06:19:37.189216Z",
+  "demoLabel": "Soft Signal Studio \u2014 full design run",
+  "projects": [
+    {
+      "id": 9001,
+      "name": "Soft Signal Studio",
+      "active": true,
+      "brief": "Brand identity for a recording studio + podcast network for neurodivergent creators. Audience: adult ADHD/autistic makers who want to publish without sensory overload or hustle culture. Outcome: feel calm enough to hit record; trust that the brand is on their side. Constraint: works in quiet mono for stickers and bold for hoodies.",
+      "logoDirection": "Soft pulse/listening mark + friendly sans wordmark. No neon, no aggressive angles, no podcast mic clich\u00e9s.",
+      "palette": [
+        "#4F46E5",
+        "#0D9488",
+        "#1A1A1A",
+        "#F4F1EA"
+      ],
+      "tagline": "Your voice, at your pace.",
+      "voice": "Warm, plain-spoken, steady. Like a good producer in the booth \u2014 clear direction, zero shame. Never corporate, never cutesy-chaos.",
+      "typeHeading": "Plus Jakarta Sans Bold",
+      "typeBody": "Plus Jakarta Sans Regular",
+      "doUse": "Soft indigo + teal \u00b7 generous space \u00b7 short sentences \u00b7 real voices \u00b7 calm motion \u00b7 inclusive captions",
+      "dontUse": "Hustle slogans \u00b7 neon cyber gradients \u00b7 stock \u2018diversity\u2019 smiles \u00b7 mic silhouettes \u00b7 FOMO timers \u00b7 cluttered waveforms",
+      "deadline": "2026-08-09",
+      "tasks": [],
+      "conceptPackage": {
+        "audience": "Neurodivergent creators (ADHD, autistic, and allies) who want to record and publish without sensory or social overload.",
+        "outcome": "Feel safe enough to press record; leave sessions clearer than they arrived; recommend Soft Signal to a friend.",
+        "concept": "Your voice, at your pace \u2014 a listening brand, not a performance brand.",
+        "voice": "Warm, plain-spoken, steady. Producer energy: clear, kind, zero shame.",
+        "visualDirection": "Soft pulse mark (listening) + clean wordmark. Indigo primary, teal growth accent, cream field, near-black text. Soft corners, no neon.",
+        "doUse": "Space to breathe \u00b7 short labels \u00b7 caption-first video \u00b7 soft indigo/teal \u00b7 real room photos",
+        "dontUse": "Hustle culture \u00b7 mic clich\u00e9s \u00b7 aggressive angles \u00b7 clutter \u00b7 FOMO",
+        "notes": "Primary deliverables: wordmark, mark, color system, voice guide, episode cover template rules."
+      }
+    }
+  ],
+  "currentProjectId": 9001,
+  "tasks": [
+    {
+      "id": 9101,
+      "title": "Write one-sentence brand promise for Soft Signal",
+      "energy": "low",
+      "meta": "Clarify \u00b7 stage 1\u20132 \u00b7 success = one line anyone can repeat",
+      "completed": true,
+      "seeded": false,
+      "projectId": 9001,
+      "dueDate": ""
+    },
+    {
+      "id": 9102,
+      "title": "List 3 audience pains (sensory, social, pacing)",
+      "energy": "med",
+      "meta": "Clarify \u00b7 research notes \u2192 brief",
+      "completed": true,
+      "seeded": false,
+      "projectId": 9001,
+      "dueDate": ""
+    },
+    {
+      "id": 9103,
+      "title": "Map site IA: Home \u00b7 Studio \u00b7 Shows \u00b7 Book a session",
+      "energy": "med",
+      "meta": "Structure \u00b7 text wireframe only",
+      "completed": true,
+      "seeded": false,
+      "projectId": 9001,
+      "dueDate": ""
+    },
+    {
+      "id": 9104,
+      "title": "Thumbnails: 2 mark directions (pulse vs monoline wordmark)",
+      "energy": "med",
+      "meta": "Ideate \u00b7 Ideas \u2192 Sketches",
+      "completed": true,
+      "seeded": false,
+      "projectId": 9001,
+      "dueDate": ""
+    },
+    {
+      "id": 9105,
+      "title": "Lock primary mark + wordmark pairing",
+      "energy": "med",
+      "meta": "Develop \u00b7 lock into concept plan",
+      "completed": true,
+      "seeded": false,
+      "projectId": 9001,
+      "dueDate": ""
+    },
+    {
+      "id": 9106,
+      "title": "Build color + type tokens in Brand",
+      "energy": "low",
+      "meta": "Visual system \u00b7 Brand step",
+      "completed": true,
+      "seeded": false,
+      "projectId": 9001,
+      "dueDate": ""
+    },
+    {
+      "id": 9107,
+      "title": "Draft do / don\u2019t for episode covers",
+      "energy": "low",
+      "meta": "Refine \u00b7 brand rules",
+      "completed": false,
+      "seeded": false,
+      "projectId": 9001,
+      "dueDate": "2026-08-09"
+    },
+    {
+      "id": 9108,
+      "title": "Export brand direction pack from Finish",
+      "energy": "low",
+      "meta": "Deliver \u00b7 ship the pack",
+      "completed": false,
+      "seeded": false,
+      "projectId": 9001,
+      "dueDate": "2026-08-09"
+    },
+    {
+      "id": 9201,
+      "title": "Write 3 cover layout rules (title size, guest photo crop, safe margins)",
+      "energy": "low",
+      "meta": "Micro-step \u00b7 episode covers",
+      "completed": false,
+      "seeded": false,
+      "projectId": 9001,
+      "parentId": 9107,
+      "dueDate": ""
+    },
+    {
+      "id": 9202,
+      "title": "Pick 1 example cover description for \u2018good\u2019 vs \u2018too busy\u2019",
+      "energy": "low",
+      "meta": "Micro-step \u00b7 episode covers",
+      "completed": false,
+      "seeded": false,
+      "projectId": 9001,
+      "parentId": 9107,
+      "dueDate": ""
+    }
+  ],
+  "moodItems": [
+    {
+      "id": 9301,
+      "type": "quote",
+      "note": "Quiet booth energy \u2014 soft light, no hustle posters, real acoustic foam.",
+      "visual": "linear-gradient(135deg, #4F46E5, #0D9488)",
+      "projectId": 9001,
+      "seeded": false
+    },
+    {
+      "id": 9302,
+      "type": "quote",
+      "note": "Listening pulse: teal on indigo, cream field, near-black type.",
+      "visual": "linear-gradient(120deg, #3730A3, #F4F1EA 60%)",
+      "projectId": 9001,
+      "seeded": false
+    },
+    {
+      "id": 9303,
+      "type": "quote",
+      "note": "Caption-first video frames; voice before spectacle.",
+      "visual": "linear-gradient(160deg, #0D9488, #1A1A1A)",
+      "projectId": 9001,
+      "seeded": false
+    }
+  ],
+  "conceptItems": [
+    {
+      "id": "c-ss-1",
+      "stage": "sketch",
+      "title": "Wordmark soft monoline",
+      "note": "Lowercase, breathing letter-spacing, no hard terminals",
+      "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNjQwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0Y0RjFFQSIgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3RDhCN0EiPlNPRlQgU0lHTkFMIMK3IHNrZXRjaCBBIMK3IHdvcmRtYXJrPC90ZXh0PgogIDxlbGxpcHNlIGN4PSIzMjAiIGN5PSIyMjAiIHJ4PSIxNDAiIHJ5PSI5MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNEY0NkU1IiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1kYXNoYXJyYXk9IjggNiIvPgogIDxwYXRoIGQ9Ik0yMDAgMjQwIFEzMjAgMTgwIDQ0MCAyNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzBEOTQ4OCIgc3Ryb2tlLXdpZHRoPSI0Ii8+CiAgPHRleHQgeD0iMjQwIiB5PSIzMjAiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLCBzZXJpZiIgZm9udC1zaXplPSIzNiIgZmlsbD0iIzFBMUExQSI+c29mdCBzaWduYWw8L3RleHQ+CiAgPHRleHQgeD0iMjUwIiB5PSIzNTAiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiPnNvZnQgbW9ub2xpbmUgwrcgbm8gaGFyZCBjb3JuZXJzPC90ZXh0Pgo8L3N2Zz4=",
+      "projectId": 9001
+    },
+    {
+      "id": "c-ss-2",
+      "stage": "sketch",
+      "title": "Pulse / listening mark",
+      "note": "Circle = booth; soft path = voice without waveform clich\u00e9",
+      "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNjQwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0VFRjJGRiIgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM2MzY2RjEiPlNPRlQgU0lHTkFMIMK3IHNrZXRjaCBCIMK3IG1hcms8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMzIwIiBjeT0iMjMwIiByPSI3MCIgZmlsbD0iIzRGNDZFNSIvPgogIDxjaXJjbGUgY3g9IjMyMCIgY3k9IjIzMCIgcj0iNDIiIGZpbGw9IiNGNEYxRUEiLz4KICA8cGF0aCBkPSJNMjkwIDIzMCBRMzIwIDIwMCAzNTAgMjMwIFEzMjAgMjUwIDI5MCAyMzAiIGZpbGw9IiMwRDk0ODgiLz4KICA8dGV4dCB4PSIyMjAiIHk9IjM2MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzM3MzBBMyI+cHVsc2UgLyBsaXN0ZW5pbmcgbWFyazwvdGV4dD4KPC9zdmc+",
+      "projectId": 9001
+    },
+    {
+      "id": "c-ss-3",
+      "stage": "develop",
+      "title": "Pulse mark selected",
+      "note": "Chosen over pure wordmark-only \u2014 works as app icon + sticker",
+      "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNjQwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0VFRjJGRiIgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM2MzY2RjEiPlNPRlQgU0lHTkFMIMK3IHNrZXRjaCBCIMK3IG1hcms8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMzIwIiBjeT0iMjMwIiByPSI3MCIgZmlsbD0iIzRGNDZFNSIvPgogIDxjaXJjbGUgY3g9IjMyMCIgY3k9IjIzMCIgcj0iNDIiIGZpbGw9IiNGNEYxRUEiLz4KICA8cGF0aCBkPSJNMjkwIDIzMCBRMzIwIDIwMCAzNTAgMjMwIFEzMjAgMjUwIDI5MCAyMzAiIGZpbGw9IiMwRDk0ODgiLz4KICA8dGV4dCB4PSIyMjAiIHk9IjM2MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzM3MzBBMyI+cHVsc2UgLyBsaXN0ZW5pbmcgbWFyazwvdGV4dD4KPC9zdmc+",
+      "projectId": 9001
+    },
+    {
+      "id": "c-ss-4",
+      "stage": "iteration",
+      "title": "Mark + wordmark lockup",
+      "note": "Primary horizontal lockup; indigo mark, teal whisper, cream field",
+      "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNjQwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0ZBRkFGOCIgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM1RjZENUQiPlNPRlQgU0lHTkFMIMK3IGl0ZXJhdGlvbiDCtyBwcmltYXJ5IG1hcms8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMjQwIiByPSI2NCIgZmlsbD0iIzRGNDZFNSIvPgogIDxjaXJjbGUgY3g9IjIwMCIgY3k9IjI0MCIgcj0iMzYiIGZpbGw9IiNGN0Y1RjAiLz4KICA8cGF0aCBkPSJNMTc1IDI0MCBRMjAwIDIxNSAyMjUgMjQwIFEyMDAgMjU1IDE3NSAyNDAiIGZpbGw9IiMwRDk0ODgiLz4KICA8dGV4dCB4PSIzMDAiIHk9IjIzMCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC13ZWlnaHQ9IjcwMCIgZm9udC1zaXplPSI0MiIgZmlsbD0iIzFBMUExQSIgbGV0dGVyLXNwYWNpbmc9Ii0xIj5Tb2Z0IFNpZ25hbDwvdGV4dD4KICA8dGV4dCB4PSIzMDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzBEOTQ4OCI+WW91ciB2b2ljZSwgYXQgeW91ciBwYWNlLjwvdGV4dD4KICA8cmVjdCB4PSIzMDAiIHk9IjMwMCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjNEY0NkU1Ii8+CiAgPHJlY3QgeD0iMzU2IiB5PSIzMDAiIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgZmlsbD0iIzBEOTQ4OCIvPgogIDxyZWN0IHg9IjQxMiIgeT0iMzAwIiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiMxQTFBMUEiLz4KICA8cmVjdCB4PSI0NjgiIHk9IjMwMCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRjRGMUVBIiBzdHJva2U9IiNDQ0MiLz4KPC9zdmc+",
+      "projectId": 9001
+    },
+    {
+      "id": "c-ss-5",
+      "stage": "locked",
+      "title": "Locked: listening mark + Soft Signal wordmark",
+      "note": "Concept locked for Brand system build",
+      "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNjQwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0ZBRkFGOCIgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM1RjZENUQiPlNPRlQgU0lHTkFMIMK3IGl0ZXJhdGlvbiDCtyBwcmltYXJ5IG1hcms8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMjQwIiByPSI2NCIgZmlsbD0iIzRGNDZFNSIvPgogIDxjaXJjbGUgY3g9IjIwMCIgY3k9IjI0MCIgcj0iMzYiIGZpbGw9IiNGN0Y1RjAiLz4KICA8cGF0aCBkPSJNMTc1IDI0MCBRMjAwIDIxNSAyMjUgMjQwIFEyMDAgMjU1IDE3NSAyNDAiIGZpbGw9IiMwRDk0ODgiLz4KICA8dGV4dCB4PSIzMDAiIHk9IjIzMCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC13ZWlnaHQ9IjcwMCIgZm9udC1zaXplPSI0MiIgZmlsbD0iIzFBMUExQSIgbGV0dGVyLXNwYWNpbmc9Ii0xIj5Tb2Z0IFNpZ25hbDwvdGV4dD4KICA8dGV4dCB4PSIzMDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzBEOTQ4OCI+WW91ciB2b2ljZSwgYXQgeW91ciBwYWNlLjwvdGV4dD4KICA8cmVjdCB4PSIzMDAiIHk9IjMwMCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjNEY0NkU1Ii8+CiAgPHJlY3QgeD0iMzU2IiB5PSIzMDAiIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgZmlsbD0iIzBEOTQ4OCIvPgogIDxyZWN0IHg9IjQxMiIgeT0iMzAwIiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiMxQTFBMUEiLz4KICA8cmVjdCB4PSI0NjgiIHk9IjMwMCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRjRGMUVBIiBzdHJva2U9IiNDQ0MiLz4KPC9zdmc+",
+      "projectId": 9001
+    }
+  ],
+  "breakKit": [
+    {
+      "id": "bk-ss-water",
+      "title": "Drink water between \u2018takes\u2019",
+      "kind": "care",
+      "minutes": 2,
+      "notes": "Designer body check",
+      "recurring": true,
+      "completed": false,
+      "lastDoneAt": null,
+      "archived": false
+    },
+    {
+      "id": "bk-ss-stretch",
+      "title": "Stand and stretch wrists 30s",
+      "kind": "care",
+      "minutes": 1,
+      "notes": "",
+      "recurring": true,
+      "completed": false,
+      "lastDoneAt": null,
+      "archived": false
+    },
+    {
+      "id": "bk-ss-note",
+      "title": "Jot one decision in Soft Signal do/don\u2019t",
+      "kind": "todo",
+      "minutes": 3,
+      "notes": "Break kit during Pomodoro lock",
+      "recurring": false,
+      "completed": false,
+      "lastDoneAt": null,
+      "archived": false
+    }
+  ],
+  "theme": "warm",
+  "prefs": {
+    "soundEnabled": true,
+    "reduceMotion": false,
+    "bodyDoubleSilent": false,
+    "forceBreaksEnabled": true,
+    "queueCollapsed": true,
+    "showHowItWorks": true
+  },
+  "sparkIndex": 0,
+  "onboarded": true,
+  "currentSpark": "What if Soft Signal\u2019s mark felt like being listened to, not performed for?"
+}
