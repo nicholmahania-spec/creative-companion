@@ -10544,3 +10544,81 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   line-height: 1.12;
   font-optical-sizing: auto;
 }
+
+/* Session resume + keyboard sheet */
+.resume-banner {
+  position: fixed;
+  left: 50%;
+  /* Bottom — must not cover path bar / Tools */
+  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  top: auto;
+  transform: translateX(-50%);
+  z-index: 120;
+  width: min(92vw, 26rem);
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(28, 25, 23, 0.14);
+  background: #fafaf9;
+  box-shadow: var(--shadow-2);
+  pointer-events: auto;
+}
+
+.resume-banner-body {
+  margin: 0 0 0.5rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.resume-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.app.deep .resume-banner {
+  background: var(--bg-elevated);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.shortcuts-panel {
+  max-width: 22rem;
+}
+
+.shortcuts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.shortcuts-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.shortcuts-list kbd {
+  display: inline-block;
+  min-width: 1.35rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.pack-copy-brief {
+  width: 100%;
+  margin-top: 0.35rem;
+}

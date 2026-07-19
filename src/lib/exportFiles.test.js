@@ -4,6 +4,7 @@ import {
   brandPackToMarkdown,
   brandPackToHtml,
   buildDirectionSheetMarkup,
+  packBriefMarkdown,
   slugifyFilename,
 } from './exportFiles'
 
@@ -176,5 +177,22 @@ describe('vector pack snapshot fields', () => {
     expect(pack.colorRoles?.cover).toBe('#1C1917')
     expect(pack.logoImage).toContain('data:image')
     expect(pack.pins[0].packHero).toBe(true)
+  })
+})
+
+describe('packBriefMarkdown', () => {
+  it('builds a short client brief', () => {
+    const md = packBriefMarkdown({
+      projectName: 'Soft Signal',
+      tagline: 'Calm covers',
+      brief: 'For designers who scatter.',
+      palette: ['#1C1917', '#0F766E'],
+      pins: [{ note: 'Mood A' }],
+    })
+    expect(md).toMatch(/Soft Signal/)
+    expect(md).toMatch(/Calm covers/)
+    expect(md).toMatch(/#1C1917/)
+    expect(md).toMatch(/Mood A/)
+    expect(md.length).toBeLessThan(800)
   })
 })

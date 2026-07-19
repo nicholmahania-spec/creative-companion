@@ -71,6 +71,7 @@ import {
   downloadBrandPackPdfRaster,
   downloadWorkspaceBackup,
   packReadiness,
+  packBriefMarkdown,
   preloadPdfEngine,
   printElementById,
   slugifyFilename,
@@ -235,6 +236,8 @@ function App() {
   /** @type {null | { kind: string, label: string, onConfirm: () => void }} */
   const [deskConfirm, setDeskConfirm] = useState(null)
   const [forceBreakConsentOpen, setForceBreakConsentOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [resumeBanner, setResumeBanner] = useState(null)
   const [boardLightbox, setBoardLightbox] = useState(null)
   const [demoTour, setDemoTour] = useState(null)
   const [navDir, setNavDir] = useState('none')
@@ -556,6 +559,11 @@ function App() {
       }
       if (e.key !== 'Escape') return
       // Topmost dialogs first
+      if (shortcutsOpen) {
+        e.preventDefault()
+        setShortcutsOpen(false)
+        return
+      }
       if (demoTour) {
         e.preventDefault()
         setDemoTour(null)
@@ -604,6 +612,7 @@ function App() {
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [
+    shortcutsOpen,
     demoTour,
     deskConfirm,
     forceBreakConsentOpen,
@@ -841,7 +850,7 @@ function App() {
     initialSelector: '#onboard-name',
   })
 
-  // Path keys 1–5 jump journey (when not typing)
+  // Flow keys (when not typing): 1–5 path · C complete · N capture · U undo · ? help
   useEffect(() => {
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return
@@ -855,8 +864,55 @@ function App() {
       ) {
         return
       }
-      if (boardLightbox || exportPanel || showBreakdown || showOnboarding || demoTour)
+      if (
+        boardLightbox ||
+        exportPanel ||
+        showBreakdown ||
+        showOnboarding ||
+        demoTour ||
+        deskConfirm ||
+        forceBreakConsentOpen ||
+        thinPackPrompt
+      ) {
         return
+      }
+      if (shortcutsOpen) {
+        if (e.key === 'Escape' || e.key === '?' || e.key === '/') {
+          e.preventDefault()
+          setShortcutsOpen(false)
+        }
+        return
+      }
+      // ? or Shift+/ → shortcuts
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault()
+        setShortcutsOpen(true)
+        return
+      }
+      const k = e.key.toLowerCase()
+      // C — complete current Work step
+      if (k === 'c') {
+        if (!nextTask) return
+        e.preventDefault()
+        completeCurrentStep()
+        return
+      }
+      // N — jump Work + focus capture
+      if (k === 'n') {
+        e.preventDefault()
+        setActiveView('flow')
+        window.setTimeout(() => {
+          document.getElementById('desk-capture')?.focus?.()
+        }, 60)
+        return
+      }
+      // U — undo last complete (within undo window)
+      if (k === 'u') {
+        if (!recentUndo) return
+        e.preventDefault()
+        undoLastComplete()
+        return
+      }
       const n = Number(e.key)
       if (n < 1 || n > 5) return
       const step = JOURNEY_STEPS[n - 1]
@@ -872,8 +928,33 @@ function App() {
     showBreakdown,
     showOnboarding,
     demoTour,
+    deskConfirm,
+    forceBreakConsentOpen,
+    thinPackPrompt,
+    shortcutsOpen,
+    nextTask,
+    recentUndo,
     setActiveView,
   ])
+
+  // Once per browser session: quiet resume strip
+  useEffect(() => {
+    if (!unlocked || !onboarded || cloudHydrating) return undefined
+    try {
+      if (sessionStorage.getItem('cc-resume-shown') === '1') return undefined
+      sessionStorage.setItem('cc-resume-shown', '1')
+    } catch {
+      /* ignore */
+    }
+    const name = activeProject?.name
+    const step = nextTask?.title
+    if (!name && !step) return undefined
+    setResumeBanner({
+      name: name || 'Project',
+      step: step || '',
+    })
+    return undefined
+  }, [unlocked, onboarded, cloudHydrating, activeProject?.name, nextTask?.title])
 
   // Lightbox: ← → between board pins
   useEffect(() => {
@@ -1915,6 +1996,18 @@ function App() {
                         : i18nT(locale, 'ui.helperOn')}
                     </strong>
                     <span>{i18nT(locale, 'ui.helperHint')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setMoreOpen(false)
+                      setShortcutsOpen(true)
+                    }}
+                  >
+                    <strong>Keyboard</strong>
+                    <span>C complete · N capture · 1–5 path · ?</span>
                   </button>
                 </div>
               )}
@@ -3903,6 +3996,23 @@ function App() {
                     >
                       {i18nT(locale, 'ui.downloadVectorPdf')}
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost pack-copy-brief"
+                      onClick={async () => {
+                        try {
+                          const packSnap = buildCurrentBrandPack()
+                          const md = packBriefMarkdown(packSnap)
+                          await navigator.clipboard.writeText(md)
+                          flashToast('Pack brief copied')
+                          setLastExportNote('Brief copied to clipboard')
+                        } catch {
+                          flashToast('Could not copy — try Download instead')
+                        }
+                      }}
+                    >
+                      Copy brief
+                    </button>
                     <p className="pack-export-hint">
                       {i18nT(locale, 'ui.packHint')}
                     </p>
@@ -4690,6 +4800,92 @@ function App() {
 
       {savePulse && (
         <div className="autosave-chip">✓ Saved on this device</div>
+      )}
+
+      {resumeBanner && (
+        <div className="resume-banner" role="status">
+          <p className="resume-banner-body">
+            <strong>{resumeBanner.name}</strong>
+            {resumeBanner.step
+              ? ` · Next: ${String(resumeBanner.step).slice(0, 48)}${
+                  String(resumeBanner.step).length > 48 ? '…' : ''
+                }`
+              : ' · Capture a step on Work'}
+          </p>
+          <div className="resume-banner-actions">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setActiveView('flow')
+                setResumeBanner(null)
+              }}
+            >
+              Continue
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setResumeBanner(null)}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      {shortcutsOpen && (
+        <div
+          className="export-overlay shortcuts-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="shortcuts-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShortcutsOpen(false)
+          }}
+        >
+          <div className="export-panel shortcuts-panel">
+            <div className="export-panel-header">
+              <h3 id="shortcuts-title" style={{ margin: 0 }}>
+                Keyboard
+              </h3>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setShortcutsOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <ul className="shortcuts-list">
+              <li>
+                <kbd>1</kbd>–<kbd>5</kbd> Path steps
+              </li>
+              <li>
+                <kbd>C</kbd> Complete current step
+              </li>
+              <li>
+                <kbd>N</kbd> New capture (Work)
+              </li>
+              <li>
+                <kbd>U</kbd> Undo last complete
+              </li>
+              <li>
+                <kbd>?</kbd> This sheet
+              </li>
+              <li>
+                <kbd>⌘</kbd>
+                <kbd>K</kbd> Spark
+              </li>
+              <li>
+                <kbd>Esc</kbd> Close / tuck Helper
+              </li>
+            </ul>
+            <p className="panel-hint" style={{ margin: '0.75rem 0 0' }}>
+              Keys work when you are not typing in a field.
+            </p>
+          </div>
+        </div>
       )}
 
       {forceBreakConsentOpen && (

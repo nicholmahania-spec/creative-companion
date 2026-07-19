@@ -415,6 +415,48 @@ export function brandPackToMarkdown(pack) {
   return lines.join('\n')
 }
 
+/**
+ * Compact client-handoff brief for clipboard (Slack / email).
+ * Shorter than full brandPackToMarkdown.
+ */
+export function packBriefMarkdown(pack = {}) {
+  const name = pack.projectName || 'Untitled project'
+  const tag = (pack.tagline && String(pack.tagline).trim()) || 'Tagline TBD'
+  const lines = [
+    `# ${name}`,
+    '',
+    `**${tag}**`,
+    '',
+  ]
+  if (pack.brief?.trim()) {
+    lines.push(String(pack.brief).trim(), '')
+  }
+  if (pack.voice?.trim()) {
+    lines.push(`_Voice:_ ${String(pack.voice).trim()}`, '')
+  }
+  if ((pack.palette || []).length) {
+    lines.push(`**Palette:** ${(pack.palette || []).join(' · ')}`, '')
+  }
+  if (pack.typeHeading || pack.typeBody) {
+    lines.push(
+      `**Type:** ${pack.typeHeading || '—'} / ${pack.typeBody || '—'}`,
+      ''
+    )
+  }
+  if (pack.doUse?.trim()) lines.push(`**Do:** ${pack.doUse.trim()}`, '')
+  if (pack.dontUse?.trim()) lines.push(`**Don't:** ${pack.dontUse.trim()}`, '')
+  const pins = pack.pins || []
+  if (pins.length) {
+    lines.push('**Refs:**')
+    pins.slice(0, 6).forEach((p, i) => {
+      lines.push(`${i + 1}. ${p.note || 'Pin'}`)
+    })
+    lines.push('')
+  }
+  lines.push('_Creative Companion · brand leave-behind_')
+  return lines.join('\n')
+}
+
 /** Standalone HTML brand pack — styled to match the in-app Export pack preview. */
 export function brandPackToHtml(pack) {
   const pinsHtml = (pack.pins || [])
