@@ -71,10 +71,10 @@ export default function SettingsView(props) {
             <div className="brand-section-label">Presence &amp; sound</div>
             <div className="settings-row">
               <div>
-                <strong>Design buddy</strong>
+                <strong>Helper</strong>
                 <span>
-                  Corner Helper (Coach · Critique · Break). Forced desk
-                  lockouts are the separate switch below — one hard model.
+                  Corner coach (Coach · Critique · Break). Forced desk lockouts
+                  are the separate switch below.
                 </span>
               </div>
               <button
@@ -87,6 +87,26 @@ export default function SettingsView(props) {
                 <span className="pref-switch-knob" />
                 <span className="sr-only">
                   {bodyDoubling ? 'On' : 'Off'}
+                </span>
+              </button>
+            </div>
+            <div className="settings-row">
+              <div>
+                <strong>Helper quiet mode</strong>
+                <span>
+                  No timed pings or hyperfocus nags — only when you open Helper
+                </span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!!prefs.helperQuiet}
+                className={`pref-switch${prefs.helperQuiet ? ' is-on' : ''}`}
+                onClick={() => setPref('helperQuiet', !prefs.helperQuiet)}
+              >
+                <span className="pref-switch-knob" />
+                <span className="sr-only">
+                  {prefs.helperQuiet ? 'On' : 'Off'}
                 </span>
               </button>
             </div>
@@ -449,8 +469,8 @@ export default function SettingsView(props) {
               </div>
             </div>
             <p className="panel-hint" style={{ margin: 0 }}>
-              Creative Companion is a real desk for ADHD creative work: one
-              step at a time, Helper presence, forced breaks, and brand pack
+              Creative Companion is a desk for ADHD creative work: one step at
+              a time, optional Helper, optional forced breaks, and brand pack
               export
               {CLOUD ? ' — with optional cloud sync when configured.' : '.'}
             </p>

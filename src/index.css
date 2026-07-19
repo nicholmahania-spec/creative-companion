@@ -1,5 +1,4 @@
-/* Creative Companion — premium product UI (beautify pass)
-   Clear purpose · refined indigo · layered depth · finished density */
+/* Creative Companion — neutral desk chrome · brand color on pack only */
 
 :root {
   /* Neutral product chrome — brand color lives on artboard/pack only */
@@ -1022,25 +1021,46 @@ h3 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.4rem;
-  height: 1.4rem;
-  border-radius: 7px;
-  background: var(--accent-primary);
-  color: #FAFAF9;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 4px;
+  background: transparent;
+  border: 1.5px solid var(--accent-primary);
+  color: var(--accent-primary);
   flex-shrink: 0;
+  position: relative;
   box-shadow: none;
 }
 
+/* Path mark: three steps rising (desk → pack) */
+.logo-mark::before,
 .logo-mark::after {
-  content: 'C';
+  content: '';
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 1px;
+}
+.logo-mark::before {
+  top: 5px;
+  width: 45%;
+  left: 3px;
+  right: auto;
+}
+.logo-mark::after {
+  bottom: 5px;
+  width: 70%;
+  left: 3px;
+  right: auto;
+  box-shadow: 0 -4px 0 currentColor;
 }
 
 .app.deep .logo-mark {
-  background: #FAFAF9;
-  color: #0C0A09;
+  border-color: #FAFAF9;
+  color: #FAFAF9;
+  background: transparent;
 }
 
 .logo-sub {
@@ -4121,9 +4141,8 @@ h3 {
   justify-content: center;
   padding: 1.75rem 1.6rem;
   border-radius: calc(var(--radius) + 4px);
-  background:
-    linear-gradient(155deg, #312e81 0%, #4f46e5 48%, #0d9488 120%);
-  color: #f8fafc;
+  background: linear-gradient(160deg, #1C1917 0%, #292524 55%, #44403C 100%);
+  color: #fafaf9;
   box-shadow: var(--shadow-3);
 }
 
@@ -4149,6 +4168,78 @@ h3 {
   letter-spacing: -0.035em;
   line-height: 1.15;
   color: #fff;
+}
+
+
+/* Login pack specimen (sells the artifact) */
+.login-pack-specimen {
+  padding: 0;
+  border-radius: 12px;
+  background: #fafaf9;
+  color: #0c0a09;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  margin-bottom: 1.15rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+.login-pack-cover {
+  padding: 1.1rem 1.05rem 0.85rem;
+  background: #1c1917;
+  color: #fafaf9;
+}
+.login-pack-kicker {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 0.4rem;
+}
+.login-pack-name {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+.login-pack-tagline {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  opacity: 0.88;
+  line-height: 1.35;
+}
+.login-pack-swatches {
+  display: flex;
+  height: 28px;
+}
+.login-pack-swatches i {
+  flex: 1;
+  display: block;
+}
+.login-pack-pins {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 0.55rem 0.65rem;
+  background: #f5f5f4;
+}
+.login-pack-pin {
+  height: 42px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #d6d3d1, #a8a29e);
+}
+.login-pack-pin.is-muted {
+  background: linear-gradient(135deg, #e7e5e4, #d6d3d1);
+}
+.login-pack-foot {
+  margin: 0;
+  padding: 0.45rem 0.75rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #57534e;
+  border-top: 1px solid #e7e5e4;
 }
 
 .login-proof-card {
@@ -8726,4 +8817,100 @@ html[data-reduce-motion='true'] *::after {
   .buddy-act {
     transition: none !important;
   }
+}
+
+
+/* Board: calm gallery; tools on focus/hover */
+.mood-card .mood-pin-tools {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-top-color: transparent;
+  transition: max-height 0.2s ease, opacity 0.15s ease, padding 0.15s ease;
+}
+.mood-card:hover .mood-pin-tools,
+.mood-card:focus-within .mood-pin-tools,
+.mood-card.is-pack-pin .mood-pin-tools {
+  max-height: 12rem;
+  opacity: 1;
+  padding-top: 0.55rem;
+  padding-bottom: 0.6rem;
+  border-top-color: var(--border-subtle);
+}
+.mood-card .mood-pin-note-input {
+  /* keep one line of caption always if pack pin starred */
+}
+@media (hover: none) {
+  .mood-card .mood-pin-tools {
+    max-height: 12rem;
+    opacity: 1;
+    padding-top: 0.55rem;
+    padding-bottom: 0.6rem;
+    border-top-color: var(--border-subtle);
+  }
+}
+
+
+/* Pack as presentation surface */
+.pack-view .finish-hero-panel.pack-hero {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.pack-view .pack-preview-artboard {
+  box-shadow: var(--shadow-3);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+.pack-view .page-title-display {
+  font-size: clamp(1.75rem, 3vw, 2.15rem);
+  letter-spacing: -0.04em;
+}
+.export-more-formats {
+  margin-top: 0.75rem;
+  width: 100%;
+}
+.export-more-formats summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.system-role-assign {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.step-more-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+}
+.cal-daynum-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+.cal-daynum-btn:hover {
+  color: var(--accent-growth);
+  text-decoration: underline;
+}
+.cal-cell.is-deadline {
+  outline: 1px solid var(--accent-growth);
+  outline-offset: -1px;
+}
+.project-quick-add summary {
+  cursor: pointer;
+  list-style: none;
 }

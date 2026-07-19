@@ -75,7 +75,7 @@ export default function BrandArtboard({
         style={{ background: roles.cover, color: coverFg }}
       >
         <div className="kicker" style={{ color: 'inherit', opacity: 0.85 }}>
-          Brand identity template
+          Direction sheet
         </div>
         {project.logoImage ? (
           <div className="artboard-logo-row">

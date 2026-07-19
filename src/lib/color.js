@@ -107,12 +107,70 @@ export function mapPaletteRoles(palette = []) {
   }
 }
 
+/**
+ * Curated type pairs — real CSS stacks (Google Fonts + system fallbacks).
+ * Prefer these over free-text so the pack specimen looks intentional.
+ */
+export const TYPE_PAIRS = [
+  {
+    id: 'jakarta',
+    label: 'Plus Jakarta — modern sans',
+    heading: 'Plus Jakarta Sans Bold',
+    body: 'Plus Jakarta Sans Regular',
+  },
+  {
+    id: 'fraunces-jakarta',
+    label: 'Fraunces + Jakarta — soft display',
+    heading: 'Fraunces SemiBold',
+    body: 'Plus Jakarta Sans Regular',
+  },
+  {
+    id: 'libre-source',
+    label: 'Libre Baskerville + Source Sans — editorial',
+    heading: 'Libre Baskerville Bold',
+    body: 'Source Sans 3 Regular',
+  },
+  {
+    id: 'space-dm',
+    label: 'Space Grotesk + DM Sans — product',
+    heading: 'Space Grotesk Bold',
+    body: 'DM Sans Regular',
+  },
+  {
+    id: 'playfair-lato',
+    label: 'Playfair + Lato — classic brand',
+    heading: 'Playfair Display Bold',
+    body: 'Lato Regular',
+  },
+  {
+    id: 'system',
+    label: 'System UI — native',
+    heading: 'System UI Bold',
+    body: 'System UI Regular',
+  },
+]
+
+/** Match stored labels to a curated pair id, or null */
+export function typePairIdFromLabels(heading, body) {
+  const h = String(heading || '').trim()
+  const b = String(body || '').trim()
+  const found = TYPE_PAIRS.find((p) => p.heading === h && p.body === b)
+  return found?.id || null
+}
+
 /** "Plus Jakarta Sans Bold" → CSS font-family stack for specimens */
 export function fontFamilyFromLabel(label) {
   const s = String(label || '')
     .replace(/\s+(Thin|ExtraLight|Light|Regular|Medium|SemiBold|Semibold|Bold|ExtraBold|Black|Italic|Oblique).*$/i, '')
     .trim()
   if (!s) return 'var(--font-sans), system-ui, sans-serif'
+  const lower = s.toLowerCase()
+  if (lower.includes('system ui') || lower === 'system') {
+    return 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+  }
+  if (lower.includes('source sans')) {
+    return '"Source Sans 3", "Source Sans Pro", var(--font-sans), system-ui, sans-serif'
+  }
   return `"${s.replace(/"/g, '')}", var(--font-sans), system-ui, sans-serif`
 }
 

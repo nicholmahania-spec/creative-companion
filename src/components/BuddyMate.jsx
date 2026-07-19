@@ -61,6 +61,8 @@ export default function BuddyMate({
   reduceMotion = false,
   pulseWin = 0,
   activity = {},
+  showProgress = false,
+  helperQuiet = false,
 }) {
   const breakKit = useAppStore((s) => s.breakKit)
   const addBreakKitItem = useAppStore((s) => s.addBreakKitItem)
@@ -402,6 +404,8 @@ export default function BuddyMate({
       const od = overdueKinds(w)
       const act = activityRef.current
 
+      if (helperQuiet) return
+
       if (level && level !== lastHyperLevel.current) {
         lastHyperLevel.current = level
         pushBuddy(hyperfocusLine(breakMins), {
@@ -429,6 +433,10 @@ export default function BuddyMate({
       }
     }
 
+    if (helperQuiet) {
+      return () => {}
+    }
+
     const interval = window.setInterval(tick, 3 * 60 * 1000)
     const first = window.setTimeout(() => {
       pushBuddy(timeBlindLine(sessionStart), { move: true, expand: false })
@@ -444,7 +452,7 @@ export default function BuddyMate({
       window.clearTimeout(first)
       window.clearTimeout(well)
     }
-  }, [pushBuddy, sessionStart])
+  }, [pushBuddy, sessionStart, helperQuiet])
 
   const logWellness = (kind, label) => {
     pushYou(label)
@@ -571,8 +579,9 @@ export default function BuddyMate({
       {
         flow: 'Work',
         studio: 'Board',
-        project: 'Projects',
-        brand: 'Brand',
+        project: 'Project',
+        brand: 'System',
+        finish: 'Pack',
         spark: 'Spark',
         insights: 'Timer',
         calendar: 'Deadlines',
@@ -653,13 +662,15 @@ export default function BuddyMate({
           e.stopPropagation()
           openPanel()
         }}
-        aria-label={`Open design buddy, level ${xp.level}${
-          hasUnread ? ', new message' : ''
-        }`}
+        aria-label={`Open Helper${
+          showProgress ? `, level ${xp.level}` : ''
+        }${hasUnread ? ', new message' : ''}`}
         title={
           hasUnread
             ? 'New tip — click to open'
-            : `Lv ${xp.level} · click to chat`
+            : showProgress
+              ? `Lv ${xp.level} · Helper`
+              : 'Helper'
         }
       >
         <img
@@ -670,7 +681,9 @@ export default function BuddyMate({
           height={64}
           draggable={false}
         />
-        <span className="buddy-fab-level">{xp.level}</span>
+        {showProgress && (
+          <span className="buddy-fab-level">{xp.level}</span>
+        )}
         {(overdue.length > 0 ||
           hyper === 'hard' ||
           hyper === 'strong' ||
@@ -696,7 +709,7 @@ export default function BuddyMate({
       style={posStyle}
       key={`panel-${spot?.id || 'br'}-${hop}`}
       role="complementary"
-      aria-label="Little Helper design buddy"
+      aria-label="Helper"
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div className="buddy-compact">
@@ -713,8 +726,10 @@ export default function BuddyMate({
               />
               <div className="buddy-compact-titles">
                 <div className="buddy-compact-name-row">
-                  <strong className="bf-name">Little Helper</strong>
-                  <span className="buddy-compact-lv">Lv {xp.level}</span>
+                  <strong className="bf-name">Helper</strong>
+                  {showProgress && (
+                    <span className="buddy-compact-lv">Lv {xp.level}</span>
+                  )}
                 </div>
                 <span className="bf-status" title={statusLine}>
                   {statusLine}
@@ -748,20 +763,22 @@ export default function BuddyMate({
             </div>
           </header>
 
-          <div
-            className="buddy-compact-xp"
-            aria-label={`${game.xp || 0} XP, level ${xp.level}`}
-            title={gameSummaryLine(game)}
-          >
-            <div className="buddy-xp-bar">
-              <div
-                className="buddy-xp-fill"
-                style={{ width: `${xp.percent}%` }}
-              />
+          {showProgress && (
+            <div
+              className="buddy-compact-xp"
+              aria-label={`${game.xp || 0} XP, level ${xp.level}`}
+              title={gameSummaryLine(game)}
+            >
+              <div className="buddy-xp-bar">
+                <div
+                  className="buddy-xp-fill"
+                  style={{ width: `${xp.percent}%` }}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          {levelBurst && (
+          {showProgress && levelBurst && (
             <p className="buddy-levelup-banner bf-levelup" role="status">
               Level {xp.level}!
             </p>
@@ -981,14 +998,6 @@ export default function BuddyMate({
                 <button
                   type="button"
                   className="buddy-quick-btn"
-                  onClick={() => reply('tip')}
-                  disabled={aiBusy}
-                >
-                  Coach
-                </button>
-                <button
-                  type="button"
-                  className="buddy-quick-btn"
                   onClick={() => reply('time')}
                 >
                   Time
@@ -1003,7 +1012,7 @@ export default function BuddyMate({
                 </button>
               </div>
 
-              {badgeList.length > 0 && (
+              {showProgress && badgeList.length > 0 && (
                 <div className="buddy-badges" aria-label="Badges">
                   {badgeList.map((b) => (
                     <span

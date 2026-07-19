@@ -78,10 +78,13 @@ export function blankWorkspaceState() {
       reduceMotion: false,
       bodyDoubleSilent: false,
       forceBreaksEnabled: true,
+      forceBreaksConsented: false,
       queueCollapsed: true,
       showHowItWorks: true,
       /** XP / quest bar — off by default (redesign brief) */
       showProgress: false,
+      /** Helper: no timed pings / hyperfocus nags */
+      helperQuiet: false,
     },
   }
 }

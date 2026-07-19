@@ -16,6 +16,8 @@ import {
   formatRatio,
   mapPaletteRoles,
   fontFamilyFromLabel,
+  TYPE_PAIRS,
+  typePairIdFromLabels,
 } from './lib/color'
 import {
   BREAKDOWN_DEPTHS,
@@ -206,6 +208,7 @@ function App() {
   const [processPhase, setProcessPhase] = useState(null)
   const [processOpen, setProcessOpen] = useState(false)
   const [brandEditSection, setBrandEditSection] = useState('essentials')
+  const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [savePulse, setSavePulse] = useState(false)
@@ -1590,40 +1593,6 @@ function App() {
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu">
-                  <p className="more-menu-group">Tools</p>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      openBreakdown()
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <strong>Break into steps</strong>
-                    <span>When the project feels too big</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      const next = !bodyDoubling
-                      toggleBodyDoubling()
-                      if (next) {
-                        awardAndBroadcast('helper_on', { label: 'Helper' })
-                        flashToast('Helper on')
-                      } else {
-                        flashToast('Helper off')
-                      }
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <strong>
-                      {bodyDoubling ? 'Turn Helper off' : 'Turn Helper on'}
-                    </strong>
-                    <span>Coach · Critique · Break</span>
-                  </button>
                   <button
                     type="button"
                     role="menuitem"
@@ -1653,19 +1622,21 @@ function App() {
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
-                      createNewProject()
-                      if (showProgress) {
-                        awardAndBroadcast('project_create', {
-                          label: 'New project',
-                        })
+                      const next = !bodyDoubling
+                      toggleBodyDoubling()
+                      if (next) {
+                        awardAndBroadcast('helper_on', { label: 'Helper' })
+                        flashToast('Helper on')
+                      } else {
+                        flashToast('Helper off')
                       }
-                      flashToast('New project')
-                      setActiveView('project')
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>New project</strong>
-                    <span>Start another name</span>
+                    <strong>
+                      {bodyDoubling ? 'Turn Helper off' : 'Turn Helper on'}
+                    </strong>
+                    <span>Coach · Critique · Break</span>
                   </button>
                 </div>
               )}
@@ -1748,15 +1719,15 @@ function App() {
           </div>
         </div>
 
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+
         {showProgress && (
           <Suspense fallback={null}>
             <GameHUD />
           </Suspense>
         )}
-
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
         <nav
           className={`journey-bar${journeyActive ? '' : ' is-tools'}`}
           aria-label="Your path through Creative Companion"
@@ -1883,47 +1854,49 @@ function App() {
                     >
                       Complete step
                     </button>
-                    {!nextTask.parentId && (
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => {
-                          breakIntoSteps(nextTask.id)
-                          notifyAction('Split into 3', 'micro_steps', {
-                            label: 'Split step',
-                          })
-                          setStepFocusKey((k) => k + 1)
-                        }}
-                      >
-                        Split if too big
-                      </button>
-                    )}
                     <details className="step-more-details">
-                      <summary>More on this step</summary>
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => {
-                          setProcessOpen((o) => !o)
-                          if (!processPhase) setProcessPhase('clarify')
-                        }}
-                        aria-expanded={processOpen}
-                      >
-                        Design checklist
-                      </button>
+                      <summary>More</summary>
+                      <div className="step-more-panel">
+                        {!nextTask.parentId && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => {
+                              breakIntoSteps(nextTask.id)
+                              notifyAction('Split into 3', 'micro_steps', {
+                                label: 'Split step',
+                              })
+                              setStepFocusKey((k) => k + 1)
+                            }}
+                          >
+                            Split if too big
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
+                          onClick={() => {
+                            setProcessOpen((o) => !o)
+                            if (!processPhase) setProcessPhase('clarify')
+                          }}
+                          aria-expanded={processOpen}
+                        >
+                          Design checklist
+                        </button>
+                        <button
+                          type="button"
+                          className="text-link step-due-toggle"
+                          onClick={() => setStepDueOpen((o) => !o)}
+                          aria-expanded={stepDueOpen}
+                        >
+                          {stepDueOpen || nextTask.dueDate
+                            ? stepDueOpen
+                              ? 'Hide due date'
+                              : `Due ${formatShortDate(nextTask.dueDate)}`
+                            : 'Add due date'}
+                        </button>
+                      </div>
                     </details>
-                    <button
-                      type="button"
-                      className="text-link step-due-toggle"
-                      onClick={() => setStepDueOpen((o) => !o)}
-                      aria-expanded={stepDueOpen}
-                    >
-                      {stepDueOpen || nextTask.dueDate
-                        ? stepDueOpen
-                          ? 'Hide due date'
-                          : `Due ${formatShortDate(nextTask.dueDate)}`
-                        : 'Add due date'}
-                    </button>
                   </div>
                   <div className="step-focus-secondary">
                     <button
@@ -2404,7 +2377,7 @@ function App() {
                       )
                     }}
                   >
-                    Star more (fill to 6)
+                    Star next unpinned
                   </button>
                   <button
                     type="button"
@@ -2721,6 +2694,7 @@ function App() {
               toggleTask={toggleTask}
               completedCount={completedCount}
               deskTasks={deskTasks}
+              prefs={prefs}
             />
           </Suspense>
 
@@ -2789,31 +2763,11 @@ function App() {
               project={activeProject || {}}
               palette={projectPalette}
               pins={deskMood.filter((m) => m.inPack)}
-              editable
-              onTaglineChange={(v) => updateBrandField('tagline', v)}
-              onBriefChange={(v) => updateProjectBrief(v)}
-              onVoiceChange={(v) => updateBrandField('voice', v)}
-              onDoChange={(v) => updateBrandField('doUse', v)}
-              onDontChange={(v) => updateBrandField('dontUse', v)}
-              onRoleAssign={(role, hex) => {
-                setColorRole(role, hex)
-                flashToast(`${role} → ${hex}`)
-              }}
-              onLogoImage={(res) => {
-                if (res?.error) flashToast(res.error)
-                else if (res?.ok) {
-                  setLogoImage(res.dataUrl)
-                  flashToast('Mark image added')
-                }
-              }}
-              onClearLogoImage={() => {
-                setLogoImage('')
-                flashToast('Mark removed')
-              }}
+              editable={false}
             />
             </Suspense>
 
-            <p className="system-edit-label">Edit</p>
+            <p className="system-edit-label">Edit fields (artboard above is live preview)</p>
             <div className="system-accordion-nav" role="tablist">
               {[
                 ['essentials', 'Tagline'],
@@ -3051,6 +3005,41 @@ function App() {
                 </div>
               </div>
 
+
+              <div className="palette-roles-editor" style={{ marginTop: '1rem' }}>
+                <p className="field-label" style={{ marginBottom: '0.45rem' }}>
+                  Pack roles — pick a role, then a swatch
+                </p>
+                <div className="system-role-assign">
+                  {['cover', 'text', 'accent', 'quiet'].map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      className={`role-pick-chip${brandRoleAssign === role ? ' is-active' : ''}`}
+                      onClick={() => setBrandRoleAssign(role)}
+                    >
+                      {role[0].toUpperCase() + role.slice(1)}
+                    </button>
+                  ))}
+                </div>
+                <div className="direction-palette is-clickable" style={{ marginTop: '0.55rem' }}>
+                  {projectPalette.map((c, i) => (
+                    <button
+                      key={`${c}-role-${i}`}
+                      type="button"
+                      className="palette-swatch-btn"
+                      style={{ background: c }}
+                      title={`Set as ${brandRoleAssign}`}
+                      onClick={() => {
+                        const n = normalizeHex(c) || c
+                        setColorRole(brandRoleAssign, n)
+                        flashToast(`${brandRoleAssign} → ${n}`)
+                      }}
+                    ></button>
+                  ))}
+                </div>
+              </div>
+
               <div className="palette-checker" style={{ marginTop: '1.15rem' }}>
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
@@ -3141,6 +3130,37 @@ function App() {
               hidden={brandEditSection !== 'type'}
             >
               <div className="brand-section-label">Type</div>
+              <div className="field-block" style={{ marginBottom: '1rem' }}>
+                <label className="field-label" htmlFor="type-pair">
+                  Type pair
+                </label>
+                <select
+                  id="type-pair"
+                  className="field-input"
+                  value={
+                    typePairIdFromLabels(
+                      activeProject?.typeHeading,
+                      activeProject?.typeBody
+                    ) || 'custom'
+                  }
+                  onChange={(e) => {
+                    const id = e.target.value
+                    if (id === 'custom') return
+                    const pair = TYPE_PAIRS.find((p) => p.id === id)
+                    if (!pair) return
+                    updateBrandField('typeHeading', pair.heading)
+                    updateBrandField('typeBody', pair.body)
+                    flashToast(`Type · ${pair.label}`)
+                  }}
+                >
+                  {TYPE_PAIRS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label}
+                    </option>
+                  ))}
+                  <option value="custom">Custom labels…</option>
+                </select>
+              </div>
               <div className="brand-type-pair">
                 <div className="field-block">
                   <label className="field-label" htmlFor="type-heading">
@@ -3158,7 +3178,12 @@ function App() {
                   />
                   <div
                     className="brand-type-display"
-                    style={{ marginTop: '0.65rem' }}
+                    style={{
+                      marginTop: '0.65rem',
+                      fontFamily: fontFamilyFromLabel(
+                        activeProject?.typeHeading || 'Plus Jakarta Sans Bold'
+                      ),
+                    }}
                   >
                     {activeProject?.typeHeading || 'Plus Jakarta Sans Bold'}
                   </div>
@@ -3179,7 +3204,12 @@ function App() {
                   />
                   <div
                     className="brand-type-body"
-                    style={{ marginTop: '0.65rem' }}
+                    style={{
+                      marginTop: '0.65rem',
+                      fontFamily: fontFamilyFromLabel(
+                        activeProject?.typeBody || 'Plus Jakarta Sans Regular'
+                      ),
+                    }}
                   >
                     {activeProject?.typeBody || 'Plus Jakarta Sans Regular'} —
                     The quick brown fox keeps the brief honest.
@@ -3195,55 +3225,11 @@ function App() {
             >
               <div className="brand-section-label">Logo</div>
               <p className="panel-hint" style={{ marginBottom: '0.75rem' }}>
-                Pick a direction note — not a fake logo generator.
+                Direction notes + optional mark image for the pack cover.
               </p>
-              <div className="link-list">
-                <button
-                  type="button"
-                  className={`link-row${
-                    activeProject?.logoDirection?.startsWith('Concept 1')
-                      ? ' is-primary'
-                      : ''
-                  }`}
-                  onClick={() =>
-                    chooseLogoDirection(
-                      'Concept 1',
-                      'Abstract geometric mark with your initial'
-                    )
-                  }
-                >
-                  <span className="link-row-label">Concept 1</span>
-                  <span className="link-row-meta">
-                    {activeProject?.logoDirection?.startsWith('Concept 1')
-                      ? 'Saved'
-                      : 'Geometric mark'}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className={`link-row${
-                    activeProject?.logoDirection?.startsWith('Concept 2')
-                      ? ' is-primary'
-                      : ''
-                  }`}
-                  onClick={() =>
-                    chooseLogoDirection(
-                      'Concept 2',
-                      'Hand-drawn wordmark + icon'
-                    )
-                  }
-                >
-                  <span className="link-row-label">Concept 2</span>
-                  <span className="link-row-meta">
-                    {activeProject?.logoDirection?.startsWith('Concept 2')
-                      ? 'Saved'
-                      : 'Wordmark'}
-                  </span>
-                </button>
-              </div>
-              <div className="field-block" style={{ marginTop: '0.85rem', marginBottom: 0 }}>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-custom">
-                  Or write your own direction
+                  Logo direction
                 </label>
                 <input
                   id="logo-custom"
@@ -3253,47 +3239,75 @@ function App() {
                   placeholder="e.g. Soft monoline bird mark · no drop shadows"
                 />
               </div>
+              <div className="finish-secondary-row">
+                <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+                  {activeProject?.logoImage ? 'Replace mark image' : 'Upload mark image'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml,image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      e.target.value = ''
+                      if (!file) return
+                      if (file.size > 2.5 * 1024 * 1024) {
+                        flashToast('Mark image must be under 2.5MB')
+                        return
+                      }
+                      const reader = new FileReader()
+                      reader.onload = () => {
+                        setLogoImage(reader.result)
+                        flashToast('Mark image added')
+                      }
+                      reader.readAsDataURL(file)
+                    }}
+                  />
+                </label>
+                {activeProject?.logoImage ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      setLogoImage('')
+                      flashToast('Mark removed')
+                    }}
+                  >
+                    Remove mark
+                  </button>
+                ) : null}
+              </div>
             </section>
 
-            {/* 06 Mood from board */}
+            {/* 06 Mood from board — starred pack pins only */}
             <section
               className="panel brand-section"
               hidden={brandEditSection !== 'pins'}
             >
-              <div className="brand-section-label">Pins (from Board)</div>
-              {deskMood.length === 0 ? (
+              <div className="brand-section-label">Pack pins (starred on Board)</div>
+              {(() => {
+                const packPins = deskMood.filter((m) => m.inPack)
+                if (packPins.length === 0) {
+                  return (
                 <div className="brand-mood-empty">
                   <p className="empty-state-body" style={{ margin: 0 }}>
-                    Mood direction comes from real pins on the Board. Upload
-                    screenshots, comps, or photos — they show here and in your
-                    brand pack.
+                    Star pins on the Board with ★ Pack (max 6). Only starred
+                    pins appear here and in your brand pack.
                   </p>
                   <div className="finish-secondary-row" style={{ marginTop: '0.75rem' }}>
-                    <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
-                      Upload images
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp,image/gif,image/*"
-                        multiple
-                        className="sr-only"
-                        onChange={(e) => {
-                          uploadMoodFiles(e.target.files)
-                          e.target.value = ''
-                        }}
-                      />
-                    </label>
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-primary"
                       onClick={() => setActiveView('studio')}
                     >
                       Open Board
                     </button>
                   </div>
                 </div>
-              ) : (
+                  )
+                }
+                return (
                 <div className="brand-mood-row">
-                  {deskMood.slice(0, 6).map((p) => (
+                  {packPins.slice(0, 6).map((p) => (
                     <div
                       key={p.id}
                       className="brand-mood-thumb"
@@ -3302,7 +3316,8 @@ function App() {
                     />
                   ))}
                 </div>
-              )}
+                )
+              })()}
             </section>
 
             <div className="brand-export-bar">
@@ -3508,7 +3523,7 @@ function App() {
                 </button>
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="btn btn-ghost"
                   onClick={handleSignOut}
                 >
                   {CLOUD ? 'Log out' : 'Log out / lock'}
@@ -3520,36 +3535,36 @@ function App() {
               </p>
             </section>
 
-            <section className="panel panel-compact">
-              <p className="list-heading">Quick map (if you get lost)</p>
+            <section className="panel panel-compact pack-path-map">
+              <p className="list-heading">Your path</p>
               <ol className="finish-map">
                 <li>
                   <button type="button" className="text-link" onClick={() => setActiveView('project')}>
                     1 Project
                   </button>
-                  {' — '}name and pick the job
+                  {' — '}name the work
                 </li>
                 <li>
                   <button type="button" className="text-link" onClick={() => setActiveView('flow')}>
                     2 Work
                   </button>
-                  {' — '}do one step at a time
+                  {' — '}one step at a time
                 </li>
                 <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('concept')}>
-                    3 Ideas
+                  <button type="button" className="text-link" onClick={() => setActiveView('studio')}>
+                    3 Board
                   </button>
-                  {' — '}sketches, lock plan, fill package
+                  {' — '}refs · star up to 6
                 </li>
                 <li>
                   <button type="button" className="text-link" onClick={() => setActiveView('brand')}>
-                    4 Brand
+                    4 System
                   </button>
-                  {' — '}colors and words
+                  {' — '}artboard · voice · type
                 </li>
                 <li>
-                  <strong>5 Finish</strong>
-                  {' — '}you are here · save · log out
+                  <strong>5 Pack</strong>
+                  {' — '}you are here · download
                 </li>
               </ol>
             </section>
@@ -3627,7 +3642,7 @@ function App() {
                 </button>
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-ghost"
                   onClick={() => setActiveView('finish')}
                 >
                   Open Pack
@@ -3855,22 +3870,25 @@ function App() {
                 </div>
               </div>
 
-              <div className="capture-row" style={{ marginBottom: '1.15rem' }}>
-                <input
-                  value={quickInput}
-                  onChange={(e) => setQuickInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
-                  placeholder="Quick add to this desk…"
-                  aria-label="Add to desk"
-                />
-                <button
-                  type="button"
-                  onClick={addQuickTask}
-                  className="btn btn-secondary"
-                >
-                  Add
-                </button>
-              </div>
+              <details className="project-quick-add" style={{ marginBottom: '1.15rem' }}>
+                <summary className="text-link">Quick add to desk</summary>
+                <div className="capture-row" style={{ marginTop: '0.5rem' }}>
+                  <input
+                    value={quickInput}
+                    onChange={(e) => setQuickInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
+                    placeholder="Quick add to this desk…"
+                    aria-label="Add to desk"
+                  />
+                  <button
+                    type="button"
+                    onClick={addQuickTask}
+                    className="btn btn-secondary"
+                  >
+                    Add
+                  </button>
+                </div>
+              </details>
 
               <p className="list-heading">Go to</p>
               <div className="link-list">
@@ -3996,9 +4014,8 @@ function App() {
               One project. One step. Ship a pack.
             </h2>
             <p className="view-lede">
-              A <strong>design desk</strong>, not a scoreboard. Name the work and
-              the <strong>one shippable step</strong> for the next 25 minutes.
-              The product is the brand pack you export.
+              Name the work and <strong>one shippable step</strong> for the next
+              25 minutes. You leave with a brand pack PDF.
             </p>
             <ol className="onboard-path" aria-label="Your path">
               {JOURNEY_STEPS.map((s) => (
@@ -4151,45 +4168,29 @@ function App() {
               </button>
               <button
                 type="button"
-                className="btn btn-secondary"
-                onClick={() => runExport('html')}
-              >
-                Download HTML
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => runExport('md')}
-              >
-                Download Markdown
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => runExport('json')}
-              >
-                Download JSON
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => runExport('print')}
-              >
-                Print preview
-              </button>
-              <button
-                type="button"
                 className="btn btn-ghost"
                 onClick={() => setExportPanel(null)}
               >
                 Close
               </button>
             </div>
+            <details className="export-more-formats no-print">
+              <summary>Other formats</summary>
+              <div className="finish-more-formats-list">
+                <button type="button" className="btn btn-secondary" onClick={() => runExport('html')}>HTML</button>
+                <button type="button" className="btn btn-secondary" onClick={() => runExport('md')}>Markdown</button>
+                <button type="button" className="btn btn-secondary" onClick={() => runExport('json')}>JSON</button>
+                <button type="button" className="btn btn-secondary" onClick={() => runExport('print')}>Print</button>
+              </div>
+              <p className="panel-hint" style={{ marginTop: '0.5rem' }}>
+                PDF is a raster preview export (matches on-screen pack).
+              </p>
+            </details>
           </div>
         </div>
       )}
 
-      {/* Body double — presence only, NOT a chatbot */}
+      {/* Helper — presence coach, not a freeform chatbot */}
       {bodyDoubling && (
         <Suspense fallback={null}>
         <BuddyMate
@@ -4200,6 +4201,8 @@ function App() {
           nextTaskTitle={nextTask?.title || ''}
           reduceMotion={reduceMotion}
           pulseWin={buddyWinPulse}
+          showProgress={showProgress}
+          helperQuiet={!!prefs.helperQuiet}
           activity={{
             view: activeView,
             projectName: activeProject?.name || '',

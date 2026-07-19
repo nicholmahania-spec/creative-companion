@@ -135,23 +135,29 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
           <h2 className="login-proof-title">
             One next design step.
             <br />
-            A desk that stays with you.
-            <br />
             Leave with a brand pack.
           </h2>
-          <div className="login-proof-card">
-            <span className="login-proof-badge">Do this now</span>
-            <p className="login-proof-step">
-              Write the one shippable step for the next 25 minutes
-            </p>
-            <div className="login-proof-actions">
-              <span className="login-proof-btn">Complete step</span>
+          <div className="login-pack-specimen">
+            <div className="login-pack-cover">
+              <span className="login-pack-kicker">Brand pack</span>
+              <strong className="login-pack-name">Soft Signal</strong>
+              <p className="login-pack-tagline">Quiet confidence, no hard sell</p>
             </div>
+            <div className="login-pack-swatches" aria-hidden="true">
+              <i style={{ background: '#1C1917' }} />
+              <i style={{ background: '#0F766E' }} />
+              <i style={{ background: '#D6D3D1' }} />
+              <i style={{ background: '#FAFAF9' }} />
+            </div>
+            <div className="login-pack-pins" aria-hidden="true">
+              <span className="login-pack-pin" />
+              <span className="login-pack-pin is-muted" />
+            </div>
+            <p className="login-pack-foot">PDF · direction sheet you can ship</p>
           </div>
           <ul className="login-proof-list">
-            <li>One shippable step at a time</li>
             <li>Project → Work → Board → System → Pack</li>
-            <li>Leave with a real brand pack (PDF)</li>
+            <li>Star pins · set voice · download PDF</li>
           </ul>
         </aside>
 
@@ -205,8 +211,8 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 ? 'Sign in to open your desk. Work syncs across devices.'
                 : 'Create an account. Your projects stay private to you.'
               : mode === 'setup'
-                ? 'Create an access password for this browser. Work stays on this device.'
-                : 'Enter your access password to open your desk on this device.'}
+                ? 'Protect this desk on this device with a password. Work stays local.'
+                : 'Enter your password to open your desk on this device.'}
           </p>
 
           <form className="login-form" onSubmit={submit}>

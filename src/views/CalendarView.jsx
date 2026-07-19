@@ -153,11 +153,32 @@ export default function CalendarView(props) {
                         cell.inMonth ? '' : ' is-pad'
                       }${isToday ? ' is-today' : ''}${
                         events.length ? ' has-events' : ''
+                      }${
+                        cell.date && projectDeadline === cell.date
+                          ? ' is-deadline'
+                          : ''
                       }`}
                     >
-                      {cell.day != null && (
+                      {cell.day != null && cell.date && cell.inMonth ? (
+                        <button
+                          type="button"
+                          className="cal-daynum cal-daynum-btn"
+                          title="Set project deadline to this day"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Set project deadline to ${formatShortDate(cell.date)}?`
+                              )
+                            ) {
+                              setProjectDeadline(cell.date)
+                            }
+                          }}
+                        >
+                          {cell.day}
+                        </button>
+                      ) : cell.day != null ? (
                         <span className="cal-daynum">{cell.day}</span>
-                      )}
+                      ) : null}
                       {events.slice(0, 3).map((ev) => (
                         <button
                           key={ev.id}
