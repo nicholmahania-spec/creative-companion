@@ -41,6 +41,7 @@ import {
 import {
   coachWithHelper,
   isHelperAiConfigured,
+  helperAiStatus,
 } from '../lib/helperAi'
 import useAppStore from '../store/useAppStore'
 
@@ -118,6 +119,7 @@ export default function BuddyMate({
   activityRef.current = activityLive
 
   const overdue = useMemo(() => overdueKinds(wellness), [wellness])
+  const aiStatus = useMemo(() => helperAiStatus(), [])
   const deskMs = now - sessionStart
   const sinceBreak = minutesSinceBreak(wellness, sessionStart, now)
   const hyper = hyperfocusLevel(sinceBreak)
@@ -485,7 +487,7 @@ export default function BuddyMate({
       pushBuddy(
         isHelperAiConfigured()
           ? 'Thinking through this step…'
-          : 'One sec — desk coach mode…',
+          : 'Scripted coach — one sec…',
         { move: true, expand: true }
       )
       try {
@@ -730,6 +732,12 @@ export default function BuddyMate({
                   {showProgress && (
                     <span className="buddy-compact-lv">Lv {xp.level}</span>
                   )}
+                  <span
+                    className={`helper-ai-badge is-${aiStatus.mode}`}
+                    title={aiStatus.detail}
+                  >
+                    {aiStatus.short}
+                  </span>
                 </div>
                 <span className="bf-status" title={statusLine}>
                   {statusLine}

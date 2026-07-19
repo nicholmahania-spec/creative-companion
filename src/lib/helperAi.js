@@ -64,8 +64,12 @@ export function usesHelperProxy() {
     }
     const base = String(import.meta.env?.VITE_XAI_BASE_URL || '').trim()
     if (base) return true
-    // Default: try same-origin proxy path in browser (dev vite proxy or Netlify)
-    if (typeof window !== 'undefined' && !import.meta.env?.VITE_XAI_API_KEY) {
+    // Dev only: try Vite /api/xai proxy when no browser key (see docs/DEPLOY_AI.md)
+    if (
+      import.meta.env?.DEV &&
+      typeof window !== 'undefined' &&
+      !import.meta.env?.VITE_XAI_API_KEY
+    ) {
       return true
     }
   } catch {
@@ -89,11 +93,43 @@ export function getHelperApiBase() {
   return 'https://api.x.ai/v1'
 }
 
+/**
+ * Honest mode for UI: Live only when a real path is configured.
+ * GH Pages without proxy → scripted (no failed network spam).
+ */
+export function helperAiStatus() {
+  try {
+    const k = getHelperApiKey()
+    const hasDirectKey = Boolean(k && k !== 'proxy')
+    if (hasDirectKey) {
+      return {
+        mode: 'live',
+        label: 'Live AI',
+        short: 'Live',
+        detail: 'Replies use the configured model; falls back if offline.',
+      }
+    }
+    if (usesHelperProxy()) {
+      return {
+        mode: 'live',
+        label: 'Live AI',
+        short: 'Live',
+        detail: 'Via same-origin proxy when available; scripted fallback if it fails.',
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return {
+    mode: 'scripted',
+    label: 'Scripted desk coach',
+    short: 'Scripted',
+    detail: 'Local craft tips on this host — no live model configured.',
+  }
+}
+
 export function isHelperAiConfigured() {
-  // Proxy may work without client key; direct needs key
-  if (usesHelperProxy()) return true
-  const k = getHelperApiKey()
-  return Boolean(k && k !== 'proxy')
+  return helperAiStatus().mode === 'live'
 }
 
 /**

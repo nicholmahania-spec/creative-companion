@@ -3690,35 +3690,50 @@ h3 {
 
 /* ——— Material system: desk / wall / document ——— */
 .surface-desk {
-  --surface-tint: rgba(255, 250, 240, 0.55);
+  --surface-tint: rgba(250, 248, 245, 0.7);
 }
 
 .surface-wall {
-  --surface-tint: rgba(241, 245, 249, 0.9);
+  --surface-tint: rgba(245, 245, 244, 0.95);
 }
 
 .surface-document {
   --surface-tint: transparent;
+  max-width: 52rem;
+  margin-inline: auto;
 }
 
 .surface-desk .panel:not(.step-focus-panel) {
-  background: color-mix(in srgb, var(--bg-elevated) 92%, #f5efe6);
-  border-color: rgba(11, 18, 32, 0.06);
+  background: color-mix(in srgb, var(--bg-elevated) 94%, #f0ebe3);
+  border-color: rgba(28, 25, 23, 0.08);
   box-shadow: var(--shadow-1);
+  border-radius: var(--radius);
 }
 
+/* Board = wall: less card chrome, tighter gallery */
 .surface-wall .panel {
-  background: color-mix(in srgb, var(--bg-elevated) 88%, #e8eef7);
-  border-style: dashed;
-  border-color: rgba(79, 70, 229, 0.16);
+  background: transparent;
+  border: none;
   box-shadow: none;
+  padding-left: 0;
+  padding-right: 0;
+  border-radius: 0;
+}
+.surface-wall .brand-section-label {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
 }
 
+/* System / Pack = document paper */
 .surface-document .panel {
   background: var(--bg-elevated);
-  border-radius: 4px;
-  border-color: rgba(11, 18, 32, 0.1);
-  box-shadow: 0 1px 0 rgba(11, 18, 32, 0.04);
+  border-radius: 2px;
+  border-color: rgba(28, 25, 23, 0.1);
+  box-shadow: 0 1px 0 rgba(28, 25, 23, 0.04), 0 12px 40px rgba(28, 25, 23, 0.04);
+}
+.surface-document .page-title {
+  letter-spacing: -0.04em;
 }
 
 .app.deep .surface-desk .panel:not(.step-focus-panel) {
@@ -3726,23 +3741,23 @@ h3 {
 }
 
 .app.deep .surface-wall .panel {
-  background: color-mix(in srgb, var(--bg-elevated) 90%, #1e293b);
-  border-color: rgba(129, 140, 248, 0.22);
+  background: transparent;
+  border: none;
 }
 
-/* Hero current-step card — owns the fold */
+/* Hero current-step card — owns the fold (desk, not indigo SaaS) */
 .step-focus-panel,
 .surface-desk-hero {
   position: relative;
-  border: 1px solid rgba(28, 25, 23, 0.22) !important;
+  border: 1px solid rgba(28, 25, 23, 0.16) !important;
   border-radius: calc(var(--radius) + 2px);
   background:
-    linear-gradient(165deg, #ffffff 0%, #f8f7ff 55%, #f3f0ff 100%) !important;
+    linear-gradient(165deg, #ffffff 0%, #fafaf9 55%, #f5f5f4 100%) !important;
   box-shadow:
     var(--highlight-inset),
-    0 1px 2px rgba(79, 70, 229, 0.06),
-    0 12px 36px rgba(28, 25, 23, 0.1),
-    0 28px 56px rgba(11, 18, 32, 0.06) !important;
+    0 1px 2px rgba(28, 25, 23, 0.05),
+    0 12px 36px rgba(28, 25, 23, 0.08),
+    0 28px 56px rgba(12, 10, 9, 0.05) !important;
   padding: 1.25rem 1.25rem 1.35rem;
 }
 
@@ -8913,4 +8928,91 @@ html[data-reduce-motion='true'] *::after {
 .project-quick-add summary {
   cursor: pointer;
   list-style: none;
+}
+
+
+/* Board gallery craft */
+.mood-board.has-pins {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.65rem;
+  align-items: start;
+}
+.mood-card .mood-pin-media,
+.mood-card .mood-pin-face {
+  aspect-ratio: 4 / 3;
+  height: auto !important;
+  min-height: 0 !important;
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px 8px 0 0;
+}
+.mood-card.is-hero .mood-pin-media,
+.mood-card.is-hero .mood-pin-face {
+  aspect-ratio: 16 / 10;
+}
+.mood-card:not(.is-pack-pin) .mood-pin-note-input {
+  display: none;
+}
+.mood-card.is-pack-pin .mood-pin-note-input,
+.mood-card:focus-within .mood-pin-note-input {
+  display: block;
+}
+.mood-card {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-1);
+}
+.mood-card.is-pack-pin {
+  outline: 2px solid var(--accent-growth);
+  outline-offset: 0;
+}
+
+/* Helper AI honesty badge */
+.helper-ai-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  margin-left: 0.25rem;
+  vertical-align: middle;
+}
+.helper-ai-badge.is-scripted {
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+}
+.helper-ai-badge.is-live {
+  background: color-mix(in srgb, var(--accent-growth) 18%, transparent);
+  color: var(--accent-growth);
+}
+
+/* Pack export confirm */
+.pack-export-confirm {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-growth);
+}
+.project-brief-readonly {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+/* Document system view spacing */
+.system-view .system-artboard,
+.pack-view .brand-artboard {
+  border-radius: 2px;
+  box-shadow: 0 8px 32px rgba(28, 25, 23, 0.08);
 }

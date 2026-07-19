@@ -211,6 +211,7 @@ function App() {
   const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
+  const [lastExportNote, setLastExportNote] = useState('')
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
@@ -1064,6 +1065,17 @@ function App() {
     const slug = slugifyFilename(pack.projectName, 'brand-pack')
     const finishOk = (label) => {
       const g = awardAndBroadcast('export_pack', { label })
+      const when = new Date().toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+      if (kind !== 'backup') {
+        setLastExportNote(
+          kind === 'pdf'
+            ? `PDF saved · ${when}`
+            : `${label || kind.toUpperCase()} saved · ${when}`
+        )
+      }
       if (showProgress && g?.gained) {
         flashToast(
           kind === 'backup'
@@ -2071,30 +2083,6 @@ function App() {
                 onClick={openBreakdown}
               >
                 Break project down
-              </button>
-              <span aria-hidden="true"> · </span>
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => setActiveView('studio')}
-              >
-                Board
-              </button>
-              <span aria-hidden="true"> · </span>
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => setActiveView('brand')}
-              >
-                System
-              </button>
-              <span aria-hidden="true"> · </span>
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => setActiveView('finish')}
-              >
-                Pack
               </button>
             </p>
 
@@ -3434,6 +3422,11 @@ function App() {
                     >
                       Download pack
                     </button>
+                    {lastExportNote ? (
+                      <p className="pack-export-confirm" role="status">
+                        {lastExportNote}
+                      </p>
+                    ) : null}
                     <button
                       type="button"
                       className="btn btn-secondary"
@@ -3797,17 +3790,20 @@ function App() {
               </div>
 
               <div className="field-block" style={{ marginBottom: '1rem' }}>
-                <label className="field-label" htmlFor="project-brief">
-                  Brief / positioning
-                </label>
-                <textarea
-                  id="project-brief"
-                  className="field-textarea"
-                  value={activeProject?.brief || ''}
-                  onChange={(e) => updateProjectBrief(e.target.value)}
-                  placeholder="Who is this for? Outcome? Constraint? (same field as System)"
-                  rows={3}
-                />
+                <label className="field-label">Brief / positioning</label>
+                <p className="project-brief-readonly">
+                  {activeProject?.brief?.trim()
+                    ? activeProject.brief
+                    : 'No brief yet — write it on System (Tagline tab).'}
+                </p>
+                <button
+                  type="button"
+                  className="text-link"
+                  style={{ marginTop: '0.35rem' }}
+                  onClick={() => goSystemSection('essentials')}
+                >
+                  Edit on System
+                </button>
               </div>
 
               <div className="project-actions-row" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>

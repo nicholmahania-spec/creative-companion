@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { scriptedCoachReply, isHelperAiConfigured } from './helperAi'
+import {
+  scriptedCoachReply,
+  isHelperAiConfigured,
+  helperAiStatus,
+} from './helperAi'
 
 describe('helperAi scripted fallback', () => {
   const activity = {
@@ -16,6 +20,9 @@ describe('helperAi scripted fallback', () => {
     // In node tests there is no browser proxy; without VITE_XAI_API_KEY this is false
     // unless a proxy env is set. Scripted coach still works either way.
     expect(typeof isHelperAiConfigured()).toBe('boolean')
+    const status = helperAiStatus()
+    expect(['live', 'scripted']).toContain(status.mode)
+    expect(status.label.length).toBeGreaterThan(3)
   })
 
   it('recommend returns task-aware scripted coaching', () => {

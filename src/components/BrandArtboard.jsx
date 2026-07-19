@@ -316,7 +316,7 @@ export default function BrandArtboard({
       )}
 
       <footer className="direction-foot">
-        Creative Companion · Brand identity ·{' '}
+        Creative Companion · Direction sheet ·{' '}
         {new Date().toLocaleDateString()}
       </footer>
     </article>
