@@ -851,13 +851,6 @@ function App() {
     flashToast('One step on your desk — complete it when ready')
   }
 
-  const escapeHtml = (s) =>
-    String(s || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-
   const buildCurrentBrandPack = () =>
     buildBrandPackSnapshot({
       project: activeProject,
@@ -942,8 +935,6 @@ function App() {
         : `Image pinned · +${g.gained} XP`
     )
   }
-
-  const downloadExportHtml = () => runExport('html')
 
   const creativeResetItems = [
     {
