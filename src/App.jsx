@@ -1732,9 +1732,6 @@ function App() {
                       toggleBodyDoubling()
                       if (next) {
                         awardAndBroadcast('helper_on', { label: 'Helper' })
-                        flashToast('Helper on')
-                      } else {
-                        flashToast('Helper off')
                       }
                       setMoreOpen(false)
                     }}
@@ -2457,13 +2454,13 @@ function App() {
                         const r = toggleMoodPinInPack(p.id)
                         if (r.ok && r.inPack) added++
                       }
-                      flashToast(
-                        added
-                          ? `Starred ${added} for pack`
-                          : deskMood.filter((m) => m.inPack).length >= 6
+                      if (!added) {
+                        flashToast(
+                          deskMood.filter((m) => m.inPack).length >= 6
                             ? 'Pack full (6 max)'
                             : 'Nothing to star'
-                      )
+                        )
+                      }
                     }}
                   >
                     Star next unpinned
@@ -2474,7 +2471,6 @@ function App() {
                     onClick={() => {
                       const starred = deskMood.filter((m) => m.inPack)
                       starred.forEach((p) => toggleMoodPinInPack(p.id))
-                      flashToast('Cleared pack stars')
                     }}
                   >
                     Clear stars
@@ -2518,7 +2514,6 @@ function App() {
                         if (packIds.length > 1) {
                           useAppStore.getState().reorderPackPins(packIds)
                         }
-                        flashToast('Board order updated')
                       }
                     }
                     return
@@ -2629,12 +2624,6 @@ function App() {
                                 flashToast(
                                   r.error || 'Pack full (6 pins max)'
                                 )
-                              else
-                                flashToast(
-                                  r.inPack
-                                    ? `In pack (${deskMood.filter((m) => m.inPack).length + (r.inPack && !item.inPack ? 1 : 0)}/6)`
-                                    : 'Removed from pack'
-                                )
                             }}
                           >
                             {item.inPack ? '★ Pack' : '☆ Pack'}
@@ -2667,8 +2656,7 @@ function App() {
                                 aria-pressed={!!item.packHero}
                                 onClick={() => {
                                   const r = setPackHeroPin(item.id)
-                                  if (r.ok) flashToast('Hero pin set')
-                                  else flashToast(r.error || 'Could not set hero')
+                                  if (!r.ok) flashToast(r.error || 'Could not set hero')
                                 }}
                               >
                                 Hero
@@ -2810,7 +2798,6 @@ function App() {
                       setBoardLightbox((p) =>
                         p ? { ...p, inPack: r.inPack } : null
                       )
-                      flashToast(r.inPack ? 'In pack' : 'Removed from pack')
                     }
                   }}
                 >
@@ -3249,7 +3236,6 @@ function App() {
                       onClick={() => {
                         const n = normalizeHex(c) || c
                         setColorRole(brandRoleAssign, n)
-                        flashToast(`${brandRoleAssign} → ${n}`)
                       }}
                     ></button>
                   ))}
@@ -3366,7 +3352,6 @@ function App() {
                     if (!pair) return
                     updateBrandField('typeHeading', pair.heading)
                     updateBrandField('typeBody', pair.body)
-                    flashToast(`Type · ${pair.label}`)
                   }}
                 >
                   {TYPE_PAIRS.map((p) => (
@@ -3473,7 +3458,6 @@ function App() {
                       const reader = new FileReader()
                       reader.onload = () => {
                         setLogoImage(reader.result)
-                        flashToast('Mark image added')
                       }
                       reader.readAsDataURL(file)
                     }}
@@ -3485,7 +3469,6 @@ function App() {
                     className="btn btn-ghost"
                     onClick={() => {
                       setLogoImage('')
-                      flashToast('Mark removed')
                     }}
                   >
                     Remove mark
@@ -4065,8 +4048,7 @@ function App() {
                   onClick={() => {
                     if (!activeProject) return
                     const r = archiveProject(activeProject.id)
-                    if (r.ok) flashToast('Project archived')
-                    else flashToast(r.error || 'Could not archive')
+                    if (!r.ok) flashToast(r.error || 'Could not archive')
                   }}
                 >
                   Archive project
@@ -4080,7 +4062,7 @@ function App() {
                       if (!id) return
                       unarchiveProject(Number(id) || id)
                       selectProject(Number(id) || id)
-                      flashToast('Project restored')
+                      /* quiet restore */
                       e.target.value = ''
                     }}
                     aria-label="Restore archived project"

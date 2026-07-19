@@ -1,7 +1,7 @@
 {
   "name": "creative-companion-react",
   "private": true,
-  "version": "0.2.60",
+  "version": "0.2.61",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:perf": "node scripts/perf-budget.mjs",
+    "build:check": "npm run build && npm run test:perf",
     "bump": "node scripts/bump-version.mjs",
     "bump:minor": "node scripts/bump-version.mjs --minor",
     "bump:major": "node scripts/bump-version.mjs --major"
@@ -22,6 +24,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.49.0",
     "@vitejs/plugin-react": "^4.5.2",
     "vite": "^7.0.0",

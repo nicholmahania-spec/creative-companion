@@ -20,6 +20,7 @@ jobs:
       - run: npm run build
         env:
           GITHUB_PAGES: 'true'
+      - run: npm run test:perf
 
   e2e:
     runs-on: ubuntu-latest

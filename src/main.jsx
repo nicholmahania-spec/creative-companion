@@ -9,10 +9,17 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// PWA offline shell (demo-friendly). Failures are silent.
+// PWA: offline shell + cached assets. Desk data is localStorage (works offline).
+// Failures are silent so login still works without SW.
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     const swUrl = `${import.meta.env.BASE_URL}sw.js`
-    navigator.serviceWorker.register(swUrl).catch(() => {})
+    navigator.serviceWorker
+      .register(swUrl)
+      .then((reg) => {
+        // Pick up new shell when a fresh deploy is available
+        if (reg && reg.update) reg.update().catch(() => {})
+      })
+      .catch(() => {})
   })
 }

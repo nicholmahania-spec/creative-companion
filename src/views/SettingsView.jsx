@@ -527,9 +527,14 @@ export default function SettingsView(props) {
               export
               {CLOUD ? ' — with optional cloud sync when configured.' : '.'}
             </p>
+            <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
+              <strong>Offline:</strong> After one online visit, the app shell
+              and assets cache locally. Your desk data is on this device — open
+              Pack and download when offline.
+            </p>
             <p className="panel-hint" style={{ margin: 0 }}>
-              <strong>What&apos;s new:</strong> Print vs Download on Pack,
-              Esc closes overlays, board pin lightbox, Helper Break care.
+              <strong>What&apos;s new:</strong> Quieter toasts, offline shell
+              cache, axe a11y checks in CI, main-bundle perf budget.
             </p>
           </section>
         </div>
