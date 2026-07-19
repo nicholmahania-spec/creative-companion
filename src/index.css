@@ -10282,3 +10282,58 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   /* paper chrome, not heavy glass */
   border-bottom-color: var(--border-hairline);
 }
+
+/* ——— Helper mood tints (expression without multi-PNG) ——— */
+.helper-character-lottie.is-mood-happy,
+.helper-character-fallback.is-mood-happy,
+.buddy-compact-hero.mood-happy .buddy-compact-body {
+  filter: drop-shadow(0 1px 0 rgba(28, 26, 23, 0.06))
+    drop-shadow(0 8px 10px rgba(28, 26, 23, 0.14))
+    saturate(1.08) brightness(1.03);
+}
+
+.helper-character-lottie.is-mood-think,
+.helper-character-fallback.is-mood-think,
+.buddy-compact-hero.mood-think .buddy-compact-body {
+  filter: drop-shadow(0 1px 0 rgba(28, 26, 23, 0.06))
+    drop-shadow(0 8px 10px rgba(28, 26, 23, 0.14))
+    saturate(0.88) hue-rotate(-8deg);
+}
+
+.helper-character-lottie.is-mood-rest,
+.helper-character-fallback.is-mood-rest,
+.buddy-compact-hero.mood-rest .buddy-compact-body {
+  filter: drop-shadow(0 1px 0 rgba(28, 26, 23, 0.05))
+    drop-shadow(0 6px 8px rgba(28, 26, 23, 0.12))
+    saturate(0.82) brightness(0.97);
+}
+
+.buddy-compact-hero.mood-happy {
+  background: #f4f0e4;
+  border-color: rgba(15, 118, 110, 0.2);
+}
+
+.buddy-compact-hero.mood-think {
+  background: #efece6;
+  border-color: rgba(87, 83, 78, 0.22);
+}
+
+.buddy-compact-hero.mood-rest {
+  background: #ebe8e2;
+  border-color: rgba(120, 113, 108, 0.18);
+}
+
+.buddy-fab .helper-character-lottie.is-mood-happy,
+.buddy-fab .helper-character-fallback.is-mood-happy {
+  filter: saturate(1.06) brightness(1.02);
+}
+
+.buddy-fab .helper-character-lottie.is-mood-think,
+.buddy-fab .helper-character-fallback.is-mood-think {
+  filter: saturate(0.9) hue-rotate(-6deg);
+}
+
+.buddy-fab .helper-character-lottie.is-mood-rest,
+.buddy-fab .helper-character-fallback.is-mood-rest {
+  filter: saturate(0.85) brightness(0.98);
+}

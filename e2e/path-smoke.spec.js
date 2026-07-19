@@ -95,10 +95,16 @@ test.describe('Creative Companion path smoke', () => {
       page.locator('h1.page-title', { hasText: 'Pack' })
     ).toBeVisible({ timeout: 10000 })
     await expect(
-      page.getByRole('button', { name: /Download vector PDF|Download PDF/i })
+      page.getByRole('button', { name: 'Download vector PDF', exact: true })
     ).toBeVisible()
     await expect(
       page.getByRole('button', { name: 'Print / Save as PDF', exact: true })
     ).toBeVisible()
+
+    // Digit key 2 → Work (when not in a field)
+    await page.keyboard.press('2')
+    await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible({
+      timeout: 8000,
+    })
   })
 })

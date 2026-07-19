@@ -561,6 +561,21 @@ function App() {
         setDemoTour(null)
         return
       }
+      if (deskConfirm) {
+        e.preventDefault()
+        setDeskConfirm(null)
+        return
+      }
+      if (forceBreakConsentOpen) {
+        e.preventDefault()
+        setForceBreakConsentOpen(false)
+        return
+      }
+      if (thinPackPrompt) {
+        e.preventDefault()
+        setThinPackPrompt(null)
+        return
+      }
       if (boardLightbox) {
         e.preventDefault()
         setBoardLightbox(null)
@@ -590,6 +605,9 @@ function App() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [
     demoTour,
+    deskConfirm,
+    forceBreakConsentOpen,
+    thinPackPrompt,
     boardLightbox,
     exportPanel,
     showBreakdown,
@@ -2012,8 +2030,8 @@ function App() {
                     aria-current={active ? 'step' : undefined}
                     aria-label={`Step ${step.num}: ${label}. ${plain}${
                       hasContent ? ' Has content.' : ''
-                    }`}
-                    title={plain}
+                    } Press ${step.num} to open.`}
+                    title={`${plain} · key ${step.num}`}
                   >
                     <span className="journey-num" aria-hidden="true">
                       {step.num}

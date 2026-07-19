@@ -34,4 +34,9 @@ describe('helperLottieReels (photoreal full-body)', () => {
     expect(happy.layers[0].ks.p.a).toBe(1)
     expect(happy.layers[0].ks.p.k.length).toBeGreaterThan(1)
   })
+
+  it('asset dimensions match compressed body PNG', () => {
+    expect(HELPER_BODY_ASSET.w).toBe(560)
+    expect(HELPER_BODY_ASSET.h).toBe(662)
+  })
 })

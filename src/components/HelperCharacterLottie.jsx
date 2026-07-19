@@ -95,15 +95,18 @@ export default function HelperCharacterLottie({
     }
   }, [mood, reduceMotion, isBody])
 
+  const moodClass = `is-mood-${String(mood || 'idle').toLowerCase()}`
+
   if (useFallback && fallbackSrc) {
     return (
       <img
-        className={`helper-character-fallback ${className}`.trim()}
+        className={`helper-character-fallback ${moodClass} ${className}`.trim()}
         src={fallbackSrc}
         alt=""
         width={w}
         height={h}
         draggable={false}
+        data-mood={mood || 'idle'}
         style={
           isBody
             ? {
@@ -121,7 +124,8 @@ export default function HelperCharacterLottie({
   return (
     <span
       ref={hostRef}
-      className={`helper-character-lottie helper-character-lottie--${shape} ${className}`.trim()}
+      className={`helper-character-lottie helper-character-lottie--${shape} ${moodClass} ${className}`.trim()}
+      data-mood={mood || 'idle'}
       style={{
         width: w,
         height: h,
