@@ -1,4 +1,4 @@
-/** Lazy-loaded Spark tool */
+/** Lazy-loaded Ideate step (sparks) */
 export default function SparkView({
   setActiveView,
   nextTask,
@@ -13,9 +13,9 @@ export default function SparkView({
       <button
         type="button"
         className="back-link"
-        onClick={() => setActiveView('flow')}
+        onClick={() => setActiveView('studio')}
       >
-        ← Work
+        ← Research
       </button>
       <div className="flow-top">
         <div>
@@ -23,6 +23,15 @@ export default function SparkView({
           <p className="page-sub">
             Step 3 — many directions fast. Pin sparks to Research. No judging.
           </p>
+        </div>
+        <div className="finish-secondary-row">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setActiveView('flow')}
+          >
+            Go to Sketch
+          </button>
         </div>
       </div>
       {nextTask && (
@@ -57,14 +66,14 @@ export default function SparkView({
               setActiveView('studio')
             }}
           >
-            Pin to Board
+            Pin to Research
           </button>
           <button
             type="button"
             className="btn btn-ghost"
             onClick={() => setActiveView('flow')}
           >
-            Done — back to Work
+            Done — Go to Sketch
           </button>
         </div>
       </section>

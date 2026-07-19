@@ -124,6 +124,7 @@ function App() {
   const bodyDoubling = useAppStore((s) => s.bodyDoubling)
   const onboarded = useAppStore((s) => s.onboarded)
   const currentSpark = useAppStore((s) => s.currentSpark)
+  const sparkIndex = useAppStore((s) => s.sparkIndex)
   const addProject = useAppStore((s) => s.addProject)
   const setCurrentProject = useAppStore((s) => s.setCurrentProject)
   const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
@@ -1431,7 +1432,7 @@ function App() {
         dueDate: '',
       })
       awardAndBroadcast('task_capture', { label: 'First step' })
-      flashToast('Your desk is ready — complete the first step')
+      flashToast('Your desk is ready — define the goal, then Research')
     } else {
       // Empty real desk — no sample clients
       clearToEmpty()
@@ -1448,12 +1449,14 @@ function App() {
     setShowOnboarding(false)
     // Quiet first session — Helper stays off until user opts in (Tools or Settings)
     setBodyDoubling(false)
-    setActiveView('flow')
-    // Land attention on the capture strip (new-user “type something” path)
+    // Start at Define — path step 1
+    setActiveView('project')
+    // Land attention on name / brief (define the work first)
     window.setTimeout(() => {
       const el =
-        document.getElementById('desk-capture') ||
-        document.getElementById('current-step')
+        document.getElementById('project-name') ||
+        document.getElementById('project-brief') ||
+        document.getElementById('desk-capture')
       try {
         el?.focus?.({ preventScroll: false })
         el?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
@@ -2280,7 +2283,13 @@ function App() {
                     activeProject?.brief?.trim()
                   )) ||
                 (step.id === 'research' && deskMood.length > 0) ||
-                (step.id === 'ideate' && false) ||
+                (step.id === 'ideate' &&
+                  !!(
+                    (sparkIndex || 0) > 0 ||
+                    deskMood.some(
+                      (m) => m.type === 'quote' || /spark/i.test(m.note || '')
+                    )
+                  )) ||
                 (step.id === 'sketch' && deskTasks.length > 0) ||
                 (step.id === 'design' &&
                   !!(
@@ -3204,18 +3213,18 @@ function App() {
               <button
                 type="button"
                 className="text-link"
-                onClick={() => setActiveView('flow')}
+                onClick={() => setActiveView('project')}
               >
-                Work
+                ← Define
               </button>
               <span aria-hidden="true"> · </span>
               <button
                 type="button"
                 className="btn btn-primary"
                 style={{ marginLeft: '0.35rem' }}
-                onClick={() => setActiveView('brand')}
+                onClick={() => setActiveView('spark')}
               >
-                {i18nT(locale, 'ui.goToSystem')}
+                {i18nT(locale, 'ui.openIdeate') || 'Go to Ideate'}
               </button>
             </p>
           </div>
@@ -3412,16 +3421,16 @@ function App() {
                 <button
                   type="button"
                   className="text-link"
-                  onClick={() => setActiveView('studio')}
+                  onClick={() => setActiveView('flow')}
                 >
-                  Board
+                  ← Sketch
                 </button>
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => setActiveView('finish')}
+                  onClick={() => setActiveView('review')}
                 >
-                  {i18nT(locale, 'ui.openPack')}
+                  {i18nT(locale, 'ui.openReview') || 'Go to Review'}
                 </button>
               </div>
             </div>
@@ -4002,14 +4011,14 @@ function App() {
                 className="btn btn-secondary"
                 onClick={() => setActiveView('studio')}
               >
-                Board
+                Research
               </button>
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => setActiveView('finish')}
+                onClick={() => setActiveView('review')}
               >
-                Go to Pack
+                {i18nT(locale, 'ui.openReview') || 'Go to Review'}
               </button>
             </div>
           </div>
@@ -4039,10 +4048,34 @@ function App() {
                   className="btn btn-primary"
                   onClick={() => setActiveView('finish')}
                 >
-                  Go to Deliver
+                  {i18nT(locale, 'ui.openPack') || 'Go to Deliver'}
                 </button>
               </div>
             </div>
+            <section className="panel brand-section">
+              <div className="brand-section-label">Pack preview</div>
+              <p className="panel-hint" style={{ marginTop: 0 }}>
+                What a reviewer sees — same sheet as Deliver.
+              </p>
+              <div
+                className="pack-preview-thumb pack-preview-artboard review-pack-preview"
+                tabIndex={0}
+                role="region"
+                aria-label="Review pack preview — scroll for full sheet"
+              >
+                <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
+                  <BrandArtboard
+                    id="review-preview-artboard"
+                    project={activeProject || {}}
+                    palette={projectPalette}
+                    pins={deskMood.filter((m) => m.inPack)}
+                    editable={false}
+                    hideWatermark={hidePackWatermark}
+                  />
+                </Suspense>
+                <p className="pack-preview-scroll-hint">Scroll preview for full sheet</p>
+              </div>
+            </section>
             <section className="panel brand-section">
               <div className="brand-section-label">Review checklist</div>
               <ul className="process-guide-checks review-checks">
@@ -4442,31 +4475,43 @@ function App() {
               <ol className="finish-map">
                 <li>
                   <button type="button" className="text-link" onClick={() => setActiveView('project')}>
-                    1 Project
+                    1 Define
                   </button>
-                  {' — '}name the work
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('flow')}>
-                    2 Work
-                  </button>
-                  {' — '}one step at a time
+                  {' — '}goal · brief · who
                 </li>
                 <li>
                   <button type="button" className="text-link" onClick={() => setActiveView('studio')}>
-                    3 Board
+                    2 Research
                   </button>
                   {' — '}refs · star up to 6
                 </li>
                 <li>
+                  <button type="button" className="text-link" onClick={() => setActiveView('spark')}>
+                    3 Ideate
+                  </button>
+                  {' — '}many directions
+                </li>
+                <li>
+                  <button type="button" className="text-link" onClick={() => setActiveView('flow')}>
+                    4 Sketch
+                  </button>
+                  {' — '}one step at a time
+                </li>
+                <li>
                   <button type="button" className="text-link" onClick={() => setActiveView('brand')}>
-                    4 System
+                    5 Design
                   </button>
                   {' — '}artboard · voice · type
                 </li>
                 <li>
-                  <strong>5 Pack</strong>
-                  {' — '}you are here · download
+                  <button type="button" className="text-link" onClick={() => setActiveView('review')}>
+                    6 Review
+                  </button>
+                  {' — '}critique · readiness
+                </li>
+                <li>
+                  <strong>7 Deliver</strong>
+                  {' — '}you are here · vector PDF
                 </li>
               </ol>
             </section>
@@ -4552,9 +4597,9 @@ function App() {
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => setActiveView('flow')}
+                  onClick={() => setActiveView('studio')}
                 >
-                  {i18nT(locale, 'ui.openWork')}
+                  {i18nT(locale, 'ui.openWork') || 'Go to Research'}
                 </button>
                 <button
                   type="button"
@@ -4569,7 +4614,7 @@ function App() {
             <section className="panel brand-section brand-kits-panel">
               <div className="brand-section-label">Direction kits</div>
               <p className="panel-hint" style={{ marginTop: 0 }}>
-                Seed palette, voice, type, and do/don&apos;t — then edit on System.
+                Seed palette, voice, type, and do/don&apos;t — then polish on Design.
               </p>
               <div className="brand-kits-grid">
                 {BRAND_KITS.map((kit) => (
@@ -4738,20 +4783,21 @@ function App() {
               </div>
 
               <div className="field-block" style={{ marginBottom: '1rem' }}>
-                <label className="field-label">Brief / positioning</label>
-                <p className="project-brief-readonly">
-                  {activeProject?.brief?.trim()
-                    ? activeProject.brief
-                    : 'No brief yet — write it on System (Tagline tab).'}
+                <label className="field-label" htmlFor="project-brief">
+                  Brief / positioning
+                </label>
+                <textarea
+                  id="project-brief"
+                  className="field-input project-brief-input"
+                  rows={4}
+                  value={activeProject?.brief || ''}
+                  onChange={(e) => updateProjectBrief(e.target.value)}
+                  placeholder="Who is it for? What should they feel or do? One clear goal."
+                  aria-label="Brief and positioning"
+                />
+                <p className="panel-hint" style={{ marginTop: '0.35rem' }}>
+                  Feeds Design positioning and the pack leave-behind.
                 </p>
-                <button
-                  type="button"
-                  className="text-link"
-                  style={{ marginTop: '0.35rem' }}
-                  onClick={() => goSystemSection('essentials')}
-                >
-                  Edit on System
-                </button>
               </div>
 
               <div className="project-actions-row" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -4838,19 +4884,9 @@ function App() {
                 <button
                   type="button"
                   className="link-row is-primary"
-                  onClick={() => setActiveView('flow')}
-                >
-                  <span className="link-row-label">2 · Work</span>
-                  <span className="link-row-meta">
-                    {deskTasks.filter((t) => !t.completed).length} to do
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="link-row"
                   onClick={() => setActiveView('studio')}
                 >
-                  <span className="link-row-label">3 · Board</span>
+                  <span className="link-row-label">2 · Research</span>
                   <span className="link-row-meta">
                     {deskMood.filter((m) => m.inPack).length} pack pins
                   </span>
@@ -4858,18 +4894,44 @@ function App() {
                 <button
                   type="button"
                   className="link-row"
+                  onClick={() => setActiveView('spark')}
+                >
+                  <span className="link-row-label">3 · Ideate</span>
+                  <span className="link-row-meta">Sparks &amp; directions</span>
+                </button>
+                <button
+                  type="button"
+                  className="link-row"
+                  onClick={() => setActiveView('flow')}
+                >
+                  <span className="link-row-label">4 · Sketch</span>
+                  <span className="link-row-meta">
+                    {deskTasks.filter((t) => !t.completed).length} open steps
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="link-row"
                   onClick={() => setActiveView('brand')}
                 >
-                  <span className="link-row-label">4 · System</span>
-                  <span className="link-row-meta">Artboard &amp; roles</span>
+                  <span className="link-row-label">5 · Design</span>
+                  <span className="link-row-meta">Artboard &amp; rules</span>
+                </button>
+                <button
+                  type="button"
+                  className="link-row"
+                  onClick={() => setActiveView('review')}
+                >
+                  <span className="link-row-label">6 · Review</span>
+                  <span className="link-row-meta">Critique &amp; readiness</span>
                 </button>
                 <button
                   type="button"
                   className="link-row"
                   onClick={() => setActiveView('finish')}
                 >
-                  <span className="link-row-label">5 · Pack</span>
-                  <span className="link-row-meta">Preview &amp; download</span>
+                  <span className="link-row-label">7 · Deliver</span>
+                  <span className="link-row-meta">Vector PDF &amp; print</span>
                 </button>
               </div>
 
@@ -4963,22 +5025,26 @@ function App() {
             <h2 id="demo-tour-title" style={{ marginTop: 0 }}>
               {
                 [
-                  '1 · Project',
-                  '2 · Work',
-                  '3 · Board',
-                  '4 · System',
-                  '5 · Pack',
+                  '1 · Define',
+                  '2 · Research',
+                  '3 · Ideate',
+                  '4 · Sketch',
+                  '5 · Design',
+                  '6 · Review',
+                  '7 · Deliver',
                 ][demoTour.step] || 'Tour'
               }
             </h2>
             <p className="view-lede">
               {
                 [
-                  'Name and readiness live here. Soft Signal is already filled — open Work when ready.',
+                  'Name, brief, and readiness. Soft Signal is filled — go to Research next.',
+                  'Upload refs. Star up to 6 ★ for the pack. Stay curious, timed.',
+                  'Many directions fast. Pin sparks you like — no judging yet.',
                   'One current step owns the fold. Complete it; the queue waits underneath.',
-                  'Refs and ★ Pack pins (max 6) feed System and the pack PDF.',
-                  'Live artboard + Edit tabs. Roles, type, voice — then go to Pack.',
-                  'Print / Save as PDF for client handoff. Download is a preview-match raster.',
+                  'Live artboard + type, color, voice. Polish rules — then Review.',
+                  'Show the pack. Ask if it feels right. Fix from real feedback.',
+                  'Download vector PDF or print for client handoff. Note what you learned.',
                 ][demoTour.step]
               }
             </p>
@@ -4987,10 +5053,18 @@ function App() {
                 type="button"
                 className="btn btn-primary"
                 onClick={() => {
-                  const views = ['project', 'flow', 'studio', 'brand', 'finish']
+                  const views = [
+                    'project',
+                    'studio',
+                    'spark',
+                    'flow',
+                    'brand',
+                    'review',
+                    'finish',
+                  ]
                   const s = demoTour.step
                   setActiveView(views[s])
-                  if (s >= 4) setDemoTour(null)
+                  if (s >= 6) setDemoTour(null)
                   else setDemoTour({ step: s + 1 })
                 }}
               >
@@ -5139,14 +5213,14 @@ function App() {
               ? ` · Next: ${String(resumeBanner.step).slice(0, 48)}${
                   String(resumeBanner.step).length > 48 ? '…' : ''
                 }`
-              : ' · Capture a step on Work'}
+              : ' · Capture a step on Sketch'}
           </p>
           <div className="resume-banner-actions">
             <button
               type="button"
               className="btn btn-primary btn-sm"
               onClick={() => {
-                setActiveView('flow')
+                setActiveView(resumeBanner.step ? 'flow' : 'project')
                 setResumeBanner(null)
               }}
             >
@@ -5470,6 +5544,7 @@ function App() {
           pulseWin={buddyWinPulse}
           showProgress={showProgress}
           helperQuiet={!!prefs.helperQuiet}
+          onNavigate={setActiveView}
           activity={{
             view: activeView,
             projectName: activeProject?.name || '',

@@ -44,7 +44,7 @@ export default function CalendarView(props) {
             className="back-link"
             onClick={() => setActiveView('flow')}
           >
-            ← Work
+            ← Path
           </button>
 
           <div className="flow-top">

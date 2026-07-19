@@ -58,6 +58,17 @@ const HELPER_FALLBACK = BODY_SRC || FAB_SRC
  * Process: Define → Research → Ideate → Sketch → Design → Review → Deliver.
  * Break Kit: meds, todos, tasks packed into forced-break windows.
  */
+/** Map process phase ids → app views */
+const PROCESS_VIEW = {
+  define: 'project',
+  research: 'studio',
+  ideate: 'spark',
+  sketch: 'flow',
+  design: 'brand',
+  review: 'review',
+  deliver: 'finish',
+}
+
 export default function BuddyMate({
   onClose,
   isFocusRunning = false,
@@ -69,6 +80,7 @@ export default function BuddyMate({
   activity = {},
   showProgress = false,
   helperQuiet = false,
+  onNavigate,
 }) {
   const breakKit = useAppStore((s) => s.breakKit)
   const addBreakKitItem = useAppStore((s) => s.addBreakKitItem)
@@ -572,6 +584,10 @@ export default function BuddyMate({
         refine: 'review',
       }
       const phase = map[key] || key
+      const view = PROCESS_VIEW[phase]
+      if (view && typeof onNavigate === 'function') {
+        onNavigate(view)
+      }
       void replyAi(phase, phase[0].toUpperCase() + phase.slice(1))
       return
     }

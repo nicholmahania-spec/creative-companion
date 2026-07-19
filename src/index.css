@@ -9269,6 +9269,13 @@ html[data-reduce-motion='true'] *::after {
   font-weight: 600;
   color: var(--accent-growth);
 }
+.project-brief-input {
+  width: 100%;
+  min-height: 5.5rem;
+  resize: vertical;
+  line-height: 1.45;
+  font-family: inherit;
+}
 .project-brief-readonly {
   margin: 0;
   padding: 0.65rem 0.75rem;
