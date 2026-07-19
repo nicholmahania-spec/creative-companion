@@ -4490,6 +4490,24 @@ html[data-reduce-motion='true'] *::after {
   border-color: rgba(79, 70, 229, 0.25) !important;
 }
 
+.buddy-process {
+  padding: 0.35rem 0.65rem 0.15rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.buddy-process-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  margin-bottom: 0.25rem;
+}
+
+@media (min-width: 360px) {
+  .buddy-process-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 .buddy-time-strip {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;

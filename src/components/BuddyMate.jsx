@@ -4,6 +4,7 @@ import {
   buddyMood,
   confirmLine,
   describeActivity,
+  designProcessTip,
   formatClock,
   formatDuration,
   greetingLine,
@@ -14,20 +15,20 @@ import {
   loadWellness,
   markBreak,
   markWellness,
-  minutesAtDesk,
   minutesSinceBreak,
   overdueKinds,
   pickBuddySpot,
   progressLine,
   spotStyle,
   timeBlindLine,
+  twoDirectionsTip,
   wellnessLine,
   whatTimeLine,
 } from '../lib/buddy'
 
 /**
- * Interactive body-double buddy (rule-based, not AI chat).
- * Tracks current page + step for helpful tips; body care; time/hyperfocus.
+ * Design buddy — UI/UX & graphic design coach (scripted system persona).
+ * Process: clarify → structure → visual → refine. Tracks craft context.
  */
 export default function BuddyMate({
   onClose,
@@ -295,29 +296,47 @@ export default function BuddyMate({
       pushBuddy(
         `${progressLine('stuck')} ${
           a.nextTaskTitle
-            ? `Your step is "${String(a.nextTaskTitle).slice(0, 40)}". Make it smaller or walk away for two minutes.`
+            ? `Current step: "${String(a.nextTaskTitle).slice(0, 40)}".`
             : ''
         }`.trim()
       )
       return
     }
     if (key === 'tip') {
-      pushYou('Give me a tip')
+      pushYou('Coach me on this')
+      pushBuddy(`${describeActivity(a)} ${activityTip(a)}`, { move: true })
+      return
+    }
+    if (key === 'clarify') {
+      pushYou('Clarify')
+      pushBuddy(designProcessTip('clarify', a), { move: true })
+      return
+    }
+    if (key === 'structure') {
+      pushYou('Structure')
+      pushBuddy(designProcessTip('structure', a), { move: true })
+      return
+    }
+    if (key === 'visual') {
+      pushYou('Visual')
+      pushBuddy(designProcessTip('visual', a), { move: true })
+      return
+    }
+    if (key === 'refine') {
+      pushYou('Refine')
       pushBuddy(
-        `${describeActivity(a)} ${activityTip(a)}`,
+        `${designProcessTip('refine', a)} ${twoDirectionsTip(a)}`,
         { move: true }
       )
       return
     }
     if (key === 'time') {
       pushYou('What time is it?')
-      pushBuddy(
-        `${whatTimeLine(sessionStart)} ${describeActivity(a)}`
-      )
+      pushBuddy(`${whatTimeLine(sessionStart)} ${describeActivity(a)}`)
       return
     }
     if (key === 'ok') {
-      pushYou("I'm okay for now")
+      pushYou('I am good for now')
       pushBuddy(activityTip(a))
       return
     }
@@ -332,10 +351,10 @@ export default function BuddyMate({
       pushBuddy(
         [
           describeActivity(a),
-          `You've been here about ${desk}, roughly ${br} minutes since a real break.`,
+          `Desk time ~${desk}; about ${br} min since a real break.`,
           completedCount > 0
-            ? `You finished ${completedCount} step${completedCount === 1 ? '' : 's'}. That's not nothing.`
-            : "You haven't checked anything off yet — and showing up still counts.",
+            ? `Closed ${completedCount} step${completedCount === 1 ? '' : 's'} this session.`
+            : 'No steps closed yet — define one shippable outcome.',
           activityTip(a),
         ].join(' ')
       )
@@ -407,11 +426,11 @@ export default function BuddyMate({
         <div className="buddy-identity">
           <BuddyFace mood={mood} reduceMotion={reduceMotion} />
           <div>
-            <strong className="buddy-name">Your buddy</strong>
+            <strong className="buddy-name">Design buddy</strong>
             <span className="buddy-status">
               {isFocusRunning
-                ? `Timer on${focusLabel ? ` · ${focusLabel}` : ''} · with you`
-                : trackingLabel}
+                ? `Focus${focusLabel ? ` · ${focusLabel}` : ''} · craft mode`
+                : `UI/UX coach · ${trackingLabel}`}
             </span>
           </div>
         </div>
@@ -435,8 +454,8 @@ export default function BuddyMate({
         </div>
       </div>
 
-      <div className="buddy-tracking" title="What I'm paying attention to">
-        <span className="buddy-tracking-label">I see you on</span>
+      <div className="buddy-tracking" title="Craft context I am tracking">
+        <span className="buddy-tracking-label">Tracking</span>
         <strong className="buddy-tracking-value">{trackingLabel}</strong>
       </div>
 
@@ -513,27 +532,61 @@ export default function BuddyMate({
         </button>
       </div>
 
+      <div className="buddy-process" aria-label="Design process">
+        <p className="buddy-wellness-label">Design process</p>
+        <div className="buddy-process-row">
+          <button
+            type="button"
+            className="buddy-quick-btn buddy-quick-tip"
+            onClick={() => reply('clarify')}
+          >
+            1 Clarify
+          </button>
+          <button
+            type="button"
+            className="buddy-quick-btn buddy-quick-tip"
+            onClick={() => reply('structure')}
+          >
+            2 Structure
+          </button>
+          <button
+            type="button"
+            className="buddy-quick-btn buddy-quick-tip"
+            onClick={() => reply('visual')}
+          >
+            3 Visual
+          </button>
+          <button
+            type="button"
+            className="buddy-quick-btn buddy-quick-tip"
+            onClick={() => reply('refine')}
+          >
+            4 Refine
+          </button>
+        </div>
+      </div>
+
       <div className="buddy-quick">
         <button
           type="button"
-          className="buddy-quick-btn buddy-quick-tip"
+          className="buddy-quick-btn"
           onClick={() => reply('tip')}
         >
-          Tip for this
+          Coach me
         </button>
         <button
           type="button"
           className="buddy-quick-btn"
           onClick={() => reply('time')}
         >
-          What time is it?
+          Time check
         </button>
         <button
           type="button"
           className="buddy-quick-btn"
           onClick={() => reply('progress')}
         >
-          How am I doing?
+          Progress
         </button>
         <button
           type="button"
@@ -547,14 +600,14 @@ export default function BuddyMate({
           className="buddy-quick-btn"
           onClick={() => reply('break')}
         >
-          I need a break
+          Need a break
         </button>
         <button
           type="button"
           className="buddy-quick-btn"
           onClick={() => reply('ok')}
         >
-          I&apos;m okay
+          I&apos;m good
         </button>
       </div>
     </div>

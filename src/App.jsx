@@ -1140,9 +1140,9 @@ function App() {
                     }}
                   >
                     <strong>
-                      {bodyDoubling ? 'Buddy off' : 'Your buddy'}
+                      {bodyDoubling ? 'Design buddy off' : 'Design buddy'}
                     </strong>
-                    <span>Friend who watches time and checks in</span>
+                    <span>UI/UX coach · clarify → refine</span>
                   </button>
                   <button
                     type="button"
@@ -1718,7 +1718,7 @@ function App() {
                   className="text-link"
                   onClick={() => toggleBodyDoubling()}
                 >
-                  {bodyDoubling ? 'Buddy off' : 'Desk buddy'}
+                  {bodyDoubling ? 'Design buddy off' : 'Design buddy'}
                 </button>
               </div>
             </section>
@@ -3075,10 +3075,10 @@ function App() {
               <div className="brand-section-label">Presence &amp; sound</div>
               <div className="settings-row">
                 <div>
-                  <strong>Desk buddy (body double)</strong>
+                  <strong>Design buddy</strong>
                   <span>
-                    Little bot for time blindness &amp; hyperfocus — clock, break
-                    watch, water/food/bathroom, progress cheers
+                    UI/UX coach: clarify → structure → visual → refine. Also
+                    tracks time, breaks, and body check-ins while you craft
                   </span>
                 </div>
                 <button
