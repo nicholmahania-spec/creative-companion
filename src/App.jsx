@@ -1960,6 +1960,9 @@ function App() {
                       ? 'Capture the next shippable outcome below — or break a big project into micro-steps.'
                       : 'Capture one shippable step below, or break the project into micro-steps.'}
                   </p>
+                  <p className="work-pack-destination">
+                    Path ends at Pack — print a brand leave-behind when ready.
+                  </p>
                   <div className="step-focus-actions" style={{ marginTop: '0.85rem' }}>
                     {deskTasks.length === 0 && (
                       <button
@@ -3566,17 +3569,23 @@ function App() {
 
             <section className="panel brand-section finish-hero-panel pack-hero">
               <div className="pack-layout">
-                <div className="pack-preview-thumb pack-preview-artboard">
+                <div
+                  className="pack-preview-thumb pack-preview-artboard"
+                  tabIndex={0}
+                  role="region"
+                  aria-label="Pack preview — scroll for full sheet"
+                >
                   <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
-            <BrandArtboard
-                    id="pack-preview-artboard"
-                    project={activeProject || {}}
-                    palette={projectPalette}
-                    pins={deskMood.filter((m) => m.inPack)}
-                    editable={false}
-                    hideWatermark={hidePackWatermark}
-                  />
-            </Suspense>
+                    <BrandArtboard
+                      id="pack-preview-artboard"
+                      project={activeProject || {}}
+                      palette={projectPalette}
+                      pins={deskMood.filter((m) => m.inPack)}
+                      editable={false}
+                      hideWatermark={hidePackWatermark}
+                    />
+                  </Suspense>
+                  <p className="pack-preview-scroll-hint">Scroll preview for full sheet</p>
                 </div>
                 <div className="pack-meta">
                   {(() => {
@@ -4257,6 +4266,11 @@ function App() {
         >
           <div className="export-panel demo-tour-panel">
             <p className="onboard-eyebrow">Soft Signal · sample tour</p>
+            <div className="demo-tour-dots" aria-hidden="true">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <span key={i} className={i <= demoTour.step ? 'is-on' : ''} />
+              ))}
+            </div>
             <h2 id="demo-tour-title" style={{ marginTop: 0 }}>
               {
                 [

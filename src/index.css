@@ -9515,3 +9515,70 @@ html[data-reduce-motion='true'] *::after {
 .demo-tour-overlay .view-lede {
   margin-bottom: 1rem;
 }
+
+
+/* ——— Redline v1.1 craft ——— */
+.pack-view .pack-preview-artboard {
+  max-height: min(70vh, 52rem);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.pack-preview-scroll-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+}
+.pack-view .pack-ready-list {
+  font-size: 0.88rem;
+  opacity: 0.92;
+}
+.pack-view .brand-section-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+/* Artboard paper hierarchy */
+.brand-artboard .export-identity-cover {
+  padding: 1.5rem 1.35rem 1.25rem !important;
+}
+.brand-artboard .direction-title {
+  font-size: clamp(1.65rem, 3vw, 2.1rem) !important;
+  letter-spacing: -0.04em;
+  line-height: 1.12;
+}
+.brand-artboard .kicker {
+  font-size: 0.7rem !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  opacity: 0.72;
+}
+.brand-artboard.direction-sheet {
+  padding: 1.25rem 1.35rem 1.5rem !important;
+}
+.brand-artboard .direction-pins {
+  gap: 0.55rem;
+}
+.demo-tour-dots {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0 0 0.85rem;
+}
+.demo-tour-dots span {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+}
+.demo-tour-dots span.is-on {
+  background: var(--accent-growth);
+  border-color: var(--accent-growth);
+}
+.work-pack-destination {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
