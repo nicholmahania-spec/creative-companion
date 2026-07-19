@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import useAppStore from './store/useAppStore'
 import {
   DEFAULT_PALETTE,
@@ -125,8 +125,38 @@ function App() {
   const breakKitRef = useRef(breakKit)
   breakKitRef.current = breakKit
 
-  // ——— Ephemeral UI (not persisted) ———
-  const [activeView, setActiveView] = useState('flow')
+  // ——— Ephemeral UI ———
+  // activeView is restored from localStorage so refresh does not always dump on Work (path 2)
+  const [activeView, setActiveViewRaw] = useState(() => {
+    try {
+      const raw = localStorage.getItem('cc-active-view')
+      const allowed = new Set([
+        'flow',
+        'project',
+        'studio',
+        'brand',
+        'finish',
+        'concept',
+        'spark',
+        'insights',
+        'calendar',
+        'settings',
+      ])
+      if (raw && allowed.has(raw)) return raw
+    } catch {
+      /* private mode */
+    }
+    // First visit: Project (path 1), not Work
+    return 'project'
+  })
+  const setActiveView = useCallback((view) => {
+    setActiveViewRaw(view)
+    try {
+      if (view) localStorage.setItem('cc-active-view', String(view))
+    } catch {
+      /* ignore */
+    }
+  }, [])
   const [quickInput, setQuickInput] = useState('')
   const [captureEnergy, setCaptureEnergy] = useState('med')
   const [focusLeft, setFocusLeft] = useState(POMODORO_WORK_MIN * 60)
