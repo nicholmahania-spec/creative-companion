@@ -27,6 +27,7 @@ import {
 } from './lib/version'
 import LoginPage from './components/LoginPage'
 import BuddyMate from './components/BuddyMate'
+import ConceptPipeline from './components/ConceptPipeline'
 import {
   isSessionOpen,
   closeSession,
@@ -1170,6 +1171,18 @@ function App() {
                   </button>
 
                   <p className="more-menu-group">Brand &amp; time</p>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setActiveView('concept')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <strong>Concept pipeline</strong>
+                    <span>Sketches → lock plan → fill Brand</span>
+                  </button>
                   <button
                     type="button"
                     role="menuitem"
@@ -2510,6 +2523,17 @@ function App() {
           </div>
         )}
 
+        {/* ===== CONCEPT PIPELINE ===== */}
+        {activeView === 'concept' && (
+          <ConceptPipeline
+            projectPills={projectPills}
+            openTasks={openTasks}
+            flashToast={flashToast}
+            onGoWork={() => setActiveView('flow')}
+            onGoBrand={() => setActiveView('brand')}
+          />
+        )}
+
         {/* ===== BRAND IDENTITY TEMPLATE ===== */}
         {activeView === 'brand' && (
           <div className="brand-layout surface-document">
@@ -2530,13 +2554,22 @@ function App() {
                   export a shareable pack.
                 </p>
               </div>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={openExportPanel}
-              >
-                Export pack
-              </button>
+              <div className="brand-template-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActiveView('concept')}
+                >
+                  Concept pipeline
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={openExportPanel}
+                >
+                  Export pack
+                </button>
+              </div>
             </div>
 
             {/* Live identity cover */}
@@ -3508,6 +3541,14 @@ function App() {
                   <span className="link-row-meta">
                     {deskMood.length} pins
                   </span>
+                </button>
+                <button
+                  type="button"
+                  className="link-row"
+                  onClick={() => setActiveView('concept')}
+                >
+                  <span className="link-row-label">Concept pipeline</span>
+                  <span className="link-row-meta">Sketches → Brand</span>
                 </button>
                 <button
                   type="button"

@@ -66,6 +66,17 @@ export const defaultBrandIdentity = {
   typeBody: 'Plus Jakarta Sans Regular',
   doUse: '',
   dontUse: '',
+  /** Step-by-step concept pack (fills brand when applied) */
+  conceptPackage: {
+    audience: '',
+    outcome: '',
+    concept: '',
+    voice: '',
+    visualDirection: '',
+    doUse: '',
+    dontUse: '',
+    notes: '',
+  },
 }
 
 export const seedProjects = [
@@ -156,6 +167,11 @@ const useAppStore = create(
       currentProjectId: 1,
       tasks: seedTasks,
       moodItems: seedMoodItems,
+      /**
+       * Concept pipeline assets:
+       * stage: sketch | develop | iteration | locked
+       */
+      conceptItems: [],
       theme: 'warm', // warm | deep
       bodyDoubling: false,
       onboarded: false,
@@ -316,6 +332,7 @@ const useAppStore = create(
           currentProjectId: s.currentProjectId,
           tasks: s.tasks,
           moodItems: s.moodItems,
+          conceptItems: s.conceptItems || [],
           theme: s.theme,
           prefs: s.prefs,
           sparkIndex: s.sparkIndex,
@@ -360,6 +377,7 @@ const useAppStore = create(
           currentProjectId,
           tasks: data.tasks,
           moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
+          conceptItems: Array.isArray(data.conceptItems) ? data.conceptItems : [],
           theme: data.theme === 'deep' ? 'deep' : 'warm',
           prefs: {
             soundEnabled: true,
@@ -408,7 +426,8 @@ const useAppStore = create(
 
       /** Delete a project and its tasks/pins. Keeps at least one project. */
       deleteProject: (id) => {
-        const { projects, tasks, moodItems, currentProjectId } = get()
+        const { projects, tasks, moodItems, conceptItems, currentProjectId } =
+          get()
         if (projects.length <= 1) {
           return { ok: false, error: 'Keep at least one project' }
         }
@@ -426,6 +445,7 @@ const useAppStore = create(
           currentProjectId: nextId,
           tasks: tasks.filter((t) => t.projectId !== id),
           moodItems: moodItems.filter((m) => m.projectId !== id),
+          conceptItems: (conceptItems || []).filter((c) => c.projectId !== id),
         })
         return { ok: true }
       },
@@ -436,6 +456,7 @@ const useAppStore = create(
           currentProjectId: 1,
           tasks: seedTasks.map((t) => ({ ...t })),
           moodItems: seedMoodItems.map((m) => ({ ...m })),
+          conceptItems: [],
           theme: 'warm',
           bodyDoubling: false,
           onboarded: false,
@@ -476,6 +497,7 @@ const useAppStore = create(
           currentProjectId: id,
           tasks: [],
           moodItems: [],
+          conceptItems: [],
           bodyDoubling: false,
           onboarded: true,
           sparkIndex: 0,
@@ -611,6 +633,143 @@ const useAppStore = create(
 
       setMoodItems: (moodItems) => set({ moodItems }),
 
+      // ——— Concept pipeline (sketches → develop → iterate → lock → package) ———
+
+      addConceptItem: (item) =>
+        set((state) => ({
+          conceptItems: [
+            {
+              id: item.id || Date.now() + Math.random(),
+              projectId: item.projectId ?? state.currentProjectId,
+              stage: item.stage || 'sketch',
+              visual: item.visual || '',
+              title: item.title || '',
+              note: item.note || '',
+              stepId: item.stepId || null,
+              parentId: item.parentId || null,
+              createdAt: item.createdAt || new Date().toISOString(),
+            },
+            ...(state.conceptItems || []),
+          ],
+        })),
+
+      updateConceptItem: (id, patch) =>
+        set((state) => ({
+          conceptItems: (state.conceptItems || []).map((c) =>
+            c.id === id ? { ...c, ...patch } : c
+          ),
+        })),
+
+      removeConceptItem: (id) =>
+        set((state) => ({
+          conceptItems: (state.conceptItems || []).filter(
+            (c) => c.id !== id && c.parentId !== id
+          ),
+        })),
+
+      /** Move sketch into develop lane */
+      selectSketchToDevelop: (id) =>
+        set((state) => ({
+          conceptItems: (state.conceptItems || []).map((c) =>
+            c.id === id ? { ...c, stage: 'develop' } : c
+          ),
+        })),
+
+      /** Lock idea into concept plan */
+      lockConceptItem: (id, planNote = '') =>
+        set((state) => ({
+          conceptItems: (state.conceptItems || []).map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  stage: 'locked',
+                  note: planNote?.trim() ? planNote.trim() : c.note,
+                }
+              : c
+          ),
+        })),
+
+      updateConceptPackageField: (field, value) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const pack = {
+              audience: '',
+              outcome: '',
+              concept: '',
+              voice: '',
+              visualDirection: '',
+              doUse: '',
+              dontUse: '',
+              notes: '',
+              ...(p.conceptPackage || {}),
+              [field]: value,
+            }
+            return { ...p, conceptPackage: pack }
+          }),
+        })),
+
+      /**
+       * Apply concept package + locked notes into Brand identity fields.
+       * Returns patch summary for toast/UI.
+       */
+      applyConceptPackageToBrand: () => {
+        const { projects, currentProjectId, conceptItems } = get()
+        const project = projects.find((p) => p.id === currentProjectId)
+        if (!project) return { ok: false, error: 'No project' }
+
+        const draft = {
+          audience: '',
+          outcome: '',
+          concept: '',
+          voice: '',
+          visualDirection: '',
+          doUse: '',
+          dontUse: '',
+          notes: '',
+          ...(project.conceptPackage || {}),
+        }
+        const locked = (conceptItems || []).filter(
+          (c) =>
+            c.projectId === currentProjectId &&
+            (c.stage === 'locked' || c.stage === 'develop')
+        )
+
+        const briefParts = []
+        if (draft.audience?.trim())
+          briefParts.push(`Audience: ${draft.audience.trim()}`)
+        if (draft.outcome?.trim())
+          briefParts.push(`Outcome: ${draft.outcome.trim()}`)
+        if (draft.notes?.trim()) briefParts.push(draft.notes.trim())
+        const lockedLines = locked
+          .map((c) => c.note || c.title)
+          .filter(Boolean)
+          .slice(0, 10)
+        if (lockedLines.length) {
+          briefParts.push(`Concept plan: ${lockedLines.join(' · ')}`)
+        }
+
+        const nextBrief =
+          briefParts.join('\n\n') || project.brief || ''
+
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== currentProjectId) return p
+            return {
+              ...p,
+              brief: nextBrief,
+              tagline: draft.concept?.trim() || p.tagline || '',
+              voice: draft.voice?.trim() || p.voice || '',
+              logoDirection:
+                draft.visualDirection?.trim() || p.logoDirection || '',
+              doUse: draft.doUse?.trim() || p.doUse || '',
+              dontUse: draft.dontUse?.trim() || p.dontUse || '',
+            }
+          }),
+        }))
+        return { ok: true }
+      },
+
       nextSpark: () =>
         set((state) => {
           const next = (state.sparkIndex + 1) % sparkPrompts.length
@@ -650,6 +809,7 @@ const useAppStore = create(
         currentProjectId: state.currentProjectId,
         tasks: state.tasks,
         moodItems: state.moodItems,
+        conceptItems: state.conceptItems || [],
         theme: state.theme,
         onboarded: state.onboarded,
         sparkIndex: state.sparkIndex,
