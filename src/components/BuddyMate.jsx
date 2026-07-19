@@ -681,7 +681,10 @@ export default function BuddyMate({
     )
   }
 
-  // ——— Expanded: compact chat card + face (not full-body billboard) ———
+  const recentMsgs = messages.slice(-4)
+  const latestBuddy = [...messages].reverse().find((m) => m.from === 'buddy')
+
+  // ——— Expanded: refined compact coach card ———
   return (
     <div
       ref={shellRef}
@@ -697,21 +700,26 @@ export default function BuddyMate({
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div className="buddy-compact">
-        <img
-          className={`buddy-compact-face mood-${mood}${
-            reduceMotion ? ' no-motion' : ''
-          }`}
-          src={FAB_SRC}
-          alt=""
-          draggable={false}
-        />
         <div className="buddy-compact-card">
-          <div className="buddy-compact-head">
-            <div className="buddy-compact-titles">
-              <strong className="bf-name">Little Helper</strong>
-              <span className="bf-status" title={statusLine}>
-                {statusLine}
-              </span>
+          <header className="buddy-compact-head">
+            <div className="buddy-compact-identity">
+              <img
+                className={`buddy-compact-face mood-${mood}${
+                  reduceMotion ? ' no-motion' : ''
+                }`}
+                src={FAB_SRC}
+                alt=""
+                draggable={false}
+              />
+              <div className="buddy-compact-titles">
+                <div className="buddy-compact-name-row">
+                  <strong className="bf-name">Little Helper</strong>
+                  <span className="buddy-compact-lv">Lv {xp.level}</span>
+                </div>
+                <span className="bf-status" title={statusLine}>
+                  {statusLine}
+                </span>
+              </div>
             </div>
             <div className="buddy-top-actions">
               <button
@@ -738,11 +746,12 @@ export default function BuddyMate({
                 ×
               </button>
             </div>
-          </div>
+          </header>
 
           <div
-            className="bf-xp buddy-compact-xp"
-            aria-label={`${game.xp || 0} XP`}
+            className="buddy-compact-xp"
+            aria-label={`${game.xp || 0} XP, level ${xp.level}`}
+            title={gameSummaryLine(game)}
           >
             <div className="buddy-xp-bar">
               <div
@@ -750,7 +759,6 @@ export default function BuddyMate({
                 style={{ width: `${xp.percent}%` }}
               />
             </div>
-            <span className="buddy-xp-label">Lv {xp.level}</span>
           </div>
 
           {levelBurst && (
@@ -767,39 +775,45 @@ export default function BuddyMate({
             </div>
           )}
 
-          <div className="bf-chat buddy-compact-chat" ref={listRef}>
-            {messages.slice(-6).map((m) => (
-              <div key={m.id} className={`bf-line bf-line-${m.from}`}>
+          <div className="buddy-compact-chat" ref={listRef}>
+            {recentMsgs.length === 0 && latestBuddy && (
+              <div className="buddy-msg buddy-msg-buddy">{latestBuddy.text}</div>
+            )}
+            {recentMsgs.map((m) => (
+              <div
+                key={m.id}
+                className={`buddy-msg buddy-msg-${m.from}`}
+              >
                 {m.text}
               </div>
             ))}
           </div>
 
-          <div className="bf-pockets" aria-label="Main actions">
+          <div className="buddy-compact-actions" aria-label="Main actions">
             <button
               type="button"
-              className="bf-pocket-btn is-accent"
+              className="buddy-act buddy-act-primary"
               onClick={() => reply('recommend')}
             >
               Recommend
             </button>
             <button
               type="button"
-              className="bf-pocket-btn is-accent"
+              className="buddy-act buddy-act-primary"
               onClick={() => reply('critique')}
             >
               Critique
             </button>
             <button
               type="button"
-              className="bf-pocket-btn"
+              className="buddy-act"
               onClick={() => reply('stuck')}
             >
               Stuck
             </button>
             <button
               type="button"
-              className="bf-pocket-btn"
+              className="buddy-act"
               onClick={() => reply('break')}
             >
               Break
@@ -814,7 +828,7 @@ export default function BuddyMate({
             onClick={() => setShowMore((v) => !v)}
             aria-expanded={showMore}
           >
-            {showMore ? 'Less' : needsCare ? 'More · care' : 'More'}
+            {showMore ? 'Show less' : needsCare ? 'Care & tools' : 'More tools'}
             <span className="buddy-more-chevron" aria-hidden="true">
               {showMore ? '▴' : '▾'}
             </span>
