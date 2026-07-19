@@ -44,7 +44,7 @@ import {
 import useAppStore from '../store/useAppStore'
 
 const BUDDY_BASE = `${import.meta.env.BASE_URL}buddy/`
-const BODY_SRC = `${BUDDY_BASE}helper-body-raw.jpg`
+const BODY_SRC = `${BUDDY_BASE}helper-body.png`
 const FAB_SRC = `${BUDDY_BASE}helper-fab.jpg`
 
 /**
