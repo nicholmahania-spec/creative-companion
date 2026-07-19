@@ -45,7 +45,6 @@ import {
 import useAppStore from '../store/useAppStore'
 
 const BUDDY_BASE = `${import.meta.env.BASE_URL}buddy/`
-const BODY_SRC = `${BUDDY_BASE}helper-body.png`
 const FAB_SRC = `${BUDDY_BASE}helper-fab.jpg`
 
 /**
@@ -128,8 +127,12 @@ export default function BuddyMate({
 
   const minimize = useCallback(() => {
     clearAutoMin()
-    setExpanded(false)
     setShowMore(false)
+    // Always dock FAB bottom-right so it doesn't vanish off-screen
+    const dock = defaultBuddySpot('fab')
+    spotIdRef.current = dock.id
+    setSpot(dock)
+    setExpanded(false)
   }, [clearAutoMin])
 
   /** System pop: show briefly, then tuck away so desk stays clear */
@@ -165,14 +168,12 @@ export default function BuddyMate({
 
   const openPanel = useCallback(() => {
     clearAutoMin()
-    setSpot((prev) => {
-      const next =
-        pickBuddySpot(prev?.id || spotIdRef.current, 'panel') ||
-        defaultBuddySpot('panel')
-      spotIdRef.current = next.id
-      return next
-    })
+    // Expand from current corner — prefer bottom-right for forms
+    const dock = defaultBuddySpot('panel')
+    spotIdRef.current = dock.id
+    setSpot(dock)
     setHop((n) => n + 1)
+    setShowMore(false)
     setExpanded(true)
     setHasUnread(false)
   }, [clearAutoMin])
@@ -584,53 +585,7 @@ export default function BuddyMate({
     return place
   }, [activityLive])
 
-  const posStyle = spotStyle(spot)
-  const xp = xpProgress(game.xp || 0)
-  const badgeList = (game.badges || [])
-    .map((id) => BADGES[id])
-    .filter(Boolean)
-    .slice(-6)
-
-  if (!expanded) {
-    return (
-      <button
-        type="button"
-        className={`buddy-fab buddy-float is-cute${
-          hyper === 'hard' || hyper === 'strong' || hasUnread ? ' is-alert' : ''
-        }${levelBurst ? ' is-levelup' : ''}${
-          hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''
-        }${hasUnread ? ' has-unread' : ''}`}
-        style={posStyle}
-        key={`fab-${spot?.id}-${hop}`}
-        onClick={openPanel}
-        aria-label={`Open design buddy, level ${xp.level}${
-          hasUnread ? ', new message' : ''
-        }`}
-        title={
-          hasUnread
-            ? 'New tip from Helper — click to open'
-            : `Level ${xp.level} · ${game.xp || 0} XP · click to chat`
-        }
-      >
-        <img
-          className="buddy-fab-img"
-          src={FAB_SRC}
-          alt=""
-          width={72}
-          height={72}
-          draggable={false}
-        />
-        <span className="buddy-fab-level">{xp.level}</span>
-        {(overdue.length > 0 ||
-          hyper === 'hard' ||
-          hyper === 'strong' ||
-          hasUnread) && (
-          <span className="buddy-fab-dot" aria-hidden="true" />
-        )}
-      </button>
-    )
-  }
-
+  // Hooks MUST stay above any early return (minimize was crashing → blank screen)
   const openKit = useMemo(
     () => (breakKit || []).filter((i) => isBreakItemOpen(i)),
     [breakKit]
@@ -639,7 +594,7 @@ export default function BuddyMate({
     overdue.length > 0 || hyper === 'hard' || hyper === 'strong'
   const statusLine = isFocusRunning
     ? `Focus${focusLabel ? ` · ${focusLabel}` : ''} · ${trackingLabel}`
-    : `${trackingLabel} · ${formatDuration(deskMs)} desk · ${sinceBreak}m break`
+    : `${trackingLabel}`
 
   const submitKitItem = () => {
     const res = addBreakKitItem({
@@ -657,7 +612,7 @@ export default function BuddyMate({
     }
     pushYou(`Break kit: ${res.item.title}`)
     pushBuddy(
-      `Parked "${res.item.title}" (${kindMeta(res.item.kind).label}, ~${res.item.minutes}m). When a break locks, I'll pack items that fit the clock.`,
+      `Parked "${res.item.title}" (${kindMeta(res.item.kind).label}, ~${res.item.minutes}m).`,
       { move: false }
     )
     setKitTitle('')
@@ -665,123 +620,155 @@ export default function BuddyMate({
 
   const markKitDone = (item) => {
     completeBreakKitItem(item.id)
-    applyGameResult(
-      awardAndBroadcast('break_kit', { label: item.title })
-    )
+    applyGameResult(awardAndBroadcast('break_kit', { label: item.title }))
     pushYou(`Done: ${item.title}`)
     pushBuddy(
       item.recurring
-        ? `Logged "${item.title}" for today. It'll resurface tomorrow if it's a daily.`
-        : `Crossed off "${item.title}". Nice use of a break.`,
+        ? `Logged "${item.title}" for today.`
+        : `Crossed off "${item.title}".`,
       { move: false }
     )
   }
 
+  const posStyle = spotStyle(spot) || spotStyle(defaultBuddySpot('fab'))
+  const xp = xpProgress(game.xp || 0)
+  const badgeList = (game.badges || [])
+    .map((id) => BADGES[id])
+    .filter(Boolean)
+    .slice(-6)
+
+  // ——— Minimized: small corner FAB only ———
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        className={`buddy-fab buddy-float is-cute${
+          hyper === 'hard' || hyper === 'strong' || hasUnread ? ' is-alert' : ''
+        }${levelBurst ? ' is-levelup' : ''}${
+          hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''
+        }${hasUnread ? ' has-unread' : ''}`}
+        style={posStyle}
+        key={`fab-${spot?.id || 'br'}-${hop}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          openPanel()
+        }}
+        aria-label={`Open design buddy, level ${xp.level}${
+          hasUnread ? ', new message' : ''
+        }`}
+        title={
+          hasUnread
+            ? 'New tip — click to open'
+            : `Lv ${xp.level} · click to chat`
+        }
+      >
+        <img
+          className="buddy-fab-img"
+          src={FAB_SRC}
+          alt=""
+          width={64}
+          height={64}
+          draggable={false}
+        />
+        <span className="buddy-fab-level">{xp.level}</span>
+        {(overdue.length > 0 ||
+          hyper === 'hard' ||
+          hyper === 'strong' ||
+          hasUnread) && (
+          <span className="buddy-fab-dot" aria-hidden="true" />
+        )}
+      </button>
+    )
+  }
+
+  // ——— Expanded: compact chat card + face (not full-body billboard) ———
   return (
     <div
       ref={shellRef}
-      className={`buddy-shell buddy-float is-docked${
+      className={`buddy-shell buddy-float is-compact-dock${
         isFocusRunning ? ' is-focus' : ''
       }${hyper === 'hard' || hyper === 'strong' ? ' is-hyper' : ''}${
         levelBurst ? ' is-levelup' : ''
       }${hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''}`}
       style={posStyle}
-      key={`panel-${spot?.id}-${hop}`}
+      key={`panel-${spot?.id || 'br'}-${hop}`}
       role="complementary"
       aria-label="Little Helper design buddy"
+      onPointerDown={(e) => e.stopPropagation()}
     >
-      {/* Floating chrome — not part of the character body */}
-      <div className="buddy-shell-chrome">
-        <span className="buddy-shell-lv" title={gameSummaryLine(game)}>
-          Lv {xp.level}
-        </span>
-        <div className="buddy-top-actions">
-          <button
-            type="button"
-            className="buddy-icon-btn"
-            onClick={minimize}
-            aria-label="Minimize buddy — keep working"
-            title="Tuck away (desk stays free)"
-          >
-            –
-          </button>
-          <button
-            type="button"
-            className="buddy-icon-btn"
-            onClick={onClose}
-            aria-label="Turn off body double"
-          >
-            ×
-          </button>
-        </div>
-      </div>
-
-      {/* One full mascot — chat sits on the belly of the art */}
-      <div
-        className={`buddy-mascot mood-${mood}${
-          reduceMotion ? ' no-motion' : ''
-        }`}
-      >
+      <div className="buddy-compact">
         <img
-          className="buddy-mascot-art"
-          src={BODY_SRC}
+          className={`buddy-compact-face mood-${mood}${
+            reduceMotion ? ' no-motion' : ''
+          }`}
+          src={FAB_SRC}
           alt=""
           draggable={false}
         />
-        {mood === 'nudge' && (
-          <span className="buddy-mascot-bang" aria-hidden="true">
-            !
-          </span>
-        )}
-        {mood === 'cheer' && (
-          <>
-            <span className="buddy-mascot-heart h1" aria-hidden="true">
-              ♡
-            </span>
-            <span className="buddy-mascot-heart h2" aria-hidden="true">
-              ♡
-            </span>
-          </>
-        )}
-
-        <div className="buddy-belly-ui">
-          <div className="bf-belly-meta">
-            <strong className="bf-name">Little Helper</strong>
-            <span className="bf-status" title={statusLine}>
-              {statusLine}
-            </span>
-            <div
-              className="bf-xp"
-              aria-label={`${game.xp || 0} XP`}
-              title={gameSummaryLine(game)}
-            >
-              <div className="buddy-xp-bar">
-                <div
-                  className="buddy-xp-fill"
-                  style={{ width: `${xp.percent}%` }}
-                />
-              </div>
+        <div className="buddy-compact-card">
+          <div className="buddy-compact-head">
+            <div className="buddy-compact-titles">
+              <strong className="bf-name">Little Helper</strong>
+              <span className="bf-status" title={statusLine}>
+                {statusLine}
+              </span>
             </div>
+            <div className="buddy-top-actions">
+              <button
+                type="button"
+                className="buddy-icon-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  minimize()
+                }}
+                aria-label="Minimize buddy"
+                title="Tuck away"
+              >
+                –
+              </button>
+              <button
+                type="button"
+                className="buddy-icon-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onClose?.()
+                }}
+                aria-label="Turn off helper"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="bf-xp buddy-compact-xp"
+            aria-label={`${game.xp || 0} XP`}
+          >
+            <div className="buddy-xp-bar">
+              <div
+                className="buddy-xp-fill"
+                style={{ width: `${xp.percent}%` }}
+              />
+            </div>
+            <span className="buddy-xp-label">Lv {xp.level}</span>
           </div>
 
           {levelBurst && (
             <p className="buddy-levelup-banner bf-levelup" role="status">
-              Level {xp.level}! ✨
+              Level {xp.level}!
             </p>
           )}
 
-          {(hyper === 'soft' || hyper === 'strong' || hyper === 'hard') && (
+          {(hyper === 'strong' || hyper === 'hard') && (
             <div className={`buddy-hyper-banner bf-hyper level-${hyper}`}>
               {hyper === 'hard'
                 ? 'Long stretch — break is okay'
-                : hyper === 'strong'
-                  ? 'Deep focus · body might want a minute'
-                  : '25+ min · stretch when you can'}
+                : 'Deep focus · take a minute soon'}
             </div>
           )}
 
-          <div className="bf-chat" ref={listRef}>
-            {messages.map((m) => (
+          <div className="bf-chat buddy-compact-chat" ref={listRef}>
+            {messages.slice(-6).map((m) => (
               <div key={m.id} className={`bf-line bf-line-${m.from}`}>
                 {m.text}
               </div>
@@ -818,292 +805,207 @@ export default function BuddyMate({
               Break
             </button>
           </div>
-        </div>
-      </div>
 
-      <button
-        type="button"
-        className={`buddy-more-toggle bf-more${
-          (needsCare || openKit.length > 0) && !showMore ? ' has-nudge' : ''
-        }${showMore ? ' is-open' : ''}`}
-        onClick={() => setShowMore((v) => !v)}
-        aria-expanded={showMore}
-      >
-        {showMore
-          ? 'Less'
-          : openKit.length > 0
-            ? `More · kit ${openKit.length}`
-            : needsCare
-              ? 'More · care'
-              : 'More'}
-        <span className="buddy-more-chevron" aria-hidden="true">
-          {showMore ? '▴' : '▾'}
-        </span>
-      </button>
+          <button
+            type="button"
+            className={`buddy-more-toggle bf-more${
+              needsCare && !showMore ? ' has-nudge' : ''
+            }${showMore ? ' is-open' : ''}`}
+            onClick={() => setShowMore((v) => !v)}
+            aria-expanded={showMore}
+          >
+            {showMore ? 'Less' : needsCare ? 'More · care' : 'More'}
+            <span className="buddy-more-chevron" aria-hidden="true">
+              {showMore ? '▴' : '▾'}
+            </span>
+          </button>
 
-      {showMore && (
-        <div className="buddy-more bf-more-panel" id="buddy-more-panel">
-          {/* Break Kit — primary life list for forced breaks */}
-          <div className="buddy-kit" aria-label="Break kit">
-            <p className="buddy-wellness-label">Break kit</p>
-            <p className="buddy-kit-hint">
-              Meds, to-dos, errands — I pack what fits when a break locks.
-            </p>
-            <div className="buddy-kit-add">
-              <input
-                className="buddy-kit-input"
-                value={kitTitle}
-                onChange={(e) => setKitTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    submitKitItem()
-                  }
-                }}
-                placeholder="e.g. take ADHD meds, water plants…"
-                aria-label="Break kit item title"
-                maxLength={120}
-              />
-              <div className="buddy-kit-row">
-                <select
-                  className="buddy-kit-select"
-                  value={kitKind}
-                  onChange={(e) => {
-                    const k = e.target.value
-                    setKitKind(k)
-                    const meta = kindMeta(k)
-                    setKitMinutes(meta.defaultMinutes)
-                  }}
-                  aria-label="Item type"
-                >
-                  {BREAK_KINDS.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.icon} {k.label}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className="buddy-kit-select buddy-kit-mins"
-                  value={kitMinutes}
-                  onChange={(e) => setKitMinutes(Number(e.target.value))}
-                  aria-label="Minutes it takes"
-                >
-                  {[1, 2, 3, 5, 7, 10, 15].map((m) => (
-                    <option key={m} value={m}>
-                      ~{m}m
-                    </option>
-                  ))}
-                </select>
+          {showMore && (
+            <div className="buddy-more bf-more-panel is-inline">
+              <div className="buddy-wellness">
+                <p className="buddy-wellness-label">Body</p>
+                <div className="buddy-wellness-row">
+                  <button
+                    type="button"
+                    className={`buddy-check${
+                      overdue.includes('water') ? ' is-due' : ''
+                    }`}
+                    onClick={() => logWellness('water', 'I drank some water')}
+                  >
+                    Water
+                  </button>
+                  <button
+                    type="button"
+                    className={`buddy-check${
+                      overdue.includes('food') ? ' is-due' : ''
+                    }`}
+                    onClick={() => logWellness('food', 'I ate something')}
+                  >
+                    Food
+                  </button>
+                  <button
+                    type="button"
+                    className={`buddy-check${
+                      overdue.includes('bathroom') ? ' is-due' : ''
+                    }`}
+                    onClick={() =>
+                      logWellness('bathroom', 'I went to the bathroom')
+                    }
+                  >
+                    Bathroom
+                  </button>
+                </div>
                 <button
                   type="button"
-                  className="buddy-kit-add-btn"
-                  onClick={submitKitItem}
+                  className="buddy-break-btn"
+                  onClick={logBreak}
                 >
-                  Add
+                  Logged a real break
                 </button>
               </div>
-            </div>
-            {openKit.length === 0 ? (
-              <p className="buddy-kit-empty">
-                Kit empty — add something you can finish in a 5–10 min break.
-              </p>
-            ) : (
-              <ul className="buddy-kit-list">
-                {openKit.slice(0, 12).map((item) => {
-                  const meta = kindMeta(item.kind)
-                  return (
-                    <li key={item.id} className="buddy-kit-item">
-                      <button
-                        type="button"
-                        className="buddy-kit-done"
-                        onClick={() => markKitDone(item)}
-                        title="Mark done"
-                        aria-label={`Done: ${item.title}`}
-                      >
-                        ○
-                      </button>
-                      <span className="buddy-kit-text">
-                        <span className="buddy-kit-meta">
-                          {meta.icon} {meta.label} · ~{item.minutes}m
-                          {item.recurring ? ' · daily' : ''}
-                        </span>
-                        <strong>{item.title}</strong>
-                      </span>
-                      <button
-                        type="button"
-                        className="buddy-kit-remove"
-                        onClick={() => removeBreakKitItem(item.id)}
-                        aria-label={`Remove ${item.title}`}
-                      >
-                        ×
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </div>
 
-          <div className="buddy-time-strip" aria-live="polite">
-            <div className="buddy-time-block">
-              <span className="buddy-time-label">Now</span>
-              <strong className="buddy-time-value">
-                {formatClock(new Date(now))}
-              </strong>
-            </div>
-            <div className="buddy-time-block">
-              <span className="buddy-time-label">Desk</span>
-              <strong className="buddy-time-value">
-                {formatDuration(deskMs)}
-              </strong>
-            </div>
-            <div className="buddy-time-block">
-              <span className="buddy-time-label">Break</span>
-              <strong
-                className={`buddy-time-value${
-                  hyper === 'hard' || hyper === 'strong' ? ' is-warn' : ''
-                }`}
-              >
-                {sinceBreak}m
-              </strong>
-            </div>
-          </div>
+              <div className="buddy-kit" aria-label="Break kit">
+                <p className="buddy-wellness-label">Break kit</p>
+                <div className="buddy-kit-add">
+                  <input
+                    className="buddy-kit-input"
+                    value={kitTitle}
+                    onChange={(e) => setKitTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        submitKitItem()
+                      }
+                    }}
+                    placeholder="Add med / to-do for breaks…"
+                    aria-label="Break kit item"
+                    maxLength={120}
+                  />
+                  <div className="buddy-kit-row">
+                    <select
+                      className="buddy-kit-select"
+                      value={kitKind}
+                      onChange={(e) => {
+                        const k = e.target.value
+                        setKitKind(k)
+                        setKitMinutes(kindMeta(k).defaultMinutes)
+                      }}
+                      aria-label="Type"
+                    >
+                      {BREAK_KINDS.map((k) => (
+                        <option key={k.id} value={k.id}>
+                          {k.icon} {k.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="buddy-kit-add-btn"
+                      onClick={submitKitItem}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+                {openKit.length > 0 && (
+                  <ul className="buddy-kit-list">
+                    {openKit.slice(0, 6).map((item) => {
+                      const meta = kindMeta(item.kind)
+                      return (
+                        <li key={item.id} className="buddy-kit-item">
+                          <button
+                            type="button"
+                            className="buddy-kit-done"
+                            onClick={() => markKitDone(item)}
+                            aria-label={`Done: ${item.title}`}
+                          >
+                            ○
+                          </button>
+                          <span className="buddy-kit-text">
+                            <span className="buddy-kit-meta">
+                              {meta.icon} ~{item.minutes}m
+                            </span>
+                            <strong>{item.title}</strong>
+                          </span>
+                          <button
+                            type="button"
+                            className="buddy-kit-remove"
+                            onClick={() => removeBreakKitItem(item.id)}
+                            aria-label={`Remove ${item.title}`}
+                          >
+                            ×
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
 
-          <div className="buddy-game-stats">
-            <span>🔥 {game.dayStreak || 0}d</span>
-            <span>✓ {game.totalSteps || 0} steps</span>
-            <span>⏱ {game.totalBreaks || 0} breaks</span>
-            <span>🎯 {game.totalPomodoros || 0} focus</span>
-          </div>
-          {badgeList.length > 0 && (
-            <div className="buddy-badges" aria-label="Badges">
-              {badgeList.map((b) => (
-                <span
-                  key={b.id}
-                  className="buddy-badge"
-                  title={`${b.name}: ${b.desc}`}
+              <div className="buddy-process" aria-label="Process">
+                <p className="buddy-wellness-label">Process</p>
+                <div className="buddy-process-row">
+                  {['clarify', 'structure', 'visual', 'refine'].map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      className="buddy-quick-btn"
+                      onClick={() => reply(k)}
+                    >
+                      {k[0].toUpperCase() + k.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="buddy-quick">
+                <button
+                  type="button"
+                  className="buddy-quick-btn"
+                  onClick={() => reply('full')}
                 >
-                  {b.icon}
-                </span>
-              ))}
+                  Full roast
+                </button>
+                <button
+                  type="button"
+                  className="buddy-quick-btn"
+                  onClick={() => reply('tip')}
+                >
+                  Coach
+                </button>
+                <button
+                  type="button"
+                  className="buddy-quick-btn"
+                  onClick={() => reply('time')}
+                >
+                  Time
+                </button>
+                <button
+                  type="button"
+                  className="buddy-quick-btn"
+                  onClick={() => reply('progress')}
+                >
+                  Progress
+                </button>
+              </div>
+
+              {badgeList.length > 0 && (
+                <div className="buddy-badges" aria-label="Badges">
+                  {badgeList.map((b) => (
+                    <span
+                      key={b.id}
+                      className="buddy-badge"
+                      title={`${b.name}: ${b.desc}`}
+                    >
+                      {b.icon}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-
-          <div className="buddy-wellness">
-            <p className="buddy-wellness-label">Body check</p>
-            <div className="buddy-wellness-row">
-              <button
-                type="button"
-                className={`buddy-check${
-                  overdue.includes('water') ? ' is-due' : ''
-                }`}
-                onClick={() => logWellness('water', 'I drank some water')}
-              >
-                Water
-              </button>
-              <button
-                type="button"
-                className={`buddy-check${
-                  overdue.includes('food') ? ' is-due' : ''
-                }`}
-                onClick={() => logWellness('food', 'I ate something')}
-              >
-                Food
-              </button>
-              <button
-                type="button"
-                className={`buddy-check${
-                  overdue.includes('bathroom') ? ' is-due' : ''
-                }`}
-                onClick={() =>
-                  logWellness('bathroom', 'I went to the bathroom')
-                }
-              >
-                Bathroom
-              </button>
-            </div>
-            <button
-              type="button"
-              className="buddy-break-btn"
-              onClick={logBreak}
-            >
-              Logged a real break
-            </button>
-          </div>
-
-          <div className="buddy-process" aria-label="Design process">
-            <p className="buddy-wellness-label">Process</p>
-            <div className="buddy-process-row">
-              <button
-                type="button"
-                className="buddy-quick-btn"
-                onClick={() => reply('clarify')}
-              >
-                Clarify
-              </button>
-              <button
-                type="button"
-                className="buddy-quick-btn"
-                onClick={() => reply('structure')}
-              >
-                Structure
-              </button>
-              <button
-                type="button"
-                className="buddy-quick-btn"
-                onClick={() => reply('visual')}
-              >
-                Visual
-              </button>
-              <button
-                type="button"
-                className="buddy-quick-btn"
-                onClick={() => reply('refine')}
-              >
-                Refine
-              </button>
-            </div>
-          </div>
-
-          <div className="buddy-quick">
-            <button
-              type="button"
-              className="buddy-quick-btn"
-              onClick={() => reply('full')}
-            >
-              Full roast
-            </button>
-            <button
-              type="button"
-              className="buddy-quick-btn"
-              onClick={() => reply('tip')}
-            >
-              Coach me
-            </button>
-            <button
-              type="button"
-              className="buddy-quick-btn"
-              onClick={() => reply('time')}
-            >
-              Time
-            </button>
-            <button
-              type="button"
-              className="buddy-quick-btn"
-              onClick={() => reply('progress')}
-            >
-              Progress
-            </button>
-            <button
-              type="button"
-              className="buddy-quick-btn"
-              onClick={() => reply('ok')}
-            >
-              I&apos;m good
-            </button>
-          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

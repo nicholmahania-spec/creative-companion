@@ -6139,15 +6139,141 @@ html[data-reduce-motion='true'] *::after {
   }
 }
 
-/* Expanded helper docks to a corner — never covers the page center */
-.buddy-shell.is-docked {
-  max-width: min(280px, calc(100vw - 1.5rem));
+/* Compact dock: small face + chat card in a corner (desk-safe) */
+.buddy-shell.is-compact-dock {
+  width: min(300px, calc(100vw - 1.25rem));
+  max-width: min(300px, calc(100vw - 1.25rem));
+  pointer-events: none;
 }
 
-@media (max-width: 720px) {
-  .buddy-shell.is-docked {
-    max-width: min(260px, calc(100vw - 1rem));
-  }
+.buddy-shell.is-compact-dock > * {
+  pointer-events: auto;
+}
+
+.buddy-compact {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  filter: drop-shadow(0 10px 22px rgba(15, 23, 42, 0.16));
+}
+
+.buddy-compact-face {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 40%;
+  flex-shrink: 0;
+  background: #f5f1e9;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+.buddy-compact-face:not(.no-motion) {
+  animation: buddyBreathe 4.8s ease-in-out infinite;
+  transform-origin: 50% 80%;
+}
+
+.buddy-compact-card {
+  flex: 1;
+  min-width: 0;
+  max-width: 15.5rem;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: var(--bg-elevated, #fff);
+  border: 1px solid var(--border-subtle, rgba(11, 18, 32, 0.08));
+  box-shadow: var(--shadow-3, 0 12px 28px rgba(15, 23, 42, 0.12));
+  overflow: hidden;
+}
+
+.buddy-compact-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.5rem 0.45rem 0.25rem 0.65rem;
+}
+
+.buddy-compact-titles {
+  min-width: 0;
+}
+
+.buddy-compact-titles .bf-name {
+  font-size: 0.78rem;
+}
+
+.buddy-compact-titles .bf-status {
+  font-size: 0.62rem;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 10.5rem;
+}
+
+.buddy-compact-xp {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.65rem 0.3rem;
+}
+
+.buddy-compact-xp .buddy-xp-bar {
+  flex: 1;
+  height: 4px;
+}
+
+.buddy-compact-xp .buddy-xp-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.buddy-compact-chat {
+  min-height: 4.5rem;
+  max-height: 7.5rem;
+  padding: 0.35rem 0.55rem;
+}
+
+.buddy-compact-card .bf-pockets {
+  padding: 0.3rem 0.45rem 0.2rem;
+  margin: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.buddy-compact-card .bf-more {
+  width: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  background: transparent;
+  padding: 0.35rem;
+}
+
+.buddy-compact-card .bf-more-panel.is-inline {
+  max-height: min(32vh, 200px);
+  overflow-y: auto;
+  width: 100%;
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  box-shadow: none;
+  margin: 0;
+}
+
+.app.deep .buddy-compact-card {
+  background: var(--bg-elevated);
+  border-color: var(--border-subtle);
+}
+
+.buddy-shell.is-focus .buddy-compact-card {
+  box-shadow: var(--shadow-3), 0 0 0 2px rgba(13, 148, 136, 0.35);
+}
+
+.buddy-shell.is-hyper .buddy-compact-card {
+  box-shadow: var(--shadow-3), 0 0 0 2px rgba(245, 158, 11, 0.4);
 }
 
 .buddy-fab.is-levelup,
