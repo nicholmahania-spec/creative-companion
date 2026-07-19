@@ -2948,7 +2948,7 @@ function App() {
                         if (packIds.length > 1) {
                           useAppStore.getState().reorderPackPins(packIds)
                         }
-                        flashMicro('Board order updated')
+                        flashMicro('Ref order updated')
                       }
                     }
                     return
@@ -3328,7 +3328,7 @@ function App() {
                 <img
                   className="board-lightbox-visual board-lightbox-img"
                   src={pinImageUrl(boardLightbox)}
-                  alt={boardLightbox.note || 'Board pin'}
+                  alt={boardLightbox.note || 'Research pin'}
                   decoding="async"
                 />
               ) : (
