@@ -47,6 +47,39 @@ src/
   lib/dates.js         # deadlines + calendar helpers
 ```
 
+## Deploy (Vercel or Netlify)
+
+Configs are already in the repo (`vercel.json`, `netlify.toml`). SPA rewrites send all routes to `index.html`.
+
+### Vercel (recommended)
+
+1. Sign in at [vercel.com](https://vercel.com) with **GitHub**.
+2. **Add New… → Project** → import **`nicholmahania-spec/creative-companion`**.
+3. If the repo is **private**, grant Vercel access to private repos when prompted.
+4. Framework: **Vite** (auto-detected). Build: `npm run build` · Output: `dist`.
+5. Deploy. Every push to `main` redeploys.
+
+CLI (after `npx vercel login`):
+
+```bash
+npx vercel link
+npx vercel --prod
+```
+
+### Netlify
+
+1. Sign in at [netlify.com](https://netlify.com) with **GitHub**.
+2. **Add new site → Import an existing project** → pick **`creative-companion`**.
+3. Build command: `npm run build` · Publish directory: `dist` (from `netlify.toml`).
+4. Deploy. Pushes to `main` redeploy.
+
+CLI (after `npx netlify login`):
+
+```bash
+npx netlify init
+npx netlify deploy --prod
+```
+
 ## License
 
 Private prototype — update this file if you open-source it.

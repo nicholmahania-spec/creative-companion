@@ -1,8 +1,12 @@
-# Static deploy — Creative Companion demo
+# Creative Companion — Netlify SPA deploy
 [build]
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA: all routes → index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
