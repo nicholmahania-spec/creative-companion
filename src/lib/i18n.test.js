@@ -62,4 +62,16 @@ describe('i18n wordmark + path + catalog', () => {
     expect(en.emptyStepBody.length).toBeLessThan(80)
     expect(en.howDeskWorks).toMatch(/Board/)
   })
+
+  it('locales override thin-pack and confirm chrome', () => {
+    for (const id of ['es', 'fr', 'de', 'pt', 'ja', 'ar']) {
+      const ui = getMessages(id).ui
+      expect(ui.thinPackBanner).toBeTruthy()
+      expect(ui.cancel).toBeTruthy()
+      expect(ui.continuePrint || ui.continue).toBeTruthy()
+      // not English raw for cancel when locale has override
+      if (id === 'es') expect(ui.cancel).toBe('Cancelar')
+      if (id === 'ar') expect(ui.openPack).toMatch(/حزمة/)
+    }
+  })
 })

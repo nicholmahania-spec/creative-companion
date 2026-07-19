@@ -6,16 +6,16 @@
 
 export const HELPER_BODY_ASSET = {
   id: 'helper_body',
-  w: 696,
-  h: 824,
+  w: 560,
+  h: 662,
   u: '',
   p: 'helper-body.png',
   e: 0,
 }
 
 /** Composition sized to character aspect (half-res for crisp SVG scale-down). */
-const COMP_W = 348
-const COMP_H = 412
+const COMP_W = 280
+const COMP_H = 331
 const FR = 30
 const OP = 90 // 3s loop @ 30fps
 

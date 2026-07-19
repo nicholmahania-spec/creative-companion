@@ -4,8 +4,8 @@ import {
   reelForMood,
 } from '../lib/helperLottieReels'
 
-/** Character art aspect (696×824). */
-const BODY_ASPECT = 696 / 824
+/** Character art aspect (560×662). */
+const BODY_ASPECT = 560 / 662
 
 /**
  * Photoreal full-body Helper Lottie reels — mood-driven body motion.
