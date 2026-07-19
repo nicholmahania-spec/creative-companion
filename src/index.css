@@ -5614,7 +5614,7 @@ html[data-reduce-motion='true'] *::after {
   font-weight: 900;
   color: #e07b1a;
   text-shadow: 0 1px 0 #fff;
-  animation: buddyWiggle 0.7s ease-in-out infinite;
+  animation: buddyPing 2.4s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -5624,7 +5624,7 @@ html[data-reduce-motion='true'] *::after {
   font-size: 0.9rem;
   color: #e8a89a;
   pointer-events: none;
-  animation: bfHeartFloat 1.2s ease-out infinite;
+  animation: buddyHeartDrift 2.8s ease-in-out infinite;
 }
 
 .buddy-mascot-heart.h1 {
@@ -5636,28 +5636,29 @@ html[data-reduce-motion='true'] *::after {
   top: 18%;
   right: 12%;
   font-size: 0.72rem;
-  animation-delay: 0.2s;
+  animation-delay: 0.45s;
 }
 
-@keyframes bfHeartFloat {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.85;
-  }
-  50% {
-    transform: translateY(-4px) scale(1.1);
-    opacity: 1;
-  }
+/* Life-like motion on the 3D figure only — chat plate stays steady */
+.buddy-mascot:not(.no-motion) .buddy-mascot-art {
+  transform-origin: 50% 72%;
+  will-change: transform;
 }
 
-.buddy-mascot.mood-idle:not(.no-motion),
-.buddy-mascot.mood-cheer:not(.no-motion) {
-  animation: buddyBob 3.2s ease-in-out infinite;
+.buddy-mascot.mood-idle:not(.no-motion) .buddy-mascot-art {
+  animation: buddyBreathe 4.8s ease-in-out infinite;
 }
 
-.buddy-mascot.mood-nudge:not(.no-motion) {
-  animation: buddyWiggle 0.8s ease-in-out infinite;
+.buddy-mascot.mood-cheer:not(.no-motion) .buddy-mascot-art {
+  animation: buddyHappy 3.2s ease-in-out infinite;
+}
+
+.buddy-mascot.mood-nudge:not(.no-motion) .buddy-mascot-art {
+  animation: buddyGlance 4.2s ease-in-out infinite;
+}
+
+.buddy-mascot.mood-focus:not(.no-motion) .buddy-mascot-art {
+  animation: buddyStill 6.5s ease-in-out infinite;
 }
 
 .buddy-shell.is-focus .buddy-mascot-art {
@@ -6870,39 +6871,97 @@ html[data-reduce-motion='true'] *::after {
   bottom: 28%;
 }
 
-.buddy-helper.mood-idle:not(.no-motion),
+.buddy-helper.mood-idle:not(.no-motion) {
+  animation: buddyBreathe 4.8s ease-in-out infinite;
+}
+
 .buddy-helper.mood-cheer:not(.no-motion) {
-  animation: buddyBob 3.2s ease-in-out infinite;
+  animation: buddyHappy 3.2s ease-in-out infinite;
 }
 
 .buddy-helper.mood-nudge:not(.no-motion) {
-  animation: buddyWiggle 0.9s ease-in-out infinite;
+  animation: buddyGlance 4.2s ease-in-out infinite;
+}
+
+.buddy-helper.mood-focus:not(.no-motion) {
+  animation: buddyStill 6.5s ease-in-out infinite;
 }
 
 .buddy-helper.mood-focus:not(.no-motion) .bh-pencil {
-  animation: buddyPencil 1.4s ease-in-out infinite;
+  animation: buddyPencil 2.4s ease-in-out infinite;
 }
 
-@keyframes buddyBob {
+/* Natural idle: soft breath + tiny float */
+@keyframes buddyBreathe {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
   50% {
-    transform: translateY(-3px);
+    transform: translateY(-2.5px) scale(1.012);
   }
 }
 
-@keyframes buddyWiggle {
+/* Happy: gentle lift, not a shake */
+@keyframes buddyHappy {
   0%,
   100% {
-    transform: rotate(0deg);
+    transform: translateY(0) scale(1);
   }
-  33% {
-    transform: rotate(-4deg);
+  35% {
+    transform: translateY(-4px) scale(1.02);
   }
-  66% {
-    transform: rotate(4deg);
+  55% {
+    transform: translateY(-1.5px) scale(1.01);
+  }
+}
+
+/* Attention: slow glance lean — no frantic wiggle */
+@keyframes buddyGlance {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-1.5px) rotate(-1.4deg);
+  }
+  70% {
+    transform: translateY(-1px) rotate(1.1deg);
+  }
+}
+
+/* Focus: almost still micro-breath */
+@keyframes buddyStill {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-1px) scale(1.004);
+  }
+}
+
+@keyframes buddyPing {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes buddyHeartDrift {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(-5px) scale(1.05);
+    opacity: 0.95;
   }
 }
 
@@ -6912,7 +6971,31 @@ html[data-reduce-motion='true'] *::after {
     transform: rotate(18deg) translateY(0);
   }
   50% {
-    transform: rotate(22deg) translateY(1px);
+    transform: rotate(20deg) translateY(0.5px);
+  }
+}
+
+/* Keep old names as aliases so nothing breaks */
+@keyframes buddyBob {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2.5px) scale(1.012);
+  }
+}
+
+@keyframes buddyWiggle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-1.5px) rotate(-1.4deg);
+  }
+  70% {
+    transform: translateY(-1px) rotate(1.1deg);
   }
 }
 
