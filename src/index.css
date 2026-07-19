@@ -1228,6 +1228,136 @@ h3 {
 
 /* desk-snapshot styles live with project folio block below */
 
+/* Forced Pomodoro break — blocks entire desk */
+.forced-break-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(11, 18, 32, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.forced-break-card {
+  width: min(420px, 100%);
+  padding: 1.75rem 1.5rem 1.5rem;
+  border-radius: calc(var(--radius) + 4px);
+  background: var(--bg-elevated);
+  border: 2px solid rgba(13, 148, 136, 0.45);
+  box-shadow: var(--shadow-3);
+  text-align: center;
+}
+
+.forced-break-eyebrow {
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-growth);
+}
+
+.forced-break-title {
+  margin: 0 0 0.65rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.forced-break-body {
+  margin: 0 0 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.forced-break-tip {
+  margin: 0 0 1.15rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.forced-break-clock {
+  font-size: clamp(2.5rem, 8vw, 3.25rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  color: var(--accent-deep);
+  margin-bottom: 0.65rem;
+}
+
+.forced-break-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  overflow: hidden;
+  margin-bottom: 0.65rem;
+}
+
+.forced-break-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-growth), var(--accent-primary));
+  border-radius: 999px;
+  transition: width 0.35s linear;
+}
+
+.forced-break-hint {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.forced-break-checklist {
+  margin: 0 0 1.15rem;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.forced-break-checklist li {
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  background: var(--bg-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.forced-break-checklist li::before {
+  content: '○ ';
+  color: var(--accent-growth);
+  font-weight: 800;
+}
+
+.forced-break-emergency-link {
+  font-size: 0.78rem;
+}
+
+.forced-break-emergency {
+  margin-top: 0.75rem;
+  text-align: left;
+}
+
+.app.is-break-locked {
+  /* visual cue under overlay */
+  pointer-events: none;
+}
+
+.app.is-break-locked .forced-break-overlay {
+  pointer-events: auto;
+}
+
 /* Numbered journey path — main navigation */
 .header-content-simple {
   grid-template-columns: 1fr auto;

@@ -28,6 +28,12 @@ import {
 import LoginPage from './components/LoginPage'
 import BuddyMate from './components/BuddyMate'
 import ConceptPipeline from './components/ConceptPipeline'
+import ForcedBreakOverlay from './components/ForcedBreakOverlay'
+import {
+  breakMinutesForWork,
+  POMODORO_WORK_MIN,
+} from './lib/forcedBreak'
+import { markBreak, minutesSinceBreak, loadSessionStart, loadWellness } from './lib/buddy'
 import {
   JOURNEY_STEPS,
   journeyIdForView,
@@ -100,11 +106,16 @@ function App() {
   const [activeView, setActiveView] = useState('flow')
   const [quickInput, setQuickInput] = useState('')
   const [captureEnergy, setCaptureEnergy] = useState('med')
-  const [focusLeft, setFocusLeft] = useState(25 * 60)
+  const [focusLeft, setFocusLeft] = useState(POMODORO_WORK_MIN * 60)
   const [isFocusRunning, setIsFocusRunning] = useState(false)
   const [sessionComplete, setSessionComplete] = useState(false)
+  const [pomodoroWorkStartedAt, setPomodoroWorkStartedAt] = useState(null)
+  /** @type {null | { totalSec: number, leftSec: number, workMinutes: number, breakMinutes: number }} */
+  const [forcedBreak, setForcedBreak] = useState(null)
   const focusMinutes = Math.floor(focusLeft / 60)
   const focusSeconds = focusLeft % 60
+  const forcedBreakRef = useRef(null)
+  forcedBreakRef.current = forcedBreak
   const [showCreativeReset, setShowCreativeReset] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardName, setOnboardName] = useState('')
@@ -362,40 +373,123 @@ function App() {
     return () => document.removeEventListener('pointerdown', onPointer)
   }, [moreOpen])
 
-  // Focus countdown
+  const playBreakChime = () => {
+    if (!soundEnabled) return
+    try {
+      const ctx = new AudioContext()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = 660
+      gain.gain.value = 0.06
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start()
+      setTimeout(() => {
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8)
+        setTimeout(() => osc.stop(), 900)
+      }, 200)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const startForcedBreak = (workMinutes, reason = 'pomodoro') => {
+    if (forcedBreakRef.current) return
+    const workMin = Math.max(1, Number(workMinutes) || POMODORO_WORK_MIN)
+    const breakMin = breakMinutesForWork(workMin)
+    const totalSec = breakMin * 60
+    setIsFocusRunning(false)
+    setSessionComplete(true)
+    setPomodoroWorkStartedAt(null)
+    setMoreOpen(false)
+    setAccountOpen(false)
+    setForcedBreak({
+      totalSec,
+      leftSec: totalSec,
+      workMinutes: workMin,
+      breakMinutes: breakMin,
+      reason,
+    })
+    playBreakChime()
+    flashToast(
+      `Break locked: ${breakMin} min (you worked ~${Math.round(workMin)} min)`
+    )
+  }
+
+  const endForcedBreak = (emergency = false) => {
+    markBreak()
+    setForcedBreak(null)
+    setPomodoroWorkStartedAt(Date.now())
+    setFocusLeft(POMODORO_WORK_MIN * 60)
+    setSessionComplete(false)
+    flashToast(
+      emergency
+        ? 'Break ended early (emergency). Try to rest next cycle.'
+        : 'Break done. Welcome back — one step at a time.'
+    )
+  }
+
+  // Focus countdown — when a Pomodoro ends, force a break
   useEffect(() => {
-    if (!isFocusRunning) return undefined
+    if (!isFocusRunning || forcedBreak) return undefined
     const id = window.setInterval(() => {
       setFocusLeft((left) => {
         if (left <= 1) {
           setIsFocusRunning(false)
           setSessionComplete(true)
-          if (soundEnabled) {
-            try {
-              const ctx = new AudioContext()
-              const osc = ctx.createOscillator()
-              const gain = ctx.createGain()
-              osc.type = 'sine'
-              osc.frequency.value = 660
-              gain.gain.value = 0.06
-              osc.connect(gain)
-              gain.connect(ctx.destination)
-              osc.start()
-              setTimeout(() => {
-                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8)
-                setTimeout(() => osc.stop(), 900)
-              }, 200)
-            } catch {
-              /* ignore */
-            }
-          }
+          const started =
+            pomodoroWorkStartedAt ||
+            Date.now() - POMODORO_WORK_MIN * 60 * 1000
+          const workedMin = Math.max(
+            1,
+            Math.round((Date.now() - started) / 60000)
+          )
+          window.setTimeout(() => {
+            startForcedBreak(Math.max(workedMin, 5), 'pomodoro')
+          }, 80)
           return 0
         }
         return left - 1
       })
     }, 1000)
     return () => window.clearInterval(id)
-  }, [isFocusRunning, soundEnabled])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocusRunning, forcedBreak, pomodoroWorkStartedAt])
+
+  // Forced break countdown (blocks whole app)
+  useEffect(() => {
+    if (!forcedBreak) return undefined
+    if (forcedBreak.leftSec <= 0) {
+      endForcedBreak(false)
+      return undefined
+    }
+    const id = window.setInterval(() => {
+      setForcedBreak((fb) => {
+        if (!fb) return null
+        if (fb.leftSec <= 1) return { ...fb, leftSec: 0 }
+        return { ...fb, leftSec: fb.leftSec - 1 }
+      })
+    }, 1000)
+    return () => window.clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forcedBreak?.totalSec, forcedBreak != null, forcedBreak?.leftSec === 0])
+
+  // Auto-Pomodoro when helper (buddy) is on: 25+ min without break → lock
+  useEffect(() => {
+    if (!unlocked || !bodyDoubling || forcedBreak) return undefined
+    const id = window.setInterval(() => {
+      if (forcedBreakRef.current) return
+      const wellness = loadWellness()
+      const sessionStart = loadSessionStart()
+      const mins = minutesSinceBreak(wellness, sessionStart)
+      if (mins >= POMODORO_WORK_MIN) {
+        startForcedBreak(mins, 'auto-pomodoro')
+      }
+    }, 12000)
+    return () => window.clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlocked, bodyDoubling, forcedBreak])
 
   // Respect reduce-motion preference on <html>
   useEffect(() => {
@@ -609,10 +703,24 @@ function App() {
     setActiveView('flow')
   }
 
-  const resetFocus = (minutes = 25) => {
+  const resetFocus = (minutes = POMODORO_WORK_MIN) => {
+    if (forcedBreak) return
     setIsFocusRunning(false)
     setFocusLeft(minutes * 60)
     setSessionComplete(false)
+    setPomodoroWorkStartedAt(null)
+  }
+
+  const startOrPauseFocus = () => {
+    if (forcedBreak) return
+    setSessionComplete(false)
+    if (focusLeft === 0) setFocusLeft(POMODORO_WORK_MIN * 60)
+    if (!isFocusRunning) {
+      setPomodoroWorkStartedAt(Date.now())
+      setIsFocusRunning(true)
+    } else {
+      setIsFocusRunning(false)
+    }
   }
 
   const chooseLogoDirection = (label, detail) => {
@@ -1042,7 +1150,20 @@ function App() {
   const journeyNext = getNextJourney(activeView)
 
   return (
-    <div className={`app ${theme} view-${activeView}`}>
+    <div
+      className={`app ${theme} view-${activeView}${
+        forcedBreak ? ' is-break-locked' : ''
+      }`}
+    >
+      {forcedBreak && (
+        <ForcedBreakOverlay
+          totalSeconds={forcedBreak.totalSec}
+          leftSeconds={forcedBreak.leftSec}
+          workMinutes={forcedBreak.workMinutes}
+          breakMinutes={forcedBreak.breakMinutes}
+          onEmergencyUnlock={() => endForcedBreak(true)}
+        />
+      )}
       <header className="header">
         <div className="header-content header-content-simple">
           <div className="brand-block">
@@ -2232,26 +2353,23 @@ function App() {
               <div className="insights-focus-actions">
                 <button
                   type="button"
-                  onClick={() => {
-                    setSessionComplete(false)
-                    if (focusLeft === 0) setFocusLeft(25 * 60)
-                    setIsFocusRunning(!isFocusRunning)
-                  }}
+                  onClick={startOrPauseFocus}
                   className="btn btn-primary"
-                  disabled={focusLeft === 0 && !isFocusRunning}
+                  disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
                 >
                   {isFocusRunning
                     ? 'Pause'
-                    : focusLeft > 0 && focusLeft < 25 * 60
+                    : focusLeft > 0 && focusLeft < POMODORO_WORK_MIN * 60
                       ? 'Resume'
                       : focusLeft === 2 * 60
                         ? 'Start 2 min'
-                        : 'Start'}
+                        : 'Start 25 min (Pomodoro)'}
                 </button>
                 <button
                   type="button"
                   onClick={() => resetFocus(25)}
                   className="btn btn-secondary"
+                  disabled={!!forcedBreak}
                 >
                   25 min
                 </button>
@@ -2259,13 +2377,22 @@ function App() {
                   type="button"
                   onClick={() => resetFocus(2)}
                   className="btn btn-ghost"
+                  disabled={!!forcedBreak}
                 >
                   2 min
                 </button>
               </div>
-              {sessionComplete && (
-                <p className="session-done">Session complete. Take a break.</p>
+              {sessionComplete && !forcedBreak && (
+                <p className="session-done">
+                  Work block done — a required break lock should open. Rest, then
+                  continue.
+                </p>
               )}
+              <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
+                After each Pomodoro, the desk locks for a 5–10 minute break
+                (longer if you worked longer). Helper on = auto lock after 25
+                min without a break too.
+              </p>
             </section>
             <section className="panel brand-section">
               <div className="brand-section-label">After</div>
@@ -3224,10 +3351,10 @@ function App() {
               <div className="brand-section-label">Presence &amp; sound</div>
               <div className="settings-row">
                 <div>
-                  <strong>Design buddy</strong>
+                  <strong>Design buddy + forced breaks</strong>
                   <span>
-                    UI/UX coach: clarify → structure → visual → refine. Also
-                    tracks time, breaks, and body check-ins while you craft
+                    Coach + Pomodoro: after ~25 min work, desk locks for a 5–10
+                    min break (longer if you worked longer)
                   </span>
                 </div>
                 <button
