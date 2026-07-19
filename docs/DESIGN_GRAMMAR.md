@@ -31,8 +31,10 @@ Tools (Timer, Calendar, Spark, Settings) are **off-path**. Path bar shows “Too
 ## Type
 
 - **UI:** Plus Jakarta Sans (desk chrome)  
-- **Pack:** project type pair (heading + body labels on System)  
-- Display tracking tight; body readable, not shouting.
+- **Pack page title:** Fraunces (display occasion only — leave-behind)  
+- **Pack sheet body:** project type pair (heading + body on System)  
+- Display tracking tight; body readable, not shouting.  
+- Never reintroduce purple-era Instrument Serif as global UI.
 
 ## Motion
 

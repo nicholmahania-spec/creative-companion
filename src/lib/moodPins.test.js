@@ -19,7 +19,7 @@ describe('mood pin visuals', () => {
   it('paints gradients with backgroundImage, not backgroundColor', () => {
     const pin = {
       type: 'quote',
-      visual: 'linear-gradient(135deg, #4F46E5, #0D9488)',
+      visual: 'linear-gradient(135deg, #1C1917, #0F766E)',
       note: 'Quiet booth',
     }
     expect(pinVisualKind(pin)).toBe('gradient')
@@ -31,8 +31,8 @@ describe('mood pin visuals', () => {
   })
 
   it('paints solid hex colors with backgroundColor', () => {
-    const style = pinFaceStyle({ type: 'quote', visual: '#4F46E5' })
-    expect(style.backgroundColor).toBe('#4F46E5')
+    const style = pinFaceStyle({ type: 'quote', visual: '#1C1917' })
+    expect(style.backgroundColor).toBe('#1C1917')
     expect(style.backgroundImage).toBeUndefined()
   })
 

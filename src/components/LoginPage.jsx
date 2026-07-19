@@ -3,7 +3,6 @@ import {
   hasAccessSetup,
   setupAccess,
   verifyAccess,
-  STORAGE_EXPLAIN,
 } from '../lib/auth'
 import { isSupabaseConfigured } from '../lib/supabase'
 import {
@@ -13,7 +12,19 @@ import {
 } from '../lib/cloudSync'
 import { versionLabel } from '../lib/version'
 import LogoLockup from './LogoLockup'
-import { t as i18nT } from '../lib/i18n'
+import { normalizeLocale, t as i18nT } from '../lib/i18n'
+
+/** Read locale from persisted store (before unlock) when available */
+function guestLocale() {
+  try {
+    const raw = localStorage.getItem('creative-companion-storage')
+    if (!raw) return 'en'
+    const p = JSON.parse(raw)
+    return normalizeLocale(p?.state?.prefs?.locale || 'en')
+  } catch {
+    return 'en'
+  }
+}
 
 /**
  * Login / access gate.
@@ -23,6 +34,7 @@ import { t as i18nT } from '../lib/i18n'
 export default function LoginPage({ onUnlocked, cloud = false }) {
   const useCloud = cloud && isSupabaseConfigured()
   const setupDone = hasAccessSetup()
+  const locale = guestLocale()
   const [mode, setMode] = useState(
     useCloud ? 'login' : setupDone ? 'login' : 'setup'
   )
@@ -167,7 +179,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
           <div className="login-brand">
             <LogoLockup reduceMotion={false} />
             <p className="login-tag">
-              {i18nT('en', 'tagline')}
+              {i18nT(locale, 'tagline')}
             </p>
             <p className="login-path-line" aria-hidden="true">
               Project → Work → Board → System → Pack

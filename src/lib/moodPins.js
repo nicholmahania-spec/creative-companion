@@ -63,25 +63,25 @@ export function pinFaceStyle(pin = {}) {
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
-      backgroundColor: '#E8E4F8',
+      backgroundColor: '#e7e5e4',
     }
   }
   if (kind === 'gradient') {
     return {
       backgroundImage: visual,
-      backgroundColor: '#E8E4F8',
+      backgroundColor: '#e7e5e4',
     }
   }
   if (kind === 'color') {
     // Hex / rgb solid — also accept full CSS background strings
     if (/gradient/i.test(visual)) {
-      return { backgroundImage: visual, backgroundColor: '#E8E4F8' }
+      return { backgroundImage: visual, backgroundColor: '#e7e5e4' }
     }
     return {
-      backgroundColor: visual || '#E8E4F8',
+      backgroundColor: visual || '#e7e5e4',
     }
   }
-  return { backgroundColor: '#E8E4F8' }
+  return { backgroundColor: '#e7e5e4' }
 }
 
 /**

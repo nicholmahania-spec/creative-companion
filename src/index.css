@@ -3189,7 +3189,7 @@ h3 {
   display: flex;
   align-items: flex-end;
   padding: 1.35rem 1.25rem;
-  color: #F5F0FF;
+  color: #fafaf9;
   position: relative;
 }
 
@@ -3201,7 +3201,7 @@ h3 {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 35%, rgba(18, 14, 28, 0.55) 100%);
+  background: linear-gradient(180deg, transparent 35%, rgba(12, 10, 9, 0.55) 100%);
   pointer-events: none;
 }
 
@@ -10535,10 +10535,12 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   gap: 0.65rem 1rem;
 }
 
-/* Pack title ceremony */
+/* Pack title ceremony — Fraunces display (loaded in index.html) */
 .pack-view .page-title-display {
+  font-family: 'Fraunces', 'Plus Jakarta Sans', system-ui, sans-serif;
   font-size: clamp(1.85rem, 4vw, 2.35rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-weight: 600;
+  letter-spacing: -0.03em;
   line-height: 1.12;
+  font-optical-sizing: auto;
 }

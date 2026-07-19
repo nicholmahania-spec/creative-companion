@@ -80,6 +80,8 @@ test.describe('Desk reliability', () => {
     await expect(page.locator('h1.page-title', { hasText: 'Pack' })).toBeVisible(
       { timeout: 10000 }
     )
+    // Preview full lives under More actions (v1.15+)
+    await page.locator('summary.pack-more-summary, details.pack-more-actions summary').first().click()
     await page.getByRole('button', { name: 'Preview full' }).click()
     await expect(page.getByRole('dialog', { name: /Brand direction pack/i })).toBeVisible({
       timeout: 8000,
