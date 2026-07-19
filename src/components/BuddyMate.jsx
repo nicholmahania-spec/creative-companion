@@ -789,14 +789,14 @@ export default function BuddyMate({
             ))}
           </div>
 
-          <div className="buddy-compact-actions" aria-label="Main actions">
+          <div className="buddy-compact-actions buddy-act-three" aria-label="Helper actions">
             <button
               type="button"
               className="buddy-act buddy-act-primary"
               onClick={() => reply('recommend')}
               disabled={aiBusy}
             >
-              Recommend
+              Coach
             </button>
             <button
               type="button"
@@ -809,27 +809,12 @@ export default function BuddyMate({
             <button
               type="button"
               className="buddy-act"
-              onClick={() => reply('stuck')}
-              disabled={aiBusy}
-            >
-              Stuck
-            </button>
-            <button
-              type="button"
-              className="buddy-act"
               onClick={() => reply('break')}
               disabled={aiBusy}
             >
               Break
             </button>
           </div>
-          <p className="buddy-ai-hint" title="Live coaching when VITE_XAI_API_KEY is set">
-            {aiBusy
-              ? 'Helper is thinking…'
-              : isHelperAiConfigured()
-                ? 'Live coach on · falls back offline'
-                : 'Desk coach · add VITE_XAI_API_KEY for live AI'}
-          </p>
 
           <button
             type="button"

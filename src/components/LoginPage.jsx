@@ -149,9 +149,9 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
             </div>
           </div>
           <ul className="login-proof-list">
-            <li>One shippable step at a time (not a scoreboard)</li>
-            <li>Project → Work → Ideas → Brand → Finish</li>
-            <li>Export a real brand pack (PDF / HTML / MD)</li>
+            <li>One shippable step at a time</li>
+            <li>Project → Work → Board → System → Pack</li>
+            <li>Leave with a real brand pack (PDF)</li>
           </ul>
         </aside>
 

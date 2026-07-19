@@ -1,6 +1,7 @@
 /**
- * One clear path through the product — no jargon.
- * Login → Project → Work → Ideas → Brand → Finish → Logout
+ * Primary path — five stops only.
+ * Project → Work → Board → System → Pack
+ * Tools (Timer, Spark, Calendar, Settings) are off-path.
  */
 
 export const JOURNEY_STEPS = [
@@ -19,33 +20,33 @@ export const JOURNEY_STEPS = [
     num: '2',
     label: 'Work',
     plain: 'One step only. Complete it. Next rises.',
-    nextView: 'concept',
-    nextLabel: 'Go to Ideas',
+    nextView: 'studio',
+    nextLabel: 'Go to Board',
   },
   {
-    id: 'ideas',
-    view: 'concept',
+    id: 'board',
+    view: 'studio',
     num: '3',
-    label: 'Ideas',
-    plain: 'Sketch, lock favorites, fill the concept pack',
+    label: 'Board',
+    plain: 'Upload refs. Star up to 6 for the pack.',
     nextView: 'brand',
-    nextLabel: 'Go to Brand',
+    nextLabel: 'Go to System',
   },
   {
-    id: 'brand',
+    id: 'system',
     view: 'brand',
     num: '4',
-    label: 'Brand',
-    plain: 'Colors, voice, type, do / don’t',
+    label: 'System',
+    plain: 'Colors, voice, type, do / don’t — live artboard.',
     nextView: 'finish',
-    nextLabel: 'Go to Finish',
+    nextLabel: 'Go to Pack',
   },
   {
-    id: 'finish',
+    id: 'pack',
     view: 'finish',
     num: '5',
-    label: 'Finish',
-    plain: 'Export your brand pack. Then rest or start the next step.',
+    label: 'Pack',
+    plain: 'Preview and download your brand pack.',
     nextView: null,
     nextLabel: null,
   },
@@ -57,17 +58,21 @@ export function journeyIdForView(view) {
     case 'project':
       return 'project'
     case 'flow':
+      return 'work'
+    case 'studio':
+      return 'board'
+    case 'brand':
+      return 'system'
+    case 'finish':
+      return 'pack'
+    // Off-path tools — soft highlight nearest craft context
     case 'insights':
     case 'calendar':
       return 'work'
     case 'concept':
-    case 'studio':
     case 'spark':
-      return 'ideas'
-    case 'brand':
-      return 'brand'
-    case 'finish':
-      return 'finish'
+      return 'board'
+    case 'settings':
     default:
       return null
   }

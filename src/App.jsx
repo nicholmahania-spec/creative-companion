@@ -52,6 +52,7 @@ import {
   downloadBrandPackJson,
   downloadBrandPackPdf,
   downloadWorkspaceBackup,
+  packReadiness,
   preloadPdfEngine,
   printElementById,
   slugifyFilename,
@@ -102,6 +103,7 @@ function App() {
   const removeTask = useAppStore((s) => s.removeTask)
   const breakIntoSteps = useAppStore((s) => s.breakIntoSteps)
   const addMoodPin = useAppStore((s) => s.addMoodPin)
+  const toggleMoodPinInPack = useAppStore((s) => s.toggleMoodPinInPack)
   const updateMoodPinNote = useAppStore((s) => s.updateMoodPinNote)
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
   const nextSpark = useAppStore((s) => s.nextSpark)
@@ -143,6 +145,8 @@ function App() {
   const [onboardBrief, setOnboardBrief] = useState('')
   const [onboardFirstStep, setOnboardFirstStep] = useState('')
   const [processPhase, setProcessPhase] = useState(null)
+  const [processOpen, setProcessOpen] = useState(false)
+  const [brandEditSection, setBrandEditSection] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -199,6 +203,7 @@ function App() {
   const reduceMotion = !!prefs.reduceMotion
   /** Pomodoro desk lock — default on; user can disable */
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
+  const showProgress = !!prefs.showProgress
   const forceBreaksEnabledRef = useRef(forceBreaksEnabled)
   forceBreaksEnabledRef.current = forceBreaksEnabled
 
@@ -1338,19 +1343,29 @@ function App() {
           onEmergencyUnlock={() => endForcedBreak(true)}
         />
       )}
-      <header className="header">
+      <header className="header header-redesign">
         <div className="header-content header-content-simple">
           <div className="brand-block">
             <div className="logo">
               <span className="logo-mark" aria-hidden="true" />
-              Creative Companion
+              Companion
             </div>
-            <p className="logo-sub">
-              One next design step · a desk that stays with you · leave with a
-              brand pack
-            </p>
           </div>
           <div className="header-actions">
+            {(projects || []).length > 1 && (
+              <select
+                className="header-project-select"
+                value={activeProjectId || ''}
+                onChange={(e) => selectProject(Number(e.target.value) || e.target.value)}
+                aria-label="Project"
+              >
+                {(projects || []).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            )}
             {isFocusRunning && activeView !== 'insights' && (
               <button
                 type="button"
@@ -1360,11 +1375,6 @@ function App() {
               >
                 Timer {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
               </button>
-            )}
-            {bodyDoubling && (
-              <span className="mate-on-badge" aria-live="polite">
-                Helper on
-              </span>
             )}
             {CLOUD && syncState === 'error' && (
               <button
@@ -1387,13 +1397,6 @@ function App() {
                 Save failed · Retry
               </button>
             )}
-            <button
-              type="button"
-              className="btn btn-ghost header-help"
-              onClick={() => setShowCreativeReset(true)}
-            >
-              Need help?
-            </button>
             <div className="more-wrap" ref={moreWrapRef}>
               <button
                 type="button"
@@ -1405,11 +1408,11 @@ function App() {
                   setAccountOpen(false)
                 }}
               >
-                Extra
+                Tools
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu">
-                  <p className="more-menu-group">If you get stuck</p>
+                  <p className="more-menu-group">Tools</p>
                   <button
                     type="button"
                     role="menuitem"
@@ -1419,7 +1422,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Break work into small steps</strong>
+                    <strong>Break into steps</strong>
                     <span>When the project feels too big</span>
                   </button>
                   <button
@@ -1430,18 +1433,18 @@ function App() {
                       const next = !bodyDoubling
                       toggleBodyDoubling()
                       if (next) {
-                        const g = awardAndBroadcast('helper_on', {
-                          label: 'Helper',
-                        })
-                        flashToast(`Helper on · +${g.gained} XP`)
+                        awardAndBroadcast('helper_on', { label: 'Helper' })
+                        flashToast('Helper on')
+                      } else {
+                        flashToast('Helper off')
                       }
                       setMoreOpen(false)
                     }}
                   >
                     <strong>
-                      {bodyDoubling ? 'Turn helper off' : 'Turn helper on'}
+                      {bodyDoubling ? 'Turn Helper off' : 'Turn Helper on'}
                     </strong>
-                    <span>Friendly coach + time reminders</span>
+                    <span>Coach · Critique · Break</span>
                   </button>
                   <button
                     type="button"
@@ -1453,7 +1456,7 @@ function App() {
                     }}
                   >
                     <strong>Timer</strong>
-                    <span>2 or 25 minutes of focus</span>
+                    <span>Focus for the current step</span>
                   </button>
                   <button
                     type="button"
@@ -1464,20 +1467,8 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Idea spark</strong>
-                    <span>One prompt if you need inspiration</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('studio')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <strong>Picture board</strong>
-                    <span>Save photos and reference images</span>
+                    <strong>Spark</strong>
+                    <span>One prompt</span>
                   </button>
                   <button
                     type="button"
@@ -1488,8 +1479,20 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Dates</strong>
-                    <span>Deadlines on a calendar</span>
+                    <strong>Calendar</strong>
+                    <span>Deadlines</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setActiveView('concept')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <strong>Direction sketches</strong>
+                    <span>Optional pipeline (off-path)</span>
                   </button>
                   <button
                     type="button"
@@ -1497,16 +1500,28 @@ function App() {
                     className="more-menu-item"
                     onClick={() => {
                       createNewProject()
-                      const g = awardAndBroadcast('project_create', {
+                      awardAndBroadcast('project_create', {
                         label: 'New project',
                       })
-                      flashToast(`New project · +${g.gained} XP`)
+                      flashToast('New project')
                       setActiveView('project')
                       setMoreOpen(false)
                     }}
                   >
                     <strong>New project</strong>
-                    <span>Start another project name</span>
+                    <span>Start another name</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setShowCreativeReset(true)
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <strong>Stuck?</strong>
+                    <span>Quick reset options</span>
                   </button>
                 </div>
               )}
@@ -1570,7 +1585,7 @@ function App() {
                       setAccountOpen(false)
                     }}
                   >
-                    {theme === 'warm' ? 'Dark screen' : 'Light screen'}
+                    {theme === 'warm' ? 'Dark' : 'Light'}
                   </button>
                   <button
                     type="button"
@@ -1589,25 +1604,19 @@ function App() {
           </div>
         </div>
 
-        <GameHUD />
+        {showProgress && <GameHUD />}
 
-        {/* Numbered path — always visible */}
-        <nav className="journey-bar" aria-label="Your path through the app">
-          {JOURNEY_STEPS.map((step, i) => {
+        <nav className="journey-bar" aria-label="Your path">
+          {JOURNEY_STEPS.map((step) => {
             const active = journeyActive === step.id
-            const stepIndex = JOURNEY_STEPS.findIndex(
-              (s) => s.id === journeyActive
-            )
-            const done = stepIndex > i
             return (
               <button
                 key={step.id}
                 type="button"
-                className={`journey-step${active ? ' is-active' : ''}${
-                  done ? ' is-done' : ''
-                }`}
+                className={`journey-step${active ? ' is-active' : ''}`}
                 onClick={() => setActiveView(step.view)}
                 aria-current={active ? 'step' : undefined}
+                title={step.plain}
               >
                 <span className="journey-num" aria-hidden="true">
                   {step.num}
@@ -1620,194 +1629,25 @@ function App() {
       </header>
 
       <main className="main">
-        {journeyStep && activeView !== 'settings' && (
-          <div className="journey-guide" role="status">
-            <div>
-              <p className="journey-guide-you">
-                You are on step {journeyStep.num}: <strong>{journeyStep.label}</strong>
-              </p>
-              <p className="journey-guide-plain">{journeyStep.plain}</p>
-            </div>
-            {journeyNext && (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setActiveView(journeyNext.view)}
-              >
-                {journeyStep.nextLabel}
-              </button>
-            )}
-          </div>
-        )}
-        {/* ===== DESK = step-by-step work loop ===== */}
+        {/* ===== WORK — one step owns the fold ===== */}
         {activeView === 'flow' && (
           <div className="flow-view surface-desk">
-            <div className="flow-top">
+            <div className="flow-top flow-top-compact">
               <div>
-                <h1 className="page-title page-title-display">Work</h1>
-                <p className="page-sub">
-                  Project: {activeProject?.name || 'None'} — do one step, then
-                  the next
-                </p>
-              </div>
-              <div className="flow-top-actions">
-                <div className="project-pills project-pills-top" role="tablist" aria-label="Project">
-                  {(projects || []).map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={activeProjectId === p.id}
-                      onClick={() => selectProject(p.id)}
-                      className={
-                        activeProjectId === p.id
-                          ? 'project-pill is-active'
-                          : 'project-pill'
-                      }
-                    >
-                      {p.name}
-                    </button>
-                  ))}
-                </div>
-                <div className="flow-progress">
-                  <div className="flow-progress-bar" aria-hidden="true">
-                    <div
-                      className="flow-progress-fill"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                  <span className="flow-progress-label">
-                    {completedCount}/{deskTasks.length || 0} done
-                    {deskTasks.length > 0 ? ` · ${progressPercent}%` : ''}
+                <p className="work-context-line">
+                  <strong>{activeProject?.name || 'Project'}</strong>
+                  {projectDeadline
+                    ? ` · due ${formatShortDate(projectDeadline)}`
+                    : ''}
+                  <span className="work-context-progress">
+                    {' '}
+                    · {completedCount}/{deskTasks.length || 0} done
                   </span>
-                </div>
+                </p>
               </div>
             </div>
 
-            {projectDeadline && (
-              <div
-                className={`deadline-banner urgency-${projectUrgency || 'later'}`}
-              >
-                <div>
-                  <strong>Deadline</strong>
-                  <span>
-                    {formatShortDate(projectDeadline)} ·{' '}
-                    {urgencyLabel(projectDeadline)}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => setActiveView('calendar')}
-                >
-                  Calendar
-                </button>
-              </div>
-            )}
-
-            {showHowItWorks ? (
-              <section className="product-card" aria-label="How this desk works">
-                <div className="product-card-top">
-                  <p className="product-card-eyebrow">What this desk is for</p>
-                  <button
-                    type="button"
-                    className="product-card-dismiss"
-                    onClick={hideHowItWorks}
-                  >
-                    Got it
-                  </button>
-                </div>
-                <p className="product-card-title" style={{ marginBottom: '0.65rem' }}>
-                  One design step owns the screen. Complete it. Next rises.
-                </p>
-                <ol className="product-steps">
-                  <li>
-                    <span className="product-step-num">1</span>
-                    <span>
-                      <strong>Do only the current step</strong>
-                      <em>Not the whole project — just this card</em>
-                    </span>
-                  </li>
-                  <li>
-                    <span className="product-step-num">2</span>
-                    <span>
-                      <strong>Complete it</strong>
-                      <em>Helper stays for presence; breaks protect your body</em>
-                    </span>
-                  </li>
-                  <li>
-                    <span className="product-step-num">3</span>
-                    <span>
-                      <strong>Ship a pack from Finish</strong>
-                      <em>Ideas → Brand → export when the story holds</em>
-                    </span>
-                  </li>
-                </ol>
-              </section>
-            ) : (
-              <button
-                type="button"
-                className="how-it-works-link"
-                onClick={revealHowItWorks}
-              >
-                What is this desk for?
-              </button>
-            )}
-
-            {/* Process mode — changes the Work UI, not only Helper chat */}
-            <section className="process-rail" aria-label="Design process">
-              <p className="process-rail-label">Design process</p>
-              <div className="process-rail-chips">
-                {PROCESS_PHASES.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    className={`process-chip${
-                      processPhase === p.id ? ' is-active' : ''
-                    }`}
-                    onClick={() =>
-                      setProcessPhase((cur) => (cur === p.id ? null : p.id))
-                    }
-                    aria-pressed={processPhase === p.id}
-                  >
-                    {p.short}
-                  </button>
-                ))}
-              </div>
-              {processPhase && getProcessPhase(processPhase) && (
-                <div className="process-guide-panel">
-                  <div className="process-guide-head">
-                    <strong>{getProcessPhase(processPhase).title}</strong>
-                    <button
-                      type="button"
-                      className="text-link"
-                      onClick={() => setProcessPhase(null)}
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <p className="process-guide-prompt">
-                    {nextTask
-                      ? `For “${String(nextTask.title).slice(0, 60)}${
-                          String(nextTask.title).length > 60 ? '…' : ''
-                        }”: ${getProcessPhase(processPhase).prompt}`
-                      : getProcessPhase(processPhase).prompt}
-                  </p>
-                  <ul className="process-guide-checks">
-                    {getProcessPhase(processPhase).checks.map((c) => (
-                      <li key={c}>{c}</li>
-                    ))}
-                  </ul>
-                  {bodyDoubling && (
-                    <p className="process-guide-hint">
-                      Helper can coach this phase — open the corner bot → More →
-                      Process, or ask Recommend.
-                    </p>
-                  )}
-                </div>
-              )}
-            </section>
-
+            {/* Current step owns the fold */}
             {/* Current step owns the fold */}
             <section
               className="panel step-focus-panel surface-desk-hero"
@@ -1886,18 +1726,27 @@ function App() {
                         className="btn btn-secondary"
                         onClick={() => {
                           breakIntoSteps(nextTask.id)
-                          {
-                            const g = awardAndBroadcast('micro_steps', {
-                              label: 'Split step',
-                            })
-                            flashToast(`Split into 3 · +${g.gained} XP`)
-                          }
+                          awardAndBroadcast('micro_steps', {
+                            label: 'Split step',
+                          })
+                          flashToast('Split into 3')
                           setStepFocusKey((k) => k + 1)
                         }}
                       >
-                        Split ×3
+                        Split if too big
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => {
+                        setProcessOpen((o) => !o)
+                        if (!processPhase) setProcessPhase('clarify')
+                      }}
+                      aria-expanded={processOpen}
+                    >
+                      Design mode
+                    </button>
                     <button
                       type="button"
                       className="text-link step-due-toggle"
@@ -2011,99 +1860,105 @@ function App() {
               </div>
             </section>
 
-            {/* Help — demoted vs current-step hero */}
-            <section className="help-panel help-panel-quiet">
-              <div className="brand-section-label">Stuck?</div>
-              <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                Pick one tool, then come back here.
-              </p>
-              <div className="help-grid help-grid-3">
-                <button
-                  type="button"
-                  className="help-card"
-                  onClick={openBreakdown}
-                >
-                  <strong>Break project into micro-steps</strong>
-                  <span>When the whole project feels too big</span>
-                </button>
-                <button
-                  type="button"
-                  className="help-card"
-                  disabled={!nextTask || !!nextTask.parentId}
-                  onClick={() => {
-                    if (!nextTask) return
-                    breakIntoSteps(nextTask.id)
-                    {
-                      const g = awardAndBroadcast('micro_steps', {
-                        label: 'Split step',
-                      })
-                      flashToast(`Split into 3 · +${g.gained} XP`)
-                    }
-                    setStepFocusKey((k) => k + 1)
-                  }}
-                >
-                  <strong>Split this step</strong>
-                  <span>3 smaller actions from current only</span>
-                </button>
-                <button
-                  type="button"
-                  className="help-card"
-                  onClick={() => setShowCreativeReset(true)}
-                >
-                  <strong>I&apos;m stuck</strong>
-                  <span>Pick one small restart</span>
-                </button>
-              </div>
-              <div className="help-secondary">
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={() => setActiveView('studio')}
-                >
-                  Board
-                </button>
-                <span aria-hidden="true">·</span>
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={() => setActiveView('spark')}
-                >
-                  Spark
-                </button>
-                <span aria-hidden="true">·</span>
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={() => setActiveView('insights')}
-                >
-                  Focus timer
-                </button>
-                <span aria-hidden="true">·</span>
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={() => setActiveView('calendar')}
-                >
-                  Deadlines
-                </button>
-                <span aria-hidden="true">·</span>
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={() => setActiveView('brand')}
-                >
-                  Brand
-                </button>
-                <span aria-hidden="true">·</span>
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={() => toggleBodyDoubling()}
-                >
-                  {bodyDoubling ? 'Design buddy off' : 'Design buddy'}
-                </button>
-              </div>
-            </section>
+            {/* Optional design mode (process checklist) — below the fold */}
+            {processOpen && (
+              <section className="process-rail process-rail-optional" aria-label="Design mode">
+                <div className="process-rail-chips">
+                  {PROCESS_PHASES.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`process-chip${
+                        processPhase === p.id ? ' is-active' : ''
+                      }`}
+                      onClick={() => setProcessPhase(p.id)}
+                      aria-pressed={processPhase === p.id}
+                    >
+                      {p.short}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="text-link"
+                    onClick={() => {
+                      setProcessOpen(false)
+                      setProcessPhase(null)
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+                {processPhase && getProcessPhase(processPhase) && (
+                  <div className="process-guide-panel">
+                    <strong>{getProcessPhase(processPhase).title}</strong>
+                    <p className="process-guide-prompt">
+                      {nextTask
+                        ? `For “${String(nextTask.title).slice(0, 60)}”: ${
+                            getProcessPhase(processPhase).prompt
+                          }`
+                        : getProcessPhase(processPhase).prompt}
+                    </p>
+                    <ul className="process-guide-checks">
+                      {getProcessPhase(processPhase).checks.map((c) => (
+                        <li key={c}>{c}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {showHowItWorks && (
+              <section className="product-card product-card-quiet" aria-label="How this desk works">
+                <div className="product-card-top">
+                  <p className="product-card-eyebrow">Desk</p>
+                  <button
+                    type="button"
+                    className="product-card-dismiss"
+                    onClick={hideHowItWorks}
+                  >
+                    Got it
+                  </button>
+                </div>
+                <p className="product-card-title" style={{ marginBottom: 0 }}>
+                  One step owns the screen. Complete it. Board → System → Pack.
+                </p>
+              </section>
+            )}
+
+            <p className="work-below-tools">
+              <button
+                type="button"
+                className="text-link"
+                onClick={openBreakdown}
+              >
+                Break project down
+              </button>
+              <span aria-hidden="true"> · </span>
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => setActiveView('studio')}
+              >
+                Board
+              </button>
+              <span aria-hidden="true"> · </span>
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => setActiveView('brand')}
+              >
+                System
+              </button>
+              <span aria-hidden="true"> · </span>
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => setActiveView('finish')}
+              >
+                Pack
+              </button>
+            </p>
 
             {/* Queue — collapsed by default when busy */}
             <section className="panel brand-section">
@@ -2222,56 +2077,24 @@ function App() {
           </div>
         )}
 
-        {/* ===== MOOD BOARD = visual collection template ===== */}
+        {/* ===== BOARD — path step 3 ===== */}
         {activeView === 'studio' && (
           <div className="studio-view surface-wall">
-            <button
-              type="button"
-              className="back-link"
-              onClick={() => setActiveView('flow')}
-            >
-              ← Work
-            </button>
-
             <div className="flow-top">
               <div>
-                <h1 className="page-title">Picture board</h1>
+                <h1 className="page-title">Board</h1>
                 <p className="page-sub">
-                  Save photos and pictures that help your project. Then go back
-                  to Work or Ideas.
+                  Upload refs. Star up to 6 for System + Pack.
+                  {deskMood.filter((m) => m.inPack).length > 0
+                    ? ` · ${deskMood.filter((m) => m.inPack).length}/6 in pack`
+                    : ''}
                 </p>
               </div>
               <span className="panel-count">{deskMood.length} pins</span>
             </div>
 
             <section className="panel brand-section">
-              <div className="brand-section-label">Project</div>
-              <div className="panel-head" style={{ marginBottom: 0 }}>
-                <div>
-                  <h2 className="panel-title">
-                    {activeProject?.name || 'Project'}
-                  </h2>
-                  <p className="panel-hint">
-                    {activeProject?.brief ||
-                      'No brief yet — add one on Projects or Brand.'}
-                  </p>
-                </div>
-                {projectPills}
-              </div>
-              {nextTask && (
-                <div className="mood-linked-step">
-                  <span className="task-badge">Linked to desk</span>
-                  <p className="mood-linked-title">{nextTask.title}</p>
-                  <p className="panel-hint" style={{ margin: 0 }}>
-                    Pin refs that help this step, then mark it complete on the
-                    desk.
-                  </p>
-                </div>
-              )}
-            </section>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">Add references</div>
+              <div className="brand-section-label">Add</div>
               <div className="mood-add-layout">
                 <label className="mood-add-hero btn-like">
                   <strong>Upload real images</strong>
@@ -2456,6 +2279,26 @@ function App() {
                           </div>
                         )}
                         <div className="mood-pin-tools">
+                          <button
+                            type="button"
+                            className={`mood-pin-star${item.inPack ? ' is-on' : ''}`}
+                            title={
+                              item.inPack
+                                ? 'Remove from pack'
+                                : 'Include in pack (max 6)'
+                            }
+                            aria-pressed={!!item.inPack}
+                            onClick={() => {
+                              const r = toggleMoodPinInPack(item.id)
+                              if (!r.ok) flashToast(r.error || 'Could not star')
+                              else
+                                flashToast(
+                                  r.inPack ? 'In pack' : 'Removed from pack'
+                                )
+                            }}
+                          >
+                            {item.inPack ? '★ Pack' : '☆ Pack'}
+                          </button>
                           <input
                             className="mood-pin-note-input"
                             value={item.note || ''}
@@ -2480,39 +2323,24 @@ function App() {
               </div>
             </section>
 
-            <section className="panel brand-section help-panel">
-              <div className="brand-section-label">Next</div>
-              <div className="help-grid help-grid-3">
-                <button
-                  type="button"
-                  className="help-card"
-                  onClick={() => setActiveView('flow')}
-                >
-                  <strong>Back to current step</strong>
-                  <span>
-                    {nextTask
-                      ? nextTask.title.slice(0, 48)
-                      : 'Open work loop'}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="help-card"
-                  onClick={() => setActiveView('brand')}
-                >
-                  <strong>Brand template</strong>
-                  <span>Use pins in identity pack</span>
-                </button>
-                <button
-                  type="button"
-                  className="help-card"
-                  onClick={() => openExportPanel()}
-                >
-                  <strong>Export pack</strong>
-                  <span>Share direction</span>
-                </button>
-              </div>
-            </section>
+            <p className="work-below-tools">
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => setActiveView('flow')}
+              >
+                Work
+              </button>
+              <span aria-hidden="true"> · </span>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ marginLeft: '0.35rem' }}
+                onClick={() => setActiveView('brand')}
+              >
+                Go to System
+              </button>
+            </p>
           </div>
         )}
 
@@ -2941,69 +2769,176 @@ function App() {
 
         {/* ===== BRAND IDENTITY TEMPLATE ===== */}
         {activeView === 'brand' && (
-          <div className="brand-layout surface-document">
-            <button
-              type="button"
-              className="back-link"
-              onClick={() => setActiveView('flow')}
-            >
-              ← Work
-            </button>
-
+          <div className="brand-layout surface-document system-view">
             <div className="brand-template-top">
               <div>
-                <h1 className="page-title">Brand</h1>
+                <h1 className="page-title">System</h1>
                 <p className="page-sub">
-                  Colors, words, and look for{' '}
-                  <strong>{activeProject?.name || 'this project'}</strong>.
-                  Tip: fill Ideas first, then click “Fill Brand” there.
+                  Live artboard for{' '}
+                  <strong>{activeProject?.name || 'this project'}</strong>
+                  {' · '}
+                  pack pins {deskMood.filter((m) => m.inPack).length}/6
                 </p>
               </div>
               <div className="brand-template-actions">
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={() => setActiveView('concept')}
+                  onClick={() => setActiveView('studio')}
                 >
-                  ← Ideas
+                  Board
                 </button>
                 <button
                   type="button"
                   className="btn btn-primary"
                   onClick={() => setActiveView('finish')}
                 >
-                  Go to Finish
+                  Download pack
                 </button>
               </div>
             </div>
 
-            {/* Live identity cover */}
-            <section
-              className="brand-cover"
-              style={{
-                background:
-                  projectPalette[0] || 'var(--accent-primary)',
-                color: bestTextOn(projectPalette[0] || '#4F46E5'),
-              }}
+            {/* ARTBOARD — export source of truth */}
+            <article
+              className="direction-sheet system-artboard"
+              id="system-artboard"
             >
-              <p className="brand-cover-label">Brand identity</p>
-              <h2 className="brand-cover-name">
-                {activeProject?.name || 'Untitled project'}
-              </h2>
-              <p className="brand-cover-tagline">
-                {activeProject?.tagline?.trim() ||
-                  'Add a tagline below — one line people can remember.'}
+              <div
+                className="export-identity-cover"
+                style={{
+                  background:
+                    projectPalette[0] || 'var(--accent-primary)',
+                  color: bestTextOn(projectPalette[0] || '#4F46E5'),
+                }}
+              >
+                <div className="kicker" style={{ color: 'inherit', opacity: 0.85 }}>
+                  Brand identity template
+                </div>
+                <h1 className="direction-title" style={{ color: 'inherit' }}>
+                  {activeProject?.name || 'Untitled project'}
+                </h1>
+                <p className="direction-brief" style={{ color: 'inherit', opacity: 0.92 }}>
+                  {activeProject?.tagline?.trim() || 'Tagline TBD'}
+                </p>
+              </div>
+              <div className="kicker">Positioning</div>
+              <p className="direction-brief">
+                {activeProject?.brief || 'No brief yet.'}
               </p>
-              <div className="brand-cover-strip">
+              {activeProject?.voice ? (
+                <>
+                  <div className="kicker">Voice</div>
+                  <p className="direction-brief">{activeProject.voice}</p>
+                </>
+              ) : null}
+              <div className="kicker">Palette</div>
+              <div className="direction-palette">
                 {projectPalette.map((c, i) => (
-                  <div key={`${c}-c-${i}`} style={{ background: c }} />
+                  <div key={`${c}-a-${i}`} style={{ background: c }} title={c} />
                 ))}
               </div>
-            </section>
+              <div className="direction-hex">{projectPalette.join(' · ')}</div>
+              <div className="kicker">Typography</div>
+              <p className="direction-type">
+                <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                  {activeProject?.typeHeading || 'Plus Jakarta Sans Bold'}
+                </span>
+                <span className="surface-meta">
+                  {' '}
+                  · {activeProject?.typeBody || 'Plus Jakarta Sans Regular'}
+                </span>
+              </p>
+              {activeProject?.logoDirection ? (
+                <>
+                  <div className="kicker">Logo direction</div>
+                  <p className="direction-brief">{activeProject.logoDirection}</p>
+                </>
+              ) : null}
+              <div className="export-do-dont">
+                <div>
+                  <div className="kicker">Do</div>
+                  <p className="direction-brief">
+                    {activeProject?.doUse || '—'}
+                  </p>
+                </div>
+                <div>
+                  <div className="kicker">Don&apos;t</div>
+                  <p className="direction-brief">
+                    {activeProject?.dontUse || '—'}
+                  </p>
+                </div>
+              </div>
+              <div className="kicker">Mood direction</div>
+              {(deskMood.filter((m) => m.inPack).length
+                ? deskMood.filter((m) => m.inPack)
+                : deskMood
+              ).slice(0, 6).length === 0 ? (
+                <p className="surface-meta">
+                  No pins yet — star images on Board.
+                </p>
+              ) : (
+                <div className="direction-pins">
+                  {(deskMood.filter((m) => m.inPack).length
+                    ? deskMood.filter((m) => m.inPack)
+                    : deskMood
+                  )
+                    .slice(0, 6)
+                    .map((pin) => (
+                      <div key={pin.id} className="direction-pin">
+                        <div
+                          className="direction-pin-visual"
+                          style={pinFaceStyle(pin)}
+                        />
+                        <div className="direction-pin-note">
+                          {pin.note || 'Pin'}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+              <footer className="direction-foot">
+                Creative Companion · Brand identity ·{' '}
+                {new Date().toLocaleDateString()}
+              </footer>
+            </article>
+
+            <p className="system-edit-label">Edit</p>
+            <div className="system-accordion-nav" role="tablist">
+              {[
+                ['essentials', 'Tagline'],
+                ['voice', 'Voice'],
+                ['colors', 'Colors'],
+                ['type', 'Type'],
+                ['logo', 'Logo'],
+                ['pins', 'Pins'],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={brandEditSection === id}
+                  className={`system-acc-tab${
+                    brandEditSection === id ? ' is-active' : ''
+                  }`}
+                  onClick={() =>
+                    setBrandEditSection((cur) => (cur === id ? null : id))
+                  }
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
             {/* 01 Essentials */}
-            <section className="panel brand-section">
-              <div className="brand-section-label">01 · Essentials</div>
+            <section
+              className={`panel brand-section${
+                brandEditSection && brandEditSection !== 'essentials'
+                  ? ' is-collapsed-edit'
+                  : ''
+              }`}
+              hidden={brandEditSection !== 'essentials'}
+            >
+              <div className="brand-section-label">Tagline &amp; positioning</div>
               <div className="field-block">
                 <label className="field-label" htmlFor="brand-tagline">
                   Tagline
@@ -3034,8 +2969,11 @@ function App() {
             </section>
 
             {/* 02 Voice */}
-            <section className="panel brand-section">
-              <div className="brand-section-label">02 · Voice</div>
+            <section
+              className="panel brand-section"
+              hidden={brandEditSection !== 'voice'}
+            >
+              <div className="brand-section-label">Voice · do / don&apos;t</div>
               <div className="field-block" style={{ marginBottom: '1rem' }}>
                 <label className="field-label" htmlFor="brand-voice">
                   How we sound
@@ -3084,8 +3022,11 @@ function App() {
             </section>
 
             {/* 03 Palette + checker */}
-            <section className="panel brand-section">
-              <div className="brand-section-label">03 · Color</div>
+            <section
+              className="panel brand-section"
+              hidden={brandEditSection !== 'colors'}
+            >
+              <div className="brand-section-label">Colors</div>
               <div className="brand-palette-block" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
@@ -3284,8 +3225,11 @@ function App() {
             </section>
 
             {/* 04 Type */}
-            <section className="panel brand-section">
-              <div className="brand-section-label">04 · Typography</div>
+            <section
+              className="panel brand-section"
+              hidden={brandEditSection !== 'type'}
+            >
+              <div className="brand-section-label">Type</div>
               <div className="brand-type-pair">
                 <div className="field-block">
                   <label className="field-label" htmlFor="type-heading">
@@ -3334,8 +3278,11 @@ function App() {
             </section>
 
             {/* 05 Logo direction */}
-            <section className="panel brand-section">
-              <div className="brand-section-label">05 · Logo direction</div>
+            <section
+              className="panel brand-section"
+              hidden={brandEditSection !== 'logo'}
+            >
+              <div className="brand-section-label">Logo</div>
               <p className="panel-hint" style={{ marginBottom: '0.75rem' }}>
                 Pick a direction note — not a fake logo generator.
               </p>
@@ -3398,8 +3345,11 @@ function App() {
             </section>
 
             {/* 06 Mood from board */}
-            <section className="panel brand-section">
-              <div className="brand-section-label">06 · Mood (from board)</div>
+            <section
+              className="panel brand-section"
+              hidden={brandEditSection !== 'pins'}
+            >
+              <div className="brand-section-label">Pins (from Board)</div>
               {deskMood.length === 0 ? (
                 <div className="brand-mood-empty">
                   <p className="empty-state-body" style={{ margin: 0 }}>
@@ -3448,144 +3398,190 @@ function App() {
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => setActiveView('finish')}
+                onClick={() => setActiveView('studio')}
               >
-                Go to Finish
+                Board
               </button>
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={openExportPanel}
+                onClick={() => setActiveView('finish')}
               >
-                Save / print pack
+                Go to Pack
               </button>
-              <span className="panel-hint" style={{ margin: 0 }}>
-                Or open Finish (step 5) for the full wrap-up
-              </span>
             </div>
           </div>
         )}
 
-        {/* ===== FINISH — end of path ===== */}
+        {/* ===== PACK — end of path ===== */}
         {activeView === 'finish' && (
-          <div className="finish-view surface-document">
+          <div className="finish-view surface-document pack-view">
             <div className="flow-top">
               <div>
-                <h1 className="page-title page-title-display">Finish</h1>
+                <h1 className="page-title page-title-display">Pack</h1>
                 <p className="page-sub">
-                  Step 5 — save your pack, start another project, or log out
+                  {activeProject?.name || 'Your project'} · preview &amp; download
                 </p>
               </div>
             </div>
 
-            <section className="panel brand-section finish-hero-panel">
-              <div className="brand-section-label">Ship moment</div>
-              <h2 className="panel-title" style={{ marginBottom: '0.5rem' }}>
-                {activeProject?.name || 'Your project'}
-              </h2>
-              <p className="empty-state-body" style={{ marginBottom: '0.75rem' }}>
-                You held one step still and walked the path. The thing only this
-                desk gives you: a <strong>brand direction pack</strong> you can
-                hand to a client, a teammate, or tomorrow-you.
-              </p>
-              <ul className="finish-ship-list">
-                <li>
-                  Steps closed this project:{' '}
-                  <strong>{completedCount}</strong>
-                  {deskTasks.length > 0
-                    ? ` / ${deskTasks.length}`
-                    : ''}
-                </li>
-                <li>
-                  Pins: <strong>{deskMood.length}</strong>
-                  {activeProject?.tagline
-                    ? ` · Tagline: “${activeProject.tagline}”`
-                    : ''}
-                </li>
-                <li>
-                  Next: export the pack, then rest — or pick <em>one</em> next
-                  Work step.
-                </li>
-              </ul>
-              <div className="finish-actions">
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => runExport('pdf')}
-                >
-                  Download brand pack
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={openExportPanel}
-                >
-                  Preview pack
-                </button>
-                <div className="finish-secondary-row">
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => setActiveView('flow')}
+            <section className="panel brand-section finish-hero-panel pack-hero">
+              <div className="pack-layout">
+                <div className="pack-preview-thumb" aria-hidden="true">
+                  <div
+                    className="pack-thumb-cover"
+                    style={{
+                      background: projectPalette[0] || '#4F46E5',
+                      color: bestTextOn(projectPalette[0] || '#4F46E5'),
+                    }}
                   >
-                    One more Work step
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => setActiveView('brand')}
-                  >
-                    Edit Brand
-                  </button>
+                    <span className="pack-thumb-kicker">Brand pack</span>
+                    <strong>{activeProject?.name || 'Untitled'}</strong>
+                    <em>
+                      {activeProject?.tagline?.trim() || 'Tagline TBD'}
+                    </em>
+                    <div className="pack-thumb-strip">
+                      {projectPalette.slice(0, 4).map((c, i) => (
+                        <i key={`${c}-t-${i}`} style={{ background: c }} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="pack-thumb-pins">
+                    {(deskMood.filter((m) => m.inPack).length
+                      ? deskMood.filter((m) => m.inPack)
+                      : deskMood
+                    )
+                      .slice(0, 4)
+                      .map((pin) => (
+                        <span
+                          key={pin.id}
+                          className="pack-thumb-pin"
+                          style={pinFaceStyle(pin)}
+                          title={pin.note}
+                        />
+                      ))}
+                  </div>
                 </div>
-                <details className="finish-more-formats">
-                  <summary>More formats &amp; backup</summary>
-                  <div className="finish-more-formats-list">
+                <div className="pack-meta">
+                  {(() => {
+                    const packSnap = buildCurrentBrandPack()
+                    const ready = packReadiness(packSnap)
+                    return (
+                      <>
+                        <div className="brand-section-label">Ready</div>
+                        <ul className="pack-ready-list">
+                          {ready.checks.map((c) => (
+                            <li
+                              key={c.id}
+                              className={c.ok ? 'is-ok' : 'is-miss'}
+                            >
+                              {c.ok ? '✓' : '○'} {c.label}
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="panel-hint">
+                          Steps {completedCount}
+                          {deskTasks.length ? `/${deskTasks.length}` : ''} · Pins{' '}
+                          {packSnap.pins?.length || 0}
+                          {packSnap.pinsUsedFallback
+                            ? ' (star pins on Board to curate)'
+                            : ''}
+                        </p>
+                        {ready.thin && (
+                          <p className="pack-thin-warning" role="status">
+                            Thin pack — add a tagline, palette, or Board pins
+                            before you hand this to a client.
+                          </p>
+                        )}
+                      </>
+                    )
+                  })()}
+                  <div className="finish-actions">
                     <button
                       type="button"
-                      className="btn btn-secondary"
-                      onClick={() => runExport('html')}
-                    >
-                      HTML
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => runExport('md')}
-                    >
-                      Markdown
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => runExport('json')}
-                    >
-                      Pack JSON
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-primary"
                       onClick={() => {
-                        openExportPanel()
-                        window.setTimeout(() => runExport('print'), 100)
+                        const packSnap = buildCurrentBrandPack()
+                        const ready = packReadiness(packSnap)
+                        if (ready.thin) {
+                          const go = window.confirm(
+                            'This pack looks thin (missing tagline, palette, or pins). Download anyway?'
+                          )
+                          if (!go) return
+                        }
+                        runExport('pdf')
                       }}
                     >
-                      Print
+                      Download pack
                     </button>
                     <button
                       type="button"
                       className="btn btn-secondary"
-                      onClick={downloadDataBackup}
+                      onClick={openExportPanel}
                     >
-                      Full workspace backup
+                      Preview full
                     </button>
+                    <div className="finish-secondary-row">
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => setActiveView('flow')}
+                      >
+                        Work one more step
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => setActiveView('brand')}
+                      >
+                        Edit system
+                      </button>
+                    </div>
+                    <details className="finish-more-formats">
+                      <summary>More formats &amp; backup</summary>
+                      <div className="finish-more-formats-list">
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => runExport('html')}
+                        >
+                          HTML
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => runExport('md')}
+                        >
+                          Markdown
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => runExport('json')}
+                        >
+                          Pack JSON
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => {
+                            openExportPanel()
+                            window.setTimeout(() => runExport('print'), 100)
+                          }}
+                        >
+                          Print
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={downloadDataBackup}
+                        >
+                          Full workspace backup
+                        </button>
+                      </div>
+                    </details>
                   </div>
-                  <p className="panel-hint" style={{ marginTop: '0.5rem' }}>
-                    PDF is the default handoff. HTML is offline-friendly.
-                    Markdown fits docs/Notion. Pack JSON is portable data;
-                    workspace backup restores the whole desk.
-                  </p>
-                </details>
+                </div>
               </div>
             </section>
 
@@ -3822,6 +3818,24 @@ function App() {
                   </span>
                 </button>
               </div>
+              <div className="settings-row">
+                <div>
+                  <strong>Progress bar (XP)</strong>
+                  <span>Optional level / quest strip under the path</span>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={showProgress}
+                  className={`pref-switch${showProgress ? ' is-on' : ''}`}
+                  onClick={() => setPref('showProgress', !showProgress)}
+                >
+                  <span className="pref-switch-knob" />
+                  <span className="sr-only">
+                    {showProgress ? 'On' : 'Off'}
+                  </span>
+                </button>
+              </div>
             </section>
 
             <section className="panel brand-section">
@@ -3933,16 +3947,24 @@ function App() {
               <div className="brand-section-label">Your data</div>
               <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
                 {CLOUD
-                  ? 'Cloud: Supabase workspace for your account. Cache: this browser’s localStorage for speed. JSON export is still the best portable backup.'
-                  : STORAGE_EXPLAIN.summary}
+                  ? 'Your desk syncs to the cloud. Keep a JSON backup for portability.'
+                  : 'Work is saved on this device. Export a backup if it matters.'}
               </p>
-              <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                Browser cache key:{' '}
-                <code className="settings-code">
-                  {STORAGE_EXPLAIN.workDataKey}
-                </code>
-                {CLOUD ? ' · Cloud table: user_workspaces' : ''}
-              </p>
+              <details className="settings-advanced">
+                <summary>Advanced storage</summary>
+                <p className="panel-hint" style={{ margin: '0.5rem 0' }}>
+                  {CLOUD
+                    ? 'Cloud + browser cache. JSON export is the best portable backup.'
+                    : STORAGE_EXPLAIN.summary}
+                </p>
+                <p className="panel-hint">
+                  Cache key:{' '}
+                  <code className="settings-code">
+                    {STORAGE_EXPLAIN.workDataKey}
+                  </code>
+                  {CLOUD ? ' · table: user_workspaces' : ''}
+                </p>
+              </details>
               <div className="settings-actions">
                 <button
                   type="button"

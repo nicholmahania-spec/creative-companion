@@ -7860,3 +7860,250 @@ html[data-reduce-motion='true'] *::after {
   outline: 3px solid var(--accent-primary);
   outline-offset: 2px;
 }
+
+/* ——— Redesign brief: chrome, path, pack, system ——— */
+.header-redesign .logo-sub {
+  display: none;
+}
+
+.header-redesign .brand-block .logo {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.header-project-select {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  max-width: 9.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.work-context-line {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.work-context-progress {
+  color: var(--text-muted);
+  font-weight: 650;
+}
+
+.flow-top-compact {
+  margin-bottom: 0.35rem;
+}
+
+.step-focus-title {
+  font-size: clamp(1.35rem, 3.2vw, 1.85rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em;
+}
+
+.process-rail-optional {
+  margin-top: 0.75rem;
+}
+
+.work-below-tools {
+  margin: 0.85rem 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.product-card-quiet {
+  margin-top: 0.75rem;
+  opacity: 0.92;
+}
+
+.mood-pin-star {
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  padding: 0.28rem 0.55rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mood-pin-star.is-on {
+  background: rgba(79, 70, 229, 0.12);
+  border-color: rgba(79, 70, 229, 0.28);
+  color: #3730a3;
+}
+
+.system-artboard {
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-2);
+}
+
+.system-edit-label {
+  margin: 0 0 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.system-accordion-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.system-acc-tab {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.system-acc-tab.is-active {
+  background: rgba(79, 70, 229, 0.12);
+  border-color: rgba(79, 70, 229, 0.3);
+  color: #3730a3;
+}
+
+.pack-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .pack-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pack-preview-thumb {
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+
+.pack-thumb-cover {
+  padding: 1.1rem 1rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 8.5rem;
+}
+
+.pack-thumb-kicker {
+  font-size: 0.68rem;
+  font-weight: 750;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pack-thumb-cover strong {
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.pack-thumb-cover em {
+  font-style: normal;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+.pack-thumb-strip {
+  display: flex;
+  height: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 0.65rem;
+}
+
+.pack-thumb-strip i {
+  flex: 1;
+  display: block;
+}
+
+.pack-thumb-pins {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.55rem;
+  background: var(--bg-muted);
+}
+
+.pack-thumb-pin {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background-size: cover;
+  background-position: center;
+}
+
+.pack-ready-list {
+  list-style: none;
+  margin: 0 0 0.65rem;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.pack-ready-list .is-ok {
+  color: var(--text-primary);
+}
+
+.pack-ready-list .is-miss {
+  color: var(--text-muted);
+}
+
+.pack-thin-warning {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: rgba(224, 79, 26, 0.08);
+  border: 1px solid rgba(224, 79, 26, 0.2);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.settings-advanced {
+  margin-bottom: 0.85rem;
+  font-size: 0.82rem;
+}
+
+.settings-advanced summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.buddy-act-three {
+  grid-template-columns: 1fr 1fr 1fr !important;
+}
+
+.app.deep .system-acc-tab.is-active,
+.app.deep .mood-pin-star.is-on {
+  color: var(--accent-soft);
+}

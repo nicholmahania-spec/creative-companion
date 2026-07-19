@@ -76,6 +76,8 @@ export function blankWorkspaceState() {
       forceBreaksEnabled: true,
       queueCollapsed: true,
       showHowItWorks: true,
+      /** XP / quest bar — off by default (redesign brief) */
+      showProgress: false,
     },
   }
 }
@@ -545,6 +547,7 @@ const useAppStore = create(
               id: pin.id || Date.now(),
               projectId: pin.projectId ?? state.currentProjectId,
               note: pin.note || '',
+              inPack: !!pin.inPack,
             },
             ...state.moodItems,
           ],
@@ -556,6 +559,39 @@ const useAppStore = create(
             m.id === id ? { ...m, note } : m
           ),
         })),
+
+      /**
+       * Star/unstar a pin for the brand pack (max 6 per project).
+       * @returns {{ ok: boolean, error?: string, inPack?: boolean }}
+       */
+      toggleMoodPinInPack: (id) => {
+        const state = get()
+        const pin = (state.moodItems || []).find((m) => m.id === id)
+        if (!pin) return { ok: false, error: 'Pin not found' }
+        const projectId = pin.projectId ?? state.currentProjectId
+        if (pin.inPack) {
+          set({
+            moodItems: state.moodItems.map((m) =>
+              m.id === id ? { ...m, inPack: false } : m
+            ),
+          })
+          return { ok: true, inPack: false }
+        }
+        const starred = (state.moodItems || []).filter(
+          (m) =>
+            m.inPack &&
+            (m.projectId == null || m.projectId === projectId)
+        )
+        if (starred.length >= 6) {
+          return { ok: false, error: 'Pack is full (6 pins max)' }
+        }
+        set({
+          moodItems: state.moodItems.map((m) =>
+            m.id === id ? { ...m, inPack: true } : m
+          ),
+        })
+        return { ok: true, inPack: true }
+      },
 
       removeMoodPin: (id) =>
         set((state) => ({

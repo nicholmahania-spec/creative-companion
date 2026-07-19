@@ -214,6 +214,27 @@ function esc(s) {
 /**
  * Snapshot of brand/work for exports (from app state pieces).
  */
+/**
+ * Pins for the pack: starred (inPack) first, else first N mood items as fallback.
+ * @returns {{ pins: object[], usedFallback: boolean, starredCount: number }}
+ */
+export function selectPackPins(moodItems = [], limit = 6) {
+  const list = moodItems || []
+  const starred = list.filter((m) => m.inPack)
+  if (starred.length > 0) {
+    return {
+      pins: starred.slice(0, limit),
+      usedFallback: false,
+      starredCount: starred.length,
+    }
+  }
+  return {
+    pins: list.slice(0, limit),
+    usedFallback: list.length > 0,
+    starredCount: 0,
+  }
+}
+
 export function buildBrandPackSnapshot({
   project,
   tasks = [],
@@ -223,7 +244,7 @@ export function buildBrandPackSnapshot({
   const p = project || {}
   const openTasks = (tasks || []).filter((t) => !t.completed)
   const doneTasks = (tasks || []).filter((t) => t.completed)
-  const pins = (moodItems || []).slice(0, 12)
+  const { pins, usedFallback, starredCount } = selectPackPins(moodItems, 6)
   const colors =
     Array.isArray(palette) && palette.length
       ? palette
@@ -263,8 +284,31 @@ export function buildBrandPackSnapshot({
       type: m.type,
       note: m.note,
       visual: m.visual,
+      inPack: !!m.inPack,
     })),
+    pinsUsedFallback: usedFallback,
+    pinsStarredCount: starredCount,
   }
+}
+
+/** Thin-pack readiness for Pack page warnings */
+export function packReadiness(pack) {
+  const hasName = !!(pack?.projectName && pack.projectName !== 'Untitled project')
+  const hasTagline = !!(pack?.tagline && String(pack.tagline).trim())
+  const hasBrief = !!(pack?.brief && String(pack.brief).trim())
+  const hasPalette = (pack?.palette || []).length >= 2
+  const hasPins = (pack?.pins || []).length > 0
+  const hasVoice = !!(pack?.voice && String(pack.voice).trim())
+  const checks = [
+    { id: 'tagline', label: 'Tagline', ok: hasTagline },
+    { id: 'palette', label: 'Palette', ok: hasPalette },
+    { id: 'pins', label: 'Mood pins', ok: hasPins },
+    { id: 'voice', label: 'Voice', ok: hasVoice },
+    { id: 'brief', label: 'Positioning', ok: hasBrief },
+  ]
+  const okCount = checks.filter((c) => c.ok).length
+  const thin = okCount < 3
+  return { checks, okCount, thin, hasName }
 }
 
 /** Markdown brand direction pack */
@@ -730,12 +774,14 @@ export function buildDirectionSheetMarkup(pack) {
  * @returns {{ el: HTMLElement, cleanup: () => void }}
  */
 export function resolveDirectionSheetForCapture(pack) {
-  const live = document.getElementById('direction-sheet')
-  if (live) {
-    const rect = live.getBoundingClientRect()
-    // Live Export pack preview is open — capture exactly what the user sees
-    if (rect.width > 40 && rect.height > 40) {
-      return { el: live, cleanup: () => {} }
+  // Prefer live export modal, then System artboard (same layout)
+  for (const id of ['direction-sheet', 'system-artboard']) {
+    const live = document.getElementById(id)
+    if (live) {
+      const rect = live.getBoundingClientRect()
+      if (rect.width > 40 && rect.height > 40) {
+        return { el: live, cleanup: () => {} }
+      }
     }
   }
 
