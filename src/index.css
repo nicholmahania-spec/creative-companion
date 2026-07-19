@@ -6121,6 +6121,35 @@ html[data-reduce-motion='true'] *::after {
   box-shadow: var(--shadow-3), 0 0 0 3px rgba(245, 158, 11, 0.45);
 }
 
+.buddy-fab.has-unread {
+  animation: buddyFabPulse 2s ease-in-out infinite;
+}
+
+.buddy-fab.has-unread .buddy-fab-dot {
+  background: #4f46e5;
+}
+
+@keyframes buddyFabPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+/* Expanded helper docks to a corner — never covers the page center */
+.buddy-shell.is-docked {
+  max-width: min(280px, calc(100vw - 1.5rem));
+}
+
+@media (max-width: 720px) {
+  .buddy-shell.is-docked {
+    max-width: min(260px, calc(100vw - 1rem));
+  }
+}
+
 .buddy-fab.is-levelup,
 .buddy-panel.is-levelup,
 .buddy-shell.is-levelup {

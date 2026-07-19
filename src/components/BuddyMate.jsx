@@ -20,6 +20,7 @@ import {
   markWellness,
   minutesSinceBreak,
   overdueKinds,
+  defaultBuddySpot,
   pickBuddySpot,
   progressLine,
   recommendForTask,
@@ -86,18 +87,22 @@ export default function BuddyMate({
       text: `${greetingLine()} Clock says ${formatClock()}. Try not to lose track of reality.`,
     },
   ])
-  const [expanded, setExpanded] = useState(true)
+  // Start minimized so work forms stay free
+  const [expanded, setExpanded] = useState(false)
   const [showMore, setShowMore] = useState(false)
   const [kitTitle, setKitTitle] = useState('')
   const [kitKind, setKitKind] = useState('todo')
   const [kitMinutes, setKitMinutes] = useState(3)
   const [mood, setMood] = useState('idle')
   const [recentWin, setRecentWin] = useState(false)
-  const [spot, setSpot] = useState(() => pickBuddySpot())
+  const [spot, setSpot] = useState(() => defaultBuddySpot('fab'))
   const [hop, setHop] = useState(0)
   const [game, setGame] = useState(() => loadGame())
   const [levelBurst, setLevelBurst] = useState(false)
+  const [hasUnread, setHasUnread] = useState(false)
   const listRef = useRef(null)
+  const shellRef = useRef(null)
+  const autoMinRef = useRef(null)
   const msgId = useRef(2)
   const lastCompleted = useRef(completedCount)
   const lastFocus = useRef(isFocusRunning)
@@ -114,25 +119,80 @@ export default function BuddyMate({
   const sinceBreak = minutesSinceBreak(wellness, sessionStart, now)
   const hyper = hyperfocusLevel(sinceBreak)
 
-  const repark = useCallback((forceExpand = false) => {
+  const clearAutoMin = useCallback(() => {
+    if (autoMinRef.current) {
+      window.clearTimeout(autoMinRef.current)
+      autoMinRef.current = null
+    }
+  }, [])
+
+  const minimize = useCallback(() => {
+    clearAutoMin()
+    setExpanded(false)
+    setShowMore(false)
+  }, [clearAutoMin])
+
+  /** System pop: show briefly, then tuck away so desk stays clear */
+  const scheduleAutoMinimize = useCallback(
+    (ms = 12000) => {
+      clearAutoMin()
+      autoMinRef.current = window.setTimeout(() => {
+        setExpanded(false)
+        setShowMore(false)
+        autoMinRef.current = null
+      }, ms)
+    },
+    [clearAutoMin]
+  )
+
+  const repark = useCallback(
+    (forceExpand = false) => {
+      setSpot((prev) => {
+        const mode = forceExpand ? 'panel' : 'fab'
+        const next = pickBuddySpot(prev?.id || spotIdRef.current, mode)
+        spotIdRef.current = next.id
+        return next
+      })
+      setHop((n) => n + 1)
+      if (forceExpand) {
+        setExpanded(true)
+        setHasUnread(false)
+        scheduleAutoMinimize(12000)
+      }
+    },
+    [scheduleAutoMinimize]
+  )
+
+  const openPanel = useCallback(() => {
+    clearAutoMin()
     setSpot((prev) => {
-      const next = pickBuddySpot(prev?.id || spotIdRef.current)
+      const next =
+        pickBuddySpot(prev?.id || spotIdRef.current, 'panel') ||
+        defaultBuddySpot('panel')
       spotIdRef.current = next.id
       return next
     })
     setHop((n) => n + 1)
-    if (forceExpand) setExpanded(true)
-  }, [])
+    setExpanded(true)
+    setHasUnread(false)
+  }, [clearAutoMin])
 
   const pushBuddy = useCallback(
     (text, { move = true, expand = false } = {}) => {
       if (!text) return
       if (move) repark(expand)
-      else if (expand) setExpanded(true)
+      else if (expand) {
+        setExpanded(true)
+        setHasUnread(false)
+        scheduleAutoMinimize(12000)
+      } else {
+        // Message waiting — pulse FAB, don't cover the desk
+        setHasUnread(true)
+      }
       const id = msgId.current++
       setMessages((m) => [...m.slice(-14), { id, from: 'buddy', text }])
     },
-    [repark]
+    [repark, scheduleAutoMinimize]
   )
 
   const pushYou = useCallback((text) => {
@@ -178,6 +238,46 @@ export default function BuddyMate({
     if (el) el.scrollTop = el.scrollHeight
   }, [messages, expanded])
 
+  // Click outside expanded panel → tuck away
+  useEffect(() => {
+    if (!expanded) return undefined
+    const onDown = (e) => {
+      const root = shellRef.current
+      if (!root) return
+      if (root.contains(e.target)) return
+      minimize()
+    }
+    // delay so the open click doesn't immediately close
+    const t = window.setTimeout(() => {
+      document.addEventListener('pointerdown', onDown, true)
+    }, 80)
+    return () => {
+      window.clearTimeout(t)
+      document.removeEventListener('pointerdown', onDown, true)
+    }
+  }, [expanded, minimize])
+
+  // Focusing a form field → minimize so typing isn't blocked
+  useEffect(() => {
+    const onFocusIn = (e) => {
+      const t = e.target
+      if (!t || !expanded) return
+      const tag = (t.tagName || '').toLowerCase()
+      const editable =
+        tag === 'input' ||
+        tag === 'textarea' ||
+        tag === 'select' ||
+        t.isContentEditable
+      if (!editable) return
+      if (shellRef.current?.contains(t)) return
+      minimize()
+    }
+    document.addEventListener('focusin', onFocusIn, true)
+    return () => document.removeEventListener('focusin', onFocusIn, true)
+  }, [expanded, minimize])
+
+  useEffect(() => () => clearAutoMin(), [clearAutoMin])
+
   useEffect(() => {
     setMood(
       buddyMood({
@@ -189,7 +289,7 @@ export default function BuddyMate({
     )
   }, [overdue, isFocusRunning, recentWin, hyper, levelBurst])
 
-  // New page → tip about what you're doing
+  // New page → tip about what you're doing (message only — don't cover desk)
   useEffect(() => {
     const view = activityLive.view
     if (!view) return
@@ -199,7 +299,7 @@ export default function BuddyMate({
         const a = activityRef.current
         pushBuddy(
           `${describeActivity(a)} ${activityTip(a)} ${recommendForTask(a)}`,
-          { move: false }
+          { move: false, expand: false }
         )
       }, 1400)
       return () => window.clearTimeout(t)
@@ -209,8 +309,8 @@ export default function BuddyMate({
     const t = window.setTimeout(() => {
       const a = activityRef.current
       pushBuddy(
-        `${describeActivity(a)} ${activityTip(a)} Try Recommend or Critique for task-specific notes.`,
-        { move: true, expand: true }
+        `${describeActivity(a)} ${activityTip(a)} Open me for Recommend or Critique.`,
+        { move: true, expand: false }
       )
     }, 600)
     return () => window.clearTimeout(t)
@@ -234,7 +334,7 @@ export default function BuddyMate({
         `New focus: "${String(a.nextTaskTitle).slice(0, 50)}${
           String(a.nextTaskTitle).length > 50 ? '…' : ''
         }". I am treating this as ${domain} work. ${recommendForTask(a)} ${critiqueForTask(a)}`,
-        { move: true, expand: true }
+        { move: true, expand: false }
       )
     }, 500)
     return () => window.clearTimeout(t)
@@ -251,7 +351,7 @@ export default function BuddyMate({
           : ' Desk is clear for a second — nice. Add something if you want.'
       pushBuddy(`${progressLine('step')}${follow}`, {
         move: true,
-        expand: true,
+        expand: false,
       })
       const t = window.setTimeout(() => setRecentWin(false), 4000)
       return () => window.clearTimeout(t)
@@ -262,7 +362,7 @@ export default function BuddyMate({
   useEffect(() => {
     if (!pulseWin) return
     setRecentWin(true)
-    pushBuddy(progressLine('step'), { move: true, expand: true })
+    pushBuddy(progressLine('step'), { move: true, expand: false })
     const t = window.setTimeout(() => setRecentWin(false), 4000)
     return () => window.clearTimeout(t)
   }, [pulseWin, pushBuddy])
@@ -274,19 +374,20 @@ export default function BuddyMate({
         a.nextTaskTitle
           ? `${progressLine('timer')} You're on: "${String(a.nextTaskTitle).slice(0, 42)}".`
           : progressLine('timer'),
-        { move: true }
+        { move: true, expand: false }
       )
     }
     if (!isFocusRunning && lastFocus.current && focusLeft === 0) {
       pushBuddy(
         "Timer's done. Stretch, sip water, or hit the bathroom — then pick up whatever is next when you're ready.",
-        { move: true, expand: true }
+        { move: true, expand: false }
       )
     }
     lastFocus.current = isFocusRunning
   }, [isFocusRunning, focusLeft, pushBuddy])
 
   // Periodic: wellness / hyperfocus / activity-aware idle
+  // Only hard hyperfocus pops the panel (and auto-tucks). Everything else pings the FAB.
   useEffect(() => {
     const tick = () => {
       const t = Date.now()
@@ -300,7 +401,10 @@ export default function BuddyMate({
 
       if (level && level !== lastHyperLevel.current) {
         lastHyperLevel.current = level
-        pushBuddy(hyperfocusLine(breakMins), { move: true, expand: true })
+        pushBuddy(hyperfocusLine(breakMins), {
+          move: true,
+          expand: level === 'hard',
+        })
         return
       }
       if (!level) lastHyperLevel.current = null
@@ -309,27 +413,27 @@ export default function BuddyMate({
         lastTimePing.current = t
         const timeBit = timeBlindLine(sessionStart, t)
         const tip = activityTip(act)
-        pushBuddy(`${timeBit} ${tip}`, { move: true, expand: true })
+        pushBuddy(`${timeBit} ${tip}`, { move: true, expand: false })
         return
       }
 
       if (od.length) {
-        pushBuddy(wellnessLine(od[0]), { move: true, expand: true })
+        pushBuddy(wellnessLine(od[0]), { move: true, expand: false })
       } else if (level === 'soft' || level === 'strong') {
-        pushBuddy(hyperfocusLine(breakMins), { move: true, expand: true })
+        pushBuddy(hyperfocusLine(breakMins), { move: true, expand: false })
       } else {
-        pushBuddy(idleLineWithActivity(act), { move: true })
+        pushBuddy(idleLineWithActivity(act), { move: true, expand: false })
       }
     }
 
     const interval = window.setInterval(tick, 3 * 60 * 1000)
     const first = window.setTimeout(() => {
-      pushBuddy(timeBlindLine(sessionStart), { move: true, expand: true })
+      pushBuddy(timeBlindLine(sessionStart), { move: true, expand: false })
     }, 2 * 60 * 1000)
     const well = window.setTimeout(() => {
       const od = overdueKinds(loadWellness())
       if (od.length)
-        pushBuddy(wellnessLine(od[0]), { move: true, expand: true })
+        pushBuddy(wellnessLine(od[0]), { move: true, expand: false })
     }, 90 * 1000)
 
     return () => {
@@ -492,18 +596,21 @@ export default function BuddyMate({
       <button
         type="button"
         className={`buddy-fab buddy-float is-cute${
-          hyper === 'hard' || hyper === 'strong' ? ' is-alert' : ''
+          hyper === 'hard' || hyper === 'strong' || hasUnread ? ' is-alert' : ''
         }${levelBurst ? ' is-levelup' : ''}${
           hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''
-        }`}
+        }${hasUnread ? ' has-unread' : ''}`}
         style={posStyle}
         key={`fab-${spot?.id}-${hop}`}
-        onClick={() => {
-          repark(false)
-          setExpanded(true)
-        }}
-        aria-label={`Open design buddy, level ${xp.level}`}
-        title={`Level ${xp.level} · ${game.xp || 0} XP`}
+        onClick={openPanel}
+        aria-label={`Open design buddy, level ${xp.level}${
+          hasUnread ? ', new message' : ''
+        }`}
+        title={
+          hasUnread
+            ? 'New tip from Helper — click to open'
+            : `Level ${xp.level} · ${game.xp || 0} XP · click to chat`
+        }
       >
         <img
           className="buddy-fab-img"
@@ -514,7 +621,10 @@ export default function BuddyMate({
           draggable={false}
         />
         <span className="buddy-fab-level">{xp.level}</span>
-        {(overdue.length > 0 || hyper === 'hard' || hyper === 'strong') && (
+        {(overdue.length > 0 ||
+          hyper === 'hard' ||
+          hyper === 'strong' ||
+          hasUnread) && (
           <span className="buddy-fab-dot" aria-hidden="true" />
         )}
       </button>
@@ -569,7 +679,8 @@ export default function BuddyMate({
 
   return (
     <div
-      className={`buddy-shell buddy-float${
+      ref={shellRef}
+      className={`buddy-shell buddy-float is-docked${
         isFocusRunning ? ' is-focus' : ''
       }${hyper === 'hard' || hyper === 'strong' ? ' is-hyper' : ''}${
         levelBurst ? ' is-levelup' : ''
@@ -588,8 +699,9 @@ export default function BuddyMate({
           <button
             type="button"
             className="buddy-icon-btn"
-            onClick={() => setExpanded(false)}
-            aria-label="Minimize buddy"
+            onClick={minimize}
+            aria-label="Minimize buddy — keep working"
+            title="Tuck away (desk stays free)"
           >
             –
           </button>

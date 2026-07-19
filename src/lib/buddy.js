@@ -822,26 +822,42 @@ export function buddyMood({
 }
 
 /**
- * Screen spots so the buddy is harder to ignore by habit.
- * Panel uses inset CSS; fab uses the same anchors.
+ * Screen spots — keep off the main work surface.
+ * Panel (expanded) uses corners only so forms stay usable.
+ * FAB (minimized) can also sit mid-edge (still not center).
  */
-export const BUDDY_SPOTS = [
+export const BUDDY_SPOTS_PANEL = [
   { id: 'br', label: 'bottom-right', bottom: '1rem', right: '1rem', top: 'auto', left: 'auto' },
   { id: 'bl', label: 'bottom-left', bottom: '1rem', left: '1rem', top: 'auto', right: 'auto' },
-  { id: 'tr', label: 'top-right', top: '4.5rem', right: '1rem', bottom: 'auto', left: 'auto' },
-  { id: 'tl', label: 'top-left', top: '4.5rem', left: '1rem', bottom: 'auto', right: 'auto' },
-  { id: 'mr', label: 'mid-right', top: '42%', right: '0.75rem', bottom: 'auto', left: 'auto' },
-  { id: 'ml', label: 'mid-left', top: '42%', left: '0.75rem', bottom: 'auto', right: 'auto' },
-  { id: 'bc', label: 'bottom-center', bottom: '1rem', left: '50%', right: 'auto', top: 'auto', transform: 'translateX(-50%)' },
+  { id: 'tr', label: 'top-right', top: '5.5rem', right: '1rem', bottom: 'auto', left: 'auto' },
+  { id: 'tl', label: 'top-left', top: '5.5rem', left: '1rem', bottom: 'auto', right: 'auto' },
 ]
 
-/** Pick a new spot, never the same as last time when possible. */
-export function pickBuddySpot(prevId = null) {
+export const BUDDY_SPOTS_FAB = [
+  ...BUDDY_SPOTS_PANEL,
+  { id: 'mr', label: 'mid-right', top: '42%', right: '0.75rem', bottom: 'auto', left: 'auto' },
+  { id: 'ml', label: 'mid-left', top: '42%', left: '0.75rem', bottom: 'auto', right: 'auto' },
+]
+
+/** @deprecated use BUDDY_SPOTS_PANEL / FAB */
+export const BUDDY_SPOTS = BUDDY_SPOTS_FAB
+
+/**
+ * Pick a new spot, never the same as last time when possible.
+ * @param {string|null} prevId
+ * @param {'panel'|'fab'} mode
+ */
+export function pickBuddySpot(prevId = null, mode = 'fab') {
+  const pool = mode === 'panel' ? BUDDY_SPOTS_PANEL : BUDDY_SPOTS_FAB
   const options =
-    prevId && BUDDY_SPOTS.length > 1
-      ? BUDDY_SPOTS.filter((s) => s.id !== prevId)
-      : BUDDY_SPOTS
+    prevId && pool.length > 1 ? pool.filter((s) => s.id !== prevId) : pool
   return options[Math.floor(Math.random() * options.length)]
+}
+
+/** Default dock — bottom-right, away from forms */
+export function defaultBuddySpot(mode = 'fab') {
+  const pool = mode === 'panel' ? BUDDY_SPOTS_PANEL : BUDDY_SPOTS_FAB
+  return pool.find((s) => s.id === 'br') || pool[0]
 }
 
 export function spotStyle(spot) {
