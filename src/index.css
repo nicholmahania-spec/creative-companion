@@ -4409,6 +4409,104 @@ html[data-reduce-motion='true'] *::after {
   box-shadow: var(--shadow-3), 0 0 0 2px rgba(13, 148, 136, 0.35);
 }
 
+.buddy-panel.is-hyper {
+  box-shadow: var(--shadow-3), 0 0 0 2px rgba(245, 158, 11, 0.4);
+}
+
+.buddy-time-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  background: color-mix(in srgb, var(--bg-muted) 80%, transparent);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.buddy-time-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.buddy-time-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.buddy-time-value {
+  font-size: 0.82rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.buddy-time-value.is-warn {
+  color: #d97706;
+}
+
+.app.deep .buddy-time-value.is-warn {
+  color: #fbbf24;
+}
+
+.buddy-hyper-banner {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.buddy-hyper-banner.level-soft {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--accent-growth);
+}
+
+.buddy-hyper-banner.level-strong {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.buddy-hyper-banner.level-hard {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.app.deep .buddy-hyper-banner.level-strong {
+  color: #fcd34d;
+}
+
+.app.deep .buddy-hyper-banner.level-hard {
+  color: #fca5a5;
+}
+
+.buddy-break-btn {
+  width: 100%;
+  margin-top: 0.4rem;
+  border: 1px dashed rgba(13, 148, 136, 0.4);
+  border-radius: 10px;
+  background: rgba(13, 148, 136, 0.08);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.45rem 0.5rem;
+  cursor: pointer;
+  color: var(--accent-growth);
+}
+
+.buddy-break-btn:hover {
+  background: rgba(13, 148, 136, 0.14);
+}
+
+.buddy-fab.is-alert {
+  box-shadow: var(--shadow-3), 0 0 0 3px rgba(245, 158, 11, 0.45);
+}
+
 .buddy-panel-top {
   display: flex;
   align-items: flex-start;

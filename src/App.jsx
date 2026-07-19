@@ -3077,8 +3077,8 @@ function App() {
                 <div>
                   <strong>Desk buddy (body double)</strong>
                   <span>
-                    Little bot that checks water, food, bathroom &amp; cheers
-                    progress — not silent, not AI chat
+                    Little bot for time blindness &amp; hyperfocus — clock, break
+                    watch, water/food/bathroom, progress cheers
                   </span>
                 </div>
                 <button
@@ -3819,6 +3819,7 @@ function App() {
         <BuddyMate
           onClose={() => setBodyDoubling(false)}
           isFocusRunning={isFocusRunning}
+          focusLeft={focusLeft}
           completedCount={completedCount}
           nextTaskTitle={nextTask?.title || ''}
           reduceMotion={reduceMotion}
