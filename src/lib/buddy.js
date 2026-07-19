@@ -145,9 +145,9 @@ export function minutesAtDesk(sessionStart, now = Date.now()) {
 }
 
 const GREETINGS = [
-  "Oh good, you're here. I'm the design buddy with opinions, a clock, and zero patience for twin primary buttons. Shall we make something that doesn't look like a template?",
-  "Look who showed up to do actual work. I'm sassy, useful, and slightly judgmental about your spacing. Ask me to coach, recommend, or roast—er, critique.",
-  "Hi. I'm your design gremlin: hierarchy, breaks, and unsolicited honesty. I also prevent you from ghosting water for three hours. You're welcome.",
+  "Little Helper reporting for duty — beret on, pencil sharp, patience for twin primary buttons: zero. Let's make something iconic.",
+  "Layouts look fine… but we both know fine is boring. I'm your sassy design bot. Coach, critique, or hydrate — pick your adventure.",
+  "Hi. Graphic design bot energy: precision meets chaos, with good kerning. I track your steps, breaks, and questionable color choices.",
 ]
 
 const WATER = [

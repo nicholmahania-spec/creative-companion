@@ -512,7 +512,7 @@ export default function BuddyMate({
           <BuddyFace mood={mood} reduceMotion={reduceMotion} />
           <div>
             <strong className="buddy-name">
-              Sassy buddy · Lv {xp.level}
+              Little Helper · Lv {xp.level}
             </strong>
             <span className="buddy-status">
               {isFocusRunning
@@ -766,20 +766,48 @@ export default function BuddyMate({
   )
 }
 
+/**
+ * Little Helper — graphic design bot (beret, pencil, cream/sage).
+ * Inspired by user concept art; pure CSS for crisp UI at any size.
+ */
 function BuddyFace({ mood = 'idle', reduceMotion = false, compact = false }) {
   return (
     <div
-      className={`buddy-face mood-${mood}${compact ? ' is-compact' : ''}${
+      className={`buddy-helper mood-${mood}${compact ? ' is-compact' : ''}${
         reduceMotion ? ' no-motion' : ''
       }`}
       aria-hidden="true"
     >
-      <span className="buddy-antenna" />
-      <span className="buddy-eye buddy-eye-l" />
-      <span className="buddy-eye buddy-eye-r" />
-      <span className="buddy-mouth" />
-      <span className="buddy-blush buddy-blush-l" />
-      <span className="buddy-blush buddy-blush-r" />
+      {/* Pencil behind beret */}
+      <span className="bh-pencil">
+        <span className="bh-pencil-wood" />
+        <span className="bh-pencil-tip" />
+      </span>
+      <span className="bh-beret">
+        <span className="bh-beret-stem" />
+      </span>
+      <span className="bh-head">
+        <span className="bh-visor">
+          <span className="bh-eye bh-eye-l" />
+          <span className="bh-eye bh-eye-r" />
+          <span className="bh-mouth" />
+          <span className="bh-blush bh-blush-l" />
+          <span className="bh-blush bh-blush-r" />
+        </span>
+      </span>
+      <span className="bh-body">
+        <span className="bh-pocket">
+          <span className="bh-pen bh-pen-ink" />
+          <span className="bh-pen bh-pen-g" />
+          <span className="bh-pen bh-pen-p" />
+        </span>
+        <span className="bh-badge" title="Little Helper" />
+      </span>
+      <span className="bh-arm bh-arm-l" />
+      <span className="bh-arm bh-arm-r" />
+      {mood === 'cheer' && <span className="bh-spark bh-spark-1" />}
+      {mood === 'cheer' && <span className="bh-spark bh-spark-2" />}
+      {mood === 'nudge' && <span className="bh-bang">!</span>}
     </div>
   )
 }
