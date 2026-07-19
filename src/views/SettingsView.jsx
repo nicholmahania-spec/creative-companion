@@ -485,17 +485,9 @@ export default function SettingsView(props) {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    'Replace your workspace with the Soft Signal sample project?'
-                  )
-                ) {
-                  loadSoftSignalDemo()
-                }
-              }}
+              onClick={() => loadSoftSignalDemo()}
             >
-              Load Soft Signal demo project
+              Load Soft Signal demo + tour
             </button>
           </section>
 

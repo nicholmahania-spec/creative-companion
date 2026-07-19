@@ -218,6 +218,7 @@ function App() {
   const [exportPanel, setExportPanel] = useState(null)
   const [lastExportNote, setLastExportNote] = useState('')
   const [boardLightbox, setBoardLightbox] = useState(null)
+  const [demoTour, setDemoTour] = useState(null)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
@@ -523,6 +524,11 @@ function App() {
       }
       if (e.key !== 'Escape') return
       // Topmost dialogs first
+      if (demoTour) {
+        e.preventDefault()
+        setDemoTour(null)
+        return
+      }
       if (boardLightbox) {
         e.preventDefault()
         setBoardLightbox(null)
@@ -551,6 +557,7 @@ function App() {
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [
+    demoTour,
     boardLightbox,
     exportPanel,
     showBreakdown,
@@ -1462,8 +1469,9 @@ function App() {
       if (result.ok) {
         setBodyDoubling(true)
         setActiveView('project')
+        setDemoTour({ step: 0 })
         notifyAction(
-          'Soft Signal demo loaded · walk Project → Pack',
+          'Soft Signal demo loaded · short tour open',
           'project_create',
           { label: 'Soft Signal demo' }
         )
@@ -3548,9 +3556,10 @@ function App() {
           <div className="finish-view surface-document pack-view">
             <div className="flow-top">
               <div>
+                <p className="pack-eyebrow">Brand leave-behind</p>
                 <h1 className="page-title page-title-display">Pack</h1>
                 <p className="page-sub">
-                  {activeProject?.name || 'Your project'} · preview &amp; download
+                  {activeProject?.name || 'Your project'} · print for client · or download preview
                 </p>
               </div>
             </div>
@@ -3564,7 +3573,6 @@ function App() {
                     project={activeProject || {}}
                     palette={projectPalette}
                     pins={deskMood.filter((m) => m.inPack)}
-                    compact
                     editable={false}
                     hideWatermark={hidePackWatermark}
                   />
@@ -3622,26 +3630,10 @@ function App() {
                     )
                   })()}
                   <div className="finish-actions pack-primary-stack">
+                    <p className="pack-client-kicker">Client handoff</p>
                     <button
                       type="button"
-                      className="btn btn-primary pack-download-btn"
-                      onClick={() => {
-                        const packSnap = buildCurrentBrandPack()
-                        const ready = packReadiness(packSnap)
-                        if (ready.thin) {
-                          const go = window.confirm(
-                            'This pack looks thin (missing tagline, palette, or pins). Download anyway?'
-                          )
-                          if (!go) return
-                        }
-                        runExport('pdf')
-                      }}
-                    >
-                      Download PDF
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary pack-print-btn"
+                      className="btn btn-primary pack-print-btn"
                       onClick={() => {
                         const packSnap = buildCurrentBrandPack()
                         const ready = packReadiness(packSnap)
@@ -3656,10 +3648,27 @@ function App() {
                     >
                       Print / Save as PDF
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary pack-download-btn"
+                      onClick={() => {
+                        const packSnap = buildCurrentBrandPack()
+                        const ready = packReadiness(packSnap)
+                        if (ready.thin) {
+                          const go = window.confirm(
+                            'This pack looks thin (missing tagline, palette, or pins). Download anyway?'
+                          )
+                          if (!go) return
+                        }
+                        runExport('pdf')
+                      }}
+                    >
+                      Download PDF (preview match)
+                    </button>
                     <p className="pack-export-hint">
-                      <strong>Download</strong> matches on-screen preview (raster).{' '}
-                      <strong>Print</strong> uses paper CSS — often sharper type;
-                      choose “Save as PDF” in the print dialog.
+                      <strong>Print / Save as PDF</strong> is best for clients
+                      (paper CSS, sharper type). <strong>Download</strong> is a
+                      raster snapshot of the on-screen pack.
                     </p>
                     {lastExportNote ? (
                       <p className="pack-export-confirm" role="status">
@@ -4234,6 +4243,78 @@ function App() {
             : 'Local-only'}
         </span>
       </footer>
+
+
+      {demoTour && (
+        <div
+          className="export-overlay demo-tour-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="demo-tour-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDemoTour(null)
+          }}
+        >
+          <div className="export-panel demo-tour-panel">
+            <p className="onboard-eyebrow">Soft Signal · sample tour</p>
+            <h2 id="demo-tour-title" style={{ marginTop: 0 }}>
+              {
+                [
+                  '1 · Project',
+                  '2 · Work',
+                  '3 · Board',
+                  '4 · System',
+                  '5 · Pack',
+                ][demoTour.step] || 'Tour'
+              }
+            </h2>
+            <p className="view-lede">
+              {
+                [
+                  'Name and readiness live here. Soft Signal is already filled — open Work when ready.',
+                  'One current step owns the fold. Complete it; the queue waits underneath.',
+                  'Refs and ★ Pack pins (max 6) feed System and the pack PDF.',
+                  'Live artboard + Edit tabs. Roles, type, voice — then go to Pack.',
+                  'Print / Save as PDF for client handoff. Download is a preview-match raster.',
+                ][demoTour.step]
+              }
+            </p>
+            <div className="onboard-actions" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  const views = ['project', 'flow', 'studio', 'brand', 'finish']
+                  const s = demoTour.step
+                  setActiveView(views[s])
+                  if (s >= 4) setDemoTour(null)
+                  else setDemoTour({ step: s + 1 })
+                }}
+              >
+                {demoTour.step >= 4 ? 'Open Pack · done' : 'Go · next tip'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  const views = ['project', 'flow', 'studio', 'brand', 'finish']
+                  setActiveView(views[demoTour.step])
+                  setDemoTour(null)
+                }}
+              >
+                Stay here
+              </button>
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => setDemoTour(null)}
+              >
+                Skip tour
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showOnboarding && (
         <div

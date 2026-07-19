@@ -9429,3 +9429,89 @@ html[data-reduce-motion='true'] *::after {
   background: color-mix(in srgb, var(--accent-growth) 22%, var(--bg-muted));
   color: var(--accent-growth);
 }
+
+/* ——— v1.1 Pack presentation ——— */
+.pack-view {
+  max-width: 56rem;
+  margin-inline: auto;
+  padding-bottom: 2.5rem;
+}
+.pack-eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.pack-view .page-title-display {
+  font-size: clamp(1.85rem, 3.5vw, 2.35rem);
+  letter-spacing: -0.045em;
+  margin-bottom: 0.2rem;
+}
+.pack-view .finish-hero-panel.pack-hero {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+.pack-view .pack-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(15rem, 0.9fr);
+  gap: 1.75rem 2rem;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .pack-view .pack-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.pack-view .pack-preview-artboard {
+  background: #fafaf9;
+  border: 1px solid rgba(28, 25, 23, 0.08);
+  border-radius: 2px;
+  box-shadow:
+    0 1px 0 rgba(28, 25, 23, 0.04),
+    0 24px 48px rgba(28, 25, 23, 0.08);
+  padding: 0.35rem;
+  overflow: hidden;
+}
+.pack-view .pack-preview-artboard .brand-artboard {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  max-height: none;
+}
+.pack-view .pack-meta {
+  position: sticky;
+  top: 4.5rem;
+}
+.pack-client-kicker {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--accent-growth);
+}
+.pack-print-btn {
+  width: 100%;
+  min-height: 2.9rem;
+  font-size: 1.02rem;
+}
+.pack-download-btn {
+  width: 100%;
+}
+.app.deep .pack-view .pack-preview-artboard {
+  background: #1c1917;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Demo tour */
+.demo-tour-panel {
+  width: min(26rem, 100%);
+  max-width: 28rem;
+}
+.demo-tour-overlay .view-lede {
+  margin-bottom: 1rem;
+}

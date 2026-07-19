@@ -55,12 +55,14 @@ test.describe('Desk reliability', () => {
       { timeout: 10000 }
     )
     await expect(
-      page.getByRole('button', { name: 'Download PDF', exact: true })
-    ).toBeVisible()
-    await expect(
       page.getByRole('button', { name: 'Print / Save as PDF', exact: true })
     ).toBeVisible()
-    await expect(page.getByText(/matches on-screen preview/i)).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: /Download PDF/i })
+    ).toBeVisible()
+    await expect(
+      page.getByText(/best for clients|paper CSS|raster snapshot/i)
+    ).toBeVisible()
   })
 
   test('Esc closes Tools menu', async ({ page }) => {
