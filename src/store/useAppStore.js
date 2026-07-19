@@ -323,6 +323,102 @@ const useAppStore = create(
         }
       },
 
+      /**
+       * Restore a JSON backup from exportAllData.
+       * Returns { ok: true } or { ok: false, error: string }.
+       */
+      importAllData: (raw) => {
+        try {
+          const data = typeof raw === 'string' ? JSON.parse(raw) : raw
+          if (!data || typeof data !== 'object') {
+            return { ok: false, error: 'Invalid backup file' }
+          }
+          if (!Array.isArray(data.projects) || data.projects.length === 0) {
+            return { ok: false, error: 'Backup has no projects' }
+          }
+          if (!Array.isArray(data.tasks)) {
+            return { ok: false, error: 'Backup has no tasks array' }
+          }
+          const projects = data.projects.map((p) => ({
+            logoDirection: '',
+            palette: [...defaultProjectPalette],
+            deadline: '',
+            ...defaultBrandIdentity,
+            ...p,
+          }))
+          const currentProjectId =
+            data.currentProjectId &&
+            projects.some((p) => p.id === data.currentProjectId)
+              ? data.currentProjectId
+              : projects[0].id
+          const sparkIndex =
+            typeof data.sparkIndex === 'number' ? data.sparkIndex : 0
+          set({
+            projects: projects.map((p) => ({
+              ...p,
+              active: p.id === currentProjectId,
+            })),
+            currentProjectId,
+            tasks: data.tasks,
+            moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
+            theme: data.theme === 'deep' ? 'deep' : 'warm',
+            prefs: {
+              soundEnabled: true,
+              reduceMotion: false,
+              bodyDoubleSilent: false,
+              queueCollapsed: true,
+              showHowItWorks: true,
+              ...(data.prefs || {}),
+            },
+            sparkIndex,
+            currentSpark:
+              sparkPrompts[sparkIndex % sparkPrompts.length] || sparkPrompts[0],
+            onboarded: data.onboarded !== false,
+            bodyDoubling: false,
+          })
+          return { ok: true }
+        } catch (e) {
+          return {
+            ok: false,
+            error: e?.message || 'Could not read backup',
+          }
+        }
+      },
+
+      renameProject: (id, name) => {
+        const next = String(name || '').trim()
+        if (!next) return
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === id ? { ...p, name: next } : p
+          ),
+        }))
+      },
+
+      /** Delete a project and its tasks/pins. Keeps at least one project. */
+      deleteProject: (id) => {
+        const { projects, tasks, moodItems, currentProjectId } = get()
+        if (projects.length <= 1) {
+          return { ok: false, error: 'Keep at least one project' }
+        }
+        const remaining = projects.filter((p) => p.id !== id)
+        if (remaining.length === projects.length) {
+          return { ok: false, error: 'Project not found' }
+        }
+        const nextId =
+          currentProjectId === id ? remaining[0].id : currentProjectId
+        set({
+          projects: remaining.map((p) => ({
+            ...p,
+            active: p.id === nextId,
+          })),
+          currentProjectId: nextId,
+          tasks: tasks.filter((t) => t.projectId !== id),
+          moodItems: moodItems.filter((m) => m.projectId !== id),
+        })
+        return { ok: true }
+      },
+
       clearAllData: () => {
         set({
           projects: seedProjects.map((p) => ({ ...p })),

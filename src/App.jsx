@@ -65,8 +65,11 @@ function App() {
   const prefs = useAppStore((s) => s.prefs) || {}
   const setPref = useAppStore((s) => s.setPref)
   const exportAllData = useAppStore((s) => s.exportAllData)
+  const importAllData = useAppStore((s) => s.importAllData)
   const clearAllData = useAppStore((s) => s.clearAllData)
   const clearToEmpty = useAppStore((s) => s.clearToEmpty)
+  const renameProject = useAppStore((s) => s.renameProject)
+  const deleteProject = useAppStore((s) => s.deleteProject)
 
   // ——— Ephemeral UI (not persisted) ———
   const [activeView, setActiveView] = useState('flow')
@@ -107,7 +110,10 @@ function App() {
   const [doneOpen, setDoneOpen] = useState(false)
   const [actionToast, setActionToast] = useState('')
   const [stepFocusKey, setStepFocusKey] = useState(0)
+  const [stepDueOpen, setStepDueOpen] = useState(false)
+  const [projectNameDraft, setProjectNameDraft] = useState('')
   const moreWrapRef = useRef(null)
+  const importFileRef = useRef(null)
 
   const showHowItWorks = prefs.showHowItWorks !== false
   const queueCollapsed = prefs.queueCollapsed !== false
@@ -256,6 +262,7 @@ function App() {
   const completeCurrentStep = () => {
     if (!nextTask) return
     toggleTask(nextTask.id)
+    setStepDueOpen(false)
     flashToast('Step complete · next one is ready')
     setStepFocusKey((k) => k + 1)
   }
@@ -375,6 +382,11 @@ function App() {
   useEffect(() => {
     if (!onboarded) setShowOnboarding(true)
   }, [onboarded])
+
+  // Keep rename field in sync with active project
+  useEffect(() => {
+    setProjectNameDraft(activeProject?.name || '')
+  }, [activeProject?.id, activeProject?.name])
 
   // Autosave pulse — skip first mount so load doesn’t flash “Saved”
   const savePulseReady = useRef(false)
@@ -690,6 +702,55 @@ function App() {
     flashToast('Backup downloaded')
   }
 
+  const handleImportBackup = (file) => {
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = importAllData(String(reader.result || ''))
+      if (result.ok) {
+        setActiveView('flow')
+        flashToast('Backup restored')
+      } else {
+        flashToast(result.error || 'Import failed')
+      }
+    }
+    reader.onerror = () => flashToast('Could not read file')
+    reader.readAsText(file)
+  }
+
+  const commitProjectRename = () => {
+    if (!activeProject) return
+    const next = projectNameDraft.trim()
+    if (!next || next === activeProject.name) {
+      setProjectNameDraft(activeProject.name || '')
+      return
+    }
+    renameProject(activeProject.id, next)
+    flashToast('Project renamed')
+  }
+
+  const handleDeleteProject = () => {
+    if (!activeProject) return
+    if (projects.length <= 1) {
+      flashToast('Keep at least one project')
+      return
+    }
+    if (
+      !window.confirm(
+        `Delete “${activeProject.name}” and its tasks & pins? This cannot be undone.`
+      )
+    ) {
+      return
+    }
+    const result = deleteProject(activeProject.id)
+    if (result.ok) {
+      flashToast('Project deleted')
+      setActiveView('project')
+    } else {
+      flashToast(result.error || 'Could not delete')
+    }
+  }
+
   const submitBoardUrl = () => {
     const url = boardUrl.trim()
     if (!url) return
@@ -909,12 +970,12 @@ function App() {
       <main className="main">
         {/* ===== DESK = step-by-step work loop ===== */}
         {activeView === 'flow' && (
-          <div className="flow-view">
+          <div className="flow-view surface-desk">
             <div className="flow-top">
               <div>
                 <h1 className="page-title">Work</h1>
                 <p className="page-sub">
-                  One project · one current step · complete it · next rises
+                  {activeProject?.name || 'Project'} · one step · complete · next
                 </p>
               </div>
               <div className="flow-top-actions">
@@ -938,7 +999,7 @@ function App() {
                 className={`deadline-banner urgency-${projectUrgency || 'later'}`}
               >
                 <div>
-                  <strong>Project deadline</strong>
+                  <strong>Deadline</strong>
                   <span>
                     {formatShortDate(projectDeadline)} ·{' '}
                     {urgencyLabel(projectDeadline)}
@@ -949,7 +1010,7 @@ function App() {
                   className="btn btn-ghost"
                   onClick={() => setActiveView('calendar')}
                 >
-                  Open calendar
+                  Calendar
                 </button>
               </div>
             )}
@@ -970,22 +1031,22 @@ function App() {
                   <li>
                     <span className="product-step-num">1</span>
                     <span>
-                      <strong>Capture</strong>
-                      <em>Dump every messy idea</em>
+                      <strong>Do the current step</strong>
+                      <em>Only what&apos;s on the card</em>
                     </span>
                   </li>
                   <li>
                     <span className="product-step-num">2</span>
                     <span>
-                      <strong>Do the current step</strong>
-                      <em>Only the next open task</em>
+                      <strong>Complete it</strong>
+                      <em>Next open step rises</em>
                     </span>
                   </li>
                   <li>
                     <span className="product-step-num">3</span>
                     <span>
-                      <strong>Need help?</strong>
-                      <em>Split · spark · timer · board</em>
+                      <strong>Dump more below</strong>
+                      <em>Or open Stuck when blocked</em>
                     </span>
                   </li>
                 </ol>
@@ -1000,25 +1061,161 @@ function App() {
               </button>
             )}
 
-            {/* 01 Capture */}
-            <section className="panel brand-section">
-              <div className="brand-section-label">Capture</div>
-              <div className="panel-head" style={{ marginBottom: '0.75rem' }}>
-                <div>
-                  <h2 className="panel-title">Dump an idea</h2>
-                  <p className="panel-hint">
-                    {activeProject?.name || 'No project'} · lands on this desk
-                  </p>
+            {/* Current step owns the fold */}
+            <section
+              className="panel step-focus-panel surface-desk-hero"
+              key={stepFocusKey}
+              id="current-step"
+            >
+              <div className="step-focus-head">
+                <div className="brand-section-label" style={{ margin: 0 }}>
+                  Current step
                 </div>
-                {projectPills}
+                <div className="project-pills project-pills-inline" role="tablist" aria-label="Project">
+                  {(projects || []).map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeProjectId === p.id}
+                      onClick={() => selectProject(p.id)}
+                      className={
+                        activeProjectId === p.id
+                          ? 'project-pill is-active'
+                          : 'project-pill'
+                      }
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="capture-row">
+              {!nextTask ? (
+                <div className="empty-state">
+                  <p className="empty-state-title">
+                    {doneTasks.length > 0
+                      ? 'Queue clear — nice work'
+                      : 'No current step yet'}
+                  </p>
+                  <p className="empty-state-body">
+                    {doneTasks.length > 0
+                      ? 'Dump another idea below, or break the project into micro-steps.'
+                      : 'Empty? Break the project down, or dump one idea below.'}
+                  </p>
+                  <div className="step-focus-actions" style={{ marginTop: '0.85rem' }}>
+                    {deskTasks.length === 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={openBreakdown}
+                      >
+                        Break into micro-steps
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() =>
+                        document.getElementById('desk-capture')?.focus()
+                      }
+                    >
+                      Dump an idea
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="step-focus">
+                  <div className="step-focus-meta">
+                    <span className="task-badge">Do this now</span>
+                    <span className="task-meta">
+                      {(nextTask.energy || 'med')} energy
+                      {nextTask.parentId ? ' · micro-step' : ''}
+                      {nextTask.dueDate
+                        ? ` · ${urgencyLabel(nextTask.dueDate)}`
+                        : ''}
+                    </span>
+                  </div>
+                  <input
+                    className="step-focus-title"
+                    value={nextTask.title}
+                    onChange={(e) =>
+                      updateTaskTitle(nextTask.id, e.target.value)
+                    }
+                    aria-label="Edit current step"
+                  />
+                  <div className="step-focus-actions">
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={completeCurrentStep}
+                    >
+                      Complete step
+                    </button>
+                    {!nextTask.parentId && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          breakIntoSteps(nextTask.id)
+                          flashToast('Split into 3 micro-steps')
+                          setStepFocusKey((k) => k + 1)
+                        }}
+                      >
+                        Split ×3
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => {
+                        removeTask(nextTask.id)
+                        flashToast('Step removed')
+                      }}
+                    >
+                      Remove
+                    </button>
+                    <button
+                      type="button"
+                      className="text-link step-due-toggle"
+                      onClick={() => setStepDueOpen((o) => !o)}
+                      aria-expanded={stepDueOpen}
+                    >
+                      {stepDueOpen || nextTask.dueDate
+                        ? stepDueOpen
+                          ? 'Hide due date'
+                          : `Due ${formatShortDate(nextTask.dueDate)}`
+                        : 'Add due date'}
+                    </button>
+                  </div>
+                  {stepDueOpen && (
+                    <div className="step-due-row">
+                      <label className="field-label" htmlFor="step-due">
+                        Due date
+                      </label>
+                      <input
+                        id="step-due"
+                        type="date"
+                        className="field-input step-due-input"
+                        value={nextTask.dueDate || ''}
+                        onChange={(e) =>
+                          setTaskDueDate(nextTask.id, e.target.value)
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+
+            {/* Compact capture — secondary to current step */}
+            <section className="capture-strip" aria-label="Capture">
+              <div className="capture-row capture-row-compact">
                 <input
                   id="desk-capture"
                   value={quickInput}
                   onChange={(e) => setQuickInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
-                  placeholder="What needs doing? Dump it raw…"
+                  placeholder="Dump another idea…"
                   aria-label="Add to desk"
                 />
                 <button
@@ -1070,114 +1267,6 @@ function App() {
                   </>
                 )}
               </div>
-            </section>
-
-            {/* 02 Current step — the only job that matters */}
-            <section
-              className="panel brand-section step-focus-panel"
-              key={stepFocusKey}
-              id="current-step"
-            >
-              <div className="brand-section-label">Current step</div>
-              {!nextTask ? (
-                <div className="empty-state">
-                  <p className="empty-state-title">
-                    {doneTasks.length > 0
-                      ? 'Queue clear — nice work'
-                      : 'No current step yet'}
-                  </p>
-                  <p className="empty-state-body">
-                    {doneTasks.length > 0
-                      ? 'Add another idea above, or break the project into micro-steps.'
-                      : 'Empty? Break the project down, or dump one idea above.'}
-                  </p>
-                  <div className="step-focus-actions" style={{ marginTop: '0.85rem' }}>
-                    {deskTasks.length === 0 && (
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={openBreakdown}
-                      >
-                        Break into micro-steps
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() =>
-                        document.getElementById('desk-capture')?.focus()
-                      }
-                    >
-                      Focus capture
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="step-focus">
-                  <div className="step-focus-meta">
-                    <span className="task-badge">Do this now</span>
-                    <span className="task-meta">
-                      {(nextTask.energy || 'med')} energy
-                      {nextTask.parentId ? ' · micro-step' : ''}
-                      {nextTask.dueDate
-                        ? ` · ${urgencyLabel(nextTask.dueDate)}`
-                        : ''}
-                    </span>
-                  </div>
-                  <input
-                    className="step-focus-title"
-                    value={nextTask.title}
-                    onChange={(e) =>
-                      updateTaskTitle(nextTask.id, e.target.value)
-                    }
-                    aria-label="Edit current step"
-                  />
-                  <label className="field-label" htmlFor="step-due">
-                    Due (optional)
-                  </label>
-                  <input
-                    id="step-due"
-                    type="date"
-                    className="field-input step-due-input"
-                    value={nextTask.dueDate || ''}
-                    onChange={(e) =>
-                      setTaskDueDate(nextTask.id, e.target.value)
-                    }
-                  />
-                  <div className="step-focus-actions">
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={completeCurrentStep}
-                    >
-                      Complete step
-                    </button>
-                    {!nextTask.parentId && (
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => {
-                          breakIntoSteps(nextTask.id)
-                          flashToast('Split into 3 micro-steps')
-                          setStepFocusKey((k) => k + 1)
-                        }}
-                      >
-                        Split ×3
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={() => {
-                        removeTask(nextTask.id)
-                        flashToast('Step removed')
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              )}
             </section>
 
             {/* Help — max 3 primary tools */}
@@ -1388,7 +1477,7 @@ function App() {
 
         {/* ===== MOOD BOARD = visual collection template ===== */}
         {activeView === 'studio' && (
-          <div className="studio-view">
+          <div className="studio-view surface-wall">
             <button
               type="button"
               className="back-link"
@@ -2056,7 +2145,7 @@ function App() {
 
         {/* ===== BRAND IDENTITY TEMPLATE ===== */}
         {activeView === 'brand' && (
-          <div className="brand-layout">
+          <div className="brand-layout surface-document">
             <button
               type="button"
               className="back-link"
@@ -2730,6 +2819,33 @@ function App() {
                 <button
                   type="button"
                   className="btn btn-secondary"
+                  onClick={() => importFileRef.current?.click()}
+                >
+                  Import JSON backup
+                </button>
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  aria-label="Import JSON backup file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    e.target.value = ''
+                    if (!file) return
+                    if (
+                      !window.confirm(
+                        'Replace all data on this device with the backup? Current work will be overwritten.'
+                      )
+                    ) {
+                      return
+                    }
+                    handleImportBackup(file)
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost settings-danger"
                   onClick={() => {
                     if (
                       window.confirm(
@@ -2747,7 +2863,7 @@ function App() {
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost"
+                  className="btn btn-ghost settings-danger"
                   onClick={() => {
                     if (
                       window.confirm(
@@ -2787,7 +2903,7 @@ function App() {
 
         {/* ===== PROJECTS ===== */}
         {activeView === 'project' && (
-          <div className="project-view">
+          <div className="project-view surface-desk">
             <div className="flow-top">
               <div>
                 <h1 className="page-title">Projects</h1>
@@ -2807,14 +2923,42 @@ function App() {
               <div className="brand-section-label">Active project</div>
               <div className="panel-head" style={{ marginBottom: '0.85rem' }}>
                 <div>
-                  <h2 className="panel-title">
-                    {activeProject?.name || 'Project'}
-                  </h2>
-                  <p className="panel-hint">
+                  <p className="panel-hint" style={{ marginBottom: '0.35rem' }}>
                     {deskTasks.filter((t) => !t.completed).length} open on desk
                   </p>
                 </div>
                 {projectPills}
+              </div>
+
+              <div className="field-block" style={{ marginBottom: '1rem' }}>
+                <label className="field-label" htmlFor="project-name">
+                  Name
+                </label>
+                <div className="capture-row">
+                  <input
+                    id="project-name"
+                    className="field-input"
+                    value={projectNameDraft}
+                    onChange={(e) => setProjectNameDraft(e.target.value)}
+                    onBlur={commitProjectRename}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        commitProjectRename()
+                        e.currentTarget.blur()
+                      }
+                    }}
+                    placeholder="Project name"
+                    aria-label="Project name"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={commitProjectRename}
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
 
               <div className="field-block" style={{ marginBottom: '1rem' }}>
@@ -2900,6 +3044,22 @@ function App() {
                   <span className="link-row-label">Brand &amp; export</span>
                   <span className="link-row-meta">Pack</span>
                 </button>
+              </div>
+
+              <div className="project-danger-zone">
+                <button
+                  type="button"
+                  className="btn btn-ghost settings-danger"
+                  disabled={projects.length <= 1}
+                  onClick={handleDeleteProject}
+                >
+                  Delete this project
+                </button>
+                {projects.length <= 1 && (
+                  <span className="panel-hint" style={{ margin: 0 }}>
+                    Keep at least one project
+                  </span>
+                )}
               </div>
             </section>
 
