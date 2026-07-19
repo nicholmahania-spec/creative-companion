@@ -261,6 +261,11 @@ export function buildBrandPackSnapshot({
     logoDirection: p.logoDirection || '',
     logoWordmark: p.logoWordmark || '',
     logoClearspace: p.logoClearspace || '',
+    designVersion: p.designVersion || 'v1',
+    detective: p.detective || null,
+    feedbackNotes: p.feedbackNotes || '',
+    handoffNote: p.handoffNote || '',
+    learnings: p.learnings || '',
     directions: Array.isArray(p.directions)
       ? p.directions
           .filter((d) => String(d?.title || d?.note || '').trim())
@@ -375,6 +380,26 @@ export function brandPackToMarkdown(pack) {
   ]
   if (pack.voice) {
     lines.push('## Voice', '', pack.voice, '')
+  }
+  if (pack.detective && Object.values(pack.detective).some((v) => String(v || '').trim())) {
+    lines.push('## Design Detective Sheet', '')
+    const d = pack.detective
+    if (d.goal) lines.push(`- **Goal:** ${d.goal}`)
+    if (d.audience) lines.push(`- **Audience:** ${d.audience}`)
+    if (d.feel) lines.push(`- **Feel:** ${d.feel}`)
+    if (d.mustHaves) lines.push(`- **Must-haves:** ${d.mustHaves}`)
+    if (d.niceToHaves) lines.push(`- **Nice-to-haves:** ${d.niceToHaves}`)
+    if (d.format) lines.push(`- **Format:** ${d.format}`)
+    lines.push('')
+  }
+  if (pack.handoffNote) {
+    lines.push('## Handoff note', '', pack.handoffNote, '')
+  }
+  if (pack.learnings) {
+    lines.push('## What I learned', '', pack.learnings, '')
+  }
+  if (pack.feedbackNotes) {
+    lines.push('## Review notes', '', pack.feedbackNotes, '')
   }
   lines.push(
     '## Palette',
@@ -1417,7 +1442,24 @@ export async function downloadBrandPackVectorPdf(
 
     // ═══════════════ PAGE 2 — Positioning ═══════════════
     newPage()
-    pageTitle('Positioning & voice', 'Who it is for · what they should feel · how we sound.')
+    pageTitle(
+      'Positioning & voice',
+      'Detective sheet answers · who · feel · goal · how we sound.'
+    )
+    const det = pack?.detective || {}
+    if (det.goal || det.audience || det.feel || det.mustHaves) {
+      kicker('Design Detective Sheet')
+      if (det.goal) writeWrapped(`Goal: ${det.goal}`, { size: 12, role: 'heading' })
+      if (det.audience)
+        writeWrapped(`Audience: ${det.audience}`, { size: 11 })
+      if (det.feel) writeWrapped(`Feel: ${det.feel}`, { size: 11 })
+      if (det.mustHaves)
+        writeWrapped(`Must-haves: ${det.mustHaves}`, { size: 11 })
+      if (det.niceToHaves)
+        writeWrapped(`Nice-to-haves: ${det.niceToHaves}`, { size: 10, color: [70, 70, 70] })
+      if (det.format)
+        writeWrapped(`Format / constraint: ${det.format}`, { size: 11 })
+    }
     kicker('Positioning')
     writeWrapped(pack?.brief || 'No brief yet — add on Define.', {
       size: 12,
@@ -1430,6 +1472,10 @@ export async function downloadBrandPackVectorPdf(
       size: 12,
       label: pack?.typeBody,
     })
+    if (pack?.designVersion) {
+      kicker('Design version')
+      writeWrapped(String(pack.designVersion), { size: 11 })
+    }
     if (pack?.deadline) {
       kicker('Constraint / deadline')
       writeWrapped(String(pack.deadline), { size: 11 })
@@ -1692,6 +1738,19 @@ export async function downloadBrandPackVectorPdf(
         pdf.text(noteLines.slice(0, 2), x, y + cellH + 12)
         if (i === pins.length - 1) y += cellH + 28
       }
+    }
+
+    if (pack?.feedbackNotes?.trim()) {
+      kicker('Review notes')
+      writeWrapped(pack.feedbackNotes, { size: 11 })
+    }
+    if (pack?.handoffNote?.trim()) {
+      kicker('Handoff note')
+      writeWrapped(pack.handoffNote, { size: 11 })
+    }
+    if (pack?.learnings?.trim()) {
+      kicker('What I learned')
+      writeWrapped(pack.learnings, { size: 11 })
     }
 
     drawFooters()

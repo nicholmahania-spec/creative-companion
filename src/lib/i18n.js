@@ -98,7 +98,8 @@ const EN = {
     hasOpenWorkStep: 'Has an open Sketch step',
     howDeskWorks:
       'Seven design steps: Define → Research → Ideate → Sketch → Design → Review → Deliver.',
-    projectSub: 'Define the goal. Who is it for? Then Research.',
+    projectSub:
+      'Detective sheet first: who, feel, one-sentence goal. Then Research.',
     systemSub: 'Design — type, color, voice, logo, pins on the live artboard.',
     boardSub: 'Research — upload refs. Star up to 6 for the pack.',
     breakCareOpen:

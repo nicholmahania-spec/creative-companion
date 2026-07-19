@@ -9,6 +9,7 @@ export default function SparkView({
   notifyAction,
   directions = [],
   updateDirection,
+  sparkIndex = 0,
 }) {
   const dirs =
     Array.isArray(directions) && directions.length >= 3
@@ -18,6 +19,11 @@ export default function SparkView({
           { id: 'b', label: 'B', title: '', note: '', chosen: false },
           { id: 'c', label: 'C', title: '', note: '', chosen: false },
         ]
+  const filledDirs = dirs.filter((d) => String(d.title || '').trim()).length
+  /** Sparks seen (index) + filled shortlist toward pro “5–8 directions” goal */
+  const tried = Math.max(sparkIndex + 1, filledDirs)
+  const goal = 8
+  const progress = Math.min(tried, goal)
 
   return (
     <div className="spark-view">
@@ -32,7 +38,20 @@ export default function SparkView({
         <div>
           <h1 className="page-title">Ideate</h1>
           <p className="page-sub">
-            Step 3 — many directions fast. Capture A/B/C. Pin sparks. No judging.
+            Step 3 — messy is correct. Force many directions. Best idea often
+            hides in #6–7. Shortlist A/B/C; don’t marry the first.
+          </p>
+          <p className="panel-hint ideate-progress" style={{ marginTop: '0.35rem' }}>
+            Direction energy:{' '}
+            <strong>
+              {progress}/{goal}
+            </strong>{' '}
+            toward a rich set
+            {progress < 5
+              ? ' — keep going (opposites welcome)'
+              : progress < 8
+                ? ' — strong set; pick a winner'
+                : ' — enough; shortlist and Sketch'}
           </p>
         </div>
         <div className="finish-secondary-row">

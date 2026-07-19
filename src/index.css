@@ -9391,6 +9391,48 @@ html[data-reduce-motion='true'] *::after {
 .review-pack-preview {
   margin-top: 0.5rem;
 }
+
+.review-question-chips {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+.review-question-chips .btn {
+  text-align: left;
+  white-space: normal;
+  height: auto;
+  min-height: 2.25rem;
+  line-height: 1.35;
+  padding: 0.45rem 0.75rem;
+}
+
+.design-version-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.75rem;
+}
+.design-version-input {
+  width: 3.5rem;
+  min-width: 3.5rem;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.85rem;
+}
+
+.process-tip-panel .process-guide-checks {
+  font-size: 0.9rem;
+}
+
+.detective-sheet-panel .field-label {
+  font-weight: 600;
+}
+
+.ideate-progress {
+  font-size: 0.9rem;
+}
 .project-brief-readonly {
   margin: 0;
   padding: 0.65rem 0.75rem;

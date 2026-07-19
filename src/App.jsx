@@ -62,6 +62,7 @@ import {
 } from './lib/journey'
 import {
   PROCESS_PHASES,
+  REVIEW_QUESTIONS,
   getProcessPhase,
   processPhaseForView,
 } from './lib/processGuide'
@@ -128,6 +129,8 @@ function App() {
   const addProject = useAppStore((s) => s.addProject)
   const setCurrentProject = useAppStore((s) => s.setCurrentProject)
   const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
+  const updateDetective = useAppStore((s) => s.updateDetective)
+  const applyDetectiveToBrief = useAppStore((s) => s.applyDetectiveToBrief)
   const updateDirection = useAppStore((s) => s.updateDirection)
   const setLogoDirection = useAppStore((s) => s.setLogoDirection)
   const updatePaletteColor = useAppStore((s) => s.updatePaletteColor)
@@ -2283,7 +2286,9 @@ function App() {
                   !!(
                     (activeProject?.name &&
                       activeProject.name !== 'My project') ||
-                    activeProject?.brief?.trim()
+                    activeProject?.brief?.trim() ||
+                    activeProject?.detective?.goal?.trim() ||
+                    activeProject?.detective?.audience?.trim()
                   )) ||
                 (step.id === 'research' && deskMood.length > 0) ||
                 (step.id === 'ideate' &&
@@ -2362,10 +2367,13 @@ function App() {
                     · {completedCount}/{deskTasks.length || 0} done
                   </span>
                 </p>
+                <p className="page-sub" style={{ marginTop: '0.35rem' }}>
+                  2–3 drafts with a one-line why. Low polish. Aim under ~2 hours
+                  total — then Design.
+                </p>
               </div>
             </div>
 
-            {/* Current step owns the fold */}
             {/* Current step owns the fold */}
             <section
               className="panel step-focus-panel surface-desk-hero"
@@ -2898,6 +2906,30 @@ function App() {
               <span className="panel-count">{deskMood.length} pins</span>
             </div>
 
+            <section className="panel brand-section process-tip-panel">
+              <div className="brand-section-label">Curious spy checklist</div>
+              <p className="panel-hint" style={{ marginTop: 0 }}>
+                {getProcessPhase('research')?.prompt}
+              </p>
+              <ul className="process-guide-checks" style={{ marginBottom: '0.75rem' }}>
+                {(getProcessPhase('research')?.checks || []).map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
+              <div className="finish-secondary-row">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActiveView('insights')}
+                >
+                  20-min research timer
+                </button>
+                <span className="panel-hint" style={{ margin: 0 }}>
+                  Stop before the rabbit hole.
+                </span>
+              </div>
+            </section>
+
             {/* Wall first — board is the stage */}
             <section className="panel brand-section board-wall-panel">
               <div className="board-wall-head">
@@ -3420,6 +3452,7 @@ function App() {
               notifyAction={notifyAction}
               directions={activeProject?.directions}
               updateDirection={updateDirection}
+              sparkIndex={sparkIndex || 0}
             />
           </Suspense>
         )}
@@ -3496,6 +3529,18 @@ function App() {
                 </p>
               </div>
               <div className="brand-template-actions">
+                <label className="field-label design-version-label" htmlFor="design-version">
+                  Version
+                  <input
+                    id="design-version"
+                    className="field-input design-version-input"
+                    value={activeProject?.designVersion || 'v1'}
+                    onChange={(e) =>
+                      updateBrandField('designVersion', e.target.value)
+                    }
+                    aria-label="Design version"
+                  />
+                </label>
                 <button
                   type="button"
                   className="text-link"
@@ -4247,9 +4292,43 @@ function App() {
             <section className="panel brand-section">
               <div className="brand-section-label">Ask for feedback</div>
               <p className="panel-hint" style={{ marginTop: 0 }}>
-                Specific beats “do you like it?” — e.g. “Does this feel hopeful?”
-                “Is anything confusing?”
+                Specific beats “do you like it?” Feedback is not failure — capture
+                it, then keep only what serves the goal.
               </p>
+              <div className="review-question-chips">
+                {REVIEW_QUESTIONS.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(q)
+                        flashToast('Question copied')
+                      } catch {
+                        flashMicro(q.slice(0, 40))
+                      }
+                    }}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+              <div className="field-block" style={{ marginTop: '0.85rem' }}>
+                <label className="field-label" htmlFor="feedback-notes">
+                  Feedback notes
+                </label>
+                <textarea
+                  id="feedback-notes"
+                  className="field-input"
+                  rows={4}
+                  value={activeProject?.feedbackNotes || ''}
+                  onChange={(e) =>
+                    updateBrandField('feedbackNotes', e.target.value)
+                  }
+                  placeholder="What they said · what you’ll change · what you’ll ignore (taste noise)."
+                />
+              </div>
               <div className="finish-secondary-row">
                 <button
                   type="button"
@@ -4469,6 +4548,36 @@ function App() {
                         {lastExportNote}
                       </p>
                     ) : null}
+                    <div className="field-block" style={{ marginTop: '0.85rem' }}>
+                      <label className="field-label" htmlFor="handoff-note">
+                        Handoff note (for the client)
+                      </label>
+                      <textarea
+                        id="handoff-note"
+                        className="field-input"
+                        rows={2}
+                        value={activeProject?.handoffNote || ''}
+                        onChange={(e) =>
+                          updateBrandField('handoffNote', e.target.value)
+                        }
+                        placeholder="What’s included, how to use the mark, contact for questions…"
+                      />
+                    </div>
+                    <div className="field-block" style={{ marginTop: '0.65rem' }}>
+                      <label className="field-label" htmlFor="learnings-note">
+                        What I learned (your style library)
+                      </label>
+                      <textarea
+                        id="learnings-note"
+                        className="field-input"
+                        rows={3}
+                        value={activeProject?.learnings || ''}
+                        onChange={(e) =>
+                          updateBrandField('learnings', e.target.value)
+                        }
+                        placeholder="What worked? What felt like me? What to improve next time?"
+                      />
+                    </div>
                     <label className="pack-watermark-toggle">
                       <input
                         type="checkbox"
@@ -4718,6 +4827,91 @@ function App() {
               </div>
             </div>
 
+            <section className="panel brand-section detective-sheet-panel">
+              <div className="brand-section-label">
+                Design Detective Sheet
+              </div>
+              <p className="panel-hint" style={{ marginTop: 0 }}>
+                The big “what are we even making?” talk. Strong Step 1 saves hours
+                of fixing later. Fill this before pretty pictures.
+              </p>
+              {(
+                [
+                  {
+                    id: 'goal',
+                    label: 'One-sentence goal',
+                    ph: 'e.g. Make a friendly booklet that helps families feel supported.',
+                  },
+                  {
+                    id: 'audience',
+                    label: 'Who is this for?',
+                    ph: 'e.g. Busy parents new to the program — not “everyone.”',
+                  },
+                  {
+                    id: 'feel',
+                    label: 'What should they feel or do?',
+                    ph: 'e.g. Hopeful, safe, clear next step.',
+                  },
+                  {
+                    id: 'mustHaves',
+                    label: 'Must-haves',
+                    ph: 'e.g. Logo, contact, 4 pages max.',
+                  },
+                  {
+                    id: 'niceToHaves',
+                    label: 'Nice-to-haves',
+                    ph: 'e.g. Photo of real families, illustration accents.',
+                  },
+                  {
+                    id: 'format',
+                    label: 'Format / size / constraint',
+                    ph: 'e.g. Letter PDF + Instagram square · Friday deadline.',
+                  },
+                ]
+              ).map((f) => (
+                <div
+                  key={f.id}
+                  className="field-block"
+                  style={{ marginBottom: '0.75rem' }}
+                >
+                  <label className="field-label" htmlFor={`detective-${f.id}`}>
+                    {f.label}
+                  </label>
+                  {f.id === 'goal' || f.id === 'feel' || f.id === 'mustHaves' || f.id === 'niceToHaves' ? (
+                    <textarea
+                      id={`detective-${f.id}`}
+                      className="field-input"
+                      rows={f.id === 'goal' ? 2 : 2}
+                      value={activeProject?.detective?.[f.id] || ''}
+                      onChange={(e) => updateDetective(f.id, e.target.value)}
+                      placeholder={f.ph}
+                    />
+                  ) : (
+                    <input
+                      id={`detective-${f.id}`}
+                      className="field-input"
+                      value={activeProject?.detective?.[f.id] || ''}
+                      onChange={(e) => updateDetective(f.id, e.target.value)}
+                      placeholder={f.ph}
+                    />
+                  )}
+                </div>
+              ))}
+              <div className="finish-secondary-row" style={{ marginTop: '0.35rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    const r = applyDetectiveToBrief()
+                    if (r.ok) flashToast('Brief filled from detective sheet')
+                    else flashToast(r.error || 'Add a few answers first')
+                  }}
+                >
+                  Fill brief from sheet
+                </button>
+              </div>
+            </section>
+
             <section className="panel brand-section brand-kits-panel">
               <div className="brand-section-label">Direction kits</div>
               <p className="panel-hint" style={{ marginTop: 0 }}>
@@ -4748,12 +4942,13 @@ function App() {
                 {i18nT(locale, 'ui.pathReadiness')}
               </div>
               {(() => {
+                const det = activeProject?.detective || {}
                 const checks = [
-                  deskTasks.some((t) => !t.completed),
+                  !!(det.goal?.trim() || activeProject?.brief?.trim()),
+                  !!det.audience?.trim(),
                   deskMood.some((m) => m.inPack),
                   !!activeProject?.tagline?.trim(),
                   (projectPalette || []).length >= 2,
-                  !!activeProject?.brief?.trim(),
                 ]
                 const readyN = checks.filter(Boolean).length
                 return (
@@ -4770,23 +4965,40 @@ function App() {
                     <ul className="pack-ready-list project-ready-list">
                       <li className={checks[0] ? 'is-ok' : 'is-miss'}>
                         {checks[0] ? (
-                          <span>
-                            ✓ {i18nT(locale, 'ui.hasOpenWorkStep')}
-                          </span>
+                          <span>✓ One-sentence goal (detective or brief)</span>
                         ) : (
                           <button
                             type="button"
                             className="pack-ready-fix"
-                            onClick={() => setActiveView('flow')}
+                            onClick={() =>
+                              document.getElementById('detective-goal')?.focus()
+                            }
                           >
-                            ○ {i18nT(locale, 'ui.hasOpenWorkStep')} — fix
+                            ○ One-sentence goal — fix
                           </button>
                         )}
                       </li>
                       <li className={checks[1] ? 'is-ok' : 'is-miss'}>
                         {checks[1] ? (
+                          <span>✓ Audience named</span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="pack-ready-fix"
+                            onClick={() =>
+                              document
+                                .getElementById('detective-audience')
+                                ?.focus()
+                            }
+                          >
+                            ○ Audience — fix
+                          </button>
+                        )}
+                      </li>
+                      <li className={checks[2] ? 'is-ok' : 'is-miss'}>
+                        {checks[2] ? (
                           <span>
-                            ✓ Starred pack pins (
+                            ✓ Starred leave-behind pins (
                             {deskMood.filter((m) => m.inPack).length}/6)
                           </span>
                         ) : (
@@ -4795,12 +5007,12 @@ function App() {
                             className="pack-ready-fix"
                             onClick={() => setActiveView('studio')}
                           >
-                            ○ Star leave-behind pins on Research — fix
+                            ○ Star pins on Research — fix
                           </button>
                         )}
                       </li>
-                      <li className={checks[2] ? 'is-ok' : 'is-miss'}>
-                        {checks[2] ? (
+                      <li className={checks[3] ? 'is-ok' : 'is-miss'}>
+                        {checks[3] ? (
                           <span>✓ Tagline</span>
                         ) : (
                           <button
@@ -4812,8 +5024,8 @@ function App() {
                           </button>
                         )}
                       </li>
-                      <li className={checks[3] ? 'is-ok' : 'is-miss'}>
-                        {checks[3] ? (
+                      <li className={checks[4] ? 'is-ok' : 'is-miss'}>
+                        {checks[4] ? (
                           <span>✓ Palette</span>
                         ) : (
                           <button
@@ -4825,25 +5037,10 @@ function App() {
                           </button>
                         )}
                       </li>
-                      <li className={checks[4] ? 'is-ok' : 'is-miss'}>
-                        {checks[4] ? (
-                          <span>✓ Brief / positioning</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="pack-ready-fix"
-                            onClick={() => {
-                              document.getElementById('project-brief')?.focus()
-                            }}
-                          >
-                            ○ Brief / positioning — fix
-                          </button>
-                        )}
-                      </li>
                     </ul>
                     <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                      {completedCount}/{deskTasks.length || 0} steps done · brief
-                      feeds Design positioning.
+                      {completedCount}/{deskTasks.length || 0} steps done · detective
+                      sheet feeds brief &amp; brand book.
                     </p>
                   </>
                 )

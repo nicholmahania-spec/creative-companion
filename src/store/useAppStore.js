@@ -19,6 +19,18 @@ export const defaultProjectPalette = [
   '#FAFAF9',
 ]
 
+/** Empty Design Detective Sheet (Define step) */
+export function blankDetective() {
+  return {
+    goal: '',
+    audience: '',
+    feel: '',
+    mustHaves: '',
+    niceToHaves: '',
+    format: '',
+  }
+}
+
 /** Default brand identity template fields on each project */
 export const defaultBrandIdentity = {
   tagline: '',
@@ -35,6 +47,16 @@ export const defaultBrandIdentity = {
   logoWordmark: '',
   /** Clearspace / min-size / lockup guidance */
   logoClearspace: '',
+  /** Design version label (v1, v2…) */
+  designVersion: 'v1',
+  /** Review: feedback notes from client / self */
+  feedbackNotes: '',
+  /** Deliver: short handover note for client */
+  handoffNote: '',
+  /** Deliver: one-paragraph evaluation / learnings */
+  learnings: '',
+  /** Define: Design Detective Sheet */
+  detective: blankDetective(),
   conceptPackage: {
     audience: '',
     outcome: '',
@@ -208,6 +230,40 @@ const useAppStore = create(
             p.id === state.currentProjectId ? { ...p, brief } : p
           ),
         })),
+
+      /** Partial update Design Detective Sheet fields */
+      updateDetective: (field, value) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const det = { ...blankDetective(), ...(p.detective || {}), [field]: value }
+            return { ...p, detective: det }
+          }),
+        })),
+
+      /** Compose free brief from detective sheet answers */
+      applyDetectiveToBrief: () => {
+        const state = get()
+        const p = state.projects.find((x) => x.id === state.currentProjectId)
+        if (!p) return { ok: false }
+        const d = { ...blankDetective(), ...(p.detective || {}) }
+        const parts = []
+        if (d.goal?.trim()) parts.push(`Goal: ${d.goal.trim()}`)
+        if (d.audience?.trim()) parts.push(`Audience: ${d.audience.trim()}`)
+        if (d.feel?.trim()) parts.push(`Feel: ${d.feel.trim()}`)
+        if (d.mustHaves?.trim()) parts.push(`Must-haves: ${d.mustHaves.trim()}`)
+        if (d.niceToHaves?.trim())
+          parts.push(`Nice-to-haves: ${d.niceToHaves.trim()}`)
+        if (d.format?.trim()) parts.push(`Format / constraint: ${d.format.trim()}`)
+        if (!parts.length) return { ok: false, error: 'Fill detective fields first' }
+        const brief = parts.join('\n\n')
+        set({
+          projects: state.projects.map((proj) =>
+            proj.id === state.currentProjectId ? { ...proj, brief } : proj
+          ),
+        })
+        return { ok: true }
+      },
 
       setProjectDeadline: (deadline) =>
         set((state) => ({

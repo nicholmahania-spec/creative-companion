@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   PROCESS_PHASES,
+  REVIEW_QUESTIONS,
   getProcessPhase,
   processPhaseForView,
 } from './processGuide'
@@ -32,6 +33,18 @@ describe('processGuide — 7 design steps', () => {
     expect(processPhaseForView('brand')?.id).toBe('design')
     expect(processPhaseForView('review')?.id).toBe('review')
     expect(processPhaseForView('finish')?.id).toBe('deliver')
+  })
+
+  it('has review questions that avoid “do you like it?”', () => {
+    expect(REVIEW_QUESTIONS.length).toBeGreaterThanOrEqual(3)
+    expect(REVIEW_QUESTIONS.join(' ')).not.toMatch(/do you like it/i)
+    expect(REVIEW_QUESTIONS.some((q) => /feel|confus|hierarchy/i.test(q))).toBe(
+      true
+    )
+  })
+
+  it('define prompt points at detective sheet', () => {
+    expect(getProcessPhase('define').prompt).toMatch(/Detective/i)
   })
 })
 

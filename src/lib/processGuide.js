@@ -11,10 +11,13 @@ export const PROCESS_PHASES = [
     label: '1 Define',
     short: 'Define',
     title: 'Define & discover',
+    /** Teacher plain: the big “what are we even making?” talk */
+    plain:
+      'Ask questions before pretty pictures. One-sentence goal. Must-haves vs nice-to-haves.',
     prompt:
-      'What are we making? Who is it for? What should they feel? Goal in one sentence.',
+      'What are we making? Who is it for? What should they feel? Goal in one sentence. Fill the Design Detective Sheet.',
     checks: [
-      'Client / project goal written in one clear sentence',
+      'Goal written in one clear sentence (detective sheet)',
       'Who it is for (audience in plain words)',
       'What they should feel or do',
       'Must-haves vs nice-to-haves listed',
@@ -27,8 +30,9 @@ export const PROCESS_PHASES = [
     label: '2 Research',
     short: 'Research',
     title: 'Research & discovery',
+    plain: 'Be a curious spy. Collect refs. Timebox 20 minutes so you don’t drown.',
     prompt:
-      'Be a curious spy: refs, competitors, audience cues. Mood board — not decoration yet.',
+      'Client past, competitors, audience cues. Mood board — not decoration yet. Timer optional.',
     checks: [
       'Client / past materials glanced at',
       '2–6 reference pins on the board',
@@ -43,14 +47,15 @@ export const PROCESS_PHASES = [
     label: '3 Ideate',
     short: 'Ideate',
     title: 'Ideate & brainstorm',
+    plain: 'Throw lots of ideas. Messy is correct. Best idea often hides in #6–7.',
     prompt:
-      'Throw many directions fast. No erasing. Best idea often hides in sketch 6–7.',
+      'Force 5–8 messy directions. Try opposites. Don’t marry the first. Shortlist A/B/C.',
     checks: [
-      'At least 5–8 directions tried (messy is correct)',
+      'At least 5–8 sparks or directions tried (messy is correct)',
       'Opposite ideas tested (calm vs bold)',
       'Sparks pinned if useful',
       'Not married to the first idea',
-      'One direction chosen to sketch next',
+      'One direction chosen (★) to sketch next',
     ],
     view: 'spark',
   },
@@ -59,8 +64,9 @@ export const PROCESS_PHASES = [
     label: '4 Sketch',
     short: 'Sketch',
     title: 'Sketch & draft',
+    plain: '2–3 cleaner drafts. Low detail. Show options with a one-line why.',
     prompt:
-      '2–3 cleaner drafts only. Low detail so changes stay cheap. Show options.',
+      '2–3 drafts only. Each needs a one-line “why it fits the goal.” Under ~2 hours total.',
     checks: [
       '2–3 options sketched (not 20 polished)',
       'Each option has a one-line “why it fits the goal”',
@@ -75,8 +81,9 @@ export const PROCESS_PHASES = [
     label: '5 Design',
     short: 'Design',
     title: 'Design & refine',
+    plain: 'Make it strong: type, color, hierarchy. Name versions before big changes.',
     prompt:
-      'Layout, type, color, hierarchy. Rules over vibes. Save versions.',
+      'Layout, type, color, hierarchy. Rules over vibes. Bump design version (v1 → v2).',
     checks: [
       'Palette roles set (cover / text / accent / quiet)',
       'Type pair chosen; body contrast readable',
@@ -91,13 +98,14 @@ export const PROCESS_PHASES = [
     label: '6 Review',
     short: 'Review',
     title: 'Review, revise & test',
+    plain: 'Show it. Ask specific questions. Fix what serves the goal — not every taste.',
     prompt:
-      'Show it. Ask: Does this feel hopeful / clear / confusing? Fix what serves the goal.',
+      'Show as if to a client. Ask “Does this feel hopeful?” not “Do you like it?” Capture notes.',
     checks: [
       'Work shown as if to a client (not only yourself)',
       'Specific questions asked (not “do you like it?”)',
       'Feedback sorted: helps goal vs taste noise',
-      'One revision pass scheduled',
+      'Notes captured for the revision pass',
       'Real audience glance if possible (one person is enough)',
     ],
     view: 'review',
@@ -107,17 +115,26 @@ export const PROCESS_PHASES = [
     label: '7 Deliver',
     short: 'Deliver',
     title: 'Finalize, deliver & evaluate',
+    plain: 'Ship files. Write a handoff note. One paragraph: what worked? what next?',
     prompt:
-      'Print-ready or vector PDF. Organized handoff. One paragraph: what worked?',
+      'Brand book PDF + handoff note. One learnings paragraph. Celebrate, then note what felt like you.',
     checks: [
-      'Files ready (print and/or vector PDF)',
+      'Files ready (print and/or brand book PDF)',
       'Watermark choice intentional for client',
-      'Pack not thin (tagline, palette, pins)',
-      'Handoff note or brief copied if needed',
-      'One-line eval: what felt like “me”? what next?',
+      'Leave-behind not thin (tagline, palette, pins)',
+      'Handoff note written',
+      'Learnings written: what felt like “me”? what next?',
     ],
     view: 'finish',
   },
+]
+
+/** Specific feedback questions (Review) — better than “do you like it?” */
+export const REVIEW_QUESTIONS = [
+  'Does this feel hopeful / safe / clear for the audience?',
+  'Is anything confusing in the first three seconds?',
+  'Does the hierarchy match the goal (what they should see first)?',
+  'Would you change one thing to better serve the brief?',
 ]
 
 export function getProcessPhase(id) {
