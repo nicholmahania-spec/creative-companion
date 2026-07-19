@@ -145,9 +145,9 @@ export function minutesAtDesk(sessionStart, now = Date.now()) {
 }
 
 const GREETINGS = [
-  "Little Helper reporting for duty — beret on, pencil sharp, patience for twin primary buttons: zero. Let's make something iconic.",
-  "Layouts look fine… but we both know fine is boring. I'm your sassy design bot. Coach, critique, or hydrate — pick your adventure.",
-  "Hi. Graphic design bot energy: precision meets chaos, with good kerning. I track your steps, breaks, and questionable color choices.",
+  "Helper online — beret on, pencil sharp. Coach, Critique, or Break when you need me.",
+  "I'm your design desk buddy. One step at a time. Open me for Coach or Critique.",
+  "Hi. I track your step, breaks, and color choices. Let's make something clear.",
 ]
 
 const WATER = [
@@ -450,7 +450,7 @@ export function recommendForTask(activity = {}) {
       'Why: bad breakdowns recreate overwhelm with extra checkboxes.',
     ],
     general: [
-      'Name the user job in one sentence, then do the smallest shippable slice.',
+      'Name the user job in one sentence, then do the smallest finishable slice.',
       'Prefer hierarchy (type, space, contrast) over new decoration.',
       'If stuck between options, write two directions in one line each and pick one for 25 minutes.',
       'Why: criteria beat vibes when energy is limited.',
@@ -676,7 +676,7 @@ export function activityTip(activity = {}) {
   if (view === 'flow' || !view) {
     if (!step) {
       return done > 0
-        ? 'Queue clear. Capture the next shippable outcome — or micro-steps if scope is still a blob.'
+        ? 'Queue clear. Capture the next finishable step — or micro-steps if scope is still a blob.'
         : `No step on ${project}. One sentence outcome, then capture it.`
     }
     if (dueSoon) {

@@ -46,7 +46,7 @@ export const JOURNEY_STEPS = [
     view: 'finish',
     num: '5',
     label: 'Pack',
-    plain: 'Preview and download your brand pack.',
+    plain: 'Preview, print, or download vector PDF.',
     nextView: null,
     nextLabel: null,
   },

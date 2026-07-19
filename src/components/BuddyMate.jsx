@@ -590,7 +590,7 @@ export default function BuddyMate({
         closedLabel:
           completedCount > 0
             ? `Closed ${completedCount} step${completedCount === 1 ? '' : 's'} this session.`
-            : 'No steps closed yet — define one shippable outcome.',
+            : 'No steps closed yet — define one finishable step.',
       })
     }
   }
@@ -886,7 +886,7 @@ export default function BuddyMate({
                   if (next) {
                     setShowMore(false)
                     pushBuddy(
-                      'Break care open — water, food, stretch, or log a real break when you actually take one.',
+                      'Break care open — water, food, stretch, or log a real break when you take one.',
                       { move: false, expand: true }
                     )
                   }

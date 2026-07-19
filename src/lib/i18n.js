@@ -29,7 +29,7 @@ const EN = {
     work: 'One step only. Complete it. Next rises.',
     board: 'Upload refs. Star up to 6 for the pack.',
     system: 'Colors, voice, type, do / don’t — live artboard.',
-    pack: 'Preview and download your brand pack.',
+    pack: 'Preview, print, or download vector PDF.',
   },
   language: 'Language',
   languageHint: 'Product name, path, and desk chrome',
@@ -50,12 +50,16 @@ const EN = {
     work: 'Work',
     packTitle: 'Pack',
     packEyebrow: 'Brand leave-behind',
-    packSub: 'print for client · or download preview',
+    packSub: 'Print for paper · or download vector PDF',
     clientHandoff: 'Client handoff',
     packHint:
-      'Print uses paper CSS (often best on screen). Download vector PDF is real text + color fills (selectable, sharp zoom). Preview-match raster is under More formats.',
+      'Download vector PDF = selectable text + sharp zoom. Print uses paper layout. Raster preview is under More formats.',
     thinPack:
-      'Thin pack — add a tagline, palette, or ★ Pack pins on Board before client handoff.',
+      'Thin pack — add a tagline, palette, or ★ Pack pins on Board first.',
+    thinPackConfirmPrint:
+      'Pack is thin (missing tagline, palette, or pins). Print anyway?',
+    thinPackConfirmDownload:
+      'Pack is thin (missing tagline, palette, or pins). Download anyway?',
     scrollPreview: 'Scroll preview for full sheet',
     leaveDesk: 'Leave desk',
     newProject: 'New project',
@@ -64,8 +68,23 @@ const EN = {
     noStepYet: 'No step yet',
     queueClear: 'Queue clear',
     noPinsYet: 'No pins yet',
+    emptyStepBody:
+      'Add one step you can finish in about 25 minutes.',
+    emptyStepBodyDone:
+      'Queue clear — capture the next finishable step below.',
+    emptyPinsBody:
+      'Upload images, then star 2–6 with ★ Pack for System and Pack.',
     openWork: 'Open Work',
-    openPack: 'Open Pack',
+    openPack: 'Go to Pack',
+    goToBoard: 'Go to Board',
+    hasOpenWorkStep: 'Has an open Work step',
+    howDeskWorks:
+      'One step on screen. Finish it. Board → System → Pack.',
+    projectSub: 'Name the work. Check readiness. Open Work or Pack.',
+    systemSub: 'Live artboard — edit tagline, voice, color, type, logo, pins.',
+    boardSub: 'Upload refs. Star up to 6 for System and Pack.',
+    breakCareOpen:
+      'Break care open — log water, food, stretch, or a real break when you take one.',
     pathReadiness: 'Path readiness',
     appearance: 'Appearance',
     presence: 'Presence',
@@ -97,7 +116,7 @@ const EN = {
     currentStep: 'Current step',
     dumpIdea: 'Dump an idea',
     breakMicro: 'Break into micro-steps',
-    packDest: 'Path ends at Pack — print a brand leave-behind when ready.',
+    packDest: 'Finish at Pack — print or download a leave-behind.',
     coach: 'Coach',
     critique: 'Critique',
     break: 'Break',
@@ -105,6 +124,12 @@ const EN = {
     showLess: 'Show less',
     deadlines: 'Deadlines',
     focusTimer: 'Focus timer',
+    doThisNow: 'Do this now',
+    sparkHint: 'Loose idea → pin or step',
+    starPinsHint: 'Star pins on Board to curate',
+    onboardTitle: 'One project. One step. Ship a pack.',
+    onboardLede:
+      'Name the work and one step you can finish in about 25 minutes. Leave with a brand pack PDF.',
   },
 }
 

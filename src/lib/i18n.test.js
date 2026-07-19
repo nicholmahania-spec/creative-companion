@@ -53,4 +53,13 @@ describe('i18n wordmark + path + catalog', () => {
     expect(isRtl('ar')).toBe(true)
     expect(isRtl('en')).toBe(false)
   })
+
+  it('pack copy is honest about vector PDF vs print', () => {
+    const en = getMessages('en').ui
+    expect(en.packSub).toMatch(/vector PDF/i)
+    expect(en.packHint).toMatch(/vector PDF/i)
+    expect(en.openPack).toMatch(/Pack/i)
+    expect(en.emptyStepBody.length).toBeLessThan(80)
+    expect(en.howDeskWorks).toMatch(/Board/)
+  })
 })

@@ -1167,7 +1167,7 @@ function App() {
       awardAndBroadcast('project_create', { label: onboardName.trim() })
       const stepTitle =
         onboardFirstStep.trim() ||
-        'Write the one shippable design step for the next 25 minutes'
+        'Write one design step you can finish in about 25 minutes'
       addTask({
         id: Date.now() + 1,
         title: stepTitle,
@@ -1845,8 +1845,8 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>{i18nT(locale, 'ui.dumpIdea') || 'Spark'}</strong>
-                    <span>Capture a loose idea</span>
+                    <strong>Spark</strong>
+                    <span>{i18nT(locale, 'ui.sparkHint')}</span>
                   </button>
                   <button
                     type="button"
@@ -2060,8 +2060,8 @@ function App() {
                   </p>
                   <p className="empty-state-body">
                     {doneTasks.length > 0
-                      ? 'Capture the next shippable outcome below — or break a big project into micro-steps.'
-                      : 'Capture one shippable step below, or break the project into micro-steps.'}
+                      ? i18nT(locale, 'ui.emptyStepBodyDone')
+                      : i18nT(locale, 'ui.emptyStepBody')}
                   </p>
                   <p className="work-pack-destination">
                     {i18nT(locale, 'ui.packDest')}
@@ -2090,7 +2090,9 @@ function App() {
               ) : (
                 <div className="step-focus">
                   <div className="step-focus-meta">
-                    <span className="task-badge">Do this now</span>
+                    <span className="task-badge">
+                      {i18nT(locale, 'ui.doThisNow')}
+                    </span>
                     <span className="task-meta">
                       {(nextTask.energy || 'med')} energy
                       {nextTask.parentId ? ' · micro-step' : ''}
@@ -2320,7 +2322,7 @@ function App() {
                   </button>
                 </div>
                 <p className="product-card-title" style={{ marginBottom: 0 }}>
-                  One step owns the screen. Complete it. Board → System → Pack.
+                  {i18nT(locale, 'ui.howDeskWorks')}
                 </p>
               </section>
             )}
@@ -2343,7 +2345,9 @@ function App() {
                     className="text-link work-path-next"
                     onClick={() => setActiveView(journeyNext.view)}
                   >
-                    {journeyStep?.nextLabel || `Go to ${journeyNext.label}`}
+                    {journeyStep?.nextLabel ||
+                      i18nT(locale, 'ui.goToBoard') ||
+                      `Go to ${journeyNext.label}`}
                   </button>
                 </>
               )}
@@ -2473,7 +2477,7 @@ function App() {
               <div>
                 <h1 className="page-title">Board</h1>
                 <p className="page-sub">
-                  Upload refs. Star up to 6 for System + Pack.
+                  {i18nT(locale, 'ui.boardSub')}
                   {deskMood.filter((m) => m.inPack).length > 0
                     ? ` · ${deskMood.filter((m) => m.inPack).length}/6 in pack`
                     : ''}
@@ -2706,9 +2710,7 @@ function App() {
                       {i18nT(locale, 'ui.noPinsYet')}
                     </p>
                     <p className="empty-state-body">
-                      Upload images (or drag them here), then star{' '}
-                      <strong>2–6</strong> with ★ Pack so they appear on System
-                      and Pack. Drag pins to reorder.
+                      {i18nT(locale, 'ui.emptyPinsBody')}
                     </p>
                   </div>
                 ) : (
@@ -3057,7 +3059,7 @@ function App() {
               <div>
                 <h1 className="page-title">System</h1>
                 <p className="page-sub">
-                  Live artboard for{' '}
+                  {i18nT(locale, 'ui.systemSub')}{' '}
                   <strong>{activeProject?.name || 'this project'}</strong>
                   {' · '}
                   pack pins {deskMood.filter((m) => m.inPack).length}/6
@@ -3076,7 +3078,7 @@ function App() {
                   className="btn btn-primary"
                   onClick={() => setActiveView('finish')}
                 >
-                  {i18nT(locale, 'ui.openPack') || 'Go to Pack'}
+                  {i18nT(locale, 'ui.openPack')}
                 </button>
               </div>
             </div>
@@ -3742,15 +3744,14 @@ function App() {
                           {deskTasks.length ? `/${deskTasks.length}` : ''} · Pins{' '}
                           {packSnap.pins?.length || 0}
                           {packSnap.pinsUsedFallback
-                            ? ' (star pins on Board to curate)'
+                            ? ` (${i18nT(locale, 'ui.starPinsHint')})`
                             : ''}
                         </p>
                         {ready.thin && (
                           <div className="pack-thin-block">
                             <EmptyIllustration variant="pack" className="pack-thin-illu" />
                             <p className="pack-thin-warning" role="status">
-                              Thin pack — add a tagline, palette, or ★ Pack pins
-                              on Board before client handoff.
+                              {i18nT(locale, 'ui.thinPack')}
                             </p>
                           </div>
                         )}
@@ -3767,7 +3768,7 @@ function App() {
                         const ready = packReadiness(packSnap)
                         if (ready.thin) {
                           const go = window.confirm(
-                            'This pack looks thin (missing tagline, palette, or pins). Print anyway?'
+                            i18nT(locale, 'ui.thinPackConfirmPrint')
                           )
                           if (!go) return
                         }
@@ -3784,7 +3785,7 @@ function App() {
                         const ready = packReadiness(packSnap)
                         if (ready.thin) {
                           const go = window.confirm(
-                            'This pack looks thin (missing tagline, palette, or pins). Download anyway?'
+                            i18nT(locale, 'ui.thinPackConfirmDownload')
                           )
                           if (!go) return
                         }
@@ -4006,7 +4007,7 @@ function App() {
               <div>
                 <h1 className="page-title">Project</h1>
                 <p className="page-sub">
-                  Name the work. Check readiness. Then open Work or Pack.
+                  {i18nT(locale, 'ui.projectSub')}
                 </p>
               </div>
               <div className="finish-secondary-row">
@@ -4015,14 +4016,14 @@ function App() {
                   className="btn btn-primary"
                   onClick={() => setActiveView('flow')}
                 >
-                  Open Work
+                  {i18nT(locale, 'ui.openWork')}
                 </button>
                 <button
                   type="button"
                   className="btn btn-ghost"
                   onClick={() => setActiveView('finish')}
                 >
-                  Open Pack
+                  {i18nT(locale, 'ui.openPack')}
                 </button>
               </div>
             </div>
@@ -4056,14 +4057,16 @@ function App() {
                     <ul className="pack-ready-list project-ready-list">
                       <li className={checks[0] ? 'is-ok' : 'is-miss'}>
                         {checks[0] ? (
-                          <span>✓ Open Work step</span>
+                          <span>
+                            ✓ {i18nT(locale, 'ui.hasOpenWorkStep')}
+                          </span>
                         ) : (
                           <button
                             type="button"
                             className="pack-ready-fix"
                             onClick={() => setActiveView('flow')}
                           >
-                            ○ Open Work step — fix
+                            ○ {i18nT(locale, 'ui.hasOpenWorkStep')} — fix
                           </button>
                         )}
                       </li>
@@ -4470,11 +4473,10 @@ function App() {
                   {CLOUD ? 'Signed in · cloud desk' : 'Saved on this device'}
                 </p>
                 <h2 id="onboard-title" className="onboard-title">
-                  One project. One step. Ship a pack.
+                  {i18nT(locale, 'ui.onboardTitle')}
                 </h2>
                 <p id="onboard-desc" className="view-lede onboard-lede">
-                  Name the work and <strong>one shippable step</strong> for the
-                  next 25 minutes. You leave with a brand pack PDF.
+                  {i18nT(locale, 'ui.onboardLede')}
                 </p>
                 <ol className="onboard-path" aria-label="Your path">
                   {JOURNEY_STEPS.map((s) => (
@@ -4665,8 +4667,7 @@ function App() {
                 <button type="button" className="btn btn-secondary" onClick={() => runExport('print')}>Print</button>
               </div>
               <p className="panel-hint export-raster-hint">
-                Raster PDF (preview-match) is under Pack → More formats. Primary
-                Download on Pack is vector (selectable text + sharp zoom).
+                Raster PDF is Pack → More formats. Primary download is vector PDF.
               </p>
             </details>
           </div>
