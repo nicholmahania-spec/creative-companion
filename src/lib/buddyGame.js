@@ -285,14 +285,18 @@ export function award(action, meta = {}) {
   const levelUp = game.level > prevLevel
   if (levelUp) {
     messages.push(
-      `Level up! You reached level ${game.level}. Nice steady craft.`
+      `Level up! You're level ${game.level} now. Don't let it go to your kerning.`
     )
   }
   if (gained > 0) {
-    messages.push(`+${gained} XP${meta.label ? ` · ${meta.label}` : ''}`)
+    messages.push(
+      `+${gained} XP${meta.label ? ` · ${meta.label}` : ''}. Look at you, collecting dopamine legally.`
+    )
   }
   for (const b of badgesUnlocked) {
-    messages.push(`Badge unlocked: ${b.icon} ${b.name} — ${b.desc}`)
+    messages.push(
+      `Badge unlocked: ${b.icon} ${b.name} — ${b.desc}. Flex responsibly.`
+    )
   }
 
   saveGame(game)

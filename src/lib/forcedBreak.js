@@ -31,8 +31,8 @@ export function formatBreakClock(totalSeconds) {
 export function breakReasonCopy(workMinutes, breakMin) {
   const w = Math.round(workMinutes)
   return {
-    title: 'Break time — desk is locked',
-    body: `You worked about ${w} minute${w === 1 ? '' : 's'}. Take a ${breakMin}-minute break. Stand up, water, bathroom, eyes off the screen. The app unlocks when the timer finishes.`,
-    tip: 'This is on purpose so hyperfocus does not skip rest. You cannot work in the app until then.',
+    title: 'Nope. Break time. Desk locked.',
+    body: `You worked about ${w} minute${w === 1 ? '' : 's'}. Congrats on the grind—and also: sit down… wait, stand up. ${breakMin} minutes. Water. Bathroom. Eyes off the glowing rectangle. The app unlocks when I say so (when the timer ends).`,
+    tip: "This isn't a suggestion, it's an intervention. Hyperfocus doesn't get a veto. See you after the stretch.",
   }
 }

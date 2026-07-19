@@ -145,93 +145,93 @@ export function minutesAtDesk(sessionStart, now = Date.now()) {
 }
 
 const GREETINGS = [
-  "I'm your design buddy — UI/UX and visual craft. I'll track what you're working on, keep soft time, and coach with a clear process: clarify → structure → visual → refine.",
-  "Design desk is open. I prioritize hierarchy, accessibility, and user goals. Ask for a tip, or pick Clarify / Structure / Visual / Refine.",
-  "Hello — expert design coach mode. I'll watch the clock so deep focus doesn't erase dinner, and give constructive, specific guidance on what you're doing.",
+  "Oh good, you're here. I'm the design buddy with opinions, a clock, and zero patience for twin primary buttons. Shall we make something that doesn't look like a template?",
+  "Look who showed up to do actual work. I'm sassy, useful, and slightly judgmental about your spacing. Ask me to coach, recommend, or roast—er, critique.",
+  "Hi. I'm your design gremlin: hierarchy, breaks, and unsolicited honesty. I also prevent you from ghosting water for three hours. You're welcome.",
 ]
 
 const WATER = [
-  'Quick care note: have you had water? Clear thinking needs it before the next layout decision.',
-  'Hydration break — even a few sips. Then return to the current design step.',
-  'Water check. Designers forget this in the zone. Sip, then back to hierarchy.',
+  "Water. Not coffee. Not vibes. Actual H2O. Your kerning will thank you.",
+  "Hydrate or your next color decision will be pure chaos. Sip. Then design.",
+  "Friendly threat: drink something that isn't despair. Even three sips counts.",
 ]
 
 const FOOD = [
-  'Have you eaten? Low fuel kills judgment on type and color.',
-  'Food check — a snack counts. Then one focused design action.',
-  'Empty stomach, muddy decisions. Eat something small if you need to.',
+  "Have you eaten, or are you running on aesthetic and spite? Snack. Then type.",
+  "Food check. Coffee is a personality, not a meal. Grab something with calories.",
+  "Empty stomach = tragic palette choices. Eat. I can wait. Barely.",
 ]
 
 const BATHROOM = [
-  'Body break: bathroom if you need it. The composition will still be there.',
-  'Stand and reset if you are holding still too long. Fresh eyes matter for critique.',
-  'Quick reset walk or bathroom — then look at your work with distance.',
+  "Bathroom. The art will survive. Your bladder is not a design constraint.",
+  "Stand up. Walk. Do the human thing. The Figma file isn't going to cry.",
+  "If you've been glued to the chair, go. Fresh eyes > another 1px nudge.",
 ]
 
 const PROGRESS_STEP = [
-  'Step complete. That is real progress on the craft — not just motion.',
-  'Nice. One deliverable-sized action closed. Momentum without chaos.',
-  'Checked off. Keep the same scope discipline on the next piece.',
+  "Boom. One step down. Look at you, collecting adult points.",
+  "Checked off. Not a vibe—a receipt. Do it again, you menace.",
+  "Step complete. Somewhere a unfinished mood board just felt a cold wind.",
 ]
 
 const PROGRESS_TIMER = [
-  "Timer is running. Protect one design action only — no tool-hopping.",
-  'Focus block on. I will hold time; you hold hierarchy and intent.',
-  'Container mode: one step, clear outcome, then reassess.',
+  "Timer's on. One job. If I catch you opening six panels, I will judge you silently. (Loudly.)",
+  "Focus mode: you, the step, and my smug little countdown. No tool tourism.",
+  "Pomodoro engaged. Make one decision so sharp it could cut a wireframe.",
 ]
 
 const STUCK = [
-  "Stuck is a signal. Step 1 — clarify: who is this for and what must they do? Then shrink the task.",
-  "When frozen: define the user job in one sentence, or wireframe the screen in text only. Skip polish.",
-  "Designer's block often means the problem is underspecified. Clarify audience and goal, then one micro-step.",
+  "Stuck? Cute. Name the user in one sentence or admit the step is a blob. Blobs don't ship.",
+  "Frozen? Write the job-to-be-done like a hostage note: short, clear, slightly desperate. Then shrink the step.",
+  "Block usually means you're decorating a mystery. Clarify who it's for—then one tiny, ugly action.",
 ]
 
 const IDLE = [
-  'Still here. What is the single next design decision — type, layout, or copy hierarchy?',
-  'Checking in. Need Clarify, Structure, Visual, or Refine guidance?',
-  'No need to finish the whole system. One clear interaction or visual choice is enough right now.',
+  "Still here. Plotting. Judging your alignment. Need a tip, a roast, or a break?",
+  "Earth to designer: one next move. Type, layout, or copy. Pick your fighter.",
+  "I'm not bored. I'm strategically hovering. Clarify / Structure / Visual / Refine—or water. Shocking options.",
 ]
 
 const PRAISE = [
-  'Showing up to the desk is half of craft. Keep going.',
-  'Messy first passes are correct process. Refine later with intent.',
-  'Good work protecting a single step — that is professional scope control.',
+  "Showing up counts. The couch was an option and you rejected it. Iconic.",
+  "Messy first pass? Correct. Perfectionism is just fear with better letter-spacing.",
+  "Protecting one step is professional. Chaos is free and overrated.",
 ]
 
 const TIME_BLIND = [
   (clock, desk) =>
-    `Time orientation: it is ${clock}. You have been at the desk about ${desk}. Use that to pace critique — not to panic.`,
+    `Time check, superstar: it's ${clock}. You've been here about ${desk}. Time is fake; dehydration is not.`,
   (clock, desk) =>
-    `Clock check: ${clock}. Session ~${desk}. Still optimize for one clear outcome.`,
+    `Psst—clock says ${clock}. Desk time ~${desk}. Still doing one thing, or opening seventeen tabs of doom?`,
   (clock, desk) =>
-    `Soft time: ${clock}, about ${desk} in. Deep work is fine; body breaks protect judgment.`,
+    `Friendly calendar attack: ${clock}, ~${desk} in. Pace yourself before your eyes file a complaint.`,
 ]
 
 const HYPER_SOFT = [
   (mins) =>
-    `About ${mins} minutes deep. Micro-break: look 20 feet away, then return with fresh hierarchy eyes.`,
+    `${mins} minutes deep. Look at something that isn't a screen for one breath. Your pupils are unionizing.`,
   (mins) =>
-    `${mins} min continuous. Stretch shoulders, sip water — then one design decision only.`,
+    `${mins} min without a break. Stretch like you mean it, then one decision—not seventeen shadows.`,
   (mins) =>
-    `Long stretch (~${mins} min). A 60-second stand improves visual judgment more than another tweak.`,
+    `You've been in the sauce for ~${mins} min. Stand up. Water. Then back to boss mode.`,
 ]
 
 const HYPER_STRONG = [
   (mins) =>
-    `Hyperfocus alert: ~${mins} minutes. Bathroom and water. Your layout will still be here.`,
+    `Okay drama: ~${mins} minutes planted. Bathroom + water. The layout will not text you while you're gone.`,
   (mins) =>
-    `${mins} minutes without a real break — this is when craft quality drops. Three minutes away, then return.`,
+    `${mins} min straight—this is how dinner becomes a myth. Three minutes away. I'll hold your seat and your sass.`,
   (mins) =>
-    `Strong nudge at ~${mins} min. Step away once. I am holding your place in the process.`,
+    `Strong nudge at ~${mins} min. Step away before your critique turns into pure spice with no nutrition.`,
 ]
 
 const HYPER_HARD = [
   (mins) =>
-    `Hard stop suggestion: ~${mins} min continuous. Stand, water, snack. Fresh eyes beat more polishing.`,
+    `Hard pass on more pixels: ~${mins} min continuous. Stand. Water. Snack. Fresh eyes > another polish pass.`,
   (mins) =>
-    `${mins} minutes is a long design block. Break is part of craft, not quitting.`,
+    `${mins} minutes is a saga. Break isn't quitting—it's quality control for your brain.`,
   (mins) =>
-    `~${mins} min in. Protect your body so the next visual decision stays sharp.`,
+    `I'm not mad. I'm concerned. ~${mins} min in. Rest so the next call isn't pure delirium in a nice font.`,
 ]
 
 function pick(arr) {
@@ -578,12 +578,12 @@ export function describeActivity(activity = {}) {
   const domain = classifyTask(activity)
   const domainLabel = DOMAIN_LABEL[domain]
   if (step && view === 'flow') {
-    return `Context: Work · ${project || 'project'} · step "${step}" · domain: ${domainLabel}.`
+    return `Caught you on Work (${project || 'mystery project'}) wrestling "${step}" — that's ${domainLabel} energy.`
   }
   if (step) {
-    return `Context: ${place} · step "${step}" · domain: ${domainLabel}.`
+    return `You're on ${place} with "${step}" still open. Domain: ${domainLabel}. Spicy.`
   }
-  return `Context: ${place}${project ? ` · ${project}` : ''} · domain: ${domainLabel}.`
+  return `You're on ${place}${project ? ` for ${project}` : ''}. Domain vibe: ${domainLabel}.`
 }
 
 /**
@@ -598,23 +598,23 @@ export function designProcessTip(phase, activity = {}) {
 
   if (phase === 'clarify') {
     return [
-      'Step 1 — Understand & clarify.',
-      `For ${project}, answer in one line each: (1) Who is the audience? (2) What should they feel or do? (3) What constraint is real (time, brand, format)?`,
+      'Step 1 — Clarify (before you decorate the void).',
+      `For ${project}, one line each: who is it for, what should they do/feel, what's the real constraint?`,
       step
-        ? `Map those answers onto your step: "${step}". If you cannot, the step is still too vague — rewrite it as a user outcome.`
-        : 'Then write one Work step that ships a decision, not "work on brand."',
-      'Why: unclear goals produce pretty-but-useless UI.',
+        ? `If "${step}" can't wear those answers, rewrite the step. Vague steps birth vague UI.`
+        : 'Then make a Work step that ships a decision—not "touch brand vibes."',
+      'Why: pretty-but-useless is my least favorite genre.',
     ].join(' ')
   }
 
   if (phase === 'structure') {
     return [
-      'Step 2 — Strategy & structure (wireframe in words).',
+      'Step 2 — Structure (wireframe in words, not 47 layers).',
       view === 'brand'
-        ? 'List the brand pack as a journey: cover → message → palette → type → do/don’t → export. Fill only the next empty section.'
-        : 'Sketch the flow: entry → primary action → success. For the current screen, list blocks top-to-bottom (header, hero, proof, CTA).',
-      step ? `Tie the structure to: "${step}".` : '',
-      'Why: layout before decoration. Hierarchy is a strategy choice.',
+        ? 'Brand journey: cover → message → palette → type → do/don’t → export. Fill the next empty hole only.'
+        : 'List blocks top to bottom: header, main thing, proof, ONE primary CTA. Entry → action → success.',
+      step ? `Glue it to "${step}" or admit you're freelancing from the plot.` : '',
+      'Why: layout is strategy. Shadows are not a personality.',
     ]
       .filter(Boolean)
       .join(' ')
@@ -622,13 +622,12 @@ export function designProcessTip(phase, activity = {}) {
 
   if (phase === 'visual') {
     return [
-      'Step 3 — Visual design.',
+      'Step 3 — Visual (taste with rules).',
       view === 'studio' || pins > 0
-        ? `Use the board: pick 1–2 refs that set mood. Limit palette to 3–5 hex roles (bg, text, accent, success/warn). Pair one display + one UI sans.`
-        : 'Suggest: primary accent with clear contrast on background (aim WCAG AA for body text). One accent for CTAs only — avoid accent inflation.',
-      'Whitespace and grid over decoration. One focal point per view.',
-      step ? `Does the visual system support "${step}"?` : '',
-      'Why: restraint reads as confidence; noise reads as template.',
+        ? 'Steal with intention: 1–2 refs, 3–5 color roles, one display + one UI font. Caption the pins or they\'re just a Pinterest nap.'
+        : 'One accent for actions. Body text that passes contrast. Whitespace is free—use it like you mean it.',
+      step ? `Does this look support "${step}", or just your ego?` : '',
+      'Why: restraint reads expensive; rainbow buttons read template.',
     ]
       .filter(Boolean)
       .join(' ')
@@ -636,11 +635,11 @@ export function designProcessTip(phase, activity = {}) {
 
   if (phase === 'refine') {
     return [
-      'Step 4 — Refinement.',
-      'Propose two directions in one sentence each — e.g. A) calmer editorial hierarchy B) bolder product CTA path. Pick one primary CTA per screen.',
-      'Audit: contrast, focus order, touch targets, empty states, destructive actions away from primary.',
-      'Ship a small complete slice (one step) rather than half of everything.',
-      'Why: iteration with criteria beats endless polishing.',
+      'Step 4 — Refine (two directions, not seventeen moods).',
+      'A) calmer editorial hierarchy  B) bolder product CTA path. Pick one. Twin primaries will make me monologue.',
+      'Audit: contrast, focus order, empty states, delete buttons not snuggling the main CTA.',
+      'Ship one complete slice. Half-finished everything is a lifestyle, not a strategy.',
+      'Why: criteria beat vibes when the caffeine wears off.',
     ].join(' ')
   }
 
@@ -750,14 +749,14 @@ export function activityTip(activity = {}) {
 
 /** Idle check-in with design context */
 export function idleLineWithActivity(activity = {}) {
-  if (Math.random() < 0.6) return activityTip(activity)
+  if (Math.random() < 0.55) return activityTip(activity)
   const place = VIEW_LABELS[activity.view] || 'your desk'
   return pick([
-    `Still coaching from the side. You are on ${place}. Want Clarify, Structure, Visual, or Refine?`,
-    `Check-in on ${place}. Hierarchy still clear? Need a process tip?`,
+    `Still lurking on ${place}. Want Clarify, Structure, Visual, Refine—or a well-deserved roast of your twin CTAs?`,
+    `Check-in: ${place}. Hierarchy still behaving, or is it a buffet of equal importance again?`,
     activity.nextTaskTitle
-      ? `Holding context: "${short(activity.nextTaskTitle, 36)}". One decision at a time.`
-      : `On ${place}. Define the next user outcome when ready.`,
+      ? `"${short(activity.nextTaskTitle, 36)}" is still waiting. It won't do itself. (I checked.)`
+      : `On ${place} with no open step. Dramatic. Capture one job or admit you're vibing.`,
   ])
 }
 
@@ -790,21 +789,21 @@ export function hyperfocusLine(minutesWorking) {
 
 export function confirmLine(kind) {
   if (kind === 'water')
-    return 'Water noted. Clear head, then one design decision.'
+    return 'Water logged. Look at you, hydrating like a functional genius. Now one design decision—not twelve.'
   if (kind === 'food')
-    return 'Fuel noted. Judgment improves with basics covered.'
+    return 'Food noted. Your next type choice might actually make sense now.'
   if (kind === 'bathroom')
-    return 'Welcome back. Fresh eyes on hierarchy — that is the point of the pause.'
+    return "Welcome back. The art waited. Your back probably didn't. Hierarchy time."
   if (kind === 'break')
-    return 'Break logged. Long-stretch timer reset. Return with intent, not guilt.'
-  return 'Noted. Still here as your design coach.'
+    return "Break logged. Hyperfocus clock reset. Return smug, not guilty."
+  return "Noted. I'm still here, sparkling with opinions."
 }
 
 export function whatTimeLine(sessionStart, now = Date.now()) {
   const clock = formatClock(new Date(now))
   const desk = formatDuration(now - sessionStart)
   const sinceBreak = minutesSinceBreak(loadWellness(), sessionStart, now)
-  return `It is ${clock}. Desk time about ${desk}. Roughly ${sinceBreak} minutes since a real break. Pace craft accordingly.`
+  return `It's ${clock} in the real world (yes, that still exists). You've been here about ${desk}. Roughly ${sinceBreak} min since a real break. Pace yourself, legend.`
 }
 
 /** Mood for avatar face */

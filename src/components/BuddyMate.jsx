@@ -68,7 +68,7 @@ export default function BuddyMate({
     {
       id: 1,
       from: 'buddy',
-      text: `${greetingLine()} It's ${formatClock()} right now.`,
+      text: `${greetingLine()} Clock says ${formatClock()}. Try not to lose track of reality.`,
     },
   ])
   const [expanded, setExpanded] = useState(true)
@@ -512,11 +512,11 @@ export default function BuddyMate({
           <BuddyFace mood={mood} reduceMotion={reduceMotion} />
           <div>
             <strong className="buddy-name">
-              Design buddy · Lv {xp.level}
+              Sassy buddy · Lv {xp.level}
             </strong>
             <span className="buddy-status">
               {isFocusRunning
-                ? `Focus${focusLabel ? ` · ${focusLabel}` : ''} · +XP when done`
+                ? `Focus${focusLabel ? ` · ${focusLabel}` : ''} · no funny business`
                 : gameSummaryLine(game)}
             </span>
           </div>
@@ -579,7 +579,7 @@ export default function BuddyMate({
         )}
         {levelBurst && (
           <p className="buddy-levelup-banner" role="status">
-            Level up! You are level {xp.level}
+            Level {xp.level}! Try not to get cocky.
           </p>
         )}
       </div>
@@ -626,7 +626,7 @@ export default function BuddyMate({
       </div>
 
       <div className="buddy-wellness">
-        <p className="buddy-wellness-label">Tell me you did this</p>
+        <p className="buddy-wellness-label">Prove you&apos;re a person</p>
         <div className="buddy-wellness-row">
           <button
             type="button"
@@ -653,12 +653,12 @@ export default function BuddyMate({
           </button>
         </div>
         <button type="button" className="buddy-break-btn" onClick={logBreak}>
-          I took a real break
+          Fine, I took a real break
         </button>
       </div>
 
       <div className="buddy-process" aria-label="Task review">
-        <p className="buddy-wellness-label">For this task</p>
+        <p className="buddy-wellness-label">Roast or help (your call)</p>
         <div className="buddy-process-row">
           <button
             type="button"
@@ -679,7 +679,7 @@ export default function BuddyMate({
             className="buddy-quick-btn buddy-quick-tip"
             onClick={() => reply('full')}
           >
-            Full review
+            Full roast
           </button>
           <button
             type="button"
