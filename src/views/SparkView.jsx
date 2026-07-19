@@ -4,6 +4,7 @@ export default function SparkView({
   nextTask,
   currentSpark,
   nextSpark,
+  oppositeSpark,
   addMoodPin,
   projectPalette,
   notifyAction,
@@ -139,6 +140,13 @@ export default function SparkView({
             className="btn btn-primary"
           >
             Another spark
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => oppositeSpark?.()}
+          >
+            Opposite direction
           </button>
           <button
             type="button"

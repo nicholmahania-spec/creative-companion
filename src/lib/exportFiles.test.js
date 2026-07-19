@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildBrandPackSnapshot,
+  packReadiness,
   brandPackToMarkdown,
   brandPackToHtml,
   buildDirectionSheetMarkup,
@@ -150,6 +151,29 @@ describe('buildDirectionSheetMarkup (preview-faithful PDF source)', () => {
     expect(html).toContain('Lock type')
     expect(html).toContain('Mood direction')
     expect(html).toContain('Open work')
+  })
+})
+
+describe('packReadiness detective + handoff', () => {
+  it('accepts detective goal as positioning signal', () => {
+    const pack = buildBrandPackSnapshot({
+      project: {
+        name: 'Demo',
+        brief: '',
+        detective: { goal: 'Help families feel safe', audience: 'Parents' },
+        palette: ['#111', '#222'],
+        tagline: 'Safe',
+        voice: 'Warm',
+      },
+      moodItems: [
+        { id: 1, type: 'color', note: 'x', visual: '#111', inPack: true },
+      ],
+    })
+    const r = packReadiness(pack)
+    expect(r.checks.find((c) => c.id === 'detective')?.ok).toBe(true)
+    expect(r.checks.find((c) => c.id === 'brief')?.ok).toBe(true)
+    expect(r.checks.find((c) => c.id === 'handoff')?.ok).toBe(false)
+    expect(r.thin).toBe(false)
   })
 })
 

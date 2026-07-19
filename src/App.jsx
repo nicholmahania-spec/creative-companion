@@ -46,6 +46,7 @@ const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const SettingsView = lazy(() => import('./views/SettingsView'))
 const SparkView = lazy(() => import('./views/SparkView'))
+const DetectiveSheet = lazy(() => import('./views/DetectiveSheet'))
 import {
   breakMinutesForWork,
   POMODORO_WORK_MIN,
@@ -145,6 +146,7 @@ function App() {
   const addTask = useAppStore((s) => s.addTask)
   const toggleTask = useAppStore((s) => s.toggleTask)
   const updateTaskTitle = useAppStore((s) => s.updateTaskTitle)
+  const updateTaskMeta = useAppStore((s) => s.updateTaskMeta)
   const removeTask = useAppStore((s) => s.removeTask)
   const breakIntoSteps = useAppStore((s) => s.breakIntoSteps)
   const addMoodPin = useAppStore((s) => s.addMoodPin)
@@ -157,6 +159,7 @@ function App() {
   const updateMoodPinNote = useAppStore((s) => s.updateMoodPinNote)
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
   const nextSpark = useAppStore((s) => s.nextSpark)
+  const oppositeSpark = useAppStore((s) => s.oppositeSpark)
   const createNewProject = useAppStore((s) => s.createNewProject)
   const addMicroStepsBatch = useAppStore((s) => s.addMicroStepsBatch)
   const setProjectDeadline = useAppStore((s) => s.setProjectDeadline)
@@ -2447,6 +2450,19 @@ function App() {
                     }
                     aria-label="Edit current step"
                   />
+                  <label className="field-label" htmlFor="step-why" style={{ marginTop: '0.65rem' }}>
+                    Why it fits the goal (one line)
+                  </label>
+                  <input
+                    id="step-why"
+                    className="field-input"
+                    value={nextTask.meta || ''}
+                    onChange={(e) =>
+                      updateTaskMeta(nextTask.id, e.target.value)
+                    }
+                    placeholder="e.g. Quiet hierarchy matches the detective goal"
+                    aria-label="Why this draft fits the goal"
+                  />
                   <div className="step-focus-actions">
                     <button
                       type="button"
@@ -2920,9 +2936,23 @@ function App() {
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={() => setActiveView('insights')}
+                  onClick={() => {
+                    if (forcedBreak) {
+                      flashToast('Break lock is open — finish it first')
+                      return
+                    }
+                    setSessionComplete(false)
+                    setFocusLeft(20 * 60)
+                    setPomodoroWorkStartedAt(Date.now())
+                    setIsFocusRunning(true)
+                    setActiveView('insights')
+                    notifyAction('Focus on', 'focus_start', {
+                      label: 'Research timer',
+                    })
+                    flashToast('20-minute research timer — stop when it ends')
+                  }}
                 >
-                  20-min research timer
+                  Start 20-min research timer
                 </button>
                 <span className="panel-hint" style={{ margin: 0 }}>
                   Stop before the rabbit hole.
@@ -3447,6 +3477,7 @@ function App() {
               nextTask={nextTask}
               currentSpark={currentSpark}
               nextSpark={nextSpark}
+              oppositeSpark={oppositeSpark}
               addMoodPin={addMoodPin}
               projectPalette={projectPalette}
               notifyAction={notifyAction}
@@ -4276,7 +4307,16 @@ function App() {
                                 if (c.view === 'studio') setActiveView('studio')
                                 else if (c.view === 'brand')
                                   goSystemSection(c.section || 'essentials')
-                                else if (c.view) setActiveView(c.view)
+                                else if (c.view === 'project') {
+                                  setActiveView('project')
+                                  window.setTimeout(
+                                    () =>
+                                      document
+                                        .getElementById('detective-goal')
+                                        ?.focus(),
+                                    100
+                                  )
+                                } else if (c.view) setActiveView(c.view)
                               }}
                             >
                               ○ {c.label} — fix
@@ -4420,7 +4460,34 @@ function App() {
                                     if (c.view === 'studio') setActiveView('studio')
                                     else if (c.view === 'brand')
                                       goSystemSection(c.section || 'essentials')
-                                    else if (c.view) setActiveView(c.view)
+                                    else if (c.view === 'project') {
+                                      setActiveView('project')
+                                      window.setTimeout(
+                                        () =>
+                                          document
+                                            .getElementById('detective-goal')
+                                            ?.focus(),
+                                        100
+                                      )
+                                    } else if (c.id === 'handoff') {
+                                      setActiveView('finish')
+                                      window.setTimeout(
+                                        () =>
+                                          document
+                                            .getElementById('handoff-note')
+                                            ?.focus(),
+                                        100
+                                      )
+                                    } else if (c.id === 'learnings') {
+                                      setActiveView('finish')
+                                      window.setTimeout(
+                                        () =>
+                                          document
+                                            .getElementById('learnings-note')
+                                            ?.focus(),
+                                        100
+                                      )
+                                    } else if (c.view) setActiveView(c.view)
                                   }}
                                 >
                                   ○ {c.label} — fix
@@ -4827,90 +4894,14 @@ function App() {
               </div>
             </div>
 
-            <section className="panel brand-section detective-sheet-panel">
-              <div className="brand-section-label">
-                Design Detective Sheet
-              </div>
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                The big “what are we even making?” talk. Strong Step 1 saves hours
-                of fixing later. Fill this before pretty pictures.
-              </p>
-              {(
-                [
-                  {
-                    id: 'goal',
-                    label: 'One-sentence goal',
-                    ph: 'e.g. Make a friendly booklet that helps families feel supported.',
-                  },
-                  {
-                    id: 'audience',
-                    label: 'Who is this for?',
-                    ph: 'e.g. Busy parents new to the program — not “everyone.”',
-                  },
-                  {
-                    id: 'feel',
-                    label: 'What should they feel or do?',
-                    ph: 'e.g. Hopeful, safe, clear next step.',
-                  },
-                  {
-                    id: 'mustHaves',
-                    label: 'Must-haves',
-                    ph: 'e.g. Logo, contact, 4 pages max.',
-                  },
-                  {
-                    id: 'niceToHaves',
-                    label: 'Nice-to-haves',
-                    ph: 'e.g. Photo of real families, illustration accents.',
-                  },
-                  {
-                    id: 'format',
-                    label: 'Format / size / constraint',
-                    ph: 'e.g. Letter PDF + Instagram square · Friday deadline.',
-                  },
-                ]
-              ).map((f) => (
-                <div
-                  key={f.id}
-                  className="field-block"
-                  style={{ marginBottom: '0.75rem' }}
-                >
-                  <label className="field-label" htmlFor={`detective-${f.id}`}>
-                    {f.label}
-                  </label>
-                  {f.id === 'goal' || f.id === 'feel' || f.id === 'mustHaves' || f.id === 'niceToHaves' ? (
-                    <textarea
-                      id={`detective-${f.id}`}
-                      className="field-input"
-                      rows={f.id === 'goal' ? 2 : 2}
-                      value={activeProject?.detective?.[f.id] || ''}
-                      onChange={(e) => updateDetective(f.id, e.target.value)}
-                      placeholder={f.ph}
-                    />
-                  ) : (
-                    <input
-                      id={`detective-${f.id}`}
-                      className="field-input"
-                      value={activeProject?.detective?.[f.id] || ''}
-                      onChange={(e) => updateDetective(f.id, e.target.value)}
-                      placeholder={f.ph}
-                    />
-                  )}
-                </div>
-              ))}
-              <div className="finish-secondary-row" style={{ marginTop: '0.35rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    const r = applyDetectiveToBrief()
-                    if (r.ok) flashToast('Brief filled from detective sheet')
-                    else flashToast(r.error || 'Add a few answers first')
-                  }}
-                >
-                  Fill brief from sheet
-                </button>
-              </div>
-            </section>
+            <Suspense fallback={null}>
+              <DetectiveSheet
+                detective={activeProject?.detective}
+                updateDetective={updateDetective}
+                applyDetectiveToBrief={applyDetectiveToBrief}
+                flashToast={flashToast}
+              />
+            </Suspense>
 
             <section className="panel brand-section brand-kits-panel">
               <div className="brand-section-label">Direction kits</div>
@@ -5344,13 +5335,13 @@ function App() {
             <p className="view-lede">
               {
                 [
-                  'Name, brief, and readiness. Soft Signal is filled — go to Research next.',
-                  'Upload refs. Star up to 6 ★ for the pack. Stay curious, timed.',
-                  'Many directions fast. Pin sparks you like — no judging yet.',
-                  'One current step owns the fold. Complete it; the queue waits underneath.',
-                  'Live artboard + type, color, voice. Polish rules — then Review.',
-                  'Show the pack. Ask if it feels right. Fix from real feedback.',
-                  'Download vector PDF or print for client handoff. Note what you learned.',
+                  'Detective sheet first: who, feel, one-sentence goal. Soft Signal is seeded.',
+                  'Curious spy: refs, star up to 6 ★. Use the 20-min research timer.',
+                  'Force many sparks — try Opposite direction. Shortlist A/B/C.',
+                  '2–3 drafts + one-line why. Low polish. Under ~2 hours total.',
+                  'Live artboard + lockups. Bump version (v1→v2) before big changes.',
+                  'Show the leave-behind. Ask specific questions. Capture feedback notes.',
+                  'Brand book PDF + handoff note + what you learned.',
                 ][demoTour.step]
               }
             </p>

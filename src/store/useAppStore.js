@@ -3,13 +3,27 @@ import { persist } from 'zustand/middleware'
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/breakKit'
 
-/** Real creative prompts — tools, not fake user data */
+/** Real creative prompts — tools, not fake user data. Aim for 8+ so Ideate progress works. */
 export const sparkPrompts = [
   'What if the mark worked in one color at sticker size and still felt human?',
   'Name the feeling the cover must land — one sentence, no jargon.',
   'Design a visual system that protects quiet attention, not hustle energy.',
   'What is the one thing a viewer must understand in three seconds?',
   'Strip one decorative layer. Does hierarchy still hold?',
+  'Opposite day: if you went bold/loud, what does the quiet twin look like?',
+  'Opposite day: if you went soft/editorial, what does the product-forward twin look like?',
+  'Write three directions in six words each — no adjectives, only nouns + verbs.',
+  'What would you design if the budget only allowed one ink color and one font?',
+  'Steal one rule from a project you admire — rewrite it for this audience.',
+]
+
+/** Opposite-direction sparks (Ideate force-opposites challenge) */
+export const oppositeSparks = [
+  'Force the opposite: calm ↔ bold. Sketch both in one line each.',
+  'Force the opposite: photo-heavy ↔ pure type. Which serves the goal?',
+  'Force the opposite: warm/hand-made ↔ crisp/system. Name the tradeoff.',
+  'Force the opposite: dense info ↔ almost empty. Where does hierarchy live?',
+  'Force the opposite: literal metaphor ↔ abstract mark. Which feels truer?',
 ]
 
 export const defaultProjectPalette = [
@@ -605,6 +619,14 @@ const useAppStore = create(
           ),
         })),
 
+      /** One-line “why it fits the goal” on a desk step */
+      updateTaskMeta: (id, meta) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === id ? { ...t, meta: String(meta || '') } : t
+          ),
+        })),
+
       setTaskDueDate: (id, dueDate) =>
         set((state) => ({
           tasks: state.tasks.map((t) =>
@@ -1044,6 +1066,16 @@ const useAppStore = create(
           return {
             sparkIndex: next,
             currentSpark: sparkPrompts[next],
+          }
+        }),
+
+      /** Ideate: inject an opposite-direction prompt (counts as progress) */
+      oppositeSpark: () =>
+        set((state) => {
+          const i = (state.sparkIndex + 1) % oppositeSparks.length
+          return {
+            sparkIndex: state.sparkIndex + 1,
+            currentSpark: oppositeSparks[i % oppositeSparks.length],
           }
         }),
 

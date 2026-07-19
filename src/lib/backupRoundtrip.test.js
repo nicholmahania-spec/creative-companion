@@ -33,7 +33,7 @@ describe('backup / pack smoke (logic)', () => {
     expect(pins[0].note).toBe('yes')
   })
 
-  it('packReadiness deep-links missing tagline to System essentials', () => {
+  it('packReadiness deep-links missing tagline to Design essentials', () => {
     const pack = buildBrandPackSnapshot({
       project: createBlankProject('Demo', 'Brief here'),
       tasks: [],
@@ -44,6 +44,9 @@ describe('backup / pack smoke (logic)', () => {
     expect(tag.ok).toBe(false)
     expect(tag.view).toBe('brand')
     expect(tag.section).toBe('essentials')
-    expect(r.thin).toBe(true)
+    // Brief fills detective + positioning; still missing pins/tagline/voice
+    expect(r.checks.find((c) => c.id === 'detective')?.ok).toBe(true)
+    expect(r.checks.find((c) => c.id === 'pins')?.ok).toBe(false)
+    expect(r.checks.find((c) => c.id === 'handoff')?.view).toBe('finish')
   })
 })

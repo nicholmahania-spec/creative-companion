@@ -319,10 +319,23 @@ export function packReadiness(pack) {
   const hasName = !!(pack?.projectName && pack.projectName !== 'Untitled project')
   const hasTagline = !!(pack?.tagline && String(pack.tagline).trim())
   const hasBrief = !!(pack?.brief && String(pack.brief).trim())
+  const det = pack?.detective || {}
+  const hasDetective =
+    !!(det.goal && String(det.goal).trim()) ||
+    !!(det.audience && String(det.audience).trim())
   const hasPalette = (pack?.palette || []).length >= 2
   const hasPins = (pack?.pins || []).length > 0
   const hasVoice = !!(pack?.voice && String(pack.voice).trim())
+  const hasHandoff = !!(pack?.handoffNote && String(pack.handoffNote).trim())
+  const hasLearnings = !!(pack?.learnings && String(pack.learnings).trim())
   const checks = [
+    {
+      id: 'detective',
+      label: 'Detective goal / audience',
+      ok: hasDetective || hasBrief,
+      view: 'project',
+      section: null,
+    },
     {
       id: 'tagline',
       label: 'Tagline',
@@ -354,14 +367,32 @@ export function packReadiness(pack) {
     {
       id: 'brief',
       label: 'Positioning',
-      ok: hasBrief,
-      view: 'brand',
-      section: 'essentials',
+      ok: hasBrief || hasDetective,
+      view: 'project',
+      section: null,
+    },
+    {
+      id: 'handoff',
+      label: 'Handoff note',
+      ok: hasHandoff,
+      view: 'finish',
+      section: null,
+    },
+    {
+      id: 'learnings',
+      label: 'Learnings note',
+      ok: hasLearnings,
+      view: 'finish',
+      section: null,
     },
   ]
   const okCount = checks.filter((c) => c.ok).length
-  const thin = okCount < 3
-  return { checks, okCount, thin, hasName }
+  // Thin if core brand pieces missing (not handoff/learnings — those are ship polish)
+  const coreOk = checks
+    .filter((c) => !['handoff', 'learnings'].includes(c.id))
+    .filter((c) => c.ok).length
+  const thin = coreOk < 3
+  return { checks, okCount, thin, hasName, coreOk }
 }
 
 /** Markdown brand direction pack */
