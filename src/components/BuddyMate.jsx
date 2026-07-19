@@ -44,6 +44,7 @@ import {
   helperAiStatus,
 } from '../lib/helperAi'
 import useAppStore from '../store/useAppStore'
+import HelperCharacterLottie from './HelperCharacterLottie'
 
 const BUDDY_BASE = `${import.meta.env.BASE_URL}buddy/`
 const FAB_SRC = `${BUDDY_BASE}helper-fab.jpg`
@@ -695,13 +696,12 @@ export default function BuddyMate({
               : 'Helper'
         }
       >
-        <img
+        <HelperCharacterLottie
           className="buddy-fab-img"
-          src={FAB_SRC}
-          alt=""
-          width={64}
-          height={64}
-          draggable={false}
+          mood={mood}
+          reduceMotion={reduceMotion}
+          size={64}
+          fallbackSrc={FAB_SRC}
         />
         {showProgress && (
           <span className="buddy-fab-level">{xp.level}</span>
@@ -738,13 +738,22 @@ export default function BuddyMate({
         <div className="buddy-compact-card">
           <header className="buddy-compact-head">
             <div className="buddy-compact-identity">
-              <img
+              <HelperCharacterLottie
                 className={`buddy-compact-face mood-${mood}${
                   reduceMotion ? ' no-motion' : ''
                 }`}
-                src={FAB_SRC}
-                alt=""
-                draggable={false}
+                mood={
+                  recentWin || mood === 'happy'
+                    ? 'happy'
+                    : hyper === 'hard' || hyper === 'strong'
+                      ? 'think'
+                      : mood === 'rest'
+                        ? 'rest'
+                        : 'idle'
+                }
+                reduceMotion={reduceMotion}
+                size={48}
+                fallbackSrc={FAB_SRC}
               />
               <div className="buddy-compact-titles">
                 <div className="buddy-compact-name-row">

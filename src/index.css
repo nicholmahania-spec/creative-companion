@@ -9932,3 +9932,55 @@ main[data-nav-dir="back"] .journey-step.is-active .journey-num {
 html[data-reduce-motion="true"] .journey-step.is-active .journey-num {
   animation: none !important;
 }
+
+/* ——— RTL layout v1.6 ——— */
+html[dir="rtl"] body {
+  text-align: start;
+}
+html[dir="rtl"] .header-content-simple {
+  direction: rtl;
+}
+html[dir="rtl"] .journey-bar,
+html[dir="rtl"] .journey-bar-list {
+  direction: rtl;
+}
+html[dir="rtl"] .logo-lockup {
+  flex-direction: row;
+}
+html[dir="rtl"] .header-actions {
+  flex-direction: row-reverse;
+}
+html[dir="rtl"] .pack-view .pack-layout {
+  direction: rtl;
+}
+html[dir="rtl"] .settings-jump {
+  direction: rtl;
+}
+html[dir="rtl"] .back-link {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  gap: 0.25rem;
+}
+/* Swap slide direction in RTL */
+html[dir="rtl"] main[data-nav-dir="forward"] .view-enter {
+  animation-name: viewEnterBack;
+}
+html[dir="rtl"] main[data-nav-dir="back"] .view-enter {
+  animation-name: viewEnterForward;
+}
+html[dir="rtl"] .buddy-fab,
+html[dir="rtl"] .buddy-shell.buddy-float {
+  /* keep FAB in physical bottom-end; spotStyle may override */
+}
+.helper-character-lottie {
+  vertical-align: middle;
+}
+.helper-character-lottie svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+.app.deep .helper-character-lottie path,
+.app.deep .helper-character-lottie circle,
+.app.deep .helper-character-lottie ellipse {
+  stroke: #fafaf9;
+}

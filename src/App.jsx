@@ -88,6 +88,8 @@ import {
   t as i18nT,
   pathLabel,
   pathPlain,
+  localeDir,
+  isRtl,
 } from './lib/i18n'
 import {
   isSessionOpen,
@@ -875,6 +877,7 @@ function App() {
 
   useEffect(() => {
     document.documentElement.lang = locale
+    document.documentElement.dir = localeDir(locale)
   }, [locale])
 
   // Directional page choreography (path order)
@@ -1776,7 +1779,7 @@ function App() {
                   setAccountOpen(false)
                 }}
               >
-                Tools
+                {i18nT(locale, 'ui.tools')}
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">
@@ -1789,7 +1792,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Timer</strong>
+                    <strong>{i18nT(locale, 'ui.timer')}</strong>
                     <span>Focus for the current step</span>
                   </button>
                   <button
@@ -1801,8 +1804,8 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Calendar</strong>
-                    <span>Deadlines</span>
+                    <strong>{i18nT(locale, 'ui.calendar')}</strong>
+                    <span>{i18nT(locale, 'ui.deadlines')}</span>
                   </button>
                   <button
                     type="button"
@@ -1821,9 +1824,11 @@ function App() {
                     }}
                   >
                     <strong>
-                      {bodyDoubling ? 'Turn Helper off' : 'Turn Helper on'}
+                      {bodyDoubling
+                        ? i18nT(locale, 'ui.helperOff')
+                        : i18nT(locale, 'ui.helperOn')}
                     </strong>
-                    <span>Coach · Critique · Break</span>
+                    <span>{i18nT(locale, 'ui.helperHint')}</span>
                   </button>
                 </div>
               )}
@@ -1878,7 +1883,7 @@ function App() {
                       setAccountOpen(false)
                     }}
                   >
-                    Settings
+                    {i18nT(locale, 'ui.settings')}
                   </button>
                   <button
                     type="button"
@@ -1978,7 +1983,7 @@ function App() {
           <div className="flow-view surface-desk view-enter" data-nav-dir={navDir}>
             <div className="flow-top flow-top-compact">
               <div>
-                <h1 className="page-title work-page-title">Work</h1>
+                <h1 className="page-title work-page-title">{i18nT(locale, 'path.work')}</h1>
                 <p className="work-context-line">
                   <strong>{activeProject?.name || 'Project'}</strong>
                   {projectDeadline
@@ -2001,7 +2006,7 @@ function App() {
             >
               <div className="step-focus-head">
                 <div className="brand-section-label" style={{ margin: 0 }}>
-                  Current step
+                  {i18nT(locale, 'ui.currentStep')}
                 </div>
               </div>
               {!nextTask ? (
@@ -2067,7 +2072,7 @@ function App() {
                       className="btn btn-primary"
                       onClick={completeCurrentStep}
                     >
-                      Complete step
+                      {i18nT(locale, 'ui.completeStep')}
                     </button>
                     <details className="step-more-details">
                       <summary>More</summary>
@@ -2811,7 +2816,7 @@ function App() {
                 style={{ marginLeft: '0.35rem' }}
                 onClick={() => setActiveView('brand')}
               >
-                Go to System
+                {i18nT(locale, 'ui.goToSystem')}
               </button>
             </p>
           </div>
@@ -3614,10 +3619,10 @@ function App() {
           <div className="finish-view surface-document pack-view view-enter" data-nav-dir={navDir}>
             <div className="flow-top">
               <div>
-                <p className="pack-eyebrow">Brand leave-behind</p>
-                <h1 className="page-title page-title-display">Pack</h1>
+                <p className="pack-eyebrow">{i18nT(locale, 'ui.packEyebrow')}</p>
+                <h1 className="page-title page-title-display">{i18nT(locale, 'ui.packTitle')}</h1>
                 <p className="page-sub">
-                  {activeProject?.name || 'Your project'} · print for client · or download preview
+                  {activeProject?.name || 'Your project'} · {i18nT(locale, 'ui.packSub')}
                 </p>
               </div>
             </div>
@@ -3697,7 +3702,7 @@ function App() {
                     )
                   })()}
                   <div className="finish-actions pack-primary-stack">
-                    <p className="pack-client-kicker">Client handoff</p>
+                    <p className="pack-client-kicker">{i18nT(locale, 'ui.clientHandoff')}</p>
                     <button
                       type="button"
                       className="btn btn-primary pack-print-btn"
@@ -3713,7 +3718,7 @@ function App() {
                         runExport('print')
                       }}
                     >
-                      Print / Save as PDF
+                      {i18nT(locale, 'ui.printSavePdf')}
                     </button>
                     <button
                       type="button"
@@ -3730,13 +3735,10 @@ function App() {
                         runExport('pdf')
                       }}
                     >
-                      Download vector PDF
+                      {i18nT(locale, 'ui.downloadVectorPdf')}
                     </button>
                     <p className="pack-export-hint">
-                      <strong>Print</strong> uses paper CSS (often best on
-                      screen). <strong>Download vector PDF</strong> is real
-                      text + color fills (selectable, sharp zoom). Preview-match
-                      raster is under More formats.
+                      {i18nT(locale, 'ui.packHint')}
                     </p>
                     {lastExportNote ? (
                       <p className="pack-export-confirm" role="status">
@@ -4588,7 +4590,7 @@ function App() {
                 className="btn btn-primary"
                 onClick={() => runExport('pdf')}
               >
-                Download vector PDF
+                {i18nT(locale, 'ui.downloadVectorPdf')}
               </button>
               <button
                 type="button"

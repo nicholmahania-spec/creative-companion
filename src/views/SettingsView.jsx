@@ -40,12 +40,12 @@ export default function SettingsView(props) {
 
           <nav className="settings-jump" aria-label="Settings sections">
             {[
-              ['appearance', 'Appearance'],
-              ['presence', 'Presence'],
-              ['work-prefs', 'Work'],
-              ['account', 'Account'],
-              ['data', 'Data'],
-              ['about', 'About'],
+              ['appearance', i18nT(locale, 'ui.appearance')],
+              ['presence', i18nT(locale, 'ui.presence')],
+              ['work-prefs', i18nT(locale, 'ui.workPrefs')],
+              ['account', i18nT(locale, 'ui.account')],
+              ['data', i18nT(locale, 'ui.data')],
+              ['about', i18nT(locale, 'ui.about')],
             ].map(([id, label]) => (
               <a key={id} className="settings-jump-link" href={`#settings-${id}`}>
                 {label}
