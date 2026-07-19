@@ -5553,41 +5553,41 @@ html[data-reduce-motion='true'] *::after {
     inset 0 3px 0 rgba(255, 255, 255, 0.55);
 }
 
-/* Cute character — illustrated head + soft cream belly chat */
+/* One unified cute character: face nestled into plush body */
 .buddy-figure {
   position: relative;
   width: 100%;
-  max-width: 16rem;
+  max-width: 15.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  filter: drop-shadow(0 14px 22px rgba(26, 26, 26, 0.14));
+  filter: drop-shadow(0 16px 24px rgba(26, 26, 26, 0.14));
 }
 
 .buddy-figure.is-cute {
-  padding-bottom: 0.2rem;
+  padding-bottom: 0.35rem;
 }
 
+/* Face sits ON the body (snowman stack), no white sticker ring */
 .bf-head-wrap {
   position: relative;
   z-index: 6;
-  width: 7.75rem;
-  height: 7.75rem;
-  margin-bottom: -1.65rem;
+  width: 8.25rem;
+  height: 8.25rem;
+  margin-bottom: -2.85rem;
   border-radius: 50%;
   overflow: hidden;
-  background: #f5f1e9;
-  box-shadow:
-    0 8px 20px rgba(26, 26, 26, 0.12),
-    0 0 0 3px rgba(255, 255, 255, 0.85);
+  background: transparent;
+  box-shadow: 0 10px 18px rgba(26, 26, 26, 0.1);
 }
 
 .bf-head-img {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 118%;
+  height: 118%;
+  margin: -6% 0 0 -9%;
   object-fit: cover;
-  object-position: center 18%;
+  object-position: center 42%;
   pointer-events: none;
   user-select: none;
 }
@@ -5599,16 +5599,17 @@ html[data-reduce-motion='true'] *::after {
   opacity: 0.9;
   animation: bfHeartFloat 1.2s ease-out infinite;
   pointer-events: none;
+  z-index: 7;
 }
 
 .bf-heart-1 {
-  top: 0.5rem;
-  left: 0.35rem;
+  top: 0.65rem;
+  left: 0.2rem;
 }
 
 .bf-heart-2 {
-  top: 1.1rem;
-  right: 0.3rem;
+  top: 1.15rem;
+  right: 0.15rem;
   animation-delay: 0.25s;
   font-size: 0.7rem;
 }
@@ -5627,8 +5628,8 @@ html[data-reduce-motion='true'] *::after {
 
 .bf-bang {
   position: absolute;
-  top: 0.15rem;
-  right: 0.35rem;
+  top: 0.35rem;
+  right: 0.2rem;
   z-index: 8;
   font-size: 1.15rem;
   font-weight: 900;
@@ -5637,59 +5638,81 @@ html[data-reduce-motion='true'] *::after {
   animation: buddyWiggle 0.7s ease-in-out infinite;
 }
 
-/* Soft stick arms like the design-bot ref */
+/* Arms from shoulder line (where head meets body) */
 .bf-arm {
   position: absolute;
-  top: 8.1rem;
-  z-index: 4;
-  width: 0.55rem;
-  height: 2.6rem;
+  top: 7.15rem;
+  z-index: 5;
+  width: 0.5rem;
+  height: 2.35rem;
   border-radius: 999px;
-  background: linear-gradient(180deg, #2c2c2c, #121212);
+  background: linear-gradient(180deg, #2a2a2a, #141414);
 }
 
 .bf-arm-l {
-  left: 0.35rem;
-  transform: rotate(28deg);
+  left: 0.55rem;
+  transform: rotate(32deg);
+  transform-origin: top center;
 }
 
 .bf-arm-r {
-  right: 0.35rem;
-  transform: rotate(-28deg);
+  right: 0.55rem;
+  transform: rotate(-32deg);
+  transform-origin: top center;
 }
 
 .bf-hand {
   position: absolute;
-  bottom: -0.4rem;
+  bottom: -0.38rem;
   left: 50%;
-  width: 1.05rem;
-  height: 1.05rem;
-  margin-left: -0.525rem;
+  width: 1rem;
+  height: 1rem;
+  margin-left: -0.5rem;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #fffcf6, #ebe4d6);
-  box-shadow: 0 2px 5px rgba(26, 26, 26, 0.12);
+  box-shadow: 0 2px 5px rgba(26, 26, 26, 0.1);
 }
 
-/* Soft plush belly = chat */
+/* Plush body — same cream family as face so it reads as one creature */
 .bf-belly {
   position: relative;
   z-index: 2;
-  width: 15.25rem;
-  height: 16.5rem;
+  width: 14.75rem;
+  height: 15.75rem;
   max-width: 100%;
   display: flex;
   flex-direction: column;
   padding: 0;
-  border-radius: 50% 50% 46% 46% / 48% 48% 48% 48%;
+  /* Soft oval body, slightly wider at middle */
+  border-radius: 50% 50% 46% 46% / 46% 46% 50% 50%;
   background:
-    radial-gradient(ellipse 80% 55% at 50% 18%, #fffef9 0%, transparent 55%),
-    linear-gradient(175deg, #fbf8f1 0%, #f3efe6 45%, #e8e1d2 100%);
-  border: 3px solid rgba(200, 190, 170, 0.55);
+    radial-gradient(ellipse 70% 40% at 50% 22%, #fffefb 0%, transparent 60%),
+    linear-gradient(175deg, #fbf8f1 0%, #f3efe6 50%, #e8e1d2 100%);
+  border: 2.5px solid rgba(210, 200, 180, 0.65);
   box-shadow:
-    0 16px 36px rgba(26, 26, 26, 0.14),
-    inset 0 4px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -16px 30px rgba(180, 165, 140, 0.12);
+    0 14px 32px rgba(26, 26, 26, 0.12),
+    inset 0 3px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -14px 28px rgba(180, 165, 140, 0.1);
   overflow: hidden;
+}
+
+/* Soft collar under chin so head + body blend */
+.bf-belly::after {
+  content: '';
+  position: absolute;
+  top: -0.15rem;
+  left: 50%;
+  z-index: 3;
+  width: 4.2rem;
+  height: 1.1rem;
+  margin-left: -2.1rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(243, 239, 230, 0.95) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
 }
 
 .bf-belly::before {
@@ -5698,7 +5721,7 @@ html[data-reduce-motion='true'] *::after {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow: inset 0 0 36px 10px rgba(180, 165, 140, 0.1);
+  box-shadow: inset 0 0 32px 8px rgba(180, 165, 140, 0.09);
   z-index: 1;
 }
 
@@ -5709,8 +5732,9 @@ html[data-reduce-motion='true'] *::after {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 2.15rem 1.5rem 1.25rem;
-  margin: 0.4rem 0.65rem 0.55rem;
+  /* Extra top pad so chat clears the overlapping head */
+  padding: 2.85rem 1.45rem 1.2rem;
+  margin: 0.35rem 0.7rem 0.5rem;
   overflow: hidden;
 }
 
@@ -5858,17 +5882,18 @@ html[data-reduce-motion='true'] *::after {
 .bf-legs {
   display: flex;
   justify-content: center;
-  gap: 1.1rem;
-  margin-top: -0.45rem;
+  gap: 1.25rem;
+  margin-top: -0.55rem;
   z-index: 1;
 }
 
 .bf-leg {
-  width: 0.95rem;
-  height: 0.95rem;
-  border-radius: 50%;
-  background: linear-gradient(160deg, #2c2c2c, #111);
-  box-shadow: 0 3px 6px rgba(26, 26, 26, 0.18);
+  width: 1.05rem;
+  height: 0.85rem;
+  border-radius: 50% 50% 45% 45%;
+  background: radial-gradient(circle at 40% 30%, #fffcf6, #e0d8c8);
+  border: 1.5px solid rgba(200, 190, 170, 0.55);
+  box-shadow: 0 3px 6px rgba(26, 26, 26, 0.1);
 }
 
 .buddy-figure.is-cute.mood-idle:not(.no-motion) .bf-head-wrap,
