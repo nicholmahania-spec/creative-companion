@@ -12,6 +12,7 @@ import {
   resetPasswordForEmail,
 } from '../lib/cloudSync'
 import { versionLabel } from '../lib/version'
+import LogoLockup from './LogoLockup'
 
 /**
  * Login / access gate.
@@ -163,13 +164,10 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
 
         <div className="login-card">
           <div className="login-brand">
-            <span className="logo-mark" aria-hidden="true" />
-            <div>
-              <h1 className="login-title">Creative Companion</h1>
-              <p className="login-tag">
-                Helper desk for ADHD creative work
-              </p>
-            </div>
+            <LogoLockup />
+            <p className="login-tag">
+              Helper desk for ADHD creative work
+            </p>
           </div>
 
           {useCloud && (

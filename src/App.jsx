@@ -80,6 +80,8 @@ import {
   pinImageUrl,
   readImageFilesAsPins,
 } from './lib/moodPins'
+import LogoLockup from './components/LogoLockup'
+import EmptyIllustration from './components/EmptyIllustration'
 import {
   isSessionOpen,
   closeSession,
@@ -1684,10 +1686,7 @@ function App() {
       <header className="header header-redesign">
         <div className="header-content header-content-simple">
           <div className="brand-block">
-            <div className="logo">
-              <span className="logo-mark" aria-hidden="true" />
-              Creative Companion
-            </div>
+            <LogoLockup className="logo" />
           </div>
           <div className="header-actions">
             {activeProjects.length > 1 && (
@@ -1945,7 +1944,7 @@ function App() {
       <main className="main" id="main-content" tabIndex={-1}>
         {/* ===== WORK — one step owns the fold ===== */}
         {activeView === 'flow' && (
-          <div className="flow-view surface-desk">
+          <div className="flow-view surface-desk view-enter">
             <div className="flow-top flow-top-compact">
               <div>
                 <h1 className="page-title work-page-title">Work</h1>
@@ -1976,11 +1975,7 @@ function App() {
               </div>
               {!nextTask ? (
                 <div className="empty-state empty-state-craft">
-                  <div className="empty-craft empty-craft-desk" aria-hidden="true">
-                    <span className="empty-craft-line" />
-                    <span className="empty-craft-line is-short" />
-                    <span className="empty-craft-dot" />
-                  </div>
+                  <EmptyIllustration variant="desk" />
                   <p className="empty-state-title">
                     {doneTasks.length > 0
                       ? 'Queue clear'
@@ -2382,7 +2377,7 @@ function App() {
 
         {/* ===== BOARD — path step 3 ===== */}
         {activeView === 'studio' && (
-          <div className="studio-view surface-wall">
+          <div className="studio-view surface-wall view-enter">
             <div className="flow-top">
               <div>
                 <h1 className="page-title">Board</h1>
@@ -2615,9 +2610,7 @@ function App() {
               >
                 {deskMood.length === 0 ? (
                   <div className="empty-state empty-state-craft">
-                    <div className="empty-craft empty-craft-board" aria-hidden="true">
-                      <span /><span /><span />
-                    </div>
+                    <EmptyIllustration variant="board" />
                     <p className="empty-state-title">No pins yet</p>
                     <p className="empty-state-body">
                       Upload images (or drag them here), then star{' '}
@@ -2965,7 +2958,7 @@ function App() {
 
         {/* ===== BRAND IDENTITY TEMPLATE ===== */}
         {activeView === 'brand' && (
-          <div className="brand-layout surface-document system-view">
+          <div className="brand-layout surface-document system-view view-enter">
             <div className="brand-template-top">
               <div>
                 <h1 className="page-title">System</h1>
@@ -3587,7 +3580,7 @@ function App() {
 
         {/* ===== PACK — end of path ===== */}
         {activeView === 'finish' && (
-          <div className="finish-view surface-document pack-view">
+          <div className="finish-view surface-document pack-view view-enter">
             <div className="flow-top">
               <div>
                 <p className="pack-eyebrow">Brand leave-behind</p>
@@ -3661,10 +3654,13 @@ function App() {
                             : ''}
                         </p>
                         {ready.thin && (
-                          <p className="pack-thin-warning" role="status">
-                            Thin pack — add a tagline, palette, or ★ Pack pins
-                            on Board before client handoff.
-                          </p>
+                          <div className="pack-thin-block">
+                            <EmptyIllustration variant="pack" className="pack-thin-illu" />
+                            <p className="pack-thin-warning" role="status">
+                              Thin pack — add a tagline, palette, or ★ Pack pins
+                              on Board before client handoff.
+                            </p>
+                          </div>
                         )}
                       </>
                     )
@@ -3915,7 +3911,7 @@ function App() {
 
 {/* ===== PROJECTS ===== */}
         {activeView === 'project' && (
-          <div className="project-view surface-desk">
+          <div className="project-view surface-desk view-enter">
             <div className="flow-top">
               <div>
                 <h1 className="page-title">Project</h1>

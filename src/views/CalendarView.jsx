@@ -1,3 +1,4 @@
+import EmptyIllustration from '../components/EmptyIllustration'
 /** Lazy-loaded CalendarView */
 export default function CalendarView(props) {
   const {
@@ -217,10 +218,13 @@ export default function CalendarView(props) {
           <section className="panel brand-section">
             <div className="brand-section-label">Upcoming</div>
             {upcomingDeadlines.length === 0 ? (
-              <p className="empty-state-body" style={{ margin: 0 }}>
-                No deadlines yet. Set a project deadline above, or add a due
-                date when capturing a step (Energy &amp; voice → Due).
-              </p>
+              <div className="empty-state empty-state-craft" style={{ paddingTop: '0.5rem' }}>
+                <EmptyIllustration variant="calendar" />
+                <p className="empty-state-body" style={{ margin: 0 }}>
+                  No deadlines yet. Set a project deadline above, or add a due
+                  date when capturing a step (Energy &amp; voice → Due).
+                </p>
+              </div>
             ) : (
               <ul className="deadline-list">
                 {upcomingDeadlines.map((row) => (
