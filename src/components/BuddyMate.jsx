@@ -266,6 +266,24 @@ export default function BuddyMate({
     }
   }, [expanded, minimize])
 
+  // Esc (from app or local) → minimize expanded Helper
+  useEffect(() => {
+    if (!expanded) return undefined
+    const onMin = () => minimize()
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        minimize()
+      }
+    }
+    window.addEventListener('cc-helper-minimize', onMin)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('cc-helper-minimize', onMin)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [expanded, minimize])
+
   // Focusing a form field → minimize so typing isn't blocked
   useEffect(() => {
     const onFocusIn = (e) => {

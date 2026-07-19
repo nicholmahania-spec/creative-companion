@@ -9188,3 +9188,77 @@ html[data-reduce-motion='true'] *::after {
 .buddy-break-care {
   margin-bottom: 0.35rem;
 }
+
+
+/* v0.2.59 empty craft + pack export hint + lightbox meta */
+.empty-state-craft {
+  text-align: center;
+  padding: 1.25rem 0.75rem 0.5rem;
+}
+.empty-craft {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 auto 0.85rem;
+  opacity: 0.55;
+}
+.empty-craft-desk {
+  flex-direction: column;
+  align-items: flex-start;
+  width: 4.5rem;
+  gap: 0.35rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px dashed var(--border-strong);
+  background: color-mix(in srgb, var(--bg-muted) 80%, transparent);
+}
+.empty-craft-line {
+  display: block;
+  height: 4px;
+  width: 100%;
+  border-radius: 2px;
+  background: var(--text-muted);
+  opacity: 0.45;
+}
+.empty-craft-line.is-short {
+  width: 55%;
+}
+.empty-craft-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-growth);
+  margin-top: 0.15rem;
+}
+.empty-craft-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1.4rem);
+  gap: 0.3rem;
+}
+.empty-craft-board span {
+  display: block;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+}
+.empty-craft-board span:nth-child(2) {
+  background: color-mix(in srgb, var(--accent-growth) 25%, var(--bg-muted));
+}
+.pack-export-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.pack-print-btn {
+  width: 100%;
+}
+.board-lightbox-meta {
+  margin: 0.45rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}

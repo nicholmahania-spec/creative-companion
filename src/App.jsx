@@ -497,7 +497,7 @@ function App() {
     </div>
   )
 
-  // Keyboard: ⌘K spark · Esc dismiss overlays
+  // Keyboard: ⌘K spark · Esc dismiss overlays (priority: topmost first)
   useEffect(() => {
     const handleKey = (e) => {
       if (e.metaKey && e.key === 'k') {
@@ -506,16 +506,41 @@ function App() {
         setMoreOpen(false)
         return
       }
-      if (e.key === 'Escape') {
-        setMoreOpen(false)
-        setShowCreativeReset(false)
-        setExportPanel(null)
-        setShowBreakdown(false)
+      if (e.key !== 'Escape') return
+      // Topmost dialogs first
+      if (boardLightbox) {
+        e.preventDefault()
+        setBoardLightbox(null)
+        return
       }
+      if (exportPanel) {
+        e.preventDefault()
+        setExportPanel(null)
+        return
+      }
+      if (showBreakdown) {
+        e.preventDefault()
+        setShowBreakdown(false)
+        return
+      }
+      if (showOnboarding) {
+        // Onboarding is required first-run — do not Esc-dismiss
+        return
+      }
+      setMoreOpen(false)
+      setAccountOpen(false)
+      setShowCreativeReset(false)
+      // Ask Helper to tuck if expanded
+      window.dispatchEvent(new CustomEvent('cc-helper-minimize'))
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [])
+  }, [
+    boardLightbox,
+    exportPanel,
+    showBreakdown,
+    showOnboarding,
+  ])
 
   // Click outside closes More menu
   useEffect(() => {
@@ -724,24 +749,36 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked, bodyDoubling, forcedBreak])
 
-  // Focus trap + Escape for export pack modal
+  // Focus trap for modal overlays (export, breakdown, lightbox)
   useEffect(() => {
-    if (!exportPanel) return undefined
-    const root = document.querySelector('.export-overlay')
-    const closeBtn = root?.querySelector('button')
-    closeBtn?.focus?.()
+    const overlay =
+      document.querySelector('.board-lightbox-overlay') ||
+      (exportPanel && document.querySelector('.export-overlay.portfolio-export, .export-overlay')) ||
+      (showBreakdown && document.querySelector('.export-overlay .breakdown-panel')?.closest('.export-overlay')) ||
+      null
+    // Prefer most specific overlay currently open
+    let root = null
+    if (boardLightbox) root = document.querySelector('.board-lightbox-overlay')
+    else if (exportPanel) root = document.querySelector('.export-overlay.no-print-hide, .export-overlay')
+    else if (showBreakdown) root = document.querySelector('.export-overlay')
+    if (!root) return undefined
+
+    const prevFocus = document.activeElement
+    const focusableSel =
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    const getFocusable = () =>
+      [...root.querySelectorAll(focusableSel)].filter(
+        (el) => !el.hasAttribute('disabled') && el.offsetParent !== null
+      )
+    const closeBtn = root.querySelector(
+      '.board-lightbox-close, .export-panel-header button, button'
+    )
+    window.requestAnimationFrame(() => closeBtn?.focus?.())
+
     const onKey = (e) => {
-      if (e.key === 'Escape') {
-        setExportPanel(null)
-        return
-      }
-      if (e.key !== 'Tab' || !root) return
-      const focusable = [
-        ...root.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        ),
-      ].filter((el) => !el.hasAttribute('disabled'))
-      if (focusable.length < 2) return
+      if (e.key !== 'Tab') return
+      const focusable = getFocusable()
+      if (focusable.length < 1) return
       const first = focusable[0]
       const last = focusable[focusable.length - 1]
       if (e.shiftKey && document.activeElement === first) {
@@ -753,8 +790,39 @@ function App() {
       }
     }
     document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [exportPanel])
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      if (prevFocus && typeof prevFocus.focus === 'function') {
+        try {
+          prevFocus.focus()
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  }, [exportPanel, showBreakdown, boardLightbox])
+
+  // Lightbox: ← → between board pins
+  useEffect(() => {
+    if (!boardLightbox) return undefined
+    const pins = deskMood || []
+    if (pins.length < 2) return undefined
+    const onKey = (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      e.preventDefault()
+      const idx = pins.findIndex(
+        (p) => String(p.id) === String(boardLightbox.id)
+      )
+      if (idx < 0) return
+      const next =
+        e.key === 'ArrowRight'
+          ? pins[(idx + 1) % pins.length]
+          : pins[(idx - 1 + pins.length) % pins.length]
+      setBoardLightbox(next)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [boardLightbox, deskMood])
 
   // Warm PDF engine on Pack (no XP for merely opening the page)
   useEffect(() => {
@@ -1176,12 +1244,23 @@ function App() {
     if (kind === 'print') {
       if (!exportPanel) openExportPanel()
       window.setTimeout(() => {
-        const r = printElementById('direction-sheet', { hideWatermark: hidePackWatermark })
+        const el =
+          document.getElementById('direction-sheet') ||
+          document.getElementById('system-artboard') ||
+          document.getElementById('pack-preview-artboard')
+        const r = el
+          ? printElementById(el.id, { hideWatermark: hidePackWatermark })
+          : { ok: false, error: 'Nothing to print' }
         if (r.ok) {
           awardAndBroadcast('export_pack', { label: 'Print / PDF' })
+          const when = new Date().toLocaleTimeString([], {
+            hour: 'numeric',
+            minute: '2-digit',
+          })
+          setLastExportNote(`Print dialog · ${when} — Save as PDF if you want a file`)
           flashToast('Print dialog open — choose Save as PDF if you want a file')
         } else flashToast(r.error || 'Print failed')
-      }, exportPanel ? 50 : 120)
+      }, exportPanel ? 50 : 180)
       return
     }
     flashToast('Unknown export')
@@ -1194,12 +1273,19 @@ function App() {
       if (!pins.length) {
         flashToast(
           skipped.length
-            ? `No images added · ${skipped[0]}`
-            : 'No images found — use PNG, JPG, WEBP, or GIF'
+            ? `No images added · ${skipped[0]}${
+                skipped.length > 1 ? ` (+${skipped.length - 1} more)` : ''
+              }`
+            : 'No images found — use PNG, JPG, WEBP, or GIF under 3.5MB'
         )
         return
       }
       pins.forEach((pin) => addMoodPin(pin))
+      if (skipped.length) {
+        flashToast(
+          `Added ${pins.length} · skipped ${skipped.length} (size/type)`
+        )
+      }
       notifyAction(
         pins.length > 1
           ? `${pins.length} images pinned${skipped.length ? ` · ${skipped.length} skipped` : ''}`
@@ -1808,7 +1894,12 @@ function App() {
                 </div>
               </div>
               {!nextTask ? (
-                <div className="empty-state">
+                <div className="empty-state empty-state-craft">
+                  <div className="empty-craft empty-craft-desk" aria-hidden="true">
+                    <span className="empty-craft-line" />
+                    <span className="empty-craft-line is-short" />
+                    <span className="empty-craft-dot" />
+                  </div>
                   <p className="empty-state-title">
                     {doneTasks.length > 0
                       ? 'Queue clear'
@@ -2440,7 +2531,10 @@ function App() {
                 }}
               >
                 {deskMood.length === 0 ? (
-                  <div className="empty-state">
+                  <div className="empty-state empty-state-craft">
+                    <div className="empty-craft empty-craft-board" aria-hidden="true">
+                      <span /><span /><span />
+                    </div>
                     <p className="empty-state-title">No pins yet</p>
                     <p className="empty-state-body">
                       Upload images (or drag them here), then star{' '}
@@ -2625,7 +2719,51 @@ function App() {
               {boardLightbox.note ? (
                 <p className="board-lightbox-note">{boardLightbox.note}</p>
               ) : null}
+              <p className="board-lightbox-meta">
+                {(() => {
+                  const i = deskMood.findIndex(
+                    (p) => String(p.id) === String(boardLightbox.id)
+                  )
+                  return i >= 0
+                    ? `${i + 1} / ${deskMood.length} · ← → to move · Esc to close`
+                    : 'Esc to close'
+                })()}
+              </p>
               <div className="board-lightbox-actions">
+                {deskMood.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => {
+                        const pins = deskMood
+                        const idx = pins.findIndex(
+                          (p) => String(p.id) === String(boardLightbox.id)
+                        )
+                        if (idx < 0) return
+                        setBoardLightbox(
+                          pins[(idx - 1 + pins.length) % pins.length]
+                        )
+                      }}
+                    >
+                      ← Prev
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => {
+                        const pins = deskMood
+                        const idx = pins.findIndex(
+                          (p) => String(p.id) === String(boardLightbox.id)
+                        )
+                        if (idx < 0) return
+                        setBoardLightbox(pins[(idx + 1) % pins.length])
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   className={`btn btn-secondary${boardLightbox.inPack ? ' is-on' : ''}`}
@@ -3475,8 +3613,30 @@ function App() {
                         runExport('pdf')
                       }}
                     >
-                      Download pack
+                      Download PDF
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary pack-print-btn"
+                      onClick={() => {
+                        const packSnap = buildCurrentBrandPack()
+                        const ready = packReadiness(packSnap)
+                        if (ready.thin) {
+                          const go = window.confirm(
+                            'This pack looks thin (missing tagline, palette, or pins). Print anyway?'
+                          )
+                          if (!go) return
+                        }
+                        runExport('print')
+                      }}
+                    >
+                      Print / Save as PDF
+                    </button>
+                    <p className="pack-export-hint">
+                      <strong>Download</strong> matches on-screen preview (raster).{' '}
+                      <strong>Print</strong> uses paper CSS — often sharper type;
+                      choose “Save as PDF” in the print dialog.
+                    </p>
                     {lastExportNote ? (
                       <p className="pack-export-confirm" role="status">
                         {lastExportNote}
@@ -3538,16 +3698,6 @@ function App() {
                           onClick={() => runExport('json')}
                         >
                           Pack JSON
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => {
-                            openExportPanel()
-                            window.setTimeout(() => runExport('print'), 100)
-                          }}
-                        >
-                          Print
                         </button>
                         <button
                           type="button"

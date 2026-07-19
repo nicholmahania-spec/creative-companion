@@ -521,11 +521,15 @@ export default function SettingsView(props) {
                 </span>
               </div>
             </div>
-            <p className="panel-hint" style={{ margin: 0 }}>
+            <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
               Creative Companion is a desk for ADHD creative work: one step at
               a time, optional Helper, optional forced breaks, and brand pack
               export
               {CLOUD ? ' — with optional cloud sync when configured.' : '.'}
+            </p>
+            <p className="panel-hint" style={{ margin: 0 }}>
+              <strong>What&apos;s new:</strong> Print vs Download on Pack,
+              Esc closes overlays, board pin lightbox, Helper Break care.
             </p>
           </section>
         </div>
