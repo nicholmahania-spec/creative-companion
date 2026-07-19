@@ -142,10 +142,13 @@ function App() {
   const [syncError, setSyncError] = useState('')
   const [pwCurrent, setPwCurrent] = useState('')
   const [pwNext, setPwNext] = useState('')
+  const [accountOpen, setAccountOpen] = useState(false)
   const moreWrapRef = useRef(null)
+  const accountWrapRef = useRef(null)
   const importFileRef = useRef(null)
   const cloudSyncReady = useRef(false)
   const skipNextCloudPush = useRef(false)
+  const lastSyncErrorToast = useRef('')
 
   const showHowItWorks = prefs.showHowItWorks !== false
   const queueCollapsed = prefs.queueCollapsed !== false
@@ -391,16 +394,30 @@ function App() {
       : 'false'
   }, [reduceMotion])
 
-  // Close More menu on outside click / Escape
+  // Close More / Account menus on outside click / Escape
   useEffect(() => {
-    if (!moreOpen) return
+    if (!moreOpen && !accountOpen) return
     const onPointer = (e) => {
-      if (moreWrapRef.current && !moreWrapRef.current.contains(e.target)) {
+      if (
+        moreOpen &&
+        moreWrapRef.current &&
+        !moreWrapRef.current.contains(e.target)
+      ) {
         setMoreOpen(false)
+      }
+      if (
+        accountOpen &&
+        accountWrapRef.current &&
+        !accountWrapRef.current.contains(e.target)
+      ) {
+        setAccountOpen(false)
       }
     }
     const onKey = (e) => {
-      if (e.key === 'Escape') setMoreOpen(false)
+      if (e.key === 'Escape') {
+        setMoreOpen(false)
+        setAccountOpen(false)
+      }
     }
     document.addEventListener('pointerdown', onPointer)
     document.addEventListener('keydown', onKey)
@@ -408,7 +425,20 @@ function App() {
       document.removeEventListener('pointerdown', onPointer)
       document.removeEventListener('keydown', onKey)
     }
-  }, [moreOpen])
+  }, [moreOpen, accountOpen])
+
+  // Surface sync errors as action toast (not only footer)
+  useEffect(() => {
+    if (!CLOUD) return
+    if (syncState === 'error' && syncError) {
+      if (lastSyncErrorToast.current !== syncError) {
+        lastSyncErrorToast.current = syncError
+        setActionToast(`Sync failed — ${syncError}`)
+        window.setTimeout(() => setActionToast(''), 4200)
+      }
+    }
+    if (syncState === 'ok') lastSyncErrorToast.current = ''
+  }, [CLOUD, syncState, syncError])
 
   // Supabase session bootstrap
   useEffect(() => {
@@ -1025,10 +1055,42 @@ function App() {
             ))}
           </nav>
           <div className="header-actions">
+            {isFocusRunning && activeView !== 'insights' && (
+              <button
+                type="button"
+                className="timer-running-chip"
+                onClick={() => setActiveView('insights')}
+                title="Focus timer running"
+              >
+                Timer {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
+              </button>
+            )}
             {bodyDoubling && (
               <span className="mate-on-badge" aria-live="polite">
                 {bodyDoubleSilent ? 'Presence' : 'With you'}
               </span>
+            )}
+            {CLOUD && syncState === 'error' && (
+              <button
+                type="button"
+                className="sync-error-chip"
+                onClick={async () => {
+                  setSyncState('syncing')
+                  const result = await pushWorkspace(exportAllData())
+                  if (result.ok) {
+                    setSyncState('ok')
+                    setSyncError('')
+                    flashToast('Synced')
+                  } else {
+                    setSyncState('error')
+                    setSyncError(result.error || 'Sync failed')
+                    flashToast(result.error || 'Sync failed')
+                  }
+                }}
+                title={syncError || 'Sync failed — retry'}
+              >
+                Sync failed · Retry
+              </button>
             )}
             <button
               type="button"
@@ -1043,9 +1105,12 @@ function App() {
                 className="btn btn-secondary header-more"
                 aria-expanded={moreOpen}
                 aria-haspopup="menu"
-                onClick={() => setMoreOpen(!moreOpen)}
+                onClick={() => {
+                  setMoreOpen(!moreOpen)
+                  setAccountOpen(false)
+                }}
               >
-                More
+                Tools
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu">
@@ -1101,7 +1166,7 @@ function App() {
                     <span>2 or 25 min container</span>
                   </button>
 
-                  <p className="more-menu-group">Brand</p>
+                  <p className="more-menu-group">Brand &amp; time</p>
                   <button
                     type="button"
                     role="menuitem"
@@ -1138,8 +1203,6 @@ function App() {
                     <strong>Deadlines</strong>
                     <span>Project + step due dates</span>
                   </button>
-
-                  <p className="more-menu-group">Setup</p>
                   <button
                     type="button"
                     role="menuitem"
@@ -1153,47 +1216,103 @@ function App() {
                     <strong>New project</strong>
                     <span>Separate client or personal lane</span>
                   </button>
+                </div>
+              )}
+            </div>
+
+            <div className="account-wrap" ref={accountWrapRef}>
+              <button
+                type="button"
+                className={`account-chip${accountOpen ? ' is-open' : ''}${
+                  activeView === 'settings' ? ' is-active' : ''
+                }`}
+                aria-expanded={accountOpen}
+                aria-haspopup="menu"
+                onClick={() => {
+                  setAccountOpen(!accountOpen)
+                  setMoreOpen(false)
+                }}
+              >
+                <span className="account-chip-avatar" aria-hidden="true">
+                  {(accessName || 'U').charAt(0).toUpperCase()}
+                </span>
+                <span className="account-chip-label">
+                  {accessName
+                    ? accessName.includes('@')
+                      ? accessName.split('@')[0]
+                      : accessName
+                    : 'Account'}
+                </span>
+              </button>
+              {accountOpen && (
+                <div className="account-menu" role="menu">
+                  <p className="account-menu-email">
+                    {accessName || (CLOUD ? 'Signed in' : 'This device')}
+                  </p>
+                  {CLOUD && (
+                    <p className="account-menu-sync">
+                      {syncState === 'syncing'
+                        ? 'Syncing…'
+                        : syncState === 'error'
+                          ? 'Sync error'
+                          : 'Cloud up to date'}
+                    </p>
+                  )}
                   <button
                     type="button"
                     role="menuitem"
-                    className="more-menu-item"
+                    className="account-menu-item"
                     onClick={() => {
                       setActiveView('settings')
-                      setMoreOpen(false)
+                      setAccountOpen(false)
                     }}
                   >
-                    <strong>Settings</strong>
-                    <span>Theme, sound, data backup</span>
+                    Settings
                   </button>
                   <button
                     type="button"
                     role="menuitem"
-                    className="more-menu-item"
+                    className="account-menu-item"
                     onClick={() => {
                       toggleTheme()
-                      setMoreOpen(false)
+                      setAccountOpen(false)
                     }}
                   >
-                    <strong>
-                      {theme === 'warm' ? 'Dark mode' : 'Light mode'}
-                    </strong>
-                    <span>Screen comfort only</span>
+                    {theme === 'warm' ? 'Dark mode' : 'Light mode'}
                   </button>
+                  {CLOUD && syncState === 'error' && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="account-menu-item"
+                      onClick={async () => {
+                        setAccountOpen(false)
+                        setSyncState('syncing')
+                        const result = await pushWorkspace(exportAllData())
+                        if (result.ok) {
+                          setSyncState('ok')
+                          setSyncError('')
+                          flashToast('Synced')
+                        } else {
+                          setSyncState('error')
+                          setSyncError(result.error || 'Sync failed')
+                          flashToast(result.error || 'Sync failed')
+                        }
+                      }}
+                    >
+                      Retry sync
+                    </button>
+                  )}
                   <button
                     type="button"
                     role="menuitem"
-                    className="more-menu-item"
+                    className="account-menu-item account-menu-danger"
                     onClick={() => {
-                      setMoreOpen(false)
+                      setAccountOpen(false)
                       handleSignOut()
                     }}
                   >
-                    <strong>{CLOUD ? 'Sign out' : 'Sign out / lock'}</strong>
-                    <span>
-                      {CLOUD
-                        ? 'End cloud session on this device'
-                        : 'Require password next visit'}
-                    </span>
+                    {CLOUD ? 'Sign out' : 'Sign out / lock'}
                   </button>
                 </div>
               )}
@@ -1208,12 +1327,30 @@ function App() {
           <div className="flow-view surface-desk">
             <div className="flow-top">
               <div>
-                <h1 className="page-title">Work</h1>
+                <h1 className="page-title page-title-display">Work</h1>
                 <p className="page-sub">
                   {activeProject?.name || 'Project'} · one step · complete · next
                 </p>
               </div>
               <div className="flow-top-actions">
+                <div className="project-pills project-pills-top" role="tablist" aria-label="Project">
+                  {(projects || []).map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeProjectId === p.id}
+                      onClick={() => selectProject(p.id)}
+                      className={
+                        activeProjectId === p.id
+                          ? 'project-pill is-active'
+                          : 'project-pill'
+                      }
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
                 <div className="flow-progress">
                   <div className="flow-progress-bar" aria-hidden="true">
                     <div
@@ -1306,24 +1443,6 @@ function App() {
                 <div className="brand-section-label" style={{ margin: 0 }}>
                   Current step
                 </div>
-                <div className="project-pills project-pills-inline" role="tablist" aria-label="Project">
-                  {(projects || []).map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={activeProjectId === p.id}
-                      onClick={() => selectProject(p.id)}
-                      className={
-                        activeProjectId === p.id
-                          ? 'project-pill is-active'
-                          : 'project-pill'
-                      }
-                    >
-                      {p.name}
-                    </button>
-                  ))}
-                </div>
               </div>
               {!nextTask ? (
                 <div className="empty-state">
@@ -1401,16 +1520,6 @@ function App() {
                     )}
                     <button
                       type="button"
-                      className="btn btn-ghost"
-                      onClick={() => {
-                        removeTask(nextTask.id)
-                        flashToast('Step removed')
-                      }}
-                    >
-                      Remove
-                    </button>
-                    <button
-                      type="button"
                       className="text-link step-due-toggle"
                       onClick={() => setStepDueOpen((o) => !o)}
                       aria-expanded={stepDueOpen}
@@ -1420,6 +1529,24 @@ function App() {
                           ? 'Hide due date'
                           : `Due ${formatShortDate(nextTask.dueDate)}`
                         : 'Add due date'}
+                    </button>
+                  </div>
+                  <div className="step-focus-secondary">
+                    <button
+                      type="button"
+                      className="text-link step-remove-link"
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            'Remove this step from the desk? This cannot be undone.'
+                          )
+                        ) {
+                          removeTask(nextTask.id)
+                          flashToast('Step removed')
+                        }
+                      }}
+                    >
+                      Remove step
                     </button>
                   </div>
                   {stepDueOpen && (
@@ -1504,8 +1631,8 @@ function App() {
               </div>
             </section>
 
-            {/* Help — max 3 primary tools */}
-            <section className="panel brand-section help-panel">
+            {/* Help — demoted vs current-step hero */}
+            <section className="help-panel help-panel-quiet">
               <div className="brand-section-label">Stuck?</div>
               <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
                 Pick one tool, then come back here.
@@ -1513,7 +1640,7 @@ function App() {
               <div className="help-grid help-grid-3">
                 <button
                   type="button"
-                  className="help-card help-card-featured"
+                  className="help-card"
                   onClick={openBreakdown}
                 >
                   <strong>Break project into micro-steps</strong>
@@ -1760,10 +1887,10 @@ function App() {
 
             <section className="panel brand-section">
               <div className="brand-section-label">Add references</div>
-              <div className="mood-add-grid">
-                <label className="mood-add-card btn-like">
+              <div className="mood-add-layout">
+                <label className="mood-add-hero btn-like">
                   <strong>Upload images</strong>
-                  <span>Screenshots, photos, comps</span>
+                  <span>Screenshots, photos, comps — primary way to pin</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -1776,38 +1903,40 @@ function App() {
                     }}
                   />
                 </label>
-                <button
-                  type="button"
-                  className={`mood-add-card${
-                    boardAddMode === 'url' ? ' is-active' : ''
-                  }`}
-                  onClick={() =>
-                    setBoardAddMode((m) => (m === 'url' ? null : 'url'))
-                  }
-                >
-                  <strong>Paste URL</strong>
-                  <span>Image link from web</span>
-                </button>
-                <button
-                  type="button"
-                  className={`mood-add-card${
-                    boardAddMode === 'note' ? ' is-active' : ''
-                  }`}
-                  onClick={() =>
-                    setBoardAddMode((m) => (m === 'note' ? null : 'note'))
-                  }
-                >
-                  <strong>Add color / note</strong>
-                  <span>Text pin on brand color</span>
-                </button>
-                <button
-                  type="button"
-                  className="mood-add-card"
-                  onClick={() => setActiveView('spark')}
-                >
-                  <strong>Get a spark</strong>
-                  <span>Prompt → pin to board</span>
-                </button>
+                <div className="mood-add-secondary">
+                  <button
+                    type="button"
+                    className={`mood-add-card${
+                      boardAddMode === 'url' ? ' is-active' : ''
+                    }`}
+                    onClick={() =>
+                      setBoardAddMode((m) => (m === 'url' ? null : 'url'))
+                    }
+                  >
+                    <strong>Paste URL</strong>
+                    <span>Image link</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`mood-add-card${
+                      boardAddMode === 'note' ? ' is-active' : ''
+                    }`}
+                    onClick={() =>
+                      setBoardAddMode((m) => (m === 'note' ? null : 'note'))
+                    }
+                  >
+                    <strong>Color / note</strong>
+                    <span>Text pin</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="mood-add-card mood-add-tertiary"
+                    onClick={() => setActiveView('spark')}
+                  >
+                    <strong>Spark</strong>
+                    <span>Prompt → pin</span>
+                  </button>
+                </div>
               </div>
               {boardAddMode === 'url' && (
                 <div className="board-inline-form">
@@ -3191,41 +3320,49 @@ function App() {
                     handleImportBackup(file)
                   }}
                 />
-                <button
-                  type="button"
-                  className="btn btn-ghost settings-danger"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        'Reset to demo projects and sample tasks? Your current data will be replaced.'
-                      )
-                    ) {
-                      clearAllData()
-                      setShowOnboarding(true)
-                      setActiveView('flow')
-                      flashToast('Reset to demo data')
-                    }
-                  }}
-                >
-                  Reset to demo
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost settings-danger"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        'Start completely empty (one blank project, no tasks)? This cannot be undone unless you have a backup.'
-                      )
-                    ) {
-                      clearToEmpty()
-                      setActiveView('flow')
-                      flashToast('Started empty')
-                    }
-                  }}
-                >
-                  Start empty
-                </button>
+              </div>
+              <div className="settings-danger-zone">
+                <p className="settings-danger-title">Danger zone</p>
+                <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
+                  These replace or wipe work. Download a backup first.
+                </p>
+                <div className="settings-actions">
+                  <button
+                    type="button"
+                    className="btn btn-ghost settings-danger"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          'Reset to demo projects and sample tasks? Your current data will be replaced.'
+                        )
+                      ) {
+                        clearAllData()
+                        setShowOnboarding(true)
+                        setActiveView('flow')
+                        flashToast('Reset to demo data')
+                      }
+                    }}
+                  >
+                    Reset to demo
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost settings-danger"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          'Start completely empty (one blank project, no tasks)? This cannot be undone unless you have a backup.'
+                        )
+                      ) {
+                        clearToEmpty()
+                        setActiveView('flow')
+                        flashToast('Started empty')
+                      }
+                    }}
+                  >
+                    Start empty
+                  </button>
+                </div>
               </div>
             </section>
 
@@ -3471,13 +3608,17 @@ function App() {
           aria-labelledby="onboard-title"
         >
           <div className="export-panel onboard-panel">
-            <p className="onboard-eyebrow">Local only · this device</p>
+            <p className="onboard-eyebrow">
+              {CLOUD ? 'Synced to your account' : 'This device only'}
+            </p>
             <h2 id="onboard-title" style={{ marginTop: 0 }}>
               Start your work loop
             </h2>
             <p className="view-lede">
-              Dump ideas → one current step → complete it. Not a chatbot. Work
-              is saved in this browser only.
+              Dump ideas → one current step → complete it. Not a chatbot.{' '}
+              {CLOUD
+                ? 'Your desk syncs to the cloud and caches on this browser.'
+                : 'Work is saved in this browser only.'}
             </p>
             <label className="onboard-label">
               Project name

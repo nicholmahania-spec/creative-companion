@@ -6,7 +6,11 @@ import {
   STORAGE_EXPLAIN,
 } from '../lib/auth'
 import { isSupabaseConfigured } from '../lib/supabase'
-import { signInWithEmail, signUpWithEmail } from '../lib/cloudSync'
+import {
+  signInWithEmail,
+  signUpWithEmail,
+  resetPasswordForEmail,
+} from '../lib/cloudSync'
 import { versionLabel } from '../lib/version'
 
 /**
@@ -24,6 +28,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [password2, setPassword2] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
@@ -51,7 +56,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
           }
           if (result.needsEmailConfirm) {
             setInfo(
-              'Check your email to confirm, then sign in. (Or disable email confirm in Supabase Auth settings for faster local testing.)'
+              'Check your email to confirm your account, then sign in here.'
             )
             setMode('login')
             return
@@ -78,7 +83,6 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
         return
       }
 
-      // Local access gate
       if (mode === 'setup') {
         if (password !== password2) {
           setError('Passwords do not match')
@@ -103,175 +107,236 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
     }
   }
 
+  const handleForgot = async () => {
+    setError('')
+    setInfo('')
+    if (!email.trim()) {
+      setError('Enter your email above, then tap Forgot password')
+      return
+    }
+    setBusy(true)
+    try {
+      const result = await resetPasswordForEmail(email)
+      if (!result.ok) {
+        setError(result.error || 'Could not send reset email')
+        return
+      }
+      setInfo('Password reset link sent — check your email.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="login-page">
-      <div className="login-card">
-        <div className="login-brand">
-          <span className="logo-mark" aria-hidden="true" />
-          <div>
-            <h1 className="login-title">Creative Companion</h1>
-            <p className="login-tag">Creative work tool for ADHD brains</p>
+      <div className="login-layout">
+        <aside className="login-proof" aria-hidden="true">
+          <p className="login-proof-eyebrow">Your work loop</p>
+          <h2 className="login-proof-title">
+            One current step.
+            <br />
+            Complete it.
+            <br />
+            Next rises.
+          </h2>
+          <div className="login-proof-card">
+            <span className="login-proof-badge">Do this now</span>
+            <p className="login-proof-step">
+              Name the feeling the cover must land — one sentence
+            </p>
+            <div className="login-proof-actions">
+              <span className="login-proof-btn">Complete step</span>
+            </div>
           </div>
-        </div>
+          <ul className="login-proof-list">
+            <li>Capture messy ideas</li>
+            <li>Break overwhelm into micro-steps</li>
+            <li>Pin refs · export brand direction</li>
+          </ul>
+        </aside>
 
-        {useCloud && (
-          <div className="login-mode-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              className={`login-mode-tab${mode === 'login' ? ' is-active' : ''}`}
-              aria-selected={mode === 'login'}
-              onClick={() => {
-                setMode('login')
-                setError('')
-                setInfo('')
-              }}
-            >
-              Sign in
-            </button>
-            <button
-              type="button"
-              role="tab"
-              className={`login-mode-tab${
-                mode === 'signup' || mode === 'setup' ? ' is-active' : ''
-              }`}
-              aria-selected={mode === 'signup' || mode === 'setup'}
-              onClick={() => {
-                setMode('signup')
-                setError('')
-                setInfo('')
-              }}
-            >
-              Create account
-            </button>
+        <div className="login-card">
+          <div className="login-brand">
+            <span className="logo-mark" aria-hidden="true" />
+            <div>
+              <h1 className="login-title">Creative Companion</h1>
+              <p className="login-tag">Creative work tool for ADHD brains</p>
+            </div>
           </div>
-        )}
 
-        <p className="login-lede">
-          {useCloud
-            ? mode === 'login'
-              ? 'Sign in with your email. Your desk syncs to Supabase so you can use another device.'
-              : 'Create an account. Your projects sync to the cloud (secured to your user).'
-            : mode === 'setup'
-              ? 'This site is public. Create an access password for this browser. Work stays on this device until you connect Supabase.'
-              : 'Enter your access password to open your desk on this device.'}
-        </p>
+          {useCloud && (
+            <div className="login-mode-tabs" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                className={`login-mode-tab${mode === 'login' ? ' is-active' : ''}`}
+                aria-selected={mode === 'login'}
+                onClick={() => {
+                  setMode('login')
+                  setError('')
+                  setInfo('')
+                }}
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                role="tab"
+                className={`login-mode-tab${
+                  mode === 'signup' || mode === 'setup' ? ' is-active' : ''
+                }`}
+                aria-selected={mode === 'signup' || mode === 'setup'}
+                onClick={() => {
+                  setMode('signup')
+                  setError('')
+                  setInfo('')
+                }}
+              >
+                Create account
+              </button>
+            </div>
+          )}
 
-        <form className="login-form" onSubmit={submit}>
-          {useCloud ? (
-            <label className="onboard-label">
-              Email
-              <input
-                className="onboard-input"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
-                autoFocus
-                required
-              />
-            </label>
-          ) : (
-            mode === 'setup' && (
+          <p className="login-lede">
+            {useCloud
+              ? mode === 'login'
+                ? 'Sign in to open your desk. Work syncs across devices.'
+                : 'Create an account. Your projects stay private to you.'
+              : mode === 'setup'
+                ? 'Create an access password for this browser. Work stays on this device.'
+                : 'Enter your access password to open your desk on this device.'}
+          </p>
+
+          <form className="login-form" onSubmit={submit}>
+            {useCloud ? (
               <label className="onboard-label">
-                Your name <span className="onboard-optional">(optional)</span>
+                Email
                 <input
                   className="onboard-input"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Nichol"
-                  autoComplete="username"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  autoFocus
+                  required
                 />
               </label>
-            )
-          )}
+            ) : (
+              mode === 'setup' && (
+                <label className="onboard-label">
+                  Your name <span className="onboard-optional">(optional)</span>
+                  <input
+                    className="onboard-input"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Nichol"
+                    autoComplete="username"
+                  />
+                </label>
+              )
+            )}
 
-          <label className="onboard-label">
-            Password
-            <input
-              className="onboard-input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={
-                mode === 'setup' || mode === 'signup'
-                  ? 'At least 6 characters'
-                  : '••••••••'
-              }
-              autoComplete={
-                mode === 'setup' || mode === 'signup'
-                  ? 'new-password'
-                  : 'current-password'
-              }
-              autoFocus={!useCloud}
-              required
-              minLength={6}
-            />
-          </label>
-
-          {(mode === 'setup' || mode === 'signup') && (
             <label className="onboard-label">
-              Confirm password
-              <input
-                className="onboard-input"
-                type="password"
-                value={password2}
-                onChange={(e) => setPassword2(e.target.value)}
-                placeholder="Repeat password"
-                autoComplete="new-password"
-                required
-                minLength={6}
-              />
+              Password
+              <div className="login-password-row">
+                <input
+                  className="onboard-input"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={
+                    mode === 'setup' || mode === 'signup'
+                      ? 'At least 6 characters'
+                      : '••••••••'
+                  }
+                  autoComplete={
+                    mode === 'setup' || mode === 'signup'
+                      ? 'new-password'
+                      : 'current-password'
+                  }
+                  autoFocus={!useCloud}
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  className="login-show-pw"
+                  onClick={() => setShowPassword((s) => !s)}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </label>
-          )}
 
-          {error && (
-            <p className="login-error" role="alert">
-              {error}
+            {(mode === 'setup' || mode === 'signup') && (
+              <label className="onboard-label">
+                Confirm password
+                <input
+                  className="onboard-input"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password2}
+                  onChange={(e) => setPassword2(e.target.value)}
+                  placeholder="Repeat password"
+                  autoComplete="new-password"
+                  required
+                  minLength={6}
+                />
+              </label>
+            )}
+
+            {useCloud && mode === 'login' && (
+              <button
+                type="button"
+                className="text-link login-forgot"
+                onClick={handleForgot}
+                disabled={busy}
+              >
+                Forgot password?
+              </button>
+            )}
+
+            {error && (
+              <p className="login-error" role="alert">
+                {error}
+              </p>
+            )}
+            {info && (
+              <p className="login-info" role="status">
+                {info}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="btn btn-primary login-submit"
+              disabled={busy || !password || (useCloud && !email)}
+            >
+              {busy
+                ? 'Working…'
+                : useCloud
+                  ? mode === 'login'
+                    ? 'Sign in'
+                    : 'Create account'
+                  : mode === 'setup'
+                    ? 'Create access & continue'
+                    : 'Unlock desk'}
+            </button>
+          </form>
+
+          <div className="login-note">
+            <strong>Where is my information saved?</strong>
+            <p>
+              {useCloud
+                ? 'Your desk syncs to your account in the cloud. This browser also keeps a local cache so it feels fast. Export a JSON backup anytime.'
+                : STORAGE_EXPLAIN.summary}
             </p>
-          )}
-          {info && (
-            <p className="login-info" role="status">
-              {info}
+            <p className="login-note-meta">
+              {useCloud ? 'Synced account · ' : 'This device only · '}
+              {versionLabel()}
             </p>
-          )}
-
-          <button
-            type="submit"
-            className="btn btn-primary login-submit"
-            disabled={busy || !password || (useCloud && !email)}
-          >
-            {busy
-              ? 'Working…'
-              : useCloud
-                ? mode === 'login'
-                  ? 'Sign in'
-                  : 'Create account'
-                : mode === 'setup'
-                  ? 'Create access & continue'
-                  : 'Unlock desk'}
-          </button>
-        </form>
-
-        <div className="login-note">
-          <strong>Where is my information saved?</strong>
-          <p>
-            {useCloud
-              ? 'Signed-in work syncs to your Supabase account (cloud). This browser also keeps a local cache so the desk feels fast. Export JSON anytime as a personal backup.'
-              : STORAGE_EXPLAIN.summary}
-          </p>
-          <p className="login-note-meta">
-            {useCloud ? 'Backend: Supabase · ' : ''}
-            Cache: <code>{STORAGE_EXPLAIN.workDataKey}</code> · {versionLabel()}
-          </p>
+          </div>
         </div>
-
-        <p className="login-fineprint">
-          {useCloud
-            ? 'Add your project URL + anon key in .env.local. Run supabase/schema.sql once. Never put the service role key in the frontend.'
-            : 'Local mode: password is checked in this browser only. Add Supabase env vars to enable real accounts + multi-device sync.'}
-        </p>
       </div>
     </div>
   )

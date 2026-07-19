@@ -97,3 +97,16 @@ export async function signOutCloud() {
   if (error) return { ok: false, error: error.message }
   return { ok: true }
 }
+
+/** Send password reset email (Supabase Auth). */
+export async function resetPasswordForEmail(email) {
+  if (!supabase) return { ok: false, error: 'Supabase not configured' }
+  const redirectTo =
+    typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : undefined
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    String(email || '').trim(),
+    redirectTo ? { redirectTo } : undefined
+  )
+  if (error) return { ok: false, error: error.message }
+  return { ok: true }
+}
