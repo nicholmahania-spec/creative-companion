@@ -47,7 +47,11 @@ import useAppStore from '../store/useAppStore'
 import HelperCharacterLottie from './HelperCharacterLottie'
 
 const BUDDY_BASE = `${import.meta.env.BASE_URL}buddy/`
+/** Photoreal full-body Helper — Lottie asset + static fallback */
+const BODY_SRC = `${BUDDY_BASE}helper-body.png`
+/** Tight circular crop still useful if body fails mid-load */
 const FAB_SRC = `${BUDDY_BASE}helper-fab.jpg`
+const HELPER_FALLBACK = BODY_SRC || FAB_SRC
 
 /**
  * Design buddy — UI/UX & graphic design coach (scripted system persona).
@@ -701,7 +705,8 @@ export default function BuddyMate({
           mood={mood}
           reduceMotion={reduceMotion}
           size={64}
-          fallbackSrc={FAB_SRC}
+          shape="circle"
+          fallbackSrc={HELPER_FALLBACK}
         />
         {showProgress && (
           <span className="buddy-fab-level">{xp.level}</span>
@@ -753,7 +758,8 @@ export default function BuddyMate({
                 }
                 reduceMotion={reduceMotion}
                 size={48}
-                fallbackSrc={FAB_SRC}
+                shape="circle"
+                fallbackSrc={HELPER_FALLBACK}
               />
               <div className="buddy-compact-titles">
                 <div className="buddy-compact-name-row">

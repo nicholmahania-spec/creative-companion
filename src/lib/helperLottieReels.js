@@ -1,258 +1,222 @@
 /**
- * Helper character Lottie reels — vector face moods (idle / happy / think / rest).
- * Compact bodymovin JSON; code-split via lottie-web consumer.
+ * Photoreal full-body Helper Lottie reels.
+ * Uses public/buddy/helper-body.png as an image layer with mood motion.
+ * Consumers pass assetsPath: `${BASE_URL}buddy/` to lottie-web.
  */
 
-function faceBase(ind, name, st, op, eyeY, mouth) {
+export const HELPER_BODY_ASSET = {
+  id: 'helper_body',
+  w: 696,
+  h: 824,
+  u: '',
+  p: 'helper-body.png',
+  e: 0,
+}
+
+/** Composition sized to character aspect (half-res for crisp SVG scale-down). */
+const COMP_W = 348
+const COMP_H = 412
+const FR = 30
+const OP = 90 // 3s loop @ 30fps
+
+function easeInOut() {
+  return { x: 0.42, y: 1 }
+}
+function easeOut() {
+  return { x: 0.42, y: 0 }
+}
+
+/** Image layer: asset centered in composition at 50% scale. */
+function bodyLayer(ks) {
   return {
     ddd: 0,
-    ind,
-    ty: 4,
-    nm: name,
+    ind: 1,
+    ty: 2,
+    nm: 'HelperBody',
+    refId: HELPER_BODY_ASSET.id,
     sr: 1,
     ks: {
-      o: { a: 0, k: 100 },
-      r: { a: 0, k: 0 },
-      p: { a: 0, k: [50, 50, 0] },
-      a: { a: 0, k: [0, 0, 0] },
-      s: { a: 0, k: [100, 100, 100] },
+      o: ks.o || { a: 0, k: 100 },
+      r: ks.r || { a: 0, k: 0 },
+      p: ks.p || { a: 0, k: [COMP_W / 2, COMP_H / 2 + 6, 0] },
+      a: { a: 0, k: [HELPER_BODY_ASSET.w / 2, HELPER_BODY_ASSET.h / 2, 0] },
+      s: ks.s || { a: 0, k: [50, 50, 100] },
     },
     ao: 0,
-    shapes: [
-      // head
-      {
-        ty: 'gr',
-        it: [
-          {
-            ty: 'el',
-            p: { a: 0, k: [0, 0] },
-            s: { a: 0, k: [72, 72] },
-            nm: 'Head',
-          },
-          {
-            ty: 'fl',
-            c: { a: 0, k: [0.96, 0.94, 0.9, 1] },
-            o: { a: 0, k: 100 },
-            nm: 'Fill',
-          },
-          {
-            ty: 'st',
-            c: { a: 0, k: [0.11, 0.1, 0.09, 1] },
-            o: { a: 0, k: 100 },
-            w: { a: 0, k: 3 },
-            nm: 'Stroke',
-          },
-          {
-            ty: 'tr',
-            p: { a: 0, k: [0, 0] },
-            a: { a: 0, k: [0, 0] },
-            s: { a: 0, k: [100, 100] },
-            r: { a: 0, k: 0 },
-            o: { a: 0, k: 100 },
-          },
-        ],
-        nm: 'Head',
-      },
-      // left eye
-      {
-        ty: 'gr',
-        it: [
-          {
-            ty: 'el',
-            p: { a: 0, k: [-14, eyeY] },
-            s: { a: 0, k: [8, 10] },
-            nm: 'L',
-          },
-          {
-            ty: 'fl',
-            c: { a: 0, k: [0.11, 0.1, 0.09, 1] },
-            o: { a: 0, k: 100 },
-          },
-          {
-            ty: 'tr',
-            p: { a: 0, k: [0, 0] },
-            a: { a: 0, k: [0, 0] },
-            s: { a: 0, k: [100, 100] },
-            r: { a: 0, k: 0 },
-            o: { a: 0, k: 100 },
-          },
-        ],
-        nm: 'EyeL',
-      },
-      // right eye
-      {
-        ty: 'gr',
-        it: [
-          {
-            ty: 'el',
-            p: { a: 0, k: [14, eyeY] },
-            s: { a: 0, k: [8, 10] },
-            nm: 'R',
-          },
-          {
-            ty: 'fl',
-            c: { a: 0, k: [0.11, 0.1, 0.09, 1] },
-            o: { a: 0, k: 100 },
-          },
-          {
-            ty: 'tr',
-            p: { a: 0, k: [0, 0] },
-            a: { a: 0, k: [0, 0] },
-            s: { a: 0, k: [100, 100] },
-            r: { a: 0, k: 0 },
-            o: { a: 0, k: 100 },
-          },
-        ],
-        nm: 'EyeR',
-      },
-      // mouth
-      {
-        ty: 'gr',
-        it: [
-          {
-            ty: 'sh',
-            ks: {
-              a: 0,
-              k: {
-                i: mouth.i,
-                o: mouth.o,
-                v: mouth.v,
-                c: false,
-              },
-            },
-            nm: 'Mouth',
-          },
-          {
-            ty: 'st',
-            c: { a: 0, k: [0.11, 0.1, 0.09, 1] },
-            o: { a: 0, k: 100 },
-            w: { a: 0, k: 3 },
-            lc: 2,
-            lj: 2,
-          },
-          {
-            ty: 'tr',
-            p: { a: 0, k: [0, 0] },
-            a: { a: 0, k: [0, 0] },
-            s: { a: 0, k: [100, 100] },
-            r: { a: 0, k: 0 },
-            o: { a: 0, k: 100 },
-          },
-        ],
-        nm: 'Mouth',
-      },
-    ],
-    ip: st,
-    op,
-    st,
+    ip: 0,
+    op: OP,
+    st: 0,
     bm: 0,
   }
 }
 
-const smile = {
-  i: [
-    [0, 0],
-    [0, 0],
-    [0, 0],
-  ],
-  o: [
-    [0, 0],
-    [0, 0],
-    [0, 0],
-  ],
-  v: [
-    [-16, 14],
-    [0, 22],
-    [16, 14],
-  ],
+function loopPos(y0, y1, mid = OP / 2) {
+  return {
+    a: 1,
+    k: [
+      {
+        t: 0,
+        s: [COMP_W / 2, y0, 0],
+        e: [COMP_W / 2, y1, 0],
+        i: easeInOut(),
+        o: easeOut(),
+      },
+      {
+        t: mid,
+        s: [COMP_W / 2, y1, 0],
+        e: [COMP_W / 2, y0, 0],
+        i: easeInOut(),
+        o: easeOut(),
+      },
+      { t: OP, s: [COMP_W / 2, y0, 0] },
+    ],
+  }
 }
 
-const flat = {
-  i: [
-    [0, 0],
-    [0, 0],
-  ],
-  o: [
-    [0, 0],
-    [0, 0],
-  ],
-  v: [
-    [-14, 16],
-    [14, 16],
-  ],
+function loopScale(s0, s1, mid = OP / 2) {
+  return {
+    a: 1,
+    k: [
+      {
+        t: 0,
+        s: [s0, s0, 100],
+        e: [s1, s1, 100],
+        i: easeInOut(),
+        o: easeOut(),
+      },
+      {
+        t: mid,
+        s: [s1, s1, 100],
+        e: [s0, s0, 100],
+        i: easeInOut(),
+        o: easeOut(),
+      },
+      { t: OP, s: [s0, s0, 100] },
+    ],
+  }
 }
 
-const oMouth = {
-  i: [
-    [0, 0],
-    [0, 0],
-    [0, 0],
-    [0, 0],
-  ],
-  o: [
-    [0, 0],
-    [0, 0],
-    [0, 0],
-    [0, 0],
-  ],
-  v: [
-    [-8, 14],
-    [0, 10],
-    [8, 14],
-    [0, 20],
-  ],
+function loopRot(r0, r1, mid = OP / 2) {
+  return {
+    a: 1,
+    k: [
+      {
+        t: 0,
+        s: [r0],
+        e: [r1],
+        i: easeInOut(),
+        o: easeOut(),
+      },
+      {
+        t: mid,
+        s: [r1],
+        e: [r0],
+        i: easeInOut(),
+        o: easeOut(),
+      },
+      { t: OP, s: [r0] },
+    ],
+  }
 }
 
-function reel(name, eyeY, mouth, bounce = false) {
-  const layers = [faceBase(1, 'face', 0, 60, eyeY, mouth)]
-  if (bounce) {
-    layers[0].ks.p = {
+function reel(name, ks) {
+  return {
+    v: '5.7.4',
+    fr: FR,
+    ip: 0,
+    op: OP,
+    w: COMP_W,
+    h: COMP_H,
+    nm: name,
+    ddd: 0,
+    assets: [HELPER_BODY_ASSET],
+    layers: [bodyLayer(ks)],
+  }
+}
+
+/** Mood → full-body photoreal Lottie animationData */
+export const HELPER_BODY_REELS = {
+  /** Soft float + breathe */
+  idle: reel('helper-body-idle', {
+    p: loopPos(COMP_H / 2 + 8, COMP_H / 2 - 4),
+    s: loopScale(49.5, 51.2),
+    r: loopRot(-1.2, 1.2),
+  }),
+  /** Cheer bounce */
+  happy: reel('helper-body-happy', {
+    p: {
       a: 1,
       k: [
         {
           t: 0,
-          s: [50, 52, 0],
-          e: [50, 48, 0],
-          i: { x: 0.4, y: 1 },
-          o: { x: 0.4, y: 0 },
+          s: [COMP_W / 2, COMP_H / 2 + 10, 0],
+          e: [COMP_W / 2, COMP_H / 2 - 14, 0],
+          i: { x: 0.33, y: 1 },
+          o: { x: 0.33, y: 0 },
         },
         {
-          t: 30,
-          s: [50, 48, 0],
-          e: [50, 52, 0],
-          i: { x: 0.4, y: 1 },
-          o: { x: 0.4, y: 0 },
+          t: 22,
+          s: [COMP_W / 2, COMP_H / 2 - 14, 0],
+          e: [COMP_W / 2, COMP_H / 2 + 6, 0],
+          i: { x: 0.5, y: 1 },
+          o: { x: 0.5, y: 0 },
         },
-        { t: 60, s: [50, 52, 0] },
+        {
+          t: 44,
+          s: [COMP_W / 2, COMP_H / 2 + 6, 0],
+          e: [COMP_W / 2, COMP_H / 2 + 10, 0],
+          i: easeInOut(),
+          o: easeOut(),
+        },
+        { t: OP, s: [COMP_W / 2, COMP_H / 2 + 10, 0] },
       ],
-    }
-  }
-  return {
-    v: '5.7.4',
-    fr: 30,
-    ip: 0,
-    op: 60,
-    w: 100,
-    h: 100,
-    nm: name,
-    ddd: 0,
-    assets: [],
-    layers,
-  }
+    },
+    s: loopScale(50, 53.5, 28),
+    r: loopRot(-3.5, 3.5, 30),
+  }),
+  /** Thoughtful sway + lean */
+  think: reel('helper-body-think', {
+    p: loopPos(COMP_H / 2 + 4, COMP_H / 2 - 2, 50),
+    s: loopScale(49.8, 50.6, 50),
+    r: loopRot(-5.5, 4, 48),
+  }),
+  /** Settled, slow breath */
+  rest: reel('helper-body-rest', {
+    p: loopPos(COMP_H / 2 + 12, COMP_H / 2 + 6, 55),
+    s: loopScale(48.5, 49.5, 55),
+    r: { a: 0, k: -2 },
+  }),
 }
 
-/** Mood → Lottie animationData */
-export const HELPER_REELS = {
-  idle: reel('idle', -8, flat, true),
-  happy: reel('happy', -10, smile, true),
-  think: reel('think', -6, oMouth, false),
-  rest: reel('rest', -4, flat, false),
-}
-
+/**
+ * Resolve mood string → body reel.
+ * Aliases map product moods (win, coach, break…) onto the four reels.
+ */
 export function reelForMood(mood = 'idle') {
-  const m = String(mood || 'idle')
-  if (m === 'happy' || m === 'win' || m === 'celebrate') return HELPER_REELS.happy
-  if (m === 'think' || m === 'focus' || m === 'coach') return HELPER_REELS.think
-  if (m === 'rest' || m === 'break' || m === 'tired') return HELPER_REELS.rest
-  return HELPER_REELS.idle
+  const m = String(mood || 'idle').toLowerCase()
+  if (
+    m === 'happy' ||
+    m === 'win' ||
+    m === 'celebrate' ||
+    m === 'cheer' ||
+    m === 'levelup'
+  ) {
+    return HELPER_BODY_REELS.happy
+  }
+  if (
+    m === 'think' ||
+    m === 'focus' ||
+    m === 'coach' ||
+    m === 'nudge' ||
+    m === 'hyper'
+  ) {
+    return HELPER_BODY_REELS.think
+  }
+  if (m === 'rest' || m === 'break' || m === 'tired' || m === 'calm') {
+    return HELPER_BODY_REELS.rest
+  }
+  return HELPER_BODY_REELS.idle
 }
+
+/** Public path segment under BASE_URL for lottie assetsPath */
+export const HELPER_BODY_ASSETS_PATH = 'buddy/'
