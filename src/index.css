@@ -7877,8 +7877,13 @@ html[data-reduce-motion='true'] *::after {
   font-weight: 600;
 }
 
-/* Print only the brand pack when body has .cc-printing-pack */
+/* Print / Save-as-PDF — paper layout for direction sheet */
 @media print {
+  @page {
+    size: letter;
+    margin: 0.55in 0.6in;
+  }
+
   body.cc-printing-pack * {
     visibility: hidden !important;
   }
@@ -7886,7 +7891,11 @@ html[data-reduce-motion='true'] *::after {
   body.cc-printing-pack .export-overlay,
   body.cc-printing-pack .export-overlay *,
   body.cc-printing-pack #direction-sheet,
-  body.cc-printing-pack #direction-sheet * {
+  body.cc-printing-pack #direction-sheet *,
+  body.cc-printing-pack #system-artboard,
+  body.cc-printing-pack #system-artboard *,
+  body.cc-printing-pack #pack-preview-artboard,
+  body.cc-printing-pack #pack-preview-artboard * {
     visibility: visible !important;
   }
 
@@ -7915,19 +7924,52 @@ html[data-reduce-motion='true'] *::after {
     visibility: hidden !important;
   }
 
-  body.cc-printing-pack .direction-sheet {
+  body.cc-printing-pack .direction-sheet,
+  body.cc-printing-pack .brand-artboard {
     border: none !important;
     box-shadow: none !important;
-    padding: 0.5rem !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    max-width: none !important;
+    background: #fff !important;
+    color: #0c0a09 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.cc-printing-pack .export-identity-cover {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    padding: 1.25rem 1.1rem !important;
+  }
+
+  body.cc-printing-pack .direction-pins,
+  body.cc-printing-pack .export-do-dont,
+  body.cc-printing-pack .type-specimen {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  body.cc-printing-pack .direction-foot,
+  body.cc-printing-pack.hide-watermark .direction-foot,
+  body.cc-print-no-watermark .direction-foot,
+  body.cc-printing-pack .brand-artboard.hide-watermark .direction-foot {
+    display: none !important;
   }
 
   body.cc-printing-pack .buddy-shell,
   body.cc-printing-pack .buddy-fab,
   body.cc-printing-pack .game-hud,
   body.cc-printing-pack .header,
-  body.cc-printing-pack .app-footer {
+  body.cc-printing-pack .app-footer,
+  body.cc-printing-pack .journey-bar,
+  body.cc-printing-pack .board-lightbox-overlay {
     display: none !important;
   }
+}
+
+.brand-artboard.hide-watermark .direction-foot {
+  display: none;
 }
 
 /* finish-export-grid removed — Finish uses a short primary stack + details */
@@ -9015,4 +9057,134 @@ html[data-reduce-motion='true'] *::after {
 .pack-view .brand-artboard {
   border-radius: 2px;
   box-shadow: 0 8px 32px rgba(28, 25, 23, 0.08);
+}
+
+/* ——— v0.2.58 pack presentation, lightbox, mobile journey ——— */
+.pack-view .pack-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(14rem, 0.85fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 800px) {
+  .pack-view .pack-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.pack-download-btn {
+  width: 100%;
+  min-height: 2.85rem;
+  font-size: 1.02rem;
+}
+.pack-primary-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+}
+.pack-watermark-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  line-height: 1.35;
+}
+.pack-watermark-toggle input {
+  margin-top: 0.15rem;
+}
+.mood-pin-media-btn {
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 0;
+  cursor: zoom-in;
+  font: inherit;
+}
+.board-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(12, 10, 9, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.board-lightbox-card {
+  width: min(36rem, 100%);
+  max-height: min(90vh, 48rem);
+  overflow: auto;
+  background: var(--bg-elevated);
+  border-radius: 14px;
+  padding: 0.85rem 0.85rem 1rem;
+  box-shadow: var(--shadow-3);
+  position: relative;
+}
+.board-lightbox-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+}
+.board-lightbox-visual {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--bg-muted);
+}
+.board-lightbox-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.board-lightbox-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+@media (max-width: 640px) {
+  .journey-bar-list {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .journey-bar-item {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .journey-step {
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.35rem 0.2rem;
+    width: 100%;
+  }
+  .journey-label {
+    display: none;
+    font-size: 0.62rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .journey-step.is-active .journey-label {
+    display: block;
+  }
+  .journey-num {
+    font-size: 0.78rem;
+  }
+}
+.buddy-act.is-on {
+  outline: 2px solid var(--accent-growth);
+  outline-offset: 1px;
+}
+.buddy-act.has-nudge {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-growth) 35%, transparent);
+}
+.buddy-break-care {
+  margin-bottom: 0.35rem;
 }

@@ -85,6 +85,8 @@ export function blankWorkspaceState() {
       showProgress: false,
       /** Helper: no timed pings / hyperfocus nags */
       helperQuiet: false,
+      /** Pack / PDF: hide Creative Companion footer watermark */
+      hidePackWatermark: false,
     },
   }
 }

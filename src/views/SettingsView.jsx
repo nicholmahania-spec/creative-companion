@@ -1,3 +1,5 @@
+import { helperAiStatus } from '../lib/helperAi'
+
 /** Lazy-loaded Settings view */
 export default function SettingsView(props) {
   const {
@@ -11,6 +13,7 @@ export default function SettingsView(props) {
     versionLabel, APP_BUILD, APP_BUILD_DATE, STORAGE_EXPLAIN, notifyAction,
     createNewProject,
   } = props
+  const aiStatus = helperAiStatus()
 
   return (
         <div className="settings-view">
@@ -44,8 +47,17 @@ export default function SettingsView(props) {
                 className="btn btn-secondary btn-sm"
                 onClick={() => toggleTheme()}
               >
-                {theme === 'warm' ? 'Use dark' : 'Use light'}
+                {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
               </button>
+            </div>
+            <div className="settings-row">
+              <div>
+                <strong>Screen</strong>
+                <span>
+                  {theme === 'warm' ? 'Light' : 'Dark'}
+                  {theme === 'warm' ? ' (warm paper)' : ' (deep charcoal)'}
+                </span>
+              </div>
             </div>
             <div className="settings-row">
               <div>
@@ -454,6 +466,47 @@ export default function SettingsView(props) {
             >
               Load Soft Signal demo project
             </button>
+          </section>
+
+          <section className="panel brand-section">
+            <div className="brand-section-label">Helper AI</div>
+            <div className="settings-row">
+              <div>
+                <strong>{aiStatus.label}</strong>
+                <span>{aiStatus.detail}</span>
+              </div>
+              <span className={`helper-ai-badge is-${aiStatus.mode}`}>
+                {aiStatus.short}
+              </span>
+            </div>
+            {aiStatus.mode === 'scripted' && (
+              <p className="panel-hint" style={{ margin: '0.35rem 0 0' }}>
+                For Live AI: set <code className="settings-code">XAI_API_KEY</code>{' '}
+                with a proxy (Netlify / Vite), or{' '}
+                <code className="settings-code">VITE_XAI_USE_PROXY=true</code>.
+                See docs/DEPLOY_AI.md.
+              </p>
+            )}
+            <div className="settings-row" style={{ marginTop: '0.75rem' }}>
+              <div>
+                <strong>Hide pack watermark</strong>
+                <span>Remove tool footer on direction sheet / PDF</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!!prefs.hidePackWatermark}
+                className={`pref-switch${prefs.hidePackWatermark ? ' is-on' : ''}`}
+                onClick={() =>
+                  setPref('hidePackWatermark', !prefs.hidePackWatermark)
+                }
+              >
+                <span className="pref-switch-knob" />
+                <span className="sr-only">
+                  {prefs.hidePackWatermark ? 'On' : 'Off'}
+                </span>
+              </button>
+            </div>
           </section>
 
           <section className="panel brand-section">

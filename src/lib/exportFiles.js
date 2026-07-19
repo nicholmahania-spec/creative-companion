@@ -1091,13 +1091,18 @@ export function downloadWorkspaceBackup(workspace) {
 
 /**
  * Print only a DOM node (opens print dialog for PDF).
- * Temporarily clones styles via print CSS on body.
+ * Uses body.cc-printing-pack + print CSS for multi-page paper layout.
+ * @param {string} elementId
+ * @param {{ hideWatermark?: boolean }} [options]
  */
-export function printElementById(elementId) {
+export function printElementById(elementId, options = {}) {
   const el = document.getElementById(elementId)
   if (!el) return { ok: false, error: 'Nothing to print' }
   try {
     document.body.classList.add('cc-printing-pack')
+    if (options.hideWatermark) {
+      document.body.classList.add('cc-print-no-watermark')
+    }
     const prevTitle = document.title
     const name =
       el.querySelector('.direction-title')?.textContent?.trim() ||
@@ -1107,10 +1112,12 @@ export function printElementById(elementId) {
     document.title = prevTitle
     window.setTimeout(() => {
       document.body.classList.remove('cc-printing-pack')
+      document.body.classList.remove('cc-print-no-watermark')
     }, 500)
     return { ok: true }
   } catch (e) {
     document.body.classList.remove('cc-printing-pack')
+    document.body.classList.remove('cc-print-no-watermark')
     return { ok: false, error: e?.message || 'Print failed' }
   }
 }

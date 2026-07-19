@@ -24,6 +24,8 @@ export default function BrandArtboard({
   pins = [],
   editable = false,
   compact = false,
+  /** Hide tool footer watermark (client handoff / print) */
+  hideWatermark = false,
   onTaglineChange,
   onBriefChange,
   onVoiceChange,
@@ -67,7 +69,9 @@ export default function BrandArtboard({
     <article
       className={`direction-sheet system-artboard brand-artboard${
         compact ? ' is-compact' : ''
-      }${editable ? ' is-editable' : ''}`}
+      }${editable ? ' is-editable' : ''}${
+        hideWatermark ? ' hide-watermark' : ''
+      }`}
       id={id}
     >
       <div
@@ -315,10 +319,12 @@ export default function BrandArtboard({
         </div>
       )}
 
-      <footer className="direction-foot">
-        Creative Companion · Direction sheet ·{' '}
-        {new Date().toLocaleDateString()}
-      </footer>
+      {!hideWatermark && (
+        <footer className="direction-foot">
+          Creative Companion · Direction sheet ·{' '}
+          {new Date().toLocaleDateString()}
+        </footer>
+      )}
     </article>
   )
 }

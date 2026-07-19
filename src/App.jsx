@@ -212,6 +212,7 @@ function App() {
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [lastExportNote, setLastExportNote] = useState('')
+  const [boardLightbox, setBoardLightbox] = useState(null)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
@@ -270,6 +271,7 @@ function App() {
   /** Pomodoro desk lock — default on; user can disable */
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
   const showProgress = !!prefs.showProgress
+  const hidePackWatermark = !!prefs.hidePackWatermark
   const forceBreaksEnabledRef = useRef(forceBreaksEnabled)
   forceBreaksEnabledRef.current = forceBreaksEnabled
 
@@ -1174,7 +1176,7 @@ function App() {
     if (kind === 'print') {
       if (!exportPanel) openExportPanel()
       window.setTimeout(() => {
-        const r = printElementById('direction-sheet')
+        const r = printElementById('direction-sheet', { hideWatermark: hidePackWatermark })
         if (r.ok) {
           awardAndBroadcast('export_pack', { label: 'Print / PDF' })
           flashToast('Print dialog open — choose Save as PDF if you want a file')
@@ -2477,10 +2479,13 @@ function App() {
                         }${item.packHero ? ' is-pack-hero' : ''}`}
                       >
                         {isImageFace ? (
-                          <div
-                            className="mood-pin-media"
+                          <button
+                            type="button"
+                            className="mood-pin-media mood-pin-media-btn"
                             style={face}
-                          />
+                            aria-label={`View pin${item.note ? `: ${item.note}` : ''}`}
+                            onClick={() => setBoardLightbox(item)}
+                          ></button>
                         ) : (
                           <div
                             className="mood-pin-face"
@@ -2591,6 +2596,54 @@ function App() {
                 Go to System
               </button>
             </p>
+          </div>
+        )}
+
+
+        {boardLightbox && (
+          <div
+            className="board-lightbox-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Pin preview"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setBoardLightbox(null)
+            }}
+          >
+            <div className="board-lightbox-card">
+              <button
+                type="button"
+                className="btn btn-ghost board-lightbox-close"
+                onClick={() => setBoardLightbox(null)}
+              >
+                Close
+              </button>
+              <div
+                className="board-lightbox-visual"
+                style={pinFaceStyle(boardLightbox)}
+              />
+              {boardLightbox.note ? (
+                <p className="board-lightbox-note">{boardLightbox.note}</p>
+              ) : null}
+              <div className="board-lightbox-actions">
+                <button
+                  type="button"
+                  className={`btn btn-secondary${boardLightbox.inPack ? ' is-on' : ''}`}
+                  onClick={() => {
+                    const r = toggleMoodPinInPack(boardLightbox.id)
+                    if (!r.ok) flashToast(r.error || 'Pack full')
+                    else {
+                      setBoardLightbox((p) =>
+                        p ? { ...p, inPack: r.inPack } : null
+                      )
+                      flashToast(r.inPack ? 'In pack' : 'Removed from pack')
+                    }
+                  }}
+                >
+                  {boardLightbox.inPack ? '★ In pack' : '☆ Add to pack'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -2752,6 +2805,7 @@ function App() {
               palette={projectPalette}
               pins={deskMood.filter((m) => m.inPack)}
               editable={false}
+              hideWatermark={hidePackWatermark}
             />
             </Suspense>
 
@@ -3350,6 +3404,7 @@ function App() {
                     pins={deskMood.filter((m) => m.inPack)}
                     compact
                     editable={false}
+                    hideWatermark={hidePackWatermark}
                   />
             </Suspense>
                 </div>
@@ -3404,10 +3459,10 @@ function App() {
                       </>
                     )
                   })()}
-                  <div className="finish-actions">
+                  <div className="finish-actions pack-primary-stack">
                     <button
                       type="button"
-                      className="btn btn-primary"
+                      className="btn btn-primary pack-download-btn"
                       onClick={() => {
                         const packSnap = buildCurrentBrandPack()
                         const ready = packReadiness(packSnap)
@@ -3427,20 +3482,23 @@ function App() {
                         {lastExportNote}
                       </p>
                     ) : null}
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={openExportPanel}
-                    >
-                      Preview full
-                    </button>
+                    <label className="pack-watermark-toggle">
+                      <input
+                        type="checkbox"
+                        checked={hidePackWatermark}
+                        onChange={(e) =>
+                          setPref('hidePackWatermark', e.target.checked)
+                        }
+                      />
+                      <span>Hide tool watermark (client handoff)</span>
+                    </label>
                     <div className="finish-secondary-row">
                       <button
                         type="button"
                         className="btn btn-ghost"
-                        onClick={() => setActiveView('flow')}
+                        onClick={openExportPanel}
                       >
-                        Work one more step
+                        Preview full
                       </button>
                       <button
                         type="button"
@@ -3448,6 +3506,13 @@ function App() {
                         onClick={() => setActiveView('brand')}
                       >
                         Edit system
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => setActiveView('flow')}
+                      >
+                        Work
                       </button>
                     </div>
                     <details className="finish-more-formats">

@@ -92,6 +92,7 @@ export default function BuddyMate({
   // Start minimized so work forms stay free
   const [expanded, setExpanded] = useState(false)
   const [showMore, setShowMore] = useState(false)
+  const [showBreakCare, setShowBreakCare] = useState(false)
   const [kitTitle, setKitTitle] = useState('')
   const [kitKind, setKitKind] = useState('todo')
   const [kitMinutes, setKitMinutes] = useState(3)
@@ -134,6 +135,7 @@ export default function BuddyMate({
   const minimize = useCallback(() => {
     clearAutoMin()
     setShowMore(false)
+    setShowBreakCare(false)
     // Always dock FAB bottom-right so it doesn't vanish off-screen
     const dock = defaultBuddySpot('fab')
     spotIdRef.current = dock.id
@@ -833,32 +835,25 @@ export default function BuddyMate({
             </button>
             <button
               type="button"
-              className="buddy-act"
-              onClick={() => reply('break')}
+              className={`buddy-act${showBreakCare ? ' is-on' : ''}${
+                needsCare ? ' has-nudge' : ''
+              }`}
+              onClick={() => {
+                setShowBreakCare((v) => !v)
+                setShowMore(false)
+                if (!showBreakCare) reply('break')
+              }}
               disabled={aiBusy}
+              aria-expanded={showBreakCare}
             >
               Break
             </button>
           </div>
 
-          <button
-            type="button"
-            className={`buddy-more-toggle bf-more${
-              needsCare && !showMore ? ' has-nudge' : ''
-            }${showMore ? ' is-open' : ''}`}
-            onClick={() => setShowMore((v) => !v)}
-            aria-expanded={showMore}
-          >
-            {showMore ? 'Show less' : needsCare ? 'Care & tools' : 'More tools'}
-            <span className="buddy-more-chevron" aria-hidden="true">
-              {showMore ? '▴' : '▾'}
-            </span>
-          </button>
-
-          {showMore && (
-            <div className="buddy-more bf-more-panel is-inline">
+          {showBreakCare && (
+            <div className="buddy-more bf-more-panel is-inline buddy-break-care">
               <div className="buddy-wellness">
-                <p className="buddy-wellness-label">Body</p>
+                <p className="buddy-wellness-label">Body · break care</p>
                 <div className="buddy-wellness-row">
                   <button
                     type="button"
@@ -898,7 +893,6 @@ export default function BuddyMate({
                   Logged a real break
                 </button>
               </div>
-
               <div className="buddy-kit" aria-label="Break kit">
                 <p className="buddy-wellness-label">Break kit</p>
                 <div className="buddy-kit-add">
@@ -976,7 +970,28 @@ export default function BuddyMate({
                   </ul>
                 )}
               </div>
+            </div>
+          )}
 
+          <button
+            type="button"
+            className={`buddy-more-toggle bf-more${
+              showMore ? ' is-open' : ''
+            }`}
+            onClick={() => {
+              setShowMore((v) => !v)
+              setShowBreakCare(false)
+            }}
+            aria-expanded={showMore}
+          >
+            {showMore ? 'Show less' : 'Process & tools'}
+            <span className="buddy-more-chevron" aria-hidden="true">
+              {showMore ? '▴' : '▾'}
+            </span>
+          </button>
+
+          {showMore && (
+            <div className="buddy-more bf-more-panel is-inline">
               <div className="buddy-process" aria-label="Process">
                 <p className="buddy-wellness-label">Process</p>
                 <div className="buddy-process-row">
