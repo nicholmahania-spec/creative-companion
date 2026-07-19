@@ -29,6 +29,12 @@ import LoginPage from './components/LoginPage'
 import BuddyMate from './components/BuddyMate'
 import ConceptPipeline from './components/ConceptPipeline'
 import {
+  JOURNEY_STEPS,
+  journeyIdForView,
+  getJourneyStep,
+  getNextJourney,
+} from './lib/journey'
+import {
   isSessionOpen,
   closeSession,
   getSession,
@@ -1031,47 +1037,35 @@ function App() {
     )
   }
 
+  const journeyActive = journeyIdForView(activeView)
+  const journeyStep = getJourneyStep(activeView)
+  const journeyNext = getNextJourney(activeView)
+
   return (
     <div className={`app ${theme} view-${activeView}`}>
       <header className="header">
-        <div className="header-content">
+        <div className="header-content header-content-simple">
           <div className="brand-block">
             <div className="logo">
               <span className="logo-mark" aria-hidden="true" />
               Creative Companion
             </div>
-            <p className="logo-sub">Creative work tool for ADHD brains</p>
+            <p className="logo-sub">Simple path: Project → Work → Ideas → Brand → Finish</p>
           </div>
-          <nav className="nav" aria-label="Primary">
-            {[
-              { id: 'flow', label: 'Work' },
-              { id: 'studio', label: 'Board' },
-              { id: 'project', label: 'Projects' },
-            ].map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                className={`nav-button ${activeView === v.id ? 'active' : ''}`}
-                onClick={() => setActiveView(v.id)}
-              >
-                {v.label}
-              </button>
-            ))}
-          </nav>
           <div className="header-actions">
             {isFocusRunning && activeView !== 'insights' && (
               <button
                 type="button"
                 className="timer-running-chip"
                 onClick={() => setActiveView('insights')}
-                title="Focus timer running"
+                title="Timer running"
               >
                 Timer {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
               </button>
             )}
             {bodyDoubling && (
               <span className="mate-on-badge" aria-live="polite">
-                Buddy on
+                Helper on
               </span>
             )}
             {CLOUD && syncState === 'error' && (
@@ -1091,9 +1085,8 @@ function App() {
                     flashToast(result.error || 'Sync failed')
                   }
                 }}
-                title={syncError || 'Sync failed — retry'}
               >
-                Sync failed · Retry
+                Save failed · Retry
               </button>
             )}
             <button
@@ -1101,7 +1094,7 @@ function App() {
               className="btn btn-ghost header-help"
               onClick={() => setShowCreativeReset(true)}
             >
-              Stuck?
+              Need help?
             </button>
             <div className="more-wrap" ref={moreWrapRef}>
               <button
@@ -1114,11 +1107,11 @@ function App() {
                   setAccountOpen(false)
                 }}
               >
-                Tools
+                Extra
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu">
-                  <p className="more-menu-group">Help</p>
+                  <p className="more-menu-group">If you get stuck</p>
                   <button
                     type="button"
                     role="menuitem"
@@ -1128,8 +1121,8 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Break into micro-steps</strong>
-                    <span>When the whole project is too big</span>
+                    <strong>Break work into small steps</strong>
+                    <span>When the project feels too big</span>
                   </button>
                   <button
                     type="button"
@@ -1141,21 +1134,9 @@ function App() {
                     }}
                   >
                     <strong>
-                      {bodyDoubling ? 'Design buddy off' : 'Design buddy'}
+                      {bodyDoubling ? 'Turn helper off' : 'Turn helper on'}
                     </strong>
-                    <span>UI/UX coach · clarify → refine</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('spark')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <strong>Spark · ⌘K</strong>
-                    <span>One prompt, then return</span>
+                    <span>Friendly coach + time reminders</span>
                   </button>
                   <button
                     type="button"
@@ -1166,46 +1147,32 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Focus timer</strong>
-                    <span>2 or 25 min container</span>
-                  </button>
-
-                  <p className="more-menu-group">Brand &amp; time</p>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('concept')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <strong>Concept pipeline</strong>
-                    <span>Sketches → lock plan → fill Brand</span>
+                    <strong>Timer</strong>
+                    <span>2 or 25 minutes of focus</span>
                   </button>
                   <button
                     type="button"
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
-                      setActiveView('brand')
+                      setActiveView('spark')
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Brand template</strong>
-                    <span>Color, type, voice, logo direction</span>
+                    <strong>Idea spark</strong>
+                    <span>One prompt if you need inspiration</span>
                   </button>
                   <button
                     type="button"
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
-                      openExportPanel()
+                      setActiveView('studio')
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Export pack</strong>
-                    <span>Print / HTML snapshot</span>
+                    <strong>Picture board</strong>
+                    <span>Save photos and reference images</span>
                   </button>
                   <button
                     type="button"
@@ -1216,8 +1183,8 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Deadlines</strong>
-                    <span>Project + step due dates</span>
+                    <strong>Dates</strong>
+                    <span>Deadlines on a calendar</span>
                   </button>
                   <button
                     type="button"
@@ -1230,7 +1197,7 @@ function App() {
                     }}
                   >
                     <strong>New project</strong>
-                    <span>Separate client or personal lane</span>
+                    <span>Start another project name</span>
                   </button>
                 </div>
               )}
@@ -1257,7 +1224,7 @@ function App() {
                     ? accessName.includes('@')
                       ? accessName.split('@')[0]
                       : accessName
-                    : 'Account'}
+                    : 'You'}
                 </span>
               </button>
               {accountOpen && (
@@ -1268,10 +1235,10 @@ function App() {
                   {CLOUD && (
                     <p className="account-menu-sync">
                       {syncState === 'syncing'
-                        ? 'Syncing…'
+                        ? 'Saving…'
                         : syncState === 'error'
-                          ? 'Sync error'
-                          : 'Cloud up to date'}
+                          ? 'Save error'
+                          : 'Saved'}
                     </p>
                   )}
                   <button
@@ -1294,31 +1261,8 @@ function App() {
                       setAccountOpen(false)
                     }}
                   >
-                    {theme === 'warm' ? 'Dark mode' : 'Light mode'}
+                    {theme === 'warm' ? 'Dark screen' : 'Light screen'}
                   </button>
-                  {CLOUD && syncState === 'error' && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="account-menu-item"
-                      onClick={async () => {
-                        setAccountOpen(false)
-                        setSyncState('syncing')
-                        const result = await pushWorkspace(exportAllData())
-                        if (result.ok) {
-                          setSyncState('ok')
-                          setSyncError('')
-                          flashToast('Synced')
-                        } else {
-                          setSyncState('error')
-                          setSyncError(result.error || 'Sync failed')
-                          flashToast(result.error || 'Sync failed')
-                        }
-                      }}
-                    >
-                      Retry sync
-                    </button>
-                  )}
                   <button
                     type="button"
                     role="menuitem"
@@ -1328,16 +1272,62 @@ function App() {
                       handleSignOut()
                     }}
                   >
-                    {CLOUD ? 'Sign out' : 'Sign out / lock'}
+                    {CLOUD ? 'Log out' : 'Log out / lock'}
                   </button>
                 </div>
               )}
             </div>
           </div>
         </div>
+
+        {/* Numbered path — always visible */}
+        <nav className="journey-bar" aria-label="Your path through the app">
+          {JOURNEY_STEPS.map((step, i) => {
+            const active = journeyActive === step.id
+            const stepIndex = JOURNEY_STEPS.findIndex(
+              (s) => s.id === journeyActive
+            )
+            const done = stepIndex > i
+            return (
+              <button
+                key={step.id}
+                type="button"
+                className={`journey-step${active ? ' is-active' : ''}${
+                  done ? ' is-done' : ''
+                }`}
+                onClick={() => setActiveView(step.view)}
+                aria-current={active ? 'step' : undefined}
+              >
+                <span className="journey-num" aria-hidden="true">
+                  {step.num}
+                </span>
+                <span className="journey-label">{step.label}</span>
+              </button>
+            )
+          })}
+        </nav>
       </header>
 
       <main className="main">
+        {journeyStep && activeView !== 'settings' && (
+          <div className="journey-guide" role="status">
+            <div>
+              <p className="journey-guide-you">
+                You are on step {journeyStep.num}: <strong>{journeyStep.label}</strong>
+              </p>
+              <p className="journey-guide-plain">{journeyStep.plain}</p>
+            </div>
+            {journeyNext && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setActiveView(journeyNext.view)}
+              >
+                {journeyStep.nextLabel}
+              </button>
+            )}
+          </div>
+        )}
         {/* ===== DESK = step-by-step work loop ===== */}
         {activeView === 'flow' && (
           <div className="flow-view surface-desk">
@@ -1345,7 +1335,8 @@ function App() {
               <div>
                 <h1 className="page-title page-title-display">Work</h1>
                 <p className="page-sub">
-                  {activeProject?.name || 'Project'} · one step · complete · next
+                  Project: {activeProject?.name || 'None'} — do one step, then
+                  the next
                 </p>
               </div>
               <div className="flow-top-actions">
@@ -1866,10 +1857,10 @@ function App() {
 
             <div className="flow-top">
               <div>
-                <h1 className="page-title">Mood board</h1>
+                <h1 className="page-title">Picture board</h1>
                 <p className="page-sub">
-                  Collect references for the current step — then return to the
-                  desk.
+                  Save photos and pictures that help your project. Then go back
+                  to Work or Ideas.
                 </p>
               </div>
               <span className="panel-count">{deskMood.length} pins</span>
@@ -2547,11 +2538,11 @@ function App() {
 
             <div className="brand-template-top">
               <div>
-                <h1 className="page-title">Brand identity template</h1>
+                <h1 className="page-title">Brand</h1>
                 <p className="page-sub">
-                  Fill the system for{' '}
-                  <strong>{activeProject?.name || 'this project'}</strong>, then
-                  export a shareable pack.
+                  Colors, words, and look for{' '}
+                  <strong>{activeProject?.name || 'this project'}</strong>.
+                  Tip: fill Ideas first, then click “Fill Brand” there.
                 </p>
               </div>
               <div className="brand-template-actions">
@@ -2560,14 +2551,14 @@ function App() {
                   className="btn btn-secondary"
                   onClick={() => setActiveView('concept')}
                 >
-                  Concept pipeline
+                  ← Ideas
                 </button>
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={openExportPanel}
+                  onClick={() => setActiveView('finish')}
                 >
-                  Export pack
+                  Go to Finish
                 </button>
               </div>
             </div>
@@ -3038,15 +3029,140 @@ function App() {
             <div className="brand-export-bar">
               <button
                 type="button"
+                className="btn btn-secondary"
+                onClick={() => setActiveView('finish')}
+              >
+                Go to Finish
+              </button>
+              <button
+                type="button"
                 className="btn btn-primary"
                 onClick={openExportPanel}
               >
-                Export identity pack
+                Save / print pack
               </button>
               <span className="panel-hint" style={{ margin: 0 }}>
-                Print / PDF or download HTML
+                Or open Finish (step 5) for the full wrap-up
               </span>
             </div>
+          </div>
+        )}
+
+        {/* ===== FINISH — end of path ===== */}
+        {activeView === 'finish' && (
+          <div className="finish-view surface-document">
+            <div className="flow-top">
+              <div>
+                <h1 className="page-title page-title-display">Finish</h1>
+                <p className="page-sub">
+                  Step 5 — save your pack, start another project, or log out
+                </p>
+              </div>
+            </div>
+
+            <section className="panel brand-section finish-hero-panel">
+              <div className="brand-section-label">You made it</div>
+              <h2 className="panel-title" style={{ marginBottom: '0.5rem' }}>
+                {activeProject?.name || 'Your project'}
+              </h2>
+              <p className="empty-state-body" style={{ marginBottom: '1rem' }}>
+                Path: Project → Work → Ideas → Brand → <strong>Finish</strong>.
+                Pick one action below. Nothing is lost when you log out if you
+                saved a backup or use cloud save.
+              </p>
+              <div className="finish-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={openExportPanel}
+                >
+                  1 · Save or print brand pack
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={downloadDataBackup}
+                >
+                  2 · Download full backup (JSON)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActiveView('brand')}
+                >
+                  Back to Brand (edit more)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActiveView('flow')}
+                >
+                  Back to Work
+                </button>
+              </div>
+            </section>
+
+            <section className="panel brand-section">
+              <div className="brand-section-label">Start over or leave</div>
+              <div className="finish-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    createNewProject()
+                    setActiveView('project')
+                    flashToast('New project ready')
+                  }}
+                >
+                  New project
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleSignOut}
+                >
+                  {CLOUD ? 'Log out' : 'Log out / lock'}
+                </button>
+              </div>
+              <p className="panel-hint" style={{ marginTop: '0.85rem' }}>
+                Log out ends this session. Use download backup if you need a
+                file on your computer.
+              </p>
+            </section>
+
+            <section className="panel panel-compact">
+              <p className="list-heading">Quick map (if you get lost)</p>
+              <ol className="finish-map">
+                <li>
+                  <button type="button" className="text-link" onClick={() => setActiveView('project')}>
+                    1 Project
+                  </button>
+                  {' — '}name and pick the job
+                </li>
+                <li>
+                  <button type="button" className="text-link" onClick={() => setActiveView('flow')}>
+                    2 Work
+                  </button>
+                  {' — '}do one step at a time
+                </li>
+                <li>
+                  <button type="button" className="text-link" onClick={() => setActiveView('concept')}>
+                    3 Ideas
+                  </button>
+                  {' — '}sketches, lock plan, fill package
+                </li>
+                <li>
+                  <button type="button" className="text-link" onClick={() => setActiveView('brand')}>
+                    4 Brand
+                  </button>
+                  {' — '}colors and words
+                </li>
+                <li>
+                  <strong>5 Finish</strong>
+                  {' — '}you are here · save · log out
+                </li>
+              </ol>
+            </section>
           </div>
         )}
 
@@ -3412,17 +3528,17 @@ function App() {
           <div className="project-view surface-desk">
             <div className="flow-top">
               <div>
-                <h1 className="page-title">Projects</h1>
+                <h1 className="page-title">Project</h1>
                 <p className="page-sub">
-                  Switch lane, set brief &amp; deadline — then work on Work
+                  Step 1 — pick or name your project, then go to Work
                 </p>
               </div>
               <button
                 type="button"
-                className="btn btn-secondary"
-                onClick={openBreakdown}
+                className="btn btn-primary"
+                onClick={() => setActiveView('flow')}
               >
-                Break into micro-steps
+                Go to Work
               </button>
             </div>
             <section className="panel brand-section">
@@ -3527,19 +3643,9 @@ function App() {
                   className="link-row is-primary"
                   onClick={() => setActiveView('flow')}
                 >
-                  <span className="link-row-label">Work</span>
+                  <span className="link-row-label">2 · Work</span>
                   <span className="link-row-meta">
-                    {deskTasks.filter((t) => !t.completed).length} open
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="link-row"
-                  onClick={() => setActiveView('studio')}
-                >
-                  <span className="link-row-label">Board</span>
-                  <span className="link-row-meta">
-                    {deskMood.length} pins
+                    {deskTasks.filter((t) => !t.completed).length} to do
                   </span>
                 </button>
                 <button
@@ -3547,16 +3653,24 @@ function App() {
                   className="link-row"
                   onClick={() => setActiveView('concept')}
                 >
-                  <span className="link-row-label">Concept pipeline</span>
-                  <span className="link-row-meta">Sketches → Brand</span>
+                  <span className="link-row-label">3 · Ideas</span>
+                  <span className="link-row-meta">Sketches &amp; plan</span>
                 </button>
                 <button
                   type="button"
                   className="link-row"
                   onClick={() => setActiveView('brand')}
                 >
-                  <span className="link-row-label">Brand &amp; export</span>
-                  <span className="link-row-meta">Pack</span>
+                  <span className="link-row-label">4 · Brand</span>
+                  <span className="link-row-meta">Colors &amp; words</span>
+                </button>
+                <button
+                  type="button"
+                  className="link-row"
+                  onClick={() => setActiveView('finish')}
+                >
+                  <span className="link-row-label">5 · Finish</span>
+                  <span className="link-row-meta">Share &amp; log out</span>
                 </button>
               </div>
 
@@ -3638,16 +3752,17 @@ function App() {
         >
           <div className="export-panel onboard-panel">
             <p className="onboard-eyebrow">
-              {CLOUD ? 'Synced to your account' : 'This device only'}
+              {CLOUD ? 'Signed in · saved to your account' : 'Saved on this device'}
             </p>
             <h2 id="onboard-title" style={{ marginTop: 0 }}>
-              Start your work loop
+              Name your project
             </h2>
             <p className="view-lede">
-              Dump ideas → one current step → complete it. Not a chatbot.{' '}
+              Easy path: <strong>1 Project → 2 Work → 3 Ideas → 4 Brand → 5
+              Finish</strong>.{' '}
               {CLOUD
-                ? 'Your desk syncs to the cloud and caches on this browser.'
-                : 'Work is saved in this browser only.'}
+                ? 'Your work saves to your account.'
+                : 'Your work stays on this computer.'}
             </p>
             <label className="onboard-label">
               Project name

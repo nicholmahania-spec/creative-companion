@@ -102,13 +102,14 @@ export default function ConceptPipeline({
 
       <div className="flow-top">
         <div>
-          <h1 className="page-title page-title-display">Concept</h1>
+          <h1 className="page-title page-title-display">Ideas</h1>
           <p className="page-sub">
-            Sketches → develop → iterate → lock plan → package → Brand identity
+            Step 3 — upload sketches, pick favorites, lock them, then fill the
+            plan. Last button sends everything to Brand.
           </p>
         </div>
         <button type="button" className="btn btn-primary" onClick={applyToBrand}>
-          Fill Brand identity
+          Send to Brand →
         </button>
       </div>
 
@@ -478,20 +479,19 @@ export default function ConceptPipeline({
               className="btn btn-primary"
               onClick={applyToBrand}
             >
-              Apply package → Brand identity
+              Send to Brand (step 4) →
             </button>
             <button
               type="button"
               className="btn btn-secondary"
               onClick={onGoBrand}
             >
-              Open Brand
+              Open Brand now
             </button>
           </div>
           <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
-            Applies audience/outcome + locked plan into the brief; concept →
-            tagline; voice, logo direction, do/don’t into Brand fields. You can
-            still edit Brand after.
+            This copies your plan into Brand (colors &amp; words page). You can
+            still change anything there. Then go to Finish to share.
           </p>
         </section>
       )}
