@@ -61,6 +61,16 @@ export default defineConfig({
     __APP_BUILD__: JSON.stringify(meta.build),
     __APP_BUILD_DATE__: JSON.stringify(meta.date),
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+        },
+      },
+    },
+  },
   // Dev: /api/xai/* → api.x.ai/v1/* with server-side XAI_API_KEY
   server: {
     proxy: {

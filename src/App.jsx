@@ -1,4 +1,12 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+  lazy,
+  Suspense,
+} from 'react'
 import useAppStore from './store/useAppStore'
 import {
   DEFAULT_PALETTE,
@@ -27,11 +35,14 @@ import {
   APP_BUILD_DATE,
   versionLabel,
 } from './lib/version'
-import LoginPage from './components/LoginPage'
-import BuddyMate from './components/BuddyMate'
-import ForcedBreakOverlay from './components/ForcedBreakOverlay'
-import BrandArtboard from './components/BrandArtboard'
-import GameHUD from './components/GameHUD'
+const LoginPage = lazy(() => import('./components/LoginPage'))
+const BuddyMate = lazy(() => import('./components/BuddyMate'))
+const ForcedBreakOverlay = lazy(() => import('./components/ForcedBreakOverlay'))
+const BrandArtboard = lazy(() => import('./components/BrandArtboard'))
+const GameHUD = lazy(() => import('./components/GameHUD'))
+const InsightsView = lazy(() => import('./views/InsightsView'))
+const CalendarView = lazy(() => import('./views/CalendarView'))
+const SettingsView = lazy(() => import('./views/SettingsView'))
 import {
   breakMinutesForWork,
   POMODORO_WORK_MIN,
@@ -108,6 +119,7 @@ function App() {
   const addMoodPin = useAppStore((s) => s.addMoodPin)
   const toggleMoodPinInPack = useAppStore((s) => s.toggleMoodPinInPack)
   const movePackPin = useAppStore((s) => s.movePackPin)
+  const reorderBoardPins = useAppStore((s) => s.reorderBoardPins)
   const setPackHeroPin = useAppStore((s) => s.setPackHeroPin)
   const setColorRole = useAppStore((s) => s.setColorRole)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
@@ -271,9 +283,10 @@ function App() {
   const doneTasks = deskTasks.filter((t) => t.completed)
   const nextTask = openTasks[0] || null
   const queueTasks = openTasks.slice(1)
-  const deskMood = (moodItems || []).filter(
-    (m) => m.projectId == null || m.projectId === activeProjectId
-  )
+  const deskMood = (moodItems || [])
+    .filter((m) => m.projectId == null || m.projectId === activeProjectId)
+    .slice()
+    .sort((a, b) => (a.boardOrder ?? 0) - (b.boardOrder ?? 0))
   const completedCount = doneTasks.length
   const progressPercent =
     deskTasks.length > 0
@@ -1495,6 +1508,7 @@ function App() {
       }`}
     >
       {forcedBreak && (
+        <Suspense fallback={null}>
         <ForcedBreakOverlay
           totalSeconds={forcedBreak.totalSec}
           leftSeconds={forcedBreak.leftSec}
@@ -1505,6 +1519,7 @@ function App() {
           onCompleteItem={completeBreakPlanItem}
           onEmergencyUnlock={() => endForcedBreak(true)}
         />
+        </Suspense>
       )}
       <header className="header header-redesign">
         <div className="header-content header-content-simple">
@@ -1733,7 +1748,11 @@ function App() {
           </div>
         </div>
 
-        {showProgress && <GameHUD />}
+        {showProgress && (
+          <Suspense fallback={null}>
+            <GameHUD />
+          </Suspense>
+        )}
 
         <nav
           className={`journey-bar${journeyActive ? '' : ' is-tools'}`}
@@ -2341,7 +2360,7 @@ function App() {
                 </div>
               )}
               <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
-                Tip: drag image files onto the board below.
+                Tip: drag image files onto the board, or drag pins to reorder.
               </p>
             </section>
 
@@ -2409,20 +2428,28 @@ function App() {
                     const target = e.target.closest('[data-pin-id]')
                     const targetId = target?.getAttribute('data-pin-id')
                     if (targetId && targetId !== pinId) {
-                      const starred = deskMood
-                        .filter((m) => m.inPack)
-                        .sort(
-                          (a, b) => (a.packOrder ?? 0) - (b.packOrder ?? 0)
-                        )
-                      const ids = starred.map((m) => m.id)
-                      const from = ids.indexOf(Number(pinId) || pinId)
-                      const to = ids.indexOf(Number(targetId) || targetId)
+                      const ids = deskMood.map((m) => m.id)
+                      const from = ids.findIndex(
+                        (id) => String(id) === String(pinId)
+                      )
+                      const to = ids.findIndex(
+                        (id) => String(id) === String(targetId)
+                      )
                       if (from >= 0 && to >= 0) {
                         const next = [...ids]
                         const [moved] = next.splice(from, 1)
                         next.splice(to, 0, moved)
-                        useAppStore.getState().reorderPackPins(next)
-                        flashToast('Pack order updated')
+                        reorderBoardPins(next, activeProjectId)
+                        // Keep pack order aligned when both are starred
+                        const packIds = next.filter((id) =>
+                          deskMood.find(
+                            (m) => String(m.id) === String(id) && m.inPack
+                          )
+                        )
+                        if (packIds.length > 1) {
+                          useAppStore.getState().reorderPackPins(packIds)
+                        }
+                        flashToast('Board order updated')
                       }
                     }
                     return
@@ -2464,9 +2491,8 @@ function App() {
                       <article
                         key={item.id || index}
                         data-pin-id={item.id}
-                        draggable={!!item.inPack}
+                        draggable
                         onDragStart={(e) => {
-                          if (!item.inPack) return
                           e.dataTransfer.setData(
                             'text/cc-pin-id',
                             String(item.id)
@@ -2476,7 +2502,7 @@ function App() {
                         }}
                         onDragEnd={() => setBoardDragId(null)}
                         className={`mood-card${isQuote && !isImageFace ? ' is-quote' : ''}${
-                          isHero ? ' is-hero' : ''
+                          index === 0 ? ' is-hero' : ''
                         }${item.inPack ? ' is-pack-pin' : ''}${
                           boardDragId === item.id ? ' is-dragging' : ''
                         }${item.packHero ? ' is-pack-hero' : ''}`}
@@ -2663,349 +2689,56 @@ function App() {
           </div>
         )}
 
-        {/* ===== FOCUS (help tool) ===== */}
+        {/* ===== FOCUS (lazy) ===== */}
         {activeView === 'insights' && (
-          <div className="insights-layout">
-            <button
-              type="button"
-              className="back-link"
-              onClick={() => setActiveView('flow')}
-            >
-              ← Work
-            </button>
-            <div className="flow-top">
-              <div>
-                <h1 className="page-title">Focus timer</h1>
-                <p className="page-sub">
-                  Hold attention · then complete the current step
-                </p>
-              </div>
-            </div>
-            {nextTask && (
-              <div className="mood-linked-step" style={{ marginBottom: '1rem' }}>
-                <span className="task-badge">Work on</span>
-                <p className="mood-linked-title">{nextTask.title}</p>
-              </div>
-            )}
-            <section className="panel focus-panel brand-section">
-              <div className="brand-section-label">Timer</div>
-              <div className="insights-timer">
-                {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
-              </div>
-              <div className="insights-focus-actions">
-                <button
-                  type="button"
-                  onClick={startOrPauseFocus}
-                  className="btn btn-primary"
-                  disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
-                >
-                  {isFocusRunning
-                    ? 'Pause'
-                    : focusLeft > 0 && focusLeft < POMODORO_WORK_MIN * 60
-                      ? 'Resume'
-                      : focusLeft === 2 * 60
-                        ? 'Start 2 min'
-                        : 'Start 25 min (Pomodoro)'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => resetFocus(25)}
-                  className="btn btn-secondary"
-                  disabled={!!forcedBreak}
-                >
-                  25 min
-                </button>
-                <button
-                  type="button"
-                  onClick={() => resetFocus(2)}
-                  className="btn btn-ghost"
-                  disabled={!!forcedBreak}
-                >
-                  2 min
-                </button>
-              </div>
-              {sessionComplete && !forcedBreak && (
-                <p className="session-done">
-                  {forceBreaksEnabled
-                    ? 'Work block done — a required break lock should open. Rest, then continue.'
-                    : 'Work block done. Forced lockouts are off — take a stretch if you want.'}
-                </p>
-              )}
-              <div className="settings-row" style={{ marginTop: '0.85rem' }}>
-                <div>
-                  <strong>Force break lockouts</strong>
-                  <span>
-                    When on: desk locks 5–10 min after a Pomodoro (or 25+ min with
-                    helper on)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={forceBreaksEnabled}
-                  className={`pref-switch${forceBreaksEnabled ? ' is-on' : ''}`}
-                  onClick={() => {
-                    const next = !forceBreaksEnabled
-                    setPref('forceBreaksEnabled', next)
-                    flashToast(
-                      next
-                        ? 'Forced breaks on — desk will lock after cycles'
-                        : 'Forced breaks off — no lockout'
-                    )
-                  }}
-                >
-                  <span className="pref-switch-knob" />
-                  <span className="sr-only">
-                    {forceBreaksEnabled ? 'On' : 'Off'}
-                  </span>
-                </button>
-              </div>
-            </section>
-            <section className="panel brand-section">
-              <div className="brand-section-label">After</div>
-              <div className="help-grid help-grid-3">
-                <button
-                  type="button"
-                  className="help-card"
-                  disabled={!nextTask}
-                  onClick={() => {
-                    if (nextTask) toggleTask(nextTask.id)
-                    setActiveView('flow')
-                  }}
-                >
-                  <strong>Mark step done</strong>
-                  <span>Complete current desk step</span>
-                </button>
-                <button
-                  type="button"
-                  className="help-card"
-                  onClick={() => setActiveView('flow')}
-                >
-                  <strong>Back to loop</strong>
-                  <span>
-                    {completedCount}/{deskTasks.length || 0} done
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="help-card"
-                  onClick={() => toggleBodyDoubling()}
-                >
-                  <strong>Body double</strong>
-                  <span>{bodyDoubling ? 'On' : 'Turn on'}</span>
-                </button>
-              </div>
-            </section>
-          </div>
+          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading timer…</div>}>
+            <InsightsView
+              setActiveView={setActiveView}
+              nextTask={nextTask}
+              focusMinutes={focusMinutes}
+              focusSeconds={focusSeconds}
+              forcedBreak={forcedBreak}
+              startOrPauseFocus={startOrPauseFocus}
+              resetFocus={resetFocus}
+              isFocusRunning={isFocusRunning}
+              focusLeft={focusLeft}
+              POMODORO_WORK_MIN={POMODORO_WORK_MIN}
+              forceBreaksEnabled={forceBreaksEnabled}
+              setPref={setPref}
+              bodyDoubling={bodyDoubling}
+              toggleBodyDoubling={toggleBodyDoubling}
+              flashToast={flashToast}
+              endForcedBreak={endForcedBreak}
+              sessionComplete={sessionComplete}
+              toggleTask={toggleTask}
+              completedCount={completedCount}
+              deskTasks={deskTasks}
+            />
+          </Suspense>
+
         )}
-
-        {/* ===== DEADLINE CALENDAR ===== */}
+        {/* ===== CALENDAR (lazy) ===== */}
         {activeView === 'calendar' && (
-          <div className="calendar-view">
-            <button
-              type="button"
-              className="back-link"
-              onClick={() => setActiveView('flow')}
-            >
-              ← Work
-            </button>
-
-            <div className="flow-top">
-              <div>
-                <h1 className="page-title">Deadlines</h1>
-                <p className="page-sub">
-                  Project due dates + step due dates. Simple calendar so time
-                  stays visible.
-                </p>
-              </div>
-            </div>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">Active project due</div>
-              <p className="panel-hint" style={{ marginBottom: '0.55rem' }}>
-                {activeProject?.name || 'No project'}
-              </p>
-              <label className="field-label" htmlFor="project-deadline">
-                Project deadline
-              </label>
-              <div className="deadline-edit-row">
-                <input
-                  id="project-deadline"
-                  type="date"
-                  className="field-input"
-                  value={projectDeadline}
-                  onChange={(e) => setProjectDeadline(e.target.value)}
-                />
-                {projectDeadline && (
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => setProjectDeadline('')}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              {projectDeadline && (
-                <p
-                  className={`deadline-chip urgency-${projectUrgency || 'later'}`}
-                >
-                  {formatShortDate(projectDeadline)} ·{' '}
-                  {urgencyLabel(projectDeadline)}
-                </p>
-              )}
-            </section>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">Month</div>
-              <div className="cal-nav">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() =>
-                    setCalCursor((c) => {
-                      const m = c.month - 1
-                      if (m < 0) return { year: c.year - 1, month: 11 }
-                      return { ...c, month: m }
-                    })
-                  }
-                >
-                  ←
-                </button>
-                <h2 className="cal-month-title">
-                  {formatMonthYear(calCursor.year, calCursor.month)}
-                </h2>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() =>
-                    setCalCursor((c) => {
-                      const m = c.month + 1
-                      if (m > 11) return { year: c.year + 1, month: 0 }
-                      return { ...c, month: m }
-                    })
-                  }
-                >
-                  →
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => {
-                    const n = new Date()
-                    setCalCursor({
-                      year: n.getFullYear(),
-                      month: n.getMonth(),
-                    })
-                  }}
-                >
-                  Today
-                </button>
-              </div>
-              <div className="cal-weekdays" aria-hidden="true">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                  <span key={d}>{d}</span>
-                ))}
-              </div>
-              <div className="cal-grid">
-                {buildMonthGrid(calCursor.year, calCursor.month).map(
-                  (cell, i) => {
-                    const events = cell.date
-                      ? calendarEvents[cell.date] || []
-                      : []
-                    const isToday = cell.date === toISODate()
-                    return (
-                      <div
-                        key={i}
-                        className={`cal-cell${
-                          cell.inMonth ? '' : ' is-pad'
-                        }${isToday ? ' is-today' : ''}${
-                          events.length ? ' has-events' : ''
-                        }`}
-                      >
-                        {cell.day != null && (
-                          <span className="cal-daynum">{cell.day}</span>
-                        )}
-                        {events.slice(0, 3).map((ev) => (
-                          <button
-                            key={ev.id}
-                            type="button"
-                            className={`cal-event cal-event-${ev.type}`}
-                            title={ev.label}
-                            onClick={() => {
-                              if (ev.projectId != null) {
-                                selectProject(ev.projectId)
-                              }
-                              setActiveView(
-                                ev.type === 'project' ? 'project' : 'flow'
-                              )
-                            }}
-                          >
-                            {ev.type === 'project' ? '◆ ' : '· '}
-                            {ev.label.slice(0, 18)}
-                            {ev.label.length > 18 ? '…' : ''}
-                          </button>
-                        ))}
-                        {events.length > 3 && (
-                          <span className="cal-more">
-                            +{events.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )
-                  }
-                )}
-              </div>
-              <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
-                ◆ = project deadline · · = open step due date
-              </p>
-            </section>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">Upcoming</div>
-              {upcomingDeadlines.length === 0 ? (
-                <p className="empty-state-body" style={{ margin: 0 }}>
-                  No deadlines yet. Set a project deadline above, or add a due
-                  date when capturing a step (Energy &amp; voice → Due).
-                </p>
-              ) : (
-                <ul className="deadline-list">
-                  {upcomingDeadlines.map((row) => (
-                    <li
-                      key={`${row.kind}-${row.id}`}
-                      className={`deadline-list-item urgency-${row.urgency}`}
-                    >
-                      <div>
-                        <strong>
-                          {row.kind === 'project' ? 'Project' : 'Step'}:{' '}
-                          {row.name}
-                        </strong>
-                        <span>
-                          {formatShortDate(row.date)} ·{' '}
-                          {urgencyLabel(row.date)}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => {
-                          if (row.kind === 'project') {
-                            selectProject(row.id)
-                            setActiveView('project')
-                          } else if (row.projectId != null) {
-                            selectProject(row.projectId)
-                            setActiveView('flow')
-                          }
-                        }}
-                      >
-                        Open
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
+          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading calendar…</div>}>
+            <CalendarView
+              setActiveView={setActiveView}
+              calCursor={calCursor}
+              setCalCursor={setCalCursor}
+              buildMonthGrid={buildMonthGrid}
+              formatMonthYear={formatMonthYear}
+              formatShortDate={formatShortDate}
+              urgencyLabel={urgencyLabel}
+              deadlineUrgency={deadlineUrgency}
+              daysUntil={daysUntil}
+              toISODate={toISODate}
+              calendarEvents={calendarEvents}
+              selectProject={selectProject}
+              projectDeadline={projectDeadline}
+              setProjectDeadline={setProjectDeadline}
+              activeProject={activeProject}
+              upcomingDeadlines={upcomingDeadlines}
+            />
+          </Suspense>
         )}
 
         {/* Concept pipeline removed from UI — Board + System only */}
@@ -3042,6 +2775,7 @@ function App() {
             </div>
 
             {/* ARTBOARD — shared pack source of truth */}
+            <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
             <BrandArtboard
               id="system-artboard"
               project={activeProject || {}}
@@ -3069,6 +2803,7 @@ function App() {
                 flashToast('Mark removed')
               }}
             />
+            </Suspense>
 
             <p className="system-edit-label">Edit</p>
             <div className="system-accordion-nav" role="tablist">
@@ -3596,7 +3331,8 @@ function App() {
             <section className="panel brand-section finish-hero-panel pack-hero">
               <div className="pack-layout">
                 <div className="pack-preview-thumb pack-preview-artboard">
-                  <BrandArtboard
+                  <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
+            <BrandArtboard
                     id="pack-preview-artboard"
                     project={activeProject || {}}
                     palette={projectPalette}
@@ -3604,6 +3340,7 @@ function App() {
                     compact
                     editable={false}
                   />
+            </Suspense>
                 </div>
                 <div className="pack-meta">
                   {(() => {
@@ -3811,454 +3548,58 @@ function App() {
           </div>
         )}
 
-        {/* ===== SETTINGS ===== */}
+        {/* ===== SETTINGS (lazy) ===== */}
         {activeView === 'settings' && (
-          <div className="settings-view">
-            <button
-              type="button"
-              className="back-link"
-              onClick={() => setActiveView('project')}
-            >
-              ← Path
-            </button>
-            <div className="flow-top">
-              <div>
-                <h1 className="page-title">Settings</h1>
-                <p className="page-sub">
-                  {CLOUD
-                    ? 'Preferences, account, and data for your cloud desk.'
-                    : 'Preferences and data for this device.'}
-                </p>
-              </div>
-            </div>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">Appearance</div>
-              <div className="settings-row">
-                <div>
-                  <strong>Theme</strong>
-                  <span>Light or dark screen comfort</span>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => toggleTheme()}
-                >
-                  {theme === 'warm' ? 'Use dark' : 'Use light'}
-                </button>
-              </div>
-              <div className="settings-row">
-                <div>
-                  <strong>Reduce motion</strong>
-                  <span>Less animation</span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={reduceMotion}
-                  className={`pref-switch${reduceMotion ? ' is-on' : ''}`}
-                  onClick={() => setPref('reduceMotion', !reduceMotion)}
-                >
-                  <span className="pref-switch-knob" />
-                  <span className="sr-only">
-                    {reduceMotion ? 'On' : 'Off'}
-                  </span>
-                </button>
-              </div>
-            </section>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">Presence &amp; sound</div>
-              <div className="settings-row">
-                <div>
-                  <strong>Design buddy</strong>
-                  <span>
-                    Corner Helper (Coach · Critique · Break). Forced desk
-                    lockouts are the separate switch below — one hard model.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={bodyDoubling}
-                  className={`pref-switch${bodyDoubling ? ' is-on' : ''}`}
-                  onClick={() => toggleBodyDoubling()}
-                >
-                  <span className="pref-switch-knob" />
-                  <span className="sr-only">
-                    {bodyDoubling ? 'On' : 'Off'}
-                  </span>
-                </button>
-              </div>
-              <div className="settings-row">
-                <div>
-                  <strong>Timer sound</strong>
-                  <span>Chime when a focus session ends</span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={soundEnabled}
-                  className={`pref-switch${soundEnabled ? ' is-on' : ''}`}
-                  onClick={() => setPref('soundEnabled', !soundEnabled)}
-                >
-                  <span className="pref-switch-knob" />
-                  <span className="sr-only">
-                    {soundEnabled ? 'On' : 'Off'}
-                  </span>
-                </button>
-              </div>
-              <div className="settings-row">
-                <div>
-                  <strong>Force break lockouts</strong>
-                  <span>
-                    Hard lock only: full-desk freeze after Pomodoro / long Helper
-                    sessions. Soft tips still work if this is off.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={forceBreaksEnabled}
-                  className={`pref-switch${forceBreaksEnabled ? ' is-on' : ''}`}
-                  onClick={() => {
-                    const next = !forceBreaksEnabled
-                    if (next && !prefs.forceBreaksConsented) {
-                      const ok = window.confirm(
-                        'Forced breaks lock the whole desk for 5–10 minutes after a Pomodoro (or long Helper sessions). You can turn this off anytime. Enable?'
-                      )
-                      if (!ok) return
-                      setPref('forceBreaksConsented', true)
-                    }
-                    setPref('forceBreaksEnabled', next)
-                    if (!next && forcedBreak) {
-                      endForcedBreak(true)
-                    }
-                    flashToast(
-                      next ? 'Forced break lockouts on' : 'Forced break lockouts off'
-                    )
-                  }}
-                >
-                  <span className="pref-switch-knob" />
-                  <span className="sr-only">
-                    {forceBreaksEnabled ? 'On' : 'Off'}
-                  </span>
-                </button>
-              </div>
-            </section>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">Work</div>
-              <div className="settings-row">
-                <div>
-                  <strong>Collapse queue by default</strong>
-                  <span>Only show the current step</span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={queueCollapsed}
-                  className={`pref-switch${queueCollapsed ? ' is-on' : ''}`}
-                  onClick={() => setPref('queueCollapsed', !queueCollapsed)}
-                >
-                  <span className="pref-switch-knob" />
-                  <span className="sr-only">
-                    {queueCollapsed ? 'On' : 'Off'}
-                  </span>
-                </button>
-              </div>
-              <div className="settings-row">
-                <div>
-                  <strong>Show “How this works”</strong>
-                  <span>Intro card on Work</span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={showHowItWorks}
-                  className={`pref-switch${showHowItWorks ? ' is-on' : ''}`}
-                  onClick={() => setPref('showHowItWorks', !showHowItWorks)}
-                >
-                  <span className="pref-switch-knob" />
-                  <span className="sr-only">
-                    {showHowItWorks ? 'On' : 'Off'}
-                  </span>
-                </button>
-              </div>
-              <div className="settings-row">
-                <div>
-                  <strong>Progress bar (XP)</strong>
-                  <span>Optional level / quest strip under the path</span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={showProgress}
-                  className={`pref-switch${showProgress ? ' is-on' : ''}`}
-                  onClick={() => setPref('showProgress', !showProgress)}
-                >
-                  <span className="pref-switch-knob" />
-                  <span className="sr-only">
-                    {showProgress ? 'On' : 'Off'}
-                  </span>
-                </button>
-              </div>
-            </section>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">
-                {CLOUD ? 'Account & sync' : 'Access'}
-              </div>
-              <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
-                {accessName ? `Signed in as ${accessName}. ` : ''}
-                {CLOUD
-                  ? 'Your desk syncs to Supabase. This browser also keeps a local cache.'
-                  : 'Local password unlocks this browser only. Add Supabase env vars for cloud accounts.'}
-              </p>
-              {CLOUD && (
-                <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                  Sync:{' '}
-                  <strong>
-                    {syncState === 'syncing'
-                      ? 'Saving…'
-                      : syncState === 'error'
-                        ? 'Error'
-                        : syncState === 'ok'
-                          ? 'Up to date'
-                          : 'Idle'}
-                  </strong>
-                  {syncError ? ` — ${syncError}` : ''}
-                </p>
-              )}
-              <div className="settings-actions" style={{ marginBottom: '1rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleSignOut}
-                >
-                  {CLOUD ? 'Sign out' : 'Sign out / lock'}
-                </button>
-                {CLOUD && (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={async () => {
-                      setSyncState('syncing')
-                      const result = await pushWorkspace(exportAllData())
-                      if (result.ok) {
-                        setSyncState('ok')
-                        setSyncError('')
-                        flashToast('Synced to cloud')
-                      } else {
-                        setSyncState('error')
-                        setSyncError(result.error || 'Sync failed')
-                        flashToast(result.error || 'Sync failed')
-                      }
-                    }}
-                  >
-                    Sync now
-                  </button>
-                )}
-              </div>
-              {!CLOUD && (
-                <>
-                  <div className="field-block" style={{ marginBottom: '0.65rem' }}>
-                    <label className="field-label" htmlFor="pw-current">
-                      Change local password
-                    </label>
-                    <input
-                      id="pw-current"
-                      type="password"
-                      className="field-input"
-                      value={pwCurrent}
-                      onChange={(e) => setPwCurrent(e.target.value)}
-                      placeholder="Current password"
-                      autoComplete="current-password"
-                    />
-                  </div>
-                  <div className="capture-row" style={{ marginBottom: '0.5rem' }}>
-                    <input
-                      type="password"
-                      className="field-input"
-                      value={pwNext}
-                      onChange={(e) => setPwNext(e.target.value)}
-                      placeholder="New password (6+ chars)"
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      disabled={!pwCurrent || pwNext.length < 6}
-                      onClick={async () => {
-                        const result = await changeAccessPassword(
-                          pwCurrent,
-                          pwNext
-                        )
-                        if (result.ok) {
-                          setPwCurrent('')
-                          setPwNext('')
-                          flashToast('Password updated')
-                        } else {
-                          flashToast(result.error || 'Could not update')
-                        }
-                      }}
-                    >
-                      Update
-                    </button>
-                  </div>
-                </>
-              )}
-            </section>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">Your data</div>
-              <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
-                {CLOUD
-                  ? 'Your desk syncs to the cloud. Keep a JSON backup for portability.'
-                  : 'Work is saved on this device. Export a backup if it matters.'}
-              </p>
-              <details className="settings-advanced">
-                <summary>Advanced storage</summary>
-                <p className="panel-hint" style={{ margin: '0.5rem 0' }}>
-                  {CLOUD
-                    ? 'Cloud + browser cache. JSON export is the best portable backup.'
-                    : STORAGE_EXPLAIN.summary}
-                </p>
-                <p className="panel-hint">
-                  Cache key:{' '}
-                  <code className="settings-code">
-                    {STORAGE_EXPLAIN.workDataKey}
-                  </code>
-                  {CLOUD ? ' · table: user_workspaces' : ''}
-                </p>
-              </details>
-              <div className="settings-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={downloadDataBackup}
-                >
-                  Download JSON backup
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => importFileRef.current?.click()}
-                >
-                  Import JSON backup
-                </button>
-                <input
-                  ref={importFileRef}
-                  type="file"
-                  accept="application/json,.json"
-                  className="sr-only"
-                  aria-label="Import JSON backup file"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    e.target.value = ''
-                    if (!file) return
-                    if (
-                      !window.confirm(
-                        'Replace all data on this device with the backup? Current work will be overwritten.'
-                      )
-                    ) {
-                      return
-                    }
-                    handleImportBackup(file)
-                  }}
-                />
-              </div>
-              <div className="settings-danger-zone">
-                <p className="settings-danger-title">Danger zone</p>
-                <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
-                  These replace or wipe work. Download a backup first.
-                </p>
-                <div className="settings-actions">
-                  <button
-                    type="button"
-                    className="btn btn-ghost settings-danger"
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          'Wipe this desk and start empty (one blank project)? This cannot be undone unless you have a backup.'
-                        )
-                      ) {
-                        clearToEmpty()
-                        setActiveView('flow')
-                        flashToast('Empty desk ready')
-                      }
-                    }}
-                  >
-                    Start empty desk
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost settings-danger"
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          'Full reset: clear all data and show first-run setup again?'
-                        )
-                      ) {
-                        clearAllData()
-                        setShowOnboarding(true)
-                        setActiveView('project')
-                        flashToast('Reset — set up your real project')
-                      }
-                    }}
-                  >
-                    Full reset + setup
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">Optional sample</div>
-              <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
-                Load a finished sample brand run to see the full path. It
-                replaces your current workspace — export a backup first.
-              </p>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      'Replace your workspace with the Soft Signal sample project?'
-                    )
-                  ) {
-                    loadSoftSignalDemo()
-                  }
-                }}
-              >
-                Load Soft Signal demo project
-              </button>
-            </section>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">About</div>
-              <div className="settings-row">
-                <div>
-                  <strong>Version</strong>
-                  <span>
-                    {versionLabel()}
-                    {APP_BUILD_DATE ? ` · ${APP_BUILD_DATE}` : ''}
-                    {APP_BUILD ? ` · ${APP_BUILD}` : ''}
-                  </span>
-                </div>
-              </div>
-              <p className="panel-hint" style={{ margin: 0 }}>
-                Creative Companion is a real desk for ADHD creative work: one
-                step at a time, Helper presence, forced breaks, and brand pack
-                export
-                {CLOUD ? ' — with optional cloud sync when configured.' : '.'}
-              </p>
-            </section>
-          </div>
+          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading settings…</div>}>
+            <SettingsView
+              setActiveView={setActiveView}
+              CLOUD={CLOUD}
+              accessName={accessName}
+              syncState={syncState}
+              syncError={syncError}
+              pushWorkspace={pushWorkspace}
+              exportAllData={exportAllData}
+              setSyncState={setSyncState}
+              setSyncError={setSyncError}
+              handleSignOut={handleSignOut}
+              theme={theme}
+              toggleTheme={toggleTheme}
+              reduceMotion={reduceMotion}
+              soundEnabled={soundEnabled}
+              showHowItWorks={showHowItWorks}
+              showProgress={showProgress}
+              queueCollapsed={queueCollapsed}
+              forceBreaksEnabled={forceBreaksEnabled}
+              setPref={setPref}
+              bodyDoubling={bodyDoubling}
+              toggleBodyDoubling={toggleBodyDoubling}
+              flashToast={flashToast}
+              forcedBreak={forcedBreak}
+              endForcedBreak={endForcedBreak}
+              prefs={prefs}
+              pwCurrent={pwCurrent}
+              setPwCurrent={setPwCurrent}
+              pwNext={pwNext}
+              setPwNext={setPwNext}
+              changeAccessPassword={changeAccessPassword}
+              downloadDataBackup={downloadDataBackup}
+              handleImportBackup={handleImportBackup}
+              importFileRef={importFileRef}
+              clearToEmpty={clearToEmpty}
+              clearAllData={clearAllData}
+              setShowOnboarding={setShowOnboarding}
+              loadSoftSignalDemo={loadSoftSignalDemo}
+              versionLabel={versionLabel}
+              APP_BUILD={APP_BUILD}
+              APP_BUILD_DATE={APP_BUILD_DATE}
+              STORAGE_EXPLAIN={STORAGE_EXPLAIN}
+              notifyAction={notifyAction}
+              createNewProject={createNewProject}
+            />
+          </Suspense>
         )}
 
-        {/* ===== PROJECTS ===== */}
+{/* ===== PROJECTS ===== */}
         {activeView === 'project' && (
           <div className="project-view surface-desk">
             <div className="flow-top">
@@ -4314,20 +3655,72 @@ function App() {
                     </div>
                     <ul className="pack-ready-list project-ready-list">
                       <li className={checks[0] ? 'is-ok' : 'is-miss'}>
-                        {checks[0] ? '✓' : '○'} Open Work step
+                        {checks[0] ? (
+                          <span>✓ Open Work step</span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="pack-ready-fix"
+                            onClick={() => setActiveView('flow')}
+                          >
+                            ○ Open Work step — fix
+                          </button>
+                        )}
                       </li>
                       <li className={checks[1] ? 'is-ok' : 'is-miss'}>
-                        {checks[1] ? '✓' : '○'} Starred pack pins (
-                        {deskMood.filter((m) => m.inPack).length}/6)
+                        {checks[1] ? (
+                          <span>
+                            ✓ Starred pack pins (
+                            {deskMood.filter((m) => m.inPack).length}/6)
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="pack-ready-fix"
+                            onClick={() => setActiveView('studio')}
+                          >
+                            ○ Star pack pins on Board — fix
+                          </button>
+                        )}
                       </li>
                       <li className={checks[2] ? 'is-ok' : 'is-miss'}>
-                        {checks[2] ? '✓' : '○'} Tagline
+                        {checks[2] ? (
+                          <span>✓ Tagline</span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="pack-ready-fix"
+                            onClick={() => goSystemSection('essentials')}
+                          >
+                            ○ Tagline — fix
+                          </button>
+                        )}
                       </li>
                       <li className={checks[3] ? 'is-ok' : 'is-miss'}>
-                        {checks[3] ? '✓' : '○'} Palette
+                        {checks[3] ? (
+                          <span>✓ Palette</span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="pack-ready-fix"
+                            onClick={() => goSystemSection('colors')}
+                          >
+                            ○ Palette — fix
+                          </button>
+                        )}
                       </li>
                       <li className={checks[4] ? 'is-ok' : 'is-miss'}>
-                        {checks[4] ? '✓' : '○'} Brief / positioning
+                        {checks[4] ? (
+                          <span>✓ Brief / positioning</span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="pack-ready-fix"
+                            onClick={() => goSystemSection('essentials')}
+                          >
+                            ○ Brief / positioning — fix
+                          </button>
+                        )}
                       </li>
                     </ul>
                     <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
@@ -4696,7 +4089,8 @@ function App() {
             </div>
 
             <div className="export-artboard-wrap">
-              <BrandArtboard
+              <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
+            <BrandArtboard
                 id="direction-sheet"
                 project={{
                   name: exportPanel.projectName,
@@ -4715,6 +4109,7 @@ function App() {
                 pins={exportPanel.pins || []}
                 editable={false}
               />
+            </Suspense>
               <div className="export-open-work">
                 <div className="kicker">Open work</div>
                 <ul className="direction-tasks">
@@ -4779,6 +4174,7 @@ function App() {
 
       {/* Body double — presence only, NOT a chatbot */}
       {bodyDoubling && (
+        <Suspense fallback={null}>
         <BuddyMate
           onClose={() => setBodyDoubling(false)}
           isFocusRunning={isFocusRunning}
@@ -4807,6 +4203,7 @@ function App() {
             isFocusRunning,
           }}
         />
+        </Suspense>
       )}
 
       {showBreakdown && (

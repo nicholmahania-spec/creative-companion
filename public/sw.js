@@ -1,6 +1,11 @@
-/* Creative Companion — minimal offline shell cache (demo-friendly). */
-const CACHE = 'cc-shell-v1'
-const PRECACHE = ['./', './index.html', './manifest.webmanifest', './favicon.svg']
+/* Creative Companion — offline shell cache */
+const CACHE = 'cc-shell-v2'
+const PRECACHE = [
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './favicon.svg',
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -29,28 +34,34 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
 
-  // Network-first for navigations; cache fallback when offline
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((res) => {
           const copy = res.clone()
-          caches.open(CACHE).then((c) => c.put('./', copy)).catch(() => {})
+          caches.open(CACHE).then((c) => c.put('./index.html', copy)).catch(() => {})
           return res
         })
         .catch(() =>
-          caches.match('./').then((r) => r || caches.match('./index.html')),
+          caches
+            .match('./index.html')
+            .then((r) => r || caches.match('./')),
         ),
     )
     return
   }
 
-  // Cache-first for same-origin static assets
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached
       return fetch(request).then((res) => {
-        if (res.ok && (url.pathname.includes('/assets/') || url.pathname.endsWith('.svg'))) {
+        if (
+          res.ok &&
+          (url.pathname.includes('/assets/') ||
+            url.pathname.endsWith('.svg') ||
+            url.pathname.endsWith('.css') ||
+            url.pathname.endsWith('.js'))
+        ) {
           const copy = res.clone()
           caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {})
         }

@@ -586,23 +586,30 @@ const useAppStore = create(
               m.inPack && (m.projectId == null || m.projectId === projectId)
           )
           const inPack = !!pin.inPack
+          const shift = pin.boardOrder == null
+          const newPin = {
+            ...pin,
+            id: pin.id || Date.now(),
+            projectId,
+            note: pin.note || '',
+            inPack,
+            boardOrder: pin.boardOrder != null ? pin.boardOrder : 0,
+            packOrder:
+              pin.packOrder != null
+                ? pin.packOrder
+                : inPack
+                  ? starred.length
+                  : 0,
+            packHero: !!pin.packHero,
+          }
           return {
             moodItems: [
-              {
-                ...pin,
-                id: pin.id || Date.now(),
-                projectId,
-                note: pin.note || '',
-                inPack,
-                packOrder:
-                  pin.packOrder != null
-                    ? pin.packOrder
-                    : inPack
-                      ? starred.length
-                      : 0,
-                packHero: !!pin.packHero,
-              },
-              ...state.moodItems,
+              newPin,
+              ...state.moodItems.map((m) => {
+                if (!shift) return m
+                if (m.projectId != null && m.projectId !== projectId) return m
+                return { ...m, boardOrder: (m.boardOrder ?? 0) + 1 }
+              }),
             ],
           }
         }),
@@ -700,6 +707,34 @@ const useAppStore = create(
             ...m,
             packHero: m.id === id,
           })),
+        })
+        return { ok: true }
+      },
+
+      /**
+       * Reorder all mood pins for a project (board grid order).
+       * orderedIds = full list of pin ids in new visual order (project pins only).
+       */
+      reorderBoardPins: (orderedIds, projectId) => {
+        const ids = (orderedIds || []).map(String)
+        const pid = projectId ?? get().currentProjectId
+        set((state) => {
+          const mine = (state.moodItems || []).filter(
+            (m) => m.projectId == null || m.projectId === pid
+          )
+          const others = (state.moodItems || []).filter(
+            (m) => m.projectId != null && m.projectId !== pid
+          )
+          // Preserve any pin not in orderedIds at end
+          const ordered = ids
+            .map((id) => mine.find((m) => String(m.id) === id))
+            .filter(Boolean)
+          const leftover = mine.filter((m) => !ids.includes(String(m.id)))
+          const nextMine = [...ordered, ...leftover].map((m, i) => ({
+            ...m,
+            boardOrder: i,
+          }))
+          return { moodItems: [...nextMine, ...others] }
         })
         return { ok: true }
       },
