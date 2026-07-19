@@ -9097,7 +9097,7 @@ html[data-reduce-motion='true'] *::after {
 }
 
 
-/* Board: calm gallery; tools on focus/hover */
+/* Board: calm gallery — star + ⋯ only; pack bulk not always open */
 .mood-card .mood-pin-tools {
   max-height: 0;
   opacity: 0;
@@ -9108,23 +9108,30 @@ html[data-reduce-motion='true'] *::after {
   transition: max-height 0.2s ease, opacity 0.15s ease, padding 0.15s ease;
 }
 .mood-card:hover .mood-pin-tools,
-.mood-card:focus-within .mood-pin-tools,
-.mood-card.is-pack-pin .mood-pin-tools {
-  max-height: 12rem;
+.mood-card:focus-within .mood-pin-tools {
+  max-height: 8rem;
   opacity: 1;
-  padding-top: 0.55rem;
-  padding-bottom: 0.6rem;
+  padding-top: 0.45rem;
+  padding-bottom: 0.5rem;
   border-top-color: var(--border-subtle);
 }
-.mood-card .mood-pin-note-input {
-  /* keep one line of caption always if pack pin starred */
+/* Starred pins: show thin tool row without exploding chrome */
+.mood-card.is-pack-pin .mood-pin-tools {
+  max-height: 4.5rem;
+  opacity: 1;
+  padding-top: 0.4rem;
+  padding-bottom: 0.45rem;
+  border-top-color: var(--border-subtle);
+}
+.mood-card.is-pack-pin:not(:hover):not(:focus-within) .mood-pin-note-input {
+  display: none;
 }
 @media (hover: none) {
   .mood-card .mood-pin-tools {
-    max-height: 12rem;
+    max-height: 8rem;
     opacity: 1;
-    padding-top: 0.55rem;
-    padding-bottom: 0.6rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.5rem;
     border-top-color: var(--border-subtle);
   }
 }
@@ -10393,4 +10400,129 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .app.deep .journey-step.is-active .journey-num {
   background: #e7e5e4;
   color: #0c0a09;
+}
+
+/* Board wall-first v1.16 */
+.board-wall-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.board-drop-hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.75rem;
+}
+
+.board-add-compact {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+.board-add-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+}
+
+.board-upload-btn {
+  cursor: pointer;
+  margin: 0;
+}
+
+.board-add-toolbar .btn.is-on {
+  border-color: var(--border-strong);
+  background: var(--bg-muted);
+  font-weight: 700;
+}
+
+.board-pack-bulk {
+  margin-left: auto;
+}
+
+.board-pack-bulk summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.board-pack-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.mood-pin-tools-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.mood-pin-more {
+  position: relative;
+  margin-left: auto;
+}
+
+.mood-pin-more-sum {
+  list-style: none;
+  cursor: pointer;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.mood-pin-more-sum::-webkit-details-marker {
+  display: none;
+}
+
+.mood-pin-more-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.25rem);
+  z-index: 8;
+  min-width: 10rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-2);
+}
+
+.mood-pin-more-menu .btn {
+  justify-content: flex-start;
+  text-align: left;
+  font-size: 0.75rem;
+}
+
+.mood-pin-note-input {
+  width: 100%;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+/* Helper compact: no full-body stage */
+.buddy-compact-face.helper-character-lottie,
+.buddy-compact-face.helper-character-fallback {
+  width: 2.65rem !important;
+  height: 2.65rem !important;
 }

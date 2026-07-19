@@ -522,26 +522,17 @@ export default function SettingsView(props) {
                 See docs/DEPLOY_AI.md.
               </p>
             )}
-            <div className="settings-row" style={{ marginTop: '0.75rem' }}>
-              <div>
-                <strong>Hide pack watermark</strong>
-                <span>Remove tool footer on direction sheet / PDF</span>
-              </div>
+            <p className="panel-hint" style={{ margin: '0.65rem 0 0' }}>
+              Pack watermark toggle lives on{' '}
               <button
                 type="button"
-                role="switch"
-                aria-checked={!!prefs.hidePackWatermark}
-                className={`pref-switch${prefs.hidePackWatermark ? ' is-on' : ''}`}
-                onClick={() =>
-                  setPref('hidePackWatermark', !prefs.hidePackWatermark)
-                }
+                className="text-link"
+                onClick={() => setActiveView('finish')}
               >
-                <span className="pref-switch-knob" />
-                <span className="sr-only">
-                  {prefs.hidePackWatermark ? 'On' : 'Off'}
-                </span>
-              </button>
-            </div>
+                Pack
+              </button>{' '}
+              (client handoff).
+            </p>
           </section>
 
           <section className="panel brand-section" id="settings-about">

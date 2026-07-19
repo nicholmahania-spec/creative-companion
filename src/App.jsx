@@ -2542,166 +2542,21 @@ function App() {
               <span className="panel-count">{deskMood.length} pins</span>
             </div>
 
-            <section className="panel brand-section">
-              <div className="brand-section-label">Add</div>
-              <div className="mood-add-layout">
-                <label className="mood-add-hero btn-like">
-                  <strong>Upload real images</strong>
-                  <span>
-                    From your device — PNG, JPG, WEBP, GIF (screenshots, comps,
-                    photos). Drag onto the board below too.
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
-                    multiple
-                    className="sr-only"
-                    onChange={(e) => {
-                      uploadMoodFiles(e.target.files)
-                      e.target.value = ''
-                    }}
-                  />
-                </label>
-                <div className="mood-add-secondary">
-                  <button
-                    type="button"
-                    className={`mood-add-card${
-                      boardAddMode === 'url' ? ' is-active' : ''
-                    }`}
-                    onClick={() =>
-                      setBoardAddMode((m) => (m === 'url' ? null : 'url'))
-                    }
-                  >
-                    <strong>Paste URL</strong>
-                    <span>Image link</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`mood-add-card${
-                      boardAddMode === 'note' ? ' is-active' : ''
-                    }`}
-                    onClick={() =>
-                      setBoardAddMode((m) => (m === 'note' ? null : 'note'))
-                    }
-                  >
-                    <strong>Color / note</strong>
-                    <span>Text pin</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="mood-add-card mood-add-tertiary"
-                    onClick={() => setActiveView('spark')}
-                  >
-                    <strong>Spark</strong>
-                    <span>Prompt → pin</span>
-                  </button>
+            {/* Wall first — board is the stage */}
+            <section className="panel brand-section board-wall-panel">
+              <div className="board-wall-head">
+                <div className="brand-section-label" style={{ margin: 0 }}>
+                  Board · {deskMood.length}
                 </div>
-              </div>
-              {boardAddMode === 'url' && (
-                <div className="board-inline-form">
-                  <label className="field-label" htmlFor="board-url">
-                    Image URL
-                  </label>
-                  <div className="capture-row">
-                    <input
-                      id="board-url"
-                      className="field-input"
-                      value={boardUrl}
-                      onChange={(e) => setBoardUrl(e.target.value)}
-                      placeholder="https://…"
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && submitBoardUrl()
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={submitBoardUrl}
-                      disabled={!boardUrl.trim()}
-                    >
-                      Add pin
-                    </button>
-                  </div>
-                </div>
-              )}
-              {boardAddMode === 'note' && (
-                <div className="board-inline-form">
-                  <label className="field-label" htmlFor="board-note">
-                    Note / direction
-                  </label>
-                  <div className="capture-row">
-                    <input
-                      id="board-note"
-                      className="field-input"
-                      value={boardNote}
-                      onChange={(e) => setBoardNote(e.target.value)}
-                      placeholder="e.g. Soft twilight, no hard sell"
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && submitBoardNote()
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={submitBoardNote}
-                    >
-                      Add pin
-                    </button>
-                  </div>
-                </div>
-              )}
-              <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
-                Tip: drag image files onto the board, or drag pins to reorder.
-              </p>
-            </section>
-
-            <section className="panel brand-section">
-              <div className="brand-section-label">
-                Board · {deskMood.length}
-              </div>
-              {deskMood.length > 0 && (
-                <div className="board-pack-bar">
-                  <span className="panel-hint" style={{ margin: 0 }}>
+                {deskMood.length > 0 && (
+                  <span className="panel-hint board-pack-count" style={{ margin: 0 }}>
                     Pack {deskMood.filter((m) => m.inPack).length}/6
                     {deskMood.filter((m) => m.inPack).length >= 6
                       ? ' · full'
                       : ''}
                   </span>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => {
-                      const open = deskMood.filter((m) => !m.inPack)
-                      let added = 0
-                      for (const p of open) {
-                        if (deskMood.filter((m) => m.inPack).length + added >= 6)
-                          break
-                        const r = toggleMoodPinInPack(p.id)
-                        if (r.ok && r.inPack) added++
-                      }
-                      if (!added) {
-                        flashToast(
-                          deskMood.filter((m) => m.inPack).length >= 6
-                            ? 'Pack full (6 max)'
-                            : 'Nothing to star'
-                        )
-                      }
-                    }}
-                  >
-                    Star next unpinned
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => {
-                      const starred = deskMood.filter((m) => m.inPack)
-                      starred.forEach((p) => toggleMoodPinInPack(p.id))
-                    }}
-                  >
-                    Clear stars
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
               <div
                 className={`mood-board${deskMood.length ? ' has-pins' : ''}${
                   deskMood.length === 1 ? ' single-pin' : ''
@@ -2805,7 +2660,7 @@ function App() {
                             className="mood-pin-media mood-pin-media-btn"
                             style={
                               pinImageUrl(item)
-                                ? { backgroundColor: '#E8E4F8' }
+                                ? { backgroundColor: '#e7e5e4' }
                                 : face
                             }
                             aria-label={`View pin${item.note ? `: ${item.note}` : ''}`}
@@ -2833,87 +2688,245 @@ function App() {
                           </div>
                         )}
                         <div className="mood-pin-tools">
-                          <button
-                            type="button"
-                            className={`mood-pin-star${item.inPack ? ' is-on' : ''}${item.packHero ? ' is-hero' : ''}`}
-                            title={
-                              item.inPack
-                                ? 'Remove from pack'
-                                : 'Include in pack (max 6)'
-                            }
-                            aria-pressed={!!item.inPack}
-                            onClick={() => {
-                              const r = toggleMoodPinInPack(item.id)
-                              if (!r.ok)
-                                flashToast(
-                                  r.error || 'Pack full (6 pins max)'
-                                )
-                              else
-                                flashMicro(
-                                  r.inPack ? 'In pack' : 'Removed from pack'
-                                )
-                            }}
-                          >
-                            {item.inPack ? '★ Pack' : '☆ Pack'}
-                          </button>
-                          {item.inPack && (
-                            <span className="mood-pack-order-tools">
-                              <button
-                                type="button"
-                                className="btn btn-ghost mood-pin-order"
-                                title="Move earlier in pack"
-                                aria-label="Move pin earlier in pack"
-                                onClick={() => movePackPin(item.id, 'up')}
+                          <div className="mood-pin-tools-row">
+                            <button
+                              type="button"
+                              className={`mood-pin-star${item.inPack ? ' is-on' : ''}${item.packHero ? ' is-hero' : ''}`}
+                              title={
+                                item.inPack
+                                  ? 'Remove from pack'
+                                  : 'Include in pack (max 6)'
+                              }
+                              aria-pressed={!!item.inPack}
+                              onClick={() => {
+                                const r = toggleMoodPinInPack(item.id)
+                                if (!r.ok)
+                                  flashToast(
+                                    r.error || 'Pack full (6 pins max)'
+                                  )
+                                else
+                                  flashMicro(
+                                    r.inPack ? 'In pack' : 'Removed from pack'
+                                  )
+                              }}
+                            >
+                              {item.inPack ? '★ Pack' : '☆ Pack'}
+                            </button>
+                            <details className="mood-pin-more">
+                              <summary
+                                className="mood-pin-more-sum"
+                                aria-label="More pin actions"
                               >
-                                ↑
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-ghost mood-pin-order"
-                                title="Move later in pack"
-                                aria-label="Move pin later in pack"
-                                onClick={() => movePackPin(item.id, 'down')}
-                              >
-                                ↓
-                              </button>
-                              <button
-                                type="button"
-                                className={`btn btn-ghost mood-pin-order${item.packHero ? ' is-on' : ''}`}
-                                title="Hero pin (first in pack)"
-                                aria-label="Set as hero pin"
-                                aria-pressed={!!item.packHero}
-                                onClick={() => {
-                                  const r = setPackHeroPin(item.id)
-                                  if (!r.ok) flashToast(r.error || 'Could not set hero')
-                                  else flashMicro('Hero pin set')
-                                }}
-                              >
-                                Hero
-                              </button>
-                            </span>
-                          )}
+                                ⋯
+                              </summary>
+                              <div className="mood-pin-more-menu">
+                                {item.inPack && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="btn btn-ghost mood-pin-order"
+                                      onClick={() => movePackPin(item.id, 'up')}
+                                    >
+                                      ↑ Earlier in pack
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-ghost mood-pin-order"
+                                      onClick={() =>
+                                        movePackPin(item.id, 'down')
+                                      }
+                                    >
+                                      ↓ Later in pack
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={`btn btn-ghost mood-pin-order${item.packHero ? ' is-on' : ''}`}
+                                      onClick={() => {
+                                        const r = setPackHeroPin(item.id)
+                                        if (!r.ok)
+                                          flashToast(
+                                            r.error || 'Could not set hero'
+                                          )
+                                        else flashMicro('Hero pin set')
+                                      }}
+                                    >
+                                      Hero pin
+                                    </button>
+                                  </>
+                                )}
+                                <button
+                                  type="button"
+                                  className="btn btn-ghost mood-pin-remove"
+                                  onClick={() => removeMoodPin(item.id)}
+                                >
+                                  Remove pin
+                                </button>
+                              </div>
+                            </details>
+                          </div>
                           <input
                             className="mood-pin-note-input"
                             value={item.note || ''}
                             onChange={(e) =>
                               updateMoodPinNote(item.id, e.target.value)
                             }
-                            placeholder="Caption / why this pin…"
+                            placeholder="Caption…"
                             aria-label="Pin note"
                           />
-                          <button
-                            type="button"
-                            className="btn btn-ghost mood-pin-remove"
-                            onClick={() => removeMoodPin(item.id)}
-                          >
-                            Remove
-                          </button>
                         </div>
                       </article>
                     )
                   })
                 )}
               </div>
+              <p className="panel-hint board-drop-hint">
+                Drop images here · drag pins to reorder
+              </p>
+            </section>
+
+            {/* Compact add — below the wall */}
+            <section className="panel brand-section board-add-compact">
+              <div className="board-add-toolbar">
+                <label className="btn btn-primary board-upload-btn">
+                  Upload images
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
+                    multiple
+                    className="sr-only"
+                    onChange={(e) => {
+                      uploadMoodFiles(e.target.files)
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className={`btn btn-ghost btn-sm${
+                    boardAddMode === 'url' ? ' is-on' : ''
+                  }`}
+                  onClick={() =>
+                    setBoardAddMode((m) => (m === 'url' ? null : 'url'))
+                  }
+                >
+                  URL
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-ghost btn-sm${
+                    boardAddMode === 'note' ? ' is-on' : ''
+                  }`}
+                  onClick={() =>
+                    setBoardAddMode((m) => (m === 'note' ? null : 'note'))
+                  }
+                >
+                  Note
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setActiveView('spark')}
+                >
+                  Spark
+                </button>
+                {deskMood.length > 0 && (
+                  <details className="board-pack-bulk">
+                    <summary className="text-link">Pack tools</summary>
+                    <div className="board-pack-bulk-actions">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => {
+                          const open = deskMood.filter((m) => !m.inPack)
+                          let added = 0
+                          for (const p of open) {
+                            if (
+                              deskMood.filter((m) => m.inPack).length + added >=
+                              6
+                            )
+                              break
+                            const r = toggleMoodPinInPack(p.id)
+                            if (r.ok && r.inPack) added++
+                          }
+                          if (!added) {
+                            flashToast(
+                              deskMood.filter((m) => m.inPack).length >= 6
+                                ? 'Pack full (6 max)'
+                                : 'Nothing to star'
+                            )
+                          }
+                        }}
+                      >
+                        Star next
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => {
+                          deskMood
+                            .filter((m) => m.inPack)
+                            .forEach((p) => toggleMoodPinInPack(p.id))
+                        }}
+                      >
+                        Clear stars
+                      </button>
+                    </div>
+                  </details>
+                )}
+              </div>
+              {boardAddMode === 'url' && (
+                <div className="board-inline-form">
+                  <label className="field-label" htmlFor="board-url">
+                    Image URL
+                  </label>
+                  <div className="capture-row">
+                    <input
+                      id="board-url"
+                      className="field-input"
+                      value={boardUrl}
+                      onChange={(e) => setBoardUrl(e.target.value)}
+                      placeholder="https://…"
+                      onKeyDown={(e) =>
+                        e.key === 'Enter' && submitBoardUrl()
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={submitBoardUrl}
+                      disabled={!boardUrl.trim()}
+                    >
+                      Add pin
+                    </button>
+                  </div>
+                </div>
+              )}
+              {boardAddMode === 'note' && (
+                <div className="board-inline-form">
+                  <label className="field-label" htmlFor="board-note">
+                    Note / direction
+                  </label>
+                  <div className="capture-row">
+                    <input
+                      id="board-note"
+                      className="field-input"
+                      value={boardNote}
+                      onChange={(e) => setBoardNote(e.target.value)}
+                      placeholder="e.g. Soft twilight, no hard sell"
+                      onKeyDown={(e) =>
+                        e.key === 'Enter' && submitBoardNote()
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={submitBoardNote}
+                    >
+                      Add pin
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
 
             <p className="work-below-tools">

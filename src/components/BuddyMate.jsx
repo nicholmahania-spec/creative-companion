@@ -751,6 +751,17 @@ export default function BuddyMate({
         <div className="buddy-compact-card">
           <header className="buddy-compact-head">
             <div className="buddy-compact-identity">
+              {/* Compact face only — message-first panel, not full mascot stage */}
+              <HelperCharacterLottie
+                className={`buddy-compact-face mood-${panelMood}${
+                  reduceMotion ? ' no-motion' : ''
+                }`}
+                mood={panelMood}
+                reduceMotion={reduceMotion}
+                size={44}
+                shape="circle"
+                fallbackSrc={HELPER_FALLBACK}
+              />
               <div className="buddy-compact-titles">
                 <div className="buddy-compact-name-row">
                   <strong className="bf-name">Helper</strong>
@@ -795,24 +806,6 @@ export default function BuddyMate({
               </button>
             </div>
           </header>
-
-          {/* Photoreal full-body Helper stage (not circle crop) */}
-          <div
-            className={`buddy-compact-hero mood-${panelMood}${
-              reduceMotion ? ' no-motion' : ''
-            }${recentWin || levelBurst ? ' is-cheer' : ''}`}
-            aria-hidden="true"
-          >
-            <HelperCharacterLottie
-              className="buddy-compact-body"
-              mood={panelMood}
-              reduceMotion={reduceMotion}
-              height={96}
-              shape="body"
-              fallbackSrc={HELPER_FALLBACK}
-            />
-            <span className="buddy-compact-hero-ground" />
-          </div>
 
           {showProgress && (
             <div
