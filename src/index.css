@@ -4389,11 +4389,15 @@ html[data-reduce-motion='true'] *::after {
 }
 
 /* ——— Interactive desk buddy (body double) ——— */
-.buddy-panel {
+.buddy-float {
   position: fixed;
+  z-index: 120;
+  /* default if no inline spot yet */
   right: 1rem;
   bottom: 1rem;
-  z-index: 120;
+}
+
+.buddy-panel {
   width: min(320px, calc(100vw - 1.5rem));
   max-height: min(72vh, 520px);
   display: flex;
@@ -4403,6 +4407,38 @@ html[data-reduce-motion='true'] *::after {
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-3), 0 0 0 1px rgba(79, 70, 229, 0.06);
   overflow: hidden;
+}
+
+/* Pop attention when relocating */
+.buddy-hop-in {
+  animation: buddyHopIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes buddyHopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Bottom-center uses translateX — hop must not wipe it */
+.buddy-float.buddy-hop-in[style*='translateX'] {
+  animation: buddyHopInCenter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes buddyHopInCenter {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
 }
 
 .buddy-panel.is-focus {
@@ -4663,10 +4699,6 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .buddy-fab {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 120;
   width: 3.4rem;
   height: 3.4rem;
   border: none;
@@ -4678,6 +4710,14 @@ html[data-reduce-motion='true'] *::after {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Mid-edge: keep panel on screen */
+@media (max-width: 420px) {
+  .buddy-panel.buddy-float {
+    width: min(320px, calc(100vw - 1.25rem));
+    max-width: calc(100vw - 1.25rem);
+  }
 }
 
 .buddy-fab-dot {

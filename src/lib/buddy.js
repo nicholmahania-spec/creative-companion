@@ -295,4 +295,39 @@ export function buddyMood({
   return 'idle'
 }
 
+/**
+ * Screen spots so the buddy is harder to ignore by habit.
+ * Panel uses inset CSS; fab uses the same anchors.
+ */
+export const BUDDY_SPOTS = [
+  { id: 'br', label: 'bottom-right', bottom: '1rem', right: '1rem', top: 'auto', left: 'auto' },
+  { id: 'bl', label: 'bottom-left', bottom: '1rem', left: '1rem', top: 'auto', right: 'auto' },
+  { id: 'tr', label: 'top-right', top: '4.5rem', right: '1rem', bottom: 'auto', left: 'auto' },
+  { id: 'tl', label: 'top-left', top: '4.5rem', left: '1rem', bottom: 'auto', right: 'auto' },
+  { id: 'mr', label: 'mid-right', top: '42%', right: '0.75rem', bottom: 'auto', left: 'auto' },
+  { id: 'ml', label: 'mid-left', top: '42%', left: '0.75rem', bottom: 'auto', right: 'auto' },
+  { id: 'bc', label: 'bottom-center', bottom: '1rem', left: '50%', right: 'auto', top: 'auto', transform: 'translateX(-50%)' },
+]
+
+/** Pick a new spot, never the same as last time when possible. */
+export function pickBuddySpot(prevId = null) {
+  const options =
+    prevId && BUDDY_SPOTS.length > 1
+      ? BUDDY_SPOTS.filter((s) => s.id !== prevId)
+      : BUDDY_SPOTS
+  return options[Math.floor(Math.random() * options.length)]
+}
+
+export function spotStyle(spot) {
+  if (!spot) return undefined
+  const style = {
+    top: spot.top,
+    right: spot.right,
+    bottom: spot.bottom,
+    left: spot.left,
+  }
+  if (spot.transform) style.transform = spot.transform
+  return style
+}
+
 export { MS }

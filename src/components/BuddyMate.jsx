@@ -15,7 +15,9 @@ import {
   minutesAtDesk,
   minutesSinceBreak,
   overdueKinds,
+  pickBuddySpot,
   progressLine,
+  spotStyle,
   timeBlindLine,
   wellnessLine,
   whatTimeLine,
@@ -47,12 +49,15 @@ export default function BuddyMate({
   const [expanded, setExpanded] = useState(true)
   const [mood, setMood] = useState('idle')
   const [recentWin, setRecentWin] = useState(false)
+  const [spot, setSpot] = useState(() => pickBuddySpot())
+  const [hop, setHop] = useState(0)
   const listRef = useRef(null)
   const msgId = useRef(2)
   const lastCompleted = useRef(completedCount)
   const lastFocus = useRef(isFocusRunning)
   const lastTimePing = useRef(Date.now())
   const lastHyperLevel = useRef(null)
+  const spotIdRef = useRef(spot?.id)
 
   const overdue = useMemo(() => overdueKinds(wellness), [wellness])
   const deskMs = now - sessionStart
@@ -60,11 +65,27 @@ export default function BuddyMate({
   const sinceBreak = minutesSinceBreak(wellness, sessionStart, now)
   const hyper = hyperfocusLevel(sinceBreak)
 
-  const pushBuddy = useCallback((text) => {
-    if (!text) return
-    const id = msgId.current++
-    setMessages((m) => [...m.slice(-14), { id, from: 'buddy', text }])
+  /** Move to a new corner/edge so the buddy is harder to ignore */
+  const repark = useCallback((forceExpand = false) => {
+    setSpot((prev) => {
+      const next = pickBuddySpot(prev?.id || spotIdRef.current)
+      spotIdRef.current = next.id
+      return next
+    })
+    setHop((n) => n + 1)
+    if (forceExpand) setExpanded(true)
   }, [])
+
+  const pushBuddy = useCallback(
+    (text, { move = true, expand = false } = {}) => {
+      if (!text) return
+      if (move) repark(expand)
+      else if (expand) setExpanded(true)
+      const id = msgId.current++
+      setMessages((m) => [...m.slice(-14), { id, from: 'buddy', text }])
+    },
+    [repark]
+  )
 
   const pushYou = useCallback((text) => {
     const id = msgId.current++
@@ -93,12 +114,12 @@ export default function BuddyMate({
     )
   }, [overdue, isFocusRunning, recentWin, hyper])
 
-  // Step completed
+  // Step completed — hop so you notice the cheer
   useEffect(() => {
     if (completedCount > lastCompleted.current) {
       lastCompleted.current = completedCount
       setRecentWin(true)
-      pushBuddy(progressLine('step'))
+      pushBuddy(progressLine('step'), { move: true, expand: true })
       const t = window.setTimeout(() => setRecentWin(false), 4000)
       return () => window.clearTimeout(t)
     }
@@ -108,7 +129,7 @@ export default function BuddyMate({
   useEffect(() => {
     if (!pulseWin) return
     setRecentWin(true)
-    pushBuddy(progressLine('step'))
+    pushBuddy(progressLine('step'), { move: true, expand: true })
     const t = window.setTimeout(() => setRecentWin(false), 4000)
     return () => window.clearTimeout(t)
   }, [pulseWin, pushBuddy])
@@ -116,11 +137,12 @@ export default function BuddyMate({
   // Timer started / stopped
   useEffect(() => {
     if (isFocusRunning && !lastFocus.current) {
-      pushBuddy(progressLine('timer'))
+      pushBuddy(progressLine('timer'), { move: true })
     }
     if (!isFocusRunning && lastFocus.current && focusLeft === 0) {
       pushBuddy(
-        "Timer's done. Stretch, sip water, or hit the bathroom — then pick up whatever is next when you're ready."
+        "Timer's done. Stretch, sip water, or hit the bathroom — then pick up whatever is next when you're ready.",
+        { move: true, expand: true }
       )
     }
     lastFocus.current = isFocusRunning
@@ -137,28 +159,28 @@ export default function BuddyMate({
       const level = hyperfocusLevel(breakMins)
       const od = overdueKinds(w)
 
-      // Escalate hyperfocus when crossing thresholds
+      // Escalate hyperfocus when crossing thresholds — hop + expand
       if (level && level !== lastHyperLevel.current) {
         lastHyperLevel.current = level
-        pushBuddy(hyperfocusLine(breakMins))
+        pushBuddy(hyperfocusLine(breakMins), { move: true, expand: true })
         return
       }
       if (!level) lastHyperLevel.current = null
 
-      // Soft time-blindness every ~12 min
+      // Soft time-blindness every ~12 min — always repark
       if (t - lastTimePing.current >= 12 * 60 * 1000) {
         lastTimePing.current = t
-        pushBuddy(timeBlindLine(sessionStart, t))
+        pushBuddy(timeBlindLine(sessionStart, t), { move: true, expand: true })
         return
       }
 
-      // Wellness or idle
+      // Wellness or idle — hop so check-ins aren't ignoreable
       if (od.length) {
-        pushBuddy(wellnessLine(od[0]))
+        pushBuddy(wellnessLine(od[0]), { move: true, expand: true })
       } else if (level === 'soft' || level === 'strong') {
-        pushBuddy(hyperfocusLine(breakMins))
+        pushBuddy(hyperfocusLine(breakMins), { move: true, expand: true })
       } else {
-        pushBuddy(idleLine())
+        pushBuddy(idleLine(), { move: true })
       }
     }
 
@@ -166,13 +188,14 @@ export default function BuddyMate({
 
     // First orientation after 2 min
     const first = window.setTimeout(() => {
-      pushBuddy(timeBlindLine(sessionStart))
+      pushBuddy(timeBlindLine(sessionStart), { move: true, expand: true })
     }, 2 * 60 * 1000)
 
     // First wellness if overdue at 90s
     const well = window.setTimeout(() => {
       const od = overdueKinds(loadWellness())
-      if (od.length) pushBuddy(wellnessLine(od[0]))
+      if (od.length)
+        pushBuddy(wellnessLine(od[0]), { move: true, expand: true })
     }, 90 * 1000)
 
     return () => {
@@ -251,13 +274,23 @@ export default function BuddyMate({
       ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')} left`
       : null
 
+  const posStyle = spotStyle(spot)
+
   if (!expanded) {
     return (
       <button
         type="button"
-        className={`buddy-fab${hyper === 'hard' || hyper === 'strong' ? ' is-alert' : ''}`}
-        onClick={() => setExpanded(true)}
+        className={`buddy-fab buddy-float${
+          hyper === 'hard' || hyper === 'strong' ? ' is-alert' : ''
+        }${hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''}`}
+        style={posStyle}
+        key={`fab-${spot?.id}-${hop}`}
+        onClick={() => {
+          repark(false)
+          setExpanded(true)
+        }}
         aria-label="Open desk buddy"
+        title="I move around so you notice me"
       >
         <BuddyFace mood={mood} reduceMotion={reduceMotion} compact />
         {(overdue.length > 0 || hyper === 'hard' || hyper === 'strong') && (
@@ -269,9 +302,11 @@ export default function BuddyMate({
 
   return (
     <div
-      className={`buddy-panel${isFocusRunning ? ' is-focus' : ''}${
+      className={`buddy-panel buddy-float${isFocusRunning ? ' is-focus' : ''}${
         hyper === 'hard' || hyper === 'strong' ? ' is-hyper' : ''
-      }`}
+      }${hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''}`}
+      style={posStyle}
+      key={`panel-${spot?.id}-${hop}`}
       role="complementary"
       aria-label="Desk buddy for time blindness and body double"
     >
