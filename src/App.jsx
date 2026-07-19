@@ -20,12 +20,7 @@ import {
   deadlineUrgency,
   daysUntil,
 } from './lib/dates'
-import {
-  APP_VERSION,
-  APP_BUILD,
-  APP_BUILD_DATE,
-  versionLabel,
-} from './lib/version'
+import { APP_BUILD, APP_BUILD_DATE, versionLabel } from './lib/version'
 
 function App() {
   // ——— Zustand (persisted studio state) ———
