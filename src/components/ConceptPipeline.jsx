@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { CONCEPT_STAGES, PACKAGE_FIELDS, packageProgress } from '../lib/conceptPackage'
+import { awardAndBroadcast } from '../lib/buddyGame'
 
 /**
  * Sketches → Develop → Iterations → Lock plan → Package → Brand
@@ -87,7 +88,12 @@ export default function ConceptPipeline({
   const applyToBrand = () => {
     const result = applyConceptPackageToBrand()
     if (result.ok) {
-      flashToast?.('Brand identity filled from concept pack')
+      const g = awardAndBroadcast('package_brand', { label: 'Package → Brand' })
+      flashToast?.(
+        g.levelUp
+          ? `Brand filled · Level ${g.newLevel}!`
+          : `Brand filled · +${g.gained} XP`
+      )
       onGoBrand?.()
     } else {
       flashToast?.(result.error || 'Could not apply')

@@ -29,6 +29,13 @@ import {
   wellnessLine,
   whatTimeLine,
 } from '../lib/buddy'
+import {
+  awardAndBroadcast,
+  BADGES,
+  gameSummaryLine,
+  loadGame,
+  xpProgress,
+} from '../lib/buddyGame'
 
 /**
  * Design buddy — UI/UX & graphic design coach (scripted system persona).
@@ -69,6 +76,8 @@ export default function BuddyMate({
   const [recentWin, setRecentWin] = useState(false)
   const [spot, setSpot] = useState(() => pickBuddySpot())
   const [hop, setHop] = useState(0)
+  const [game, setGame] = useState(() => loadGame())
+  const [levelBurst, setLevelBurst] = useState(false)
   const listRef = useRef(null)
   const msgId = useRef(2)
   const lastCompleted = useRef(completedCount)
@@ -112,6 +121,34 @@ export default function BuddyMate({
     setMessages((m) => [...m.slice(-14), { id, from: 'you', text }])
   }, [])
 
+  const applyGameResult = useCallback(
+    (result) => {
+      if (!result?.game) return
+      setGame(result.game)
+      if (result.levelUp) {
+        setLevelBurst(true)
+        setMood('cheer')
+        window.setTimeout(() => setLevelBurst(false), 2800)
+      }
+      ;(result.messages || []).forEach((msg, i) => {
+        window.setTimeout(() => {
+          pushBuddy(msg, {
+            move: i === 0 && result.levelUp,
+            expand: result.levelUp || result.badgesUnlocked?.length > 0,
+          })
+        }, i * 200)
+      })
+    },
+    [pushBuddy]
+  )
+
+  useEffect(() => {
+    const onGame = (e) => applyGameResult(e.detail)
+    window.addEventListener('cc-buddy-game', onGame)
+    setGame(loadGame())
+    return () => window.removeEventListener('cc-buddy-game', onGame)
+  }, [applyGameResult])
+
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 15000)
     return () => window.clearInterval(t)
@@ -127,11 +164,11 @@ export default function BuddyMate({
       buddyMood({
         overdue,
         isFocusRunning,
-        recentWin,
+        recentWin: recentWin || levelBurst,
         hyperfocus: hyper,
       })
     )
-  }, [overdue, isFocusRunning, recentWin, hyper])
+  }, [overdue, isFocusRunning, recentWin, hyper, levelBurst])
 
   // New page → tip about what you're doing
   useEffect(() => {
@@ -288,6 +325,9 @@ export default function BuddyMate({
     const next = markWellness(kind)
     setWellness(next)
     pushBuddy(confirmLine(kind))
+    const action =
+      kind === 'water' ? 'water' : kind === 'food' ? 'food' : 'bathroom'
+    applyGameResult(awardAndBroadcast(action, { label }))
   }
 
   const logBreak = () => {
@@ -296,6 +336,9 @@ export default function BuddyMate({
     setWellness(next)
     lastHyperLevel.current = null
     pushBuddy(confirmLine('break'))
+    applyGameResult(
+      awardAndBroadcast('break_complete', { label: 'Self-logged break' })
+    )
   }
 
   const reply = (key) => {
@@ -419,6 +462,11 @@ export default function BuddyMate({
   }, [activityLive])
 
   const posStyle = spotStyle(spot)
+  const xp = xpProgress(game.xp || 0)
+  const badgeList = (game.badges || [])
+    .map((id) => BADGES[id])
+    .filter(Boolean)
+    .slice(-6)
 
   if (!expanded) {
     return (
@@ -426,17 +474,20 @@ export default function BuddyMate({
         type="button"
         className={`buddy-fab buddy-float${
           hyper === 'hard' || hyper === 'strong' ? ' is-alert' : ''
-        }${hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''}`}
+        }${levelBurst ? ' is-levelup' : ''}${
+          hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''
+        }`}
         style={posStyle}
         key={`fab-${spot?.id}-${hop}`}
         onClick={() => {
           repark(false)
           setExpanded(true)
         }}
-        aria-label="Open desk buddy"
-        title="I move around so you notice me"
+        aria-label={`Open design buddy, level ${xp.level}`}
+        title={`Level ${xp.level} · ${game.xp || 0} XP`}
       >
         <BuddyFace mood={mood} reduceMotion={reduceMotion} compact />
+        <span className="buddy-fab-level">{xp.level}</span>
         {(overdue.length > 0 || hyper === 'hard' || hyper === 'strong') && (
           <span className="buddy-fab-dot" aria-hidden="true" />
         )}
@@ -448,21 +499,25 @@ export default function BuddyMate({
     <div
       className={`buddy-panel buddy-float${isFocusRunning ? ' is-focus' : ''}${
         hyper === 'hard' || hyper === 'strong' ? ' is-hyper' : ''
-      }${hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''}`}
+      }${levelBurst ? ' is-levelup' : ''}${
+        hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''
+      }`}
       style={posStyle}
       key={`panel-${spot?.id}-${hop}`}
       role="complementary"
-      aria-label="Desk buddy tracking what you are doing"
+      aria-label="Design buddy with XP and badges"
     >
       <div className="buddy-panel-top">
         <div className="buddy-identity">
           <BuddyFace mood={mood} reduceMotion={reduceMotion} />
           <div>
-            <strong className="buddy-name">Design buddy</strong>
+            <strong className="buddy-name">
+              Design buddy · Lv {xp.level}
+            </strong>
             <span className="buddy-status">
               {isFocusRunning
-                ? `Focus${focusLabel ? ` · ${focusLabel}` : ''} · craft mode`
-                : `UI/UX coach · ${trackingLabel}`}
+                ? `Focus${focusLabel ? ` · ${focusLabel}` : ''} · +XP when done`
+                : gameSummaryLine(game)}
             </span>
           </div>
         </div>
@@ -489,6 +544,44 @@ export default function BuddyMate({
       <div className="buddy-tracking" title="Craft context I am tracking">
         <span className="buddy-tracking-label">Tracking</span>
         <strong className="buddy-tracking-value">{trackingLabel}</strong>
+      </div>
+
+      {/* Gamification bar */}
+      <div className="buddy-game" aria-label="Buddy progress">
+        <div className="buddy-game-row">
+          <span className="buddy-game-level">Lv {xp.level}</span>
+          <div className="buddy-xp-bar" title={`${xp.into} / ${xp.span} XP this level`}>
+            <div
+              className="buddy-xp-fill"
+              style={{ width: `${xp.percent}%` }}
+            />
+          </div>
+          <span className="buddy-xp-label">{game.xp || 0} XP</span>
+        </div>
+        <div className="buddy-game-stats">
+          <span>🔥 {game.dayStreak || 0}d streak</span>
+          <span>✓ {game.totalSteps || 0} steps</span>
+          <span>⏱ {game.totalBreaks || 0} breaks</span>
+          <span>🎯 {game.totalPomodoros || 0} focus</span>
+        </div>
+        {badgeList.length > 0 && (
+          <div className="buddy-badges" aria-label="Badges">
+            {badgeList.map((b) => (
+              <span
+                key={b.id}
+                className="buddy-badge"
+                title={`${b.name}: ${b.desc}`}
+              >
+                {b.icon}
+              </span>
+            ))}
+          </div>
+        )}
+        {levelBurst && (
+          <p className="buddy-levelup-banner" role="status">
+            Level up! You are level {xp.level}
+          </p>
+        )}
       </div>
 
       <div className="buddy-time-strip" aria-live="polite">

@@ -34,6 +34,7 @@ import {
   POMODORO_WORK_MIN,
 } from './lib/forcedBreak'
 import { markBreak, minutesSinceBreak, loadSessionStart, loadWellness } from './lib/buddy'
+import { awardAndBroadcast } from './lib/buddyGame'
 import {
   JOURNEY_STEPS,
   journeyIdForView,
@@ -319,7 +320,12 @@ function App() {
     toggleTask(nextTask.id)
     setStepDueOpen(false)
     setBuddyWinPulse((n) => n + 1)
-    flashToast('Step complete · next one is ready')
+    const g = awardAndBroadcast('step_complete', { label: 'Step done' })
+    flashToast(
+      g.levelUp
+        ? `Step complete · Level ${g.newLevel}!`
+        : `Step complete · +${g.gained} XP`
+    )
     setStepFocusKey((k) => k + 1)
   }
 
@@ -423,10 +429,14 @@ function App() {
     setPomodoroWorkStartedAt(Date.now())
     setFocusLeft(POMODORO_WORK_MIN * 60)
     setSessionComplete(false)
+    if (!emergency) {
+      awardAndBroadcast('break_complete', { label: 'Pomodoro break' })
+      awardAndBroadcast('pomodoro_work', { label: 'Focus cycle' })
+    }
     flashToast(
       emergency
         ? 'Break ended early (emergency). Try to rest next cycle.'
-        : 'Break done. Welcome back — one step at a time.'
+        : 'Break done · XP earned. Welcome back.'
     )
   }
 
@@ -490,6 +500,13 @@ function App() {
     return () => window.clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked, bodyDoubling, forcedBreak])
+
+  // XP when you reach Finish step
+  useEffect(() => {
+    if (activeView === 'finish' && unlocked) {
+      awardAndBroadcast('journey_finish', { label: 'Finish step' })
+    }
+  }, [activeView, unlocked])
 
   // Respect reduce-motion preference on <html>
   useEffect(() => {
