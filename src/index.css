@@ -8218,3 +8218,137 @@ html[data-reduce-motion='true'] *::after {
     font-size: 1.05rem !important;
   }
 }
+
+
+/* Shared brand artboard */
+.brand-artboard.is-compact {
+  transform: scale(0.92);
+  transform-origin: top center;
+  pointer-events: none;
+  margin-bottom: -1rem;
+}
+
+.pack-preview-artboard {
+  overflow: hidden;
+  max-height: 28rem;
+  overflow-y: auto;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+}
+
+.artboard-tagline-input {
+  width: 100%;
+  margin: 0.35rem 0 0;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 650;
+  background: transparent;
+  border: 1px dashed currentColor;
+  border-radius: 8px;
+  padding: 0.4rem 0.55rem;
+  opacity: 0.95;
+}
+
+.artboard-brief-input {
+  width: 100%;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  resize: vertical;
+  margin: 0 0 0.35rem;
+}
+
+.artboard-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.5rem;
+}
+
+.artboard-logo-img {
+  max-height: 48px;
+  max-width: 120px;
+  object-fit: contain;
+}
+
+.artboard-logo-clear {
+  font-size: 0.72rem !important;
+  color: inherit !important;
+  opacity: 0.85;
+}
+
+.artboard-logo-upload {
+  margin: 0.5rem 0 0.75rem;
+}
+
+.role-select {
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 650;
+  max-width: 5.5rem;
+  margin-left: 0.25rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.direction-pin.is-hero-pin {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 1px;
+}
+
+.mood-pack-order-tools {
+  display: inline-flex;
+  gap: 0.15rem;
+  align-items: center;
+}
+
+.mood-pin-order {
+  font-size: 0.68rem !important;
+  padding: 0.2rem 0.35rem !important;
+  min-width: 0;
+}
+
+.mood-pin-order.is-on,
+.mood-pin-star.is-hero {
+  font-weight: 800;
+}
+
+.project-ready-list {
+  margin-bottom: 0.65rem;
+}
+
+.mood-pin-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .header-redesign .logo {
+    max-width: 9.5rem;
+  }
+  .journey-bar {
+    gap: 0.2rem;
+  }
+  .journey-label {
+    font-size: 0.65rem;
+  }
+  .pack-layout {
+    grid-template-columns: 1fr;
+  }
+  .step-focus-title {
+    font-size: 1.25rem !important;
+  }
+  .system-accordion-nav {
+    gap: 0.25rem;
+  }
+}

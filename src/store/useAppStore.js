@@ -27,6 +27,10 @@ export const defaultBrandIdentity = {
   typeBody: 'Plus Jakarta Sans Regular',
   doUse: '',
   dontUse: '',
+  /** Optional overrides; null/empty keys fall back to mapPaletteRoles(palette) */
+  colorRoles: null,
+  /** data URL mark for pack cover */
+  logoImage: '',
   conceptPackage: {
     audience: '',
     outcome: '',
@@ -540,18 +544,33 @@ const useAppStore = create(
       },
 
       addMoodPin: (pin) =>
-        set((state) => ({
-          moodItems: [
-            {
-              ...pin,
-              id: pin.id || Date.now(),
-              projectId: pin.projectId ?? state.currentProjectId,
-              note: pin.note || '',
-              inPack: !!pin.inPack,
-            },
-            ...state.moodItems,
-          ],
-        })),
+        set((state) => {
+          const projectId = pin.projectId ?? state.currentProjectId
+          const starred = (state.moodItems || []).filter(
+            (m) =>
+              m.inPack && (m.projectId == null || m.projectId === projectId)
+          )
+          const inPack = !!pin.inPack
+          return {
+            moodItems: [
+              {
+                ...pin,
+                id: pin.id || Date.now(),
+                projectId,
+                note: pin.note || '',
+                inPack,
+                packOrder:
+                  pin.packOrder != null
+                    ? pin.packOrder
+                    : inPack
+                      ? starred.length
+                      : 0,
+                packHero: !!pin.packHero,
+              },
+              ...state.moodItems,
+            ],
+          }
+        }),
 
       updateMoodPinNote: (id, note) =>
         set((state) => ({
@@ -570,10 +589,23 @@ const useAppStore = create(
         if (!pin) return { ok: false, error: 'Pin not found' }
         const projectId = pin.projectId ?? state.currentProjectId
         if (pin.inPack) {
+          const remaining = (state.moodItems || [])
+            .filter(
+              (m) =>
+                m.id !== id &&
+                m.inPack &&
+                (m.projectId == null || m.projectId === projectId)
+            )
+            .sort((a, b) => (a.packOrder ?? 0) - (b.packOrder ?? 0))
           set({
-            moodItems: state.moodItems.map((m) =>
-              m.id === id ? { ...m, inPack: false } : m
-            ),
+            moodItems: state.moodItems.map((m) => {
+              if (m.id === id) {
+                return { ...m, inPack: false, packHero: false, packOrder: 0 }
+              }
+              const idx = remaining.findIndex((r) => r.id === m.id)
+              if (idx >= 0) return { ...m, packOrder: idx }
+              return m
+            }),
           })
           return { ok: true, inPack: false }
         }
@@ -587,11 +619,105 @@ const useAppStore = create(
         }
         set({
           moodItems: state.moodItems.map((m) =>
-            m.id === id ? { ...m, inPack: true } : m
+            m.id === id
+              ? {
+                  ...m,
+                  inPack: true,
+                  packOrder: starred.length,
+                  packHero: starred.length === 0,
+                }
+              : m
           ),
         })
         return { ok: true, inPack: true }
       },
+
+      /** Reorder starred pack pins; orderedIds = full starred list in new order */
+      reorderPackPins: (orderedIds) => {
+        const ids = (orderedIds || []).map(String)
+        set((state) => {
+          const heroId = (state.moodItems || []).find((m) => m.packHero)?.id
+          return {
+            moodItems: state.moodItems.map((m) => {
+              const idx = ids.indexOf(String(m.id))
+              if (idx < 0) return m
+              return {
+                ...m,
+                inPack: true,
+                packOrder: idx,
+                // keep hero if still in list; else first becomes hero
+                packHero: heroId
+                  ? m.id === heroId
+                  : idx === 0,
+              }
+            }),
+          }
+        })
+        return { ok: true }
+      },
+
+      setPackHeroPin: (id) => {
+        const state = get()
+        const pin = (state.moodItems || []).find((m) => m.id === id)
+        if (!pin?.inPack) return { ok: false, error: 'Star pin for pack first' }
+        set({
+          moodItems: state.moodItems.map((m) => ({
+            ...m,
+            packHero: m.id === id,
+          })),
+        })
+        return { ok: true }
+      },
+
+      movePackPin: (id, direction) => {
+        const state = get()
+        const pin = (state.moodItems || []).find((m) => m.id === id)
+        if (!pin?.inPack) return { ok: false }
+        const projectId = pin.projectId ?? state.currentProjectId
+        const starred = (state.moodItems || [])
+          .filter(
+            (m) =>
+              m.inPack && (m.projectId == null || m.projectId === projectId)
+          )
+          .sort((a, b) => (a.packOrder ?? 0) - (b.packOrder ?? 0))
+        const idx = starred.findIndex((m) => m.id === id)
+        if (idx < 0) return { ok: false }
+        const swapWith = direction === 'up' ? idx - 1 : idx + 1
+        if (swapWith < 0 || swapWith >= starred.length) return { ok: false }
+        const ids = starred.map((m) => m.id)
+        ;[ids[idx], ids[swapWith]] = [ids[swapWith], ids[idx]]
+        get().reorderPackPins(ids)
+        return { ok: true }
+      },
+
+      setColorRole: (role, hex) => {
+        const key = String(role || '')
+        if (!['cover', 'text', 'accent', 'quiet'].includes(key)) {
+          return { ok: false, error: 'Unknown role' }
+        }
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              colorRoles: {
+                ...(p.colorRoles || {}),
+                [key]: hex,
+              },
+            }
+          }),
+        }))
+        return { ok: true }
+      },
+
+      setLogoImage: (dataUrl) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId
+              ? { ...p, logoImage: dataUrl || '' }
+              : p
+          ),
+        })),
 
       removeMoodPin: (id) =>
         set((state) => ({

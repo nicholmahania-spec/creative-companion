@@ -30,6 +30,7 @@ import {
 import LoginPage from './components/LoginPage'
 import BuddyMate from './components/BuddyMate'
 import ForcedBreakOverlay from './components/ForcedBreakOverlay'
+import BrandArtboard from './components/BrandArtboard'
 import GameHUD from './components/GameHUD'
 import {
   breakMinutesForWork,
@@ -106,6 +107,10 @@ function App() {
   const breakIntoSteps = useAppStore((s) => s.breakIntoSteps)
   const addMoodPin = useAppStore((s) => s.addMoodPin)
   const toggleMoodPinInPack = useAppStore((s) => s.toggleMoodPinInPack)
+  const movePackPin = useAppStore((s) => s.movePackPin)
+  const setPackHeroPin = useAppStore((s) => s.setPackHeroPin)
+  const setColorRole = useAppStore((s) => s.setColorRole)
+  const setLogoImage = useAppStore((s) => s.setLogoImage)
   const updateMoodPinNote = useAppStore((s) => s.updateMoodPinNote)
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
   const nextSpark = useAppStore((s) => s.nextSpark)
@@ -386,6 +391,27 @@ function App() {
     setActionToast(msg)
     window.setTimeout(() => setActionToast(''), 3200)
   }
+
+  /** Award XP in background; only surface XP text when Progress bar is on */
+  const notifyAction = (baseMsg, action, meta = {}) => {
+    let g = null
+    if (action) {
+      try {
+        g = awardAndBroadcast(action, meta)
+      } catch {
+        g = null
+      }
+    }
+    if (showProgress && g?.levelUp) {
+      flashToast(`${baseMsg} · Level ${g.newLevel}!`)
+    } else if (showProgress && g?.gained) {
+      flashToast(`${baseMsg} · +${g.gained} XP`)
+    } else {
+      flashToast(baseMsg)
+    }
+    return g
+  }
+
 
   const completeCurrentStep = () => {
     if (!nextTask) return
@@ -869,10 +895,9 @@ function App() {
       projectId: activeProjectId,
       dueDate: captureDue || '',
     })
-    const g = awardAndBroadcast('task_capture', {
+    notifyAction('Captured', 'task_capture', {
       label: quickInput.trim().slice(0, 40),
     })
-    flashToast(`Captured · +${g.gained} XP`)
     setQuickInput('')
     setCaptureDue('')
     setActiveView('flow')
@@ -968,11 +993,15 @@ function App() {
     const slug = slugifyFilename(pack.projectName, 'brand-pack')
     const finishOk = (label) => {
       const g = awardAndBroadcast('export_pack', { label })
-      flashToast(
-        kind === 'backup'
-          ? `Backup saved · +${g.gained} XP`
-          : `Pack downloaded · +${g.gained} XP`
-      )
+      if (showProgress && g?.gained) {
+        flashToast(
+          kind === 'backup'
+            ? `Backup saved · +${g.gained} XP`
+            : `Pack downloaded · +${g.gained} XP`
+        )
+      } else {
+        flashToast(kind === 'backup' ? 'Backup saved' : 'Pack downloaded')
+      }
     }
 
     // Capture File System Access handle WHILE we still have the user-gesture.
@@ -1079,17 +1108,12 @@ function App() {
         return
       }
       pins.forEach((pin) => addMoodPin(pin))
-      const g = awardAndBroadcast('mood_pin', {
-        label: `${pins.length} image${pins.length > 1 ? 's' : ''}`,
-      })
-      const skipNote =
-        skipped.length > 0
-          ? ` · ${skipped.length} skipped`
-          : ''
-      flashToast(
+      notifyAction(
         pins.length > 1
-          ? `${pins.length} images pinned${skipNote} · +${g.gained} XP`
-          : `Image pinned${skipNote} · +${g.gained} XP`
+          ? `${pins.length} images pinned${skipped.length ? ` · ${skipped.length} skipped` : ''}`
+          : `Image pinned${skipped.length ? ` · ${skipped.length} skipped` : ''}`,
+        'mood_pin',
+        { label: `${pins.length} image${pins.length > 1 ? 's' : ''}` }
       )
     })
   }
@@ -1308,8 +1332,7 @@ function App() {
     })
     setBoardUrl('')
     setBoardAddMode(null)
-    const g = awardAndBroadcast('mood_pin', { label: 'URL pin' })
-    flashToast(`Pin added · +${g.gained} XP`)
+    notifyAction('Pin added', 'mood_pin', { label: 'URL pin' })
   }
 
   const submitBoardNote = () => {
@@ -1323,8 +1346,7 @@ function App() {
     })
     setBoardNote('')
     setBoardAddMode(null)
-    const g = awardAndBroadcast('mood_pin', { label: 'Note pin' })
-    flashToast(`Pin added · +${g.gained} XP`)
+    notifyAction('Pin added', 'mood_pin', { label: 'Note pin' })
   }
 
   const handleSignOut = async () => {
@@ -1530,18 +1552,6 @@ function App() {
                   >
                     <strong>Timer</strong>
                     <span>Focus for the current step</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('spark')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <strong>Spark</strong>
-                    <span>One prompt</span>
                   </button>
                   <button
                     type="button"
@@ -2300,9 +2310,8 @@ function App() {
                   <div className="empty-state">
                     <p className="empty-state-title">Board is empty</p>
                     <p className="empty-state-body">
-                      Upload real images from your computer (or phone), paste an
-                      image URL, or add a color/note pin. Drag &amp; drop images
-                      here. Pins feed Mood direction in Brand + your pack.
+                      Upload images from your device, then star <strong>2–6</strong>{' '}
+                      with ★ Pack for System and Pack. Drag &amp; drop works too.
                     </p>
                   </div>
                 ) : (
@@ -2340,7 +2349,7 @@ function App() {
                         <div className="mood-pin-tools">
                           <button
                             type="button"
-                            className={`mood-pin-star${item.inPack ? ' is-on' : ''}`}
+                            className={`mood-pin-star${item.inPack ? ' is-on' : ''}${item.packHero ? ' is-hero' : ''}`}
                             title={
                               item.inPack
                                 ? 'Remove from pack'
@@ -2358,6 +2367,38 @@ function App() {
                           >
                             {item.inPack ? '★ Pack' : '☆ Pack'}
                           </button>
+                          {item.inPack && (
+                            <span className="mood-pack-order-tools">
+                              <button
+                                type="button"
+                                className="btn btn-ghost mood-pin-order"
+                                title="Move earlier in pack"
+                                onClick={() => movePackPin(item.id, 'up')}
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-ghost mood-pin-order"
+                                title="Move later in pack"
+                                onClick={() => movePackPin(item.id, 'down')}
+                              >
+                                ↓
+                              </button>
+                              <button
+                                type="button"
+                                className={`btn btn-ghost mood-pin-order${item.packHero ? ' is-on' : ''}`}
+                                title="Hero pin (first in pack)"
+                                onClick={() => {
+                                  const r = setPackHeroPin(item.id)
+                                  if (r.ok) flashToast('Hero pin set')
+                                  else flashToast(r.error || 'Could not set hero')
+                                }}
+                              >
+                                Hero
+                              </button>
+                            </span>
+                          )}
                           <input
                             className="mood-pin-note-input"
                             value={item.note || ''}
@@ -2880,123 +2921,28 @@ function App() {
               </div>
             </div>
 
-            {/* ARTBOARD — export source of truth */}
-            <article
-              className="direction-sheet system-artboard"
+            {/* ARTBOARD — shared pack source of truth */}
+            <BrandArtboard
               id="system-artboard"
-            >
-              <div
-                className="export-identity-cover"
-                style={{
-                  background: paletteRoles.cover,
-                  color: bestTextOn(paletteRoles.cover),
-                }}
-              >
-                <div className="kicker" style={{ color: 'inherit', opacity: 0.85 }}>
-                  Brand identity template
-                </div>
-                <h1 className="direction-title" style={{ color: 'inherit' }}>
-                  {activeProject?.name || 'Untitled project'}
-                </h1>
-                <p className="direction-brief" style={{ color: 'inherit', opacity: 0.92 }}>
-                  {activeProject?.tagline?.trim() || 'Tagline TBD'}
-                </p>
-              </div>
-              <div className="kicker">Positioning</div>
-              <p className="direction-brief">
-                {activeProject?.brief || 'No brief yet.'}
-              </p>
-              {activeProject?.voice ? (
-                <>
-                  <div className="kicker">Voice</div>
-                  <p className="direction-brief">{activeProject.voice}</p>
-                </>
-              ) : null}
-              <div className="kicker">Palette roles</div>
-              <div className="direction-palette">
-                {projectPalette.map((c, i) => (
-                  <div key={`${c}-a-${i}`} style={{ background: c }} title={c} />
-                ))}
-              </div>
-              <div className="palette-roles-row">
-                <span><i style={{ background: paletteRoles.cover }} /> Cover</span>
-                <span><i style={{ background: paletteRoles.text }} /> Text</span>
-                <span><i style={{ background: paletteRoles.accent }} /> Accent</span>
-                <span><i style={{ background: paletteRoles.quiet }} /> Quiet</span>
-              </div>
-              <div className="direction-hex">{projectPalette.join(' · ')}</div>
-              <div className="kicker">Typography</div>
-              <div className="type-specimen">
-                <p
-                  className="type-specimen-h"
-                  style={{
-                    fontFamily: fontFamilyFromLabel(
-                      activeProject?.typeHeading || 'Plus Jakarta Sans Bold'
-                    ),
-                  }}
-                >
-                  {activeProject?.typeHeading || 'Plus Jakarta Sans Bold'}
-                </p>
-                <p
-                  className="type-specimen-b"
-                  style={{
-                    fontFamily: fontFamilyFromLabel(
-                      activeProject?.typeBody || 'Plus Jakarta Sans Regular'
-                    ),
-                  }}
-                >
-                  {activeProject?.typeBody || 'Plus Jakarta Sans Regular'} — body
-                  for UI and long copy. The quick brown fox jumps.
-                </p>
-              </div>
-              {activeProject?.logoDirection ? (
-                <>
-                  <div className="kicker">Logo direction</div>
-                  <p className="direction-brief">{activeProject.logoDirection}</p>
-                </>
-              ) : null}
-              <div className="export-do-dont">
-                <div>
-                  <div className="kicker">Do</div>
-                  <p className="direction-brief">
-                    {activeProject?.doUse || '—'}
-                  </p>
-                </div>
-                <div>
-                  <div className="kicker">Don&apos;t</div>
-                  <p className="direction-brief">
-                    {activeProject?.dontUse || '—'}
-                  </p>
-                </div>
-              </div>
-              <div className="kicker">Mood direction</div>
-              {deskMood.filter((m) => m.inPack).length === 0 ? (
-                <p className="surface-meta">
-                  No starred pins — open Board and tap ★ Pack (max 6).
-                </p>
-              ) : (
-                <div className="direction-pins">
-                  {deskMood
-                    .filter((m) => m.inPack)
-                    .slice(0, 6)
-                    .map((pin) => (
-                      <div key={pin.id} className="direction-pin">
-                        <div
-                          className="direction-pin-visual"
-                          style={pinFaceStyle(pin)}
-                        />
-                        <div className="direction-pin-note">
-                          {pin.note || 'Pin'}
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-              <footer className="direction-foot">
-                Creative Companion · Brand identity ·{' '}
-                {new Date().toLocaleDateString()}
-              </footer>
-            </article>
+              project={activeProject || {}}
+              palette={projectPalette}
+              pins={deskMood.filter((m) => m.inPack)}
+              editable
+              onTaglineChange={(v) => updateBrandField('tagline', v)}
+              onBriefChange={(v) => updateProjectBrief(v)}
+              onRoleAssign={(role, hex) => setColorRole(role, hex)}
+              onLogoImage={(res) => {
+                if (res?.error) flashToast(res.error)
+                else if (res?.ok) {
+                  setLogoImage(res.dataUrl)
+                  flashToast('Mark image added')
+                }
+              }}
+              onClearLogoImage={() => {
+                setLogoImage('')
+                flashToast('Mark removed')
+              }}
+            />
 
             <p className="system-edit-label">Edit</p>
             <div className="system-accordion-nav" role="tablist">
@@ -3523,38 +3469,15 @@ function App() {
 
             <section className="panel brand-section finish-hero-panel pack-hero">
               <div className="pack-layout">
-                <div className="pack-preview-thumb" aria-hidden="true">
-                  <div
-                    className="pack-thumb-cover"
-                    style={{
-                      background: paletteRoles.cover,
-                      color: bestTextOn(paletteRoles.cover),
-                    }}
-                  >
-                    <span className="pack-thumb-kicker">Brand pack</span>
-                    <strong>{activeProject?.name || 'Untitled'}</strong>
-                    <em>
-                      {activeProject?.tagline?.trim() || 'Tagline TBD'}
-                    </em>
-                    <div className="pack-thumb-strip">
-                      {projectPalette.slice(0, 4).map((c, i) => (
-                        <i key={`${c}-t-${i}`} style={{ background: c }} />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="pack-thumb-pins">
-                    {deskMood
-                      .filter((m) => m.inPack)
-                      .slice(0, 4)
-                      .map((pin) => (
-                        <span
-                          key={pin.id}
-                          className="pack-thumb-pin"
-                          style={pinFaceStyle(pin)}
-                          title={pin.note}
-                        />
-                      ))}
-                  </div>
+                <div className="pack-preview-thumb pack-preview-artboard">
+                  <BrandArtboard
+                    id="pack-preview-artboard"
+                    project={activeProject || {}}
+                    palette={projectPalette}
+                    pins={deskMood.filter((m) => m.inPack)}
+                    compact
+                    editable={false}
+                  />
                 </div>
                 <div className="pack-meta">
                   {(() => {
@@ -3583,8 +3506,8 @@ function App() {
                         </p>
                         {ready.thin && (
                           <p className="pack-thin-warning" role="status">
-                            Thin pack — add a tagline, palette, or Board pins
-                            before you hand this to a client.
+                            Thin pack — add a tagline, palette, or ★ Pack pins
+                            on Board before client handoff.
                           </p>
                         )}
                       </>
@@ -3808,8 +3731,8 @@ function App() {
                 <div>
                   <strong>Design buddy</strong>
                   <span>
-                    Coach + time tips. Forced lockouts are a separate switch
-                    below (or on the Timer page)
+                    Corner Helper (Coach · Critique · Break). Forced desk
+                    lockouts are the separate switch below — one hard model.
                   </span>
                 </div>
                 <button
@@ -3847,9 +3770,8 @@ function App() {
                 <div>
                   <strong>Force break lockouts</strong>
                   <span>
-                    Lock the whole desk for 5–10 min after a Pomodoro (or after
-                    25+ min with the helper on). Turn off if you only want soft
-                    reminders.
+                    Hard lock only: full-desk freeze after Pomodoro / long Helper
+                    sessions. Soft tips still work if this is off.
                   </span>
                 </div>
                 <button
@@ -4168,7 +4090,7 @@ function App() {
                   }
                 }}
               >
-                Load Soft Signal sample
+                Load Soft Signal demo project
               </button>
             </section>
 
@@ -4201,17 +4123,52 @@ function App() {
               <div>
                 <h1 className="page-title">Project</h1>
                 <p className="page-sub">
-                  Step 1 — pick or name your project, then go to Work
+                  Name the work. Check readiness. Then open Work or Pack.
                 </p>
               </div>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setActiveView('flow')}
-              >
-                Go to Work
-              </button>
+              <div className="finish-secondary-row">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setActiveView('flow')}
+                >
+                  Open Work
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActiveView('finish')}
+                >
+                  Open Pack
+                </button>
+              </div>
             </div>
+            <section className="panel brand-section">
+              <div className="brand-section-label">Readiness</div>
+              <ul className="pack-ready-list project-ready-list">
+                <li className={deskTasks.some((t) => !t.completed) ? 'is-ok' : 'is-miss'}>
+                  {deskTasks.some((t) => !t.completed) ? '✓' : '○'} Open Work step
+                </li>
+                <li className={deskMood.some((m) => m.inPack) ? 'is-ok' : 'is-miss'}>
+                  {deskMood.some((m) => m.inPack) ? '✓' : '○'} Starred pack pins (
+                  {deskMood.filter((m) => m.inPack).length}/6)
+                </li>
+                <li className={activeProject?.tagline?.trim() ? 'is-ok' : 'is-miss'}>
+                  {activeProject?.tagline?.trim() ? '✓' : '○'} Tagline
+                </li>
+                <li className={(projectPalette || []).length >= 2 ? 'is-ok' : 'is-miss'}>
+                  {(projectPalette || []).length >= 2 ? '✓' : '○'} Palette
+                </li>
+                <li className={activeProject?.brief?.trim() ? 'is-ok' : 'is-miss'}>
+                  {activeProject?.brief?.trim() ? '✓' : '○'} Brief / positioning
+                </li>
+              </ul>
+              <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
+                {completedCount}/{deskTasks.length || 0} steps done · one brief
+                field feeds System positioning.
+              </p>
+              {projectPills}
+            </section>
             <section className="panel brand-section">
               <div className="brand-section-label">Active project</div>
               <div className="panel-head" style={{ marginBottom: '0.85rem' }}>
@@ -4220,7 +4177,6 @@ function App() {
                     {deskTasks.filter((t) => !t.completed).length} open on desk
                   </p>
                 </div>
-                {projectPills}
               </div>
 
               <div className="field-block" style={{ marginBottom: '1rem' }}>
@@ -4256,14 +4212,14 @@ function App() {
 
               <div className="field-block" style={{ marginBottom: '1rem' }}>
                 <label className="field-label" htmlFor="project-brief">
-                  Brief
+                  Brief / positioning
                 </label>
                 <textarea
                   id="project-brief"
                   className="field-textarea"
                   value={activeProject?.brief || ''}
                   onChange={(e) => updateProjectBrief(e.target.value)}
-                  placeholder="Who is this for? What should it feel like?"
+                  placeholder="Who is this for? Outcome? Constraint? (same field as System)"
                   rows={3}
                 />
               </div>

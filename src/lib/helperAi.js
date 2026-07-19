@@ -21,7 +21,6 @@ import {
   twoDirectionsTip,
 } from './buddy'
 
-const XAI_BASE = 'https://api.x.ai/v1'
 const DEFAULT_MODEL = 'grok-4.5'
 
 const SYSTEM_PROMPT = `You are Helper, the design buddy inside Creative Companion — a desk for ADHD-friendly UI/UX and brand work.
@@ -38,12 +37,30 @@ You are not a general chatbot. Stay on the design desk.`
 /** @returns {string} */
 export function getHelperApiKey() {
   try {
+    // Optional runtime proxy injection (server-side secret stays off the client bundle)
+    if (typeof window !== 'undefined' && window.__CC_XAI_API_KEY__) {
+      return String(window.__CC_XAI_API_KEY__).trim()
+    }
     const vite = String(import.meta.env?.VITE_XAI_API_KEY || '').trim()
     if (vite) return vite
   } catch {
     /* non-vite */
   }
   return ''
+}
+
+/** Optional OpenAI-compatible base URL override for a same-origin proxy */
+export function getHelperApiBase() {
+  try {
+    if (typeof window !== 'undefined' && window.__CC_XAI_BASE__) {
+      return String(window.__CC_XAI_BASE__).replace(/\/$/, '')
+    }
+    const vite = String(import.meta.env?.VITE_XAI_BASE_URL || '').trim()
+    if (vite) return vite.replace(/\/$/, '')
+  } catch {
+    /* ignore */
+  }
+  return 'https://api.x.ai/v1'
 }
 
 export function isHelperAiConfigured() {
@@ -150,8 +167,9 @@ export async function callXaiChat({
 } = {}) {
   const key = getHelperApiKey()
   if (!key) throw new Error('No API key')
+  const base = getHelperApiBase()
 
-  const res = await fetch(`${XAI_BASE}/chat/completions`, {
+  const res = await fetch(`${base}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

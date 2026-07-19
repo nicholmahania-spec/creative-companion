@@ -219,7 +219,13 @@ function esc(s) {
  * @returns {{ pins: object[], usedFallback: boolean, starredCount: number }}
  */
 export function selectPackPins(moodItems = [], limit = 6) {
-  const starred = (moodItems || []).filter((m) => m.inPack)
+  const starred = (moodItems || [])
+    .filter((m) => m.inPack)
+    .sort((a, b) => {
+      if (a.packHero && !b.packHero) return -1
+      if (!a.packHero && b.packHero) return 1
+      return (a.packOrder ?? 999) - (b.packOrder ?? 999)
+    })
   return {
     pins: starred.slice(0, limit),
     usedFallback: false,
