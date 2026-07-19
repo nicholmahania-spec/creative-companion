@@ -145,42 +145,8 @@ export function breakPlanCopy(plan, breakMinutes) {
   }
 }
 
-/** Seed examples so the feature is obvious on first open */
-export const seedBreakKit = [
-  {
-    id: 'seed-water',
-    title: 'Drink water',
-    kind: 'care',
-    minutes: 2,
-    notes: '',
-    recurring: true,
-    completed: false,
-    lastDoneAt: null,
-    archived: false,
-  },
-  {
-    id: 'seed-med',
-    title: 'Take afternoon meds (edit me)',
-    kind: 'med',
-    minutes: 2,
-    notes: 'Replace with your real meds',
-    recurring: true,
-    completed: false,
-    lastDoneAt: null,
-    archived: false,
-  },
-  {
-    id: 'seed-todo',
-    title: 'Reply to one text you have been avoiding',
-    kind: 'todo',
-    minutes: 3,
-    notes: '',
-    recurring: false,
-    completed: false,
-    lastDoneAt: null,
-    archived: false,
-  },
-]
+/** Empty by default — user adds real meds / to-dos */
+export const seedBreakKit = []
 
 export function createBreakItem({
   title,

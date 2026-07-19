@@ -842,13 +842,23 @@ function App() {
         dueDate: '',
       })
       awardAndBroadcast('task_capture', { label: 'First step' })
+      flashToast('Your desk is ready — complete the first step')
+    } else {
+      // Empty real desk — no sample clients
+      clearToEmpty()
+      if (onboardName.trim()) {
+        renameProject(
+          useAppStore.getState().currentProjectId,
+          onboardName.trim()
+        )
+      }
+      flashToast('Empty desk — capture your first real step')
     }
     setOnboarded(true)
     localStorage.setItem('cc-onboarded', '1')
     setShowOnboarding(false)
     setBodyDoubling(true)
     setActiveView('flow')
-    flashToast('One step on your desk — complete it when ready')
   }
 
   const buildCurrentBrandPack = () =>
@@ -3485,13 +3495,6 @@ function App() {
                 >
                   Edit Brand
                 </button>
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={loadSoftSignalDemo}
-                >
-                  Load Soft Signal demo
-                </button>
               </div>
               <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
                 HTML opens offline and includes Print/PDF. Markdown is for docs
@@ -3902,17 +3905,16 @@ function App() {
                     onClick={() => {
                       if (
                         window.confirm(
-                          'Reset to demo projects and sample tasks? Your current data will be replaced.'
+                          'Wipe this desk and start empty (one blank project)? This cannot be undone unless you have a backup.'
                         )
                       ) {
-                        clearAllData()
-                        setShowOnboarding(true)
+                        clearToEmpty()
                         setActiveView('flow')
-                        flashToast('Reset to demo data')
+                        flashToast('Empty desk ready')
                       }
                     }}
                   >
-                    Reset to demo
+                    Start empty desk
                   </button>
                   <button
                     type="button"
@@ -3920,19 +3922,43 @@ function App() {
                     onClick={() => {
                       if (
                         window.confirm(
-                          'Start completely empty (one blank project, no tasks)? This cannot be undone unless you have a backup.'
+                          'Full reset: clear all data and show first-run setup again?'
                         )
                       ) {
-                        clearToEmpty()
-                        setActiveView('flow')
-                        flashToast('Started empty')
+                        clearAllData()
+                        setShowOnboarding(true)
+                        setActiveView('project')
+                        flashToast('Reset — set up your real project')
                       }
                     }}
                   >
-                    Start empty
+                    Full reset + setup
                   </button>
                 </div>
               </div>
+            </section>
+
+            <section className="panel brand-section">
+              <div className="brand-section-label">Optional sample</div>
+              <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
+                Load a finished sample brand run to see the full path. It
+                replaces your current workspace — export a backup first.
+              </p>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      'Replace your workspace with the Soft Signal sample project?'
+                    )
+                  ) {
+                    loadSoftSignalDemo()
+                  }
+                }}
+              >
+                Load Soft Signal sample
+              </button>
             </section>
 
             <section className="panel brand-section">
@@ -3948,8 +3974,10 @@ function App() {
                 </div>
               </div>
               <p className="panel-hint" style={{ margin: 0 }}>
-                Creative Companion is a local work loop for ADHD creative work —
-                not a chatbot, not a cloud app.
+                Creative Companion is a real desk for ADHD creative work: one
+                step at a time, Helper presence, forced breaks, and brand pack
+                export
+                {CLOUD ? ' — with optional cloud sync when configured.' : '.'}
               </p>
             </section>
           </div>
@@ -3965,23 +3993,13 @@ function App() {
                   Step 1 — pick or name your project, then go to Work
                 </p>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={loadSoftSignalDemo}
-                  title="Load the Soft Signal fictional design run"
-                >
-                  Load Soft Signal demo
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setActiveView('flow')}
-                >
-                  Go to Work
-                </button>
-              </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setActiveView('flow')}
+              >
+                Go to Work
+              </button>
             </div>
             <section className="panel brand-section">
               <div className="brand-section-label">Active project</div>
@@ -4245,9 +4263,9 @@ function App() {
               <button
                 type="button"
                 className="text-link onboard-demo"
-                onClick={() => finishOnboarding('demo')}
+                onClick={() => finishOnboarding('empty')}
               >
-                Or explore demo projects
+                Skip — empty desk (no first step yet)
               </button>
             </div>
           </div>

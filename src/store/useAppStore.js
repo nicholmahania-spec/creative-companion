@@ -1,55 +1,15 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { addDays, toISODate } from '../lib/dates'
-import { createBreakItem, seedBreakKit } from '../lib/breakKit'
+import { createBreakItem } from '../lib/breakKit'
 
+/** Real creative prompts — tools, not fake user data */
 export const sparkPrompts = [
-  'What if your next illustration series explored the feeling of quiet belonging?',
-  'Design a visual system that feels both protective and hopeful for foster families.',
-  'Make a single mark that says “you are not alone in this” without using those words.',
-  'Three color stories for 100 Families that feel like a warm invitation, not a campaign.',
-  'What does sustained joy look like as a repeating pattern or texture?',
-]
-
-export const seedTasks = [
-  {
-    id: 1,
-    title:
-      '100 Families booklet — cover directions that feel like invitation, not campaign',
-    energy: 'med',
-    meta: '1 of 3 micro-steps · thumbnails waiting in Figma',
-    completed: false,
-    seeded: true,
-    projectId: 1,
-  },
-  {
-    id: 2,
-    title:
-      'Sparrow’s Promise — foster parent appreciation carousel (warm, not corporate)',
-    energy: 'low',
-    meta: '0 of 3 · photo pull is the only next move',
-    completed: false,
-    seeded: true,
-    projectId: 1,
-  },
-  {
-    id: 3,
-    title: 'Alayla Jade — wordmark explorations (hand-drawn, not template)',
-    energy: 'med',
-    meta: 'Brand lane · 2 marks pinned in Studio',
-    completed: false,
-    seeded: true,
-    projectId: 2,
-  },
-  {
-    id: 4,
-    title: 'Personal series — “quiet belonging” gradient studies',
-    energy: 'low',
-    meta: 'No client · pure play',
-    completed: false,
-    seeded: true,
-    projectId: 3,
-  },
+  'What if the mark worked in one color at sticker size and still felt human?',
+  'Name the feeling the cover must land — one sentence, no jargon.',
+  'Design a visual system that protects quiet attention, not hustle energy.',
+  'What is the one thing a viewer must understand in three seconds?',
+  'Strip one decorative layer. Does hierarchy still hold?',
 ]
 
 export const defaultProjectPalette = [
@@ -67,7 +27,6 @@ export const defaultBrandIdentity = {
   typeBody: 'Plus Jakarta Sans Regular',
   doUse: '',
   dontUse: '',
-  /** Step-by-step concept pack (fills brand when applied) */
   conceptPackage: {
     audience: '',
     outcome: '',
@@ -80,118 +39,70 @@ export const defaultBrandIdentity = {
   },
 }
 
-export const seedProjects = [
-  {
-    id: 1,
-    name: '100 Families Booklet',
+/** Fresh real desk — no sample clients or fake tasks */
+export function createBlankProject(name = 'My project', brief = '') {
+  const id = Date.now()
+  return {
+    id,
+    name: name || 'My project',
     active: true,
-    brief:
-      'Warm invitation for foster & family support — hope without campaign gloss.',
-    logoDirection: '',
-    palette: ['#5B4B8A', '#2A9D8F', '#1C1917', '#F6F1EB'],
-    tagline: 'You are not alone in this.',
-    voice: 'Warm, hopeful, plain-spoken. No campaign gloss.',
-    typeHeading: 'Plus Jakarta Sans Bold',
-    typeBody: 'Plus Jakarta Sans Regular',
-    doUse: 'Soft invitation language · real photos · space to breathe',
-    dontUse: 'Stock “diversity” clichés · corporate blue · hard sells',
-    deadline: addDays(toISODate(), 14),
-    tasks: [],
-  },
-  {
-    id: 2,
-    name: 'Alayla Jade Brand',
-    active: false,
-    brief:
-      'Personal brand system: handmade marks, purple spark, quiet confidence.',
-    logoDirection: '',
-    palette: ['#4F46E5', '#7C3AED', '#0B1220', '#EEF2FF'],
-    tagline: 'Handmade marks. Quiet confidence.',
-    voice: 'Direct, creative, a little sparkly — never loud.',
-    typeHeading: 'Plus Jakarta Sans Bold',
-    typeBody: 'Plus Jakarta Sans Regular',
-    doUse: 'Hand-drawn edges · indigo spark · short lines',
-    dontUse: 'Template logos · generic scripts · clutter',
-    deadline: addDays(toISODate(), 28),
-    tasks: [],
-  },
-  {
-    id: 3,
-    name: 'Personal Illustrations',
-    active: false,
-    brief: 'Play lane — quiet belonging, gradient studies, no client clock.',
+    brief: brief || '',
     logoDirection: '',
     palette: [...defaultProjectPalette],
-    tagline: 'Quiet belonging, in color.',
-    voice: 'Soft, curious, unhurried.',
-    typeHeading: 'Plus Jakarta Sans Bold',
-    typeBody: 'Plus Jakarta Sans Regular',
-    doUse: 'Gradients · texture · one strong feeling',
-    dontUse: 'Deadlines energy · over-explaining',
     deadline: '',
+    ...defaultBrandIdentity,
     tasks: [],
-  },
-]
+  }
+}
 
-/** Soft gradient “pins” so Studio isn’t an empty wall on first open */
-export const seedMoodItems = [
-  {
-    id: 101,
-    type: 'quote',
-    note: 'Quiet belonging — soft gradients, hand-drawn line, no hard sell.',
-    visual: 'linear-gradient(135deg, #5E2B8A, #C9B1E0)',
-    projectId: 1,
-    seeded: true,
-  },
-  {
-    id: 102,
-    type: 'quote',
-    note: 'Mark that feels chosen, not campaign — purple spark + human warmth.',
-    visual: 'linear-gradient(120deg, #863BFF, #2A9D8F)',
-    projectId: 2,
-    seeded: true,
-  },
-  {
-    id: 103,
-    type: 'quote',
-    note: 'Personal series mood: twilight studio, sustained joy as texture.',
-    visual: 'linear-gradient(160deg, #1A1625, #863BFF 80%)',
-    projectId: 3,
-    seeded: true,
-  },
-]
+export function blankWorkspaceState() {
+  const project = createBlankProject('My project', '')
+  return {
+    projects: [project],
+    currentProjectId: project.id,
+    tasks: [],
+    moodItems: [],
+    conceptItems: [],
+    breakKit: [],
+    theme: 'warm',
+    bodyDoubling: false,
+    onboarded: false,
+    sparkIndex: 0,
+    currentSpark: sparkPrompts[0],
+    prefs: {
+      soundEnabled: true,
+      reduceMotion: false,
+      bodyDoubleSilent: false,
+      forceBreaksEnabled: true,
+      queueCollapsed: true,
+      showHowItWorks: true,
+    },
+  }
+}
+
+/** @deprecated kept for migration only — never seed into new installs */
+export const seedTasks = []
+export const seedProjects = []
+export const seedMoodItems = []
+
+const initial = blankWorkspaceState()
 
 const useAppStore = create(
   persist(
     (set, get) => ({
-      projects: seedProjects,
-      currentProjectId: 1,
-      tasks: seedTasks,
-      moodItems: seedMoodItems,
-      /**
-       * Concept pipeline assets:
-       * stage: sketch | develop | iteration | locked
-       */
+      ...initial,
+      projects: initial.projects,
+      currentProjectId: initial.currentProjectId,
+      tasks: [],
+      moodItems: [],
       conceptItems: [],
-      /**
-       * Break Kit — life micro-tasks (meds, todos, errands) for forced breaks.
-       * See lib/breakKit.js
-       */
-      breakKit: seedBreakKit.map((i) => ({ ...i })),
-      theme: 'warm', // warm | deep
+      breakKit: [],
+      theme: 'warm',
       bodyDoubling: false,
       onboarded: false,
       sparkIndex: 0,
       currentSpark: sparkPrompts[0],
-      // Preferences (persisted)
-      prefs: {
-        soundEnabled: true,
-        reduceMotion: false,
-        bodyDoubleSilent: false, // true = badge only, no floating card copy
-        forceBreaksEnabled: true, // Pomodoro desk lock after work cycles
-        queueCollapsed: true, // collapse queue after breakdown / by default when busy
-        showHowItWorks: true,
-      },
+      prefs: { ...initial.prefs },
 
       addBreakKitItem: (payload) => {
         const item = createBreakItem(payload || {})
@@ -428,9 +339,7 @@ const useAppStore = create(
           tasks: data.tasks,
           moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
           conceptItems: Array.isArray(data.conceptItems) ? data.conceptItems : [],
-          breakKit: Array.isArray(data.breakKit)
-            ? data.breakKit
-            : seedBreakKit.map((i) => ({ ...i })),
+          breakKit: Array.isArray(data.breakKit) ? data.breakKit : [],
           theme: data.theme === 'deep' ? 'deep' : 'warm',
           prefs: {
             soundEnabled: true,
@@ -505,27 +414,8 @@ const useAppStore = create(
       },
 
       clearAllData: () => {
-        set({
-          projects: seedProjects.map((p) => ({ ...p })),
-          currentProjectId: 1,
-          tasks: seedTasks.map((t) => ({ ...t })),
-          moodItems: seedMoodItems.map((m) => ({ ...m })),
-          conceptItems: [],
-          breakKit: seedBreakKit.map((i) => ({ ...i })),
-          theme: 'warm',
-          bodyDoubling: false,
-          onboarded: false,
-          sparkIndex: 0,
-          currentSpark: sparkPrompts[0],
-          prefs: {
-            soundEnabled: true,
-            reduceMotion: false,
-            bodyDoubleSilent: false,
-            forceBreaksEnabled: true,
-            queueCollapsed: true,
-            showHowItWorks: true,
-          },
-        })
+        const blank = blankWorkspaceState()
+        set({ ...blank, onboarded: false })
         try {
           localStorage.removeItem('cc-hide-howto')
           localStorage.removeItem('cc-onboarded')
@@ -535,30 +425,14 @@ const useAppStore = create(
       },
 
       clearToEmpty: () => {
-        const id = Date.now()
+        const blank = blankWorkspaceState()
         set({
-          projects: [
-            {
-              id,
-              name: 'My project',
-              active: true,
-              brief: '',
-              logoDirection: '',
-              palette: [...defaultProjectPalette],
-              deadline: '',
-              ...defaultBrandIdentity,
-              tasks: [],
-            },
-          ],
-          currentProjectId: id,
-          tasks: [],
-          moodItems: [],
-          conceptItems: [],
-          breakKit: [],
-          bodyDoubling: false,
+          ...blank,
           onboarded: true,
-          sparkIndex: 0,
-          currentSpark: sparkPrompts[0],
+          projects: blank.projects.map((p) => ({
+            ...p,
+            name: 'My project',
+          })),
         })
       },
 
@@ -836,19 +710,11 @@ const useAppStore = create(
           }
         }),
 
-      createNewProject: (name = 'New Creative Project', brief = '') => {
-        const project = {
-          id: Date.now(),
-          name,
-          active: true,
-          brief:
-            brief || 'Direction TBD — capture first, polish later.',
-          logoDirection: '',
-          palette: [...defaultProjectPalette],
-          deadline: '',
-          ...defaultBrandIdentity,
-          tasks: [],
-        }
+      createNewProject: (name = 'My project', brief = '') => {
+        const project = createBlankProject(
+          name || 'My project',
+          brief || ''
+        )
         get().addProject(project)
         return project
       },
@@ -861,6 +727,31 @@ const useAppStore = create(
     }),
     {
       name: 'creative-companion-storage',
+      version: 3,
+      migrate: (persisted) => {
+        // Keep real user data; only normalize missing arrays
+        if (!persisted || typeof persisted !== 'object') {
+          return blankWorkspaceState()
+        }
+        return {
+          ...blankWorkspaceState(),
+          ...persisted,
+          tasks: Array.isArray(persisted.tasks) ? persisted.tasks : [],
+          moodItems: Array.isArray(persisted.moodItems)
+            ? persisted.moodItems
+            : [],
+          conceptItems: Array.isArray(persisted.conceptItems)
+            ? persisted.conceptItems
+            : [],
+          breakKit: Array.isArray(persisted.breakKit)
+            ? persisted.breakKit
+            : [],
+          projects:
+            Array.isArray(persisted.projects) && persisted.projects.length
+              ? persisted.projects
+              : blankWorkspaceState().projects,
+        }
+      },
       partialize: (state) => ({
         projects: state.projects,
         currentProjectId: state.currentProjectId,
@@ -875,32 +766,36 @@ const useAppStore = create(
         prefs: state.prefs,
       }),
       onRehydrateStorage: () => (state) => {
-        // One-time bridge from earlier cc-desk localStorage shape
         try {
           if (!state) return
-          const legacy = localStorage.getItem('cc-desk')
           const onboardFlag = localStorage.getItem('cc-onboarded')
           if (onboardFlag === '1') state.onboarded = true
+          if (!Array.isArray(state.tasks)) state.tasks = []
+          if (!Array.isArray(state.moodItems)) state.moodItems = []
+          if (!Array.isArray(state.conceptItems)) state.conceptItems = []
+          if (!Array.isArray(state.breakKit)) state.breakKit = []
+          if (!Array.isArray(state.projects) || !state.projects.length) {
+            const blank = blankWorkspaceState()
+            state.projects = blank.projects
+            state.currentProjectId = blank.currentProjectId
+          }
+          // Legacy bridge from earlier cc-desk shape (real user data only)
+          const legacy = localStorage.getItem('cc-desk')
           if (!legacy) return
           const data = JSON.parse(legacy)
-          if (Array.isArray(data.tasks) && data.tasks.length && state.tasks?.length <= seedTasks.length) {
+          if (Array.isArray(data.tasks) && data.tasks.length && !state.tasks?.length) {
             state.tasks = data.tasks
           }
-          if (Array.isArray(data.moodItems) && data.moodItems.length) {
+          if (Array.isArray(data.moodItems) && data.moodItems.length && !state.moodItems?.length) {
             state.moodItems = data.moodItems
-          } else if (!state.moodItems?.length) {
-            state.moodItems = seedMoodItems
           }
           if (data.activeProjectId) state.currentProjectId = data.activeProjectId
           if (Array.isArray(data.projects) && data.projects.length) {
             state.projects = data.projects.map((p) => ({
               logoDirection: '',
+              ...defaultBrandIdentity,
               ...p,
             }))
-          }
-          // Empty mood after rehydrate → seed demo pins once
-          if (!state.moodItems?.length) {
-            state.moodItems = seedMoodItems
           }
         } catch {
           /* ignore */
