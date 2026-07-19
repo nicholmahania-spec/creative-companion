@@ -1,0 +1,19 @@
+{
+  "name": "Creative Companion",
+  "short_name": "Companion",
+  "description": "Calm adaptive workflow for ADHD designers and photographers.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F4F1EA",
+  "theme_color": "#1F5A6B",
+  "orientation": "any",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
