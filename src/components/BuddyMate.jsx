@@ -41,7 +41,7 @@ export default function BuddyMate({
     {
       id: 1,
       from: 'buddy',
-      text: `${greetingLine()} It is ${formatClock()}.`,
+      text: `${greetingLine()} It's ${formatClock()} right now.`,
     },
   ])
   const [expanded, setExpanded] = useState(true)
@@ -120,7 +120,7 @@ export default function BuddyMate({
     }
     if (!isFocusRunning && lastFocus.current && focusLeft === 0) {
       pushBuddy(
-        'Focus pocket ended. Stretch, water, or bathroom — then pick the next open step.'
+        "Timer's done. Stretch, sip water, or hit the bathroom — then pick up whatever is next when you're ready."
       )
     }
     lastFocus.current = isFocusRunning
@@ -190,7 +190,7 @@ export default function BuddyMate({
   }
 
   const logBreak = () => {
-    pushYou('Taking a break')
+    pushYou("I'm taking a break")
     const next = markBreak()
     setWellness(next)
     lastHyperLevel.current = null
@@ -212,10 +212,10 @@ export default function BuddyMate({
       pushYou("I'm okay for now")
       pushBuddy(
         nextTaskTitle
-          ? `Cool. It is ${formatClock()}. Current step: "${nextTaskTitle.slice(0, 56)}${
+          ? `Cool. It's ${formatClock()}. Your next thing is still: "${nextTaskTitle.slice(0, 56)}${
               nextTaskTitle.length > 56 ? '…' : ''
-            }". One action only.`
-          : `Cool. It is ${formatClock()}. Dump one idea on Work or run micro-steps.`
+            }". Just that. Nothing else.`
+          : `Cool. It's ${formatClock()}. When you're ready, toss one idea on the Work page or break something into smaller steps.`
       )
       return
     }
@@ -229,18 +229,18 @@ export default function BuddyMate({
       const br = minutesSinceBreak(loadWellness(), sessionStart)
       pushBuddy(
         [
-          `Desk session ~${desk}. About ${br} min since last break log.`,
+          `You've been here about ${desk}, and roughly ${br} minutes since a real break.`,
           completedCount > 0
-            ? `Completed ${completedCount} step${completedCount === 1 ? '' : 's'}.`
-            : 'No completes yet — still counts as showing up.',
+            ? `You finished ${completedCount} step${completedCount === 1 ? '' : 's'}. That's not nothing.`
+            : "You haven't checked anything off yet — and showing up still counts.",
           nextTaskTitle
-            ? `Current step: "${nextTaskTitle.slice(0, 48)}${
+            ? `Right now the job is: "${nextTaskTitle.slice(0, 48)}${
                 nextTaskTitle.length > 48 ? '…' : ''
               }".`
-            : 'No open step — capture or breakdown.',
+            : "You don't have a next step open. Add one when you feel like it.",
           hyper
-            ? 'Hyperfocus watch is on — breaks are allowed.'
-            : 'Pace looks sustainable right now.',
+            ? "You've been in it a while — breaks are allowed. I'm not judging."
+            : "Pace feels okay from here. Keep going if it feels good.",
         ].join(' ')
       )
     }
@@ -279,13 +279,13 @@ export default function BuddyMate({
         <div className="buddy-identity">
           <BuddyFace mood={mood} reduceMotion={reduceMotion} />
           <div>
-            <strong className="buddy-name">Desk Buddy</strong>
+            <strong className="buddy-name">Your buddy</strong>
             <span className="buddy-status">
               {isFocusRunning
-                ? `Focus · ${focusLabel || 'running'} · holding time`
+                ? `Timer on${focusLabel ? ` · ${focusLabel}` : ''} · I'm with you`
                 : hyper
-                  ? `Hyperfocus watch · ${sinceBreak} min since break`
-                  : 'Time + body double · not AI chat'}
+                  ? `${sinceBreak} min since your last break · checking in`
+                  : "Here if you need me · friend, not a lecture"}
             </span>
           </div>
         </div>
@@ -312,11 +312,11 @@ export default function BuddyMate({
       {/* Time blindness strip — always visible */}
       <div className="buddy-time-strip" aria-live="polite">
         <div className="buddy-time-block">
-          <span className="buddy-time-label">Clock</span>
+          <span className="buddy-time-label">Time now</span>
           <strong className="buddy-time-value">{formatClock(new Date(now))}</strong>
         </div>
         <div className="buddy-time-block">
-          <span className="buddy-time-label">At desk</span>
+          <span className="buddy-time-label">Been here</span>
           <strong className="buddy-time-value">{formatDuration(deskMs)}</strong>
         </div>
         <div className="buddy-time-block">
@@ -334,10 +334,10 @@ export default function BuddyMate({
       {(hyper === 'soft' || hyper === 'strong' || hyper === 'hard') && (
         <div className={`buddy-hyper-banner level-${hyper}`}>
           {hyper === 'hard'
-            ? 'Long stretch — break is productive'
+            ? "You've been at this a long time — a break is okay"
             : hyper === 'strong'
-              ? 'Deep focus · body may need a minute'
-              : '25+ min in · soft stretch soon'}
+              ? "Deep in it · your body might want a minute"
+              : 'About 25+ minutes in · stretch when you can'}
         </div>
       )}
 
@@ -350,12 +350,12 @@ export default function BuddyMate({
       </div>
 
       <div className="buddy-wellness">
-        <p className="buddy-wellness-label">Body check-ins</p>
+        <p className="buddy-wellness-label">Tell me you did this</p>
         <div className="buddy-wellness-row">
           <button
             type="button"
             className={`buddy-check${overdue.includes('water') ? ' is-due' : ''}`}
-            onClick={() => logWellness('water', 'I drank water')}
+            onClick={() => logWellness('water', 'I drank some water')}
           >
             Water
           </button>
@@ -377,7 +377,7 @@ export default function BuddyMate({
           </button>
         </div>
         <button type="button" className="buddy-break-btn" onClick={logBreak}>
-          I took a break · reset hyperfocus clock
+          I took a real break
         </button>
       </div>
 
@@ -408,7 +408,7 @@ export default function BuddyMate({
           className="buddy-quick-btn"
           onClick={() => reply('break')}
         >
-          Need a break
+          I need a break
         </button>
         <button
           type="button"

@@ -132,93 +132,93 @@ export function minutesAtDesk(sessionStart, now = Date.now()) {
 }
 
 const GREETINGS = [
-  "Hey — I'm here for company, body checks, and time blindness. Clock is soft, not scary.",
-  'Buddy online. I track how long you have been at the desk so time does not vanish.',
-  "Body double bot here. I will nudge water, bathroom, and breaks if hyperfocus grabs you.",
+  "Hey, I'm right here with you. I'll keep an eye on the clock and check if you need water or a break.",
+  "Hi friend. Pull up a chair — I've got your back while you work.",
+  "Hey you. I'm hanging out so time doesn't sneak away and you don't forget to take care of yourself.",
 ]
 
 const WATER = [
-  'Water check. Have you had a sip in the last while?',
-  'Hydration nudge: glass of water now beats crashing later.',
-  'Quick one: drink something. Your brain runs on water too.',
+  "Hey — have you had any water lately? Even a few sips.",
+  "Friendly reminder from me: grab a drink. Future you will thank you.",
+  "Water check, friend. Want to take a quick sip before you keep going?",
 ]
 
 const FOOD = [
-  'Food check. Have you eaten something today?',
-  'Fuel break? Even a snack counts. Empty stomach = foggy desk.',
-  'Did you eat? Creative work needs calories, not just coffee.',
+  "Real talk — have you eaten today? Even a snack counts.",
+  "Hey, food check. Empty stomach makes everything harder.",
+  "Did you eat something? Coffee doesn't count. Want a quick snack break?",
 ]
 
 const BATHROOM = [
-  'Bathroom break? Holding it tanks focus. Go if you need to.',
-  'Body check: bathroom. Stand up, walk, come back for the step.',
-  'Stretch + bathroom if you have been planted. I will hold the desk.',
+  "Bathroom break? Don't wait until you're miserable. I'll be here when you're back.",
+  "Hey, if you need the bathroom, just go. The work isn't going anywhere.",
+  "Quick body check: stand up, bathroom if you need it, then come back. I got you.",
 ]
 
 const PROGRESS_STEP = [
-  'Nice — a step left the queue. That counts as real motion.',
-  'Progress logged. One less blob on the desk. Proud of you.',
-  'You completed something. Micro-wins stack into finished work.',
+  "Yes! You finished one. That's real progress — I'm proud of you.",
+  "Look at you go. One less thing hanging over you. Nice work.",
+  "You actually completed something. That counts. Keep that energy.",
 ]
 
 const PROGRESS_TIMER = [
-  'Timer is humming. Stay with the current step — nothing else.',
-  'Focus pocket is on. I will still watch the clock so hyperfocus does not eat dinner.',
-  'Timer mode: one job only. Buddy is sitting with you and holding time.',
+  "Timer's on. Just this one thing — nothing else for now. I'm right here.",
+  "Okay, focus time. I'll watch the clock so you don't have to.",
+  "You've got this. One job while the timer runs. I'm sitting with you.",
 ]
 
 const STUCK = [
-  'Stuck is information, not failure. Split the step or pick Stuck?',
-  'When it freezes: smaller action, 2-min timer, or walk for water.',
-  'You are not broken — the task might still be too big. Micro-step it.',
+  "Stuck happens to everyone. Try a tiny piece of it, or take two minutes and come back.",
+  "Hey, it's okay. Make it smaller. What's the smallest next move you can do?",
+  "You're not failing — this part is just hard. Split it up or walk away for a minute.",
 ]
 
 const IDLE = [
-  'Still here. What is the one next action on the current step?',
-  'Desk buddy check-in. Body okay? Step still clear?',
-  'Ping: you do not have to finish everything — just the current step.',
+  "Still here with you. What's the next little thing on your list?",
+  "Hey, just checking in. You good? Need anything?",
+  "No pressure to finish everything. Just the next step. I'm not going anywhere.",
 ]
 
 const PRAISE = [
-  'You are showing up. That is the hard part for ADHD brains.',
-  'Company mode on. No judgment if you wander — just come back.',
-  'I believe in ugly first drafts. Keep going.',
+  "Showing up is the hard part. You're doing that. I see you.",
+  "Wander off if you need to — just come back when you can. No judgment from me.",
+  "Messy drafts are allowed. Keep going. I believe in you.",
 ]
 
 const TIME_BLIND = [
   (clock, desk) =>
-    `Time check: it is ${clock}. You have been at the desk about ${desk}. Not a scold — just orientation.`,
+    `Hey, heads up — it's ${clock}. You've been here about ${desk}. Not nagging, just so you know.`,
   (clock, desk) =>
-    `Soft clock: ${clock}. Desk session ~${desk}. Still one step only.`,
+    `Quick time check: ${clock}. You've been at this for about ${desk}.`,
   (clock, desk) =>
-    `Time blindness ping — wall clock says ${clock}. You have been here ~${desk}.`,
+    `Friend update: the clock says ${clock}, and you've been sitting here about ${desk}.`,
 ]
 
 const HYPER_SOFT = [
   (mins) =>
-    `Hyperfocus watch: ~${mins} min without a real break. 60-second stand + water still counts as winning.`,
+    `You've been deep in it for about ${mins} minutes. Want to stand up and stretch for a sec?`,
   (mins) =>
-    `You have been deep for about ${mins} minutes. Eyes off screen for one breath? Then return to the step.`,
+    `Hey — roughly ${mins} min without a break. Look away from the screen for one breath, then come back.`,
   (mins) =>
-    `${mins} min continuous. Body first: stretch shoulders, sip water, then the current step only.`,
+    `${mins} minutes in. Sip of water and a shoulder roll? Then jump back in.`,
 ]
 
 const HYPER_STRONG = [
   (mins) =>
-    `Hyperfocus alert: ~${mins} min planted. Bathroom + water now — the work will still be here.`,
+    `Okay friend, you've been at this about ${mins} minutes. Bathroom and water. The work will wait.`,
   (mins) =>
-    `${mins} minutes deep. This is the ADHD trap where dinner disappears. 3-minute break, then back.`,
+    `${mins} minutes deep — this is how dinner disappears. Take three minutes. I'll hold your spot.`,
   (mins) =>
-    `Strong nudge: you have been going ~${mins} min. Step away once. I am holding your place.`,
+    `You've been going hard for ~${mins} min. Step away once. I've got your place saved.`,
 ]
 
 const HYPER_HARD = [
   (mins) =>
-    `Hard stop suggestion: ~${mins} min without a break. Stand up, bathroom, water, snack. Set a 2-min timer when you return.`,
+    `Hey. Real talk: ~${mins} minutes with no break. Stand up, bathroom, water, maybe a snack. Come back when you're ready.`,
   (mins) =>
-    `${mins} minutes is a lot of continuous focus. Hyperfocus is a gift and a thief — reclaim 5 minutes for your body.`,
+    `${mins} minutes is a long stretch. Take five for your body. You're allowed. The work stays.`,
   (mins) =>
-    `Buddy override: you have been at this ~${mins} min. Break is productive. Come back to one step only.`,
+    `I'm gently insisting: you've been at this ~${mins} min. Break is not quitting. I'll be right here.`,
 ]
 
 function pick(arr) {
@@ -263,21 +263,21 @@ export function hyperfocusLine(minutesWorking) {
 
 export function confirmLine(kind) {
   if (kind === 'water')
-    return 'Logged water. Nice. Time keeps moving — one step when ready.'
+    return 'Nice. Water logged. Whenever you are ready, just the next little step.'
   if (kind === 'food')
-    return 'Logged food. Fuel helps the next mark complete.'
+    return 'Good. Food helps more than people admit. Proud of you for that.'
   if (kind === 'bathroom')
-    return 'Logged bathroom. Welcome back — current step is waiting.'
+    return 'Welcome back. Your step is still right where you left it.'
   if (kind === 'break')
-    return 'Break logged. Hyperfocus clock reset. Come back gentle.'
-  return 'Noted. I am still sitting with you and watching the clock softly.'
+    return "Okay, break counts. I'm resetting the long-stretch timer. Come back soft."
+  return "Got it. I'm still here with you."
 }
 
 export function whatTimeLine(sessionStart, now = Date.now()) {
   const clock = formatClock(new Date(now))
   const desk = formatDuration(now - sessionStart)
   const sinceBreak = minutesSinceBreak(loadWellness(), sessionStart, now)
-  return `It is ${clock}. Desk session ~${desk}. About ${sinceBreak} min since your last break log.`
+  return `It's ${clock}. You've been here about ${desk}. Roughly ${sinceBreak} minutes since you last took a break.`
 }
 
 /** Mood for avatar face */

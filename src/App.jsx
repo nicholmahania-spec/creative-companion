@@ -1140,9 +1140,9 @@ function App() {
                     }}
                   >
                     <strong>
-                      {bodyDoubling ? 'Buddy off' : 'Desk buddy'}
+                      {bodyDoubling ? 'Buddy off' : 'Your buddy'}
                     </strong>
-                    <span>Interactive bot · body checks + progress</span>
+                    <span>Friend who watches time and checks in</span>
                   </button>
                   <button
                     type="button"
