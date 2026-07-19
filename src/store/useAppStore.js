@@ -959,19 +959,39 @@ const useAppStore = create(
     }),
     {
       name: 'creative-companion-storage',
-      version: 3,
-      migrate: (persisted) => {
+      version: 4,
+      migrate: (persisted, fromVersion) => {
         // Keep real user data; only normalize missing arrays
         if (!persisted || typeof persisted !== 'object') {
           return blankWorkspaceState()
+        }
+        let moodItems = Array.isArray(persisted.moodItems)
+          ? persisted.moodItems
+          : []
+        // v4: ensure boardOrder for stable board drag (old pins lacked it)
+        if (fromVersion < 4 && moodItems.length) {
+          const byProject = new Map()
+          moodItems.forEach((m) => {
+            const pid = m.projectId ?? '_none'
+            if (!byProject.has(pid)) byProject.set(pid, [])
+            byProject.get(pid).push(m)
+          })
+          const next = []
+          byProject.forEach((list) => {
+            list.forEach((m, i) => {
+              next.push({
+                ...m,
+                boardOrder: m.boardOrder != null ? m.boardOrder : i,
+              })
+            })
+          })
+          moodItems = next
         }
         return {
           ...blankWorkspaceState(),
           ...persisted,
           tasks: Array.isArray(persisted.tasks) ? persisted.tasks : [],
-          moodItems: Array.isArray(persisted.moodItems)
-            ? persisted.moodItems
-            : [],
+          moodItems,
           conceptItems: Array.isArray(persisted.conceptItems)
             ? persisted.conceptItems
             : [],
@@ -1006,6 +1026,25 @@ const useAppStore = create(
           if (!Array.isArray(state.moodItems)) state.moodItems = []
           if (!Array.isArray(state.conceptItems)) state.conceptItems = []
           if (!Array.isArray(state.breakKit)) state.breakKit = []
+          // Normalize boardOrder for pins that predate board drag
+          if (state.moodItems?.length) {
+            const byProject = new Map()
+            state.moodItems.forEach((m) => {
+              const pid = m.projectId ?? '_none'
+              if (!byProject.has(pid)) byProject.set(pid, [])
+              byProject.get(pid).push(m)
+            })
+            const next = []
+            byProject.forEach((list) => {
+              list.forEach((m, i) => {
+                next.push({
+                  ...m,
+                  boardOrder: m.boardOrder != null ? m.boardOrder : i,
+                })
+              })
+            })
+            state.moodItems = next
+          }
           if (!Array.isArray(state.projects) || !state.projects.length) {
             const blank = blankWorkspaceState()
             state.projects = blank.projects

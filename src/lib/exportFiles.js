@@ -862,10 +862,13 @@ export function resolveDirectionSheetForCapture(pack) {
  */
 /**
  * @param {HTMLCanvasElement} canvas
- * @param {{ fitSinglePage?: boolean }} [opts] — scale to one A4 page when true (default)
+ * @param {{ fitSinglePage?: boolean | 'auto' }} [opts]
+ *   - true: always scale to one page
+ *   - false: multi-page when tall
+ *   - 'auto' (default): single page unless shrink would go below ~58% (then multi-page)
  */
 export async function canvasPagesToPdfBlob(canvas, opts = {}) {
-  const fitSinglePage = opts.fitSinglePage !== false
+  const fitMode = opts.fitSinglePage === undefined ? 'auto' : opts.fitSinglePage
   await preloadPdfEngine()
   const { jsPDF } = await jsPdfModulePromise
   const pdf = new jsPDF({
@@ -876,7 +879,6 @@ export async function canvasPagesToPdfBlob(canvas, opts = {}) {
   })
   const pageW = pdf.internal.pageSize.getWidth()
   const pageH = pdf.internal.pageSize.getHeight()
-  // Print-friendlier margins (was 28pt)
   const margin = 42
   const contentW = pageW - margin * 2
   const contentH = pageH - margin * 2
@@ -885,12 +887,17 @@ export async function canvasPagesToPdfBlob(canvas, opts = {}) {
   let imgH = (canvas.height * imgW) / canvas.width
   const imgData = canvas.toDataURL('image/jpeg', 0.94)
 
-  // Prefer a single page for brand packs (scale down if needed)
-  if (fitSinglePage || imgH <= contentH) {
+  const scaleToFit = imgH > contentH ? contentH / imgH : 1
+  // Very tall artboards: multi-page instead of unreadable shrink
+  const useSingle =
+    fitMode === true ||
+    (fitMode === 'auto' && scaleToFit >= 0.58) ||
+    (fitMode !== false && imgH <= contentH)
+
+  if (useSingle) {
     if (imgH > contentH) {
-      const scale = contentH / imgH
-      imgW *= scale
-      imgH *= scale
+      imgW *= scaleToFit
+      imgH *= scaleToFit
     }
     const x = margin + (contentW - imgW) / 2
     pdf.addImage(imgData, 'JPEG', x, margin, imgW, imgH, undefined, 'FAST')

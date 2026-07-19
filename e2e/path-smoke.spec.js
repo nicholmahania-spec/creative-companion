@@ -49,26 +49,30 @@ test.describe('Creative Companion path smoke', () => {
     await expect(path).toBeVisible()
 
     // Project
-    await path.getByRole('button', { name: /Project/i }).click()
+    await path.getByRole('button', { name: /Step 1: Project/i }).click()
     await expect(page.getByRole('heading', { name: 'Project' })).toBeVisible()
     await expect(page.getByText(/Pack readiness/i)).toBeVisible()
 
     // Work
-    await path.getByRole('button', { name: /Work/i }).click()
+    await path.getByRole('button', { name: /Step 2: Work/i }).click()
     const capture = page.locator('#desk-capture')
     if (await capture.count()) {
       await capture.fill('E2E ship one step')
-      const addBtn = page.locator('.capture-strip .btn-primary, .capture-row .btn-primary, .capture-row button').first()
+      const addBtn = page
+        .locator(
+          '.capture-strip .btn-primary, .capture-row .btn-primary, .capture-row button'
+        )
+        .first()
       if (await addBtn.count()) await addBtn.click()
       await page.waitForTimeout(300)
     }
 
     // Board
-    await path.getByRole('button', { name: /Board/i }).click()
+    await path.getByRole('button', { name: /Step 3: Board/i }).click()
     await expect(page.getByRole('heading', { name: 'Board' })).toBeVisible()
 
     // System
-    await path.getByRole('button', { name: /System/i }).click()
+    await path.getByRole('button', { name: /Step 4: System/i }).click()
     await expect(page.getByRole('heading', { name: 'System' })).toBeVisible()
     const tagline = page.getByLabel('Tagline')
     if (await tagline.count()) {
@@ -76,7 +80,7 @@ test.describe('Creative Companion path smoke', () => {
     }
 
     // Pack
-    await path.getByRole('button', { name: /Pack/i }).click()
+    await path.getByRole('button', { name: /Step 5: Pack/i }).click()
     await expect(
       page.locator('h1.page-title', { hasText: 'Pack' })
     ).toBeVisible({ timeout: 10000 })

@@ -1754,37 +1754,44 @@ function App() {
           </Suspense>
         )}
 
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <nav
           className={`journey-bar${journeyActive ? '' : ' is-tools'}`}
-          aria-label="Your path"
+          aria-label="Your path through Creative Companion"
         >
-          {JOURNEY_STEPS.map((step) => {
-            const active = journeyActive === step.id
-            return (
-              <button
-                key={step.id}
-                type="button"
-                className={`journey-step${active ? ' is-active' : ''}`}
-                onClick={() => setActiveView(step.view)}
-                aria-current={active ? 'step' : undefined}
-                title={step.plain}
-              >
-                <span className="journey-num" aria-hidden="true">
-                  {step.num}
-                </span>
-                <span className="journey-label">{step.label}</span>
-              </button>
-            )
-          })}
+          <ol className="journey-bar-list">
+            {JOURNEY_STEPS.map((step) => {
+              const active = journeyActive === step.id
+              return (
+                <li key={step.id} className="journey-bar-item">
+                  <button
+                    type="button"
+                    className={`journey-step${active ? ' is-active' : ''}`}
+                    onClick={() => setActiveView(step.view)}
+                    aria-current={active ? 'step' : undefined}
+                    aria-label={`Step ${step.num}: ${step.label}. ${step.plain}`}
+                    title={step.plain}
+                  >
+                    <span className="journey-num" aria-hidden="true">
+                      {step.num}
+                    </span>
+                    <span className="journey-label">{step.label}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
           {!journeyActive && (
-            <span className="journey-tools-pill" role="status">
+            <span className="journey-tools-pill" role="status" aria-live="polite">
               Tools · {toolsLabelForView(activeView)}
             </span>
           )}
         </nav>
       </header>
 
-      <main className="main">
+      <main className="main" id="main-content" tabIndex={-1}>
         {/* ===== WORK — one step owns the fold ===== */}
         {activeView === 'flow' && (
           <div className="flow-view surface-desk">
@@ -1819,13 +1826,13 @@ function App() {
                 <div className="empty-state">
                   <p className="empty-state-title">
                     {doneTasks.length > 0
-                      ? 'Queue clear — nice work'
-                      : 'No current step yet'}
+                      ? 'Queue clear'
+                      : 'No step yet'}
                   </p>
                   <p className="empty-state-body">
                     {doneTasks.length > 0
-                      ? 'Dump another idea below, or break the project into micro-steps.'
-                      : 'Empty? Break the project down, or dump one idea below.'}
+                      ? 'Capture the next shippable outcome below — or break a big project into micro-steps.'
+                      : 'Capture one shippable step below, or break the project into micro-steps.'}
                   </p>
                   <div className="step-focus-actions" style={{ marginTop: '0.85rem' }}>
                     {deskTasks.length === 0 && (
@@ -2471,10 +2478,11 @@ function App() {
               >
                 {deskMood.length === 0 ? (
                   <div className="empty-state">
-                    <p className="empty-state-title">Board is empty</p>
+                    <p className="empty-state-title">No pins yet</p>
                     <p className="empty-state-body">
-                      Upload images from your device, then star <strong>2–6</strong>{' '}
-                      with ★ Pack for System and Pack. Drag &amp; drop works too.
+                      Upload images (or drag them here), then star{' '}
+                      <strong>2–6</strong> with ★ Pack so they appear on System
+                      and Pack. Drag pins to reorder.
                     </p>
                   </div>
                 ) : (
@@ -3988,11 +3996,20 @@ function App() {
               One project. One step. Ship a pack.
             </h2>
             <p className="view-lede">
-              Creative Companion is a <strong>design desk</strong> — not a
-              scoreboard. Name the project and the <strong>one shippable step</strong>{' '}
-              for the next 25 minutes. Work → Ideas → Brand → Finish. XP and
-              streaks are optional fuel; the product is the brand pack you export.
+              A <strong>design desk</strong>, not a scoreboard. Name the work and
+              the <strong>one shippable step</strong> for the next 25 minutes.
+              The product is the brand pack you export.
             </p>
+            <ol className="onboard-path" aria-label="Your path">
+              {JOURNEY_STEPS.map((s) => (
+                <li key={s.id}>
+                  <span className="onboard-path-num" aria-hidden="true">
+                    {s.num}
+                  </span>
+                  <span className="onboard-path-label">{s.label}</span>
+                </li>
+              ))}
+            </ol>
             <label className="onboard-label">
               Project name
               <input
@@ -4048,7 +4065,7 @@ function App() {
       )}
 
       {actionToast && (
-        <div className="action-toast" role="status">
+        <div className="action-toast" role="status" aria-live="polite">
           {actionToast}
         </div>
       )}
