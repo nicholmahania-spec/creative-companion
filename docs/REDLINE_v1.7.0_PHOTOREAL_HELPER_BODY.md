@@ -34,7 +34,13 @@ Helper should feel like the same 3D character in the product — full body, phot
 
 ## Acceptance
 
-1. FAB and open panel show the photoreal Helper body (cropped circle for avatars).  
-2. Mood changes drive distinct loops without full remount thrash beyond mood switch.  
-3. `reduceMotion` → static `helper-body.png`.  
-4. Unit tests pass; production build includes `/buddy/helper-body.png`.  
+1. FAB shows photoreal Helper (circle crop).  
+2. Expanded panel shows **full-body** stage (`shape="body"`, ~148px) — not circle.  
+3. Mood changes drive distinct loops without full remount thrash beyond mood switch.  
+4. `reduceMotion` → static `helper-body.png`.  
+5. Unit tests pass; production build includes `/buddy/helper-body.png`.  
+
+## Follow-up (v1.7.1)
+
+- Expanded panel hero stage with ground shadow + focus/hyper/levelup tints  
+- Header circle removed so body is the single figure in the open card  

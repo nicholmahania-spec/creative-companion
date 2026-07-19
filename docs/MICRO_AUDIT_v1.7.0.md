@@ -14,5 +14,13 @@
 
 ## Residual
 
-- Optional: larger full-body (non-circle) mascot mode in expanded panel  
+- ~~Optional: larger full-body (non-circle) mascot mode in expanded panel~~ → **v1.7.1 done**  
 - Optional: mood-specific expression PNGs if art is produced later  
+
+### v1.7.1 addendum
+
+| Check | Result |
+|-------|--------|
+| Expanded panel `shape="body"` hero | **Pass** |
+| Circle crop only on FAB | **Pass** |
+| Hero ground + mood shell tints | **Pass** |

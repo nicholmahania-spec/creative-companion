@@ -723,8 +723,16 @@ export default function BuddyMate({
 
   const recentMsgs = messages.slice(-4)
   const latestBuddy = [...messages].reverse().find((m) => m.from === 'buddy')
+  const panelMood =
+    recentWin || mood === 'happy'
+      ? 'happy'
+      : hyper === 'hard' || hyper === 'strong'
+        ? 'think'
+        : mood === 'rest'
+          ? 'rest'
+          : 'idle'
 
-  // ——— Expanded: refined compact coach card ———
+  // ——— Expanded: refined compact coach card + full-body stage ———
   return (
     <div
       ref={shellRef}
@@ -743,24 +751,6 @@ export default function BuddyMate({
         <div className="buddy-compact-card">
           <header className="buddy-compact-head">
             <div className="buddy-compact-identity">
-              <HelperCharacterLottie
-                className={`buddy-compact-face mood-${mood}${
-                  reduceMotion ? ' no-motion' : ''
-                }`}
-                mood={
-                  recentWin || mood === 'happy'
-                    ? 'happy'
-                    : hyper === 'hard' || hyper === 'strong'
-                      ? 'think'
-                      : mood === 'rest'
-                        ? 'rest'
-                        : 'idle'
-                }
-                reduceMotion={reduceMotion}
-                size={48}
-                shape="circle"
-                fallbackSrc={HELPER_FALLBACK}
-              />
               <div className="buddy-compact-titles">
                 <div className="buddy-compact-name-row">
                   <strong className="bf-name">Helper</strong>
@@ -805,6 +795,24 @@ export default function BuddyMate({
               </button>
             </div>
           </header>
+
+          {/* Photoreal full-body Helper stage (not circle crop) */}
+          <div
+            className={`buddy-compact-hero mood-${panelMood}${
+              reduceMotion ? ' no-motion' : ''
+            }${recentWin || levelBurst ? ' is-cheer' : ''}`}
+            aria-hidden="true"
+          >
+            <HelperCharacterLottie
+              className="buddy-compact-body"
+              mood={panelMood}
+              reduceMotion={reduceMotion}
+              height={148}
+              shape="body"
+              fallbackSrc={HELPER_FALLBACK}
+            />
+            <span className="buddy-compact-hero-ground" />
+          </div>
 
           {showProgress && (
             <div

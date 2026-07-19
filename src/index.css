@@ -6569,6 +6569,133 @@ html[data-reduce-motion='true'] *::after {
   transform-origin: 50% 80%;
 }
 
+/* Full-body photoreal Helper stage in expanded panel */
+.buddy-compact-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 9.75rem;
+  padding: 0.15rem 0.5rem 0.35rem;
+  margin: 0 0.45rem 0.15rem;
+  border-radius: 16px;
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 88%,
+      rgba(125, 139, 122, 0.14) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 252, 246, 0.2) 0%,
+      rgba(235, 229, 217, 0.45) 100%
+    );
+  overflow: visible;
+}
+
+.buddy-compact-body,
+.buddy-compact-body.helper-character-lottie,
+.buddy-compact-body.helper-character-fallback {
+  position: relative;
+  z-index: 1;
+  width: auto !important;
+  height: 9.25rem !important;
+  max-width: 7.85rem;
+  border-radius: 0 !important;
+  background: transparent !important;
+  filter: drop-shadow(0 10px 16px rgba(28, 26, 23, 0.18))
+    drop-shadow(0 2px 4px rgba(28, 26, 23, 0.08));
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.buddy-compact-body.helper-character-lottie--body {
+  overflow: visible;
+}
+
+.buddy-compact-hero-ground {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(28, 26, 23, 0.14) 0%,
+    transparent 72%
+  );
+  z-index: 0;
+  pointer-events: none;
+}
+
+.buddy-compact-hero.is-cheer .buddy-compact-body {
+  filter: drop-shadow(0 12px 18px rgba(28, 26, 23, 0.2))
+    drop-shadow(0 0 12px rgba(125, 139, 122, 0.25));
+}
+
+.buddy-shell.is-focus .buddy-compact-hero {
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 88%,
+      rgba(95, 109, 93, 0.18) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 252, 246, 0.15) 0%,
+      rgba(230, 236, 228, 0.5) 100%
+    );
+}
+
+.buddy-shell.is-hyper .buddy-compact-hero {
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 88%,
+      rgba(245, 158, 11, 0.12) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 252, 246, 0.2) 0%,
+      rgba(250, 240, 220, 0.55) 100%
+    );
+}
+
+.buddy-shell.is-levelup .buddy-compact-hero {
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 88%,
+      rgba(125, 139, 122, 0.22) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 252, 246, 0.35) 0%,
+      rgba(235, 245, 232, 0.6) 100%
+    );
+}
+
+.app.deep .buddy-compact-hero {
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 88%,
+      rgba(165, 180, 252, 0.12) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(18, 24, 38, 0.4) 0%,
+      rgba(26, 34, 48, 0.75) 100%
+    );
+}
+
+.app.deep .buddy-compact-body {
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+
 .buddy-compact-titles {
   min-width: 0;
   flex: 1;
