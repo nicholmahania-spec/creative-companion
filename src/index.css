@@ -92,8 +92,8 @@ body {
   --bg-elevated: #292524;
   --bg-muted: #44403C;
   --text-primary: #FAFAF9;
-  --text-secondary: rgba(250, 250, 249, 0.68);
-  --text-muted: rgba(250, 250, 249, 0.42);
+  --text-secondary: rgba(250, 250, 249, 0.72);
+  --text-muted: rgba(250, 250, 249, 0.55);
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.14);
   --highlight-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -1000,7 +1000,8 @@ h3 {
 }
 
 .app.deep .header {
-  background: rgba(11, 15, 26, 0.88);
+  background: rgba(12, 10, 9, 0.9);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .header-content {
@@ -1167,7 +1168,8 @@ h3 {
 }
 
 .app.deep .more-menu {
-  background: rgba(18, 24, 38, 0.98);
+  background: rgba(28, 25, 23, 0.98);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .more-menu-intro {
@@ -2334,6 +2336,20 @@ h3 {
   max-width: 780px;
   margin: 0 auto;
   width: 100%;
+}
+
+/* System + Pack need room for sticky artboard / preview side-by-side */
+.main:has(.system-view),
+.main:has(.pack-view),
+.app.view-brand .main,
+.app.is-pack-view .main {
+  max-width: min(1120px, 100%);
+}
+
+.system-view.brand-layout,
+.pack-view .brand-layout,
+.system-view {
+  max-width: none;
 }
 
 /* Global version footer — every view */
@@ -4563,7 +4579,7 @@ h3 {
   font-weight: 700;
 }
 
-/* Action feedback toast (complete step, backup, etc.) */
+/* Action feedback toast (complete step, backup, etc.) — stone, not indigo */
 .action-toast {
   position: fixed;
   bottom: 1.35rem;
@@ -4573,21 +4589,22 @@ h3 {
   max-width: min(92vw, 28rem);
   padding: 0.65rem 1.15rem;
   border-radius: var(--radius-pill);
-  background: rgba(30, 27, 75, 0.94);
-  color: #f8fafc;
+  background: rgba(28, 25, 23, 0.94);
+  color: #fafaf9;
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   text-align: center;
-  box-shadow: 0 12px 32px rgba(30, 27, 75, 0.28);
+  box-shadow: 0 12px 32px rgba(12, 10, 9, 0.28);
   backdrop-filter: blur(10px);
   animation: chipIn 0.35s var(--ease-out, ease-out);
   pointer-events: none;
 }
 
 .app.deep .action-toast {
-  background: rgba(238, 242, 255, 0.96);
-  color: #1e1b4b;
+  background: rgba(250, 250, 249, 0.96);
+  color: #0c0a09;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }
 
 .app.deep .board-inline-form {
@@ -5047,9 +5064,14 @@ html[data-reduce-motion='true'] *::after {
   }
 }
 
-/* Brand identity template */
+/* Brand identity template — System overrides via .system-view max-width:none */
 .brand-layout {
   max-width: 42rem;
+}
+
+.brand-layout.system-view {
+  max-width: none;
+  width: 100%;
 }
 
 .brand-template-top {
@@ -6530,8 +6552,13 @@ html[data-reduce-motion='true'] *::after {
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
     0 14px 36px rgba(28, 26, 23, 0.12),
     0 4px 12px rgba(28, 25, 23, 0.06);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: min(72dvh, 34rem);
+  overscroll-behavior: contain;
   backdrop-filter: blur(8px);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(125, 139, 122, 0.35) transparent;
 }
 
 .buddy-compact-head {
@@ -6576,7 +6603,7 @@ html[data-reduce-motion='true'] *::after {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  min-height: 9.75rem;
+  min-height: 8.25rem;
   padding: 0.15rem 0.5rem 0.35rem;
   margin: 0 0.45rem 0.15rem;
   border-radius: 16px;
@@ -6592,6 +6619,7 @@ html[data-reduce-motion='true'] *::after {
       rgba(235, 229, 217, 0.45) 100%
     );
   overflow: visible;
+  flex-shrink: 0;
 }
 
 .buddy-compact-body,
@@ -6600,14 +6628,30 @@ html[data-reduce-motion='true'] *::after {
   position: relative;
   z-index: 1;
   width: auto !important;
-  height: 9.25rem !important;
-  max-width: 7.85rem;
+  height: 8rem !important;
+  max-width: 6.85rem;
   border-radius: 0 !important;
   background: transparent !important;
   filter: drop-shadow(0 10px 16px rgba(28, 26, 23, 0.18))
     drop-shadow(0 2px 4px rgba(28, 26, 23, 0.08));
   object-fit: contain;
   object-position: center bottom;
+}
+
+@media (max-height: 720px) {
+  .buddy-compact-hero {
+    min-height: 5.5rem;
+  }
+  .buddy-compact-body,
+  .buddy-compact-body.helper-character-lottie,
+  .buddy-compact-body.helper-character-fallback {
+    height: 5.25rem !important;
+    max-width: 4.5rem;
+  }
+  .buddy-compact-chat {
+    min-height: 2.75rem;
+    max-height: 5.5rem;
+  }
 }
 
 .buddy-compact-body.helper-character-lottie--body {
@@ -6681,13 +6725,13 @@ html[data-reduce-motion='true'] *::after {
   background:
     radial-gradient(
       ellipse 70% 55% at 50% 88%,
-      rgba(165, 180, 252, 0.12) 0%,
+      rgba(125, 139, 122, 0.16) 0%,
       transparent 70%
     ),
     linear-gradient(
       180deg,
-      rgba(18, 24, 38, 0.4) 0%,
-      rgba(26, 34, 48, 0.75) 100%
+      rgba(28, 25, 23, 0.35) 0%,
+      rgba(41, 37, 36, 0.85) 100%
     );
 }
 
@@ -6731,11 +6775,14 @@ html[data-reduce-motion='true'] *::after {
   font-size: 0.68rem;
   font-weight: 600;
   color: rgba(28, 26, 23, 0.55);
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 11rem;
+  white-space: normal;
+  max-width: 12.5rem;
   margin-top: 0.12rem;
   line-height: 1.3;
 }
@@ -9549,12 +9596,13 @@ html[data-reduce-motion='true'] *::after {
 .system-artboard-sticky {
   margin-bottom: 1rem;
 }
-@media (min-width: 960px) {
+@media (min-width: 900px) {
   .system-view {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.95fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(17rem, 0.9fr);
     gap: 1.25rem 1.5rem;
     align-items: start;
+    width: 100%;
   }
   .system-view .brand-template-top {
     grid-column: 1 / -1;
@@ -9566,6 +9614,8 @@ html[data-reduce-motion='true'] *::after {
     overflow: auto;
     grid-row: 2 / span 20;
     grid-column: 1;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
   }
   .system-view .system-edit-label,
   .system-view .system-accordion-nav,
@@ -9573,6 +9623,24 @@ html[data-reduce-motion='true'] *::after {
   .system-view .brand-export-bar {
     grid-column: 2;
   }
+}
+
+.work-below-sep {
+  margin: 0 0.4rem;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.work-path-next {
+  font-weight: 700;
+}
+
+.step-focus-actions-empty {
+  margin-top: 0.85rem;
+}
+
+.export-raster-hint {
+  margin-top: 0.5rem;
 }
 .pack-leave-details {
   padding: 0.85rem 1rem;

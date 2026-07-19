@@ -321,56 +321,56 @@ export default function BuddyMate({
     )
   }, [overdue, isFocusRunning, recentWin, hyper, levelBurst])
 
-  // New page → tip about what you're doing (message only — don't cover desk)
+  // New page → tip (message only — don't cover desk). Skip when quiet.
   useEffect(() => {
+    if (helperQuiet) return undefined
     const view = activityLive.view
-    if (!view) return
+    if (!view) return undefined
     if (lastView.current === null) {
       lastView.current = view
       const t = window.setTimeout(() => {
         const a = activityRef.current
-        pushBuddy(
-          `${describeActivity(a)} ${activityTip(a)} ${recommendForTask(a)}`,
-          { move: false, expand: false }
-        )
+        pushBuddy(`${describeActivity(a)} ${activityTip(a)}`, {
+          move: false,
+          expand: false,
+        })
       }, 1400)
       return () => window.clearTimeout(t)
     }
-    if (lastView.current === view) return
+    if (lastView.current === view) return undefined
     lastView.current = view
     const t = window.setTimeout(() => {
       const a = activityRef.current
       pushBuddy(
-        `${describeActivity(a)} ${activityTip(a)} Open me for Recommend or Critique.`,
+        `${describeActivity(a)} Open me for Coach or Critique.`,
         { move: true, expand: false }
       )
     }, 600)
     return () => window.clearTimeout(t)
-  }, [activityLive.view, pushBuddy])
+  }, [activityLive.view, pushBuddy, helperQuiet])
 
-  // Current step changed → acknowledge + task-fit recommend/critique
+  // Current step changed → short acknowledge. Skip when quiet.
   useEffect(() => {
+    if (helperQuiet) return undefined
     const key = `${activityLive.nextTaskTitle || ''}|${activityLive.view || ''}`
     if (!activityLive.nextTaskTitle) {
       lastStepKey.current = key
-      return
+      return undefined
     }
-    if (lastStepKey.current === key) return
+    if (lastStepKey.current === key) return undefined
     const isFirst = lastStepKey.current === ''
     lastStepKey.current = key
-    if (isFirst) return
+    if (isFirst) return undefined
     const t = window.setTimeout(() => {
       const a = activityRef.current
-      const domain = classifyTask(a)
+      const title = String(a.nextTaskTitle)
       pushBuddy(
-        `New focus: "${String(a.nextTaskTitle).slice(0, 50)}${
-          String(a.nextTaskTitle).length > 50 ? '…' : ''
-        }". Treating as ${domain}. ${recommendForTask(a)} Open me for Critique or full review.`,
+        `New focus: "${title.slice(0, 48)}${title.length > 48 ? '…' : ''}". Open me for Coach.`,
         { move: true, expand: false }
       )
     }, 500)
     return () => window.clearTimeout(t)
-  }, [activityLive.nextTaskTitle, activityLive.view, pushBuddy])
+  }, [activityLive.nextTaskTitle, activityLive.view, pushBuddy, helperQuiet])
 
   useEffect(() => {
     if (completedCount > lastCompleted.current) {
@@ -807,7 +807,7 @@ export default function BuddyMate({
               className="buddy-compact-body"
               mood={panelMood}
               reduceMotion={reduceMotion}
-              height={148}
+              height={132}
               shape="body"
               fallbackSrc={HELPER_FALLBACK}
             />
@@ -868,7 +868,7 @@ export default function BuddyMate({
             </button>
             <button
               type="button"
-              className="buddy-act buddy-act-primary"
+              className="buddy-act"
               onClick={() => reply('critique')}
               disabled={aiBusy}
             >
@@ -880,9 +880,18 @@ export default function BuddyMate({
                 needsCare ? ' has-nudge' : ''
               }`}
               onClick={() => {
-                setShowBreakCare((v) => !v)
-                setShowMore(false)
-                if (!showBreakCare) reply('break')
+                setShowBreakCare((v) => {
+                  const next = !v
+                  // Open care kit only — do not auto-log a break (that is explicit below)
+                  if (next) {
+                    setShowMore(false)
+                    pushBuddy(
+                      'Break care open — water, food, stretch, or log a real break when you actually take one.',
+                      { move: false, expand: true }
+                    )
+                  }
+                  return next
+                })
               }}
               disabled={aiBusy}
               aria-expanded={showBreakCare}

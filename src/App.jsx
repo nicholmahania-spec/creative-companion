@@ -287,7 +287,18 @@ function App() {
   const showHowItWorks = prefs.showHowItWorks !== false
   const queueCollapsed = prefs.queueCollapsed !== false
   const soundEnabled = prefs.soundEnabled !== false
-  const reduceMotion = !!prefs.reduceMotion
+  const [osReduceMotion, setOsReduceMotion] = useState(() => {
+    try {
+      return (
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      )
+    } catch {
+      return false
+    }
+  })
+  /** Settings pref OR OS prefers-reduced-motion — drives Lottie + hop */
+  const reduceMotion = !!prefs.reduceMotion || osReduceMotion
   /** Pomodoro desk lock — default on; user can disable */
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
   const showProgress = !!prefs.showProgress
@@ -868,7 +879,25 @@ function App() {
     }
   }, [activeView, unlocked])
 
-  // Respect reduce-motion preference on <html>
+  // Track OS prefers-reduced-motion (OR'd with Settings in reduceMotion)
+  useEffect(() => {
+    let mq
+    try {
+      mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    } catch {
+      return undefined
+    }
+    const onChange = () => setOsReduceMotion(!!mq.matches)
+    onChange()
+    if (mq.addEventListener) mq.addEventListener('change', onChange)
+    else if (mq.addListener) mq.addListener(onChange)
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', onChange)
+      else if (mq.removeListener) mq.removeListener(onChange)
+    }
+  }, [])
+
+  // Respect reduce-motion (Settings + OS) on <html>
   useEffect(() => {
     document.documentElement.dataset.reduceMotion = reduceMotion
       ? 'true'
@@ -1812,6 +1841,18 @@ function App() {
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
+                      setActiveView('spark')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <strong>{i18nT(locale, 'ui.dumpIdea') || 'Spark'}</strong>
+                    <span>Capture a loose idea</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
                       const next = !bodyDoubling
                       toggleBodyDoubling()
                       if (next) {
@@ -2014,8 +2055,8 @@ function App() {
                   <EmptyIllustration variant="desk" />
                   <p className="empty-state-title">
                     {doneTasks.length > 0
-                      ? 'Queue clear'
-                      : 'No step yet'}
+                      ? i18nT(locale, 'ui.queueClear')
+                      : i18nT(locale, 'ui.noStepYet')}
                   </p>
                   <p className="empty-state-body">
                     {doneTasks.length > 0
@@ -2023,16 +2064,16 @@ function App() {
                       : 'Capture one shippable step below, or break the project into micro-steps.'}
                   </p>
                   <p className="work-pack-destination">
-                    Path ends at Pack — print a brand leave-behind when ready.
+                    {i18nT(locale, 'ui.packDest')}
                   </p>
-                  <div className="step-focus-actions" style={{ marginTop: '0.85rem' }}>
+                  <div className="step-focus-actions step-focus-actions-empty">
                     {deskTasks.length === 0 && (
                       <button
                         type="button"
                         className="btn btn-primary"
                         onClick={openBreakdown}
                       >
-                        Break into micro-steps
+                        {i18nT(locale, 'ui.breakMicro')}
                       </button>
                     )}
                     <button
@@ -2292,6 +2333,20 @@ function App() {
               >
                 Break project down
               </button>
+              {journeyNext && (
+                <>
+                  <span className="work-below-sep" aria-hidden="true">
+                    ·
+                  </span>
+                  <button
+                    type="button"
+                    className="text-link work-path-next"
+                    onClick={() => setActiveView(journeyNext.view)}
+                  >
+                    {journeyStep?.nextLabel || `Go to ${journeyNext.label}`}
+                  </button>
+                </>
+              )}
             </p>
 
             {/* Queue — collapsed by default when busy */}
@@ -2647,7 +2702,9 @@ function App() {
                 {deskMood.length === 0 ? (
                   <div className="empty-state empty-state-craft">
                     <EmptyIllustration variant="board" />
-                    <p className="empty-state-title">No pins yet</p>
+                    <p className="empty-state-title">
+                      {i18nT(locale, 'ui.noPinsYet')}
+                    </p>
                     <p className="empty-state-body">
                       Upload images (or drag them here), then star{' '}
                       <strong>2–6</strong> with ★ Pack so they appear on System
@@ -2837,6 +2894,7 @@ function App() {
               <button
                 type="button"
                 className="btn btn-ghost board-lightbox-close"
+                autoFocus
                 onClick={() => setBoardLightbox(null)}
               >
                 Close
@@ -3018,7 +3076,7 @@ function App() {
                   className="btn btn-primary"
                   onClick={() => setActiveView('finish')}
                 >
-                  Download pack
+                  {i18nT(locale, 'ui.openPack') || 'Go to Pack'}
                 </button>
               </div>
             </div>
@@ -3060,9 +3118,7 @@ function App() {
                   className={`system-acc-tab${
                     brandEditSection === id ? ' is-active' : ''
                   }`}
-                  onClick={() =>
-                    setBrandEditSection((cur) => (cur === id ? null : id))
-                  }
+                  onClick={() => setBrandEditSection(id)}
                 >
                   {label}
                 </button>
@@ -4608,8 +4664,9 @@ function App() {
                 <button type="button" className="btn btn-secondary" onClick={() => runExport('json')}>JSON</button>
                 <button type="button" className="btn btn-secondary" onClick={() => runExport('print')}>Print</button>
               </div>
-              <p className="panel-hint" style={{ marginTop: '0.5rem' }}>
-                PDF is a raster preview export (matches on-screen pack).
+              <p className="panel-hint export-raster-hint">
+                Raster PDF (preview-match) is under Pack → More formats. Primary
+                Download on Pack is vector (selectable text + sharp zoom).
               </p>
             </details>
           </div>
