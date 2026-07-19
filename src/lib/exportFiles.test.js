@@ -154,7 +154,7 @@ describe('buildDirectionSheetMarkup (preview-faithful PDF source)', () => {
 })
 
 describe('vector pack snapshot fields', () => {
-  it('includes colorRoles and logoImage for the vector PDF engine', () => {
+  it('includes colorRoles, logo lockup fields, and directions for brand book PDF', () => {
     const pack = buildBrandPackSnapshot({
       project: {
         name: 'Vector Pack Co',
@@ -162,6 +162,12 @@ describe('vector pack snapshot fields', () => {
         palette: ['#1C1917', '#0F766E'],
         colorRoles: { cover: '#1C1917', accent: '#0F766E' },
         logoImage: 'data:image/png;base64,abc',
+        logoWordmark: 'Vector Co',
+        logoClearspace: '½ mark height',
+        logoDirection: 'Monoline mark',
+        directions: [
+          { id: 'a', label: 'A', title: 'Quiet', note: 'Soft', chosen: true },
+        ],
       },
       moodItems: [
         {
@@ -176,6 +182,10 @@ describe('vector pack snapshot fields', () => {
     })
     expect(pack.colorRoles?.cover).toBe('#1C1917')
     expect(pack.logoImage).toContain('data:image')
+    expect(pack.logoWordmark).toBe('Vector Co')
+    expect(pack.logoClearspace).toMatch(/mark/)
+    expect(pack.logoDirection).toMatch(/Monoline/)
+    expect(pack.directions[0].chosen).toBe(true)
     expect(pack.pins[0].packHero).toBe(true)
   })
 })

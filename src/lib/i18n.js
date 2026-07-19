@@ -58,17 +58,17 @@ const EN = {
     helperHint: 'Coach · Critique · Break',
     completeStep: 'Complete step',
     more: 'More',
-    downloadVectorPdf: 'Download vector PDF',
+    downloadVectorPdf: 'Download brand book PDF',
     printSavePdf: 'Print / Save as PDF',
     previewFull: 'Preview full',
     editSystem: 'Edit Design',
     work: 'Sketch',
     packTitle: 'Leave-behind',
     packEyebrow: 'Brand leave-behind',
-    packSub: 'Print for paper · or download vector PDF',
+    packSub: 'Print for paper · or multi-page brand book PDF',
     clientHandoff: 'Client handoff',
     packHint:
-      'Download vector PDF = selectable text + sharp zoom. Print uses paper layout. Raster preview is under More formats.',
+      'Brand book PDF = 7 pages (cover, voice, color, type, logo lockups, usage, mood). Selectable text. Raster preview is under More formats.',
     thinPack:
       'Thin leave-behind — add a tagline, palette, or ★ pins on Research first.',
     thinPackConfirmPrint:

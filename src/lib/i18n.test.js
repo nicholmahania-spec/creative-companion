@@ -60,8 +60,9 @@ describe('i18n wordmark + path + catalog', () => {
 
   it('pack copy is honest about vector PDF vs print', () => {
     const en = getMessages('en').ui
-    expect(en.packSub).toMatch(/vector PDF/i)
-    expect(en.packHint).toMatch(/vector PDF/i)
+    expect(en.packSub).toMatch(/brand book PDF|vector PDF/i)
+    expect(en.packHint).toMatch(/brand book|pages|vector/i)
+    expect(en.downloadVectorPdf).toMatch(/brand book|vector/i)
     expect(en.openPack).toMatch(/Deliver/i)
     expect(en.openWork).toMatch(/Research/i)
     expect(en.openReview).toMatch(/Review/i)

@@ -77,7 +77,9 @@ test.describe('Offline desk', () => {
       page.locator('h1.page-title', { hasText: 'Deliver' })
     ).toBeVisible()
     await expect(
-      page.getByRole('button', { name: 'Download vector PDF', exact: true }),
+      page.getByRole('button', {
+        name: /Download (brand book|vector) PDF/i,
+      }),
     ).toBeVisible()
 
     // Desk data is local — Pack readiness UI still present offline

@@ -224,14 +224,70 @@ export default function BrandArtboard({
         </p>
       </div>
 
-      {project.logoDirection || editable ? (
+      <div className="kicker">Logo lockups</div>
+      <div className="logo-lockup-suite" aria-label="Logo lockup suite">
+        {[
+          {
+            id: 'primary',
+            label: 'Primary',
+            bg: roles.quiet || '#FAFAF9',
+            fg: roles.text || '#1C1917',
+          },
+          {
+            id: 'reverse',
+            label: 'Reverse',
+            bg: roles.cover,
+            fg: coverFg,
+          },
+          {
+            id: 'mono',
+            label: 'Mono',
+            bg: '#FAFAF9',
+            fg: '#1C1917',
+          },
+          {
+            id: 'accent',
+            label: 'On accent',
+            bg: roles.accent,
+            fg: bestTextOn(roles.accent),
+          },
+        ].map((v) => (
+          <div
+            key={v.id}
+            className={`logo-lockup-tile logo-lockup-${v.id}`}
+            style={{ background: v.bg, color: v.fg }}
+          >
+            <span className="logo-lockup-label">{v.label}</span>
+            {project.logoImage ? (
+              <img
+                className="logo-lockup-mark"
+                src={project.logoImage}
+                alt=""
+              />
+            ) : (
+              <span className="logo-lockup-mark-fallback" aria-hidden="true" />
+            )}
+            <strong className="logo-lockup-wordmark">
+              {project.logoWordmark?.trim() ||
+                project.name ||
+                'Wordmark'}
+            </strong>
+          </div>
+        ))}
+      </div>
+      {(project.logoDirection ||
+        project.logoClearspace ||
+        editable) && (
         <>
-          <div className="kicker">Logo direction</div>
-          <p className="direction-brief">
-            {project.logoDirection || (editable ? 'Set logo notes in Edit → Logo' : '—')}
+          <p className="direction-brief" style={{ marginTop: '0.65rem' }}>
+            {project.logoDirection ||
+              (editable ? 'Set logo notes in Edit → Logo' : '—')}
           </p>
+          {project.logoClearspace?.trim() ? (
+            <p className="surface-meta">{project.logoClearspace}</p>
+          ) : null}
         </>
-      ) : null}
+      )}
 
       {editable && (
         <div className="artboard-logo-upload">

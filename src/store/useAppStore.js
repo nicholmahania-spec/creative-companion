@@ -31,6 +31,10 @@ export const defaultBrandIdentity = {
   colorRoles: null,
   /** data URL mark for pack cover */
   logoImage: '',
+  /** Optional wordmark text (falls back to project name) */
+  logoWordmark: '',
+  /** Clearspace / min-size / lockup guidance */
+  logoClearspace: '',
   conceptPackage: {
     audience: '',
     outcome: '',

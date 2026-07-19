@@ -1536,7 +1536,7 @@ function App() {
     if (kind === 'pdf') {
       // Vector direction pack (text + swatches as PDF primitives)
       void preloadPdfEngine()
-      flashToast('Building vector PDF…', { important: true })
+      flashToast('Building multi-page brand book PDF…', { important: true })
       void (async () => {
         const result = await downloadBrandPackPdf(pack, handlePromise, {
           hideWatermark: hidePackWatermark,
@@ -1544,12 +1544,14 @@ function App() {
         })
         if (result.ok) {
           setLastExportNote(
-            `Vector PDF saved · ${new Date().toLocaleTimeString([], {
+            `Brand book PDF saved${
+              result.pages ? ` · ${result.pages}p` : ''
+            } · ${new Date().toLocaleTimeString([], {
               hour: 'numeric',
               minute: '2-digit',
             })}`
           )
-          finishOk('Vector PDF')
+          finishOk('Brand book PDF')
         } else if (result.cancelled) flashToast('Save cancelled')
         else flashToast(result.error || 'PDF failed')
       })()
@@ -3979,15 +3981,34 @@ function App() {
               </div>
             </section>
 
-            {/* 05 Logo direction */}
+            {/* 05 Logo lockup suite */}
             <section
               className="panel brand-section"
               hidden={brandEditSection !== 'logo'}
             >
-              <div className="brand-section-label">Logo</div>
+              <div className="brand-section-label">Logo lockups</div>
               <p className="panel-hint" style={{ marginBottom: '0.75rem' }}>
-                Direction notes + optional mark image for the pack cover.
+                Mark image, wordmark, clearspace — ships in the multi-page brand
+                book PDF.
               </p>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="logo-wordmark">
+                  Wordmark text
+                </label>
+                <input
+                  id="logo-wordmark"
+                  className="field-input"
+                  value={activeProject?.logoWordmark || ''}
+                  onChange={(e) =>
+                    updateBrandField('logoWordmark', e.target.value)
+                  }
+                  placeholder={
+                    activeProject?.name
+                      ? `Defaults to “${activeProject.name}”`
+                      : 'Brand wordmark'
+                  }
+                />
+              </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-custom">
                   Logo direction
@@ -3998,6 +4019,21 @@ function App() {
                   value={activeProject?.logoDirection || ''}
                   onChange={(e) => setLogoDirection(e.target.value)}
                   placeholder="e.g. Soft monoline bird mark · no drop shadows"
+                />
+              </div>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="logo-clearspace">
+                  Clearspace &amp; min size
+                </label>
+                <textarea
+                  id="logo-clearspace"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.logoClearspace || ''}
+                  onChange={(e) =>
+                    updateBrandField('logoClearspace', e.target.value)
+                  }
+                  placeholder="e.g. Clearspace = ½ mark height · min 24px digital / 0.5&quot; print"
                 />
               </div>
               <div className="finish-secondary-row">

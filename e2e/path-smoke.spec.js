@@ -88,7 +88,9 @@ test.describe('Creative Companion path smoke', () => {
       page.locator('h1.page-title', { hasText: 'Deliver' })
     ).toBeVisible({ timeout: 10000 })
     await expect(
-      page.getByRole('button', { name: 'Download vector PDF', exact: true })
+      page.getByRole('button', {
+        name: /Download (brand book|vector) PDF/i,
+      })
     ).toBeVisible()
     await expect(
       page.getByRole('button', { name: 'Print / Save as PDF', exact: true })
