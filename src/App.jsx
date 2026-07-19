@@ -57,6 +57,11 @@ function App() {
   const addMicroStepsBatch = useAppStore((s) => s.addMicroStepsBatch)
   const setProjectDeadline = useAppStore((s) => s.setProjectDeadline)
   const setTaskDueDate = useAppStore((s) => s.setTaskDueDate)
+  const prefs = useAppStore((s) => s.prefs) || {}
+  const setPref = useAppStore((s) => s.setPref)
+  const exportAllData = useAppStore((s) => s.exportAllData)
+  const clearAllData = useAppStore((s) => s.clearAllData)
+  const clearToEmpty = useAppStore((s) => s.clearToEmpty)
 
   // ——— Ephemeral UI (not persisted) ———
   const [activeView, setActiveView] = useState('flow')
@@ -90,13 +95,19 @@ function App() {
     const n = new Date()
     return { year: n.getFullYear(), month: n.getMonth() }
   })
-  const [showHowItWorks, setShowHowItWorks] = useState(() => {
-    try {
-      return localStorage.getItem('cc-hide-howto') !== '1'
-    } catch {
-      return true
-    }
-  })
+  const [boardUrl, setBoardUrl] = useState('')
+  const [boardNote, setBoardNote] = useState('')
+  const [boardAddMode, setBoardAddMode] = useState(null) // 'url' | 'note' | null
+  const [queueOpen, setQueueOpen] = useState(false)
+  const [doneOpen, setDoneOpen] = useState(false)
+  const [actionToast, setActionToast] = useState('')
+  const [stepFocusKey, setStepFocusKey] = useState(0)
+
+  const showHowItWorks = prefs.showHowItWorks !== false
+  const queueCollapsed = prefs.queueCollapsed !== false
+  const soundEnabled = prefs.soundEnabled !== false
+  const reduceMotion = !!prefs.reduceMotion
+  const bodyDoubleSilent = !!prefs.bodyDoubleSilent
 
   const activeProjectId = currentProjectId
   const activeProject = projects.find((p) => p.id === activeProjectId)
@@ -228,22 +239,19 @@ function App() {
     })
   }
 
-  const hideHowItWorks = () => {
-    setShowHowItWorks(false)
-    try {
-      localStorage.setItem('cc-hide-howto', '1')
-    } catch {
-      /* ignore */
-    }
+  const hideHowItWorks = () => setPref('showHowItWorks', false)
+  const revealHowItWorks = () => setPref('showHowItWorks', true)
+
+  const flashToast = (msg) => {
+    setActionToast(msg)
+    window.setTimeout(() => setActionToast(''), 3200)
   }
 
-  const revealHowItWorks = () => {
-    setShowHowItWorks(true)
-    try {
-      localStorage.removeItem('cc-hide-howto')
-    } catch {
-      /* ignore */
-    }
+  const completeCurrentStep = () => {
+    if (!nextTask) return
+    toggleTask(nextTask.id)
+    flashToast('Step complete · next one is ready')
+    setStepFocusKey((k) => k + 1)
   }
 
   const projectPills = (
@@ -304,22 +312,24 @@ function App() {
         if (left <= 1) {
           setIsFocusRunning(false)
           setSessionComplete(true)
-          try {
-            const ctx = new AudioContext()
-            const osc = ctx.createOscillator()
-            const gain = ctx.createGain()
-            osc.type = 'sine'
-            osc.frequency.value = 660
-            gain.gain.value = 0.06
-            osc.connect(gain)
-            gain.connect(ctx.destination)
-            osc.start()
-            setTimeout(() => {
-              gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8)
-              setTimeout(() => osc.stop(), 900)
-            }, 200)
-          } catch {
-            /* ignore */
+          if (soundEnabled) {
+            try {
+              const ctx = new AudioContext()
+              const osc = ctx.createOscillator()
+              const gain = ctx.createGain()
+              osc.type = 'sine'
+              osc.frequency.value = 660
+              gain.gain.value = 0.06
+              osc.connect(gain)
+              gain.connect(ctx.destination)
+              osc.start()
+              setTimeout(() => {
+                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8)
+                setTimeout(() => osc.stop(), 900)
+              }, 200)
+            } catch {
+              /* ignore */
+            }
           }
           return 0
         }
@@ -327,7 +337,14 @@ function App() {
       })
     }, 1000)
     return () => window.clearInterval(id)
-  }, [isFocusRunning])
+  }, [isFocusRunning, soundEnabled])
+
+  // Respect reduce-motion preference on <html>
+  useEffect(() => {
+    document.documentElement.dataset.reduceMotion = reduceMotion
+      ? 'true'
+      : 'false'
+  }, [reduceMotion])
 
   // First-run gate (zustand onboarded)
   useEffect(() => {
@@ -608,7 +625,66 @@ function App() {
     })
     setBreakdownAdded(n)
     setBreakdownStep(4)
+    setPref('queueCollapsed', true)
+    setQueueOpen(false)
+    setDoneOpen(false)
     setActiveView('flow')
+    setStepFocusKey((k) => k + 1)
+    flashToast(`${n} micro-steps ready — do #1 only`)
+  }
+
+  const finishBreakdownToStep = () => {
+    setShowBreakdown(false)
+    setActiveView('flow')
+    window.setTimeout(() => {
+      document
+        .getElementById('current-step')
+        ?.scrollIntoView({
+          behavior: reduceMotion ? 'auto' : 'smooth',
+          block: 'start',
+        })
+    }, 60)
+  }
+
+  const downloadDataBackup = () => {
+    const data = exportAllData()
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: 'application/json',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `creative-companion-backup-${toISODate()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    flashToast('Backup downloaded')
+  }
+
+  const submitBoardUrl = () => {
+    const url = boardUrl.trim()
+    if (!url) return
+    addMoodPin({
+      type: 'image',
+      note: 'Reference URL',
+      visual: url,
+    })
+    setBoardUrl('')
+    setBoardAddMode(null)
+    flashToast('Pin added')
+  }
+
+  const submitBoardNote = () => {
+    const note = boardNote.trim() || 'Direction note'
+    addMoodPin({
+      type: 'quote',
+      note,
+      visual:
+        projectPalette[0] ||
+        'linear-gradient(135deg, #4F46E5, #0D9488)',
+    })
+    setBoardNote('')
+    setBoardAddMode(null)
+    flashToast('Note pin added')
   }
 
   return (
@@ -627,7 +703,6 @@ function App() {
               { id: 'flow', label: 'Work' },
               { id: 'studio', label: 'Board' },
               { id: 'project', label: 'Projects' },
-              { id: 'calendar', label: 'Deadlines' },
             ].map((v) => (
               <button
                 key={v.id}
@@ -642,7 +717,7 @@ function App() {
           <div className="header-actions">
             {bodyDoubling && (
               <span className="mate-on-badge" aria-live="polite">
-                Sitting with you
+                {bodyDoubleSilent ? 'Presence on' : 'Sitting with you'}
               </span>
             )}
             <button
@@ -652,6 +727,15 @@ function App() {
             >
               I&apos;m stuck
             </button>
+            <button
+              type="button"
+              className={`btn btn-ghost header-help${
+                activeView === 'settings' ? ' is-nav-active' : ''
+              }`}
+              onClick={() => setActiveView('settings')}
+            >
+              Settings
+            </button>
             <div className="more-wrap">
               <button
                 type="button"
@@ -659,7 +743,7 @@ function App() {
                 aria-expanded={moreOpen}
                 onClick={() => setMoreOpen(!moreOpen)}
               >
-                Help &amp; tools
+                More
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu">
@@ -836,13 +920,34 @@ function App() {
                 </p>
               </div>
               <div className="flow-top-actions">
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={openBreakdown}
-                >
-                  Break into micro-steps
-                </button>
+                {/* Context primary CTA */}
+                {!nextTask && deskTasks.length === 0 ? (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={openBreakdown}
+                  >
+                    Break project into micro-steps
+                  </button>
+                ) : nextTask ? (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={completeCurrentStep}
+                  >
+                    Complete current step
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() =>
+                      document.getElementById('desk-capture')?.focus()
+                    }
+                  >
+                    Add next entry
+                  </button>
+                )}
                 <div className="flow-progress">
                   <div className="flow-progress-bar" aria-hidden="true">
                     <div
@@ -998,8 +1103,12 @@ function App() {
               </div>
             </section>
 
-            {/* 02 Current step */}
-            <section className="panel brand-section step-focus-panel">
+            {/* 02 Current step — the only job that matters */}
+            <section
+              className="panel brand-section step-focus-panel"
+              key={stepFocusKey}
+              id="current-step"
+            >
               <div className="brand-section-label">02 · Current step</div>
               {!nextTask ? (
                 <div className="empty-state">
@@ -1010,9 +1119,29 @@ function App() {
                   </p>
                   <p className="empty-state-body">
                     {doneTasks.length > 0
-                      ? 'Add another entry above, or open Mood board / Brand to keep momentum.'
-                      : 'Add an entry in step 01. It becomes your current step automatically.'}
+                      ? 'Add another entry above, or break the project into new micro-steps.'
+                      : 'Empty project? Start with micro-steps. Or add one entry above.'}
                   </p>
+                  <div className="step-focus-actions" style={{ marginTop: '0.85rem' }}>
+                    {deskTasks.length === 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={openBreakdown}
+                      >
+                        Break project into micro-steps
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() =>
+                        document.getElementById('desk-capture')?.focus()
+                      }
+                    >
+                      Add an entry
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="step-focus">
@@ -1050,7 +1179,7 @@ function App() {
                     <button
                       type="button"
                       className="btn btn-primary"
-                      onClick={() => toggleTask(nextTask.id)}
+                      onClick={completeCurrentStep}
                     >
                       Mark complete
                     </button>
@@ -1058,7 +1187,11 @@ function App() {
                       <button
                         type="button"
                         className="btn btn-secondary"
-                        onClick={() => breakIntoSteps(nextTask.id)}
+                        onClick={() => {
+                          breakIntoSteps(nextTask.id)
+                          flashToast('Split into 3 micro-steps')
+                          setStepFocusKey((k) => k + 1)
+                        }}
                       >
                         Split into 3 steps
                       </button>
@@ -1066,7 +1199,10 @@ function App() {
                     <button
                       type="button"
                       className="btn btn-ghost"
-                      onClick={() => removeTask(nextTask.id)}
+                      onClick={() => {
+                        removeTask(nextTask.id)
+                        flashToast('Step removed')
+                      }}
                     >
                       Remove
                     </button>
@@ -1075,20 +1211,34 @@ function App() {
               )}
             </section>
 
-            {/* 03 Help tools */}
+            {/* 03 Need help? — max 3 primary tools */}
             <section className="panel brand-section help-panel">
-              <div className="brand-section-label">03 · Help tools</div>
+              <div className="brand-section-label">03 · Need help?</div>
               <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                Stuck on the current step? Use one tool, then come back.
+                Use one tool, then return here. More tools live under More.
               </p>
-              <div className="help-grid">
+              <div className="help-grid help-grid-3">
                 <button
                   type="button"
                   className="help-card help-card-featured"
                   onClick={openBreakdown}
                 >
                   <strong>Break project into micro-steps</strong>
-                  <span>Guided steps for ADHD overwhelm</span>
+                  <span>When the whole project feels too big</span>
+                </button>
+                <button
+                  type="button"
+                  className="help-card"
+                  disabled={!nextTask || !!nextTask.parentId}
+                  onClick={() => {
+                    if (!nextTask) return
+                    breakIntoSteps(nextTask.id)
+                    flashToast('Split into 3 micro-steps')
+                    setStepFocusKey((k) => k + 1)
+                  }}
+                >
+                  <strong>Split this step</strong>
+                  <span>3 smaller actions from current only</span>
                 </button>
                 <button
                   type="button"
@@ -1096,101 +1246,92 @@ function App() {
                   onClick={() => setShowCreativeReset(true)}
                 >
                   <strong>I&apos;m stuck</strong>
-                  <span>Pick a small restart</span>
+                  <span>Pick one small restart</span>
                 </button>
+              </div>
+              <div className="help-secondary">
                 <button
                   type="button"
-                  className="help-card"
-                  disabled={!nextTask || !!nextTask.parentId}
-                  onClick={() => nextTask && breakIntoSteps(nextTask.id)}
-                >
-                  <strong>Split this step</strong>
-                  <span>3 micro-steps from current only</span>
-                </button>
-                <button
-                  type="button"
-                  className="help-card"
-                  onClick={() => {
-                    resetFocus(2)
-                    setActiveView('insights')
-                  }}
-                >
-                  <strong>2‑min focus</strong>
-                  <span>Start a tiny timer</span>
-                </button>
-                <button
-                  type="button"
-                  className="help-card"
-                  onClick={() => setActiveView('spark')}
-                >
-                  <strong>Spark</strong>
-                  <span>One creative prompt</span>
-                </button>
-                <button
-                  type="button"
-                  className="help-card"
+                  className="text-link"
                   onClick={() => setActiveView('studio')}
                 >
-                  <strong>Mood board</strong>
-                  <span>
-                    {deskMood.length === 0
-                      ? 'Collect refs'
-                      : `${deskMood.length} pins`}
-                  </span>
+                  Board
                 </button>
+                <span aria-hidden="true">·</span>
                 <button
                   type="button"
-                  className="help-card"
-                  onClick={() => toggleBodyDoubling()}
+                  className="text-link"
+                  onClick={() => setActiveView('spark')}
                 >
-                  <strong>Body double</strong>
-                  <span>
-                    {bodyDoubling ? 'On — turn off' : 'Quiet company'}
-                  </span>
+                  Spark
                 </button>
+                <span aria-hidden="true">·</span>
                 <button
                   type="button"
-                  className="help-card"
-                  onClick={() => setActiveView('brand')}
-                >
-                  <strong>Brand template</strong>
-                  <span>Identity &amp; export</span>
-                </button>
-                <button
-                  type="button"
-                  className="help-card"
+                  className="text-link"
                   onClick={() => setActiveView('insights')}
                 >
-                  <strong>Focus timer</strong>
-                  <span>Full 25‑min block</span>
+                  Focus timer
                 </button>
+                <span aria-hidden="true">·</span>
                 <button
                   type="button"
-                  className="help-card"
+                  className="text-link"
                   onClick={() => setActiveView('calendar')}
                 >
-                  <strong>Deadlines</strong>
-                  <span>
-                    {projectDeadline
-                      ? urgencyLabel(projectDeadline)
-                      : 'Set project due date'}
-                  </span>
+                  Deadlines
+                </button>
+                <span aria-hidden="true">·</span>
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => setActiveView('brand')}
+                >
+                  Brand
+                </button>
+                <span aria-hidden="true">·</span>
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => toggleBodyDoubling()}
+                >
+                  {bodyDoubling ? 'Body double off' : 'Body double'}
                 </button>
               </div>
             </section>
 
-            {/* 04 Queue */}
+            {/* 04 Queue — collapsed by default when busy */}
             <section className="panel brand-section">
-              <div className="brand-section-label">
-                04 · Queue · {queueTasks.length} waiting
-              </div>
+              <button
+                type="button"
+                className="section-toggle"
+                onClick={() => setQueueOpen((o) => !o)}
+                aria-expanded={
+                  queueTasks.length === 0
+                    ? false
+                    : queueCollapsed
+                      ? queueOpen
+                      : true
+                }
+              >
+                <span className="brand-section-label" style={{ margin: 0 }}>
+                  04 · Queue · {queueTasks.length} waiting
+                </span>
+                <span className="section-toggle-hint">
+                  {queueTasks.length === 0
+                    ? ''
+                    : queueCollapsed && !queueOpen
+                      ? 'Show'
+                      : 'Hide'}
+                </span>
+              </button>
               {queueTasks.length === 0 ? (
-                <p className="empty-state-body" style={{ margin: 0 }}>
-                  Nothing waiting. After you complete the current step, the next
-                  entry moves up here.
+                <p className="empty-state-body" style={{ margin: '0.65rem 0 0' }}>
+                  Nothing waiting. Completing the current step promotes the next
+                  entry automatically.
                 </p>
-              ) : (
-                <div className="desk-list">
+              ) : (queueCollapsed ? queueOpen : true) ? (
+                <div className="desk-list" style={{ marginTop: '0.75rem' }}>
                   {queueTasks.map((task, i) => (
                     <div key={task.id} className="task-row">
                       <label className="task-row-label">
@@ -1200,51 +1341,47 @@ function App() {
                           onChange={() => toggleTask(task.id)}
                         />
                         <span className="task-row-body">
-                          <span className="task-step-num">
-                            Step {i + 2}
-                          </span>
+                          <span className="task-step-num">Step {i + 2}</span>
                           <span className="task-title">{task.title}</span>
                           <span className="task-meta">
                             {(task.energy || 'med')} energy
                             {task.dueDate
                               ? ` · ${formatShortDate(task.dueDate)}`
                               : ''}
-                            {!task.parentId && (
-                              <>
-                                {' · '}
-                                <button
-                                  type="button"
-                                  className="text-link"
-                                  style={{ marginTop: 0 }}
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    breakIntoSteps(task.id)
-                                  }}
-                                >
-                                  Split
-                                </button>
-                              </>
-                            )}
                           </span>
                         </span>
                       </label>
                     </div>
                   ))}
                 </div>
+              ) : (
+                <p className="empty-state-body" style={{ margin: '0.65rem 0 0' }}>
+                  Queue hidden so you only see the current step. Show when ready.
+                </p>
               )}
             </section>
 
-            {/* 05 Completed */}
+            {/* 05 Completed — collapsed by default */}
             <section className="panel brand-section">
-              <div className="brand-section-label">
-                05 · Completed · {doneTasks.length}
-              </div>
+              <button
+                type="button"
+                className="section-toggle"
+                onClick={() => setDoneOpen((o) => !o)}
+                aria-expanded={doneOpen}
+              >
+                <span className="brand-section-label" style={{ margin: 0 }}>
+                  05 · Completed · {doneTasks.length}
+                </span>
+                <span className="section-toggle-hint">
+                  {doneTasks.length === 0 ? '' : doneOpen ? 'Hide' : 'Show'}
+                </span>
+              </button>
               {doneTasks.length === 0 ? (
-                <p className="empty-state-body" style={{ margin: 0 }}>
-                  Finished steps land here. Proof you moved.
+                <p className="empty-state-body" style={{ margin: '0.65rem 0 0' }}>
+                  Finished steps land here — proof you moved.
                 </p>
-              ) : (
-                <ul className="done-list">
+              ) : doneOpen ? (
+                <ul className="done-list" style={{ marginTop: '0.75rem' }}>
                   {doneTasks.map((t) => (
                     <li key={t.id}>
                       <button
@@ -1260,14 +1397,22 @@ function App() {
                         type="button"
                         className="text-link"
                         style={{ marginTop: 0 }}
-                        onClick={() => removeTask(t.id)}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              'Delete this completed step permanently?'
+                            )
+                          ) {
+                            removeTask(t.id)
+                          }
+                        }}
                       >
                         Delete
                       </button>
                     </li>
                   ))}
                 </ul>
-              )}
+              ) : null}
             </section>
           </div>
         )}
@@ -1334,40 +1479,30 @@ function App() {
                     onChange={(e) => {
                       uploadMoodFiles(e.target.files)
                       e.target.value = ''
+                      flashToast('Images added')
                     }}
                   />
                 </label>
                 <button
                   type="button"
-                  className="mood-add-card"
-                  onClick={() => {
-                    const url = prompt('Paste image URL:')
-                    if (url?.trim()) {
-                      addMoodPin({
-                        type: 'image',
-                        note: 'Reference URL',
-                        visual: url.trim(),
-                      })
-                    }
-                  }}
+                  className={`mood-add-card${
+                    boardAddMode === 'url' ? ' is-active' : ''
+                  }`}
+                  onClick={() =>
+                    setBoardAddMode((m) => (m === 'url' ? null : 'url'))
+                  }
                 >
                   <strong>Paste URL</strong>
                   <span>Image link from web</span>
                 </button>
                 <button
                   type="button"
-                  className="mood-add-card"
-                  onClick={() => {
-                    const note =
-                      prompt('Color or quote note:') || 'Direction note'
-                    addMoodPin({
-                      type: 'quote',
-                      note,
-                      visual:
-                        projectPalette[0] ||
-                        'linear-gradient(135deg, #4F46E5, #0D9488)',
-                    })
-                  }}
+                  className={`mood-add-card${
+                    boardAddMode === 'note' ? ' is-active' : ''
+                  }`}
+                  onClick={() =>
+                    setBoardAddMode((m) => (m === 'note' ? null : 'note'))
+                  }
                 >
                   <strong>Add color / note</strong>
                   <span>Text pin on brand color</span>
@@ -1381,6 +1516,59 @@ function App() {
                   <span>Prompt → pin to board</span>
                 </button>
               </div>
+              {boardAddMode === 'url' && (
+                <div className="board-inline-form">
+                  <label className="field-label" htmlFor="board-url">
+                    Image URL
+                  </label>
+                  <div className="capture-row">
+                    <input
+                      id="board-url"
+                      className="field-input"
+                      value={boardUrl}
+                      onChange={(e) => setBoardUrl(e.target.value)}
+                      placeholder="https://…"
+                      onKeyDown={(e) =>
+                        e.key === 'Enter' && submitBoardUrl()
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={submitBoardUrl}
+                      disabled={!boardUrl.trim()}
+                    >
+                      Add pin
+                    </button>
+                  </div>
+                </div>
+              )}
+              {boardAddMode === 'note' && (
+                <div className="board-inline-form">
+                  <label className="field-label" htmlFor="board-note">
+                    Note / direction
+                  </label>
+                  <div className="capture-row">
+                    <input
+                      id="board-note"
+                      className="field-input"
+                      value={boardNote}
+                      onChange={(e) => setBoardNote(e.target.value)}
+                      placeholder="e.g. Soft twilight, no hard sell"
+                      onKeyDown={(e) =>
+                        e.key === 'Enter' && submitBoardNote()
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={submitBoardNote}
+                    >
+                      Add pin
+                    </button>
+                  </div>
+                </div>
+              )}
               <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
                 Tip: drag image files onto the board below.
               </p>
@@ -2398,6 +2586,184 @@ function App() {
           </div>
         )}
 
+        {/* ===== SETTINGS ===== */}
+        {activeView === 'settings' && (
+          <div className="settings-view">
+            <button
+              type="button"
+              className="back-link"
+              onClick={() => setActiveView('flow')}
+            >
+              ← Back to Work
+            </button>
+            <div className="flow-top">
+              <div>
+                <h1 className="page-title">Settings</h1>
+                <p className="page-sub">
+                  Control stimulation, presence, and your data. Everything saves
+                  on this device only — no account, no cloud.
+                </p>
+              </div>
+            </div>
+
+            <section className="panel brand-section">
+              <div className="brand-section-label">01 · Appearance</div>
+              <div className="settings-row">
+                <div>
+                  <strong>Theme</strong>
+                  <span>Light or dark screen comfort</span>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => toggleTheme()}
+                >
+                  {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
+                </button>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <strong>Reduce motion</strong>
+                  <span>Less animation (easier on focus)</span>
+                </div>
+                <button
+                  type="button"
+                  className={`btn ${reduceMotion ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setPref('reduceMotion', !reduceMotion)}
+                >
+                  {reduceMotion ? 'On' : 'Off'}
+                </button>
+              </div>
+            </section>
+
+            <section className="panel brand-section">
+              <div className="brand-section-label">02 · Presence &amp; sound</div>
+              <div className="settings-row">
+                <div>
+                  <strong>Body double</strong>
+                  <span>Quiet company while you work — not a chatbot</span>
+                </div>
+                <button
+                  type="button"
+                  className={`btn ${bodyDoubling ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => toggleBodyDoubling()}
+                >
+                  {bodyDoubling ? 'On' : 'Off'}
+                </button>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <strong>Silent presence</strong>
+                  <span>Header badge only — no floating message card</span>
+                </div>
+                <button
+                  type="button"
+                  className={`btn ${bodyDoubleSilent ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setPref('bodyDoubleSilent', !bodyDoubleSilent)}
+                >
+                  {bodyDoubleSilent ? 'On' : 'Off'}
+                </button>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <strong>Timer sound</strong>
+                  <span>Soft chime when a focus session ends</span>
+                </div>
+                <button
+                  type="button"
+                  className={`btn ${soundEnabled ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setPref('soundEnabled', !soundEnabled)}
+                >
+                  {soundEnabled ? 'On' : 'Off'}
+                </button>
+              </div>
+            </section>
+
+            <section className="panel brand-section">
+              <div className="brand-section-label">03 · Work loop</div>
+              <div className="settings-row">
+                <div>
+                  <strong>Collapse queue by default</strong>
+                  <span>Hide waiting steps so you only see the current one</span>
+                </div>
+                <button
+                  type="button"
+                  className={`btn ${queueCollapsed ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setPref('queueCollapsed', !queueCollapsed)}
+                >
+                  {queueCollapsed ? 'On' : 'Off'}
+                </button>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <strong>Show “How this works”</strong>
+                  <span>Intro card on the Work screen</span>
+                </div>
+                <button
+                  type="button"
+                  className={`btn ${showHowItWorks ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setPref('showHowItWorks', !showHowItWorks)}
+                >
+                  {showHowItWorks ? 'On' : 'Off'}
+                </button>
+              </div>
+            </section>
+
+            <section className="panel brand-section">
+              <div className="brand-section-label">04 · Your data</div>
+              <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
+                All projects, tasks, pins, and brand fields live in this
+                browser&apos;s storage. Clearing site data or switching devices
+                can wipe them — download a backup if it matters.
+              </p>
+              <div className="settings-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={downloadDataBackup}
+                >
+                  Download JSON backup
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        'Reset to demo projects and sample tasks? Your current data will be replaced.'
+                      )
+                    ) {
+                      clearAllData()
+                      setShowOnboarding(true)
+                      setActiveView('flow')
+                      flashToast('Reset to demo data')
+                    }
+                  }}
+                >
+                  Reset to demo data
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        'Start completely empty (one blank project, no tasks)? This cannot be undone unless you have a backup.'
+                      )
+                    ) {
+                      clearToEmpty()
+                      setActiveView('flow')
+                      flashToast('Started empty')
+                    }
+                  }}
+                >
+                  Start empty
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
         {/* ===== PROJECTS ===== */}
         {activeView === 'project' && (
           <div className="project-view">
@@ -2544,8 +2910,9 @@ function App() {
           <div className="export-panel onboard-panel">
             <h2 style={{ marginTop: 0 }}>Name your first project</h2>
             <p className="view-lede">
-              Creative Companion is a desk for ADHD creative work: dump ideas,
-              do one next step, pin references. Not a chatbot.
+              Creative Companion is a work loop for ADHD creative work: dump
+              ideas, break into micro-steps, do one next step. Not a chatbot.
+              Data stays on this device only.
             </p>
             <label className="onboard-label">
               Project name
@@ -2590,7 +2957,13 @@ function App() {
       )}
 
       {savePulse && (
-        <div className="autosave-chip">✓ Thread held · auto-saved</div>
+        <div className="autosave-chip">✓ Saved on this device</div>
+      )}
+
+      {actionToast && (
+        <div className="action-toast" role="status">
+          {actionToast}
+        </div>
       )}
 
       {exportPanel && (
@@ -2749,15 +3122,16 @@ function App() {
       )}
 
       {/* Body double — presence only, NOT a chatbot */}
-      {bodyDoubling && (
+      {bodyDoubling && !bodyDoubleSilent && (
         <div
           className="studio-mate"
           role="status"
           aria-live="polite"
           style={{
-            animation: isFocusRunning
-              ? 'softPulse 4s infinite ease-in-out'
-              : 'none',
+            animation:
+              isFocusRunning && !reduceMotion
+                ? 'softPulse 4s infinite ease-in-out'
+                : 'none',
           }}
         >
           <div className="studio-mate-top">
@@ -3006,11 +3380,12 @@ function App() {
             {breakdownStep === 4 && (
               <div className="breakdown-step">
                 <p className="session-done" style={{ marginTop: 0 }}>
-                  Added {breakdownAdded} micro-steps to your Work queue.
+                  Added {breakdownAdded} micro-steps. Queue is collapsed so you
+                  only see step #1.
                 </p>
                 <p className="breakdown-lead">
-                  Do <strong>only the current step</strong>. When it&apos;s done,
-                  mark complete — the next micro-step rises automatically.
+                  Do <strong>only the current step</strong>. Mark complete when
+                  finished — the next micro-step rises automatically.
                 </p>
                 <div className="breakdown-nav">
                   <button
@@ -3023,7 +3398,7 @@ function App() {
                   <button
                     type="button"
                     className="btn btn-primary"
-                    onClick={() => setShowBreakdown(false)}
+                    onClick={finishBreakdownToStep}
                   >
                     Start current step
                   </button>

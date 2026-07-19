@@ -161,6 +161,14 @@ const useAppStore = create(
       onboarded: false,
       sparkIndex: 0,
       currentSpark: sparkPrompts[0],
+      // Preferences (persisted)
+      prefs: {
+        soundEnabled: true,
+        reduceMotion: false,
+        bodyDoubleSilent: false, // true = badge only, no floating card copy
+        queueCollapsed: true, // collapse queue after breakdown / by default when busy
+        showHowItWorks: true,
+      },
 
       addProject: (project) =>
         set((state) => ({
@@ -286,6 +294,88 @@ const useAppStore = create(
 
       setOnboarded: (onboarded) => set({ onboarded }),
 
+      setPref: (key, value) =>
+        set((state) => ({
+          prefs: {
+            soundEnabled: true,
+            reduceMotion: false,
+            bodyDoubleSilent: false,
+            queueCollapsed: true,
+            showHowItWorks: true,
+            ...state.prefs,
+            [key]: value,
+          },
+        })),
+
+      exportAllData: () => {
+        const s = get()
+        return {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          projects: s.projects,
+          currentProjectId: s.currentProjectId,
+          tasks: s.tasks,
+          moodItems: s.moodItems,
+          theme: s.theme,
+          prefs: s.prefs,
+          sparkIndex: s.sparkIndex,
+          onboarded: s.onboarded,
+        }
+      },
+
+      clearAllData: () => {
+        set({
+          projects: seedProjects.map((p) => ({ ...p })),
+          currentProjectId: 1,
+          tasks: seedTasks.map((t) => ({ ...t })),
+          moodItems: seedMoodItems.map((m) => ({ ...m })),
+          theme: 'warm',
+          bodyDoubling: false,
+          onboarded: false,
+          sparkIndex: 0,
+          currentSpark: sparkPrompts[0],
+          prefs: {
+            soundEnabled: true,
+            reduceMotion: false,
+            bodyDoubleSilent: false,
+            queueCollapsed: true,
+            showHowItWorks: true,
+          },
+        })
+        try {
+          localStorage.removeItem('cc-hide-howto')
+          localStorage.removeItem('cc-onboarded')
+        } catch {
+          /* ignore */
+        }
+      },
+
+      clearToEmpty: () => {
+        const id = Date.now()
+        set({
+          projects: [
+            {
+              id,
+              name: 'My project',
+              active: true,
+              brief: '',
+              logoDirection: '',
+              palette: [...defaultProjectPalette],
+              deadline: '',
+              ...defaultBrandIdentity,
+              tasks: [],
+            },
+          ],
+          currentProjectId: id,
+          tasks: [],
+          moodItems: [],
+          bodyDoubling: false,
+          onboarded: true,
+          sparkIndex: 0,
+          currentSpark: sparkPrompts[0],
+        })
+      },
+
       setTasks: (tasks) => set({ tasks }),
 
       addTask: (task) =>
@@ -342,26 +432,23 @@ const useAppStore = create(
           projectId: task.projectId ?? currentProjectId,
           parentId: taskId,
         }))
-        // Park parent at bottom of open work as completed-hold or keep open with note
+        // Parent moves to completed so micro-steps become the work queue
+        const rest = tasks
+          .filter((t) => t.id !== taskId)
+          .map((t) => t)
+        const parentDone = {
+          ...task,
+          completed: true,
+          meta: 'Replaced by micro-steps',
+        }
         set({
-          tasks: [
-            ...newItems,
-            ...tasks.map((t) =>
-              t.id === taskId
-                ? {
-                    ...t,
-                    meta: 'Split into micro-steps — work the small ones',
-                    energy: 'low',
-                  }
-                : t
-            ),
-          ],
+          tasks: [...newItems, ...rest.filter((t) => !t.completed), parentDone, ...rest.filter((t) => t.completed)],
         })
       },
 
       /** Add a batch of micro-steps for the active project (ADHD project breakdown) */
       addMicroStepsBatch: ({ steps, energy = 'low', goalLabel = '' }) => {
-        const { currentProjectId, tasks } = get()
+        const { currentProjectId, tasks, prefs } = get()
         const stamp = Date.now()
         const newItems = (steps || [])
           .map((title) => String(title || '').trim())
@@ -380,7 +467,13 @@ const useAppStore = create(
             fromBreakdown: true,
           }))
         if (!newItems.length) return 0
-        set({ tasks: [...newItems, ...tasks] })
+        set({
+          tasks: [...newItems, ...tasks],
+          prefs: {
+            ...prefs,
+            queueCollapsed: true,
+          },
+        })
         return newItems.length
       },
 
@@ -454,6 +547,7 @@ const useAppStore = create(
         onboarded: state.onboarded,
         sparkIndex: state.sparkIndex,
         currentSpark: state.currentSpark,
+        prefs: state.prefs,
       }),
       onRehydrateStorage: () => (state) => {
         // One-time bridge from earlier cc-desk localStorage shape

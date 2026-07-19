@@ -2378,14 +2378,206 @@ h3 {
   gap: 0.65rem;
 }
 
+.help-grid.help-grid-3 {
+  grid-template-columns: 1fr;
+}
+
 @media (min-width: 640px) {
   .help-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 
-  .help-grid-3 {
+  .help-grid.help-grid-3 {
     grid-template-columns: repeat(3, 1fr);
   }
+
+  .help-grid-3 .help-card-featured {
+    grid-column: span 1;
+  }
+}
+
+/* Secondary help links (Board · Spark · timer …) under primary 3 tools */
+.help-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.55rem;
+  margin-top: 0.95rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.help-secondary .text-link {
+  margin: 0;
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.help-secondary > span[aria-hidden] {
+  opacity: 0.45;
+  user-select: none;
+}
+
+/* Collapsible queue / completed headers */
+.section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.section-toggle:hover .section-toggle-hint {
+  color: var(--accent-primary);
+}
+
+.section-toggle-hint {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+/* Board: inline URL / note forms (no window.prompt) */
+.board-inline-form {
+  margin-top: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-warm, var(--bg-muted));
+}
+
+.board-inline-form .field-label {
+  margin-bottom: 0.4rem;
+}
+
+.board-inline-form .capture-row {
+  margin-top: 0;
+}
+
+.mood-add-card.is-active {
+  border-style: solid;
+  border-color: var(--accent-primary);
+  background: linear-gradient(145deg, #EEF2FF, #fff);
+  box-shadow: var(--shadow-1);
+}
+
+/* Settings view */
+.settings-view {
+  animation: flowIn 0.45s ease-out;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.settings-row:first-of-type {
+  padding-top: 0.15rem;
+}
+
+.settings-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.settings-row strong {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.settings-row span {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.settings-row .btn {
+  flex-shrink: 0;
+  min-width: 5.5rem;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+/* Header Settings active state */
+.btn-ghost.is-nav-active,
+.header-help.is-nav-active {
+  background: var(--accent-glow);
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+/* Action feedback toast (complete step, backup, etc.) */
+.action-toast {
+  position: fixed;
+  bottom: 1.35rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 160;
+  max-width: min(92vw, 28rem);
+  padding: 0.65rem 1.15rem;
+  border-radius: var(--radius-pill);
+  background: rgba(30, 27, 75, 0.94);
+  color: #f8fafc;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(30, 27, 75, 0.28);
+  backdrop-filter: blur(10px);
+  animation: chipIn 0.35s var(--ease-out, ease-out);
+  pointer-events: none;
+}
+
+.app.deep .action-toast {
+  background: rgba(238, 242, 255, 0.96);
+  color: #1e1b4b;
+}
+
+.app.deep .board-inline-form {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app.deep .mood-add-card.is-active {
+  background: linear-gradient(145deg, rgba(79, 70, 229, 0.22), rgba(255, 255, 255, 0.04));
+}
+
+/* User pref: reduce motion (mirrors prefers-reduced-motion) */
+html[data-reduce-motion='true'] *,
+html[data-reduce-motion='true'] *::before,
+html[data-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 .help-card {
