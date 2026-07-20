@@ -622,11 +622,14 @@ function App() {
   )
 
   const commandActions = useMemo(() => {
+    /** @type {{ id: string, label: string, hint: string, group: 'actions'|'path'|'tools', run: () => void, when?: () => boolean }[]} */
     const acts = [
+      // —— Actions (desk recovery first) ——
       {
         id: 'complete',
         label: 'Complete current step',
         hint: 'C',
+        group: 'actions',
         run: () => completeCurrentStep(),
         when: () => !!nextTask,
       },
@@ -634,6 +637,7 @@ function App() {
         id: 'capture',
         label: 'New capture on Sketch',
         hint: 'N',
+        group: 'actions',
         run: () => {
           setActiveView('flow')
           window.setTimeout(
@@ -643,75 +647,99 @@ function App() {
         },
       },
       {
+        id: 'fix-next-gap',
+        label:
+          pathDoneCount >= 7
+            ? 'Process full · open Deliver'
+            : `Fix next process gap (${pathDoneCount}/7)`,
+        hint: 'G',
+        group: 'actions',
+        run: () => goToNextProcessGap(),
+      },
+      // —— Path 1–7 (spaced step · label) ——
+      {
         id: 'define',
-        label: '1 Define',
+        label: '1 · Define',
         hint: '1',
+        group: 'path',
         run: () => setActiveView('project'),
       },
       {
         id: 'research',
-        label: '2 Research',
+        label: '2 · Research',
         hint: '2',
+        group: 'path',
         run: () => setActiveView('studio'),
       },
       {
         id: 'ideate',
-        label: '3 Ideate',
+        label: '3 · Ideate',
         hint: '3',
+        group: 'path',
         run: () => setActiveView('spark'),
       },
       {
         id: 'sketch',
-        label: '4 Sketch',
+        label: '4 · Sketch',
         hint: '4',
+        group: 'path',
         run: () => setActiveView('flow'),
       },
       {
         id: 'design',
-        label: '5 Design',
+        label: '5 · Design',
         hint: '5',
+        group: 'path',
         run: () => setActiveView('brand'),
       },
       {
         id: 'review',
-        label: '6 Review',
+        label: '6 · Review',
         hint: '6',
+        group: 'path',
         run: () => setActiveView('review'),
       },
       {
         id: 'deliver',
-        label: '7 Deliver',
+        label: '7 · Deliver',
         hint: '7',
+        group: 'path',
         run: () => setActiveView('finish'),
       },
+      // —— Tools & extras ——
       {
         id: 'timer',
         label: 'Open Focus timer',
         hint: '',
+        group: 'tools',
         run: () => setActiveView('insights'),
       },
       {
         id: 'helper',
         label: bodyDoubling ? 'Turn Helper off' : 'Turn Helper on',
         hint: '',
+        group: 'tools',
         run: () => toggleBodyDoubling(),
       },
       {
         id: 'keys',
         label: 'Keyboard shortcuts',
         hint: '?',
+        group: 'tools',
         run: () => setShortcutsOpen(true),
       },
       {
         id: 'settings',
         label: 'Open Settings',
         hint: '',
+        group: 'tools',
         run: () => setActiveView('settings'),
       },
       {
         id: 'detective',
         label: 'Open Design Detective Sheet',
         hint: '',
+        group: 'tools',
         run: () => {
           setActiveView('project')
           window.setTimeout(
@@ -724,6 +752,7 @@ function App() {
         id: 'bump-version',
         label: 'Bump design version',
         hint: '',
+        group: 'tools',
         run: () => {
           const r = bumpDesignVersion()
           if (r?.ok)
@@ -737,6 +766,7 @@ function App() {
         id: 'research-timer',
         label: 'Start 20-min research timer',
         hint: '',
+        group: 'tools',
         run: () => {
           if (forcedBreak) {
             flashToast(i18nT(locale, 'ui.breakLockFirst'))
@@ -752,15 +782,6 @@ function App() {
           })
           flashToast(i18nT(locale, 'ui.researchTimerOn'))
         },
-      },
-      {
-        id: 'fix-next-gap',
-        label:
-          pathDoneCount >= 7
-            ? 'Process full · open Deliver'
-            : `Fix next process gap (${pathDoneCount}/7)`,
-        hint: 'G',
-        run: () => goToNextProcessGap(),
       },
     ]
     return acts.filter((a) => (a.when ? a.when() : true))
@@ -780,6 +801,20 @@ function App() {
     if (!q) return commandActions
     return commandActions.filter((a) => a.label.toLowerCase().includes(q))
   }, [commandActions, commandQuery])
+
+  const commandSections = useMemo(() => {
+    const order = [
+      { id: 'actions', label: 'Actions' },
+      { id: 'path', label: 'Path' },
+      { id: 'tools', label: 'Tools' },
+    ]
+    return order
+      .map((sec) => ({
+        ...sec,
+        items: commandFiltered.filter((a) => a.group === sec.id),
+      }))
+      .filter((sec) => sec.items.length > 0)
+  }, [commandFiltered])
 
   // Auto-clear undo window
   useEffect(() => {
@@ -4605,30 +4640,46 @@ function App() {
                 }
               }}
             />
-            <ul className="command-list" role="listbox">
-              {commandFiltered.length === 0 && (
-                <li className="command-empty">No matches</li>
-              )}
-              {commandFiltered.map((a) => (
-                <li key={a.id}>
-                  <button
-                    type="button"
-                    className="command-item"
-                    role="option"
-                    onClick={() => {
-                      setCommandOpen(false)
-                      setCommandQuery('')
-                      a.run()
-                    }}
-                  >
-                    <span>{a.label}</span>
-                    {a.hint ? <kbd>{a.hint}</kbd> : null}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <p className="panel-hint" style={{ margin: '0.55rem 0 0' }}>
-              Enter runs the first match · Esc closes
+            <div className="command-list-wrap">
+              <div
+                className="command-list"
+                role="listbox"
+                aria-label="Commands"
+              >
+                {commandFiltered.length === 0 && (
+                  <p className="command-empty">No matches</p>
+                )}
+                {commandSections.map((sec) => (
+                  <div key={sec.id} className="command-section" role="group">
+                    <div className="command-section-label" aria-hidden="true">
+                      {sec.label}
+                    </div>
+                    <ul className="command-section-list">
+                      {sec.items.map((a) => (
+                        <li key={a.id}>
+                          <button
+                            type="button"
+                            className="command-item"
+                            role="option"
+                            onClick={() => {
+                              setCommandOpen(false)
+                              setCommandQuery('')
+                              a.run()
+                            }}
+                          >
+                            <span className="command-item-label">{a.label}</span>
+                            {a.hint ? <kbd>{a.hint}</kbd> : null}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="panel-hint command-footer-hint">
+              Enter runs the first match · scroll for Path &amp; Tools · Esc
+              closes
             </p>
           </div>
         </div>

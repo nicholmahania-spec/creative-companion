@@ -43,10 +43,20 @@ test.describe('Command palette', () => {
     const input = page.locator(
       'input.command-input, input[aria-label="Filter commands"]'
     )
-    // Wave: palette shows N/7 progress in gap action label
+    // Actions group first — G is not buried under path 1–5
+    await expect(page.locator('.command-section-label').first()).toHaveText(
+      /Actions/i
+    )
     await expect(
       page.getByRole('option', { name: /Fix next process gap \(\d+\/7\)/i })
     ).toBeVisible({ timeout: 5000 })
+    // Path section + spaced step labels
+    await expect(
+      page.locator('.command-section-label', { hasText: /^Path$/i })
+    ).toBeVisible()
+    await expect(
+      page.getByRole('option', { name: /1\s*·\s*Define/i })
+    ).toBeVisible()
     await input.fill('Fix next')
     await page.keyboard.press('Enter')
     await expect(page.locator('h1.page-title').first()).toBeVisible({
