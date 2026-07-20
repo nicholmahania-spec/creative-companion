@@ -18,8 +18,11 @@ const assetsDir = join(root, 'dist', 'assets')
  * 440 KB (v1.47): design/UX flow honesty chrome + leave-behind thin copy.
  */
 const MAIN_JS_RAW_MAX = 440 * 1024
-/** Main CSS raw max */
-const MAIN_CSS_RAW_MAX = 180 * 1024
+/**
+ * Main CSS raw max — 210 KB (v1.48.14): gamified path nodes, one-thing hierarchy,
+ * dopamine/calm palette layer on top of desk chrome.
+ */
+const MAIN_CSS_RAW_MAX = 210 * 1024
 /** Main JS gzipped advisory max (warn only if over, still fail on raw) */
 const MAIN_JS_GZIP_WARN = 140 * 1024
 
