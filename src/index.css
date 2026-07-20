@@ -5645,6 +5645,57 @@ html[data-reduce-motion='true'] *::after {
   margin-top: 0.85rem;
 }
 
+.palette-health {
+  margin: 0.6rem 0 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.palette-health-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.palette-health-score {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.palette-health-score.is-good {
+  color: var(--accent-growth);
+}
+
+.palette-health-score.is-mid {
+  color: #b45309;
+}
+
+.palette-health-score.is-low {
+  color: #b91c1c;
+}
+
+.palette-health-bar {
+  margin-top: 0.4rem;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  overflow: hidden;
+}
+
+.palette-health-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-growth);
+  transition: width var(--transition);
+}
+
+.palette-suggest-btn {
+  font-size: 0.8rem;
+}
+
 .palette-checker {
   margin: 0 0 1.5rem;
   padding: 1rem 1rem 1.05rem;

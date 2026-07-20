@@ -1,14 +1,14 @@
 /**
- * Under-path strip: this-step fill chip + next-gap / ship CTA.
+ * Under-path strip: next-gap / ship CTA only.
  * ADHD one-next-action chrome shared across path views.
- * Which other steps are still empty already lives on the step-nav pills
- * above — repeating that list here was pure duplication.
+ * Whether the current step is filled already shows as a checkmark on its
+ * own step-nav pill above — a second "this step · enough" chip here was
+ * pure duplication of the same signal.
  * G / strip = recovery; primary “Continue · …” lives on each step.
  */
 export default function JourneyGapStrip({
   locale,
   thisStepFilled,
-  thisStepHint,
   pathNextGap = null,
   leaveBehindThin = false,
   activeView,
@@ -40,18 +40,6 @@ export default function JourneyGapStrip({
       role="status"
       aria-live="polite"
     >
-      <span
-        className={`step-fill-chip${
-          thisStepFilled ? ' is-filled' : ' is-open'
-        }`}
-        title={thisStepHint || undefined}
-      >
-        {thisStepFilled
-          ? i18nT(locale, 'ui.stepFilled')
-          : thisStepHint
-            ? tFormat(locale, 'ui.openStepChip', { label: thisStepHint })
-            : i18nT(locale, 'ui.stepOpen')}
-      </span>
       {showPathMarkPackThin && (
         <span className="journey-leavebehind-thin" role="status">
           {i18nT(locale, 'ui.pathMarkPackThin')}

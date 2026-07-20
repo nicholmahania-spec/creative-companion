@@ -21,6 +21,9 @@ import {
   suggestRoleAaFixes,
   mergeRolesIntoPalette,
   nudgeHexForContrast,
+  paletteHealthScore,
+  checkPaletteHarmony,
+  suggestRoleColor,
 } from '../lib/color'
 import { getProcessPhase } from '../lib/processGuide'
 import { pinFaceStyle } from '../lib/moodPins'
@@ -444,6 +447,44 @@ export default function DesignView({
               hidden={brandEditSection !== 'colors'}
             >
               <div className="brand-section-label">Colors</div>
+              {(() => {
+                const health = paletteHealthScore({
+                  palette: projectPalette,
+                  colorRoles: activeProject?.colorRoles || {},
+                  colorRoleWhy: activeProject?.colorRoleWhy || {},
+                })
+                return (
+                  <div className="palette-health">
+                    <div className="palette-health-head">
+                      <span className="field-label" style={{ margin: 0 }}>
+                        Palette health
+                      </span>
+                      <span
+                        className={`palette-health-score${
+                          health.score >= 80
+                            ? ' is-good'
+                            : health.score >= 50
+                              ? ' is-mid'
+                              : ' is-low'
+                        }`}
+                      >
+                        {health.score}%
+                      </span>
+                    </div>
+                    <div className="palette-health-bar">
+                      <div
+                        className="palette-health-bar-fill"
+                        style={{ width: `${health.score}%` }}
+                      />
+                    </div>
+                    <p className="panel-hint" style={{ margin: '0.4rem 0 0' }}>
+                      {health.justifiedCount}/{health.assignedCount || 4} roles
+                      justified · {Math.round(health.contrastScore * 100)}%
+                      contrast pairs pass · {health.harmony.note}
+                    </p>
+                  </div>
+                )
+              })()}
               <div className="brand-palette-block" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
@@ -693,6 +734,23 @@ export default function DesignView({
                     </button>
                   ))}
                 </div>
+                {!activeProject?.colorRoles?.[brandRoleAssign] && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm palette-suggest-btn"
+                    style={{ marginTop: '0.5rem' }}
+                    onClick={() => {
+                      const suggestion = suggestRoleColor(
+                        projectPalette,
+                        brandRoleAssign
+                      )
+                      setColorRole(brandRoleAssign, suggestion)
+                      flashMicro(`Suggested ${brandRoleAssign} → ${suggestion}`)
+                    }}
+                  >
+                    ✨ Suggest a {brandRoleAssign} color
+                  </button>
+                )}
                 <div className="direction-palette is-clickable" style={{ marginTop: '0.55rem' }}>
                   {projectPalette.map((c, i) => (
                     <button

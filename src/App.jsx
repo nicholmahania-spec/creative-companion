@@ -435,10 +435,6 @@ function App() {
     if (!thisStepId) return null
     return pathStepHasContent(thisStepId, pathProgressCtx)
   }, [thisStepId, pathProgressCtx])
-  const thisStepHint =
-    thisStepId && thisStepFilled === false
-      ? pathFillHint(locale, thisStepId)
-      : null
   /** Leave-behind can still be thin when path N/7 looks full */
   const leaveBehindThin = useMemo(() => {
     const pack = buildBrandPackSnapshot({
@@ -2825,7 +2821,6 @@ function App() {
           <JourneyGapStrip
             locale={locale}
             thisStepFilled={thisStepFilled}
-            thisStepHint={thisStepHint}
             pathNextGap={pathNextGap}
             leaveBehindThin={leaveBehindThin}
             activeView={activeView}

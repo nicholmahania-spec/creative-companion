@@ -629,3 +629,144 @@ export function mergeRolesIntoPalette(palette = [], roles = {}, max = 8) {
     .filter(Boolean)
   return dedupePalette([...base, ...extra], { max, minDistance: 18 })
 }
+
+/**
+ * Smallest angle between two hues on the 360° color wheel (0–180).
+ */
+function hueDelta(a, b) {
+  const d = Math.abs(a - b) % 360
+  return d > 180 ? 360 - d : d
+}
+
+/**
+ * Lightweight hue-relationship check — not a substitute for a trained eye,
+ * just enough signal to flag "these hues are fighting" versus "these read
+ * as a family." Near-gray colors (low saturation) are treated as neutrals
+ * and excluded from the hue comparison.
+ * @param {string[]} palette
+ * @returns {{ type: string, ok: boolean, note: string, hues: number[] }}
+ */
+export function checkPaletteHarmony(palette = []) {
+  const chromatic = (palette || [])
+    .map((hex) => ({ hex, hsl: hexToHsl(hex) }))
+    .filter((c) => c.hsl && c.hsl.s >= 0.15)
+  const hues = chromatic.map((c) => c.hsl.h)
+
+  if (hues.length <= 1) {
+    return {
+      type: 'neutral',
+      ok: true,
+      note: 'Mostly neutrals — one accent color reads as calm by default.',
+      hues,
+    }
+  }
+
+  // Pairwise deltas between every chromatic hue
+  const deltas = []
+  for (let i = 0; i < hues.length; i++) {
+    for (let j = i + 1; j < hues.length; j++) {
+      deltas.push(hueDelta(hues[i], hues[j]))
+    }
+  }
+  const maxDelta = Math.max(...deltas)
+  const minDelta = Math.min(...deltas)
+
+  if (maxDelta <= 40) {
+    return {
+      type: 'analogous',
+      ok: true,
+      note: 'Hues sit close together on the wheel — reads as one family.',
+      hues,
+    }
+  }
+  if (hues.length === 2 && maxDelta >= 150) {
+    return {
+      type: 'complementary',
+      ok: true,
+      note: 'Two hues sit opposite each other — high contrast on purpose.',
+      hues,
+    }
+  }
+  if (hues.length >= 3 && minDelta >= 90) {
+    return {
+      type: 'triadic',
+      ok: true,
+      note: 'Hues are evenly spread — balanced, not accidental.',
+      hues,
+    }
+  }
+  return {
+    type: 'clashing',
+    ok: false,
+    note: 'Hues are unevenly spaced — not quite a family, not quite opposites. Worth a second look.',
+    hues,
+  }
+}
+
+/**
+ * One combined 0–100 signal for the Colors tab: contrast + role
+ * justification + hue harmony. Mirrors the ingredients we already compute
+ * separately (AA pass rate, "N/4 roles justified", harmony check) so this
+ * is a rollup, not a new source of truth.
+ * @param {{ palette: string[], colorRoles: object, colorRoleWhy: object }} args
+ */
+export function paletteHealthScore({
+  palette = [],
+  colorRoles = {},
+  colorRoleWhy = {},
+} = {}) {
+  const roleKeys = ['cover', 'text', 'accent', 'quiet']
+  const assigned = roleKeys.filter((k) => String(colorRoles[k] || '').trim())
+  const justified = assigned.filter((k) => String(colorRoleWhy[k] || '').trim())
+  const roleScore = assigned.length ? justified.length / assigned.length : 0
+
+  const bg = normalizeHex(colorRoles.quiet) || '#FFFFFF'
+  const pairs = buildPairChecks(palette, bg)
+  const contrastScore = pairs.length
+    ? pairs.filter((p) => p.grade?.aaNormal || p.grade?.aaLarge).length /
+      pairs.length
+    : 0
+
+  const harmony = checkPaletteHarmony(palette)
+  const harmonyScore = harmony.ok ? 1 : 0.4
+
+  const score = Math.round(
+    (roleScore * 0.4 + contrastScore * 0.4 + harmonyScore * 0.2) * 100
+  )
+  return {
+    score,
+    roleScore,
+    contrastScore,
+    harmony,
+    assignedCount: assigned.length,
+    justifiedCount: justified.length,
+  }
+}
+
+/**
+ * Suggest a hex for a role that has no color assigned yet, derived from
+ * the existing palette rather than a random pick.
+ * @param {string[]} palette
+ * @param {'cover'|'text'|'accent'|'quiet'} role
+ */
+export function suggestRoleColor(palette = [], role) {
+  const base = (palette || []).map(normalizeHex).filter(Boolean)[0]
+  const hsl = base ? hexToHsl(base) : { h: 200, s: 0.4, l: 0.4 }
+  if (!hsl) return '#0F766E'
+
+  switch (role) {
+    case 'accent':
+      // Complementary hue, kept mid-lightness so it stays usable as an accent.
+      return hslToHex(hsl.h + 180, Math.max(hsl.s, 0.45), 0.45)
+    case 'quiet':
+      // Light, low-saturation tint of the base — a calm background.
+      return hslToHex(hsl.h, Math.min(hsl.s, 0.12), 0.96)
+    case 'cover':
+      // Dark, slightly desaturated shade of the base — a grounded surface.
+      return hslToHex(hsl.h, Math.min(hsl.s * 0.8, 0.3), 0.14)
+    case 'text':
+      return bestTextOn(hslToHex(hsl.h, hsl.s, 0.96))
+    default:
+      return base || '#0F766E'
+  }
+}
