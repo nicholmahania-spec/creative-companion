@@ -53,9 +53,13 @@ export function pathStepHasContent(stepId, ctx = {}) {
         project.detective?.audience?.trim()
       )
     case 'research': {
-      // Prefer ★ leave-behind pin; 2+ unstarred pins still count as research progress
-      const hasStar = mood.some((m) => m.inPack)
-      return hasStar || mood.length >= 2
+      // Once anything is starred, every starred pin needs its "why" filled —
+      // 2+ unstarred pins alone still count as early progress.
+      const starred = mood.filter((m) => m.inPack)
+      if (starred.length > 0) {
+        return starred.every((m) => String(m.note || '').trim())
+      }
+      return mood.length >= 2
     }
     case 'ideate': {
       // Honest fill: direction shortlist or Ideate spark pin (not Research notes)

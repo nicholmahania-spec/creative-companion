@@ -4929,6 +4929,18 @@ html[data-reduce-motion='true'] *::after {
   border-color: var(--accent-primary);
 }
 
+.mood-pin-note-input.needs-why {
+  border-color: color-mix(in srgb, #b45309 55%, var(--border-subtle));
+  background: color-mix(in srgb, #b45309 6%, var(--bg-canvas));
+}
+
+.mood-pin-why-hint {
+  margin: 0.3rem 0 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #b45309;
+}
+
 .mood-pin-remove {
   align-self: flex-start;
   font-size: 0.75rem !important;
@@ -10441,6 +10453,26 @@ html[data-reduce-motion='true'] *::after {
   text-transform: uppercase;
   color: var(--accent-growth);
 }
+
+.deliver-words-check {
+  margin: 0.65rem 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+}
+
+.deliver-word-check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 550;
+  color: var(--text-primary);
+  padding: 0.2rem 0;
+  cursor: pointer;
+}
+
 .pack-print-btn {
   width: 100%;
   min-height: 2.9rem;

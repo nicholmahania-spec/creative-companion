@@ -2939,6 +2939,7 @@ function App() {
               navDir={navDir}
               deskMood={deskMood}
               activeProjectId={activeProjectId}
+              brandWords={activeProject?.detective?.brandWords || ''}
               projectPalette={projectPalette}
               forcedBreak={forcedBreak}
               setActiveView={setActiveView}

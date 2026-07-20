@@ -709,6 +709,40 @@ export default function DesignView({
                     ></button>
                   ))}
                 </div>
+                {(() => {
+                  const roleWhy = activeProject?.colorRoleWhy || {}
+                  const brandWords = activeProject?.detective?.brandWords || ''
+                  const justifiedCount = ['cover', 'text', 'accent', 'quiet'].filter(
+                    (r) => String(roleWhy[r] || '').trim()
+                  ).length
+                  return (
+                    <div className="field-block" style={{ marginTop: '0.65rem' }}>
+                      <label className="field-label" htmlFor="color-role-why">
+                        Why does {brandRoleAssign} fit
+                        {brandWords.trim() ? ` "${brandWords.trim()}"` : ' the brand'}?
+                        <span className="panel-hint" style={{ marginLeft: '0.4rem' }}>
+                          {justifiedCount}/4 roles justified
+                        </span>
+                      </label>
+                      <input
+                        id="color-role-why"
+                        className="field-input"
+                        value={roleWhy[brandRoleAssign] || ''}
+                        onChange={(e) =>
+                          updateBrandField('colorRoleWhy', {
+                            cover: '',
+                            text: '',
+                            accent: '',
+                            quiet: '',
+                            ...roleWhy,
+                            [brandRoleAssign]: e.target.value,
+                          })
+                        }
+                        placeholder="e.g. Deep teal reads calm and trustworthy for the cover."
+                      />
+                    </div>
+                  )
+                })()}
               </div>
 
               <div className="palette-checker" style={{ marginTop: '1.15rem' }}>
@@ -887,6 +921,21 @@ export default function DesignView({
                   ))}
                   <option value="custom">Custom labels…</option>
                 </select>
+              </div>
+              <div className="field-block" style={{ marginBottom: '1rem' }}>
+                <label className="field-label" htmlFor="type-why">
+                  Why this pair fits
+                  {activeProject?.detective?.brandWords?.trim()
+                    ? ` "${activeProject.detective.brandWords.trim()}"`
+                    : ' the brand'}
+                </label>
+                <input
+                  id="type-why"
+                  className="field-input"
+                  value={activeProject?.typeWhy || ''}
+                  onChange={(e) => updateBrandField('typeWhy', e.target.value)}
+                  placeholder="e.g. Fraunces feels warm and unhurried; Jakarta keeps body copy clear."
+                />
               </div>
               <div className="brand-type-pair">
                 <div className="field-block">

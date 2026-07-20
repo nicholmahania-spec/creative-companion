@@ -184,6 +184,36 @@ export default function DeliverView({
                   })()}
                   <div className="finish-actions pack-primary-stack">
                     <p className="pack-client-kicker">{i18nT(locale, 'ui.clientHandoff')}</p>
+                    {(() => {
+                      const words = String(activeProject?.detective?.brandWords || '')
+                        .split(',')
+                        .map((w) => w.trim())
+                        .filter(Boolean)
+                      if (!words.length) return null
+                      const checked = activeProject?.deliverWordsChecked || {}
+                      return (
+                        <div className="deliver-words-check">
+                          <p className="field-label" style={{ margin: '0 0 0.35rem' }}>
+                            Does the final piece deliver on these brand words?
+                          </p>
+                          {words.map((w) => (
+                            <label key={w} className="deliver-word-check-row">
+                              <input
+                                type="checkbox"
+                                checked={!!checked[w]}
+                                onChange={(e) =>
+                                  updateBrandField('deliverWordsChecked', {
+                                    ...checked,
+                                    [w]: e.target.checked,
+                                  })
+                                }
+                              />
+                              {w}
+                            </label>
+                          ))}
+                        </div>
+                      )
+                    })()}
                     <div className="field-block">
                       <label className="field-label" htmlFor="handoff-note">
                         Handoff note (for the client)

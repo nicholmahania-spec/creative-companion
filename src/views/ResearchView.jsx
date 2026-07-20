@@ -32,6 +32,7 @@ export default function ResearchView({
   navDir = 'none',
   deskMood = [],
   activeProjectId = null,
+  brandWords = '',
   projectPalette = [],
   forcedBreak = null,
   setActiveView,
@@ -139,7 +140,7 @@ export default function ResearchView({
     if (!url) return
     addMoodPin({
       type: 'image',
-      note: 'Reference URL',
+      note: '',
       visual: url,
     })
     setBoardUrl('')
@@ -283,7 +284,7 @@ export default function ResearchView({
                   if (data?.trim()) {
                     addMoodPin({
                       type: 'image',
-                      note: 'Dropped reference',
+                      note: '',
                       visual: data.trim(),
                     })
                     notifyAction('Pin added', 'mood_pin', {
@@ -458,14 +459,31 @@ export default function ResearchView({
                             </details>
                           </div>
                           <input
-                            className="mood-pin-note-input"
+                            className={`mood-pin-note-input${
+                              item.inPack && !item.note?.trim()
+                                ? ' needs-why'
+                                : ''
+                            }`}
                             value={item.note || ''}
                             onChange={(e) =>
                               updateMoodPinNote(item.id, e.target.value)
                             }
-                            placeholder="Caption…"
-                            aria-label="Pin note"
+                            placeholder={
+                              item.inPack
+                                ? brandWords.trim()
+                                  ? `Why does this fit "${brandWords.trim()}"?`
+                                  : 'Why does this fit the brand?'
+                                : 'Caption…'
+                            }
+                            aria-label={
+                              item.inPack ? 'Why this pin fits the brand' : 'Pin note'
+                            }
                           />
+                          {item.inPack && !item.note?.trim() && (
+                            <p className="mood-pin-why-hint">
+                              Needs a why before Research counts as done.
+                            </p>
+                          )}
                         </div>
                       </article>
                     )

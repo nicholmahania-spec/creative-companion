@@ -28,6 +28,13 @@ export default function DetectiveSheet({
       area: true,
     },
     {
+      id: 'brandWords',
+      label: 'Brand words (3–5)',
+      ph: 'e.g. Warm, trustworthy, unhurried.',
+      hint: 'Later steps ask you to justify choices against these words.',
+      area: false,
+    },
+    {
       id: 'mustHaves',
       label: 'Must-haves',
       ph: 'e.g. Logo, contact, 4 pages max.',
@@ -63,6 +70,11 @@ export default function DetectiveSheet({
           <label className="field-label" htmlFor={`detective-${f.id}`}>
             {f.label}
           </label>
+          {f.hint && (
+            <p className="panel-hint" style={{ margin: '0 0 0.35rem' }}>
+              {f.hint}
+            </p>
+          )}
           {f.area ? (
             <textarea
               id={`detective-${f.id}`}

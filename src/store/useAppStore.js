@@ -51,6 +51,8 @@ export function blankDetective() {
     mustHaves: '',
     niceToHaves: '',
     format: '',
+    /** 3-5 words this brand should feel like — referenced by later "why" prompts */
+    brandWords: '',
   }
 }
 
@@ -64,6 +66,10 @@ export const defaultBrandIdentity = {
   dontUse: '',
   /** Optional overrides; null/empty keys fall back to mapPaletteRoles(palette) */
   colorRoles: null,
+  /** Why each assigned color role fits the Define brand words */
+  colorRoleWhy: { cover: '', text: '', accent: '', quiet: '' },
+  /** Why the chosen type pair fits the Define brand words */
+  typeWhy: '',
   /** data URL mark for pack cover */
   logoImage: '',
   /** Optional wordmark text (falls back to project name) */
@@ -90,6 +96,8 @@ export const defaultBrandIdentity = {
   handoffNote: '',
   /** Deliver: one-paragraph evaluation / learnings */
   learnings: '',
+  /** Deliver: per brand-word confirmation that the final piece delivers on it */
+  deliverWordsChecked: {},
   /** Define: Design Detective Sheet */
   detective: blankDetective(),
   conceptPackage: {
