@@ -11,7 +11,6 @@ export default function SparkView({
   directions = [],
   updateDirection,
   sparkIndex = 0,
-  onFixNextGap,
 }) {
   const dirs =
     Array.isArray(directions) && directions.length >= 3
@@ -57,16 +56,6 @@ export default function SparkView({
           </p>
         </div>
         <div className="finish-secondary-row">
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            title="Fix next process gap (G)"
-            onClick={() => {
-              if (typeof onFixNextGap === 'function') onFixNextGap()
-            }}
-          >
-            Gap · G
-          </button>
           <button
             type="button"
             className="btn btn-primary"

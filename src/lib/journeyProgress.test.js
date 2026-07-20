@@ -6,6 +6,7 @@ import {
   pathFirstGap,
   pathGapFocusSelector,
   pathStepFillHint,
+  buildPathProgressCtx,
 } from './journeyProgress'
 import { JOURNEY_STEPS } from './journey'
 
@@ -94,5 +95,25 @@ describe('pathStepHasContent', () => {
     expect(pathStepFillHint('sketch')).toMatch(/step/i)
     expect(pathStepFillHint('design')).toMatch(/tagline|palette|version/i)
     expect(pathStepFillHint('unknown')).toMatch(/content/i)
+  })
+
+  it('buildPathProgressCtx scopes mood/tasks to active project', () => {
+    const ctx = buildPathProgressCtx({
+      currentProjectId: 'a',
+      projects: [{ id: 'a', name: 'A', palette: ['#111'] }],
+      moodItems: [
+        { id: 1, projectId: 'a' },
+        { id: 2, projectId: 'b' },
+      ],
+      tasks: [
+        { id: 1, projectId: 'a' },
+        { id: 2, projectId: 'b' },
+      ],
+      sparkIndex: 2,
+    })
+    expect(ctx.moodItems).toHaveLength(1)
+    expect(ctx.tasks).toHaveLength(1)
+    expect(ctx.sparkIndex).toBe(2)
+    expect(ctx.palette).toEqual(['#111'])
   })
 })

@@ -1,6 +1,6 @@
 /**
- * Compact 7-step process progress (Review / Deliver).
- * Includes “Fix next gap” for one clear ADHD next action.
+ * Compact 7-step process map (Review / Deliver).
+ * Next-gap CTA lives on path strip + G — chips only here unless showFixCta.
  */
 export default function PathProgressPanel({
   steps = [],
@@ -10,6 +10,10 @@ export default function PathProgressPanel({
   nextGap = null,
   onOpenStep,
   onFixNextGap,
+  /** When false (default), strip/G own “Fix next gap” — avoid dual CTAs */
+  showFixCta = false,
+  /** When false, skip still-thin text if path strip already lists missing */
+  showMissing = true,
   labelForId,
   hint = 'Tap any step to fill gaps.',
 }) {
@@ -33,7 +37,7 @@ export default function PathProgressPanel({
               className={`deliver-progress-chip${p.done ? ' is-done' : ''}${
                 nextGap && nextGap.id === p.id ? ' is-next' : ''
               }`}
-              onClick={() => onOpenStep?.(p.view)}
+              onClick={() => onOpenStep?.(p.view, p)}
             >
               <span aria-hidden="true">{p.done ? '✓' : p.num}</span>{' '}
               {labelForId?.(p.id) || p.label}
@@ -41,23 +45,26 @@ export default function PathProgressPanel({
           </li>
         ))}
       </ol>
-      {missing.length > 0 ? (
+      {showMissing && missing.length > 0 ? (
         <p className="panel-hint deliver-missing" style={{ marginBottom: '0.65rem' }}>
-          <strong>Still thin:</strong> {missing.join(' · ')}
+          <strong>Still thin:</strong> {missing.join(' · ')}{' '}
+          <span className="panel-hint" style={{ display: 'inline' }}>
+            (path strip or G)
+          </span>
         </p>
       ) : (
         <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
           {hint}
         </p>
       )}
-      {nextGap && (
+      {showFixCta && nextGap && (
         <button
           type="button"
           className="btn btn-secondary btn-sm"
           onClick={() =>
             onFixNextGap
               ? onFixNextGap()
-              : onOpenStep?.(nextGap.view)
+              : onOpenStep?.(nextGap.view, nextGap)
           }
         >
           Fix next gap · {nextLabel}

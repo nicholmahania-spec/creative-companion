@@ -64,9 +64,9 @@ import {
 import {
   pathStepHasContent,
   pathProgressSummary,
-  pathMissingLabels,
   pathFirstGap,
   pathGapFocusSelector,
+  buildPathProgressCtx,
   focusPathGapTarget,
 } from './lib/journeyProgress'
 const PathProgressPanel = lazy(() => import('./components/PathProgressPanel'))
@@ -409,20 +409,26 @@ function App() {
     }),
     [activeProject, deskMood, deskTasks, sparkIndex, projectPalette]
   )
-  const pathDoneCount = useMemo(
-    () =>
-      pathProgressSummary(JOURNEY_STEPS, pathProgressCtx).filter((r) => r.done)
-        .length,
+  const pathRows = useMemo(
+    () => pathProgressSummary(JOURNEY_STEPS, pathProgressCtx),
     [pathProgressCtx]
+  )
+  const pathDoneCount = useMemo(
+    () => pathRows.filter((r) => r.done).length,
+    [pathRows]
   )
   const pathNextGap = useMemo(
-    () => pathFirstGap(JOURNEY_STEPS, pathProgressCtx),
-    [pathProgressCtx]
+    () => pathRows.find((r) => !r.done) || null,
+    [pathRows]
   )
   const pathMissingRows = useMemo(
+    () => pathRows.filter((r) => !r.done),
+    [pathRows]
+  )
+  const pathMissingLabelsList = useMemo(
     () =>
-      pathProgressSummary(JOURNEY_STEPS, pathProgressCtx).filter((r) => !r.done),
-    [pathProgressCtx]
+      pathMissingRows.map((r) => pathLabel(locale, r.id) || r.label),
+    [pathMissingRows, locale]
   )
   const pathMissingExtra = Math.max(0, pathMissingRows.length - 3)
   const pathMissingShown = pathMissingRows.slice(0, 3)
@@ -621,50 +627,35 @@ function App() {
 
   const bumpDesignVersionIfV1 = useAppStore((s) => s.bumpDesignVersionIfV1)
 
-  /** Open a process step and focus a useful field (ADHD land-on-work) */
+  /**
+   * Open a process step + focus a useful field (ADHD land-on-work).
+   * @param {{ view: string, id?: string, label?: string }} step
+   * @param {{ micro?: 'open'|'next' }} [opts]
+   */
   const goToProcessStep = useCallback(
-    (step) => {
+    (step, opts = {}) => {
       if (!step?.view) return null
       setActiveView(step.view)
       const label = pathLabel(locale, step.id) || step.label
-      flashMicro(tFormat(locale, 'ui.openStepMicro', { label }))
-      focusPathGapTarget(pathGapFocusSelector(step.id))
+      const micro = opts.micro === 'next' ? 'ui.nextGapMicro' : 'ui.openStepMicro'
+      flashMicro(tFormat(locale, micro, { label }))
+      if (step.id) focusPathGapTarget(pathGapFocusSelector(step.id))
       return step
     },
     [setActiveView, locale]
   )
 
-  /** Jump to earliest incomplete process step + focus a useful field */
+  /** Earliest incomplete step — reuses buildPathProgressCtx (same filters as strip) */
   const goToNextProcessGap = useCallback(() => {
-    const st = useAppStore.getState()
-    const pid = st.currentProjectId
-    const project =
-      st.projects?.find((p) => p.id === pid) || null
-    // Scope mood/tasks to active project (match pathProgressCtx / desk filters)
-    const moodItems = (st.moodItems || []).filter(
-      (m) => m.projectId == null || m.projectId === pid
+    const gap = pathFirstGap(
+      JOURNEY_STEPS,
+      buildPathProgressCtx(useAppStore.getState())
     )
-    const tasks = (st.tasks || []).filter(
-      (t) => t.projectId == null || t.projectId === pid
-    )
-    const gap = pathFirstGap(JOURNEY_STEPS, {
-      project,
-      moodItems,
-      tasks,
-      sparkIndex: st.sparkIndex || 0,
-      palette: project?.palette || [],
-    })
-    if (gap?.view) {
-      setActiveView(gap.view)
-      const label = pathLabel(locale, gap.id) || gap.label
-      flashMicro(tFormat(locale, 'ui.nextGapMicro', { label }))
-      focusPathGapTarget(pathGapFocusSelector(gap.id))
-      return gap
-    }
+    if (gap?.view) return goToProcessStep(gap, { micro: 'next' })
     flashToast(i18nT(locale, 'ui.processLooksFull'))
     setActiveView('finish')
     return null
-  }, [setActiveView, locale])
+  }, [goToProcessStep, setActiveView, locale])
 
   const applyBrandKit = useCallback(
     async (kitId) => {
@@ -2395,9 +2386,7 @@ function App() {
                     }}
                   >
                     <strong>Keyboard</strong>
-                    <span>
-                      C complete · N capture · G next gap · path N/7 · 1–7 · ?
-                    </span>
+                    <span>C · N · G (next gap) · 1–7 · ?</span>
                   </button>
                   <button
                     type="button"
@@ -2683,14 +2672,6 @@ function App() {
                   total — then Design.
                 </p>
               </div>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                title="Fix next process gap (G)"
-                onClick={() => goToNextProcessGap()}
-              >
-                Gap · G
-              </button>
             </div>
 
             {/* Current step owns the fold */}
@@ -3227,17 +3208,7 @@ function App() {
                     : ''}
                 </p>
               </div>
-              <div className="finish-secondary-row">
-                <span className="panel-count">{deskMood.length} pins</span>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  title="Fix next process gap (G)"
-                  onClick={() => goToNextProcessGap()}
-                >
-                  Gap · G
-                </button>
-              </div>
+              <span className="panel-count">{deskMood.length} pins</span>
             </div>
 
             <section className="panel brand-section process-tip-panel">
@@ -3367,14 +3338,8 @@ function App() {
                         {pathLabel(locale, 'research')}
                       </strong>
                       {' — '}
-                      {pathFillHint(locale, 'research')}. Path strip or{' '}
-                      <button
-                        type="button"
-                        className="text-link"
-                        onClick={() => goToNextProcessGap()}
-                      >
-                        Gap · G
-                      </button>
+                      {pathFillHint(locale, 'research')}. Use path strip or{' '}
+                      <kbd>G</kbd>.
                     </p>
                   </div>
                 ) : (
@@ -3824,7 +3789,6 @@ function App() {
               directions={activeProject?.directions}
               updateDirection={updateDirection}
               sparkIndex={sparkIndex || 0}
-              onFixNextGap={goToNextProcessGap}
             />
           </Suspense>
         )}
@@ -3923,14 +3887,6 @@ function App() {
                   }}
                 >
                   Bump
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  title="Fix next process gap (G)"
-                  onClick={() => goToNextProcessGap()}
-                >
-                  Gap · G
                 </button>
                 <button
                   type="button"
@@ -4624,14 +4580,6 @@ function App() {
               <div className="finish-secondary-row">
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
-                  title="Fix next process gap (G)"
-                  onClick={() => goToNextProcessGap()}
-                >
-                  Gap · G
-                </button>
-                <button
-                  type="button"
                   className="btn btn-secondary"
                   onClick={() => setActiveView('brand')}
                 >
@@ -4646,41 +4594,26 @@ function App() {
                 </button>
               </div>
             </div>
-            {(() => {
-              const ctx = {
-                project: activeProject,
-                moodItems: deskMood,
-                tasks: deskTasks,
-                sparkIndex,
-                palette: projectPalette,
-              }
-              const rows = pathProgressSummary(JOURNEY_STEPS, ctx)
-              const doneN = rows.filter((p) => p.done).length
-              const missing = pathMissingLabels(JOURNEY_STEPS, ctx, (id) =>
-                pathLabel(locale, id)
-              )
-              const nextGap = pathFirstGap(JOURNEY_STEPS, ctx)
-              return (
-                <Suspense fallback={null}>
-                  <PathProgressPanel
-                    steps={JOURNEY_STEPS}
-                    rows={rows}
-                    doneN={doneN}
-                    missing={missing}
-                    nextGap={nextGap}
-                    onOpenStep={(view) => {
-                      setActiveView(view)
-                      const step = JOURNEY_STEPS.find((s) => s.view === view)
-                      if (step)
-                        focusPathGapTarget(pathGapFocusSelector(step.id))
-                    }}
-                    onFixNextGap={goToNextProcessGap}
-                    labelForId={(id) => pathLabel(locale, id)}
-                    hint="Review with content in earlier steps — then Deliver."
-                  />
-                </Suspense>
-              )
-            })()}
+            <Suspense fallback={null}>
+              <PathProgressPanel
+                steps={JOURNEY_STEPS}
+                rows={pathRows}
+                doneN={pathDoneCount}
+                missing={pathMissingLabelsList}
+                nextGap={pathNextGap}
+                showFixCta={false}
+                showMissing={false}
+                onOpenStep={(_view, step) => {
+                  const s =
+                    step ||
+                    JOURNEY_STEPS.find((x) => x.view === _view) ||
+                    pathRows.find((x) => x.view === _view)
+                  if (s) goToProcessStep(s)
+                }}
+                labelForId={(id) => pathLabel(locale, id)}
+                hint="Tap a step chip to open it. Path strip or G for the next empty step — then Deliver."
+              />
+            </Suspense>
             <section className="panel brand-section">
               <div className="brand-section-label">Leave-behind preview</div>
               <p className="panel-hint" style={{ marginTop: 0 }}>
@@ -4854,41 +4787,26 @@ function App() {
               </div>
             </div>
 
-            {(() => {
-              const ctx = {
-                project: activeProject,
-                moodItems: deskMood,
-                tasks: deskTasks,
-                sparkIndex,
-                palette: projectPalette,
-              }
-              const rows = pathProgressSummary(JOURNEY_STEPS, ctx)
-              const doneN = rows.filter((p) => p.done).length
-              const missing = pathMissingLabels(JOURNEY_STEPS, ctx, (id) =>
-                pathLabel(locale, id)
-              )
-              const nextGap = pathFirstGap(JOURNEY_STEPS, ctx)
-              return (
-                <Suspense fallback={null}>
-                  <PathProgressPanel
-                    steps={JOURNEY_STEPS}
-                    rows={rows}
-                    doneN={doneN}
-                    missing={missing}
-                    nextGap={nextGap}
-                    onOpenStep={(view) => {
-                      setActiveView(view)
-                      const step = JOURNEY_STEPS.find((s) => s.view === view)
-                      if (step)
-                        focusPathGapTarget(pathGapFocusSelector(step.id))
-                    }}
-                    onFixNextGap={goToNextProcessGap}
-                    labelForId={(id) => pathLabel(locale, id)}
-                    hint="Tap any step to fill gaps before the brand book PDF."
-                  />
-                </Suspense>
-              )
-            })()}
+            <Suspense fallback={null}>
+              <PathProgressPanel
+                steps={JOURNEY_STEPS}
+                rows={pathRows}
+                doneN={pathDoneCount}
+                missing={pathMissingLabelsList}
+                nextGap={pathNextGap}
+                showFixCta={false}
+                showMissing={false}
+                onOpenStep={(_view, step) => {
+                  const s =
+                    step ||
+                    JOURNEY_STEPS.find((x) => x.view === _view) ||
+                    pathRows.find((x) => x.view === _view)
+                  if (s) goToProcessStep(s)
+                }}
+                labelForId={(id) => pathLabel(locale, id)}
+                hint="Tap a step chip to fill gaps. Path strip or G for the next empty step — then brand book PDF."
+              />
+            </Suspense>
 
             <section className="panel brand-section finish-hero-panel pack-hero">
               <div className="pack-layout">
@@ -5382,14 +5300,6 @@ function App() {
                   onClick={() => setActiveView('studio')}
                 >
                   {i18nT(locale, 'ui.openWork') || 'Go to Research'}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => goToNextProcessGap()}
-                  title="Keyboard G"
-                >
-                  Fix next gap · G
                 </button>
               </div>
             </div>
@@ -6142,13 +6052,7 @@ function App() {
                 <kbd>N</kbd> New capture (Sketch)
               </li>
               <li>
-                <kbd>G</kbd> Fix next process gap
-              </li>
-              <li>
-                Path <strong>N/7</strong> pill · same as G (shows count)
-              </li>
-              <li>
-                Gap strip · <strong>Next gap · step · G</strong> under path
+                <kbd>G</kbd> / path <strong>N/7</strong> / strip → next empty step
               </li>
               <li>
                 <kbd>U</kbd> Undo last complete
@@ -6165,8 +6069,8 @@ function App() {
               </li>
             </ul>
             <p className="panel-hint" style={{ margin: '0.75rem 0 0' }}>
-              Keys work when you are not typing in a field. Path pill + gap
-              strip always show the next empty step.
+              Keys work when you are not typing in a field. One next-gap
+              system: keyboard G, path pill, and under-path strip.
             </p>
           </div>
         </div>

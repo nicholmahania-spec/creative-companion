@@ -1,17 +1,14 @@
 /**
- * Design process — 7 steps. Nothing more, nothing less.
- * Matches the professional graphic design process used as product spine.
- *
- * 1 Define → 2 Research → 3 Ideate → 4 Sketch → 5 Design → 6 Review → 7 Deliver
+ * Design process coaching — prompts & checks layered on journey steps.
+ * Spine ids/views come from JOURNEY_STEPS (single catalog).
  */
 
-export const PROCESS_PHASES = [
-  {
-    id: 'define',
-    label: '1 Define',
-    short: 'Define',
+import { JOURNEY_STEPS } from './journey'
+
+/** Coaching overlay per step id (plain/prompt/checks differ from path bar plain). */
+const COACHING = {
+  define: {
     title: 'Define & discover',
-    /** Teacher plain: the big “what are we even making?” talk */
     plain:
       'Ask questions before pretty pictures. One-sentence goal. Must-haves vs nice-to-haves.',
     prompt:
@@ -23,12 +20,8 @@ export const PROCESS_PHASES = [
       'Must-haves vs nice-to-haves listed',
       'Deadline / format / constraint noted',
     ],
-    view: 'project',
   },
-  {
-    id: 'research',
-    label: '2 Research',
-    short: 'Research',
+  research: {
     title: 'Research & discovery',
     plain: 'Be a curious spy. Collect refs. Timebox 20 minutes so you don’t drown.',
     prompt:
@@ -40,12 +33,8 @@ export const PROCESS_PHASES = [
       'Timer used so research does not swallow the day',
       'At least one pin starred ★ for the pack',
     ],
-    view: 'studio',
   },
-  {
-    id: 'ideate',
-    label: '3 Ideate',
-    short: 'Ideate',
+  ideate: {
     title: 'Ideate & brainstorm',
     plain: 'Throw lots of ideas. Messy is correct. Best idea often hides in #6–7.',
     prompt:
@@ -57,12 +46,8 @@ export const PROCESS_PHASES = [
       'Not married to the first idea',
       'One direction chosen (★) to sketch next',
     ],
-    view: 'spark',
   },
-  {
-    id: 'sketch',
-    label: '4 Sketch',
-    short: 'Sketch',
+  sketch: {
     title: 'Sketch & draft',
     plain: '2–3 cleaner drafts. Low detail. Show options with a one-line why.',
     prompt:
@@ -74,12 +59,8 @@ export const PROCESS_PHASES = [
       'Current desk step is a draft decision, not polish',
       'Ready to pick one direction for Design',
     ],
-    view: 'flow',
   },
-  {
-    id: 'design',
-    label: '5 Design',
-    short: 'Design',
+  design: {
     title: 'Design & refine',
     plain: 'Make it strong: type, color, hierarchy. Name versions before big changes.',
     prompt:
@@ -91,12 +72,8 @@ export const PROCESS_PHASES = [
       'Whitespace intentional',
       'Version named (v1 → v2) before big changes',
     ],
-    view: 'brand',
   },
-  {
-    id: 'review',
-    label: '6 Review',
-    short: 'Review',
+  review: {
     title: 'Review, revise & test',
     plain: 'Show it. Ask specific questions. Fix what serves the goal — not every taste.',
     prompt:
@@ -108,12 +85,8 @@ export const PROCESS_PHASES = [
       'Notes captured for the revision pass',
       'Real audience glance if possible (one person is enough)',
     ],
-    view: 'review',
   },
-  {
-    id: 'deliver',
-    label: '7 Deliver',
-    short: 'Deliver',
+  deliver: {
     title: 'Finalize, deliver & evaluate',
     plain: 'Ship files. Write a handoff note. One paragraph: what worked? what next?',
     prompt:
@@ -125,9 +98,27 @@ export const PROCESS_PHASES = [
       'Handoff note written',
       'Learnings written: what felt like “me”? what next?',
     ],
-    view: 'finish',
   },
-]
+}
+
+/**
+ * Full process phases = journey spine + coaching.
+ * id / view / num / short align with JOURNEY_STEPS.
+ */
+export const PROCESS_PHASES = JOURNEY_STEPS.map((s) => {
+  const c = COACHING[s.id] || {}
+  return {
+    id: s.id,
+    view: s.view,
+    num: s.num,
+    short: s.label,
+    label: `${s.num} ${s.label}`,
+    title: c.title || s.label,
+    plain: c.plain || s.plain,
+    prompt: c.prompt || s.plain,
+    checks: c.checks || [],
+  }
+})
 
 /** Specific feedback questions (Review) — better than “do you like it?” */
 export const REVIEW_QUESTIONS = [

@@ -62,7 +62,37 @@ export function pathStepHasContent(stepId, ctx = {}) {
 }
 
 /**
- * @returns {{ id: string, label: string, done: boolean, view: string }[]}
+ * Build path progress ctx from Zustand-like store state (project-scoped).
+ * Single filter path for gap jump + React memos.
+ * @param {{
+ *   projects?: array,
+ *   currentProjectId?: string|number|null,
+ *   moodItems?: array,
+ *   tasks?: array,
+ *   sparkIndex?: number,
+ * }} st
+ */
+export function buildPathProgressCtx(st = {}) {
+  const pid = st.currentProjectId
+  const project =
+    (st.projects || []).find((p) => p.id === pid) || null
+  const moodItems = (st.moodItems || []).filter(
+    (m) => m.projectId == null || m.projectId === pid
+  )
+  const tasks = (st.tasks || []).filter(
+    (t) => t.projectId == null || t.projectId === pid
+  )
+  return {
+    project,
+    moodItems,
+    tasks,
+    sparkIndex: st.sparkIndex || 0,
+    palette: project?.palette || [],
+  }
+}
+
+/**
+ * @returns {{ id: string, label: string, done: boolean, view: string, num?: string }[]}
  */
 export function pathProgressSummary(steps, ctx) {
   return (steps || []).map((s) => ({
@@ -119,30 +149,25 @@ export function pathGapFocusSelector(stepId) {
   }
 }
 
+/** English fill hints — single source; i18n pathFillHint falls back here. */
+export const PATH_FILL_HINTS = {
+  define: 'Name, goal, or audience',
+  research: 'Pin at least one ref',
+  ideate: 'Spark, A/B/C, or pin a spark note',
+  sketch: 'Capture one finishable step',
+  design: 'Tagline, palette, or version bump',
+  review: 'Feedback notes or leave-behind pin',
+  deliver: 'Handoff, learnings, or leave-behind',
+  default: 'Add a little content',
+}
+
 /**
- * Short “how to fill this step” line for ADHD strip / empty states.
+ * Short “how to fill this step” line (EN). Prefer pathFillHint(locale, id) in UI.
  * @param {string} stepId
  * @returns {string}
  */
 export function pathStepFillHint(stepId) {
-  switch (stepId) {
-    case 'define':
-      return 'Name, goal, or audience'
-    case 'research':
-      return 'Pin at least one ref'
-    case 'ideate':
-      return 'Spark, A/B/C, or pin a spark note'
-    case 'sketch':
-      return 'Capture one finishable step'
-    case 'design':
-      return 'Tagline, palette, or version bump'
-    case 'review':
-      return 'Feedback notes or leave-behind pin'
-    case 'deliver':
-      return 'Handoff, learnings, or leave-behind'
-    default:
-      return 'Add a little content'
-  }
+  return PATH_FILL_HINTS[stepId] || PATH_FILL_HINTS.default
 }
 
 /**

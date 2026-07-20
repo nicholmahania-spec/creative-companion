@@ -20,6 +20,15 @@ describe('processGuide — 7 design steps', () => {
     ])
   })
 
+  it('PROCESS_PHASES spine matches JOURNEY_STEPS ids/views', () => {
+    expect(PROCESS_PHASES.map((p) => p.id)).toEqual(
+      JOURNEY_STEPS.map((s) => s.id)
+    )
+    expect(PROCESS_PHASES.map((p) => p.view)).toEqual(
+      JOURNEY_STEPS.map((s) => s.view)
+    )
+  })
+
   it('resolves each phase', () => {
     expect(getProcessPhase('define').short).toBe('Define')
     expect(getProcessPhase('deliver').view).toBe('finish')

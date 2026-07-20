@@ -21,14 +21,9 @@ test.describe('Brand book PDF', () => {
     await expect(
       page.getByText(/Process · \d+ of 7 steps have content/i)
     ).toBeVisible()
-    // Fresh project is thin — missing summary + next-gap CTA
-    // (strip + PathProgressPanel both say Still thin)
-    await expect(page.locator('.deliver-missing')).toBeVisible()
-    const fixGap = page
-      .getByLabel('Process progress')
-      .getByRole('button', { name: /^Fix next gap/i })
-    await expect(fixGap).toBeVisible()
-    await fixGap.click()
+    // Next gap chrome: path strip (panel no longer duplicates Fix next gap)
+    await expect(page.locator('.journey-gap-strip-btn')).toBeVisible()
+    await page.locator('.journey-gap-strip-btn').click()
     // Earliest gap for a bare project is usually Research (after define name)
     await expect(
       page.getByRole('heading', { name: /Research|Define|Ideate|Sketch/i })

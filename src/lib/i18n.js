@@ -3,6 +3,8 @@
  * Missing keys fall back to English via deep lookup.
  */
 
+import { pathStepFillHint } from './journeyProgress'
+
 export const LOCALES = [
   { id: 'en', label: 'English', native: 'English', dir: 'ltr' },
   { id: 'es', label: 'Spanish', native: 'Español', dir: 'ltr' },
@@ -186,16 +188,7 @@ const EN = {
     openStepMicro: 'Open · {label}',
     nextGapMicro: 'Next gap · {label}',
   },
-  fillHint: {
-    define: 'Name, goal, or audience',
-    research: 'Pin at least one ref',
-    ideate: 'Spark, A/B/C, or pin a spark note',
-    sketch: 'Capture one finishable step',
-    design: 'Tagline, palette, or version bump',
-    review: 'Feedback notes or leave-behind pin',
-    deliver: 'Handoff, learnings, or leave-behind',
-    default: 'Add a little content',
-  },
+  // fillHint.* — non-EN locales only; EN defaults live in journeyProgress.PATH_FILL_HINTS
 }
 
 /** Deep-merge override onto English base */
@@ -754,11 +747,11 @@ export function pathPlain(locale, stepId) {
   return t(locale, `pathPlain.${stepId}`) || ''
 }
 
-/** Short how-to fill a path step (ADHD strip / empty states). */
+/** Short how-to fill a path step. Locale override via fillHint.*; EN from pathStepFillHint. */
 export function pathFillHint(locale, stepId) {
   const s = t(locale, `fillHint.${stepId}`)
   if (s && s !== `fillHint.${stepId}`) return s
-  return t(locale, 'fillHint.default') || 'Add a little content'
+  return pathStepFillHint(stepId)
 }
 
 /** Simple `{label}` style template for strip / micro copy. */

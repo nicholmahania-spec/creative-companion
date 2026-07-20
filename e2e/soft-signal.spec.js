@@ -64,11 +64,10 @@ test.describe('Soft Signal demo', () => {
     const goal = await page.locator('#detective-goal').inputValue()
     expect(goal.length).toBeGreaterThan(10)
 
-    // Design has Gap · G control
+    // Design still has path gap strip (not per-step Gap · G)
     await path.getByRole('button', { name: /Step 5: Design/i }).click()
     await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: /Gap · G/i }).first()
-    ).toBeVisible()
+    await expect(page.locator('.journey-gap-strip')).toBeVisible()
+    await expect(page.locator('.journey-progress-pill')).toBeVisible()
   })
 })
