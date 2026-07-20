@@ -95,6 +95,8 @@ export function journeyIdForView(view) {
 /** Label for off-path Tools pages */
 export function toolsLabelForView(view) {
   switch (view) {
+    case 'home':
+      return 'Home'
     case 'insights':
       return 'Timer'
     case 'calendar':

@@ -229,6 +229,7 @@ function App() {
     try {
       const raw = localStorage.getItem('cc-active-view')
       const allowed = new Set([
+        'home',
         'flow',
         'project',
         'studio',
@@ -246,8 +247,8 @@ function App() {
     } catch {
       /* private mode */
     }
-    // First visit: Define (path 1)
-    return 'project'
+    // First visit and every return visit: one clear next action
+    return 'home'
   })
   const setActiveView = useCallback((view) => {
     setActiveViewRaw(view)
@@ -2440,9 +2441,15 @@ function App() {
       )}
       <header className="header header-redesign">
         <div className="header-content header-content-simple">
-          <div className="brand-block">
+          <button
+            type="button"
+            className="brand-block brand-block-link"
+            onClick={() => setActiveView('home')}
+            aria-label="Home"
+            title="Home"
+          >
             <LogoLockup className="logo" locale={locale} reduceMotion={reduceMotion} />
-          </div>
+          </button>
           <div className="header-actions">
             {activeProjects.length > 1 && (
               <select
@@ -2795,6 +2802,67 @@ function App() {
             goToNextProcessGap={goToNextProcessGap}
             setActiveView={setActiveView}
           />
+        )}
+        {/* ===== HOME — the whole app, reduced to one sentence and one button ===== */}
+        {activeView === 'home' && (
+          <section className="home-view">
+            <p className="home-eyebrow">
+              {activeProject?.name || 'Your project'}
+            </p>
+            {pathDoneCount >= 7 ? (
+              <>
+                <h1 className="home-title">Your brand book is ready.</h1>
+                <p className="home-body">
+                  Every step has something in it. Time to hand it off.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary home-cta"
+                  onClick={() => setActiveView('finish')}
+                >
+                  Open Deliver
+                </button>
+              </>
+            ) : pathNextGap ? (
+              <>
+                <p className="home-kicker">Next step</p>
+                <h1 className="home-title">
+                  {pathLabel(locale, pathNextGap.id) || pathNextGap.label}
+                </h1>
+                <p className="home-body">
+                  {pathPlain(locale, pathNextGap.id) ||
+                    pathFillHint(locale, pathNextGap.id)}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary home-cta"
+                  onClick={() => goToNextProcessGap()}
+                >
+                  Continue
+                </button>
+              </>
+            ) : (
+              <>
+                <h1 className="home-title">All caught up.</h1>
+                <button
+                  type="button"
+                  className="btn btn-primary home-cta"
+                  onClick={() => setActiveView('finish')}
+                >
+                  Go to Deliver
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              className="text-link home-see-all"
+              onClick={() =>
+                setActiveView(pathNextGap ? pathNextGap.view : 'project')
+              }
+            >
+              See all 7 steps
+            </button>
+          </section>
         )}
         {/* ===== WORK — one step owns the fold ===== */}
         {/* ===== SKETCH (lazy) ===== */}
