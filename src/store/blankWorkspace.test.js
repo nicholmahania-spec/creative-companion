@@ -5,7 +5,9 @@ import {
   seedProjects,
   seedTasks,
   seedMoodItems,
+  blankDetective,
 } from './useAppStore'
+import useAppStore from './useAppStore'
 
 describe('blank workspace defaults', () => {
   it('starts with no fake clients or seed fiction', () => {
@@ -38,5 +40,36 @@ describe('blank workspace defaults', () => {
     expect(s.breakKit).toEqual([])
     expect(s.onboarded).toBe(false)
     expect(s.currentProjectId).toBe(s.projects[0].id)
+  })
+
+  it('createBlankProject has detective sheet + designVersion', () => {
+    const p = createBlankProject('Demo', '')
+    expect(p.detective).toEqual(blankDetective())
+    expect(p.designVersion).toBe('v1')
+    expect(p.directions).toHaveLength(3)
+  })
+
+  it('bumpDesignVersion increments vN', () => {
+    const store = useAppStore.getState()
+    // Ensure clean active project
+    const p = store.createNewProject('Bump Co', 'Brief')
+    store.setCurrentProject?.(p.id)
+    // setCurrentProject may not exist — select via setCurrentProjectId pattern
+    if (typeof store.setCurrentProject === 'function') {
+      store.setCurrentProject(p.id)
+    } else {
+      useAppStore.setState({ currentProjectId: p.id })
+    }
+    useAppStore.setState({
+      projects: useAppStore.getState().projects.map((proj) =>
+        proj.id === p.id ? { ...proj, designVersion: 'v1' } : proj
+      ),
+      currentProjectId: p.id,
+    })
+    const r1 = useAppStore.getState().bumpDesignVersion()
+    expect(r1.ok).toBe(true)
+    expect(r1.version).toBe('v2')
+    const r2 = useAppStore.getState().bumpDesignVersion()
+    expect(r2.version).toBe('v3')
   })
 })

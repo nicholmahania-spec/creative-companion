@@ -639,9 +639,58 @@ function App() {
         hint: '',
         run: () => setActiveView('settings'),
       },
+      {
+        id: 'detective',
+        label: 'Open Design Detective Sheet',
+        hint: '',
+        run: () => {
+          setActiveView('project')
+          window.setTimeout(
+            () => document.getElementById('detective-goal')?.focus?.(),
+            120
+          )
+        },
+      },
+      {
+        id: 'bump-version',
+        label: 'Bump design version',
+        hint: '',
+        run: () => {
+          const r = bumpDesignVersion()
+          if (r?.ok) flashMicro(`Version ${r.version}`)
+          setActiveView('brand')
+        },
+      },
+      {
+        id: 'research-timer',
+        label: 'Start 20-min research timer',
+        hint: '',
+        run: () => {
+          if (forcedBreak) {
+            flashToast('Break lock is open — finish it first')
+            return
+          }
+          setSessionComplete(false)
+          setFocusLeft(20 * 60)
+          setPomodoroWorkStartedAt(Date.now())
+          setIsFocusRunning(true)
+          setActiveView('insights')
+          notifyAction('Focus on', 'focus_start', {
+            label: 'Research timer',
+          })
+          flashToast('20-minute research timer — stop when it ends')
+        },
+      },
     ]
     return acts.filter((a) => (a.when ? a.when() : true))
-  }, [nextTask, bodyDoubling, setActiveView, toggleBodyDoubling])
+  }, [
+    nextTask,
+    bodyDoubling,
+    setActiveView,
+    toggleBodyDoubling,
+    bumpDesignVersion,
+    forcedBreak,
+  ])
 
   const commandFiltered = useMemo(() => {
     const q = commandQuery.trim().toLowerCase()
@@ -3615,6 +3664,22 @@ function App() {
                 </button>
               </div>
             </div>
+
+            <section className="panel brand-section process-tip-panel">
+              <div className="brand-section-label">Design checklist</div>
+              <p className="panel-hint" style={{ marginTop: 0 }}>
+                {getProcessPhase('design')?.prompt}
+              </p>
+              <ul className="process-guide-checks">
+                {(getProcessPhase('design')?.checks || []).map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
+              <p className="panel-hint" style={{ marginBottom: 0 }}>
+                Bump version before big changes. Then Review with specific
+                questions — not “do you like it?”
+              </p>
+            </section>
 
             {/* ARTBOARD — sticky preview on wide screens */}
             <div
