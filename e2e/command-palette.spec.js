@@ -63,4 +63,29 @@ test.describe('Command palette', () => {
       timeout: 8000,
     })
   })
+
+  test('lists Download brand kit and jumps to Deliver', async ({ page }) => {
+    const gate = await unlockAndOnboard(page, {
+      name: 'E2E Kit Palette',
+      step: 'Kit command',
+    })
+    skipIfCloud(test, gate)
+
+    await page.keyboard.press('Control+k')
+    await expect(
+      page.getByRole('dialog', { name: /Command palette/i })
+    ).toBeVisible({ timeout: 5000 })
+    const input = page.locator(
+      'input.command-input, input[aria-label="Filter commands"]'
+    )
+    await input.fill('brand kit')
+    await expect(
+      page.getByRole('option', { name: /Download brand kit/i })
+    ).toBeVisible({ timeout: 5000 })
+    // Selecting kit opens Deliver (export may show toast / download)
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('heading', { name: 'Deliver' })).toBeVisible({
+      timeout: 10000,
+    })
+  })
 })

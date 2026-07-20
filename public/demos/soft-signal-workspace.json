@@ -36,7 +36,7 @@
     {
       "n": 7,
       "name": "Deliver",
-      "app": "Deliver · brand book PDF"
+      "app": "Deliver · brand book PDF + kit zip"
     }
   ],
   "projects": [
@@ -103,9 +103,34 @@
         }
       ],
       "logoWordmark": "Soft Signal",
-      "logoClearspace": "Clearspace ≈ ½ mark height. Min 24px digital / 0.5\" print. Prefer reverse on indigo covers.",
+      "logoClearspace": "Clearspace ≈ ½ mark height on all sides. Prefer reverse on indigo covers; mono for stickers.",
+      "logoMinSize": "24px digital · 0.5″ print (mark height)",
+      "logoDonts": "Do not stretch or distort the mark\nDo not recolor outside indigo / teal / cream / near-black\nDo not place the mark on busy waveforms or neon gradients",
+      "colorRoles": {
+        "cover": "#4F46E5",
+        "text": "#1A1A1A",
+        "accent": "#0D9488",
+        "quiet": "#F4F1EA"
+      },
+      "messagingPromise": "Creators finish a session calmer than they started — and share one episode cover proudly.",
+      "messagingProof": "Quiet booths, plain-spoken producers, and cover rules that protect hierarchy (title first, guest quiet, one teal accent).",
+      "messagingPersonality": "Warm, steady, zero shame. Good-producer energy — clear direction, short sentences, never hustle.",
+      "imageryStyle": "Real booth rooms · soft natural or warm tungsten light · documentary calm · cream/indigo fields · people at ease, not performing",
+      "imageryDo": "Hands on equipment, quiet corners, caption-first stills, breathing room around subjects, authentic booth texture",
+      "imageryDont": "Stock diversity handshakes, neon cyber gradients, mic silhouettes as the hero, FOMO timers, dense waveform clutter",
+      "decisionLog": [
+        {
+          "id": 90011,
+          "at": 1720000000000,
+          "kind": "direction",
+          "directionId": "a",
+          "label": "A",
+          "title": "Quiet booth editorial",
+          "why": "Cream field and listening mark protect calm — B denser UI and C bold blocks felt too loud for sensory safety"
+        }
+      ],
       "feedbackNotes": "Reviewer: hierarchy on cover is clear. Keep guest line quieter. Feels hopeful without hustle.",
-      "handoffNote": "Includes mark direction, palette roles, type pair, episode cover rules, and voice. Use brand book PDF for client handoff.",
+      "handoffNote": "Includes mark direction, palette roles (cover/text/accent/quiet), type pair, messaging pillars, imagery rules, episode cover rules, and voice. Download brand kit zip for PDF + tokens + MD.",
       "learnings": "What worked: plain-spoken voice + cream field. Felt like me: protecting quiet attention. Next: more real booth photos, less abstract gradient temptation."
     }
   ],

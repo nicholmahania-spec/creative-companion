@@ -648,6 +648,9 @@ function App() {
     [setProjectPalette, updateBrandField, bumpDesignVersionIfV1, locale]
   )
 
+  /** Filled after runExport is defined — command palette export actions use this */
+  const runExportRef = useRef(/** @type {null | ((kind: string) => void)} */ (null))
+
   const commandActions = useMemo(() => {
     /** @type {{ id: string, label: string, hint: string, group: 'actions'|'path'|'tools', run: () => void, when?: () => boolean }[]} */
     const acts = [
@@ -820,6 +823,38 @@ function App() {
           flashToast(i18nT(locale, 'ui.researchTimerOn'))
         },
       },
+      {
+        id: 'brand-kit',
+        label: i18nT(locale, 'ui.downloadKit') || 'Download brand kit (zip)',
+        hint: '',
+        group: 'tools',
+        run: () => {
+          if (forcedBreak) {
+            flashToast(i18nT(locale, 'ui.breakLockFirst'))
+            return
+          }
+          setActiveView('finish')
+          window.setTimeout(() => {
+            runExportRef.current?.('kit')
+          }, 80)
+        },
+      },
+      {
+        id: 'brand-book-pdf',
+        label: i18nT(locale, 'ui.downloadVectorPdf') || 'Download brand book PDF',
+        hint: '',
+        group: 'tools',
+        run: () => {
+          if (forcedBreak) {
+            flashToast(i18nT(locale, 'ui.breakLockFirst'))
+            return
+          }
+          setActiveView('finish')
+          window.setTimeout(() => {
+            runExportRef.current?.('pdf')
+          }, 80)
+        },
+      },
     ]
     return acts.filter((a) => (a.when ? a.when() : true))
   }, [
@@ -831,6 +866,7 @@ function App() {
     forcedBreak,
     goToNextProcessGap,
     pathDoneCount,
+    locale,
   ])
 
   const commandFiltered = useMemo(() => {
@@ -1864,7 +1900,7 @@ function App() {
         document.getElementById('desk-capture')
       try {
         el?.focus?.({ preventScroll: false })
-        el?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+        el?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
       } catch {
         /* ignore */
       }
@@ -2087,6 +2123,7 @@ function App() {
     }
     flashToast(i18nT(locale, 'ui.unknownExport'))
   }
+  runExportRef.current = runExport
 
   const creativeResetItems = [
     {
