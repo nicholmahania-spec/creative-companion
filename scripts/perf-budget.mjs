@@ -19,10 +19,10 @@ const assetsDir = join(root, 'dist', 'assets')
  */
 const MAIN_JS_RAW_MAX = 440 * 1024
 /**
- * Main CSS raw max — 230 KB (v1.48.15): premium dark glassmorphism surfaces,
- * mesh backgrounds, frosted chrome, neon interactive accents.
+ * Main CSS raw max — 245 KB (v1.48.16): Define split workspace + dopamine
+ * timeline + mood canvas on top of glassmorphism desk chrome.
  */
-const MAIN_CSS_RAW_MAX = 230 * 1024
+const MAIN_CSS_RAW_MAX = 245 * 1024
 /** Main JS gzipped advisory max (warn only if over, still fail on raw) */
 const MAIN_JS_GZIP_WARN = 140 * 1024
 
