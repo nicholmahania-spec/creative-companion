@@ -672,11 +672,14 @@ function App() {
       const bump = bumpDesignVersionIfV1()
       flashToast(
         bump?.bumped
-          ? `Direction kit: ${kit.name} · version ${bump.version}`
-          : `Direction kit: ${kit.name} — continue Research or open Design`
+          ? tFormat(locale, 'ui.directionKitBumped', {
+              name: kit.name,
+              version: bump.version,
+            })
+          : tFormat(locale, 'ui.directionKitOk', { name: kit.name })
       )
     },
-    [setProjectPalette, updateBrandField, bumpDesignVersionIfV1]
+    [setProjectPalette, updateBrandField, bumpDesignVersionIfV1, locale]
   )
 
   const commandActions = useMemo(() => {
@@ -784,7 +787,10 @@ function App() {
         hint: '',
         run: () => {
           const r = bumpDesignVersion()
-          if (r?.ok) flashMicro(`Version ${r.version}`)
+          if (r?.ok)
+            flashMicro(
+              tFormat(locale, 'ui.versionBumped', { version: r.version })
+            )
           setActiveView('brand')
         },
       },
@@ -994,7 +1000,9 @@ function App() {
       markBreak()
       playBreakChime()
       flashToast(
-        `Work block done (~${Math.round(workMin)} min). Forced lockouts are off — stretch if you can.`
+        tFormat(locale, 'ui.workBlockDoneSoft', {
+          min: Math.round(workMin),
+        })
       )
       return
     }
@@ -1008,7 +1016,7 @@ function App() {
       markBreak()
       playBreakChime()
       setForceBreakConsentOpen(true)
-      flashToast('Review forced break lockouts before the next cycle')
+      flashToast(i18nT(locale, 'ui.forceBreaksReview'))
       return
     }
 
@@ -1036,8 +1044,14 @@ function App() {
     const kitN = planItems.length
     flashToast(
       kitN > 0
-        ? `Break locked: ${breakMin} min · ${kitN} kit item${kitN === 1 ? '' : 's'} for this window`
-        : `Break locked: ${breakMin} min (you worked ~${Math.round(workMin)} min)`
+        ? tFormat(locale, 'ui.breakLockedKit', {
+            min: breakMin,
+            n: kitN,
+          })
+        : tFormat(locale, 'ui.breakLockedPlain', {
+            min: breakMin,
+            work: Math.round(workMin),
+          })
     )
   }
 
@@ -1077,7 +1091,7 @@ function App() {
     }
     flashToast(
       emergency
-        ? 'Break ended early — try a real rest next cycle.'
+        ? i18nT(locale, 'ui.breakEndedEarly')
         : i18nT(locale, 'ui.breakDone')
     )
   }
@@ -1495,7 +1509,7 @@ function App() {
       if (cancelled) return
       if (!result.ok) {
         setSyncState('error')
-        setSyncError(result.error || 'Could not load cloud desk')
+        setSyncError(result.error || 'Couldn’t load cloud desk')
         setCloudHydrating(false)
         cloudSyncReady.current = true
         return
@@ -1516,7 +1530,7 @@ function App() {
         if (hasLocal && local.onboarded) {
           const push = await pushWorkspace(local)
           setSyncState(push.ok ? 'ok' : 'error')
-          if (!push.ok) setSyncError(push.error || 'Upload failed')
+          if (!push.ok) setSyncError(push.error || 'Couldn’t upload')
         } else {
           setSyncState('ok')
         }
@@ -1547,7 +1561,7 @@ function App() {
         setSyncError('')
       } else {
         setSyncState('error')
-        setSyncError(result.error || 'Sync failed')
+        setSyncError(result.error || 'Couldn’t sync')
       }
     }, 1200)
     return () => window.clearTimeout(t)
@@ -1661,7 +1675,7 @@ function App() {
         dueDate: '',
       })
       awardAndBroadcast('task_capture', { label: 'First step' })
-      flashToast('Your desk is ready — define the goal, then Research')
+      flashToast(i18nT(locale, 'ui.deskReady'))
     } else {
       // Empty real desk — no sample clients
       clearToEmpty()
@@ -1671,7 +1685,7 @@ function App() {
           onboardName.trim()
         )
       }
-      flashToast('Empty desk — capture your first real step')
+      flashToast(i18nT(locale, 'ui.emptyDeskFirst'))
     }
     setOnboarded(true)
     localStorage.setItem('cc-onboarded', '1')
@@ -1868,7 +1882,7 @@ function App() {
           document.getElementById('pack-preview-artboard')
         const r = el
           ? printElementById(el.id, { hideWatermark: hidePackWatermark })
-          : { ok: false, error: 'Nothing to print yet' }
+          : { ok: false, error: i18nT(locale, 'ui.nothingToPrint') }
         if (r.ok) {
           awardAndBroadcast('export_pack', { label: 'Print / PDF' })
           const when = new Date().toLocaleTimeString([], {
@@ -1876,9 +1890,7 @@ function App() {
             minute: '2-digit',
           })
           setLastExportNote(`Print dialog · ${when} — Save as PDF if you want a file`)
-          flashToast(
-            'Print dialog is open — pick Save as PDF if you want a file'
-          )
+          flashToast(i18nT(locale, 'ui.printDialogOpen'))
         } else flashToast(r.error || i18nT(locale, 'ui.printFailed'))
       }, exportPanel ? 50 : 180)
       return
@@ -1893,10 +1905,10 @@ function App() {
       if (!pins.length) {
         flashToast(
           skipped.length
-            ? `No images added · ${skipped[0]}${
+            ? `Couldn’t add images · ${skipped[0]}${
                 skipped.length > 1 ? ` (+${skipped.length - 1} more)` : ''
               }`
-            : 'No images found — use PNG, JPG, WEBP, or GIF under 3.5MB'
+            : 'No images found — try PNG, JPG, WEBP, or GIF under 3.5MB'
         )
         return
       }
@@ -2029,8 +2041,8 @@ function App() {
     })
     flashToast(
       n === 1
-        ? 'One micro-step ready — just do that one'
-        : `${n} micro-steps ready — only do #1 right now`
+        ? i18nT(locale, 'ui.microStepsOne')
+        : tFormat(locale, 'ui.microStepsN', { n })
     )
   }
 
@@ -2068,10 +2080,10 @@ function App() {
           { label: 'Soft Signal demo' }
         )
       } else {
-        flashToast(result.error || 'Could not load demo')
+        flashToast(result.error || i18nT(locale, 'ui.demoLoadFail'))
       }
     } catch (e) {
-      flashToast(e?.message || 'Could not load Soft Signal demo')
+      flashToast(e?.message || i18nT(locale, 'ui.softSignalFail'))
     }
   }
 
@@ -2096,10 +2108,10 @@ function App() {
         setActiveView('flow')
         flashToast(i18nT(locale, 'ui.backupRestored'))
       } else {
-        flashToast(result.error || 'Couldn’t import that file')
+        flashToast(result.error || i18nT(locale, 'ui.importFail'))
       }
     }
-    reader.onerror = () => flashToast('Couldn’t read that file')
+    reader.onerror = () => flashToast(i18nT(locale, 'ui.readFileFail'))
     reader.readAsText(file)
   }
 
@@ -2117,7 +2129,7 @@ function App() {
   const handleDeleteProject = () => {
     if (!activeProject) return
     if (projects.length <= 1) {
-      flashToast('Keep at least one project on the desk')
+      flashToast(i18nT(locale, 'ui.keepOneProject'))
       return
     }
     const id = activeProject.id
@@ -2131,7 +2143,7 @@ function App() {
           flashToast(i18nT(locale, 'ui.projectDeleted'))
           setActiveView('project')
         } else {
-          flashToast(result.error || 'Couldn’t delete that')
+          flashToast(result.error || i18nT(locale, 'ui.deleteFail'))
         }
         setDeskConfirm(null)
       },
@@ -2300,7 +2312,7 @@ function App() {
                   } else {
                     setSyncState('error')
                     setSyncError(result.error || 'Couldn’t sync')
-                    flashToast(result.error || 'Couldn’t sync just now')
+                    flashToast(result.error || i18nT(locale, 'ui.syncFail'))
                   }
                 }}
               >
@@ -2843,7 +2855,7 @@ function App() {
                             'Remove this step from the desk? Cannot be undone.',
                           onConfirm: () => {
                             removeTask(id)
-                            flashToast('Step removed')
+                            flashToast(i18nT(locale, 'ui.stepRemoved'))
                             setDeskConfirm(null)
                           },
                         })
@@ -2899,7 +2911,11 @@ function App() {
                               useAppStore.getState().currentProjectId,
                             dueDate: '',
                           })
-                          flashToast(`Queued draft ${d.label}`)
+                          flashToast(
+                            tFormat(locale, 'ui.queuedDraftLabel', {
+                              label: d.label,
+                            })
+                          )
                         }}
                       >
                         {d.label}
@@ -2916,7 +2932,7 @@ function App() {
                       (d) => String(d.title || '').trim()
                     )
                     if (!filled.length) {
-                      flashToast('Capture A/B/C titles on Ideate first')
+                      flashToast(i18nT(locale, 'ui.captureIdeateFirst'))
                       return
                     }
                     const base = Date.now()
@@ -2934,7 +2950,11 @@ function App() {
                         dueDate: '',
                       })
                     })
-                    flashToast(`Queued ${filled.length} draft options`)
+                    flashToast(
+                      tFormat(locale, 'ui.queuedDraftsN', {
+                        n: filled.length,
+                      })
+                    )
                   }}
                 >
                   Queue all A/B/C drafts
@@ -3308,7 +3328,7 @@ function App() {
                         if (packIds.length > 1) {
                           useAppStore.getState().reorderPackPins(packIds)
                         }
-                        flashMicro('Ref order updated')
+                        flashMicro(i18nT(locale, 'ui.refOrderUpdated'))
                       }
                     }
                     return
@@ -3428,13 +3448,14 @@ function App() {
                                 const r = toggleMoodPinInPack(item.id)
                                 if (!r.ok)
                                   flashToast(
-                                    r.error || 'Leave-behind full (6 pins max)'
+                                    r.error ||
+                                      i18nT(locale, 'ui.leaveBehindFull')
                                   )
                                 else
                                   flashMicro(
                                     r.inPack
                                       ? 'On leave-behind'
-                                      : 'Removed from leave-behind'
+                                      : 'Off leave-behind'
                                   )
                               }}
                             >
@@ -3475,7 +3496,7 @@ function App() {
                                           flashToast(
                                             r.error || 'Could not set hero'
                                           )
-                                        else flashMicro('Hero pin set')
+                                        else flashMicro(i18nT(locale, 'ui.heroPinSet'))
                                       }}
                                     >
                                       Hero pin
@@ -3579,8 +3600,8 @@ function App() {
                           if (!added) {
                             flashToast(
                               deskMood.filter((m) => m.inPack).length >= 6
-                                ? 'Leave-behind full (6 max)'
-                                : 'Nothing to star'
+                                ? i18nT(locale, 'ui.leaveBehindFull')
+                                : 'Nothing left to star'
                             )
                           }
                         }}
@@ -3765,7 +3786,7 @@ function App() {
                   onClick={() => {
                     const r = toggleMoodPinInPack(boardLightbox.id)
                     if (!r.ok)
-                      flashToast(r.error || 'Leave-behind full (6 max)')
+                      flashToast(r.error || i18nT(locale, 'ui.leaveBehindFull'))
                     else {
                       setBoardLightbox((p) =>
                         p ? { ...p, inPack: r.inPack } : null
@@ -3901,7 +3922,12 @@ function App() {
                   title="Bump before a big change (v1 → v2)"
                   onClick={() => {
                     const r = bumpDesignVersion()
-                    if (r?.ok) flashMicro(`Version ${r.version}`)
+                    if (r?.ok)
+                      flashMicro(
+                        tFormat(locale, 'ui.versionBumped', {
+                          version: r.version,
+                        })
+                      )
                   }}
                 >
                   Bump
@@ -3923,7 +3949,7 @@ function App() {
                     ).trim()
                     if (/^v?1$/i.test(cur) || cur === '') {
                       updateBrandField('designVersion', 'v2')
-                      flashToast('Version → v2 · heading to Review')
+                      flashToast(i18nT(locale, 'ui.versionToReview'))
                     }
                     setActiveView('review')
                   }}
@@ -4489,7 +4515,7 @@ function App() {
                       e.target.value = ''
                       if (!file) return
                       if (file.size > 2.5 * 1024 * 1024) {
-                        flashToast('Mark image must be under 2.5MB')
+                        flashToast(i18nT(locale, 'ui.markTooBig'))
                         return
                       }
                       const reader = new FileReader()
@@ -4512,7 +4538,7 @@ function App() {
                     className="btn btn-ghost"
                     onClick={() => {
                       setLogoImage('')
-                      flashMicro('Mark removed')
+                      flashMicro(i18nT(locale, 'ui.markRemoved'))
                     }}
                   >
                     Remove mark
@@ -4734,7 +4760,7 @@ function App() {
                     onClick={async () => {
                       try {
                         await navigator.clipboard.writeText(q)
-                        flashToast('Question copied')
+                        flashToast(i18nT(locale, 'ui.questionCopied'))
                       } catch {
                         flashMicro(q.slice(0, 40))
                       }
@@ -4765,7 +4791,7 @@ function App() {
                   className="btn btn-secondary"
                   onClick={() => {
                     if (!bodyDoubling) toggleBodyDoubling()
-                    flashToast('Helper on — open Critique')
+                    flashToast(i18nT(locale, 'ui.helperOpenCritique'))
                   }}
                 >
                   Open Helper for Critique
@@ -4777,9 +4803,9 @@ function App() {
                     try {
                       const md = packBriefMarkdown(buildCurrentBrandPack())
                       await navigator.clipboard.writeText(md)
-                      flashToast('Brief copied — send to a reviewer')
+                      flashToast(i18nT(locale, 'ui.briefCopied'))
                     } catch {
-                      flashToast('Could not copy brief')
+                      flashToast(i18nT(locale, 'ui.briefCopyFail'))
                     }
                   }}
                 >
@@ -4868,40 +4894,30 @@ function App() {
                                   type="button"
                                   className="pack-ready-fix"
                                   onClick={() => {
-                                    if (c.view === 'studio') setActiveView('studio')
-                                    else if (c.view === 'brand')
+                                    if (c.view === 'brand') {
                                       goSystemSection(c.section || 'essentials')
-                                    else if (c.view === 'project') {
-                                      setActiveView('project')
-                                      window.setTimeout(
-                                        () =>
-                                          document
-                                            .getElementById('detective-goal')
-                                            ?.focus(),
-                                        100
-                                      )
-                                    } else if (c.id === 'handoff') {
+                                      return
+                                    }
+                                    if (c.id === 'handoff') {
                                       setActiveView('finish')
-                                      window.setTimeout(
-                                        () =>
-                                          document
-                                            .getElementById('handoff-note')
-                                            ?.focus(),
-                                        100
-                                      )
-                                    } else if (c.id === 'learnings') {
+                                      focusPathGapTarget('#handoff-note')
+                                      return
+                                    }
+                                    if (c.id === 'learnings') {
                                       setActiveView('finish')
-                                      window.setTimeout(
-                                        () =>
-                                          document
-                                            .getElementById('learnings-note')
-                                            ?.focus(),
-                                        100
-                                      )
-                                    } else if (c.view) setActiveView(c.view)
+                                      focusPathGapTarget('#learnings-note')
+                                      return
+                                    }
+                                    const step = JOURNEY_STEPS.find(
+                                      (s) => s.view === c.view
+                                    )
+                                    if (step) goToProcessStep(step)
+                                    else if (c.view) setActiveView(c.view)
                                   }}
                                 >
-                                  ○ {c.label} — fix
+                                  {tFormat(locale, 'ui.packReadyFix', {
+                                    label: c.label,
+                                  })}
                                 </button>
                               )}
                             </li>
@@ -5014,10 +5030,10 @@ function App() {
                           const packSnap = buildCurrentBrandPack()
                           const md = packBriefMarkdown(packSnap)
                           await navigator.clipboard.writeText(md)
-                          flashToast('Leave-behind brief copied')
+                          flashToast(i18nT(locale, 'ui.leaveBehindBriefCopied'))
                           setLastExportNote('Brief copied to clipboard')
                         } catch {
-                          flashToast('Could not copy — try Download instead')
+                          flashToast(i18nT(locale, 'ui.leaveBehindBriefCopyFail'))
                         }
                       }}
                     >
@@ -5524,7 +5540,7 @@ function App() {
                   onClick={() => {
                     if (!activeProject) return
                     const r = archiveProject(activeProject.id)
-                    if (!r.ok) flashToast(r.error || 'Could not archive')
+                    if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
                   }}
                 >
                   Archive project
@@ -6111,7 +6127,7 @@ function App() {
                 setPref('forceBreaksConsented', true)
                 setPref('forceBreaksEnabled', true)
                 setForceBreakConsentOpen(false)
-                flashToast('Forced break lockouts are on')
+                flashToast(i18nT(locale, 'ui.forceBreaksOn'))
               }}
             >
               {i18nT(locale, 'ui.enable')}
@@ -6122,7 +6138,7 @@ function App() {
               onClick={() => {
                 setPref('forceBreaksEnabled', false)
                 setForceBreakConsentOpen(false)
-                flashToast('Forced lockouts off — re-enable anytime in Settings')
+                flashToast(i18nT(locale, 'ui.forceBreaksOff'))
               }}
             >
               {i18nT(locale, 'ui.cancel')}

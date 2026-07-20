@@ -27,5 +27,7 @@ describe('humanize — no legacy 4-step or Figma in Helper voice', () => {
     expect(t('en', 'ui.pdfFailed')).toMatch(/try again|Couldn/i)
     expect(t('en', 'ui.stepComplete')).toMatch(/nice|done/i)
     expect(t('en', 'ui.queueClear')).not.toBe('Queue clear')
+    expect(t('es', 'ui.pdfFailed')).toMatch(/otra vez|No se/i)
+    expect(t('es', 'ui.stepComplete')).toMatch(/bien|listo/i)
   })
 })
