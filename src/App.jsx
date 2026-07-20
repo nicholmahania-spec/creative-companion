@@ -306,6 +306,10 @@ function App() {
   const [authReady, setAuthReady] = useState(!CLOUD)
   const [cloudHydrating, setCloudHydrating] = useState(false)
   const [showHydratingEscape, setShowHydratingEscape] = useState(false)
+  /** Which project's detail shows on the multi-project Home — separate from
+   * currentProjectId so browsing the list doesn't switch the active project
+   * until the user actually clicks Continue / Open Deliver. */
+  const [homeSelectedProjectId, setHomeSelectedProjectId] = useState(null)
   const [syncState, setSyncState] = useState('idle') // idle | syncing | ok | error
   const [syncError, setSyncError] = useState('')
   const [pwCurrent, setPwCurrent] = useState('')
@@ -871,6 +875,7 @@ function App() {
         const rows = pathProgressSummary(JOURNEY_STEPS, ctx)
         return {
           project: p,
+          rows,
           doneCount: rows.filter((r) => r.done).length,
           nextGap: pathFirstGap(JOURNEY_STEPS, ctx),
         }
@@ -2811,53 +2816,152 @@ function App() {
             setActiveView={setActiveView}
           />
         )}
-        {/* ===== HOME — the whole app, reduced to one sentence and one button ===== */}
-        {activeView === 'home' && activeProjects.length > 1 && (
-          <section className="home-view home-view-multi">
-            <p className="home-eyebrow">Your projects</p>
-            <h1 className="home-title">What's next</h1>
-            <ul className="home-project-list">
-              {[...projectsSummary]
-                .sort((a, b) => {
-                  const aDone = a.doneCount >= 7
-                  const bDone = b.doneCount >= 7
-                  if (aDone !== bDone) return aDone ? 1 : -1
-                  return 0
-                })
-                .map(({ project: p, doneCount, nextGap }) => {
-                  const done = doneCount >= 7
-                  return (
-                    <li key={p.id} className="home-project-row">
-                      <div className="home-project-row-main">
-                        <p className="home-project-name">{p.name}</p>
-                        <p className="home-project-next">
-                          {done
-                            ? 'Ready to deliver'
-                            : nextGap
-                              ? `Next: ${pathLabel(locale, nextGap.id) || nextGap.label}`
-                              : 'All caught up'}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        className={`btn ${done ? 'btn-secondary' : 'btn-primary'} home-project-btn`}
-                        onClick={() => {
-                          if (done) {
-                            setCurrentProject(p.id)
-                            setActiveView('finish')
-                            return
-                          }
-                          switchProjectAndContinue(p.id)
-                        }}
-                      >
-                        {done ? 'Open Deliver' : 'Continue'}
-                      </button>
-                    </li>
-                  )
-                })}
-            </ul>
-          </section>
-        )}
+        {/* ===== HOME (multi-project) — master/detail, not a card grid ===== */}
+        {activeView === 'home' && activeProjects.length > 1 && (() => {
+          const sorted = [...projectsSummary].sort((a, b) => {
+            const aDone = a.doneCount >= 7
+            const bDone = b.doneCount >= 7
+            if (aDone !== bDone) return aDone ? 1 : -1
+            return 0
+          })
+          const selected =
+            sorted.find((s) => s.project.id === homeSelectedProjectId) ||
+            sorted[0]
+          if (!selected) return null
+          const done = selected.doneCount >= 7
+          return (
+            <section className="home-view home-md">
+              <nav className="home-md-list" aria-label="Your projects">
+                <div className="home-md-list-head">
+                  <p className="home-eyebrow" style={{ margin: 0 }}>
+                    Your projects
+                  </p>
+                  <h1 className="home-title" style={{ margin: '0.25rem 0 0' }}>
+                    What's next
+                  </h1>
+                </div>
+                <ul className="home-md-rows">
+                  {sorted.map(({ project: p, doneCount, nextGap }) => {
+                    const rowDone = doneCount >= 7
+                    const isActive = p.id === selected.project.id
+                    return (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          className={`home-md-row${isActive ? ' is-active' : ''}`}
+                          onClick={() => setHomeSelectedProjectId(p.id)}
+                        >
+                          <span className="home-md-row-top">
+                            <span className="home-md-row-name">{p.name}</span>
+                            <span className="home-md-row-count">
+                              {doneCount}/7
+                            </span>
+                          </span>
+                          <span
+                            className={`home-md-row-next${rowDone ? ' is-done' : ''}`}
+                          >
+                            {rowDone
+                              ? 'Ready to deliver'
+                              : nextGap
+                                ? `Next: ${pathLabel(locale, nextGap.id) || nextGap.label}`
+                                : 'All caught up'}
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </nav>
+
+              <div className="home-md-detail">
+                <p className="home-kicker">
+                  {done ? 'All done' : 'Next step'}
+                </p>
+                <h2 className="home-title">
+                  {done
+                    ? 'Your brand book is ready.'
+                    : selected.nextGap
+                      ? pathLabel(locale, selected.nextGap.id) ||
+                        selected.nextGap.label
+                      : 'All caught up.'}
+                </h2>
+                <p className="home-body">
+                  {done
+                    ? 'Every step has something in it. Time to hand it off.'
+                    : selected.nextGap
+                      ? pathPlain(locale, selected.nextGap.id) ||
+                        pathFillHint(locale, selected.nextGap.id)
+                      : ''}
+                </p>
+                <div className="home-cta-row">
+                  <button
+                    type="button"
+                    className="btn btn-primary home-cta"
+                    onClick={() => {
+                      if (done) {
+                        setCurrentProject(selected.project.id)
+                        setActiveView('finish')
+                        return
+                      }
+                      switchProjectAndContinue(selected.project.id)
+                    }}
+                  >
+                    {done ? 'Open Deliver' : 'Continue'}
+                  </button>
+                  {!done && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost home-cta-secondary"
+                      title="A tiny timer just to get moving — not a real work session"
+                      onClick={() => {
+                        if (forcedBreak) {
+                          flashToast(i18nT(locale, 'ui.breakLockFirst'))
+                          return
+                        }
+                        setTimerFocusSource?.('starter')
+                        setFocusLeft(5 * 60)
+                        setPomodoroWorkStartedAt(Date.now())
+                        setIsFocusRunning(true)
+                        flashToast('5-minute starter running — just begin.')
+                        switchProjectAndContinue(selected.project.id)
+                      }}
+                    >
+                      Start 5 min
+                    </button>
+                  )}
+                </div>
+
+                <div className="home-md-strip">
+                  <p className="home-md-strip-label">
+                    {selected.project.name} · {selected.doneCount} of 7 steps
+                  </p>
+                  <div className="home-md-steps">
+                    {selected.rows.map((r, i) => {
+                      const num = i + 1
+                      const isCurrent =
+                        selected.nextGap && r.id === selected.nextGap.id
+                      return (
+                        <div
+                          key={r.id}
+                          className={`home-md-step${r.done ? ' is-done' : ''}${
+                            isCurrent ? ' is-current' : ''
+                          }`}
+                        >
+                          <span className="home-md-step-dot">
+                            {r.done ? '✓' : num}
+                          </span>
+                          <span className="home-md-step-label">
+                            {pathLabel(locale, r.id) || r.label}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            </section>
+          )
+        })()}
         {activeView === 'home' && activeProjects.length <= 1 && (
           <section className="home-view">
             <p className="home-eyebrow">
