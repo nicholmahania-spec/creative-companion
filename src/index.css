@@ -2428,6 +2428,23 @@ h3 {
   max-width: 22rem;
 }
 
+.detective-milestone-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.detective-milestone-row .field-input:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.detective-milestone-date {
+  flex: 0 0 auto;
+  width: auto;
+}
+
 .finish-secondary-row {
   display: flex;
   flex-wrap: wrap;

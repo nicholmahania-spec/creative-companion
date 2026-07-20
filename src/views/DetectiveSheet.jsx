@@ -7,6 +7,9 @@ export default function DetectiveSheet({
   updateDetective,
   applyDetectiveToBrief,
   flashToast,
+  addMilestone,
+  updateMilestone,
+  removeMilestone,
 }) {
   const fields = [
     {
@@ -48,9 +51,29 @@ export default function DetectiveSheet({
     },
     {
       id: 'format',
-      label: 'Format / size / constraint',
-      ph: 'e.g. Letter PDF + Instagram square · Friday deadline.',
+      label: 'Format / size',
+      ph: 'e.g. Letter PDF + Instagram square.',
       area: false,
+    },
+    {
+      id: 'avoid',
+      label: 'What to avoid',
+      ph: 'e.g. No literal icons — abstract motion only.',
+      hint: 'Carried forward so this instruction survives all the way to Design.',
+      area: true,
+    },
+    {
+      id: 'deliverables',
+      label: 'Deliverables — what ships',
+      ph: 'e.g. Master logo, style guide, 4-page catalog, website hero.',
+      hint: 'One line per deliverable — the actual scope, not the vibe.',
+      area: true,
+    },
+    {
+      id: 'technical',
+      label: 'Technical / production constraints',
+      ph: 'e.g. Sharp at 32px, laser-engravable, .AI/.EPS/.SVG with transparent bg.',
+      area: true,
     },
   ]
 
@@ -95,6 +118,50 @@ export default function DetectiveSheet({
           )}
         </div>
       ))}
+
+      <div className="field-block" style={{ marginBottom: '0.75rem' }}>
+        <label className="field-label">Milestones</label>
+        <p className="panel-hint" style={{ margin: '0 0 0.35rem' }}>
+          A brief often has several dated checkpoints, not just one deadline.
+        </p>
+        {(detective?.milestones || []).map((m) => (
+          <div key={m.id} className="detective-milestone-row">
+            <input
+              className="field-input"
+              value={m.label}
+              onChange={(e) =>
+                updateMilestone?.(m.id, 'label', e.target.value)
+              }
+              placeholder="e.g. Moodboard approval"
+            />
+            <input
+              type="date"
+              className="field-input detective-milestone-date"
+              value={m.date}
+              onChange={(e) =>
+                updateMilestone?.(m.id, 'date', e.target.value)
+              }
+            />
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => removeMilestone?.(m.id)}
+              aria-label="Remove milestone"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          style={{ marginTop: '0.35rem' }}
+          onClick={() => addMilestone?.('', '')}
+        >
+          + Add milestone
+        </button>
+      </div>
+
       <div className="finish-secondary-row" style={{ marginTop: '0.35rem' }}>
         <button
           type="button"

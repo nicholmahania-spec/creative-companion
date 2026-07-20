@@ -20,9 +20,7 @@ export default function DefineView(props) {
     navDir = 'none',
     activeProject = null,
     nextTask = null,
-    deskMood = [],
     deskTasks = [],
-    projectPalette = [],
     projects = [],
     projectNameDraft = '',
     setProjectNameDraft,
@@ -36,8 +34,6 @@ export default function DefineView(props) {
     renameProject,
     createNewProject,
     selectProject,
-    goSystemSection,
-    completedCount = 0,
     projectPills = null,
     projectDeadline = '',
     quickInput = '',
@@ -51,6 +47,9 @@ export default function DefineView(props) {
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
   const archiveProject = useAppStore((s) => s.archiveProject)
   const unarchiveProject = useAppStore((s) => s.unarchiveProject)
+  const addMilestone = useAppStore((s) => s.addMilestone)
+  const updateMilestone = useAppStore((s) => s.updateMilestone)
+  const removeMilestone = useAppStore((s) => s.removeMilestone)
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
   const archivedProjects = (projects || []).filter((p) => p.archived)
@@ -115,109 +114,15 @@ export default function DefineView(props) {
                 updateDetective={updateDetective}
                 applyDetectiveToBrief={applyDetectiveToBrief}
                 flashToast={flashToast}
+                addMilestone={addMilestone}
+                updateMilestone={updateMilestone}
+                removeMilestone={removeMilestone}
               />
             </Suspense>
 
-            <section className="panel brand-section">
-              <div className="brand-section-label">
-                {i18nT(locale, 'ui.pathReadiness')}
-              </div>
-              {(() => {
-                const det = activeProject?.detective || {}
-                const checks = [
-                  !!(det.goal?.trim() || activeProject?.brief?.trim()),
-                  !!det.audience?.trim(),
-                  deskMood.some((m) => m.inPack),
-                  !!activeProject?.tagline?.trim(),
-                  (projectPalette || []).length >= 2,
-                ]
-                return (
-                  <>
-                    <ul className="pack-ready-list project-ready-list">
-                      <li className={checks[0] ? 'is-ok' : 'is-miss'}>
-                        {checks[0] ? (
-                          <span>✓ One-sentence goal (detective or brief)</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="pack-ready-fix"
-                            onClick={() =>
-                              document.getElementById('detective-goal')?.focus()
-                            }
-                          >
-                            ○ One-sentence goal — fix
-                          </button>
-                        )}
-                      </li>
-                      <li className={checks[1] ? 'is-ok' : 'is-miss'}>
-                        {checks[1] ? (
-                          <span>✓ Audience named</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="pack-ready-fix"
-                            onClick={() =>
-                              document
-                                .getElementById('detective-audience')
-                                ?.focus()
-                            }
-                          >
-                            ○ Audience — fix
-                          </button>
-                        )}
-                      </li>
-                      <li className={checks[2] ? 'is-ok' : 'is-miss'}>
-                        {checks[2] ? (
-                          <span>
-                            ✓ Starred leave-behind pins (
-                            {deskMood.filter((m) => m.inPack).length}/6)
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="pack-ready-fix"
-                            onClick={() => setActiveView('studio')}
-                          >
-                            ○ Star pins on Research — fix
-                          </button>
-                        )}
-                      </li>
-                      <li className={checks[3] ? 'is-ok' : 'is-miss'}>
-                        {checks[3] ? (
-                          <span>✓ Tagline</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="pack-ready-fix"
-                            onClick={() => goSystemSection('essentials')}
-                          >
-                            ○ Tagline — fix
-                          </button>
-                        )}
-                      </li>
-                      <li className={checks[4] ? 'is-ok' : 'is-miss'}>
-                        {checks[4] ? (
-                          <span>✓ Palette</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="pack-ready-fix"
-                            onClick={() => goSystemSection('colors')}
-                          >
-                            ○ Palette — fix
-                          </button>
-                        )}
-                      </li>
-                    </ul>
-                    <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
-                      {completedCount}/{deskTasks.length || 0} steps done · detective
-                      sheet feeds brief &amp; brand book.
-                    </p>
-                  </>
-                )
-              })()}
-              {projectPills}
-            </section>
+            {projectPills && (
+              <section className="panel brand-section">{projectPills}</section>
+            )}
             <section className="panel brand-section">
               <div className="brand-section-label">Active project</div>
               <div className="panel-head" style={{ marginBottom: '0.85rem' }}>

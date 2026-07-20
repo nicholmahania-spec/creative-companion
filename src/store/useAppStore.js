@@ -53,6 +53,15 @@ export function blankDetective() {
     format: '',
     /** 3-5 words this brand should feel like — referenced by later "why" prompts */
     brandWords: '',
+    /** What to avoid — carried forward so it isn't lost by the time Design happens */
+    avoid: '',
+    /** What specifically ships — one line per deliverable */
+    deliverables: '',
+    /** File formats, scalability, production/technical requirements */
+    technical: '',
+    /** Milestones: [{ id, label, date }] — a brief can have several dated
+     * checkpoints, not just one overall deadline */
+    milestones: [],
   }
 }
 
@@ -288,6 +297,42 @@ const useAppStore = create(
           }),
         })),
 
+      /** Add a dated checkpoint (moodboard approval, sketches due, etc.) */
+      addMilestone: (label, date) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const det = { ...blankDetective(), ...(p.detective || {}) }
+            const milestones = [
+              ...(det.milestones || []),
+              { id: Date.now(), label: label || '', date: date || '' },
+            ]
+            return { ...p, detective: { ...det, milestones } }
+          }),
+        })),
+
+      updateMilestone: (id, field, value) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const det = { ...blankDetective(), ...(p.detective || {}) }
+            const milestones = (det.milestones || []).map((m) =>
+              m.id === id ? { ...m, [field]: value } : m
+            )
+            return { ...p, detective: { ...det, milestones } }
+          }),
+        })),
+
+      removeMilestone: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const det = { ...blankDetective(), ...(p.detective || {}) }
+            const milestones = (det.milestones || []).filter((m) => m.id !== id)
+            return { ...p, detective: { ...det, milestones } }
+          }),
+        })),
+
       /** Compose free brief from detective sheet answers */
       applyDetectiveToBrief: () => {
         const state = get()
@@ -302,6 +347,18 @@ const useAppStore = create(
         if (d.niceToHaves?.trim())
           parts.push(`Nice-to-haves: ${d.niceToHaves.trim()}`)
         if (d.format?.trim()) parts.push(`Format / constraint: ${d.format.trim()}`)
+        if (d.avoid?.trim()) parts.push(`Avoid: ${d.avoid.trim()}`)
+        if (d.deliverables?.trim())
+          parts.push(`Deliverables: ${d.deliverables.trim()}`)
+        if (d.technical?.trim())
+          parts.push(`Technical: ${d.technical.trim()}`)
+        if ((d.milestones || []).length) {
+          const ms = d.milestones
+            .filter((m) => m.label?.trim())
+            .map((m) => `${m.label.trim()}${m.date ? ` (${m.date})` : ''}`)
+            .join(', ')
+          if (ms) parts.push(`Milestones: ${ms}`)
+        }
         if (!parts.length) return { ok: false, error: 'Fill detective fields first' }
         const brief = parts.join('\n\n')
         set({

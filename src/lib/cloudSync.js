@@ -4,34 +4,52 @@ import { supabase, isSupabaseConfigured } from './supabase'
  * Load the signed-in user's workspace from Supabase.
  * @returns {{ ok: true, payload: object|null, updatedAt?: string } | { ok: false, error: string }}
  */
+/** Reject after ms so a stalled network request can't hang the UI forever. */
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out`)), ms)
+    ),
+  ])
+}
+
 export async function pullWorkspace() {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: 'Supabase not configured' }
   }
-  const {
-    data: { user },
-    error: userErr,
-  } = await supabase.auth.getUser()
-  if (userErr || !user) {
-    return { ok: false, error: userErr?.message || 'Not signed in' }
-  }
+  try {
+    const {
+      data: { user },
+      error: userErr,
+    } = await withTimeout(supabase.auth.getUser(), 12000, 'Sign-in check')
+    if (userErr || !user) {
+      return { ok: false, error: userErr?.message || 'Not signed in' }
+    }
 
-  const { data, error } = await supabase
-    .from('user_workspaces')
-    .select('payload, updated_at')
-    .eq('user_id', user.id)
-    .maybeSingle()
+    const { data, error } = await withTimeout(
+      supabase
+        .from('user_workspaces')
+        .select('payload, updated_at')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      12000,
+      'Cloud desk load'
+    )
 
-  if (error) {
-    return { ok: false, error: error.message }
-  }
-  if (!data) {
-    return { ok: true, payload: null }
-  }
-  return {
-    ok: true,
-    payload: data.payload || null,
-    updatedAt: data.updated_at,
+    if (error) {
+      return { ok: false, error: error.message }
+    }
+    if (!data) {
+      return { ok: true, payload: null }
+    }
+    return {
+      ok: true,
+      payload: data.payload || null,
+      updatedAt: data.updated_at,
+    }
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Could not reach the cloud' }
   }
 }
 
@@ -42,28 +60,36 @@ export async function pushWorkspace(payload) {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: 'Supabase not configured' }
   }
-  const {
-    data: { user },
-    error: userErr,
-  } = await supabase.auth.getUser()
-  if (userErr || !user) {
-    return { ok: false, error: userErr?.message || 'Not signed in' }
-  }
+  try {
+    const {
+      data: { user },
+      error: userErr,
+    } = await withTimeout(supabase.auth.getUser(), 12000, 'Sign-in check')
+    if (userErr || !user) {
+      return { ok: false, error: userErr?.message || 'Not signed in' }
+    }
 
-  const body = {
-    user_id: user.id,
-    payload: payload || {},
-    updated_at: new Date().toISOString(),
-  }
+    const body = {
+      user_id: user.id,
+      payload: payload || {},
+      updated_at: new Date().toISOString(),
+    }
 
-  const { error } = await supabase.from('user_workspaces').upsert(body, {
-    onConflict: 'user_id',
-  })
+    const { error } = await withTimeout(
+      supabase.from('user_workspaces').upsert(body, {
+        onConflict: 'user_id',
+      }),
+      12000,
+      'Cloud desk save'
+    )
 
-  if (error) {
-    return { ok: false, error: error.message }
+    if (error) {
+      return { ok: false, error: error.message }
+    }
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Could not reach the cloud' }
   }
-  return { ok: true }
 }
 
 export async function signUpWithEmail(email, password) {

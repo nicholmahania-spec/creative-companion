@@ -305,6 +305,7 @@ function App() {
   const [cloudUser, setCloudUser] = useState(null)
   const [authReady, setAuthReady] = useState(!CLOUD)
   const [cloudHydrating, setCloudHydrating] = useState(false)
+  const [showHydratingEscape, setShowHydratingEscape] = useState(false)
   const [syncState, setSyncState] = useState('idle') // idle | syncing | ok | error
   const [syncError, setSyncError] = useState('')
   const [pwCurrent, setPwCurrent] = useState('')
@@ -1644,6 +1645,18 @@ function App() {
     }
   }, [])
 
+  // Hard safety net: if cloud loading ever hangs (even past the 12s
+  // per-request timeout in cloudSync.js), never leave the user stuck on a
+  // dead screen with no way out.
+  useEffect(() => {
+    if (!cloudHydrating) {
+      setShowHydratingEscape(false)
+      return undefined
+    }
+    const t = window.setTimeout(() => setShowHydratingEscape(true), 6000)
+    return () => window.clearTimeout(t)
+  }, [cloudHydrating])
+
   // Pull cloud workspace after sign-in
   useEffect(() => {
     if (!CLOUD || !unlocked || !cloudUser) return
@@ -2386,6 +2399,29 @@ function App() {
             <p className="login-fineprint" style={{ margin: 0 }}>
               Syncing projects, tasks, and pins
             </p>
+            {showHydratingEscape && (
+              <>
+                <p
+                  className="login-fineprint"
+                  style={{ marginTop: '0.85rem' }}
+                >
+                  Taking longer than expected — your connection may be slow.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ marginTop: '0.5rem' }}
+                  onClick={() => {
+                    setCloudHydrating(false)
+                    cloudSyncReady.current = true
+                    setSyncState('error')
+                    setSyncError('Cloud load took too long — continued locally.')
+                  }}
+                >
+                  Continue without waiting
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -2760,7 +2796,7 @@ function App() {
       </header>
 
       <main className="main" id="main-content" tabIndex={-1} data-nav-dir={navDir}>
-        {journeyActive && (
+        {journeyActive && activeView !== 'review' && activeView !== 'finish' && (
           <JourneyGapStrip
             locale={locale}
             thisStepFilled={thisStepFilled}
