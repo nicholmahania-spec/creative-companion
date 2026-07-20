@@ -184,6 +184,39 @@ export default function DeliverView({
                   })()}
                   <div className="finish-actions pack-primary-stack">
                     <p className="pack-client-kicker">{i18nT(locale, 'ui.clientHandoff')}</p>
+                    <div className="field-block">
+                      <label className="field-label" htmlFor="handoff-note">
+                        Handoff note (for the client)
+                      </label>
+                      <textarea
+                        id="handoff-note"
+                        className="field-input"
+                        rows={2}
+                        value={activeProject?.handoffNote || ''}
+                        onChange={(e) =>
+                          updateBrandField('handoffNote', e.target.value)
+                        }
+                        placeholder="What’s included, how to use the mark, contact for questions…"
+                      />
+                    </div>
+                    <div className="field-block" style={{ marginTop: '0.65rem' }}>
+                      <label className="field-label" htmlFor="learnings-note">
+                        What I learned
+                      </label>
+                      <textarea
+                        id="learnings-note"
+                        className="field-input"
+                        rows={3}
+                        value={activeProject?.learnings || ''}
+                        onChange={(e) =>
+                          updateBrandField('learnings', e.target.value)
+                        }
+                        placeholder="What worked? What felt like me? What to improve next time? (Notes only — not a media library.)"
+                      />
+                    </div>
+                    <p className="panel-hint" style={{ margin: '0.35rem 0 0.85rem' }}>
+                      This note marks Deliver done — fill it in before or after downloading.
+                    </p>
                     {thinPackPrompt && (
                       <div
                         className="thin-pack-prompt"
@@ -319,36 +352,6 @@ export default function DeliverView({
                           <li key={c}>{c}</li>
                         ))}
                       </ul>
-                    </div>
-                    <div className="field-block" style={{ marginTop: '0.85rem' }}>
-                      <label className="field-label" htmlFor="handoff-note">
-                        Handoff note (for the client)
-                      </label>
-                      <textarea
-                        id="handoff-note"
-                        className="field-input"
-                        rows={2}
-                        value={activeProject?.handoffNote || ''}
-                        onChange={(e) =>
-                          updateBrandField('handoffNote', e.target.value)
-                        }
-                        placeholder="What’s included, how to use the mark, contact for questions…"
-                      />
-                    </div>
-                    <div className="field-block" style={{ marginTop: '0.65rem' }}>
-                      <label className="field-label" htmlFor="learnings-note">
-                        What I learned
-                      </label>
-                      <textarea
-                        id="learnings-note"
-                        className="field-input"
-                        rows={3}
-                        value={activeProject?.learnings || ''}
-                        onChange={(e) =>
-                          updateBrandField('learnings', e.target.value)
-                        }
-                        placeholder="What worked? What felt like me? What to improve next time? (Notes only — not a media library.)"
-                      />
                     </div>
                     <p className="panel-hint" style={{ marginTop: '0.65rem' }}>
                       Direction leave-behind &amp; lockups — not a full design

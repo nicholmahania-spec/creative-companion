@@ -121,9 +121,13 @@ export default function DefineView(props) {
             </Suspense>
 
             <section className="panel brand-section brand-kits-panel">
-              <div className="brand-section-label">Direction kits</div>
+              <div className="brand-section-label">
+                Quick-start colors &amp; voice
+              </div>
               <p className="panel-hint" style={{ marginTop: 0 }}>
-                Seed palette, voice, type, and do/don&apos;t — then polish on Design.
+                Pick one to instantly fill in your colors, fonts, and voice
+                on Design — this replaces anything you&apos;ve already set
+                there.
               </p>
               <Suspense
                 fallback={

@@ -1,15 +1,14 @@
 /**
- * Under-path strip: this-step fill chip + still-thin links + next-gap / ship CTA.
+ * Under-path strip: this-step fill chip + next-gap / ship CTA.
  * ADHD one-next-action chrome shared across path views.
+ * Which other steps are still empty already lives on the step-nav pills
+ * above — repeating that list here was pure duplication.
  * G / strip = recovery; primary “Continue · …” lives on each step.
  */
 export default function JourneyGapStrip({
   locale,
   thisStepFilled,
   thisStepHint,
-  pathMissingShown = [],
-  pathMissingRows = [],
-  pathMissingExtra = 0,
   pathNextGap = null,
   leaveBehindThin = false,
   activeView,
@@ -17,7 +16,6 @@ export default function JourneyGapStrip({
   pathLabel,
   i18nT,
   tFormat,
-  goToProcessStep,
   goToNextProcessGap,
   setActiveView,
 }) {
@@ -54,31 +52,6 @@ export default function JourneyGapStrip({
             ? tFormat(locale, 'ui.openStepChip', { label: thisStepHint })
             : i18nT(locale, 'ui.stepOpen')}
       </span>
-      {pathMissingShown.length > 0 && !onEarliestGap && (
-        <span
-          className="journey-still-thin"
-          title={pathMissingRows
-            .map((r) => pathLabel(locale, r.id) || r.label)
-            .join(' · ')}
-        >
-          <strong>{i18nT(locale, 'ui.stillThin')}:</strong>{' '}
-          <span className="journey-still-thin-list">
-            {pathMissingShown.map((r, i) => (
-              <span key={r.id}>
-                {i > 0 ? ' · ' : null}
-                <button
-                  type="button"
-                  className="journey-still-thin-link"
-                  onClick={() => goToProcessStep(r)}
-                >
-                  {pathLabel(locale, r.id) || r.label}
-                </button>
-              </span>
-            ))}
-            {pathMissingExtra > 0 ? ` · +${pathMissingExtra}` : null}
-          </span>
-        </span>
-      )}
       {showPathMarkPackThin && (
         <span className="journey-leavebehind-thin" role="status">
           {i18nT(locale, 'ui.pathMarkPackThin')}

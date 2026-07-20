@@ -428,8 +428,6 @@ function App() {
       pathMissingRows.map((r) => pathLabel(locale, r.id) || r.label),
     [pathMissingRows, locale]
   )
-  const pathMissingExtra = Math.max(0, pathMissingRows.length - 3)
-  const pathMissingShown = pathMissingRows.slice(0, 3)
   const thisStepId = journeyIdForView(activeView)
   const thisStepFilled = useMemo(() => {
     if (!thisStepId) return null
@@ -2788,9 +2786,6 @@ function App() {
             locale={locale}
             thisStepFilled={thisStepFilled}
             thisStepHint={thisStepHint}
-            pathMissingShown={pathMissingShown}
-            pathMissingRows={pathMissingRows}
-            pathMissingExtra={pathMissingExtra}
             pathNextGap={pathNextGap}
             leaveBehindThin={leaveBehindThin}
             activeView={activeView}
@@ -2798,7 +2793,6 @@ function App() {
             pathLabel={pathLabel}
             i18nT={i18nT}
             tFormat={tFormat}
-            goToProcessStep={goToProcessStep}
             goToNextProcessGap={goToNextProcessGap}
             setActiveView={setActiveView}
           />
