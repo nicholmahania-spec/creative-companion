@@ -1,5 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v3) */
-const CACHE = 'cc-shell-v3'
+/* Creative Companion — offline shell + asset cache (v4)
+ * v4: network-first for hashed /assets/ so deploys win over sticky cache-first.
+ */
+const CACHE = 'cc-shell-v4'
 const PRECACHE = [
   './',
   './index.html',
@@ -29,6 +31,11 @@ self.addEventListener('activate', (event) => {
       .then(() => self.clients.claim()),
   )
 })
+
+function isHashedAsset(url) {
+  const path = url.pathname
+  return path.includes('/assets/') || /\.[a-f0-9]{6,}\.(?:js|css)$/i.test(path)
+}
 
 function shouldCacheResponse(url, res) {
   if (!res || !res.ok) return false
@@ -68,8 +75,26 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Assets: cache-first, then network and store
-  // Workspace / pack live in localStorage — export works offline once shell loads.
+  // Hashed bundles: network-first so new deploys replace old shell quickly
+  if (isHashedAsset(url)) {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (shouldCacheResponse(url, res)) {
+            const copy = res.clone()
+            caches
+              .open(CACHE)
+              .then((c) => c.put(request, copy))
+              .catch(() => {})
+          }
+          return res
+        })
+        .catch(() => caches.match(request)),
+    )
+    return
+  }
+
+  // Other static: cache-first (buddy art, icons)
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached

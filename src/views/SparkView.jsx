@@ -250,7 +250,9 @@ export default function SparkView({
             className="btn btn-ghost"
             onClick={() => setActiveView('flow')}
           >
-            {i18nT('ui.openSketch') || 'Go to Sketch'}
+            {tFormat(locale, 'ui.continueNext', {
+              label: pathLabel(locale, 'sketch') || 'Sketch',
+            })}
           </button>
         </div>
       </section>

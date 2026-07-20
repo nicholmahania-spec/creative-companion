@@ -359,14 +359,18 @@ function App() {
       ? activeProject.palette
       : DEFAULT_PALETTE
   const deskTasks = (tasks || []).filter(
-    (t) => t.projectId == null || t.projectId === activeProjectId
+    (t) =>
+      t.projectId == null || String(t.projectId) === String(activeProjectId)
   )
   const openTasks = deskTasks.filter((t) => !t.completed)
   const doneTasks = deskTasks.filter((t) => t.completed)
   const nextTask = openTasks[0] || null
   const queueTasks = openTasks.slice(1)
   const deskMood = (moodItems || [])
-    .filter((m) => m.projectId == null || m.projectId === activeProjectId)
+    .filter(
+      (m) =>
+        m.projectId == null || String(m.projectId) === String(activeProjectId)
+    )
     .slice()
     .sort((a, b) => (a.boardOrder ?? 0) - (b.boardOrder ?? 0))
 

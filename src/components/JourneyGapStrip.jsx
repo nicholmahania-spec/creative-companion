@@ -51,7 +51,7 @@ export default function JourneyGapStrip({
         {thisStepFilled
           ? i18nT(locale, 'ui.stepFilled')
           : thisStepHint
-            ? tFormat(locale, 'ui.openStepMicro', { label: thisStepHint })
+            ? tFormat(locale, 'ui.openStepChip', { label: thisStepHint })
             : i18nT(locale, 'ui.stepOpen')}
       </span>
       {pathMissingShown.length > 0 && !onEarliestGap && (

@@ -113,15 +113,21 @@ export function pathStepHasContent(stepId, ctx = {}) {
  *   sparkIndex?: number,
  * }} st
  */
+/** Loose id match so number/string projectIds still scope (persist/import). */
+export function sameProjectId(a, b) {
+  if (a == null || b == null) return a == b
+  return String(a) === String(b)
+}
+
 export function buildPathProgressCtx(st = {}) {
   const pid = st.currentProjectId
   const project =
-    (st.projects || []).find((p) => p.id === pid) || null
+    (st.projects || []).find((p) => sameProjectId(p.id, pid)) || null
   const moodItems = (st.moodItems || []).filter(
-    (m) => m.projectId == null || m.projectId === pid
+    (m) => m.projectId == null || sameProjectId(m.projectId, pid)
   )
   const tasks = (st.tasks || []).filter(
-    (t) => t.projectId == null || t.projectId === pid
+    (t) => t.projectId == null || sameProjectId(t.projectId, pid)
   )
   return {
     project,

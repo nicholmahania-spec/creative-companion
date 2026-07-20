@@ -69,5 +69,27 @@ test.describe('Soft Signal demo', () => {
     await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible()
     await expect(page.locator('.journey-gap-strip')).toBeVisible()
     await expect(page.locator('.journey-progress-pill')).toBeVisible()
+    // Demo honesty: leave-behind ★ pins seeded (pack readiness)
+    await expect(page.getByText(/pack pins [1-9]\/6/i)).toBeVisible({
+      timeout: 5000,
+    })
+
+    await path.getByRole('button', { name: /Step 2: Research/i }).click()
+    await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
+    await expect(page.locator('.mood-board.has-pins, .mood-card').first()).toBeVisible({
+      timeout: 8000,
+    })
+    // Strip chip uses Open · … not Jumping to …
+    const chip = page.locator('.step-fill-chip')
+    if (await chip.count()) {
+      const t = await chip.first().innerText()
+      expect(t).not.toMatch(/Jumping/i)
+    }
+
+    await path.getByRole('button', { name: /Step 3: Ideate/i }).click()
+    await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()
+    await expect(page.locator('#dir-title-a')).toHaveValue(/.+/, {
+      timeout: 5000,
+    })
   })
 })

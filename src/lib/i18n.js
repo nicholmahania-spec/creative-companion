@@ -196,6 +196,8 @@ const EN = {
     stillThin: 'Still thin',
     stepFilled: 'This step · enough',
     stepOpen: 'This step · needs you',
+    /** Status chip when step is open (not a jump toast) */
+    openStepChip: 'Open · {label}',
     nextGapBtn: 'Next gap · {label} · G',
     shipBrandBook: 'Ship · brand book PDF',
     processFullDeliver: 'Path looks full · open Deliver',
@@ -357,6 +359,7 @@ const OVERRIDES = {
       openPack: 'Ir a Entregar',
       openReview: 'Ir a Revisar',
       openIdeate: 'Ir a Idear',
+      openStepChip: 'Abierto · {label}',
       continueNext: 'Continuar · {label}',
       pathMarkPackThin:
         'Solo marca de camino — el entregable aún quiere pines ★ o un eslogan',

@@ -226,7 +226,7 @@
       "title": "Visual: write voice + do/don’t",
       "energy": "low",
       "meta": "Step 5 · Design system",
-      "completed": true,
+      "completed": false,
       "seeded": false,
       "projectId": 9001,
       "dueDate": ""
@@ -282,7 +282,10 @@
       "note": "Quiet booth — soft light, no hustle posters.",
       "visual": "linear-gradient(135deg, #4F46E5, #0D9488)",
       "projectId": 9001,
-      "seeded": false
+      "seeded": false,
+      "inPack": true,
+      "packOrder": 0,
+      "packHero": true
     },
     {
       "id": 9302,
@@ -290,7 +293,10 @@
       "note": "Listening pulse: teal on indigo, cream field.",
       "visual": "linear-gradient(120deg, #3730A3, #F4F1EA 60%)",
       "projectId": 9001,
-      "seeded": false
+      "seeded": false,
+      "inPack": true,
+      "packOrder": 1,
+      "packHero": false
     },
     {
       "id": 9303,
@@ -298,7 +304,10 @@
       "note": "Caption-first frames; voice before spectacle.",
       "visual": "linear-gradient(160deg, #0D9488, #1A1A1A)",
       "projectId": 9001,
-      "seeded": false
+      "seeded": false,
+      "inPack": true,
+      "packOrder": 2,
+      "packHero": false
     },
     {
       "id": 9304,
@@ -306,7 +315,10 @@
       "note": "Structure map — Home / Studio / Shows / Book",
       "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MjAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNzIwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0Y3RjVGMCIgd2lkdGg9IjcyMCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIyOCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM1RjZENUQiPlNPRlQgU0lHTkFMIMK3IHN0cnVjdHVyZSDCtyB0ZXh0IElBPC90ZXh0PgogIDxyZWN0IHg9IjQwIiB5PSI4MCIgd2lkdGg9IjE0MCIgaGVpZ2h0PSI1NiIgcng9IjEyIiBmaWxsPSIjNEY0NkU1Ii8+PHRleHQgeD0iNzAiIHk9IjExNCIgZmlsbD0iI2ZmZiIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiI+SG9tZTwvdGV4dD4KICA8cmVjdCB4PSIyMTAiIHk9IjgwIiB3aWR0aD0iMTQwIiBoZWlnaHQ9IjU2IiByeD0iMTIiIGZpbGw9IiMwRDk0ODgiLz48dGV4dCB4PSIyNDAiIHk9IjExNCIgZmlsbD0iI2ZmZiIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiI+U3R1ZGlvPC90ZXh0PgogIDxyZWN0IHg9IjM4MCIgeT0iODAiIHdpZHRoPSIxNDAiIGhlaWdodD0iNTYiIHJ4PSIxMiIgZmlsbD0iIzM3MzBBMyIvPjx0ZXh0IHg9IjQyMiIgeT0iMTE0IiBmaWxsPSIjZmZmIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjE2Ij5TaG93czwvdGV4dD4KICA8cmVjdCB4PSI1NTAiIHk9IjgwIiB3aWR0aD0iMTQwIiBoZWlnaHQ9IjU2IiByeD0iMTIiIGZpbGw9IiMxQTFBMUEiLz48dGV4dCB4PSI1NzUiIHk9IjExNCIgZmlsbD0iI2ZmZiIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiI+Qm9vazwvdGV4dD4KICA8cGF0aCBkPSJNMTEwIDEzNiBMMTEwIDE4MCBMMjgwIDE4MCBMMjgwIDEzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQ0NDIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cGF0aCBkPSJNNDUwIDEzNiBMNDUwIDE4MCBMNjIwIDE4MCBMNjIwIDEzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQ0NDIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cmVjdCB4PSI0MCIgeT0iMjAwIiB3aWR0aD0iMzAwIiBoZWlnaHQ9IjEwMCIgcng9IjEyIiBmaWxsPSIjZmZmIiBzdHJva2U9IiNFNUUwRDgiLz4KICA8dGV4dCB4PSI1NiIgeT0iMjMyIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzMzIj5Ib21lIGJsb2NrcyAodGV4dCB3aXJlZnJhbWUpPC90ZXh0PgogIDx0ZXh0IHg9IjU2IiB5PSIyNTgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTMiIGZpbGw9IiM2NjYiPjEgSGVybyBwcm9taXNlIMK3IDIgSG93IHNlc3Npb25zIGZlZWw8L3RleHQ+CiAgPHRleHQgeD0iNTYiIHk9IjI4MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxMyIgZmlsbD0iIzY2NiI+MyBGZWF0dXJlZCBzaG93IMK3IDQgQm9vayBDVEE8L3RleHQ+CiAgPHJlY3QgeD0iMzgwIiB5PSIyMDAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMTAwIiByeD0iMTIiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI0U1RTBEOCIvPgogIDx0ZXh0IHg9IjM5NiIgeT0iMjMyIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzMzIj5Cb29rIGZsb3c8L3RleHQ+CiAgPHRleHQgeD0iMzk2IiB5PSIyNTgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTMiIGZpbGw9IiM2NjYiPk5lZWQgwrcgTGVuZ3RoIMK3IFNlbnNvcnkgbm90ZXMgwrcgQ29uZmlybTwvdGV4dD4KICA8dGV4dCB4PSIzOTYiIHk9IjI4MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxMyIgZmlsbD0iIzY2NiI+Tm8gZGFyayBwYXR0ZXJucyDCtyBwbGFpbiBsYW5ndWFnZTwvdGV4dD4KICA8dGV4dCB4PSI0MCIgeT0iMzYwIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMEQ5NDg4Ij5QcmltYXJ5IENUQSBldmVyeXdoZXJlOiDigJxCb29rIGEgY2FsbSBzZXNzaW9u4oCdPC90ZXh0Pgo8L3N2Zz4=",
       "projectId": 9001,
-      "seeded": false
+      "seeded": false,
+      "inPack": true,
+      "packOrder": 3,
+      "packHero": false
     },
     {
       "id": 9305,
@@ -314,7 +326,9 @@
       "note": "Episode cover template (Deliver leave-behind)",
       "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MjAiIGhlaWdodD0iNzIwIiB2aWV3Qm94PSIwIDAgNzIwIDcyMCI+CiAgPHJlY3QgZmlsbD0iIzRGNDZFNSIgd2lkdGg9IjcyMCIgaGVpZ2h0PSI3MjAiLz4KICA8Y2lyY2xlIGN4PSIxMjAiIGN5PSIxMjAiIHI9IjQ4IiBmaWxsPSIjMEQ5NDg4Ii8+CiAgPGNpcmNsZSBjeD0iMTIwIiBjeT0iMTIwIiByPSIyNiIgZmlsbD0iI0Y0RjFFQSIvPgogIDxwYXRoIGQ9Ik0xMDAgMTIwIFExMjAgMTAwIDE0MCAxMjAgUTEyMCAxMzIgMTAwIDEyMCIgZmlsbD0iIzRGNDZFNSIvPgogIDx0ZXh0IHg9IjQ4IiB5PSIyODAiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iNTIiIGZpbGw9IiNGNEYxRUEiPlNvZnQgU2lnbmFsPC90ZXh0PgogIDx0ZXh0IHg9IjQ4IiB5PSIzNDAiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiNBNUI0RkMiPkVwLiAxMiDCtyBTbG93IFN0YXJ0czwvdGV4dD4KICA8dGV4dCB4PSI0OCIgeT0iNDAwIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjIwIiBmaWxsPSIjRTBFN0ZGIj5HdWVzdDogQS4gUml2ZXJhIMK3IDQyIG1pbjwvdGV4dD4KICA8cmVjdCB4PSI0OCIgeT0iNDgwIiB3aWR0aD0iMjQwIiBoZWlnaHQ9IjgiIHJ4PSI0IiBmaWxsPSIjMEQ5NDg4Ii8+CiAgPHRleHQgeD0iNDgiIHk9IjU0MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiIgZmlsbD0iI0M3RDJGRSI+UnVsZXM6IHRpdGxlIOKJpCAyIGxpbmVzIMK3IGd1ZXN0IHVuZGVyIHRpdGxlIMK3IG1hcmsgdG9wLWxlZnQgwrcgbm8gd2F2ZWZvcm0gY2x1dHRlcjwvdGV4dD4KPC9zdmc+",
       "projectId": 9001,
-      "seeded": false
+      "seeded": false,
+      "inPack": false,
+      "packHero": false
     }
   ],
   "conceptItems": [

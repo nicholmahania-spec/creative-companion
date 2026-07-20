@@ -98,6 +98,12 @@ describe('i18n wordmark + path + catalog', () => {
     expect(tFormat('en', 'ui.continueNext', { label: 'Research' })).toBe(
       'Continue · Research'
     )
+    expect(tFormat('en', 'ui.openStepChip', { label: 'Star a pin' })).toBe(
+      'Open · Star a pin'
+    )
+    expect(tFormat('en', 'ui.openStepChip', { label: 'x' })).not.toMatch(
+      /Jumping/i
+    )
     expect(en.goToSystem).toMatch(/Design/i)
     expect(en.emptyStepBody.length).toBeLessThan(80)
     expect(en.howDeskWorks).toMatch(/Define/)

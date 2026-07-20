@@ -168,4 +168,20 @@ describe('pathStepHasContent', () => {
     expect(ctx.sparkIndex).toBe(2)
     expect(ctx.palette).toEqual(['#111'])
   })
+
+  it('buildPathProgressCtx matches string/number projectIds', () => {
+    const ctx = buildPathProgressCtx({
+      currentProjectId: '9001',
+      projects: [{ id: 9001, name: 'Soft', palette: ['#111'] }],
+      moodItems: [
+        { id: 1, projectId: 9001, inPack: true },
+        { id: 2, projectId: 9002 },
+      ],
+      tasks: [{ id: 1, projectId: 9001 }],
+    })
+    expect(ctx.project?.name).toBe('Soft')
+    expect(ctx.moodItems).toHaveLength(1)
+    expect(ctx.tasks).toHaveLength(1)
+    expect(pathStepHasContent('research', ctx)).toBe(true)
+  })
 })
