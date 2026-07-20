@@ -65,6 +65,7 @@ import {
   pathStepHasContent,
   pathProgressSummary,
   pathMissingLabels,
+  pathFirstGap,
 } from './lib/journeyProgress'
 import PathProgressPanel from './components/PathProgressPanel'
 import {
@@ -693,6 +694,28 @@ function App() {
             label: 'Research timer',
           })
           flashToast('20-minute research timer — stop when it ends')
+        },
+      },
+      {
+        id: 'fix-next-gap',
+        label: 'Fix next process gap',
+        hint: '',
+        run: () => {
+          const gap = pathFirstGap(JOURNEY_STEPS, {
+            project: useAppStore.getState().projects?.find(
+              (p) => p.id === useAppStore.getState().currentProjectId
+            ),
+            moodItems: useAppStore.getState().moodItems || [],
+            tasks: useAppStore.getState().tasks || [],
+            sparkIndex: useAppStore.getState().sparkIndex || 0,
+          })
+          if (gap?.view) {
+            setActiveView(gap.view)
+            flashMicro(`Next gap · ${gap.label}`)
+          } else {
+            flashToast('Process looks full — ship the brand book on Deliver')
+            setActiveView('finish')
+          }
         },
       },
     ]
@@ -4361,12 +4384,14 @@ function App() {
               const missing = pathMissingLabels(JOURNEY_STEPS, ctx, (id) =>
                 pathLabel(locale, id)
               )
+              const nextGap = pathFirstGap(JOURNEY_STEPS, ctx)
               return (
                 <PathProgressPanel
                   steps={JOURNEY_STEPS}
                   rows={rows}
                   doneN={doneN}
                   missing={missing}
+                  nextGap={nextGap}
                   onOpenStep={setActiveView}
                   labelForId={(id) => pathLabel(locale, id)}
                   hint="Review with content in earlier steps — then Deliver."
@@ -4559,12 +4584,14 @@ function App() {
               const missing = pathMissingLabels(JOURNEY_STEPS, ctx, (id) =>
                 pathLabel(locale, id)
               )
+              const nextGap = pathFirstGap(JOURNEY_STEPS, ctx)
               return (
                 <PathProgressPanel
                   steps={JOURNEY_STEPS}
                   rows={rows}
                   doneN={doneN}
                   missing={missing}
+                  nextGap={nextGap}
                   onOpenStep={setActiveView}
                   labelForId={(id) => pathLabel(locale, id)}
                   hint="Tap any step to fill gaps before the brand book PDF."

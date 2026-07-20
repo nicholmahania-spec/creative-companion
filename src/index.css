@@ -9412,8 +9412,15 @@ html[data-reduce-motion='true'] *::after {
   color: var(--text-primary);
   background: color-mix(in srgb, var(--accent-growth, #0f766e) 12%, transparent);
 }
+.deliver-progress-chip.is-next:not(.is-done) {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 1px var(--text-primary);
+}
 .deliver-progress-chip:hover {
   border-color: var(--text-secondary);
+}
+.deliver-path-progress .btn-sm {
+  margin-top: 0.15rem;
 }
 
 .review-question-chips {

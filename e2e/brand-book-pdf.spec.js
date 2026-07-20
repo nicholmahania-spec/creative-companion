@@ -21,8 +21,22 @@ test.describe('Brand book PDF', () => {
     await expect(
       page.getByText(/Process · \d+ of 7 steps have content/i)
     ).toBeVisible()
-    // Fresh project is thin — missing summary helps fill gaps
+    // Fresh project is thin — missing summary + next-gap CTA
     await expect(page.getByText(/Still thin:/i)).toBeVisible()
+    const fixGap = page.getByRole('button', { name: /Fix next gap/i })
+    await expect(fixGap).toBeVisible()
+    await fixGap.click()
+    // Earliest gap for a bare project is usually Research (after define name)
+    await expect(
+      page.getByRole('heading', { name: /Research|Define|Ideate|Sketch/i })
+    ).toBeVisible({ timeout: 8000 })
+
+    // Back to Deliver for PDF
+    const path2 = await pathNav(page)
+    await path2.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await expect(
+      page.locator('h1.page-title', { hasText: 'Deliver' })
+    ).toBeVisible({ timeout: 10000 })
 
     const downloadBtn = page.getByRole('button', {
       name: /Download (brand book|vector) PDF/i,

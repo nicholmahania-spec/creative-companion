@@ -3,6 +3,7 @@ import {
   pathStepHasContent,
   pathProgressSummary,
   pathMissingLabels,
+  pathFirstGap,
 } from './journeyProgress'
 import { JOURNEY_STEPS } from './journey'
 
@@ -64,5 +65,19 @@ describe('pathStepHasContent', () => {
     expect(missing.length).toBeGreaterThan(3)
     expect(missing).toContain('Research')
     expect(missing).toContain('Ideate')
+  })
+
+  it('pathFirstGap returns earliest incomplete step', () => {
+    const gap = pathFirstGap(JOURNEY_STEPS, {
+      project: {
+        name: 'Co',
+        detective: { goal: 'G', audience: 'A' },
+      },
+      moodItems: [],
+      tasks: [],
+      sparkIndex: 0,
+    })
+    expect(gap?.id).toBe('research')
+    expect(gap?.view).toBe('studio')
   })
 })

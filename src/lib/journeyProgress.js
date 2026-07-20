@@ -83,3 +83,12 @@ export function pathMissingLabels(steps, ctx, labelForId) {
     .filter((r) => !r.done)
     .map((r) => (labelForId ? labelForId(r.id) || r.label : r.label))
 }
+
+/**
+ * First incomplete path step (ADHD “one next gap” jump).
+ * @returns {{ id: string, label: string, num: string, view: string }|null}
+ */
+export function pathFirstGap(steps, ctx) {
+  const rows = pathProgressSummary(steps, ctx)
+  return rows.find((r) => !r.done) || null
+}
