@@ -313,7 +313,7 @@ export function buildBrandPackSnapshot({
 
 /**
  * Thin-pack readiness for Pack page.
- * Each check can deep-link: view + optional System accordion section.
+ * Each check can deep-link: view + optional Design accordion section.
  */
 export function packReadiness(pack) {
   const hasName = !!(pack?.projectName && pack.projectName !== 'Untitled project')
@@ -938,7 +938,7 @@ export function buildDirectionSheetMarkup(pack) {
  * @returns {{ el: HTMLElement, cleanup: () => void }}
  */
 export function resolveDirectionSheetForCapture(pack) {
-  // Prefer System artboard, then export modal artboard (BrandArtboard id)
+  // Prefer Design artboard, then export modal artboard (BrandArtboard id)
   for (const id of [
     'system-artboard',
     'direction-sheet',

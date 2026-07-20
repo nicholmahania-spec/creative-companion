@@ -30,12 +30,29 @@ test.describe('Process walk (artifacts)', () => {
     await page.getByRole('button', { name: /Fill brief from sheet/i }).click()
     await page.getByRole('button', { name: /Go to Research/i }).first().click()
 
-    // 2 Research
+    // 2 Research — pin + star for leave-behind
     await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
     await expect(page.getByText(/Curious spy checklist/i)).toBeVisible()
     await expect(
       page.getByRole('button', { name: /Start 20-min research timer/i })
     ).toBeVisible()
+    // Open note pin form if present
+    const noteBtn = page.getByRole('button', { name: /^Note$/i })
+    if (await noteBtn.count()) {
+      await noteBtn.click()
+      const noteInput = page.locator(
+        'input[placeholder*="twilight"], input[placeholder*="note" i], .board-note-input, #board-note'
+      )
+      if (await noteInput.count()) {
+        await noteInput.first().fill('Calm indigo field — safe energy')
+        await page.getByRole('button', { name: /Add pin/i }).click()
+        await page.waitForTimeout(300)
+        const star = page.locator('button.mood-pin-star').first()
+        if (await star.count()) {
+          await star.click({ force: true })
+        }
+      }
+    }
 
     // 3 Ideate
     await path.getByRole('button', { name: /Step 3: Ideate/i }).click()

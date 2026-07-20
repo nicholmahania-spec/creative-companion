@@ -15,7 +15,8 @@ const ROLE_KEYS = [
 ]
 
 /**
- * Shared brand pack artboard — System editor, Pack preview, PDF capture source.
+ * Shared brand leave-behind artboard — Design preview, Review/Deliver, PDF capture.
+ * Direction sheet + lockup tiles — not a freeform Figma canvas.
  */
 export default function BrandArtboard({
   id = 'system-artboard',

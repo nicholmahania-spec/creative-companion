@@ -35,6 +35,20 @@ describe('i18n wordmark + path + catalog', () => {
     expect(pathLabel('ar', 'work')).toBeTruthy()
   })
 
+  it('locales expose 7-step path labels (not raw Board/System path)', () => {
+    for (const id of ['es', 'fr', 'de', 'pt', 'ja', 'ar']) {
+      const path = getMessages(id).path || {}
+      // Prefer define/research/…; legacy aliases should not be English Board/System
+      if (path.define) expect(path.define.length).toBeGreaterThan(1)
+      if (path.board) expect(path.board).not.toBe('Board')
+      if (path.system) expect(path.system).not.toBe('System')
+      if (path.pack) expect(path.pack).not.toBe('Pack')
+    }
+    expect(pathLabel('de', 'define')).toBeTruthy()
+    expect(pathLabel('es', 'define')).toBe('Definir')
+    expect(pathLabel('ja', 'deliver')).toBe('納品')
+  })
+
   it('english tagline is stable', () => {
     expect(getMessages('en').tagline).toMatch(/ADHD/i)
   })

@@ -1,0 +1,60 @@
+import { test, expect } from '@playwright/test'
+import { unlockAndOnboard, pathNav, skipIfCloud } from './helpers.js'
+
+/**
+ * Soft Signal demo replaces workspace and seeds 7-step process fields.
+ */
+test.describe('Soft Signal demo', () => {
+  test('loads demo with replace warning and detective seed', async ({
+    page,
+  }) => {
+    const gate = await unlockAndOnboard(page, {
+      name: 'Before Demo',
+      step: 'Will be replaced',
+    })
+    skipIfCloud(test, gate)
+
+    // Settings lives under account chip (not Tools)
+    await page.locator('#account-menu-button').click()
+    await page
+      .locator('#account-menu')
+      .getByRole('menuitem', { name: /Settings/i })
+      .click()
+    await expect(page.getByRole('heading', { name: /Settings/i })).toBeVisible({
+      timeout: 8000,
+    })
+
+    await page
+      .getByRole('button', { name: /Load Soft Signal demo/i })
+      .click()
+
+    const banner = page.locator('.desk-confirm-banner')
+    await expect(banner).toBeVisible({ timeout: 5000 })
+    await expect(banner).toContainText(/Replaces/i)
+    await banner.getByRole('button', { name: /Continue|Continuar/i }).click()
+    await page.waitForTimeout(1000)
+
+    await expect(page.getByText(/Soft Signal/i).first()).toBeVisible({
+      timeout: 12000,
+    })
+
+    const dots = page.locator('.demo-tour-dots span')
+    if ((await dots.count()) >= 7) {
+      expect(await dots.count()).toBeGreaterThanOrEqual(7)
+      await page
+        .getByRole('button', { name: /Skip tour|Stay here|Open Deliver/i })
+        .first()
+        .click()
+      await page.waitForTimeout(300)
+    }
+
+    const path = await pathNav(page)
+    await path.getByRole('button', { name: /Step 1: Define/i }).click()
+    await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
+    await expect(page.locator('#detective-goal')).toBeVisible({
+      timeout: 8000,
+    })
+    const goal = await page.locator('#detective-goal').inputValue()
+    expect(goal.length).toBeGreaterThan(10)
+  })
+})

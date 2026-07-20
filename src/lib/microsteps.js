@@ -49,7 +49,7 @@ export function generateProjectMicrosteps({
     'Kill 2 directions — keep only one path',
     'Do a 15‑min messy first pass — ugly is allowed',
     `Name the single next visual decision for “${g}”`,
-    'When ready: open Brand template or export a direction pack',
+    'When ready: open Design or export brand book PDF on Deliver',
   ]
 
   const full = [

@@ -554,6 +554,9 @@ export default function SettingsView(props) {
               a time, optional Helper, optional forced breaks, and brand
               leave-behind export
               {CLOUD ? ' — with optional cloud sync when configured.' : '.'}
+              {' '}
+              Direction pack &amp; lockups — not a full design tool or Figma
+              replacement.
             </p>
             <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
               <strong>Offline:</strong> After one online visit, the app shell

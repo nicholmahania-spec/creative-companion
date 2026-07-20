@@ -182,7 +182,7 @@ function App() {
   breakKitRef.current = breakKit
 
   // ——— Ephemeral UI ———
-  // activeView is restored from localStorage so refresh does not always dump on Work (path 2)
+  // activeView is restored from localStorage so refresh does not always dump on Sketch
   const [activeView, setActiveViewRaw] = useState(() => {
     try {
       const raw = localStorage.getItem('cc-active-view')
@@ -193,12 +193,13 @@ function App() {
         'brand',
         'review',
         'finish',
-        'concept',
         'spark',
         'insights',
         'calendar',
         'settings',
       ])
+      // Legacy concept pipeline removed — never blank main
+      if (raw === 'concept') return 'flow'
       if (raw && allowed.has(raw)) return raw
     } catch {
       /* private mode */
@@ -1045,7 +1046,7 @@ function App() {
     initialSelector: '#onboard-name',
   })
 
-  // Flow keys (when not typing): 1–5 path · C complete · N capture · U undo · ? help
+  // Flow keys (when not typing): 1–7 path · C complete · N capture · U undo · ? help
   useEffect(() => {
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return
@@ -1086,14 +1087,14 @@ function App() {
         return
       }
       const k = e.key.toLowerCase()
-      // C — complete current Work step
+      // C — complete current Sketch step
       if (k === 'c') {
         if (!nextTask) return
         e.preventDefault()
         completeCurrentStep()
         return
       }
-      // N — jump Work + focus capture
+      // N — jump Sketch + focus capture
       if (k === 'n') {
         e.preventDefault()
         setActiveView('flow')
@@ -1908,7 +1909,7 @@ function App() {
     setDeskConfirm({
       kind: 'demo',
       label:
-        'Load Soft Signal demo? Merges into this workspace — export a backup first if needed.',
+        'Load Soft Signal demo? Replaces this workspace (projects, steps, pins). Export a backup first if it matters.',
       onConfirm: () => {
         setDeskConfirm(null)
         void runSoftSignalImport()
@@ -2222,7 +2223,7 @@ function App() {
                     }}
                   >
                     <strong>Keyboard</strong>
-                    <span>C complete · N capture · 1–5 path · ?</span>
+                    <span>C complete · N capture · 1–7 path · ?</span>
                   </button>
                   <button
                     type="button"
@@ -2750,33 +2751,13 @@ function App() {
               </div>
             </section>
 
-            {/* 7-step process checklist — Sketch step (desk) */}
+            {/* Sketch process checklist only — path bar owns navigation */}
             <section
               className="process-rail process-rail-optional"
-              aria-label="Design process"
+              aria-label="Sketch process checklist"
             >
-              <div className="process-rail-chips">
-                {PROCESS_PHASES.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    className={`process-chip${
-                      (processPhase || 'sketch') === p.id ? ' is-active' : ''
-                    }`}
-                    onClick={() => {
-                      setProcessPhase(p.id)
-                      if (p.view) setActiveView(p.view)
-                    }}
-                    aria-pressed={(processPhase || 'sketch') === p.id}
-                  >
-                    {p.short}
-                  </button>
-                ))}
-              </div>
               {(() => {
-                const phase =
-                  getProcessPhase(processPhase || 'sketch') ||
-                  processPhaseForView('flow')
+                const phase = getProcessPhase('sketch')
                 if (!phase) return null
                 return (
                   <div className="process-guide-panel">
@@ -3174,8 +3155,8 @@ function App() {
                               className={`mood-pin-star${item.inPack ? ' is-on' : ''}${item.packHero ? ' is-hero' : ''}`}
                               title={
                                 item.inPack
-                                  ? 'Remove from pack'
-                                  : 'Include in pack (max 6)'
+                                  ? 'Remove from leave-behind'
+                                  : 'Include in leave-behind (max 6)'
                               }
                               aria-pressed={!!item.inPack}
                               onClick={() => {
@@ -3186,11 +3167,13 @@ function App() {
                                   )
                                 else
                                   flashMicro(
-                                    r.inPack ? 'In pack' : 'Removed from pack'
+                                    r.inPack
+                                      ? 'On leave-behind'
+                                      : 'Removed from leave-behind'
                                   )
                               }}
                             >
-                              {item.inPack ? '★ Pack' : '☆ Pack'}
+                              {item.inPack ? '★ Leave-behind' : '☆ Leave-behind'}
                             </button>
                             <details className="mood-pin-more">
                               <summary
@@ -3524,7 +3507,9 @@ function App() {
                     }
                   }}
                 >
-                  {boardLightbox.inPack ? '★ In pack' : '☆ Add to pack'}
+                  {boardLightbox.inPack
+                    ? '★ On leave-behind'
+                    : '☆ Add to leave-behind'}
                 </button>
               </div>
             </div>
@@ -3604,7 +3589,7 @@ function App() {
           </Suspense>
         )}
 
-        {/* Concept pipeline removed from UI — Board + System only */}
+        {/* Concept pipeline removed from UI — Research + Design path only */}
 
         {/* ===== BRAND IDENTITY TEMPLATE ===== */}
         {activeView === 'brand' && (
@@ -4352,7 +4337,7 @@ function App() {
               </div>
             </div>
             <section className="panel brand-section">
-              <div className="brand-section-label">Pack preview</div>
+              <div className="brand-section-label">Leave-behind preview</div>
               <p className="panel-hint" style={{ marginTop: 0 }}>
                 What a reviewer sees — same sheet as Deliver.
               </p>
@@ -4387,7 +4372,7 @@ function App() {
               </p>
             </section>
             <section className="panel brand-section">
-              <div className="brand-section-label">Pack readiness</div>
+              <div className="brand-section-label">Leave-behind readiness</div>
               {(() => {
                 const packSnap = buildCurrentBrandPack()
                 const ready = packReadiness(packSnap)
@@ -4530,7 +4515,7 @@ function App() {
                   className="pack-preview-thumb pack-preview-artboard"
                   tabIndex={0}
                   role="region"
-                  aria-label="Pack preview — scroll for full sheet"
+                  aria-label="Leave-behind preview — scroll for full sheet"
                 >
                   <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
                     <BrandArtboard
@@ -4707,7 +4692,7 @@ function App() {
                           const packSnap = buildCurrentBrandPack()
                           const md = packBriefMarkdown(packSnap)
                           await navigator.clipboard.writeText(md)
-                          flashToast('Pack brief copied')
+                          flashToast('Leave-behind brief copied')
                           setLastExportNote('Brief copied to clipboard')
                         } catch {
                           flashToast('Could not copy — try Download instead')
@@ -4749,7 +4734,7 @@ function App() {
                     </div>
                     <div className="field-block" style={{ marginTop: '0.65rem' }}>
                       <label className="field-label" htmlFor="learnings-note">
-                        What I learned (your style library)
+                        What I learned
                       </label>
                       <textarea
                         id="learnings-note"
@@ -4759,9 +4744,13 @@ function App() {
                         onChange={(e) =>
                           updateBrandField('learnings', e.target.value)
                         }
-                        placeholder="What worked? What felt like me? What to improve next time?"
+                        placeholder="What worked? What felt like me? What to improve next time? (Notes only — not a media library.)"
                       />
                     </div>
+                    <p className="panel-hint" style={{ marginTop: '0.65rem' }}>
+                      Direction leave-behind &amp; lockups — not a full design
+                      tool or Figma replacement.
+                    </p>
                     <label className="pack-watermark-toggle">
                       <input
                         type="checkbox"
