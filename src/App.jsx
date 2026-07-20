@@ -3796,6 +3796,11 @@ function App() {
               addTask={addTask}
               projectId={activeProjectId}
               i18nT={(key) => i18nT(locale, key)}
+              projectGoal={
+                activeProject?.detective?.goal ||
+                activeProject?.brief ||
+                ''
+              }
             />
           </Suspense>
         )}
@@ -6289,6 +6294,15 @@ function App() {
             openCount: openTasks.length,
             pinsCount: deskMood.length,
             isFocusRunning,
+            goal:
+              activeProject?.detective?.goal ||
+              activeProject?.brief ||
+              '',
+            audience: activeProject?.detective?.audience || '',
+            pathDoneCount,
+            nextGapLabel: pathNextGap
+              ? pathLabel(locale, pathNextGap.id) || pathNextGap.label
+              : '',
           }}
         />
         </Suspense>

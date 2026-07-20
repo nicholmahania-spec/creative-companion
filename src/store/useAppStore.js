@@ -3,18 +3,22 @@ import { persist } from 'zustand/middleware'
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/breakKit'
 
-/** Real creative prompts — tools, not fake user data. Aim for 8+ so Ideate progress works. */
+/**
+ * Ideate tool prompts (not fake client data).
+ * ≥8 for energy UI. Opposites live in oppositeSparks only (no “Opposite day” here).
+ * Mix brand leave-behind + UI/UX (empty state, primary action, hierarchy).
+ */
 export const sparkPrompts = [
+  'Write three directions in six words each — no adjectives, only nouns + verbs.',
+  'What is the one thing a viewer must understand in three seconds?',
+  'Where does the finger go first on this screen — and why?',
+  'What does the empty state show before any content loads?',
+  'Strip one decorative layer. Does hierarchy still hold?',
+  'Design a visual system that protects quiet attention, not hustle energy.',
+  'Steal one rule from a project you admire — rewrite it for this audience.',
   'What if the mark worked in one color at sticker size and still felt human?',
   'Name the feeling the cover must land — one sentence, no jargon.',
-  'Design a visual system that protects quiet attention, not hustle energy.',
-  'What is the one thing a viewer must understand in three seconds?',
-  'Strip one decorative layer. Does hierarchy still hold?',
-  'Opposite day: if you went bold/loud, what does the quiet twin look like?',
-  'Opposite day: if you went soft/editorial, what does the product-forward twin look like?',
-  'Write three directions in six words each — no adjectives, only nouns + verbs.',
   'What would you design if the budget only allowed one ink color and one font?',
-  'Steal one rule from a project you admire — rewrite it for this audience.',
 ]
 
 /** Opposite-direction sparks (Ideate force-opposites challenge) */
@@ -24,6 +28,7 @@ export const oppositeSparks = [
   'Force the opposite: warm/hand-made ↔ crisp/system. Name the tradeoff.',
   'Force the opposite: dense info ↔ almost empty. Where does hierarchy live?',
   'Force the opposite: literal metaphor ↔ abstract mark. Which feels truer?',
+  'Force the opposite: loud accent color ↔ near-monochrome. What still reads?',
 ]
 
 export const defaultProjectPalette = [

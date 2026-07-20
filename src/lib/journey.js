@@ -28,7 +28,7 @@ export const JOURNEY_STEPS = [
     view: 'spark',
     num: '3',
     label: 'Ideate',
-    plain: 'Messy ideas first. Aim for 5–8 sparks. Shortlist A/B/C.',
+    plain: 'Messy ideas first. Many directions; shortlist A/B/C.',
     nextView: 'flow',
     nextLabel: 'Go to Sketch',
   },

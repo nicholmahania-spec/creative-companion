@@ -19,6 +19,8 @@ export default function SparkView({
   addTask,
   projectId,
   i18nT = (key) => key,
+  /** Detective goal one-liner when set — grounds prompts */
+  projectGoal = '',
 }) {
   const dirs =
     Array.isArray(directions) && directions.length >= 3
@@ -33,6 +35,7 @@ export default function SparkView({
   const sparksSeen = Math.min(Math.max(sparksTried, 0), 8)
   const phase = getProcessPhase('ideate')
   const title = pathLabel(locale, 'ideate') || 'Ideate'
+  const goalLine = String(projectGoal || '').trim()
 
   const pinSparkStay = () => {
     addMoodPin({
@@ -203,6 +206,11 @@ export default function SparkView({
 
       <section className="panel brand-section">
         <div className="brand-section-label">Prompt</div>
+        {goalLine ? (
+          <p className="panel-hint spark-goal-line" style={{ marginTop: 0 }}>
+            Goal · {goalLine.length > 120 ? `${goalLine.slice(0, 117)}…` : goalLine}
+          </p>
+        ) : null}
         <div className="spark-card">
           <p>{currentSpark}</p>
         </div>

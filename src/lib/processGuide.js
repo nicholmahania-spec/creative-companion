@@ -36,11 +36,11 @@ const COACHING = {
   },
   ideate: {
     title: 'Ideate & brainstorm',
-    plain: 'Throw lots of ideas. Messy is correct. Best idea often hides in #6–7.',
+    plain: 'Throw lots of ideas. Messy is correct. Shortlist A/B/C.',
     prompt:
-      'Force 5–8 messy directions. Try opposites. Don’t marry the first. Shortlist A/B/C.',
+      'Force many messy directions. Try opposites (button). Don’t marry the first. Shortlist A/B/C.',
     checks: [
-      'At least 5–8 sparks or directions tried (messy is correct)',
+      'Several sparks tried (messy is correct)',
       'Opposite ideas tested (calm vs bold)',
       'Sparks pinned if useful',
       'Not married to the first idea',

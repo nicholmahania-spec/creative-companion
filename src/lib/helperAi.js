@@ -20,19 +20,12 @@ import {
   activityTip,
   twoDirectionsTip,
 } from './buddy'
+import { HELPER_SYSTEM_PROMPT } from './helperPersona'
 
 const DEFAULT_MODEL = 'grok-4.5'
 
-const SYSTEM_PROMPT = `You are Helper, the design buddy inside Creative Companion — a desk for ADHD-friendly UI/UX and brand work.
-
-Voice: warm, slightly sassy, concise. Max ~120 words. No markdown headings. Prefer short paragraphs or 2–4 bullets with plain dashes.
-
-Process spine (nothing more/less): Define → Research → Ideate → Sketch → Design → Review → Deliver.
-Product promise: one shippable step at a time, then brand book leave-behind PDF — not XP or productivity theatre.
-
-Coach craft (hierarchy, type, color roles, contrast, copy clarity, scope). Never invent fake client names or fake project data. If context is thin, ask one sharp question and give one safe next move.
-
-You are not a general chatbot. Stay on the design desk.`
+/** @deprecated use HELPER_SYSTEM_PROMPT — kept as local alias for callXaiChat default */
+const SYSTEM_PROMPT = HELPER_SYSTEM_PROMPT
 
 /** @returns {string} */
 /**
@@ -207,6 +200,13 @@ function intentUserPrompt(intent, activity = {}, extra = {}) {
     `Mood pins: ${activity.pinsCount ?? 0}`,
     `Focus timer: ${activity.isFocusRunning ? 'running' : 'off'}`,
   ]
+  if (activity.goal) lines.push(`Goal (detective): ${String(activity.goal).slice(0, 120)}`)
+  if (activity.audience)
+    lines.push(`Audience: ${String(activity.audience).slice(0, 80)}`)
+  if (activity.pathDoneCount != null)
+    lines.push(`Process fill: ${activity.pathDoneCount}/7 steps have content`)
+  if (activity.nextGapLabel)
+    lines.push(`Next process gap: ${activity.nextGapLabel}`)
   if (extra.deskLabel) lines.push(`Desk time: ${extra.deskLabel}`)
   if (extra.breakLabel) lines.push(`Since break: ${extra.breakLabel}`)
   if (extra.closedLabel) lines.push(extra.closedLabel)
@@ -220,7 +220,7 @@ function intentUserPrompt(intent, activity = {}, extra = {}) {
     stuck: 'Unstick them: one tiny action they can finish in under 10 minutes.',
     define: 'Coach Define: audience, goal in one sentence, must-haves.',
     research: 'Coach Research: refs, mood, timed discovery.',
-    ideate: 'Coach Ideate: many directions, no judging yet.',
+    ideate: 'Coach Ideate: many directions, shortlist A/B/C, no judging yet.',
     sketch: 'Coach Sketch: 2–3 rough drafts, low detail.',
     design: 'Coach Design: type, color roles, hierarchy, space.',
     review: 'Coach Review: specific feedback questions, revise for the goal.',

@@ -1,21 +1,16 @@
 /**
  * Design buddy — scripted UI/UX & graphic design coach (not a live LLM).
- * System persona: expert designer; user-centric, accessible, clear hierarchy.
- * Process: 1 Clarify → 2 Structure → 3 Visual → 4 Refine
+ * Persona: Helper (see helperPersona.js). Process: Define → Deliver.
  * Also: body care, time blindness, hyperfocus (so you can keep designing).
  */
 
-/** Documented system identity for this buddy */
-export const DESIGN_SYSTEM_PROMPT = `You are an expert UI/UX and Graphic Designer. Your goal is to help craft intuitive, visually stunning, and highly functional digital products and design assets.
+import { getProcessPhase } from './processGuide'
 
-4-step process:
-1) Understand & Clarify — audience, brand, goals, constraints
-2) Strategy & Wireframing — user journey, structure, text wireframes
-3) Visual Design — type, color (hex), layout
-4) Refinement — two directions, iterate on feedback
-
-Philosophy: user-centric design, WCAG accessibility, clear visual hierarchy. Explain the why. Professional, constructive, organized.`
-
+export {
+  DESIGN_SYSTEM_PROMPT,
+  HELPER_SYSTEM_PROMPT,
+  PROCESS_SPINE,
+} from './helperPersona'
 
 const WELLNESS_KEY = 'cc-buddy-wellness-v1'
 const SESSION_KEY = 'cc-buddy-session-v1'
@@ -589,8 +584,8 @@ export function describeActivity(activity = {}) {
 }
 
 /**
- * 7-step design process coaching (system prompt behavior, scripted).
- * define | research | ideate | sketch | design | review | deliver
+ * 7-step design process coaching (scripted).
+ * Prefers processGuide.prompt when present — single coaching source.
  * Legacy aliases: clarify→define, structure→sketch, visual→design, refine→review
  */
 export function designProcessTip(phase, activity = {}) {
@@ -608,29 +603,34 @@ export function designProcessTip(phase, activity = {}) {
             ? 'review'
             : phase
 
-  if (p === 'define') {
-    return `Define “${step}” on ${project}: who is it for, what they feel/do, one constraint. Goal in one sentence before any pretty pictures.`
+  const guide = getProcessPhase(p)
+  if (guide?.prompt) {
+    // Contextualize guide prompt with current step/project
+    if (p === 'ideate') {
+      return `Ideate “${step}”: ${guide.prompt}`
+    }
+    if (p === 'define') {
+      return `Define “${step}” on ${project}: ${guide.prompt}`
+    }
+    if (p === 'research') {
+      return `Research for ${project}: ${guide.prompt}`
+    }
+    if (p === 'sketch') {
+      return view === 'brand'
+        ? `Sketch/draft next hole only on Design (message → palette → type). Low detail.`
+        : `Sketch “${step}”: ${guide.prompt}`
+    }
+    if (p === 'design') {
+      return `Design “${step}”: ${guide.prompt}`
+    }
+    if (p === 'review') {
+      return `Review “${step}”: ${guide.prompt}`
+    }
+    if (p === 'deliver') {
+      return `Deliver ${project}: ${guide.prompt}`
+    }
   }
-  if (p === 'research') {
-    return `Research for ${project}: pin real refs (not vibes only). Star ≤6 for the pack. Set a timer so you don’t live in the rabbit hole.`
-  }
-  if (p === 'ideate') {
-    return `Ideate “${step}”: force 5–8 messy directions. Opposite ideas count. Don’t marry the first spark.`
-  }
-  if (p === 'sketch') {
-    return view === 'brand'
-      ? `Sketch/draft next hole only on Design (message → palette → type). Low detail.`
-      : `Sketch “${step}”: 2–3 rough options max. One primary path in words before polish.`
-  }
-  if (p === 'design') {
-    return `Design “${step}”: one accent for actions, readable body type, intentional space. Does this look serve the goal — or only look busy?`
-  }
-  if (p === 'review') {
-    return `Review “${step}”: ask “Does this feel clear / hopeful?” not “Do you like it?” Fix what serves the goal.`
-  }
-  if (p === 'deliver') {
-    return `Deliver ${project}: print or vector PDF, organized handoff, one line — what worked and what felt like you.`
-  }
+
   return activityTip(activity)
 }
 

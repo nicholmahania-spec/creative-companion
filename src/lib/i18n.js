@@ -37,7 +37,7 @@ const EN = {
   pathPlain: {
     define: 'What are we making? Who is it for? One clear goal.',
     research: 'Collect refs. Star up to 6. Stay curious, timed.',
-    ideate: 'Many directions fast. No judging. Pin what sparks.',
+    ideate: 'Many directions; shortlist A/B/C. No judging. Pin what sparks.',
     sketch: 'Rough drafts. 2–3 options. One step on screen.',
     design: 'Type, color, voice, layout — live artboard.',
     review: 'Show it. Ask if it feels right. Revise for the goal.',
