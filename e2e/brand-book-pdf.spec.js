@@ -23,7 +23,7 @@ test.describe('Brand book PDF', () => {
     ).toBeVisible()
     // Fresh project is thin — missing summary + next-gap CTA
     await expect(page.getByText(/Still thin:/i)).toBeVisible()
-    const fixGap = page.getByRole('button', { name: /Fix next gap/i })
+    const fixGap = page.getByRole('button', { name: /^Fix next gap/i })
     await expect(fixGap).toBeVisible()
     await fixGap.click()
     // Earliest gap for a bare project is usually Research (after define name)

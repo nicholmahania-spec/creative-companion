@@ -49,6 +49,13 @@ test.describe('Soft Signal demo', () => {
     }
 
     const path = await pathNav(page)
+    // Soft Signal seeds content — progress pill should show > 0
+    const pill = page.locator('.journey-progress-pill')
+    await expect(pill).toBeVisible()
+    const pillText = await pill.innerText()
+    const n = Number(String(pillText).split('/')[0])
+    expect(n).toBeGreaterThanOrEqual(3)
+
     await path.getByRole('button', { name: /Step 1: Define/i }).click()
     await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
     await expect(page.locator('#detective-goal')).toBeVisible({
@@ -56,5 +63,12 @@ test.describe('Soft Signal demo', () => {
     })
     const goal = await page.locator('#detective-goal').inputValue()
     expect(goal.length).toBeGreaterThan(10)
+
+    // Design has Gap · G control
+    await path.getByRole('button', { name: /Step 5: Design/i }).click()
+    await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: /Gap · G/i })
+    ).toBeVisible()
   })
 })

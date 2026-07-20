@@ -8509,6 +8509,36 @@ html[data-reduce-motion='true'] *::after {
   white-space: nowrap;
 }
 
+.journey-progress-pill {
+  appearance: none;
+  margin-left: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.journey-progress-pill:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+.journey-progress-pill.is-partial {
+  border-color: color-mix(in srgb, var(--accent, #6366f1) 45%, var(--border-subtle));
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--accent, #6366f1) 8%, transparent);
+}
+.journey-progress-pill.is-full {
+  border-color: var(--accent-growth, #0f766e);
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--accent-growth, #0f766e) 12%, transparent);
+}
+
 .palette-roles-row {
   display: flex;
   flex-wrap: wrap;

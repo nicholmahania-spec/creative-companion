@@ -43,6 +43,10 @@ test.describe('Command palette', () => {
     const input = page.locator(
       'input.command-input, input[aria-label="Filter commands"]'
     )
+    // Wave: palette shows N/7 progress in gap action label
+    await expect(
+      page.getByRole('option', { name: /Fix next process gap \(\d+\/7\)/i })
+    ).toBeVisible({ timeout: 5000 })
     await input.fill('Fix next')
     await page.keyboard.press('Enter')
     await expect(page.locator('h1.page-title').first()).toBeVisible({

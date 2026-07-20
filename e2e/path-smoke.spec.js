@@ -14,24 +14,32 @@ test.describe('Creative Companion path smoke', () => {
 
     const path = await pathNav(page)
     await expect(path).toBeVisible()
+    // Wave: path bar N/7 process pill
+    await expect(page.locator('.journey-progress-pill')).toBeVisible()
+    await expect(page.locator('.journey-progress-pill')).toContainText(/\/7/)
 
     await path.getByRole('button', { name: /Step 1: Define/i }).click()
     await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
 
     await path.getByRole('button', { name: /Step 2: Research/i }).click()
     await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Gap · G/i })).toBeVisible()
 
     await path.getByRole('button', { name: /Step 3: Ideate/i }).click()
     await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Gap · G/i })).toBeVisible()
 
     await path.getByRole('button', { name: /Step 4: Sketch/i }).click()
     await expect(page.getByRole('heading', { name: 'Sketch' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Gap · G/i })).toBeVisible()
 
     await path.getByRole('button', { name: /Step 5: Design/i }).click()
     await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Gap · G/i })).toBeVisible()
 
     await path.getByRole('button', { name: /Step 6: Review/i }).click()
     await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Gap · G/i })).toBeVisible()
 
     await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
     await expect(

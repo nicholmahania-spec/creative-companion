@@ -30,7 +30,7 @@ test.describe('Process walk (artifacts)', () => {
     await page.getByRole('button', { name: /Fill brief from sheet/i }).click()
     // Define shows Fix next gap · G
     await expect(
-      page.getByRole('button', { name: /Fix next gap/i }).first()
+      page.getByRole('button', { name: /Fix next gap · G|^Fix next gap/i }).first()
     ).toBeVisible()
     await page.getByRole('button', { name: /Go to Research/i }).first().click()
 

@@ -363,6 +363,24 @@ function App() {
     .filter((m) => m.projectId == null || m.projectId === activeProjectId)
     .slice()
     .sort((a, b) => (a.boardOrder ?? 0) - (b.boardOrder ?? 0))
+
+  /** Shared path progress (must stay above any early return — Rules of Hooks) */
+  const pathProgressCtx = useMemo(
+    () => ({
+      project: activeProject,
+      moodItems: deskMood,
+      tasks: deskTasks,
+      sparkIndex,
+      palette: projectPalette,
+    }),
+    [activeProject, deskMood, deskTasks, sparkIndex, projectPalette]
+  )
+  const pathDoneCount = useMemo(
+    () =>
+      pathProgressSummary(JOURNEY_STEPS, pathProgressCtx).filter((r) => r.done)
+        .length,
+    [pathProgressCtx]
+  )
   const completedCount = doneTasks.length
   const progressPercent =
     deskTasks.length > 0
@@ -552,12 +570,20 @@ function App() {
   /** Jump to earliest incomplete process step + focus a useful field */
   const goToNextProcessGap = useCallback(() => {
     const st = useAppStore.getState()
+    const pid = st.currentProjectId
     const project =
-      st.projects?.find((p) => p.id === st.currentProjectId) || null
+      st.projects?.find((p) => p.id === pid) || null
+    // Scope mood/tasks to active project (match pathProgressCtx / desk filters)
+    const moodItems = (st.moodItems || []).filter(
+      (m) => m.projectId == null || m.projectId === pid
+    )
+    const tasks = (st.tasks || []).filter(
+      (t) => t.projectId == null || t.projectId === pid
+    )
     const gap = pathFirstGap(JOURNEY_STEPS, {
       project,
-      moodItems: st.moodItems || [],
-      tasks: st.tasks || [],
+      moodItems,
+      tasks,
       sparkIndex: st.sparkIndex || 0,
       palette: project?.palette || [],
     })
@@ -723,7 +749,10 @@ function App() {
       },
       {
         id: 'fix-next-gap',
-        label: 'Fix next process gap',
+        label:
+          pathDoneCount >= 7
+            ? 'Process full · open Deliver'
+            : `Fix next process gap (${pathDoneCount}/7)`,
         hint: 'G',
         run: () => goToNextProcessGap(),
       },
@@ -737,6 +766,7 @@ function App() {
     bumpDesignVersion,
     forcedBreak,
     goToNextProcessGap,
+    pathDoneCount,
   ])
 
   const commandFiltered = useMemo(() => {
@@ -2457,7 +2487,28 @@ function App() {
               )
             })}
           </ol>
-          {!journeyActive && (
+          {journeyActive ? (
+            <button
+              type="button"
+              className={`journey-progress-pill${
+                pathDoneCount >= 7 ? ' is-full' : ''
+              }${pathDoneCount > 0 && pathDoneCount < 7 ? ' is-partial' : ''}`}
+              data-done={pathDoneCount}
+              onClick={() => goToNextProcessGap()}
+              title={
+                pathDoneCount >= 7
+                  ? 'Process full · open Deliver'
+                  : `Process ${pathDoneCount}/7 · Fix next gap (G)`
+              }
+              aria-label={
+                pathDoneCount >= 7
+                  ? 'Process complete, seven of seven steps have content'
+                  : `Process ${pathDoneCount} of 7 steps have content. Fix next gap.`
+              }
+            >
+              {pathDoneCount}/7
+            </button>
+          ) : (
             <span className="journey-tools-pill" role="status" aria-live="polite">
               Tools · {toolsLabelForView(activeView)}
             </span>
@@ -2489,6 +2540,14 @@ function App() {
                   total — then Design.
                 </p>
               </div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                title="Fix next process gap (G)"
+                onClick={() => goToNextProcessGap()}
+              >
+                Gap · G
+              </button>
             </div>
 
             {/* Current step owns the fold */}
@@ -3013,7 +3072,17 @@ function App() {
                     : ''}
                 </p>
               </div>
-              <span className="panel-count">{deskMood.length} pins</span>
+              <div className="finish-secondary-row">
+                <span className="panel-count">{deskMood.length} pins</span>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  title="Fix next process gap (G)"
+                  onClick={() => goToNextProcessGap()}
+                >
+                  Gap · G
+                </button>
+              </div>
             </div>
 
             <section className="panel brand-section process-tip-panel">
@@ -3583,6 +3652,7 @@ function App() {
               directions={activeProject?.directions}
               updateDirection={updateDirection}
               sparkIndex={sparkIndex || 0}
+              onFixNextGap={goToNextProcessGap}
             />
           </Suspense>
         )}
@@ -3681,6 +3751,14 @@ function App() {
                   }}
                 >
                   Bump
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  title="Fix next process gap (G)"
+                  onClick={() => goToNextProcessGap()}
+                >
+                  Gap · G
                 </button>
                 <button
                   type="button"
@@ -4372,6 +4450,14 @@ function App() {
                 </p>
               </div>
               <div className="finish-secondary-row">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  title="Fix next process gap (G)"
+                  onClick={() => goToNextProcessGap()}
+                >
+                  Gap · G
+                </button>
                 <button
                   type="button"
                   className="btn btn-secondary"
