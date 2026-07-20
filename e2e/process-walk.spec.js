@@ -82,9 +82,12 @@ test.describe('Process walk (artifacts)', () => {
     await page.getByRole('button', { name: 'Bump', exact: true }).click()
     await expect(page.locator('#design-version')).toHaveValue(/v[2-9]/)
 
-    // 6 Review — feedback notes
+    // 6 Review — process strip + feedback notes
     await path.getByRole('button', { name: /Step 6: Review/i }).click()
     await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible()
+    await expect(
+      page.getByText(/Process · \d+ of 7 steps have content/i)
+    ).toBeVisible()
     await page
       .locator('#feedback-notes')
       .fill('Hierarchy clear. Keep guest line quieter.')

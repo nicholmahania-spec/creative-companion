@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { pathStepHasContent, pathProgressSummary } from './journeyProgress'
+import {
+  pathStepHasContent,
+  pathProgressSummary,
+  pathMissingLabels,
+} from './journeyProgress'
 import { JOURNEY_STEPS } from './journey'
 
 describe('pathStepHasContent', () => {
@@ -47,5 +51,18 @@ describe('pathStepHasContent', () => {
     })
     expect(rows).toHaveLength(7)
     expect(rows.every((r) => r.done)).toBe(true)
+  })
+
+  it('pathMissingLabels lists empty steps', () => {
+    const missing = pathMissingLabels(JOURNEY_STEPS, {
+      project: { name: 'Only name' },
+      moodItems: [],
+      tasks: [],
+      sparkIndex: 0,
+      palette: [],
+    })
+    expect(missing.length).toBeGreaterThan(3)
+    expect(missing).toContain('Research')
+    expect(missing).toContain('Ideate')
   })
 })

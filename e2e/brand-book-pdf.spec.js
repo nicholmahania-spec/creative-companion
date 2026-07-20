@@ -21,6 +21,8 @@ test.describe('Brand book PDF', () => {
     await expect(
       page.getByText(/Process · \d+ of 7 steps have content/i)
     ).toBeVisible()
+    // Fresh project is thin — missing summary helps fill gaps
+    await expect(page.getByText(/Still thin:/i)).toBeVisible()
 
     const downloadBtn = page.getByRole('button', {
       name: /Download (brand book|vector) PDF/i,

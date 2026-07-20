@@ -64,7 +64,9 @@ import {
 import {
   pathStepHasContent,
   pathProgressSummary,
+  pathMissingLabels,
 } from './lib/journeyProgress'
+import PathProgressPanel from './components/PathProgressPanel'
 import {
   PROCESS_PHASES,
   REVIEW_QUESTIONS,
@@ -4346,6 +4348,31 @@ function App() {
                 </button>
               </div>
             </div>
+            {(() => {
+              const ctx = {
+                project: activeProject,
+                moodItems: deskMood,
+                tasks: deskTasks,
+                sparkIndex,
+                palette: projectPalette,
+              }
+              const rows = pathProgressSummary(JOURNEY_STEPS, ctx)
+              const doneN = rows.filter((p) => p.done).length
+              const missing = pathMissingLabels(JOURNEY_STEPS, ctx, (id) =>
+                pathLabel(locale, id)
+              )
+              return (
+                <PathProgressPanel
+                  steps={JOURNEY_STEPS}
+                  rows={rows}
+                  doneN={doneN}
+                  missing={missing}
+                  onOpenStep={setActiveView}
+                  labelForId={(id) => pathLabel(locale, id)}
+                  hint="Review with content in earlier steps — then Deliver."
+                />
+              )
+            })()}
             <section className="panel brand-section">
               <div className="brand-section-label">Leave-behind preview</div>
               <p className="panel-hint" style={{ marginTop: 0 }}>
@@ -4520,44 +4547,28 @@ function App() {
             </div>
 
             {(() => {
-              const progress = pathProgressSummary(JOURNEY_STEPS, {
+              const ctx = {
                 project: activeProject,
                 moodItems: deskMood,
                 tasks: deskTasks,
                 sparkIndex,
                 palette: projectPalette,
-              })
-              const doneN = progress.filter((p) => p.done).length
+              }
+              const rows = pathProgressSummary(JOURNEY_STEPS, ctx)
+              const doneN = rows.filter((p) => p.done).length
+              const missing = pathMissingLabels(JOURNEY_STEPS, ctx, (id) =>
+                pathLabel(locale, id)
+              )
               return (
-                <section
-                  className="panel brand-section deliver-path-progress"
-                  aria-label="Process progress"
-                >
-                  <div className="brand-section-label">
-                    Process · {doneN} of 7 steps have content
-                  </div>
-                  <ol className="deliver-progress-list">
-                    {progress.map((p) => (
-                      <li key={p.id}>
-                        <button
-                          type="button"
-                          className={`deliver-progress-chip${
-                            p.done ? ' is-done' : ''
-                          }`}
-                          onClick={() => setActiveView(p.view)}
-                        >
-                          <span aria-hidden="true">
-                            {p.done ? '✓' : p.num}
-                          </span>{' '}
-                          {pathLabel(locale, p.id) || p.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="panel-hint" style={{ marginBottom: 0 }}>
-                    Tap any step to fill gaps before the brand book PDF.
-                  </p>
-                </section>
+                <PathProgressPanel
+                  steps={JOURNEY_STEPS}
+                  rows={rows}
+                  doneN={doneN}
+                  missing={missing}
+                  onOpenStep={setActiveView}
+                  labelForId={(id) => pathLabel(locale, id)}
+                  hint="Tap any step to fill gaps before the brand book PDF."
+                />
               )
             })()}
 

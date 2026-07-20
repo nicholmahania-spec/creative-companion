@@ -73,3 +73,13 @@ export function pathProgressSummary(steps, ctx) {
     done: pathStepHasContent(s.id, ctx),
   }))
 }
+
+/**
+ * Labels of steps still empty (for “What’s missing” copy).
+ * @param {function(string): string} [labelForId]
+ */
+export function pathMissingLabels(steps, ctx, labelForId) {
+  return pathProgressSummary(steps, ctx)
+    .filter((r) => !r.done)
+    .map((r) => (labelForId ? labelForId(r.id) || r.label : r.label))
+}
