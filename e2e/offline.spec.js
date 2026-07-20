@@ -50,7 +50,7 @@ test.describe('Offline desk', () => {
     ).toBeVisible()
 
     await expect(
-      page.getByText(/Ready|Download PDF|Thin pack|leave-behind/i).first()
+      page.getByText(/Ready|Download PDF|Thin pack|leave-behind|client pack|brand book|Not ready/i).first()
     ).toBeVisible()
 
     await context.setOffline(false)

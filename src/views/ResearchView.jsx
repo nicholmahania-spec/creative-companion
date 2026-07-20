@@ -382,8 +382,8 @@ export default function ResearchView({
                               className={`mood-pin-star${item.inPack ? ' is-on' : ''}${item.packHero ? ' is-hero' : ''}`}
                               title={
                                 item.inPack
-                                  ? 'Remove from leave-behind'
-                                  : 'Include in leave-behind (max 6)'
+                                  ? 'Remove from client pack'
+                                  : 'Add to client pack (max 6)'
                               }
                               aria-pressed={!!item.inPack}
                               onClick={() => {
@@ -396,8 +396,8 @@ export default function ResearchView({
                                 else
                                   flashMicro(
                                     r.inPack
-                                      ? 'On leave-behind'
-                                      : 'Off leave-behind'
+                                      ? 'In client pack'
+                                      : 'Not in client pack'
                                   )
                               }}
                             >
@@ -734,8 +734,8 @@ export default function ResearchView({
                   }}
                 >
                   {boardLightbox.inPack
-                    ? '★ On leave-behind'
-                    : '☆ Add to leave-behind'}
+                    ? '★ In client pack'
+                    : '☆ Add to client pack'}
                 </button>
               </div>
             </div>

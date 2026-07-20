@@ -135,7 +135,7 @@ export default function ReviewView({
                         {ready.okCount}/{ready.checks.length}
                       </strong>{' '}
                       ready
-                      {ready.thin ? ' · still thin for client handoff' : ''}
+                      {ready.thin ? ' · not ready for the client yet' : ''}
                     </p>
                     <ul className="pack-ready-list">
                       {ready.checks.map((c) => (

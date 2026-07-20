@@ -113,8 +113,8 @@ export default function SketchView(props) {
                   </span>
                 </p>
                 <p className="page-sub" style={{ marginTop: '0.35rem' }}>
-                  2–3 drafts with a one-line why. Low polish. Aim under ~2 hours
-                  total — then Design.
+                  Make 2–3 rough drafts. Each needs one short “why.” Keep it
+                  simple. About 2 hours total — then Design.
                 </p>
               </div>
             </div>
@@ -352,7 +352,7 @@ export default function SketchView(props) {
               String(d.title || '').trim()
             ) && (
               <section className="panel brand-section sketch-directions-panel">
-                <div className="brand-section-label">Draft options (from Ideate)</div>
+                <div className="brand-section-label">Draft options (from Ideate · ideas)</div>
                 <div className="sketch-dir-chips">
                   {(activeProject.directions || [])
                     .filter((d) => String(d.title || '').trim())

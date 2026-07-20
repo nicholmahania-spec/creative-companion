@@ -550,13 +550,13 @@ export default function SettingsView(props) {
               </div>
             </div>
             <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
-              Creative Companion is a desk for ADHD creative work: one step at
-              a time, optional Helper, optional forced breaks, and brand
-              leave-behind export
-              {CLOUD ? ' — with optional cloud sync when configured.' : '.'}
+              Creative Companion is a calm desk for creative work (helpful for
+              ADHD): one step at a time, an optional Helper, optional break
+              locks, and a brand pack you can download
+              {CLOUD ? ' — plus optional cloud sync when set up.' : '.'}
               {' '}
-              Direction pack &amp; lockups — not a full design tool or Figma
-              replacement.
+              It is a direction pack (words, colors, logo rules) — not a full
+              design app like Figma.
             </p>
             <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
               <strong>Brand kit:</strong> On{' '}

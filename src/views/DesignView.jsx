@@ -220,7 +220,7 @@ export default function DesignView({
                   {i18nT(locale, 'ui.systemSub')}{' '}
                   <strong>{activeProject?.name || 'this project'}</strong>
                   {' · '}
-                  pack pins {deskMood.filter((m) => m.inPack).length}/6
+                  client pack {deskMood.filter((m) => m.inPack).length}/6
                 </p>
               </div>
               <div className="brand-template-actions">

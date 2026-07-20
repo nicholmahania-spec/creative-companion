@@ -52,8 +52,8 @@ describe('processGuide — 7 design steps', () => {
     )
   })
 
-  it('define prompt points at detective sheet', () => {
-    expect(getProcessPhase('define').prompt).toMatch(/Detective/i)
+  it('define prompt points at goal sheet', () => {
+    expect(getProcessPhase('define').prompt).toMatch(/goal|who|sentence/i)
   })
 })
 

@@ -122,8 +122,8 @@ export default function SparkView({
         <div>
           <h1 className="page-title">{title}</h1>
           <p className="page-sub">
-            Step 3 — messy is correct. Force many directions. Best idea often
-            hides in #6–7. Shortlist A/B/C; don’t marry the first.
+            Step 3 · Ideas. Make many rough options. Messy is fine. Keep your
+            best three as A, B, C. Do not stick to the first idea only.
           </p>
           <p className="panel-hint ideate-progress" style={{ marginTop: '0.35rem' }}>
             Sparks tried:{' '}

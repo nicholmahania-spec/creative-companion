@@ -70,7 +70,7 @@ test.describe('Soft Signal demo', () => {
     await expect(page.locator('.journey-gap-strip')).toBeVisible()
     await expect(page.locator('.journey-progress-pill')).toBeVisible()
     // Demo honesty: leave-behind ★ pins seeded (pack readiness)
-    await expect(page.getByText(/pack pins [1-9]\/6/i)).toBeVisible({
+    await expect(page.getByText(/client pack [1-9]\/6|pack pins [1-9]\/6/i)).toBeVisible({
       timeout: 5000,
     })
     // Brand kit fields seeded (messaging pillars)

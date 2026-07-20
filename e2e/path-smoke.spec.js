@@ -20,7 +20,7 @@ test.describe('Creative Companion path smoke', () => {
     await expect(page.locator('.journey-gap-strip')).toBeVisible()
     await expect(page.locator('.journey-gap-strip-btn')).toBeVisible()
     await expect(page.locator('.journey-gap-strip-btn')).toContainText(
-      /Next gap ·|Ship · brand book/i
+      /Next empty ·|Next gap ·|Download brand book|Ship · brand book/i
     )
     await expect(page.locator('.journey-still-thin')).toBeVisible()
     await expect(page.locator('.journey-still-thin-link').first()).toBeVisible()

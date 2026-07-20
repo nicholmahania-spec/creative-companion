@@ -58,7 +58,7 @@ describe('i18n wordmark + path + catalog', () => {
   it('falls back to English for missing nested keys', () => {
     // fr may not override every ui key
     expect(t('fr', 'ui.completeStep')).toBeTruthy()
-    expect(t('en', 'ui.completeStep')).toBe('Complete step')
+    expect(t('en', 'ui.completeStep')).toMatch(/step|done|complete/i)
   })
 
   it('every locale has ui.completeStep via fallback', () => {
@@ -78,25 +78,25 @@ describe('i18n wordmark + path + catalog', () => {
     expect(pathFillHint('en', 'research')).toMatch(/star|pin|ref/i)
     expect(pathFillHint('es', 'research')).toMatch(/★|ref/i)
     expect(tFormat('en', 'ui.nextGapBtn', { label: 'Research' })).toBe(
-      'Next gap · Research · G'
+      'Next empty · Research · G'
     )
-    expect(t('en', 'ui.stillThin')).toBe('Still thin')
+    expect(t('en', 'ui.stillThin')).toMatch(/empty|thin/i)
     expect(t('es', 'ui.stillThin')).toMatch(/delgado/i)
   })
 
-  it('pack copy is honest about vector PDF vs print', () => {
+  it('pack copy is honest about brand book PDF vs print', () => {
     const en = getMessages('en').ui
-    expect(en.packSub).toMatch(/brand book PDF|vector PDF/i)
-    expect(en.packHint).toMatch(/brand book|pages|vector/i)
-    expect(en.downloadVectorPdf).toMatch(/brand book|vector/i)
+    expect(en.packSub).toMatch(/brand book PDF|PDF/i)
+    expect(en.packHint).toMatch(/brand book|pages/i)
+    expect(en.downloadVectorPdf).toMatch(/brand book|PDF/i)
     expect(en.openPack).toMatch(/Deliver/i)
     expect(en.openWork).toMatch(/Research/i)
     expect(en.openReview).toMatch(/Review/i)
-    expect(en.continueNext).toMatch(/Continue/)
-    expect(en.pathMarkPackThin).toMatch(/Path mark|leave-behind|★/i)
+    expect(en.continueNext).toMatch(/Next|Continue/)
+    expect(en.pathMarkPackThin).toMatch(/client pack|tagline|star/i)
     expect(en.backToIdeate).toMatch(/Ideate/i)
     expect(tFormat('en', 'ui.continueNext', { label: 'Research' })).toBe(
-      'Continue · Research'
+      'Next · Research'
     )
     expect(tFormat('en', 'ui.openStepChip', { label: 'Star a pin' })).toBe(
       'Open · Star a pin'

@@ -145,7 +145,7 @@ describe('pathStepHasContent', () => {
   it('pathStepFillHint returns short how-to for each step', () => {
     expect(pathStepFillHint('research')).toMatch(/star|pin|ref/i)
     expect(pathStepFillHint('sketch')).toMatch(/step/i)
-    expect(pathStepFillHint('design')).toMatch(/tagline|palette|version/i)
+    expect(pathStepFillHint('design')).toMatch(/tagline|color|palette|logo|voice/i)
     expect(pathStepFillHint('unknown')).toMatch(/content/i)
   })
 

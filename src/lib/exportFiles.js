@@ -358,7 +358,7 @@ export function packReadiness(pack) {
   const checks = [
     {
       id: 'detective',
-      label: 'Detective goal / audience',
+      label: 'Goal / who it is for',
       ok: hasDetective || hasBrief,
       view: 'project',
       section: null,
@@ -379,7 +379,7 @@ export function packReadiness(pack) {
     },
     {
       id: 'pins',
-      label: '★ Leave-behind pins',
+      label: '★ Starred pictures',
       ok: hasPins,
       view: 'studio',
       section: null,
@@ -400,7 +400,7 @@ export function packReadiness(pack) {
     },
     {
       id: 'handoff',
-      label: 'Handoff note',
+      label: 'Note for the client',
       ok: hasHandoff,
       view: 'finish',
       section: null,

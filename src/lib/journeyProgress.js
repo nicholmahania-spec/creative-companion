@@ -198,13 +198,13 @@ export function pathGapFocusSelector(stepId) {
 
 /** English fill hints — single source; i18n pathFillHint falls back here. */
 export const PATH_FILL_HINTS = {
-  define: 'Name, goal, or audience',
-  research: 'Star a pin ★ or add 2+ refs',
-  ideate: 'A/B/C title or pin a spark note',
-  sketch: 'Capture one finishable step',
-  design: 'Tagline, voice, logo, or your own palette',
-  review: 'Feedback notes or leave-behind pin',
-  deliver: 'Handoff, learnings, or leave-behind',
+  define: 'Project name, goal, or who it is for',
+  research: 'Star a picture ★ or add 2+ refs',
+  ideate: 'A/B/C title or save an idea note',
+  sketch: 'Write one step you can finish',
+  design: 'Tagline, voice, logo, or your own colors',
+  review: 'Feedback notes or a starred picture',
+  deliver: 'Client note, learnings, or pack pieces',
   default: 'Add a little content',
 }
 
