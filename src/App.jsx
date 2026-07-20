@@ -198,6 +198,7 @@ function App() {
   const toggleTask = useAppStore((s) => s.toggleTask)
   const updateTaskTitle = useAppStore((s) => s.updateTaskTitle)
   const updateTaskMeta = useAppStore((s) => s.updateTaskMeta)
+  const updateTaskWhy = useAppStore((s) => s.updateTaskWhy)
   const removeTask = useAppStore((s) => s.removeTask)
   const breakIntoSteps = useAppStore((s) => s.breakIntoSteps)
   const addMoodPin = useAppStore((s) => s.addMoodPin)
@@ -2920,6 +2921,7 @@ function App() {
               toggleTask={toggleTask}
               updateTaskTitle={updateTaskTitle}
               updateTaskMeta={updateTaskMeta}
+              updateTaskWhy={updateTaskWhy}
               removeTask={removeTask}
               breakIntoSteps={breakIntoSteps}
               setTaskDueDate={setTaskDueDate}

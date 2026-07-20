@@ -735,11 +735,19 @@ const useAppStore = create(
           ),
         })),
 
-      /** One-line “why it fits the goal” on a desk step */
+      /** Status tag shown under a desk step (energy, source) — not the why */
       updateTaskMeta: (id, meta) =>
         set((state) => ({
           tasks: state.tasks.map((t) =>
             t.id === id ? { ...t, meta: String(meta || '') } : t
+          ),
+        })),
+
+      /** One-line "why it fits the goal" — distinct from meta's auto-tags */
+      updateTaskWhy: (id, why) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === id ? { ...t, why: String(why || '') } : t
           ),
         })),
 

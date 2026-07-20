@@ -25,6 +25,15 @@ function hasExplicitColorRoles(project = {}) {
   return Object.values(r).some((v) => String(v || '').trim())
 }
 
+/** Explicit color roles count only once every assigned role has its "why" filled. */
+function hasJustifiedColorRoles(project = {}) {
+  if (!hasExplicitColorRoles(project)) return false
+  const roles = project.colorRoles || {}
+  const why = project.colorRoleWhy || {}
+  const assigned = Object.keys(roles).filter((k) => String(roles[k] || '').trim())
+  return assigned.length > 0 && assigned.every((r) => String(why[r] || '').trim())
+}
+
 /**
  * Whether a path step has meaningful content (progress / is-done).
  * Shared by path bar + Deliver process strip.
@@ -62,9 +71,10 @@ export function pathStepHasContent(stepId, ctx = {}) {
       return mood.length >= 2
     }
     case 'ideate': {
-      // Honest fill: direction shortlist or Ideate spark pin (not Research notes)
-      const hasDirection = (project.directions || []).some((d) =>
-        String(d.title || d.note || '').trim()
+      // Honest fill: a direction needs both a title AND a why, not either —
+      // matches the "no judging without a reason" copy on this step.
+      const hasDirection = (project.directions || []).some(
+        (d) => String(d.title || '').trim() && String(d.note || '').trim()
       )
       const hasSparkPin = mood.some(
         (m) =>
@@ -74,8 +84,13 @@ export function pathStepHasContent(stepId, ctx = {}) {
       )
       return !!(hasDirection || hasSparkPin)
     }
-    case 'sketch':
-      return tasks.length > 0
+    case 'sketch': {
+      if (!tasks.length) return false
+      // "Each draft needs one short why" is the step's own stated rule —
+      // any still-active (not completed) task must have it filled.
+      const active = tasks.filter((t) => !t.completed)
+      return active.every((t) => String(t.why || '').trim())
+    }
     case 'design': {
       // Craft signals only — stock default palette alone does not count
       const paletteCraft =
@@ -85,7 +100,7 @@ export function pathStepHasContent(stepId, ctx = {}) {
         project.voice?.trim() ||
         project.logoImage ||
         String(project.logoWordmark || '').trim() ||
-        hasExplicitColorRoles(project) ||
+        hasJustifiedColorRoles(project) ||
         paletteCraft
       )
     }
@@ -94,10 +109,18 @@ export function pathStepHasContent(stepId, ctx = {}) {
         project.feedbackNotes?.trim() ||
         (project.tagline?.trim() && mood.some((m) => m.inPack))
       )
-    case 'deliver':
-      // Deliver-specific action only — tagline/pins belong to earlier steps
-      // and must not make the final step look done before it's touched.
-      return !!(project.handoffNote?.trim() || project.learnings?.trim())
+    case 'deliver': {
+      const hasNote = !!(
+        project.handoffNote?.trim() || project.learnings?.trim()
+      )
+      const words = String(project.detective?.brandWords || '')
+        .split(',')
+        .map((w) => w.trim())
+        .filter(Boolean)
+      if (!words.length) return hasNote
+      const checked = project.deliverWordsChecked || {}
+      return hasNote && words.every((w) => checked[w])
+    }
     default:
       return false
   }

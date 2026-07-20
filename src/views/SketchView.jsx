@@ -62,6 +62,7 @@ export default function SketchView(props) {
     toggleTask,
     updateTaskTitle,
     updateTaskMeta,
+    updateTaskWhy,
     removeTask,
     breakIntoSteps,
     setTaskDueDate,
@@ -250,9 +251,9 @@ export default function SketchView(props) {
                   <input
                     id="step-why"
                     className="field-input"
-                    value={nextTask.meta || ''}
+                    value={nextTask.why || ''}
                     onChange={(e) =>
-                      updateTaskMeta(nextTask.id, e.target.value)
+                      updateTaskWhy(nextTask.id, e.target.value)
                     }
                     placeholder="e.g. Quiet hierarchy matches the detective goal"
                     aria-label="Why this draft fits the goal"
@@ -366,7 +367,8 @@ export default function SketchView(props) {
                             id: Date.now() + Math.random(),
                             title: `Draft ${d.label}: ${d.title}`,
                             energy: 'med',
-                            meta: d.note || 'Direction option',
+                            meta: 'Direction option',
+                            why: d.note || '',
                             completed: false,
                             seeded: false,
                             projectId:
@@ -404,7 +406,8 @@ export default function SketchView(props) {
                         id: base + i + 1,
                         title: `Draft ${d.label}: ${d.title}`,
                         energy: 'med',
-                        meta: d.note || 'Direction option',
+                        meta: 'Direction option',
+                        why: d.note || '',
                         completed: false,
                         seeded: false,
                         projectId:
