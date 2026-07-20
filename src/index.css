@@ -9293,7 +9293,8 @@ html[data-reduce-motion='true'] *::after {
   gap: 0;
 }
 
-.palette-swatch-btn {
+.palette-swatch-btn,
+.palette-role-swatch-btn {
   flex: 1;
   min-height: 52px;
   border: none;

@@ -698,7 +698,7 @@ export default function DesignView({
                     <button
                       key={`${c}-role-${i}`}
                       type="button"
-                      className="palette-swatch-btn"
+                      className="palette-role-swatch-btn"
                       style={{ background: c }}
                       title={`Set as ${brandRoleAssign}`}
                       onClick={() => {
