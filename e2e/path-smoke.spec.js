@@ -46,7 +46,7 @@ test.describe('Creative Companion path smoke', () => {
     await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
     await expect(page.locator('.research-still-thin')).toBeVisible()
     await expect(page.locator('.research-still-thin')).toContainText(
-      /Pin at least one ref/i
+      /Star a pin|2\+|ref/i
     )
     await expect(page.getByRole('button', { name: /^Gap · G$/i })).toHaveCount(0)
 

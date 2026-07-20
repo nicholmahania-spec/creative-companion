@@ -214,11 +214,11 @@ Baseline: `REDLINE_v1.3.0_BEAUTIFY.md` (v1.2 era). Current CSS scan:
 **None** (for these five audits)
 
 ## Open P2 (optional polish backlog)
-1. Soften Research hasContent to prefer ★ pin for pack readiness alignment  
-2. Gap-strip density on mobile (collapse still-thin further)  
-3. Dark mode path visual spot-check  
-4. Settings “Synced to cloud” → i18n humanize  
-5. App.jsx modularization (Design/Research extracts)
+1. ~~Soften Research hasContent to prefer ★ pin~~ → **Closed v1.48** (`inPack || ≥2 pins`)  
+2. ~~Gap-strip density on mobile~~ → **Closed v1.48**  
+3. ~~Dark mode path visual spot-check~~ → **Closed v1.48** (growth teal, deep chrome)  
+4. ~~Settings “Synced to cloud” → i18n humanize~~ → **Closed v1.48** (`ui.syncedOk`)  
+5. ~~App.jsx modularization (gap strip)~~ → **Closed v1.48** (`JourneyGapStrip.jsx`); Design/Research extracts remain optional
 
 ## Accepted (not residuals)
 - Soft craft gates (user can skip steps via path) — ADHD  
@@ -247,9 +247,9 @@ Baseline: `REDLINE_v1.3.0_BEAUTIFY.md` (v1.2 era). Current CSS scan:
 - [ ] Thin PDF confirm path once  
 
 ### Optional polish before “flawless”
-- [ ] B2 mobile strip density  
-- [ ] H1 Settings sync toast i18n  
-- [ ] Dark mode journey pass  
+- [x] B2 mobile strip density — v1.48  
+- [x] H1 Settings sync toast i18n — v1.48  
+- [x] Dark mode journey pass — v1.48  
 
 ---
 

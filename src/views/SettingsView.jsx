@@ -331,11 +331,11 @@ export default function SettingsView(props) {
                     if (result.ok) {
                       setSyncState('ok')
                       setSyncError('')
-                      flashToast('Synced to cloud')
+                      flashToast(i18nT(locale, 'ui.syncedOk'))
                     } else {
                       setSyncState('error')
-                      setSyncError(result.error || 'Sync failed')
-                      flashToast(result.error || 'Sync failed')
+                      setSyncError(result.error || i18nT(locale, 'ui.syncFail'))
+                      flashToast(result.error || i18nT(locale, 'ui.syncFail'))
                     }
                   }}
                 >

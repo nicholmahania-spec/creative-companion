@@ -471,7 +471,7 @@ const OVERRIDES = {
     },
     fillHint: {
       define: 'Nombre, meta o audiencia',
-      research: 'Fija al menos una ref',
+      research: 'Marca ★ o añade 2+ refs',
       ideate: 'Chispa, A/B/C o nota de idea',
       sketch: 'Captura un paso terminable',
       design: 'Eslogan, paleta o versión',

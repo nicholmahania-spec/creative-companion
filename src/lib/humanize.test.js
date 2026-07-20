@@ -27,7 +27,19 @@ describe('humanize — no legacy 4-step or Figma in Helper voice', () => {
     expect(t('en', 'ui.pdfFailed')).toMatch(/try again|Couldn/i)
     expect(t('en', 'ui.stepComplete')).toMatch(/nice|done/i)
     expect(t('en', 'ui.queueClear')).not.toBe('Queue clear')
+    expect(t('en', 'ui.syncedOk')).toMatch(/sync/i)
     expect(t('es', 'ui.pdfFailed')).toMatch(/otra vez|No se/i)
     expect(t('es', 'ui.stepComplete')).toMatch(/bien|listo/i)
+  })
+
+  it('buddy queue-empty tip avoids stiff “Queue clear” opener', () => {
+    const tip = activityTip({
+      view: 'flow',
+      nextTaskTitle: '',
+      doneCount: 2,
+      projectName: 'Demo',
+    })
+    expect(tip).not.toMatch(/^Queue clear\b/)
+    expect(tip).toMatch(/Queue empty|No step/i)
   })
 })

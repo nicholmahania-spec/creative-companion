@@ -22,10 +22,20 @@ describe('pathStepHasContent', () => {
     ).toBe(true)
   })
 
-  it('research needs pins', () => {
+  it('research prefers ★ pin or 2+ refs (single unstarred is thin)', () => {
     expect(pathStepHasContent('research', { moodItems: [] })).toBe(false)
     expect(
       pathStepHasContent('research', { moodItems: [{ id: 1 }] })
+    ).toBe(false)
+    expect(
+      pathStepHasContent('research', {
+        moodItems: [{ id: 1, inPack: true }],
+      })
+    ).toBe(true)
+    expect(
+      pathStepHasContent('research', {
+        moodItems: [{ id: 1 }, { id: 2 }],
+      })
     ).toBe(true)
   })
 
@@ -133,7 +143,7 @@ describe('pathStepHasContent', () => {
   })
 
   it('pathStepFillHint returns short how-to for each step', () => {
-    expect(pathStepFillHint('research')).toMatch(/pin/i)
+    expect(pathStepFillHint('research')).toMatch(/star|pin|ref/i)
     expect(pathStepFillHint('sketch')).toMatch(/step/i)
     expect(pathStepFillHint('design')).toMatch(/tagline|palette|version/i)
     expect(pathStepFillHint('unknown')).toMatch(/content/i)

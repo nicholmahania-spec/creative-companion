@@ -8529,9 +8529,9 @@ html[data-reduce-motion='true'] *::after {
   color: var(--text-primary);
 }
 .journey-progress-pill.is-partial {
-  border-color: color-mix(in srgb, var(--accent, #6366f1) 45%, var(--border-subtle));
+  border-color: color-mix(in srgb, var(--accent-growth, #0f766e) 45%, var(--border-subtle));
   color: var(--text-primary);
-  background: color-mix(in srgb, var(--accent, #6366f1) 8%, transparent);
+  background: color-mix(in srgb, var(--accent-growth, #0f766e) 8%, transparent);
 }
 .journey-progress-pill.is-full {
   border-color: var(--accent-growth, #0f766e);
@@ -8565,8 +8565,9 @@ html[data-reduce-motion='true'] *::after {
   background: color-mix(in srgb, var(--accent-growth, #0f766e) 10%, transparent);
 }
 .step-fill-chip.is-open {
-  border-color: color-mix(in srgb, var(--accent, #6366f1) 40%, var(--border-subtle));
+  border-color: color-mix(in srgb, var(--accent-growth, #0f766e) 35%, var(--border-subtle));
   color: var(--text-primary);
+  background: color-mix(in srgb, var(--accent-growth, #0f766e) 6%, transparent);
 }
 .journey-gap-strip-btn {
   appearance: none;
@@ -8632,7 +8633,7 @@ html[data-reduce-motion='true'] *::after {
   padding: 0.55rem 0.75rem;
   border-radius: 0.65rem;
   border: 1px solid var(--border-subtle);
-  background: color-mix(in srgb, var(--accent, #6366f1) 6%, transparent);
+  background: color-mix(in srgb, var(--accent-growth, #0f766e) 8%, transparent);
 }
 .define-first-step-chip .panel-hint {
   flex: 1 1 12rem;
@@ -8651,25 +8652,48 @@ html[data-reduce-motion='true'] *::after {
 }
 @media (max-width: 640px) {
   .journey-gap-strip {
-    padding: 0.3rem 0.65rem 0.4rem;
-    gap: 0.35rem 0.5rem;
+    padding: 0.22rem 0.5rem 0.28rem;
+    gap: 0.25rem 0.4rem;
   }
   .step-fill-chip {
-    font-size: 0.68rem;
-    padding: 0.15rem 0.45rem;
-    max-width: 100%;
+    font-size: 0.65rem;
+    padding: 0.12rem 0.4rem;
+    max-width: min(11rem, 52vw);
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  /* Collapse still-thin to a single line; full list remains on N/7 title + G */
   .journey-still-thin {
+    flex: 1 1 auto;
+    order: 0;
+    font-size: 0.64rem;
+    min-width: 0;
+    max-width: 42vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .journey-still-thin strong {
+    display: none;
+  }
+  .journey-leavebehind-thin {
     flex-basis: 100%;
-    order: 3;
-    font-size: 0.68rem;
+    font-size: 0.64rem;
+    order: 4;
   }
   .journey-gap-strip-btn {
-    font-size: 0.72rem;
-    padding: 0.22rem 0.55rem;
+    font-size: 0.68rem;
+    padding: 0.18rem 0.48rem;
     margin-left: auto;
+    flex-shrink: 0;
+  }
+}
+@media (max-width: 380px) {
+  .journey-still-thin {
+    display: none;
+  }
+  .step-fill-chip {
+    max-width: 46vw;
   }
 }
 
@@ -9214,11 +9238,85 @@ html[data-reduce-motion='true'] *::after {
 
 .app.deep .journey-step {
   color: var(--text-secondary);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--bg-elevated, #1c1917) 80%, transparent);
 }
 
 .app.deep .journey-step.is-active {
   color: var(--text-primary);
-  border-color: rgba(250, 250, 249, 0.35);
+  border-color: rgba(15, 118, 110, 0.55);
+  background: color-mix(in srgb, #0f766e 18%, var(--bg-elevated, #1c1917));
+}
+
+.app.deep .journey-step.is-active .journey-num {
+  background: #0f766e;
+  color: #fafaf9;
+}
+
+.app.deep .journey-step.is-done:not(.is-active) {
+  border-color: rgba(13, 148, 136, 0.35);
+  color: var(--text-secondary);
+}
+
+.app.deep .journey-step.is-done:not(.is-active) .journey-num {
+  background: rgba(13, 148, 136, 0.28);
+  color: #5eead4;
+}
+
+.app.deep .journey-progress-pill {
+  background: color-mix(in srgb, var(--bg-muted) 70%, transparent);
+  color: var(--text-secondary);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.app.deep .journey-progress-pill.is-partial {
+  border-color: color-mix(in srgb, #0f766e 55%, rgba(255, 255, 255, 0.12));
+  color: var(--text-primary);
+  background: color-mix(in srgb, #0f766e 14%, transparent);
+}
+
+.app.deep .journey-progress-pill.is-full {
+  border-color: color-mix(in srgb, #0f766e 65%, rgba(255, 255, 255, 0.12));
+  background: color-mix(in srgb, #0f766e 18%, transparent);
+}
+
+.app.deep .journey-gap-strip {
+  background: color-mix(in srgb, var(--bg-muted) 45%, transparent);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.app.deep .step-fill-chip {
+  background: color-mix(in srgb, var(--bg-elevated, #1c1917) 70%, transparent);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--text-secondary);
+}
+
+.app.deep .step-fill-chip.is-open {
+  border-color: color-mix(in srgb, #0f766e 40%, rgba(255, 255, 255, 0.12));
+  color: var(--text-primary);
+  background: color-mix(in srgb, #0f766e 10%, transparent);
+}
+
+.app.deep .step-fill-chip.is-filled {
+  border-color: color-mix(in srgb, #0f766e 50%, rgba(255, 255, 255, 0.12));
+  background: color-mix(in srgb, #0f766e 14%, transparent);
+  color: var(--text-primary);
+}
+
+.app.deep .journey-gap-strip-btn {
+  background: color-mix(in srgb, var(--bg-elevated, #1c1917) 85%, transparent);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--text-primary);
+}
+
+.app.deep .journey-gap-strip-btn.is-ship {
+  border-color: color-mix(in srgb, #0f766e 55%, rgba(255, 255, 255, 0.12));
+  background: color-mix(in srgb, #0f766e 16%, transparent);
+}
+
+.app.deep .define-first-step-chip {
+  background: color-mix(in srgb, #0f766e 12%, transparent);
+  border-color: color-mix(in srgb, #0f766e 35%, rgba(255, 255, 255, 0.12));
 }
 
 .app.deep .empty-state-body,
@@ -10227,14 +10325,6 @@ html[data-reduce-motion='true'] *::after {
   background-image: none;
   background-color: var(--bg-canvas);
 }
-.app.deep .journey-step.is-active {
-  border-color: rgba(15, 118, 110, 0.55);
-  background: color-mix(in srgb, #0F766E 18%, var(--bg-elevated));
-}
-.app.deep .journey-step.is-active .journey-num {
-  background: #0F766E;
-  color: #fff;
-}
 /* Calmer field focus — stone ring */
 input:focus,
 textarea:focus,
@@ -10749,16 +10839,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .pack-more-row {
   margin-top: 0.45rem;
-}
-
-.app.deep .journey-step.is-active {
-  border-color: rgba(231, 229, 228, 0.35);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.app.deep .journey-step.is-active .journey-num {
-  background: #e7e5e4;
-  color: #0c0a09;
 }
 
 /* Board wall-first v1.16 */

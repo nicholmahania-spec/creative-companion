@@ -75,8 +75,8 @@ describe('i18n wordmark + path + catalog', () => {
   })
 
   it('pathFillHint and strip templates resolve', () => {
-    expect(pathFillHint('en', 'research')).toMatch(/pin/i)
-    expect(pathFillHint('es', 'research')).toMatch(/ref|Fija/i)
+    expect(pathFillHint('en', 'research')).toMatch(/star|pin|ref/i)
+    expect(pathFillHint('es', 'research')).toMatch(/★|ref/i)
     expect(tFormat('en', 'ui.nextGapBtn', { label: 'Research' })).toBe(
       'Next gap · Research · G'
     )

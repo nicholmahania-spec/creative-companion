@@ -52,8 +52,11 @@ export function pathStepHasContent(stepId, ctx = {}) {
         project.detective?.goal?.trim() ||
         project.detective?.audience?.trim()
       )
-    case 'research':
-      return mood.length > 0
+    case 'research': {
+      // Prefer ★ leave-behind pin; 2+ unstarred pins still count as research progress
+      const hasStar = mood.some((m) => m.inPack)
+      return hasStar || mood.length >= 2
+    }
     case 'ideate': {
       // Honest fill: direction shortlist or Ideate spark pin (not Research notes)
       const hasDirection = (project.directions || []).some((d) =>
@@ -190,7 +193,7 @@ export function pathGapFocusSelector(stepId) {
 /** English fill hints — single source; i18n pathFillHint falls back here. */
 export const PATH_FILL_HINTS = {
   define: 'Name, goal, or audience',
-  research: 'Pin at least one ref',
+  research: 'Star a pin ★ or add 2+ refs',
   ideate: 'A/B/C title or pin a spark note',
   sketch: 'Capture one finishable step',
   design: 'Tagline, voice, logo, or your own palette',

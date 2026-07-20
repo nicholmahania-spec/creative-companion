@@ -706,7 +706,7 @@ export function activityTip(activity = {}) {
   if (view === 'flow' || !view) {
     if (!step) {
       return done > 0
-        ? 'Queue clear. Capture the next finishable step — or micro-steps if scope is still a blob.'
+        ? 'Queue empty — nice. Capture the next finishable step, or micro-steps if scope is still a blob.'
         : `No step on ${project}. One sentence outcome, then capture it.`
     }
     if (dueSoon) {
