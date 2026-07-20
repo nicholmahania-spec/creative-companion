@@ -1,7 +1,7 @@
 /**
  * Sketch step — current desk step, capture, queue, micro-breakdown.
  */
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import {
   normalizeLocale,
@@ -32,6 +32,7 @@ export default function SketchView(props) {
     queueTasks = [],
     nextTask = null,
     stepFocusKey = 0,
+    setStepFocusKey,
     showHowItWorks = false,
     hideHowItWorks,
     openBreakdown,
@@ -50,7 +51,8 @@ export default function SketchView(props) {
     captureOptionsOpen = false,
     setCaptureOptionsOpen,
     handleCapture,
-    // queue UI
+    // queue UI (legacy alias)
+    addQuickTask: addQuickTaskProp,
     queueCollapsed = false,
     queueOpen = false,
     setQueueOpen,
@@ -66,12 +68,18 @@ export default function SketchView(props) {
     stepDueOpen = false,
     setStepDueOpen,
     completeCurrentStep,
+    startVoice,
     // breakdown (embedded if parent passes flags)
     showBreakdown = false,
   } = props
 
   const locale = normalizeLocale(localeProp)
   const addTask = useAppStore((s) => s.addTask)
+  const captureStep = handleCapture || addQuickTaskProp
+  const [processOpenLocal, setProcessOpenLocal] = useState(false)
+  const bumpStepFocus = () => {
+    if (typeof setStepFocusKey === 'function') setStepFocusKey((k) => k + 1)
+  }
 
   const dec =
     latestDecision(activeProject?.decisionLog, 'direction') ||
@@ -269,7 +277,7 @@ export default function SketchView(props) {
                               notifyAction('Split into 3', 'micro_steps', {
                                 label: 'Split step',
                               })
-                              setStepFocusKey((k) => k + 1)
+                              bumpStepFocus()
                             }}
                           >
                             Split if too big
@@ -278,11 +286,8 @@ export default function SketchView(props) {
                         <button
                           type="button"
                           className="btn btn-ghost"
-                          onClick={() => {
-                            setProcessOpen((o) => !o)
-                            if (!processPhase) setProcessPhase('sketch')
-                          }}
-                          aria-expanded={processOpen}
+                          onClick={() => setProcessOpenLocal((o) => !o)}
+                          aria-expanded={processOpenLocal}
                         >
                           Process checklist
                         </button>
@@ -427,13 +432,13 @@ export default function SketchView(props) {
                   id="desk-capture"
                   value={quickInput}
                   onChange={(e) => setQuickInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
+                  onKeyDown={(e) => e.key === 'Enter' && captureStep?.()}
                   placeholder="Dump another idea…"
                   aria-label="Add to desk"
                 />
                 <button
                   type="button"
-                  onClick={addQuickTask}
+                  onClick={() => captureStep?.()}
                   className="btn btn-secondary"
                 >
                   Add

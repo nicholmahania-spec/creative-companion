@@ -40,6 +40,11 @@ export default function DefineView(props) {
     selectProject,
     goSystemSection,
     completedCount = 0,
+    projectPills = null,
+    projectDeadline = '',
+    quickInput = '',
+    setQuickInput,
+    addQuickTask,
   } = props
 
   const locale = normalizeLocale(localeProp)

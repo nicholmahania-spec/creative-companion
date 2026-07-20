@@ -184,14 +184,6 @@ export default function SparkView({
             <div className="decision-log-strip-actions">
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={queueChosen}
-                disabled={!chosen}
-              >
-                {i18nT('ui.queueChosenSketch') || 'Queue chosen → Sketch'}
-              </button>
-              <button
-                type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={() => setActiveView('flow')}
               >

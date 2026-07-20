@@ -15,8 +15,15 @@ test.describe('Offline desk', () => {
     const path = await pathNav(page)
     await expect(path).toBeVisible()
 
+    // Warm lazy path chunks while online so offline SPA hops still work
     await path.getByRole('button', { name: /Step 2: Research/i }).click()
     await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
+    await path.getByRole('button', { name: /Step 4: Sketch/i }).click()
+    await expect(
+      page.locator('#current-step, #desk-capture, .step-focus-panel').first()
+    ).toBeVisible({ timeout: 10000 })
+    await path.getByRole('button', { name: /Step 1: Define/i }).click()
+    await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
     await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
     await expect(
       page.locator('h1.page-title', { hasText: 'Deliver' })

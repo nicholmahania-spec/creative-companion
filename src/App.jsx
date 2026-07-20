@@ -2745,6 +2745,7 @@ function App() {
               queueTasks={queueTasks}
               nextTask={nextTask}
               stepFocusKey={stepFocusKey}
+              setStepFocusKey={setStepFocusKey}
               showHowItWorks={showHowItWorks}
               hideHowItWorks={hideHowItWorks}
               openBreakdown={openBreakdown}
@@ -2761,7 +2762,7 @@ function App() {
               setCaptureDue={setCaptureDue}
               captureOptionsOpen={captureOptionsOpen}
               setCaptureOptionsOpen={setCaptureOptionsOpen}
-              handleCapture={handleCapture}
+              handleCapture={addQuickTask}
               queueCollapsed={queueCollapsed}
               queueOpen={queueOpen}
               setQueueOpen={setQueueOpen}
@@ -2776,6 +2777,7 @@ function App() {
               stepDueOpen={stepDueOpen}
               setStepDueOpen={setStepDueOpen}
               completeCurrentStep={completeCurrentStep}
+              startVoice={startVoice}
             />
           </Suspense>
         )}
@@ -3065,6 +3067,11 @@ function App() {
               selectProject={selectProject}
               goSystemSection={goSystemSection}
               completedCount={completedCount}
+              projectPills={projectPills}
+              projectDeadline={projectDeadline}
+              quickInput={quickInput}
+              setQuickInput={setQuickInput}
+              addQuickTask={addQuickTask}
             />
           </Suspense>
         )}
