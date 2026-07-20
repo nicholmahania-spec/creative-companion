@@ -321,6 +321,85 @@ export default function BrandArtboard({
         </div>
       )}
 
+      <div className="kicker">Application mock</div>
+      <div
+        className="brand-card-mock"
+        aria-label="Business card proof of system"
+      >
+        <div
+          className="brand-card-mock-inner"
+          style={{
+            background: roles.quiet || '#FAFAF9',
+            color: roles.text || '#1C1917',
+            borderColor: roles.accent || '#0F766E',
+          }}
+        >
+          <div
+            className="brand-card-mock-accent"
+            style={{ background: roles.accent || '#0F766E' }}
+            aria-hidden
+          />
+          <div className="brand-card-mock-body">
+            <strong
+              style={{
+                fontFamily: fontFamilyFromLabel(typeH),
+                fontSize: '1.05rem',
+              }}
+            >
+              {project.logoWordmark?.trim() || project.name || 'Brand'}
+            </strong>
+            <p
+              className="brand-card-mock-tag"
+              style={{ fontFamily: fontFamilyFromLabel(typeB) }}
+            >
+              {project.tagline?.trim() || 'Tagline TBD'}
+            </p>
+            <p className="brand-card-mock-meta">hello@brand.example</p>
+          </div>
+          <div
+            className="brand-card-mock-cover"
+            style={{
+              background: roles.cover || '#1C1917',
+              color: coverFg,
+            }}
+          >
+            {project.logoImage ? (
+              <img src={project.logoImage} alt="" />
+            ) : (
+              <span aria-hidden>●</span>
+            )}
+          </div>
+        </div>
+        <p className="surface-meta" style={{ marginTop: '0.45rem' }}>
+          Proof of system — not a print die-line. Roles + type + mark.
+        </p>
+      </div>
+
+      {(project.messagingPromise ||
+        project.messagingProof ||
+        project.messagingPersonality) && (
+        <>
+          <div className="kicker">Messaging</div>
+          <ul className="brand-messaging-list">
+            {project.messagingPromise ? (
+              <li>
+                <strong>Promise</strong> — {project.messagingPromise}
+              </li>
+            ) : null}
+            {project.messagingProof ? (
+              <li>
+                <strong>Proof</strong> — {project.messagingProof}
+              </li>
+            ) : null}
+            {project.messagingPersonality ? (
+              <li>
+                <strong>Personality</strong> — {project.messagingPersonality}
+              </li>
+            ) : null}
+          </ul>
+        </>
+      )}
+
       <div className="export-do-dont">
         <div>
           <div className="kicker">Do</div>

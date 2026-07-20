@@ -323,10 +323,12 @@ export default function DesignView({
             <div className="system-accordion-nav" role="tablist">
               {[
                 ['essentials', 'Tagline'],
+                ['messaging', 'Message'],
                 ['voice', 'Voice'],
                 ['colors', 'Colors'],
                 ['type', 'Type'],
                 ['logo', 'Logo'],
+                ['imagery', 'Imagery'],
                 ['pins', 'Pins'],
               ].map(([id, label]) => (
                 <button
@@ -943,6 +945,64 @@ export default function DesignView({
               </div>
             </section>
 
+            {/* Messaging pillars */}
+            <section
+              className="panel brand-section"
+              hidden={brandEditSection !== 'messaging'}
+            >
+              <div className="brand-section-label">
+                {i18nT(locale, 'ui.messagingPillars') || 'Messaging pillars'}
+              </div>
+              <p className="panel-hint" style={{ marginTop: 0 }}>
+                Promise · proof · personality — ships in the brand book and kit.
+              </p>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="msg-promise">
+                  {i18nT(locale, 'ui.messagingPromise') || 'Promise'}
+                </label>
+                <textarea
+                  id="msg-promise"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.messagingPromise || ''}
+                  onChange={(e) =>
+                    updateBrandField('messagingPromise', e.target.value)
+                  }
+                  placeholder="What we commit to for the customer"
+                />
+              </div>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="msg-proof">
+                  {i18nT(locale, 'ui.messagingProof') || 'Proof'}
+                </label>
+                <textarea
+                  id="msg-proof"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.messagingProof || ''}
+                  onChange={(e) =>
+                    updateBrandField('messagingProof', e.target.value)
+                  }
+                  placeholder="Evidence, credentials, why believe us"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="msg-personality">
+                  {i18nT(locale, 'ui.messagingPersonality') || 'Personality'}
+                </label>
+                <textarea
+                  id="msg-personality"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.messagingPersonality || ''}
+                  onChange={(e) =>
+                    updateBrandField('messagingPersonality', e.target.value)
+                  }
+                  placeholder="How we sound and feel in three words + a sentence"
+                />
+              </div>
+            </section>
+
             {/* 05 Logo lockup suite */}
             <section
               className="panel brand-section"
@@ -950,8 +1010,8 @@ export default function DesignView({
             >
               <div className="brand-section-label">Logo lockups</div>
               <p className="panel-hint" style={{ marginBottom: '0.75rem' }}>
-                Mark image, wordmark, clearspace — ships in the multi-page brand
-                book PDF.
+                Mark image, wordmark, clearspace, don’ts — primary / reverse /
+                mono in the brand book.
               </p>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-wordmark">
@@ -985,7 +1045,7 @@ export default function DesignView({
               </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-clearspace">
-                  Clearspace &amp; min size
+                  Clearspace
                 </label>
                 <textarea
                   id="logo-clearspace"
@@ -995,10 +1055,66 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('logoClearspace', e.target.value)
                   }
-                  placeholder="e.g. Clearspace = ½ mark height · min 24px digital / 0.5&quot; print"
+                  placeholder="e.g. Clearspace = ½ mark height on all sides"
                 />
               </div>
-              <div className="finish-secondary-row">
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="logo-min-size">
+                  {i18nT(locale, 'ui.logoMinSize') || 'Min size'}
+                </label>
+                <input
+                  id="logo-min-size"
+                  className="field-input"
+                  value={activeProject?.logoMinSize || ''}
+                  onChange={(e) =>
+                    updateBrandField('logoMinSize', e.target.value)
+                  }
+                  placeholder="24px digital · 0.5″ print"
+                />
+              </div>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="logo-donts">
+                  {i18nT(locale, 'ui.logoDonts') || 'Logo don’ts'}
+                </label>
+                <textarea
+                  id="logo-donts"
+                  className="field-input"
+                  rows={3}
+                  value={activeProject?.logoDonts || ''}
+                  onChange={(e) =>
+                    updateBrandField('logoDonts', e.target.value)
+                  }
+                  placeholder={
+                    'One rule per line (defaults used if empty):\nDo not stretch or distort\nDo not recolor outside palette roles\nDo not place on low-contrast photos'
+                  }
+                />
+              </div>
+              {activeProject?.logoImage ? (
+                <div
+                  className="logo-variant-row"
+                  role="group"
+                  aria-label={i18nT(locale, 'ui.logoVariants') || 'Variants'}
+                >
+                  <p className="field-label" style={{ marginBottom: '0.4rem' }}>
+                    {i18nT(locale, 'ui.logoVariants') || 'Variants'}
+                  </p>
+                  <div className="logo-variant-grid">
+                    <div className="logo-variant-card is-primary">
+                      <span className="logo-variant-label">Primary</span>
+                      <img src={activeProject.logoImage} alt="" />
+                    </div>
+                    <div className="logo-variant-card is-reverse">
+                      <span className="logo-variant-label">Reverse</span>
+                      <img src={activeProject.logoImage} alt="" />
+                    </div>
+                    <div className="logo-variant-card is-mono">
+                      <span className="logo-variant-label">Mono</span>
+                      <img src={activeProject.logoImage} alt="" />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+              <div className="finish-secondary-row" style={{ marginTop: '0.85rem' }}>
                 <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
                   {activeProject?.logoImage ? 'Replace mark image' : 'Upload mark image'}
                   <input
@@ -1039,6 +1155,65 @@ export default function DesignView({
                     Remove mark
                   </button>
                 ) : null}
+              </div>
+            </section>
+
+            {/* Imagery guidelines */}
+            <section
+              className="panel brand-section"
+              hidden={brandEditSection !== 'imagery'}
+            >
+              <div className="brand-section-label">
+                {i18nT(locale, 'ui.imageryGuidelines') || 'Imagery guidelines'}
+              </div>
+              <p className="panel-hint" style={{ marginTop: 0 }}>
+                Style + do/don’t for photos and illustrations. Pairs with ★ pins
+                on Research.
+              </p>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="img-style">
+                  {i18nT(locale, 'ui.imageryStyle') || 'Photo / illustration style'}
+                </label>
+                <textarea
+                  id="img-style"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.imageryStyle || ''}
+                  onChange={(e) =>
+                    updateBrandField('imageryStyle', e.target.value)
+                  }
+                  placeholder="e.g. Soft natural light · documentary · warm neutrals"
+                />
+              </div>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="img-do">
+                  {i18nT(locale, 'ui.imageryDo') || 'Imagery do'}
+                </label>
+                <textarea
+                  id="img-do"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.imageryDo || ''}
+                  onChange={(e) =>
+                    updateBrandField('imageryDo', e.target.value)
+                  }
+                  placeholder="Real people, hands at work, quiet environments…"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="img-dont">
+                  {i18nT(locale, 'ui.imageryDont') || 'Imagery don’t'}
+                </label>
+                <textarea
+                  id="img-dont"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.imageryDont || ''}
+                  onChange={(e) =>
+                    updateBrandField('imageryDont', e.target.value)
+                  }
+                  placeholder="Stock handshakes, neon gradients, cluttered backgrounds…"
+                />
               </div>
             </section>
 

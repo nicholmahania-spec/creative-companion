@@ -70,6 +70,18 @@ export const defaultBrandIdentity = {
   logoWordmark: '',
   /** Clearspace / min-size / lockup guidance */
   logoClearspace: '',
+  /** Min reproduction size note */
+  logoMinSize: '',
+  /** Logo don’ts — one per line; defaults apply in export if empty */
+  logoDonts: '',
+  /** Messaging pillars */
+  messagingPromise: '',
+  messagingProof: '',
+  messagingPersonality: '',
+  /** Imagery guidelines */
+  imageryStyle: '',
+  imageryDo: '',
+  imageryDont: '',
   /** Design version label (v1, v2…) */
   designVersion: 'v1',
   /** Review: feedback notes from client / self */

@@ -228,6 +228,35 @@ describe('vector pack snapshot fields', () => {
     expect(pack.directions[0].chosen).toBe(true)
     expect(pack.pins[0].packHero).toBe(true)
   })
+
+  it('includes messaging, imagery, and decision log in snapshot', () => {
+    const pack = buildBrandPackSnapshot({
+      project: {
+        name: 'Full Kit Co',
+        messagingPromise: 'Calm care',
+        messagingProof: '10 years',
+        messagingPersonality: 'Warm expert',
+        imageryStyle: 'Soft light',
+        imageryDo: 'Real hands',
+        imageryDont: 'Stock handshakes',
+        logoMinSize: '24px',
+        logoDonts: 'No stretch',
+        decisionLog: [
+          { kind: 'direction', label: 'B', title: 'Quiet teal', why: 'calm' },
+        ],
+      },
+      palette: ['#111111', '#FAFAF9'],
+    })
+    expect(pack.messagingPromise).toMatch(/Calm/)
+    expect(pack.imageryStyle).toMatch(/Soft/)
+    expect(pack.logoMinSize).toBe('24px')
+    expect(pack.decisionLog[0].label).toBe('B')
+    const md = brandPackToMarkdown(pack)
+    expect(md).toMatch(/Messaging pillars|Promise/)
+    expect(md).toMatch(/Color system|CMYK|rgb/i)
+    expect(md).toMatch(/Type scale/)
+    expect(md).toMatch(/Imagery/)
+  })
 })
 
 describe('packBriefMarkdown', () => {

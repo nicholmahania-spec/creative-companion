@@ -9,6 +9,18 @@
 
 import { pinFaceCssText, pinVisualKind } from './moodPins'
 import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
+import {
+  appendSystemMarkdown,
+  buildColorSystem,
+  buildCssTokens,
+  buildJsonTokens,
+  logoDontsList,
+  decisionLineFromPack,
+  DEFAULT_LOGO_CLEARSPACE,
+  DEFAULT_LOGO_MIN_SIZE,
+  TYPE_SCALE,
+  ROLE_JOBS,
+} from './brandSystem'
 
 /** Safe filename from a project title */
 export function slugifyFilename(name, fallback = 'creative-companion') {
@@ -314,6 +326,15 @@ export function buildBrandPackSnapshot({
     pinsStarredCount: starredCount,
     colorRoles: p.colorRoles || null,
     logoImage: p.logoImage || '',
+    logoMinSize: p.logoMinSize || '',
+    logoDonts: p.logoDonts || '',
+    messagingPromise: p.messagingPromise || '',
+    messagingProof: p.messagingProof || '',
+    messagingPersonality: p.messagingPersonality || '',
+    imageryStyle: p.imageryStyle || '',
+    imageryDo: p.imageryDo || '',
+    imageryDont: p.imageryDont || '',
+    decisionLog: Array.isArray(p.decisionLog) ? p.decisionLog : [],
   }
 }
 
@@ -438,26 +459,15 @@ export function brandPackToMarkdown(pack) {
   if (pack.feedbackNotes) {
     lines.push('## Review notes', '', pack.feedbackNotes, '')
   }
-  lines.push(
-    '## Palette',
-    '',
-    ...(pack.palette || []).map((c) => `- \`${c}\``),
-    '',
-    '## Typography',
-    '',
-    `- **Heading:** ${pack.typeHeading}`,
-    `- **Body:** ${pack.typeBody}`,
-    ''
-  )
-  if (pack.logoWordmark || pack.logoDirection || pack.logoClearspace) {
+  if (pack.logoWordmark || pack.logoDirection || pack.logoClearspace || pack.logoImage) {
     lines.push('## Logo lockups', '')
     if (pack.logoWordmark) lines.push(`- **Wordmark:** ${pack.logoWordmark}`)
     if (pack.logoDirection) lines.push(`- **Direction:** ${pack.logoDirection}`)
     if (pack.logoClearspace)
       lines.push(`- **Clearspace:** ${pack.logoClearspace}`)
+    if (pack.logoMinSize) lines.push(`- **Min size:** ${pack.logoMinSize}`)
+    if (pack.logoImage) lines.push(`- **Mark image:** included in kit`)
     lines.push('')
-  } else if (pack.logoDirection) {
-    lines.push('## Logo direction', '', pack.logoDirection, '')
   }
   if (pack.directions?.length) {
     lines.push('## Ideate directions', '')
@@ -499,13 +509,15 @@ export function brandPackToMarkdown(pack) {
     })
     lines.push('')
   }
-  lines.push(
+  // Full system appendix: roles, codes, AA pairs, type scale, logo don’ts, imagery
+  const withSystem = appendSystemMarkdown(lines, pack)
+  withSystem.push(
     '---',
     '',
-    `Progress: ${pack.doneCount}/${pack.totalCount} steps (${pack.progressPercent}%)`,
+    `Version: ${pack.designVersion || 'v1'} · Progress: ${pack.doneCount}/${pack.totalCount} steps (${pack.progressPercent}%)`,
     ''
   )
-  return lines.join('\n')
+  return withSystem.join('\n')
 }
 
 /**
@@ -788,6 +800,102 @@ export function downloadBrandPackJson(pack, handlePromise = null) {
   })
   if (handlePromise) return downloadBlobReliable(blob, name, handlePromise)
   return downloadBlob(blob, name)
+}
+
+/**
+ * Client brand kit zip: PDF + MD + tokens + logo (if any).
+ * Builds PDF first (async), then zips with JSZip.
+ * @returns {Promise<{ ok: boolean, error?: string, cancelled?: boolean, method?: string }>}
+ */
+export async function downloadBrandKitZip(
+  pack,
+  handlePromise = null,
+  options = {}
+) {
+  try {
+    const JSZip = (await import('jszip')).default
+    const slug = slugifyFilename(pack?.projectName, 'brand-kit')
+    const zipName = `${slug}-brand-kit.zip`
+    const zip = new JSZip()
+    const folder = zip.folder(slug) || zip
+
+    // Markdown + tokens (sync)
+    folder.file('brand.md', brandPackToMarkdown(pack))
+    folder.file('tokens.css', buildCssTokens(pack))
+    folder.file(
+      'tokens.json',
+      JSON.stringify(buildJsonTokens(pack), null, 2)
+    )
+    folder.file(
+      'pack.json',
+      JSON.stringify(
+        {
+          ...pack,
+          // strip huge pin binaries from pack.json if many data URLs
+          pins: (pack.pins || []).map((p) => ({
+            id: p.id,
+            note: p.note,
+            type: p.type,
+            packHero: p.packHero,
+            // keep small non-data visuals only
+            visual:
+              String(p.visual || '').startsWith('data:') &&
+              String(p.visual).length > 8000
+                ? '[embedded in brand-book.pdf / mood pins]'
+                : p.visual,
+          })),
+        },
+        null,
+        2
+      )
+    )
+
+    // Logo as separate file when data URL
+    if (
+      pack?.logoImage &&
+      String(pack.logoImage).startsWith('data:image')
+    ) {
+      try {
+        const m = String(pack.logoImage).match(
+          /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/
+        )
+        if (m) {
+          const ext =
+            m[1].includes('png')
+              ? 'png'
+              : m[1].includes('jpeg') || m[1].includes('jpg')
+                ? 'jpg'
+                : m[1].includes('webp')
+                  ? 'webp'
+                  : m[1].includes('svg')
+                    ? 'svg'
+                    : 'png'
+          folder.file(`logo.${ext}`, m[2], { base64: true })
+        }
+      } catch {
+        /* skip logo file */
+      }
+    }
+
+    // Vector brand book PDF into zip
+    const pdfResult = await downloadBrandPackVectorPdf(pack, null, {
+      hideWatermark: !!options.hideWatermark,
+      returnBlobOnly: true,
+    })
+    if (pdfResult?.blob) {
+      folder.file('brand-book.pdf', pdfResult.blob)
+    }
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' })
+    if (handlePromise) {
+      const written = await writeToSaveHandle(handlePromise, zipBlob)
+      if (written.ok || written.cancelled)
+        return { ...written, method: 'file-picker' }
+    }
+    return downloadBlobReliable(zipBlob, zipName, null)
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Brand kit zip failed' }
+  }
 }
 
 /** Cached engines so Finish view can warm them */
@@ -1463,12 +1571,13 @@ export async function downloadBrandPackVectorPdf(
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
     const toc = [
       '01  Cover',
-      '02  Positioning & voice',
-      '03  Color system',
-      '04  Typography',
-      '05  Logo lockups',
+      '02  Positioning · messaging · voice',
+      '03  Color system · codes · AA pairs',
+      '04  Typography · type scale',
+      '05  Logo lockups · don’ts',
       '06  Usage · do / don’t',
-      '07  Mood & directions',
+      '07  Imagery · mood pins',
+      '08  Application mock · handoff',
     ]
     toc.forEach((line) => {
       pdf.text(line, margin, y)
@@ -1480,9 +1589,14 @@ export async function downloadBrandPackVectorPdf(
     // ═══════════════ PAGE 2 — Positioning ═══════════════
     newPage()
     pageTitle(
-      'Positioning & voice',
-      'Detective sheet answers · who · feel · goal · how we sound.'
+      'Positioning · messaging · voice',
+      'Who · feel · goal · pillars · how we sound.'
     )
+    const decisionLine = decisionLineFromPack(pack)
+    if (decisionLine) {
+      kicker('Direction decision')
+      writeWrapped(decisionLine, { size: 12, role: 'heading' })
+    }
     const det = pack?.detective || {}
     if (det.goal || det.audience || det.feel || det.mustHaves) {
       kicker('Design Detective Sheet')
@@ -1504,6 +1618,19 @@ export async function downloadBrandPackVectorPdf(
     })
     kicker('Tagline')
     writeWrapped(tag, { size: 14, role: 'heading', label: pack?.typeHeading })
+    if (
+      pack?.messagingPromise ||
+      pack?.messagingProof ||
+      pack?.messagingPersonality
+    ) {
+      kicker('Messaging pillars')
+      if (pack.messagingPromise)
+        writeWrapped(`Promise: ${pack.messagingPromise}`, { size: 11 })
+      if (pack.messagingProof)
+        writeWrapped(`Proof: ${pack.messagingProof}`, { size: 11 })
+      if (pack.messagingPersonality)
+        writeWrapped(`Personality: ${pack.messagingPersonality}`, { size: 11 })
+    }
     kicker('Voice')
     writeWrapped(pack?.voice || 'Voice TBD — set on Design.', {
       size: 12,
@@ -1520,62 +1647,86 @@ export async function downloadBrandPackVectorPdf(
 
     // ═══════════════ PAGE 3 — Color ═══════════════
     newPage()
-    pageTitle('Color system', 'Roles first. Hex second. Stay consistent.')
+    pageTitle(
+      'Color system',
+      'Roles first. HEX · RGB · CMYK. Approved AA pairs for body text.'
+    )
+    const colorSys = buildColorSystem(colors, pack?.colorRoles)
     if (colors.length) {
-      const swH = 72
+      const swH = 56
       const swW = contentW / Math.min(colors.length, 6)
       const show = colors.slice(0, 6)
-      ensureSpace(swH + 48)
+      ensureSpace(swH + 36)
       show.forEach((hex, i) => {
         const rgb = hexToRgb(hex) || [136, 136, 136]
         const x = margin + i * swW
         pdf.setFillColor(rgb[0], rgb[1], rgb[2])
         pdf.rect(x, y, swW - 4, swH, 'F')
         pdf.setFont('helvetica', 'normal')
-        pdf.setFontSize(8)
+        pdf.setFontSize(7)
         pdf.setTextColor(70, 70, 70)
-        pdf.text(String(hex).toUpperCase(), x, y + swH + 12)
+        pdf.text(String(hex).toUpperCase(), x, y + swH + 10)
       })
-      y += swH + 28
+      y += swH + 22
     } else {
       writeWrapped('No palette yet — add colors on Design.', { size: 11 })
     }
-    kicker('Roles')
-    const roleKeys = [
-      ['cover', 'Cover'],
-      ['text', 'Text'],
-      ['accent', 'Accent'],
-      ['quiet', 'Quiet'],
-    ]
-    const roleCardW = (contentW - 18) / 2
-    const roleCardH = 52
-    roleKeys.forEach(([key, label], i) => {
-      const col = i % 2
-      const row = Math.floor(i / 2)
-      if (col === 0) ensureSpace(roleCardH + 12)
-      const x = margin + col * (roleCardW + 18)
-      const yy = y + row * (roleCardH + 12)
-      const hex = normalizeHex(roles[key]) || roles[key] || '#888888'
-      const rgb = hexToRgb(hex) || [136, 136, 136]
+    kicker('Roles · jobs · codes')
+    const roleCardW = contentW
+    const roleCardH = 36
+    colorSys.roleRows.forEach((row) => {
+      ensureSpace(roleCardH + 8)
+      const rgb = hexToRgb(row.hex) || [136, 136, 136]
       pdf.setFillColor(rgb[0], rgb[1], rgb[2])
-      pdf.roundedRect(x, yy, roleCardW, roleCardH, 4, 4, 'F')
-      const tOn = bestTextOn(hex)
-      const tRgb = hexToRgb(tOn) || [255, 255, 255]
-      pdf.setTextColor(tRgb[0], tRgb[1], tRgb[2])
+      pdf.roundedRect(margin, y, 28, roleCardH - 4, 3, 3, 'F')
+      pdf.setTextColor(12, 10, 9)
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(10)
-      pdf.text(label, x + 12, yy + 22)
+      pdf.text(row.role.toUpperCase(), margin + 36, y + 12)
       pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(9)
-      pdf.text(String(hex).toUpperCase(), x + 12, yy + 38)
+      pdf.setFontSize(8)
+      pdf.setTextColor(70, 70, 70)
+      const job = ROLE_JOBS[row.role] || row.job || ''
+      pdf.text(
+        `${row.hex}  ·  ${row.rgb}  ·  ${row.cmyk}`,
+        margin + 36,
+        y + 24
+      )
+      if (job) {
+        pdf.setFontSize(7)
+        pdf.text(job, margin + 36, y + 32)
+      }
+      y += roleCardH + 4
     })
-    y += 2 * (roleCardH + 12) + 8
+    if (colorSys.passPairs.length) {
+      kicker('AA pass pairs (body ≥ 4.5:1)')
+      colorSys.passPairs.slice(0, 8).forEach((p) => {
+        ensureSpace(22)
+        const fgRgb = hexToRgb(p.fg) || [0, 0, 0]
+        const bgRgb = hexToRgb(p.bg) || [255, 255, 255]
+        pdf.setFillColor(bgRgb[0], bgRgb[1], bgRgb[2])
+        pdf.roundedRect(margin, y - 2, 36, 16, 2, 2, 'F')
+        pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(9)
+        pdf.text('Aa', margin + 8, y + 10)
+        pdf.setTextColor(40, 40, 40)
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(9)
+        pdf.text(
+          `${p.fg} on ${p.bg}  ·  ${p.label}`,
+          margin + 44,
+          y + 10
+        )
+        y += 20
+      })
+    }
 
     // ═══════════════ PAGE 4 — Typography ═══════════════
     newPage()
     pageTitle(
       'Typography',
-      'Production face names below. PDF uses Helvetica/Times for portability.'
+      'Faces + scale for implementation. PDF embeds Helvetica/Times for portability.'
     )
     kicker('Heading')
     writeWrapped(pack?.typeHeading || 'Heading face', {
@@ -1602,6 +1753,17 @@ export async function downloadBrandPackVectorPdf(
       `${pack?.typeHeading || 'Heading'}  ·  ${pack?.typeBody || 'Body'}`,
       { size: 12, role: 'heading', label: pack?.typeHeading }
     )
+    kicker('Type scale (implementation)')
+    TYPE_SCALE.forEach((row) => {
+      writeWrapped(
+        `${row.label} · ${row.size} · ${row.weight} — ${row.use}`,
+        { size: 10, color: [40, 40, 40] }
+      )
+    })
+    writeWrapped('Fallback: system-ui, -apple-system, Segoe UI, sans-serif', {
+      size: 9,
+      color: [90, 90, 90],
+    })
 
     // ═══════════════ PAGE 5 — Logo lockups ═══════════════
     newPage()
@@ -1690,10 +1852,37 @@ export async function downloadBrandPackVectorPdf(
     )
     kicker('Clearspace & size')
     writeWrapped(
-      pack?.logoClearspace ||
-        'Keep clearspace ≈ half the mark height on all sides. Do not set the mark smaller than ~24px digital / 0.5" print. Prefer full-color primary; reverse on dark covers; mono for one-ink jobs.',
+      pack?.logoClearspace || DEFAULT_LOGO_CLEARSPACE,
       { size: 10, color: [60, 60, 60] }
     )
+    writeWrapped(
+      `Min size: ${pack?.logoMinSize || DEFAULT_LOGO_MIN_SIZE}`,
+      { size: 10, color: [60, 60, 60] }
+    )
+    kicker("Logo don’ts")
+    logoDontsList(pack).forEach((rule) => {
+      writeWrapped(`• ${rule}`, { size: 10 })
+    })
+    // Visual don’ts strip (labels only — keeps PDF lean)
+    ensureSpace(48)
+    kicker('Avoid (examples)')
+    const avoidLabels = ['Stretch', 'Recolor wild', 'Low contrast']
+    const avoidW = (contentW - 16) / 3
+    avoidLabels.forEach((lab, i) => {
+      const x = margin + i * (avoidW + 8)
+      pdf.setFillColor(250, 245, 245)
+      pdf.setDrawColor(200, 160, 160)
+      pdf.roundedRect(x, y, avoidW, 36, 3, 3, 'FD')
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(8)
+      pdf.setTextColor(153, 27, 27)
+      pdf.text(lab.toUpperCase(), x + 8, y + 14)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(7)
+      pdf.setTextColor(100, 60, 60)
+      pdf.text('Not allowed', x + 8, y + 26)
+    })
+    y += 48
 
     // ═══════════════ PAGE 6 — Usage ═══════════════
     newPage()
@@ -1728,9 +1917,26 @@ export async function downloadBrandPackVectorPdf(
       })
     }
 
-    // ═══════════════ PAGE 7 — Mood ═══════════════
+    // ═══════════════ PAGE 7 — Imagery + Mood ═══════════════
     newPage()
-    pageTitle('Mood & refs', 'Starred leave-behind pins only (max 6).')
+    pageTitle(
+      'Imagery & mood',
+      'Style rules + starred leave-behind pins (max 6).'
+    )
+    if (pack?.imageryStyle || pack?.imageryDo || pack?.imageryDont) {
+      kicker('Imagery guidelines')
+      if (pack.imageryStyle)
+        writeWrapped(`Style: ${pack.imageryStyle}`, { size: 11 })
+      if (pack.imageryDo) writeWrapped(`Do: ${pack.imageryDo}`, { size: 11 })
+      if (pack.imageryDont)
+        writeWrapped(`Don’t: ${pack.imageryDont}`, { size: 11 })
+    } else {
+      writeWrapped(
+        'Add imagery style / do / don’t on Design → Imagery for a fuller chapter.',
+        { size: 10, color: [90, 90, 90] }
+      )
+    }
+    kicker('Starred refs')
     const pins = pack?.pins || []
     if (!pins.length) {
       writeWrapped(
@@ -1777,6 +1983,45 @@ export async function downloadBrandPackVectorPdf(
       }
     }
 
+    // ═══════════════ PAGE 8 — Application mock + handoff ═══════════════
+    newPage()
+    pageTitle(
+      'Application mock',
+      'Proof of system — business card using cover, quiet, accent, type, mark.'
+    )
+    // Business card mock 3.5" × 2" at 72dpi ≈ 252 × 144 pt, scaled up
+    const cardW = contentW
+    const cardH = 150
+    ensureSpace(cardH + 40)
+    pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
+    pdf.setDrawColor(220, 220, 220)
+    pdf.roundedRect(margin, y, cardW, cardH, 6, 6, 'FD')
+    // accent bar
+    pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+    pdf.rect(margin, y, 10, cardH, 'F')
+    // cover strip
+    pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
+    pdf.rect(margin + cardW - 72, y, 72, cardH, 'F')
+    if (!tryLogo(margin + cardW - 56, y + 20, 40, null)) {
+      pdf.setFillColor(fgRgb[0], fgRgb[1], fgRgb[2])
+      pdf.circle(margin + cardW - 36, y + 40, 14, 'F')
+    }
+    setFont(pack?.typeHeading, 'heading', 14)
+    pdf.setTextColor(textRgb[0], textRgb[1], textRgb[2])
+    pdf.text(String(wordmark).slice(0, 28), margin + 24, y + 40)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(9)
+    pdf.setTextColor(80, 80, 80)
+    const cardTag = pdf.splitTextToSize(tag, cardW - 100)
+    pdf.text(cardTag.slice(0, 2), margin + 24, y + 58)
+    pdf.setFontSize(8)
+    pdf.text('hello@brand.example  ·  brand.example', margin + 24, y + 120)
+    y += cardH + 20
+    writeWrapped(
+      'Mock is a direction proof only — not a print-ready die-line. Build final files in your design tool using roles + type scale.',
+      { size: 9, color: [90, 90, 90] }
+    )
+
     if (pack?.feedbackNotes?.trim()) {
       kicker('Review notes')
       writeWrapped(pack.feedbackNotes, { size: 11 })
@@ -1789,6 +2034,11 @@ export async function downloadBrandPackVectorPdf(
       kicker('What I learned')
       writeWrapped(pack.learnings, { size: 11 })
     }
+    kicker('Kit contents')
+    writeWrapped(
+      'Download Brand kit zip for: brand-book.pdf · brand.md · tokens.css · tokens.json · logo (if uploaded).',
+      { size: 10 }
+    )
 
     drawFooters()
 
@@ -1801,6 +2051,16 @@ export async function downloadBrandPackVectorPdf(
     } catch {
       blob = pdf.output('blob')
       if (!blob.type) blob = new Blob([blob], { type: 'application/pdf' })
+    }
+
+    if (options.returnBlobOnly) {
+      return {
+        ok: true,
+        blob,
+        method: 'blob',
+        mode: 'vector',
+        pages: pdf.getNumberOfPages(),
+      }
     }
 
     if (handlePromise) {

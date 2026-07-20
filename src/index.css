@@ -11160,6 +11160,90 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   border-color: rgba(255, 255, 255, 0.12);
 }
 
+/* Logo variants (Design) */
+.logo-variant-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+.logo-variant-card {
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  padding: 0.55rem;
+  min-height: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: var(--bg-canvas);
+}
+.logo-variant-card img {
+  max-width: 2.75rem;
+  max-height: 2.75rem;
+  object-fit: contain;
+}
+.logo-variant-card.is-reverse {
+  background: #1c1917;
+  color: #fafaf9;
+}
+.logo-variant-card.is-mono img {
+  filter: grayscale(1) contrast(1.15);
+}
+.logo-variant-label {
+  font-size: 0.65rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+/* Business card mock on artboard */
+.brand-card-mock-inner {
+  display: grid;
+  grid-template-columns: 8px 1fr 4.5rem;
+  min-height: 6.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+}
+.brand-card-mock-body {
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.brand-card-mock-tag {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  opacity: 0.85;
+}
+.brand-card-mock-meta {
+  margin: auto 0 0;
+  font-size: 0.68rem;
+  opacity: 0.65;
+}
+.brand-card-mock-cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-card-mock-cover img {
+  width: 2.25rem;
+  height: 2.25rem;
+  object-fit: contain;
+}
+.brand-messaging-list {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
 /* Ideate → Sketch decision strip */
 .decision-log-strip {
   margin: 0 0 1rem;

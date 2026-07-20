@@ -98,6 +98,7 @@ import {
   downloadBrandPackJson,
   downloadBrandPackPdf,
   downloadBrandPackPdfRaster,
+  downloadBrandKitZip,
   downloadWorkspaceBackup,
   packReadiness,
   preloadPdfEngine,
@@ -1918,18 +1919,46 @@ function App() {
     const saveName =
       kind === 'pdf' || kind === 'pdf-preview'
         ? `${slug}-brand-direction.pdf`
-        : kind === 'html'
-          ? `${slug}-brand-direction.html`
-          : kind === 'md'
-            ? `${slug}-brand-direction.md`
-            : kind === 'json'
-              ? `${slug}-brand-pack.json`
-              : kind === 'backup'
-                ? `creative-companion-backup-${new Date().toISOString().slice(0, 10)}.json`
-                : null
+        : kind === 'kit'
+          ? `${slug}-brand-kit.zip`
+          : kind === 'html'
+            ? `${slug}-brand-direction.html`
+            : kind === 'md'
+              ? `${slug}-brand-direction.md`
+              : kind === 'json'
+                ? `${slug}-brand-pack.json`
+                : kind === 'backup'
+                  ? `creative-companion-backup-${new Date().toISOString().slice(0, 10)}.json`
+                  : null
     const handlePromise = saveName
       ? captureSaveHandle(saveName, 'Creative Companion export')
       : null
+
+    if (kind === 'kit') {
+      flashToast(i18nT(locale, 'ui.kitBuilding') || 'Building brand kit…', {
+        important: true,
+      })
+      void (async () => {
+        const result = await downloadBrandKitZip(pack, handlePromise, {
+          hideWatermark: hidePackWatermark,
+        })
+        if (result.ok) {
+          setLastExportNote(
+            `Brand kit zip · ${new Date().toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit',
+            })}`
+          )
+          finishOk('Brand kit')
+        } else if (result.cancelled)
+          flashToast(i18nT(locale, 'ui.saveCancelled'))
+        else
+          flashToast(
+            result.error || i18nT(locale, 'ui.downloadFailed') || 'Kit failed'
+          )
+      })()
+      return
+    }
 
     if (kind === 'pdf') {
       // Vector direction pack (text + swatches as PDF primitives)

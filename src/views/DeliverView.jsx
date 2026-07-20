@@ -200,7 +200,13 @@ export default function DeliverView({
                             onClick={() => {
                               const kind = thinPackPrompt
                               setThinPackPrompt(null)
-                              runExport(kind === 'print' ? 'print' : 'pdf')
+                              runExport(
+                                kind === 'print'
+                                  ? 'print'
+                                  : kind === 'kit'
+                                    ? 'kit'
+                                    : 'pdf'
+                              )
                             }}
                           >
                             {thinPackPrompt === 'print'
@@ -257,6 +263,30 @@ export default function DeliverView({
                     >
                       {i18nT(locale, 'ui.downloadVectorPdf')}
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary pack-download-btn"
+                      onClick={() => {
+                        const packSnap = buildCurrentBrandPack()
+                        const ready = packReadiness(packSnap)
+                        if (ready.thin) {
+                          setThinPackPrompt('kit')
+                          return
+                        }
+                        runExport('kit')
+                      }}
+                      title={
+                        i18nT(locale, 'ui.kitHint') ||
+                        'PDF + Markdown + tokens + logo'
+                      }
+                    >
+                      {i18nT(locale, 'ui.downloadKit') ||
+                        'Download brand kit (zip)'}
+                    </button>
+                    <p className="panel-hint" style={{ margin: '0.25rem 0 0' }}>
+                      {i18nT(locale, 'ui.kitHint') ||
+                        'PDF + Markdown + tokens.css + tokens.json + logo'}
+                    </p>
                     <button
                       type="button"
                       className="btn btn-ghost pack-copy-brief"
