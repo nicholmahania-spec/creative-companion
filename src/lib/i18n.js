@@ -96,6 +96,14 @@ const EN = {
     openPack: 'Go to Deliver',
     openReview: 'Go to Review',
     openIdeate: 'Go to Ideate',
+    /** Primary linear CTA — stronger than gap strip / G recovery */
+    continueNext: 'Continue · {label}',
+    pathMarkPackThin:
+      'Path mark only — leave-behind still wants ★ pins or a tagline',
+    backToIdeate: 'Back to Ideate',
+    backToResearch: 'Back to Research',
+    timerDoneIdeate:
+      'Timer done — continue to Ideate (messy directions), or stay on Research.',
     anotherSpark: 'Another spark',
     oppositeDirection: 'Opposite direction',
     pinSpark: 'Pin spark',
@@ -349,6 +357,13 @@ const OVERRIDES = {
       openPack: 'Ir a Entregar',
       openReview: 'Ir a Revisar',
       openIdeate: 'Ir a Idear',
+      continueNext: 'Continuar · {label}',
+      pathMarkPackThin:
+        'Solo marca de camino — el entregable aún quiere pines ★ o un eslogan',
+      backToIdeate: 'Volver a Idear',
+      backToResearch: 'Volver a Investigación',
+      timerDoneIdeate:
+        'Timer listo — sigue a Idear (direcciones), o quédate en Investigación.',
       goToBoard: 'Ir a Investigación',
       pathReadiness: 'Preparación del camino',
       appearance: 'Apariencia',

@@ -1,6 +1,6 @@
 /** Lazy-loaded Ideate step — sparks + A/B/C direction capture */
 import { getProcessPhase } from '../lib/processGuide'
-import { pathLabel } from '../lib/i18n'
+import { pathLabel, tFormat } from '../lib/i18n'
 
 export default function SparkView({
   setActiveView,
@@ -103,7 +103,16 @@ export default function SparkView({
                   : ' — pick a winner (Choose)'}
           </p>
         </div>
-        <div className="finish-secondary-row">
+        <div className="finish-secondary-row path-continue-row">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setActiveView('flow')}
+          >
+            {tFormat(locale, 'ui.continueNext', {
+              label: pathLabel(locale, 'sketch') || 'Sketch',
+            })}
+          </button>
           {chosen && (
             <button
               type="button"
@@ -113,13 +122,6 @@ export default function SparkView({
               {i18nT('ui.queueChosenSketch') || 'Queue chosen → Sketch'}
             </button>
           )}
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setActiveView('flow')}
-          >
-            {i18nT('ui.openSketch') || 'Go to Sketch'}
-          </button>
         </div>
       </div>
       {nextTask && (

@@ -8589,6 +8589,34 @@ html[data-reduce-motion='true'] *::after {
   border-color: color-mix(in srgb, var(--accent-growth, #0f766e) 55%, var(--border-subtle));
   background: color-mix(in srgb, var(--accent-growth, #0f766e) 12%, transparent);
 }
+/* On the empty step already: recovery is quiet; primary Continue is on-page */
+.journey-gap-strip.is-on-gap {
+  padding-block: 0.28rem 0.32rem;
+}
+.journey-gap-strip-btn.is-quiet {
+  opacity: 0.85;
+  font-weight: 600;
+  border-style: dashed;
+}
+.journey-gap-strip.is-pack-thin .journey-leavebehind-thin {
+  color: var(--text-secondary);
+  font-weight: 550;
+}
+/* Primary linear continue (stronger than strip G) */
+.path-continue-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0.85rem 0 1rem;
+}
+.path-continue-row .btn-primary {
+  font-weight: 750;
+}
+.work-below-tools .btn-primary.work-path-next,
+.path-continue-row .work-path-next {
+  margin-left: 0;
+}
 .journey-still-thin {
   font-size: 0.72rem;
   color: var(--text-secondary);
@@ -8655,6 +8683,9 @@ html[data-reduce-motion='true'] *::after {
     padding: 0.22rem 0.5rem 0.28rem;
     gap: 0.25rem 0.4rem;
   }
+  .journey-gap-strip.is-on-gap {
+    padding: 0.18rem 0.45rem 0.22rem;
+  }
   .step-fill-chip {
     font-size: 0.65rem;
     padding: 0.12rem 0.4rem;
@@ -8694,6 +8725,9 @@ html[data-reduce-motion='true'] *::after {
   }
   .step-fill-chip {
     max-width: 46vw;
+  }
+  .journey-gap-strip.is-on-gap .journey-leavebehind-thin {
+    display: none;
   }
 }
 

@@ -92,6 +92,12 @@ describe('i18n wordmark + path + catalog', () => {
     expect(en.openPack).toMatch(/Deliver/i)
     expect(en.openWork).toMatch(/Research/i)
     expect(en.openReview).toMatch(/Review/i)
+    expect(en.continueNext).toMatch(/Continue/)
+    expect(en.pathMarkPackThin).toMatch(/Path mark|leave-behind|★/i)
+    expect(en.backToIdeate).toMatch(/Ideate/i)
+    expect(tFormat('en', 'ui.continueNext', { label: 'Research' })).toBe(
+      'Continue · Research'
+    )
     expect(en.goToSystem).toMatch(/Design/i)
     expect(en.emptyStepBody.length).toBeLessThan(80)
     expect(en.howDeskWorks).toMatch(/Define/)

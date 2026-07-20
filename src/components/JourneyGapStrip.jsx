@@ -1,6 +1,7 @@
 /**
  * Under-path strip: this-step fill chip + still-thin links + next-gap / ship CTA.
  * ADHD one-next-action chrome shared across path views.
+ * G / strip = recovery; primary “Continue · …” lives on each step.
  */
 export default function JourneyGapStrip({
   locale,
@@ -20,8 +21,27 @@ export default function JourneyGapStrip({
   goToNextProcessGap,
   setActiveView,
 }) {
+  const journeyNextNow = getNextJourney?.(activeView)
+  const earliest =
+    pathNextGap &&
+    journeyNextNow &&
+    journeyNextNow.view !== pathNextGap.view
+  /** Already standing on the empty step G would open — hide redundant still-thin */
+  const onEarliestGap =
+    !!pathNextGap && pathNextGap.view === activeView
+  /** This step filled on path but leave-behind still thin for client handoff */
+  const showPathMarkPackThin = leaveBehindThin && !!thisStepFilled && !!pathNextGap
+  /** Whole path has content but pack still thin */
+  const showPathFullPackThin = leaveBehindThin && !pathNextGap
+
   return (
-    <div className="journey-gap-strip" role="status" aria-live="polite">
+    <div
+      className={`journey-gap-strip${onEarliestGap ? ' is-on-gap' : ''}${
+        showPathMarkPackThin || showPathFullPackThin ? ' is-pack-thin' : ''
+      }`}
+      role="status"
+      aria-live="polite"
+    >
       <span
         className={`step-fill-chip${
           thisStepFilled ? ' is-filled' : ' is-open'
@@ -34,7 +54,7 @@ export default function JourneyGapStrip({
             ? tFormat(locale, 'ui.openStepMicro', { label: thisStepHint })
             : i18nT(locale, 'ui.stepOpen')}
       </span>
-      {pathMissingShown.length > 0 && (
+      {pathMissingShown.length > 0 && !onEarliestGap && (
         <span
           className="journey-still-thin"
           title={pathMissingRows
@@ -59,7 +79,12 @@ export default function JourneyGapStrip({
           </span>
         </span>
       )}
-      {!pathNextGap && leaveBehindThin && (
+      {showPathMarkPackThin && (
+        <span className="journey-leavebehind-thin" role="status">
+          {i18nT(locale, 'ui.pathMarkPackThin')}
+        </span>
+      )}
+      {showPathFullPackThin && (
         <span className="journey-leavebehind-thin" role="status">
           {i18nT(locale, 'ui.pathFullLeaveBehindThin')}
         </span>
@@ -67,22 +92,24 @@ export default function JourneyGapStrip({
       {pathNextGap ? (
         <button
           type="button"
-          className="journey-gap-strip-btn"
+          className={`journey-gap-strip-btn${
+            onEarliestGap ? ' is-quiet' : ''
+          }`}
           onClick={() => goToNextProcessGap()}
           title="Keyboard G"
         >
-          {(() => {
-            const gapLabel =
-              pathLabel(locale, pathNextGap.id) || pathNextGap.label
-            const journeyNextNow = getNextJourney?.(activeView)
-            const earliest =
-              journeyNextNow && journeyNextNow.view !== pathNextGap.view
-            return earliest
+          {onEarliestGap
+            ? // Already on the empty step — quiet recovery, not a second primary
+              `Fill · G`
+            : earliest
               ? tFormat(locale, 'ui.earliestEmptyBtn', {
-                  label: gapLabel,
+                  label:
+                    pathLabel(locale, pathNextGap.id) || pathNextGap.label,
                 })
-              : tFormat(locale, 'ui.nextGapBtn', { label: gapLabel })
-          })()}
+              : tFormat(locale, 'ui.nextGapBtn', {
+                  label:
+                    pathLabel(locale, pathNextGap.id) || pathNextGap.label,
+                })}
         </button>
       ) : (
         <button

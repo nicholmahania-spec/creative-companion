@@ -21,6 +21,7 @@ import {
   t as i18nT,
   pathLabel,
   pathFillHint,
+  tFormat,
 } from '../lib/i18n'
 import { useModalFocus } from '../lib/useModalFocus'
 
@@ -41,6 +42,7 @@ export default function ResearchView({
   setFocusLeft,
   setPomodoroWorkStartedAt,
   setIsFocusRunning,
+  setTimerFocusSource,
 }) {
   const locale = normalizeLocale(localeProp)
   const addMoodPin = useAppStore((s) => s.addMoodPin)
@@ -197,6 +199,7 @@ export default function ResearchView({
                       return
                     }
                     setSessionComplete(false)
+                    setTimerFocusSource?.('research')
                     setFocusLeft(20 * 60)
                     setPomodoroWorkStartedAt(Date.now())
                     setIsFocusRunning(true)
@@ -617,7 +620,16 @@ export default function ResearchView({
               )}
             </section>
 
-            <p className="work-below-tools">
+            <div className="path-continue-row work-below-tools">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setActiveView('spark')}
+              >
+                {tFormat(locale, 'ui.continueNext', {
+                  label: pathLabel(locale, 'ideate') || 'Ideate',
+                })}
+              </button>
               <button
                 type="button"
                 className="text-link"
@@ -625,16 +637,7 @@ export default function ResearchView({
               >
                 ← Define
               </button>
-              <span aria-hidden="true"> · </span>
-              <button
-                type="button"
-                className="btn btn-primary"
-                style={{ marginLeft: '0.35rem' }}
-                onClick={() => setActiveView('spark')}
-              >
-                {i18nT(locale, 'ui.openIdeate') || 'Go to Ideate'}
-              </button>
-            </p>
+            </div>
           </div>
         {boardLightbox && (
           <div

@@ -1,4 +1,6 @@
-/** Lazy-loaded InsightsView */
+/** Lazy-loaded Focus timer (off-path tool) */
+import { normalizeLocale, t as i18nT, tFormat, pathLabel } from '../lib/i18n'
+
 export default function InsightsView(props) {
   const {
     setActiveView,
@@ -23,7 +25,18 @@ export default function InsightsView(props) {
     deskTasks,
     prefs = {},
     openForceBreakConsent,
+    timerFocusSource = null,
+    setTimerFocusSource,
+    locale: localeProp = 'en',
   } = props
+
+  const locale = normalizeLocale(localeProp || prefs.locale || 'en')
+  const fromResearch = timerFocusSource === 'research'
+
+  const go = (view) => {
+    setTimerFocusSource?.(null)
+    setActiveView(view)
+  }
 
   const toggleForceBreaks = () => {
     const next = !forceBreaksEnabled
@@ -48,7 +61,7 @@ export default function InsightsView(props) {
       <button
         type="button"
         className="back-link"
-        onClick={() => setActiveView('flow')}
+        onClick={() => go(fromResearch ? 'studio' : 'flow')}
       >
         ← Path
       </button>
@@ -56,7 +69,9 @@ export default function InsightsView(props) {
         <div>
           <h1 className="page-title">Focus timer</h1>
           <p className="page-sub">
-            Hold attention · then complete the current step
+            {fromResearch
+              ? 'Research sprint · then Ideate (messy directions)'
+              : 'Hold attention · then complete the current step'}
           </p>
         </div>
       </div>
@@ -88,7 +103,10 @@ export default function InsightsView(props) {
           </button>
           <button
             type="button"
-            onClick={() => resetFocus(25)}
+            onClick={() => {
+              setTimerFocusSource?.(null)
+              resetFocus(25)
+            }}
             className="btn btn-secondary"
             disabled={!!forcedBreak}
           >
@@ -96,7 +114,10 @@ export default function InsightsView(props) {
           </button>
           <button
             type="button"
-            onClick={() => resetFocus(2)}
+            onClick={() => {
+              setTimerFocusSource?.(null)
+              resetFocus(2)
+            }}
             className="btn btn-ghost"
             disabled={!!forcedBreak}
           >
@@ -104,11 +125,35 @@ export default function InsightsView(props) {
           </button>
         </div>
         {sessionComplete && !forcedBreak && (
-          <p className="session-done">
-            {forceBreaksEnabled
-              ? 'Work block done — a required break lock should open. Rest, then continue.'
-              : 'Work block done. Forced lockouts are off — take a stretch if you want.'}
-          </p>
+          <div className="session-done">
+            <p style={{ margin: '0 0 0.55rem' }}>
+              {fromResearch
+                ? i18nT(locale, 'ui.timerDoneIdeate')
+                : forceBreaksEnabled
+                  ? 'Work block done — a required break lock should open. Rest, then continue.'
+                  : 'Work block done. Forced lockouts are off — take a stretch if you want.'}
+            </p>
+            {fromResearch && (
+              <div className="path-continue-row" style={{ margin: 0 }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => go('spark')}
+                >
+                  {tFormat(locale, 'ui.continueNext', {
+                    label: pathLabel(locale, 'ideate') || 'Ideate',
+                  })}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => go('studio')}
+                >
+                  {i18nT(locale, 'ui.backToResearch')}
+                </button>
+              </div>
+            )}
+          </div>
         )}
         <div className="settings-row" style={{ marginTop: '0.85rem' }}>
           <div>
@@ -134,28 +179,49 @@ export default function InsightsView(props) {
       </section>
       <section className="panel brand-section">
         <div className="brand-section-label">After</div>
-        <div className="timer-after-actions">
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={!nextTask}
-            onClick={() => {
-              if (nextTask) toggleTask(nextTask.id)
-              setActiveView('flow')
-            }}
-          >
-            Mark step done
-          </button>
-          <button
-            type="button"
-            className="text-link"
-            onClick={() => setActiveView('flow')}
-          >
-            Back to Sketch
-            {deskTasks.length
-              ? ` · ${completedCount}/${deskTasks.length} done`
-              : ''}
-          </button>
+        <div className="timer-after-actions path-continue-row">
+          {fromResearch ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => go('spark')}
+              >
+                {i18nT(locale, 'ui.backToIdeate')}
+              </button>
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => go('studio')}
+              >
+                {i18nT(locale, 'ui.backToResearch')}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!nextTask}
+                onClick={() => {
+                  if (nextTask) toggleTask(nextTask.id)
+                  go('flow')
+                }}
+              >
+                Mark step done
+              </button>
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => go('flow')}
+              >
+                Back to Sketch
+                {deskTasks.length
+                  ? ` · ${completedCount}/${deskTasks.length} done`
+                  : ''}
+              </button>
+            </>
+          )}
           <button
             type="button"
             className="text-link"

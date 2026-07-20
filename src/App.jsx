@@ -249,6 +249,8 @@ function App() {
   const [focusLeft, setFocusLeft] = useState(POMODORO_WORK_MIN * 60)
   const [isFocusRunning, setIsFocusRunning] = useState(false)
   const [sessionComplete, setSessionComplete] = useState(false)
+  /** 'research' when 20-min research timer started — rejoin Ideate after ding */
+  const [timerFocusSource, setTimerFocusSource] = useState(null)
   const [pomodoroWorkStartedAt, setPomodoroWorkStartedAt] = useState(null)
   /** @type {null | { totalSec: number, leftSec: number, workMinutes: number, breakMinutes: number, planItems: array, completedIds: string[] }} */
   const [forcedBreak, setForcedBreak] = useState(null)
@@ -773,6 +775,7 @@ function App() {
             return
           }
           setSessionComplete(false)
+          setTimerFocusSource('research')
           setFocusLeft(20 * 60)
           setPomodoroWorkStartedAt(Date.now())
           setIsFocusRunning(true)
@@ -2927,7 +2930,19 @@ function App() {
               </section>
             )}
 
-            <p className="work-below-tools">
+            <div className="path-continue-row work-below-tools">
+              {journeyNext && (
+                <button
+                  type="button"
+                  className="btn btn-primary work-path-next"
+                  onClick={() => setActiveView(journeyNext.view)}
+                >
+                  {tFormat(locale, 'ui.continueNext', {
+                    label:
+                      pathLabel(locale, journeyNext.id) || journeyNext.label,
+                  })}
+                </button>
+              )}
               <button
                 type="button"
                 className="text-link"
@@ -2935,23 +2950,7 @@ function App() {
               >
                 Break project down
               </button>
-              {journeyNext && (
-                <>
-                  <span className="work-below-sep" aria-hidden="true">
-                    ·
-                  </span>
-                  <button
-                    type="button"
-                    className="text-link work-path-next"
-                    onClick={() => setActiveView(journeyNext.view)}
-                  >
-                    {journeyStep?.nextLabel ||
-                      i18nT(locale, 'ui.goToBoard') ||
-                      `Go to ${journeyNext.label}`}
-                  </button>
-                </>
-              )}
-            </p>
+            </div>
 
             {/* Queue — collapsed by default when busy */}
             <section className="panel brand-section">
@@ -3093,6 +3092,7 @@ function App() {
               setFocusLeft={setFocusLeft}
               setPomodoroWorkStartedAt={setPomodoroWorkStartedAt}
               setIsFocusRunning={setIsFocusRunning}
+              setTimerFocusSource={setTimerFocusSource}
             />
           </Suspense>
         )}
@@ -3152,6 +3152,9 @@ function App() {
               deskTasks={deskTasks}
               prefs={prefs}
               openForceBreakConsent={() => setForceBreakConsentOpen(true)}
+              timerFocusSource={timerFocusSource}
+              setTimerFocusSource={setTimerFocusSource}
+              locale={locale}
             />
           </Suspense>
 
@@ -3224,7 +3227,9 @@ function App() {
                   className="btn btn-primary"
                   onClick={() => setActiveView('finish')}
                 >
-                  {i18nT(locale, 'ui.openPack') || 'Go to Deliver'}
+                  {tFormat(locale, 'ui.continueNext', {
+                    label: pathLabel(locale, 'deliver') || 'Deliver',
+                  })}
                 </button>
               </div>
             </div>
@@ -3931,7 +3936,9 @@ function App() {
                   className="btn btn-primary"
                   onClick={() => setActiveView('studio')}
                 >
-                  {i18nT(locale, 'ui.openWork') || 'Go to Research'}
+                  {tFormat(locale, 'ui.continueNext', {
+                    label: pathLabel(locale, 'research') || 'Research',
+                  })}
                 </button>
               </div>
             </div>

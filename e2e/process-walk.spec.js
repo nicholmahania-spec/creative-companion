@@ -30,7 +30,10 @@ test.describe('Process walk (artifacts)', () => {
     await page.getByRole('button', { name: /Fill brief from sheet/i }).click()
     // Next gap lives on path strip (not Define header)
     await expect(page.locator('.journey-gap-strip-btn')).toBeVisible()
-    await page.getByRole('button', { name: /Go to Research/i }).first().click()
+    await page
+      .getByRole('button', { name: /Continue · Research|Go to Research/i })
+      .first()
+      .click()
 
     // 2 Research — pin + star for leave-behind
     await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
@@ -63,9 +66,10 @@ test.describe('Process walk (artifacts)', () => {
     await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()
     await expect(page.getByText(/Ideate checklist|Ideate & brainstorm/i)).toBeVisible()
     await page.getByRole('button', { name: /Opposite direction/i }).click()
-    // Still thin until direction title
-    await expect(page.locator('.journey-still-thin')).toBeVisible()
-    await expect(page.locator('.journey-still-thin')).toContainText(/Ideate/i)
+    // On earliest empty step: strip densifies (still-thin list hidden; chip open)
+    await expect(page.locator('.journey-gap-strip.is-on-gap')).toBeVisible()
+    await expect(page.locator('.step-fill-chip.is-open')).toBeVisible()
+    await expect(page.locator('.journey-still-thin')).toHaveCount(0)
     await page.locator('#dir-title-a').fill('Quiet editorial')
     await page.locator('#dir-title-b').fill('Warm product toolkit')
     await page

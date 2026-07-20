@@ -22,6 +22,7 @@ import {
   normalizeLocale,
   t as i18nT,
   tFormat,
+  pathLabel,
 } from '../lib/i18n'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
@@ -160,7 +161,9 @@ export default function DesignView({
                     setActiveView('review')
                   }}
                 >
-                  {i18nT(locale, 'ui.openReview') || 'Go to Review'}
+                  {tFormat(locale, 'ui.continueNext', {
+                    label: pathLabel(locale, 'review') || 'Review',
+                  })}
                 </button>
               </div>
             </div>
@@ -800,20 +803,22 @@ export default function DesignView({
               })()}
             </section>
 
-            <div className="brand-export-bar">
+            <div className="brand-export-bar path-continue-row">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setActiveView('review')}
+              >
+                {tFormat(locale, 'ui.continueNext', {
+                  label: pathLabel(locale, 'review') || 'Review',
+                })}
+              </button>
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setActiveView('studio')}
               >
                 Research
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setActiveView('review')}
-              >
-                {i18nT(locale, 'ui.openReview') || 'Go to Review'}
               </button>
             </div>
           </div>
