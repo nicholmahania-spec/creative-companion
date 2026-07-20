@@ -68,7 +68,7 @@ test.describe('Soft Signal demo', () => {
     await path.getByRole('button', { name: /Step 5: Design/i }).click()
     await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible()
     await expect(
-      page.getByRole('button', { name: /Gap · G/i })
+      page.getByRole('button', { name: /Gap · G/i }).first()
     ).toBeVisible()
   })
 })

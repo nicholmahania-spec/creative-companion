@@ -67,6 +67,7 @@ import {
   pathMissingLabels,
   pathFirstGap,
   pathGapFocusSelector,
+  pathStepFillHint,
   focusPathGapTarget,
 } from './lib/journeyProgress'
 const PathProgressPanel = lazy(() => import('./components/PathProgressPanel'))
@@ -385,11 +386,22 @@ function App() {
     () => pathFirstGap(JOURNEY_STEPS, pathProgressCtx),
     [pathProgressCtx]
   )
+  const pathMissingShort = useMemo(() => {
+    const labels = pathMissingLabels(JOURNEY_STEPS, pathProgressCtx, (id) =>
+      pathLabel(locale, id)
+    )
+    if (labels.length <= 3) return labels
+    return [...labels.slice(0, 3), `+${labels.length - 3}`]
+  }, [pathProgressCtx, locale])
+  const thisStepId = journeyIdForView(activeView)
   const thisStepFilled = useMemo(() => {
-    const id = journeyIdForView(activeView)
-    if (!id) return null
-    return pathStepHasContent(id, pathProgressCtx)
-  }, [activeView, pathProgressCtx])
+    if (!thisStepId) return null
+    return pathStepHasContent(thisStepId, pathProgressCtx)
+  }, [thisStepId, pathProgressCtx])
+  const thisStepHint =
+    thisStepId && thisStepFilled === false
+      ? pathStepFillHint(thisStepId)
+      : null
   const completedCount = doneTasks.length
   const progressPercent =
     deskTasks.length > 0
@@ -2538,9 +2550,22 @@ function App() {
               className={`step-fill-chip${
                 thisStepFilled ? ' is-filled' : ' is-open'
               }`}
+              title={thisStepHint || undefined}
             >
-              {thisStepFilled ? 'This step · filled' : 'This step · open'}
+              {thisStepFilled
+                ? 'This step · filled'
+                : thisStepHint
+                  ? `Open · ${thisStepHint}`
+                  : 'This step · open'}
             </span>
+            {pathMissingShort.length > 0 && (
+              <span className="journey-still-thin" title={pathMissingShort.join(' · ')}>
+                <strong>Still thin:</strong>{' '}
+                <span className="journey-still-thin-list">
+                  {pathMissingShort.join(' · ')}
+                </span>
+              </span>
+            )}
             {pathNextGap ? (
               <button
                 type="button"
@@ -2621,6 +2646,13 @@ function App() {
                       ? i18nT(locale, 'ui.emptyStepBodyDone')
                       : i18nT(locale, 'ui.emptyStepBody')}
                   </p>
+                  {deskTasks.length === 0 && (
+                    <p className="panel-hint sketch-still-thin" style={{ marginTop: '0.5rem' }}>
+                      <strong>Still thin · Sketch</strong>
+                      {' — '}
+                      {pathStepFillHint('sketch')}.
+                    </p>
+                  )}
                   <p className="work-pack-destination">
                     {i18nT(locale, 'ui.packDest')}
                   </p>
@@ -3252,6 +3284,18 @@ function App() {
                     </p>
                     <p className="empty-state-body">
                       {i18nT(locale, 'ui.emptyPinsBody')}
+                    </p>
+                    <p className="panel-hint research-still-thin" style={{ marginTop: '0.75rem' }}>
+                      <strong>Still thin · Research</strong>
+                      {' — '}
+                      {pathStepFillHint('research')}. Path strip or{' '}
+                      <button
+                        type="button"
+                        className="text-link"
+                        onClick={() => goToNextProcessGap()}
+                      >
+                        Gap · G
+                      </button>
                     </p>
                   </div>
                 ) : (
@@ -4551,6 +4595,7 @@ function App() {
                       if (step)
                         focusPathGapTarget(pathGapFocusSelector(step.id))
                     }}
+                    onFixNextGap={goToNextProcessGap}
                     labelForId={(id) => pathLabel(locale, id)}
                     hint="Review with content in earlier steps — then Deliver."
                   />
@@ -4758,6 +4803,7 @@ function App() {
                       if (step)
                         focusPathGapTarget(pathGapFocusSelector(step.id))
                     }}
+                    onFixNextGap={goToNextProcessGap}
                     labelForId={(id) => pathLabel(locale, id)}
                     hint="Tap any step to fill gaps before the brand book PDF."
                   />

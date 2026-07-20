@@ -9,6 +9,7 @@ export default function PathProgressPanel({
   missing = [],
   nextGap = null,
   onOpenStep,
+  onFixNextGap,
   labelForId,
   hint = 'Tap any step to fill gaps.',
 }) {
@@ -53,7 +54,11 @@ export default function PathProgressPanel({
         <button
           type="button"
           className="btn btn-secondary btn-sm"
-          onClick={() => onOpenStep?.(nextGap.view)}
+          onClick={() =>
+            onFixNextGap
+              ? onFixNextGap()
+              : onOpenStep?.(nextGap.view)
+          }
         >
           Fix next gap · {nextLabel}
         </button>

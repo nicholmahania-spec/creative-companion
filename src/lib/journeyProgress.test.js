@@ -5,6 +5,7 @@ import {
   pathMissingLabels,
   pathFirstGap,
   pathGapFocusSelector,
+  pathStepFillHint,
 } from './journeyProgress'
 import { JOURNEY_STEPS } from './journey'
 
@@ -86,5 +87,12 @@ describe('pathStepHasContent', () => {
     expect(pathGapFocusSelector('define')).toMatch(/detective/)
     expect(pathGapFocusSelector('review')).toMatch(/feedback/)
     expect(pathGapFocusSelector('deliver')).toMatch(/handoff/)
+  })
+
+  it('pathStepFillHint returns short how-to for each step', () => {
+    expect(pathStepFillHint('research')).toMatch(/pin/i)
+    expect(pathStepFillHint('sketch')).toMatch(/step/i)
+    expect(pathStepFillHint('design')).toMatch(/tagline|palette|version/i)
+    expect(pathStepFillHint('unknown')).toMatch(/content/i)
   })
 })

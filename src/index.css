@@ -8588,6 +8588,45 @@ html[data-reduce-motion='true'] *::after {
   border-color: color-mix(in srgb, var(--accent-growth, #0f766e) 55%, var(--border-subtle));
   background: color-mix(in srgb, var(--accent-growth, #0f766e) 12%, transparent);
 }
+.journey-still-thin {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  flex: 1 1 8rem;
+  min-width: 0;
+  line-height: 1.35;
+}
+.journey-still-thin-list {
+  color: var(--text-primary);
+  font-weight: 550;
+}
+.research-still-thin .text-link {
+  font: inherit;
+  font-weight: 650;
+  vertical-align: baseline;
+}
+@media (max-width: 640px) {
+  .journey-gap-strip {
+    padding: 0.3rem 0.65rem 0.4rem;
+    gap: 0.35rem 0.5rem;
+  }
+  .step-fill-chip {
+    font-size: 0.68rem;
+    padding: 0.15rem 0.45rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .journey-still-thin {
+    flex-basis: 100%;
+    order: 3;
+    font-size: 0.68rem;
+  }
+  .journey-gap-strip-btn {
+    font-size: 0.72rem;
+    padding: 0.22rem 0.55rem;
+    margin-left: auto;
+  }
+}
 
 .palette-roles-row {
   display: flex;

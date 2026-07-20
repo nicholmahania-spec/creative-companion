@@ -120,6 +120,32 @@ export function pathGapFocusSelector(stepId) {
 }
 
 /**
+ * Short “how to fill this step” line for ADHD strip / empty states.
+ * @param {string} stepId
+ * @returns {string}
+ */
+export function pathStepFillHint(stepId) {
+  switch (stepId) {
+    case 'define':
+      return 'Name, goal, or audience'
+    case 'research':
+      return 'Pin at least one ref'
+    case 'ideate':
+      return 'Spark, A/B/C, or pin a spark note'
+    case 'sketch':
+      return 'Capture one finishable step'
+    case 'design':
+      return 'Tagline, palette, or version bump'
+    case 'review':
+      return 'Feedback notes or leave-behind pin'
+    case 'deliver':
+      return 'Handoff, learnings, or leave-behind'
+    default:
+      return 'Add a little content'
+  }
+}
+
+/**
  * Focus first matching selector after a short delay (post-nav).
  * @param {string|null} selectorList - comma-separated CSS selectors
  * @param {number} [delayMs]

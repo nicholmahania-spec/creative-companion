@@ -22,8 +22,11 @@ test.describe('Brand book PDF', () => {
       page.getByText(/Process · \d+ of 7 steps have content/i)
     ).toBeVisible()
     // Fresh project is thin — missing summary + next-gap CTA
-    await expect(page.getByText(/Still thin:/i)).toBeVisible()
-    const fixGap = page.getByRole('button', { name: /^Fix next gap/i })
+    // (strip + PathProgressPanel both say Still thin)
+    await expect(page.locator('.deliver-missing')).toBeVisible()
+    const fixGap = page
+      .getByLabel('Process progress')
+      .getByRole('button', { name: /^Fix next gap/i })
     await expect(fixGap).toBeVisible()
     await fixGap.click()
     // Earliest gap for a bare project is usually Research (after define name)
