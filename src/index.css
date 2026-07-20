@@ -2313,6 +2313,56 @@ h3 {
   font-size: 0.85rem;
 }
 
+.home-view-multi {
+  max-width: 34rem;
+}
+
+.home-project-list {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  text-align: left;
+}
+
+.home-project-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+}
+
+.home-project-row-main {
+  min-width: 0;
+}
+
+.home-project-name {
+  margin: 0 0 0.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-project-next {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.home-project-btn {
+  flex-shrink: 0;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.9rem;
+}
+
 .journey-step.is-active .journey-num {
   background: var(--accent-primary);
   color: #fafaf9;

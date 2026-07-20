@@ -83,6 +83,7 @@ import {
   pathGapFocusSelector,
   buildPathProgressCtx,
   focusPathGapTarget,
+  sameProjectId,
 } from './lib/journeyProgress'
 import JourneyGapStrip from './components/JourneyGapStrip'
 import {
@@ -624,6 +625,21 @@ function App() {
     return null
   }, [goToProcessStep, setActiveView, locale])
 
+  /** Home dashboard: switch to a different project, then land on its own next gap */
+  const switchProjectAndContinue = useCallback(
+    (projectId) => {
+      setCurrentProject(projectId)
+      const gap = pathFirstGap(
+        JOURNEY_STEPS,
+        buildPathProgressCtx(useAppStore.getState())
+      )
+      if (gap?.view) return goToProcessStep(gap, { micro: 'next' })
+      setActiveView('finish')
+      return null
+    },
+    [setCurrentProject, goToProcessStep, setActiveView]
+  )
+
   const applyBrandKit = useCallback(
     async (kitId) => {
       const { getBrandKit } = await loadBrandKits()
@@ -898,6 +914,29 @@ function App() {
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
   const archivedProjects = (projects || []).filter((p) => p.archived)
+
+  /** Per-project next-step summary for the multi-project Home dashboard */
+  const projectsSummary = useMemo(
+    () =>
+      activeProjects.map((p) => {
+        const ctx = {
+          project: p,
+          moodItems: (moodItems || []).filter((m) =>
+            sameProjectId(m.projectId, p.id)
+          ),
+          tasks: (tasks || []).filter((t) => sameProjectId(t.projectId, p.id)),
+          sparkIndex,
+          palette: p.palette?.length > 0 ? p.palette : DEFAULT_PALETTE,
+        }
+        const rows = pathProgressSummary(JOURNEY_STEPS, ctx)
+        return {
+          project: p,
+          doneCount: rows.filter((r) => r.done).length,
+          nextGap: pathFirstGap(JOURNEY_STEPS, ctx),
+        }
+      }),
+    [activeProjects, moodItems, tasks, sparkIndex]
+  )
 
   const projectPills = (
     <div className="project-pills" role="tablist" aria-label="Project">
@@ -2799,7 +2838,53 @@ function App() {
           />
         )}
         {/* ===== HOME — the whole app, reduced to one sentence and one button ===== */}
-        {activeView === 'home' && (
+        {activeView === 'home' && activeProjects.length > 1 && (
+          <section className="home-view home-view-multi">
+            <p className="home-eyebrow">Your projects</p>
+            <h1 className="home-title">What's next</h1>
+            <ul className="home-project-list">
+              {[...projectsSummary]
+                .sort((a, b) => {
+                  const aDone = a.doneCount >= 7
+                  const bDone = b.doneCount >= 7
+                  if (aDone !== bDone) return aDone ? 1 : -1
+                  return 0
+                })
+                .map(({ project: p, doneCount, nextGap }) => {
+                  const done = doneCount >= 7
+                  return (
+                    <li key={p.id} className="home-project-row">
+                      <div className="home-project-row-main">
+                        <p className="home-project-name">{p.name}</p>
+                        <p className="home-project-next">
+                          {done
+                            ? 'Ready to deliver'
+                            : nextGap
+                              ? `Next: ${pathLabel(locale, nextGap.id) || nextGap.label}`
+                              : 'All caught up'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className={`btn ${done ? 'btn-secondary' : 'btn-primary'} home-project-btn`}
+                        onClick={() => {
+                          if (done) {
+                            setCurrentProject(p.id)
+                            setActiveView('finish')
+                            return
+                          }
+                          switchProjectAndContinue(p.id)
+                        }}
+                      >
+                        {done ? 'Open Deliver' : 'Continue'}
+                      </button>
+                    </li>
+                  )
+                })}
+            </ul>
+          </section>
+        )}
+        {activeView === 'home' && activeProjects.length <= 1 && (
           <section className="home-view">
             <p className="home-eyebrow">
               {activeProject?.name || 'Your project'}
