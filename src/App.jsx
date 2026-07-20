@@ -120,39 +120,6 @@ import {
   isRtl,
 } from './lib/i18n'
 import { useModalFocus } from './lib/useModalFocus'
-/** Direction kits — lazy to keep main chunk lean */
-let brandKitsMod = null
-async function loadBrandKits() {
-  if (!brandKitsMod) brandKitsMod = await import('./lib/brandKits')
-  return brandKitsMod
-}
-const BrandKitsGrid = lazy(async () => {
-  const { BRAND_KITS } = await loadBrandKits()
-  return {
-    default: function BrandKitsGridInner({ onPick }) {
-      return (
-        <div className="brand-kits-grid">
-          {BRAND_KITS.map((kit) => (
-            <button
-              key={kit.id}
-              type="button"
-              className="brand-kit-card"
-              onClick={() => onPick?.(kit.id)}
-            >
-              <span className="brand-kit-swatches" aria-hidden="true">
-                {kit.palette.slice(0, 4).map((c) => (
-                  <i key={c} style={{ background: c }} />
-                ))}
-              </span>
-              <strong className="brand-kit-name">{kit.name}</strong>
-              <span className="brand-kit-blurb">{kit.blurb}</span>
-            </button>
-          ))}
-        </div>
-      )
-    },
-  }
-})
 import {
   isSessionOpen,
   closeSession,
@@ -634,30 +601,6 @@ function App() {
       return null
     },
     [setCurrentProject, goToProcessStep, setActiveView]
-  )
-
-  const applyBrandKit = useCallback(
-    async (kitId) => {
-      const { getBrandKit } = await loadBrandKits()
-      const kit = getBrandKit(kitId)
-      if (!kit) return
-      setProjectPalette([...kit.palette])
-      updateBrandField('voice', kit.voice)
-      updateBrandField('typeHeading', kit.typeHeading)
-      updateBrandField('typeBody', kit.typeBody)
-      updateBrandField('doUse', kit.doUse)
-      updateBrandField('dontUse', kit.dontUse)
-      const bump = bumpDesignVersionIfV1()
-      flashToast(
-        bump?.bumped
-          ? tFormat(locale, 'ui.directionKitBumped', {
-              name: kit.name,
-              version: bump.version,
-            })
-          : tFormat(locale, 'ui.directionKitOk', { name: kit.name })
-      )
-    },
-    [setProjectPalette, updateBrandField, bumpDesignVersionIfV1, locale]
   )
 
   /** Filled after runExport is defined — command palette export actions use this */
@@ -3290,8 +3233,6 @@ function App() {
               flashMicro={flashMicro}
               updateDetective={updateDetective}
               applyDetectiveToBrief={applyDetectiveToBrief}
-              applyBrandKit={applyBrandKit}
-              BrandKitsGrid={BrandKitsGrid}
               setProjectDeadline={setProjectDeadline}
               handleDeleteProject={handleDeleteProject}
               renameProject={renameProject}

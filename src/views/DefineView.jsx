@@ -1,5 +1,5 @@
 /**
- * Define step — detective sheet, direction kits, project fields, readiness.
+ * Define step — detective sheet, project fields, readiness.
  */
 import { Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
@@ -31,8 +31,6 @@ export default function DefineView(props) {
     flashMicro,
     updateDetective,
     applyDetectiveToBrief,
-    applyBrandKit,
-    BrandKitsGrid,
     setProjectDeadline,
     handleDeleteProject,
     renameProject,
@@ -119,26 +117,6 @@ export default function DefineView(props) {
                 flashToast={flashToast}
               />
             </Suspense>
-
-            <section className="panel brand-section brand-kits-panel">
-              <div className="brand-section-label">
-                Quick-start colors &amp; voice
-              </div>
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                Pick one to instantly fill in your colors, fonts, and voice
-                on Design — this replaces anything you&apos;ve already set
-                there.
-              </p>
-              <Suspense
-                fallback={
-                  <p className="panel-hint" style={{ margin: 0 }}>
-                    Loading kits…
-                  </p>
-                }
-              >
-                <BrandKitsGrid onPick={applyBrandKit} />
-              </Suspense>
-            </section>
 
             <section className="panel brand-section">
               <div className="brand-section-label">

@@ -29,7 +29,7 @@ describe('pathStepHasContent', () => {
     ).toBe(false)
     expect(
       pathStepHasContent('research', {
-        moodItems: [{ id: 1, inPack: true }],
+        moodItems: [{ id: 1, inPack: true, note: 'why' }],
       })
     ).toBe(true)
     expect(
@@ -44,7 +44,7 @@ describe('pathStepHasContent', () => {
     expect(pathStepHasContent('ideate', { sparkIndex: 5 })).toBe(false)
     expect(
       pathStepHasContent('ideate', {
-        project: { directions: [{ title: 'Quiet' }] },
+        project: { directions: [{ title: 'Quiet', note: 'Fits the goal' }] },
       })
     ).toBe(true)
     expect(
@@ -98,10 +98,10 @@ describe('pathStepHasContent', () => {
         feedbackNotes: 'ok',
         handoffNote: 'hi',
         learnings: 'yay',
-        directions: [{ id: 'a', title: 'Quiet' }],
+        directions: [{ id: 'a', title: 'Quiet', note: 'Fits the goal' }],
       },
       moodItems: [{ id: 1, inPack: true, type: 'quote', note: 'ref' }],
-      tasks: [{ id: 1 }],
+      tasks: [{ id: 1, why: 'Fits the goal' }],
       sparkIndex: 3,
       palette: ['#111', '#222'],
     })
@@ -174,7 +174,7 @@ describe('pathStepHasContent', () => {
       currentProjectId: '9001',
       projects: [{ id: 9001, name: 'Soft', palette: ['#111'] }],
       moodItems: [
-        { id: 1, projectId: 9001, inPack: true },
+        { id: 1, projectId: 9001, inPack: true, note: 'why' },
         { id: 2, projectId: 9002 },
       ],
       tasks: [{ id: 1, projectId: 9001 }],
