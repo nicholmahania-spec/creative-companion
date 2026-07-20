@@ -3,6 +3,8 @@ import {
   normalizeLocale,
   t,
   pathLabel,
+  pathFillHint,
+  tFormat,
   LOCALES,
   getMessages,
   localeDir,
@@ -70,6 +72,16 @@ describe('i18n wordmark + path + catalog', () => {
     expect(localeDir('ar')).toBe('rtl')
     expect(isRtl('ar')).toBe(true)
     expect(isRtl('en')).toBe(false)
+  })
+
+  it('pathFillHint and strip templates resolve', () => {
+    expect(pathFillHint('en', 'research')).toMatch(/pin/i)
+    expect(pathFillHint('es', 'research')).toMatch(/ref|Fija/i)
+    expect(tFormat('en', 'ui.nextGapBtn', { label: 'Research' })).toBe(
+      'Next gap · Research · G'
+    )
+    expect(t('en', 'ui.stillThin')).toBe('Still thin')
+    expect(t('es', 'ui.stillThin')).toMatch(/delgado/i)
   })
 
   it('pack copy is honest about vector PDF vs print', () => {

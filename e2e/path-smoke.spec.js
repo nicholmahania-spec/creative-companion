@@ -22,9 +22,16 @@ test.describe('Creative Companion path smoke', () => {
     await expect(page.locator('.journey-gap-strip-btn')).toContainText(
       /Next gap ·|Ship · brand book/i
     )
-    // Wave: still-thin summary on strip
+    // Wave: still-thin summary on strip (clickable step links)
     await expect(page.locator('.journey-still-thin')).toBeVisible()
     await expect(page.locator('.journey-still-thin')).toContainText(/Still thin/i)
+    await expect(page.locator('.journey-still-thin-link').first()).toBeVisible()
+
+    // Click first still-thin link → jump that step + focus
+    await page.locator('.journey-still-thin-link').first().click()
+    await expect(page.locator('h1.page-title').first()).toBeVisible({
+      timeout: 8000,
+    })
 
     await path.getByRole('button', { name: /Step 1: Define/i }).click()
     await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()

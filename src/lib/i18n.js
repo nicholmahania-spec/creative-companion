@@ -176,6 +176,25 @@ const EN = {
     setDeadlineTo: 'Set project deadline to',
     lightThemeOn: 'Light (warm paper) — on',
     darkThemeOn: 'Dark (deep charcoal) — on',
+    stillThin: 'Still thin',
+    stepFilled: 'This step · filled',
+    stepOpen: 'This step · open',
+    nextGapBtn: 'Next gap · {label} · G',
+    shipBrandBook: 'Ship · brand book PDF',
+    processFullDeliver: 'Process full · open Deliver',
+    processLooksFull: 'Process looks full — ship the brand book on Deliver',
+    openStepMicro: 'Open · {label}',
+    nextGapMicro: 'Next gap · {label}',
+  },
+  fillHint: {
+    define: 'Name, goal, or audience',
+    research: 'Pin at least one ref',
+    ideate: 'Spark, A/B/C, or pin a spark note',
+    sketch: 'Capture one finishable step',
+    design: 'Tagline, palette, or version bump',
+    review: 'Feedback notes or leave-behind pin',
+    deliver: 'Handoff, learnings, or leave-behind',
+    default: 'Add a little content',
   },
 }
 
@@ -275,6 +294,16 @@ const OVERRIDES = {
       enable: 'Activar',
       cancel: 'Cancelar',
       continue: 'Continuar',
+      stillThin: 'Aún delgado',
+      stepFilled: 'Este paso · listo',
+      stepOpen: 'Este paso · abierto',
+      nextGapBtn: 'Siguiente hueco · {label} · G',
+      shipBrandBook: 'Enviar · PDF libro de marca',
+      processFullDeliver: 'Proceso completo · abrir Entregar',
+      processLooksFull:
+        'Proceso completo — envía el libro de marca en Entregar',
+      openStepMicro: 'Abrir · {label}',
+      nextGapMicro: 'Siguiente hueco · {label}',
       thinPackBanner:
         'Entregable delgado — añade eslogan, paleta o pines ★ en Investigación.',
       continuePrint: 'Imprimir igual',
@@ -309,6 +338,16 @@ const OVERRIDES = {
       doThisNow: 'Haz esto ahora',
       lightThemeOn: 'Claro (papel) — activo',
       darkThemeOn: 'Oscuro (carbón) — activo',
+    },
+    fillHint: {
+      define: 'Nombre, meta o audiencia',
+      research: 'Fija al menos una ref',
+      ideate: 'Chispa, A/B/C o nota de idea',
+      sketch: 'Captura un paso terminable',
+      design: 'Eslogan, paleta o versión',
+      review: 'Notas de feedback o pin del entregable',
+      deliver: 'Entrega, aprendizajes o entregable',
+      default: 'Añade un poco de contenido',
     },
   },
   fr: {
@@ -713,6 +752,22 @@ export function pathLabel(locale, stepId) {
 
 export function pathPlain(locale, stepId) {
   return t(locale, `pathPlain.${stepId}`) || ''
+}
+
+/** Short how-to fill a path step (ADHD strip / empty states). */
+export function pathFillHint(locale, stepId) {
+  const s = t(locale, `fillHint.${stepId}`)
+  if (s && s !== `fillHint.${stepId}`) return s
+  return t(locale, 'fillHint.default') || 'Add a little content'
+}
+
+/** Simple `{label}` style template for strip / micro copy. */
+export function tFormat(locale, key, vars = {}) {
+  let s = String(t(locale, key) || key)
+  for (const [k, v] of Object.entries(vars)) {
+    s = s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v ?? ''))
+  }
+  return s
 }
 
 export function isRtl(locale) {

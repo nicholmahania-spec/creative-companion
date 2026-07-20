@@ -67,7 +67,6 @@ import {
   pathMissingLabels,
   pathFirstGap,
   pathGapFocusSelector,
-  pathStepFillHint,
   focusPathGapTarget,
 } from './lib/journeyProgress'
 const PathProgressPanel = lazy(() => import('./components/PathProgressPanel'))
@@ -105,11 +104,45 @@ import {
   t as i18nT,
   pathLabel,
   pathPlain,
+  pathFillHint,
+  tFormat,
   localeDir,
   isRtl,
 } from './lib/i18n'
 import { useModalFocus } from './lib/useModalFocus'
-import { BRAND_KITS, getBrandKit } from './lib/brandKits'
+/** Direction kits — lazy to keep main chunk lean */
+let brandKitsMod = null
+async function loadBrandKits() {
+  if (!brandKitsMod) brandKitsMod = await import('./lib/brandKits')
+  return brandKitsMod
+}
+const BrandKitsGrid = lazy(async () => {
+  const { BRAND_KITS } = await loadBrandKits()
+  return {
+    default: function BrandKitsGridInner({ onPick }) {
+      return (
+        <div className="brand-kits-grid">
+          {BRAND_KITS.map((kit) => (
+            <button
+              key={kit.id}
+              type="button"
+              className="brand-kit-card"
+              onClick={() => onPick?.(kit.id)}
+            >
+              <span className="brand-kit-swatches" aria-hidden="true">
+                {kit.palette.slice(0, 4).map((c) => (
+                  <i key={c} style={{ background: c }} />
+                ))}
+              </span>
+              <strong className="brand-kit-name">{kit.name}</strong>
+              <span className="brand-kit-blurb">{kit.blurb}</span>
+            </button>
+          ))}
+        </div>
+      )
+    },
+  }
+})
 import {
   isSessionOpen,
   closeSession,
@@ -386,13 +419,13 @@ function App() {
     () => pathFirstGap(JOURNEY_STEPS, pathProgressCtx),
     [pathProgressCtx]
   )
-  const pathMissingShort = useMemo(() => {
-    const labels = pathMissingLabels(JOURNEY_STEPS, pathProgressCtx, (id) =>
-      pathLabel(locale, id)
-    )
-    if (labels.length <= 3) return labels
-    return [...labels.slice(0, 3), `+${labels.length - 3}`]
-  }, [pathProgressCtx, locale])
+  const pathMissingRows = useMemo(
+    () =>
+      pathProgressSummary(JOURNEY_STEPS, pathProgressCtx).filter((r) => !r.done),
+    [pathProgressCtx]
+  )
+  const pathMissingExtra = Math.max(0, pathMissingRows.length - 3)
+  const pathMissingShown = pathMissingRows.slice(0, 3)
   const thisStepId = journeyIdForView(activeView)
   const thisStepFilled = useMemo(() => {
     if (!thisStepId) return null
@@ -400,7 +433,7 @@ function App() {
   }, [thisStepId, pathProgressCtx])
   const thisStepHint =
     thisStepId && thisStepFilled === false
-      ? pathStepFillHint(thisStepId)
+      ? pathFillHint(locale, thisStepId)
       : null
   const completedCount = doneTasks.length
   const progressPercent =
@@ -588,6 +621,19 @@ function App() {
 
   const bumpDesignVersionIfV1 = useAppStore((s) => s.bumpDesignVersionIfV1)
 
+  /** Open a process step and focus a useful field (ADHD land-on-work) */
+  const goToProcessStep = useCallback(
+    (step) => {
+      if (!step?.view) return null
+      setActiveView(step.view)
+      const label = pathLabel(locale, step.id) || step.label
+      flashMicro(tFormat(locale, 'ui.openStepMicro', { label }))
+      focusPathGapTarget(pathGapFocusSelector(step.id))
+      return step
+    },
+    [setActiveView, locale]
+  )
+
   /** Jump to earliest incomplete process step + focus a useful field */
   const goToNextProcessGap = useCallback(() => {
     const st = useAppStore.getState()
@@ -610,17 +656,19 @@ function App() {
     })
     if (gap?.view) {
       setActiveView(gap.view)
-      flashMicro(`Next gap · ${gap.label}`)
+      const label = pathLabel(locale, gap.id) || gap.label
+      flashMicro(tFormat(locale, 'ui.nextGapMicro', { label }))
       focusPathGapTarget(pathGapFocusSelector(gap.id))
       return gap
     }
-    flashToast('Process looks full — ship the brand book on Deliver')
+    flashToast(i18nT(locale, 'ui.processLooksFull'))
     setActiveView('finish')
     return null
-  }, [setActiveView])
+  }, [setActiveView, locale])
 
   const applyBrandKit = useCallback(
-    (kitId) => {
+    async (kitId) => {
+      const { getBrandKit } = await loadBrandKits()
       const kit = getBrandKit(kitId)
       if (!kit) return
       setProjectPalette([...kit.palette])
@@ -2494,7 +2542,13 @@ function App() {
                     className={`journey-step${active ? ' is-active' : ''}${
                       hasContent && !active ? ' is-done' : ''
                     }`}
-                    onClick={() => setActiveView(step.view)}
+                    onClick={() => {
+                      setActiveView(step.view)
+                      // Empty steps: land focus on a useful field
+                      if (!hasContent) {
+                        focusPathGapTarget(pathGapFocusSelector(step.id))
+                      }
+                    }}
                     aria-current={active ? 'step' : undefined}
                     aria-label={`Step ${step.num}: ${label}. ${plain}${
                       hasContent ? ' Has content.' : ''
@@ -2520,16 +2574,16 @@ function App() {
               onClick={() => goToNextProcessGap()}
               title={
                 pathDoneCount >= 7
-                  ? 'Process full · open Deliver'
+                  ? i18nT(locale, 'ui.processFullDeliver')
                   : pathNextGap
-                    ? `Process ${pathDoneCount}/7 · Next ${pathNextGap.label} (G)`
-                    : `Process ${pathDoneCount}/7 · Fix next gap (G)`
+                    ? `Process ${pathDoneCount}/7 · ${pathLabel(locale, pathNextGap.id) || pathNextGap.label} (G)`
+                    : `Process ${pathDoneCount}/7 · G`
               }
               aria-label={
                 pathDoneCount >= 7
                   ? 'Process complete, seven of seven steps have content'
                   : pathNextGap
-                    ? `Process ${pathDoneCount} of 7. Next gap ${pathNextGap.label}. Fix next gap.`
+                    ? `Process ${pathDoneCount} of 7. Next gap ${pathLabel(locale, pathNextGap.id) || pathNextGap.label}. Fix next gap.`
                     : `Process ${pathDoneCount} of 7 steps have content. Fix next gap.`
               }
             >
@@ -2553,16 +2607,33 @@ function App() {
               title={thisStepHint || undefined}
             >
               {thisStepFilled
-                ? 'This step · filled'
+                ? i18nT(locale, 'ui.stepFilled')
                 : thisStepHint
-                  ? `Open · ${thisStepHint}`
-                  : 'This step · open'}
+                  ? tFormat(locale, 'ui.openStepMicro', { label: thisStepHint })
+                  : i18nT(locale, 'ui.stepOpen')}
             </span>
-            {pathMissingShort.length > 0 && (
-              <span className="journey-still-thin" title={pathMissingShort.join(' · ')}>
-                <strong>Still thin:</strong>{' '}
+            {pathMissingShown.length > 0 && (
+              <span
+                className="journey-still-thin"
+                title={pathMissingRows
+                  .map((r) => pathLabel(locale, r.id) || r.label)
+                  .join(' · ')}
+              >
+                <strong>{i18nT(locale, 'ui.stillThin')}:</strong>{' '}
                 <span className="journey-still-thin-list">
-                  {pathMissingShort.join(' · ')}
+                  {pathMissingShown.map((r, i) => (
+                    <span key={r.id}>
+                      {i > 0 ? ' · ' : null}
+                      <button
+                        type="button"
+                        className="journey-still-thin-link"
+                        onClick={() => goToProcessStep(r)}
+                      >
+                        {pathLabel(locale, r.id) || r.label}
+                      </button>
+                    </span>
+                  ))}
+                  {pathMissingExtra > 0 ? ` · +${pathMissingExtra}` : null}
                 </span>
               </span>
             )}
@@ -2573,16 +2644,18 @@ function App() {
                 onClick={() => goToNextProcessGap()}
                 title="Keyboard G"
               >
-                Next gap · {pathNextGap.label} · G
+                {tFormat(locale, 'ui.nextGapBtn', {
+                  label: pathLabel(locale, pathNextGap.id) || pathNextGap.label,
+                })}
               </button>
             ) : (
               <button
                 type="button"
                 className="journey-gap-strip-btn is-ship"
                 onClick={() => setActiveView('finish')}
-                title="Process full — open Deliver"
+                title={i18nT(locale, 'ui.processFullDeliver')}
               >
-                Ship · brand book PDF
+                {i18nT(locale, 'ui.shipBrandBook')}
               </button>
             )}
           </div>
@@ -2648,9 +2721,12 @@ function App() {
                   </p>
                   {deskTasks.length === 0 && (
                     <p className="panel-hint sketch-still-thin" style={{ marginTop: '0.5rem' }}>
-                      <strong>Still thin · Sketch</strong>
+                      <strong>
+                        {i18nT(locale, 'ui.stillThin')} ·{' '}
+                        {pathLabel(locale, 'sketch')}
+                      </strong>
                       {' — '}
-                      {pathStepFillHint('sketch')}.
+                      {pathFillHint(locale, 'sketch')}.
                     </p>
                   )}
                   <p className="work-pack-destination">
@@ -3286,9 +3362,12 @@ function App() {
                       {i18nT(locale, 'ui.emptyPinsBody')}
                     </p>
                     <p className="panel-hint research-still-thin" style={{ marginTop: '0.75rem' }}>
-                      <strong>Still thin · Research</strong>
+                      <strong>
+                        {i18nT(locale, 'ui.stillThin')} ·{' '}
+                        {pathLabel(locale, 'research')}
+                      </strong>
                       {' — '}
-                      {pathStepFillHint('research')}. Path strip or{' '}
+                      {pathFillHint(locale, 'research')}. Path strip or{' '}
                       <button
                         type="button"
                         className="text-link"
@@ -5329,24 +5408,15 @@ function App() {
               <p className="panel-hint" style={{ marginTop: 0 }}>
                 Seed palette, voice, type, and do/don&apos;t — then polish on Design.
               </p>
-              <div className="brand-kits-grid">
-                {BRAND_KITS.map((kit) => (
-                  <button
-                    key={kit.id}
-                    type="button"
-                    className="brand-kit-card"
-                    onClick={() => applyBrandKit(kit.id)}
-                  >
-                    <span className="brand-kit-swatches" aria-hidden="true">
-                      {kit.palette.slice(0, 4).map((c) => (
-                        <i key={c} style={{ background: c }} />
-                      ))}
-                    </span>
-                    <strong className="brand-kit-name">{kit.name}</strong>
-                    <span className="brand-kit-blurb">{kit.blurb}</span>
-                  </button>
-                ))}
-              </div>
+              <Suspense
+                fallback={
+                  <p className="panel-hint" style={{ margin: 0 }}>
+                    Loading kits…
+                  </p>
+                }
+              >
+                <BrandKitsGrid onPick={applyBrandKit} />
+              </Suspense>
             </section>
 
             <section className="panel brand-section">
