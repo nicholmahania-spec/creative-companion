@@ -1135,7 +1135,7 @@ function App() {
     setActiveView,
   ])
 
-  // Once per browser session: quiet resume strip
+  // Once per browser session: quiet resume strip → last path view when possible
   useEffect(() => {
     if (!unlocked || !onboarded || cloudHydrating) return undefined
     try {
@@ -1147,9 +1147,36 @@ function App() {
     const name = activeProject?.name
     const step = nextTask?.title
     if (!name && !step) return undefined
+    let resumeView = null
+    try {
+      const raw = localStorage.getItem('cc-active-view')
+      const pathViews = new Set([
+        'project',
+        'studio',
+        'spark',
+        'flow',
+        'brand',
+        'review',
+        'finish',
+      ])
+      if (raw && pathViews.has(raw)) resumeView = raw
+    } catch {
+      /* ignore */
+    }
+    const pathLabelFor = {
+      project: 'Define',
+      studio: 'Research',
+      spark: 'Ideate',
+      flow: 'Sketch',
+      brand: 'Design',
+      review: 'Review',
+      finish: 'Deliver',
+    }
     setResumeBanner({
       name: name || 'Project',
       step: step || '',
+      view: resumeView || (step ? 'flow' : 'project'),
+      viewLabel: pathLabelFor[resumeView] || (step ? 'Sketch' : 'Define'),
     })
     return undefined
   }, [unlocked, onboarded, cloudHydrating, activeProject?.name, nextTask?.title])
@@ -5635,6 +5662,9 @@ function App() {
         <div className="resume-banner" role="status">
           <p className="resume-banner-body">
             <strong>{resumeBanner.name}</strong>
+            {resumeBanner.viewLabel
+              ? ` · ${resumeBanner.viewLabel}`
+              : ''}
             {resumeBanner.step
               ? ` · Next: ${String(resumeBanner.step).slice(0, 48)}${
                   String(resumeBanner.step).length > 48 ? '…' : ''
@@ -5646,11 +5676,15 @@ function App() {
               type="button"
               className="btn btn-primary btn-sm"
               onClick={() => {
-                setActiveView(resumeBanner.step ? 'flow' : 'project')
+                setActiveView(
+                  resumeBanner.view ||
+                    (resumeBanner.step ? 'flow' : 'project')
+                )
                 setResumeBanner(null)
               }}
             >
               Continue
+              {resumeBanner.viewLabel ? ` · ${resumeBanner.viewLabel}` : ''}
             </button>
             <button
               type="button"

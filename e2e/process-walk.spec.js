@@ -49,7 +49,9 @@ test.describe('Process walk (artifacts)', () => {
         await page.waitForTimeout(300)
         const star = page.locator('button.mood-pin-star').first()
         if (await star.count()) {
-          await star.click({ force: true })
+          // Real hit target (no force) — pin tools must not be covered by face
+          await star.click()
+          await expect(star).toHaveAttribute('aria-pressed', 'true')
         }
       }
     }
