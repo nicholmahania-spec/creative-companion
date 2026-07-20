@@ -2241,6 +2241,18 @@ function App() {
                     <strong>Command palette</strong>
                     <span>⌘K · jump anywhere</span>
                   </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setActiveView('settings')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <strong>{i18nT(locale, 'ui.settings')}</strong>
+                    <span>Demo, data, Helper AI, about</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -3163,7 +3175,7 @@ function App() {
                                 const r = toggleMoodPinInPack(item.id)
                                 if (!r.ok)
                                   flashToast(
-                                    r.error || 'Pack full (6 pins max)'
+                                    r.error || 'Leave-behind full (6 pins max)'
                                   )
                                 else
                                   flashMicro(
@@ -3314,7 +3326,7 @@ function App() {
                           if (!added) {
                             flashToast(
                               deskMood.filter((m) => m.inPack).length >= 6
-                                ? 'Pack full (6 max)'
+                                ? 'Leave-behind full (6 max)'
                                 : 'Nothing to star'
                             )
                           }
@@ -3499,7 +3511,8 @@ function App() {
                   className={`btn btn-secondary${boardLightbox.inPack ? ' is-on' : ''}`}
                   onClick={() => {
                     const r = toggleMoodPinInPack(boardLightbox.id)
-                    if (!r.ok) flashToast(r.error || 'Pack full')
+                    if (!r.ok)
+                      flashToast(r.error || 'Leave-behind full (6 max)')
                     else {
                       setBoardLightbox((p) =>
                         p ? { ...p, inPack: r.inPack } : null

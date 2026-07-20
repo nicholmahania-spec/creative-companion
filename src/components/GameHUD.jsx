@@ -102,7 +102,7 @@ export default function GameHUD({ compact = false }) {
       {open && (
         <div className="game-hud-panel" role="region" aria-label="Progress extras">
           <p className="game-hud-promise">
-            Real product: finish one step, then export a brand pack. XP is just a
+            Real product: finish one step, then export a brand book PDF. XP is just a
             side meter.
           </p>
           <div className="game-hud-panel-grid">

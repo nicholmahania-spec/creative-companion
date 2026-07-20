@@ -1864,7 +1864,7 @@ export function printElementById(elementId, options = {}) {
     const name =
       el.querySelector('.direction-title')?.textContent?.trim() ||
       'Brand direction'
-    document.title = `${name} — Brand pack`
+    document.title = `${name} — Brand book`
     window.print()
     document.title = prevTitle
     window.setTimeout(() => {

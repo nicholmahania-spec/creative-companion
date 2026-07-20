@@ -38,6 +38,9 @@ test.describe('Desk reliability', () => {
     skipIfCloud(test, gate)
     await page.getByRole('button', { name: 'Tools' }).click()
     await expect(page.locator('#tools-menu, .more-menu')).toBeVisible()
+    await expect(
+      page.locator('#tools-menu').getByRole('menuitem', { name: /Settings/i })
+    ).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(page.locator('#tools-menu, .more-menu')).toHaveCount(0)
   })

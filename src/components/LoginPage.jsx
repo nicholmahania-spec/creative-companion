@@ -149,11 +149,11 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
           <h2 className="login-proof-title">
             One next design step.
             <br />
-            Leave with a brand pack.
+            Leave with a brand leave-behind.
           </h2>
           <div className="login-pack-specimen">
             <div className="login-pack-cover">
-              <span className="login-pack-kicker">Brand pack</span>
+              <span className="login-pack-kicker">Brand book</span>
               <strong className="login-pack-name">Your project</strong>
               <p className="login-pack-tagline">Direction you can hand to a client</p>
             </div>
@@ -167,11 +167,11 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
               <span className="login-pack-pin" />
               <span className="login-pack-pin is-muted" />
             </div>
-            <p className="login-pack-foot">PDF · direction sheet you can ship</p>
+            <p className="login-pack-foot">Multi-page PDF · direction you can ship</p>
           </div>
           <ul className="login-proof-list">
             <li>Define → Research → Ideate → Sketch → Design → Review → Deliver</li>
-            <li>One process · refs · drafts · pack PDF</li>
+            <li>One process · refs · drafts · brand book PDF</li>
           </ul>
         </aside>
 

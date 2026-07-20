@@ -14,10 +14,10 @@ test.describe('Soft Signal demo', () => {
     })
     skipIfCloud(test, gate)
 
-    // Settings lives under account chip (not Tools)
-    await page.locator('#account-menu-button').click()
+    // Settings is on Tools (and account) — prefer Tools for discoverability
+    await page.getByRole('button', { name: 'Tools' }).click()
     await page
-      .locator('#account-menu')
+      .locator('#tools-menu, .more-menu')
       .getByRole('menuitem', { name: /Settings/i })
       .click()
     await expect(page.getByRole('heading', { name: /Settings/i })).toBeVisible({
