@@ -66,6 +66,8 @@ import {
   pathProgressSummary,
   pathMissingLabels,
   pathFirstGap,
+  pathGapFocusSelector,
+  focusPathGapTarget,
 } from './lib/journeyProgress'
 import PathProgressPanel from './components/PathProgressPanel'
 import {
@@ -547,6 +549,29 @@ function App() {
 
   const bumpDesignVersionIfV1 = useAppStore((s) => s.bumpDesignVersionIfV1)
 
+  /** Jump to earliest incomplete process step + focus a useful field */
+  const goToNextProcessGap = useCallback(() => {
+    const st = useAppStore.getState()
+    const project =
+      st.projects?.find((p) => p.id === st.currentProjectId) || null
+    const gap = pathFirstGap(JOURNEY_STEPS, {
+      project,
+      moodItems: st.moodItems || [],
+      tasks: st.tasks || [],
+      sparkIndex: st.sparkIndex || 0,
+      palette: project?.palette || [],
+    })
+    if (gap?.view) {
+      setActiveView(gap.view)
+      flashMicro(`Next gap · ${gap.label}`)
+      focusPathGapTarget(pathGapFocusSelector(gap.id))
+      return gap
+    }
+    flashToast('Process looks full — ship the brand book on Deliver')
+    setActiveView('finish')
+    return null
+  }, [setActiveView])
+
   const applyBrandKit = useCallback(
     (kitId) => {
       const kit = getBrandKit(kitId)
@@ -699,24 +724,8 @@ function App() {
       {
         id: 'fix-next-gap',
         label: 'Fix next process gap',
-        hint: '',
-        run: () => {
-          const gap = pathFirstGap(JOURNEY_STEPS, {
-            project: useAppStore.getState().projects?.find(
-              (p) => p.id === useAppStore.getState().currentProjectId
-            ),
-            moodItems: useAppStore.getState().moodItems || [],
-            tasks: useAppStore.getState().tasks || [],
-            sparkIndex: useAppStore.getState().sparkIndex || 0,
-          })
-          if (gap?.view) {
-            setActiveView(gap.view)
-            flashMicro(`Next gap · ${gap.label}`)
-          } else {
-            flashToast('Process looks full — ship the brand book on Deliver')
-            setActiveView('finish')
-          }
-        },
+        hint: 'G',
+        run: () => goToNextProcessGap(),
       },
     ]
     return acts.filter((a) => (a.when ? a.when() : true))
@@ -727,6 +736,7 @@ function App() {
     toggleBodyDoubling,
     bumpDesignVersion,
     forcedBreak,
+    goToNextProcessGap,
   ])
 
   const commandFiltered = useMemo(() => {
@@ -1139,6 +1149,12 @@ function App() {
         undoLastComplete()
         return
       }
+      // G — fix next process gap
+      if (k === 'g') {
+        e.preventDefault()
+        goToNextProcessGap()
+        return
+      }
       const n = Number(e.key)
       if (n < 1 || n > 7) return
       const step = JOURNEY_STEPS[n - 1]
@@ -1162,6 +1178,7 @@ function App() {
     nextTask,
     recentUndo,
     setActiveView,
+    goToNextProcessGap,
   ])
 
   // Once per browser session: quiet resume strip → last path view when possible
@@ -4392,7 +4409,11 @@ function App() {
                   doneN={doneN}
                   missing={missing}
                   nextGap={nextGap}
-                  onOpenStep={setActiveView}
+                  onOpenStep={(view) => {
+                    setActiveView(view)
+                    const step = JOURNEY_STEPS.find((s) => s.view === view)
+                    if (step) focusPathGapTarget(pathGapFocusSelector(step.id))
+                  }}
                   labelForId={(id) => pathLabel(locale, id)}
                   hint="Review with content in earlier steps — then Deliver."
                 />
@@ -4592,7 +4613,11 @@ function App() {
                   doneN={doneN}
                   missing={missing}
                   nextGap={nextGap}
-                  onOpenStep={setActiveView}
+                  onOpenStep={(view) => {
+                    setActiveView(view)
+                    const step = JOURNEY_STEPS.find((s) => s.view === view)
+                    if (step) focusPathGapTarget(pathGapFocusSelector(step.id))
+                  }}
                   labelForId={(id) => pathLabel(locale, id)}
                   hint="Tap any step to fill gaps before the brand book PDF."
                 />
@@ -5845,6 +5870,9 @@ function App() {
               </li>
               <li>
                 <kbd>N</kbd> New capture (Sketch)
+              </li>
+              <li>
+                <kbd>G</kbd> Fix next process gap
               </li>
               <li>
                 <kbd>U</kbd> Undo last complete

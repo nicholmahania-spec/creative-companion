@@ -4,6 +4,7 @@ import {
   pathProgressSummary,
   pathMissingLabels,
   pathFirstGap,
+  pathGapFocusSelector,
 } from './journeyProgress'
 import { JOURNEY_STEPS } from './journey'
 
@@ -79,5 +80,11 @@ describe('pathStepHasContent', () => {
     })
     expect(gap?.id).toBe('research')
     expect(gap?.view).toBe('studio')
+  })
+
+  it('pathGapFocusSelector maps steps to fields', () => {
+    expect(pathGapFocusSelector('define')).toMatch(/detective/)
+    expect(pathGapFocusSelector('review')).toMatch(/feedback/)
+    expect(pathGapFocusSelector('deliver')).toMatch(/handoff/)
   })
 })

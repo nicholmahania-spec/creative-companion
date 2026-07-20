@@ -92,3 +92,56 @@ export function pathFirstGap(steps, ctx) {
   const rows = pathProgressSummary(steps, ctx)
   return rows.find((r) => !r.done) || null
 }
+
+/**
+ * Best focus target after jumping to a gap step (querySelector id).
+ * @param {string} stepId
+ * @returns {string|null}
+ */
+export function pathGapFocusSelector(stepId) {
+  switch (stepId) {
+    case 'define':
+      return '#detective-goal, #project-name, #project-brief'
+    case 'research':
+      return '.board-upload-btn, .studio-view .btn-primary, #board-note'
+    case 'ideate':
+      return '#dir-title-a, .spark-actions .btn-primary'
+    case 'sketch':
+      return '#desk-capture, #step-why, #current-step'
+    case 'design':
+      return '#brand-brief, #design-version, .system-acc-tab'
+    case 'review':
+      return '#feedback-notes'
+    case 'deliver':
+      return '#handoff-note, #learnings-note'
+    default:
+      return null
+  }
+}
+
+/**
+ * Focus first matching selector after a short delay (post-nav).
+ * @param {string|null} selectorList - comma-separated CSS selectors
+ * @param {number} [delayMs]
+ */
+export function focusPathGapTarget(selectorList, delayMs = 120) {
+  if (!selectorList || typeof document === 'undefined') return
+  window.setTimeout(() => {
+    const parts = String(selectorList)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    for (const sel of parts) {
+      const el = document.querySelector(sel)
+      if (el && typeof el.focus === 'function') {
+        try {
+          el.focus({ preventScroll: false })
+          el.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+        } catch {
+          el.focus?.()
+        }
+        return
+      }
+    }
+  }, delayMs)
+}

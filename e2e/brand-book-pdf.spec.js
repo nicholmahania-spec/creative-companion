@@ -31,6 +31,11 @@ test.describe('Brand book PDF', () => {
       page.getByRole('heading', { name: /Research|Define|Ideate|Sketch/i })
     ).toBeVisible({ timeout: 8000 })
 
+    // G key also jumps to next gap from any path view
+    await page.keyboard.press('g')
+    await page.waitForTimeout(200)
+    await expect(page.locator('h1.page-title').first()).toBeVisible()
+
     // Back to Deliver for PDF
     const path2 = await pathNav(page)
     await path2.getByRole('button', { name: /Step 7: Deliver/i }).click()
