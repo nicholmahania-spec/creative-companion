@@ -170,6 +170,7 @@ function App() {
   const onboarded = useAppStore((s) => s.onboarded)
   const currentSpark = useAppStore((s) => s.currentSpark)
   const sparkIndex = useAppStore((s) => s.sparkIndex)
+  const sparksTried = useAppStore((s) => s.sparksTried)
   const addProject = useAppStore((s) => s.addProject)
   const setCurrentProject = useAppStore((s) => s.setCurrentProject)
   const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
@@ -3350,6 +3351,7 @@ function App() {
                     const isQuote =
                       !isImageFace ||
                       item.type === 'quote' ||
+                      item.type === 'spark' ||
                       item.type === 'color' ||
                       item.type === 'note'
                     return (
@@ -3788,7 +3790,12 @@ function App() {
               notifyAction={notifyAction}
               directions={activeProject?.directions}
               updateDirection={updateDirection}
-              sparkIndex={sparkIndex || 0}
+              sparksTried={sparksTried || 0}
+              locale={locale}
+              flashMicro={flashMicro}
+              addTask={addTask}
+              projectId={activeProjectId}
+              i18nT={(key) => i18nT(locale, key)}
             />
           </Suspense>
         )}

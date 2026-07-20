@@ -28,14 +28,19 @@ export function pathStepHasContent(stepId, ctx = {}) {
       )
     case 'research':
       return mood.length > 0
-    case 'ideate':
-      return !!(
-        sparkIndex > 0 ||
-        mood.some((m) => m.type === 'quote' || /spark/i.test(m.note || '')) ||
-        (project.directions || []).some((d) =>
-          String(d.title || d.note || '').trim()
-        )
+    case 'ideate': {
+      // Honest fill: direction shortlist or Ideate spark pin (not Research notes)
+      const hasDirection = (project.directions || []).some((d) =>
+        String(d.title || d.note || '').trim()
       )
+      const hasSparkPin = mood.some(
+        (m) =>
+          m.type === 'spark' ||
+          m.fromSpark === true ||
+          (m.type === 'quote' && m.fromSpark)
+      )
+      return !!(hasDirection || hasSparkPin)
+    }
     case 'sketch':
       return tasks.length > 0
     case 'design':
@@ -153,7 +158,7 @@ export function pathGapFocusSelector(stepId) {
 export const PATH_FILL_HINTS = {
   define: 'Name, goal, or audience',
   research: 'Pin at least one ref',
-  ideate: 'Spark, A/B/C, or pin a spark note',
+  ideate: 'A/B/C title or pin a spark note',
   sketch: 'Capture one finishable step',
   design: 'Tagline, palette, or version bump',
   review: 'Feedback notes or leave-behind pin',

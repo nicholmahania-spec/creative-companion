@@ -96,6 +96,13 @@ const EN = {
     openPack: 'Go to Deliver',
     openReview: 'Go to Review',
     openIdeate: 'Go to Ideate',
+    anotherSpark: 'Another spark',
+    oppositeDirection: 'Opposite direction',
+    pinSpark: 'Pin spark',
+    sparkPinnedStay: 'Pinned · stay on Ideate',
+    queueChosenSketch: 'Queue chosen → Sketch',
+    queuedDraft: 'Queued draft',
+    openResearchBoard: 'Open Research',
     goToBoard: 'Go to Research',
     hasOpenWorkStep: 'Has an open Sketch step',
     howDeskWorks:

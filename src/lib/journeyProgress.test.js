@@ -27,12 +27,22 @@ describe('pathStepHasContent', () => {
     ).toBe(true)
   })
 
-  it('ideate needs spark progress or directions', () => {
+  it('ideate needs direction title or spark pin — not bare sparkIndex', () => {
     expect(pathStepHasContent('ideate', { sparkIndex: 0 })).toBe(false)
-    expect(pathStepHasContent('ideate', { sparkIndex: 2 })).toBe(true)
+    expect(pathStepHasContent('ideate', { sparkIndex: 5 })).toBe(false)
     expect(
       pathStepHasContent('ideate', {
         project: { directions: [{ title: 'Quiet' }] },
+      })
+    ).toBe(true)
+    expect(
+      pathStepHasContent('ideate', {
+        moodItems: [{ type: 'quote', note: 'Research note only' }],
+      })
+    ).toBe(false)
+    expect(
+      pathStepHasContent('ideate', {
+        moodItems: [{ type: 'spark', note: 'A spark', fromSpark: true }],
       })
     ).toBe(true)
   })
@@ -47,8 +57,9 @@ describe('pathStepHasContent', () => {
         feedbackNotes: 'ok',
         handoffNote: 'hi',
         learnings: 'yay',
+        directions: [{ id: 'a', title: 'Quiet' }],
       },
-      moodItems: [{ id: 1, inPack: true, type: 'quote', note: 'spark' }],
+      moodItems: [{ id: 1, inPack: true, type: 'quote', note: 'ref' }],
       tasks: [{ id: 1 }],
       sparkIndex: 3,
       palette: ['#111', '#222'],

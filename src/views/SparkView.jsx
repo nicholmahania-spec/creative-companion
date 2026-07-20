@@ -1,4 +1,7 @@
 /** Lazy-loaded Ideate step — sparks + A/B/C direction capture */
+import { getProcessPhase } from '../lib/processGuide'
+import { pathLabel } from '../lib/i18n'
+
 export default function SparkView({
   setActiveView,
   nextTask,
@@ -10,7 +13,12 @@ export default function SparkView({
   notifyAction,
   directions = [],
   updateDirection,
-  sparkIndex = 0,
+  sparksTried = 0,
+  locale = 'en',
+  flashMicro,
+  addTask,
+  projectId,
+  i18nT = (key) => key,
 }) {
   const dirs =
     Array.isArray(directions) && directions.length >= 3
@@ -21,10 +29,39 @@ export default function SparkView({
           { id: 'c', label: 'C', title: '', note: '', chosen: false },
         ]
   const filledDirs = dirs.filter((d) => String(d.title || '').trim()).length
-  /** Sparks seen (index) + filled shortlist toward pro “5–8 directions” goal */
-  const tried = Math.max(sparkIndex + 1, filledDirs)
-  const goal = 8
-  const progress = Math.min(tried, goal)
+  const chosen = dirs.find((d) => d.chosen && String(d.title || '').trim())
+  const sparksSeen = Math.min(Math.max(sparksTried, 0), 8)
+  const phase = getProcessPhase('ideate')
+  const title = pathLabel(locale, 'ideate') || 'Ideate'
+
+  const pinSparkStay = () => {
+    addMoodPin({
+      type: 'spark',
+      fromSpark: true,
+      note: currentSpark,
+      visual: projectPalette[0] || '#1C1917',
+    })
+    notifyAction?.('Pinned', 'mood_pin', { label: 'Spark pin' })
+    flashMicro?.(i18nT('ui.sparkPinnedStay') || 'Pinned · stay on Ideate')
+  }
+
+  const queueChosen = () => {
+    if (!chosen) return
+    addTask?.({
+      id: Date.now() + Math.random(),
+      title: `Draft ${chosen.label}: ${chosen.title}`,
+      energy: 'med',
+      meta: chosen.note || 'Direction option',
+      completed: false,
+      seeded: false,
+      projectId: projectId || null,
+      dueDate: '',
+    })
+    flashMicro?.(
+      i18nT('ui.queuedDraft') || `Queued draft ${chosen.label}`
+    )
+    setActiveView('flow')
+  }
 
   return (
     <div className="spark-view">
@@ -33,35 +70,52 @@ export default function SparkView({
         className="back-link"
         onClick={() => setActiveView('studio')}
       >
-        ← Research
+        {i18nT('ui.backResearch') || '← Research'}
       </button>
       <div className="flow-top">
         <div>
-          <h1 className="page-title">Ideate</h1>
+          <h1 className="page-title">{title}</h1>
           <p className="page-sub">
             Step 3 — messy is correct. Force many directions. Best idea often
             hides in #6–7. Shortlist A/B/C; don’t marry the first.
           </p>
           <p className="panel-hint ideate-progress" style={{ marginTop: '0.35rem' }}>
-            Direction energy:{' '}
+            Sparks tried:{' '}
             <strong>
-              {progress}/{goal}
-            </strong>{' '}
-            toward a rich set
-            {progress < 5
-              ? ' — keep going (opposites welcome)'
-              : progress < 8
-                ? ' — strong set; pick a winner'
-                : ' — enough; shortlist and Sketch'}
+              {sparksSeen}
+              /8
+            </strong>
+            {' · '}
+            Shortlist:{' '}
+            <strong>
+              {filledDirs}
+              /3
+            </strong>
+            {filledDirs === 0
+              ? ' — fill A/B/C or pin a spark'
+              : chosen
+                ? ' — winner picked; queue or Sketch'
+                : filledDirs < 2
+                  ? ' — add another direction'
+                  : ' — pick a winner (Choose)'}
           </p>
         </div>
         <div className="finish-secondary-row">
+          {chosen && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={queueChosen}
+            >
+              {i18nT('ui.queueChosenSketch') || 'Queue chosen → Sketch'}
+            </button>
+          )}
           <button
             type="button"
             className="btn btn-primary"
             onClick={() => setActiveView('flow')}
           >
-            Go to Sketch
+            {i18nT('ui.openSketch') || 'Go to Sketch'}
           </button>
         </div>
       </div>
@@ -70,6 +124,25 @@ export default function SparkView({
           <span className="task-badge">For</span>{' '}
           <span className="mood-linked-title">{nextTask.title}</span>
         </p>
+      )}
+
+      {phase && (
+        <section className="panel brand-section process-tip-panel">
+          <div className="brand-section-label">
+            {phase.title || 'Ideate checklist'}
+          </div>
+          <p className="panel-hint" style={{ marginTop: 0 }}>
+            {phase.prompt}
+          </p>
+          <ul
+            className="process-guide-checks"
+            style={{ marginBottom: 0 }}
+          >
+            {(phase.checks || []).map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <section className="panel brand-section">
@@ -139,36 +212,35 @@ export default function SparkView({
             onClick={nextSpark}
             className="btn btn-primary"
           >
-            Another spark
+            {i18nT('ui.anotherSpark') || 'Another spark'}
           </button>
           <button
             type="button"
             className="btn btn-secondary"
             onClick={() => oppositeSpark?.()}
           >
-            Opposite direction
+            {i18nT('ui.oppositeDirection') || 'Opposite direction'}
           </button>
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={() => {
-              addMoodPin({
-                type: 'quote',
-                note: currentSpark,
-                visual: projectPalette[0] || '#1C1917',
-              })
-              notifyAction('Pinned', 'mood_pin', { label: 'Spark pin' })
-              setActiveView('studio')
-            }}
+            onClick={pinSparkStay}
           >
-            Pin to Research
+            {i18nT('ui.pinSpark') || 'Pin spark'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setActiveView('studio')}
+          >
+            {i18nT('ui.openResearchBoard') || 'Open Research'}
           </button>
           <button
             type="button"
             className="btn btn-ghost"
             onClick={() => setActiveView('flow')}
           >
-            Done — Go to Sketch
+            {i18nT('ui.openSketch') || 'Go to Sketch'}
           </button>
         </div>
       </section>

@@ -58,10 +58,14 @@ test.describe('Process walk (artifacts)', () => {
       }
     }
 
-    // 3 Ideate
+    // 3 Ideate — Opposite alone does not fill step; need A/B/C or pin
     await path.getByRole('button', { name: /Step 3: Ideate/i }).click()
     await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()
+    await expect(page.getByText(/Ideate checklist|Ideate & brainstorm/i)).toBeVisible()
     await page.getByRole('button', { name: /Opposite direction/i }).click()
+    // Still thin until direction title
+    await expect(page.locator('.journey-still-thin')).toBeVisible()
+    await expect(page.locator('.journey-still-thin')).toContainText(/Ideate/i)
     await page.locator('#dir-title-a').fill('Quiet editorial')
     await page.locator('#dir-title-b').fill('Warm product toolkit')
     await page
@@ -69,6 +73,9 @@ test.describe('Process walk (artifacts)', () => {
       .first()
       .getByRole('button', { name: /Choose|Chosen/i })
       .click()
+    await expect(
+      page.getByRole('button', { name: /Queue chosen/i })
+    ).toBeVisible()
 
     // 4 Sketch — why field
     await path.getByRole('button', { name: /Step 4: Sketch/i }).click()

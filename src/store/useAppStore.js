@@ -122,6 +122,8 @@ export function blankWorkspaceState() {
     bodyDoubling: false,
     onboarded: false,
     sparkIndex: 0,
+    oppositeIndex: 0,
+    sparksTried: 0,
     currentSpark: sparkPrompts[0],
     prefs: {
       soundEnabled: true,
@@ -459,6 +461,8 @@ const useAppStore = create(
           theme: s.theme,
           prefs: s.prefs,
           sparkIndex: s.sparkIndex,
+          oppositeIndex: s.oppositeIndex ?? 0,
+          sparksTried: s.sparksTried ?? 0,
           onboarded: s.onboarded,
           currentSpark: s.currentSpark,
         }
@@ -505,6 +509,10 @@ const useAppStore = create(
             : projects[0].id
         const sparkIndex =
           typeof data.sparkIndex === 'number' ? data.sparkIndex : 0
+        const oppositeIndex =
+          typeof data.oppositeIndex === 'number' ? data.oppositeIndex : 0
+        const sparksTried =
+          typeof data.sparksTried === 'number' ? data.sparksTried : 0
         set({
           projects: projects.map((p) => ({
             ...p,
@@ -526,6 +534,8 @@ const useAppStore = create(
             ...(data.prefs || {}),
           },
           sparkIndex,
+          oppositeIndex,
+          sparksTried,
           currentSpark:
             data.currentSpark ||
             sparkPrompts[sparkIndex % sparkPrompts.length] ||
@@ -1115,17 +1125,22 @@ const useAppStore = create(
           const next = (state.sparkIndex + 1) % sparkPrompts.length
           return {
             sparkIndex: next,
+            sparksTried: (state.sparksTried || 0) + 1,
             currentSpark: sparkPrompts[next],
           }
         }),
 
-      /** Ideate: inject an opposite-direction prompt (counts as progress) */
+      /**
+       * Ideate: opposite-direction prompt. Separate oppositeIndex wrap;
+       * does not pollute sparkIndex. sparksTried bumps for energy UI only.
+       */
       oppositeSpark: () =>
         set((state) => {
-          const i = (state.sparkIndex + 1) % oppositeSparks.length
+          const oi = ((state.oppositeIndex ?? 0) + 1) % oppositeSparks.length
           return {
-            sparkIndex: state.sparkIndex + 1,
-            currentSpark: oppositeSparks[i % oppositeSparks.length],
+            oppositeIndex: oi,
+            sparksTried: (state.sparksTried || 0) + 1,
+            currentSpark: oppositeSparks[oi],
           }
         }),
 
@@ -1201,6 +1216,8 @@ const useAppStore = create(
         theme: state.theme,
         onboarded: state.onboarded,
         sparkIndex: state.sparkIndex,
+        oppositeIndex: state.oppositeIndex ?? 0,
+        sparksTried: state.sparksTried ?? 0,
         currentSpark: state.currentSpark,
         prefs: state.prefs,
       }),

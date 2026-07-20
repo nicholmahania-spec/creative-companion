@@ -29,6 +29,7 @@ export function pinVisualKind(pin = {}) {
   if (/gradient/i.test(visual)) return 'gradient'
   if (
     type === 'quote' ||
+    type === 'spark' ||
     type === 'color' ||
     type === 'note' ||
     visual.startsWith('#') ||
