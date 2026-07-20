@@ -159,7 +159,7 @@ const FOOD = [
 
 const BATHROOM = [
   "Bathroom. The art will survive. Your bladder is not a design constraint.",
-  "Stand up. Walk. Do the human thing. The Figma file isn't going to cry.",
+  "Stand up. Walk. Do the human thing. The desk will wait — it isn't going to cry.",
   "If you've been glued to the chair, go. Fresh eyes > another 1px nudge.",
 ]
 
@@ -184,7 +184,7 @@ const STUCK = [
 const IDLE = [
   "Still here. Plotting. Judging your alignment. Need a tip, a roast, or a break?",
   "Earth to designer: one next move. Type, layout, or copy. Pick your fighter.",
-  "I'm not bored. I'm strategically hovering. Clarify / Structure / Visual / Refine—or water. Shocking options.",
+  "I'm not bored. I'm strategically hovering. Path step, Coach, or water. Shocking options.",
 ]
 
 const PRAISE = [
@@ -721,7 +721,7 @@ export function activityTip(activity = {}) {
     if (queue >= 5) {
       return `${queue} waiting. Tunnel vision on “${step}” only.`
     }
-    return `On “${step}”: fuzzy scope → Clarify · layout → Structure · style → Visual · almost done → Refine.`
+    return `On “${step}”: fuzzy → Define it · messy options → Ideate · one draft → Sketch · polish → Design. One lane only.`
   }
 
   return pick(IDLE)
@@ -732,7 +732,7 @@ export function idleLineWithActivity(activity = {}) {
   if (Math.random() < 0.55) return activityTip(activity)
   const place = VIEW_LABELS[activity.view] || 'your desk'
   return pick([
-    `Still lurking on ${place}. Want Clarify, Structure, Visual, Refine—or a well-deserved roast of your twin CTAs?`,
+    `Still lurking on ${place}. Coach, Critique, a break — or a roast of your twin CTAs?`,
     `Check-in: ${place}. Hierarchy still behaving, or is it a buffet of equal importance again?`,
     activity.nextTaskTitle
       ? `"${short(activity.nextTaskTitle, 36)}" is still waiting. It won't do itself. (I checked.)`

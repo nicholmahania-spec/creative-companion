@@ -614,14 +614,14 @@ function App() {
       awardAndBroadcast('step_complete', { label: 'Step done' })
     }
     setRecentUndo({ id: doneId, title: doneTitle, at: Date.now() })
-    flashToast('Step complete', { important: true })
+    flashToast(i18nT(locale, 'ui.stepComplete'), { important: true })
     setStepFocusKey((k) => k + 1)
   }
 
   const undoLastComplete = () => {
     if (!recentUndo?.id) return
     toggleTask(recentUndo.id)
-    flashToast('Undone')
+    flashToast(i18nT(locale, 'ui.undidStep'))
     setRecentUndo(null)
     setStepFocusKey((k) => k + 1)
   }
@@ -794,7 +794,7 @@ function App() {
         hint: '',
         run: () => {
           if (forcedBreak) {
-            flashToast('Break lock is open — finish it first')
+            flashToast(i18nT(locale, 'ui.breakLockFirst'))
             return
           }
           setSessionComplete(false)
@@ -805,7 +805,7 @@ function App() {
           notifyAction('Focus on', 'focus_start', {
             label: 'Research timer',
           })
-          flashToast('20-minute research timer — stop when it ends')
+          flashToast(i18nT(locale, 'ui.researchTimerOn'))
         },
       },
       {
@@ -1077,8 +1077,8 @@ function App() {
     }
     flashToast(
       emergency
-        ? 'Break ended early (emergency). Try to rest next cycle.'
-        : 'Break done · XP earned. Welcome back.'
+        ? 'Break ended early — try a real rest next cycle.'
+        : i18nT(locale, 'ui.breakDone')
     )
   }
 
@@ -1729,18 +1729,13 @@ function App() {
             : `${label || kind.toUpperCase()} saved · ${when}`
         )
       }
-      if (showProgress && g?.gained) {
-        flashToast(
-          kind === 'backup'
-            ? `Backup saved · +${g.gained} XP`
-            : `Pack downloaded · +${g.gained} XP`
-        )
-      } else {
-        flashToast(
-          kind === 'backup' ? 'Backup saved' : 'Pack downloaded',
-          { important: true }
-        )
-      }
+      // XP stays in Progress HUD — success toast stays human leave-behind language
+      flashToast(
+        kind === 'backup'
+          ? i18nT(locale, 'ui.backupSaved')
+          : i18nT(locale, 'ui.leaveBehindSaved'),
+        { important: true }
+      )
     }
 
     // Capture File System Access handle WHILE we still have the user-gesture.
@@ -1764,7 +1759,7 @@ function App() {
     if (kind === 'pdf') {
       // Vector direction pack (text + swatches as PDF primitives)
       void preloadPdfEngine()
-      flashToast('Building multi-page brand book PDF…', { important: true })
+      flashToast(i18nT(locale, 'ui.pdfBuilding'), { important: true })
       void (async () => {
         const result = await downloadBrandPackPdf(pack, handlePromise, {
           hideWatermark: hidePackWatermark,
@@ -1780,8 +1775,9 @@ function App() {
             })}`
           )
           finishOk('Brand book PDF')
-        } else if (result.cancelled) flashToast('Save cancelled')
-        else flashToast(result.error || 'PDF failed')
+        } else if (result.cancelled)
+          flashToast(i18nT(locale, 'ui.saveCancelled'))
+        else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
       })()
       return
     }
@@ -1791,7 +1787,7 @@ function App() {
       const hasSystem = document.getElementById('system-artboard')
       if (!hasSystem && !exportPanel) openExportPanel()
       void preloadPdfEngine()
-      flashToast('Capturing preview PDF…', { important: true })
+      flashToast(i18nT(locale, 'ui.pdfPreviewing'), { important: true })
       void (async () => {
         await new Promise((r) =>
           requestAnimationFrame(() => requestAnimationFrame(r))
@@ -1817,8 +1813,9 @@ function App() {
             })}`
           )
           finishOk('Preview PDF')
-        } else if (result.cancelled) flashToast('Save cancelled')
-        else flashToast(result.error || 'PDF failed')
+        } else if (result.cancelled)
+          flashToast(i18nT(locale, 'ui.saveCancelled'))
+        else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
       })()
       return
     }
@@ -1827,8 +1824,9 @@ function App() {
       void Promise.resolve(downloadBrandPackHtml(pack, handlePromise)).then(
         (result) => {
           if (result.ok) finishOk('Brand HTML')
-          else if (result.cancelled) flashToast('Save cancelled')
-          else flashToast(result.error || 'Download failed')
+          else if (result.cancelled)
+            flashToast(i18nT(locale, 'ui.saveCancelled'))
+          else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
         }
       )
       return
@@ -1837,8 +1835,9 @@ function App() {
       void Promise.resolve(downloadBrandPackMarkdown(pack, handlePromise)).then(
         (result) => {
           if (result.ok) finishOk('Brand Markdown')
-          else if (result.cancelled) flashToast('Save cancelled')
-          else flashToast(result.error || 'Download failed')
+          else if (result.cancelled)
+            flashToast(i18nT(locale, 'ui.saveCancelled'))
+          else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
         }
       )
       return
@@ -1847,8 +1846,9 @@ function App() {
       void Promise.resolve(downloadBrandPackJson(pack, handlePromise)).then(
         (result) => {
           if (result.ok) finishOk('Brand JSON')
-          else if (result.cancelled) flashToast('Save cancelled')
-          else flashToast(result.error || 'Download failed')
+          else if (result.cancelled)
+            flashToast(i18nT(locale, 'ui.saveCancelled'))
+          else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
         }
       )
       return
@@ -1856,7 +1856,7 @@ function App() {
     if (kind === 'backup') {
       const result = downloadWorkspaceBackup(exportAllData())
       if (result.ok) finishOk('Workspace backup')
-      else flashToast(result.error || 'Download failed')
+      else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
       return
     }
     if (kind === 'print') {
@@ -1868,7 +1868,7 @@ function App() {
           document.getElementById('pack-preview-artboard')
         const r = el
           ? printElementById(el.id, { hideWatermark: hidePackWatermark })
-          : { ok: false, error: 'Nothing to print' }
+          : { ok: false, error: 'Nothing to print yet' }
         if (r.ok) {
           awardAndBroadcast('export_pack', { label: 'Print / PDF' })
           const when = new Date().toLocaleTimeString([], {
@@ -1876,12 +1876,14 @@ function App() {
             minute: '2-digit',
           })
           setLastExportNote(`Print dialog · ${when} — Save as PDF if you want a file`)
-          flashToast('Print dialog open — choose Save as PDF if you want a file')
-        } else flashToast(r.error || 'Print failed')
+          flashToast(
+            'Print dialog is open — pick Save as PDF if you want a file'
+          )
+        } else flashToast(r.error || i18nT(locale, 'ui.printFailed'))
       }, exportPanel ? 50 : 180)
       return
     }
-    flashToast('Unknown export')
+    flashToast(i18nT(locale, 'ui.unknownExport'))
   }
 
   const uploadMoodFiles = (fileList) => {
@@ -2025,7 +2027,11 @@ function App() {
     const g = awardAndBroadcast('breakdown', {
       label: `${n} micro-steps`,
     })
-    flashToast(`${n} micro-steps ready · +${g.gained} XP — do #1 only`)
+    flashToast(
+      n === 1
+        ? 'One micro-step ready — just do that one'
+        : `${n} micro-steps ready — only do #1 right now`
+    )
   }
 
   const finishBreakdownToStep = () => {
@@ -2088,12 +2094,12 @@ function App() {
       const result = importAllData(String(reader.result || ''))
       if (result.ok) {
         setActiveView('flow')
-        flashToast('Backup restored')
+        flashToast(i18nT(locale, 'ui.backupRestored'))
       } else {
-        flashToast(result.error || 'Import failed')
+        flashToast(result.error || 'Couldn’t import that file')
       }
     }
-    reader.onerror = () => flashToast('Could not read file')
+    reader.onerror = () => flashToast('Couldn’t read that file')
     reader.readAsText(file)
   }
 
@@ -2105,13 +2111,13 @@ function App() {
       return
     }
     renameProject(activeProject.id, next)
-    flashToast('Project renamed')
+    flashToast(i18nT(locale, 'ui.projectRenamed'))
   }
 
   const handleDeleteProject = () => {
     if (!activeProject) return
     if (projects.length <= 1) {
-      flashToast('Keep at least one project')
+      flashToast('Keep at least one project on the desk')
       return
     }
     const id = activeProject.id
@@ -2122,10 +2128,10 @@ function App() {
       onConfirm: () => {
         const result = deleteProject(id)
         if (result.ok) {
-          flashToast('Project deleted')
+          flashToast(i18nT(locale, 'ui.projectDeleted'))
           setActiveView('project')
         } else {
-          flashToast(result.error || 'Could not delete')
+          flashToast(result.error || 'Couldn’t delete that')
         }
         setDeskConfirm(null)
       },
@@ -2166,13 +2172,13 @@ function App() {
       setUnlocked(false)
       setAccessName('')
       cloudSyncReady.current = false
-      flashToast('Signed out')
+      flashToast(i18nT(locale, 'ui.signedOutOk'))
       return
     }
     closeSession()
     setUnlocked(false)
     setAccessName('')
-    flashToast('Locked')
+    flashToast(i18nT(locale, 'ui.lockedOk'))
   }
 
   if (!authReady) {
@@ -2290,15 +2296,15 @@ function App() {
                   if (result.ok) {
                     setSyncState('ok')
                     setSyncError('')
-                    flashToast('Synced')
+                    flashToast(i18nT(locale, 'ui.syncedOk'))
                   } else {
                     setSyncState('error')
-                    setSyncError(result.error || 'Sync failed')
-                    flashToast(result.error || 'Sync failed')
+                    setSyncError(result.error || 'Couldn’t sync')
+                    flashToast(result.error || 'Couldn’t sync just now')
                   }
                 }}
               >
-                Save failed · Retry
+                Save didn’t stick · Retry
               </button>
             )}
             <div className="more-wrap" ref={moreWrapRef}>
@@ -2363,9 +2369,9 @@ function App() {
                       toggleBodyDoubling()
                       if (next) {
                         awardAndBroadcast('helper_on', { label: 'Helper' })
-                        flashMicro('Helper on')
+                        flashMicro(i18nT(locale, 'ui.helperOnMicro'))
                       } else {
-                        flashMicro('Helper off')
+                        flashMicro(i18nT(locale, 'ui.helperOffMicro'))
                       }
                       setMoreOpen(false)
                     }}
@@ -3228,7 +3234,7 @@ function App() {
                   className="btn btn-secondary"
                   onClick={() => {
                     if (forcedBreak) {
-                      flashToast('Break lock is open — finish it first')
+                      flashToast(i18nT(locale, 'ui.breakLockFirst'))
                       return
                     }
                     setSessionComplete(false)
@@ -3239,7 +3245,7 @@ function App() {
                     notifyAction('Focus on', 'focus_start', {
                       label: 'Research timer',
                     })
-                    flashToast('20-minute research timer — stop when it ends')
+                    flashToast(i18nT(locale, 'ui.researchTimerOn'))
                   }}
                 >
                   Start 20-min research timer
@@ -6105,7 +6111,7 @@ function App() {
                 setPref('forceBreaksConsented', true)
                 setPref('forceBreaksEnabled', true)
                 setForceBreakConsentOpen(false)
-                flashToast('Forced break lockouts on')
+                flashToast('Forced break lockouts are on')
               }}
             >
               {i18nT(locale, 'ui.enable')}
@@ -6116,7 +6122,7 @@ function App() {
               onClick={() => {
                 setPref('forceBreaksEnabled', false)
                 setForceBreakConsentOpen(false)
-                flashToast('Forced lockouts off — re-enable in Settings')
+                flashToast('Forced lockouts off — re-enable anytime in Settings')
               }}
             >
               {i18nT(locale, 'ui.cancel')}
