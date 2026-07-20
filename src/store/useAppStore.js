@@ -380,6 +380,28 @@ const useAppStore = create(
           ),
         })),
 
+      /**
+       * Bump designVersion vN → vN+1 (or set v2 if freeform).
+       * Call before big design changes.
+       */
+      bumpDesignVersion: () => {
+        const state = get()
+        const p = state.projects.find((x) => x.id === state.currentProjectId)
+        if (!p) return { ok: false }
+        const cur = String(p.designVersion || 'v1').trim()
+        const m = cur.match(/^v?(\d+)$/i)
+        const n = m ? Number(m[1]) + 1 : 2
+        const next = `v${n}`
+        set({
+          projects: state.projects.map((proj) =>
+            proj.id === state.currentProjectId
+              ? { ...proj, designVersion: next }
+              : proj
+          ),
+        })
+        return { ok: true, version: next }
+      },
+
       toggleTheme: () =>
         set((state) => ({
           theme: state.theme === 'warm' ? 'deep' : 'warm',
@@ -441,13 +463,26 @@ const useAppStore = create(
         if (!Array.isArray(data.tasks)) {
           return { ok: false, error: 'No tasks in workspace' }
         }
-        const projects = data.projects.map((p) => ({
-          logoDirection: '',
-          palette: [...defaultProjectPalette],
-          deadline: '',
-          ...defaultBrandIdentity,
-          ...p,
-        }))
+        const projects = data.projects.map((p) => {
+          const base = {
+            logoDirection: '',
+            palette: [...defaultProjectPalette],
+            deadline: '',
+            directions: blankDirections(),
+            ...defaultBrandIdentity,
+            ...p,
+          }
+          // Merge detective so partial imports keep all keys
+          base.detective = {
+            ...blankDetective(),
+            ...(p.detective || {}),
+          }
+          if (!Array.isArray(base.directions) || base.directions.length < 3) {
+            base.directions = blankDirections()
+          }
+          if (!base.designVersion) base.designVersion = 'v1'
+          return base
+        })
         const currentProjectId =
           data.currentProjectId &&
           projects.some((p) => p.id === data.currentProjectId)

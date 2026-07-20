@@ -154,6 +154,20 @@ describe('buildDirectionSheetMarkup (preview-faithful PDF source)', () => {
   })
 })
 
+describe('designVersion bump helper is store-level', () => {
+  it('snapshot includes designVersion and detective', () => {
+    const pack = buildBrandPackSnapshot({
+      project: {
+        name: 'Ver',
+        designVersion: 'v3',
+        detective: { goal: 'G', audience: 'A' },
+      },
+    })
+    expect(pack.designVersion).toBe('v3')
+    expect(pack.detective?.goal).toBe('G')
+  })
+})
+
 describe('packReadiness detective + handoff', () => {
   it('accepts detective goal as positioning signal', () => {
     const pack = buildBrandPackSnapshot({

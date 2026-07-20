@@ -1,42 +1,42 @@
 {
   "version": 1,
   "exportedAt": "2026-07-19T06:31:00.133397Z",
-  "demoLabel": "Soft Signal Studio \u2014 all 7 stages complete",
+  "demoLabel": "Soft Signal Studio — full 7-step process sample",
   "designStages": [
     {
       "n": 1,
-      "name": "Discover",
-      "app": "Project"
+      "name": "Define",
+      "app": "Define · Design Detective Sheet"
     },
     {
       "n": 2,
-      "name": "Clarify",
-      "app": "Work + Helper Clarify"
+      "name": "Research",
+      "app": "Research · refs + ★ pins"
     },
     {
       "n": 3,
-      "name": "Structure",
-      "app": "Work + Helper Structure"
+      "name": "Ideate",
+      "app": "Ideate · sparks + A/B/C"
     },
     {
       "n": 4,
-      "name": "Ideate",
-      "app": "Ideas sketches + Studio"
+      "name": "Sketch",
+      "app": "Sketch · drafts + why"
     },
     {
       "n": 5,
-      "name": "Develop & lock",
-      "app": "Ideas develop\u2192package"
+      "name": "Design",
+      "app": "Design · artboard + lockups"
     },
     {
       "n": 6,
-      "name": "Visual system",
-      "app": "Brand"
+      "name": "Review",
+      "app": "Review · feedback notes"
     },
     {
       "n": 7,
       "name": "Deliver",
-      "app": "Work microsteps + Finish"
+      "app": "Deliver · brand book PDF"
     }
   ],
   "projects": [
@@ -44,7 +44,7 @@
       "id": 9001,
       "name": "Soft Signal Studio",
       "active": true,
-      "brief": "STAGE 1 DISCOVER \u2014 Soft Signal Studio is a recording studio + podcast network for neurodivergent creators (ADHD, autistic, and allies). They book quiet sessions, publish shows, and learn pacing\u2014not hustle. Audience pain: sensory overload, shame around \u2018inconsistent\u2019 output, tools that scream performance. Business goal: clear booking + recognizable covers. Success metric: creators finish a session calmer than they started and share one episode cover proudly.",
+      "brief": "STAGE 1 DISCOVER — Soft Signal Studio is a recording studio + podcast network for neurodivergent creators (ADHD, autistic, and allies). They book quiet sessions, publish shows, and learn pacing—not hustle. Audience pain: sensory overload, shame around ‘inconsistent’ output, tools that scream performance. Business goal: clear booking + recognizable covers. Success metric: creators finish a session calmer than they started and share one episode cover proudly.",
       "logoDirection": "Listening pulse mark (circle = booth, soft path = voice) + Plus Jakarta wordmark. Horizontal primary lockup; mark alone for stickers/app. No mic icons, no neon, no aggressive angles.",
       "palette": [
         "#4F46E5",
@@ -56,20 +56,57 @@
       "voice": "Warm, plain-spoken, steady. Good-producer energy: clear direction, zero shame. Short sentences. Never corporate, never chaos-for-clicks.",
       "typeHeading": "Plus Jakarta Sans Bold",
       "typeBody": "Plus Jakarta Sans Regular",
-      "doUse": "Soft indigo + teal \u00b7 cream field \u00b7 near-black text \u00b7 generous space \u00b7 caption-first video \u00b7 real booth photos \u00b7 short CTAs (\u2018Book a calm session\u2019) \u00b7 EPISODE COVERS (stage 7 locked): 1) Title \u2264 2 lines, largest type on cover. 2) Guest/episode meta under title \u2014 never competing size. 3) Mark top-left; one teal accent bar max; no waveform clutter. Good: calm indigo field, Soft Signal + Ep title, guest line quiet, mark breathing room. Too busy: neon gradients, multiple CTAs, dense waveforms, guest photo fighting title.",
-      "dontUse": "Hustle slogans \u00b7 neon cyber gradients \u00b7 stock diversity clich\u00e9s \u00b7 mic silhouettes \u00b7 FOMO timers \u00b7 dense waveforms \u00b7 more than one primary CTA \u00b7 waveform clutter on covers \u00b7 dual title weights \u00b7 neon cover gradients",
+      "doUse": "Soft indigo + teal · cream field · near-black text · generous space · caption-first video · real booth photos · short CTAs (‘Book a calm session’) · EPISODE COVERS (stage 7 locked): 1) Title ≤ 2 lines, largest type on cover. 2) Guest/episode meta under title — never competing size. 3) Mark top-left; one teal accent bar max; no waveform clutter. Good: calm indigo field, Soft Signal + Ep title, guest line quiet, mark breathing room. Too busy: neon gradients, multiple CTAs, dense waveforms, guest photo fighting title.",
+      "dontUse": "Hustle slogans · neon cyber gradients · stock diversity clichés · mic silhouettes · FOMO timers · dense waveforms · more than one primary CTA · waveform clutter on covers · dual title weights · neon cover gradients",
       "deadline": "2026-08-09",
       "tasks": [],
       "conceptPackage": {
         "audience": "Adult neurodivergent creators who want to record and publish without sensory or social overload.",
         "outcome": "Feel safe enough to press record; leave clearer than they arrived; recommend Soft Signal to a friend.",
-        "concept": "Your voice, at your pace \u2014 a listening brand, not a performance brand.",
+        "concept": "Your voice, at your pace — a listening brand, not a performance brand.",
         "voice": "Warm, plain-spoken, steady. Producer energy: clear, kind, zero shame.",
         "visualDirection": "Soft pulse listening mark + clean wordmark. Indigo primary, teal growth accent, cream field, near-black type. Soft corners throughout.",
-        "doUse": "Space \u00b7 short labels \u00b7 caption-first \u00b7 indigo/teal \u00b7 real rooms \u00b7 one primary CTA",
-        "dontUse": "Hustle \u00b7 mic clich\u00e9s \u00b7 aggressive angles \u00b7 clutter \u00b7 FOMO \u00b7 dual CTAs",
+        "doUse": "Space · short labels · caption-first · indigo/teal · real rooms · one primary CTA",
+        "dontUse": "Hustle · mic clichés · aggressive angles · clutter · FOMO · dual CTAs",
         "notes": "Stage 7 DELIVERED: episode cover template rules locked. Export brand pack from Finish. Deliverables: mark, wordmark, color/type system, voice, episode cover template, booking CTA language."
-      }
+      },
+      "detective": {
+        "goal": "Make Soft Signal Studio recognizable so neurodivergent creators book calm sessions and share episode covers proudly.",
+        "audience": "Adult neurodivergent creators (ADHD, autistic, allies) who want to record without sensory overload.",
+        "feel": "Safe, steady, zero shame — calmer after the session than before.",
+        "mustHaves": "Mark + wordmark, indigo/teal palette, voice, episode cover rules, booking CTA language.",
+        "niceToHaves": "Booth photography, soft pulse motion, sticker-size mark.",
+        "format": "Brand leave-behind PDF + social cover template · demo deadline on project."
+      },
+      "designVersion": "v2",
+      "directions": [
+        {
+          "id": "a",
+          "label": "A",
+          "title": "Quiet booth editorial",
+          "note": "Cream field, lots of air, listening mark only",
+          "chosen": true
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "title": "Warm producer toolkit",
+          "note": "Slightly denser UI, teal CTAs, still soft",
+          "chosen": false
+        },
+        {
+          "id": "c",
+          "label": "C",
+          "title": "Bold pulse network",
+          "note": "Stronger indigo blocks — parked as too loud",
+          "chosen": false
+        }
+      ],
+      "logoWordmark": "Soft Signal",
+      "logoClearspace": "Clearspace ≈ ½ mark height. Min 24px digital / 0.5\" print. Prefer reverse on indigo covers.",
+      "feedbackNotes": "Reviewer: hierarchy on cover is clear. Keep guest line quieter. Feels hopeful without hustle.",
+      "handoffNote": "Includes mark direction, palette roles, type pair, episode cover rules, and voice. Use brand book PDF for client handoff.",
+      "learnings": "What worked: plain-spoken voice + cream field. Felt like me: protecting quiet attention. Next: more real booth photos, less abstract gradient temptation."
     }
   ],
   "currentProjectId": 9001,
@@ -78,7 +115,7 @@
       "id": 9101,
       "title": "Discover: write project brief (audience, pain, success metric)",
       "energy": "med",
-      "meta": "Stage 1 \u00b7 Discover \u00b7 Project brief \u00b7 closed",
+      "meta": "Stage 1 · Discover · Project brief · closed",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -86,9 +123,9 @@
     },
     {
       "id": 9102,
-      "title": "Discover: list constraints (mono sticker \u2192 bold hoodie)",
+      "title": "Discover: list constraints (mono sticker → bold hoodie)",
       "energy": "low",
-      "meta": "Stage 1 \u00b7 Discover \u00b7 closed",
+      "meta": "Stage 1 · Discover · closed",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -98,7 +135,7 @@
       "id": 9103,
       "title": "Clarify: one-sentence brand promise",
       "energy": "low",
-      "meta": "Stage 2 \u00b7 Clarify \u00b7 Your voice, at your pace.",
+      "meta": "Stage 2 · Clarify · Your voice, at your pace.",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -108,7 +145,7 @@
       "id": 9104,
       "title": "Clarify: 3 audience pains (sensory, social, pacing)",
       "energy": "med",
-      "meta": "Stage 2 \u00b7 Clarify",
+      "meta": "Stage 2 · Clarify",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -116,9 +153,9 @@
     },
     {
       "id": 9105,
-      "title": "Structure: site IA Home \u00b7 Studio \u00b7 Shows \u00b7 Book",
+      "title": "Structure: site IA Home · Studio · Shows · Book",
       "energy": "med",
-      "meta": "Stage 3 \u00b7 Structure \u00b7 text wireframe",
+      "meta": "Stage 3 · Structure · text wireframe",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -128,7 +165,7 @@
       "id": 9106,
       "title": "Structure: book-flow steps in plain language",
       "energy": "low",
-      "meta": "Stage 3 \u00b7 Structure",
+      "meta": "Stage 3 · Structure",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -138,7 +175,7 @@
       "id": 9107,
       "title": "Ideate: 2 mark directions (pulse vs monoline-only)",
       "energy": "med",
-      "meta": "Stage 4 \u00b7 Ideate \u00b7 Ideas sketches",
+      "meta": "Stage 4 · Ideate · Ideas sketches",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -148,7 +185,7 @@
       "id": 9108,
       "title": "Ideate: pin 3 mood refs with one-line criteria",
       "energy": "low",
-      "meta": "Stage 4 \u00b7 Ideate \u00b7 Studio",
+      "meta": "Stage 4 · Ideate · Studio",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -158,7 +195,7 @@
       "id": 9109,
       "title": "Develop: choose pulse mark + push to iteration",
       "energy": "med",
-      "meta": "Stage 5 \u00b7 Develop",
+      "meta": "Stage 5 · Develop",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -168,7 +205,7 @@
       "id": 9110,
       "title": "Lock: primary lockup + fill concept package",
       "energy": "med",
-      "meta": "Stage 5 \u00b7 Lock \u00b7 Package \u2192 Brand",
+      "meta": "Stage 5 · Lock · Package → Brand",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -178,7 +215,7 @@
       "id": 9111,
       "title": "Visual: set palette + type in Brand",
       "energy": "low",
-      "meta": "Stage 6 \u00b7 Visual system",
+      "meta": "Stage 6 · Visual system",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -186,9 +223,9 @@
     },
     {
       "id": 9112,
-      "title": "Visual: write voice + do/don\u2019t",
+      "title": "Visual: write voice + do/don’t",
       "energy": "low",
-      "meta": "Stage 6 \u00b7 Visual system",
+      "meta": "Stage 6 · Visual system",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -198,7 +235,7 @@
       "id": 9113,
       "title": "Deliver: finalize episode cover template rules",
       "energy": "med",
-      "meta": "Stage 7 \u00b7 Deliver \u00b7 current focus \u00b7 closed",
+      "meta": "Stage 7 · Deliver · current focus · closed",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -208,7 +245,7 @@
       "id": 9201,
       "title": "Write 3 cover rules (title size, guest crop, margins)",
       "energy": "low",
-      "meta": "Micro-step \u00b7 Deliver \u00b7 closed",
+      "meta": "Micro-step · Deliver · closed",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -219,7 +256,7 @@
       "id": 9202,
       "title": "Describe 1 good cover vs 1 too-busy cover",
       "energy": "low",
-      "meta": "Micro-step \u00b7 Deliver \u00b7 closed",
+      "meta": "Micro-step · Deliver · closed",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -230,7 +267,7 @@
       "id": 9203,
       "title": "Export brand pack from Finish",
       "energy": "low",
-      "meta": "Micro-step \u00b7 Deliver \u00b7 closed",
+      "meta": "Micro-step · Deliver · closed",
       "completed": true,
       "seeded": false,
       "projectId": 9001,
@@ -242,7 +279,7 @@
     {
       "id": 9301,
       "type": "quote",
-      "note": "Quiet booth \u2014 soft light, no hustle posters.",
+      "note": "Quiet booth — soft light, no hustle posters.",
       "visual": "linear-gradient(135deg, #4F46E5, #0D9488)",
       "projectId": 9001,
       "seeded": false
@@ -266,7 +303,7 @@
     {
       "id": 9304,
       "type": "image",
-      "note": "Structure map \u2014 Home / Studio / Shows / Book",
+      "note": "Structure map — Home / Studio / Shows / Book",
       "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MjAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNzIwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0Y3RjVGMCIgd2lkdGg9IjcyMCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIyOCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM1RjZENUQiPlNPRlQgU0lHTkFMIMK3IHN0cnVjdHVyZSDCtyB0ZXh0IElBPC90ZXh0PgogIDxyZWN0IHg9IjQwIiB5PSI4MCIgd2lkdGg9IjE0MCIgaGVpZ2h0PSI1NiIgcng9IjEyIiBmaWxsPSIjNEY0NkU1Ii8+PHRleHQgeD0iNzAiIHk9IjExNCIgZmlsbD0iI2ZmZiIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiI+SG9tZTwvdGV4dD4KICA8cmVjdCB4PSIyMTAiIHk9IjgwIiB3aWR0aD0iMTQwIiBoZWlnaHQ9IjU2IiByeD0iMTIiIGZpbGw9IiMwRDk0ODgiLz48dGV4dCB4PSIyNDAiIHk9IjExNCIgZmlsbD0iI2ZmZiIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiI+U3R1ZGlvPC90ZXh0PgogIDxyZWN0IHg9IjM4MCIgeT0iODAiIHdpZHRoPSIxNDAiIGhlaWdodD0iNTYiIHJ4PSIxMiIgZmlsbD0iIzM3MzBBMyIvPjx0ZXh0IHg9IjQyMiIgeT0iMTE0IiBmaWxsPSIjZmZmIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjE2Ij5TaG93czwvdGV4dD4KICA8cmVjdCB4PSI1NTAiIHk9IjgwIiB3aWR0aD0iMTQwIiBoZWlnaHQ9IjU2IiByeD0iMTIiIGZpbGw9IiMxQTFBMUEiLz48dGV4dCB4PSI1NzUiIHk9IjExNCIgZmlsbD0iI2ZmZiIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiI+Qm9vazwvdGV4dD4KICA8cGF0aCBkPSJNMTEwIDEzNiBMMTEwIDE4MCBMMjgwIDE4MCBMMjgwIDEzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQ0NDIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cGF0aCBkPSJNNDUwIDEzNiBMNDUwIDE4MCBMNjIwIDE4MCBMNjIwIDEzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQ0NDIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cmVjdCB4PSI0MCIgeT0iMjAwIiB3aWR0aD0iMzAwIiBoZWlnaHQ9IjEwMCIgcng9IjEyIiBmaWxsPSIjZmZmIiBzdHJva2U9IiNFNUUwRDgiLz4KICA8dGV4dCB4PSI1NiIgeT0iMjMyIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzMzIj5Ib21lIGJsb2NrcyAodGV4dCB3aXJlZnJhbWUpPC90ZXh0PgogIDx0ZXh0IHg9IjU2IiB5PSIyNTgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTMiIGZpbGw9IiM2NjYiPjEgSGVybyBwcm9taXNlIMK3IDIgSG93IHNlc3Npb25zIGZlZWw8L3RleHQ+CiAgPHRleHQgeD0iNTYiIHk9IjI4MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxMyIgZmlsbD0iIzY2NiI+MyBGZWF0dXJlZCBzaG93IMK3IDQgQm9vayBDVEE8L3RleHQ+CiAgPHJlY3QgeD0iMzgwIiB5PSIyMDAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMTAwIiByeD0iMTIiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI0U1RTBEOCIvPgogIDx0ZXh0IHg9IjM5NiIgeT0iMjMyIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzMzIj5Cb29rIGZsb3c8L3RleHQ+CiAgPHRleHQgeD0iMzk2IiB5PSIyNTgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTMiIGZpbGw9IiM2NjYiPk5lZWQgwrcgTGVuZ3RoIMK3IFNlbnNvcnkgbm90ZXMgwrcgQ29uZmlybTwvdGV4dD4KICA8dGV4dCB4PSIzOTYiIHk9IjI4MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxMyIgZmlsbD0iIzY2NiI+Tm8gZGFyayBwYXR0ZXJucyDCtyBwbGFpbiBsYW5ndWFnZTwvdGV4dD4KICA8dGV4dCB4PSI0MCIgeT0iMzYwIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMEQ5NDg4Ij5QcmltYXJ5IENUQSBldmVyeXdoZXJlOiDigJxCb29rIGEgY2FsbSBzZXNzaW9u4oCdPC90ZXh0Pgo8L3N2Zz4=",
       "projectId": 9001,
       "seeded": false
@@ -285,7 +322,7 @@
       "id": "c-ss-1",
       "stage": "sketch",
       "title": "Wordmark soft monoline",
-      "note": "Stage 4 \u00b7 lowercase, breathing tracking",
+      "note": "Stage 4 · lowercase, breathing tracking",
       "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNjQwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0Y0RjFFQSIgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3RDhCN0EiPlNPRlQgU0lHTkFMIMK3IHNrZXRjaCBBIMK3IHdvcmRtYXJrPC90ZXh0PgogIDxlbGxpcHNlIGN4PSIzMjAiIGN5PSIyMjAiIHJ4PSIxNDAiIHJ5PSI5MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNEY0NkU1IiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1kYXNoYXJyYXk9IjggNiIvPgogIDxwYXRoIGQ9Ik0yMDAgMjQwIFEzMjAgMTgwIDQ0MCAyNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzBEOTQ4OCIgc3Ryb2tlLXdpZHRoPSI0Ii8+CiAgPHRleHQgeD0iMjQwIiB5PSIzMjAiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLCBzZXJpZiIgZm9udC1zaXplPSIzNiIgZmlsbD0iIzFBMUExQSI+c29mdCBzaWduYWw8L3RleHQ+CiAgPHRleHQgeD0iMjUwIiB5PSIzNTAiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiPnNvZnQgbW9ub2xpbmUgwrcgbm8gaGFyZCBjb3JuZXJzPC90ZXh0Pgo8L3N2Zz4=",
       "projectId": 9001
     },
@@ -293,7 +330,7 @@
       "id": "c-ss-2",
       "stage": "sketch",
       "title": "Pulse / listening mark",
-      "note": "Stage 4 \u00b7 circle booth + soft path voice",
+      "note": "Stage 4 · circle booth + soft path voice",
       "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNjQwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0VFRjJGRiIgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM2MzY2RjEiPlNPRlQgU0lHTkFMIMK3IHNrZXRjaCBCIMK3IG1hcms8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMzIwIiBjeT0iMjMwIiByPSI3MCIgZmlsbD0iIzRGNDZFNSIvPgogIDxjaXJjbGUgY3g9IjMyMCIgY3k9IjIzMCIgcj0iNDIiIGZpbGw9IiNGNEYxRUEiLz4KICA8cGF0aCBkPSJNMjkwIDIzMCBRMzIwIDIwMCAzNTAgMjMwIFEzMjAgMjUwIDI5MCAyMzAiIGZpbGw9IiMwRDk0ODgiLz4KICA8dGV4dCB4PSIyMjAiIHk9IjM2MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzM3MzBBMyI+cHVsc2UgLyBsaXN0ZW5pbmcgbWFyazwvdGV4dD4KPC9zdmc+",
       "projectId": 9001
     },
@@ -301,7 +338,7 @@
       "id": "c-ss-3",
       "stage": "develop",
       "title": "Pulse mark selected",
-      "note": "Stage 5 \u00b7 works as icon + sticker; beat wordmark-only",
+      "note": "Stage 5 · works as icon + sticker; beat wordmark-only",
       "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNjQwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0VFRjJGRiIgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM2MzY2RjEiPlNPRlQgU0lHTkFMIMK3IHNrZXRjaCBCIMK3IG1hcms8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMzIwIiBjeT0iMjMwIiByPSI3MCIgZmlsbD0iIzRGNDZFNSIvPgogIDxjaXJjbGUgY3g9IjMyMCIgY3k9IjIzMCIgcj0iNDIiIGZpbGw9IiNGNEYxRUEiLz4KICA8cGF0aCBkPSJNMjkwIDIzMCBRMzIwIDIwMCAzNTAgMjMwIFEzMjAgMjUwIDI5MCAyMzAiIGZpbGw9IiMwRDk0ODgiLz4KICA8dGV4dCB4PSIyMjAiIHk9IjM2MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzM3MzBBMyI+cHVsc2UgLyBsaXN0ZW5pbmcgbWFyazwvdGV4dD4KPC9zdmc+",
       "projectId": 9001
     },
@@ -309,15 +346,15 @@
       "id": "c-ss-4",
       "stage": "iteration",
       "title": "Mark + wordmark lockup",
-      "note": "Stage 5 \u00b7 primary horizontal; indigo + teal whisper",
+      "note": "Stage 5 · primary horizontal; indigo + teal whisper",
       "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNjQwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0ZBRkFGOCIgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM1RjZENUQiPlNPRlQgU0lHTkFMIMK3IGl0ZXJhdGlvbiDCtyBwcmltYXJ5IG1hcms8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMjQwIiByPSI2NCIgZmlsbD0iIzRGNDZFNSIvPgogIDxjaXJjbGUgY3g9IjIwMCIgY3k9IjI0MCIgcj0iMzYiIGZpbGw9IiNGN0Y1RjAiLz4KICA8cGF0aCBkPSJNMTc1IDI0MCBRMjAwIDIxNSAyMjUgMjQwIFEyMDAgMjU1IDE3NSAyNDAiIGZpbGw9IiMwRDk0ODgiLz4KICA8dGV4dCB4PSIzMDAiIHk9IjIzMCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC13ZWlnaHQ9IjcwMCIgZm9udC1zaXplPSI0MiIgZmlsbD0iIzFBMUExQSIgbGV0dGVyLXNwYWNpbmc9Ii0xIj5Tb2Z0IFNpZ25hbDwvdGV4dD4KICA8dGV4dCB4PSIzMDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzBEOTQ4OCI+WW91ciB2b2ljZSwgYXQgeW91ciBwYWNlLjwvdGV4dD4KICA8cmVjdCB4PSIzMDAiIHk9IjMwMCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjNEY0NkU1Ii8+CiAgPHJlY3QgeD0iMzU2IiB5PSIzMDAiIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgZmlsbD0iIzBEOTQ4OCIvPgogIDxyZWN0IHg9IjQxMiIgeT0iMzAwIiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiMxQTFBMUEiLz4KICA8cmVjdCB4PSI0NjgiIHk9IjMwMCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRjRGMUVBIiBzdHJva2U9IiNDQ0MiLz4KPC9zdmc+",
       "projectId": 9001
     },
     {
       "id": "c-ss-5",
       "stage": "locked",
-      "title": "LOCKED \u00b7 listening mark + Soft Signal",
-      "note": "Stage 5 \u00b7 ready for Brand system",
+      "title": "LOCKED · listening mark + Soft Signal",
+      "note": "Stage 5 · ready for Brand system",
       "visual": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDgwIiB2aWV3Qm94PSIwIDAgNjQwIDQ4MCI+CiAgPHJlY3QgZmlsbD0iI0ZBRkFGOCIgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0ODAiLz4KICA8dGV4dCB4PSIzMiIgeT0iNDgiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM1RjZENUQiPlNPRlQgU0lHTkFMIMK3IGl0ZXJhdGlvbiDCtyBwcmltYXJ5IG1hcms8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMjQwIiByPSI2NCIgZmlsbD0iIzRGNDZFNSIvPgogIDxjaXJjbGUgY3g9IjIwMCIgY3k9IjI0MCIgcj0iMzYiIGZpbGw9IiNGN0Y1RjAiLz4KICA8cGF0aCBkPSJNMTc1IDI0MCBRMjAwIDIxNSAyMjUgMjQwIFEyMDAgMjU1IDE3NSAyNDAiIGZpbGw9IiMwRDk0ODgiLz4KICA8dGV4dCB4PSIzMDAiIHk9IjIzMCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC13ZWlnaHQ9IjcwMCIgZm9udC1zaXplPSI0MiIgZmlsbD0iIzFBMUExQSIgbGV0dGVyLXNwYWNpbmc9Ii0xIj5Tb2Z0IFNpZ25hbDwvdGV4dD4KICA8dGV4dCB4PSIzMDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzBEOTQ4OCI+WW91ciB2b2ljZSwgYXQgeW91ciBwYWNlLjwvdGV4dD4KICA8cmVjdCB4PSIzMDAiIHk9IjMwMCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjNEY0NkU1Ii8+CiAgPHJlY3QgeD0iMzU2IiB5PSIzMDAiIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgZmlsbD0iIzBEOTQ4OCIvPgogIDxyZWN0IHg9IjQxMiIgeT0iMzAwIiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiMxQTFBMUEiLz4KICA8cmVjdCB4PSI0NjgiIHk9IjMwMCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRjRGMUVBIiBzdHJva2U9IiNDQ0MiLz4KPC9zdmc+",
       "projectId": 9001
     }
@@ -368,12 +405,12 @@
   },
   "sparkIndex": 0,
   "onboarded": true,
-  "currentSpark": "What if Soft Signal\u2019s mark felt like being listened to, not performed for?",
+  "currentSpark": "What if Soft Signal’s mark felt like being listened to, not performed for?",
   "stage7Status": "closed",
   "stage7Deliverables": {
     "coverRules": [
-      "Title \u2264 2 lines, largest type on cover",
-      "Guest/episode meta under title \u2014 never competing size",
+      "Title ≤ 2 lines, largest type on cover",
+      "Guest/episode meta under title — never competing size",
       "Mark top-left; one teal accent bar max; no waveform clutter"
     ],
     "goodCover": "Calm indigo field, Soft Signal + Ep title, quiet guest line, mark with breathing room",

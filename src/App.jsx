@@ -139,6 +139,7 @@ function App() {
   const removePaletteColor = useAppStore((s) => s.removePaletteColor)
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
+  const bumpDesignVersion = useAppStore((s) => s.bumpDesignVersion)
   const toggleTheme = useAppStore((s) => s.toggleTheme)
   const setBodyDoubling = useAppStore((s) => s.setBodyDoubling)
   const toggleBodyDoubling = useAppStore((s) => s.toggleBodyDoubling)
@@ -2308,15 +2309,20 @@ function App() {
                 (step.id === 'design' &&
                   !!(
                     activeProject?.tagline?.trim() ||
-                    (projectPalette || []).length >= 2
+                    (projectPalette || []).length >= 2 ||
+                    (activeProject?.designVersion &&
+                      activeProject.designVersion !== 'v1')
                   )) ||
                 (step.id === 'review' &&
                   !!(
-                    activeProject?.tagline?.trim() &&
-                    deskMood.some((m) => m.inPack)
+                    activeProject?.feedbackNotes?.trim() ||
+                    (activeProject?.tagline?.trim() &&
+                      deskMood.some((m) => m.inPack))
                   )) ||
                 (step.id === 'deliver' &&
                   !!(
+                    activeProject?.handoffNote?.trim() ||
+                    activeProject?.learnings?.trim() ||
                     activeProject?.tagline?.trim() ||
                     deskMood.some((m) => m.inPack)
                   ))
@@ -3574,6 +3580,17 @@ function App() {
                 </label>
                 <button
                   type="button"
+                  className="btn btn-ghost btn-sm"
+                  title="Bump before a big change (v1 → v2)"
+                  onClick={() => {
+                    const r = bumpDesignVersion()
+                    if (r?.ok) flashMicro(`Version ${r.version}`)
+                  }}
+                >
+                  Bump
+                </button>
+                <button
+                  type="button"
                   className="text-link"
                   onClick={() => setActiveView('flow')}
                 >
@@ -3582,7 +3599,17 @@ function App() {
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => setActiveView('review')}
+                  onClick={() => {
+                    // Encourage version discipline before review
+                    const cur = String(
+                      activeProject?.designVersion || 'v1'
+                    ).trim()
+                    if (/^v?1$/i.test(cur) || cur === '') {
+                      updateBrandField('designVersion', 'v2')
+                      flashToast('Version → v2 · heading to Review')
+                    }
+                    setActiveView('review')
+                  }}
                 >
                   {i18nT(locale, 'ui.openReview') || 'Go to Review'}
                 </button>
