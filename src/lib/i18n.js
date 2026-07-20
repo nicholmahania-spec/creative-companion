@@ -123,7 +123,7 @@ const EN = {
     boardSub: 'Research — add pictures and notes. Star up to 6 for the client pack.',
     breakCareOpen:
       'Body check: water, food, stretch, or a real break when you take one.',
-    pathReadiness: 'What’s filled in so far?',
+    pathReadiness: 'Quick fixes for other steps',
     appearance: 'Look & feel',
     presence: 'Helper & sound',
     workPrefs: 'Sketch prefs',

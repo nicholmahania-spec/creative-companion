@@ -153,18 +153,8 @@ export default function DefineView(props) {
                   !!activeProject?.tagline?.trim(),
                   (projectPalette || []).length >= 2,
                 ]
-                const readyN = checks.filter(Boolean).length
                 return (
                   <>
-                    <p
-                      className="panel-hint project-ready-count"
-                      aria-label={`${readyN} of 5 ready`}
-                    >
-                      <strong>
-                        {readyN} of 5
-                      </strong>{' '}
-                      ready
-                    </p>
                     <ul className="pack-ready-list project-ready-list">
                       <li className={checks[0] ? 'is-ok' : 'is-miss'}>
                         {checks[0] ? (
@@ -387,62 +377,6 @@ export default function DefineView(props) {
                   </button>
                 </div>
               </details>
-
-              <p className="list-heading">Go to</p>
-              <div className="link-list">
-                <button
-                  type="button"
-                  className="link-row is-primary"
-                  onClick={() => setActiveView('studio')}
-                >
-                  <span className="link-row-label">2 · Research</span>
-                  <span className="link-row-meta">
-                    {deskMood.filter((m) => m.inPack).length} pack pins
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="link-row"
-                  onClick={() => setActiveView('spark')}
-                >
-                  <span className="link-row-label">3 · Ideate</span>
-                  <span className="link-row-meta">Sparks &amp; directions</span>
-                </button>
-                <button
-                  type="button"
-                  className="link-row"
-                  onClick={() => setActiveView('flow')}
-                >
-                  <span className="link-row-label">4 · Sketch</span>
-                  <span className="link-row-meta">
-                    {deskTasks.filter((t) => !t.completed).length} open steps
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="link-row"
-                  onClick={() => setActiveView('brand')}
-                >
-                  <span className="link-row-label">5 · Design</span>
-                  <span className="link-row-meta">Artboard &amp; rules</span>
-                </button>
-                <button
-                  type="button"
-                  className="link-row"
-                  onClick={() => setActiveView('review')}
-                >
-                  <span className="link-row-label">6 · Review</span>
-                  <span className="link-row-meta">Critique &amp; readiness</span>
-                </button>
-                <button
-                  type="button"
-                  className="link-row"
-                  onClick={() => setActiveView('finish')}
-                >
-                  <span className="link-row-label">7 · Deliver</span>
-                  <span className="link-row-meta">Vector PDF &amp; print</span>
-                </button>
-              </div>
 
               <div className="project-danger-zone">
                 <button
