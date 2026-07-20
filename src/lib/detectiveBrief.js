@@ -116,7 +116,7 @@ export const DETECTIVE_CHAPTERS = [
   },
 ]
 
-function isFilled(val) {
+export function isFilled(val) {
   return String(val || '').trim().length > 0
 }
 

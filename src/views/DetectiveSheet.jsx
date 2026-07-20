@@ -6,9 +6,10 @@ import { useMemo, useState, useCallback } from 'react'
 import {
   DETECTIVE_CHAPTERS,
   getDetectiveProgress,
+  isFilled,
 } from '../lib/detectiveBrief'
 
-export { DETECTIVE_CHAPTERS, getDetectiveProgress }
+export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 
 function FieldIcon({ name }) {
   const common = {
