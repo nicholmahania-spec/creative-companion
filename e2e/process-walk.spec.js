@@ -28,6 +28,10 @@ test.describe('Process walk (artifacts)', () => {
     await page.locator('#detective-audience').fill('Busy parents new to the program')
     await page.locator('#detective-feel').fill('Hopeful and clear — not hustle')
     await page.getByRole('button', { name: /Fill brief from sheet/i }).click()
+    // Define shows Fix next gap · G
+    await expect(
+      page.getByRole('button', { name: /Fix next gap/i }).first()
+    ).toBeVisible()
     await page.getByRole('button', { name: /Go to Research/i }).first().click()
 
     // 2 Research — pin + star for leave-behind

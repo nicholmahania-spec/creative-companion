@@ -676,11 +676,11 @@ export function activityTip(activity = {}) {
   }
 
   if (view === 'review') {
-    return 'Show the leave-behind. Ask if it feels right. Then Deliver.'
+    return 'Show the leave-behind. Ask specific questions. Press G if a process step is still empty — then Deliver.'
   }
 
   if (view === 'finish') {
-    return 'Vector PDF or print. Hand off. Note what you learned.'
+    return 'Brand book PDF or print. Press G to fix the next empty process step. Hand off. Note what you learned.'
   }
 
   if (view === 'insights') {
@@ -696,7 +696,7 @@ export function activityTip(activity = {}) {
   }
 
   if (view === 'project') {
-    return 'Brief = audience + outcome + constraint. Then go to Research.'
+    return 'Detective sheet first: goal + audience. Then Research — or press G for the next empty process step.'
   }
 
   if (view === 'settings') {

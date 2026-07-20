@@ -69,7 +69,7 @@ import {
   pathGapFocusSelector,
   focusPathGapTarget,
 } from './lib/journeyProgress'
-import PathProgressPanel from './components/PathProgressPanel'
+const PathProgressPanel = lazy(() => import('./components/PathProgressPanel'))
 import {
   PROCESS_PHASES,
   REVIEW_QUESTIONS,
@@ -2296,7 +2296,7 @@ function App() {
                     }}
                   >
                     <strong>Keyboard</strong>
-                    <span>C complete · N capture · 1–7 path · ?</span>
+                    <span>C complete · N capture · G next gap · 1–7 · ?</span>
                   </button>
                   <button
                     type="button"
@@ -4403,20 +4403,23 @@ function App() {
               )
               const nextGap = pathFirstGap(JOURNEY_STEPS, ctx)
               return (
-                <PathProgressPanel
-                  steps={JOURNEY_STEPS}
-                  rows={rows}
-                  doneN={doneN}
-                  missing={missing}
-                  nextGap={nextGap}
-                  onOpenStep={(view) => {
-                    setActiveView(view)
-                    const step = JOURNEY_STEPS.find((s) => s.view === view)
-                    if (step) focusPathGapTarget(pathGapFocusSelector(step.id))
-                  }}
-                  labelForId={(id) => pathLabel(locale, id)}
-                  hint="Review with content in earlier steps — then Deliver."
-                />
+                <Suspense fallback={null}>
+                  <PathProgressPanel
+                    steps={JOURNEY_STEPS}
+                    rows={rows}
+                    doneN={doneN}
+                    missing={missing}
+                    nextGap={nextGap}
+                    onOpenStep={(view) => {
+                      setActiveView(view)
+                      const step = JOURNEY_STEPS.find((s) => s.view === view)
+                      if (step)
+                        focusPathGapTarget(pathGapFocusSelector(step.id))
+                    }}
+                    labelForId={(id) => pathLabel(locale, id)}
+                    hint="Review with content in earlier steps — then Deliver."
+                  />
+                </Suspense>
               )
             })()}
             <section className="panel brand-section">
@@ -4607,20 +4610,23 @@ function App() {
               )
               const nextGap = pathFirstGap(JOURNEY_STEPS, ctx)
               return (
-                <PathProgressPanel
-                  steps={JOURNEY_STEPS}
-                  rows={rows}
-                  doneN={doneN}
-                  missing={missing}
-                  nextGap={nextGap}
-                  onOpenStep={(view) => {
-                    setActiveView(view)
-                    const step = JOURNEY_STEPS.find((s) => s.view === view)
-                    if (step) focusPathGapTarget(pathGapFocusSelector(step.id))
-                  }}
-                  labelForId={(id) => pathLabel(locale, id)}
-                  hint="Tap any step to fill gaps before the brand book PDF."
-                />
+                <Suspense fallback={null}>
+                  <PathProgressPanel
+                    steps={JOURNEY_STEPS}
+                    rows={rows}
+                    doneN={doneN}
+                    missing={missing}
+                    nextGap={nextGap}
+                    onOpenStep={(view) => {
+                      setActiveView(view)
+                      const step = JOURNEY_STEPS.find((s) => s.view === view)
+                      if (step)
+                        focusPathGapTarget(pathGapFocusSelector(step.id))
+                    }}
+                    labelForId={(id) => pathLabel(locale, id)}
+                    hint="Tap any step to fill gaps before the brand book PDF."
+                  />
+                </Suspense>
               )
             })()}
 
@@ -5022,7 +5028,7 @@ function App() {
                 </li>
                 <li>
                   <strong>7 Deliver</strong>
-                  {' — '}you are here · vector PDF
+                  {' — '}you are here · brand book PDF
                 </li>
               </ol>
             </section>
@@ -5111,6 +5117,14 @@ function App() {
                   onClick={() => setActiveView('studio')}
                 >
                   {i18nT(locale, 'ui.openWork') || 'Go to Research'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => goToNextProcessGap()}
+                  title="Keyboard G"
+                >
+                  Fix next gap · G
                 </button>
               </div>
             </div>
