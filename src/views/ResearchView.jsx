@@ -176,7 +176,9 @@ export default function ResearchView({
                     : ''}
                 </p>
               </div>
-              <span className="panel-count">{deskMood.length} pins</span>
+              <span className="panel-count">
+                {deskMood.length} pin{deskMood.length === 1 ? '' : 's'}
+              </span>
             </div>
 
             <section className="panel brand-section process-tip-panel">

@@ -91,12 +91,9 @@ export function pathStepHasContent(stepId, ctx = {}) {
         (project.tagline?.trim() && mood.some((m) => m.inPack))
       )
     case 'deliver':
-      return !!(
-        project.handoffNote?.trim() ||
-        project.learnings?.trim() ||
-        project.tagline?.trim() ||
-        mood.some((m) => m.inPack)
-      )
+      // Deliver-specific action only — tagline/pins belong to earlier steps
+      // and must not make the final step look done before it's touched.
+      return !!(project.handoffNote?.trim() || project.learnings?.trim())
     default:
       return false
   }
