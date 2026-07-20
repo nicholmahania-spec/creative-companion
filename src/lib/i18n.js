@@ -307,6 +307,10 @@ const EN = {
     logoVariants: 'Variants',
     applicationMock: 'Application mock',
     brandCardMock: 'Business card proof',
+    aboutBrandKit:
+      'On Deliver, download brand kit zip (PDF + MD + tokens + logo).',
+    aboutAdhd:
+      'ADHD resources (educational): CHADD.org — not medical advice.',
     pdfFontHonesty:
       'Vector PDF uses built-in fonts (mapped from your type pair labels) — not full webfont embedding.',
   },

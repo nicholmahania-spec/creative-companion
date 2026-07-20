@@ -559,9 +559,53 @@ export default function SettingsView(props) {
               replacement.
             </p>
             <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
+              <strong>Brand kit:</strong> On{' '}
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => setActiveView('finish')}
+              >
+                Deliver
+              </button>
+              , use <em>Download brand kit (zip)</em> for PDF + Markdown +
+              tokens + logo. Fill Message / Logo / Imagery on Design first.
+            </p>
+            <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
+              <strong>ADHD resources:</strong>{' '}
+              <a
+                className="text-link"
+                href="https://chadd.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                CHADD.org
+              </a>
+              {' · '}
+              <a
+                className="text-link"
+                href="https://chadd.org/for-adults/overview/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Adults overview
+              </a>
+              {' · '}
+              <a
+                className="text-link"
+                href="https://chadd.org/about-adhd/executive-function-skills/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Executive function
+              </a>
+              . Educational links only — not medical advice. Helpline (US):
+              1-866-200-8098.
+            </p>
+            <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
               <strong>Offline:</strong> After one online visit, the app shell
               and assets cache locally. Your desk data is on this device — open
-              Deliver and download when offline.
+              Deliver and download when offline. Hard-refresh once after a big
+              update if the UI looks stale.
             </p>
             <p className="panel-hint" style={{ margin: 0 }}>
               <strong>1.0:</strong> Full path desk + pack export, quiet/all

@@ -1,7 +1,8 @@
-/* Creative Companion — offline shell + asset cache (v4)
+/* Creative Companion — offline shell + asset cache (v5)
  * v4: network-first for hashed /assets/ so deploys win over sticky cache-first.
+ * v5: cache name bump after brand-kit + path extracts so clients drop stale shells.
  */
-const CACHE = 'cc-shell-v4'
+const CACHE = 'cc-shell-v5'
 const PRECACHE = [
   './',
   './index.html',
