@@ -97,7 +97,7 @@ import {
   readImageFilesAsPins,
 } from './lib/moodPins'
 import LogoLockup from './components/LogoLockup'
-import EmptyIllustration from './components/EmptyIllustration'
+const EmptyIllustration = lazy(() => import('./components/EmptyIllustration'))
 import {
   LOCALES,
   normalizeLocale,
@@ -381,6 +381,15 @@ function App() {
         .length,
     [pathProgressCtx]
   )
+  const pathNextGap = useMemo(
+    () => pathFirstGap(JOURNEY_STEPS, pathProgressCtx),
+    [pathProgressCtx]
+  )
+  const thisStepFilled = useMemo(() => {
+    const id = journeyIdForView(activeView)
+    if (!id) return null
+    return pathStepHasContent(id, pathProgressCtx)
+  }, [activeView, pathProgressCtx])
   const completedCount = doneTasks.length
   const progressPercent =
     deskTasks.length > 0
@@ -2326,7 +2335,9 @@ function App() {
                     }}
                   >
                     <strong>Keyboard</strong>
-                    <span>C complete · N capture · G next gap · 1–7 · ?</span>
+                    <span>
+                      C complete · N capture · G next gap · path N/7 · 1–7 · ?
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -2498,12 +2509,16 @@ function App() {
               title={
                 pathDoneCount >= 7
                   ? 'Process full · open Deliver'
-                  : `Process ${pathDoneCount}/7 · Fix next gap (G)`
+                  : pathNextGap
+                    ? `Process ${pathDoneCount}/7 · Next ${pathNextGap.label} (G)`
+                    : `Process ${pathDoneCount}/7 · Fix next gap (G)`
               }
               aria-label={
                 pathDoneCount >= 7
                   ? 'Process complete, seven of seven steps have content'
-                  : `Process ${pathDoneCount} of 7 steps have content. Fix next gap.`
+                  : pathNextGap
+                    ? `Process ${pathDoneCount} of 7. Next gap ${pathNextGap.label}. Fix next gap.`
+                    : `Process ${pathDoneCount} of 7 steps have content. Fix next gap.`
               }
             >
               {pathDoneCount}/7
@@ -2517,6 +2532,36 @@ function App() {
       </header>
 
       <main className="main" id="main-content" tabIndex={-1} data-nav-dir={navDir}>
+        {journeyActive && (
+          <div className="journey-gap-strip" role="status" aria-live="polite">
+            <span
+              className={`step-fill-chip${
+                thisStepFilled ? ' is-filled' : ' is-open'
+              }`}
+            >
+              {thisStepFilled ? 'This step · filled' : 'This step · open'}
+            </span>
+            {pathNextGap ? (
+              <button
+                type="button"
+                className="journey-gap-strip-btn"
+                onClick={() => goToNextProcessGap()}
+                title="Keyboard G"
+              >
+                Next gap · {pathNextGap.label} · G
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="journey-gap-strip-btn is-ship"
+                onClick={() => setActiveView('finish')}
+                title="Process full — open Deliver"
+              >
+                Ship · brand book PDF
+              </button>
+            )}
+          </div>
+        )}
         {/* ===== WORK — one step owns the fold ===== */}
         {activeView === 'flow' && (
           <div className="flow-view surface-desk view-enter" data-nav-dir={navDir}>
@@ -2563,7 +2608,9 @@ function App() {
               </div>
               {!nextTask ? (
                 <div className="empty-state empty-state-craft">
-                  <EmptyIllustration variant="desk" />
+                  <Suspense fallback={null}>
+                    <EmptyIllustration variant="desk" />
+                  </Suspense>
                   <p className="empty-state-title">
                     {doneTasks.length > 0
                       ? i18nT(locale, 'ui.queueClear')
@@ -3197,7 +3244,9 @@ function App() {
               >
                 {deskMood.length === 0 ? (
                   <div className="empty-state empty-state-craft">
-                    <EmptyIllustration variant="board" />
+                    <Suspense fallback={null}>
+                      <EmptyIllustration variant="board" />
+                    </Suspense>
                     <p className="empty-state-title">
                       {i18nT(locale, 'ui.noPinsYet')}
                     </p>
@@ -4807,7 +4856,12 @@ function App() {
                         </p>
                         {ready.thin && (
                           <div className="pack-thin-block">
-                            <EmptyIllustration variant="pack" className="pack-thin-illu" />
+                            <Suspense fallback={null}>
+                              <EmptyIllustration
+                                variant="pack"
+                                className="pack-thin-illu"
+                              />
+                            </Suspense>
                             <p className="pack-thin-warning" role="status">
                               {i18nT(locale, 'ui.thinPack')}
                             </p>
@@ -5975,6 +6029,12 @@ function App() {
                 <kbd>G</kbd> Fix next process gap
               </li>
               <li>
+                Path <strong>N/7</strong> pill · same as G (shows count)
+              </li>
+              <li>
+                Gap strip · <strong>Next gap · step · G</strong> under path
+              </li>
+              <li>
                 <kbd>U</kbd> Undo last complete
               </li>
               <li>
@@ -5989,7 +6049,8 @@ function App() {
               </li>
             </ul>
             <p className="panel-hint" style={{ margin: '0.75rem 0 0' }}>
-              Keys work when you are not typing in a field.
+              Keys work when you are not typing in a field. Path pill + gap
+              strip always show the next empty step.
             </p>
           </div>
         </div>

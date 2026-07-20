@@ -659,28 +659,28 @@ export function activityTip(activity = {}) {
 
   if (view === 'studio') {
     return step
-      ? `Research for “${step}”: keep pins that constrain. Drop the rest.`
+      ? `Research for “${step}”: keep pins that constrain. Drop the rest. Path N/7 or G for empty steps.`
       : pins > 0
-        ? `Curate ${project} refs, then back to Sketch with one decision.`
-        : 'Pin 2–3 refs with a one-line why. Then Sketch.'
+        ? `Curate ${project} refs, then back to Sketch with one decision. Path N/7 shows process fill.`
+        : 'Pin 2–3 refs with a one-line why. Then Sketch — or G for the next empty process step.'
   }
 
   if (view === 'brand') {
-    return `Design for ${project}: finish one layer (tagline or palette). Consistent incomplete > conflicting complete.`
+    return `Design for ${project}: finish one layer (tagline or palette). Path N/7 pill or G jumps the next empty step.`
   }
 
   if (view === 'spark') {
     return step
-      ? `If this spark helps “${step}”, pin it or fill A/B/C. Else skip.`
-      : 'One spark → pin or A/B/C → then Sketch.'
+      ? `If this spark helps “${step}”, pin it or fill A/B/C. Else skip. Path N/7 pill or G jumps empty steps.`
+      : 'One spark → pin or A/B/C → then Sketch. Path N/7 or G for the next empty step.'
   }
 
   if (view === 'review') {
-    return 'Show the leave-behind. Ask specific questions. Press G if a process step is still empty — then Deliver.'
+    return 'Show the leave-behind. Ask specific questions. Path N/7 pill or G if a process step is still empty — then Deliver.'
   }
 
   if (view === 'finish') {
-    return 'Brand book PDF or print. Press G to fix the next empty process step. Hand off. Note what you learned.'
+    return 'Brand book PDF or print. Path N/7 or G fixes empty process steps. Hand off. Note what you learned.'
   }
 
   if (view === 'insights') {
@@ -696,7 +696,7 @@ export function activityTip(activity = {}) {
   }
 
   if (view === 'project') {
-    return 'Detective sheet first: goal + audience. Then Research — or press G for the next empty process step.'
+    return 'Detective sheet first: goal + audience. Then Research — or path N/7 / G for the next empty process step.'
   }
 
   if (view === 'settings') {

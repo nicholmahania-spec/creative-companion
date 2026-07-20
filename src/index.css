@@ -8539,6 +8539,56 @@ html[data-reduce-motion='true'] *::after {
   background: color-mix(in srgb, var(--accent-growth, #0f766e) 12%, transparent);
 }
 
+/* Under-path strip: this-step fill + next gap (ADHD one next action) */
+.journey-gap-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  padding: 0.4rem 1rem 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-muted) 65%, transparent);
+}
+.step-fill-chip {
+  font-size: 0.72rem;
+  font-weight: 650;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  background: var(--bg-surface, var(--bg-muted));
+  white-space: nowrap;
+}
+.step-fill-chip.is-filled {
+  border-color: color-mix(in srgb, var(--accent-growth, #0f766e) 50%, var(--border-subtle));
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--accent-growth, #0f766e) 10%, transparent);
+}
+.step-fill-chip.is-open {
+  border-color: color-mix(in srgb, var(--accent, #6366f1) 40%, var(--border-subtle));
+  color: var(--text-primary);
+}
+.journey-gap-strip-btn {
+  appearance: none;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface, #fff);
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.journey-gap-strip-btn:hover {
+  border-color: var(--text-secondary);
+}
+.journey-gap-strip-btn.is-ship {
+  border-color: color-mix(in srgb, var(--accent-growth, #0f766e) 55%, var(--border-subtle));
+  background: color-mix(in srgb, var(--accent-growth, #0f766e) 12%, transparent);
+}
+
 .palette-roles-row {
   display: flex;
   flex-wrap: wrap;

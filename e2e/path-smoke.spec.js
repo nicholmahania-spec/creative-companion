@@ -14,12 +14,18 @@ test.describe('Creative Companion path smoke', () => {
 
     const path = await pathNav(page)
     await expect(path).toBeVisible()
-    // Wave: path bar N/7 process pill
+    // Wave: path bar N/7 process pill + under-path gap strip
     await expect(page.locator('.journey-progress-pill')).toBeVisible()
     await expect(page.locator('.journey-progress-pill')).toContainText(/\/7/)
+    await expect(page.locator('.journey-gap-strip')).toBeVisible()
+    await expect(page.locator('.journey-gap-strip-btn')).toBeVisible()
+    await expect(page.locator('.journey-gap-strip-btn')).toContainText(
+      /Next gap ·|Ship · brand book/i
+    )
 
     await path.getByRole('button', { name: /Step 1: Define/i }).click()
     await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
+    await expect(page.locator('.step-fill-chip')).toBeVisible()
 
     await path.getByRole('button', { name: /Step 2: Research/i }).click()
     await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
