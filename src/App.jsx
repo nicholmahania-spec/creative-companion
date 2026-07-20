@@ -2833,13 +2833,34 @@ function App() {
                   {pathPlain(locale, pathNextGap.id) ||
                     pathFillHint(locale, pathNextGap.id)}
                 </p>
-                <button
-                  type="button"
-                  className="btn btn-primary home-cta"
-                  onClick={() => goToNextProcessGap()}
-                >
-                  Continue
-                </button>
+                <div className="home-cta-row">
+                  <button
+                    type="button"
+                    className="btn btn-primary home-cta"
+                    onClick={() => goToNextProcessGap()}
+                  >
+                    Continue
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost home-cta-secondary"
+                    title="A tiny timer just to get moving — not a real work session"
+                    onClick={() => {
+                      if (forcedBreak) {
+                        flashToast(i18nT(locale, 'ui.breakLockFirst'))
+                        return
+                      }
+                      setTimerFocusSource?.('starter')
+                      setFocusLeft(5 * 60)
+                      setPomodoroWorkStartedAt(Date.now())
+                      setIsFocusRunning(true)
+                      flashToast('5-minute starter running — just begin.')
+                      goToNextProcessGap()
+                    }}
+                  >
+                    Start 5 min
+                  </button>
+                </div>
               </>
             ) : (
               <>

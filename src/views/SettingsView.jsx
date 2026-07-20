@@ -140,6 +140,9 @@ export default function SettingsView(props) {
                 </span>
               </button>
             </div>
+            <p className="panel-hint settings-helper-note">
+              {i18nT(locale, 'ui.helperBodyDoubleNote')}
+            </p>
             <div className="settings-row">
               <div>
                 <strong>{i18nT(locale, 'ui.helperQuiet')}</strong>
