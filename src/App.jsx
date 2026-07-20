@@ -3449,7 +3449,7 @@ function App() {
         <div className="autosave-chip">✓ Saved on this device</div>
       )}
 
-      {resumeBanner && (
+      {resumeBanner && activeView !== 'home' && (
         <div
           className={`resume-banner${resumeBanner.afterBreak ? ' is-after-break' : ''}${resumeBanner.rejoinTimer ? ' is-timer' : ''}`}
           role="status"
