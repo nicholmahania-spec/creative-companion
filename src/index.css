@@ -1,25 +1,36 @@
-/* Creative Companion — neutral desk chrome · brand color on pack only */
+/* Creative Companion — calm base · dopamine only on next/active */
 
 :root {
-  /* Neutral product chrome — brand color lives on artboard/pack only */
-  --accent-primary: #1C1917;
-  --accent-deep: #0C0A09;
-  --accent-soft: #44403C;
-  --accent-glow: rgba(28, 25, 23, 0.08);
-  --accent-growth: #0F766E;
+  /*
+   * Calm base: warm cream + soft sage (low stimulation).
+   * Chrome ink stays quiet. Dopamine is NOT default chrome.
+   */
+  --accent-primary: #2A2926; /* calm ink — default CTAs, chrome */
+  --accent-deep: #1A1814;
+  --accent-soft: #5C5A54;
+  --accent-glow: rgba(42, 41, 38, 0.08);
+  --accent-growth: #5B8A7A; /* soft sage — done / progress, not “next” */
 
-  --bg-canvas: #F5F5F4;
-  --bg-warm: #FFFFFF;
-  --bg-card: #FFFFFF;
-  --bg-elevated: #FFFFFF;
-  --bg-muted: #E7E5E4;
+  /* Dopamine — ONLY active path step / next action */
+  --dopamine: #FF4D6A;
+  --dopamine-deep: #E83655;
+  --dopamine-soft: #FF8A9B;
+  --dopamine-glow: rgba(255, 77, 106, 0.18);
+  --dopamine-ink: #FFF8F9;
+  --on-dopamine: #FFF8F9;
 
-  --text-primary: #0C0A09;
-  --text-secondary: rgba(12, 10, 9, 0.68);
-  --text-muted: rgba(12, 10, 9, 0.48);
-  --border-subtle: rgba(12, 10, 9, 0.08);
-  --border-strong: rgba(12, 10, 9, 0.14);
-  --border-hairline: rgba(12, 10, 9, 0.07);
+  --bg-canvas: #F3F0E8; /* warm cream */
+  --bg-warm: #FCFAF6;
+  --bg-card: #FCFAF6;
+  --bg-elevated: #FCFAF6;
+  --bg-muted: #E5E4DB; /* sage-washed */
+
+  --text-primary: #1A1814;
+  --text-secondary: rgba(26, 24, 20, 0.68);
+  --text-muted: rgba(26, 24, 20, 0.48);
+  --border-subtle: rgba(26, 24, 20, 0.08);
+  --border-strong: rgba(26, 24, 20, 0.14);
+  --border-hairline: rgba(26, 24, 20, 0.07);
   --highlight-inset: inset 0 1px 0 rgba(255, 255, 255, 0.95);
 
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -31,10 +42,10 @@
   --radius-pill: 999px;
 
   --shadow-0: none;
-  --shadow-1: 0 1px 2px rgba(12, 10, 9, 0.04), 0 2px 6px rgba(12, 10, 9, 0.03);
-  --shadow-2: 0 6px 18px rgba(12, 10, 9, 0.07);
-  --shadow-3: 0 16px 40px rgba(12, 10, 9, 0.1);
-  --shadow-hover: 0 10px 24px rgba(12, 10, 9, 0.12);
+  --shadow-1: 0 1px 2px rgba(26, 24, 20, 0.04), 0 2px 6px rgba(26, 24, 20, 0.03);
+  --shadow-2: 0 6px 18px rgba(26, 24, 20, 0.07);
+  --shadow-3: 0 16px 40px rgba(26, 24, 20, 0.1);
+  --shadow-hover: 0 10px 24px rgba(26, 24, 20, 0.12);
 
   --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 280ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -46,7 +57,7 @@
 }
 
 ::selection {
-  background: rgba(28, 25, 23, 0.12);
+  background: color-mix(in srgb, var(--dopamine) 22%, transparent);
   color: var(--text-primary);
 }
 
@@ -116,21 +127,30 @@ body:has(.app.deep)::after {
 }
 
 .app.deep {
-  --bg-canvas: #0C0A09;
-  --bg-warm: #1C1917;
-  --bg-card: #1C1917;
-  --bg-elevated: #292524;
-  --bg-muted: #44403C;
-  --text-primary: #FAFAF9;
-  --text-secondary: rgba(250, 250, 249, 0.72);
-  --text-muted: rgba(250, 250, 249, 0.55);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
+  /* Midnight charcoal base — calm, low stimulation */
+  --bg-canvas: #12141A;
+  --bg-warm: #1A1D24;
+  --bg-card: #1A1D24;
+  --bg-elevated: #22262F;
+  --bg-muted: #2C313C;
+  --text-primary: #F4F1EA;
+  --text-secondary: rgba(244, 241, 234, 0.72);
+  --text-muted: rgba(244, 241, 234, 0.52);
+  --border-subtle: rgba(244, 241, 234, 0.08);
+  --border-strong: rgba(244, 241, 234, 0.14);
   --highlight-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --accent-primary: #E7E5E4;
-  --accent-deep: #FAFAF9;
-  --accent-soft: #A8A29E;
-  --accent-glow: rgba(231, 229, 228, 0.12);
+  /* Chrome ink stays quiet (light on dark) — not dopamine */
+  --accent-primary: #E8E4DC;
+  --accent-deep: #F4F1EA;
+  --accent-soft: #A8A29A;
+  --accent-glow: rgba(232, 228, 220, 0.1);
+  --accent-growth: #6BA896; /* soft sage on dark */
+  --dopamine: #FF5C78;
+  --dopamine-deep: #FF4D6A;
+  --dopamine-soft: #FF8A9B;
+  --dopamine-glow: rgba(255, 92, 120, 0.22);
+  --dopamine-ink: #1A0A0E;
+  --on-dopamine: #FFF8F9;
   background: var(--bg-canvas);
   color: var(--text-primary);
 }
@@ -2384,7 +2404,7 @@ h3 {
 
 .home-md-row.is-active {
   background: var(--bg-elevated);
-  border-left-color: var(--accent-growth);
+  border-left-color: var(--dopamine);
 }
 
 .home-md-row-top {
@@ -2428,6 +2448,14 @@ h3 {
 .home-md-row-next.is-done {
   color: var(--accent-growth);
   font-weight: 600;
+}
+
+.home-md-detail .home-kicker {
+  color: var(--dopamine);
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
 }
 
 .home-md-detail {
@@ -2515,8 +2543,15 @@ h3 {
 }
 
 .home-md-step.is-current .home-md-step-dot {
-  border-color: var(--text-primary);
+  border-color: var(--dopamine);
+  background: var(--dopamine);
+  color: var(--on-dopamine);
+  box-shadow: 0 0 0 3px var(--dopamine-glow);
+}
+
+.home-md-step.is-current .home-md-step-label {
   color: var(--text-primary);
+  font-weight: 750;
 }
 
 .home-md-step-label {
@@ -2796,28 +2831,76 @@ h3 {
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, #292524 0%, var(--accent-primary) 100%);
-  color: #fafaf9;
-  border: 1px solid rgba(12, 10, 9, 0.35);
+  /* Calm ink CTA — not dopamine (dopamine reserved for next-step only) */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent-primary) 88%, #fff) 0%,
+    var(--accent-primary) 100%
+  );
+  color: var(--bg-elevated);
+  border: 1px solid color-mix(in srgb, var(--accent-deep) 55%, transparent);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 1px 2px rgba(12, 10, 9, 0.14),
-    0 4px 12px rgba(12, 10, 9, 0.12);
+    0 1px 2px rgba(26, 24, 20, 0.12),
+    0 4px 12px rgba(26, 24, 20, 0.1);
   padding: 0.72rem 1.2rem;
   border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(180deg, #44403c 0%, var(--accent-deep) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent-soft) 40%, var(--accent-primary)) 0%,
+    var(--accent-deep) 100%
+  );
   filter: none;
   box-shadow: var(--shadow-hover);
 }
 
 .app.deep .btn-primary {
-  background: linear-gradient(180deg, #fafaf9 0%, #e7e5e4 100%);
-  color: #0c0a09;
-  border-color: rgba(250, 250, 249, 0.35);
+  background: linear-gradient(180deg, #f4f1ea 0%, #e8e4dc 100%);
+  color: #12141a;
+  border-color: rgba(244, 241, 234, 0.35);
+}
+
+/* Dopamine CTA — only wire to next/active actions */
+.btn-dopamine,
+.step-focus-actions .btn-primary,
+.home-cta,
+.journey-gap-strip-btn:not(.is-quiet):not(.is-ship),
+.path-continue-row .btn-primary,
+.work-path-next.btn-primary {
+  background: linear-gradient(180deg, var(--dopamine-soft) 0%, var(--dopamine) 55%, var(--dopamine-deep) 100%);
+  color: var(--on-dopamine);
+  border: 1px solid color-mix(in srgb, var(--dopamine-deep) 70%, #000 10%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 4px 16px var(--dopamine-glow),
+    0 1px 2px rgba(26, 24, 20, 0.12);
+}
+
+.btn-dopamine:hover,
+.step-focus-actions .btn-primary:hover,
+.home-cta:hover,
+.journey-gap-strip-btn:not(.is-quiet):not(.is-ship):hover,
+.path-continue-row .btn-primary:hover,
+.work-path-next.btn-primary:hover {
+  background: linear-gradient(180deg, var(--dopamine) 0%, var(--dopamine-deep) 100%);
+  filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 8px 22px var(--dopamine-glow);
+}
+
+.app.deep .btn-dopamine,
+.app.deep .step-focus-actions .btn-primary,
+.app.deep .home-cta,
+.app.deep .journey-gap-strip-btn:not(.is-quiet):not(.is-ship),
+.app.deep .path-continue-row .btn-primary,
+.app.deep .work-path-next.btn-primary {
+  color: var(--on-dopamine);
+  border-color: color-mix(in srgb, var(--dopamine) 50%, transparent);
 }
 
 .btn-primary:disabled {
@@ -3104,11 +3187,11 @@ h3 {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #fff;
-  background: var(--accent-primary);
+  color: var(--on-dopamine);
+  background: var(--dopamine);
   padding: 0.2rem 0.5rem;
   border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(28, 25, 23, 0.25);
+  box-shadow: 0 2px 10px var(--dopamine-glow);
 }
 
 .task-title {
@@ -4143,19 +4226,24 @@ h3 {
   border: none;
 }
 
-/* Hero current-step card — owns the fold (desk, not indigo SaaS) */
+/* Hero current-step card — owns the fold on calm cream / midnight */
 .step-focus-panel,
 .surface-desk-hero {
   position: relative;
-  border: 1px solid rgba(28, 25, 23, 0.16) !important;
+  border: 1px solid color-mix(in srgb, var(--dopamine) 22%, var(--border-subtle)) !important;
   border-radius: calc(var(--radius) + 2px);
   background:
-    linear-gradient(165deg, #ffffff 0%, #fafaf9 55%, #f5f5f4 100%) !important;
+    linear-gradient(
+      165deg,
+      var(--bg-elevated) 0%,
+      color-mix(in srgb, var(--bg-warm) 92%, var(--bg-muted)) 55%,
+      var(--bg-warm) 100%
+    ) !important;
   box-shadow:
     var(--highlight-inset),
-    0 1px 2px rgba(28, 25, 23, 0.05),
-    0 12px 36px rgba(28, 25, 23, 0.08),
-    0 28px 56px rgba(12, 10, 9, 0.05) !important;
+    0 1px 2px rgba(26, 24, 20, 0.04),
+    0 12px 36px rgba(26, 24, 20, 0.07),
+    0 0 0 1px var(--dopamine-glow) !important;
   padding: 1.25rem 1.25rem 1.35rem;
 }
 
@@ -4167,18 +4255,28 @@ h3 {
   bottom: 0.85rem;
   width: 3px;
   border-radius: 0 2px 2px 0;
-  /* Solid stone rail — not growth rainbow */
-  background: var(--accent-primary);
+  background: linear-gradient(
+    180deg,
+    var(--dopamine-soft),
+    var(--dopamine) 50%,
+    var(--dopamine-deep)
+  );
 }
 
 .app.deep .step-focus-panel,
 .app.deep .surface-desk-hero {
   background:
-    linear-gradient(165deg, #1c1917 0%, #292524 60%, #0c0a09 100%) !important;
-  border-color: rgba(168, 162, 158, 0.28) !important;
+    linear-gradient(
+      165deg,
+      var(--bg-elevated) 0%,
+      var(--bg-warm) 55%,
+      var(--bg-canvas) 100%
+    ) !important;
+  border-color: color-mix(in srgb, var(--dopamine) 28%, var(--border-subtle)) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 16px 40px rgba(0, 0, 0, 0.35) !important;
+    0 16px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--dopamine-glow) !important;
 }
 
 .step-focus-head {
@@ -4235,8 +4333,8 @@ h3 {
 
 .step-focus-title:focus {
   outline: none;
-  border-bottom-color: var(--accent-primary);
-  box-shadow: none;
+  border-bottom-color: var(--dopamine);
+  box-shadow: 0 1px 0 0 var(--dopamine-glow);
   background: transparent;
 }
 
@@ -11916,3 +12014,858 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   background: rgba(255, 255, 255, 0.06);
 }
 
+
+/* ============================================================
+   Gamified Minimalist Accent — STRUCTURE ONLY (v1.48.x)
+   Hierarchy · organic nodes · micro-progress feedback
+   Palette intentionally unchanged — tokens stay as-is.
+   ============================================================ */
+
+/* Shape language: squircles (radius only — not color) */
+:root {
+  --radius-organic: 1.25rem;
+  --radius-squircle: 1.5rem;
+  --radius-node: 1.15rem;
+  --focus-lift: 0 18px 48px rgba(12, 10, 9, 0.1), 0 4px 12px rgba(12, 10, 9, 0.05);
+  --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+/* ——— Progress ring (path + XP) ——— */
+.progress-ring {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.progress-ring-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.progress-ring-track {
+  stroke: var(--bg-muted);
+}
+
+.progress-ring-fill {
+  /* Path completion stays sage — calm progress, not urgency */
+  stroke: var(--accent-growth);
+  transition: stroke-dashoffset 0.55s var(--ease-out);
+}
+
+/* Active path ring (partial) can pulse with dopamine tip */
+.journey-progress-pill.is-partial .progress-ring-fill {
+  stroke: var(--dopamine);
+}
+
+.journey-progress-pill.is-full .progress-ring-fill {
+  stroke: var(--accent-growth);
+}
+
+.progress-ring-label {
+  position: relative;
+  z-index: 1;
+  font-size: 0.58rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text-primary);
+  text-align: center;
+  max-width: 90%;
+}
+
+/* ——— Journey as creative flow nodes ——— */
+.journey-bar-flow {
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  padding: 0.55rem 0 0.35rem;
+}
+
+.journey-bar-flow .journey-bar-list {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0.2rem 0.1rem;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 8px,
+    #000 calc(100% - 8px),
+    transparent 100%
+  );
+}
+
+.journey-bar-flow .journey-bar-list::-webkit-scrollbar {
+  display: none;
+}
+
+.journey-bar-flow .journey-bar-item {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 3.75rem;
+  max-width: 7.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.journey-flow-link {
+  position: absolute;
+  left: -0.35rem;
+  width: 0.7rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+  transition: background 0.35s var(--ease-out), opacity 0.35s var(--ease-out);
+}
+
+.journey-flow-link.is-lit {
+  background: color-mix(in srgb, var(--accent-growth) 55%, var(--border-subtle));
+  opacity: 0.9;
+}
+
+.journey-bar-flow .journey-step {
+  position: relative;
+  z-index: 1;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  width: 100%;
+  padding: 0.45rem 0.35rem 0.4rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-node);
+  background: transparent;
+  color: var(--text-muted);
+  opacity: 0.42;
+  box-shadow: none;
+  transition:
+    opacity 0.28s var(--ease-out),
+    transform 0.28s var(--ease-spring),
+    background 0.22s var(--ease-out),
+    border-color 0.22s var(--ease-out),
+    color 0.22s var(--ease-out),
+    box-shadow 0.28s var(--ease-out);
+}
+
+.journey-bar-flow .journey-step:hover {
+  opacity: 0.88;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  border-color: var(--border-subtle);
+  transform: translateY(-1px);
+}
+
+.journey-bar-flow .journey-step.is-done:not(.is-active) {
+  opacity: 0.62;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.journey-bar-flow .journey-step.is-done:not(.is-active) .journey-node {
+  background: color-mix(in srgb, var(--accent-growth) 18%, var(--bg-muted));
+  color: var(--accent-growth);
+  border-color: color-mix(in srgb, var(--accent-growth) 35%, transparent);
+}
+
+/* ONE-THING: only the active path step gets dopamine */
+.journey-bar-flow .journey-step.is-active {
+  opacity: 1;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border-color: color-mix(in srgb, var(--dopamine) 38%, var(--border-subtle));
+  box-shadow:
+    0 0 0 1px var(--dopamine-glow),
+    var(--shadow-2);
+  transform: scale(1.06);
+  z-index: 2;
+}
+
+.journey-bar-flow .journey-step.is-active .journey-node {
+  background: var(--dopamine);
+  color: var(--on-dopamine);
+  border-color: transparent;
+  box-shadow: 0 4px 16px var(--dopamine-glow);
+  transform: scale(1.05);
+}
+
+.journey-bar-flow .journey-step.is-active .journey-label {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.journey-node {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.85rem; /* soft squircle */
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  transition:
+    background 0.22s var(--ease-out),
+    color 0.22s var(--ease-out),
+    transform 0.28s var(--ease-spring),
+    box-shadow 0.28s var(--ease-out),
+    border-color 0.22s var(--ease-out);
+}
+
+.path-step-icon {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+
+.journey-check {
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Keep journey-num for a11y/tests but hide visually — icon is the anchor */
+.journey-bar-flow .journey-num {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.journey-bar-flow .journey-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Progress pill becomes a ring node */
+.journey-bar-flow .journey-progress-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.15rem;
+  padding: 0.15rem;
+  min-width: 2.35rem;
+  min-height: 2.35rem;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-1);
+  transition:
+    transform 0.22s var(--ease-spring),
+    border-color 0.2s ease,
+    box-shadow 0.22s ease;
+}
+
+.journey-bar-flow .journey-progress-pill:hover {
+  transform: scale(1.06);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-2);
+}
+
+/* ring stroke colors set on .progress-ring-fill rules above */
+
+.journey-bar-flow .journey-progress-pill .progress-ring-label {
+  font-size: 0.55rem;
+}
+
+.journey-bar-flow .journey-tools-pill {
+  border-radius: var(--radius-pill);
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  .journey-bar-flow .journey-bar-item {
+    min-width: 3.1rem;
+    max-width: 4.5rem;
+  }
+  .journey-bar-flow .journey-label {
+    font-size: 0.6rem;
+  }
+  .journey-node {
+    width: 1.65rem;
+    height: 1.65rem;
+    border-radius: 0.75rem;
+  }
+  .journey-flow-link {
+    display: none;
+  }
+}
+
+/* ——— Game HUD: ring-first, chips recede ——— */
+.game-hud-bar {
+  border-radius: var(--radius-organic);
+  gap: 0.45rem 0.55rem;
+  padding: 0.45rem 0.7rem;
+  align-items: center;
+}
+
+.game-hud-xp-ring .progress-ring-label {
+  font-size: 0.52rem;
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--accent-deep);
+}
+
+.game-hud-xp-ring .game-hud-level {
+  font-size: 0.52rem;
+  letter-spacing: 0;
+}
+
+.game-hud-xp-wrap {
+  max-width: 5.5rem;
+  height: 5px;
+  border-radius: 999px;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+.game-hud-bar:hover .game-hud-xp-wrap {
+  opacity: 1;
+}
+
+.game-hud-chip {
+  opacity: 0.55;
+  border-radius: var(--radius-pill);
+  transition: opacity 0.2s ease, transform 0.2s var(--ease-spring);
+}
+
+.game-hud-bar:hover .game-hud-chip,
+.game-hud-chip.is-combo,
+.game-hud-chip.is-daily.is-done {
+  opacity: 1;
+}
+
+.game-hud-chip.is-combo:hover,
+.game-hud-chip:hover {
+  transform: scale(1.04);
+}
+
+/* Quest strike-through — satisfying micro-progress */
+.game-hud-quest {
+  border-radius: 0.85rem;
+  transition: background 0.2s ease, opacity 0.25s ease;
+}
+
+.game-hud-quest .game-hud-quest-body strong {
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.game-hud-quest.is-done .game-hud-quest-body strong {
+  color: var(--text-muted);
+}
+
+.game-hud-quest.is-done .game-hud-quest-body strong::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 55%;
+  height: 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent-growth) 70%, var(--text-muted));
+  transform: scaleX(1);
+  transform-origin: left center;
+  animation: strikeThrough 0.45s var(--ease-out) both;
+}
+
+@keyframes strikeThrough {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.game-hud-quest-check {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.55rem;
+  background: var(--bg-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.3s var(--ease-spring);
+}
+
+.game-hud-quest.is-done .game-hud-quest-check {
+  background: color-mix(in srgb, var(--accent-growth) 22%, var(--bg-muted));
+  color: var(--accent-growth);
+  transform: scale(1.08);
+}
+
+.game-hud-panel {
+  border-radius: var(--radius-squircle);
+}
+
+.game-hud-burst {
+  border-radius: var(--radius-pill);
+  animation: gameHudBurst 1.5s var(--ease-spring) forwards;
+}
+
+/* ——— ONE-THING FOCUS: desk hero owns the fold ——— */
+.flow-view.surface-desk > .decision-log-strip,
+.flow-view.surface-desk > .panel:not(.step-focus-panel),
+.flow-view.surface-desk > .capture-desk,
+.flow-view.surface-desk > .capture-strip,
+.flow-view.surface-desk > .desk-list,
+.flow-view.surface-desk > .work-below-tools,
+.flow-view.surface-desk > details,
+.flow-view.surface-desk > .queue-block,
+.flow-view.surface-desk > .brand-section {
+  opacity: 0.58;
+  filter: saturate(0.92);
+  transition:
+    opacity 0.3s var(--ease-out),
+    filter 0.3s var(--ease-out),
+    transform 0.3s var(--ease-out);
+}
+
+.flow-view.surface-desk > .decision-log-strip:hover,
+.flow-view.surface-desk > .panel:not(.step-focus-panel):hover,
+.flow-view.surface-desk > .capture-desk:hover,
+.flow-view.surface-desk > .capture-strip:hover,
+.flow-view.surface-desk > .desk-list:hover,
+.flow-view.surface-desk > .work-below-tools:hover,
+.flow-view.surface-desk > details:hover,
+.flow-view.surface-desk > .queue-block:hover,
+.flow-view.surface-desk > .brand-section:hover,
+.flow-view.surface-desk > .decision-log-strip:focus-within,
+.flow-view.surface-desk > .panel:not(.step-focus-panel):focus-within,
+.flow-view.surface-desk > .capture-desk:focus-within,
+.flow-view.surface-desk > .capture-strip:focus-within {
+  opacity: 1;
+  filter: none;
+}
+
+/* Hero step panel — only primary action surface at full presence */
+.step-focus-panel,
+.surface-desk-hero {
+  opacity: 1 !important;
+  filter: none !important;
+  border-radius: var(--radius-squircle) !important;
+  padding: 1.45rem 1.4rem 1.55rem !important;
+  box-shadow: var(--focus-lift) !important;
+  transform: translateZ(0);
+}
+
+.step-focus-panel::before {
+  width: 4px;
+  top: 1rem;
+  bottom: 1rem;
+  border-radius: 0 4px 4px 0;
+  /* Dopamine rail = this is the one thing */
+  background: linear-gradient(
+    180deg,
+    var(--dopamine-soft),
+    var(--dopamine) 45%,
+    var(--dopamine-deep)
+  );
+  box-shadow: 0 0 12px var(--dopamine-glow);
+}
+
+.step-focus-title {
+  font-size: clamp(1.4rem, 3.2vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.step-focus-actions .btn-primary {
+  border-radius: var(--radius-organic);
+  padding: 0.85rem 1.45rem;
+  font-size: 0.95rem;
+  font-weight: 750;
+  transition:
+    transform 0.2s var(--ease-spring),
+    box-shadow 0.22s ease,
+    background 0.2s ease;
+}
+
+.step-focus-actions .btn-primary:hover {
+  transform: translateY(-2px) scale(1.015);
+}
+
+.step-focus-actions .btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.step-focus-secondary,
+.step-more-details {
+  opacity: 0.45;
+  transition: opacity 0.2s ease;
+}
+
+.step-focus-panel:hover .step-focus-secondary,
+.step-focus-panel:focus-within .step-focus-secondary,
+.step-focus-panel:hover .step-more-details,
+.step-focus-panel:focus-within .step-more-details {
+  opacity: 1;
+}
+
+.task-badge {
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  padding: 0.28rem 0.65rem;
+}
+
+/* Page chrome recedes; hero title stays readable */
+.flow-view .flow-top {
+  opacity: 0.72;
+  transition: opacity 0.25s ease;
+}
+
+.flow-view .flow-top:hover {
+  opacity: 1;
+}
+
+.work-page-title {
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.work-context-line,
+.flow-view .page-sub {
+  opacity: 0.85;
+}
+
+/* ——— Organic panels & controls (shape only) ——— */
+.panel {
+  border-radius: var(--radius-organic);
+}
+
+.btn,
+.btn-primary,
+.btn-outline,
+.btn-secondary {
+  border-radius: var(--radius-organic);
+}
+
+.btn-ghost {
+  border-radius: 0.85rem;
+}
+
+.capture-row input {
+  border-radius: var(--radius-organic);
+}
+
+.capture-row .btn-primary {
+  border-radius: var(--radius-organic);
+}
+
+.more-menu {
+  border-radius: var(--radius-squircle);
+}
+
+.task-row {
+  border-radius: var(--radius-organic);
+  opacity: 0.72;
+  transition:
+    opacity 0.22s ease,
+    border-color var(--transition),
+    box-shadow var(--transition),
+    background var(--transition),
+    transform 0.22s var(--ease-spring);
+}
+
+.task-row:hover,
+.task-row:focus-within {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.task-row.is-next {
+  opacity: 1;
+  border-radius: var(--radius-squircle);
+}
+
+/* Done tasks: physical strike-through */
+.task-row.is-done .task-title {
+  position: relative;
+  color: var(--text-muted);
+}
+
+.task-row.is-done .task-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  height: 1.5px;
+  background: color-mix(in srgb, var(--text-muted) 80%, transparent);
+  border-radius: 2px;
+  animation: strikeThrough 0.4s var(--ease-out) both;
+}
+
+/* Decision strip — secondary until engaged */
+.decision-log-strip {
+  border-radius: var(--radius-organic);
+}
+
+/* Gap strip: next action is the only bright chip */
+.journey-gap-strip {
+  background: transparent;
+  border-bottom-color: var(--border-hairline);
+  opacity: 0.85;
+}
+
+.journey-gap-strip:hover,
+.journey-gap-strip:focus-within {
+  opacity: 1;
+}
+
+.journey-gap-strip-btn:not(.is-quiet):not(.is-ship) {
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  transition: transform 0.2s var(--ease-spring), box-shadow 0.2s ease;
+}
+
+.journey-gap-strip-btn:not(.is-quiet):not(.is-ship):hover {
+  transform: translateY(-1px) scale(1.03);
+}
+
+.journey-gap-strip-btn.is-quiet,
+.journey-gap-strip-btn.is-ship {
+  opacity: 0.75;
+  border-radius: var(--radius-pill);
+}
+
+/* Header softens so path + main work own attention */
+.header {
+  border-bottom-color: transparent;
+  box-shadow: 0 1px 0 var(--border-hairline);
+}
+
+.header-actions .btn-secondary,
+.header-more,
+.account-chip {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  border-radius: var(--radius-pill);
+}
+
+.header-actions:hover .btn-secondary,
+.header-actions:hover .header-more,
+.header-actions:hover .account-chip,
+.header-actions:focus-within .btn-secondary,
+.header-actions:focus-within .header-more,
+.header-actions:focus-within .account-chip {
+  opacity: 1;
+}
+
+/* Home primary CTA — one thing */
+.home-cta {
+  border-radius: var(--radius-organic);
+  padding: 0.95rem 2.4rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 28px color-mix(in srgb, var(--accent-primary) 18%, transparent);
+}
+
+.home-cta-secondary,
+.home-see-all {
+  opacity: 0.65;
+  transition: opacity 0.2s ease;
+}
+
+.home-cta-secondary:hover,
+.home-see-all:hover {
+  opacity: 1;
+}
+
+.home-md-rows button,
+.home-project-row {
+  border-radius: var(--radius-organic);
+  opacity: 0.75;
+  transition: opacity 0.2s ease, transform 0.2s var(--ease-spring), box-shadow 0.2s ease;
+}
+
+.home-md-rows button:hover,
+.home-md-rows button[aria-current],
+.home-project-row:hover {
+  opacity: 1;
+}
+
+/* Breakdown wizard dots → soft pills */
+.breakdown-dot {
+  height: 5px;
+  border-radius: 999px;
+  opacity: 0.4;
+  transition: opacity 0.25s ease, flex-grow 0.3s var(--ease-out), background 0.25s ease;
+}
+
+.breakdown-dot.is-on {
+  opacity: 1;
+  flex: 1.6 1 auto;
+}
+
+/* Reduced motion: keep hierarchy, drop motion */
+@media (prefers-reduced-motion: reduce) {
+  .journey-bar-flow .journey-step,
+  .journey-bar-flow .journey-step.is-active,
+  .step-focus-actions .btn-primary,
+  .task-row,
+  .game-hud-quest-check,
+  .journey-gap-strip-btn,
+  .progress-ring-fill {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .task-row.is-done .task-title::after,
+  .game-hud-quest.is-done .game-hud-quest-body strong::after {
+    animation: none;
+  }
+}
+
+/* Deep theme: structure carries; colors still from existing tokens */
+.app.deep .journey-bar-flow .journey-step.is-active {
+  background: var(--bg-elevated);
+  border-color: color-mix(in srgb, var(--accent-primary) 35%, transparent);
+}
+
+.app.deep .journey-node {
+  background: var(--bg-muted);
+}
+
+.app.deep .progress-ring-track {
+  stroke: color-mix(in srgb, var(--bg-muted) 80%, #000);
+}
+
+.app.deep .flow-view.surface-desk > .panel:not(.step-focus-panel),
+.app.deep .flow-view.surface-desk > .decision-log-strip,
+.app.deep .flow-view.surface-desk > .capture-desk,
+.app.deep .flow-view.surface-desk > .capture-strip {
+  opacity: 0.5;
+}
+
+/* Path "Continue" is a primary next action — full presence */
+.flow-view.surface-desk > .path-continue-row,
+.flow-view.surface-desk > .work-below-tools.path-continue-row,
+.flow-view .path-continue-row .btn-primary,
+.flow-view .work-path-next {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.flow-view.surface-desk > .work-below-tools {
+  opacity: 1;
+  filter: none;
+}
+
+/* ============================================================
+   Dopamine scope lock — calm everywhere else
+   ============================================================ */
+
+body {
+  background-image: radial-gradient(
+    120% 80% at 50% -10%,
+    color-mix(in srgb, var(--bg-warm) 70%, #fff) 0%,
+    var(--bg-canvas) 55%
+  );
+}
+
+.app.deep body,
+.app.deep {
+  background-image: radial-gradient(
+    100% 70% at 50% -15%,
+    color-mix(in srgb, var(--bg-elevated) 80%, #2a2030) 0%,
+    var(--bg-canvas) 60%
+  );
+}
+
+/* Capture focus: quiet ink ring, not dopamine (typing ≠ next action) */
+.capture-row input:focus {
+  border-color: color-mix(in srgb, var(--accent-soft) 55%, var(--border-strong));
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Lane active underline stays calm ink */
+.lane-switch button.is-active {
+  border-bottom-color: var(--accent-primary);
+}
+
+/* Game HUD XP ring stays sage growth — side meter, not next step */
+.game-hud-xp-ring .progress-ring-fill {
+  stroke: var(--accent-growth);
+}
+
+.game-hud-burst {
+  background: var(--dopamine);
+  box-shadow: 0 4px 14px var(--dopamine-glow);
+}
+
+.game-hud-burst.is-level {
+  background: var(--dopamine-deep);
+}
+
+/* Header logo mark stays calm */
+.logo-mark {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* Timer running chip — calm, not dopamine */
+.timer-running-chip {
+  border-color: color-mix(in srgb, var(--accent-growth) 40%, var(--border-subtle));
+  color: var(--accent-growth);
+}
+
+/* Empty-state dump idea is a recovery primary — dopamine OK (next action) */
+.empty-state .btn-primary {
+  background: linear-gradient(180deg, var(--dopamine-soft) 0%, var(--dopamine) 55%, var(--dopamine-deep) 100%);
+  color: var(--on-dopamine);
+  border: 1px solid color-mix(in srgb, var(--dopamine-deep) 70%, #000 10%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 4px 16px var(--dopamine-glow);
+}
+
+.app.deep .empty-state .btn-primary {
+  color: var(--on-dopamine);
+}
+
+/* Home active row name + detail title stay high contrast on cream/midnight */
+.home-md {
+  border-radius: var(--radius-squircle, 1.5rem);
+  background: var(--bg-elevated);
+}
+
+.home-md-list {
+  background: color-mix(in srgb, var(--bg-muted) 85%, var(--bg-canvas));
+}
+
+/* Soft sage connectors for completed path only */
+.home-md-step.is-done + .home-md-step::before,
+.home-md-step.is-done::before {
+  background: color-mix(in srgb, var(--accent-growth) 55%, var(--border-strong));
+}
+
+.home-md-step.is-current::before {
+  background: color-mix(in srgb, var(--dopamine) 40%, var(--border-strong));
+}

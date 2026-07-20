@@ -86,6 +86,7 @@ import {
   sameProjectId,
 } from './lib/journeyProgress'
 import JourneyGapStrip from './components/JourneyGapStrip'
+import PathStepIcon, { ProgressRing } from './components/PathStepIcon'
 import {
   PROCESS_PHASES,
   getProcessPhase,
@@ -2723,23 +2724,38 @@ function App() {
           </Suspense>
         )}
         <nav
-          className={`journey-bar${journeyActive ? '' : ' is-tools'}`}
+          className={`journey-bar journey-bar-flow${journeyActive ? '' : ' is-tools'}`}
           aria-label={i18nT(locale, 'pathAria')}
         >
           <ol className="journey-bar-list">
-            {JOURNEY_STEPS.map((step) => {
+            {JOURNEY_STEPS.map((step, idx) => {
               const active = journeyActive === step.id
               const label = pathLabel(locale, step.id) || step.label
               const plain = pathPlain(locale, step.id) || step.plain
-              const hasContent = pathStepHasContent(step.id, {
+              const pathCtx = {
                 project: activeProject,
                 moodItems: deskMood,
                 tasks: deskTasks,
                 sparkIndex,
                 palette: projectPalette,
-              })
+              }
+              const hasContent = pathStepHasContent(step.id, pathCtx)
+              const prevLit =
+                idx > 0 &&
+                pathStepHasContent(JOURNEY_STEPS[idx - 1].id, pathCtx)
               return (
-                <li key={step.id} className="journey-bar-item">
+                <li
+                  key={step.id}
+                  className={`journey-bar-item${active ? ' is-active' : ''}${
+                    hasContent && !active ? ' is-done' : ''
+                  }`}
+                >
+                  {idx > 0 && (
+                    <span
+                      className={`journey-flow-link${prevLit ? ' is-lit' : ''}`}
+                      aria-hidden="true"
+                    />
+                  )}
                   <button
                     type="button"
                     className={`journey-step${active ? ' is-active' : ''}${
@@ -2758,6 +2774,13 @@ function App() {
                     } Press ${step.num} to open.`}
                     title={`${plain} · key ${step.num}`}
                   >
+                    <span className="journey-node" aria-hidden="true">
+                      {hasContent && !active ? (
+                        <span className="journey-check">✓</span>
+                      ) : (
+                        <PathStepIcon id={step.id} />
+                      )}
+                    </span>
                     <span className="journey-num" aria-hidden="true">
                       {hasContent && !active ? '✓' : step.num}
                     </span>
@@ -2790,7 +2813,15 @@ function App() {
                     : `Process ${pathDoneCount} of 7 steps have content. Fix next gap.`
               }
             >
-              {pathDoneCount}/7
+              <ProgressRing
+                value={pathDoneCount}
+                max={7}
+                size={34}
+                stroke={3}
+                className="journey-progress-ring"
+              >
+                {pathDoneCount}/7
+              </ProgressRing>
             </button>
           ) : (
             <span className="journey-tools-pill" role="status" aria-live="polite">

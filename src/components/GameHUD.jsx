@@ -4,14 +4,15 @@ import {
   DAILY_XP_GOAL,
   dailyGoalProgress,
   gameSummaryLine,
-  loadGame,
   questStatus,
   refreshGameDay,
   xpProgress,
 } from '../lib/buddyGame'
+import { ProgressRing } from './PathStepIcon'
 
 /**
  * Optional progress strip (XP, quests, streak). Secondary to shipping work.
+ * Micro-progress feedback: ring fill + strike-through quests — not a dashboard.
  */
 export default function GameHUD({ compact = false }) {
   const [game, setGame] = useState(() => refreshGameDay())
@@ -62,7 +63,15 @@ export default function GameHUD({ compact = false }) {
         aria-expanded={open}
         title={gameSummaryLine(game)}
       >
-        <span className="game-hud-level">Lv {xp.level}</span>
+        <ProgressRing
+          value={xp.into}
+          max={xp.span || 1}
+          size={32}
+          stroke={3}
+          className="game-hud-xp-ring"
+        >
+          <span className="game-hud-level">Lv {xp.level}</span>
+        </ProgressRing>
         <span className="game-hud-xp-wrap" aria-hidden="true">
           <span className="game-hud-xp-fill" style={{ width: `${xp.percent}%` }} />
         </span>
