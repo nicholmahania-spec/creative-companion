@@ -38,6 +38,8 @@ const SettingsView = lazy(() => import('./views/SettingsView'))
 const SparkView = lazy(() => import('./views/SparkView'))
 const ResearchView = lazy(() => import('./views/ResearchView'))
 const DesignView = lazy(() => import('./views/DesignView'))
+const ReviewView = lazy(() => import('./views/ReviewView'))
+const DeliverView = lazy(() => import('./views/DeliverView'))
 const DetectiveSheet = lazy(() => import('./views/DetectiveSheet'))
 import {
   breakMinutesForWork,
@@ -61,11 +63,9 @@ import {
   buildPathProgressCtx,
   focusPathGapTarget,
 } from './lib/journeyProgress'
-const PathProgressPanel = lazy(() => import('./components/PathProgressPanel'))
 import JourneyGapStrip from './components/JourneyGapStrip'
 import {
   PROCESS_PHASES,
-  REVIEW_QUESTIONS,
   getProcessPhase,
   processPhaseForView,
 } from './lib/processGuide'
@@ -79,7 +79,6 @@ import {
   downloadBrandPackPdfRaster,
   downloadWorkspaceBackup,
   packReadiness,
-  packBriefMarkdown,
   preloadPdfEngine,
   printElementById,
   slugifyFilename,
@@ -237,6 +236,8 @@ function App() {
     }
   }, [])
 
+  /** Design accordion target when jumping from Review/Deliver readiness fixes */
+  const [brandEditSection, setBrandEditSection] = useState('essentials')
   const goSystemSection = useCallback(
     (section) => {
       if (section) setBrandEditSection(section)
@@ -270,8 +271,6 @@ function App() {
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [lastExportNote, setLastExportNote] = useState('')
-  /** @type {null | 'print' | 'pdf'} */
-  const [thinPackPrompt, setThinPackPrompt] = useState(null)
   /** @type {null | { kind: string, label: string, onConfirm: () => void }} */
   const [deskConfirm, setDeskConfirm] = useState(null)
   const [forceBreakConsentOpen, setForceBreakConsentOpen] = useState(false)
@@ -891,11 +890,6 @@ function App() {
         setForceBreakConsentOpen(false)
         return
       }
-      if (thinPackPrompt) {
-        e.preventDefault()
-        setThinPackPrompt(null)
-        return
-      }
       if (exportPanel) {
         e.preventDefault()
         setExportPanel(null)
@@ -924,7 +918,6 @@ function App() {
     demoTour,
     deskConfirm,
     forceBreakConsentOpen,
-    thinPackPrompt,
     exportPanel,
     showBreakdown,
     showOnboarding,
@@ -1195,9 +1188,9 @@ function App() {
         demoTour ||
         deskConfirm ||
         forceBreakConsentOpen ||
-        thinPackPrompt ||
         commandOpen ||
-        document.querySelector('.board-lightbox-overlay')
+        document.querySelector('.board-lightbox-overlay') ||
+        document.querySelector('.thin-pack-prompt')
       ) {
         return
       }
@@ -1260,7 +1253,6 @@ function App() {
     demoTour,
     deskConfirm,
     forceBreakConsentOpen,
-    thinPackPrompt,
     commandOpen,
     shortcutsOpen,
     nextTask,
@@ -3203,660 +3195,71 @@ function App() {
               setActiveView={setActiveView}
               flashToast={flashToast}
               flashMicro={flashMicro}
+              brandEditSection={brandEditSection}
+              setBrandEditSection={setBrandEditSection}
             />
           </Suspense>
         )}
 
-        {/* ===== REVIEW — step 6 ===== */}
+        {/* ===== REVIEW (lazy) ===== */}
         {activeView === 'review' && (
-          <div className="review-view surface-desk view-enter" data-nav-dir={navDir}>
-            <div className="flow-top">
-              <div>
-                <h1 className="page-title">{i18nT(locale, 'path.review')}</h1>
-                <p className="page-sub">
-                  Show the work. Ask if it feels right. Revise for the goal — not
-                  every opinion.
-                </p>
-              </div>
-              <div className="finish-secondary-row">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setActiveView('brand')}
-                >
-                  Back to Design
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setActiveView('finish')}
-                >
-                  {tFormat(locale, 'ui.continueNext', {
-                    label: pathLabel(locale, 'deliver') || 'Deliver',
-                  })}
-                </button>
-              </div>
-            </div>
-            <Suspense fallback={null}>
-              <PathProgressPanel
-                steps={JOURNEY_STEPS}
-                rows={pathRows}
-                doneN={pathDoneCount}
-                missing={pathMissingLabelsList}
-                nextGap={pathNextGap}
-                showFixCta={false}
-                showMissing={false}
-                onOpenStep={(_view, step) => {
-                  const s =
-                    step ||
-                    JOURNEY_STEPS.find((x) => x.view === _view) ||
-                    pathRows.find((x) => x.view === _view)
-                  if (s) goToProcessStep(s)
-                }}
-                labelForId={(id) => pathLabel(locale, id)}
-                hint="Tap a step chip to open it. Path strip or G for the next empty step — then Deliver."
-              />
-            </Suspense>
-            <section className="panel brand-section">
-              <div className="brand-section-label">Leave-behind preview</div>
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                What a reviewer sees — same sheet as Deliver.
-              </p>
-              <div
-                className="pack-preview-thumb pack-preview-artboard review-pack-preview"
-                tabIndex={0}
-                role="region"
-                aria-label="Review pack preview — scroll for full sheet"
-              >
-                <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
-                  <BrandArtboard
-                    id="review-preview-artboard"
-                    project={activeProject || {}}
-                    palette={projectPalette}
-                    pins={deskMood.filter((m) => m.inPack)}
-                    editable={false}
-                    hideWatermark={hidePackWatermark}
-                  />
-                </Suspense>
-                <p className="pack-preview-scroll-hint">Scroll preview for full sheet</p>
-              </div>
-            </section>
-            <section className="panel brand-section">
-              <div className="brand-section-label">Review checklist</div>
-              <ul className="process-guide-checks review-checks">
-                {(getProcessPhase('review')?.checks || []).map((c) => (
-                  <li key={c}>{c}</li>
-                ))}
-              </ul>
-              <p className="process-guide-prompt">
-                {getProcessPhase('review')?.prompt}
-              </p>
-            </section>
-            <section className="panel brand-section">
-              <div className="brand-section-label">Leave-behind readiness</div>
-              {(() => {
-                const packSnap = buildCurrentBrandPack()
-                const ready = packReadiness(packSnap)
-                return (
-                  <>
-                    <p className="panel-hint">
-                      <strong>
-                        {ready.okCount}/{ready.checks.length}
-                      </strong>{' '}
-                      ready
-                      {ready.thin ? ' · still thin for client handoff' : ''}
-                    </p>
-                    <ul className="pack-ready-list">
-                      {ready.checks.map((c) => (
-                        <li
-                          key={c.id}
-                          className={c.ok ? 'is-ok' : 'is-miss'}
-                        >
-                          {c.ok ? (
-                            <span>✓ {c.label}</span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="pack-ready-fix"
-                              onClick={() => {
-                                if (c.view === 'studio') setActiveView('studio')
-                                else if (c.view === 'brand')
-                                  goSystemSection(c.section || 'essentials')
-                                else if (c.view === 'project') {
-                                  setActiveView('project')
-                                  window.setTimeout(
-                                    () =>
-                                      document
-                                        .getElementById('detective-goal')
-                                        ?.focus(),
-                                    100
-                                  )
-                                } else if (c.view) setActiveView(c.view)
-                              }}
-                            >
-                              ○ {c.label} — fix
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )
-              })()}
-            </section>
-            <section className="panel brand-section">
-              <div className="brand-section-label">Ask for feedback</div>
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                Specific beats “do you like it?” Feedback is not failure — capture
-                it, then keep only what serves the goal.
-              </p>
-              <div className="review-question-chips">
-                {REVIEW_QUESTIONS.map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(q)
-                        flashToast(i18nT(locale, 'ui.questionCopied'))
-                      } catch {
-                        flashMicro(q.slice(0, 40))
-                      }
-                    }}
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-              <div className="field-block" style={{ marginTop: '0.85rem' }}>
-                <label className="field-label" htmlFor="feedback-notes">
-                  Feedback notes
-                </label>
-                <textarea
-                  id="feedback-notes"
-                  className="field-input"
-                  rows={4}
-                  value={activeProject?.feedbackNotes || ''}
-                  onChange={(e) =>
-                    updateBrandField('feedbackNotes', e.target.value)
-                  }
-                  placeholder="What they said · what you’ll change · what you’ll ignore (taste noise)."
-                />
-              </div>
-              <div className="finish-secondary-row">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    if (!bodyDoubling) toggleBodyDoubling()
-                    flashToast(i18nT(locale, 'ui.helperOpenCritique'))
-                  }}
-                >
-                  Open Helper for Critique
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={async () => {
-                    try {
-                      const md = packBriefMarkdown(buildCurrentBrandPack())
-                      await navigator.clipboard.writeText(md)
-                      flashToast(i18nT(locale, 'ui.briefCopied'))
-                    } catch {
-                      flashToast(i18nT(locale, 'ui.briefCopyFail'))
-                    }
-                  }}
-                >
-                  Copy brief to share
-                </button>
-              </div>
-            </section>
-          </div>
+          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Review…</div>}>
+            <ReviewView
+              locale={locale}
+              navDir={navDir}
+              activeProject={activeProject}
+              deskMood={deskMood}
+              projectPalette={projectPalette}
+              pathRows={pathRows}
+              pathDoneCount={pathDoneCount}
+              pathMissingLabelsList={pathMissingLabelsList}
+              pathNextGap={pathNextGap}
+              hidePackWatermark={hidePackWatermark}
+              setActiveView={setActiveView}
+              goToProcessStep={goToProcessStep}
+              goSystemSection={goSystemSection}
+              buildCurrentBrandPack={buildCurrentBrandPack}
+              flashToast={flashToast}
+              flashMicro={flashMicro}
+              toggleBodyDoubling={toggleBodyDoubling}
+              bodyDoubling={bodyDoubling}
+            />
+          </Suspense>
         )}
 
-        {/* ===== DELIVER — step 7 ===== */}
+        {/* ===== DELIVER (lazy) ===== */}
         {activeView === 'finish' && (
-          <div className="finish-view surface-document pack-view view-enter" data-nav-dir={navDir}>
-            <div className="flow-top">
-              <div>
-                <p className="pack-eyebrow">{i18nT(locale, 'ui.packEyebrow')}</p>
-                <h1 className="page-title page-title-display">
-                  {i18nT(locale, 'path.deliver')}
-                </h1>
-                <p className="page-sub">
-                  {activeProject?.name || 'Your project'} · {i18nT(locale, 'ui.packSub')}
-                </p>
-              </div>
-            </div>
-
-            <Suspense fallback={null}>
-              <PathProgressPanel
-                steps={JOURNEY_STEPS}
-                rows={pathRows}
-                doneN={pathDoneCount}
-                missing={pathMissingLabelsList}
-                nextGap={pathNextGap}
-                showFixCta={false}
-                showMissing={false}
-                onOpenStep={(_view, step) => {
-                  const s =
-                    step ||
-                    JOURNEY_STEPS.find((x) => x.view === _view) ||
-                    pathRows.find((x) => x.view === _view)
-                  if (s) goToProcessStep(s)
-                }}
-                labelForId={(id) => pathLabel(locale, id)}
-                hint="Tap a step chip to fill gaps. Path strip or G for the next empty step — then brand book PDF."
-              />
-            </Suspense>
-
-            <section className="panel brand-section finish-hero-panel pack-hero">
-              <div className="pack-layout">
-                <div
-                  className="pack-preview-thumb pack-preview-artboard"
-                  tabIndex={0}
-                  role="region"
-                  aria-label="Leave-behind preview — scroll for full sheet"
-                >
-                  <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
-                    <BrandArtboard
-                      id="pack-preview-artboard"
-                      project={activeProject || {}}
-                      palette={projectPalette}
-                      pins={deskMood.filter((m) => m.inPack)}
-                      editable={false}
-                      hideWatermark={hidePackWatermark}
-                    />
-                  </Suspense>
-                  <p className="pack-preview-scroll-hint">Scroll preview for full sheet</p>
-                </div>
-                <div className="pack-meta">
-                  {(() => {
-                    const packSnap = buildCurrentBrandPack()
-                    const ready = packReadiness(packSnap)
-                    return (
-                      <>
-                        <div className="brand-section-label">Ready</div>
-                        <ul className="pack-ready-list">
-                          {ready.checks.map((c) => (
-                            <li
-                              key={c.id}
-                              className={c.ok ? 'is-ok' : 'is-miss'}
-                            >
-                              {c.ok ? (
-                                <span>
-                                  ✓ {c.label}
-                                </span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="pack-ready-fix"
-                                  onClick={() => {
-                                    if (c.view === 'brand') {
-                                      goSystemSection(c.section || 'essentials')
-                                      return
-                                    }
-                                    if (c.id === 'handoff') {
-                                      setActiveView('finish')
-                                      focusPathGapTarget('#handoff-note')
-                                      return
-                                    }
-                                    if (c.id === 'learnings') {
-                                      setActiveView('finish')
-                                      focusPathGapTarget('#learnings-note')
-                                      return
-                                    }
-                                    const step = JOURNEY_STEPS.find(
-                                      (s) => s.view === c.view
-                                    )
-                                    if (step) goToProcessStep(step)
-                                    else if (c.view) setActiveView(c.view)
-                                  }}
-                                >
-                                  {tFormat(locale, 'ui.packReadyFix', {
-                                    label: c.label,
-                                  })}
-                                </button>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                        <p className="panel-hint">
-                          Steps {completedCount}
-                          {deskTasks.length ? `/${deskTasks.length}` : ''} · Pins{' '}
-                          {packSnap.pins?.length || 0}
-                          {packSnap.pinsUsedFallback
-                            ? ` (${i18nT(locale, 'ui.starPinsHint')})`
-                            : ''}
-                        </p>
-                        {ready.thin && (
-                          <div className="pack-thin-block">
-                            <Suspense fallback={null}>
-                              <EmptyIllustration
-                                variant="pack"
-                                className="pack-thin-illu"
-                              />
-                            </Suspense>
-                            <p className="pack-thin-warning" role="status">
-                              {i18nT(locale, 'ui.thinPack')}
-                            </p>
-                          </div>
-                        )}
-                      </>
-                    )
-                  })()}
-                  <div className="finish-actions pack-primary-stack">
-                    <p className="pack-client-kicker">{i18nT(locale, 'ui.clientHandoff')}</p>
-                    {thinPackPrompt && (
-                      <div
-                        className="thin-pack-prompt"
-                        role="alertdialog"
-                        aria-labelledby="thin-pack-title"
-                      >
-                        <p id="thin-pack-title" className="thin-pack-prompt-body">
-                          {i18nT(locale, 'ui.thinPackBanner')}
-                        </p>
-                        <div className="thin-pack-prompt-actions">
-                          <button
-                            type="button"
-                            className="btn btn-primary btn-sm"
-                            onClick={() => {
-                              const kind = thinPackPrompt
-                              setThinPackPrompt(null)
-                              runExport(kind === 'print' ? 'print' : 'pdf')
-                            }}
-                          >
-                            {thinPackPrompt === 'print'
-                              ? i18nT(locale, 'ui.continuePrint')
-                              : i18nT(locale, 'ui.continueDownload')}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => setThinPackPrompt(null)}
-                          >
-                            {i18nT(locale, 'ui.cancel')}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => {
-                              setThinPackPrompt(null)
-                              setActiveView('studio')
-                            }}
-                          >
-                            Research
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      className="btn btn-primary pack-print-btn"
-                      onClick={() => {
-                        const packSnap = buildCurrentBrandPack()
-                        const ready = packReadiness(packSnap)
-                        if (ready.thin) {
-                          setThinPackPrompt('print')
-                          return
-                        }
-                        runExport('print')
-                      }}
-                    >
-                      {i18nT(locale, 'ui.printSavePdf')}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary pack-download-btn"
-                      onClick={() => {
-                        const packSnap = buildCurrentBrandPack()
-                        const ready = packReadiness(packSnap)
-                        if (ready.thin) {
-                          setThinPackPrompt('pdf')
-                          return
-                        }
-                        runExport('pdf')
-                      }}
-                    >
-                      {i18nT(locale, 'ui.downloadVectorPdf')}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost pack-copy-brief"
-                      onClick={async () => {
-                        try {
-                          const packSnap = buildCurrentBrandPack()
-                          const md = packBriefMarkdown(packSnap)
-                          await navigator.clipboard.writeText(md)
-                          flashToast(i18nT(locale, 'ui.leaveBehindBriefCopied'))
-                          setLastExportNote('Brief copied to clipboard')
-                        } catch {
-                          flashToast(i18nT(locale, 'ui.leaveBehindBriefCopyFail'))
-                        }
-                      }}
-                    >
-                      Copy brief
-                    </button>
-                    <p className="pack-export-hint">
-                      {i18nT(locale, 'ui.packHint')}
-                    </p>
-                    {lastExportNote ? (
-                      <p className="pack-export-confirm" role="status">
-                        {lastExportNote}
-                      </p>
-                    ) : null}
-                    <div className="process-tip-panel" style={{ marginTop: '0.85rem' }}>
-                      <div className="brand-section-label">Deliver checklist</div>
-                      <ul className="process-guide-checks">
-                        {(getProcessPhase('deliver')?.checks || []).map((c) => (
-                          <li key={c}>{c}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="field-block" style={{ marginTop: '0.85rem' }}>
-                      <label className="field-label" htmlFor="handoff-note">
-                        Handoff note (for the client)
-                      </label>
-                      <textarea
-                        id="handoff-note"
-                        className="field-input"
-                        rows={2}
-                        value={activeProject?.handoffNote || ''}
-                        onChange={(e) =>
-                          updateBrandField('handoffNote', e.target.value)
-                        }
-                        placeholder="What’s included, how to use the mark, contact for questions…"
-                      />
-                    </div>
-                    <div className="field-block" style={{ marginTop: '0.65rem' }}>
-                      <label className="field-label" htmlFor="learnings-note">
-                        What I learned
-                      </label>
-                      <textarea
-                        id="learnings-note"
-                        className="field-input"
-                        rows={3}
-                        value={activeProject?.learnings || ''}
-                        onChange={(e) =>
-                          updateBrandField('learnings', e.target.value)
-                        }
-                        placeholder="What worked? What felt like me? What to improve next time? (Notes only — not a media library.)"
-                      />
-                    </div>
-                    <p className="panel-hint" style={{ marginTop: '0.65rem' }}>
-                      Direction leave-behind &amp; lockups — not a full design
-                      tool or Figma replacement.
-                    </p>
-                    <p className="panel-hint" style={{ marginTop: '0.35rem' }}>
-                      {i18nT(locale, 'ui.pdfFontHonesty')}
-                    </p>
-                    {leaveBehindThin && pathDoneCount >= 5 && (
-                      <p className="panel-hint pack-path-vs-thin" role="status">
-                        {i18nT(locale, 'ui.pathFullLeaveBehindThin')}
-                      </p>
-                    )}
-                    <label className="pack-watermark-toggle">
-                      <input
-                        type="checkbox"
-                        checked={hidePackWatermark}
-                        onChange={(e) =>
-                          setPref('hidePackWatermark', e.target.checked)
-                        }
-                      />
-                      <span>Hide tool watermark (client handoff)</span>
-                    </label>
-                    <details className="pack-more-actions">
-                      <summary className="text-link pack-more-summary">
-                        More actions
-                      </summary>
-                      <div className="finish-secondary-row pack-more-row">
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={openExportPanel}
-                      >
-                        Preview full
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => setActiveView('brand')}
-                      >
-                        Edit Design
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => setActiveView('flow')}
-                      >
-                        Sketch
-                      </button>
-                      </div>
-                    </details>
-                    <details className="finish-more-formats">
-                      <summary>More formats &amp; backup</summary>
-                      <div className="finish-more-formats-list">
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => runExport('pdf-preview')}
-                        >
-                          Preview PDF (raster)
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => runExport('html')}
-                        >
-                          HTML
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => runExport('md')}
-                        >
-                          Markdown
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => runExport('json')}
-                        >
-                          Pack JSON
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={downloadDataBackup}
-                        >
-                          Full workspace backup
-                        </button>
-                      </div>
-                    </details>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <details className="pack-leave-details panel brand-section">
-              <summary className="brand-section-label pack-leave-summary">
-                Leave desk
-              </summary>
-              <div className="finish-actions" style={{ marginTop: '0.75rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    createNewProject()
-                    notifyAction('New project', 'project_create', {
-                      label: 'New project',
-                    })
-                    setActiveView('project')
-                  }}
-                >
-                  New project
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={handleSignOut}
-                >
-                  {CLOUD ? 'Log out' : 'Log out / lock'}
-                </button>
-              </div>
-              <p className="panel-hint" style={{ marginTop: '0.65rem' }}>
-                Log out ends this session. Download a backup first if you need a
-                file on your computer.
-              </p>
-            </details>
-
-            <section className="panel panel-compact pack-path-map">
-              <p className="list-heading">Your path</p>
-              <ol className="finish-map">
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('project')}>
-                    1 Define
-                  </button>
-                  {' — '}goal · brief · who
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('studio')}>
-                    2 Research
-                  </button>
-                  {' — '}refs · star up to 6
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('spark')}>
-                    3 Ideate
-                  </button>
-                  {' — '}many directions
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('flow')}>
-                    4 Sketch
-                  </button>
-                  {' — '}one step at a time
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('brand')}>
-                    5 Design
-                  </button>
-                  {' — '}artboard · voice · type
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('review')}>
-                    6 Review
-                  </button>
-                  {' — '}critique · readiness
-                </li>
-                <li>
-                  <strong>7 Deliver</strong>
-                  {' — '}you are here · brand book PDF
-                </li>
-              </ol>
-            </section>
-          </div>
+          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Deliver…</div>}>
+            <DeliverView
+              locale={locale}
+              navDir={navDir}
+              activeProject={activeProject}
+              deskMood={deskMood}
+              deskTasks={deskTasks}
+              completedCount={completedCount}
+              projectPalette={projectPalette}
+              pathRows={pathRows}
+              pathDoneCount={pathDoneCount}
+              pathMissingLabelsList={pathMissingLabelsList}
+              pathNextGap={pathNextGap}
+              leaveBehindThin={leaveBehindThin}
+              hidePackWatermark={hidePackWatermark}
+              setActiveView={setActiveView}
+              goToProcessStep={goToProcessStep}
+              goSystemSection={goSystemSection}
+              buildCurrentBrandPack={buildCurrentBrandPack}
+              setPref={setPref}
+              runExport={runExport}
+              openExportPanel={openExportPanel}
+              flashToast={flashToast}
+              handleSignOut={handleSignOut}
+              downloadDataBackup={downloadDataBackup}
+              createNewProject={createNewProject}
+              notifyAction={notifyAction}
+              CLOUD={CLOUD}
+              lastExportNote={lastExportNote}
+            />
+          </Suspense>
         )}
 
         {/* ===== SETTINGS (lazy) ===== */}

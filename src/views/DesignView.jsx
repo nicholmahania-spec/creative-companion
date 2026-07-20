@@ -37,6 +37,9 @@ export default function DesignView({
   setActiveView,
   flashToast,
   flashMicro,
+  /** Controlled accordion tab when jumping from Review/Deliver readiness */
+  brandEditSection: brandEditSectionProp,
+  setBrandEditSection: setBrandEditSectionProp,
 }) {
   const locale = normalizeLocale(localeProp)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
@@ -51,7 +54,12 @@ export default function DesignView({
   const setLogoDirection = useAppStore((s) => s.setLogoDirection)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
 
-  const [brandEditSection, setBrandEditSection] = useState('essentials')
+  const [brandEditSectionLocal, setBrandEditSectionLocal] =
+    useState('essentials')
+  const brandEditSection =
+    brandEditSectionProp != null ? brandEditSectionProp : brandEditSectionLocal
+  const setBrandEditSection =
+    setBrandEditSectionProp || setBrandEditSectionLocal
   const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
   const [checkBgIndex, setCheckBgIndex] = useState(0)
   const [hexDrafts, setHexDrafts] = useState({})
@@ -61,6 +69,11 @@ export default function DesignView({
       setCheckBgIndex(Math.max(0, projectPalette.length - 1))
     }
   }, [projectPalette.length, checkBgIndex])
+
+  // Honor parent jump (e.g. readiness “fix palette roles”)
+  useEffect(() => {
+    if (brandEditSectionProp) setBrandEditSectionLocal(brandEditSectionProp)
+  }, [brandEditSectionProp])
 
   const paletteRoles = useMemo(
     () => mapPaletteRoles(projectPalette),
