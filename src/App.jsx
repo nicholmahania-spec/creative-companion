@@ -2734,7 +2734,7 @@ function App() {
                     title={`${plain} · key ${step.num}`}
                   >
                     <span className="journey-num" aria-hidden="true">
-                      {step.num}
+                      {hasContent && !active ? '✓' : step.num}
                     </span>
                     <span className="journey-label">{label}</span>
                   </button>

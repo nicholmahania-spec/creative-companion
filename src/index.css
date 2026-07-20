@@ -2221,13 +2221,14 @@ h3 {
 }
 
 .journey-step.is-done:not(.is-active) {
-  border-color: rgba(13, 148, 136, 0.3);
+  border-color: rgba(13, 148, 136, 0.45);
+  background: color-mix(in srgb, var(--accent-growth) 5%, var(--bg-elevated));
   color: var(--text-secondary);
 }
 
 .journey-step.is-done:not(.is-active) .journey-num {
-  background: rgba(13, 148, 136, 0.2);
-  color: var(--accent-growth);
+  background: var(--accent-growth);
+  color: #fafaf9;
 }
 
 .journey-step:hover {
@@ -8653,21 +8654,27 @@ html[data-reduce-motion='true'] *::after {
   appearance: none;
   font-family: inherit;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 700;
   padding: 0.28rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface, #fff);
-  color: var(--text-primary);
+  border: 1px solid transparent;
+  background: var(--accent-primary);
+  color: #fafaf9;
   cursor: pointer;
   white-space: nowrap;
 }
 .journey-gap-strip-btn:hover {
-  border-color: var(--text-secondary);
+  background: color-mix(in srgb, var(--accent-primary) 85%, black);
 }
+.journey-gap-strip-btn.is-quiet,
 .journey-gap-strip-btn.is-ship {
-  border-color: color-mix(in srgb, var(--accent-growth, #0f766e) 55%, var(--border-subtle));
-  background: color-mix(in srgb, var(--accent-growth, #0f766e) 12%, transparent);
+  background: var(--bg-surface, #fff);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+.journey-gap-strip-btn.is-quiet:hover,
+.journey-gap-strip-btn.is-ship:hover {
+  border-color: var(--text-secondary);
 }
 /* On the empty step already: recovery is quiet; primary Continue is on-page */
 .journey-gap-strip.is-on-gap {
@@ -8908,6 +8915,17 @@ html[data-reduce-motion='true'] *::after {
   border-radius: 16px;
   border: 1px solid var(--border-subtle);
   background: var(--bg-elevated);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-subtle) transparent;
+}
+
+.pack-preview-artboard::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pack-preview-artboard::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 999px;
 }
 
 .artboard-tagline-input {
@@ -9058,7 +9076,8 @@ html[data-reduce-motion='true'] *::after {
 
 @media (max-width: 640px) {
   .header-redesign .logo {
-    max-width: 9.5rem;
+    max-width: calc(100vw - 8rem);
+    font-size: 0.85rem !important;
   }
   .journey-bar {
     gap: 0.2rem;
@@ -9958,29 +9977,28 @@ html[data-reduce-motion='true'] *::after {
 }
 @media (max-width: 640px) {
   .journey-bar-list {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    flex-wrap: nowrap;
   }
   .journey-bar-item {
-    flex: 1 1 0;
-    min-width: 0;
+    flex: 0 0 auto;
+    min-width: 3.75rem;
   }
   .journey-step {
     flex-direction: column;
     gap: 0.15rem;
-    padding: 0.35rem 0.2rem;
-    width: 100%;
+    padding: 0.35rem 0.3rem;
   }
   .journey-label {
-    display: none;
+    display: block;
     font-size: 0.62rem;
-    max-width: 100%;
+    max-width: 3.4rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .journey-step.is-active .journey-label {
-    display: block;
+    font-weight: 800;
   }
   .journey-num {
     font-size: 0.78rem;
