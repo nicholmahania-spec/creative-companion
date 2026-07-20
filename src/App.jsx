@@ -8,17 +8,7 @@ import {
   Suspense,
 } from 'react'
 import useAppStore from './store/useAppStore'
-import {
-  DEFAULT_PALETTE,
-  normalizeHex,
-  buildPairChecks,
-  bestTextOn,
-  formatRatio,
-  mapPaletteRoles,
-  fontFamilyFromLabel,
-  TYPE_PAIRS,
-  typePairIdFromLabels,
-} from './lib/color'
+import { DEFAULT_PALETTE } from './lib/color'
 import {
   BREAKDOWN_DEPTHS,
   generateProjectMicrosteps,
@@ -46,6 +36,8 @@ const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const SettingsView = lazy(() => import('./views/SettingsView'))
 const SparkView = lazy(() => import('./views/SparkView'))
+const ResearchView = lazy(() => import('./views/ResearchView'))
+const DesignView = lazy(() => import('./views/DesignView'))
 const DetectiveSheet = lazy(() => import('./views/DetectiveSheet'))
 import {
   breakMinutesForWork,
@@ -92,11 +84,6 @@ import {
   printElementById,
   slugifyFilename,
 } from './lib/exportFiles'
-import {
-  pinFaceStyle,
-  pinImageUrl,
-  readImageFilesAsPins,
-} from './lib/moodPins'
 import LogoLockup from './components/LogoLockup'
 const EmptyIllustration = lazy(() => import('./components/EmptyIllustration'))
 import {
@@ -179,9 +166,6 @@ function App() {
   const applyDetectiveToBrief = useAppStore((s) => s.applyDetectiveToBrief)
   const updateDirection = useAppStore((s) => s.updateDirection)
   const setLogoDirection = useAppStore((s) => s.setLogoDirection)
-  const updatePaletteColor = useAppStore((s) => s.updatePaletteColor)
-  const addPaletteColor = useAppStore((s) => s.addPaletteColor)
-  const removePaletteColor = useAppStore((s) => s.removePaletteColor)
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const bumpDesignVersion = useAppStore((s) => s.bumpDesignVersion)
@@ -196,14 +180,6 @@ function App() {
   const removeTask = useAppStore((s) => s.removeTask)
   const breakIntoSteps = useAppStore((s) => s.breakIntoSteps)
   const addMoodPin = useAppStore((s) => s.addMoodPin)
-  const toggleMoodPinInPack = useAppStore((s) => s.toggleMoodPinInPack)
-  const movePackPin = useAppStore((s) => s.movePackPin)
-  const reorderBoardPins = useAppStore((s) => s.reorderBoardPins)
-  const setPackHeroPin = useAppStore((s) => s.setPackHeroPin)
-  const setColorRole = useAppStore((s) => s.setColorRole)
-  const setLogoImage = useAppStore((s) => s.setLogoImage)
-  const updateMoodPinNote = useAppStore((s) => s.updateMoodPinNote)
-  const removeMoodPin = useAppStore((s) => s.removeMoodPin)
   const nextSpark = useAppStore((s) => s.nextSpark)
   const oppositeSpark = useAppStore((s) => s.oppositeSpark)
   const createNewProject = useAppStore((s) => s.createNewProject)
@@ -289,8 +265,6 @@ function App() {
   const [onboardFirstStep, setOnboardFirstStep] = useState('')
   const [processPhase, setProcessPhase] = useState(null)
   const [processOpen, setProcessOpen] = useState(false)
-  const [brandEditSection, setBrandEditSection] = useState('essentials')
-  const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [lastExportNote, setLastExportNote] = useState('')
@@ -304,15 +278,12 @@ function App() {
   const [commandQuery, setCommandQuery] = useState('')
   const commandInputRef = useRef(null)
   const [resumeBanner, setResumeBanner] = useState(null)
-  const [boardLightbox, setBoardLightbox] = useState(null)
   const [demoTour, setDemoTour] = useState(null)
   const [navDir, setNavDir] = useState('none')
   const prevJourneyIdx = useRef(0)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
-  const [checkBgIndex, setCheckBgIndex] = useState(0)
-  const [hexDrafts, setHexDrafts] = useState({})
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [breakdownStep, setBreakdownStep] = useState(0)
   const [bdGoal, setBdGoal] = useState('')
@@ -326,11 +297,6 @@ function App() {
     const n = new Date()
     return { year: n.getFullYear(), month: n.getMonth() }
   })
-  const [boardUrl, setBoardUrl] = useState('')
-  const [boardNote, setBoardNote] = useState('')
-  const [boardAddMode, setBoardAddMode] = useState(null) // 'url' | 'note' | null
-  const [boardSelectIds, setBoardSelectIds] = useState(() => new Set())
-  const [boardDragId, setBoardDragId] = useState(null)
   const [queueOpen, setQueueOpen] = useState(false)
   const [doneOpen, setDoneOpen] = useState(false)
   const [actionToast, setActionToast] = useState('')
@@ -529,53 +495,13 @@ function App() {
 
   const selectProject = (id) => setCurrentProject(id)
 
-  // Keep checker bg valid when palette shrinks; seed missing project palettes
+  // Seed missing project palettes
   useEffect(() => {
     if (!activeProject) return
     if (!activeProject.palette?.length) {
       setProjectPalette([...DEFAULT_PALETTE])
     }
   }, [activeProject?.id, activeProject?.palette, setProjectPalette])
-
-  useEffect(() => {
-    if (checkBgIndex >= projectPalette.length) {
-      setCheckBgIndex(Math.max(0, projectPalette.length - 1))
-    }
-  }, [projectPalette.length, checkBgIndex])
-
-  const paletteRoles = useMemo(
-    () => mapPaletteRoles(projectPalette),
-    [projectPalette]
-  )
-
-  const checkBg =
-    projectPalette[checkBgIndex] ||
-    paletteRoles.background ||
-    projectPalette[0] ||
-    '#FFFFFF'
-
-  const contrastPairs = useMemo(
-    () => buildPairChecks(projectPalette, checkBg),
-    [projectPalette, checkBg]
-  )
-
-  const handleHexChange = (index, raw) => {
-    setHexDrafts((d) => ({ ...d, [index]: raw }))
-    const n = normalizeHex(raw)
-    if (n) updatePaletteColor(index, n)
-  }
-
-  const commitHex = (index) => {
-    const draft = hexDrafts[index]
-    if (draft == null) return
-    const n = normalizeHex(draft)
-    if (n) updatePaletteColor(index, n)
-    setHexDrafts((d) => {
-      const next = { ...d }
-      delete next[index]
-      return next
-    })
-  }
 
   const hideHowItWorks = () => setPref('showHowItWorks', false)
   const revealHowItWorks = () => setPref('showHowItWorks', true)
@@ -928,11 +854,6 @@ function App() {
         setThinPackPrompt(null)
         return
       }
-      if (boardLightbox) {
-        e.preventDefault()
-        setBoardLightbox(null)
-        return
-      }
       if (exportPanel) {
         e.preventDefault()
         setExportPanel(null)
@@ -962,7 +883,6 @@ function App() {
     deskConfirm,
     forceBreakConsentOpen,
     thinPackPrompt,
-    boardLightbox,
     exportPanel,
     showBreakdown,
     showOnboarding,
@@ -1186,11 +1106,7 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked, bodyDoubling, forcedBreak])
 
-  // Focus traps — lightbox / export / breakdown / onboard
-  const getLightboxRoot = useCallback(
-    () => document.querySelector('.board-lightbox-overlay'),
-    []
-  )
+  // Focus traps — export / breakdown / onboard (Research lightbox lives in ResearchView)
   const getExportRoot = useCallback(
     () => document.querySelector('.export-overlay.no-print-hide, .export-overlay.portfolio-export, .export-overlay:not(.onboard-overlay)'),
     []
@@ -1206,9 +1122,6 @@ function App() {
     () => document.querySelector('.onboard-overlay'),
     []
   )
-  useModalFocus(!!boardLightbox, getLightboxRoot, {
-    initialSelector: '.board-lightbox-close',
-  })
   useModalFocus(!!exportPanel && !showBreakdown, getExportRoot, {
     initialSelector: '.export-panel-header button, button',
   })
@@ -1234,7 +1147,6 @@ function App() {
         return
       }
       if (
-        boardLightbox ||
         exportPanel ||
         showBreakdown ||
         showOnboarding ||
@@ -1242,7 +1154,8 @@ function App() {
         deskConfirm ||
         forceBreakConsentOpen ||
         thinPackPrompt ||
-        commandOpen
+        commandOpen ||
+        document.querySelector('.board-lightbox-overlay')
       ) {
         return
       }
@@ -1299,7 +1212,6 @@ function App() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [
-    boardLightbox,
     exportPanel,
     showBreakdown,
     showOnboarding,
@@ -1360,28 +1272,6 @@ function App() {
     })
     return undefined
   }, [unlocked, onboarded, cloudHydrating, activeProject?.name, nextTask?.title])
-
-  // Lightbox: ← → between board pins
-  useEffect(() => {
-    if (!boardLightbox) return undefined
-    const pins = deskMood || []
-    if (pins.length < 2) return undefined
-    const onKey = (e) => {
-      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
-      e.preventDefault()
-      const idx = pins.findIndex(
-        (p) => String(p.id) === String(boardLightbox.id)
-      )
-      if (idx < 0) return
-      const next =
-        e.key === 'ArrowRight'
-          ? pins[(idx + 1) % pins.length]
-          : pins[(idx - 1 + pins.length) % pins.length]
-      setBoardLightbox(next)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [boardLightbox, deskMood])
 
   // Warm PDF engine on Pack (no XP for merely opening the page)
   useEffect(() => {
@@ -1927,36 +1817,6 @@ function App() {
     flashToast(i18nT(locale, 'ui.unknownExport'))
   }
 
-  const uploadMoodFiles = (fileList) => {
-    const list = Array.from(fileList || [])
-    if (!list.length) return
-    void readImageFilesAsPins(list).then(({ pins, skipped }) => {
-      if (!pins.length) {
-        flashToast(
-          skipped.length
-            ? `Couldn’t add images · ${skipped[0]}${
-                skipped.length > 1 ? ` (+${skipped.length - 1} more)` : ''
-              }`
-            : 'No images found — try PNG, JPG, WEBP, or GIF under 3.5MB'
-        )
-        return
-      }
-      pins.forEach((pin) => addMoodPin(pin))
-      if (skipped.length) {
-        flashToast(
-          `Added ${pins.length} · skipped ${skipped.length} (size/type)`
-        )
-      }
-      notifyAction(
-        pins.length > 1
-          ? `${pins.length} images pinned${skipped.length ? ` · ${skipped.length} skipped` : ''}`
-          : `Image pinned${skipped.length ? ` · ${skipped.length} skipped` : ''}`,
-        'mood_pin',
-        { label: `${pins.length} image${pins.length > 1 ? 's' : ''}` }
-      )
-    })
-  }
-
   const creativeResetItems = [
     {
       label: 'Break project into micro-steps',
@@ -2177,33 +2037,6 @@ function App() {
         setDeskConfirm(null)
       },
     })
-  }
-
-  const submitBoardUrl = () => {
-    const url = boardUrl.trim()
-    if (!url) return
-    addMoodPin({
-      type: 'image',
-      note: 'Reference URL',
-      visual: url,
-    })
-    setBoardUrl('')
-    setBoardAddMode(null)
-    notifyAction('Pin added', 'mood_pin', { label: 'URL pin' })
-  }
-
-  const submitBoardNote = () => {
-    const note = boardNote.trim() || 'Direction note'
-    addMoodPin({
-      type: 'quote',
-      note,
-      visual:
-        projectPalette[0] ||
-        'linear-gradient(135deg, #1C1917, #0F766E)',
-    })
-    setBoardNote('')
-    setBoardAddMode(null)
-    notifyAction('Pin added', 'mood_pin', { label: 'Note pin' })
   }
 
   const handleSignOut = async () => {
@@ -3207,587 +3040,26 @@ function App() {
           </div>
         )}
 
-        {/* ===== BOARD — path step 3 ===== */}
+        {/* ===== RESEARCH (lazy) ===== */}
         {activeView === 'studio' && (
-          <div className="studio-view surface-wall view-enter" data-nav-dir={navDir}>
-            <div className="flow-top">
-              <div>
-                <h1 className="page-title">
-                  {i18nT(locale, 'path.research')}
-                </h1>
-                <p className="page-sub">
-                  {i18nT(locale, 'ui.boardSub')}
-                  {deskMood.filter((m) => m.inPack).length > 0
-                    ? ` · ${deskMood.filter((m) => m.inPack).length}/6 in pack`
-                    : ''}
-                </p>
-              </div>
-              <span className="panel-count">{deskMood.length} pins</span>
-            </div>
-
-            <section className="panel brand-section process-tip-panel">
-              <div className="brand-section-label">Curious spy checklist</div>
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                {getProcessPhase('research')?.prompt}
-              </p>
-              <ul className="process-guide-checks" style={{ marginBottom: '0.75rem' }}>
-                {(getProcessPhase('research')?.checks || []).map((c) => (
-                  <li key={c}>{c}</li>
-                ))}
-              </ul>
-              <div className="finish-secondary-row">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    if (forcedBreak) {
-                      flashToast(i18nT(locale, 'ui.breakLockFirst'))
-                      return
-                    }
-                    setSessionComplete(false)
-                    setFocusLeft(20 * 60)
-                    setPomodoroWorkStartedAt(Date.now())
-                    setIsFocusRunning(true)
-                    setActiveView('insights')
-                    notifyAction('Focus on', 'focus_start', {
-                      label: 'Research timer',
-                    })
-                    flashToast(i18nT(locale, 'ui.researchTimerOn'))
-                  }}
-                >
-                  Start 20-min research timer
-                </button>
-                <span className="panel-hint" style={{ margin: 0 }}>
-                  Stop before the rabbit hole.
-                </span>
-              </div>
-            </section>
-
-            {/* Wall first — board is the stage */}
-            <section className="panel brand-section board-wall-panel">
-              <div className="board-wall-head">
-                <div className="brand-section-label" style={{ margin: 0 }}>
-                  Refs · {deskMood.length}
-                </div>
-                {deskMood.length > 0 && (
-                  <span className="panel-hint board-pack-count" style={{ margin: 0 }}>
-                    Leave-behind {deskMood.filter((m) => m.inPack).length}/6
-                    {deskMood.filter((m) => m.inPack).length >= 6
-                      ? ' · full'
-                      : ''}
-                  </span>
-                )}
-              </div>
-              <div
-                className={`mood-board${deskMood.length ? ' has-pins' : ''}${
-                  deskMood.length === 1 ? ' single-pin' : ''
-                }`}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  if (e.dataTransfer.files?.length) {
-                    uploadMoodFiles(e.dataTransfer.files)
-                    return
-                  }
-                  const pinId = e.dataTransfer.getData('text/cc-pin-id')
-                  if (pinId) {
-                    const target = e.target.closest('[data-pin-id]')
-                    const targetId = target?.getAttribute('data-pin-id')
-                    if (targetId && targetId !== pinId) {
-                      const ids = deskMood.map((m) => m.id)
-                      const from = ids.findIndex(
-                        (id) => String(id) === String(pinId)
-                      )
-                      const to = ids.findIndex(
-                        (id) => String(id) === String(targetId)
-                      )
-                      if (from >= 0 && to >= 0) {
-                        const next = [...ids]
-                        const [moved] = next.splice(from, 1)
-                        next.splice(to, 0, moved)
-                        reorderBoardPins(next, activeProjectId)
-                        // Keep pack order aligned when both are starred
-                        const packIds = next.filter((id) =>
-                          deskMood.find(
-                            (m) => String(m.id) === String(id) && m.inPack
-                          )
-                        )
-                        if (packIds.length > 1) {
-                          useAppStore.getState().reorderPackPins(packIds)
-                        }
-                        flashMicro(i18nT(locale, 'ui.refOrderUpdated'))
-                      }
-                    }
-                    return
-                  }
-                  const data =
-                    e.dataTransfer.getData('text/uri-list') ||
-                    e.dataTransfer.getData('text')
-                  if (data?.trim()) {
-                    addMoodPin({
-                      type: 'image',
-                      note: 'Dropped reference',
-                      visual: data.trim(),
-                    })
-                    notifyAction('Pin added', 'mood_pin', {
-                      label: 'Dropped pin',
-                    })
-                  }
-                }}
-              >
-                {deskMood.length === 0 ? (
-                  <div className="empty-state empty-state-craft">
-                    <Suspense fallback={null}>
-                      <EmptyIllustration variant="board" />
-                    </Suspense>
-                    <p className="empty-state-title">
-                      {i18nT(locale, 'ui.noPinsYet')}
-                    </p>
-                    <p className="empty-state-body">
-                      {i18nT(locale, 'ui.emptyPinsBody')}
-                    </p>
-                    <p className="panel-hint research-still-thin" style={{ marginTop: '0.75rem' }}>
-                      <strong>
-                        {i18nT(locale, 'ui.stillThin')} ·{' '}
-                        {pathLabel(locale, 'research')}
-                      </strong>
-                      {' — '}
-                      {pathFillHint(locale, 'research')}. Use path strip or{' '}
-                      <kbd>G</kbd>.
-                    </p>
-                  </div>
-                ) : (
-                  deskMood.map((item, index) => {
-                    const isHero = index === 0
-                    const face = pinFaceStyle(item)
-                    const isImageFace = Boolean(face.backgroundImage?.includes('url('))
-                    const isQuote =
-                      !isImageFace ||
-                      item.type === 'quote' ||
-                      item.type === 'spark' ||
-                      item.type === 'color' ||
-                      item.type === 'note'
-                    return (
-                      <article
-                        key={item.id || index}
-                        data-pin-id={item.id}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData(
-                            'text/cc-pin-id',
-                            String(item.id)
-                          )
-                          e.dataTransfer.effectAllowed = 'move'
-                          setBoardDragId(item.id)
-                        }}
-                        onDragEnd={() => setBoardDragId(null)}
-                        className={`mood-card${isQuote && !isImageFace ? ' is-quote' : ''}${
-                          index === 0 ? ' is-hero' : ''
-                        }${item.inPack ? ' is-pack-pin' : ''}${
-                          boardDragId === item.id ? ' is-dragging' : ''
-                        }${item.packHero ? ' is-pack-hero' : ''}`}
-                      >
-                        {isImageFace ? (
-                          <button
-                            type="button"
-                            className="mood-pin-media mood-pin-media-btn"
-                            style={
-                              pinImageUrl(item)
-                                ? { backgroundColor: '#e7e5e4' }
-                                : face
-                            }
-                            aria-label={`View pin${item.note ? `: ${item.note}` : ''}`}
-                            onClick={() => setBoardLightbox(item)}
-                          >
-                            {pinImageUrl(item) ? (
-                              <img
-                                className="mood-pin-img"
-                                src={pinImageUrl(item)}
-                                alt=""
-                                loading="lazy"
-                                decoding="async"
-                                draggable={false}
-                              />
-                            ) : null}
-                          </button>
-                        ) : (
-                          <div
-                            className="mood-pin-face"
-                            style={face}
-                          >
-                            <p className="mood-pin-caption">
-                              {item.note || 'Note'}
-                            </p>
-                          </div>
-                        )}
-                        <div className="mood-pin-tools">
-                          <div className="mood-pin-tools-row">
-                            <button
-                              type="button"
-                              className={`mood-pin-star${item.inPack ? ' is-on' : ''}${item.packHero ? ' is-hero' : ''}`}
-                              title={
-                                item.inPack
-                                  ? 'Remove from leave-behind'
-                                  : 'Include in leave-behind (max 6)'
-                              }
-                              aria-pressed={!!item.inPack}
-                              onClick={() => {
-                                const r = toggleMoodPinInPack(item.id)
-                                if (!r.ok)
-                                  flashToast(
-                                    r.error ||
-                                      i18nT(locale, 'ui.leaveBehindFull')
-                                  )
-                                else
-                                  flashMicro(
-                                    r.inPack
-                                      ? 'On leave-behind'
-                                      : 'Off leave-behind'
-                                  )
-                              }}
-                            >
-                              {item.inPack ? '★ Leave-behind' : '☆ Leave-behind'}
-                            </button>
-                            <details className="mood-pin-more">
-                              <summary
-                                className="mood-pin-more-sum"
-                                aria-label="More pin actions"
-                              >
-                                ⋯
-                              </summary>
-                              <div className="mood-pin-more-menu">
-                                {item.inPack && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      className="btn btn-ghost mood-pin-order"
-                                      onClick={() => movePackPin(item.id, 'up')}
-                                    >
-                                      ↑ Earlier in pack
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="btn btn-ghost mood-pin-order"
-                                      onClick={() =>
-                                        movePackPin(item.id, 'down')
-                                      }
-                                    >
-                                      ↓ Later in pack
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className={`btn btn-ghost mood-pin-order${item.packHero ? ' is-on' : ''}`}
-                                      onClick={() => {
-                                        const r = setPackHeroPin(item.id)
-                                        if (!r.ok)
-                                          flashToast(
-                                            r.error || 'Could not set hero'
-                                          )
-                                        else flashMicro(i18nT(locale, 'ui.heroPinSet'))
-                                      }}
-                                    >
-                                      Hero pin
-                                    </button>
-                                  </>
-                                )}
-                                <button
-                                  type="button"
-                                  className="btn btn-ghost mood-pin-remove"
-                                  onClick={() => removeMoodPin(item.id)}
-                                >
-                                  Remove pin
-                                </button>
-                              </div>
-                            </details>
-                          </div>
-                          <input
-                            className="mood-pin-note-input"
-                            value={item.note || ''}
-                            onChange={(e) =>
-                              updateMoodPinNote(item.id, e.target.value)
-                            }
-                            placeholder="Caption…"
-                            aria-label="Pin note"
-                          />
-                        </div>
-                      </article>
-                    )
-                  })
-                )}
-              </div>
-              <p className="panel-hint board-drop-hint">
-                Drop images here · drag pins to reorder
-              </p>
-            </section>
-
-            {/* Compact add — below the wall */}
-            <section className="panel brand-section board-add-compact">
-              <div className="board-add-toolbar">
-                <label className="btn btn-primary board-upload-btn">
-                  Upload images
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
-                    multiple
-                    className="sr-only"
-                    onChange={(e) => {
-                      uploadMoodFiles(e.target.files)
-                      e.target.value = ''
-                    }}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm${
-                    boardAddMode === 'url' ? ' is-on' : ''
-                  }`}
-                  onClick={() =>
-                    setBoardAddMode((m) => (m === 'url' ? null : 'url'))
-                  }
-                >
-                  URL
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm${
-                    boardAddMode === 'note' ? ' is-on' : ''
-                  }`}
-                  onClick={() =>
-                    setBoardAddMode((m) => (m === 'note' ? null : 'note'))
-                  }
-                >
-                  Note
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setActiveView('spark')}
-                >
-                  Spark
-                </button>
-                {deskMood.length > 0 && (
-                  <details className="board-pack-bulk">
-                    <summary className="text-link">Leave-behind tools</summary>
-                    <div className="board-pack-bulk-actions">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => {
-                          const open = deskMood.filter((m) => !m.inPack)
-                          let added = 0
-                          for (const p of open) {
-                            if (
-                              deskMood.filter((m) => m.inPack).length + added >=
-                              6
-                            )
-                              break
-                            const r = toggleMoodPinInPack(p.id)
-                            if (r.ok && r.inPack) added++
-                          }
-                          if (!added) {
-                            flashToast(
-                              deskMood.filter((m) => m.inPack).length >= 6
-                                ? i18nT(locale, 'ui.leaveBehindFull')
-                                : 'Nothing left to star'
-                            )
-                          }
-                        }}
-                      >
-                        Star next
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => {
-                          deskMood
-                            .filter((m) => m.inPack)
-                            .forEach((p) => toggleMoodPinInPack(p.id))
-                        }}
-                      >
-                        Clear stars
-                      </button>
-                    </div>
-                  </details>
-                )}
-              </div>
-              {boardAddMode === 'url' && (
-                <div className="board-inline-form">
-                  <label className="field-label" htmlFor="board-url">
-                    Image URL
-                  </label>
-                  <div className="capture-row">
-                    <input
-                      id="board-url"
-                      className="field-input"
-                      value={boardUrl}
-                      onChange={(e) => setBoardUrl(e.target.value)}
-                      placeholder="https://…"
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && submitBoardUrl()
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={submitBoardUrl}
-                      disabled={!boardUrl.trim()}
-                    >
-                      Add pin
-                    </button>
-                  </div>
-                </div>
-              )}
-              {boardAddMode === 'note' && (
-                <div className="board-inline-form">
-                  <label className="field-label" htmlFor="board-note">
-                    Note / direction
-                  </label>
-                  <div className="capture-row">
-                    <input
-                      id="board-note"
-                      className="field-input"
-                      value={boardNote}
-                      onChange={(e) => setBoardNote(e.target.value)}
-                      placeholder="e.g. Soft twilight, no hard sell"
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && submitBoardNote()
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={submitBoardNote}
-                    >
-                      Add pin
-                    </button>
-                  </div>
-                </div>
-              )}
-            </section>
-
-            <p className="work-below-tools">
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => setActiveView('project')}
-              >
-                ← Define
-              </button>
-              <span aria-hidden="true"> · </span>
-              <button
-                type="button"
-                className="btn btn-primary"
-                style={{ marginLeft: '0.35rem' }}
-                onClick={() => setActiveView('spark')}
-              >
-                {i18nT(locale, 'ui.openIdeate') || 'Go to Ideate'}
-              </button>
-            </p>
-          </div>
-        )}
-
-
-        {boardLightbox && (
-          <div
-            className="board-lightbox-overlay"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Pin preview"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setBoardLightbox(null)
-            }}
-          >
-            <div className="board-lightbox-card">
-              <button
-                type="button"
-                className="btn btn-ghost board-lightbox-close"
-                autoFocus
-                onClick={() => setBoardLightbox(null)}
-              >
-                Close
-              </button>
-              {pinImageUrl(boardLightbox) ? (
-                <img
-                  className="board-lightbox-visual board-lightbox-img"
-                  src={pinImageUrl(boardLightbox)}
-                  alt={boardLightbox.note || 'Research pin'}
-                  decoding="async"
-                />
-              ) : (
-                <div
-                  className="board-lightbox-visual"
-                  style={pinFaceStyle(boardLightbox)}
-                />
-              )}
-              {boardLightbox.note ? (
-                <p className="board-lightbox-note">{boardLightbox.note}</p>
-              ) : null}
-              <p className="board-lightbox-meta">
-                {(() => {
-                  const i = deskMood.findIndex(
-                    (p) => String(p.id) === String(boardLightbox.id)
-                  )
-                  return i >= 0
-                    ? `${i + 1} / ${deskMood.length} · ← → to move · Esc to close`
-                    : 'Esc to close'
-                })()}
-              </p>
-              <div className="board-lightbox-actions">
-                {deskMood.length > 1 && (
-                  <>
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={() => {
-                        const pins = deskMood
-                        const idx = pins.findIndex(
-                          (p) => String(p.id) === String(boardLightbox.id)
-                        )
-                        if (idx < 0) return
-                        setBoardLightbox(
-                          pins[(idx - 1 + pins.length) % pins.length]
-                        )
-                      }}
-                    >
-                      ← Prev
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={() => {
-                        const pins = deskMood
-                        const idx = pins.findIndex(
-                          (p) => String(p.id) === String(boardLightbox.id)
-                        )
-                        if (idx < 0) return
-                        setBoardLightbox(pins[(idx + 1) % pins.length])
-                      }}
-                    >
-                      Next →
-                    </button>
-                  </>
-                )}
-                <button
-                  type="button"
-                  className={`btn btn-secondary${boardLightbox.inPack ? ' is-on' : ''}`}
-                  onClick={() => {
-                    const r = toggleMoodPinInPack(boardLightbox.id)
-                    if (!r.ok)
-                      flashToast(r.error || i18nT(locale, 'ui.leaveBehindFull'))
-                    else {
-                      setBoardLightbox((p) =>
-                        p ? { ...p, inPack: r.inPack } : null
-                      )
-                    }
-                  }}
-                >
-                  {boardLightbox.inPack
-                    ? '★ On leave-behind'
-                    : '☆ Add to leave-behind'}
-                </button>
-              </div>
-            </div>
-          </div>
+          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Research…</div>}>
+            <ResearchView
+              locale={locale}
+              navDir={navDir}
+              deskMood={deskMood}
+              activeProjectId={activeProjectId}
+              projectPalette={projectPalette}
+              forcedBreak={forcedBreak}
+              setActiveView={setActiveView}
+              flashToast={flashToast}
+              flashMicro={flashMicro}
+              notifyAction={notifyAction}
+              setSessionComplete={setSessionComplete}
+              setFocusLeft={setFocusLeft}
+              setPomodoroWorkStartedAt={setPomodoroWorkStartedAt}
+              setIsFocusRunning={setIsFocusRunning}
+            />
+          </Suspense>
         )}
 
         {/* ===== SPARK (lazy) ===== */}
@@ -3876,728 +3148,21 @@ function App() {
         {/* Concept pipeline removed from UI — Research + Design path only */}
 
         {/* ===== BRAND IDENTITY TEMPLATE ===== */}
+        {/* ===== DESIGN (lazy) ===== */}
         {activeView === 'brand' && (
-          <div className="brand-layout surface-document system-view view-enter" data-nav-dir={navDir}>
-            <div className="brand-template-top">
-              <div>
-                <h1 className="page-title">
-                  {i18nT(locale, 'path.design')}
-                </h1>
-                <p className="page-sub">
-                  {i18nT(locale, 'ui.systemSub')}{' '}
-                  <strong>{activeProject?.name || 'this project'}</strong>
-                  {' · '}
-                  pack pins {deskMood.filter((m) => m.inPack).length}/6
-                </p>
-              </div>
-              <div className="brand-template-actions">
-                <label className="field-label design-version-label" htmlFor="design-version">
-                  Version
-                  <input
-                    id="design-version"
-                    className="field-input design-version-input"
-                    value={activeProject?.designVersion || 'v1'}
-                    onChange={(e) =>
-                      updateBrandField('designVersion', e.target.value)
-                    }
-                    aria-label="Design version"
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  title="Bump before a big change (v1 → v2)"
-                  onClick={() => {
-                    const r = bumpDesignVersion()
-                    if (r?.ok)
-                      flashMicro(
-                        tFormat(locale, 'ui.versionBumped', {
-                          version: r.version,
-                        })
-                      )
-                  }}
-                >
-                  Bump
-                </button>
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={() => setActiveView('flow')}
-                >
-                  ← Sketch
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => {
-                    // Encourage version discipline before review
-                    const cur = String(
-                      activeProject?.designVersion || 'v1'
-                    ).trim()
-                    if (/^v?1$/i.test(cur) || cur === '') {
-                      updateBrandField('designVersion', 'v2')
-                      flashToast(i18nT(locale, 'ui.versionToReview'))
-                    }
-                    setActiveView('review')
-                  }}
-                >
-                  {i18nT(locale, 'ui.openReview') || 'Go to Review'}
-                </button>
-              </div>
-            </div>
-
-            <section className="panel brand-section process-tip-panel">
-              <div className="brand-section-label">Design checklist</div>
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                {getProcessPhase('design')?.prompt}
-              </p>
-              <ul className="process-guide-checks">
-                {(getProcessPhase('design')?.checks || []).map((c) => (
-                  <li key={c}>{c}</li>
-                ))}
-              </ul>
-              <p className="panel-hint" style={{ marginBottom: 0 }}>
-                Bump version before big changes. Then Review with specific
-                questions — not “do you like it?”
-              </p>
-            </section>
-
-            {/* ARTBOARD — sticky preview on wide screens (not freeform edit) */}
-            <div
-              className="system-artboard-sticky"
-              tabIndex={0}
-              role="region"
-              aria-label="Live leave-behind preview"
-            >
-              <p className="panel-hint design-preview-caption" style={{ marginTop: 0 }}>
-                {i18nT(locale, 'ui.designPreviewCaption')}
-              </p>
-              <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
-                <BrandArtboard
-                  id="system-artboard"
-                  project={activeProject || {}}
-                  palette={projectPalette}
-                  pins={deskMood.filter((m) => m.inPack)}
-                  editable={false}
-                  hideWatermark={hidePackWatermark}
-                />
-              </Suspense>
-            </div>
-
-            <p className="system-edit-label">Edit</p>
-            <div className="system-accordion-nav" role="tablist">
-              {[
-                ['essentials', 'Tagline'],
-                ['voice', 'Voice'],
-                ['colors', 'Colors'],
-                ['type', 'Type'],
-                ['logo', 'Logo'],
-                ['pins', 'Pins'],
-              ].map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={brandEditSection === id}
-                  className={`system-acc-tab${
-                    brandEditSection === id ? ' is-active' : ''
-                  }`}
-                  onClick={() => setBrandEditSection(id)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* 01 Essentials */}
-            <section
-              className={`panel brand-section${
-                brandEditSection && brandEditSection !== 'essentials'
-                  ? ' is-collapsed-edit'
-                  : ''
-              }`}
-              hidden={brandEditSection !== 'essentials'}
-            >
-              <div className="brand-section-label">Tagline &amp; positioning</div>
-              <div className="field-block">
-                <label className="field-label" htmlFor="brand-tagline">
-                  Tagline
-                </label>
-                <input
-                  id="brand-tagline"
-                  className="field-input"
-                  value={activeProject?.tagline || ''}
-                  onChange={(e) =>
-                    updateBrandField('tagline', e.target.value)
-                  }
-                  placeholder="One line. Memorable."
-                />
-              </div>
-              <div className="field-block" style={{ marginBottom: 0 }}>
-                <label className="field-label" htmlFor="brand-brief">
-                  Positioning / brief
-                </label>
-                <textarea
-                  id="brand-brief"
-                  className="field-textarea"
-                  value={activeProject?.brief || ''}
-                  onChange={(e) => updateProjectBrief(e.target.value)}
-                  placeholder="Who is this for? What should it feel like?"
-                  rows={3}
-                />
-              </div>
-            </section>
-
-            {/* 02 Voice */}
-            <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'voice'}
-            >
-              <div className="brand-section-label">Voice · do / don&apos;t</div>
-              <div className="field-block" style={{ marginBottom: '1rem' }}>
-                <label className="field-label" htmlFor="brand-voice">
-                  How we sound
-                </label>
-                <textarea
-                  id="brand-voice"
-                  className="field-textarea"
-                  value={activeProject?.voice || ''}
-                  onChange={(e) => updateBrandField('voice', e.target.value)}
-                  placeholder="e.g. Warm, plain-spoken, hopeful — never corporate."
-                  rows={2}
-                />
-              </div>
-              <div className="brand-do-dont">
-                <div className="field-block" style={{ marginBottom: 0 }}>
-                  <label className="field-label" htmlFor="brand-do">
-                    Do
-                  </label>
-                  <textarea
-                    id="brand-do"
-                    className="field-textarea"
-                    value={activeProject?.doUse || ''}
-                    onChange={(e) =>
-                      updateBrandField('doUse', e.target.value)
-                    }
-                    placeholder="Behaviors, materials, tone that fit."
-                    rows={3}
-                  />
-                </div>
-                <div className="field-block" style={{ marginBottom: 0 }}>
-                  <label className="field-label" htmlFor="brand-dont">
-                    Don&apos;t
-                  </label>
-                  <textarea
-                    id="brand-dont"
-                    className="field-textarea"
-                    value={activeProject?.dontUse || ''}
-                    onChange={(e) =>
-                      updateBrandField('dontUse', e.target.value)
-                    }
-                    placeholder="Clichés and traps to avoid."
-                    rows={3}
-                  />
-                </div>
-              </div>
-            </section>
-
-            {/* 03 Palette + checker */}
-            <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'colors'}
-            >
-              <div className="brand-section-label">Colors</div>
-              <div className="brand-palette-block" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
-                <div className="palette-section-head">
-                  <p className="field-label" style={{ margin: 0 }}>
-                    Palette builder
-                  </p>
-                  <span className="panel-hint" style={{ margin: 0 }}>
-                    {projectPalette.length}/8 · saved on project
-                  </span>
-                </div>
-
-                <div className="brand-palette-bleed">
-                  {projectPalette.map((c, i) => (
-                    <div
-                      key={`${c}-${i}`}
-                      style={{ flex: 1, background: c }}
-                      title={c}
-                    />
-                  ))}
-                </div>
-                <div className="direction-hex">
-                  {projectPalette.join(' · ')}
-                </div>
-
-                <ul className="palette-editor">
-                  {projectPalette.map((hex, index) => {
-                    const display =
-                      hexDrafts[index] != null ? hexDrafts[index] : hex
-                    return (
-                      <li key={index} className="palette-row">
-                        <label
-                          className="palette-swatch-wrap"
-                          title="Pick color"
-                        >
-                          <input
-                            type="color"
-                            className="palette-color-input"
-                            value={normalizeHex(hex) || '#888888'}
-                            onChange={(e) => {
-                              const n = normalizeHex(e.target.value)
-                              if (n) {
-                                updatePaletteColor(index, n)
-                                setHexDrafts((d) => {
-                                  const next = { ...d }
-                                  delete next[index]
-                                  return next
-                                })
-                              }
-                            }}
-                            aria-label={`Color ${index + 1} picker`}
-                          />
-                          <span
-                            className="palette-swatch"
-                            style={{
-                              background: normalizeHex(hex) || hex,
-                            }}
-                          />
-                        </label>
-                        <input
-                          type="text"
-                          className="palette-hex-input"
-                          value={display}
-                          onChange={(e) =>
-                            handleHexChange(index, e.target.value)
-                          }
-                          onBlur={() => commitHex(index)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') e.currentTarget.blur()
-                          }}
-                          spellCheck={false}
-                          aria-label={`Color ${index + 1} hex`}
-                        />
-                        <span
-                          className="palette-preview-chip"
-                          style={{
-                            background: normalizeHex(hex) || hex,
-                            color: bestTextOn(hex),
-                          }}
-                        >
-                          Aa
-                        </span>
-                        <button
-                          type="button"
-                          className="btn btn-ghost palette-remove"
-                          disabled={projectPalette.length <= 2}
-                          onClick={() => removePaletteColor(index)}
-                          aria-label={`Remove color ${index + 1}`}
-                        >
-                          Remove
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-
-                <div className="palette-actions">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    disabled={projectPalette.length >= 8}
-                    onClick={() => addPaletteColor('#888888')}
-                  >
-                    Add color
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => setProjectPalette([...DEFAULT_PALETTE])}
-                  >
-                    Reset default
-                  </button>
-                </div>
-              </div>
-
-
-              <div className="palette-roles-editor" style={{ marginTop: '1rem' }}>
-                <p className="field-label" style={{ marginBottom: '0.45rem' }}>
-                  Pack roles — pick a role, then a swatch
-                </p>
-                <div className="system-role-assign">
-                  {['cover', 'text', 'accent', 'quiet'].map((role) => (
-                    <button
-                      key={role}
-                      type="button"
-                      className={`role-pick-chip${brandRoleAssign === role ? ' is-active' : ''}`}
-                      onClick={() => setBrandRoleAssign(role)}
-                    >
-                      {role[0].toUpperCase() + role.slice(1)}
-                    </button>
-                  ))}
-                </div>
-                <div className="direction-palette is-clickable" style={{ marginTop: '0.55rem' }}>
-                  {projectPalette.map((c, i) => (
-                    <button
-                      key={`${c}-role-${i}`}
-                      type="button"
-                      className="palette-swatch-btn"
-                      style={{ background: c }}
-                      title={`Set as ${brandRoleAssign}`}
-                      onClick={() => {
-                        const n = normalizeHex(c) || c
-                        setColorRole(brandRoleAssign, n)
-                        flashMicro(`${brandRoleAssign} → ${n}`)
-                      }}
-                    ></button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="palette-checker" style={{ marginTop: '1.15rem' }}>
-                <div className="palette-section-head">
-                  <p className="field-label" style={{ margin: 0 }}>
-                    Contrast checker
-                  </p>
-                  <span className="panel-hint" style={{ margin: 0 }}>
-                    WCAG 2.1 · AA ≥ 4.5:1 body · ≥ 3:1 large
-                  </span>
-                </div>
-                <label className="field-label" htmlFor="check-bg">
-                  Background color
-                </label>
-                <select
-                  id="check-bg"
-                  className="palette-bg-select"
-                  value={checkBgIndex}
-                  onChange={(e) => setCheckBgIndex(Number(e.target.value))}
-                >
-                  {projectPalette.map((c, i) => (
-                    <option key={`${c}-bg-${i}`} value={i}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-                <div
-                  className="palette-check-preview"
-                  style={{ background: checkBg }}
-                >
-                  <p
-                    className="palette-check-preview-text"
-                    style={{ color: bestTextOn(checkBg) }}
-                  >
-                    Sample text on this background
-                  </p>
-                </div>
-                <ul className="palette-check-list">
-                  {contrastPairs.length === 0 ? (
-                    <li className="panel-hint">
-                      Add at least two different colors to check contrast.
-                    </li>
-                  ) : (
-                    contrastPairs.map((pair) => (
-                      <li
-                        key={`${pair.fg}-${pair.bg}`}
-                        className="palette-check-row"
-                      >
-                        <span className="palette-check-pair">
-                          <span
-                            className="palette-check-fg"
-                            style={{
-                              background: pair.fg,
-                              color: bestTextOn(pair.fg),
-                            }}
-                          >
-                            Aa
-                          </span>
-                          <span className="palette-check-on">on</span>
-                          <span
-                            className="palette-check-bg-chip"
-                            style={{ background: pair.bg }}
-                          />
-                        </span>
-                        <span className="palette-check-ratio">
-                          {formatRatio(pair.ratio)}
-                        </span>
-                        <span
-                          className={`palette-check-badge ${pair.label.level}`}
-                        >
-                          {pair.label.text}
-                        </span>
-                        <span className="palette-check-detail">
-                          {pair.grade.aaNormal
-                            ? 'Body text OK'
-                            : pair.grade.aaLarge
-                              ? 'Large text only'
-                              : 'Too low for text'}
-                        </span>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-            </section>
-
-            {/* 04 Type */}
-            <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'type'}
-            >
-              <div className="brand-section-label">Type</div>
-              <div className="field-block" style={{ marginBottom: '1rem' }}>
-                <label className="field-label" htmlFor="type-pair">
-                  Type pair
-                </label>
-                <select
-                  id="type-pair"
-                  className="field-input"
-                  value={
-                    typePairIdFromLabels(
-                      activeProject?.typeHeading,
-                      activeProject?.typeBody
-                    ) || 'custom'
-                  }
-                  onChange={(e) => {
-                    const id = e.target.value
-                    if (id === 'custom') return
-                    const pair = TYPE_PAIRS.find((p) => p.id === id)
-                    if (!pair) return
-                    updateBrandField('typeHeading', pair.heading)
-                    updateBrandField('typeBody', pair.body)
-                    const bump = bumpDesignVersionIfV1()
-                    flashMicro(
-                      bump?.bumped
-                        ? `Type · ${pair.label} · ${bump.version}`
-                        : `Type · ${pair.label}`
-                    )
-                  }}
-                >
-                  {TYPE_PAIRS.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label}
-                    </option>
-                  ))}
-                  <option value="custom">Custom labels…</option>
-                </select>
-              </div>
-              <div className="brand-type-pair">
-                <div className="field-block">
-                  <label className="field-label" htmlFor="type-heading">
-                    Heading face
-                  </label>
-                  <input
-                    id="type-heading"
-                    className="field-input"
-                    value={
-                      activeProject?.typeHeading || 'Plus Jakarta Sans Bold'
-                    }
-                    onChange={(e) =>
-                      updateBrandField('typeHeading', e.target.value)
-                    }
-                  />
-                  <div
-                    className="brand-type-display"
-                    style={{
-                      marginTop: '0.65rem',
-                      fontFamily: fontFamilyFromLabel(
-                        activeProject?.typeHeading || 'Plus Jakarta Sans Bold'
-                      ),
-                    }}
-                  >
-                    {activeProject?.typeHeading || 'Plus Jakarta Sans Bold'}
-                  </div>
-                </div>
-                <div className="field-block" style={{ marginBottom: 0 }}>
-                  <label className="field-label" htmlFor="type-body">
-                    Body face
-                  </label>
-                  <input
-                    id="type-body"
-                    className="field-input"
-                    value={
-                      activeProject?.typeBody || 'Plus Jakarta Sans Regular'
-                    }
-                    onChange={(e) =>
-                      updateBrandField('typeBody', e.target.value)
-                    }
-                  />
-                  <div
-                    className="brand-type-body"
-                    style={{
-                      marginTop: '0.65rem',
-                      fontFamily: fontFamilyFromLabel(
-                        activeProject?.typeBody || 'Plus Jakarta Sans Regular'
-                      ),
-                    }}
-                  >
-                    {activeProject?.typeBody || 'Plus Jakarta Sans Regular'} —
-                    The quick brown fox keeps the brief honest.
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* 05 Logo lockup suite */}
-            <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'logo'}
-            >
-              <div className="brand-section-label">Logo lockups</div>
-              <p className="panel-hint" style={{ marginBottom: '0.75rem' }}>
-                Mark image, wordmark, clearspace — ships in the multi-page brand
-                book PDF.
-              </p>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-wordmark">
-                  Wordmark text
-                </label>
-                <input
-                  id="logo-wordmark"
-                  className="field-input"
-                  value={activeProject?.logoWordmark || ''}
-                  onChange={(e) =>
-                    updateBrandField('logoWordmark', e.target.value)
-                  }
-                  placeholder={
-                    activeProject?.name
-                      ? `Defaults to “${activeProject.name}”`
-                      : 'Brand wordmark'
-                  }
-                />
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-custom">
-                  Logo direction
-                </label>
-                <input
-                  id="logo-custom"
-                  className="field-input"
-                  value={activeProject?.logoDirection || ''}
-                  onChange={(e) => setLogoDirection(e.target.value)}
-                  placeholder="e.g. Soft monoline bird mark · no drop shadows"
-                />
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-clearspace">
-                  Clearspace &amp; min size
-                </label>
-                <textarea
-                  id="logo-clearspace"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.logoClearspace || ''}
-                  onChange={(e) =>
-                    updateBrandField('logoClearspace', e.target.value)
-                  }
-                  placeholder="e.g. Clearspace = ½ mark height · min 24px digital / 0.5&quot; print"
-                />
-              </div>
-              <div className="finish-secondary-row">
-                <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
-                  {activeProject?.logoImage ? 'Replace mark image' : 'Upload mark image'}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml,image/*"
-                    className="sr-only"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      e.target.value = ''
-                      if (!file) return
-                      if (file.size > 2.5 * 1024 * 1024) {
-                        flashToast(i18nT(locale, 'ui.markTooBig'))
-                        return
-                      }
-                      const reader = new FileReader()
-                      reader.onload = () => {
-                        setLogoImage(reader.result)
-                        const bump = bumpDesignVersionIfV1()
-                        flashMicro(
-                          bump?.bumped
-                            ? `Mark image · ${bump.version}`
-                            : 'Mark image added'
-                        )
-                      }
-                      reader.readAsDataURL(file)
-                    }}
-                  />
-                </label>
-                {activeProject?.logoImage ? (
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => {
-                      setLogoImage('')
-                      flashMicro(i18nT(locale, 'ui.markRemoved'))
-                    }}
-                  >
-                    Remove mark
-                  </button>
-                ) : null}
-              </div>
-            </section>
-
-            {/* 06 Mood from board — starred pack pins only */}
-            <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'pins'}
-            >
-              <div className="brand-section-label">
-                Leave-behind pins (starred on Research)
-              </div>
-              {(() => {
-                const packPins = deskMood.filter((m) => m.inPack)
-                if (packPins.length === 0) {
-                  return (
-                <div className="brand-mood-empty">
-                  <p className="empty-state-body" style={{ margin: 0 }}>
-                    Star pins on Research with ★ (max 6). Only starred pins
-                    appear here and in your leave-behind PDF.
-                  </p>
-                  <div className="finish-secondary-row" style={{ marginTop: '0.75rem' }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setActiveView('studio')}
-                    >
-                      Open Research
-                    </button>
-                  </div>
-                </div>
-                  )
-                }
-                return (
-                <div className="brand-mood-row">
-                  {packPins.slice(0, 6).map((p) => (
-                    <div
-                      key={p.id}
-                      className="brand-mood-thumb"
-                      style={pinFaceStyle(p)}
-                      title={p.note}
-                    />
-                  ))}
-                </div>
-                )
-              })()}
-            </section>
-
-            <div className="brand-export-bar">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setActiveView('studio')}
-              >
-                Research
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setActiveView('review')}
-              >
-                {i18nT(locale, 'ui.openReview') || 'Go to Review'}
-              </button>
-            </div>
-          </div>
+          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Design…</div>}>
+            <DesignView
+              locale={locale}
+              navDir={navDir}
+              activeProject={activeProject}
+              deskMood={deskMood}
+              projectPalette={projectPalette}
+              hidePackWatermark={hidePackWatermark}
+              setActiveView={setActiveView}
+              flashToast={flashToast}
+              flashMicro={flashMicro}
+            />
+          </Suspense>
         )}
 
         {/* ===== REVIEW — step 6 ===== */}
