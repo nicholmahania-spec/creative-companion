@@ -62,6 +62,10 @@ import {
   toolsLabelForView,
 } from './lib/journey'
 import {
+  pathStepHasContent,
+  pathProgressSummary,
+} from './lib/journeyProgress'
+import {
   PROCESS_PHASES,
   REVIEW_QUESTIONS,
   getProcessPhase,
@@ -2381,47 +2385,13 @@ function App() {
               const active = journeyActive === step.id
               const label = pathLabel(locale, step.id) || step.label
               const plain = pathPlain(locale, step.id) || step.plain
-              const hasContent =
-                (step.id === 'define' &&
-                  !!(
-                    (activeProject?.name &&
-                      activeProject.name !== 'My project') ||
-                    activeProject?.brief?.trim() ||
-                    activeProject?.detective?.goal?.trim() ||
-                    activeProject?.detective?.audience?.trim()
-                  )) ||
-                (step.id === 'research' && deskMood.length > 0) ||
-                (step.id === 'ideate' &&
-                  !!(
-                    (sparkIndex || 0) > 0 ||
-                    deskMood.some(
-                      (m) => m.type === 'quote' || /spark/i.test(m.note || '')
-                    ) ||
-                    (activeProject?.directions || []).some((d) =>
-                      String(d.title || d.note || '').trim()
-                    )
-                  )) ||
-                (step.id === 'sketch' && deskTasks.length > 0) ||
-                (step.id === 'design' &&
-                  !!(
-                    activeProject?.tagline?.trim() ||
-                    (projectPalette || []).length >= 2 ||
-                    (activeProject?.designVersion &&
-                      activeProject.designVersion !== 'v1')
-                  )) ||
-                (step.id === 'review' &&
-                  !!(
-                    activeProject?.feedbackNotes?.trim() ||
-                    (activeProject?.tagline?.trim() &&
-                      deskMood.some((m) => m.inPack))
-                  )) ||
-                (step.id === 'deliver' &&
-                  !!(
-                    activeProject?.handoffNote?.trim() ||
-                    activeProject?.learnings?.trim() ||
-                    activeProject?.tagline?.trim() ||
-                    deskMood.some((m) => m.inPack)
-                  ))
+              const hasContent = pathStepHasContent(step.id, {
+                project: activeProject,
+                moodItems: deskMood,
+                tasks: deskTasks,
+                sparkIndex,
+                palette: projectPalette,
+              })
               return (
                 <li key={step.id} className="journey-bar-item">
                   <button
@@ -4548,6 +4518,48 @@ function App() {
                 </p>
               </div>
             </div>
+
+            {(() => {
+              const progress = pathProgressSummary(JOURNEY_STEPS, {
+                project: activeProject,
+                moodItems: deskMood,
+                tasks: deskTasks,
+                sparkIndex,
+                palette: projectPalette,
+              })
+              const doneN = progress.filter((p) => p.done).length
+              return (
+                <section
+                  className="panel brand-section deliver-path-progress"
+                  aria-label="Process progress"
+                >
+                  <div className="brand-section-label">
+                    Process · {doneN} of 7 steps have content
+                  </div>
+                  <ol className="deliver-progress-list">
+                    {progress.map((p) => (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          className={`deliver-progress-chip${
+                            p.done ? ' is-done' : ''
+                          }`}
+                          onClick={() => setActiveView(p.view)}
+                        >
+                          <span aria-hidden="true">
+                            {p.done ? '✓' : p.num}
+                          </span>{' '}
+                          {pathLabel(locale, p.id) || p.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="panel-hint" style={{ marginBottom: 0 }}>
+                    Tap any step to fill gaps before the brand book PDF.
+                  </p>
+                </section>
+              )
+            })()}
 
             <section className="panel brand-section finish-hero-panel pack-hero">
               <div className="pack-layout">

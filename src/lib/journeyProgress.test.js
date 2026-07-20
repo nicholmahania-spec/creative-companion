@@ -1,0 +1,51 @@
+import { describe, expect, it } from 'vitest'
+import { pathStepHasContent, pathProgressSummary } from './journeyProgress'
+import { JOURNEY_STEPS } from './journey'
+
+describe('pathStepHasContent', () => {
+  it('define needs name, brief, or detective', () => {
+    expect(pathStepHasContent('define', { project: {} })).toBe(false)
+    expect(
+      pathStepHasContent('define', {
+        project: { detective: { goal: 'Help families' } },
+      })
+    ).toBe(true)
+  })
+
+  it('research needs pins', () => {
+    expect(pathStepHasContent('research', { moodItems: [] })).toBe(false)
+    expect(
+      pathStepHasContent('research', { moodItems: [{ id: 1 }] })
+    ).toBe(true)
+  })
+
+  it('ideate needs spark progress or directions', () => {
+    expect(pathStepHasContent('ideate', { sparkIndex: 0 })).toBe(false)
+    expect(pathStepHasContent('ideate', { sparkIndex: 2 })).toBe(true)
+    expect(
+      pathStepHasContent('ideate', {
+        project: { directions: [{ title: 'Quiet' }] },
+      })
+    ).toBe(true)
+  })
+
+  it('pathProgressSummary counts done steps', () => {
+    const rows = pathProgressSummary(JOURNEY_STEPS, {
+      project: {
+        name: 'Co',
+        detective: { goal: 'G', audience: 'A' },
+        tagline: 'T',
+        designVersion: 'v2',
+        feedbackNotes: 'ok',
+        handoffNote: 'hi',
+        learnings: 'yay',
+      },
+      moodItems: [{ id: 1, inPack: true, type: 'quote', note: 'spark' }],
+      tasks: [{ id: 1 }],
+      sparkIndex: 3,
+      palette: ['#111', '#222'],
+    })
+    expect(rows).toHaveLength(7)
+    expect(rows.every((r) => r.done)).toBe(true)
+  })
+})

@@ -9388,6 +9388,34 @@ html[data-reduce-motion='true'] *::after {
   margin-top: 0.5rem;
 }
 
+.deliver-progress-list {
+  list-style: none;
+  margin: 0.5rem 0 0.65rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.deliver-progress-chip {
+  appearance: none;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.deliver-progress-chip.is-done {
+  border-color: var(--accent-growth, #0f766e);
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--accent-growth, #0f766e) 12%, transparent);
+}
+.deliver-progress-chip:hover {
+  border-color: var(--text-secondary);
+}
+
 .review-question-chips {
   display: flex;
   flex-direction: column;
