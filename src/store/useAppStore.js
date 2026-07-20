@@ -1,5 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import {
+  appendDecision,
+  decisionFromDirection,
+} from '../lib/decisionLog'
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/breakKit'
 
@@ -107,6 +111,8 @@ export function createBlankProject(name = 'My project', brief = '') {
     brief: brief || '',
     logoDirection: '',
     directions: blankDirections(),
+    /** Ideate → Sketch external memory: chose X because Y */
+    decisionLog: [],
     palette: [...defaultProjectPalette],
     deadline: '',
     ...defaultBrandIdentity,
@@ -317,13 +323,38 @@ const useAppStore = create(
             )
             if (idx < 0) return p
             dirs[idx] = { ...dirs[idx], ...patch }
-            // Choosing one un-chooses others
+            // Choosing one un-chooses others + log decision for Sketch resume
+            let decisionLog = Array.isArray(p.decisionLog) ? p.decisionLog : []
             if (patch.chosen === true) {
               dirs.forEach((d, i) => {
                 if (i !== idx) d.chosen = false
               })
+              const entry = decisionFromDirection(dirs[idx])
+              decisionLog = appendDecision(decisionLog, entry)
+            } else if (
+              dirs[idx].chosen &&
+              (patch.title != null || patch.note != null)
+            ) {
+              // Keep log in sync while refining title/why on the winner
+              decisionLog = appendDecision(
+                decisionLog,
+                decisionFromDirection(dirs[idx])
+              )
             }
-            return { ...p, directions: dirs }
+            return { ...p, directions: dirs, decisionLog }
+          }),
+        })),
+
+      /**
+       * Manual decision log entry (Ideate why, Sketch note).
+       * @param {{ kind?: string, directionId?: string, label?: string, title?: string, why?: string }} entry
+       */
+      logDecision: (entry) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const decisionLog = appendDecision(p.decisionLog, entry)
+            return { ...p, decisionLog }
           }),
         })),
 
@@ -1207,7 +1238,14 @@ const useAppStore = create(
             : [],
           projects:
             Array.isArray(persisted.projects) && persisted.projects.length
-              ? persisted.projects
+              ? persisted.projects.map((p) => ({
+                  ...p,
+                  decisionLog: Array.isArray(p.decisionLog) ? p.decisionLog : [],
+                  directions:
+                    Array.isArray(p.directions) && p.directions.length >= 3
+                      ? p.directions
+                      : blankDirections(),
+                }))
               : blankWorkspaceState().projects,
         }
       },

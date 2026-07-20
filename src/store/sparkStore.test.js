@@ -61,4 +61,20 @@ describe('spark / ideate store', () => {
     expect(b.chosen).toBe(true)
     expect(b.title).toBe('Bold')
   })
+
+  it('choosing a direction writes decisionLog', () => {
+    const p = useAppStore.getState().createNewProject('Decide', '')
+    useAppStore.setState({ currentProjectId: p.id })
+    useAppStore.getState().updateDirection('b', {
+      title: 'Quiet teal clinic',
+      note: 'calm not cold',
+      chosen: true,
+    })
+    const proj = useAppStore
+      .getState()
+      .projects.find((x) => x.id === p.id)
+    expect(proj.decisionLog?.length).toBe(1)
+    expect(proj.decisionLog[0].label).toBe('B')
+    expect(proj.decisionLog[0].why).toBe('calm not cold')
+  })
 })

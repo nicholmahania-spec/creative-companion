@@ -1,6 +1,12 @@
 /** Lazy-loaded Ideate step — sparks + A/B/C direction capture */
 import { getProcessPhase } from '../lib/processGuide'
-import { pathLabel, tFormat } from '../lib/i18n'
+import { pathLabel, tFormat, t as i18nLookup } from '../lib/i18n'
+import {
+  formatDecisionLine,
+  latestDecision,
+  decisionFromDirection,
+} from '../lib/decisionLog'
+import useAppStore from '../store/useAppStore'
 
 export default function SparkView({
   setActiveView,
@@ -21,7 +27,9 @@ export default function SparkView({
   i18nT = (key) => key,
   /** Detective goal one-liner when set — grounds prompts */
   projectGoal = '',
+  decisionLog = [],
 }) {
+  const logDecision = useAppStore((s) => s.logDecision)
   const dirs =
     Array.isArray(directions) && directions.length >= 3
       ? directions
@@ -36,6 +44,16 @@ export default function SparkView({
   const phase = getProcessPhase('ideate')
   const title = pathLabel(locale, 'ideate') || 'Ideate'
   const goalLine = String(projectGoal || '').trim()
+  const latest = latestDecision(decisionLog, 'direction') || latestDecision(decisionLog)
+  const decisionLine =
+    formatDecisionLine(latest) ||
+    (chosen
+      ? formatDecisionLine({
+          label: chosen.label,
+          title: chosen.title,
+          why: chosen.note,
+        })
+      : '')
 
   const pinSparkStay = () => {
     addMoodPin({
@@ -48,8 +66,33 @@ export default function SparkView({
     flashMicro?.(i18nT('ui.sparkPinnedStay') || 'Pinned · stay on Ideate')
   }
 
+  const chooseDirection = (dir) => {
+    const nextChosen = !dir.chosen
+    updateDirection?.(dir.id, { chosen: nextChosen })
+    if (nextChosen) {
+      const entry = decisionFromDirection({ ...dir, chosen: true })
+      // updateDirection also logs; reinforce micro feedback
+      const line = formatDecisionLine(entry)
+      flashMicro?.(
+        line
+          ? tFormat(locale, 'ui.decisionLogged', {
+              label: dir.label || dir.id,
+            }) || `Decision saved · ${dir.label}`
+          : `Chose ${dir.label} — add a title + why`
+      )
+      if (!String(dir.note || '').trim() && String(dir.title || '').trim()) {
+        // Soft nudge: why is the ADHD working-memory glue
+        window.setTimeout(() => {
+          document.getElementById(`dir-note-${dir.id}`)?.focus?.()
+        }, 80)
+      }
+    }
+  }
+
   const queueChosen = () => {
     if (!chosen) return
+    // Ensure decision log has the latest title/why
+    logDecision?.(decisionFromDirection(chosen))
     addTask?.({
       id: Date.now() + Math.random(),
       title: `Draft ${chosen.label}: ${chosen.title}`,
@@ -131,6 +174,41 @@ export default function SparkView({
         </p>
       )}
 
+      <section className="decision-log-strip" aria-label="Decision log">
+        <p className="decision-log-strip-label">
+          {i18nLookup(locale, 'ui.decisionLogTitle') || 'Decision log'}
+        </p>
+        {decisionLine ? (
+          <>
+            <p className="decision-log-strip-line">{decisionLine}</p>
+            <div className="decision-log-strip-actions">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={queueChosen}
+                disabled={!chosen}
+              >
+                {i18nT('ui.queueChosenSketch') || 'Queue chosen → Sketch'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setActiveView('flow')}
+              >
+                {tFormat(locale, 'ui.continueNext', {
+                  label: pathLabel(locale, 'sketch') || 'Sketch',
+                })}
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className="decision-log-empty">
+            {i18nLookup(locale, 'ui.decisionEmpty') ||
+              'Pick a winner on Ideate — we save why for Sketch.'}
+          </p>
+        )}
+      </section>
+
       {phase && (
         <section className="panel brand-section process-tip-panel">
           <div className="brand-section-label">
@@ -168,9 +246,7 @@ export default function SparkView({
                 <button
                   type="button"
                   className={`btn btn-ghost btn-sm${d.chosen ? ' is-on' : ''}`}
-                  onClick={() =>
-                    updateDirection?.(d.id, { chosen: !d.chosen })
-                  }
+                  onClick={() => chooseDirection(d)}
                   aria-pressed={!!d.chosen}
                 >
                   {d.chosen ? 'Chosen' : 'Choose'}

@@ -9,12 +9,18 @@ import {
   DEFAULT_PALETTE,
   normalizeHex,
   buildPairChecks,
+  buildPassPairs,
   bestTextOn,
   formatRatio,
   mapPaletteRoles,
   fontFamilyFromLabel,
   TYPE_PAIRS,
   typePairIdFromLabels,
+  tintsAndShades,
+  extractPaletteFromPins,
+  suggestRoleAaFixes,
+  mergeRolesIntoPalette,
+  nudgeHexForContrast,
 } from '../lib/color'
 import { getProcessPhase } from '../lib/processGuide'
 import { pinFaceStyle } from '../lib/moodPins'
@@ -63,6 +69,9 @@ export default function DesignView({
   const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
   const [checkBgIndex, setCheckBgIndex] = useState(0)
   const [hexDrafts, setHexDrafts] = useState({})
+  const [tintOpenIndex, setTintOpenIndex] = useState(null)
+  const [extractingPins, setExtractingPins] = useState(false)
+  const [showPassPairs, setShowPassPairs] = useState(false)
 
   useEffect(() => {
     if (checkBgIndex >= projectPalette.length) {
@@ -80,6 +89,16 @@ export default function DesignView({
     [projectPalette]
   )
 
+  const effectiveRoles = useMemo(() => {
+    const o = activeProject?.colorRoles || {}
+    return {
+      cover: normalizeHex(o.cover) || paletteRoles.cover,
+      text: normalizeHex(o.text) || paletteRoles.text,
+      accent: normalizeHex(o.accent) || paletteRoles.accent,
+      quiet: normalizeHex(o.quiet) || paletteRoles.quiet,
+    }
+  }, [activeProject?.colorRoles, paletteRoles])
+
   const checkBg =
     projectPalette[checkBgIndex] ||
     paletteRoles.background ||
@@ -90,6 +109,17 @@ export default function DesignView({
     () => buildPairChecks(projectPalette, checkBg),
     [projectPalette, checkBg]
   )
+
+  const passPairs = useMemo(
+    () => buildPassPairs(projectPalette, 4.5).slice(0, 12),
+    [projectPalette]
+  )
+
+  const starredPinCount = useMemo(
+    () => (deskMood || []).filter((m) => m.inPack).length,
+    [deskMood]
+  )
+  const pinCount = (deskMood || []).length
 
   const handleHexChange = (index, raw) => {
     setHexDrafts((d) => ({ ...d, [index]: raw }))
@@ -107,6 +137,76 @@ export default function DesignView({
       delete next[index]
       return next
     })
+  }
+
+  const applyFromPins = async () => {
+    if (!pinCount) {
+      flashToast?.('Add Research pins first (color, gradient, or image).')
+      return
+    }
+    setExtractingPins(true)
+    try {
+      const result = await extractPaletteFromPins(deskMood, {
+        max: 6,
+        preferStarred: true,
+      })
+      if (result.empty || result.colors.length < 2) {
+        flashToast?.(
+          'Could not pull colors from pins — try solid hex pins or image uploads.'
+        )
+        return
+      }
+      setProjectPalette(result.colors)
+      setHexDrafts({})
+      setTintOpenIndex(null)
+      const src = result.sources
+      const bits = []
+      if (src.color) bits.push(`${src.color} color`)
+      if (src.gradient) bits.push(`${src.gradient} gradient`)
+      if (src.image) bits.push(`${src.image} image`)
+      flashMicro?.(
+        `Palette from ${starredPinCount ? '★ pins' : 'pins'} · ${result.colors.length} colors${bits.length ? ` (${bits.join(', ')})` : ''}`
+      )
+    } finally {
+      setExtractingPins(false)
+    }
+  }
+
+  const applyAaRoleFix = () => {
+    const { roles, changes } = suggestRoleAaFixes(
+      projectPalette,
+      activeProject?.colorRoles
+    )
+    if (!changes.length) {
+      flashMicro?.('Roles already pass AA targets')
+      return
+    }
+    for (const c of changes) {
+      setColorRole(c.role, c.to)
+    }
+    // Keep fixed hexes on the palette so checker + export stay in sync
+    const nextPal = mergeRolesIntoPalette(projectPalette, roles, 8)
+    if (nextPal.length >= 2) setProjectPalette(nextPal)
+    flashMicro?.(
+      `Fixed ${changes.length} role${changes.length === 1 ? '' : 's'} for AA · ${changes.map((c) => c.role).join(', ')}`
+    )
+  }
+
+  const fixPairFg = (fg, bg, index) => {
+    const fix = nudgeHexForContrast(fg, bg, 4.5)
+    if (!fix || !fix.changed) {
+      flashMicro?.('Already AA or cannot fix this pair')
+      return
+    }
+    if (typeof index === 'number' && index >= 0) {
+      updatePaletteColor(index, fix.hex)
+      setHexDrafts((d) => {
+        const next = { ...d }
+        delete next[index]
+        return next
+      })
+    }
+    flashMicro?.(`${fg} → ${fix.hex} · ${formatRatio(fix.ratio)}`)
   }
 
   return (
@@ -369,68 +469,144 @@ export default function DesignView({
                   {projectPalette.map((hex, index) => {
                     const display =
                       hexDrafts[index] != null ? hexDrafts[index] : hex
+                    const tints = tintsAndShades(hex, { steps: 2 })
+                    const tintsOpen = tintOpenIndex === index
                     return (
-                      <li key={index} className="palette-row">
-                        <label
-                          className="palette-swatch-wrap"
-                          title="Pick color"
-                        >
+                      <li key={index} className="palette-row-block">
+                        <div className="palette-row">
+                          <label
+                            className="palette-swatch-wrap"
+                            title="Pick color"
+                          >
+                            <input
+                              type="color"
+                              className="palette-color-input"
+                              value={normalizeHex(hex) || '#888888'}
+                              onChange={(e) => {
+                                const n = normalizeHex(e.target.value)
+                                if (n) {
+                                  updatePaletteColor(index, n)
+                                  setHexDrafts((d) => {
+                                    const next = { ...d }
+                                    delete next[index]
+                                    return next
+                                  })
+                                }
+                              }}
+                              aria-label={`Color ${index + 1} picker`}
+                            />
+                            <span
+                              className="palette-swatch"
+                              style={{
+                                background: normalizeHex(hex) || hex,
+                              }}
+                            />
+                          </label>
                           <input
-                            type="color"
-                            className="palette-color-input"
-                            value={normalizeHex(hex) || '#888888'}
-                            onChange={(e) => {
-                              const n = normalizeHex(e.target.value)
-                              if (n) {
-                                updatePaletteColor(index, n)
-                                setHexDrafts((d) => {
-                                  const next = { ...d }
-                                  delete next[index]
-                                  return next
-                                })
-                              }
+                            type="text"
+                            className="palette-hex-input"
+                            value={display}
+                            onChange={(e) =>
+                              handleHexChange(index, e.target.value)
+                            }
+                            onBlur={() => commitHex(index)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') e.currentTarget.blur()
                             }}
-                            aria-label={`Color ${index + 1} picker`}
+                            spellCheck={false}
+                            aria-label={`Color ${index + 1} hex`}
                           />
                           <span
-                            className="palette-swatch"
+                            className="palette-preview-chip"
                             style={{
                               background: normalizeHex(hex) || hex,
+                              color: bestTextOn(hex),
                             }}
-                          />
-                        </label>
-                        <input
-                          type="text"
-                          className="palette-hex-input"
-                          value={display}
-                          onChange={(e) =>
-                            handleHexChange(index, e.target.value)
-                          }
-                          onBlur={() => commitHex(index)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') e.currentTarget.blur()
-                          }}
-                          spellCheck={false}
-                          aria-label={`Color ${index + 1} hex`}
-                        />
-                        <span
-                          className="palette-preview-chip"
-                          style={{
-                            background: normalizeHex(hex) || hex,
-                            color: bestTextOn(hex),
-                          }}
-                        >
-                          Aa
-                        </span>
-                        <button
-                          type="button"
-                          className="btn btn-ghost palette-remove"
-                          disabled={projectPalette.length <= 2}
-                          onClick={() => removePaletteColor(index)}
-                          aria-label={`Remove color ${index + 1}`}
-                        >
-                          Remove
-                        </button>
+                          >
+                            Aa
+                          </span>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            aria-expanded={tintsOpen}
+                            title="Tints and shades"
+                            onClick={() =>
+                              setTintOpenIndex(tintsOpen ? null : index)
+                            }
+                          >
+                            Tints
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost palette-remove"
+                            disabled={projectPalette.length <= 2}
+                            onClick={() => removePaletteColor(index)}
+                            aria-label={`Remove color ${index + 1}`}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        {tintsOpen && tints.length > 0 && (
+                          <div
+                            className="palette-tints-row"
+                            role="group"
+                            aria-label={`Tints and shades for color ${index + 1}`}
+                          >
+                            {tints.map((t) => {
+                              const isBase =
+                                normalizeHex(t) === normalizeHex(hex)
+                              return (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  className={`palette-tint-chip${isBase ? ' is-base' : ''}`}
+                                  style={{
+                                    background: t,
+                                    color: bestTextOn(t),
+                                  }}
+                                  title={
+                                    isBase
+                                      ? `${t} (current)`
+                                      : `Apply ${t} to this swatch`
+                                  }
+                                  onClick={() => {
+                                    if (isBase) return
+                                    updatePaletteColor(index, t)
+                                    setHexDrafts((d) => {
+                                      const next = { ...d }
+                                      delete next[index]
+                                      return next
+                                    })
+                                    flashMicro?.(`Swatch → ${t}`)
+                                  }}
+                                >
+                                  {isBase ? '·' : ''}
+                                </button>
+                              )
+                            })}
+                            {projectPalette.length < 8 &&
+                              tints
+                                .filter(
+                                  (t) =>
+                                    normalizeHex(t) !== normalizeHex(hex)
+                                )
+                                .slice(0, 2)
+                                .map((t) => (
+                                  <button
+                                    key={`add-${t}`}
+                                    type="button"
+                                    className="btn btn-ghost btn-sm palette-tint-add"
+                                    title={`Add ${t} to palette`}
+                                    onClick={() => {
+                                      addPaletteColor(t)
+                                      flashMicro?.(`Added ${t}`)
+                                    }}
+                                  >
+                                    +{t.slice(0, 4)}
+                                  </button>
+                                ))}
+                          </div>
+                        )}
                       </li>
                     )
                   })}
@@ -447,28 +623,71 @@ export default function DesignView({
                   </button>
                   <button
                     type="button"
+                    className="btn btn-secondary"
+                    disabled={!pinCount || extractingPins}
+                    title={
+                      starredPinCount
+                        ? `Sample ★ leave-behind pins (${starredPinCount})`
+                        : pinCount
+                          ? `Sample all Research pins (${pinCount})`
+                          : 'Add pins on Research first'
+                    }
+                    onClick={() => applyFromPins()}
+                  >
+                    {extractingPins
+                      ? 'Sampling…'
+                      : starredPinCount
+                        ? 'From ★ pins'
+                        : 'From pins'}
+                  </button>
+                  <button
+                    type="button"
                     className="btn btn-ghost"
-                    onClick={() => setProjectPalette([...DEFAULT_PALETTE])}
+                    onClick={() => {
+                      setProjectPalette([...DEFAULT_PALETTE])
+                      setHexDrafts({})
+                      setTintOpenIndex(null)
+                    }}
                   >
                     Reset default
                   </button>
                 </div>
+                <p className="panel-hint" style={{ marginTop: '0.45rem', marginBottom: 0 }}>
+                  From pins pulls solids, gradients, and image samples from
+                  Research {starredPinCount ? '(★ first)' : ''}. Open a swatch’s
+                  tints to expand shades.
+                </p>
               </div>
 
-
               <div className="palette-roles-editor" style={{ marginTop: '1rem' }}>
-                <p className="field-label" style={{ marginBottom: '0.45rem' }}>
-                  Pack roles — pick a role, then a swatch
-                </p>
-                <div className="system-role-assign">
+                <div className="palette-section-head">
+                  <p className="field-label" style={{ margin: 0 }}>
+                    Pack roles — pick a role, then a swatch
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    title="Nudge text / accent / quiet / cover until AA targets pass"
+                    onClick={() => applyAaRoleFix()}
+                  >
+                    Fix roles for AA
+                  </button>
+                </div>
+                <div className="system-role-assign" style={{ marginTop: '0.45rem' }}>
                   {['cover', 'text', 'accent', 'quiet'].map((role) => (
                     <button
                       key={role}
                       type="button"
                       className={`role-pick-chip${brandRoleAssign === role ? ' is-active' : ''}`}
                       onClick={() => setBrandRoleAssign(role)}
+                      title={effectiveRoles[role]}
                     >
                       {role[0].toUpperCase() + role.slice(1)}
+                      <span
+                        className="role-pick-swatch"
+                        style={{ background: effectiveRoles[role] }}
+                        aria-hidden
+                      />
                     </button>
                   ))}
                 </div>
@@ -567,10 +786,61 @@ export default function DesignView({
                               ? 'Large text only'
                               : 'Too low for text'}
                         </span>
+                        {!pair.grade.aaNormal && (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm palette-fix-pair"
+                            title="Nudge this color’s lightness until AA body"
+                            onClick={() =>
+                              fixPairFg(pair.fg, pair.bg, pair.index)
+                            }
+                          >
+                            Fix AA
+                          </button>
+                        )}
                       </li>
                     ))
                   )}
                 </ul>
+
+                <div className="palette-pass-pairs" style={{ marginTop: '0.85rem' }}>
+                  <button
+                    type="button"
+                    className="text-link"
+                    onClick={() => setShowPassPairs((v) => !v)}
+                    aria-expanded={showPassPairs}
+                  >
+                    {showPassPairs ? 'Hide' : 'Show'} AA pass pairs
+                    {passPairs.length ? ` (${passPairs.length})` : ''}
+                  </button>
+                  {showPassPairs && (
+                    <ul className="palette-pass-list">
+                      {passPairs.length === 0 ? (
+                        <li className="panel-hint">
+                          No body-text pairs yet — add contrast or use Fix AA.
+                        </li>
+                      ) : (
+                        passPairs.map((p) => (
+                          <li key={`${p.fg}-${p.bg}`} className="palette-pass-row">
+                            <span
+                              className="palette-pass-chip"
+                              style={{
+                                background: p.bg,
+                                color: p.fg,
+                              }}
+                              title={`${p.fg} on ${p.bg}`}
+                            >
+                              Aa
+                            </span>
+                            <span className="palette-pass-meta">
+                              {p.fg} on {p.bg} · {formatRatio(p.ratio)}
+                            </span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  )}
+                </div>
               </div>
             </section>
 
