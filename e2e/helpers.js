@@ -1,9 +1,16 @@
 /**
  * Shared Playwright unlock + onboard for local desk gate.
+ * @param {import('@playwright/test').Page} page
+ * @param {{ name?: string, step?: string, testerName?: string, expectOnboardDialog?: boolean }} [opts]
  */
 export async function unlockAndOnboard(
   page,
-  { name = 'E2E Project', step = 'First draft step' } = {}
+  {
+    name = 'E2E Project',
+    step = 'First draft step',
+    testerName = 'E2E Tester',
+    expectOnboardDialog = false,
+  } = {}
 ) {
   await page.goto('/')
   await page.waitForLoadState('networkidle')
@@ -21,10 +28,10 @@ export async function unlockAndOnboard(
     body.includes('Create access')
 
   if (onLogin || (await page.locator('.login-form, .login-page').count())) {
-    const inputs = page.locator('.login-form input, .login-page input')
+    const inputs = page.locator('.login-form input, .login-page input, input')
     const n = await inputs.count()
     if (n >= 3) {
-      await inputs.nth(0).fill('E2E Tester')
+      await inputs.nth(0).fill(testerName)
       await inputs.nth(1).fill('testpass123')
       await inputs.nth(2).fill('testpass123')
     } else if (n >= 2) {
@@ -41,6 +48,13 @@ export async function unlockAndOnboard(
     '.onboard-primary, .onboard-panel .btn-primary'
   )
   if (await onboardPrimary.count()) {
+    if (expectOnboardDialog) {
+      const { expect } = await import('@playwright/test')
+      await expect(
+        page.getByRole('dialog', { name: /One project|project/i })
+      ).toBeVisible()
+      await expect(page.locator('#onboard-desc')).toBeVisible()
+    }
     const nameEl = page
       .locator('#onboard-name, .onboard-panel input, .onboard-input')
       .first()
@@ -60,4 +74,9 @@ export async function unlockAndOnboard(
 
 export async function pathNav(page) {
   return page.getByRole('navigation', { name: /Your path/i })
+}
+
+/** Skip test if unlock returned cloud-auth skip */
+export function skipIfCloud(test, gate) {
+  if (gate?.skipped) test.skip(true, gate.reason || 'Cloud auth')
 }

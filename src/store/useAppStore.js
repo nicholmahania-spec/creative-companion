@@ -402,6 +402,21 @@ const useAppStore = create(
         return { ok: true, version: next }
       },
 
+      /**
+       * If still on v1, bump once after a major design action (kit, mark, type pair).
+       * Avoids keystroke spam — only discrete intentional actions call this.
+       */
+      bumpDesignVersionIfV1: () => {
+        const state = get()
+        const p = state.projects.find((x) => x.id === state.currentProjectId)
+        if (!p) return { ok: false, bumped: false }
+        const cur = String(p.designVersion || 'v1').trim()
+        if (!/^v?1$/i.test(cur) && cur !== '') {
+          return { ok: true, bumped: false, version: cur }
+        }
+        return { ...get().bumpDesignVersion(), bumped: true }
+      },
+
       toggleTheme: () =>
         set((state) => ({
           theme: state.theme === 'warm' ? 'deep' : 'warm',

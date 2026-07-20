@@ -537,6 +537,8 @@ function App() {
     setStepFocusKey((k) => k + 1)
   }
 
+  const bumpDesignVersionIfV1 = useAppStore((s) => s.bumpDesignVersionIfV1)
+
   const applyBrandKit = useCallback(
     (kitId) => {
       const kit = getBrandKit(kitId)
@@ -547,9 +549,14 @@ function App() {
       updateBrandField('typeBody', kit.typeBody)
       updateBrandField('doUse', kit.doUse)
       updateBrandField('dontUse', kit.dontUse)
-      flashToast(`Direction kit: ${kit.name} — continue Research or open Design`)
+      const bump = bumpDesignVersionIfV1()
+      flashToast(
+        bump?.bumped
+          ? `Direction kit: ${kit.name} · version ${bump.version}`
+          : `Direction kit: ${kit.name} — continue Research or open Design`
+      )
     },
-    [setProjectPalette, updateBrandField]
+    [setProjectPalette, updateBrandField, bumpDesignVersionIfV1]
   )
 
   const commandActions = useMemo(() => {
@@ -4081,7 +4088,12 @@ function App() {
                     if (!pair) return
                     updateBrandField('typeHeading', pair.heading)
                     updateBrandField('typeBody', pair.body)
-                    flashMicro(`Type · ${pair.label}`)
+                    const bump = bumpDesignVersionIfV1()
+                    flashMicro(
+                      bump?.bumped
+                        ? `Type · ${pair.label} · ${bump.version}`
+                        : `Type · ${pair.label}`
+                    )
                   }}
                 >
                   {TYPE_PAIRS.map((p) => (
@@ -4222,7 +4234,12 @@ function App() {
                       const reader = new FileReader()
                       reader.onload = () => {
                         setLogoImage(reader.result)
-                        flashMicro('Mark image added')
+                        const bump = bumpDesignVersionIfV1()
+                        flashMicro(
+                          bump?.bumped
+                            ? `Mark image · ${bump.version}`
+                            : 'Mark image added'
+                        )
                       }
                       reader.readAsDataURL(file)
                     }}
@@ -4707,6 +4724,14 @@ function App() {
                         {lastExportNote}
                       </p>
                     ) : null}
+                    <div className="process-tip-panel" style={{ marginTop: '0.85rem' }}>
+                      <div className="brand-section-label">Deliver checklist</div>
+                      <ul className="process-guide-checks">
+                        {(getProcessPhase('deliver')?.checks || []).map((c) => (
+                          <li key={c}>{c}</li>
+                        ))}
+                      </ul>
+                    </div>
                     <div className="field-block" style={{ marginTop: '0.85rem' }}>
                       <label className="field-label" htmlFor="handoff-note">
                         Handoff note (for the client)

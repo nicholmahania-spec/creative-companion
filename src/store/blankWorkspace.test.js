@@ -50,16 +50,7 @@ describe('blank workspace defaults', () => {
   })
 
   it('bumpDesignVersion increments vN', () => {
-    const store = useAppStore.getState()
-    // Ensure clean active project
-    const p = store.createNewProject('Bump Co', 'Brief')
-    store.setCurrentProject?.(p.id)
-    // setCurrentProject may not exist — select via setCurrentProjectId pattern
-    if (typeof store.setCurrentProject === 'function') {
-      store.setCurrentProject(p.id)
-    } else {
-      useAppStore.setState({ currentProjectId: p.id })
-    }
+    const p = useAppStore.getState().createNewProject('Bump Co', 'Brief')
     useAppStore.setState({
       projects: useAppStore.getState().projects.map((proj) =>
         proj.id === p.id ? { ...proj, designVersion: 'v1' } : proj
@@ -71,5 +62,21 @@ describe('blank workspace defaults', () => {
     expect(r1.version).toBe('v2')
     const r2 = useAppStore.getState().bumpDesignVersion()
     expect(r2.version).toBe('v3')
+  })
+
+  it('bumpDesignVersionIfV1 only bumps once from v1', () => {
+    const p = useAppStore.getState().createNewProject('Kit Co', 'Brief')
+    useAppStore.setState({
+      projects: useAppStore.getState().projects.map((proj) =>
+        proj.id === p.id ? { ...proj, designVersion: 'v1' } : proj
+      ),
+      currentProjectId: p.id,
+    })
+    const a = useAppStore.getState().bumpDesignVersionIfV1()
+    expect(a.bumped).toBe(true)
+    expect(a.version).toBe('v2')
+    const b = useAppStore.getState().bumpDesignVersionIfV1()
+    expect(b.bumped).toBe(false)
+    expect(b.version).toBe('v2')
   })
 })
