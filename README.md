@@ -55,6 +55,11 @@ Without a key, Helper uses **built-in scripted coaching** (Recommend / Critique 
 - Zustand (persist)  
 - Plain CSS design system  
 
+## Agent / design rules
+
+- **`AGENTS.md`** — always audit **dark mode** (`.app.deep`) on every color change  
+- **`DESIGN_GRAMMAR.md`** — full UX/color grammar (see **G4.4**)  
+
 ## Project layout
 
 ```

@@ -185,7 +185,21 @@ Header **Export** may stay primary **only** if Capture is the sole competing pri
 - **Export** = outline / solid-but-smaller, or primary only when Brand/export intent is active  
 
 **G4.3 Deep Focus**  
-Invert field/ink; accent lightens to `#B794FF`. Same grammar — no neon.
+Invert field/ink; keep calm chrome. Dopamine (next/active only) must stay high-contrast on deep. Same grammar — no neon soup.
+
+**G4.4 Dark mode audit (mandatory on every color change)**  
+Any edit to palette tokens, hex/rgb, gradients, tinted shadows, or theme-color **requires** a deep-theme (`.app.deep`) readability pass before ship. Light-only fixes are incomplete.
+
+| Check | Pass criteria |
+|--------|----------------|
+| **Token pair** | New color uses semantic token or has `:root` + `.app.deep` values |
+| **Body text** | Primary ~≥4.5:1 on surface; muted still legible |
+| **CTAs / path active** | Dopamine and primary buttons readable on deep bg |
+| **Chrome** | Header, journey, menus, chips, borders visible (not crushed) |
+| **Hardcoded light hex** | No bare `#fff` / light gray on dark without deep override |
+
+Agent rule of record: **`AGENTS.md`** (loaded every session).  
+Helpers: `src/lib/color.js` (`contrastRatio`, `contrastGrade`).
 
 ---
 
@@ -311,6 +325,7 @@ Before shipping a screen, all boxes must pass:
 - [ ] **Usable** — keyboard Esc closes overlays; focus visible  
 - [ ] **Findable** — user can reach Spark/Brand without guessing (document ⌘K)  
 - [ ] **Accessible** — labels on icon-only controls; contrast on meta  
+- [ ] **Dark mode (G4.4)** — if any color changed, deep theme audited for readability  
 - [ ] **Valuable** — removes a real creative friction, not adds a toy  
 
 ---
