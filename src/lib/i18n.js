@@ -259,6 +259,16 @@ const EN = {
     breakLockedPlain: 'Break locked: {min} min (you worked ~{work} min)',
     breakEndedEarly: 'Break ended early — try a real rest next cycle.',
     packReadyFix: '○ {label} — fix',
+    firstStepWaiting: 'Your first step is waiting on Sketch:',
+    openSketchStep: 'Open Sketch step',
+    designPreviewCaption:
+      'Live direction sheet (preview only — edit below). Download on Deliver is a multi-page brand book PDF.',
+    pathFullLeaveBehindThin:
+      'Path has content · leave-behind still thin for a client handoff',
+    earliestEmptyBtn: 'Earliest empty · {label} · G',
+    backAfterBreak: 'Back to {label}',
+    pdfFontHonesty:
+      'Vector PDF uses built-in fonts (mapped from your type pair labels) — not full webfont embedding.',
   },
   // fillHint.* — non-EN locales only; EN defaults live in journeyProgress.PATH_FILL_HINTS
 }

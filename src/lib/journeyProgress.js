@@ -1,4 +1,31 @@
 /**
+ * Stock blank-project palette (matches useAppStore.defaultProjectPalette).
+ * Alone, it must not mark Design “done.”
+ */
+export const STOCK_PROJECT_PALETTE = [
+  '#1C1917',
+  '#0F766E',
+  '#A8A29E',
+  '#FAFAF9',
+]
+
+/** @param {string[]} palette */
+export function isStockProjectPalette(palette = []) {
+  if (!Array.isArray(palette) || palette.length !== STOCK_PROJECT_PALETTE.length)
+    return false
+  const norm = (h) => String(h || '').trim().toUpperCase()
+  const a = palette.map(norm).sort()
+  const b = STOCK_PROJECT_PALETTE.map(norm).sort()
+  return a.every((v, i) => v === b[i])
+}
+
+function hasExplicitColorRoles(project = {}) {
+  const r = project.colorRoles
+  if (!r || typeof r !== 'object') return false
+  return Object.values(r).some((v) => String(v || '').trim())
+}
+
+/**
  * Whether a path step has meaningful content (progress / is-done).
  * Shared by path bar + Deliver process strip.
  *
@@ -15,7 +42,6 @@ export function pathStepHasContent(stepId, ctx = {}) {
   const project = ctx.project || {}
   const mood = ctx.moodItems || []
   const tasks = ctx.tasks || []
-  const sparkIndex = ctx.sparkIndex || 0
   const palette = ctx.palette || project.palette || []
 
   switch (stepId) {
@@ -43,12 +69,19 @@ export function pathStepHasContent(stepId, ctx = {}) {
     }
     case 'sketch':
       return tasks.length > 0
-    case 'design':
+    case 'design': {
+      // Craft signals only — stock default palette alone does not count
+      const paletteCraft =
+        palette.length >= 2 && !isStockProjectPalette(palette)
       return !!(
         project.tagline?.trim() ||
-        palette.length >= 2 ||
-        (project.designVersion && project.designVersion !== 'v1')
+        project.voice?.trim() ||
+        project.logoImage ||
+        String(project.logoWordmark || '').trim() ||
+        hasExplicitColorRoles(project) ||
+        paletteCraft
       )
+    }
     case 'review':
       return !!(
         project.feedbackNotes?.trim() ||
@@ -160,7 +193,7 @@ export const PATH_FILL_HINTS = {
   research: 'Pin at least one ref',
   ideate: 'A/B/C title or pin a spark note',
   sketch: 'Capture one finishable step',
-  design: 'Tagline, palette, or version bump',
+  design: 'Tagline, voice, logo, or your own palette',
   review: 'Feedback notes or leave-behind pin',
   deliver: 'Handoff, learnings, or leave-behind',
   default: 'Add a little content',

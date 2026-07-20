@@ -279,6 +279,8 @@ function App() {
   const focusSeconds = focusLeft % 60
   const forcedBreakRef = useRef(null)
   forcedBreakRef.current = forcedBreak
+  /** View to restore after forced break ends */
+  const preBreakViewRef = useRef(null)
   const [showCreativeReset, setShowCreativeReset] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardName, setOnboardName] = useState('')
@@ -442,6 +444,16 @@ function App() {
     thisStepId && thisStepFilled === false
       ? pathFillHint(locale, thisStepId)
       : null
+  /** Leave-behind can still be thin when path N/7 looks full */
+  const leaveBehindThin = useMemo(() => {
+    const pack = buildBrandPackSnapshot({
+      project: activeProject,
+      tasks: deskTasks,
+      moodItems: deskMood,
+      palette: projectPalette,
+    })
+    return !!packReadiness(pack).thin
+  }, [activeProject, deskTasks, deskMood, projectPalette])
   const completedCount = doneTasks.length
   const progressPercent =
     deskTasks.length > 0
@@ -1031,6 +1043,8 @@ function App() {
     setPomodoroWorkStartedAt(null)
     setMoreOpen(false)
     setAccountOpen(false)
+    // Remember path view so unlock returns user where they were
+    preBreakViewRef.current = activeView
     setForcedBreak({
       totalSec,
       leftSec: totalSec,
@@ -1039,6 +1053,7 @@ function App() {
       reason,
       planItems,
       completedIds: [],
+      resumeView: activeView,
     })
     playBreakChime()
     const kitN = planItems.length
@@ -1080,6 +1095,8 @@ function App() {
   }
 
   const endForcedBreak = (emergency = false) => {
+    const fb = forcedBreakRef.current
+    const resume = fb?.resumeView || preBreakViewRef.current || null
     markBreak()
     setForcedBreak(null)
     setPomodoroWorkStartedAt(Date.now())
@@ -1088,6 +1105,17 @@ function App() {
     if (!emergency) {
       awardAndBroadcast('break_complete', { label: 'Pomodoro break' })
       awardAndBroadcast('pomodoro_work', { label: 'Focus cycle' })
+    }
+    if (resume) {
+      setActiveView(resume)
+      const step = JOURNEY_STEPS.find((s) => s.view === resume)
+      const label = step
+        ? pathLabel(locale, step.id) || step.label
+        : toolsLabelForView(resume)
+      flashMicro(
+        tFormat(locale, 'ui.backAfterBreak', { label: label || resume })
+      )
+      preBreakViewRef.current = null
     }
     flashToast(
       emergency
@@ -2645,6 +2673,11 @@ function App() {
                 </span>
               </span>
             )}
+            {!pathNextGap && leaveBehindThin && (
+              <span className="journey-leavebehind-thin" role="status">
+                {i18nT(locale, 'ui.pathFullLeaveBehindThin')}
+              </span>
+            )}
             {pathNextGap ? (
               <button
                 type="button"
@@ -2652,9 +2685,19 @@ function App() {
                 onClick={() => goToNextProcessGap()}
                 title="Keyboard G"
               >
-                {tFormat(locale, 'ui.nextGapBtn', {
-                  label: pathLabel(locale, pathNextGap.id) || pathNextGap.label,
-                })}
+                {(() => {
+                  const gapLabel =
+                    pathLabel(locale, pathNextGap.id) || pathNextGap.label
+                  const journeyNextNow = getNextJourney(activeView)
+                  const earliest =
+                    journeyNextNow &&
+                    journeyNextNow.view !== pathNextGap.view
+                  return earliest
+                    ? tFormat(locale, 'ui.earliestEmptyBtn', {
+                        label: gapLabel,
+                      })
+                    : tFormat(locale, 'ui.nextGapBtn', { label: gapLabel })
+                })()}
               </button>
             ) : (
               <button
@@ -3975,13 +4018,16 @@ function App() {
               </p>
             </section>
 
-            {/* ARTBOARD — sticky preview on wide screens */}
+            {/* ARTBOARD — sticky preview on wide screens (not freeform edit) */}
             <div
               className="system-artboard-sticky"
               tabIndex={0}
               role="region"
-              aria-label="Live pack artboard preview"
+              aria-label="Live leave-behind preview"
             >
+              <p className="panel-hint design-preview-caption" style={{ marginTop: 0 }}>
+                {i18nT(locale, 'ui.designPreviewCaption')}
+              </p>
               <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
                 <BrandArtboard
                   id="system-artboard"
@@ -5089,6 +5135,14 @@ function App() {
                       Direction leave-behind &amp; lockups — not a full design
                       tool or Figma replacement.
                     </p>
+                    <p className="panel-hint" style={{ marginTop: '0.35rem' }}>
+                      {i18nT(locale, 'ui.pdfFontHonesty')}
+                    </p>
+                    {leaveBehindThin && pathDoneCount >= 5 && (
+                      <p className="panel-hint pack-path-vs-thin" role="status">
+                        {i18nT(locale, 'ui.pathFullLeaveBehindThin')}
+                      </p>
+                    )}
                     <label className="pack-watermark-toggle">
                       <input
                         type="checkbox"
@@ -5337,6 +5391,25 @@ function App() {
                 </button>
               </div>
             </div>
+
+            {nextTask && (
+              <div className="define-first-step-chip" role="status">
+                <p className="panel-hint" style={{ margin: 0 }}>
+                  {i18nT(locale, 'ui.firstStepWaiting')}{' '}
+                  <strong>
+                    {String(nextTask.title).slice(0, 64)}
+                    {String(nextTask.title).length > 64 ? '…' : ''}
+                  </strong>
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setActiveView('flow')}
+                >
+                  {i18nT(locale, 'ui.openSketchStep') || 'Open Sketch step'}
+                </button>
+              </div>
+            )}
 
             <Suspense fallback={null}>
               <DetectiveSheet

@@ -283,7 +283,13 @@ export function buildBrandPackSnapshot({
     dontUse: p.dontUse || '',
     deadline: p.deadline || '',
     palette: colors,
-    conceptPackage: p.conceptPackage || null,
+    // Omit empty concept package (UI pipeline removed; avoid noise in export)
+    conceptPackage: (() => {
+      const c = p.conceptPackage
+      if (!c || typeof c !== 'object') return null
+      const has = Object.values(c).some((v) => String(v || '').trim())
+      return has ? c : null
+    })(),
     openTasks: openTasks.map((t) => ({
       id: t.id,
       title: t.title,

@@ -8617,6 +8617,33 @@ html[data-reduce-motion='true'] *::after {
   text-decoration-color: currentColor;
   color: var(--text-primary);
 }
+.journey-leavebehind-thin {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  flex: 1 1 100%;
+  line-height: 1.35;
+}
+.define-first-step-chip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--accent, #6366f1) 6%, transparent);
+}
+.define-first-step-chip .panel-hint {
+  flex: 1 1 12rem;
+}
+.design-preview-caption {
+  margin-bottom: 0.5rem !important;
+}
+.pack-path-vs-thin {
+  color: var(--text-primary);
+  font-weight: 550;
+}
 .research-still-thin .text-link {
   font: inherit;
   font-weight: 650;

@@ -7,6 +7,8 @@ import {
   pathGapFocusSelector,
   pathStepFillHint,
   buildPathProgressCtx,
+  isStockProjectPalette,
+  STOCK_PROJECT_PALETTE,
 } from './journeyProgress'
 import { JOURNEY_STEPS } from './journey'
 
@@ -45,6 +47,35 @@ describe('pathStepHasContent', () => {
         moodItems: [{ type: 'spark', note: 'A spark', fromSpark: true }],
       })
     ).toBe(true)
+  })
+
+  it('design ignores stock default palette alone', () => {
+    expect(isStockProjectPalette(STOCK_PROJECT_PALETTE)).toBe(true)
+    expect(
+      pathStepHasContent('design', {
+        project: {},
+        palette: [...STOCK_PROJECT_PALETTE],
+      })
+    ).toBe(false)
+    expect(
+      pathStepHasContent('design', {
+        project: { tagline: 'Hello' },
+        palette: [...STOCK_PROJECT_PALETTE],
+      })
+    ).toBe(true)
+    expect(
+      pathStepHasContent('design', {
+        project: {},
+        palette: ['#111111', '#222222'],
+      })
+    ).toBe(true)
+    // version alone is not craft
+    expect(
+      pathStepHasContent('design', {
+        project: { designVersion: 'v2' },
+        palette: [...STOCK_PROJECT_PALETTE],
+      })
+    ).toBe(false)
   })
 
   it('pathProgressSummary counts done steps', () => {

@@ -85,9 +85,14 @@ test.describe('Process walk (artifacts)', () => {
       await why.fill('Quiet hierarchy matches the detective goal')
     }
 
-    // 5 Design — bump version
+    // 5 Design — tagline (craft) + version bump
     await path.getByRole('button', { name: /Step 5: Design/i }).click()
     await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible()
+    await expect(page.locator('.design-preview-caption')).toBeVisible()
+    await expect(page.locator('.design-preview-caption')).toContainText(
+      /direction sheet|multi-page brand book/i
+    )
+    await page.locator('#brand-tagline').fill('Calm direction you can hand over')
     await page.getByRole('button', { name: 'Bump', exact: true }).click()
     await expect(page.locator('#design-version')).toHaveValue(/v[2-9]/)
 

@@ -34,6 +34,11 @@ test.describe('Creative Companion path smoke', () => {
     await path.getByRole('button', { name: /Step 1: Define/i }).click()
     await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
     await expect(page.locator('.step-fill-chip')).toBeVisible()
+    // Onboard first step waits on Sketch
+    await expect(page.locator('.define-first-step-chip')).toBeVisible()
+    await expect(page.locator('.define-first-step-chip')).toContainText(
+      /first step|Sketch/i
+    )
     // No per-step Gap · G after chrome collapse
     await expect(page.getByRole('button', { name: /^Gap · G$/i })).toHaveCount(0)
 

@@ -15,13 +15,13 @@ const assetsDir = join(root, 'dist', 'assets')
 
 /**
  * Main app chunk (index-*.js) raw max — excludes jspdf/html2canvas/supabase lazy chunks.
- * 435 KB (v1.46): residual closeout i18n toast catalog (EN+ES humanize keys).
+ * 440 KB (v1.47): design/UX flow honesty chrome + leave-behind thin copy.
  */
-const MAIN_JS_RAW_MAX = 435 * 1024
+const MAIN_JS_RAW_MAX = 440 * 1024
 /** Main CSS raw max */
 const MAIN_CSS_RAW_MAX = 180 * 1024
 /** Main JS gzipped advisory max (warn only if over, still fail on raw) */
-const MAIN_JS_GZIP_WARN = 138 * 1024
+const MAIN_JS_GZIP_WARN = 140 * 1024
 
 function pickMain(files, re) {
   return files.filter((f) => re.test(f)).sort((a, b) => {

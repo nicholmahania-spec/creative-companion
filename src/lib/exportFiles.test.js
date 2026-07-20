@@ -52,6 +52,8 @@ describe('buildBrandPackSnapshot', () => {
     expect(pack.totalCount).toBe(2)
     expect(pack.progressPercent).toBe(50)
     expect(pack.palette).toEqual(['#4F46E5', '#0D9488'])
+    // empty concept package omitted
+    expect(pack.conceptPackage).toBeNull()
     expect(pack.pins[0].note).toBe('Indigo calm')
     expect(pack.app).toBe('Creative Companion')
     expect(pack.exportedAt).toMatch(/^\d{4}-/)
