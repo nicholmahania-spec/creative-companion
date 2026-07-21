@@ -103,7 +103,7 @@ export default function BuddyMate({
     {
       id: 1,
       from: 'buddy',
-      text: `${greetingLine()} Clock says ${formatClock()}. Try not to lose track of reality.`,
+      text: `${greetingLine()} · ${formatClock()}`,
     },
   ])
   // Start minimized so work forms stay free
@@ -342,7 +342,7 @@ export default function BuddyMate({
       lastView.current = view
       const t = window.setTimeout(() => {
         const a = activityRef.current
-        pushBuddy(`${describeActivity(a)} ${activityTip(a)}`, {
+        pushBuddy(describeActivity(a), {
           move: false,
           expand: false,
         })
@@ -353,10 +353,10 @@ export default function BuddyMate({
     lastView.current = view
     const t = window.setTimeout(() => {
       const a = activityRef.current
-      pushBuddy(
-        `${describeActivity(a)} Open me for Coach or Critique.`,
-        { move: true, expand: false }
-      )
+      pushBuddy(`${describeActivity(a)} · Coach if stuck`, {
+        move: true,
+        expand: false,
+      })
     }, 600)
     return () => window.clearTimeout(t)
   }, [activityLive.view, pushBuddy, helperQuiet])
@@ -377,7 +377,7 @@ export default function BuddyMate({
       const a = activityRef.current
       const title = String(a.nextTaskTitle)
       pushBuddy(
-        `New focus: "${title.slice(0, 48)}${title.length > 48 ? '…' : ''}". Open me for Coach.`,
+        `Now · ${title.slice(0, 40)}${title.length > 40 ? '…' : ''}`,
         { move: true, expand: false }
       )
     }, 500)
@@ -389,10 +389,9 @@ export default function BuddyMate({
       lastCompleted.current = completedCount
       setRecentWin(true)
       const a = activityRef.current
-      const follow =
-        a.nextTaskTitle
-          ? ` Next up looks like: "${String(a.nextTaskTitle).slice(0, 40)}…". One at a time.`
-          : ' Desk is clear for a second — nice. Add something if you want.'
+      const follow = a.nextTaskTitle
+        ? ` · next: ${String(a.nextTaskTitle).slice(0, 28)}`
+        : ''
       pushBuddy(`${progressLine('step')}${follow}`, {
         move: true,
         expand: false,
@@ -416,16 +415,16 @@ export default function BuddyMate({
       const a = activityRef.current
       pushBuddy(
         a.nextTaskTitle
-          ? `${progressLine('timer')} You're on: "${String(a.nextTaskTitle).slice(0, 42)}".`
+          ? `Timer · ${String(a.nextTaskTitle).slice(0, 36)}`
           : progressLine('timer'),
         { move: true, expand: false }
       )
     }
     if (!isFocusRunning && lastFocus.current && focusLeft === 0) {
-      pushBuddy(
-        "Timer's done. Stretch, sip water, or hit the bathroom — then pick up whatever is next when you're ready.",
-        { move: true, expand: false }
-      )
+      pushBuddy('Timer done · stretch, then next', {
+        move: true,
+        expand: false,
+      })
     }
     lastFocus.current = isFocusRunning
   }, [isFocusRunning, focusLeft, pushBuddy])
@@ -457,9 +456,7 @@ export default function BuddyMate({
 
       if (t - lastTimePing.current >= 12 * 60 * 1000) {
         lastTimePing.current = t
-        const timeBit = timeBlindLine(sessionStart, t)
-        const tip = activityTip(act)
-        pushBuddy(`${timeBit} ${tip}`, { move: true, expand: false })
+        pushBuddy(timeBlindLine(sessionStart, t), { move: true, expand: false })
         return
       }
 
@@ -521,12 +518,10 @@ export default function BuddyMate({
       const a = activityRef.current
       const req = ++aiReqRef.current
       setAiBusy(true)
-      pushBuddy(
-        isHelperAiConfigured()
-          ? 'Thinking through this step…'
-          : 'Scripted coach — one sec…',
-        { move: true, expand: true }
-      )
+      pushBuddy(isHelperAiConfigured() ? '…' : 'One sec…', {
+        move: true,
+        expand: true,
+      })
       try {
         const result = await coachWithHelper(intent, a, extra)
         if (req !== aiReqRef.current) return
@@ -664,16 +659,12 @@ export default function BuddyMate({
       minutes: kitMinutes,
     })
     if (!res?.ok) {
-      pushBuddy(
-        res?.error ||
-          'Give me a title for the kit — med name, to-do, whatever fits a break.',
-        { move: false }
-      )
+      pushBuddy(res?.error || 'Add a kit title', { move: false })
       return
     }
-    pushYou(`Break kit: ${res.item.title}`)
+    pushYou(`Kit · ${res.item.title}`)
     pushBuddy(
-      `Parked "${res.item.title}" (${kindMeta(res.item.kind).label}, ~${res.item.minutes}m).`,
+      `+ ${res.item.title} · ~${res.item.minutes}m`,
       { move: false }
     )
     setKitTitle('')
@@ -682,13 +673,8 @@ export default function BuddyMate({
   const markKitDone = (item) => {
     completeBreakKitItem(item.id)
     applyGameResult(awardAndBroadcast('break_kit', { label: item.title }))
-    pushYou(`Done: ${item.title}`)
-    pushBuddy(
-      item.recurring
-        ? `Logged "${item.title}" for today.`
-        : `Crossed off "${item.title}".`,
-      { move: false }
-    )
+    pushYou(`Done · ${item.title}`)
+    pushBuddy(`✓ ${item.title}`, { move: false })
   }
 
   const posStyle = spotStyle(spot) || spotStyle(defaultBuddySpot('fab'))
@@ -698,12 +684,22 @@ export default function BuddyMate({
     .filter(Boolean)
     .slice(-6)
 
-  // ——— Minimized: small corner FAB only ———
+  const PROCESS_STEMS = [
+    ['define', 'Def'],
+    ['research', 'Res'],
+    ['ideate', 'Ide'],
+    ['sketch', 'Sk'],
+    ['design', 'Des'],
+    ['review', 'Rev'],
+    ['deliver', 'Del'],
+  ]
+
+  // ——— Minimized: corner FAB ———
   if (!expanded) {
     return (
       <button
         type="button"
-        className={`buddy-fab buddy-float is-cute${
+        className={`buddy-fab buddy-float buddy-studio-fab${
           hyper === 'hard' || hyper === 'strong' || hasUnread ? ' is-alert' : ''
         }${levelBurst ? ' is-levelup' : ''}${
           hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''
@@ -717,19 +713,13 @@ export default function BuddyMate({
         aria-label={`Open Helper${
           showProgress ? `, band ${xp.level}` : ''
         }${hasUnread ? ', new message' : ''}`}
-        title={
-          hasUnread
-            ? 'New tip — click to open'
-            : showProgress
-              ? `Helper · ${xp.level}`
-              : 'Helper'
-        }
+        title={hasUnread ? 'New tip' : 'Helper'}
       >
         <HelperCharacterLottie
           className="buddy-fab-img"
           mood={mood}
           reduceMotion={reduceMotion}
-          size={64}
+          size={56}
           shape="circle"
           fallbackSrc={HELPER_FALLBACK}
         />
@@ -746,7 +736,7 @@ export default function BuddyMate({
     )
   }
 
-  const recentMsgs = messages.slice(-4)
+  const recentMsgs = messages.slice(-3)
   const latestBuddy = [...messages].reverse().find((m) => m.from === 'buddy')
   const panelMood =
     recentWin || mood === 'happy'
@@ -757,11 +747,11 @@ export default function BuddyMate({
           ? 'rest'
           : 'idle'
 
-  // ——— Expanded: refined compact coach card + full-body stage ———
+  // ——— Expanded: coach card ———
   return (
     <div
       ref={shellRef}
-      className={`buddy-shell buddy-float is-compact-dock${
+      className={`buddy-shell buddy-float is-compact-dock buddy-studio${
         isFocusRunning ? ' is-focus' : ''
       }${hyper === 'hard' || hyper === 'strong' ? ' is-hyper' : ''}${
         levelBurst ? ' is-levelup' : ''
@@ -776,14 +766,13 @@ export default function BuddyMate({
         <div className="buddy-compact-card">
           <header className="buddy-compact-head">
             <div className="buddy-compact-identity">
-              {/* Compact face only — message-first panel, not full mascot stage */}
               <HelperCharacterLottie
                 className={`buddy-compact-face mood-${panelMood}${
                   reduceMotion ? ' no-motion' : ''
                 }`}
                 mood={panelMood}
                 reduceMotion={reduceMotion}
-                size={44}
+                size={40}
                 shape="circle"
                 fallbackSrc={HELPER_FALLBACK}
               />
@@ -813,8 +802,8 @@ export default function BuddyMate({
                   e.stopPropagation()
                   minimize()
                 }}
-                aria-label="Minimize buddy"
-                title="Tuck away"
+                aria-label="Minimize"
+                title="Minimize"
               >
                 –
               </button>
@@ -835,7 +824,7 @@ export default function BuddyMate({
           {showProgress && (
             <div
               className="buddy-compact-xp"
-              aria-label={`Progress band ${xp.level}`}
+              aria-label={`Band ${xp.level}`}
               title={gameSummaryLine(game)}
             >
               <div className="buddy-xp-bar">
@@ -873,7 +862,10 @@ export default function BuddyMate({
             ))}
           </div>
 
-          <div className="buddy-compact-actions buddy-act-three" aria-label="Helper actions">
+          <div
+            className="buddy-compact-actions buddy-act-grid"
+            aria-label="Helper actions"
+          >
             <button
               type="button"
               className="buddy-act buddy-act-primary"
@@ -892,19 +884,26 @@ export default function BuddyMate({
             </button>
             <button
               type="button"
+              className="buddy-act"
+              onClick={() => reply('stuck')}
+              disabled={aiBusy}
+            >
+              Stuck
+            </button>
+            <button
+              type="button"
               className={`buddy-act${showBreakCare ? ' is-on' : ''}${
                 needsCare ? ' has-nudge' : ''
               }`}
               onClick={() => {
                 setShowBreakCare((v) => {
                   const next = !v
-                  // Open care kit only — do not auto-log a break (that is explicit below)
                   if (next) {
                     setShowMore(false)
-                    pushBuddy(
-                      'Break care open — water, food, stretch, or log a real break when you take one.',
-                      { move: false, expand: true }
-                    )
+                    pushBuddy('Break · water · food · kit', {
+                      move: false,
+                      expand: true,
+                    })
                   }
                   return next
                 })
@@ -919,14 +918,14 @@ export default function BuddyMate({
           {showBreakCare && (
             <div className="buddy-more bf-more-panel is-inline buddy-break-care">
               <div className="buddy-wellness">
-                <p className="buddy-wellness-label">Body · break care</p>
+                <p className="buddy-wellness-label">Body</p>
                 <div className="buddy-wellness-row">
                   <button
                     type="button"
                     className={`buddy-check${
                       overdue.includes('water') ? ' is-due' : ''
                     }`}
-                    onClick={() => logWellness('water', 'I drank some water')}
+                    onClick={() => logWellness('water', 'Water')}
                   >
                     Water
                   </button>
@@ -935,7 +934,7 @@ export default function BuddyMate({
                     className={`buddy-check${
                       overdue.includes('food') ? ' is-due' : ''
                     }`}
-                    onClick={() => logWellness('food', 'I ate something')}
+                    onClick={() => logWellness('food', 'Food')}
                   >
                     Food
                   </button>
@@ -944,11 +943,9 @@ export default function BuddyMate({
                     className={`buddy-check${
                       overdue.includes('bathroom') ? ' is-due' : ''
                     }`}
-                    onClick={() =>
-                      logWellness('bathroom', 'I went to the bathroom')
-                    }
+                    onClick={() => logWellness('bathroom', 'Bathroom')}
                   >
-                    Bathroom
+                    Bath
                   </button>
                 </div>
                 <button
@@ -956,11 +953,11 @@ export default function BuddyMate({
                   className="buddy-break-btn"
                   onClick={logBreak}
                 >
-                  Logged a real break
+                  Log break
                 </button>
               </div>
               <div className="buddy-kit" aria-label="Break kit">
-                <p className="buddy-wellness-label">Break kit</p>
+                <p className="buddy-wellness-label">Kit</p>
                 <div className="buddy-kit-add">
                   <input
                     className="buddy-kit-input"
@@ -972,7 +969,7 @@ export default function BuddyMate({
                         submitKitItem()
                       }
                     }}
-                    placeholder="Add med / to-do for breaks…"
+                    placeholder="Med / to-do"
                     aria-label="Break kit item"
                     maxLength={120}
                   />
@@ -989,7 +986,7 @@ export default function BuddyMate({
                     >
                       {BREAK_KINDS.map((k) => (
                         <option key={k.id} value={k.id}>
-                          {k.icon} {k.label}
+                          {k.label}
                         </option>
                       ))}
                     </select>
@@ -1004,7 +1001,7 @@ export default function BuddyMate({
                 </div>
                 {openKit.length > 0 && (
                   <ul className="buddy-kit-list">
-                    {openKit.slice(0, 6).map((item) => {
+                    {openKit.slice(0, 5).map((item) => {
                       const meta = kindMeta(item.kind)
                       return (
                         <li key={item.id} className="buddy-kit-item">
@@ -1050,7 +1047,7 @@ export default function BuddyMate({
             }}
             aria-expanded={showMore}
           >
-            {showMore ? 'Show less' : 'Process & tools'}
+            {showMore ? 'Less' : 'More'}
             <span className="buddy-more-chevron" aria-hidden="true">
               {showMore ? '▴' : '▾'}
             </span>
@@ -1059,25 +1056,18 @@ export default function BuddyMate({
           {showMore && (
             <div className="buddy-more bf-more-panel is-inline">
               <div className="buddy-process" aria-label="Process">
-                <p className="buddy-wellness-label">Process</p>
+                <p className="buddy-wellness-label">Path</p>
                 <div className="buddy-process-row">
-                  {[
-                    'define',
-                    'research',
-                    'ideate',
-                    'sketch',
-                    'design',
-                    'review',
-                    'deliver',
-                  ].map((k) => (
+                  {PROCESS_STEMS.map(([k, stem]) => (
                     <button
                       key={k}
                       type="button"
                       className="buddy-quick-btn"
                       onClick={() => reply(k)}
                       disabled={aiBusy}
+                      title={k[0].toUpperCase() + k.slice(1)}
                     >
-                      {k[0].toUpperCase() + k.slice(1)}
+                      {stem}
                     </button>
                   ))}
                 </div>
@@ -1090,7 +1080,7 @@ export default function BuddyMate({
                   onClick={() => reply('full')}
                   disabled={aiBusy}
                 >
-                  Full review
+                  Review
                 </button>
                 <button
                   type="button"
@@ -1115,7 +1105,7 @@ export default function BuddyMate({
                     <span
                       key={b.id}
                       className="buddy-badge"
-                      title={`${b.name}: ${b.desc}`}
+                      title={b.name}
                     >
                       {b.icon}
                     </span>
