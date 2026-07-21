@@ -144,7 +144,7 @@ export default function SettingsView(props) {
             <div className="settings-row">
               <div>
                 <strong>Hide tips</strong>
-                <span>Hide process ? tips and instructional sublines</span>
+                <span>Hide ? tips, empty-state body, pack thin notes</span>
               </div>
               <button
                 type="button"

@@ -93,7 +93,9 @@ describe('i18n wordmark + path + catalog', () => {
     expect(en.openWork).toMatch(/Research/i)
     expect(en.openReview).toMatch(/Review/i)
     expect(en.continueNext).toMatch(/Next|Continue/)
-    expect(en.pathMarkPackThin).toMatch(/client pack|tagline|star/i)
+    expect(en.pathMarkPackThin).toMatch(/client pack|tagline|★|star/i)
+    expect(en.pathMarkPackThin.length).toBeLessThan(60)
+    expect(en.pathFullLeaveBehindThin.length).toBeLessThan(50)
     expect(en.backToIdeate).toMatch(/Ideate/i)
     expect(tFormat('en', 'ui.continueNext', { label: 'Research' })).toBe(
       'Next · Research'

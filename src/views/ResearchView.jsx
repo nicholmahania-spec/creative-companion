@@ -21,7 +21,6 @@ import {
   normalizeLocale,
   t as i18nT,
   pathLabel,
-  pathFillHint,
   tFormat,
 } from '../lib/i18n'
 import { useModalFocus } from '../lib/useModalFocus'
@@ -294,15 +293,6 @@ export default function ResearchView({
                     </p>
                     <p className="empty-state-body">
                       {i18nT(locale, 'ui.emptyPinsBody')}
-                    </p>
-                    <p className="panel-hint research-still-thin" style={{ marginTop: '0.75rem' }}>
-                      <strong>
-                        {i18nT(locale, 'ui.stillThin')} ·{' '}
-                        {pathLabel(locale, 'research')}
-                      </strong>
-                      {' — '}
-                      {pathFillHint(locale, 'research')}. Use path strip or{' '}
-                      <kbd>G</kbd>.
                     </p>
                   </div>
                 ) : (

@@ -66,10 +66,11 @@ test.describe('Process walk (artifacts)', () => {
     await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()
     await expect(page.getByText(/Ideate checklist|Ideate & brainstorm/i)).toBeVisible()
     await page.getByRole('button', { name: /Opposite direction/i }).click()
-    // On earliest empty step: strip densifies (still-thin list hidden; chip open)
+    // On earliest empty step: strip quiets (Fill · G); no still-thin / step chip
     await expect(page.locator('.journey-gap-strip.is-on-gap')).toBeVisible()
-    await expect(page.locator('.step-fill-chip.is-open')).toBeVisible()
+    await expect(page.locator('.journey-gap-strip-btn.is-quiet')).toBeVisible()
     await expect(page.locator('.journey-still-thin')).toHaveCount(0)
+    await expect(page.locator('.step-fill-chip')).toHaveCount(0)
     await page.locator('#dir-title-a').fill('Quiet editorial')
     await page.locator('#dir-title-b').fill('Warm product toolkit')
     await page

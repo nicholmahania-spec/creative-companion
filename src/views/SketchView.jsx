@@ -8,7 +8,6 @@ import {
   t as i18nT,
   tFormat,
   pathLabel,
-  pathFillHint,
 } from '../lib/i18n'
 import { getProcessPhase } from '../lib/processGuide'
 import { formatShortDate, urgencyLabel } from '../lib/dates'
@@ -204,16 +203,6 @@ export default function SketchView(props) {
                       ? i18nT(locale, 'ui.emptyStepBodyDone')
                       : i18nT(locale, 'ui.emptyStepBody')}
                   </p>
-                  {deskTasks.length === 0 && (
-                    <p className="panel-hint sketch-still-thin" style={{ marginTop: '0.5rem' }}>
-                      <strong>
-                        {i18nT(locale, 'ui.stillThin')} ·{' '}
-                        {pathLabel(locale, 'sketch')}
-                      </strong>
-                      {' — '}
-                      {pathFillHint(locale, 'sketch')}.
-                    </p>
-                  )}
                   <p className="work-pack-destination">
                     {i18nT(locale, 'ui.packDest')}
                   </p>

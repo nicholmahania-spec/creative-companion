@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test'
 import { unlockAndOnboard, pathNav, skipIfCloud } from './helpers.js'
 
 /**
- * Path smoke: unlock → walk process; gap chrome = pill + strip (not per-step Gap · G).
+ * Path smoke: unlock → walk process; gap chrome = N/7 pill + strip (not
+ * still-thin list or step-fill chip — those duplicated step-nav pills).
  */
 test.describe('Creative Companion path smoke', () => {
   test('walk 7-step design process after local unlock', async ({ page }) => {
@@ -20,20 +21,14 @@ test.describe('Creative Companion path smoke', () => {
     await expect(page.locator('.journey-gap-strip')).toBeVisible()
     await expect(page.locator('.journey-gap-strip-btn')).toBeVisible()
     await expect(page.locator('.journey-gap-strip-btn')).toContainText(
-      /Next empty ·|Next gap ·|Download brand book|Ship · brand book/i
+      /Next empty ·|Next gap ·|First empty ·|Fill · G|Download brand book|Ship · brand book/i
     )
-    await expect(page.locator('.journey-still-thin')).toBeVisible()
-    await expect(page.locator('.journey-still-thin-link').first()).toBeVisible()
-
-    // Click first still-thin link → jump that step + focus
-    await page.locator('.journey-still-thin-link').first().click()
-    await expect(page.locator('h1.page-title').first()).toBeVisible({
-      timeout: 8000,
-    })
+    // Still-thin list + step-fill chip intentionally removed (pill checkmarks own that signal)
+    await expect(page.locator('.journey-still-thin')).toHaveCount(0)
+    await expect(page.locator('.step-fill-chip')).toHaveCount(0)
 
     await path.getByRole('button', { name: /Step 1: Define/i }).click()
     await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
-    await expect(page.locator('.step-fill-chip')).toBeVisible()
     // Onboard first step waits on Sketch
     await expect(page.locator('.define-first-step-chip')).toBeVisible()
     await expect(page.locator('.define-first-step-chip')).toContainText(
@@ -44,10 +39,9 @@ test.describe('Creative Companion path smoke', () => {
 
     await path.getByRole('button', { name: /Step 2: Research/i }).click()
     await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
-    await expect(page.locator('.research-still-thin')).toBeVisible()
-    await expect(page.locator('.research-still-thin')).toContainText(
-      /Star a pin|2\+|ref/i
-    )
+    // Empty board: title + body only (no second still-thin lecture)
+    await expect(page.getByText(/No pictures yet|pin/i).first()).toBeVisible()
+    await expect(page.locator('.research-still-thin')).toHaveCount(0)
     await expect(page.getByRole('button', { name: /^Gap · G$/i })).toHaveCount(0)
 
     await page.locator('.journey-gap-strip-btn').click()

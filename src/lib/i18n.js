@@ -100,8 +100,7 @@ const EN = {
     openIdeate: 'Go to Ideate',
     /** Primary linear CTA — stronger than gap strip / G recovery */
     continueNext: 'Next · {label}',
-    pathMarkPackThin:
-      'Steps look fine — still need a tagline or starred pictures for the client pack',
+    pathMarkPackThin: 'Need tagline or ★ pins for client pack',
     backToIdeate: 'Back to Ideate',
     backToResearch: 'Back to Research',
     timerDoneIdeate:
@@ -273,10 +272,8 @@ const EN = {
     packReadyFix: '○ {label} — fix',
     firstStepWaiting: 'Your first step is waiting on Sketch:',
     openSketchStep: 'Open Sketch step',
-    designPreviewCaption:
-      'Live preview (look only — edit in the sections below). On Deliver you can download a multi-page brand book PDF.',
-    pathFullLeaveBehindThin:
-      'Steps have content · client pack still needs more for a handoff',
+    designPreviewCaption: 'Live preview — edit sections below. PDF on Deliver.',
+    pathFullLeaveBehindThin: 'Client pack still thin for handoff',
     earliestEmptyBtn: 'First empty · {label} · G',
     backAfterBreak: 'Back to {label}',
     breakResumed: 'Break still running — desk locked',
@@ -397,8 +394,7 @@ const OVERRIDES = {
       openIdeate: 'Ir a Idear',
       openStepChip: 'Abierto · {label}',
       continueNext: 'Continuar · {label}',
-      pathMarkPackThin:
-        'Solo marca de camino — el entregable aún quiere pines ★ o un eslogan',
+      pathMarkPackThin: 'Falta eslogan o pines ★ para el pack',
       backToIdeate: 'Volver a Idear',
       backToResearch: 'Volver a Investigación',
       timerDoneIdeate:

@@ -2564,8 +2564,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>{i18nT(locale, 'ui.timer')}</strong>
-                    <span>Focus for the current step</span>
+                    {i18nT(locale, 'ui.timer')}
                   </button>
                   <button
                     type="button"
@@ -2576,8 +2575,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>{i18nT(locale, 'ui.calendar')}</strong>
-                    <span>{i18nT(locale, 'ui.deadlines')}</span>
+                    {i18nT(locale, 'ui.calendar')}
                   </button>
                   <button
                     type="button"
@@ -2588,8 +2586,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>Spark</strong>
-                    <span>{i18nT(locale, 'ui.sparkHint')}</span>
+                    Spark
                   </button>
                   <button
                     type="button"
@@ -2607,12 +2604,9 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>
-                      {bodyDoubling
-                        ? i18nT(locale, 'ui.helperOff')
-                        : i18nT(locale, 'ui.helperOn')}
-                    </strong>
-                    <span>{i18nT(locale, 'ui.helperHint')}</span>
+                    {bodyDoubling
+                      ? i18nT(locale, 'ui.helperOff')
+                      : i18nT(locale, 'ui.helperOn')}
                   </button>
                   <button
                     type="button"
@@ -2623,8 +2617,7 @@ function App() {
                       setShortcutsOpen(true)
                     }}
                   >
-                    <strong>Keyboard</strong>
-                    <span>C · N · G (next gap) · 1–7 · ?</span>
+                    Keyboard
                   </button>
                   <button
                     type="button"
@@ -2639,8 +2632,7 @@ function App() {
                       )
                     }}
                   >
-                    <strong>Command palette</strong>
-                    <span>⌘K · jump anywhere</span>
+                    Command · ⌘K
                   </button>
                   <button
                     type="button"
@@ -2651,8 +2643,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <strong>{i18nT(locale, 'ui.settings')}</strong>
-                    <span>Demo, data, Helper AI, about</span>
+                    {i18nT(locale, 'ui.settings')}
                   </button>
                 </div>
               )}
