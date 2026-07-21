@@ -147,16 +147,6 @@ export default function DetectiveSheet({
 
   /** Only the required fields actually still empty — not a static list of
    * all three, which reads as wrong once some of them are filled in. */
-  const missingRequiredLabels = useMemo(() => {
-    const labels = []
-    DETECTIVE_CHAPTERS.forEach((ch) => {
-      ch.fields.forEach((f) => {
-        if (f.required && !isFilled(detective?.[f.id])) labels.push(f.label)
-      })
-    })
-    return labels
-  }, [detective])
-
   return (
     <div className={`define-workbook${splitMode ? ' is-split' : ''}`}>
       {!splitMode && (
@@ -213,7 +203,8 @@ export default function DetectiveSheet({
 
       <div className="define-chapters">
         {DETECTIVE_CHAPTERS.map((ch) => {
-          const open = openChapter === ch.id
+          // Split mode = master/detail single scroll: every chapter open, no tabs
+          const open = splitMode || openChapter === ch.id
           const st = chapterStats.find((s) => s.id === ch.id)
           return (
             <article
@@ -392,15 +383,6 @@ export default function DetectiveSheet({
         role="region"
         aria-label="Continue"
       >
-        {!requiredReady && missingRequiredLabels.length > 0 && (
-          <button
-            type="button"
-            className="define-fab-hint"
-            onClick={openNextIncomplete}
-          >
-            Need · {missingRequiredLabels.slice(0, 3).join(' · ')}
-          </button>
-        )}
         <button
           type="button"
           className={`define-fab btn btn-primary work-path-next${requiredReady ? ' is-ready' : ' is-quiet'}`}

@@ -7,7 +7,7 @@
  *
  * Calm chapter nav — no XP / game HUD.
  */
-import { Suspense, lazy, useState, useMemo } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import {
   normalizeLocale,
@@ -15,51 +15,9 @@ import {
   tFormat,
   pathLabel,
 } from '../lib/i18n'
-import { getDetectiveProgress } from '../lib/detectiveBrief'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 const DefineMoodCanvas = lazy(() => import('./DefineMoodCanvas'))
-
-/** Compact chapter tabs — 4px slates, no progress essay */
-function DefineChapterNav({ progress, openChapter, onSelectChapter }) {
-  const { chapters = [], filledCount = 0, fieldTotal = 0 } = progress || {}
-
-  return (
-    <nav className="define-chapter-frame" aria-label="Brief chapters">
-      <ol className="define-chapter-nav-list">
-        {chapters.map((ch) => {
-          const active = openChapter === ch.id
-          return (
-            <li key={ch.id}>
-              <button
-                type="button"
-                className={`define-chapter-nav-btn${active ? ' is-active' : ''}${
-                  ch.complete ? ' is-complete' : ''
-                }`}
-                onClick={() => onSelectChapter?.(ch.id)}
-                aria-current={active ? 'step' : undefined}
-                aria-label={`${ch.title}: ${ch.done} of ${ch.total}${
-                  ch.complete ? ', complete' : ''
-                }`}
-              >
-                <span className="define-chapter-nav-num" aria-hidden="true">
-                  {ch.complete ? '✓' : ch.num}
-                </span>
-                <span className="define-chapter-nav-label">{ch.title}</span>
-                <span className="define-chapter-nav-count">
-                  {ch.done}/{ch.total}
-                </span>
-              </button>
-            </li>
-          )
-        })}
-      </ol>
-      <span className="define-chapter-total" role="status">
-        {filledCount}/{fieldTotal}
-      </span>
-    </nav>
-  )
-}
 
 export default function DefineView(props) {
   const {
@@ -95,11 +53,6 @@ export default function DefineView(props) {
   const removeMilestone = useAppStore((s) => s.removeMilestone)
 
   const [openChapter, setOpenChapter] = useState('core')
-
-  const progress = useMemo(
-    () => getDetectiveProgress(activeProject?.detective),
-    [activeProject?.detective]
-  )
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
   const archivedProjects = (projects || []).filter((p) => p.archived)
@@ -150,12 +103,6 @@ export default function DefineView(props) {
           />
         </div>
       </header>
-
-      <DefineChapterNav
-        progress={progress}
-        openChapter={openChapter}
-        onSelectChapter={setOpenChapter}
-      />
 
       <div
         className="define-split"

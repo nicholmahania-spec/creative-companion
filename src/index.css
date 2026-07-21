@@ -14005,3 +14005,96 @@ select:focus,
     white-space: nowrap;
   }
 }
+
+/* ============================================================
+   Master/detail parity — high-contrast left rail + bold header
+   (mockup structural match, light Tech-Studio tokens)
+   ============================================================ */
+
+/* Left step rail: strong, readable — no barely-visible 0.4 ghosts */
+.journey-sidebar {
+  padding: 0.85rem 0 !important;
+}
+.journey-sidebar .journey-bar-list {
+  gap: 0.15rem !important;
+  padding: 0 0.55rem !important;
+}
+.journey-sidebar .journey-step {
+  min-height: 40px !important;
+  padding: 0.6rem 0.7rem !important;
+  border-radius: 4px !important;
+  border-left: 2px solid transparent !important;
+  opacity: 1 !important;
+  color: #64748B !important;
+  font-weight: 600 !important;
+}
+.journey-sidebar .journey-step:not(.is-active) {
+  opacity: 1 !important;
+}
+.journey-sidebar .journey-step:hover {
+  background: #EEF0F2 !important;
+  color: #1A1A1E !important;
+}
+.journey-sidebar .journey-step.is-active {
+  opacity: 1 !important;
+  background: #FFFFFF !important;
+  color: #1A1A1E !important;
+  border: 1px solid #E2E8F0 !important;
+  border-left: 2px solid #2563EB !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+}
+.journey-sidebar .journey-step.is-done:not(.is-active) {
+  opacity: 1 !important;
+  color: #334155 !important;
+}
+.journey-sidebar .journey-label {
+  font-size: 0.85rem !important;
+  font-weight: inherit !important;
+  color: inherit !important;
+  letter-spacing: -0.01em !important;
+}
+.journey-sidebar .journey-num {
+  opacity: 1 !important;
+  color: #94A3B8 !important;
+  font-weight: 700 !important;
+}
+.journey-sidebar .journey-step.is-active .journey-num {
+  color: #2563EB !important;
+}
+.journey-sidebar .journey-step.is-done:not(.is-active) .journey-num {
+  color: #0F766E !important;
+}
+
+/* Massive bold Define header — beat the global 1.25rem page-title clamp */
+.define-studio-title.page-title {
+  font-size: clamp(2.4rem, 4vw, 3rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1.02 !important;
+  color: #1A1A1E !important;
+  margin: 0 !important;
+}
+
+/* Chapters now flow as one master scroll — bold section dividers, no tab loop */
+.define-chapter-frame { display: none !important; }
+.define-workbook.is-split .define-chapter {
+  border-top: 1px solid #E2E8F0;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+.define-workbook.is-split .define-chapter:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+.define-workbook.is-split .define-chapter-title {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: #1A1A1E !important;
+  letter-spacing: -0.02em !important;
+}
+.define-workbook.is-split .define-chapter-badge {
+  color: #94A3B8 !important;
+  font-weight: 700 !important;
+}

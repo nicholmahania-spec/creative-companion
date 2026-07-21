@@ -153,10 +153,6 @@ export default function DefineMoodCanvas({
           Sticky
         </button>
       </div>
-      <p className="define-mood-tip">
-        <span className="define-field-tip-label">tip</span>
-        Dump half-thoughts as stickies. Stars live on Research.
-      </p>
 
       <div className="define-mood-wall">
         {pins.length === 0 ? (
@@ -164,7 +160,6 @@ export default function DefineMoodCanvas({
             <span className="define-mood-empty-icon" aria-hidden="true">
               ✦
             </span>
-            <p>Empty sandbox — drop a photo or pin a swatch.</p>
           </div>
         ) : (
           pins.map((pin) => {
