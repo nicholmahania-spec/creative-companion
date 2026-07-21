@@ -175,12 +175,12 @@ export default function BuddyMate({
 
   const repark = useCallback(
     (forceExpand = false) => {
-      setSpot((prev) => {
-        const mode = forceExpand ? 'panel' : 'fab'
-        const next = pickBuddySpot(prev?.id || spotIdRef.current, mode)
-        spotIdRef.current = next.id
-        return next
-      })
+      // Expanded panel always bottom-right so it never covers path Next
+      const next = forceExpand
+        ? defaultBuddySpot('panel')
+        : pickBuddySpot(spotIdRef.current, 'fab')
+      spotIdRef.current = next.id
+      setSpot(next)
       setHop((n) => n + 1)
       if (forceExpand) {
         setExpanded(true)
@@ -193,7 +193,6 @@ export default function BuddyMate({
 
   const openPanel = useCallback(() => {
     clearAutoMin()
-    // Expand from current corner — prefer bottom-right for forms
     const dock = defaultBuddySpot('panel')
     spotIdRef.current = dock.id
     setSpot(dock)
@@ -352,35 +351,25 @@ export default function BuddyMate({
     )
   }, [overdue, isFocusRunning, recentWin, hyper, levelBurst])
 
-  // New page → tip (message only — don't cover desk). Skip when quiet.
+  // New page → FAB ping only (never hop/repark/expand). Skip when quiet.
   useEffect(() => {
     if (helperQuiet) return undefined
     const view = activityLive.view
     if (!view) return undefined
     if (lastView.current === null) {
       lastView.current = view
-      const t = window.setTimeout(() => {
-        const a = activityRef.current
-        pushBuddy(describeActivity(a), {
-          move: false,
-          expand: false,
-        })
-      }, 1400)
-      return () => window.clearTimeout(t)
+      return undefined
     }
     if (lastView.current === view) return undefined
     lastView.current = view
     const t = window.setTimeout(() => {
       const a = activityRef.current
-      pushBuddy(`${describeActivity(a)} · Coach if stuck`, {
-        move: true,
-        expand: false,
-      })
-    }, 600)
+      pushBuddy(describeActivity(a), { move: false, expand: false })
+    }, 900)
     return () => window.clearTimeout(t)
   }, [activityLive.view, pushBuddy, helperQuiet])
 
-  // Current step changed → short acknowledge. Skip when quiet.
+  // Current step changed → FAB ping only. Skip when quiet.
   useEffect(() => {
     if (helperQuiet) return undefined
     const key = `${activityLive.nextTaskTitle || ''}|${activityLive.view || ''}`
@@ -395,11 +384,11 @@ export default function BuddyMate({
     const t = window.setTimeout(() => {
       const a = activityRef.current
       const title = String(a.nextTaskTitle)
-      pushBuddy(
-        `Now · ${title.slice(0, 40)}${title.length > 40 ? '…' : ''}`,
-        { move: true, expand: false }
-      )
-    }, 500)
+      pushBuddy(`Now · ${title.slice(0, 36)}${title.length > 36 ? '…' : ''}`, {
+        move: false,
+        expand: false,
+      })
+    }, 700)
     return () => window.clearTimeout(t)
   }, [activityLive.nextTaskTitle, activityLive.view, pushBuddy, helperQuiet])
 
@@ -409,10 +398,10 @@ export default function BuddyMate({
       setRecentWin(true)
       const a = activityRef.current
       const follow = a.nextTaskTitle
-        ? ` · next: ${String(a.nextTaskTitle).slice(0, 28)}`
+        ? ` · next: ${String(a.nextTaskTitle).slice(0, 24)}`
         : ''
       pushBuddy(`${progressLine('step')}${follow}`, {
-        move: true,
+        move: false,
         expand: false,
       })
       const t = window.setTimeout(() => setRecentWin(false), 4000)
@@ -424,7 +413,7 @@ export default function BuddyMate({
   useEffect(() => {
     if (!pulseWin) return
     setRecentWin(true)
-    pushBuddy(progressLine('step'), { move: true, expand: false })
+    pushBuddy(progressLine('step'), { move: false, expand: false })
     const t = window.setTimeout(() => setRecentWin(false), 4000)
     return () => window.clearTimeout(t)
   }, [pulseWin, pushBuddy])
@@ -434,16 +423,13 @@ export default function BuddyMate({
       const a = activityRef.current
       pushBuddy(
         a.nextTaskTitle
-          ? `Timer · ${String(a.nextTaskTitle).slice(0, 36)}`
+          ? `Timer · ${String(a.nextTaskTitle).slice(0, 32)}`
           : progressLine('timer'),
-        { move: true, expand: false }
+        { move: false, expand: false }
       )
     }
     if (!isFocusRunning && lastFocus.current && focusLeft === 0) {
-      pushBuddy('Timer done · stretch, then next', {
-        move: true,
-        expand: false,
-      })
+      pushBuddy('Timer done · stretch', { move: false, expand: false })
     }
     lastFocus.current = isFocusRunning
   }, [isFocusRunning, focusLeft, pushBuddy])
@@ -465,42 +451,46 @@ export default function BuddyMate({
 
       if (level && level !== lastHyperLevel.current) {
         lastHyperLevel.current = level
+        // Hard hyperfocus may open panel once; soft/strong = FAB only
         pushBuddy(hyperfocusLine(breakMins), {
-          move: true,
+          move: false,
           expand: level === 'hard',
         })
         return
       }
       if (!level) lastHyperLevel.current = null
 
-      if (t - lastTimePing.current >= 12 * 60 * 1000) {
+      if (t - lastTimePing.current >= 15 * 60 * 1000) {
         lastTimePing.current = t
-        pushBuddy(timeBlindLine(sessionStart, t), { move: true, expand: false })
+        pushBuddy(timeBlindLine(sessionStart, t), {
+          move: false,
+          expand: false,
+        })
         return
       }
 
+      // Soft wellness / idle — FAB unread only, never repark
       if (od.length) {
-        pushBuddy(wellnessLine(od[0]), { move: true, expand: false })
+        pushBuddy(wellnessLine(od[0]), { move: false, expand: false })
       } else if (level === 'soft' || level === 'strong') {
-        pushBuddy(hyperfocusLine(breakMins), { move: true, expand: false })
-      } else {
-        pushBuddy(idleLineWithActivity(act), { move: true, expand: false })
+        pushBuddy(hyperfocusLine(breakMins), { move: false, expand: false })
       }
+      // Skip chatty idle pings — user opens Helper when they want Coach
     }
 
     if (helperQuiet) {
       return () => {}
     }
 
-    const interval = window.setInterval(tick, 3 * 60 * 1000)
+    const interval = window.setInterval(tick, 4 * 60 * 1000)
     const first = window.setTimeout(() => {
-      pushBuddy(timeBlindLine(sessionStart), { move: true, expand: false })
-    }, 2 * 60 * 1000)
+      pushBuddy(timeBlindLine(sessionStart), { move: false, expand: false })
+    }, 4 * 60 * 1000)
     const well = window.setTimeout(() => {
       const od = overdueKinds(loadWellness())
       if (od.length)
-        pushBuddy(wellnessLine(od[0]), { move: true, expand: false })
-    }, 90 * 1000)
+        pushBuddy(wellnessLine(od[0]), { move: false, expand: false })
+    }, 3 * 60 * 1000)
 
     return () => {
       window.clearInterval(interval)

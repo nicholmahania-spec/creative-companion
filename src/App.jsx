@@ -1046,16 +1046,18 @@ function App() {
       return
     }
 
-    // First lockout: inline consent (no window.confirm)
+    // First lockout: bottom consent once; later use Settings if still off
     if (!prefs.forceBreaksConsented) {
-      setPref('forceBreaksExplained', true)
       setIsFocusRunning(false)
       setSessionComplete(true)
       setPomodoroWorkStartedAt(null)
       markBreak()
       playBreakChime()
-      setForceBreakConsentOpen(true)
-      flashToast(i18nT(locale, 'ui.forceBreaksReview'))
+      if (!prefs.forceBreaksExplained) {
+        setPref('forceBreaksExplained', true)
+        setForceBreakConsentOpen(true)
+        flashToast(i18nT(locale, 'ui.forceBreaksReview'))
+      }
       return
     }
 
