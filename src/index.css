@@ -12440,16 +12440,68 @@ select:focus,
   cursor: pointer;
 }
 
+/* Break consent — bottom strip, never mid-canvas over work */
 .force-break-consent-studio {
-  border-radius: 4px !important;
-  border: 1px solid var(--ts-border, #E2E8F0);
+  position: fixed !important;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  border-top: 1px solid var(--ts-border, #E2E8F0) !important;
   box-shadow: none !important;
+  background: #FFFFFF !important;
+  padding: 0.75rem 1rem !important;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  max-width: none !important;
 }
 
 .force-break-consent-studio .desk-confirm-body {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.35;
+  margin: 0;
+  flex: 1 1 12rem;
+  max-width: 36rem;
+}
+
+.force-break-consent-studio .desk-confirm-actions {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* Helper dock — above sticky path Next */
+.buddy-studio.buddy-float,
+.buddy-studio-fab.buddy-float {
+  bottom: 5.25rem !important;
+  right: 1rem !important;
+  left: auto !important;
+  top: auto !important;
+  z-index: 40;
+}
+
+@media (max-width: 640px) {
+  .buddy-studio.buddy-float,
+  .buddy-studio-fab.buddy-float {
+    bottom: 4.75rem !important;
+    right: 0.65rem !important;
+  }
+}
+
+.journey-gap-strip.is-on-gap {
+  justify-content: flex-end;
+}
+
+.journey-gap-strip-btn.is-quiet {
+  min-width: 2.25rem;
+  opacity: 0.75;
+  font-weight: 700;
 }
 
 .undo-chip {

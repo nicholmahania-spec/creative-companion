@@ -143,7 +143,8 @@ export function scriptedCoachReply(intent, activity = {}, extra = {}) {
     case 'tip':
       return `${activityTip(a)} · ${recommendForTask(a)}`
     case 'stuck':
-      return `${progressLine('stuck')} · ${recommendForTask(a)}`
+      // One line only — Coach is a separate control
+      return progressLine('stuck')
     case 'define':
     case 'clarify':
       return designProcessTip('define', a)

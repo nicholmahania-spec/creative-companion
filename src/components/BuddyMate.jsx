@@ -203,22 +203,39 @@ export default function BuddyMate({
     setHasUnread(false)
   }, [clearAutoMin])
 
+  const isThinkingText = (t) => t === '…' || t === 'One sec…'
+
   const pushBuddy = useCallback(
-    (text, { move = true, expand = false } = {}) => {
+    (text, { move = true, expand = false, replaceThinking = false } = {}) => {
       if (!text) return
       if (move) repark(expand)
       else if (expand) {
         setExpanded(true)
         setHasUnread(false)
         scheduleAutoMinimize(12000)
-      } else {
+      } else if (!expanded) {
         // Message waiting — pulse FAB, don't cover the desk
         setHasUnread(true)
       }
-      const id = msgId.current++
-      setMessages((m) => [...m.slice(-14), { id, from: 'buddy', text }])
+      setMessages((m) => {
+        if (replaceThinking) {
+          const last = m[m.length - 1]
+          if (last?.from === 'buddy' && isThinkingText(last.text)) {
+            return [
+              ...m.slice(0, -1),
+              { ...last, text },
+            ].slice(-14)
+          }
+        }
+        // Drop any leftover thinking bubble when a real reply lands
+        const base = m.filter(
+          (x) => !(x.from === 'buddy' && isThinkingText(x.text))
+        )
+        const id = msgId.current++
+        return [...base.slice(-13), { id, from: 'buddy', text }]
+      })
     },
-    [repark, scheduleAutoMinimize]
+    [repark, scheduleAutoMinimize, expanded]
   )
 
   const pushYou = useCallback((text) => {
@@ -520,17 +537,26 @@ export default function BuddyMate({
       const a = activityRef.current
       const req = ++aiReqRef.current
       setAiBusy(true)
+      // Stay docked bottom-right; replace thinking line with one reply
       pushBuddy(isHelperAiConfigured() ? '…' : 'One sec…', {
-        move: true,
+        move: false,
         expand: true,
       })
       try {
         const result = await coachWithHelper(intent, a, extra)
         if (req !== aiReqRef.current) return
-        pushBuddy(result.text, { move: true, expand: true })
+        pushBuddy(result.text, {
+          move: false,
+          expand: true,
+          replaceThinking: true,
+        })
       } catch {
         if (req !== aiReqRef.current) return
-        pushBuddy(activityTip(a), { move: true, expand: true })
+        pushBuddy(activityTip(a), {
+          move: false,
+          expand: true,
+          replaceThinking: true,
+        })
       } finally {
         if (req === aiReqRef.current) setAiBusy(false)
       }

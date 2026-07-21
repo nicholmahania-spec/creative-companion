@@ -2828,6 +2828,9 @@ function App() {
               }
             >
               {pathDoneCount}/7
+              {pathNextGap
+                ? ` · ${String(pathLabel(locale, pathNextGap.id) || pathNextGap.label || '').slice(0, 8)}`
+                : ''}
             </button>
           ) : (
             <span className="journey-tools-pill" role="status" aria-live="polite">
@@ -2844,10 +2847,8 @@ function App() {
             pathNextGap={pathNextGap}
             leaveBehindThin={leaveBehindThin}
             activeView={activeView}
-            getNextJourney={getNextJourney}
             pathLabel={pathLabel}
             i18nT={i18nT}
-            tFormat={tFormat}
             goToNextProcessGap={goToNextProcessGap}
             setActiveView={setActiveView}
           />

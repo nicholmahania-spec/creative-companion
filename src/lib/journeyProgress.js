@@ -54,13 +54,21 @@ export function pathStepHasContent(stepId, ctx = {}) {
   const palette = ctx.palette || project.palette || []
 
   switch (stepId) {
-    case 'define':
+    case 'define': {
+      // Default blank name "My project" alone is not fill — but any real brief signal is
+      const named =
+        project.name &&
+        String(project.name).trim() &&
+        String(project.name).trim() !== 'My project' &&
+        String(project.name).trim() !== 'Untitled project'
       return !!(
-        (project.name && project.name !== 'My project') ||
+        named ||
         project.brief?.trim() ||
         project.detective?.goal?.trim() ||
-        project.detective?.audience?.trim()
+        project.detective?.audience?.trim() ||
+        project.detective?.brandWords?.trim()
       )
+    }
     case 'research': {
       // Once anything is starred, every starred pin needs its "why" filled —
       // 2+ unstarred pins alone still count as early progress.

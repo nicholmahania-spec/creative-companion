@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v29)
- * v28: shell densify · v29: dead CSS purge (~80KB)
+/* Creative Companion — offline shell + asset cache (v30)
+ * v29: CSS purge · v30: gap pill quiet + Helper/consent residuals
  */
-const CACHE = 'cc-shell-v29'
+const CACHE = 'cc-shell-v30'
 const PRECACHE = [
   './',
   './index.html',
