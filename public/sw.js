@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v22)
- * v21: shell tools · v22: onboard + HUD + helper residual
+/* Creative Companion — offline shell + asset cache (v23)
+ * v22: residual chrome · v23: breakdown + stuck modal densify
  */
-const CACHE = 'cc-shell-v22'
+const CACHE = 'cc-shell-v23'
 const PRECACHE = [
   './',
   './index.html',

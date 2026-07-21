@@ -16760,6 +16760,73 @@ select:focus,
 }
 
 /* ============================================================
+   Breakdown + stuck modal densify
+   ============================================================ */
+.breakdown-studio {
+  border-radius: 4px !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  box-shadow: none !important;
+  background: #FFFFFF;
+  max-width: 26rem;
+}
+.breakdown-studio .breakdown-lead {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ts-mute, #94A3B8);
+  margin: 0 0 0.85rem;
+}
+.breakdown-studio .breakdown-how {
+  display: none;
+}
+.breakdown-studio .breakdown-depth {
+  border-radius: 4px !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  box-shadow: none !important;
+  background: #FFFFFF;
+  min-height: 40px;
+  text-align: left;
+}
+.breakdown-studio .breakdown-depth span {
+  display: none;
+}
+.breakdown-studio .breakdown-depth.is-active {
+  border-color: var(--ts-focus, #2563EB);
+  outline: 1.5px solid var(--ts-focus, #2563EB);
+  outline-offset: 0;
+}
+.breakdown-studio .breakdown-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+}
+.breakdown-studio .breakdown-dot {
+  border-radius: 2px;
+  width: 0.4rem;
+  height: 0.4rem;
+}
+.reset-studio {
+  border-radius: 4px !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  box-shadow: none !important;
+}
+.reset-studio .reset-lede {
+  display: none;
+}
+.reset-studio .reset-row {
+  border-radius: 4px !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  box-shadow: none !important;
+  min-height: 44px;
+}
+.reset-studio .reset-row:focus-visible,
+.reset-studio .reset-row:hover {
+  border-color: var(--ts-focus, #2563EB);
+  outline: 1.5px solid var(--ts-focus, #2563EB);
+  outline-offset: 0;
+}
+
+/* ============================================================
    Global residual — onboard, demo, HUD, helper, resume
    ============================================================ */
 .onboard-studio .onboard-panel {

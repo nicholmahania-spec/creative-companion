@@ -2144,21 +2144,21 @@ function App() {
 
   const creativeResetItems = [
     {
-      label: 'Break project into micro-steps',
+      label: 'Break into micro-steps',
       action: () => {
         setShowCreativeReset(false)
         openBreakdown()
       },
     },
     {
-      label: 'Back to current step',
+      label: 'Current Sketch step',
       action: () => {
         setActiveView('flow')
         setShowCreativeReset(false)
       },
     },
     {
-      label: 'Split current step into 3',
+      label: 'Split step ×3',
       action: () => {
         if (nextTask && !nextTask.parentId) breakIntoSteps(nextTask.id)
         setActiveView('flow')
@@ -2166,14 +2166,14 @@ function App() {
       },
     },
     {
-      label: 'Get a spark',
+      label: 'Spark',
       action: () => {
         setActiveView('spark')
         setShowCreativeReset(false)
       },
     },
     {
-      label: 'Start a 2‑min focus',
+      label: '2-min timer',
       action: () => {
         resetFocus(2)
         setActiveView('insights')
@@ -2181,7 +2181,7 @@ function App() {
       },
     },
     {
-      label: 'Open mood board',
+      label: 'Research board',
       action: () => {
         setActiveView('studio')
         setShowCreativeReset(false)
@@ -3991,22 +3991,19 @@ function App() {
             if (e.target === e.currentTarget) setShowBreakdown(false)
           }}
         >
-          <div className="export-panel breakdown-panel">
+          <div className="export-panel breakdown-panel breakdown-studio">
             <div className="export-panel-header">
               <div>
-                <p className="field-label" style={{ marginBottom: 4 }}>
-                  ADHD project breakdown
-                </p>
                 <h3 style={{ margin: 0 }}>
-                  Micro-steps for {activeProject?.name || 'this project'}
+                  Break down · {activeProject?.name || 'Project'}
                 </h3>
               </div>
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-ghost btn-sm"
                 onClick={() => setShowBreakdown(false)}
               >
-                Close
+                ×
               </button>
             </div>
 
@@ -4024,22 +4021,14 @@ function App() {
             {breakdownStep === 0 && (
               <div className="breakdown-step">
                 <p className="breakdown-lead">
-                  Overwhelm usually means the project is still one giant blob.
-                  We&apos;ll turn it into tiny, doable desk steps you can check
-                  off one at a time.
+                  Giant blob → tiny Sketch steps.
                 </p>
-                <ol className="breakdown-how">
-                  <li>Name the goal</li>
-                  <li>Write what “done” looks like</li>
-                  <li>Pick how many steps (5 / 8 / 12)</li>
-                  <li>Edit the list, then add to your Sketch queue</li>
-                </ol>
                 <button
                   type="button"
                   className="btn btn-primary"
                   onClick={() => setBreakdownStep(1)}
                 >
-                  Start breakdown
+                  Start
                 </button>
               </div>
             )}
@@ -4047,21 +4036,21 @@ function App() {
             {breakdownStep === 1 && (
               <div className="breakdown-step">
                 <label className="field-label" htmlFor="bd-goal">
-                  1 · What are we making?
+                  Goal
                 </label>
                 <input
                   id="bd-goal"
                   className="field-input"
                   value={bdGoal}
                   onChange={(e) => setBdGoal(e.target.value)}
-                  placeholder="e.g. Spring booklet cover directions"
+                  placeholder="What we’re making"
                 />
                 <label
                   className="field-label"
                   htmlFor="bd-done"
-                  style={{ marginTop: '0.85rem' }}
+                  style={{ marginTop: '0.65rem' }}
                 >
-                  2 · What does “done enough” look like?
+                  Done enough
                 </label>
                 <textarea
                   id="bd-done"
@@ -4069,12 +4058,12 @@ function App() {
                   rows={2}
                   value={bdDone}
                   onChange={(e) => setBdDone(e.target.value)}
-                  placeholder="e.g. 3 cover options ready to show the client"
+                  placeholder="Ship definition"
                 />
                 <div className="breakdown-nav">
                   <button
                     type="button"
-                    className="btn btn-ghost"
+                    className="btn btn-ghost btn-sm"
                     onClick={() => setBreakdownStep(0)}
                   >
                     Back
@@ -4093,7 +4082,7 @@ function App() {
 
             {breakdownStep === 2 && (
               <div className="breakdown-step">
-                <p className="field-label">3 · How broken-down do you need?</p>
+                <p className="field-label">Depth</p>
                 <div className="breakdown-depth-list">
                   {BREAKDOWN_DEPTHS.map((d) => (
                     <button
@@ -4105,12 +4094,11 @@ function App() {
                       onClick={() => setBdDepth(d.id)}
                     >
                       <strong>{d.label}</strong>
-                      <span>{d.hint}</span>
                     </button>
                   ))}
                 </div>
                 <label className="field-label" htmlFor="bd-energy">
-                  Energy for these steps
+                  Energy
                 </label>
                 <select
                   id="bd-energy"
@@ -4118,14 +4106,14 @@ function App() {
                   value={bdEnergy}
                   onChange={(e) => setBdEnergy(e.target.value)}
                 >
-                  <option value="low">Low — tiny actions only</option>
-                  <option value="med">Med — normal creative work</option>
-                  <option value="high">High — deep focus later</option>
+                  <option value="low">Low</option>
+                  <option value="med">Med</option>
+                  <option value="high">High</option>
                 </select>
                 <div className="breakdown-nav">
                   <button
                     type="button"
-                    className="btn btn-ghost"
+                    className="btn btn-ghost btn-sm"
                     onClick={() => setBreakdownStep(1)}
                   >
                     Back
@@ -4135,7 +4123,7 @@ function App() {
                     className="btn btn-primary"
                     onClick={buildBreakdownPreview}
                   >
-                    Generate micro-steps
+                    Generate
                   </button>
                 </div>
               </div>
@@ -4143,13 +4131,7 @@ function App() {
 
             {breakdownStep === 3 && (
               <div className="breakdown-step">
-                <p className="field-label">
-                  4 · Edit anything · delete · add your own
-                </p>
-                <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
-                  These become real desk entries. You only ever do the top open
-                  one.
-                </p>
+                <p className="field-label">Edit steps</p>
                 <ul className="breakdown-edit-list">
                   {bdSteps.map((line, i) => (
                     <li key={i}>
@@ -4164,7 +4146,7 @@ function App() {
                       />
                       <button
                         type="button"
-                        className="btn btn-ghost"
+                        className="btn btn-ghost btn-sm"
                         onClick={() => removeBdStepLine(i)}
                         aria-label={`Remove step ${i + 1}`}
                       >
@@ -4175,15 +4157,15 @@ function App() {
                 </ul>
                 <button
                   type="button"
-                  className="text-link"
+                  className="btn btn-ghost btn-sm"
                   onClick={addBdStepLine}
                 >
-                  + Add another micro-step
+                  + Step
                 </button>
                 <div className="breakdown-nav">
                   <button
                     type="button"
-                    className="btn btn-ghost"
+                    className="btn btn-ghost btn-sm"
                     onClick={() => setBreakdownStep(2)}
                   >
                     Back
@@ -4194,7 +4176,7 @@ function App() {
                     disabled={!bdSteps.some((s) => s.trim())}
                     onClick={commitBreakdown}
                   >
-                    Add {bdSteps.filter((s) => s.trim()).length} steps to Sketch
+                    Add {bdSteps.filter((s) => s.trim()).length} to Sketch
                   </button>
                 </div>
               </div>
@@ -4203,27 +4185,22 @@ function App() {
             {breakdownStep === 4 && (
               <div className="breakdown-step">
                 <p className="session-done" style={{ marginTop: 0 }}>
-                  Added {breakdownAdded} micro-steps. Queue is collapsed so you
-                  only see step #1.
-                </p>
-                <p className="breakdown-lead">
-                  Do <strong>only the current step</strong>. Mark complete when
-                  finished — the next micro-step rises automatically.
+                  +{breakdownAdded} steps · do #1 only
                 </p>
                 <div className="breakdown-nav">
                   <button
                     type="button"
-                    className="btn btn-secondary"
+                    className="btn btn-secondary btn-sm"
                     onClick={openBreakdown}
                   >
-                    Break down more
+                    More
                   </button>
                   <button
                     type="button"
                     className="btn btn-primary"
                     onClick={finishBreakdownToStep}
                   >
-                    Start current step
+                    Start #1
                   </button>
                 </div>
               </div>
@@ -4242,9 +4219,8 @@ function App() {
             if (e.target === e.currentTarget) setShowCreativeReset(false)
           }}
         >
-          <div className="export-panel reset-panel">
-            <h3 className="reset-title">Stuck? Pick one</h3>
-            <p className="view-lede reset-lede">Esc to close.</p>
+          <div className="export-panel reset-panel reset-studio">
+            <h3 className="reset-title">Stuck · pick one</h3>
             <div className="reset-list">
               {creativeResetItems.map((item, i) => (
                 <button
