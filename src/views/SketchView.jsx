@@ -197,11 +197,10 @@ export default function SketchView(props) {
                   <div className="step-focus-meta">
                     <span className="task-badge">Now</span>
                     <span className="task-meta">
-                      {({ high: 'High', med: 'Medium', low: 'Low' }[
+                      {({ high: 'H', med: 'M', low: 'L' }[
                         nextTask.energy || 'med'
-                      ] || 'Medium')}{' '}
-                      energy
-                      {nextTask.parentId ? ' · micro-step' : ''}
+                      ] || 'M')}
+                      {nextTask.parentId ? ' · micro' : ''}
                       {nextTask.dueDate
                         ? ` · ${urgencyLabel(nextTask.dueDate)}`
                         : ''}
@@ -323,7 +322,7 @@ export default function SketchView(props) {
               String(d.title || '').trim()
             ) && (
               <section className="panel brand-section sketch-directions-panel">
-                <div className="brand-section-label">Draft options (from Ideate · ideas)</div>
+                <div className="brand-section-label">From Ideate</div>
                 <div className="sketch-dir-chips">
                   {(activeProject.directions || [])
                     .filter((d) => String(d.title || '').trim())
@@ -407,7 +406,7 @@ export default function SketchView(props) {
                   value={quickInput}
                   onChange={(e) => setQuickInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && captureStep?.()}
-                  placeholder="Dump another idea…"
+                  placeholder="Next step"
                   aria-label="Add to desk"
                 />
                 <button
@@ -529,10 +528,9 @@ export default function SketchView(props) {
                           <span className="task-step-num">Step {i + 2}</span>
                           <span className="task-title">{task.title}</span>
                           <span className="task-meta">
-                            {({ high: 'High', med: 'Medium', low: 'Low' }[
+                            {({ high: 'H', med: 'M', low: 'L' }[
                               task.energy || 'med'
-                            ] || 'Medium')}{' '}
-                            energy
+                            ] || 'M')}
                             {task.dueDate
                               ? ` · ${formatShortDate(task.dueDate)}`
                               : ''}

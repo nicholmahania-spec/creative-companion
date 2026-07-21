@@ -214,16 +214,8 @@ export default function ResearchView({
             <section className="panel brand-section board-wall-panel research-wall">
               <div className="board-wall-head">
                 <div className="brand-section-label" style={{ margin: 0 }}>
-                  Wall
+                  Board
                 </div>
-                {deskMood.length > 0 && (
-                  <span className="panel-hint board-pack-count" style={{ margin: 0 }}>
-                    Leave-behind {deskMood.filter((m) => m.inPack).length}/6
-                    {deskMood.filter((m) => m.inPack).length >= 6
-                      ? ' · full'
-                      : ''}
-                  </span>
-                )}
               </div>
               <div
                 className={`mood-board${deskMood.length ? ' has-pins is-masonry' : ''}${

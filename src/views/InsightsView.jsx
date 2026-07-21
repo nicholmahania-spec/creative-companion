@@ -72,7 +72,7 @@ export default function InsightsView(props) {
       </div>
       {nextTask && (
         <div className="mood-linked-step" style={{ marginBottom: '1rem' }}>
-          <span className="task-badge">Working on</span>
+          <span className="task-badge">Now</span>
           <p className="mood-linked-title">{nextTask.title}</p>
         </div>
       )}
@@ -152,7 +152,7 @@ export default function InsightsView(props) {
         )}
         <div className="settings-row" style={{ marginTop: '0.85rem' }}>
           <div>
-            <strong>Force break lockouts</strong>
+            <strong>Break lock</strong>
             <span>
               When on: desk locks 5–10 min after a Pomodoro (or 25+ min with
               Helper on). Same consent as Settings.

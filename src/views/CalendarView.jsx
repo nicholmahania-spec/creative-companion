@@ -50,7 +50,7 @@ export default function CalendarView(props) {
           <div className="flow-top">
             <div>
               <h1 className="page-title">Deadlines</h1>
-              <p className="page-sub">Project + step due dates</p>
+
             </div>
           </div>
 
@@ -82,12 +82,11 @@ export default function CalendarView(props) {
           )}
 
           <section className="panel brand-section">
-            <div className="brand-section-label">Active project due</div>
-            <p className="panel-hint" style={{ marginBottom: '0.55rem' }}>
-              {activeProject?.name || 'No project'}
-            </p>
+            <div className="brand-section-label">
+              {activeProject?.name || 'Project'} · due
+            </div>
             <label className="field-label" htmlFor="project-deadline">
-              Project deadline
+              Deadline
             </label>
             <div className="deadline-edit-row">
               <input
@@ -241,8 +240,8 @@ export default function CalendarView(props) {
             {upcomingDeadlines.length === 0 ? (
               <div className="empty-state empty-state-craft" style={{ paddingTop: '0.5rem' }}>
                 <EmptyIllustration variant="calendar" />
-                <p className="empty-state-body" style={{ margin: 0 }}>
-                  No deadlines yet. Set project due above, or a step due on Sketch.
+                <p className="empty-state-title" style={{ margin: 0 }}>
+                  No deadlines
                 </p>
               </div>
             ) : (

@@ -343,69 +343,43 @@ export default function DeliverView({
                     </label>
                     <details className="pack-more-actions">
                       <summary className="text-link pack-more-summary">
-                        More actions
+                        More
                       </summary>
                       <div className="finish-secondary-row pack-more-row">
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={openExportPanel}
-                      >
-                        Preview full
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => setActiveView('brand')}
-                      >
-                        Edit Design
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => setActiveView('flow')}
-                      >
-                        Sketch
-                      </button>
-                      </div>
-                    </details>
-                    <details className="finish-more-formats">
-                      <summary>More formats &amp; backup</summary>
-                      <div className="finish-more-formats-list">
                         <button
                           type="button"
-                          className="btn btn-secondary"
+                          className="btn btn-ghost"
+                          onClick={openExportPanel}
+                        >
+                          Preview
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
+                          onClick={() => setActiveView('brand')}
+                        >
+                          Design
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
                           onClick={() => runExport('pdf-preview')}
                         >
-                          Preview PDF (raster)
+                          Raster
                         </button>
                         <button
                           type="button"
-                          className="btn btn-secondary"
-                          onClick={() => runExport('html')}
-                        >
-                          HTML
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
+                          className="btn btn-ghost"
                           onClick={() => runExport('md')}
                         >
-                          Markdown
+                          MD
                         </button>
                         <button
                           type="button"
-                          className="btn btn-secondary"
-                          onClick={() => runExport('json')}
-                        >
-                          Pack JSON
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
+                          className="btn btn-ghost"
                           onClick={downloadDataBackup}
                         >
-                          Full workspace backup
+                          Backup
                         </button>
                       </div>
                     </details>
@@ -416,7 +390,7 @@ export default function DeliverView({
 
             <details className="pack-leave-details panel brand-section">
               <summary className="brand-section-label pack-leave-summary">
-                Leave desk
+                Leave
               </summary>
               <div className="finish-actions" style={{ marginTop: '0.75rem' }}>
                 <button

@@ -144,7 +144,7 @@ export default function SettingsView(props) {
             <div className="settings-row">
               <div>
                 <strong>Hide tips</strong>
-                <span>Hide ? tips, empty-state body, pack thin notes</span>
+                <span>Lectures off</span>
               </div>
               <button
                 type="button"
@@ -301,11 +301,11 @@ export default function SettingsView(props) {
           </section>
 
           <section className="panel brand-section" id="settings-work-prefs">
-            <div className="brand-section-label">Sketch prefs</div>
+            <div className="brand-section-label">Desk</div>
             <div className="settings-row">
               <div>
-                <strong>{i18nT(locale, 'ui.collapseQueue')}</strong>
-                <span>{i18nT(locale, 'ui.collapseQueueHint')}</span>
+                <strong>Collapse queue</strong>
+                <span>Hide waiting steps</span>
               </div>
               <button
                 type="button"
@@ -322,8 +322,8 @@ export default function SettingsView(props) {
             </div>
             <div className="settings-row">
               <div>
-                <strong>Show “How this works”</strong>
-                <span>Intro card on Sketch</span>
+                <strong>How this works</strong>
+                <span>Sketch intro card</span>
               </div>
               <button
                 type="button"
@@ -340,8 +340,8 @@ export default function SettingsView(props) {
             </div>
             <div className="settings-row">
               <div>
-                <strong>Optional progress strip</strong>
-                <span>Quiet meter under the path — off by default</span>
+                <strong>Progress strip</strong>
+                <span>Off by default</span>
               </div>
               <button
                 type="button"
@@ -358,8 +358,8 @@ export default function SettingsView(props) {
             </div>
             <div className="settings-row">
               <div>
-                <strong>Toast detail</strong>
-                <span>Quiet hides micro feedback; errors and exports always show</span>
+                <strong>Toasts</strong>
+                <span>Quiet = errors + exports</span>
               </div>
               <button
                 type="button"

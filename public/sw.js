@@ -1,8 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v11)
- * v8: Tech-Studio blueprint · v9: Define/Design merge · v10: Review densify
- * v11: Design/Sketch tips + always-hide lecture chrome
+/* Creative Companion — offline shell + asset cache (v12)
+ * v11: Design/Sketch tips · v12: label densify pass
  */
-const CACHE = 'cc-shell-v11'
+const CACHE = 'cc-shell-v12'
 const PRECACHE = [
   './',
   './index.html',

@@ -191,7 +191,7 @@ export default function SparkView({
                 onChange={(e) =>
                   updateDirection?.(d.id, { title: e.target.value })
                 }
-                placeholder={`${d.label} — one-line direction`}
+                placeholder={`${d.label} title`}
               />
               <label className="sr-only" htmlFor={`dir-note-${d.id}`}>
                 Direction {d.label} note
@@ -204,7 +204,7 @@ export default function SparkView({
                 onChange={(e) =>
                   updateDirection?.(d.id, { note: e.target.value })
                 }
-                placeholder="Why it might fit the goal…"
+                placeholder="Why"
               />
             </div>
           ))}
@@ -212,7 +212,7 @@ export default function SparkView({
       </section>
 
       <section className="panel brand-section ideate-spark-tray">
-        <div className="brand-section-label">Spark tray</div>
+        <div className="brand-section-label">Spark</div>
         <div className="spark-card">
           <p>{currentSpark}</p>
         </div>
