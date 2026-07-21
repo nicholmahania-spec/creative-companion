@@ -85,7 +85,13 @@ export default function DesignView({
 
   // Honor parent jump (e.g. readiness “fix palette roles”)
   useEffect(() => {
-    if (brandEditSectionProp) setBrandEditSectionLocal(brandEditSectionProp)
+    if (!brandEditSectionProp) return
+    // Map legacy section ids into the 6-tab Tech-Studio set
+    const map = {
+      messaging: 'essentials',
+      imagery: 'pins',
+    }
+    setBrandEditSectionLocal(map[brandEditSectionProp] || brandEditSectionProp)
   }, [brandEditSectionProp])
 
   const paletteRoles = useMemo(
@@ -1044,7 +1050,10 @@ export default function DesignView({
             {/* Messaging pillars */}
             <section
               className="panel brand-section"
-              hidden={brandEditSection !== 'messaging'}
+              hidden={
+                brandEditSection !== 'messaging' &&
+                brandEditSection !== 'essentials'
+              }
             >
               <div className="brand-section-label">
                 {i18nT(locale, 'ui.messagingPillars') || 'Messaging pillars'}
@@ -1257,15 +1266,13 @@ export default function DesignView({
             {/* Imagery guidelines */}
             <section
               className="panel brand-section"
-              hidden={brandEditSection !== 'imagery'}
+              hidden={
+                brandEditSection !== 'imagery' && brandEditSection !== 'pins'
+              }
             >
               <div className="brand-section-label">
                 {i18nT(locale, 'ui.imageryGuidelines') || 'Imagery guidelines'}
               </div>
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                Style + do/don’t for photos and illustrations. Pairs with ★ pins
-                on Research.
-              </p>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="img-style">
                   {i18nT(locale, 'ui.imageryStyle') || 'Photo / illustration style'}

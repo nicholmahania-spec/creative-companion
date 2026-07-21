@@ -74,11 +74,12 @@ test.describe('Soft Signal demo', () => {
       timeout: 5000,
     })
     // Brand kit fields seeded (messaging pillars)
-    await page.getByRole('tab', { name: /^Message$/i }).click()
+    // Words tab includes messaging pillars; Pack tab includes imagery
+    await page.getByRole('tab', { name: /^Words$/i }).click()
     await expect(page.locator('#msg-promise')).toBeVisible({ timeout: 5000 })
     const promise = await page.locator('#msg-promise').inputValue()
     expect(promise.length).toBeGreaterThan(10)
-    await page.getByRole('tab', { name: /^Imagery$/i }).click()
+    await page.getByRole('tab', { name: /^Pack$/i }).click()
     await expect(page.locator('#img-style')).toBeVisible({ timeout: 5000 })
     const style = await page.locator('#img-style').inputValue()
     expect(style.length).toBeGreaterThan(5)

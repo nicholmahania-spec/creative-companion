@@ -44,7 +44,7 @@ export default function ReviewView({
         <div>
           <h1 className="page-title">{i18nT(locale, 'path.review')}</h1>
           <p className="page-sub review-lede">
-            Show the sheet. Ask one clear question. Note what to fix — then Deliver.
+            Ask one question. Note what to fix.
             <InfoReveal>
               {(getProcessPhase('review')?.checks || []).join(' · ')}
             </InfoReveal>

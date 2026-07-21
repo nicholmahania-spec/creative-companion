@@ -172,10 +172,9 @@ export default function ResearchView({
                   {i18nT(locale, 'path.research')}
                 </h1>
                 <p className="page-sub">
-                  {i18nT(locale, 'ui.boardSub')}
                   {deskMood.filter((m) => m.inPack).length > 0
-                    ? ` · ${deskMood.filter((m) => m.inPack).length}/6 in pack`
-                    : ''}
+                    ? `★ ${deskMood.filter((m) => m.inPack).length}/6`
+                    : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
                 </p>
               </div>
               <div className="research-studio-actions">
