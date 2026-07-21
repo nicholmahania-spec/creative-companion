@@ -1,13 +1,11 @@
 /**
- * Research step — mood board wall, leave-behind stars, 20-min timer entry.
- * Owns board add/lightbox local state so App stays lean.
+ * Research — board wall primary; ★ pack pins; sticky Next → Ideate.
+ * ADHD: short chrome, goal anchor, focus lock on pin notes.
  */
 import {
   useState,
   useEffect,
   useCallback,
-  Suspense,
-  lazy,
 } from 'react'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/processGuide'
@@ -24,8 +22,6 @@ import {
   tFormat,
 } from '../lib/i18n'
 import { useModalFocus } from '../lib/useModalFocus'
-
-const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
 
 export default function ResearchView({
   locale: localeProp = 'en',
@@ -162,24 +158,33 @@ export default function ResearchView({
     notifyAction?.('Pin added', 'mood_pin', { label: 'Note pin' })
   }
 
+  const starred = deskMood.filter((m) => m.inPack).length
+  const words = String(brandWords || '').trim()
+
   return (
     <>
           <div className="studio-view surface-wall view-enter research-studio" data-nav-dir={navDir}>
             <div className="flow-top research-studio-top">
-              <div>
+              <div className="research-top-text">
                 <h1 className="page-title">
                   {i18nT(locale, 'path.research')}
                 </h1>
-                <p className="page-sub">
-                  {deskMood.filter((m) => m.inPack).length > 0
-                    ? `★ ${deskMood.filter((m) => m.inPack).length}/6`
+                <p className="research-status" role="status">
+                  {starred > 0
+                    ? `★ ${starred}/6`
                     : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
                 </p>
+                {words ? (
+                  <p className="research-goal-anchor" title={words}>
+                    Words · {words.slice(0, 64)}
+                    {words.length > 64 ? '…' : ''}
+                  </p>
+                ) : null}
               </div>
               <div className="research-studio-actions">
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
+                  className="btn btn-ghost btn-sm research-timer-btn"
                   title="20-min timer"
                   aria-label="Start 20-minute research timer"
                   onClick={() => {
@@ -203,20 +208,12 @@ export default function ResearchView({
                 </button>
                 <InfoReveal>
                   {(getProcessPhase('research')?.checks || []).join(' · ')}
-                  {getProcessPhase('research')?.prompt
-                    ? ` — ${getProcessPhase('research').prompt}`
-                    : ''}
                 </InfoReveal>
               </div>
             </div>
 
             {/* Wall is the stage — masonry when pins exist */}
             <section className="panel brand-section board-wall-panel research-wall">
-              <div className="board-wall-head">
-                <div className="brand-section-label" style={{ margin: 0 }}>
-                  Board
-                </div>
-              </div>
               <div
                 className={`mood-board${deskMood.length ? ' has-pins is-masonry' : ''}${
                   deskMood.length === 1 ? ' single-pin' : ''
@@ -275,17 +272,23 @@ export default function ResearchView({
                 }}
               >
                 {deskMood.length === 0 ? (
-                  <div className="empty-state empty-state-craft">
-                    <Suspense fallback={null}>
-                      <EmptyIllustration variant="board" />
-                    </Suspense>
-                    <p className="empty-state-title">
-                      {i18nT(locale, 'ui.noPinsYet')}
-                    </p>
+                  <div className="empty-state empty-state-craft research-empty">
+                    <label className="btn btn-primary board-upload-btn">
+                      Upload images
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
+                        multiple
+                        className="sr-only"
+                        onChange={(e) => {
+                          uploadMoodFiles(e.target.files)
+                          e.target.value = ''
+                        }}
+                      />
+                    </label>
                   </div>
                 ) : (
                   deskMood.map((item, index) => {
-                    const isHero = index === 0
                     const face = pinFaceStyle(item)
                     const isImageFace = Boolean(face.backgroundImage?.includes('url('))
                     const isQuote =
@@ -354,8 +357,13 @@ export default function ResearchView({
                               className={`mood-pin-star${item.inPack ? ' is-on' : ''}${item.packHero ? ' is-hero' : ''}`}
                               title={
                                 item.inPack
-                                  ? 'Remove from client pack'
-                                  : 'Add to client pack (max 6)'
+                                  ? 'Remove from pack'
+                                  : 'Add to pack (max 6)'
+                              }
+                              aria-label={
+                                item.inPack
+                                  ? 'In pack — remove'
+                                  : 'Add to pack'
                               }
                               aria-pressed={!!item.inPack}
                               onClick={() => {
@@ -367,13 +375,11 @@ export default function ResearchView({
                                   )
                                 else
                                   flashMicro(
-                                    r.inPack
-                                      ? 'In client pack'
-                                      : 'Not in client pack'
+                                    r.inPack ? '★ pack' : '☆ pack'
                                   )
                               }}
                             >
-                              {item.inPack ? '★ Leave-behind' : '☆ Leave-behind'}
+                              {item.inPack ? '★' : '☆'}
                             </button>
                             <details className="mood-pin-more">
                               <summary
@@ -390,7 +396,7 @@ export default function ResearchView({
                                       className="btn btn-ghost mood-pin-order"
                                       onClick={() => movePackPin(item.id, 'up')}
                                     >
-                                      ↑ Earlier in pack
+                                      ↑
                                     </button>
                                     <button
                                       type="button"
@@ -399,7 +405,7 @@ export default function ResearchView({
                                         movePackPin(item.id, 'down')
                                       }
                                     >
-                                      ↓ Later in pack
+                                      ↓
                                     </button>
                                     <button
                                       type="button"
@@ -413,7 +419,7 @@ export default function ResearchView({
                                         else flashMicro(i18nT(locale, 'ui.heroPinSet'))
                                       }}
                                     >
-                                      Hero pin
+                                      Hero
                                     </button>
                                   </>
                                 )}
@@ -422,7 +428,7 @@ export default function ResearchView({
                                   className="btn btn-ghost mood-pin-remove"
                                   onClick={() => removeMoodPin(item.id)}
                                 >
-                                  Remove pin
+                                  Remove
                                 </button>
                               </div>
                             </details>
@@ -438,51 +444,41 @@ export default function ResearchView({
                               updateMoodPinNote(item.id, e.target.value)
                             }
                             placeholder={
-                              item.inPack
-                                ? brandWords.trim()
-                                  ? `Why does this fit "${brandWords.trim()}"?`
-                                  : 'Why does this fit the brand?'
-                                : 'Caption…'
+                              item.inPack ? 'Why ★' : 'Caption…'
                             }
                             aria-label={
-                              item.inPack ? 'Why this pin fits the brand' : 'Pin note'
+                              item.inPack ? 'Why this pin fits' : 'Pin note'
                             }
                           />
-                          {item.inPack && !item.note?.trim() && (
-                            <p className="mood-pin-why-hint">
-                              Needs a why before Research counts as done.
-                            </p>
-                          )}
                         </div>
                       </article>
                     )
                   })
                 )}
               </div>
-              <p className="panel-hint board-drop-hint design-lect">
-                Drop images here · drag pins to reorder
-              </p>
             </section>
 
             {/* Compact add — below the wall */}
             <section className="panel brand-section board-add-compact">
               <div className="board-add-toolbar">
-                <label className="btn btn-primary board-upload-btn">
-                  Upload images
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
-                    multiple
-                    className="sr-only"
-                    onChange={(e) => {
-                      uploadMoodFiles(e.target.files)
-                      e.target.value = ''
-                    }}
-                  />
-                </label>
+                {deskMood.length > 0 && (
+                  <label className="btn btn-primary board-upload-btn">
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
+                      multiple
+                      className="sr-only"
+                      onChange={(e) => {
+                        uploadMoodFiles(e.target.files)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                )}
                 <button
                   type="button"
-                  className={`btn btn-ghost btn-sm${
+                  className={`btn btn-ghost btn-sm research-add-toggle${
                     boardAddMode === 'url' ? ' is-on' : ''
                   }`}
                   onClick={() =>
@@ -493,7 +489,7 @@ export default function ResearchView({
                 </button>
                 <button
                   type="button"
-                  className={`btn btn-ghost btn-sm${
+                  className={`btn btn-ghost btn-sm research-add-toggle${
                     boardAddMode === 'note' ? ' is-on' : ''
                   }`}
                   onClick={() =>
@@ -503,8 +499,8 @@ export default function ResearchView({
                   Note
                 </button>
                 {deskMood.length > 0 && (
-                  <details className="board-pack-bulk">
-                    <summary className="text-link">Leave-behind tools</summary>
+                  <details className="board-pack-bulk research-advanced">
+                    <summary>Pack tools</summary>
                     <div className="board-pack-bulk-actions">
                       <button
                         type="button"
@@ -541,7 +537,7 @@ export default function ResearchView({
                             .forEach((p) => toggleMoodPinInPack(p.id))
                         }}
                       >
-                        Clear stars
+                        Clear ★
                       </button>
                     </div>
                   </details>
@@ -549,8 +545,8 @@ export default function ResearchView({
               </div>
               {boardAddMode === 'url' && (
                 <div className="board-inline-form">
-                  <label className="field-label" htmlFor="board-url">
-                    Image URL
+                  <label className="field-label sr-only" htmlFor="board-url">
+                    URL
                   </label>
                   <div className="capture-row">
                     <input
@@ -569,15 +565,15 @@ export default function ResearchView({
                       onClick={submitBoardUrl}
                       disabled={!boardUrl.trim()}
                     >
-                      Add pin
+                      Add
                     </button>
                   </div>
                 </div>
               )}
               {boardAddMode === 'note' && (
                 <div className="board-inline-form">
-                  <label className="field-label" htmlFor="board-note">
-                    Note / direction
+                  <label className="field-label sr-only" htmlFor="board-note">
+                    Note
                   </label>
                   <div className="capture-row">
                     <input
@@ -585,7 +581,7 @@ export default function ResearchView({
                       className="field-input"
                       value={boardNote}
                       onChange={(e) => setBoardNote(e.target.value)}
-                      placeholder="e.g. Soft twilight, no hard sell"
+                      placeholder="Direction note"
                       onKeyDown={(e) =>
                         e.key === 'Enter' && submitBoardNote()
                       }
@@ -595,29 +591,22 @@ export default function ResearchView({
                       className="btn btn-primary"
                       onClick={submitBoardNote}
                     >
-                      Add pin
+                      Add
                     </button>
                   </div>
                 </div>
               )}
             </section>
 
-            <div className="path-continue-row work-below-tools">
+            <div className="path-continue-row research-continue">
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary work-path-next"
                 onClick={() => setActiveView('spark')}
               >
                 {tFormat(locale, 'ui.continueNext', {
                   label: pathLabel(locale, 'ideate') || 'Ideate',
                 })}
-              </button>
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => setActiveView('project')}
-              >
-                ← Define
               </button>
             </div>
           </div>
@@ -715,9 +704,7 @@ export default function ResearchView({
                     }
                   }}
                 >
-                  {boardLightbox.inPack
-                    ? '★ In client pack'
-                    : '☆ Add to client pack'}
+                  {boardLightbox.inPack ? '★ Pack' : '☆ Pack'}
                 </button>
               </div>
             </div>
