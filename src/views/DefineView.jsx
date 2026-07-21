@@ -130,10 +130,6 @@ export default function DefineView(props) {
           <h1 className="page-title define-studio-title">
             {i18nT(locale, 'path.define')}
           </h1>
-          <p className="page-sub define-dashboard-sub">
-            Questions on the left, inspiration pinned on the right — so you don’t
-            leave the page and lose the thread. One chapter at a time.
-          </p>
         </div>
       </header>
 
@@ -206,6 +202,7 @@ export default function DefineView(props) {
                       e.currentTarget.blur()
                     }
                   }}
+                  placeholder="Client name"
                   aria-label="Project name"
                 />
                 <button
@@ -216,10 +213,6 @@ export default function DefineView(props) {
                   Save
                 </button>
               </div>
-              <aside className="define-field-tip define-field-tip-static">
-                <span className="define-field-tip-label">tip</span>
-                Short client-facing name — shows on the brand book cover.
-              </aside>
             </div>
 
             <div
@@ -245,12 +238,9 @@ export default function DefineView(props) {
                 onChange={(e) => updateProjectBrief(e.target.value)}
                 onFocus={() => setMetaFocus('brief')}
                 onBlur={() => setMetaFocus(null)}
+                placeholder="Goal + audience"
                 aria-label="Brief and positioning"
               />
-              <aside className="define-field-tip define-field-tip-static">
-                <span className="define-field-tip-label">tip</span>
-                Auto-fills from the detective sheet — or freeform here.
-              </aside>
             </div>
 
             <div

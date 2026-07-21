@@ -1067,20 +1067,18 @@ h3 {
 
 /* ——— Shell ——— */
 .header {
-  padding: 1rem 1.75rem 0.95rem;
-  border-bottom: 1px solid var(--glass-border-dim);
-  background: var(--glass-bg);
-  backdrop-filter: blur(22px) saturate(1.35);
-  -webkit-backdrop-filter: blur(22px) saturate(1.35);
-  box-shadow: var(--glass-shadow);
+  padding: 0.55rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  box-shadow: none;
   position: sticky;
   top: 0;
   z-index: 40;
 }
 
 .app.deep .header {
-  background: rgba(12, 10, 9, 0.9);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: var(--bg-elevated);
+  box-shadow: none;
 }
 
 .header-content {
@@ -12438,6 +12436,169 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   }
   .journey-flow-link {
     display: none;
+  }
+}
+
+/* ============================================================
+   Left utility sidebar — replaces the horizontal step nav
+   ============================================================ */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: min(220px, 15vw) 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    'sidebar header'
+    'sidebar main';
+}
+
+.app-shell > .header-redesign {
+  grid-area: header;
+}
+
+.app-shell > .journey-sidebar {
+  grid-area: sidebar;
+}
+
+.app-shell > .main {
+  grid-area: main;
+}
+
+.app-shell > .app-footer {
+  grid-column: 1 / -1;
+}
+
+.journey-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  height: 100%;
+  padding: 1.1rem 0;
+  background: #F8F9FA;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.app.deep .journey-sidebar {
+  background: var(--bg-warm);
+}
+
+.journey-sidebar .journey-bar-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0 0.6rem;
+}
+
+.journey-sidebar .journey-bar-item {
+  display: block;
+}
+
+.journey-sidebar .journey-flow-link {
+  display: none;
+}
+
+.journey-sidebar .journey-node,
+.journey-sidebar .path-step-icon {
+  display: none;
+}
+
+.journey-sidebar .journey-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  text-align: left;
+  box-shadow: none;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.journey-sidebar .journey-step:hover {
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  transform: none;
+}
+
+.journey-sidebar .journey-step.is-done:not(.is-active) {
+  color: var(--text-secondary);
+}
+
+.journey-sidebar .journey-step.is-active {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border-left-color: var(--dopamine);
+  font-weight: 700;
+}
+
+.journey-sidebar .journey-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  opacity: 0.65;
+}
+
+.journey-sidebar .journey-step.is-active .journey-num,
+.journey-sidebar .journey-step.is-done:not(.is-active) .journey-num {
+  opacity: 1;
+  color: var(--dopamine);
+}
+
+.journey-sidebar .journey-step.is-done:not(.is-active) .journey-num {
+  color: var(--accent-growth);
+}
+
+.journey-sidebar .journey-label {
+  font-size: 0.82rem;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journey-sidebar .journey-tools-pill {
+  margin: 0.75rem 0.6rem 0;
+  align-self: flex-start;
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'header'
+      'sidebar'
+      'main';
+  }
+  .journey-sidebar {
+    flex-direction: row;
+    align-items: center;
+    height: auto;
+    padding: 0.4rem 0.6rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: auto;
+  }
+  .journey-sidebar .journey-bar-list {
+    flex-direction: row;
+    padding: 0;
+  }
+  .journey-sidebar .journey-step {
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .journey-sidebar .journey-step.is-active {
+    border-left-color: transparent;
+    border-bottom-color: var(--dopamine);
   }
 }
 

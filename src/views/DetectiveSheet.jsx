@@ -285,9 +285,6 @@ export default function DetectiveSheet({
                           </span>
                         )}
                       </div>
-                      {f.hint && (
-                        <p className="define-field-hint">{f.hint}</p>
-                      )}
                       <div className="define-field-control">
                         {f.area ? (
                           <textarea
@@ -300,7 +297,8 @@ export default function DetectiveSheet({
                             }
                             onFocus={() => setFocusField(f.id)}
                             onBlur={() => setFocusField(null)}
-                            aria-describedby={`detective-tip-${f.id}`}
+                            placeholder={f.placeholder}
+                            title={f.tip}
                           />
                         ) : (
                           <input
@@ -312,16 +310,10 @@ export default function DetectiveSheet({
                             }
                             onFocus={() => setFocusField(f.id)}
                             onBlur={() => setFocusField(null)}
-                            aria-describedby={`detective-tip-${f.id}`}
+                            placeholder={f.placeholder}
+                            title={f.tip}
                           />
                         )}
-                        <aside
-                          id={`detective-tip-${f.id}`}
-                          className="define-field-tip"
-                        >
-                          <span className="define-field-tip-label">e.g.</span>
-                          {f.tip.replace(/^e\.g\.\s*/i, '')}
-                        </aside>
                       </div>
                     </div>
                   )
@@ -348,10 +340,6 @@ export default function DetectiveSheet({
                       </span>
                       <span className="define-field-label">Milestones</span>
                     </div>
-                    <p className="define-field-hint">
-                      A brief often has several dated checkpoints, not just one
-                      deadline.
-                    </p>
                     <div
                       className="define-milestones-list"
                       onFocusCapture={() => setFocusField('milestones')}
@@ -369,6 +357,7 @@ export default function DetectiveSheet({
                             onChange={(e) =>
                               updateMilestone?.(m.id, 'label', e.target.value)
                             }
+                            placeholder="Milestone"
                             aria-label="Milestone name"
                           />
                           <input
@@ -395,13 +384,9 @@ export default function DetectiveSheet({
                         className="btn btn-secondary btn-sm"
                         onClick={() => addMilestone?.('', '')}
                       >
-                        + Add milestone
+                        + Add
                       </button>
                     </div>
-                    <aside className="define-field-tip define-field-tip-static">
-                      <span className="define-field-tip-label">e.g.</span>
-                      Moodboard approval · Client review · Final ship
-                    </aside>
                   </div>
                 )}
               </div>
@@ -416,7 +401,7 @@ export default function DetectiveSheet({
                       if (idx > 0) setOpenChapter(DETECTIVE_CHAPTERS[idx - 1].id)
                     }}
                   >
-                    ← Previous
+                    Back
                   </button>
                 )}
                 <div className="define-chapter-foot-spacer" />
@@ -431,7 +416,7 @@ export default function DetectiveSheet({
                       }
                     }}
                   >
-                    Next chapter →
+                    Next
                   </button>
                 ) : (
                   <button
@@ -439,11 +424,11 @@ export default function DetectiveSheet({
                     className="btn btn-secondary"
                     onClick={() => {
                       const r = applyDetectiveToBrief?.()
-                      if (r?.ok) flashToast?.('Brief filled from detective sheet')
+                      if (r?.ok) flashToast?.('Brief filled')
                       else flashToast?.(r?.error || 'Add a few answers first')
                     }}
                   >
-                    Fill brief from sheet
+                    Fill brief
                   </button>
                 )}
               </footer>
@@ -463,7 +448,7 @@ export default function DetectiveSheet({
             className="define-fab-hint"
             onClick={openNextIncomplete}
           >
-            Still need {joinWithAnd(missingRequiredLabels)}
+            Missing: {joinWithAnd(missingRequiredLabels)}
           </button>
         )}
         <button

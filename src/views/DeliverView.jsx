@@ -12,6 +12,7 @@ import {
 } from '../lib/i18n'
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
 import { focusPathGapTarget } from '../lib/journeyProgress'
+import InfoReveal from '../components/InfoReveal'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
@@ -51,13 +52,9 @@ export default function DeliverView({
           <div className="finish-view surface-document pack-view view-enter" data-nav-dir={navDir}>
             <div className="flow-top">
               <div>
-                <p className="pack-eyebrow">{i18nT(locale, 'ui.packEyebrow')}</p>
                 <h1 className="page-title page-title-display">
                   {i18nT(locale, 'path.deliver')}
                 </h1>
-                <p className="page-sub">
-                  {activeProject?.name || 'Your project'} · {i18nT(locale, 'ui.packSub')}
-                </p>
               </div>
             </div>
 
@@ -350,16 +347,15 @@ export default function DeliverView({
                       </p>
                     ) : null}
                     <div className="process-tip-panel" style={{ marginTop: '0.85rem' }}>
-                      <div className="brand-section-label">Deliver checklist</div>
-                      <ul className="process-guide-checks">
-                        {(getProcessPhase('deliver')?.checks || []).map((c) => (
-                          <li key={c}>{c}</li>
-                        ))}
-                      </ul>
+                      <div className="brand-section-label">
+                        Deliver
+                        <InfoReveal>
+                          {(getProcessPhase('deliver')?.checks || []).join(' · ')}
+                          {' — '}
+                          {i18nT(locale, 'ui.pdfFontHonesty')}
+                        </InfoReveal>
+                      </div>
                     </div>
-                    <p className="panel-hint" style={{ marginTop: '0.35rem' }}>
-                      {i18nT(locale, 'ui.pdfFontHonesty')}
-                    </p>
                     {leaveBehindThin && pathDoneCount >= 5 && (
                       <p className="panel-hint pack-path-vs-thin" role="status">
                         {i18nT(locale, 'ui.pathFullLeaveBehindThin')}

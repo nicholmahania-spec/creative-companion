@@ -501,19 +501,19 @@ export default function SketchView(props) {
                 if (!phase) return null
                 return (
                   <div className="process-guide-panel">
-                    <strong>{phase.title}</strong>
-                    <ul className="process-guide-checks">
-                      {phase.checks.map((c) => (
-                        <li key={c}>{c}</li>
-                      ))}
-                    </ul>
-                    <InfoReveal>
-                      {nextTask
-                        ? `For "${String(nextTask.title).slice(0, 60)}": ${
-                            phase.prompt
-                          }`
-                        : phase.prompt}
-                    </InfoReveal>
+                    <strong>
+                      Sketch
+                      <InfoReveal>
+                        {phase.checks.join(' · ')}
+                        {phase.prompt
+                          ? ` — ${
+                              nextTask
+                                ? `For "${String(nextTask.title).slice(0, 60)}": ${phase.prompt}`
+                                : phase.prompt
+                            }`
+                          : ''}
+                      </InfoReveal>
+                    </strong>
                   </div>
                 )
               })()}

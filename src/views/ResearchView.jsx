@@ -184,13 +184,15 @@ export default function ResearchView({
             </div>
 
             <section className="panel brand-section process-tip-panel">
-              <div className="brand-section-label">Checklist</div>
-              <ul className="process-guide-checks" style={{ marginBottom: '0.75rem' }}>
-                {(getProcessPhase('research')?.checks || []).map((c) => (
-                  <li key={c}>{c}</li>
-                ))}
-              </ul>
-              <InfoReveal>{getProcessPhase('research')?.prompt}</InfoReveal>
+              <div className="brand-section-label">
+                Research
+                <InfoReveal>
+                  {(getProcessPhase('research')?.checks || []).join(' · ')}
+                  {getProcessPhase('research')?.prompt
+                    ? ` — ${getProcessPhase('research').prompt}`
+                    : ''}
+                </InfoReveal>
+              </div>
               <div className="finish-secondary-row">
                 <button
                   type="button"
@@ -212,11 +214,8 @@ export default function ResearchView({
                     flashToast(i18nT(locale, 'ui.researchTimerOn'))
                   }}
                 >
-                  Start 20-min research timer
+                  Start Timer
                 </button>
-                <span className="panel-hint" style={{ margin: 0 }}>
-                  Stop before the rabbit hole.
-                </span>
               </div>
             </section>
 

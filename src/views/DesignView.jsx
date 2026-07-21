@@ -286,13 +286,15 @@ export default function DesignView({
             </div>
 
             <section className="panel brand-section process-tip-panel">
-              <div className="brand-section-label">Checklist</div>
-              <ul className="process-guide-checks" style={{ marginBottom: 0 }}>
-                {(getProcessPhase('design')?.checks || []).map((c) => (
-                  <li key={c}>{c}</li>
-                ))}
-              </ul>
-              <InfoReveal>{getProcessPhase('design')?.prompt}</InfoReveal>
+              <div className="brand-section-label">
+                Design
+                <InfoReveal>
+                  {(getProcessPhase('design')?.checks || []).join(' · ')}
+                  {getProcessPhase('design')?.prompt
+                    ? ` — ${getProcessPhase('design').prompt}`
+                    : ''}
+                </InfoReveal>
+              </div>
             </section>
 
             {/* ARTBOARD — sticky preview on wide screens (not freeform edit) */}

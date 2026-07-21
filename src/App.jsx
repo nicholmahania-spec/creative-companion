@@ -2440,7 +2440,7 @@ function App() {
 
   return (
     <div
-      className={`app ${theme} view-${activeView}${
+      className={`app app-shell ${theme} view-${activeView}${
         forcedBreak ? ' is-break-locked' : ''
       }${activeView === 'finish' ? ' is-pack-view' : ''}`}
     >
@@ -2724,20 +2724,21 @@ function App() {
             </div>
           </div>
         </div>
+      </header>
 
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
 
-        {showProgress && (
-          <Suspense fallback={null}>
-            <GameHUD />
-          </Suspense>
-        )}
-        <nav
-          className={`journey-bar journey-bar-flow${journeyActive ? '' : ' is-tools'}`}
-          aria-label={i18nT(locale, 'pathAria')}
-        >
+      {showProgress && (
+        <Suspense fallback={null}>
+          <GameHUD />
+        </Suspense>
+      )}
+      <nav
+        className={`journey-sidebar${journeyActive ? '' : ' is-tools'}`}
+        aria-label={i18nT(locale, 'pathAria')}
+      >
           <ol className="journey-bar-list">
             {JOURNEY_STEPS.map((step, idx) => {
               const active = journeyActive === step.id
@@ -2793,7 +2794,7 @@ function App() {
                       )}
                     </span>
                     <span className="journey-num" aria-hidden="true">
-                      {hasContent && !active ? '✓' : step.num}
+                      {hasContent && !active ? '✓' : String(step.num).padStart(2, '0')}
                     </span>
                     <span className="journey-label">{label}</span>
                   </button>
@@ -2806,8 +2807,7 @@ function App() {
               Tools · {toolsLabelForView(activeView)}
             </span>
           )}
-        </nav>
-      </header>
+      </nav>
 
       <main className="main" id="main-content" tabIndex={-1} data-nav-dir={navDir}>
         {journeyActive && activeView !== 'review' && activeView !== 'finish' && (

@@ -11,6 +11,7 @@ import {
   pathLabel,
 } from '../lib/i18n'
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
+import InfoReveal from '../components/InfoReveal'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
@@ -80,12 +81,12 @@ export default function ReviewView({
               </section>
               <div className="review-split-right">
                 <section className="panel brand-section">
-                  <div className="brand-section-label">Checklist</div>
-                  <ul className="process-guide-checks review-checks">
-                    {(getProcessPhase('review')?.checks || []).map((c) => (
-                      <li key={c}>{c}</li>
-                    ))}
-                  </ul>
+                  <div className="brand-section-label">
+                    Review
+                    <InfoReveal>
+                      {(getProcessPhase('review')?.checks || []).join(' · ')}
+                    </InfoReveal>
+                  </div>
                 </section>
                 <section className="panel brand-section">
                   <div className="brand-section-label">Readiness</div>

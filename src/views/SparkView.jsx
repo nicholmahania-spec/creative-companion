@@ -44,7 +44,6 @@ export default function SparkView({
   const sparksSeen = Math.min(Math.max(sparksTried, 0), 8)
   const phase = getProcessPhase('ideate')
   const title = pathLabel(locale, 'ideate') || 'Ideate'
-  const goalLine = String(projectGoal || '').trim()
   const latest = latestDecision(decisionLog, 'direction') || latestDecision(decisionLog)
   const decisionLine =
     formatDecisionLine(latest) ||
@@ -122,29 +121,9 @@ export default function SparkView({
       <div className="flow-top">
         <div>
           <h1 className="page-title">{title}</h1>
-          <p className="page-sub">
-            Step 3 · Ideas. Make many rough options. Messy is fine. Keep your
-            best three as A, B, C. Do not stick to the first idea only.
-          </p>
           <p className="panel-hint ideate-progress" style={{ marginTop: '0.35rem' }}>
-            Sparks tried:{' '}
-            <strong>
-              {sparksSeen}
-              /8
-            </strong>
-            {' · '}
-            Shortlist:{' '}
-            <strong>
-              {filledDirs}
-              /3
-            </strong>
-            {filledDirs === 0
-              ? ' — fill A/B/C or pin a spark'
-              : chosen
-                ? ' — winner picked; queue or Sketch'
-                : filledDirs < 2
-                  ? ' — add another direction'
-                  : ' — pick a winner (Choose)'}
+            Sparks <strong>{sparksSeen}/8</strong> · Shortlist{' '}
+            <strong>{filledDirs}/3</strong>
           </p>
         </div>
         <div className="finish-secondary-row path-continue-row">
@@ -204,16 +183,13 @@ export default function SparkView({
 
       {phase && (
         <section className="panel brand-section process-tip-panel">
-          <div className="brand-section-label">{phase.title || 'Checklist'}</div>
-          <ul
-            className="process-guide-checks"
-            style={{ marginBottom: 0 }}
-          >
-            {(phase.checks || []).map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ul>
-          <InfoReveal>{phase.prompt}</InfoReveal>
+          <div className="brand-section-label">
+            Ideate
+            <InfoReveal>
+              {(phase.checks || []).join(' · ')}
+              {phase.prompt ? ` — ${phase.prompt}` : ''}
+            </InfoReveal>
+          </div>
         </section>
       )}
 
@@ -269,12 +245,6 @@ export default function SparkView({
       </section>
 
       <section className="panel brand-section">
-        <div className="brand-section-label">Prompt</div>
-        {goalLine ? (
-          <p className="panel-hint spark-goal-line" style={{ marginTop: 0 }}>
-            Goal · {goalLine.length > 120 ? `${goalLine.slice(0, 117)}…` : goalLine}
-          </p>
-        ) : null}
         <div className="spark-card">
           <p>{currentSpark}</p>
         </div>
@@ -284,37 +254,21 @@ export default function SparkView({
             onClick={nextSpark}
             className="btn btn-primary"
           >
-            {i18nT('ui.anotherSpark') || 'Another spark'}
+            New
           </button>
           <button
             type="button"
             className="btn btn-secondary"
             onClick={() => oppositeSpark?.()}
           >
-            {i18nT('ui.oppositeDirection') || 'Opposite direction'}
+            Opposite
           </button>
           <button
             type="button"
             className="btn btn-secondary"
             onClick={pinSparkStay}
           >
-            {i18nT('ui.pinSpark') || 'Pin spark'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => setActiveView('studio')}
-          >
-            {i18nT('ui.openResearchBoard') || 'Open Research'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => setActiveView('flow')}
-          >
-            {tFormat(locale, 'ui.continueNext', {
-              label: pathLabel(locale, 'sketch') || 'Sketch',
-            })}
+            Pin
           </button>
         </div>
       </section>
