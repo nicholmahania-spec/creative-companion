@@ -10356,29 +10356,112 @@ html[data-reduce-motion='true'] *::after {
   font-size: 1.1rem;
   letter-spacing: 0.02em;
 }
-.sketch-dir-chips {
+/* Sketch ADHD fold desk */
+.sketch-studio {
+  max-width: 40rem;
+  margin-inline: auto;
+}
+.sketch-studio-hint {
+  display: none !important;
+}
+.sketch-decision-line {
+  font-size: 0.78rem;
+  color: #94A3B8;
+  margin: 0 0 0.65rem;
+}
+.sketch-ideate-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+  align-items: center;
 }
 .sketch-dir-chip {
   appearance: none;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-muted);
-  color: var(--text-primary);
-  border-radius: var(--radius);
-  padding: 0.35rem 0.75rem;
-  font-size: 0.85rem;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  color: #1A1A1E;
+  border-radius: 4px !important;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 650;
   cursor: pointer;
   text-align: left;
-  max-width: 100%;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .sketch-dir-chip.is-chosen {
-  border-color: var(--accent-growth, #0f766e);
-  font-weight: 600;
+  border-color: #2563EB;
+  border-width: 1.5px;
+  font-weight: 700;
 }
 .sketch-dir-chip:hover {
-  border-color: var(--text-secondary);
+  border-color: #CBD5E1;
+}
+.sketch-ideate-more summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94A3B8;
+}
+.sketch-now {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+.sketch-now .task-badge {
+  border-radius: 4px !important;
+  background: #F4F5F6 !important;
+  color: #1A1A1E !important;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+}
+.sketch-now .field-label {
+  margin-top: 0.55rem;
+  font-size: 0.75rem;
+  color: #94A3B8;
+}
+.sketch-studio:has(.sketch-now:focus-within) .sketch-below,
+.sketch-studio:has(.sketch-now:focus-within) .sketch-ideate-strip {
+  opacity: 0.25;
+  pointer-events: none;
+  filter: none;
+  transition: opacity 0.15s ease;
+}
+.sketch-now .step-focus-title:focus,
+.sketch-now .field-input:focus {
+  border-color: #2563EB !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.step-more-details summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94A3B8;
+  list-style: none;
+}
+.step-more-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+.step-more-panel .btn {
+  border-radius: 4px !important;
+  min-height: 36px;
+}
+@media (max-width: 640px) {
+  .sketch-empty .empty-illu-svg,
+  .sketch-empty [class*='empty-craft'],
+  .sketch-empty .empty-state-craft > span,
+  .sketch-empty .empty-state-craft > div:first-child {
+    display: none !important;
+  }
 }
 .review-pack-preview {
   margin-top: 0.5rem;

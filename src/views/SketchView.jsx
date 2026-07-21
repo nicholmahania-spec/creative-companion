@@ -1,5 +1,6 @@
 /**
- * Sketch step — current desk step, capture, queue, micro-breakdown.
+ * Sketch — fold owns the step; capture secondary; queue/done collapsed.
+ * Tech-Studio ADHD: one primary (Done), sticky Next, focus isolation.
  */
 import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
@@ -41,7 +42,6 @@ export default function SketchView(props) {
     flashToast,
     flashMicro,
     notifyAction,
-    // capture
     quickInput = '',
     setQuickInput,
     captureEnergy = 'med',
@@ -51,17 +51,14 @@ export default function SketchView(props) {
     captureOptionsOpen = false,
     setCaptureOptionsOpen,
     handleCapture,
-    // queue UI (legacy alias)
     addQuickTask: addQuickTaskProp,
     queueCollapsed = false,
     queueOpen = false,
     setQueueOpen,
     doneOpen = false,
     setDoneOpen,
-    // task ops
     toggleTask,
     updateTaskTitle,
-    updateTaskMeta,
     updateTaskWhy,
     removeTask,
     breakIntoSteps,
@@ -70,14 +67,12 @@ export default function SketchView(props) {
     setStepDueOpen,
     completeCurrentStep,
     startVoice,
-    // breakdown (embedded if parent passes flags)
-    showBreakdown = false,
+    setDeskConfirm,
   } = props
 
   const locale = normalizeLocale(localeProp)
   const addTask = useAppStore((s) => s.addTask)
   const captureStep = handleCapture || addQuickTaskProp
-  const [processOpenLocal, setProcessOpenLocal] = useState(false)
   const bumpStepFocus = () => {
     if (typeof setStepFocusKey === 'function') setStepFocusKey((k) => k + 1)
   }
@@ -96,505 +91,446 @@ export default function SketchView(props) {
         })
       : '')
 
+  const ideateDirs = (activeProject?.directions || []).filter((d) =>
+    String(d.title || '').trim()
+  )
+
+  const queueDraft = (d) => {
+    addTask({
+      id: Date.now() + Math.random(),
+      title: `Draft ${d.label}: ${d.title}`,
+      energy: 'med',
+      meta: 'Direction option',
+      why: d.note || '',
+      completed: false,
+      seeded: false,
+      projectId:
+        activeProject?.id || useAppStore.getState().currentProjectId,
+      dueDate: '',
+    })
+    flashToast?.(
+      tFormat(locale, 'ui.queuedDraftLabel', { label: d.label }) ||
+        `Queued ${d.label}`
+    )
+  }
+
+  const confirmRemove = (id, label) => {
+    if (typeof setDeskConfirm === 'function') {
+      setDeskConfirm({
+        kind: 'remove-step',
+        label,
+        onConfirm: () => {
+          removeTask(id)
+          flashToast?.(i18nT(locale, 'ui.stepRemoved'))
+          setDeskConfirm(null)
+        },
+      })
+      return
+    }
+    removeTask(id)
+  }
+
   return (
-          <div className="flow-view surface-desk view-enter sketch-studio" data-nav-dir={navDir}>
-            <div className="flow-top flow-top-compact sketch-studio-top">
-              <div>
-                <h1 className="page-title work-page-title">
-                  {i18nT(locale, 'path.sketch')}
-                </h1>
-                <p className="work-context-line">
-                  <strong>{activeProject?.name || 'Project'}</strong>
-                  {projectDeadline
-                    ? ` · due ${formatShortDate(projectDeadline)}`
-                    : ''}
-                  <span className="work-context-progress">
-                    {' '}
-                    · {completedCount}/{deskTasks.length || 0} done
-                  </span>
-                  <span className="sketch-studio-hint">
-                    {' '}
-                    · 2–3 drafts · one “why” each
-                  </span>
-                </p>
-              </div>
-              {journeyNext && (
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm work-path-next"
-                  onClick={() => setActiveView(journeyNext.view)}
-                >
-                  {tFormat(locale, 'ui.continueNext', {
-                    label:
-                      pathLabel(locale, journeyNext.id) || journeyNext.label,
-                  })}
-                </button>
-              )}
-            </div>
+    <div
+      className="flow-view surface-desk view-enter sketch-studio"
+      data-nav-dir={navDir}
+    >
+      <div className="flow-top flow-top-compact sketch-studio-top">
+        <div>
+          <h1 className="page-title work-page-title">
+            {i18nT(locale, 'path.sketch')}
+          </h1>
+          <p className="work-context-line">
+            <strong>{activeProject?.name || 'Project'}</strong>
+            {projectDeadline ? ` · ${formatShortDate(projectDeadline)}` : ''}
+            <span className="work-context-progress">
+              {' '}
+              · {completedCount}/{deskTasks.length || 0}
+            </span>
+          </p>
+        </div>
+      </div>
 
-            {decisionLine ? (
-              <p className="ideate-chosen-line sketch-decision-line" role="status">
-                {decisionLine}{' '}
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={() => setActiveView?.('spark')}
-                >
-                  Edit
-                </button>
-              </p>
-            ) : null}
+      {decisionLine ? (
+        <p className="sketch-decision-line" role="status">
+          {decisionLine}{' '}
+          <button
+            type="button"
+            className="text-link"
+            onClick={() => setActiveView?.('spark')}
+          >
+            Edit
+          </button>
+        </p>
+      ) : null}
 
-            {/* Current step owns the fold — only one primary action */}
-            <section
-              className="panel step-focus-panel surface-desk-hero sketch-now"
-              key={stepFocusKey}
-              id="current-step"
+      {ideateDirs.length > 0 && (
+        <div className="sketch-ideate-strip" aria-label="From Ideate">
+          {ideateDirs.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              className={`sketch-dir-chip${d.chosen ? ' is-chosen' : ''}`}
+              onClick={() => queueDraft(d)}
             >
-              <div className="step-focus-head">
-                <div className="brand-section-label" style={{ margin: 0 }}>
-                  {i18nT(locale, 'ui.currentStep')}
-                </div>
-                {getProcessPhase('sketch') && (
-                  <InfoReveal>
-                    {getProcessPhase('sketch').checks.join(' · ')}
-                  </InfoReveal>
-                )}
-              </div>
-              {!nextTask ? (
-                <div className="empty-state empty-state-craft">
-                  <Suspense fallback={null}>
-                    <EmptyIllustration variant="desk" />
-                  </Suspense>
-                  <p className="empty-state-title">
-                    {doneTasks.length > 0
-                      ? i18nT(locale, 'ui.queueClear')
-                      : i18nT(locale, 'ui.noStepYet')}
-                  </p>
-                  <div className="step-focus-actions step-focus-actions-empty">
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={() =>
-                        document.getElementById('desk-capture')?.focus()
-                      }
-                    >
-                      {i18nT(locale, 'ui.dumpIdea')}
-                    </button>
-                    {deskTasks.length === 0 && (
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={openBreakdown}
-                      >
-                        {i18nT(locale, 'ui.breakMicro')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="step-focus">
-                  <div className="step-focus-meta">
-                    <span className="task-badge">Now</span>
-                    <span className="task-meta">
-                      {({ high: 'H', med: 'M', low: 'L' }[
-                        nextTask.energy || 'med'
-                      ] || 'M')}
-                      {nextTask.parentId ? ' · micro' : ''}
-                      {nextTask.dueDate
-                        ? ` · ${urgencyLabel(nextTask.dueDate)}`
-                        : ''}
-                    </span>
-                  </div>
-                  <input
-                    className="step-focus-title"
-                    value={nextTask.title}
-                    onChange={(e) =>
-                      updateTaskTitle(nextTask.id, e.target.value)
-                    }
-                    aria-label="Edit current step"
-                  />
-                  <label className="field-label" htmlFor="step-why" style={{ marginTop: '0.65rem' }}>
-                    Why it fits the goal (one line)
-                  </label>
-                  <input
-                    id="step-why"
-                    className="field-input"
-                    value={nextTask.why || ''}
-                    onChange={(e) =>
-                      updateTaskWhy(nextTask.id, e.target.value)
-                    }
-                    placeholder="Why this step"
-                    aria-label="Why this draft fits the goal"
-                  />
-                  <div className="step-focus-actions">
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={completeCurrentStep}
-                    >
-                      {i18nT(locale, 'ui.completeStep')}
-                    </button>
-                    <details className="step-more-details">
-                      <summary>More</summary>
-                      <div className="step-more-panel">
-                        {!nextTask.parentId && (
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={() => {
-                              breakIntoSteps(nextTask.id)
-                              notifyAction('Split into 3', 'micro_steps', {
-                                label: 'Split step',
-                              })
-                              bumpStepFocus()
-                            }}
-                          >
-                            Split if too big
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          className="btn btn-ghost"
-                          onClick={() => setProcessOpenLocal((o) => !o)}
-                          aria-expanded={processOpenLocal}
-                        >
-                          Process checklist
-                        </button>
-                        <button
-                          type="button"
-                          className="text-link step-due-toggle"
-                          onClick={() => setStepDueOpen((o) => !o)}
-                          aria-expanded={stepDueOpen}
-                        >
-                          {stepDueOpen || nextTask.dueDate
-                            ? stepDueOpen
-                              ? 'Hide due date'
-                              : `Due ${formatShortDate(nextTask.dueDate)}`
-                            : 'Add due date'}
-                        </button>
-                      </div>
-                    </details>
-                  </div>
-                  <div className="step-focus-secondary">
-                    <button
-                      type="button"
-                      className="text-link step-remove-link"
-                      onClick={() => {
-                        const id = nextTask.id
-                        setDeskConfirm({
-                          kind: 'remove-step',
-                          label:
-                            'Remove this step from the desk? Cannot be undone.',
-                          onConfirm: () => {
-                            removeTask(id)
-                            flashToast(i18nT(locale, 'ui.stepRemoved'))
-                            setDeskConfirm(null)
-                          },
-                        })
-                      }}
-                    >
-                      Remove step
-                    </button>
-                  </div>
-                  {stepDueOpen && (
-                    <div className="step-due-row">
-                      <label className="field-label" htmlFor="step-due">
-                        Due date
-                      </label>
-                      <input
-                        id="step-due"
-                        type="date"
-                        className="field-input step-due-input"
-                        value={nextTask.dueDate || ''}
-                        onChange={(e) =>
-                          setTaskDueDate(nextTask.id, e.target.value)
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </section>
-
-            {/* A/B/C draft options from Ideate */}
-            {(activeProject?.directions || []).some((d) =>
-              String(d.title || '').trim()
-            ) && (
-              <section className="panel brand-section sketch-directions-panel">
-                <div className="brand-section-label">From Ideate</div>
-                <div className="sketch-dir-chips">
-                  {(activeProject.directions || [])
-                    .filter((d) => String(d.title || '').trim())
-                    .map((d) => (
-                      <button
-                        key={d.id}
-                        type="button"
-                        className={`sketch-dir-chip${d.chosen ? ' is-chosen' : ''}`}
-                        onClick={() => {
-                          addTask({
-                            id: Date.now() + Math.random(),
-                            title: `Draft ${d.label}: ${d.title}`,
-                            energy: 'med',
-                            meta: 'Direction option',
-                            why: d.note || '',
-                            completed: false,
-                            seeded: false,
-                            projectId:
-                              activeProject?.id ||
-                              useAppStore.getState().currentProjectId,
-                            dueDate: '',
-                          })
-                          flashToast(
-                            tFormat(locale, 'ui.queuedDraftLabel', {
-                              label: d.label,
-                            })
-                          )
-                        }}
-                      >
-                        {d.label}
-                        {d.chosen ? ' ★' : ''} · {d.title}
-                      </button>
-                    ))}
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  style={{ marginTop: '0.65rem' }}
-                  onClick={() => {
-                    const filled = (activeProject?.directions || []).filter(
-                      (d) => String(d.title || '').trim()
-                    )
-                    if (!filled.length) {
-                      flashToast(i18nT(locale, 'ui.captureIdeateFirst'))
-                      return
-                    }
-                    const base = Date.now()
-                    filled.forEach((d, i) => {
-                      addTask({
-                        id: base + i + 1,
-                        title: `Draft ${d.label}: ${d.title}`,
-                        energy: 'med',
-                        meta: 'Direction option',
-                        why: d.note || '',
-                        completed: false,
-                        seeded: false,
-                        projectId:
-                          activeProject?.id ||
-                          useAppStore.getState().currentProjectId,
-                        dueDate: '',
-                      })
-                    })
-                    flashToast(
-                      tFormat(locale, 'ui.queuedDraftsN', {
-                        n: filled.length,
-                      })
-                    )
-                  }}
-                >
-                  Queue all A/B/C drafts
-                </button>
-              </section>
-            )}
-
-            <div className="sketch-below">
-            {/* Compact capture — secondary to current step */}
-            <section className="capture-strip sketch-capture" aria-label="Capture">
-              <div className="capture-row capture-row-compact">
-                <input
-                  id="desk-capture"
-                  value={quickInput}
-                  onChange={(e) => setQuickInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && captureStep?.()}
-                  placeholder="Next step"
-                  aria-label="Add to desk"
-                />
-                <button
-                  type="button"
-                  onClick={() => captureStep?.()}
-                  className="btn btn-secondary"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="capture-desk-meta">
-                <button
-                  type="button"
-                  className="text-link capture-options-toggle"
-                  onClick={() => setCaptureOptionsOpen((o) => !o)}
-                  aria-expanded={captureOptionsOpen}
-                >
-                  {captureOptionsOpen ? 'Hide options' : 'Energy & voice'}
-                </button>
-                {captureOptionsOpen && (
-                  <>
-                    <select
-                      className="capture-energy"
-                      value={captureEnergy}
-                      onChange={(e) => setCaptureEnergy(e.target.value)}
-                      aria-label="Energy level"
-                    >
-                      <option value="high">High</option>
-                      <option value="med">Medium</option>
-                      <option value="low">Low</option>
-                    </select>
-                    <label className="capture-due-label">
-                      Due
-                      <input
-                        type="date"
-                        className="capture-due-input"
-                        value={captureDue}
-                        onChange={(e) => setCaptureDue(e.target.value)}
-                        aria-label="Optional due date"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      className="voice-link"
-                      onClick={startVoice}
-                    >
-                      Voice input
-                    </button>
-                  </>
-                )}
-              </div>
-            </section>
-
-            {showHowItWorks && (
-              <section className="product-card product-card-quiet" aria-label="How this desk works">
-                <div className="product-card-top">
-                  <p className="product-card-eyebrow">Desk</p>
-                  <button
-                    type="button"
-                    className="product-card-dismiss"
-                    onClick={hideHowItWorks}
-                  >
-                    Got it
-                  </button>
-                </div>
-                <p className="product-card-title" style={{ marginBottom: 0 }}>
-                  {i18nT(locale, 'ui.howDeskWorks')}
-                </p>
-              </section>
-            )}
-
-            <div className="path-continue-row work-below-tools sketch-tools-row">
+              {d.label}
+              {d.chosen ? ' ·' : ''} {d.title}
+            </button>
+          ))}
+          {ideateDirs.length > 1 && (
+            <details className="sketch-ideate-more">
+              <summary>All</summary>
               <button
                 type="button"
-                className="text-link"
-                onClick={openBreakdown}
+                className="btn btn-ghost btn-sm"
+                onClick={() => ideateDirs.forEach(queueDraft)}
               >
-                Break project down
+                Queue all
               </button>
-            </div>
+            </details>
+          )}
+        </div>
+      )}
 
-            {/* Queue — collapsed by default when busy */}
-            <section className="panel brand-section sketch-queue-panel">
+      {/* Fold: current step only */}
+      <section
+        className="panel step-focus-panel sketch-now"
+        key={stepFocusKey}
+        id="current-step"
+      >
+        <div className="step-focus-head">
+          <div className="brand-section-label" style={{ margin: 0 }}>
+            Now
+          </div>
+          {getProcessPhase('sketch') && (
+            <InfoReveal>
+              {getProcessPhase('sketch').checks.join(' · ')}
+            </InfoReveal>
+          )}
+        </div>
+        {!nextTask ? (
+          <div className="empty-state empty-state-craft sketch-empty">
+            <Suspense fallback={null}>
+              <EmptyIllustration variant="desk" />
+            </Suspense>
+            <p className="empty-state-title">
+              {doneTasks.length > 0
+                ? i18nT(locale, 'ui.queueClear')
+                : i18nT(locale, 'ui.noStepYet')}
+            </p>
+            <div className="step-focus-actions step-focus-actions-empty">
               <button
                 type="button"
-                className="section-toggle"
-                onClick={() => setQueueOpen((o) => !o)}
-                aria-expanded={
-                  queueTasks.length === 0
-                    ? false
-                    : queueCollapsed
-                      ? queueOpen
-                      : true
+                className="btn btn-primary"
+                onClick={() =>
+                  document.getElementById('desk-capture')?.focus()
                 }
               >
-                <span className="brand-section-label" style={{ margin: 0 }}>
-                  Queue · {queueTasks.length} waiting
-                </span>
-                <span className="section-toggle-hint">
-                  {queueTasks.length === 0
-                    ? ''
-                    : queueCollapsed && !queueOpen
-                      ? 'Show'
-                      : 'Hide'}
-                </span>
+                Add step
               </button>
-              {queueTasks.length > 0 &&
-                (queueCollapsed ? queueOpen : true) && (
-                <div className="desk-list" style={{ marginTop: '0.75rem' }}>
-                  {queueTasks.map((task, i) => (
-                    <div key={task.id} className="task-row">
-                      <label className="task-row-label">
-                        <input
-                          type="checkbox"
-                          checked={false}
-                          onChange={() => toggleTask(task.id)}
-                        />
-                        <span className="task-row-body">
-                          <span className="task-step-num">Step {i + 2}</span>
-                          <span className="task-title">{task.title}</span>
-                          <span className="task-meta">
-                            {({ high: 'H', med: 'M', low: 'L' }[
-                              task.energy || 'med'
-                            ] || 'M')}
-                            {task.dueDate
-                              ? ` · ${formatShortDate(task.dueDate)}`
-                              : ''}
-                          </span>
-                        </span>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            {/* Completed — collapsed by default */}
-            <section className="panel brand-section">
-              <button
-                type="button"
-                className="section-toggle"
-                onClick={() => setDoneOpen((o) => !o)}
-                aria-expanded={doneOpen}
-              >
-                <span className="brand-section-label" style={{ margin: 0 }}>
-                  Done · {doneTasks.length}
-                </span>
-                <span className="section-toggle-hint">
-                  {doneTasks.length === 0 ? '' : doneOpen ? 'Hide' : 'Show'}
-                </span>
-              </button>
-              {doneTasks.length > 0 && doneOpen ? (
-                <ul className="done-list" style={{ marginTop: '0.75rem' }}>
-                  {doneTasks.map((t) => (
-                    <li key={t.id}>
-                      <button
-                        type="button"
-                        className="done-undo"
-                        onClick={() => toggleTask(t.id)}
-                        title="Mark incomplete"
-                      >
-                        ✓
-                      </button>
-                      <span className="done-title">{t.title}</span>
-                      <button
-                        type="button"
-                        className="text-link"
-                        style={{ marginTop: 0 }}
-                        onClick={() => {
-                          const id = t.id
-                          setDeskConfirm({
-                            kind: 'delete-done',
-                            label: 'Delete this completed step permanently?',
-                            onConfirm: () => {
-                              removeTask(id)
-                              setDeskConfirm(null)
-                            },
-                          })
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </section>
             </div>
           </div>
+        ) : (
+          <div className="step-focus">
+            <div className="step-focus-meta">
+              <span className="task-badge">Now</span>
+              <span className="task-meta">
+                {({ high: 'H', med: 'M', low: 'L' }[nextTask.energy || 'med'] ||
+                  'M')}
+                {nextTask.parentId ? ' · micro' : ''}
+                {nextTask.dueDate
+                  ? ` · ${urgencyLabel(nextTask.dueDate)}`
+                  : ''}
+              </span>
+            </div>
+            <input
+              className="step-focus-title"
+              value={nextTask.title}
+              onChange={(e) => updateTaskTitle(nextTask.id, e.target.value)}
+              aria-label="Edit current step"
+            />
+            <label className="field-label" htmlFor="step-why">
+              Why
+            </label>
+            <input
+              id="step-why"
+              className="field-input"
+              value={nextTask.why || ''}
+              onChange={(e) => updateTaskWhy(nextTask.id, e.target.value)}
+              placeholder="Why this step"
+              aria-label="Why this step"
+            />
+            <div className="step-focus-actions">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={completeCurrentStep}
+              >
+                Done
+              </button>
+              <details className="step-more-details">
+                <summary>More</summary>
+                <div className="step-more-panel">
+                  {!nextTask.parentId && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        breakIntoSteps(nextTask.id)
+                        notifyAction?.('Split into 3', 'micro_steps', {
+                          label: 'Split step',
+                        })
+                        bumpStepFocus()
+                      }}
+                    >
+                      Split
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setStepDueOpen((o) => !o)}
+                    aria-expanded={stepDueOpen}
+                  >
+                    {nextTask.dueDate
+                      ? `Due ${formatShortDate(nextTask.dueDate)}`
+                      : 'Due'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() =>
+                      confirmRemove(
+                        nextTask.id,
+                        'Remove this step? Cannot undo.'
+                      )
+                    }
+                  >
+                    Remove
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={openBreakdown}
+                  >
+                    Break down
+                  </button>
+                </div>
+              </details>
+            </div>
+            {stepDueOpen && (
+              <div className="step-due-row">
+                <label className="field-label" htmlFor="step-due">
+                  Due
+                </label>
+                <input
+                  id="step-due"
+                  type="date"
+                  className="field-input step-due-input"
+                  value={nextTask.dueDate || ''}
+                  onChange={(e) =>
+                    setTaskDueDate(nextTask.id, e.target.value)
+                  }
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      <div className="sketch-below">
+        <section className="capture-strip sketch-capture" aria-label="Capture">
+          <div className="capture-row capture-row-compact">
+            <input
+              id="desk-capture"
+              value={quickInput}
+              onChange={(e) => setQuickInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && captureStep?.()}
+              placeholder="Next step"
+              aria-label="Add to desk"
+            />
+            <button
+              type="button"
+              onClick={() => captureStep?.()}
+              className="btn btn-secondary"
+            >
+              Add
+            </button>
+          </div>
+          <div className="capture-desk-meta">
+            <button
+              type="button"
+              className="text-link capture-options-toggle"
+              onClick={() => setCaptureOptionsOpen((o) => !o)}
+              aria-expanded={captureOptionsOpen}
+            >
+              {captureOptionsOpen ? 'Hide' : 'Options'}
+            </button>
+            {captureOptionsOpen && (
+              <>
+                <select
+                  className="capture-energy"
+                  value={captureEnergy}
+                  onChange={(e) => setCaptureEnergy(e.target.value)}
+                  aria-label="Energy"
+                >
+                  <option value="high">H</option>
+                  <option value="med">M</option>
+                  <option value="low">L</option>
+                </select>
+                <label className="capture-due-label">
+                  Due
+                  <input
+                    type="date"
+                    className="capture-due-input"
+                    value={captureDue}
+                    onChange={(e) => setCaptureDue(e.target.value)}
+                    aria-label="Due date"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="voice-link"
+                  onClick={startVoice}
+                >
+                  Voice
+                </button>
+              </>
+            )}
+          </div>
+        </section>
+
+        {showHowItWorks && (
+          <section
+            className="product-card product-card-quiet"
+            aria-label="How this desk works"
+          >
+            <div className="product-card-top">
+              <p className="product-card-eyebrow">Desk</p>
+              <button
+                type="button"
+                className="product-card-dismiss"
+                onClick={hideHowItWorks}
+              >
+                Got it
+              </button>
+            </div>
+            <p className="product-card-title" style={{ marginBottom: 0 }}>
+              {i18nT(locale, 'ui.howDeskWorks')}
+            </p>
+          </section>
+        )}
+
+        <section className="panel brand-section sketch-queue-panel">
+          <button
+            type="button"
+            className="section-toggle"
+            onClick={() => setQueueOpen((o) => !o)}
+            aria-expanded={
+              queueTasks.length === 0
+                ? false
+                : queueCollapsed
+                  ? queueOpen
+                  : true
+            }
+          >
+            <span className="brand-section-label" style={{ margin: 0 }}>
+              Queue · {queueTasks.length}
+            </span>
+            <span className="section-toggle-hint">
+              {queueTasks.length === 0
+                ? ''
+                : queueCollapsed && !queueOpen
+                  ? 'Show'
+                  : 'Hide'}
+            </span>
+          </button>
+          {queueTasks.length > 0 && (queueCollapsed ? queueOpen : true) && (
+            <div className="desk-list" style={{ marginTop: '0.75rem' }}>
+              {queueTasks.map((task, i) => (
+                <div key={task.id} className="task-row">
+                  <label className="task-row-label">
+                    <input
+                      type="checkbox"
+                      checked={false}
+                      onChange={() => toggleTask(task.id)}
+                    />
+                    <span className="task-row-body">
+                      <span className="task-step-num">{i + 2}</span>
+                      <span className="task-title">{task.title}</span>
+                      <span className="task-meta">
+                        {({ high: 'H', med: 'M', low: 'L' }[
+                          task.energy || 'med'
+                        ] || 'M')}
+                        {task.dueDate
+                          ? ` · ${formatShortDate(task.dueDate)}`
+                          : ''}
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="panel brand-section">
+          <button
+            type="button"
+            className="section-toggle"
+            onClick={() => setDoneOpen((o) => !o)}
+            aria-expanded={doneOpen}
+          >
+            <span className="brand-section-label" style={{ margin: 0 }}>
+              Done · {doneTasks.length}
+            </span>
+            <span className="section-toggle-hint">
+              {doneTasks.length === 0 ? '' : doneOpen ? 'Hide' : 'Show'}
+            </span>
+          </button>
+          {doneTasks.length > 0 && doneOpen ? (
+            <ul className="done-list" style={{ marginTop: '0.75rem' }}>
+              {doneTasks.map((t) => (
+                <li key={t.id}>
+                  <button
+                    type="button"
+                    className="done-undo"
+                    onClick={() => toggleTask(t.id)}
+                    title="Undo"
+                  >
+                    ✓
+                  </button>
+                  <span className="done-title">{t.title}</span>
+                  <button
+                    type="button"
+                    className="text-link"
+                    style={{ marginTop: 0 }}
+                    onClick={() =>
+                      confirmRemove(t.id, 'Delete this step permanently?')
+                    }
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      </div>
+
+      {journeyNext && (
+        <div className="path-continue-row work-below-tools">
+          <button
+            type="button"
+            className="btn btn-primary work-path-next"
+            onClick={() => setActiveView(journeyNext.view)}
+          >
+            {tFormat(locale, 'ui.continueNext', {
+              label: pathLabel(locale, journeyNext.id) || journeyNext.label,
+            })}
+          </button>
+        </div>
+      )}
+    </div>
   )
 }

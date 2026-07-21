@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v13)
- * v12: label densify · v13: Ideate 65/35 + gated Send
+/* Creative Companion — offline shell + asset cache (v14)
+ * v13: Ideate rewrite · v14: Sketch fold ADHD rewrite
  */
-const CACHE = 'cc-shell-v13'
+const CACHE = 'cc-shell-v14'
 const PRECACHE = [
   './',
   './index.html',

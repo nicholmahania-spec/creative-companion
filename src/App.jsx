@@ -3072,6 +3072,7 @@ function App() {
               setStepDueOpen={setStepDueOpen}
               completeCurrentStep={completeCurrentStep}
               startVoice={startVoice}
+              setDeskConfirm={setDeskConfirm}
             />
           </Suspense>
         )}
