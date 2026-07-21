@@ -8,6 +8,7 @@
  */
 
 import { pinFaceCssText, pinVisualKind } from './moodPins'
+import { toISODate } from './dates'
 import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
 import {
   appendSystemMarkdown,
@@ -1341,7 +1342,7 @@ function hexToRgb(hex) {
 
 /** Full workspace backup */
 export function downloadWorkspaceBackup(workspace) {
-  const day = new Date().toISOString().slice(0, 10)
+  const day = toISODate()
   return downloadJson(
     {
       ...workspace,
