@@ -1,6 +1,11 @@
 /**
  * Define — split-screen studio: brief form (60%) + mood board (40%).
- * Calm chapter nav — no XP, bars, or reward effects.
+ *
+ * ADHD: side-by-side kills “tab-switching amnesia.” Inspiration stays pinned
+ * next to the questions so users don’t leave the page to look at refs and
+ * forget what they were answering. Do not collapse to form-only.
+ *
+ * Calm chapter nav — no XP / game HUD.
  */
 import { Suspense, lazy, useState, useMemo } from 'react'
 import useAppStore from '../store/useAppStore'
@@ -126,8 +131,8 @@ export default function DefineView(props) {
             {i18nT(locale, 'path.define')}
           </h1>
           <p className="page-sub define-dashboard-sub">
-            Write the brief on the left. Pin references on the right. One chapter
-            at a time.
+            Questions on the left, inspiration pinned on the right — so you don’t
+            leave the page and lose the thread. One chapter at a time.
           </p>
         </div>
       </header>
@@ -157,9 +162,13 @@ export default function DefineView(props) {
         </div>
       )}
 
-      <div className="define-split">
-        {/* ——— LEFT 60%: form ——— */}
-        <div className="define-split-form">
+      <div
+        className="define-split"
+        data-define-layout="form-board"
+        title="Brief and mood board stay side by side"
+      >
+        {/* LEFT: questions — board stays visible so focus doesn’t leave the page */}
+        <div className="define-split-form" aria-label="Brief questions">
           <section
             className={`define-meta-card${metaFocus ? ' has-focus' : ''}`}
             aria-label="Project essentials"
@@ -311,6 +320,10 @@ export default function DefineView(props) {
             </section>
           )}
 
+          <a className="define-board-anchor" href="#define-mood-board">
+            Inspiration is below on this page — same pins as Research.
+          </a>
+
           <details className="define-secondary define-admin">
             <summary>Project tools · desk · archive</summary>
             <div className="define-admin-body">
@@ -392,8 +405,8 @@ export default function DefineView(props) {
           </details>
         </div>
 
-        {/* ——— RIGHT 40%: mood board ——— */}
-        <div className="define-split-mood">
+        {/* RIGHT: pinned inspiration — same project pins as Research */}
+        <div className="define-split-mood" aria-label="Inspiration beside the brief">
           <Suspense fallback={<div className="define-mood define-mood-loading">Loading board…</div>}>
             <DefineMoodCanvas
               deskMood={deskMood}

@@ -1,5 +1,19 @@
 # Creative Companion — agent rules
 
+## Define split workspace (ADHD — do not regress)
+
+**Define must keep a side-by-side form + mood board.** ADHD users lose the train of thought when they tab away to look at inspiration (“tab-switching amnesia”). The mood board stays **pinned next to** the brief questions so writing and reference stay in one glance.
+
+| Keep | Avoid |
+|------|--------|
+| ~60% questions / ~40% mood board on desktop | Single-column form that sends users to Research for refs |
+| Sticky inspiration pane while the form scrolls | Hiding the board behind a tab/modal by default |
+| Same project pins as Research (shared `moodItems`) | A disposable “demo only” board that doesn’t stick to the project |
+
+Mobile may stack, but the board must remain **one scroll away on the same page**, not a separate path step.
+
+---
+
 ## Color changes → dark mode audit (mandatory)
 
 **Whenever you change colors** — CSS variables, hex/rgb/hsl values, gradients, borders, shadows that tint UI, `theme-color`, or tokens in `:root` / `.app.deep` — you **must** audit dark mode before calling the work done.

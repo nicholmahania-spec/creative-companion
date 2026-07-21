@@ -14316,10 +14316,13 @@ body:has(.app.deep)::after {
   font-variant-numeric: tabular-nums;
 }
 
-/* ——— Split workspace ——— */
+/* ——— Split workspace (ADHD: board pinned beside questions) ———
+ * Side-by-side prevents tab-switching amnesia: refs stay in view while typing.
+ * Do not default to form-only; keep board on the same page even when stacked.
+ */
 .define-split {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 3fr) minmax(16rem, 2fr); /* ~60/40 */
   gap: 1.15rem;
   align-items: start;
 }
@@ -14334,8 +14337,9 @@ body:has(.app.deep)::after {
 .define-split-mood {
   min-width: 0;
   position: sticky;
-  top: 5.5rem;
-  max-height: calc(100vh - 6.5rem);
+  top: 4.75rem;
+  max-height: calc(100vh - 5.5rem);
+  z-index: 5;
 }
 
 .define-workbook.is-split {
@@ -14589,7 +14593,17 @@ body:has(.app.deep)::after {
   background: #ef4444;
 }
 
-@media (max-width: 900px) {
+/* Wide tablet+: keep real split so board never leaves the glance */
+@media (min-width: 840px) {
+  .define-split {
+    grid-template-columns: minmax(0, 3fr) minmax(15rem, 2fr);
+  }
+}
+
+/* Narrow: stack, but board stays on this page (order: form then board).
+ * Compact sticky mini-rail of the board title keeps awareness of pins below.
+ */
+@media (max-width: 839px) {
   .define-split {
     grid-template-columns: 1fr;
   }
@@ -14597,14 +14611,35 @@ body:has(.app.deep)::after {
     position: relative;
     top: auto;
     max-height: none;
+    order: 2;
+  }
+  .define-split-form {
+    order: 1;
   }
   .define-mood {
     max-height: none;
   }
-  .define-dopamine-hint {
-    text-align: left;
-    max-width: none;
+  .define-board-anchor {
+    display: block;
   }
+}
+
+/* Desktop: board is beside form — no need for “below” anchor */
+.define-board-anchor {
+  display: none;
+  margin: 0.85rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(244, 244, 245, 0.55);
+  text-decoration: none;
+}
+
+.define-board-anchor:hover {
+  color: #f4f4f5;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 @media (prefers-reduced-motion: reduce) {

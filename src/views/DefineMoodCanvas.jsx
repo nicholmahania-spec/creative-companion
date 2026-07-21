@@ -87,12 +87,17 @@ export default function DefineMoodCanvas({
   )
 
   return (
-    <aside className="define-mood" aria-label="Inspiration and mood board">
+    <aside
+      id="define-mood-board"
+      className="define-mood"
+      aria-label="Inspiration and mood board"
+    >
       <header className="define-mood-head">
-        <p className="define-mood-kicker">Inspiration</p>
+        <p className="define-mood-kicker">Stays open while you write</p>
         <h2 className="define-mood-title">Mood board</h2>
         <p className="define-mood-lede">
-          Pin refs while you write. Messy is fine — context for the brief.
+          Pin refs next to the questions so you don’t tab away and lose the
+          thought. Same pins show up in Research.
         </p>
       </header>
 
