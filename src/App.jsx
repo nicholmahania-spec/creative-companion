@@ -2744,18 +2744,51 @@ function App() {
         className={`journey-sidebar${journeyActive ? '' : ' is-tools'}`}
         aria-label={i18nT(locale, 'pathAria')}
       >
-          <button
-            type="button"
-            className={`journey-projects-link${activeView === 'home' ? ' is-active' : ''}`}
-            onClick={() => {
-              setActiveView('home')
-              setNavOpen(false)
-            }}
-            aria-current={activeView === 'home' ? 'page' : undefined}
-          >
-            <span className="journey-projects-icon" aria-hidden="true">▦</span>
-            <span className="journey-label">Projects</span>
-          </button>
+          <div className="journey-projects-section" aria-label="Your projects">
+            <div className="journey-projects-head">
+              <span className="journey-projects-heading">Projects</span>
+              <button
+                type="button"
+                className="journey-projects-add"
+                onClick={() => {
+                  createNewProject()
+                  notifyAction('New project', 'project_create', {
+                    label: 'New project',
+                  })
+                  setActiveView('project')
+                  setNavOpen(false)
+                }}
+                aria-label="New project"
+                title="New project"
+              >
+                +
+              </button>
+            </div>
+            <ul className="journey-projects-list">
+              {projectsSummary.map(({ project: p, doneCount }) => {
+                const isActive = p.id === activeProjectId
+                return (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      className={`journey-project-row${isActive ? ' is-active' : ''}`}
+                      onClick={() => {
+                        if (!isActive) switchProjectAndContinue(p.id)
+                        else setActiveView('project')
+                        setNavOpen(false)
+                      }}
+                      aria-current={isActive ? 'true' : undefined}
+                    >
+                      <span className="journey-project-row-name">{p.name}</span>
+                      <span className="journey-project-row-count">
+                        {doneCount}/7
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
           <ol className="journey-bar-list">
             {JOURNEY_STEPS.map((step, idx) => {
               const active = journeyActive === step.id

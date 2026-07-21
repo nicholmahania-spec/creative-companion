@@ -14357,14 +14357,63 @@ select:focus,
   font-size: 0.9rem;
 }
 
-/* Sidebar "Projects" entry — its own section above the step path */
-.journey-projects-link {
+/* Sidebar "Projects" — its own section above the step path, listing
+   every project so resuming one is a single click, not a detour */
+.journey-projects-section {
+  padding: 0 0.6rem 0.5rem;
+}
+
+.journey-projects-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.05rem 0.4rem;
+}
+
+.journey-projects-heading {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94A3B8;
+}
+
+.journey-projects-add {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  background: #FFFFFF;
+  color: #64748B;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.journey-projects-add:hover {
+  border-color: #2563EB;
+  color: #2563EB;
+}
+
+.journey-projects-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  max-height: 9.5rem;
+  overflow-y: auto;
+}
+
+.journey-project-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
-  width: calc(100% - 1.2rem);
-  margin: 0 0.6rem 0.5rem;
-  padding: 0.6rem 0.65rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
   border: none;
   border-left: 2px solid transparent;
   border-radius: 4px;
@@ -14376,28 +14425,38 @@ select:focus,
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.journey-projects-link:hover {
+.journey-project-row:hover {
   background: #EEF0F2;
   color: #1A1A1E;
 }
-.journey-projects-link.is-active {
+.journey-project-row.is-active {
   background: #FFFFFF;
   color: #1A1A1E;
   border: 1px solid #E2E8F0;
   border-left: 2px solid #2563EB;
   font-weight: 700;
 }
-.journey-projects-icon {
-  font-size: 0.9rem;
+
+.journey-project-row-name {
+  font-size: 0.8rem;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.journey-project-row-count {
+  flex: 0 0 auto;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: #94A3B8;
 }
-.journey-projects-link.is-active .journey-projects-icon {
+.journey-project-row.is-active .journey-project-row-count {
   color: #2563EB;
 }
-.journey-projects-link .journey-label {
-  font-size: 0.85rem;
-  letter-spacing: -0.01em;
-}
+
 /* Divider under the Projects section */
 .journey-sidebar .journey-bar-list {
   border-top: 1px solid #E2E8F0;
