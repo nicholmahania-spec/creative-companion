@@ -1,71 +1,73 @@
-/* Creative Companion — Premium Dark Glassmorphism (modern SaaS) */
+/* Creative Companion — Tech Studio (flat, precise, professional-tool) */
 
 :root {
   /*
-   * Light glass (warm theme): cool frosted SaaS, not paper corporate.
-   * Neon accent reserved for next / active / interactive highlights.
+   * Tech Studio: light cool-gray canvas, white component surfaces, steel-blue
+   * interactive accent. Flat geometry — no glass, no glow, no gradients.
    */
-  --accent-primary: #0F172A;
-  --accent-deep: #020617;
-  --accent-soft: #475569;
-  --accent-glow: rgba(34, 211, 238, 0.12);
-  --accent-growth: #14B8A6; /* teal success — not next */
+  --accent-primary: #334155; /* slate ink — buttons/dark chrome */
+  --accent-deep: #1E293B;
+  --accent-soft: #64748B;
+  --accent-glow: rgba(51, 65, 85, 0.08);
+  --accent-growth: #0F766E; /* done / success */
 
-  /* Neon interactive — path active + next CTA only */
-  --dopamine: #06B6D4;
-  --dopamine-deep: #0891B2;
-  --dopamine-soft: #22D3EE;
-  --dopamine-glow: rgba(6, 182, 212, 0.28);
-  --dopamine-ink: #042F2E;
-  --on-dopamine: #042F2E;
+  /* Steel blue — the one interactive/focus color, used deliberately */
+  --dopamine: #3B6EA5;
+  --dopamine-deep: #2C567F;
+  --dopamine-soft: #5A87BC;
+  --dopamine-glow: rgba(59, 110, 165, 0.16);
+  --dopamine-ink: #1E3A5F;
+  --on-dopamine: #FFFFFF;
 
-  --bg-canvas: #E8ECF4;
-  --bg-warm: rgba(255, 255, 255, 0.72);
-  --bg-card: rgba(255, 255, 255, 0.78);
-  --bg-elevated: rgba(255, 255, 255, 0.82);
-  --bg-muted: rgba(148, 163, 184, 0.22);
+  --bg-canvas: #F4F5F6;
+  --bg-warm: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --bg-muted: #E9EBED;
 
-  --text-primary: #0F172A;
-  --text-secondary: rgba(15, 23, 42, 0.68);
-  --text-muted: rgba(15, 23, 42, 0.48);
-  --border-subtle: rgba(15, 23, 42, 0.08);
-  --border-strong: rgba(15, 23, 42, 0.14);
-  --border-hairline: rgba(15, 23, 42, 0.06);
-  --highlight-inset: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --text-primary: #1E293B;
+  --text-secondary: rgba(30, 41, 59, 0.68);
+  --text-muted: rgba(30, 41, 59, 0.5);
+  --border-subtle: #DDE1E5;
+  --border-strong: #C7CDD3;
+  --border-hairline: #E4E7EA;
+  --highlight-inset: none;
 
-  /* Glass system */
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-bg-strong: rgba(255, 255, 255, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.65);
-  --glass-border-dim: rgba(15, 23, 42, 0.08);
-  --glass-blur: 18px;
-  --glass-shadow: 0 8px 32px rgba(15, 23, 42, 0.08), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
-  --mesh-1: rgba(6, 182, 212, 0.12);
-  --mesh-2: rgba(99, 102, 241, 0.1);
-  --mesh-3: rgba(255, 255, 255, 0.5);
+  /* Legacy "glass" tokens kept flat/opaque — components still reference
+   * these names; redefining them here removes the glass look everywhere
+   * without hunting down every usage. */
+  --glass-bg: #FFFFFF;
+  --glass-bg-strong: #FFFFFF;
+  --glass-border: #DDE1E5;
+  --glass-border-dim: #E4E7EA;
+  --glass-blur: 0px;
+  --glass-shadow: none;
+  --mesh-1: transparent;
+  --mesh-2: transparent;
+  --mesh-3: transparent;
 
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: 'Space Grotesk', var(--font-sans);
-  --tracking-display: -0.045em;
+  --font-sans: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: var(--font-sans);
+  --tracking-display: -0.01em;
 
-  --radius: 18px;
-  --radius-sm: 12px;
+  --radius: 6px;
+  --radius-sm: 4px;
   --radius-pill: 999px;
-  --radius-organic: 1.25rem;
-  --radius-squircle: 1.5rem;
-  --radius-node: 1.15rem;
+  --radius-organic: 6px;
+  --radius-squircle: 6px;
+  --radius-node: 6px;
 
   --shadow-0: none;
-  --shadow-1: 0 2px 8px rgba(15, 23, 42, 0.05);
-  --shadow-2: 0 12px 40px rgba(15, 23, 42, 0.08);
-  --shadow-3: 0 24px 64px rgba(15, 23, 42, 0.12);
-  --shadow-hover: 0 16px 48px rgba(15, 23, 42, 0.12);
-  --focus-lift: 0 20px 50px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(6, 182, 212, 0.15);
+  --shadow-1: none;
+  --shadow-2: none;
+  --shadow-3: none;
+  --shadow-hover: none;
+  --focus-lift: 0 0 0 1.5px var(--dopamine);
 
-  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 320ms cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+  --transition: 120ms ease;
+  --transition-slow: 160ms ease;
+  --ease-out: ease;
+  --ease-spring: ease;
 }
 
 * {
@@ -81,11 +83,6 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   background-color: var(--bg-canvas);
-  background-image:
-    radial-gradient(ellipse 90% 60% at 10% -10%, var(--mesh-1), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 95% 10%, var(--mesh-2), transparent 50%),
-    radial-gradient(ellipse 50% 40% at 50% 100%, var(--mesh-3), transparent 55%);
-  background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.55;
   letter-spacing: -0.01em;
@@ -94,43 +91,9 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Subtle film grain — grit without decoration widgets */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9998;
-  opacity: 0.028;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 180px 180px;
-}
-
-body:has(.app.deep)::after {
-  mix-blend-mode: soft-light;
-  opacity: 0.045;
-}
-
-@media print {
-  body::after {
-    display: none !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body::after {
-    opacity: 0.015;
-  }
-}
-
 .app.deep body,
 .app.deep {
-  background-image:
-    radial-gradient(ellipse 100% 70% at 15% -20%, rgba(6, 182, 212, 0.14), transparent 50%),
-    radial-gradient(ellipse 80% 55% at 90% 0%, rgba(99, 102, 241, 0.16), transparent 48%),
-    radial-gradient(ellipse 60% 45% at 50% 110%, rgba(14, 165, 233, 0.08), transparent 50%);
+  background-color: var(--bg-canvas);
 }
 
 .app {
@@ -150,48 +113,42 @@ body:has(.app.deep)::after {
 }
 
 .app.deep {
-  /* Premium midnight glass foundation */
-  --bg-canvas: #070B14;
-  --bg-warm: rgba(15, 23, 42, 0.55);
-  --bg-card: rgba(15, 23, 42, 0.55);
-  --bg-elevated: rgba(30, 41, 59, 0.45);
-  --bg-muted: rgba(51, 65, 85, 0.45);
+  /* Flat slate dark — same Tech Studio system, no glow/glass */
+  --bg-canvas: #12151A;
+  --bg-warm: #1B1F26;
+  --bg-card: #1B1F26;
+  --bg-elevated: #21262E;
+  --bg-muted: #2A303A;
   --text-primary: #F1F5F9;
   --text-secondary: rgba(226, 232, 240, 0.78);
-  --text-muted: rgba(148, 163, 184, 0.88);
-  --border-subtle: rgba(148, 163, 184, 0.12);
-  --border-strong: rgba(148, 163, 184, 0.22);
-  --highlight-inset: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --text-muted: rgba(148, 163, 184, 0.82);
+  --border-subtle: rgba(148, 163, 184, 0.16);
+  --border-strong: rgba(148, 163, 184, 0.26);
+  --highlight-inset: none;
   --accent-primary: #E2E8F0;
   --accent-deep: #F8FAFC;
   --accent-soft: #94A3B8;
-  --accent-glow: rgba(34, 211, 238, 0.16);
+  --accent-glow: rgba(148, 163, 184, 0.14);
   --accent-growth: #2DD4BF;
-  --dopamine: #22D3EE;
-  --dopamine-deep: #06B6D4;
-  --dopamine-soft: #67E8F9;
-  --dopamine-glow: rgba(34, 211, 238, 0.35);
-  --dopamine-ink: #042F2E;
-  --on-dopamine: #042F2E;
-  --glass-bg: rgba(15, 23, 42, 0.45);
-  --glass-bg-strong: rgba(15, 23, 42, 0.62);
+  --dopamine: #5A87BC;
+  --dopamine-deep: #3B6EA5;
+  --dopamine-soft: #7FA5D1;
+  --dopamine-glow: rgba(90, 135, 188, 0.2);
+  --dopamine-ink: #1E3A5F;
+  --on-dopamine: #FFFFFF;
+  --glass-bg: #1B1F26;
+  --glass-bg-strong: #21262E;
   --glass-border: rgba(148, 163, 184, 0.16);
   --glass-border-dim: rgba(148, 163, 184, 0.1);
-  --glass-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.35),
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 0 0 1px rgba(255, 255, 255, 0.04);
-  --mesh-1: rgba(6, 182, 212, 0.14);
-  --mesh-2: rgba(99, 102, 241, 0.16);
-  --mesh-3: rgba(14, 165, 233, 0.08);
-  --shadow-1: 0 4px 16px rgba(0, 0, 0, 0.25);
-  --shadow-2: 0 16px 48px rgba(0, 0, 0, 0.35);
-  --shadow-3: 0 28px 72px rgba(0, 0, 0, 0.45);
-  --shadow-hover: 0 20px 56px rgba(0, 0, 0, 0.4);
-  --focus-lift:
-    0 24px 64px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(34, 211, 238, 0.25),
-    0 0 40px rgba(34, 211, 238, 0.12);
+  --glass-shadow: none;
+  --mesh-1: transparent;
+  --mesh-2: transparent;
+  --mesh-3: transparent;
+  --shadow-1: none;
+  --shadow-2: none;
+  --shadow-3: none;
+  --shadow-hover: none;
+  --focus-lift: 0 0 0 1.5px var(--dopamine);
   background: var(--bg-canvas);
   color: var(--text-primary);
 }
@@ -5702,9 +5659,9 @@ html[data-reduce-motion='true'] *::after {
 
 .field-input:focus {
   outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-  background: #fff;
+  border: 1.5px solid var(--dopamine);
+  box-shadow: none;
+  background: var(--bg-elevated);
 }
 
 .brand-do-dont {
@@ -11067,14 +11024,14 @@ html[data-reduce-motion='true'] *::after {
   background-image: none;
   background-color: var(--bg-canvas);
 }
-/* Calmer field focus — stone ring */
+/* Active-cell isolation: sharp steel-blue border, no glow ring */
 input:focus,
 textarea:focus,
 select:focus,
 .field-input:focus,
 .onboard-input:focus {
-  border-color: var(--accent-soft) !important;
-  box-shadow: 0 0 0 3px var(--accent-glow) !important;
+  border: 1.5px solid var(--dopamine) !important;
+  box-shadow: none !important;
   outline: none;
 }
 .settings-jump-link {
@@ -12144,28 +12101,26 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 }
 
 /* ——— Journey as creative flow nodes ——— */
+/* ——— Systematic timeline: technical breadcrumb, not a game HUD ———
+ * [01] Define > [02] Research > ... with a solid track underneath that
+ * fills as steps complete. Text-forward — icons hidden, numbers shown.
+ */
 .journey-bar-flow {
-  align-items: center;
-  gap: 0.45rem 0.65rem;
-  padding: 0.55rem 0 0.35rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.3rem;
+  padding: 0.6rem 0 0.5rem;
 }
 
 .journey-bar-flow .journey-bar-list {
   display: flex;
   flex-wrap: nowrap;
-  align-items: stretch;
+  align-items: center;
   gap: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 0.2rem 0.1rem;
-  mask-image: linear-gradient(
-    90deg,
-    transparent 0,
-    #000 8px,
-    #000 calc(100% - 8px),
-    transparent 100%
-  );
+  padding: 0;
 }
 
 .journey-bar-flow .journey-bar-list::-webkit-scrollbar {
@@ -12174,149 +12129,134 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .journey-bar-flow .journey-bar-item {
   position: relative;
-  flex: 1 1 0;
-  min-width: 3.75rem;
-  max-width: 7.5rem;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 0;
 }
 
+/* The connector doubles as separator + track segment */
 .journey-flow-link {
-  position: absolute;
-  left: -0.35rem;
-  width: 0.7rem;
-  height: 2px;
-  border-radius: 999px;
-  background: var(--border-subtle);
-  opacity: 0.55;
+  position: static;
+  width: 1.1rem;
+  height: 1px;
+  background: var(--border-strong);
+  opacity: 1;
+  margin: 0 0.3rem;
   pointer-events: none;
-  z-index: 0;
-  transition: background 0.35s var(--ease-out), opacity 0.35s var(--ease-out);
+}
+
+.journey-flow-link::after {
+  content: '>';
+  display: block;
+  transform: translate(-0.15rem, -0.62rem);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
 }
 
 .journey-flow-link.is-lit {
-  background: color-mix(in srgb, var(--accent-growth) 55%, var(--border-subtle));
-  opacity: 0.9;
+  background: var(--dopamine);
 }
 
 .journey-bar-flow .journey-step {
   position: relative;
-  z-index: 1;
-  flex-direction: column;
-  gap: 0.2rem;
+  flex-direction: row;
+  gap: 0.35rem;
   min-width: 0;
-  width: 100%;
-  padding: 0.45rem 0.35rem 0.4rem;
+  padding: 0.3rem 0.4rem;
   border: 1px solid transparent;
-  border-radius: var(--radius-node);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
-  opacity: 0.42;
+  opacity: 1;
   box-shadow: none;
-  transition:
-    opacity 0.28s var(--ease-out),
-    transform 0.28s var(--ease-spring),
-    background 0.22s var(--ease-out),
-    border-color 0.22s var(--ease-out),
-    color 0.22s var(--ease-out),
-    box-shadow 0.28s var(--ease-out);
+  transition: background var(--transition), border-color var(--transition),
+    color var(--transition);
 }
 
 .journey-bar-flow .journey-step:hover {
-  opacity: 0.88;
   color: var(--text-secondary);
-  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  background: var(--bg-muted);
   border-color: var(--border-subtle);
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .journey-bar-flow .journey-step.is-done:not(.is-active) {
-  opacity: 0.62;
+  opacity: 1;
   border-color: transparent;
   background: transparent;
   color: var(--text-secondary);
 }
 
-.journey-bar-flow .journey-step.is-done:not(.is-active) .journey-node {
-  background: color-mix(in srgb, var(--accent-growth) 18%, var(--bg-muted));
+.journey-bar-flow .journey-step.is-done:not(.is-active) .journey-num {
   color: var(--accent-growth);
-  border-color: color-mix(in srgb, var(--accent-growth) 35%, transparent);
 }
 
-/* ONE-THING: only the active path step gets dopamine */
+/* Only the active step gets the steel-blue accent */
 .journey-bar-flow .journey-step.is-active {
   opacity: 1;
   color: var(--text-primary);
   background: var(--bg-elevated);
-  border-color: color-mix(in srgb, var(--dopamine) 38%, var(--border-subtle));
-  box-shadow:
-    0 0 0 1px var(--dopamine-glow),
-    var(--shadow-2);
-  transform: scale(1.06);
+  border-color: var(--dopamine);
+  box-shadow: none;
+  transform: none;
   z-index: 2;
 }
 
-.journey-bar-flow .journey-step.is-active .journey-node {
-  background: var(--dopamine);
-  color: var(--on-dopamine);
-  border-color: transparent;
-  box-shadow: 0 4px 16px var(--dopamine-glow);
-  transform: scale(1.05);
+.journey-bar-flow .journey-step.is-active .journey-num {
+  color: var(--dopamine);
 }
 
 .journey-bar-flow .journey-step.is-active .journey-label {
   color: var(--text-primary);
-  font-weight: 800;
+  font-weight: 700;
 }
 
+/* Icon node hidden — breadcrumb is text + bracketed number, not an icon */
 .journey-node {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.85rem;
-  height: 1.85rem;
-  border-radius: 0.85rem; /* soft squircle */
-  background: var(--bg-muted);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  transition:
-    background 0.22s var(--ease-out),
-    color 0.22s var(--ease-out),
-    transform 0.28s var(--ease-spring),
-    box-shadow 0.28s var(--ease-out),
-    border-color 0.22s var(--ease-out);
+  display: none;
 }
 
 .path-step-icon {
-  display: block;
-  width: 1rem;
-  height: 1rem;
+  display: none;
 }
 
 .journey-check {
-  font-size: 0.78rem;
-  font-weight: 800;
+  font-size: 0.72rem;
+  font-weight: 700;
   line-height: 1;
 }
 
-/* Keep journey-num for a11y/tests but hide visually — icon is the anchor */
 .journey-bar-flow .journey-num {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+  position: static;
+  width: auto;
+  height: auto;
   padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  margin: 0;
+  overflow: visible;
+  clip: auto;
   white-space: nowrap;
   border: 0;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.journey-bar-flow .journey-num::before {
+  content: '[';
+}
+
+.journey-bar-flow .journey-num::after {
+  content: ']';
 }
 
 .journey-bar-flow .journey-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
   line-height: 1.15;
   max-width: 100%;
   overflow: hidden;
@@ -12324,40 +12264,48 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   white-space: nowrap;
 }
 
-/* Progress pill becomes a ring node */
+/* Solid horizontal progress track under the breadcrumb row */
+.journey-bar-flow::after {
+  content: '';
+  display: block;
+  height: 3px;
+  margin-top: 0.35rem;
+  border-radius: 2px;
+  background: var(--bg-muted);
+}
+
 .journey-bar-flow .journey-progress-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0.15rem;
-  padding: 0.15rem;
-  min-width: 2.35rem;
-  min-height: 2.35rem;
-  border-radius: 50%;
+  margin-left: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  min-width: 0;
+  min-height: 0;
+  border-radius: var(--radius-sm);
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-1);
-  transition:
-    transform 0.22s var(--ease-spring),
-    border-color 0.2s ease,
-    box-shadow 0.22s ease;
+  box-shadow: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  transition: border-color var(--transition);
 }
 
 .journey-bar-flow .journey-progress-pill:hover {
-  transform: scale(1.06);
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-2);
+  transform: none;
+  border-color: var(--dopamine);
+  box-shadow: none;
 }
 
-/* ring stroke colors set on .progress-ring-fill rules above */
-
 .journey-bar-flow .journey-progress-pill .progress-ring-label {
-  font-size: 0.55rem;
+  font-size: 0.68rem;
 }
 
 .journey-bar-flow .journey-tools-pill {
-  border-radius: var(--radius-pill);
-  opacity: 0.7;
+  border-radius: var(--radius-sm);
+  opacity: 1;
 }
 
 @media (max-width: 720px) {
@@ -12963,46 +12911,23 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   padding: 2.25rem 1.75rem 3.5rem;
 }
 
-/* Journey nodes — glass chips; active = neon glow only */
+/* Flat breadcrumb — no glass, no glow (superseded legacy block) */
 .journey-bar-flow .journey-step {
-  border-radius: 1rem;
+  border-radius: var(--radius-sm);
   background: transparent;
 }
 
 .journey-bar-flow .journey-step.is-active {
-  background: var(--glass-bg-strong);
-  border-color: color-mix(in srgb, var(--dopamine) 45%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--dopamine) 30%, transparent),
-    0 0 28px var(--dopamine-glow),
-    var(--shadow-2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.journey-bar-flow .journey-step.is-active .journey-node {
-  background: linear-gradient(145deg, var(--dopamine-soft), var(--dopamine-deep));
-  color: var(--on-dopamine);
-  box-shadow:
-    0 0 20px var(--dopamine-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
-}
-
-.journey-bar-flow .journey-step.is-done:not(.is-active) .journey-node {
-  background: color-mix(in srgb, var(--accent-growth) 22%, var(--glass-bg));
-  color: var(--accent-growth);
-  border-color: color-mix(in srgb, var(--accent-growth) 40%, transparent);
-}
-
-.journey-node {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border-dim);
-  backdrop-filter: blur(8px);
+  background: var(--bg-elevated);
+  border-color: var(--dopamine);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .progress-ring-fill {
   stroke: var(--accent-growth);
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent-growth) 50%, transparent));
+  filter: none;
 }
 
 .journey-progress-pill.is-partial .progress-ring-fill {
@@ -13295,17 +13220,17 @@ body:has(.app.deep)::after {
    ============================================================ */
 
 .define-studio {
-  --define-canvas: #121214;
-  --define-card: #1a1a1e;
-  --define-card-lift: #222228;
-  --define-ink: #f4f4f5;
-  --define-muted: rgba(244, 244, 245, 0.58);
-  --define-dim: rgba(244, 244, 245, 0.38);
-  --define-border: rgba(255, 255, 255, 0.08);
-  --define-ch-1: #22d3ee;
-  --define-ch-2: #a78bfa;
-  --define-ch-3: #fb7185;
-  --define-glow: rgba(34, 211, 238, 0.45);
+  --define-canvas: var(--bg-canvas);
+  --define-card: var(--bg-elevated);
+  --define-card-lift: var(--bg-muted);
+  --define-ink: var(--text-primary);
+  --define-muted: var(--text-secondary);
+  --define-dim: var(--text-muted);
+  --define-border: var(--border-subtle);
+  --define-ch-1: var(--dopamine);
+  --define-ch-2: var(--dopamine);
+  --define-ch-3: var(--dopamine);
+  --define-glow: transparent;
   max-width: 42rem;
   margin-inline: auto;
   padding-bottom: 6.5rem;
@@ -13345,18 +13270,15 @@ body:has(.app.deep)::after {
   gap: 1.15rem;
   margin: 0 0 1.75rem;
   padding: 1.35rem 1.35rem 1.45rem;
-  border-radius: 1.5rem;
+  border-radius: 0.5rem;
   background: var(--define-card);
   border: 1px solid var(--define-border);
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.35),
-    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  box-shadow: none;
   color: var(--define-ink);
 }
 
 .app:not(.deep) .define-meta-card,
 .app:not(.deep) .define-workbook {
-  /* Keep studio dark even if shell is light — Define is a dark room */
   color: var(--define-ink);
 }
 
@@ -13375,10 +13297,12 @@ body:has(.app.deep)::after {
     transform 0.22s var(--ease-spring, ease);
 }
 
+/* Active-cell focus isolation: click a field, everything else drops to
+ * 25% opacity — no glow, no scale, just contrast doing the isolating. */
 .define-meta-field.is-dimmed,
 .define-field.is-dimmed {
-  opacity: 0.28;
-  filter: saturate(0.7);
+  opacity: 0.25;
+  filter: none;
   pointer-events: none;
 }
 
@@ -13387,13 +13311,10 @@ body:has(.app.deep)::after {
   opacity: 1 !important;
   filter: none !important;
   pointer-events: auto !important;
-  background: var(--define-card-lift);
-  border-color: var(--dopamine, var(--define-ch-1));
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--dopamine, var(--define-ch-1)) 55%, transparent),
-    0 0 32px var(--define-glow),
-    0 12px 32px rgba(0, 0, 0, 0.35);
-  transform: scale(1.01);
+  background: var(--bg-elevated);
+  border-color: var(--dopamine);
+  box-shadow: none;
+  transform: none;
   z-index: 2;
 }
 
@@ -13413,67 +13334,28 @@ body:has(.app.deep)::after {
   place-items: center;
   width: 2rem;
   height: 2rem;
-  border-radius: 0.75rem;
+  border-radius: 0.4rem;
   flex-shrink: 0;
-  color: #042f2e;
-  background: linear-gradient(145deg, #67e8f9, #22d3ee);
-  box-shadow: 0 4px 14px rgba(34, 211, 238, 0.35);
+  color: var(--define-ink);
+  background: var(--define-card-lift);
+  border: 1px solid var(--define-border);
+  box-shadow: none;
 }
 
-.define-icon-people {
-  background: linear-gradient(145deg, #c4b5fd, #8b5cf6);
-  color: #1e1b4b;
-  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
-}
-.define-icon-heart {
-  background: linear-gradient(145deg, #fda4af, #fb7185);
-  color: #4c0519;
-  box-shadow: 0 4px 14px rgba(251, 113, 133, 0.35);
-}
-.define-icon-spark {
-  background: linear-gradient(145deg, #fde68a, #fbbf24);
-  color: #422006;
-  box-shadow: 0 4px 14px rgba(251, 191, 36, 0.35);
-}
-.define-icon-check {
-  background: linear-gradient(145deg, #6ee7b7, #34d399);
-  color: #064e3b;
-  box-shadow: 0 4px 14px rgba(52, 211, 153, 0.35);
-}
-.define-icon-star {
-  background: linear-gradient(145deg, #fcd34d, #f59e0b);
-  color: #451a03;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
-}
-.define-icon-frame {
-  background: linear-gradient(145deg, #93c5fd, #3b82f6);
-  color: #1e3a8a;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
-}
-.define-icon-block {
-  background: linear-gradient(145deg, #fca5a5, #ef4444);
-  color: #450a0a;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
-}
-.define-icon-box {
-  background: linear-gradient(145deg, #5eead4, #14b8a6);
-  color: #042f2e;
-  box-shadow: 0 4px 14px rgba(20, 184, 166, 0.35);
-}
-.define-icon-gear {
-  background: linear-gradient(145deg, #cbd5e1, #94a3b8);
-  color: #0f172a;
-  box-shadow: 0 4px 14px rgba(148, 163, 184, 0.3);
-}
-.define-icon-flag {
-  background: linear-gradient(145deg, #fdba74, #f97316);
-  color: #431407;
-  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
-}
+.define-icon-people,
+.define-icon-heart,
+.define-icon-spark,
+.define-icon-check,
+.define-icon-star,
+.define-icon-frame,
+.define-icon-block,
+.define-icon-box,
+.define-icon-gear,
+.define-icon-flag,
 .define-icon-target {
-  background: linear-gradient(145deg, #67e8f9, #06b6d4);
-  color: #083344;
-  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.4);
+  background: var(--define-card-lift);
+  color: var(--define-ink);
+  box-shadow: none;
 }
 
 .define-field-label {
@@ -13523,9 +13405,9 @@ body:has(.app.deep)::after {
   width: 100%;
   margin: 0;
   padding: 0.85rem 1rem;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   border: 1px solid var(--define-border);
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--bg-canvas);
   color: var(--define-ink);
   font: inherit;
   font-size: 0.95rem;
@@ -13544,9 +13426,9 @@ body:has(.app.deep)::after {
 
 .define-input.field-input:focus {
   outline: none;
-  border-color: var(--dopamine, var(--define-ch-1));
-  box-shadow: 0 0 0 3px var(--define-glow);
-  background: rgba(0, 0, 0, 0.5);
+  border: 1.5px solid var(--dopamine, var(--define-ch-1));
+  box-shadow: none;
+  background: var(--bg-elevated);
 }
 
 .define-field-tip {
@@ -13556,9 +13438,9 @@ body:has(.app.deep)::after {
   gap: 0.35rem 0.45rem;
   margin: 0;
   padding: 0.45rem 0.7rem;
-  border-radius: 0.85rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 0.4rem;
+  background: var(--bg-muted);
+  border: 1px solid var(--define-border);
   font-size: 0.78rem;
   line-height: 1.4;
   color: var(--define-dim);
@@ -13594,12 +13476,10 @@ body:has(.app.deep)::after {
   position: relative;
   margin: 0 0 1.5rem;
   padding: 1.5rem 1.35rem 1.25rem;
-  border-radius: 1.65rem;
+  border-radius: 0.5rem;
   background: var(--define-card);
   border: 1px solid var(--define-border);
-  box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.4),
-    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  box-shadow: none;
   color: var(--define-ink);
 }
 
@@ -13663,9 +13543,9 @@ body:has(.app.deep)::after {
     radial-gradient(circle at center, var(--define-card) 58%, transparent 59%),
     conic-gradient(
       var(--dopamine, var(--define-ch-1)) calc(var(--p) * 1%),
-      rgba(255, 255, 255, 0.08) 0
+      var(--border-subtle) 0
     );
-  box-shadow: 0 0 24px color-mix(in srgb, var(--dopamine, var(--define-ch-1)) 25%, transparent);
+  box-shadow: none;
 }
 
 .define-progress-num {
@@ -13690,8 +13570,8 @@ body:has(.app.deep)::after {
   gap: 0.45rem;
   margin-bottom: 1.25rem;
   padding: 0.35rem;
-  border-radius: 1.15rem;
-  background: rgba(0, 0, 0, 0.35);
+  border-radius: 0.5rem;
+  background: var(--bg-muted);
   border: 1px solid var(--define-border);
 }
 
@@ -13718,15 +13598,15 @@ body:has(.app.deep)::after {
 
 .define-chapter-tab:hover {
   color: var(--define-ink);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-muted);
 }
 
 .define-chapter-tab.is-active {
   color: var(--define-ink);
   background: var(--define-card-lift);
-  border-color: color-mix(in srgb, var(--dopamine, var(--define-ch-1)) 40%, transparent);
-  box-shadow: 0 0 24px var(--define-glow);
-  transform: translateY(-1px);
+  border-color: var(--dopamine, var(--define-ch-1));
+  box-shadow: none;
+  transform: none;
 }
 
 .define-chapter-tab.is-complete .define-chapter-tab-num {
@@ -13745,14 +13625,14 @@ body:has(.app.deep)::after {
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.04em;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-muted);
   color: var(--define-muted);
 }
 
 .define-chapter-tab.is-active .define-chapter-tab-num {
-  background: linear-gradient(135deg, var(--dopamine-soft, #67e8f9), var(--dopamine, #22d3ee));
-  color: #042f2e;
-  box-shadow: 0 0 12px var(--define-glow);
+  background: var(--dopamine, var(--define-ch-1));
+  color: #fff;
+  box-shadow: none;
 }
 
 .define-chapter-tab-label {
@@ -13786,11 +13666,11 @@ body:has(.app.deep)::after {
 
 /* Open chapter card */
 .define-chapter {
-  border-radius: 1.35rem;
-  background: rgba(0, 0, 0, 0.28);
+  border-radius: 0.5rem;
+  background: var(--bg-muted);
   border: 1px solid var(--define-border);
   padding: 1.15rem 1.1rem 1.2rem;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  box-shadow: none;
   animation: defineChapterIn 0.35s var(--ease-out, ease);
 }
 
@@ -13821,7 +13701,7 @@ body:has(.app.deep)::after {
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--chapter-accent, var(--define-ch-1));
-  text-shadow: 0 0 18px color-mix(in srgb, var(--chapter-accent, var(--define-ch-1)) 50%, transparent);
+  text-shadow: none;
 }
 
 .define-chapter-title {
@@ -13888,20 +13768,15 @@ body:has(.app.deep)::after {
   gap: 0.45rem;
   margin-top: 1.25rem;
   padding: 0.65rem;
-  border-radius: 1.25rem;
-  background: rgba(18, 18, 20, 0.82);
+  border-radius: 0.5rem;
+  background: var(--bg-elevated);
   border: 1px solid var(--define-border);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  box-shadow: none;
 }
 
 .define-fab-bar.is-ready {
-  border-color: color-mix(in srgb, var(--dopamine, var(--define-ch-1)) 45%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--dopamine, var(--define-ch-1)) 25%, transparent),
-    0 0 40px var(--define-glow),
-    0 16px 48px rgba(0, 0, 0, 0.45);
+  border-color: var(--dopamine, var(--define-ch-1));
+  box-shadow: none;
 }
 
 .define-fab-hint {
@@ -13923,9 +13798,9 @@ body:has(.app.deep)::after {
 .define-fab {
   width: 100%;
   padding: 0.95rem 1.25rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(135deg, #2a2a32 0%, #1a1a1e 100%);
+  border-radius: 0.5rem;
+  border: 1px solid var(--define-border);
+  background: var(--define-card-lift);
   color: var(--define-muted);
   font-family: var(--font-display);
   font-size: 1.02rem;
@@ -13933,48 +13808,20 @@ body:has(.app.deep)::after {
   letter-spacing: -0.02em;
   cursor: pointer;
   transition:
-    transform 0.22s var(--ease-spring, ease),
-    box-shadow 0.25s ease,
     background 0.22s ease,
     color 0.2s ease,
     border-color 0.2s ease;
 }
 
 .define-fab.is-glow {
-  color: #042f2e;
-  background: linear-gradient(
-    135deg,
-    var(--dopamine-soft, #67e8f9) 0%,
-    var(--dopamine, #22d3ee) 50%,
-    var(--dopamine-deep, #06b6d4) 100%
-  );
-  border-color: color-mix(in srgb, var(--dopamine-soft, #67e8f9) 50%, transparent);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 0 36px var(--define-glow),
-    0 8px 28px rgba(6, 182, 212, 0.35);
-  animation: defineFabPulse 2.4s ease-in-out infinite;
+  color: #fff;
+  background: var(--dopamine, var(--define-ch-1));
+  border-color: var(--dopamine, var(--define-ch-1));
+  box-shadow: none;
 }
 
 .define-fab.is-glow:hover {
-  transform: translateY(-2px) scale(1.015);
-  filter: brightness(1.06);
-}
-
-@keyframes defineFabPulse {
-  0%,
-  100% {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.45),
-      0 0 28px var(--define-glow),
-      0 8px 28px rgba(6, 182, 212, 0.3);
-  }
-  50% {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.45),
-      0 0 48px var(--define-glow),
-      0 12px 36px rgba(6, 182, 212, 0.45);
-  }
+  background: var(--dopamine-deep, var(--define-ch-1));
 }
 
 /* Secondary / admin — recedes */
@@ -14359,13 +14206,11 @@ body:has(.app.deep)::after {
   height: 100%;
   max-height: calc(100vh - 6.5rem);
   padding: 1.2rem 1.15rem 1.15rem;
-  border-radius: 1.5rem;
-  background: #1a1a1e;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow:
-    0 20px 56px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  color: #f4f4f5;
+  border-radius: 0.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
+  color: var(--text-primary);
   overflow: hidden;
 }
 
@@ -14373,7 +14218,7 @@ body:has(.app.deep)::after {
   min-height: 16rem;
   display: grid;
   place-items: center;
-  color: rgba(244, 244, 245, 0.5);
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -14384,7 +14229,7 @@ body:has(.app.deep)::after {
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #a78bfa;
+  color: var(--dopamine);
 }
 
 .define-mood-title {
@@ -14393,31 +14238,30 @@ body:has(.app.deep)::after {
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #f4f4f5;
+  color: var(--text-primary);
 }
 
 .define-mood-lede {
   margin: 0;
   font-size: 0.82rem;
   line-height: 1.4;
-  color: rgba(244, 244, 245, 0.52);
+  color: var(--text-secondary);
 }
 
 .define-mood-drop {
   position: relative;
-  border-radius: 1.1rem;
-  border: 1.5px dashed rgba(167, 139, 250, 0.35);
-  background: rgba(0, 0, 0, 0.28);
+  border-radius: 0.4rem;
+  border: 1.5px dashed var(--border-strong);
+  background: var(--bg-muted);
   transition:
     border-color 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.25s ease;
+    background 0.2s ease;
 }
 
 .define-mood-drop.is-over {
-  border-color: #22d3ee;
-  background: rgba(34, 211, 238, 0.08);
-  box-shadow: 0 0 28px rgba(34, 211, 238, 0.25);
+  border-color: var(--dopamine);
+  background: var(--dopamine-glow);
+  box-shadow: none;
 }
 
 .define-mood-file {
@@ -14435,12 +14279,12 @@ body:has(.app.deep)::after {
   font: inherit;
   font-size: 0.85rem;
   font-weight: 650;
-  color: rgba(244, 244, 245, 0.7);
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
 .define-mood-drop-btn:hover {
-  color: #67e8f9;
+  color: var(--dopamine);
 }
 
 .define-mood-swatches {
@@ -14452,16 +14296,15 @@ body:has(.app.deep)::after {
 .define-mood-swatch {
   width: 1.65rem;
   height: 1.65rem;
-  border-radius: 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.3rem;
+  border: 1px solid var(--border-strong);
   cursor: pointer;
   padding: 0;
-  transition: transform 0.18s var(--ease-spring, ease), box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .define-mood-swatch:hover {
-  transform: scale(1.12);
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.25);
+  border-color: var(--dopamine);
 }
 
 .define-mood-note-row {
@@ -14479,7 +14322,7 @@ body:has(.app.deep)::after {
 .define-mood-tip {
   margin: 0;
   font-size: 0.72rem;
-  color: rgba(244, 244, 245, 0.4);
+  color: var(--text-muted);
   display: flex;
   gap: 0.35rem;
   align-items: baseline;
@@ -14506,26 +14349,26 @@ body:has(.app.deep)::after {
   min-height: 8rem;
   padding: 1.25rem;
   text-align: center;
-  border-radius: 1.1rem;
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-  color: rgba(244, 244, 245, 0.45);
+  border-radius: 0.4rem;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-muted);
   font-size: 0.85rem;
   line-height: 1.4;
 }
 
 .define-mood-empty-icon {
   font-size: 1.5rem;
-  color: #a78bfa;
-  text-shadow: 0 0 18px rgba(167, 139, 250, 0.6);
+  color: var(--dopamine);
+  text-shadow: none;
 }
 
 .define-mood-pin {
   position: relative;
   min-height: 5.5rem;
-  border-radius: 0.95rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.4rem;
+  border: 1px solid var(--border-subtle);
   overflow: hidden;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
 }
 
 .define-mood-pin.is-note {
@@ -14670,18 +14513,18 @@ body:has(.app.deep)::after {
 .define-chapter-nav {
   margin: 0 0 1.25rem;
   padding: 0.85rem 1rem 1rem;
-  border-radius: 1.15rem;
-  background: var(--define-card, #1a1a1e);
-  border: 1px solid var(--define-border, rgba(255, 255, 255, 0.08));
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  color: var(--define-ink, #f4f4f5);
+  border-radius: 0.5rem;
+  background: var(--define-card, var(--bg-elevated));
+  border: 1px solid var(--define-border, var(--border-subtle));
+  box-shadow: none;
+  color: var(--define-ink, var(--text-primary));
 }
 
 .define-chapter-nav-meta {
   margin: 0 0 0.65rem;
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--define-muted, rgba(244, 244, 245, 0.55));
+  color: var(--define-muted, var(--text-secondary));
   font-variant-numeric: tabular-nums;
 }
 
@@ -14701,10 +14544,10 @@ body:has(.app.deep)::after {
   gap: 0.2rem;
   width: 100%;
   padding: 0.65rem 0.7rem;
-  border-radius: 0.85rem;
+  border-radius: 0.4rem;
   border: 1px solid transparent;
-  background: rgba(0, 0, 0, 0.22);
-  color: var(--define-muted, rgba(244, 244, 245, 0.55));
+  background: var(--bg-muted, var(--define-card-lift));
+  color: var(--define-muted, var(--text-secondary));
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -14712,14 +14555,14 @@ body:has(.app.deep)::after {
 }
 
 .define-chapter-nav-btn:hover {
-  color: var(--define-ink, #f4f4f5);
-  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--define-ink, var(--text-primary));
+  border-color: var(--border-strong);
 }
 
 .define-chapter-nav-btn.is-active {
-  color: var(--define-ink, #f4f4f5);
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--define-ink, var(--text-primary));
+  background: var(--define-card-lift, var(--bg-elevated));
+  border-color: var(--dopamine);
 }
 
 .define-chapter-nav-btn.is-complete .define-chapter-nav-num {
@@ -14736,13 +14579,13 @@ body:has(.app.deep)::after {
   border-radius: 999px;
   font-size: 0.65rem;
   font-weight: 750;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border-subtle);
   color: inherit;
 }
 
 .define-chapter-nav-btn.is-active .define-chapter-nav-num {
-  background: rgba(255, 255, 255, 0.14);
-  color: var(--define-ink, #f4f4f5);
+  background: var(--dopamine);
+  color: #fff;
 }
 
 .define-chapter-nav-label {
@@ -14776,14 +14619,14 @@ body:has(.app.deep)::after {
 
 /* Continue CTA: solid desk button, not a pulsing power-up */
 .define-fab-bar {
-  border-color: var(--define-border, rgba(255, 255, 255, 0.08)) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  border-color: var(--define-border, var(--border-subtle)) !important;
+  box-shadow: none !important;
   animation: none !important;
 }
 
 .define-fab-bar.is-ready {
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  border-color: var(--border-strong) !important;
+  box-shadow: none !important;
 }
 
 .define-fab {
@@ -14794,15 +14637,15 @@ body:has(.app.deep)::after {
 }
 
 .define-fab.is-quiet {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: var(--define-muted, rgba(244, 244, 245, 0.55)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: var(--bg-muted, var(--define-card-lift)) !important;
+  color: var(--define-muted, var(--text-secondary)) !important;
+  border: 1px solid var(--border-subtle) !important;
 }
 
 .define-fab.is-ready,
 .define-fab.is-glow {
-  background: var(--text-primary, #f1f5f9) !important;
-  color: #0f172a !important;
+  background: var(--dopamine) !important;
+  color: #fff !important;
   border: 1px solid transparent !important;
   box-shadow: none !important;
   animation: none !important;
@@ -14856,7 +14699,8 @@ body:has(.app.deep)::after {
 
 .define-field.is-focused,
 .define-meta-field.is-focused {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--dopamine, #22d3ee) 40%, transparent) !important;
+  box-shadow: none !important;
+  border-color: var(--dopamine) !important;
   transform: none !important;
 }
 

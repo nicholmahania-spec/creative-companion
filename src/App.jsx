@@ -3567,16 +3567,6 @@ function App() {
                 <p id="onboard-desc" className="view-lede onboard-lede">
                   {i18nT(locale, 'ui.onboardLede')}
                 </p>
-                <ol className="onboard-path" aria-label="Your path">
-                  {JOURNEY_STEPS.map((s) => (
-                    <li key={s.id}>
-                      <span className="onboard-path-num" aria-hidden="true">
-                        {s.num}
-                      </span>
-                      <span className="onboard-path-label">{s.label}</span>
-                    </li>
-                  ))}
-                </ol>
               </div>
               <div className="onboard-specimen" aria-hidden="true">
                 <div className="login-pack-specimen onboard-pack-mini">
