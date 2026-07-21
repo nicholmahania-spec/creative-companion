@@ -15344,3 +15344,150 @@ body:has(.app.deep)::after {
 .app.deep .pack-split-menu {
   background: var(--bg-elevated);
 }
+
+/* ============================================================
+   Sketch · Design · Review studio density (audit pages)
+   ============================================================ */
+
+.sketch-studio-top {
+  align-items: center;
+}
+
+.sketch-studio-hint {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.sketch-decision-strip {
+  margin-bottom: 0.85rem;
+  padding: 0.55rem 0.75rem;
+  opacity: 0.85;
+}
+
+.sketch-decision-strip:hover,
+.sketch-decision-strip:focus-within {
+  opacity: 1;
+}
+
+.sketch-now {
+  margin-bottom: 1rem;
+}
+
+.sketch-below {
+  opacity: 0.72;
+  transition: opacity 0.2s ease;
+}
+
+.sketch-below:hover,
+.sketch-below:focus-within {
+  opacity: 1;
+}
+
+.sketch-capture {
+  margin-top: 0.25rem;
+}
+
+.sketch-tools-row {
+  margin: 0.35rem 0 0.75rem;
+}
+
+.sketch-queue-panel {
+  margin-bottom: 0.75rem;
+}
+
+/* Design — clearer Preview | Edit rails */
+.design-studio .process-tip-panel {
+  display: none;
+}
+
+.design-rail-label,
+.design-edit-rail-label {
+  margin: 0 0 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.design-preview-rail {
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated, var(--bg-warm));
+  box-shadow: var(--shadow-1);
+}
+
+.design-section-tabs {
+  margin-bottom: 0.75rem;
+}
+
+.system-accordion-nav.design-section-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.system-acc-tab {
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+/* Review — feedback first on right, preview sticky left */
+.review-studio .review-lede {
+  max-width: 34rem;
+}
+
+.review-preview-panel {
+  padding: 0.85rem 1rem 1rem;
+}
+
+.review-feedback-hero {
+  order: 0;
+}
+
+.review-feedback-hint {
+  margin: 0 0 0.55rem;
+}
+
+.review-notes-input {
+  min-height: 7rem;
+}
+
+.review-ready-panel {
+  opacity: 0.92;
+}
+
+.review-ready-list {
+  margin-top: 0.35rem;
+}
+
+.review-ready-ok {
+  margin: 0.35rem 0 0;
+  font-weight: 600;
+  color: var(--accent-growth, #0f766e);
+}
+
+.review-ready-ok-details {
+  margin-top: 0.55rem;
+}
+
+.review-ready-ok-details > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.review-split-right {
+  gap: 0.85rem;
+}
+
+@media (min-width: 861px) {
+  .review-studio .review-split {
+    grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.9fr);
+    gap: 1.15rem;
+  }
+  .review-studio .review-split-left {
+    top: 4.75rem;
+  }
+}

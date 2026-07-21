@@ -214,17 +214,22 @@ export default function DesignView({
   }
 
   return (
-          <div className="brand-layout surface-document system-view view-enter" data-nav-dir={navDir}>
+          <div className="brand-layout surface-document system-view design-studio view-enter" data-nav-dir={navDir}>
             <div className="brand-template-top">
               <div>
                 <h1 className="page-title">
                   {i18nT(locale, 'path.design')}
                 </h1>
                 <p className="page-sub">
-                  {i18nT(locale, 'ui.systemSub')}{' '}
-                  <strong>{activeProject?.name || 'this project'}</strong>
+                  <strong>{activeProject?.name || 'Project'}</strong>
                   {' · '}
-                  client pack {deskMood.filter((m) => m.inPack).length}/6
+                  pack {deskMood.filter((m) => m.inPack).length}/6
+                  <InfoReveal>
+                    {(getProcessPhase('design')?.checks || []).join(' · ')}
+                    {getProcessPhase('design')?.prompt
+                      ? ` — ${getProcessPhase('design').prompt}`
+                      : ''}
+                  </InfoReveal>
                 </p>
               </div>
               <div className="brand-template-actions">
@@ -285,25 +290,14 @@ export default function DesignView({
               </div>
             </div>
 
-            <section className="panel brand-section process-tip-panel">
-              <div className="brand-section-label">
-                Design
-                <InfoReveal>
-                  {(getProcessPhase('design')?.checks || []).join(' · ')}
-                  {getProcessPhase('design')?.prompt
-                    ? ` — ${getProcessPhase('design').prompt}`
-                    : ''}
-                </InfoReveal>
-              </div>
-            </section>
-
-            {/* ARTBOARD — sticky preview on wide screens (not freeform edit) */}
+            {/* ARTBOARD — sticky preview (left rail on wide) */}
             <div
-              className="system-artboard-sticky"
+              className="system-artboard-sticky design-preview-rail"
               tabIndex={0}
               role="region"
               aria-label="Live leave-behind preview"
             >
+              <div className="design-rail-label">Preview</div>
               <p className="panel-hint design-preview-caption" style={{ marginTop: 0 }}>
                 {i18nT(locale, 'ui.designPreviewCaption')}
               </p>
@@ -319,8 +313,8 @@ export default function DesignView({
               </Suspense>
             </div>
 
-            <p className="system-edit-label">Edit</p>
-            <div className="system-accordion-nav" role="tablist">
+            <p className="system-edit-label design-edit-rail-label">Edit system</p>
+            <div className="system-accordion-nav design-section-tabs" role="tablist">
               {[
                 ['essentials', 'Tagline'],
                 ['messaging', 'Message'],

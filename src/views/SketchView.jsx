@@ -98,8 +98,8 @@ export default function SketchView(props) {
       : '')
 
   return (
-          <div className="flow-view surface-desk view-enter" data-nav-dir={navDir}>
-            <div className="flow-top flow-top-compact">
+          <div className="flow-view surface-desk view-enter sketch-studio" data-nav-dir={navDir}>
+            <div className="flow-top flow-top-compact sketch-studio-top">
               <div>
                 <h1 className="page-title work-page-title">
                   {i18nT(locale, 'path.sketch')}
@@ -113,16 +113,28 @@ export default function SketchView(props) {
                     {' '}
                     · {completedCount}/{deskTasks.length || 0} done
                   </span>
-                </p>
-                <p className="page-sub" style={{ marginTop: '0.35rem' }}>
-                  Make 2–3 rough drafts. Each needs one short “why.” Keep it
-                  simple. About 2 hours total — then Design.
+                  <span className="sketch-studio-hint">
+                    {' '}
+                    · 2–3 drafts · one “why” each
+                  </span>
                 </p>
               </div>
+              {journeyNext && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm work-path-next"
+                  onClick={() => setActiveView(journeyNext.view)}
+                >
+                  {tFormat(locale, 'ui.continueNext', {
+                    label:
+                      pathLabel(locale, journeyNext.id) || journeyNext.label,
+                  })}
+                </button>
+              )}
             </div>
 
             <section
-              className="decision-log-strip"
+              className="decision-log-strip sketch-decision-strip"
               aria-label={i18nT(locale, 'ui.decisionLogTitle') || 'Decision log'}
             >
               <p className="decision-log-strip-label">
@@ -161,9 +173,9 @@ export default function SketchView(props) {
               )}
             </section>
 
-            {/* Current step owns the fold */}
+            {/* Current step owns the fold — only one primary action */}
             <section
-              className="panel step-focus-panel surface-desk-hero"
+              className="panel step-focus-panel surface-desk-hero sketch-now"
               key={stepFocusKey}
               id="current-step"
             >
@@ -171,6 +183,11 @@ export default function SketchView(props) {
                 <div className="brand-section-label" style={{ margin: 0 }}>
                   {i18nT(locale, 'ui.currentStep')}
                 </div>
+                {getProcessPhase('sketch') && (
+                  <InfoReveal>
+                    {getProcessPhase('sketch').checks.join(' · ')}
+                  </InfoReveal>
+                )}
               </div>
               {!nextTask ? (
                 <div className="empty-state empty-state-craft">
@@ -429,8 +446,9 @@ export default function SketchView(props) {
               </section>
             )}
 
+            <div className="sketch-below">
             {/* Compact capture — secondary to current step */}
-            <section className="capture-strip" aria-label="Capture">
+            <section className="capture-strip sketch-capture" aria-label="Capture">
               <div className="capture-row capture-row-compact">
                 <input
                   id="desk-capture"
@@ -491,34 +509,6 @@ export default function SketchView(props) {
               </div>
             </section>
 
-            {/* Sketch process checklist only — path bar owns navigation */}
-            <section
-              className="process-rail process-rail-optional"
-              aria-label="Sketch process checklist"
-            >
-              {(() => {
-                const phase = getProcessPhase('sketch')
-                if (!phase) return null
-                return (
-                  <div className="process-guide-panel">
-                    <strong>
-                      Sketch
-                      <InfoReveal>
-                        {phase.checks.join(' · ')}
-                        {phase.prompt
-                          ? ` — ${
-                              nextTask
-                                ? `For "${String(nextTask.title).slice(0, 60)}": ${phase.prompt}`
-                                : phase.prompt
-                            }`
-                          : ''}
-                      </InfoReveal>
-                    </strong>
-                  </div>
-                )
-              })()}
-            </section>
-
             {showHowItWorks && (
               <section className="product-card product-card-quiet" aria-label="How this desk works">
                 <div className="product-card-top">
@@ -537,19 +527,7 @@ export default function SketchView(props) {
               </section>
             )}
 
-            <div className="path-continue-row work-below-tools">
-              {journeyNext && (
-                <button
-                  type="button"
-                  className="btn btn-primary work-path-next"
-                  onClick={() => setActiveView(journeyNext.view)}
-                >
-                  {tFormat(locale, 'ui.continueNext', {
-                    label:
-                      pathLabel(locale, journeyNext.id) || journeyNext.label,
-                  })}
-                </button>
-              )}
+            <div className="path-continue-row work-below-tools sketch-tools-row">
               <button
                 type="button"
                 className="text-link"
@@ -560,7 +538,7 @@ export default function SketchView(props) {
             </div>
 
             {/* Queue — collapsed by default when busy */}
-            <section className="panel brand-section">
+            <section className="panel brand-section sketch-queue-panel">
               <button
                 type="button"
                 className="section-toggle"
@@ -678,6 +656,7 @@ export default function SketchView(props) {
                 </ul>
               ) : null}
             </section>
+            </div>
           </div>
   )
 }
