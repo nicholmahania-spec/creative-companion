@@ -183,6 +183,8 @@ export function blankWorkspaceState() {
       focusRingStrength: 'normal',
       /** Collapse the sidebar to zero-width while a field has focus */
       hideNavUntilBlur: false,
+      /** Hide process tips / InfoReveal and instructional page-subs (Tech-Studio) */
+      hideTips: true,
       /** Pack / PDF: hide Creative Companion footer watermark */
       hidePackWatermark: false,
       /**

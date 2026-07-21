@@ -141,6 +141,24 @@ export default function SettingsView(props) {
                 </span>
               </button>
             </div>
+            <div className="settings-row">
+              <div>
+                <strong>Hide tips</strong>
+                <span>Hide process ? tips and instructional sublines</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!!prefs.hideTips}
+                className={`pref-switch${prefs.hideTips ? ' is-on' : ''}`}
+                onClick={() => setPref('hideTips', !prefs.hideTips)}
+              >
+                <span className="pref-switch-knob" />
+                <span className="sr-only">
+                  {prefs.hideTips ? 'On' : 'Off'}
+                </span>
+              </button>
+            </div>
           </section>
 
           <section className="panel brand-section" id="settings-appearance">

@@ -2465,7 +2465,7 @@ function App() {
         prefs.focusMode ? ' focus-mode-on' : ''
       }${prefs.focusRingStrength === 'high' ? ' focus-ring-high' : ''}${
         prefs.hideNavUntilBlur ? ' hide-nav-until-blur' : ''
-      }`}
+      }${prefs.hideTips ? ' hide-tips-on' : ''}`}
     >
       {forcedBreak && (
         <Suspense fallback={null}>
@@ -2876,14 +2876,11 @@ function App() {
           if (!selected) return null
           const done = selected.doneCount >= 7
           return (
-            <section className="home-view home-md">
+            <section className="home-view home-md home-studio">
               <nav className="home-md-list" aria-label="Your projects">
                 <div className="home-md-list-head">
-                  <p className="home-eyebrow" style={{ margin: 0 }}>
-                    Your projects
-                  </p>
-                  <h1 className="home-title" style={{ margin: '0.25rem 0 0' }}>
-                    What's next
+                  <h1 className="home-title" style={{ margin: 0 }}>
+                    Projects
                   </h1>
                 </div>
                 <ul className="home-md-rows">
@@ -2907,10 +2904,10 @@ function App() {
                             className={`home-md-row-next${rowDone ? ' is-done' : ''}`}
                           >
                             {rowDone
-                              ? 'Ready to deliver'
+                              ? 'Deliver'
                               : nextGap
-                                ? `Next: ${pathLabel(locale, nextGap.id) || nextGap.label}`
-                                : 'All caught up'}
+                                ? pathLabel(locale, nextGap.id) || nextGap.label
+                                : '—'}
                           </span>
                         </button>
                       </li>
@@ -2921,24 +2918,16 @@ function App() {
 
               <div className="home-md-detail">
                 <p className="home-kicker">
-                  {done ? 'All done' : 'Next step'}
+                  {done ? 'Done' : 'Next'}
                 </p>
                 <h2 className="home-title">
                   {done
-                    ? 'Your brand book is ready.'
+                    ? 'Brand book ready'
                     : selected.nextGap
                       ? pathLabel(locale, selected.nextGap.id) ||
                         selected.nextGap.label
-                      : 'All caught up.'}
+                      : 'Caught up'}
                 </h2>
-                <p className="home-body">
-                  {done
-                    ? 'Every step has something in it. Time to hand it off.'
-                    : selected.nextGap
-                      ? pathPlain(locale, selected.nextGap.id) ||
-                        pathFillHint(locale, selected.nextGap.id)
-                      : ''}
-                </p>
                 <div className="home-cta-row">
                   <button
                     type="button"
@@ -2954,32 +2943,11 @@ function App() {
                   >
                     {done ? 'Open Deliver' : 'Continue'}
                   </button>
-                  {!done && (
-                    <button
-                      type="button"
-                      className="btn btn-ghost home-cta-secondary"
-                      title="A tiny timer just to get moving — not a real work session"
-                      onClick={() => {
-                        if (forcedBreak) {
-                          flashToast(i18nT(locale, 'ui.breakLockFirst'))
-                          return
-                        }
-                        setTimerFocusSource?.('starter')
-                        setFocusLeft(5 * 60)
-                        setPomodoroWorkStartedAt(Date.now())
-                        setIsFocusRunning(true)
-                        flashToast('5-minute starter running — just begin.')
-                        switchProjectAndContinue(selected.project.id)
-                      }}
-                    >
-                      Start 5 min
-                    </button>
-                  )}
                 </div>
 
                 <div className="home-md-strip">
                   <p className="home-md-strip-label">
-                    {selected.project.name} · {selected.doneCount} of 7 steps
+                    {selected.doneCount}/7
                   </p>
                   <div className="home-md-steps">
                     {selected.rows.map((r, i) => {
@@ -2992,12 +2960,10 @@ function App() {
                           className={`home-md-step${r.done ? ' is-done' : ''}${
                             isCurrent ? ' is-current' : ''
                           }`}
+                          title={pathLabel(locale, r.id) || r.label}
                         >
                           <span className="home-md-step-dot">
                             {r.done ? '✓' : num}
-                          </span>
-                          <span className="home-md-step-label">
-                            {pathLabel(locale, r.id) || r.label}
                           </span>
                         </div>
                       )
@@ -3009,16 +2975,13 @@ function App() {
           )
         })()}
         {activeView === 'home' && activeProjects.length <= 1 && (
-          <section className="home-view">
+          <section className="home-view home-studio">
             <p className="home-eyebrow">
-              {activeProject?.name || 'Your project'}
+              {activeProject?.name || 'Project'}
             </p>
             {pathDoneCount >= 7 ? (
               <>
-                <h1 className="home-title">Your brand book is ready.</h1>
-                <p className="home-body">
-                  Every step has something in it. Time to hand it off.
-                </p>
+                <h1 className="home-title">Brand book ready</h1>
                 <button
                   type="button"
                   className="btn btn-primary home-cta"
@@ -3029,14 +2992,10 @@ function App() {
               </>
             ) : pathNextGap ? (
               <>
-                <p className="home-kicker">Next step</p>
+                <p className="home-kicker">Next</p>
                 <h1 className="home-title">
                   {pathLabel(locale, pathNextGap.id) || pathNextGap.label}
                 </h1>
-                <p className="home-body">
-                  {pathPlain(locale, pathNextGap.id) ||
-                    pathFillHint(locale, pathNextGap.id)}
-                </p>
                 <div className="home-cta-row">
                   <button
                     type="button"
@@ -3045,48 +3004,20 @@ function App() {
                   >
                     Continue
                   </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost home-cta-secondary"
-                    title="A tiny timer just to get moving — not a real work session"
-                    onClick={() => {
-                      if (forcedBreak) {
-                        flashToast(i18nT(locale, 'ui.breakLockFirst'))
-                        return
-                      }
-                      setTimerFocusSource?.('starter')
-                      setFocusLeft(5 * 60)
-                      setPomodoroWorkStartedAt(Date.now())
-                      setIsFocusRunning(true)
-                      flashToast('5-minute starter running — just begin.')
-                      goToNextProcessGap()
-                    }}
-                  >
-                    Start 5 min
-                  </button>
                 </div>
               </>
             ) : (
               <>
-                <h1 className="home-title">All caught up.</h1>
+                <h1 className="home-title">Caught up</h1>
                 <button
                   type="button"
                   className="btn btn-primary home-cta"
                   onClick={() => setActiveView('finish')}
                 >
-                  Go to Deliver
+                  Open Deliver
                 </button>
               </>
             )}
-            <button
-              type="button"
-              className="text-link home-see-all"
-              onClick={() =>
-                setActiveView(pathNextGap ? pathNextGap.view : 'project')
-              }
-            >
-              See all 7 steps
-            </button>
           </section>
         )}
         {/* ===== WORK — one step owns the fold ===== */}

@@ -15833,3 +15833,37 @@ body:has(.app.deep)::after {
     filter: none;
   }
 }
+
+/* Hide tips mode — instructional chrome off by default */
+.hide-tips-on .info-reveal,
+.hide-tips-on .page-sub:not(.login-lede-short),
+.hide-tips-on .review-lede,
+.hide-tips-on .panel-hint.board-drop-hint,
+.hide-tips-on .define-board-anchor,
+.hide-tips-on .home-body {
+  display: none !important;
+}
+
+/* Home densify */
+.home-studio .home-md-step-label {
+  display: none;
+}
+.home-studio .home-md-steps {
+  justify-content: flex-start;
+  gap: 0.35rem;
+}
+.home-studio .home-md-step {
+  flex: 0 0 auto;
+}
+.home-studio .home-md-step-dot {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+}
+.home-studio .home-body {
+  display: none;
+}
+.home-studio .home-cta-secondary {
+  display: none;
+}
