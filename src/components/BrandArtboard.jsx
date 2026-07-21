@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import {
   bestTextOn,
   fontFamilyFromLabel,
+  formatRgb,
   mapPaletteRoles,
   normalizeHex,
 } from '../lib/color'
@@ -200,10 +201,21 @@ export default function BrandArtboard({
             <i style={{ background: roles[r.id] }} />
             {r.label}
             <code className="role-hex">{roles[r.id]}</code>
+            <code className="role-rgb">RGB {formatRgb(roles[r.id])}</code>
           </span>
         ))}
       </div>
-      <div className="direction-hex">{(palette || []).join(' · ')}</div>
+      <div className="direction-hex-grid">
+        {(palette || []).map((c, i) => (
+          <div key={`${c}-${i}`} className="direction-hex-chip">
+            <i style={{ background: c }} />
+            <span>
+              <code>{normalizeHex(c) || c}</code>
+              <code className="direction-hex-rgb">RGB {formatRgb(c)}</code>
+            </span>
+          </div>
+        ))}
+      </div>
 
       <div className="kicker">Typography</div>
       <div className="type-specimen">

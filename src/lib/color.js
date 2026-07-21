@@ -210,6 +210,12 @@ export function hexToRgb(hex) {
   }
 }
 
+export function formatRgb(hex) {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return ''
+  return `${rgb.r}, ${rgb.g}, ${rgb.b}`
+}
+
 export function rgbToHex(r, g, b) {
   const clamp = (n) => Math.max(0, Math.min(255, Math.round(n)))
   const to = (n) => clamp(n).toString(16).padStart(2, '0')
