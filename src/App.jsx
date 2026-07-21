@@ -3646,16 +3646,16 @@ function App() {
             }
           }}
         >
-          <div className="export-panel command-panel">
+          <div className="export-panel command-panel command-studio">
             <h3 id="command-title" className="sr-only">
-              Command palette
+              Commands
             </h3>
             <input
               ref={commandInputRef}
               className="field-input command-input"
               value={commandQuery}
               onChange={(e) => setCommandQuery(e.target.value)}
-              placeholder="Jump, complete, Helper…"
+              placeholder="Jump…"
               aria-label="Filter commands"
               autoComplete="off"
               onKeyDown={(e) => {
@@ -3677,7 +3677,7 @@ function App() {
                 aria-label="Commands"
               >
                 {commandFiltered.length === 0 && (
-                  <p className="command-empty">No matches</p>
+                  <p className="command-empty">—</p>
                 )}
                 {commandSections.map((sec) => (
                   <div key={sec.id} className="command-section" role="group">
@@ -3707,10 +3707,6 @@ function App() {
                 ))}
               </div>
             </div>
-            <p className="panel-hint command-footer-hint">
-              Enter runs the first match · scroll for Path &amp; Tools · Esc
-              closes
-            </p>
           </div>
         </div>
       )}
@@ -3876,7 +3872,7 @@ function App() {
             </div>
 
             <div className="export-artboard-wrap">
-              <Suspense fallback={<div className="panel-hint">Loading…</div>}>
+              <Suspense fallback={<div className="panel-hint">…</div>}>
                 <BrandArtboard
                   id="direction-sheet"
                   project={{
@@ -3897,18 +3893,16 @@ function App() {
                   editable={false}
                 />
               </Suspense>
-              <div className="export-open-work">
-                <div className="kicker">Open</div>
-                <ul className="direction-tasks">
-                  {exportPanel.openTasks.length === 0 ? (
-                    <li>Clear</li>
-                  ) : (
-                    exportPanel.openTasks.map((t) => (
+              {exportPanel.openTasks.length > 0 && (
+                <div className="export-open-work">
+                  <div className="kicker">Open</div>
+                  <ul className="direction-tasks">
+                    {exportPanel.openTasks.map((t) => (
                       <li key={t.id}>{t.title}</li>
-                    ))
-                  )}
-                </ul>
-              </div>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="export-panel-actions no-print">
@@ -3924,7 +3918,7 @@ function App() {
                 className="btn btn-ghost btn-sm"
                 onClick={() => setExportPanel(null)}
               >
-                Close
+                ×
               </button>
             </div>
             <details className="export-more-formats no-print">

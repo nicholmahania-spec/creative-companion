@@ -8944,7 +8944,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .app-shell {
   display: grid;
-  grid-template-columns: min(220px, 15vw) 1fr;
+  grid-template-columns: 200px 1fr;
   grid-template-rows: auto 1fr;
   grid-template-areas:
     'sidebar header'
@@ -9118,6 +9118,10 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   }
 
 .journey-sidebar {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    flex: none;
     flex-direction: row;
     align-items: center;
     height: auto;
@@ -11162,6 +11166,11 @@ body:has(.app.deep)::after {
   max-width: 42rem;
 }
 
+/* Lectures off — drop goal essay under Design title */
+.hide-tips-on .design-goal-anchor {
+  display: none;
+}
+
 .design-edit-column {
   min-width: 0;
 }
@@ -12431,6 +12440,27 @@ select:focus,
   border-radius: 4px !important;
   box-shadow: none !important;
   border: 1px solid var(--ts-border, #E2E8F0);
+  max-width: min(36rem, 96vw);
+}
+
+.export-studio .export-panel-header h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.export-studio .export-panel-actions {
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem 0.65rem;
+}
+
+.export-studio .export-open-work {
+  margin-top: 0.45rem;
+  padding: 0 0.25rem 0.35rem;
+}
+
+.export-studio .export-open-work .kicker {
+  font-size: 0.7rem;
+  color: #94A3B8;
 }
 
 .export-studio .export-more-formats > summary {
@@ -12438,6 +12468,31 @@ select:focus,
   font-weight: 650;
   color: var(--ts-mute, #94A3B8);
   cursor: pointer;
+}
+
+.command-studio {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  max-width: min(28rem, 96vw);
+  padding: 0.65rem;
+}
+
+.command-studio .command-input {
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.command-studio .command-item {
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.command-studio .command-empty {
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+  color: #94A3B8;
 }
 
 /* ============================================================
@@ -12450,30 +12505,37 @@ select:focus,
 
 .journey-sidebar {
   width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  flex: 0 0 200px;
   background: #F8F9FA !important;
   border-right: 1px solid #E2E8F0 !important;
   box-shadow: none !important;
 }
-.journey-step:not(.is-active) {
+.journey-sidebar .journey-step {
+  padding: 0.4rem 0.55rem !important;
+  border-radius: 4px !important;
+}
+.journey-sidebar .journey-step:not(.is-active) {
   opacity: 0.4;
 }
-.journey-step.is-active {
+.journey-sidebar .journey-step.is-active {
   opacity: 1 !important;
   background: #FFFFFF !important;
-  border-radius: 4px;
-  border: 1px solid #E2E8F0;
-  box-shadow: none !important;
-  outline: none;
+  border: 1px solid #E2E8F0 !important;
+  border-left: none !important;
   box-shadow: inset 2px 0 0 #2563EB !important;
 }
-.journey-step.is-done:not(.is-active) {
+.journey-sidebar .journey-step.is-done:not(.is-active) {
   opacity: 0.55;
 }
-.journey-progress-pill {
+.journey-progress-pill,
+.journey-tools-pill {
   border-radius: 4px !important;
   box-shadow: none !important;
   font-size: 0.75rem;
   font-weight: 650;
+  margin: 0.5rem 0.55rem 0 !important;
 }
 
 /* Hyper-focus mask uses prefs vars set on .app-shell */
@@ -12897,15 +12959,33 @@ select:focus,
   background: #FFFFFF;
   box-shadow: none !important;
   gap: 0.35rem;
-  min-height: 40px;
+  min-height: 36px;
+  padding: 0.3rem 0.5rem;
+}
+
+.game-hud-studio .game-hud-xp-fill {
+  background: #2563EB !important;
+  border-radius: 2px;
+}
+
+.game-hud-studio .game-hud-xp-wrap {
+  max-width: 6rem;
+  height: 4px;
+  border-radius: 2px;
 }
 
 .game-hud-studio .game-hud-chip {
   border-radius: 4px !important;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 650;
   box-shadow: none;
-  padding: 0.15rem 0.35rem;
+  padding: 0.1rem 0.3rem;
+}
+
+.game-hud-studio .game-hud-chip.is-daily.is-done {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.35);
+  color: #1D4ED8;
 }
 
 .game-hud-studio .game-hud-panel {
@@ -12917,7 +12997,12 @@ select:focus,
 
 .game-hud-studio .game-hud-badge {
   border-radius: 4px;
-  padding: 0.2rem 0.35rem;
+  padding: 0.15rem 0.3rem;
+}
+
+.game-hud-studio .game-hud-burst {
+  border-radius: 4px;
+  box-shadow: none !important;
 }
 
 /* Helper Buddy — ADHD studio densify */

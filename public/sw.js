@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v33)
- * v32: Helper quiet · v33: Tech-Studio blueprint pass
+/* Creative Companion — offline shell + asset cache (v34)
+ * v33: blueprint · v34: residual densify (rail 200, export/command)
  */
-const CACHE = 'cc-shell-v33'
+const CACHE = 'cc-shell-v34'
 const PRECACHE = [
   './',
   './index.html',

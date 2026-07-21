@@ -62,7 +62,7 @@ const EN = {
       'Body doubling: work alongside Helper so starting is easier.',
     completeStep: 'Mark step done',
     more: 'More',
-    downloadVectorPdf: 'Download brand book (PDF)',
+    downloadVectorPdf: 'Brand book PDF',
     printSavePdf: 'Print or save as PDF',
     previewFull: 'Full preview',
     editSystem: 'Edit Design',
