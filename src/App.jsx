@@ -2305,7 +2305,7 @@ function App() {
     setDeskConfirm({
       kind: 'demo',
       label:
-        'Load Soft Signal demo? Replaces this workspace (projects, steps, pins). Export a backup first if it matters.',
+        'Load Soft Signal demo? Replaces workspace. Backup first if needed.',
       onConfirm: () => {
         setDeskConfirm(null)
         void runSoftSignalImport()
@@ -3713,57 +3713,53 @@ function App() {
             if (e.target === e.currentTarget) setShortcutsOpen(false)
           }}
         >
-          <div className="export-panel shortcuts-panel">
+          <div className="export-panel shortcuts-panel shortcuts-studio">
             <div className="export-panel-header">
               <h3 id="shortcuts-title" style={{ margin: 0 }}>
-                Keyboard
+                Keys
               </h3>
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-ghost btn-sm"
                 onClick={() => setShortcutsOpen(false)}
               >
-                Close
+                ×
               </button>
             </div>
             <ul className="shortcuts-list">
               <li>
-                <kbd>1</kbd>–<kbd>7</kbd> Process steps
+                <kbd>1</kbd>–<kbd>7</kbd> Path
               </li>
               <li>
-                <kbd>C</kbd> Complete current step
+                <kbd>C</kbd> Done step
               </li>
               <li>
-                <kbd>N</kbd> New capture (Sketch)
+                <kbd>N</kbd> Capture
               </li>
               <li>
-                <kbd>G</kbd> / path <strong>N/7</strong> / strip → next empty step
+                <kbd>G</kbd> Next gap
               </li>
               <li>
-                <kbd>U</kbd> Undo last complete
+                <kbd>U</kbd> Undo
               </li>
               <li>
-                <kbd>?</kbd> This sheet
+                <kbd>?</kbd> This
               </li>
               <li>
                 <kbd>⌘</kbd>
-                <kbd>K</kbd> Command palette
+                <kbd>K</kbd> Commands
               </li>
               <li>
-                <kbd>Esc</kbd> Close / tuck Helper
+                <kbd>Esc</kbd> Close / Helper
               </li>
             </ul>
-            <p className="panel-hint" style={{ margin: '0.75rem 0 0' }}>
-              Keys work when you are not typing in a field. One next-gap
-              system: keyboard G, path pill, and under-path strip.
-            </p>
           </div>
         </div>
       )}
 
       {forceBreakConsentOpen && (
         <div
-          className="desk-confirm-banner force-break-consent"
+          className="desk-confirm-banner force-break-consent force-break-consent-studio"
           role="alertdialog"
           aria-labelledby="force-break-consent-title"
         >
@@ -3781,7 +3777,7 @@ function App() {
                 flashToast(i18nT(locale, 'ui.forceBreaksOn'))
               }}
             >
-              {i18nT(locale, 'ui.enable')}
+              {i18nT(locale, 'ui.enable') || 'On'}
             </button>
             <button
               type="button"
@@ -3792,7 +3788,7 @@ function App() {
                 flashToast(i18nT(locale, 'ui.forceBreaksOff'))
               }}
             >
-              {i18nT(locale, 'ui.cancel')}
+              Off
             </button>
           </div>
         </div>
@@ -3838,8 +3834,8 @@ function App() {
           className="undo-chip"
           onClick={undoLastComplete}
         >
-          Undo complete · {String(recentUndo.title || '').slice(0, 28)}
-          {String(recentUndo.title || '').length > 28 ? '…' : ''}
+          Undo · {String(recentUndo.title || '').slice(0, 24)}
+          {String(recentUndo.title || '').length > 24 ? '…' : ''}
         </button>
       )}
 
@@ -3853,47 +3849,47 @@ function App() {
             if (e.target === e.currentTarget) setExportPanel(null)
           }}
         >
-          <div className="export-panel portfolio-export">
+          <div className="export-panel portfolio-export export-studio">
             <div className="export-panel-header no-print">
               <div>
-                <h3 style={{ margin: 0 }}>Export pack</h3>
+                <h3 style={{ margin: 0 }}>Export</h3>
               </div>
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-ghost btn-sm"
                 onClick={() => setExportPanel(null)}
               >
-                Close
+                ×
               </button>
             </div>
 
             <div className="export-artboard-wrap">
-              <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
-            <BrandArtboard
-                id="direction-sheet"
-                project={{
-                  name: exportPanel.projectName,
-                  tagline: exportPanel.tagline,
-                  brief: exportPanel.brief,
-                  voice: exportPanel.voice,
-                  typeHeading: exportPanel.typeHeading,
-                  typeBody: exportPanel.typeBody,
-                  logoDirection: exportPanel.logoDirection,
-                  doUse: exportPanel.doUse,
-                  dontUse: exportPanel.dontUse,
-                  colorRoles: activeProject?.colorRoles,
-                  logoImage: activeProject?.logoImage,
-                }}
-                palette={exportPanel.palette || projectPalette}
-                pins={exportPanel.pins || []}
-                editable={false}
-              />
-            </Suspense>
+              <Suspense fallback={<div className="panel-hint">Loading…</div>}>
+                <BrandArtboard
+                  id="direction-sheet"
+                  project={{
+                    name: exportPanel.projectName,
+                    tagline: exportPanel.tagline,
+                    brief: exportPanel.brief,
+                    voice: exportPanel.voice,
+                    typeHeading: exportPanel.typeHeading,
+                    typeBody: exportPanel.typeBody,
+                    logoDirection: exportPanel.logoDirection,
+                    doUse: exportPanel.doUse,
+                    dontUse: exportPanel.dontUse,
+                    colorRoles: activeProject?.colorRoles,
+                    logoImage: activeProject?.logoImage,
+                  }}
+                  palette={exportPanel.palette || projectPalette}
+                  pins={exportPanel.pins || []}
+                  editable={false}
+                />
+              </Suspense>
               <div className="export-open-work">
-                <div className="kicker">Open work</div>
+                <div className="kicker">Open</div>
                 <ul className="direction-tasks">
                   {exportPanel.openTasks.length === 0 ? (
-                    <li>Desk clear for this project</li>
+                    <li>Clear</li>
                   ) : (
                     exportPanel.openTasks.map((t) => (
                       <li key={t.id}>{t.title}</li>
@@ -3913,23 +3909,20 @@ function App() {
               </button>
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-ghost btn-sm"
                 onClick={() => setExportPanel(null)}
               >
                 Close
               </button>
             </div>
             <details className="export-more-formats no-print">
-              <summary>Other formats</summary>
+              <summary>More</summary>
               <div className="finish-more-formats-list">
-                <button type="button" className="btn btn-secondary" onClick={() => runExport('html')}>HTML</button>
-                <button type="button" className="btn btn-secondary" onClick={() => runExport('md')}>Markdown</button>
-                <button type="button" className="btn btn-secondary" onClick={() => runExport('json')}>JSON</button>
-                <button type="button" className="btn btn-secondary" onClick={() => runExport('print')}>Print</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => runExport('html')}>HTML</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => runExport('md')}>MD</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => runExport('json')}>JSON</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => runExport('print')}>Print</button>
               </div>
-              <p className="panel-hint export-raster-hint">
-                Raster PDF is Pack → More formats. Primary download is vector PDF.
-              </p>
             </details>
           </div>
         </div>
