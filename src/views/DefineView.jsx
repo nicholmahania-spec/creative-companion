@@ -314,7 +314,7 @@ export default function DefineView(props) {
           )}
 
           <a className="define-board-anchor" href="#define-mood-board">
-            Inspiration is below on this page — same pins as Research.
+            Mood board on this page
           </a>
 
           <details className="define-secondary define-admin">

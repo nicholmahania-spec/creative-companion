@@ -140,93 +140,81 @@ export function minutesAtDesk(sessionStart, now = Date.now()) {
 }
 
 const GREETINGS = [
-  "Helper online — beret on, pencil sharp. Coach, Critique, or Break when you need me.",
-  "I'm your design desk buddy. One step at a time. Open me for Coach or Critique.",
-  "Hi. I track your step, breaks, and color choices. Let's make something clear.",
+  'Helper ready. Coach, Critique, or Break when you need it.',
+  'One step at a time. Open me for Coach or Critique.',
+  'Here for your path step, breaks, and clear choices.',
 ]
 
 const WATER = [
-  "Water. Not coffee. Not vibes. Actual H2O. Your kerning will thank you.",
-  "Hydrate or your next color decision will be pure chaos. Sip. Then design.",
-  "Friendly threat: drink something that isn't despair. Even three sips counts.",
+  'Water first. Then one design decision.',
+  'Sip something. Then color or type — not both.',
+  'Three sips count. Back to the step.',
 ]
 
 const FOOD = [
-  "Have you eaten, or are you running on aesthetic and spite? Snack. Then type.",
-  "Food check. Coffee is a personality, not a meal. Grab something with calories.",
-  "Empty stomach = tragic palette choices. Eat. I can wait. Barely.",
+  'Food check. Snack, then continue the step.',
+  'Coffee isn’t a meal. Eat something, then type.',
+  'Empty stomach muddies palette calls. Eat, then decide.',
 ]
 
 const BATHROOM = [
-  "Bathroom. The art will survive. Your bladder is not a design constraint.",
-  "Stand up. Walk. Do the human thing. The desk will wait — it isn't going to cry.",
-  "If you've been glued to the chair, go. Fresh eyes > another 1px nudge.",
+  'Stand and walk. The desk will wait.',
+  'Take a short break. Fresh eyes beat another 1px nudge.',
+  'Step away briefly, then return to one call.',
 ]
 
 const PROGRESS_STEP = [
-  "Boom. One step down. Look at you, collecting adult points.",
-  "Checked off. Not a vibe—a receipt. Do it again, you menace.",
-  "Step complete. Somewhere a unfinished mood board just felt a cold wind.",
+  'Step done. Next gap when you’re ready.',
+  'Checked off. One more small step if you want.',
+  'Step complete. Keep the path moving.',
 ]
 
 const PROGRESS_TIMER = [
-  "Timer's on. One job. If I catch you opening six panels, I will judge you silently. (Loudly.)",
-  "Focus mode: you, the step, and my smug little countdown. No tool tourism.",
-  "Pomodoro engaged. Make one decision so sharp it could cut a wireframe.",
+  'Timer on. One job only.',
+  'Focus block started. Stay on this step.',
+  'Timer running. One clear decision.',
 ]
 
 const STUCK = [
-  "Stuck? Cute. Name the user in one sentence or admit the step is a blob. Blobs don't ship.",
-  "Frozen? Write the job-to-be-done like a hostage note: short, clear, slightly desperate. Then shrink the step.",
-  "Block usually means you're decorating a mystery. Clarify who it's for—then one tiny, ugly action.",
+  'Stuck? Name the user in one sentence, then shrink the step.',
+  'Write the job in one short line, then one tiny action.',
+  'Clarify who it’s for, then one ugly first pass.',
 ]
 
 const IDLE = [
-  "Still here. Plotting. Judging your alignment. Need a tip, a roast, or a break?",
-  "Earth to designer: one next move. Type, layout, or copy. Pick your fighter.",
-  "I'm not bored. I'm strategically hovering. Path step, Coach, or water. Shocking options.",
+  'Still here. Path step, Coach, or water.',
+  'One next move: type, layout, or copy.',
+  'Ready when you are — step, Coach, or break.',
 ]
 
 const PRAISE = [
-  "Showing up counts. The couch was an option and you rejected it. Iconic.",
-  "Messy first pass? Correct. Perfectionism is just fear with better letter-spacing.",
-  "Protecting one step is professional. Chaos is free and overrated.",
+  'Showing up counts. Keep the step small.',
+  'Messy first pass is correct. Polish later.',
+  'One protected step beats busy chaos.',
 ]
 
 const TIME_BLIND = [
-  (clock, desk) =>
-    `Time check, superstar: it's ${clock}. You've been here about ${desk}. Time is fake; dehydration is not.`,
-  (clock, desk) =>
-    `Psst—clock says ${clock}. Desk time ~${desk}. Still doing one thing, or opening seventeen tabs of doom?`,
-  (clock, desk) =>
-    `Friendly calendar attack: ${clock}, ~${desk} in. Pace yourself before your eyes file a complaint.`,
+  (clock, desk) => `It's ${clock}. Desk ~${desk}. One step, then water.`,
+  (clock, desk) => `${clock} · ~${desk} at desk. Still on one thing?`,
+  (clock, desk) => `Clock: ${clock}. You've been here ~${desk}.`,
 ]
 
 const HYPER_SOFT = [
-  (mins) =>
-    `${mins} minutes deep. Look at something that isn't a screen for one breath. Your pupils are unionizing.`,
-  (mins) =>
-    `${mins} min without a break. Stretch like you mean it, then one decision—not seventeen shadows.`,
-  (mins) =>
-    `You've been in the sauce for ~${mins} min. Stand up. Water. Then back to boss mode.`,
+  (mins) => `${mins} min in. Look away for one breath, then one decision.`,
+  (mins) => `${mins} min without a break. Stretch, then continue.`,
+  (mins) => `~${mins} min deep. Stand or water, then back.`,
 ]
 
 const HYPER_STRONG = [
-  (mins) =>
-    `Okay drama: ~${mins} minutes planted. Bathroom + water. The layout will not text you while you're gone.`,
-  (mins) =>
-    `${mins} min straight—this is how dinner becomes a myth. Three minutes away. I'll hold your seat and your sass.`,
-  (mins) =>
-    `Strong nudge at ~${mins} min. Step away before your critique turns into pure spice with no nutrition.`,
+  (mins) => `~${mins} min planted. Water + short step away.`,
+  (mins) => `${mins} min straight. Three minutes off is fine.`,
+  (mins) => `~${mins} min. Break soon so the next call stays clear.`,
 ]
 
 const HYPER_HARD = [
-  (mins) =>
-    `Hard pass on more pixels: ~${mins} min continuous. Stand. Water. Snack. Fresh eyes > another polish pass.`,
-  (mins) =>
-    `${mins} minutes is a saga. Break isn't quitting—it's quality control for your brain.`,
-  (mins) =>
-    `I'm not mad. I'm concerned. ~${mins} min in. Rest so the next call isn't pure delirium in a nice font.`,
+  (mins) => `~${mins} min continuous. Stand. Water. Fresh eyes.`,
+  (mins) => `${mins} min — break is quality control, not quitting.`,
+  (mins) => `~${mins} min in. Rest before the next polish pass.`,
 ]
 
 function pick(arr) {
@@ -768,22 +756,18 @@ export function hyperfocusLine(minutesWorking) {
 }
 
 export function confirmLine(kind) {
-  if (kind === 'water')
-    return 'Water logged. Look at you, hydrating like a functional genius. Now one design decision—not twelve.'
-  if (kind === 'food')
-    return 'Food noted. Your next type choice might actually make sense now.'
-  if (kind === 'bathroom')
-    return "Welcome back. The art waited. Your back probably didn't. Hierarchy time."
-  if (kind === 'break')
-    return "Break logged. Hyperfocus clock reset. Return smug, not guilty."
-  return "Noted. I'm still here, sparkling with opinions."
+  if (kind === 'water') return 'Water logged. One design decision next.'
+  if (kind === 'food') return 'Food noted. Ready when you are.'
+  if (kind === 'bathroom') return 'Welcome back. Pick one hierarchy call.'
+  if (kind === 'break') return 'Break logged. Clock reset.'
+  return 'Noted.'
 }
 
 export function whatTimeLine(sessionStart, now = Date.now()) {
   const clock = formatClock(new Date(now))
   const desk = formatDuration(now - sessionStart)
   const sinceBreak = minutesSinceBreak(loadWellness(), sessionStart, now)
-  return `It's ${clock} in the real world (yes, that still exists). You've been here about ${desk}. Roughly ${sinceBreak} min since a real break. Pace yourself, legend.`
+  return `${clock} · desk ${desk} · ${sinceBreak} min since break.`
 }
 
 /** Mood for avatar face */

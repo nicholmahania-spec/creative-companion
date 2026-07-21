@@ -69,9 +69,7 @@ export default function InsightsView(props) {
         <div>
           <h1 className="page-title">Focus timer</h1>
           <p className="page-sub">
-            {fromResearch
-              ? 'Research sprint · then Ideate (messy directions)'
-              : 'Hold attention · then complete the current step'}
+            {fromResearch ? 'Research sprint · then Ideate' : 'One block · then the current step'}
           </p>
         </div>
       </div>

@@ -50,10 +50,7 @@ export default function CalendarView(props) {
           <div className="flow-top">
             <div>
               <h1 className="page-title">Deadlines</h1>
-              <p className="page-sub">
-                Project due dates + step due dates. Simple calendar so time
-                stays visible.
-              </p>
+              <p className="page-sub">Project + step due dates</p>
             </div>
           </div>
 
@@ -234,8 +231,8 @@ export default function CalendarView(props) {
                 }
               )}
             </div>
-            <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
-              ◆ = project deadline · · = open step due date
+            <p className="panel-hint design-lect" style={{ marginTop: '0.75rem' }}>
+              ◆ project · · step due
             </p>
           </section>
 
@@ -245,8 +242,7 @@ export default function CalendarView(props) {
               <div className="empty-state empty-state-craft" style={{ paddingTop: '0.5rem' }}>
                 <EmptyIllustration variant="calendar" />
                 <p className="empty-state-body" style={{ margin: 0 }}>
-                  No deadlines yet. Set a project deadline above, or add a due
-                  date when capturing a step (Energy &amp; voice → Due).
+                  No deadlines yet. Set project due above, or a step due on Sketch.
                 </p>
               </div>
             ) : (

@@ -3944,7 +3944,7 @@ h3 {
 
 .reset-row:hover {
   padding-left: 0.35rem;
-  background: linear-gradient(90deg, rgba(224, 79, 26, 0.05), transparent 60%);
+  background: var(--bg-muted);
 }
 
 .reset-row:hover .reset-label {
@@ -4232,13 +4232,13 @@ h3 {
   color: var(--text-muted);
 }
 
-/* ——— Material system: desk / wall / document ——— */
+/* ——— Material system: desk / wall / document (flat Tech-Studio) ——— */
 .surface-desk {
-  --surface-tint: rgba(250, 248, 245, 0.7);
+  --surface-tint: transparent;
 }
 
 .surface-wall {
-  --surface-tint: rgba(245, 245, 244, 0.95);
+  --surface-tint: transparent;
 }
 
 .surface-document {
@@ -4248,9 +4248,9 @@ h3 {
 }
 
 .surface-desk .panel:not(.step-focus-panel) {
-  background: color-mix(in srgb, var(--bg-elevated) 94%, #f0ebe3);
-  border-color: rgba(28, 25, 23, 0.08);
-  box-shadow: var(--shadow-1);
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  box-shadow: none;
   border-radius: var(--radius);
 }
 
@@ -4281,7 +4281,7 @@ h3 {
 }
 
 .app.deep .surface-desk .panel:not(.step-focus-panel) {
-  background: color-mix(in srgb, var(--bg-elevated) 94%, #3d3428);
+  background: var(--bg-card);
 }
 
 .app.deep .surface-wall .panel {
@@ -4554,9 +4554,9 @@ h3 {
 
 .mood-add-card.is-active {
   border-style: solid;
-  border-color: var(--accent-primary);
-  background: linear-gradient(145deg, #f5f5f4, #fff);
-  box-shadow: var(--shadow-1);
+  border-color: var(--dopamine);
+  background: var(--bg-muted);
+  box-shadow: none;
 }
 
 /* Settings view */
@@ -5212,9 +5212,9 @@ html[data-reduce-motion='true'] *::after {
 .mood-linked-step {
   margin-top: 1rem;
   padding: 0.85rem 0.95rem;
-  background: linear-gradient(135deg, #f5f5f4, #fff);
-  border: 1px solid rgba(28, 25, 23, 0.15);
-  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
 }
 
 .mood-linked-title {
@@ -6494,22 +6494,22 @@ html[data-reduce-motion='true'] *::after {
 
 .buddy-shell-lv {
   font-size: 0.68rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--bh-sage-deep);
-  background: rgba(243, 239, 230, 0.95);
-  border: 1px solid rgba(125, 139, 122, 0.35);
-  border-radius: 999px;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
   padding: 0.15rem 0.5rem;
-  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.08);
+  box-shadow: none;
 }
 
 .buddy-shell .buddy-top-actions {
-  background: rgba(243, 239, 230, 0.95);
-  border: 1px solid rgba(125, 139, 122, 0.35);
-  border-radius: 999px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
   padding: 0.1rem;
-  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.08);
+  box-shadow: none;
 }
 
 .buddy-shell.is-focus .bf-belly {
@@ -7618,18 +7618,18 @@ html[data-reduce-motion='true'] *::after {
   transform: translateX(-50%);
   min-width: 1.1rem;
   padding: 0.05rem 0.3rem;
-  border-radius: 999px;
-  background: #0f172a;
-  color: #fbbf24;
+  border-radius: var(--radius);
+  background: var(--text-primary);
+  color: var(--bg-canvas);
   font-size: 0.62rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.2;
 }
 
 .buddy-game {
   padding: 0.45rem 0.7rem 0.5rem;
   border-bottom: 1px solid var(--border-subtle);
-  background: linear-gradient(180deg, rgba(251, 191, 36, 0.1), transparent);
+  background: var(--bg-muted);
 }
 
 .buddy-game-slim {
@@ -7739,7 +7739,7 @@ html[data-reduce-motion='true'] *::after {
   gap: 0.5rem;
   padding: 0.55rem 0.65rem 0.45rem;
   border-bottom: 1px solid var(--border-subtle);
-  background: linear-gradient(180deg, rgba(28, 25, 23, 0.08), transparent);
+  background: var(--bg-card);
 }
 
 .buddy-identity {
@@ -8479,27 +8479,28 @@ html[data-reduce-motion='true'] *::after {
   }
 }
 
-/* Soft cream panel accents to match Little Helper */
+/* Helper chrome — flat Tech-Studio */
 .buddy-panel {
-  border-color: rgba(125, 139, 122, 0.28);
+  border-color: var(--border-subtle);
 }
 
 .buddy-panel-top {
-  background: linear-gradient(180deg, rgba(243, 239, 230, 0.95), transparent);
+  background: var(--bg-card);
 }
 
 .app.deep .buddy-panel-top {
-  background: linear-gradient(180deg, rgba(125, 139, 122, 0.15), transparent);
+  background: var(--bg-card);
 }
 
 .buddy-fab {
-  background: linear-gradient(145deg, #f3efe6 0%, #e5dfd2 45%, #c5cfc2 100%);
-  box-shadow: var(--shadow-3), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
 }
 
 .buddy-fab-level {
-  background: var(--bh-sage-deep, #5f6d5d);
-  color: #f3efe6;
+  background: var(--text-primary);
+  color: var(--bg-canvas);
 }
 
 @keyframes buddyPulse {
@@ -8508,7 +8509,7 @@ html[data-reduce-motion='true'] *::after {
     box-shadow: none;
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--dopamine) 35%, transparent);
   }
 }
 
@@ -8526,18 +8527,18 @@ html[data-reduce-motion='true'] *::after {
   top: 1rem;
   right: 1rem;
   z-index: 150;
-  background: rgba(26, 107, 96, 0.94);
-  color: #F7FFFC;
-  padding: 0.48rem 1rem;
-  border-radius: var(--radius-pill);
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius);
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  box-shadow: 0 8px 22px rgba(42, 157, 143, 0.32);
+  letter-spacing: 0.02em;
+  box-shadow: none;
   backdrop-filter: none;
   animation: chipIn 0.4s var(--ease-out);
   pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid transparent;
 }
 
 .export-overlay {
@@ -9346,9 +9347,9 @@ html[data-reduce-motion='true'] *::after {
   gap: 0.5rem 0.75rem;
   margin: 0 0 0.85rem;
   padding: 0.55rem 0.75rem;
-  border-radius: 0.65rem;
+  border-radius: var(--radius);
   border: 1px solid var(--border-subtle);
-  background: color-mix(in srgb, var(--accent-growth, #0f766e) 8%, transparent);
+  background: var(--bg-muted);
 }
 .define-first-step-chip .panel-hint {
   flex: 1 1 12rem;

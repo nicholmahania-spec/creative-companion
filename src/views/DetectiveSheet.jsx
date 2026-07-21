@@ -171,11 +171,10 @@ export default function DetectiveSheet({
       {!splitMode && (
         <header className="define-workbook-head">
           <div className="define-workbook-head-text">
-            <p className="define-workbook-kicker">Design detective</p>
+            <p className="define-workbook-kicker">Brief</p>
             <h2 className="define-workbook-title">Brief builder</h2>
             <p className="define-workbook-lede">
-              Three short chapters. Strong Step 1 saves hours of fixing later —
-              fill this before pretty pictures.
+              Three chapters. Fill before polish.
             </p>
           </div>
           <div
