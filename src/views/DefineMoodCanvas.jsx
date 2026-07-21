@@ -93,12 +93,7 @@ export default function DefineMoodCanvas({
       aria-label="Inspiration and mood board"
     >
       <header className="define-mood-head">
-        <p className="define-mood-kicker">Stays open while you write</p>
-        <h2 className="define-mood-title">Mood board</h2>
-        <p className="define-mood-lede">
-          Pin refs next to the questions so you don’t tab away and lose the
-          thought. Same pins show up in Research.
-        </p>
+        <h2 className="define-mood-title">Refs</h2>
       </header>
 
       <div

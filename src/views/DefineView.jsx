@@ -26,56 +26,42 @@ function DefineChapterNav({ progress, openChapter, onSelectChapter }) {
   const activeCh = chapters.find((c) => c.id === openChapter) || chapters[0]
 
   return (
-    <header className="define-chapter-frame" aria-label="Brief chapters">
-      <div className="define-chapter-frame-top">
-        <p className="define-chapter-frame-kicker">Three short chapters</p>
-        <p className="define-chapter-nav-meta">
-          {filledCount} of {fieldTotal} notes filled
-        </p>
-      </div>
-      <nav className="define-chapter-nav" aria-label="Chapter list">
-        <ol className="define-chapter-nav-list">
-          {chapters.map((ch) => {
-            const active = openChapter === ch.id
-            return (
-              <li key={ch.id}>
-                <button
-                  type="button"
-                  className={`define-chapter-nav-btn${active ? ' is-active' : ''}${
-                    ch.complete ? ' is-complete' : ''
-                  }`}
-                  onClick={() => onSelectChapter?.(ch.id)}
-                  aria-current={active ? 'step' : undefined}
-                  aria-label={`${ch.title}: ${ch.done} of ${ch.total} filled${
-                    ch.complete ? ', complete' : ''
-                  }`}
-                >
-                  <span className="define-chapter-nav-num" aria-hidden="true">
-                    {ch.complete ? '✓' : ch.num}
-                  </span>
-                  <span className="define-chapter-nav-label">{ch.title}</span>
-                  <span className="define-chapter-nav-count">
-                    {ch.done}/{ch.total}
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ol>
-      </nav>
+    <nav className="define-chapter-frame" aria-label="Brief chapters">
+      <ol className="define-chapter-nav-list">
+        {chapters.map((ch) => {
+          const active = openChapter === ch.id
+          return (
+            <li key={ch.id}>
+              <button
+                type="button"
+                className={`define-chapter-nav-btn${active ? ' is-active' : ''}${
+                  ch.complete ? ' is-complete' : ''
+                }`}
+                onClick={() => onSelectChapter?.(ch.id)}
+                aria-current={active ? 'step' : undefined}
+                aria-label={`${ch.title}: ${ch.done} of ${ch.total}${
+                  ch.complete ? ', complete' : ''
+                }`}
+              >
+                <span className="define-chapter-nav-num" aria-hidden="true">
+                  {ch.complete ? '✓' : ch.num}
+                </span>
+                <span className="define-chapter-nav-label">{ch.title}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ol>
       {activeCh && (
         <p className="define-chapter-frame-now" role="status">
-          <span className="define-chapter-frame-now-num">
-            Chapter {activeCh.num}
-          </span>
           <span className="define-chapter-frame-now-title">{activeCh.title}</span>
           <span className="define-chapter-frame-now-meta">
-            {activeCh.done}/{activeCh.total} in this chapter
-            {activeCh.complete ? ' · done' : ''}
+            {activeCh.done}/{activeCh.total}
+            {` · ${filledCount}/${fieldTotal}`}
           </span>
         </p>
       )}
-    </header>
+    </nav>
   )
 }
 
@@ -144,7 +130,6 @@ export default function DefineView(props) {
     >
       <header className="define-dashboard-head">
         <div>
-          <p className="define-studio-eyebrow">Step 1 · Define</p>
           <h1 className="page-title define-studio-title">
             {i18nT(locale, 'path.define')}
           </h1>

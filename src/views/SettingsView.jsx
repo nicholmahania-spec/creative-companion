@@ -36,28 +36,112 @@ export default function SettingsView(props) {
           <div className="flow-top">
             <div>
               <h1 className="page-title">Settings</h1>
-              <p className="page-sub">
-                {CLOUD
-                  ? 'Preferences, account, and data for your cloud desk.'
-                  : 'Preferences and data for this device.'}
-              </p>
             </div>
           </div>
 
           <nav className="settings-jump" aria-label="Settings sections">
             {[
-              ['appearance', i18nT(locale, 'ui.appearance')],
-              ['presence', i18nT(locale, 'ui.presenceSound')],
-              ['work-prefs', i18nT(locale, 'ui.workPrefs')],
-              ['account', i18nT(locale, 'ui.account')],
+              ['focus', 'Focus'],
               ['data', i18nT(locale, 'ui.data')],
-              ['about', i18nT(locale, 'ui.about')],
+              ['advanced', 'Advanced'],
             ].map(([id, label]) => (
               <a key={id} className="settings-jump-link" href={`#settings-${id}`}>
                 {label}
               </a>
             ))}
           </nav>
+
+          <section className="panel brand-section" id="settings-focus">
+            <div className="brand-section-label">Focus</div>
+            <div className="settings-row">
+              <div>
+                <strong>Focus mode</strong>
+                <span>Dim chrome while typing</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!!prefs.focusMode}
+                className={`pref-switch${prefs.focusMode ? ' is-on' : ''}`}
+                onClick={() => setPref('focusMode', !prefs.focusMode)}
+              >
+                <span className="pref-switch-knob" />
+                <span className="sr-only">
+                  {prefs.focusMode ? 'On' : 'Off'}
+                </span>
+              </button>
+            </div>
+            <div className="settings-row">
+              <div>
+                <strong>Single-task lock</strong>
+                <span>Hide sidebar while typing</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!!prefs.hideNavUntilBlur}
+                className={`pref-switch${prefs.hideNavUntilBlur ? ' is-on' : ''}`}
+                onClick={() => setPref('hideNavUntilBlur', !prefs.hideNavUntilBlur)}
+              >
+                <span className="pref-switch-knob" />
+                <span className="sr-only">
+                  {prefs.hideNavUntilBlur ? 'On' : 'Off'}
+                </span>
+              </button>
+            </div>
+            <div className="settings-row">
+              <div>
+                <strong>Focus ring</strong>
+                <span>Stronger border on focused field</span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() =>
+                  setPref(
+                    'focusRingStrength',
+                    prefs.focusRingStrength === 'high' ? 'normal' : 'high'
+                  )
+                }
+              >
+                {prefs.focusRingStrength === 'high' ? 'Normal' : 'High'}
+              </button>
+            </div>
+            <div className="settings-row">
+              <div>
+                <strong>Batch toasts</strong>
+                <span>Queue non-error notices</span>
+              </div>
+              <select
+                className="field-input settings-locale-select"
+                value={String(prefs.toastBatchWindow || 0)}
+                aria-label="Batch toasts"
+                onChange={(e) => setPref('toastBatchWindow', Number(e.target.value))}
+              >
+                <option value="0">Off</option>
+                <option value="30">30s</option>
+                <option value="120">2 min</option>
+              </select>
+            </div>
+            <div className="settings-row">
+              <div>
+                <strong>{i18nT(locale, 'ui.reduceMotion')}</strong>
+                <span>{i18nT(locale, 'ui.reduceMotionHint')}</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={reduceMotion}
+                className={`pref-switch${reduceMotion ? ' is-on' : ''}`}
+                onClick={() => setPref('reduceMotion', !reduceMotion)}
+              >
+                <span className="pref-switch-knob" />
+                <span className="sr-only">
+                  {reduceMotion ? 'On' : 'Off'}
+                </span>
+              </button>
+            </div>
+          </section>
 
           <section className="panel brand-section" id="settings-appearance">
             <div className="brand-section-label">Appearance</div>
@@ -98,81 +182,13 @@ export default function SettingsView(props) {
                   : i18nT(locale, 'ui.switchLight')}
               </button>
             </div>
-            <div className="settings-row">
-              <div>
-                <strong>{i18nT(locale, 'ui.reduceMotion')}</strong>
-                <span>{i18nT(locale, 'ui.reduceMotionHint')}</span>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={reduceMotion}
-                className={`pref-switch${reduceMotion ? ' is-on' : ''}`}
-                onClick={() => setPref('reduceMotion', !reduceMotion)}
-              >
-                <span className="pref-switch-knob" />
-                <span className="sr-only">
-                  {reduceMotion ? 'On' : 'Off'}
-                </span>
-              </button>
-            </div>
-            <div className="settings-row">
-              <div>
-                <strong>Focus mode</strong>
-                <span>Dim sidebar + header while typing</span>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={!!prefs.focusMode}
-                className={`pref-switch${prefs.focusMode ? ' is-on' : ''}`}
-                onClick={() => setPref('focusMode', !prefs.focusMode)}
-              >
-                <span className="pref-switch-knob" />
-                <span className="sr-only">
-                  {prefs.focusMode ? 'On' : 'Off'}
-                </span>
-              </button>
-            </div>
-            <div className="settings-row">
-              <div>
-                <strong>Single-task lock</strong>
-                <span>Sidebar collapses to zero-width while typing</span>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={!!prefs.hideNavUntilBlur}
-                className={`pref-switch${prefs.hideNavUntilBlur ? ' is-on' : ''}`}
-                onClick={() => setPref('hideNavUntilBlur', !prefs.hideNavUntilBlur)}
-              >
-                <span className="pref-switch-knob" />
-                <span className="sr-only">
-                  {prefs.hideNavUntilBlur ? 'On' : 'Off'}
-                </span>
-              </button>
-            </div>
-            <div className="settings-row">
-              <div>
-                <strong>Focus ring contrast</strong>
-                <span>Stronger border + outer ring on the focused field</span>
-              </div>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() =>
-                  setPref(
-                    'focusRingStrength',
-                    prefs.focusRingStrength === 'high' ? 'normal' : 'high'
-                  )
-                }
-              >
-                {prefs.focusRingStrength === 'high' ? 'Use normal' : 'Use high'}
-              </button>
-            </div>
           </section>
 
-          <section className="panel brand-section" id="settings-presence">
+          <details className="panel brand-section settings-advanced" id="settings-advanced">
+            <summary className="brand-section-label settings-advanced-sum">
+              Advanced
+            </summary>
+          <section className="settings-advanced-body" id="settings-presence">
             <div className="brand-section-label">
               {i18nT(locale, 'ui.presenceSound')}
             </div>
@@ -342,22 +358,6 @@ export default function SettingsView(props) {
               >
                 {prefs.toastMode === 'all' ? 'Use quiet' : 'Show all'}
               </button>
-            </div>
-            <div className="settings-row">
-              <div>
-                <strong>Batch toasts</strong>
-                <span>Group non-error toasts instead of firing instantly</span>
-              </div>
-              <select
-                className="field-input settings-locale-select"
-                value={String(prefs.toastBatchWindow || 0)}
-                aria-label="Batch toasts window"
-                onChange={(e) => setPref('toastBatchWindow', Number(e.target.value))}
-              >
-                <option value="0">Instant</option>
-                <option value="30">30s</option>
-                <option value="120">2 min</option>
-              </select>
             </div>
           </section>
 
@@ -685,6 +685,7 @@ export default function SettingsView(props) {
               toasts, offline SPA, axe + e2e CI, perf budget. See docs/RELEASE_1.0.md.
             </p>
           </section>
+          </details>
         </div>
   )
 }

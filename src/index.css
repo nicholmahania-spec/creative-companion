@@ -5,18 +5,18 @@
    * Tech Studio: light cool-gray canvas, white component surfaces, steel-blue
    * interactive accent. Flat geometry — no glass, no glow, no gradients.
    */
-  --accent-primary: #334155; /* slate ink — buttons/dark chrome */
-  --accent-deep: #1E293B;
+  /* Tech-Studio blueprint lock */
+  --accent-primary: #1A1A1E;
+  --accent-deep: #0F0F12;
   --accent-soft: #64748B;
-  --accent-glow: rgba(51, 65, 85, 0.08);
-  --accent-growth: #0F766E; /* done / success */
+  --accent-glow: rgba(37, 99, 235, 0.12);
+  --accent-growth: #0F766E;
 
-  /* Steel blue — the one interactive/focus color, used deliberately */
-  --dopamine: #3B6EA5;
-  --dopamine-deep: #2C567F;
-  --dopamine-soft: #5A87BC;
-  --dopamine-glow: rgba(59, 110, 165, 0.16);
-  --dopamine-ink: #1E3A5F;
+  --dopamine: #2563EB;
+  --dopamine-deep: #1D4ED8;
+  --dopamine-soft: #3B82F6;
+  --dopamine-glow: rgba(37, 99, 235, 0.18);
+  --dopamine-ink: #1E3A8A;
   --on-dopamine: #FFFFFF;
 
   --bg-canvas: #F4F5F6;
@@ -25,12 +25,12 @@
   --bg-elevated: #FFFFFF;
   --bg-muted: #E9EBED;
 
-  --text-primary: #1E293B;
-  --text-secondary: rgba(30, 41, 59, 0.68);
-  --text-muted: rgba(30, 41, 59, 0.5);
-  --border-subtle: #DDE1E5;
-  --border-strong: #C7CDD3;
-  --border-hairline: #E4E7EA;
+  --text-primary: #1A1A1E;
+  --text-secondary: rgba(26, 26, 30, 0.68);
+  --text-muted: #94A3B8;
+  --border-subtle: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --border-hairline: #E2E8F0;
   --highlight-inset: none;
 
   /* Legacy "glass" tokens kept flat/opaque — components still reference
@@ -50,12 +50,12 @@
   --font-display: var(--font-sans);
   --tracking-display: -0.01em;
 
-  --radius: 6px;
+  --radius: 4px;
   --radius-sm: 4px;
-  --radius-pill: 999px;
-  --radius-organic: 6px;
-  --radius-squircle: 6px;
-  --radius-node: 6px;
+  --radius-pill: 4px; /* Tech-Studio: no pills — square language */
+  --radius-organic: 4px;
+  --radius-squircle: 4px;
+  --radius-node: 4px;
 
   --shadow-0: none;
   --shadow-1: none;
@@ -15489,5 +15489,320 @@ body:has(.app.deep)::after {
   }
   .review-studio .review-split-left {
     top: 4.75rem;
+  }
+}
+
+/* ============================================================
+   TECH-STUDIO BLUEPRINT IMPLEMENTATION (v1.48.30)
+   One path rail · no wall-of-text · 4px geometry · hyper-focus
+   ============================================================ */
+
+.app-shell {
+  grid-template-columns: 200px 1fr;
+}
+
+.header-redesign {
+  min-height: 48px;
+  padding: 0.5rem 1rem !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.header-progress-badge,
+.journey-gap-strip {
+  display: none !important;
+}
+
+.journey-sidebar {
+  width: 200px;
+  padding: 0.75rem 0 !important;
+  background: #FFFFFF !important;
+  border-right: 1px solid #E2E8F0 !important;
+}
+
+.journey-sidebar .journey-step {
+  border-radius: 4px !important;
+  min-height: 32px;
+  padding: 0.35rem 0.65rem !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.journey-sidebar .journey-step.is-active {
+  background: #F4F5F6 !important;
+  box-shadow: inset 2px 0 0 #2563EB !important;
+  transform: none !important;
+}
+
+.journey-sidebar .journey-node,
+.journey-sidebar .path-step-icon {
+  display: none !important;
+}
+
+.journey-sidebar .journey-label {
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+}
+
+.btn-primary {
+  background: #1A1A1E !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+}
+
+.btn-primary:hover {
+  background: #0F0F12 !important;
+  filter: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-secondary,
+.btn-outline {
+  background: transparent !important;
+  color: #1A1A1E !important;
+  border: 1px solid #1A1A1E !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.btn,
+.panel,
+.field-input,
+.define-input,
+.onboard-input {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+/* Hyper-focus: siblings dim when a field group is focused */
+.define-fields:focus-within .define-field:not(:focus-within),
+.define-meta-card:focus-within .define-meta-field:not(:focus-within),
+.ideate-directions:focus-within .ideate-dir-card:not(:focus-within) {
+  opacity: 0.25;
+  filter: blur(2px);
+  pointer-events: none;
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+.define-fields:focus-within .define-field:focus-within,
+.define-meta-card:focus-within .define-meta-field:focus-within,
+.ideate-directions:focus-within .ideate-dir-card:focus-within {
+  opacity: 1;
+  filter: none;
+  pointer-events: auto;
+  border-color: #2563EB !important;
+}
+
+/* Define mood board never dims (context anchor) */
+.define-split-mood {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.define-field-tip,
+.define-field-tip-static,
+.define-workbook-kicker,
+.define-chapter-blurb,
+.define-mood-kicker,
+.define-mood-lede,
+.define-chapter-frame-kicker,
+.page-sub:not(.review-lede):not(.define-dashboard-sub) {
+  /* Soften instructional density; keep review short lede if needed */
+}
+
+.define-field-tip,
+.define-field-tip-static {
+  display: none !important;
+}
+
+.define-mood-kicker,
+.define-mood-lede {
+  display: none !important;
+}
+
+.define-chapter-blurb {
+  display: none !important;
+}
+
+.define-chapter-frame-top {
+  display: none !important;
+}
+
+.define-chapter-frame {
+  padding: 0.5rem !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  color: #1A1A1E !important;
+}
+
+.define-chapter-nav-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 4px !important;
+}
+
+.define-chapter-nav-btn {
+  background: #F4F5F6 !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  color: #1A1A1E !important;
+  min-height: 36px;
+}
+
+.define-chapter-nav-btn.is-active {
+  background: #FFFFFF !important;
+  border-color: #2563EB !important;
+}
+
+.define-meta-card,
+.define-workbook,
+.define-mood {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  color: #1A1A1E !important;
+}
+
+.define-field-icon {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.define-input.field-input,
+.define-studio .field-input {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1A1A1E !important;
+}
+
+.define-input.field-input:focus {
+  border-color: #2563EB !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+/* Login solo card */
+.login-page-studio {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #F4F5F6;
+  padding: 1.5rem;
+}
+
+.login-card-solo {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 1.5rem !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.login-proof {
+  display: none !important;
+}
+
+.login-layout {
+  display: block !important;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.login-h1 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1A1A1E;
+  letter-spacing: -0.02em;
+}
+
+.login-lede-short {
+  margin: 0 0 1rem !important;
+  font-size: 0.9rem !important;
+  color: #94A3B8 !important;
+  font-weight: 500;
+}
+
+.login-tag,
+.login-path-line {
+  display: none !important;
+}
+
+.login-submit {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 0.5rem;
+}
+
+.login-forgot {
+  display: block;
+  margin: 0.75rem auto 0;
+  text-align: center;
+  font-size: 0.8125rem;
+}
+
+.login-version {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: #94A3B8;
+}
+
+/* Research toolbar densify */
+.research-studio .page-sub {
+  font-size: 0.8125rem;
+  color: #94A3B8;
+}
+
+.research-still-thin {
+  display: none !important;
+}
+
+/* Ideate — decision strip quieter */
+.ideate-studio .decision-log-strip {
+  display: none !important;
+}
+
+.ideate-shortlist-hint {
+  display: none !important;
+}
+
+/* Focus mode: 25% not 40/50 */
+.app-shell.focus-mode-on:has(.main:focus-within) > .journey-sidebar,
+.app-shell.focus-mode-on:has(.main:focus-within) > .header-redesign {
+  opacity: 0.25 !important;
+}
+
+.app-shell.focus-mode-on .define-split:has(.define-split-form:focus-within) .define-split-mood {
+  /* Board stays as context — do not dim mood when typing form */
+  opacity: 1 !important;
+}
+
+.app-shell.focus-mode-on .review-split:has(.review-split-right:focus-within) .review-split-left {
+  opacity: 1 !important; /* preview never dims */
+}
+
+.app-shell.focus-mode-on .review-split:has(.review-split-left:focus-within) .review-split-right {
+  opacity: 0.25 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .define-fields:focus-within .define-field:not(:focus-within),
+  .define-meta-card:focus-within .define-meta-field:not(:focus-within),
+  .ideate-directions:focus-within .ideate-dir-card:not(:focus-within) {
+    filter: none;
   }
 }

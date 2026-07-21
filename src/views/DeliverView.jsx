@@ -84,59 +84,53 @@ export default function DeliverView({
                     const ready = packReadiness(packSnap)
                     return (
                       <>
-                        <div className="brand-section-label">Ready</div>
-                        <ul className="pack-ready-list">
-                          {ready.checks.map((c) => (
-                            <li
-                              key={c.id}
-                              className={c.ok ? 'is-ok' : 'is-miss'}
-                            >
-                              {c.ok ? (
-                                <span>
-                                  ✓ {c.label}
-                                </span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="pack-ready-fix"
-                                  onClick={() => {
-                                    if (c.view === 'brand') {
-                                      goSystemSection(c.section || 'essentials')
-                                      return
-                                    }
-                                    if (c.id === 'handoff') {
-                                      setActiveView('finish')
-                                      focusPathGapTarget('#handoff-note')
-                                      return
-                                    }
-                                    if (c.id === 'learnings') {
-                                      setActiveView('finish')
-                                      focusPathGapTarget('#learnings-note')
-                                      return
-                                    }
-                                    const step = JOURNEY_STEPS.find(
-                                      (s) => s.view === c.view
-                                    )
-                                    if (step) goToProcessStep(step)
-                                    else if (c.view) setActiveView(c.view)
-                                  }}
-                                >
-                                  {tFormat(locale, 'ui.packReadyFix', {
-                                    label: c.label,
-                                  })}
-                                </button>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                        <p className="panel-hint">
-                          Steps {completedCount}
-                          {deskTasks.length ? `/${deskTasks.length}` : ''} · Pins{' '}
-                          {packSnap.pins?.length || 0}
-                          {packSnap.pinsUsedFallback
-                            ? ` (${i18nT(locale, 'ui.starPinsHint')})`
-                            : ''}
-                        </p>
+                        <div className="brand-section-label">
+                          Ready · {ready.okCount}/{ready.checks.length}
+                        </div>
+                        {ready.checks.some((c) => !c.ok) ? (
+                          <details className="pack-ready-details">
+                            <summary className="text-link">
+                              {ready.checks.filter((c) => !c.ok).length} to fix
+                            </summary>
+                            <ul className="pack-ready-list">
+                              {ready.checks
+                                .filter((c) => !c.ok)
+                                .map((c) => (
+                                  <li key={c.id} className="is-miss">
+                                    <button
+                                      type="button"
+                                      className="pack-ready-fix"
+                                      onClick={() => {
+                                        if (c.view === 'brand') {
+                                          goSystemSection(
+                                            c.section || 'essentials'
+                                          )
+                                          return
+                                        }
+                                        if (c.id === 'handoff') {
+                                          focusPathGapTarget('#handoff-note')
+                                          return
+                                        }
+                                        if (c.id === 'learnings') {
+                                          focusPathGapTarget('#learnings-note')
+                                          return
+                                        }
+                                        const step = JOURNEY_STEPS.find(
+                                          (s) => s.view === c.view
+                                        )
+                                        if (step) goToProcessStep(step)
+                                        else if (c.view) setActiveView(c.view)
+                                      }}
+                                    >
+                                      Fix · {c.label}
+                                    </button>
+                                  </li>
+                                ))}
+                            </ul>
+                          </details>
+                        ) : (
+                          <p className="panel-hint">Ready to download</p>
+                        )}
                         {ready.thin && (
                           <div className="pack-thin-block">
                             <Suspense fallback={null}>

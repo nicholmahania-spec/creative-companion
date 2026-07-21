@@ -27,9 +27,7 @@ function guestLocale() {
 }
 
 /**
- * Login / access gate.
- * - Supabase configured → real email + password (cloud)
- * - Otherwise → local browser password gate
+ * Login / access gate — Tech-Studio: single centered card, no marketing column.
  */
 export default function LoginPage({ onUnlocked, cloud = false }) {
   const useCloud = cloud && isSupabaseConfigured()
@@ -69,9 +67,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
             return
           }
           if (result.needsEmailConfirm) {
-            setInfo(
-              'Check your email to confirm your account, then sign in here.'
-            )
+            setInfo('Check your email to confirm, then sign in.')
             setMode('login')
             return
           }
@@ -142,226 +138,167 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-layout">
-        <aside className="login-proof" aria-hidden="true">
-          <p className="login-proof-eyebrow">For designers who scatter</p>
-          <h2 className="login-proof-title">
-            One next design step.
-            <br />
-            Leave with a brand leave-behind.
-          </h2>
-          <div className="login-pack-specimen">
-            <div className="login-pack-cover">
-              <span className="login-pack-kicker">Brand book</span>
-              <strong className="login-pack-name">Your project</strong>
-              <p className="login-pack-tagline">Direction you can hand to a client</p>
-            </div>
-            <div className="login-pack-swatches" aria-hidden="true">
-              <i style={{ background: '#1C1917' }} />
-              <i style={{ background: '#0F766E' }} />
-              <i style={{ background: '#A8A29E' }} />
-              <i style={{ background: '#FAFAF9' }} />
-            </div>
-            <div className="login-pack-pins" aria-hidden="true">
-              <span className="login-pack-pin" />
-              <span className="login-pack-pin is-muted" />
-            </div>
-            <p className="login-pack-foot">Multi-page PDF · direction you can ship</p>
-          </div>
-          <ul className="login-proof-list">
-            <li>Define → Research → Ideate → Sketch → Design → Review → Deliver</li>
-            <li>One process · refs · drafts · brand book PDF</li>
-          </ul>
-        </aside>
-
-        <div className="login-card">
-          <div className="login-brand">
-            <LogoLockup reduceMotion={false} />
-            <p className="login-tag">
-              {i18nT(locale, 'tagline')}
-            </p>
-            <p className="login-path-line" aria-hidden="true">
-              Define → Research → Ideate → Sketch → Design → Review → Deliver
-            </p>
-          </div>
-
-          {useCloud && (
-            <div className="login-mode-tabs" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                className={`login-mode-tab${mode === 'login' ? ' is-active' : ''}`}
-                aria-selected={mode === 'login'}
-                onClick={() => {
-                  setMode('login')
-                  setError('')
-                  setInfo('')
-                }}
-              >
-                Sign in
-              </button>
-              <button
-                type="button"
-                role="tab"
-                className={`login-mode-tab${
-                  mode === 'signup' || mode === 'setup' ? ' is-active' : ''
-                }`}
-                aria-selected={mode === 'signup' || mode === 'setup'}
-                onClick={() => {
-                  setMode('signup')
-                  setError('')
-                  setInfo('')
-                }}
-              >
-                Create account
-              </button>
-            </div>
-          )}
-
-          <p className="login-lede">
+    <div className="login-page login-page-studio">
+      <div className="login-card login-card-solo">
+        <div className="login-brand">
+          <LogoLockup reduceMotion={false} />
+          <h1 className="login-h1">Creative Companion</h1>
+          <p className="login-lede login-lede-short">
             {useCloud
               ? mode === 'login'
-                ? 'Sign in to open your desk. Work syncs across devices.'
-                : 'Create an account. Your projects stay private to you.'
+                ? 'Sign in'
+                : 'Create account'
               : mode === 'setup'
-                ? 'Protect this desk on this device with a password. Work stays local.'
-                : 'Enter your password to open your desk on this device.'}
+                ? 'Create a password for this device'
+                : 'Enter password'}
           </p>
+        </div>
 
-          <form className="login-form" onSubmit={submit}>
-            {useCloud ? (
-              <label className="onboard-label">
-                Email
-                <input
-                  className="onboard-input"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  autoFocus
-                  required
-                />
-              </label>
-            ) : (
-              mode === 'setup' && (
-                <label className="onboard-label">
-                  Your name <span className="onboard-optional">(optional)</span>
-                  <input
-                    className="onboard-input"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Nichol"
-                    autoComplete="username"
-                  />
-                </label>
-              )
-            )}
+        {useCloud && (
+          <div className="login-mode-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              className={`login-mode-tab${mode === 'login' ? ' is-active' : ''}`}
+              aria-selected={mode === 'login'}
+              onClick={() => {
+                setMode('login')
+                setError('')
+                setInfo('')
+              }}
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className={`login-mode-tab${
+                mode === 'signup' || mode === 'setup' ? ' is-active' : ''
+              }`}
+              aria-selected={mode === 'signup' || mode === 'setup'}
+              onClick={() => {
+                setMode('signup')
+                setError('')
+                setInfo('')
+              }}
+            >
+              Create account
+            </button>
+          </div>
+        )}
 
+        <form className="login-form" onSubmit={submit}>
+          {useCloud ? (
             <label className="onboard-label">
-              Password
-              <div className="login-password-row">
-                <input
-                  className="onboard-input"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={
-                    mode === 'setup' || mode === 'signup'
-                      ? 'At least 6 characters'
-                      : '••••••••'
-                  }
-                  autoComplete={
-                    mode === 'setup' || mode === 'signup'
-                      ? 'new-password'
-                      : 'current-password'
-                  }
-                  autoFocus={!useCloud}
-                  required
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  className="login-show-pw"
-                  onClick={() => setShowPassword((s) => !s)}
-                  aria-pressed={showPassword}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
+              Email
+              <input
+                className="onboard-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                autoFocus
+                required
+              />
             </label>
-
-            {(mode === 'setup' || mode === 'signup') && (
+          ) : (
+            mode === 'setup' && (
               <label className="onboard-label">
-                Confirm password
+                Name <span className="onboard-optional">(optional)</span>
                 <input
                   className="onboard-input"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password2}
-                  onChange={(e) => setPassword2(e.target.value)}
-                  placeholder="Repeat password"
-                  autoComplete="new-password"
-                  required
-                  minLength={6}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoComplete="username"
                 />
               </label>
-            )}
+            )
+          )}
 
-            {useCloud && mode === 'login' && (
+          <label className="onboard-label">
+            Password
+            <div className="login-password-row">
+              <input
+                className="onboard-input"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={
+                  mode === 'setup' || mode === 'signup'
+                    ? 'new-password'
+                    : 'current-password'
+                }
+                autoFocus={!useCloud}
+                required
+                minLength={6}
+              />
               <button
                 type="button"
-                className="text-link login-forgot"
-                onClick={handleForgot}
-                disabled={busy}
+                className="login-show-pw"
+                onClick={() => setShowPassword((s) => !s)}
+                aria-pressed={showPassword}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                Forgot password?
+                {showPassword ? 'Hide' : 'Show'}
               </button>
-            )}
+            </div>
+          </label>
 
-            {error && (
-              <p className="login-error" role="alert">
-                {error}
-              </p>
-            )}
-            {info && (
-              <p className="login-info" role="status">
-                {info}
-              </p>
-            )}
+          {(mode === 'setup' || mode === 'signup') && (
+            <label className="onboard-label">
+              Confirm password
+              <input
+                className="onboard-input"
+                type={showPassword ? 'text' : 'password'}
+                value={password2}
+                onChange={(e) => setPassword2(e.target.value)}
+                autoComplete="new-password"
+                required
+                minLength={6}
+              />
+            </label>
+          )}
 
+          {error && (
+            <p className="login-error" role="alert">
+              {error}
+            </p>
+          )}
+          {info && (
+            <p className="login-info" role="status">
+              {info}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-primary login-submit"
+            disabled={busy}
+          >
+            {busy
+              ? '…'
+              : useCloud
+                ? mode === 'login'
+                  ? 'Sign in'
+                  : 'Create account'
+                : mode === 'setup'
+                  ? 'Create access'
+                  : 'Open desk'}
+          </button>
+
+          {useCloud && mode === 'login' && (
             <button
-              type="submit"
-              className="btn btn-primary login-submit"
-              disabled={busy || !password || (useCloud && !email)}
+              type="button"
+              className="text-link login-forgot"
+              onClick={handleForgot}
+              disabled={busy}
             >
-              {busy
-                ? 'Working…'
-                : useCloud
-                  ? mode === 'login'
-                    ? 'Sign in'
-                    : 'Create account'
-                  : mode === 'setup'
-                    ? 'Create access & continue'
-                    : 'Unlock desk'}
+              Forgot password
             </button>
-          </form>
+          )}
+        </form>
 
-          <div className="login-note">
-            <p className="login-note-one">
-              {useCloud
-                ? 'Work syncs to your account · local cache for speed. Export a JSON backup anytime.'
-                : 'Work stays on this device. Export a JSON backup if it matters.'}
-            </p>
-            <p className="login-note-meta">
-              {useCloud ? 'Synced · ' : 'Local · '}
-              {versionLabel()}
-              {' · '}
-              Details in Settings after unlock
-            </p>
-          </div>
-        </div>
+        <p className="login-version">{versionLabel()}</p>
       </div>
     </div>
   )

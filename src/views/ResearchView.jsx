@@ -525,13 +525,6 @@ export default function ResearchView({
                 >
                   Note
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setActiveView('spark')}
-                >
-                  Spark
-                </button>
                 {deskMood.length > 0 && (
                   <details className="board-pack-bulk">
                     <summary className="text-link">Leave-behind tools</summary>

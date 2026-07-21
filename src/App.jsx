@@ -85,7 +85,7 @@ import {
   focusPathGapTarget,
   sameProjectId,
 } from './lib/journeyProgress'
-import JourneyGapStrip from './components/JourneyGapStrip'
+
 import PathStepIcon from './components/PathStepIcon'
 import {
   PROCESS_PHASES,
@@ -2506,17 +2506,6 @@ function App() {
                 ))}
               </select>
             )}
-            {journeyActive && (
-              <button
-                type="button"
-                className="header-progress-badge"
-                onClick={() => goToNextProcessGap()}
-                title={`Process ${pathDoneCount}/7`}
-                aria-label={`Process ${pathDoneCount} of 7 steps have content`}
-              >
-                {pathDoneCount}/7
-              </button>
-            )}
             {isFocusRunning && activeView !== 'insights' && (
               <button
                 type="button"
@@ -2832,21 +2821,8 @@ function App() {
       </nav>
 
       <main className="main" id="main-content" tabIndex={-1} data-nav-dir={navDir}>
-        {journeyActive && activeView !== 'review' && activeView !== 'finish' && (
-          <JourneyGapStrip
-            locale={locale}
-            thisStepFilled={thisStepFilled}
-            pathNextGap={pathNextGap}
-            leaveBehindThin={leaveBehindThin}
-            activeView={activeView}
-            getNextJourney={getNextJourney}
-            pathLabel={pathLabel}
-            i18nT={i18nT}
-            tFormat={tFormat}
-            goToNextProcessGap={goToNextProcessGap}
-            setActiveView={setActiveView}
-          />
-        )}
+        {/* Gap strip removed from default chrome (Tech-Studio: one path rail only).
+            Recovery via keyboard G + path Continue on each step. */}
         {/* ===== HOME (multi-project) — master/detail, not a card grid ===== */}
         {activeView === 'home' && activeProjects.length > 1 && (() => {
           const sorted = [...projectsSummary].sort((a, b) => {

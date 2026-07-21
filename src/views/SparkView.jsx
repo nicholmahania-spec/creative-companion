@@ -168,31 +168,18 @@ export default function SparkView({
         </p>
       )}
 
-      <section className="decision-log-strip" aria-label="Decision log">
-        <p className="decision-log-strip-label">
-          {i18nLookup(locale, 'ui.decisionLogTitle') || 'Decision log'}
+      {decisionLine ? (
+        <p className="ideate-chosen-line" role="status">
+          {decisionLine}
         </p>
-        {decisionLine ? (
-          <p className="decision-log-strip-line">{decisionLine}</p>
-        ) : (
-          <p className="decision-log-empty">
-            {i18nLookup(locale, 'ui.decisionEmpty') ||
-              'Pick a winner on Ideate — we save why for Sketch.'}
-          </p>
-        )}
-      </section>
+      ) : null}
 
       {/* Locked 3-column shortlist — primary stage */}
       <section
         className="panel brand-section ideate-shortlist"
         aria-label="Three directions A B C"
       >
-        <div className="brand-section-label">
-          Shortlist · A · B · C
-        </div>
-        <p className="panel-hint ideate-shortlist-hint">
-          One line each. Choose one winner. Messy is fine.
-        </p>
+        <div className="brand-section-label">A · B · C</div>
         <div className="ideate-directions is-locked-3">
           {dirs.slice(0, 3).map((d) => (
             <div

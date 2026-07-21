@@ -316,14 +316,12 @@ export default function DesignView({
             <p className="system-edit-label design-edit-rail-label">Edit system</p>
             <div className="system-accordion-nav design-section-tabs" role="tablist">
               {[
-                ['essentials', 'Tagline'],
-                ['messaging', 'Message'],
-                ['voice', 'Voice'],
-                ['colors', 'Colors'],
+                ['essentials', 'Words'],
+                ['colors', 'Color'],
                 ['type', 'Type'],
+                ['voice', 'Voice'],
                 ['logo', 'Logo'],
-                ['imagery', 'Imagery'],
-                ['pins', 'Pins'],
+                ['pins', 'Pack'],
               ].map(([id, label]) => (
                 <button
                   key={id}
