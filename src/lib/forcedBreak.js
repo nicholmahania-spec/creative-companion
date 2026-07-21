@@ -15,7 +15,6 @@ export function breakMinutesForWork(workMinutes) {
   if (m >= 50) return 8
   if (m >= 40) return 7
   if (m >= 25) return 5
-  // Short pomodoro (e.g. 2-min test) still gets a real pause
   if (m >= 15) return 5
   if (m >= 5) return 5
   return 5
@@ -28,11 +27,12 @@ export function formatBreakClock(totalSeconds) {
   return `${m}:${String(r).padStart(2, '0')}`
 }
 
+/** ADHD: short lock message — no lecture */
 export function breakReasonCopy(workMinutes, breakMin) {
   const w = Math.round(workMinutes)
   return {
-    title: 'Nope. Break time. Desk locked.',
-    body: `You worked about ${w} minute${w === 1 ? '' : 's'}. Congrats on the grind—and also: sit down… wait, stand up. ${breakMin} minutes. Water. Bathroom. Eyes off the glowing rectangle. The app unlocks when I say so (when the timer ends).`,
-    tip: "This isn't a suggestion, it's an intervention. Hyperfocus doesn't get a veto. See you after the stretch.",
+    title: 'Break · desk locked',
+    body: `~${w} min work · ${breakMin} min rest · water · stand`,
+    tip: 'Unlocks when the clock hits zero',
   }
 }

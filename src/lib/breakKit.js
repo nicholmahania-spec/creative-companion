@@ -4,54 +4,12 @@
  */
 
 export const BREAK_KINDS = [
-  {
-    id: 'med',
-    label: 'Med',
-    icon: '💊',
-    defaultMinutes: 2,
-    recurring: true,
-    hint: 'Pills, drops, inhaler',
-  },
-  {
-    id: 'care',
-    label: 'Care',
-    icon: '♡',
-    defaultMinutes: 3,
-    recurring: true,
-    hint: 'Stretch, snack, eyes',
-  },
-  {
-    id: 'todo',
-    label: 'To-do',
-    icon: '✓',
-    defaultMinutes: 5,
-    recurring: false,
-    hint: 'One small life task',
-  },
-  {
-    id: 'task',
-    label: 'Task',
-    icon: '☰',
-    defaultMinutes: 5,
-    recurring: false,
-    hint: 'Quick non-desk task',
-  },
-  {
-    id: 'errand',
-    label: 'Errand',
-    icon: '→',
-    defaultMinutes: 5,
-    recurring: false,
-    hint: 'Text, pay, reply',
-  },
-  {
-    id: 'habit',
-    label: 'Habit',
-    icon: '↻',
-    defaultMinutes: 3,
-    recurring: true,
-    hint: 'Daily micro-habit',
-  },
+  { id: 'med', label: 'Med', icon: '💊', defaultMinutes: 2, recurring: true, hint: 'Pills' },
+  { id: 'care', label: 'Care', icon: '♡', defaultMinutes: 3, recurring: true, hint: 'Stretch' },
+  { id: 'todo', label: 'To-do', icon: '✓', defaultMinutes: 5, recurring: false, hint: 'One life task' },
+  { id: 'task', label: 'Task', icon: '☰', defaultMinutes: 5, recurring: false, hint: 'Quick task' },
+  { id: 'errand', label: 'Errand', icon: '→', defaultMinutes: 5, recurring: false, hint: 'Text / pay' },
+  { id: 'habit', label: 'Habit', icon: '↻', defaultMinutes: 3, recurring: true, hint: 'Daily' },
 ]
 
 export function kindMeta(kind) {
@@ -112,9 +70,9 @@ export function pickBreakPlan(items = [], breakMinutes = 5, now = new Date()) {
       budgetMinutes: budget,
       empty: true,
       fallback: [
-        { id: '_water', title: 'Drink a full glass of water', kind: 'care', minutes: 2 },
-        { id: '_stand', title: 'Stand up and stretch 30 seconds', kind: 'care', minutes: 1 },
-        { id: '_eyes', title: 'Look at something far away', kind: 'care', minutes: 1 },
+        { id: '_water', title: 'Water', kind: 'care', minutes: 2 },
+        { id: '_stand', title: 'Stand · stretch', kind: 'care', minutes: 1 },
+        { id: '_eyes', title: 'Eyes far', kind: 'care', minutes: 1 },
       ],
     }
   }
@@ -131,17 +89,14 @@ export function pickBreakPlan(items = [], breakMinutes = 5, now = new Date()) {
 export function breakPlanCopy(plan, breakMinutes) {
   if (!plan || plan.empty) {
     return {
-      headline: 'Use this break for your body',
-      sub: `~${breakMinutes} min · add your own meds & to-dos in Little Helper → More → Break kit`,
+      headline: 'Body break',
+      sub: `~${breakMinutes} min · kit in Helper → Break`,
     }
   }
   const n = plan.items.length
   return {
-    headline:
-      n === 1
-        ? 'One thing for this break'
-        : `${n} things that fit this break`,
-    sub: `About ${plan.usedMinutes} of ${breakMinutes} min · check them off as you go`,
+    headline: n === 1 ? '1 kit item' : `${n} kit items`,
+    sub: `${plan.usedMinutes}/${breakMinutes} min · check off`,
   }
 }
 

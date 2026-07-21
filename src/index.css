@@ -16760,6 +16760,110 @@ select:focus,
 }
 
 /* ============================================================
+   Forced break + kit — Helper-adjacent ADHD densify
+   ============================================================ */
+.forced-break-studio .forced-break-card {
+  border-radius: 4px !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  box-shadow: none !important;
+  background: #FFFFFF;
+  max-width: 22rem;
+  padding: 1.15rem 1.1rem;
+}
+.forced-break-studio .forced-break-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ts-mute, #94A3B8);
+  margin: 0 0 0.35rem;
+}
+.forced-break-studio .forced-break-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.35rem;
+}
+.forced-break-studio .forced-break-body {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ts-mute, #94A3B8);
+  margin: 0 0 0.85rem;
+  line-height: 1.35;
+}
+.forced-break-studio .forced-break-clock {
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(2.25rem, 8vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-align: center;
+  margin: 0 0 0.5rem;
+}
+.forced-break-studio .forced-break-bar {
+  border-radius: 2px;
+  height: 4px;
+  background: var(--ts-canvas, #F4F5F6);
+  border: 1px solid var(--ts-border, #E2E8F0);
+  overflow: hidden;
+  margin-bottom: 0.85rem;
+}
+.forced-break-studio .forced-break-bar-fill {
+  background: var(--ts-focus, #2563EB);
+  border-radius: 2px;
+}
+.forced-break-studio .forced-break-kit-head {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  margin: 0 0 0.2rem;
+}
+.forced-break-studio .forced-break-kit-sub {
+  font-size: 0.75rem;
+  color: var(--ts-mute, #94A3B8);
+  margin: 0 0 0.55rem;
+}
+.forced-break-studio .forced-break-kit-item {
+  border-radius: 4px !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  box-shadow: none !important;
+  background: #FFFFFF;
+  min-height: 44px;
+}
+.forced-break-studio .forced-break-kit-item.is-done {
+  opacity: 0.55;
+}
+.forced-break-studio .forced-break-kit-item:focus-visible {
+  border-color: var(--ts-focus, #2563EB);
+  outline: 1.5px solid var(--ts-focus, #2563EB);
+  outline-offset: 0;
+}
+.forced-break-studio .forced-break-checklist li {
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 4px;
+}
+.forced-break-studio .forced-break-hint {
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--ts-mute, #94A3B8);
+  text-align: center;
+  margin: 0.75rem 0 0.5rem;
+}
+.forced-break-studio .forced-break-emergency-link {
+  border-radius: 4px !important;
+  display: block;
+  margin: 0 auto;
+}
+.forced-break-studio .forced-break-emergency-hint {
+  font-size: 0.78rem;
+  margin: 0 0 0.4rem;
+}
+.forced-break-studio .field-input,
+.forced-break-studio .btn {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+/* ============================================================
    Breakdown + stuck modal densify
    ============================================================ */
 .breakdown-studio {

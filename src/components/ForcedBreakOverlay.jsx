@@ -3,8 +3,8 @@ import { breakReasonCopy, formatBreakClock } from '../lib/forcedBreak'
 import { breakPlanCopy, kindMeta } from '../lib/breakKit'
 
 /**
- * Full-screen lock until forced break countdown completes.
- * Shows Break Kit items that fit this window — check them off while you rest.
+ * Full-screen lock until forced break ends.
+ * ADHD: short copy, kit checklist, 4px Tech-Studio chrome.
  */
 export default function ForcedBreakOverlay({
   totalSeconds,
@@ -53,14 +53,14 @@ export default function ForcedBreakOverlay({
 
   return (
     <div
-      className="forced-break-overlay"
+      className="forced-break-overlay forced-break-studio"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="forced-break-title"
       aria-describedby="forced-break-body"
     >
       <div className="forced-break-card">
-        <p className="forced-break-eyebrow">Required break · Pomodoro</p>
+        <p className="forced-break-eyebrow">Break lock</p>
         <h2 id="forced-break-title" className="forced-break-title">
           {copy.title}
         </h2>
@@ -110,7 +110,7 @@ export default function ForcedBreakOverlay({
                       </span>
                       <span className="forced-break-kit-body">
                         <span className="forced-break-kit-kind">
-                          {meta.icon} {meta.label}
+                          {meta.label}
                           {!isFallback && item.minutes
                             ? ` · ~${item.minutes}m`
                             : ''}
@@ -126,38 +126,36 @@ export default function ForcedBreakOverlay({
             </ul>
           ) : (
             <ul className="forced-break-checklist">
-              <li>Stand up if you can</li>
-              <li>Drink water</li>
-              <li>Bathroom if you need it</li>
-              <li>Rest your eyes (look far away)</li>
+              <li>Stand</li>
+              <li>Water</li>
+              <li>Bathroom</li>
+              <li>Eyes far</li>
             </ul>
           )}
 
           {allDone && (
             <p className="forced-break-kit-done" role="status">
-              Kit clear — keep resting until the timer ends.
+              Kit clear · rest until zero
             </p>
           )}
         </div>
 
         <p className="forced-break-hint">
-          {leftSeconds > 0
-            ? 'Screen stays locked until the clock hits zero'
-            : 'Break complete — unlocking…'}
+          {leftSeconds > 0 ? 'Locked until 0:00' : 'Done · unlocking…'}
         </p>
 
         {!showEmergency ? (
           <button
             type="button"
-            className="text-link forced-break-emergency-link"
+            className="btn btn-ghost btn-sm forced-break-emergency-link"
             onClick={() => setShowEmergency(true)}
           >
-            Emergency only — unlock early
+            Emergency unlock
           </button>
         ) : (
           <div className="forced-break-emergency">
-            <p className="panel-hint">
-              Type exactly: <strong>end break now</strong>
+            <p className="forced-break-emergency-hint">
+              Type: <strong>end break now</strong>
             </p>
             <div className="capture-row">
               <input
@@ -170,7 +168,7 @@ export default function ForcedBreakOverlay({
               />
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-secondary btn-sm"
                 onClick={tryEmergency}
               >
                 Unlock
