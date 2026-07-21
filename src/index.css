@@ -14066,20 +14066,21 @@ select:focus,
   color: #0F766E !important;
 }
 
-/* Massive bold Define header — beat the global 1.25rem page-title clamp */
+/* Massive bold Define header — beat the global 1.25rem page-title clamp.
+   Token-driven ink so it stays legible in both light and dark themes. */
 .define-studio-title.page-title {
   font-size: clamp(2.4rem, 4vw, 3rem) !important;
   font-weight: 800 !important;
   letter-spacing: -0.04em !important;
   line-height: 1.02 !important;
-  color: #1A1A1E !important;
+  color: var(--text-primary) !important;
   margin: 0 !important;
 }
 
 /* Chapters now flow as one master scroll — bold section dividers, no tab loop */
 .define-chapter-frame { display: none !important; }
 .define-workbook.is-split .define-chapter {
-  border-top: 1px solid #E2E8F0;
+  border-top: 1px solid var(--border-subtle);
   padding-top: 1rem;
   margin-top: 0.5rem;
 }
@@ -14091,11 +14092,11 @@ select:focus,
 .define-workbook.is-split .define-chapter-title {
   font-size: 1.15rem !important;
   font-weight: 700 !important;
-  color: #1A1A1E !important;
+  color: var(--text-primary) !important;
   letter-spacing: -0.02em !important;
 }
 .define-workbook.is-split .define-chapter-badge {
-  color: #94A3B8 !important;
+  color: var(--text-muted) !important;
   font-weight: 700 !important;
 }
 
