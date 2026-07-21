@@ -69,16 +69,14 @@ const EN = {
     work: 'Sketch',
     packTitle: 'Client pack',
     packEyebrow: 'What you hand to a client',
-    packSub: 'Print on paper, or download a multi-page brand book PDF',
+    packSub: 'Print or multi-page brand book PDF',
     clientHandoff: 'Send to client',
     packHint:
-      'The brand book is several pages: cover, words, colors, fonts, logo rules, do/don’t, and mood pictures. Text can be selected. A simple picture PDF is under More formats.',
-    thinPack:
-      'Not ready yet — add a short tagline, colors, or star some Research pictures first.',
-    thinPackConfirmPrint:
-      'This pack is missing pieces (tagline, colors, or starred pictures). Print anyway?',
+      'Brand book pages: cover, words, colors, type, logo, mood. Picture PDF under More formats.',
+    thinPack: 'Thin pack — add tagline, colors, or ★ Research pins.',
+    thinPackConfirmPrint: 'Pack is thin (tagline / colors / ★ pins). Print anyway?',
     thinPackConfirmDownload:
-      'This pack is missing pieces (tagline, colors, or starred pictures). Download anyway?',
+      'Pack is thin (tagline / colors / ★ pins). Download anyway?',
     scrollPreview: 'Scroll to see the whole preview',
     leaveDesk: 'Leave desk',
     newProject: 'New project',
@@ -291,8 +289,7 @@ const EN = {
     decisionEditIdeate: 'Change on Ideate',
     kitBuilding: 'Building brand kit…',
     downloadKit: 'Download brand kit (zip folder)',
-    kitHint:
-      'One folder with the brand book PDF, a text guide, color files, and your logo (if you added one)',
+    kitHint: 'Zip: brand book PDF, guide, color files, logo',
     messagingPillars: 'Key messages',
     messagingPromise: 'What we promise',
     messagingProof: 'Why believe us',

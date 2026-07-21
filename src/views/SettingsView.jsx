@@ -341,7 +341,7 @@ export default function SettingsView(props) {
             <div className="settings-row">
               <div>
                 <strong>Optional progress strip</strong>
-                <span>Quiet fill meter under the path — off by default</span>
+                <span>Quiet meter under the path — off by default</span>
               </div>
               <button
                 type="button"
@@ -359,10 +359,7 @@ export default function SettingsView(props) {
             <div className="settings-row">
               <div>
                 <strong>Toast detail</strong>
-                <span>
-                  Quiet hides micro feedback (stars, roles, helper). Errors and
-                  pack download always show.
-                </span>
+                <span>Quiet hides micro feedback; errors and exports always show</span>
               </div>
               <button
                 type="button"

@@ -472,10 +472,10 @@ export default function DesignView({
                         style={{ width: `${health.score}%` }}
                       />
                     </div>
-                    <p className="panel-hint" style={{ margin: '0.4rem 0 0' }}>
-                      {health.justifiedCount}/{health.assignedCount || 4} roles
-                      justified · {Math.round(health.contrastScore * 100)}%
-                      contrast pairs pass · {health.harmony.note}
+                    <p className="panel-hint design-health-meta" style={{ margin: '0.4rem 0 0' }}>
+                      {health.justifiedCount}/{health.assignedCount || 4} justified
+                      · {Math.round(health.contrastScore * 100)}% AA
+                      · {health.harmony.note}
                     </p>
                   </div>
                 )
@@ -690,17 +690,15 @@ export default function DesignView({
                     Reset default
                   </button>
                 </div>
-                <p className="panel-hint" style={{ marginTop: '0.45rem', marginBottom: 0 }}>
-                  From pins pulls solids, gradients, and image samples from
-                  Research {starredPinCount ? '(★ first)' : ''}. Open a swatch’s
-                  tints to expand shades.
+                <p className="panel-hint design-lect" style={{ marginTop: '0.45rem', marginBottom: 0 }}>
+                  From pins {starredPinCount ? '(★ first)' : ''} · open a swatch for tints
                 </p>
               </div>
 
               <div className="palette-roles-editor" style={{ marginTop: '1rem' }}>
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
-                    Pack roles — pick a role, then a swatch
+                    Pack roles
                   </p>
                   <button
                     type="button"
@@ -803,8 +801,8 @@ export default function DesignView({
                   <p className="field-label" style={{ margin: 0 }}>
                     Contrast checker
                   </p>
-                  <span className="panel-hint" style={{ margin: 0 }}>
-                    WCAG 2.1 · AA ≥ 4.5:1 body · ≥ 3:1 large
+                  <span className="panel-hint design-lect" style={{ margin: 0 }}>
+                    AA body ≥ 4.5:1
                   </span>
                 </div>
                 <label className="field-label" htmlFor="check-bg">
@@ -1058,8 +1056,8 @@ export default function DesignView({
               <div className="brand-section-label">
                 {i18nT(locale, 'ui.messagingPillars') || 'Messaging pillars'}
               </div>
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                Promise · proof · personality — ships in the brand book and kit.
+              <p className="panel-hint design-lect" style={{ marginTop: 0 }}>
+                Promise · proof · personality
               </p>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="msg-promise">
@@ -1114,9 +1112,8 @@ export default function DesignView({
               hidden={brandEditSection !== 'logo'}
             >
               <div className="brand-section-label">Logo lockups</div>
-              <p className="panel-hint" style={{ marginBottom: '0.75rem' }}>
-                Mark image, wordmark, clearspace, don’ts — primary / reverse /
-                mono in the brand book.
+              <p className="panel-hint design-lect" style={{ marginBottom: '0.75rem' }}>
+                Wordmark, mark image, clearspace
               </p>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-wordmark">

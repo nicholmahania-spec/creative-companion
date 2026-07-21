@@ -11,8 +11,8 @@ import {
 import { ProgressRing } from './PathStepIcon'
 
 /**
- * Optional progress strip (XP, quests, streak). Secondary to shipping work.
- * Micro-progress feedback: ring fill + strike-through quests — not a dashboard.
+ * Optional quiet progress strip (opt-in via Settings).
+ * Secondary to shipping work — not a game dashboard.
  */
 export default function GameHUD({ compact = false }) {
   const [game, setGame] = useState(() => refreshGameDay())
@@ -70,28 +70,28 @@ export default function GameHUD({ compact = false }) {
           stroke={3}
           className="game-hud-xp-ring"
         >
-          <span className="game-hud-level">Lv {xp.level}</span>
+          <span className="game-hud-level">{xp.level}</span>
         </ProgressRing>
         <span className="game-hud-xp-wrap" aria-hidden="true">
           <span className="game-hud-xp-fill" style={{ width: `${xp.percent}%` }} />
         </span>
-        <span className="game-hud-xp-num">{game.xp || 0} XP</span>
+        <span className="game-hud-xp-num">{game.xp || 0}</span>
         <span className="game-hud-chip" title="Day streak">
-          🔥 {game.dayStreak || 0}d
+          {game.dayStreak || 0}d
         </span>
         {(game.combo || 0) > 1 && (
           <span className="game-hud-chip is-combo" title="Step combo">
-            ⚡ {game.combo}x
+            ×{game.combo}
           </span>
         )}
         <span
           className={`game-hud-chip is-daily${daily.done ? ' is-done' : ''}`}
-          title={`Daily goal ${daily.xp}/${DAILY_XP_GOAL} XP`}
+          title={`Today ${daily.xp}/${DAILY_XP_GOAL}`}
         >
           Today {daily.xp}/{DAILY_XP_GOAL}
         </span>
-        <span className="game-hud-chip is-quests" title="Daily quests">
-          ★ {questsDone}/{quests.length}
+        <span className="game-hud-chip is-quests" title="Today checklist">
+          {questsDone}/{quests.length}
         </span>
         <span className="game-hud-chevron" aria-hidden="true">
           {open ? '▴' : '▾'}
@@ -101,24 +101,23 @@ export default function GameHUD({ compact = false }) {
             key={burst.id}
             className={`game-hud-burst${burst.levelUp ? ' is-level' : ''}`}
           >
-            {burst.levelUp ? 'LEVEL UP ' : ''}
+            {burst.levelUp ? 'Up ' : ''}
             {burst.text}
-            {burst.combo > 1 ? ` · ${burst.combo}x` : ''}
+            {burst.combo > 1 ? ` · ×${burst.combo}` : ''}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="game-hud-panel" role="region" aria-label="Progress extras">
+        <div className="game-hud-panel" role="region" aria-label="Optional progress">
           <p className="game-hud-promise">
-            Real product: finish one step, then export a brand book PDF. XP is just a
-            side meter.
+            Meter only — finish a step, then export the brand book.
           </p>
           <div className="game-hud-panel-grid">
             <div className="game-hud-stat">
-              <span className="game-hud-stat-label">Level</span>
+              <span className="game-hud-stat-label">Band</span>
               <strong>
-                {xp.level} · {xp.into}/{xp.span} to next
+                {xp.level} · {xp.into}/{xp.span}
               </strong>
             </div>
             <div className="game-hud-stat">
@@ -144,10 +143,10 @@ export default function GameHUD({ compact = false }) {
 
           <div className="game-hud-daily">
             <div className="game-hud-daily-top">
-              <span>Daily XP goal</span>
+              <span>Today</span>
               <strong>
                 {daily.xp}/{DAILY_XP_GOAL}
-                {daily.done ? ' · cleared' : ''}
+                {daily.done ? ' · done' : ''}
               </strong>
             </div>
             <div className="game-hud-daily-bar">
@@ -158,7 +157,7 @@ export default function GameHUD({ compact = false }) {
             </div>
           </div>
 
-          <p className="game-hud-section-label">Today&apos;s quests</p>
+          <p className="game-hud-section-label">Today</p>
           <ul className="game-hud-quests">
             {quests.map((q) => (
               <li
@@ -172,7 +171,7 @@ export default function GameHUD({ compact = false }) {
                   <strong>{q.label}</strong>
                   <span>
                     {q.progress}/{q.target}
-                    {q.done ? ` · +${q.bonusXp} XP` : ''}
+                    {q.done ? ` · +${q.bonusXp}` : ''}
                   </span>
                 </span>
               </li>
@@ -181,7 +180,7 @@ export default function GameHUD({ compact = false }) {
 
           {badgeList.length > 0 && (
             <>
-              <p className="game-hud-section-label">Badges</p>
+              <p className="game-hud-section-label">Marks</p>
               <div className="game-hud-badges">
                 {badgeList.map((b) => (
                   <span
@@ -198,7 +197,7 @@ export default function GameHUD({ compact = false }) {
 
           {(game.recent || []).length > 0 && (
             <>
-              <p className="game-hud-section-label">Recent XP</p>
+              <p className="game-hud-section-label">Recent</p>
               <ul className="game-hud-recent">
                 {(game.recent || []).slice(0, 5).map((r) => (
                   <li key={r.id}>
@@ -211,9 +210,8 @@ export default function GameHUD({ compact = false }) {
           )}
 
           <p className="game-hud-foot">
-            XP follows real work: closed steps, focus blocks, pins, breaks, and
-            exports. Combos stack when you ship steps within 45 minutes. Ignore
-            the meter if it gets in the way — ship the pack instead.
+            Tracks real work (steps, focus, pins, export). Turn off in Settings
+            anytime.
           </p>
         </div>
       )}

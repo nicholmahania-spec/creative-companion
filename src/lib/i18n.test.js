@@ -88,6 +88,9 @@ describe('i18n wordmark + path + catalog', () => {
     const en = getMessages('en').ui
     expect(en.packSub).toMatch(/brand book PDF|PDF/i)
     expect(en.packHint).toMatch(/brand book|pages/i)
+    expect(en.packHint.length).toBeLessThan(120)
+    expect(en.kitHint.length).toBeLessThan(80)
+    expect(en.thinPack.length).toBeLessThan(80)
     expect(en.downloadVectorPdf).toMatch(/brand book|PDF/i)
     expect(en.openPack).toMatch(/Deliver/i)
     expect(en.openWork).toMatch(/Research/i)
