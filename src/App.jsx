@@ -2744,6 +2744,18 @@ function App() {
         className={`journey-sidebar${journeyActive ? '' : ' is-tools'}`}
         aria-label={i18nT(locale, 'pathAria')}
       >
+          <button
+            type="button"
+            className={`journey-projects-link${activeView === 'home' ? ' is-active' : ''}`}
+            onClick={() => {
+              setActiveView('home')
+              setNavOpen(false)
+            }}
+            aria-current={activeView === 'home' ? 'page' : undefined}
+          >
+            <span className="journey-projects-icon" aria-hidden="true">▦</span>
+            <span className="journey-label">Projects</span>
+          </button>
           <ol className="journey-bar-list">
             {JOURNEY_STEPS.map((step, idx) => {
               const active = journeyActive === step.id
@@ -2885,6 +2897,19 @@ function App() {
                   <h1 className="home-title" style={{ margin: 0 }}>
                     Projects
                   </h1>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm home-new-project"
+                    onClick={() => {
+                      createNewProject()
+                      notifyAction('New project', 'project_create', {
+                        label: 'New project',
+                      })
+                      setActiveView('project')
+                    }}
+                  >
+                    + New project
+                  </button>
                 </div>
                 <ul className="home-md-rows">
                   {sorted.map(({ project: p, doneCount, nextGap }) => {
@@ -3021,6 +3046,21 @@ function App() {
                 </button>
               </>
             )}
+            <div className="home-cta-row home-new-project-row">
+              <button
+                type="button"
+                className="btn btn-secondary home-new-project"
+                onClick={() => {
+                  createNewProject()
+                  notifyAction('New project', 'project_create', {
+                    label: 'New project',
+                  })
+                  setActiveView('project')
+                }}
+              >
+                + New project
+              </button>
+            </div>
           </section>
         )}
         {/* ===== WORK — one step owns the fold ===== */}

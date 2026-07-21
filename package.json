@@ -1,7 +1,7 @@
 {
   "name": "creative-companion-react",
   "private": true,
-  "version": "1.48.77",
+  "version": "1.48.78",
   "type": "module",
   "scripts": {
     "dev": "vite",
