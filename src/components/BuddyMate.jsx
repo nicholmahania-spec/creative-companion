@@ -451,10 +451,10 @@ export default function BuddyMate({
 
       if (level && level !== lastHyperLevel.current) {
         lastHyperLevel.current = level
-        // Hard hyperfocus may open panel once; soft/strong = FAB only
+        // Never auto-open panel — banner shows when user opens Helper
         pushBuddy(hyperfocusLine(breakMins), {
           move: false,
-          expand: level === 'hard',
+          expand: false,
         })
         return
       }
@@ -916,13 +916,7 @@ export default function BuddyMate({
               onClick={() => {
                 setShowBreakCare((v) => {
                   const next = !v
-                  if (next) {
-                    setShowMore(false)
-                    pushBuddy('Break · water · food · kit', {
-                      move: false,
-                      expand: true,
-                    })
-                  }
+                  if (next) setShowMore(false)
                   return next
                 })
               }}
