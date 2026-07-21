@@ -1,7 +1,8 @@
-/* Creative Companion — offline shell + asset cache (v34)
+/* Creative Companion — offline shell + asset cache (v35)
  * v33: blueprint · v34: residual densify (rail 200, export/command)
+ * v35: faster cloud-load timeout + escape hatch (mobile "stuck loading" fix)
  */
-const CACHE = 'cc-shell-v34'
+const CACHE = 'cc-shell-v35'
 const PRECACHE = [
   './',
   './index.html',

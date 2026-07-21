@@ -22,7 +22,7 @@ export async function pullWorkspace() {
     const {
       data: { user },
       error: userErr,
-    } = await withTimeout(supabase.auth.getUser(), 12000, 'Sign-in check')
+    } = await withTimeout(supabase.auth.getUser(), 6000, 'Sign-in check')
     if (userErr || !user) {
       return { ok: false, error: userErr?.message || 'Not signed in' }
     }
@@ -33,7 +33,7 @@ export async function pullWorkspace() {
         .select('payload, updated_at')
         .eq('user_id', user.id)
         .maybeSingle(),
-      12000,
+      6000,
       'Cloud desk load'
     )
 
@@ -64,7 +64,7 @@ export async function pushWorkspace(payload) {
     const {
       data: { user },
       error: userErr,
-    } = await withTimeout(supabase.auth.getUser(), 12000, 'Sign-in check')
+    } = await withTimeout(supabase.auth.getUser(), 6000, 'Sign-in check')
     if (userErr || !user) {
       return { ok: false, error: userErr?.message || 'Not signed in' }
     }
@@ -79,7 +79,7 @@ export async function pushWorkspace(payload) {
       supabase.from('user_workspaces').upsert(body, {
         onConflict: 'user_id',
       }),
-      12000,
+      6000,
       'Cloud desk save'
     )
 
