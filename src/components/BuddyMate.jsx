@@ -855,7 +855,7 @@ export default function BuddyMate({
 
           {(hyper === 'strong' || hyper === 'hard') && (
             <div className={`buddy-hyper-banner bf-hyper level-${hyper}`}>
-              {hyper === 'hard' ? 'Long stretch · break ok' : 'Deep focus · pause soon'}
+              {hyper === 'hard' ? 'Break ok' : 'Pause soon'}
             </div>
           )}
 

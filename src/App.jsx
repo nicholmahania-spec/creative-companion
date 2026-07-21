@@ -3396,8 +3396,8 @@ function App() {
             if (e.target === e.currentTarget) setDemoTour(null)
           }}
         >
-          <div className="export-panel demo-tour-panel">
-            <p className="onboard-eyebrow">Soft Signal · sample tour</p>
+          <div className="export-panel demo-tour-panel demo-tour-studio">
+            <p className="onboard-eyebrow">Demo</p>
             <div className="demo-tour-dots" aria-hidden="true">
               {[0, 1, 2, 3, 4, 5, 6].map((i) => (
                 <span key={i} className={i <= demoTour.step ? 'is-on' : ''} />
@@ -3416,16 +3416,16 @@ function App() {
                 ][demoTour.step] || 'Tour'
               }
             </h2>
-            <p className="view-lede">
+            <p className="view-lede demo-tour-lede">
               {
                 [
-                  'Detective sheet first: who, feel, one-sentence goal. Soft Signal is seeded.',
-                  'Curious spy: refs, star up to 6 ★. Use the 20-min research timer.',
-                  'Force many sparks — try Opposite direction. Shortlist A/B/C.',
-                  '2–3 drafts + one-line why. Low polish. Under ~2 hours total.',
-                  'Live artboard + lockups. Bump version (v1→v2) before big changes.',
-                  'Show the leave-behind. Ask specific questions. Capture feedback notes.',
-                  'Brand book PDF + handoff note + what you learned.',
+                  'Goal · who · feel',
+                  'Pins · ★ up to 6',
+                  'Sparks · shortlist',
+                  'Drafts + why',
+                  'Artboard · version',
+                  'Notes · gaps',
+                  'PDF · handoff',
                 ][demoTour.step]
               }
             </p>
@@ -3449,13 +3449,11 @@ function App() {
                   else setDemoTour({ step: s + 1 })
                 }}
               >
-                {demoTour.step >= 6
-                  ? 'Open Deliver · done'
-                  : 'Go · next tip'}
+                {demoTour.step >= 6 ? 'Deliver' : 'Next'}
               </button>
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-secondary btn-sm"
                 onClick={() => {
                   const views = [
                     'project',
@@ -3470,14 +3468,14 @@ function App() {
                   setDemoTour(null)
                 }}
               >
-                Stay here
+                Stay
               </button>
               <button
                 type="button"
-                className="text-link"
+                className="btn btn-ghost btn-sm"
                 onClick={() => setDemoTour(null)}
               >
-                Skip tour
+                Skip
               </button>
             </div>
           </div>
@@ -3486,76 +3484,47 @@ function App() {
 
       {showOnboarding && (
         <div
-          className="export-overlay onboard-overlay"
+          className="export-overlay onboard-overlay onboard-studio"
           role="dialog"
           aria-modal="true"
           aria-labelledby="onboard-title"
-          aria-describedby="onboard-desc"
         >
           <div className="export-panel onboard-panel">
-            <div className="onboard-layout">
-              <div className="onboard-copy">
-                <p className="onboard-eyebrow">
-                  {CLOUD ? 'Signed in · cloud desk' : 'Saved on this device'}
-                </p>
-                <h2 id="onboard-title" className="onboard-title">
-                  {i18nT(locale, 'ui.onboardTitle')}
-                </h2>
-                <p id="onboard-desc" className="view-lede onboard-lede">
-                  {i18nT(locale, 'ui.onboardLede')}
-                </p>
-              </div>
-              <div className="onboard-specimen" aria-hidden="true">
-                <div className="login-pack-specimen onboard-pack-mini">
-                  <div className="login-pack-cover">
-                    <span className="login-pack-kicker">Brand pack</span>
-                    <strong className="login-pack-name">Your project</strong>
-                    <p className="login-pack-tagline">Direction you can ship</p>
-                  </div>
-                  <div className="login-pack-swatches">
-                    <i style={{ background: '#1C1917' }} />
-                    <i style={{ background: '#0F766E' }} />
-                    <i style={{ background: '#D6D3D1' }} />
-                    <i style={{ background: '#FAFAF9' }} />
-                  </div>
-                  <p className="login-pack-foot">PDF · end of the path</p>
-                </div>
-              </div>
-            </div>
+            <h2 id="onboard-title" className="onboard-title">
+              New project
+            </h2>
             <label className="onboard-label" htmlFor="onboard-name">
-              Project name
+              Name
               <input
                 id="onboard-name"
                 value={onboardName}
                 onChange={(e) => setOnboardName(e.target.value)}
-                placeholder="e.g. Soft Signal covers"
+                placeholder="Project name"
                 className="onboard-input"
                 autoFocus
                 autoComplete="off"
               />
             </label>
             <label className="onboard-label" htmlFor="onboard-step">
-              First step (do this now)
+              First step
               <input
                 id="onboard-step"
                 value={onboardFirstStep}
                 onChange={(e) => setOnboardFirstStep(e.target.value)}
-                placeholder="e.g. Write 3 cover rules in one pass"
+                placeholder="Optional · Sketch later"
                 className="onboard-input"
                 autoComplete="off"
               />
             </label>
             <details className="onboard-brief-details">
-              <summary className="text-link">
-                Add brief later? (optional)
-              </summary>
+              <summary>Brief</summary>
               <label className="onboard-label" htmlFor="onboard-brief">
-                Brief
+                <span className="sr-only">Brief</span>
                 <textarea
                   id="onboard-brief"
                   value={onboardBrief}
                   onChange={(e) => setOnboardBrief(e.target.value)}
-                  placeholder="Who is this for? Outcome? Constraint?"
+                  placeholder="Who · outcome · constraint"
                   rows={2}
                   className="onboard-input"
                 />
@@ -3568,14 +3537,14 @@ function App() {
                 disabled={!onboardName.trim()}
                 onClick={() => finishOnboarding('custom')}
               >
-                Start on Define
+                Start · Define
               </button>
               <button
                 type="button"
-                className="text-link onboard-demo"
+                className="btn btn-ghost btn-sm onboard-demo"
                 onClick={() => finishOnboarding('empty')}
               >
-                Skip setup — empty desk (capture a Sketch step later)
+                Skip
               </button>
             </div>
           </div>
@@ -3583,7 +3552,7 @@ function App() {
       )}
 
       {savePulse && (
-        <div className="autosave-chip">✓ Saved on this device</div>
+        <div className="autosave-chip">✓ Saved</div>
       )}
 
       {resumeBanner && activeView !== 'home' && (() => {
@@ -3600,25 +3569,18 @@ function App() {
             <p className="resume-banner-body">
               <strong>{resumeBanner.name}</strong>
               {resumeBanner.afterBreak
-                ? ` · ${i18nT(locale, 'ui.resumeAfterBreak') || 'Break done — pick up here'}`
+                ? ' · After break'
                 : resumeBanner.rejoinTimer
-                  ? ` · ${i18nT(locale, 'ui.resumeTimerRunning') || 'Timer still running'}`
+                  ? ' · Timer on'
                   : resumeBanner.viewLabel
                     ? ` · ${resumeBanner.viewLabel}`
                     : ''}
               {resumeBanner.step
-                ? ` · Next: ${String(resumeBanner.step).slice(0, 40)}${
-                    String(resumeBanner.step).length > 40 ? '…' : ''
+                ? ` · ${String(resumeBanner.step).slice(0, 32)}${
+                    String(resumeBanner.step).length > 32 ? '…' : ''
                   }`
-                : !resumeBanner.decisionLine
-                  ? ` · ${i18nT(locale, 'ui.resumeCaptureHint') || 'Capture a step on Sketch'}`
-                  : ''}
+                : ''}
             </p>
-            {resumeBanner.decisionLine ? (
-              <p className="resume-banner-decision">
-                {resumeBanner.decisionLine}
-              </p>
-            ) : null}
           </div>
           <div className="resume-banner-actions">
             {alreadyThere ? (
@@ -3630,7 +3592,7 @@ function App() {
                   setResumeBanner(null)
                 }}
               >
-                Got it
+                OK
               </button>
             ) : (
               <button
@@ -3642,8 +3604,7 @@ function App() {
                   setResumeBanner(null)
                 }}
               >
-                {i18nT(locale, 'ui.resumeContinue') || 'Continue'}
-                {resumeBanner.viewLabel ? ` · ${resumeBanner.viewLabel}` : ''}
+                Continue
               </button>
             )}
             {!alreadyThere && (
@@ -3652,7 +3613,7 @@ function App() {
                 className="btn btn-ghost btn-sm"
                 onClick={() => setResumeBanner(null)}
               >
-                {i18nT(locale, 'ui.resumeDismiss') || 'Dismiss'}
+                ×
               </button>
             )}
           </div>

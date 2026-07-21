@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v21)
- * v20: Settings · v21: Login + Calendar + Timer shell densify
+/* Creative Companion — offline shell + asset cache (v22)
+ * v21: shell tools · v22: onboard + HUD + helper residual
  */
-const CACHE = 'cc-shell-v21'
+const CACHE = 'cc-shell-v22'
 const PRECACHE = [
   './',
   './index.html',
