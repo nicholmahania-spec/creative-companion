@@ -11,6 +11,15 @@ import {
 
 export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 
+/** "a" / "a and b" / "a, b, and c" */
+function joinWithAnd(items) {
+  const list = items.filter(Boolean)
+  if (list.length === 0) return ''
+  if (list.length === 1) return list[0]
+  if (list.length === 2) return `${list[0]} and ${list[1]}`
+  return `${list.slice(0, -1).join(', ')}, and ${list[list.length - 1]}`
+}
+
 function FieldIcon({ name }) {
   const common = {
     width: 18,
@@ -144,6 +153,18 @@ export default function DetectiveSheet({
     })
     if (next) setOpenChapter(next.id)
   }, [chapterStats, setOpenChapter])
+
+  /** Only the required fields actually still empty — not a static list of
+   * all three, which reads as wrong once some of them are filled in. */
+  const missingRequiredLabels = useMemo(() => {
+    const labels = []
+    DETECTIVE_CHAPTERS.forEach((ch) => {
+      ch.fields.forEach((f) => {
+        if (f.required && !isFilled(detective?.[f.id])) labels.push(f.label)
+      })
+    })
+    return labels
+  }, [detective])
 
   return (
     <div className={`define-workbook${splitMode ? ' is-split' : ''}`}>
@@ -442,7 +463,7 @@ export default function DetectiveSheet({
             className="define-fab-hint"
             onClick={openNextIncomplete}
           >
-            Still need goal, audience, and brand words
+            Still need {joinWithAnd(missingRequiredLabels)}
           </button>
         )}
         <button
