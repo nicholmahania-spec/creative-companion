@@ -304,9 +304,6 @@ export default function DesignView({
               aria-label="Live leave-behind preview"
             >
               <div className="design-rail-label">Preview</div>
-              <p className="panel-hint design-preview-caption" style={{ marginTop: 0 }}>
-                {i18nT(locale, 'ui.designPreviewCaption')}
-              </p>
               <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
                 <BrandArtboard
                   id="system-artboard"
@@ -472,10 +469,8 @@ export default function DesignView({
                         style={{ width: `${health.score}%` }}
                       />
                     </div>
-                    <p className="panel-hint design-health-meta" style={{ margin: '0.4rem 0 0' }}>
-                      {health.justifiedCount}/{health.assignedCount || 4} justified
-                      · {Math.round(health.contrastScore * 100)}% AA
-                      · {health.harmony.note}
+                    <p className="panel-hint design-health-meta design-lect" style={{ margin: '0.4rem 0 0' }}>
+                      {health.harmony?.type || ''}
                     </p>
                   </div>
                 )

@@ -177,12 +177,11 @@ export default function ResearchView({
                 </p>
               </div>
               <div className="research-studio-actions">
-                <span className="panel-count">
-                  {deskMood.length} pin{deskMood.length === 1 ? '' : 's'}
-                </span>
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-ghost btn-sm"
+                  title="20-min timer"
+                  aria-label="Start 20-minute research timer"
                   onClick={() => {
                     if (forcedBreak) {
                       flashToast(i18nT(locale, 'ui.breakLockFirst'))
@@ -200,7 +199,7 @@ export default function ResearchView({
                     flashToast(i18nT(locale, 'ui.researchTimerOn'))
                   }}
                 >
-                  20‑min timer
+                  ⏱
                 </button>
                 <InfoReveal>
                   {(getProcessPhase('research')?.checks || []).join(' · ')}
@@ -290,9 +289,6 @@ export default function ResearchView({
                     </Suspense>
                     <p className="empty-state-title">
                       {i18nT(locale, 'ui.noPinsYet')}
-                    </p>
-                    <p className="empty-state-body">
-                      {i18nT(locale, 'ui.emptyPinsBody')}
                     </p>
                   </div>
                 ) : (

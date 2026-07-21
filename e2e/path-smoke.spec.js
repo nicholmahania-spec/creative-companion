@@ -21,7 +21,7 @@ test.describe('Creative Companion path smoke', () => {
     await expect(page.locator('.journey-gap-strip')).toBeVisible()
     await expect(page.locator('.journey-gap-strip-btn')).toBeVisible()
     await expect(page.locator('.journey-gap-strip-btn')).toContainText(
-      /Next empty ·|Next gap ·|First empty ·|Fill · G|Download brand book|Ship · brand book/i
+      /Next empty ·|Next gap ·|First empty ·|Fill · G|^G$|Download brand book|Ship · brand book/i
     )
     // Still-thin list + step-fill chip intentionally removed (pill checkmarks own that signal)
     await expect(page.locator('.journey-still-thin')).toHaveCount(0)

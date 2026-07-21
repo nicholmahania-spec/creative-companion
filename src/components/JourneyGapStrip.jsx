@@ -1,14 +1,10 @@
 /**
- * Under-path strip: next-gap / ship CTA only.
- * ADHD one-next-action chrome shared across path views.
- * Whether the current step is filled already shows as a checkmark on its
- * own step-nav pill above — a second "this step · enough" chip here was
- * pure duplication of the same signal.
- * G / strip = recovery; primary “Continue · …” lives on each step.
+ * Under-path recovery only — single quiet control.
+ * Primary “Next · …” lives on each step (path-continue-row).
+ * Path rail checkmarks already show fill state.
  */
 export default function JourneyGapStrip({
   locale,
-  thisStepFilled,
   pathNextGap = null,
   leaveBehindThin = false,
   activeView,
@@ -18,18 +14,16 @@ export default function JourneyGapStrip({
   tFormat,
   goToNextProcessGap,
   setActiveView,
+  thisStepFilled,
 }) {
   const journeyNextNow = getNextJourney?.(activeView)
   const earliest =
     pathNextGap &&
     journeyNextNow &&
     journeyNextNow.view !== pathNextGap.view
-  /** Already standing on the empty step G would open — hide redundant still-thin */
-  const onEarliestGap =
-    !!pathNextGap && pathNextGap.view === activeView
-  /** This step filled on path but leave-behind still thin for client handoff */
-  const showPathMarkPackThin = leaveBehindThin && !!thisStepFilled && !!pathNextGap
-  /** Whole path has content but pack still thin */
+  const onEarliestGap = !!pathNextGap && pathNextGap.view === activeView
+  const showPathMarkPackThin =
+    leaveBehindThin && !!thisStepFilled && !!pathNextGap
   const showPathFullPackThin = leaveBehindThin && !pathNextGap
 
   return (
@@ -40,14 +34,14 @@ export default function JourneyGapStrip({
       role="status"
       aria-live="polite"
     >
-      {showPathMarkPackThin && (
+      {(showPathMarkPackThin || showPathFullPackThin) && (
         <span className="journey-leavebehind-thin" role="status">
-          {i18nT(locale, 'ui.pathMarkPackThin')}
-        </span>
-      )}
-      {showPathFullPackThin && (
-        <span className="journey-leavebehind-thin" role="status">
-          {i18nT(locale, 'ui.pathFullLeaveBehindThin')}
+          {i18nT(
+            locale,
+            showPathFullPackThin
+              ? 'ui.pathFullLeaveBehindThin'
+              : 'ui.pathMarkPackThin'
+          )}
         </span>
       )}
       {pathNextGap ? (
@@ -60,8 +54,7 @@ export default function JourneyGapStrip({
           title="Keyboard G"
         >
           {onEarliestGap
-            ? // Already on the empty step — quiet recovery, not a second primary
-              `Fill · G`
+            ? 'G'
             : earliest
               ? tFormat(locale, 'ui.earliestEmptyBtn', {
                   label:

@@ -198,14 +198,6 @@ export default function SketchView(props) {
                       ? i18nT(locale, 'ui.queueClear')
                       : i18nT(locale, 'ui.noStepYet')}
                   </p>
-                  <p className="empty-state-body">
-                    {doneTasks.length > 0
-                      ? i18nT(locale, 'ui.emptyStepBodyDone')
-                      : i18nT(locale, 'ui.emptyStepBody')}
-                  </p>
-                  <p className="work-pack-destination">
-                    {i18nT(locale, 'ui.packDest')}
-                  </p>
                   <div className="step-focus-actions step-focus-actions-empty">
                     <button
                       type="button"

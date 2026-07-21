@@ -1,11 +1,11 @@
-/* Creative Companion — offline shell + asset cache (v7)
+/* Creative Companion — offline shell + asset cache (v8)
  * v4: network-first for hashed /assets/ so deploys win over sticky cache-first.
  * v5: cache name bump after brand-kit + path extracts so clients drop stale shells.
  * v6: bust after Define isFilled crash fix so clients drop bad DetectiveSheet chunks.
- * v7: bust after mobile Define + full-width path rail (v1.48.41–42) so phones drop
- *     the 200px Tech-Studio sidebar cache.
+ * v7: bust after mobile Define + full-width path rail (v1.48.41–42).
+ * v8: Tech-Studio blueprint implement-all (text diet, gap strip, sticky Next).
  */
-const CACHE = 'cc-shell-v7'
+const CACHE = 'cc-shell-v8'
 const PRECACHE = [
   './',
   './index.html',

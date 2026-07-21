@@ -43,24 +43,14 @@ export default function ReviewView({
       <div className="flow-top">
         <div>
           <h1 className="page-title">{i18nT(locale, 'path.review')}</h1>
-          <p className="page-sub review-lede">
-            Ask one question. Note what to fix.
-            <InfoReveal>
-              {(getProcessPhase('review')?.checks || []).join(' · ')}
-            </InfoReveal>
-          </p>
+          <InfoReveal>
+            {(getProcessPhase('review')?.checks || []).join(' · ')}
+          </InfoReveal>
         </div>
-        <div className="finish-secondary-row">
+        <div className="finish-secondary-row path-continue-row">
           <button
             type="button"
-            className="btn btn-secondary"
-            onClick={() => setActiveView('brand')}
-          >
-            Back to Design
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
+            className="btn btn-primary work-path-next"
             onClick={() => setActiveView('finish')}
           >
             {tFormat(locale, 'ui.continueNext', {
@@ -95,9 +85,6 @@ export default function ReviewView({
         <div className="review-split-right">
           <section className="panel brand-section review-feedback-hero">
             <div className="brand-section-label">Feedback</div>
-            <p className="panel-hint review-feedback-hint">
-              Copy a question, then write what you heard.
-            </p>
             <div className="review-question-chips">
               {REVIEW_QUESTIONS.map((q) => (
                 <button

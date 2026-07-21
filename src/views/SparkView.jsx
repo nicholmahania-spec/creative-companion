@@ -122,9 +122,8 @@ export default function SparkView({
         <div>
           <h1 className="page-title">{title}</h1>
           <p className="panel-hint ideate-progress" style={{ marginTop: '0.35rem' }}>
-            Three directions · <strong>{filledDirs}/3</strong> titled
-            {chosen ? ` · Chose ${chosen.label}` : ''}
-            {sparksSeen > 0 ? ` · Sparks ${sparksSeen}/8` : ''}
+            <strong>{filledDirs}/3</strong>
+            {chosen ? ` · ${chosen.label}` : ''}
             {phase ? (
               <InfoReveal>
                 {(phase.checks || []).join(' · ')}
@@ -132,12 +131,6 @@ export default function SparkView({
               </InfoReveal>
             ) : null}
           </p>
-          {projectGoal ? (
-            <p className="ideate-goal-anchor panel-hint">
-              Goal · {String(projectGoal).slice(0, 120)}
-              {String(projectGoal).length > 120 ? '…' : ''}
-            </p>
-          ) : null}
         </div>
         <div className="finish-secondary-row path-continue-row">
           {chosen ? (

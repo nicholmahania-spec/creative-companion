@@ -68,9 +68,6 @@ export default function InsightsView(props) {
       <div className="flow-top">
         <div>
           <h1 className="page-title">Focus timer</h1>
-          <p className="page-sub">
-            {fromResearch ? 'Research sprint · then Ideate' : 'One block · then the current step'}
-          </p>
         </div>
       </div>
       {nextTask && (

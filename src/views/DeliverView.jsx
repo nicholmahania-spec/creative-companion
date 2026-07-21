@@ -209,9 +209,7 @@ export default function DeliverView({
                         placeholder="What worked…"
                       />
                     </div>
-                    <p className="panel-hint" style={{ margin: '0.35rem 0 0.85rem' }}>
-                      Marks Deliver done.
-                    </p>
+
                     {thinPackPrompt && (
                       <div
                         className="thin-pack-prompt"
@@ -331,28 +329,16 @@ export default function DeliverView({
                         </div>
                       )
                     })()}
-                    <p className="panel-hint pack-kit-hint">
-                      {i18nT(locale, 'ui.kitHint') ||
-                        'Kit = PDF + Markdown + tokens + logo'}
-                    </p>
-                    <p className="pack-export-hint">
-                      {i18nT(locale, 'ui.packHint')}
-                    </p>
                     {lastExportNote ? (
                       <p className="pack-export-confirm" role="status">
                         {lastExportNote}
                       </p>
                     ) : null}
-                    <div className="process-tip-panel" style={{ marginTop: '0.85rem' }}>
-                      <div className="brand-section-label">
-                        Deliver
-                        <InfoReveal>
-                          {(getProcessPhase('deliver')?.checks || []).join(' · ')}
-                          {' — '}
-                          {i18nT(locale, 'ui.pdfFontHonesty')}
-                        </InfoReveal>
-                      </div>
-                    </div>
+                    <InfoReveal>
+                      {(getProcessPhase('deliver')?.checks || []).join(' · ')}
+                      {' — '}
+                      {i18nT(locale, 'ui.pdfFontHonesty')}
+                    </InfoReveal>
                     {leaveBehindThin && pathDoneCount >= 5 && (
                       <p className="panel-hint pack-path-vs-thin" role="status">
                         {i18nT(locale, 'ui.pathFullLeaveBehindThin')}
@@ -366,7 +352,7 @@ export default function DeliverView({
                           setPref('hidePackWatermark', e.target.checked)
                         }
                       />
-                      <span>Hide tool watermark (client handoff)</span>
+                      <span>Hide watermark</span>
                     </label>
                     <details className="pack-more-actions">
                       <summary className="text-link pack-more-summary">

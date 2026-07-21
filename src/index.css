@@ -15784,6 +15784,237 @@ body:has(.app.deep)::after {
 }
 
 /* ============================================================
+   TECH-STUDIO BLUEPRINT LOCK (audit implement-all)
+   One spine · text diet · 4px · no lecture chrome · primary Next
+   ============================================================ */
+
+:root {
+  --ts-canvas: #F4F5F6;
+  --ts-panel: #FFFFFF;
+  --ts-ink: #1A1A1E;
+  --ts-mute: #94A3B8;
+  --ts-border: #E2E8F0;
+  --ts-focus: #2563EB;
+  --ts-radius: 4px;
+}
+
+body,
+.app {
+  background-color: var(--ts-canvas) !important;
+  color: var(--ts-ink);
+}
+
+.panel,
+.brand-section,
+.define-meta-card,
+.more-menu,
+.account-menu {
+  background: var(--ts-panel) !important;
+  border-color: var(--ts-border) !important;
+  border-radius: var(--ts-radius) !important;
+  box-shadow: none !important;
+}
+
+/* Primary / secondary law */
+.btn-primary,
+.path-continue-row .btn-primary,
+.work-path-next.btn-primary {
+  background: var(--ts-ink) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--ts-ink) !important;
+  border-radius: var(--ts-radius) !important;
+  box-shadow: none !important;
+  min-height: 40px;
+  font-weight: 600;
+}
+.btn-primary:hover,
+.path-continue-row .btn-primary:hover {
+  background: var(--ts-focus) !important;
+  border-color: var(--ts-focus) !important;
+}
+.btn-secondary {
+  background: transparent !important;
+  color: var(--ts-ink) !important;
+  border: 1px solid var(--ts-ink) !important;
+  border-radius: var(--ts-radius) !important;
+  box-shadow: none !important;
+  min-height: 40px;
+}
+.btn-ghost {
+  border-radius: var(--ts-radius) !important;
+  border-color: var(--ts-border) !important;
+}
+
+/* Sticky step primary */
+.path-continue-row {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 0 0.25rem;
+  background: var(--ts-canvas);
+  border-top: 1px solid var(--ts-border);
+}
+
+/* Gap strip = recovery only, never primary */
+.journey-gap-strip {
+  min-height: 28px !important;
+  padding: 0.15rem 1rem !important;
+  opacity: 0.7;
+  justify-content: flex-end !important;
+  border-bottom: 1px solid var(--ts-border) !important;
+  background: transparent !important;
+}
+.journey-gap-strip-btn {
+  border-radius: var(--ts-radius) !important;
+  font-size: 0.72rem !important;
+  min-height: 28px;
+  padding: 0.15rem 0.55rem !important;
+}
+.journey-gap-strip-btn.is-quiet {
+  font-weight: 700;
+  min-width: 2rem;
+}
+
+/* Text diet defaults (even when hideTips off — structural quiet) */
+.work-pack-destination,
+.design-preview-caption,
+.pack-kit-hint,
+.pack-export-hint,
+.review-feedback-hint,
+.review-lede,
+.ideate-goal-anchor,
+.process-tip-panel .brand-section-label:empty {
+  display: none !important;
+}
+
+/* Hyper-focus: 25% peripherals, no blur */
+.define-fields:focus-within .define-field:not(:focus-within),
+.define-meta-card:focus-within .define-meta-field:not(:focus-within),
+.ideate-directions:focus-within .ideate-dir-card:not(:focus-within) {
+  opacity: 0.25 !important;
+  filter: none !important;
+}
+.define-fields:focus-within .define-field:focus-within,
+.define-meta-card:focus-within .define-meta-field:focus-within,
+.ideate-directions:focus-within .ideate-dir-card:focus-within {
+  opacity: 1 !important;
+  border-color: var(--ts-focus) !important;
+  box-shadow: none !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.field-input:focus,
+.define-input:focus {
+  border-color: var(--ts-focus) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Resume = top whisper, not bottom modal theater */
+.resume-banner {
+  position: sticky !important;
+  top: 0 !important;
+  bottom: auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+  border-bottom: 1px solid var(--ts-border) !important;
+  box-shadow: none !important;
+  padding: 0.45rem 1rem !important;
+  z-index: 50;
+}
+.resume-banner-body {
+  font-size: 0.78rem !important;
+  -webkit-line-clamp: 1;
+}
+.resume-banner-decision {
+  display: none !important;
+}
+
+/* Deliver export stack hierarchy */
+.pack-primary-stack .btn-primary {
+  width: 100%;
+  min-height: 44px;
+}
+.pack-watermark-toggle {
+  font-size: 0.78rem;
+  color: var(--ts-mute);
+}
+
+/* Login solo densify */
+.login-page-studio {
+  background: var(--ts-canvas) !important;
+}
+.login-card-solo {
+  width: min(360px, calc(100% - 2rem));
+  border-radius: var(--ts-radius) !important;
+  border: 1px solid var(--ts-border) !important;
+  box-shadow: none !important;
+  background: var(--ts-panel) !important;
+}
+.login-h1 {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: var(--ts-ink) !important;
+}
+.login-lede-short {
+  font-size: 0.8125rem !important;
+  color: var(--ts-mute) !important;
+}
+
+/* Settings rows */
+.settings-row {
+  min-height: 56px;
+  align-items: center;
+}
+.settings-row strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.settings-row span {
+  font-size: 0.75rem;
+  color: var(--ts-mute);
+}
+
+/* Page titles */
+.page-title {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+  color: var(--ts-ink) !important;
+}
+
+/* Empty titles only when hideTips */
+.empty-state-title {
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+/* Design preview label only */
+.design-rail-label {
+  font-size: 0.6875rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ts-mute) !important;
+}
+
+/* Review split densify */
+.review-studio .finish-secondary-row .btn-secondary {
+  display: none;
+}
+
+/* ============================================================
    Mobile Define + shell — fix cramped chapter/header/resume
    ============================================================ */
 @media (max-width: 640px) {

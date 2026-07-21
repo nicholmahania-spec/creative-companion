@@ -149,8 +149,8 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 ? 'Sign in'
                 : 'Create account'
               : mode === 'setup'
-                ? 'Create a password for this device'
-                : 'Enter password'}
+                ? 'Set password'
+                : 'Unlock desk'}
           </p>
         </div>
 
