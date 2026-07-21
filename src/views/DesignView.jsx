@@ -22,7 +22,6 @@ import {
   mergeRolesIntoPalette,
   nudgeHexForContrast,
   paletteHealthScore,
-  checkPaletteHarmony,
   suggestRoleColor,
 } from '../lib/color'
 import { getProcessPhase } from '../lib/processGuide'
@@ -235,6 +234,25 @@ export default function DesignView({
                     {(getProcessPhase('design')?.checks || []).join(' · ')}
                   </InfoReveal>
                 </p>
+                {(activeProject?.detective?.goal ||
+                  activeProject?.detective?.brandWords) && (
+                  <p className="design-goal-anchor">
+                    {activeProject?.detective?.goal
+                      ? `Goal · ${String(activeProject.detective.goal).slice(0, 80)}${
+                          String(activeProject.detective.goal).length > 80
+                            ? '…'
+                            : ''
+                        }`
+                      : null}
+                    {activeProject?.detective?.goal &&
+                    activeProject?.detective?.brandWords
+                      ? ' · '
+                      : ''}
+                    {activeProject?.detective?.brandWords
+                      ? String(activeProject.detective.brandWords).slice(0, 48)
+                      : null}
+                  </p>
+                )}
               </div>
               <div className="brand-template-actions">
                 <button
@@ -253,47 +271,10 @@ export default function DesignView({
                 >
                   {activeProject?.designVersion || 'v1'}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => {
-                    const cur = String(
-                      activeProject?.designVersion || 'v1'
-                    ).trim()
-                    if (/^v?1$/i.test(cur) || cur === '') {
-                      updateBrandField('designVersion', 'v2')
-                      flashToast(i18nT(locale, 'ui.versionToReview'))
-                    }
-                    setActiveView('review')
-                  }}
-                >
-                  {tFormat(locale, 'ui.continueNext', {
-                    label: pathLabel(locale, 'review') || 'Review',
-                  })}
-                </button>
               </div>
             </div>
 
-            {/* ARTBOARD — sticky preview (left rail on wide) */}
-            <div
-              className="system-artboard-sticky design-preview-rail"
-              tabIndex={0}
-              role="region"
-              aria-label="Live leave-behind preview"
-            >
-              <div className="design-rail-label">Preview</div>
-              <Suspense fallback={<div className="panel-hint">Loading artboard…</div>}>
-                <BrandArtboard
-                  id="system-artboard"
-                  project={activeProject || {}}
-                  palette={projectPalette}
-                  pins={deskMood.filter((m) => m.inPack)}
-                  editable={false}
-                  hideWatermark={hidePackWatermark}
-                />
-              </Suspense>
-            </div>
-
+            <div className="design-edit-column">
             <div className="system-accordion-nav design-section-tabs" role="tablist">
               {[
                 ['essentials', 'Words'],
@@ -319,11 +300,7 @@ export default function DesignView({
 
             {/* 01 Essentials */}
             <section
-              className={`panel brand-section${
-                brandEditSection && brandEditSection !== 'essentials'
-                  ? ' is-collapsed-edit'
-                  : ''
-              }`}
+              className="panel brand-section"
               hidden={brandEditSection !== 'essentials'}
             >
               <div className="brand-section-label">Words</div>
@@ -367,38 +344,86 @@ export default function DesignView({
                   rows={2}
                 />
               </div>
-              <div className="brand-do-dont">
-                <div className="field-block" style={{ marginBottom: 0 }}>
-                  <label className="field-label" htmlFor="brand-do">
-                    Do
+              <details className="design-advanced">
+                <summary>Do / Don&apos;t · Messages</summary>
+                <div className="brand-do-dont" style={{ marginTop: '0.65rem' }}>
+                  <div className="field-block" style={{ marginBottom: 0 }}>
+                    <label className="field-label" htmlFor="brand-do">
+                      Do
+                    </label>
+                    <textarea
+                      id="brand-do"
+                      className="field-textarea"
+                      value={activeProject?.doUse || ''}
+                      onChange={(e) =>
+                        updateBrandField('doUse', e.target.value)
+                      }
+                      placeholder="Fits"
+                      rows={2}
+                    />
+                  </div>
+                  <div className="field-block" style={{ marginBottom: 0 }}>
+                    <label className="field-label" htmlFor="brand-dont">
+                      Don&apos;t
+                    </label>
+                    <textarea
+                      id="brand-dont"
+                      className="field-textarea"
+                      value={activeProject?.dontUse || ''}
+                      onChange={(e) =>
+                        updateBrandField('dontUse', e.target.value)
+                      }
+                      placeholder="Avoid"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+                <div className="field-block" style={{ marginTop: '0.75rem' }}>
+                  <label className="field-label" htmlFor="msg-promise">
+                    Promise
                   </label>
                   <textarea
-                    id="brand-do"
-                    className="field-textarea"
-                    value={activeProject?.doUse || ''}
-                    onChange={(e) =>
-                      updateBrandField('doUse', e.target.value)
-                    }
-                    placeholder="Fits"
+                    id="msg-promise"
+                    className="field-input"
                     rows={2}
+                    value={activeProject?.messagingPromise || ''}
+                    onChange={(e) =>
+                      updateBrandField('messagingPromise', e.target.value)
+                    }
+                    placeholder="Promise"
                   />
                 </div>
-                <div className="field-block" style={{ marginBottom: 0 }}>
-                  <label className="field-label" htmlFor="brand-dont">
-                    Don&apos;t
+                <div className="field-block">
+                  <label className="field-label" htmlFor="msg-proof">
+                    Proof
                   </label>
                   <textarea
-                    id="brand-dont"
-                    className="field-textarea"
-                    value={activeProject?.dontUse || ''}
-                    onChange={(e) =>
-                      updateBrandField('dontUse', e.target.value)
-                    }
-                    placeholder="Avoid"
+                    id="msg-proof"
+                    className="field-input"
                     rows={2}
+                    value={activeProject?.messagingProof || ''}
+                    onChange={(e) =>
+                      updateBrandField('messagingProof', e.target.value)
+                    }
+                    placeholder="Proof"
                   />
                 </div>
-              </div>
+                <div className="field-block">
+                  <label className="field-label" htmlFor="msg-personality">
+                    Personality
+                  </label>
+                  <textarea
+                    id="msg-personality"
+                    className="field-input"
+                    rows={2}
+                    value={activeProject?.messagingPersonality || ''}
+                    onChange={(e) =>
+                      updateBrandField('messagingPersonality', e.target.value)
+                    }
+                    placeholder="Personality"
+                  />
+                </div>
+              </details>
             </section>
 
             {/* Color */}
@@ -658,14 +683,6 @@ export default function DesignView({
                   <p className="field-label" style={{ margin: 0 }}>
                     Pack roles
                   </p>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    title="Nudge text / accent / quiet / cover until AA targets pass"
-                    onClick={() => applyAaRoleFix()}
-                  >
-                    Fix AA
-                  </button>
                 </div>
                 <div className="system-role-assign" style={{ marginTop: '0.45rem' }}>
                   {['cover', 'text', 'accent', 'quiet'].map((role) => (
@@ -685,23 +702,6 @@ export default function DesignView({
                     </button>
                   ))}
                 </div>
-                {!activeProject?.colorRoles?.[brandRoleAssign] && (
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm palette-suggest-btn"
-                    style={{ marginTop: '0.5rem' }}
-                    onClick={() => {
-                      const suggestion = suggestRoleColor(
-                        projectPalette,
-                        brandRoleAssign
-                      )
-                      setColorRole(brandRoleAssign, suggestion)
-                      flashMicro(`Suggested ${brandRoleAssign} → ${suggestion}`)
-                    }}
-                  >
-                    Suggest
-                  </button>
-                )}
                 <div className="direction-palette is-clickable" style={{ marginTop: '0.55rem' }}>
                   {projectPalette.map((c, i) => (
                     <button
@@ -718,19 +718,59 @@ export default function DesignView({
                     ></button>
                   ))}
                 </div>
+              </div>
+
+              <details className="design-advanced">
+                <summary>AA · Why · Suggest</summary>
+                <div className="finish-secondary-row" style={{ marginTop: '0.65rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    title="Nudge text / accent / quiet / cover until AA targets pass"
+                    onClick={() => applyAaRoleFix()}
+                  >
+                    Fix AA
+                  </button>
+                  {!activeProject?.colorRoles?.[brandRoleAssign] && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm palette-suggest-btn"
+                      onClick={() => {
+                        const suggestion = suggestRoleColor(
+                          projectPalette,
+                          brandRoleAssign
+                        )
+                        setColorRole(brandRoleAssign, suggestion)
+                        flashMicro(
+                          `Suggested ${brandRoleAssign} → ${suggestion}`
+                        )
+                      }}
+                    >
+                      Suggest {brandRoleAssign}
+                    </button>
+                  )}
+                </div>
                 {(() => {
                   const roleWhy = activeProject?.colorRoleWhy || {}
                   const brandWords = activeProject?.detective?.brandWords || ''
-                  const justifiedCount = ['cover', 'text', 'accent', 'quiet'].filter(
-                    (r) => String(roleWhy[r] || '').trim()
-                  ).length
+                  const justifiedCount = [
+                    'cover',
+                    'text',
+                    'accent',
+                    'quiet',
+                  ].filter((r) => String(roleWhy[r] || '').trim()).length
                   return (
                     <div className="field-block" style={{ marginTop: '0.65rem' }}>
                       <label className="field-label" htmlFor="color-role-why">
-                        Why does {brandRoleAssign} fit
-                        {brandWords.trim() ? ` "${brandWords.trim()}"` : ' the brand'}?
-                        <span className="panel-hint" style={{ marginLeft: '0.4rem' }}>
-                          {justifiedCount}/4 roles justified
+                        Why {brandRoleAssign}
+                        {brandWords.trim()
+                          ? ` · ${brandWords.trim().slice(0, 24)}`
+                          : ''}
+                        <span
+                          className="panel-hint"
+                          style={{ marginLeft: '0.4rem' }}
+                        >
+                          {justifiedCount}/4
                         </span>
                       </label>
                       <input
@@ -752,137 +792,140 @@ export default function DesignView({
                     </div>
                   )
                 })()}
-              </div>
 
-              <div className="palette-checker" style={{ marginTop: '1.15rem' }}>
-                <div className="palette-section-head">
-                  <p className="field-label" style={{ margin: 0 }}>
-                    Contrast checker
-                  </p>
-                  <span className="panel-hint design-lect" style={{ margin: 0 }}>
-                    AA
-                  </span>
-                </div>
-                <label className="field-label" htmlFor="check-bg">
-                  Background color
-                </label>
-                <select
-                  id="check-bg"
-                  className="palette-bg-select"
-                  value={checkBgIndex}
-                  onChange={(e) => setCheckBgIndex(Number(e.target.value))}
-                >
-                  {projectPalette.map((c, i) => (
-                    <option key={`${c}-bg-${i}`} value={i}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-                <div
-                  className="palette-check-preview"
-                  style={{ background: checkBg }}
-                >
-                  <p
-                    className="palette-check-preview-text"
-                    style={{ color: bestTextOn(checkBg) }}
+                <div className="palette-checker" style={{ marginTop: '0.85rem' }}>
+                  <div className="palette-section-head">
+                    <p className="field-label" style={{ margin: 0 }}>
+                      Contrast
+                    </p>
+                  </div>
+                  <label className="field-label" htmlFor="check-bg">
+                    Background
+                  </label>
+                  <select
+                    id="check-bg"
+                    className="palette-bg-select"
+                    value={checkBgIndex}
+                    onChange={(e) => setCheckBgIndex(Number(e.target.value))}
                   >
-                    Aa
-                  </p>
-                </div>
-                <ul className="palette-check-list">
-                  {contrastPairs.length === 0 ? (
-                    <li className="panel-hint design-lect">2+ colors</li>
-                  ) : (
-                    contrastPairs.map((pair) => (
-                      <li
-                        key={`${pair.fg}-${pair.bg}`}
-                        className="palette-check-row"
-                      >
-                        <span className="palette-check-pair">
-                          <span
-                            className="palette-check-fg"
-                            style={{
-                              background: pair.fg,
-                              color: bestTextOn(pair.fg),
-                            }}
-                          >
-                            Aa
-                          </span>
-                          <span className="palette-check-on">on</span>
-                          <span
-                            className="palette-check-bg-chip"
-                            style={{ background: pair.bg }}
-                          />
-                        </span>
-                        <span className="palette-check-ratio">
-                          {formatRatio(pair.ratio)}
-                        </span>
-                        <span
-                          className={`palette-check-badge ${pair.label.level}`}
+                    {projectPalette.map((c, i) => (
+                      <option key={`${c}-bg-${i}`} value={i}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <div
+                    className="palette-check-preview"
+                    style={{ background: checkBg }}
+                  >
+                    <p
+                      className="palette-check-preview-text"
+                      style={{ color: bestTextOn(checkBg) }}
+                    >
+                      Aa
+                    </p>
+                  </div>
+                  <ul className="palette-check-list">
+                    {contrastPairs.length === 0 ? (
+                      <li className="panel-hint">2+ colors</li>
+                    ) : (
+                      contrastPairs.map((pair) => (
+                        <li
+                          key={`${pair.fg}-${pair.bg}`}
+                          className="palette-check-row"
                         >
-                          {pair.label.text}
-                        </span>
-                        <span className="palette-check-detail">
-                          {pair.grade.aaNormal
-                            ? 'OK'
-                            : pair.grade.aaLarge
-                              ? 'Large'
-                              : 'Fail'}
-                        </span>
-                        {!pair.grade.aaNormal && (
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm palette-fix-pair"
-                            title="Nudge this color’s lightness until AA body"
-                            onClick={() =>
-                              fixPairFg(pair.fg, pair.bg, pair.index)
-                            }
-                          >
-                            Fix AA
-                          </button>
-                        )}
-                      </li>
-                    ))
-                  )}
-                </ul>
-
-                <div className="palette-pass-pairs" style={{ marginTop: '0.85rem' }}>
-                  <button
-                    type="button"
-                    className="text-link"
-                    onClick={() => setShowPassPairs((v) => !v)}
-                    aria-expanded={showPassPairs}
-                  >
-                    {showPassPairs ? 'Hide' : 'Show'} AA pass pairs
-                    {passPairs.length ? ` (${passPairs.length})` : ''}
-                  </button>
-                  {showPassPairs && (
-                    <ul className="palette-pass-list">
-                      {passPairs.length === 0 ? (
-                        <li className="panel-hint design-lect">None</li>
-                      ) : (
-                        passPairs.map((p) => (
-                          <li key={`${p.fg}-${p.bg}`} className="palette-pass-row">
+                          <span className="palette-check-pair">
                             <span
-                              className="palette-pass-chip"
+                              className="palette-check-fg"
                               style={{
-                                background: p.bg,
-                                color: p.fg,
+                                background: pair.fg,
+                                color: bestTextOn(pair.fg),
                               }}
-                              title={`${p.fg} on ${p.bg}`}
                             >
                               Aa
                             </span>
-                            <span className="palette-pass-meta">
-                              {p.fg} on {p.bg} · {formatRatio(p.ratio)}
-                            </span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  )}
+                            <span className="palette-check-on">on</span>
+                            <span
+                              className="palette-check-bg-chip"
+                              style={{ background: pair.bg }}
+                            />
+                          </span>
+                          <span className="palette-check-ratio">
+                            {formatRatio(pair.ratio)}
+                          </span>
+                          <span
+                            className={`palette-check-badge ${pair.label.level}`}
+                          >
+                            {pair.label.text}
+                          </span>
+                          <span className="palette-check-detail">
+                            {pair.grade.aaNormal
+                              ? 'OK'
+                              : pair.grade.aaLarge
+                                ? 'Large'
+                                : 'Fail'}
+                          </span>
+                          {!pair.grade.aaNormal && (
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm palette-fix-pair"
+                              title="Nudge lightness until AA body"
+                              onClick={() =>
+                                fixPairFg(pair.fg, pair.bg, pair.index)
+                              }
+                            >
+                              Fix AA
+                            </button>
+                          )}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+
+                  <div
+                    className="palette-pass-pairs"
+                    style={{ marginTop: '0.85rem' }}
+                  >
+                    <button
+                      type="button"
+                      className="text-link"
+                      onClick={() => setShowPassPairs((v) => !v)}
+                      aria-expanded={showPassPairs}
+                    >
+                      {showPassPairs ? 'Hide' : 'Show'} pass pairs
+                      {passPairs.length ? ` (${passPairs.length})` : ''}
+                    </button>
+                    {showPassPairs && (
+                      <ul className="palette-pass-list">
+                        {passPairs.length === 0 ? (
+                          <li className="panel-hint">None</li>
+                        ) : (
+                          passPairs.map((p) => (
+                            <li
+                              key={`${p.fg}-${p.bg}`}
+                              className="palette-pass-row"
+                            >
+                              <span
+                                className="palette-pass-chip"
+                                style={{
+                                  background: p.bg,
+                                  color: p.fg,
+                                }}
+                                title={`${p.fg} on ${p.bg}`}
+                              >
+                                Aa
+                              </span>
+                              <span className="palette-pass-meta">
+                                {p.fg} on {p.bg} · {formatRatio(p.ratio)}
+                              </span>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </details>
             </section>
 
             {/* 04 Type */}
@@ -926,21 +969,6 @@ export default function DesignView({
                   ))}
                   <option value="custom">Custom labels…</option>
                 </select>
-              </div>
-              <div className="field-block" style={{ marginBottom: '1rem' }}>
-                <label className="field-label" htmlFor="type-why">
-                  Why this pair fits
-                  {activeProject?.detective?.brandWords?.trim()
-                    ? ` "${activeProject.detective.brandWords.trim()}"`
-                    : ' the brand'}
-                </label>
-                <input
-                  id="type-why"
-                  className="field-input"
-                  value={activeProject?.typeWhy || ''}
-                  onChange={(e) => updateBrandField('typeWhy', e.target.value)}
-                  placeholder="Why these fonts"
-                />
               </div>
               <div className="brand-type-pair">
                 <div className="field-block">
@@ -997,67 +1025,29 @@ export default function DesignView({
                   </div>
                 </div>
               </div>
+              <details className="design-advanced">
+                <summary>Why this pair</summary>
+                <div className="field-block" style={{ marginTop: '0.65rem' }}>
+                  <label className="field-label" htmlFor="type-why">
+                    Why
+                    {activeProject?.detective?.brandWords?.trim()
+                      ? ` · ${activeProject.detective.brandWords.trim().slice(0, 32)}`
+                      : ''}
+                  </label>
+                  <input
+                    id="type-why"
+                    className="field-input"
+                    value={activeProject?.typeWhy || ''}
+                    onChange={(e) =>
+                      updateBrandField('typeWhy', e.target.value)
+                    }
+                    placeholder="Why these fonts"
+                  />
+                </div>
+              </details>
             </section>
 
-            {/* Messaging pillars */}
-            <section
-              className="panel brand-section"
-              hidden={
-                brandEditSection !== 'messaging' &&
-                brandEditSection !== 'essentials'
-              }
-            >
-              <div className="brand-section-label">
-                {i18nT(locale, 'ui.messagingPillars') || 'Messages'}
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="msg-promise">
-                  {i18nT(locale, 'ui.messagingPromise') || 'Promise'}
-                </label>
-                <textarea
-                  id="msg-promise"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.messagingPromise || ''}
-                  onChange={(e) =>
-                    updateBrandField('messagingPromise', e.target.value)
-                  }
-                  placeholder="Promise"
-                />
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="msg-proof">
-                  {i18nT(locale, 'ui.messagingProof') || 'Proof'}
-                </label>
-                <textarea
-                  id="msg-proof"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.messagingProof || ''}
-                  onChange={(e) =>
-                    updateBrandField('messagingProof', e.target.value)
-                  }
-                  placeholder="Proof"
-                />
-              </div>
-              <div className="field-block">
-                <label className="field-label" htmlFor="msg-personality">
-                  {i18nT(locale, 'ui.messagingPersonality') || 'Personality'}
-                </label>
-                <textarea
-                  id="msg-personality"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.messagingPersonality || ''}
-                  onChange={(e) =>
-                    updateBrandField('messagingPersonality', e.target.value)
-                  }
-                  placeholder="Personality"
-                />
-              </div>
-            </section>
-
-            {/* 05 Logo lockup suite */}
+            {/* Logo */}
             <section
               className="panel brand-section"
               hidden={brandEditSection !== 'logo'}
@@ -1208,103 +1198,112 @@ export default function DesignView({
               </div>
             </section>
 
-            {/* Imagery guidelines */}
-            <section
-              className="panel brand-section"
-              hidden={
-                brandEditSection !== 'imagery' && brandEditSection !== 'pins'
-              }
-            >
-              <div className="brand-section-label">
-                {i18nT(locale, 'ui.imageryGuidelines') || 'Imagery guidelines'}
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="img-style">
-                  {i18nT(locale, 'ui.imageryStyle') || 'Photo / illustration style'}
-                </label>
-                <textarea
-                  id="img-style"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.imageryStyle || ''}
-                  onChange={(e) =>
-                    updateBrandField('imageryStyle', e.target.value)
-                  }
-                  placeholder="Look"
-                />
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="img-do">
-                  {i18nT(locale, 'ui.imageryDo') || 'Imagery do'}
-                </label>
-                <textarea
-                  id="img-do"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.imageryDo || ''}
-                  onChange={(e) =>
-                    updateBrandField('imageryDo', e.target.value)
-                  }
-                  placeholder="Do"
-                />
-              </div>
-              <div className="field-block">
-                <label className="field-label" htmlFor="img-dont">
-                  {i18nT(locale, 'ui.imageryDont') || 'Imagery don’t'}
-                </label>
-                <textarea
-                  id="img-dont"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.imageryDont || ''}
-                  onChange={(e) =>
-                    updateBrandField('imageryDont', e.target.value)
-                  }
-                  placeholder="Don't"
-                />
-              </div>
-            </section>
-
-            {/* 06 Mood from board — starred pack pins only */}
+            {/* Pack — starred pins + imagery advanced */}
             <section
               className="panel brand-section"
               hidden={brandEditSection !== 'pins'}
             >
-              <div className="brand-section-label">Pack pins</div>
+              <div className="brand-section-label">Pack</div>
               {(() => {
                 const packPins = deskMood.filter((m) => m.inPack)
                 if (packPins.length === 0) {
                   return (
-                <div className="brand-mood-empty">
-                  <p className="empty-state-title" style={{ margin: 0 }}>
-                    No ★ pins
-                  </p>
-                  <div className="finish-secondary-row" style={{ marginTop: '0.75rem' }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setActiveView('studio')}
-                    >
-                      Research
-                    </button>
-                  </div>
-                </div>
+                    <div className="brand-mood-empty">
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setActiveView('studio')}
+                      >
+                        ★ pins in Research
+                      </button>
+                    </div>
                   )
                 }
                 return (
-                <div className="brand-mood-row">
-                  {packPins.slice(0, 6).map((p) => (
-                    <div
-                      key={p.id}
-                      className="brand-mood-thumb"
-                      style={pinFaceStyle(p)}
-                      title={p.note}
-                    />
-                  ))}
-                </div>
+                  <div className="brand-mood-row">
+                    {packPins.slice(0, 6).map((p) => (
+                      <div
+                        key={p.id}
+                        className="brand-mood-thumb"
+                        style={pinFaceStyle(p)}
+                        title={p.note}
+                      />
+                    ))}
+                  </div>
                 )
               })()}
+              <details className="design-advanced">
+                <summary>Imagery guidelines</summary>
+                <div className="field-block" style={{ marginTop: '0.65rem' }}>
+                  <label className="field-label" htmlFor="img-style">
+                    {i18nT(locale, 'ui.imageryStyle') || 'Style'}
+                  </label>
+                  <textarea
+                    id="img-style"
+                    className="field-input"
+                    rows={2}
+                    value={activeProject?.imageryStyle || ''}
+                    onChange={(e) =>
+                      updateBrandField('imageryStyle', e.target.value)
+                    }
+                    placeholder="Look"
+                  />
+                </div>
+                <div className="field-block">
+                  <label className="field-label" htmlFor="img-do">
+                    {i18nT(locale, 'ui.imageryDo') || 'Do'}
+                  </label>
+                  <textarea
+                    id="img-do"
+                    className="field-input"
+                    rows={2}
+                    value={activeProject?.imageryDo || ''}
+                    onChange={(e) =>
+                      updateBrandField('imageryDo', e.target.value)
+                    }
+                    placeholder="Do"
+                  />
+                </div>
+                <div className="field-block">
+                  <label className="field-label" htmlFor="img-dont">
+                    {i18nT(locale, 'ui.imageryDont') || "Don't"}
+                  </label>
+                  <textarea
+                    id="img-dont"
+                    className="field-input"
+                    rows={2}
+                    value={activeProject?.imageryDont || ''}
+                    onChange={(e) =>
+                      updateBrandField('imageryDont', e.target.value)
+                    }
+                    placeholder="Don't"
+                  />
+                </div>
+              </details>
             </section>
+            </div>
+
+            {/* Preview — sticky 45% right on wide */}
+            <div
+              className="system-artboard-sticky design-preview-rail"
+              tabIndex={0}
+              role="region"
+              aria-label="Live leave-behind preview"
+            >
+              <div className="design-rail-label">Preview</div>
+              <Suspense
+                fallback={<div className="panel-hint">Loading…</div>}
+              >
+                <BrandArtboard
+                  id="system-artboard"
+                  project={activeProject || {}}
+                  palette={projectPalette}
+                  pins={deskMood.filter((m) => m.inPack)}
+                  editable={false}
+                  hideWatermark={hidePackWatermark}
+                />
+              </Suspense>
+            </div>
 
             <div className="brand-export-bar path-continue-row">
               <button

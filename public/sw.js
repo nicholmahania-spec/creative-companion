@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v14)
- * v13: Ideate rewrite · v14: Sketch fold ADHD rewrite
+/* Creative Companion — offline shell + asset cache (v15)
+ * v14: Sketch fold · v15: Design ADHD 55/45 rewrite
  */
-const CACHE = 'cc-shell-v14'
+const CACHE = 'cc-shell-v15'
 const PRECACHE = [
   './',
   './index.html',

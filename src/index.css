@@ -15394,9 +15394,44 @@ body:has(.app.deep)::after {
   margin-bottom: 0.75rem;
 }
 
-/* Design — clearer Preview | Edit rails */
+/* Design — ADHD: edit 55% left · preview 45% sticky right */
 .design-studio .process-tip-panel {
   display: none;
+}
+
+.design-goal-anchor {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--ts-mute, var(--text-secondary));
+  max-width: 42rem;
+}
+
+.design-edit-column {
+  min-width: 0;
+}
+
+.design-advanced {
+  margin-top: 0.85rem;
+  border-top: 1px solid var(--ts-border, var(--border-subtle));
+  padding-top: 0.5rem;
+}
+.design-advanced > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--ts-mute, var(--text-secondary));
+  list-style: none;
+}
+.design-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+.design-advanced > summary::before {
+  content: '▸ ';
+  font-size: 0.7rem;
+}
+.design-advanced[open] > summary::before {
+  content: '▾ ';
 }
 
 .design-rail-label,
@@ -15411,10 +15446,10 @@ body:has(.app.deep)::after {
 
 .design-preview-rail {
   padding: 0.75rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-elevated, var(--bg-warm));
-  box-shadow: var(--shadow-1);
+  border-radius: 4px;
+  border: 1px solid var(--ts-border, var(--border-subtle));
+  background: #FFFFFF;
+  box-shadow: none;
 }
 
 .design-section-tabs {
@@ -15428,8 +15463,65 @@ body:has(.app.deep)::after {
 }
 
 .system-acc-tab {
-  border-radius: var(--radius);
+  border-radius: 4px;
   font-size: 0.78rem;
+}
+
+.design-studio .role-pick-chip {
+  border-radius: 4px;
+}
+
+/* Focus lock: inactive tab panels stay out of flow (hidden); dim non-focus roles */
+.design-studio .system-role-assign .role-pick-chip:not(.is-active) {
+  opacity: 0.55;
+}
+.design-studio .system-role-assign .role-pick-chip.is-active {
+  opacity: 1;
+  outline: 1px solid var(--ts-focus, #2563EB);
+  outline-offset: 1px;
+}
+
+@media (min-width: 900px) {
+  .design-studio.system-view {
+    display: grid;
+    grid-template-columns: minmax(0, 55fr) minmax(14rem, 45fr);
+    gap: 1rem 1.15rem;
+    align-items: start;
+    width: 100%;
+  }
+  .design-studio .brand-template-top {
+    grid-column: 1 / -1;
+  }
+  .design-studio .design-edit-column {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .design-studio .system-artboard-sticky.design-preview-rail {
+    grid-column: 2;
+    grid-row: 2;
+    position: sticky;
+    top: 4.5rem;
+    max-height: calc(100vh - 5.5rem);
+    overflow: auto;
+    margin-bottom: 0;
+    box-shadow: none;
+  }
+  .design-studio .brand-export-bar.path-continue-row,
+  .design-studio .path-continue-row {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+  /* Override legacy preview-left / edit-right placement */
+  .design-studio .system-accordion-nav,
+  .design-studio .panel.brand-section {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 899px) {
+  .design-studio .design-preview-rail {
+    order: -1;
+  }
 }
 
 /* Review — feedback first on right, preview sticky left */
