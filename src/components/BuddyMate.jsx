@@ -235,13 +235,15 @@ export default function BuddyMate({
         setMood('cheer')
         window.setTimeout(() => setLevelBurst(false), 2800)
       }
-      ;(result.messages || []).forEach((msg, i) => {
+      // At most 2 short pings (level/badge + xp) — never a lecture stack
+      const msgs = (result.messages || []).slice(0, 2)
+      msgs.forEach((msg, i) => {
         window.setTimeout(() => {
           pushBuddy(msg, {
             move: i === 0 && result.levelUp,
-            expand: result.levelUp || result.badgesUnlocked?.length > 0,
+            expand: false,
           })
-        }, i * 200)
+        }, i * 180)
       })
     },
     [pushBuddy]

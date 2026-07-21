@@ -13,144 +13,29 @@ export const LEVEL_THRESHOLDS = [
 ]
 
 export const BADGES = {
-  first_step: {
-    id: 'first_step',
-    name: 'First step',
-    desc: 'Complete your first work step',
-    icon: '✓',
-  },
-  step_streak_3: {
-    id: 'step_streak_3',
-    name: '3 in a day',
-    desc: 'Complete 3 steps in one day',
-    icon: '3',
-  },
-  step_10: {
-    id: 'step_10',
-    name: '10 steps',
-    desc: 'Complete 10 steps all-time',
-    icon: '10',
-  },
-  step_50: {
-    id: 'step_50',
-    name: '50 steps',
-    desc: 'Complete 50 steps all-time',
-    icon: '50',
-  },
-  break_hero: {
-    id: 'break_hero',
-    name: 'Break done',
-    desc: 'Finish a required Pomodoro break',
-    icon: '⏱',
-  },
-  water_3: {
-    id: 'water_3',
-    name: 'Hydrated',
-    desc: 'Log water 3 times',
-    icon: '💧',
-  },
-  full_body: {
-    id: 'full_body',
-    name: 'Body check pro',
-    desc: 'Log water, food, and bathroom in one day',
-    icon: '★',
-  },
-  pomodoro_5: {
-    id: 'pomodoro_5',
-    name: 'Focus five',
-    desc: 'Complete 5 Pomodoro work blocks',
-    icon: '🎯',
-  },
-  pomodoro_25: {
-    id: 'pomodoro_25',
-    name: 'Deep work',
-    desc: 'Complete 25 focus blocks',
-    icon: '🧠',
-  },
-  package_sent: {
-    id: 'package_sent',
-    name: 'Brand bridge',
-    desc: 'Send Ideas package to Brand',
-    icon: '📦',
-  },
-  journey_finish: {
-    id: 'journey_finish',
-    name: 'Path walker',
-    desc: 'Open the Finish step',
-    icon: '🏁',
-  },
-  level_5: {
-    id: 'level_5',
-    name: 'Level 5',
-    desc: 'Reach level 5',
-    icon: '⬆',
-  },
-  level_10: {
-    id: 'level_10',
-    name: 'Level 10',
-    desc: 'Reach level 10',
-    icon: '👑',
-  },
-  day_streak_3: {
-    id: 'day_streak_3',
-    name: '3-day streak',
-    desc: 'Show up 3 days in a row',
-    icon: '📅',
-  },
-  day_streak_7: {
-    id: 'day_streak_7',
-    name: '7-day streak',
-    desc: '7-day activity streak',
-    icon: '7',
-  },
-  break_kit_3: {
-    id: 'break_kit_3',
-    name: '3 break items',
-    desc: 'Complete 3 Break Kit items',
-    icon: '3',
-  },
-  capture_10: {
-    id: 'capture_10',
-    name: '10 captures',
-    desc: 'Capture 10 tasks',
-    icon: '10',
-  },
-  pin_5: {
-    id: 'pin_5',
-    name: '5 pins',
-    desc: 'Pin 5 ideas',
-    icon: '5',
-  },
-  quest_master: {
-    id: 'quest_master',
-    name: 'Day list done',
-    desc: 'Clear all daily targets in one day',
-    icon: '✓',
-  },
-  combo_5: {
-    id: 'combo_5',
-    name: '5 in a row',
-    desc: 'Complete 5 steps in a row',
-    icon: '5',
-  },
-  daily_goal: {
-    id: 'daily_goal',
-    name: 'Daily target',
-    desc: 'Hit the daily progress target once',
-    icon: '·',
-  },
-  exporter: {
-    id: 'exporter',
-    name: 'Exported',
-    desc: 'Export a project pack',
-    icon: '↑',
-  },
-  helper_friend: {
-    id: 'helper_friend',
-    name: 'Helper on',
-    desc: 'Turn on Helper',
-    icon: 'H',
-  },
+  first_step: { id: 'first_step', name: 'First step', desc: 'First step done', icon: '✓' },
+  step_streak_3: { id: 'step_streak_3', name: '3 today', desc: '3 steps in a day', icon: '3' },
+  step_10: { id: 'step_10', name: '10 steps', desc: '10 steps total', icon: '10' },
+  step_50: { id: 'step_50', name: '50 steps', desc: '50 steps total', icon: '50' },
+  break_hero: { id: 'break_hero', name: 'Break', desc: 'Pomodoro break done', icon: '⏱' },
+  water_3: { id: 'water_3', name: 'Water ×3', desc: 'Water logged 3×', icon: '💧' },
+  full_body: { id: 'full_body', name: 'Body', desc: 'Water + food + bath today', icon: '★' },
+  pomodoro_5: { id: 'pomodoro_5', name: 'Focus ×5', desc: '5 focus blocks', icon: '🎯' },
+  pomodoro_25: { id: 'pomodoro_25', name: 'Focus ×25', desc: '25 focus blocks', icon: '🧠' },
+  package_sent: { id: 'package_sent', name: 'Ideas→Brand', desc: 'Package to Brand', icon: '📦' },
+  journey_finish: { id: 'journey_finish', name: 'Deliver', desc: 'Opened Deliver', icon: '🏁' },
+  level_5: { id: 'level_5', name: 'Band 5', desc: 'Band 5', icon: '⬆' },
+  level_10: { id: 'level_10', name: 'Band 10', desc: 'Band 10', icon: '👑' },
+  day_streak_3: { id: 'day_streak_3', name: '3d', desc: '3-day streak', icon: '📅' },
+  day_streak_7: { id: 'day_streak_7', name: '7d', desc: '7-day streak', icon: '7' },
+  break_kit_3: { id: 'break_kit_3', name: 'Kit ×3', desc: '3 kit items done', icon: '3' },
+  capture_10: { id: 'capture_10', name: '10 captures', desc: '10 tasks captured', icon: '10' },
+  pin_5: { id: 'pin_5', name: '5 pins', desc: '5 pins', icon: '5' },
+  quest_master: { id: 'quest_master', name: 'Day clear', desc: 'All day targets', icon: '✓' },
+  combo_5: { id: 'combo_5', name: '×5', desc: '5 steps in a row', icon: '5' },
+  daily_goal: { id: 'daily_goal', name: 'Daily', desc: 'Hit daily target', icon: '·' },
+  exporter: { id: 'exporter', name: 'Export', desc: 'Pack exported', icon: '↑' },
+  helper_friend: { id: 'helper_friend', name: 'Helper', desc: 'Helper on', icon: 'H' },
 }
 
 /** Daily progress target (optional meter) */
@@ -161,55 +46,13 @@ export const DAILY_XP_GOAL = 100
  * progress reads game.metrics fields.
  */
 export const QUEST_POOL = [
-  {
-    id: 'q_steps',
-    label: 'Complete 3 steps',
-    metric: 'todaySteps',
-    target: 3,
-    bonusXp: 25,
-  },
-  {
-    id: 'q_focus',
-    label: 'Finish 1 focus block',
-    metric: 'todayPomodoros',
-    target: 1,
-    bonusXp: 20,
-  },
-  {
-    id: 'q_capture',
-    label: 'Capture 2 tasks',
-    metric: 'todayCaptures',
-    target: 2,
-    bonusXp: 15,
-  },
-  {
-    id: 'q_kit',
-    label: 'Do 1 break-kit item',
-    metric: 'todayBreakKit',
-    target: 1,
-    bonusXp: 15,
-  },
-  {
-    id: 'q_body',
-    label: 'Log water or a break',
-    metric: 'todayBody',
-    target: 1,
-    bonusXp: 12,
-  },
-  {
-    id: 'q_pin',
-    label: 'Pin 1 idea',
-    metric: 'todayPins',
-    target: 1,
-    bonusXp: 12,
-  },
-  {
-    id: 'q_xp',
-    label: 'Reach 50 points today',
-    metric: 'todayXp',
-    target: 50,
-    bonusXp: 20,
-  },
+  { id: 'q_steps', label: '3 steps', metric: 'todaySteps', target: 3, bonusXp: 25 },
+  { id: 'q_focus', label: '1 focus', metric: 'todayPomodoros', target: 1, bonusXp: 20 },
+  { id: 'q_capture', label: '2 captures', metric: 'todayCaptures', target: 2, bonusXp: 15 },
+  { id: 'q_kit', label: '1 kit item', metric: 'todayBreakKit', target: 1, bonusXp: 15 },
+  { id: 'q_body', label: 'Water/break', metric: 'todayBody', target: 1, bonusXp: 12 },
+  { id: 'q_pin', label: '1 pin', metric: 'todayPins', target: 1, bonusXp: 12 },
+  { id: 'q_xp', label: '50 today', metric: 'todayXp', target: 50, bonusXp: 20 },
 ]
 
 const defaultGame = () => ({
@@ -389,7 +232,7 @@ function claimQuests(game, badgesUnlocked, messages) {
       game.questClaimed = [...(game.questClaimed || []), q.id]
       bonus += q.bonusXp
       pushRecent(game, q.label, q.bonusXp)
-      messages.push(`Done: ${q.label} · +${q.bonusXp}`)
+      messages.push(`✓ ${q.label} +${q.bonusXp}`)
     }
   }
   const allClaimed =
@@ -430,9 +273,7 @@ export function award(action, meta = {}) {
       game.todaySteps = (game.todaySteps || 0) + 1
       pushRecent(
         game,
-        comboBonus
-          ? `Step · ${game.combo}x combo (+${comboBonus})`
-          : 'Step complete',
+        comboBonus ? `Step ×${game.combo}` : 'Step',
         15 + comboBonus
       )
       {
@@ -461,7 +302,7 @@ export function award(action, meta = {}) {
       gained += 5
       game.totalCaptures = (game.totalCaptures || 0) + 1
       game.todayCaptures = (game.todayCaptures || 0) + 1
-      pushRecent(game, meta.label || 'Task captured', 5)
+      pushRecent(game, meta.label || 'Capture', 5)
       if (game.totalCaptures >= 10) {
         const b = unlockBadge(game, 'capture_10')
         if (b) badgesUnlocked.push(b)
@@ -471,7 +312,7 @@ export function award(action, meta = {}) {
       gained += 8
       game.totalPins = (game.totalPins || 0) + 1
       game.todayPins = (game.todayPins || 0) + 1
-      pushRecent(game, meta.label || 'Idea pinned', 8)
+      pushRecent(game, meta.label || 'Pin', 8)
       if (game.totalPins >= 5) {
         const b = unlockBadge(game, 'pin_5')
         if (b) badgesUnlocked.push(b)
@@ -627,8 +468,8 @@ export function award(action, meta = {}) {
     const goalBonus = 30
     gained += goalBonus
     game.todayXp += goalBonus
-    pushRecent(game, 'Daily target hit', goalBonus)
-    messages.push(`Daily target · +${goalBonus}`)
+    pushRecent(game, 'Daily', goalBonus)
+    messages.push(`Daily +${goalBonus}`)
     const b = unlockBadge(game, 'daily_goal')
     if (b) badgesUnlocked.push(b)
   }
@@ -651,15 +492,13 @@ export function award(action, meta = {}) {
   }
   if (gained > 0 && action !== 'check_in') {
     const comboBit =
-      action === 'step_complete' && game.combo > 1
-        ? ` · ×${game.combo}`
-        : ''
-    messages.push(
-      `+${gained}${meta.label ? ` · ${meta.label}` : ''}${comboBit}`
-    )
+      action === 'step_complete' && game.combo > 1 ? ` ×${game.combo}` : ''
+    const tag = meta.label ? ` ${String(meta.label).slice(0, 24)}` : ''
+    messages.push(`+${gained}${tag}${comboBit}`)
   }
-  for (const b of badgesUnlocked) {
-    messages.push(`${b.name}`)
+  // One badge name max — avoid Helper spam
+  if (badgesUnlocked[0]) {
+    messages.push(badgesUnlocked[0].name)
   }
 
   saveGame(game)

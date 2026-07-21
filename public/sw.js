@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v25)
- * v24: Helper UI · v25: short coach copy + AI prompts
+/* Creative Companion — offline shell + asset cache (v26)
+ * v25: coach copy · v26: Helper progress pings densify
  */
-const CACHE = 'cc-shell-v25'
+const CACHE = 'cc-shell-v26'
 const PRECACHE = [
   './',
   './index.html',
