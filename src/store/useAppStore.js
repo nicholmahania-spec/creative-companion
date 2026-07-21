@@ -173,7 +173,7 @@ export function blankWorkspaceState() {
       forceBreaksConsented: false,
       queueCollapsed: true,
       showHowItWorks: false,
-      /** XP / quest bar — off by default (redesign brief) */
+      /** Optional quiet progress strip — off by default (Tech-Studio) */
       showProgress: false,
       /** Helper: no timed pings / hyperfocus nags */
       helperQuiet: false,

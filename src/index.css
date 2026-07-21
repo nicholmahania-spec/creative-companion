@@ -943,19 +943,19 @@ h3 {
   align-items: flex-start;
   gap: 0.3rem;
   padding: 1.15rem 1.1rem;
-  border: 2px dashed rgba(28, 25, 23, 0.4);
-  border-radius: var(--radius-sm);
-  background: linear-gradient(145deg, #f5f5f4, #fff);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-muted);
   font: inherit;
   text-align: left;
   cursor: pointer;
   color: var(--text-primary);
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: border-color var(--transition);
 }
 
 .mood-add-hero:hover {
-  border-color: var(--accent-primary);
-  box-shadow: var(--shadow-2);
+  border-color: var(--dopamine);
+  box-shadow: none;
 }
 
 .mood-add-hero strong {
@@ -1020,7 +1020,7 @@ h3 {
 }
 
 .app.deep .mood-add-hero {
-  background: linear-gradient(145deg, rgba(28, 25, 23, 0.2), rgba(255, 255, 255, 0.04));
+  background: var(--bg-muted);
 }
 
 .view-head {
@@ -3677,8 +3677,11 @@ h3 {
 .mood-pin-face::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 35%, rgba(12, 10, 9, 0.55) 100%);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+  background: color-mix(in srgb, #0c0a09 48%, transparent);
   pointer-events: none;
 }
 
@@ -3691,7 +3694,7 @@ h3 {
   line-height: 1.4;
   letter-spacing: -0.015em;
   max-width: 28ch;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.25);
+  text-shadow: none;
 }
 
 .mood-card.is-hero .mood-pin-caption {
@@ -3812,12 +3815,10 @@ h3 {
   bottom: 1.35rem;
   right: 1.35rem;
   width: 272px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-3);
+  box-shadow: none;
   z-index: 100;
   overflow: hidden;
 }
@@ -3825,8 +3826,8 @@ h3 {
 .studio-mate::before {
   content: '';
   display: block;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent-growth), var(--accent-primary));
+  height: 2px;
+  background: var(--dopamine);
 }
 
 .app.deep .studio-mate {
@@ -4069,8 +4070,8 @@ h3 {
 }
 
 .help-card-featured {
-  border-color: rgba(28, 25, 23, 0.35);
-  background: linear-gradient(145deg, #f5f5f4, #fff);
+  border-color: var(--border-strong);
+  background: var(--bg-muted);
   grid-column: 1 / -1;
 }
 
@@ -4207,19 +4208,19 @@ h3 {
 }
 
 .flow-progress-bar {
-  height: 8px;
+  height: 6px;
   width: 11rem;
   max-width: 100%;
   margin-left: auto;
   background: var(--bg-muted);
-  border-radius: 999px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
 .flow-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-growth));
-  border-radius: 999px;
+  background: var(--dopamine);
+  border-radius: var(--radius);
   transition: width 0.35s var(--ease-out);
 }
 
@@ -4271,9 +4272,9 @@ h3 {
 /* System / Pack = document paper */
 .surface-document .panel {
   background: var(--bg-elevated);
-  border-radius: 2px;
-  border-color: rgba(28, 25, 23, 0.1);
-  box-shadow: 0 1px 0 rgba(28, 25, 23, 0.04), 0 12px 40px rgba(28, 25, 23, 0.04);
+  border-radius: var(--radius);
+  border-color: var(--border-subtle);
+  box-shadow: none;
 }
 .surface-document .page-title {
   letter-spacing: -0.04em;
@@ -4288,24 +4289,14 @@ h3 {
   border: none;
 }
 
-/* Hero current-step card — owns the fold on calm cream / midnight */
+/* Hero current-step card — flat Tech-Studio surface */
 .step-focus-panel,
 .surface-desk-hero {
   position: relative;
-  border: 1px solid color-mix(in srgb, var(--dopamine) 22%, var(--border-subtle)) !important;
-  border-radius: calc(var(--radius) + 2px);
-  background:
-    linear-gradient(
-      165deg,
-      var(--bg-elevated) 0%,
-      color-mix(in srgb, var(--bg-warm) 92%, var(--bg-muted)) 55%,
-      var(--bg-warm) 100%
-    ) !important;
-  box-shadow:
-    var(--highlight-inset),
-    0 1px 2px rgba(26, 24, 20, 0.04),
-    0 12px 36px rgba(26, 24, 20, 0.07),
-    0 0 0 1px var(--dopamine-glow) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius);
+  background: var(--bg-card) !important;
+  box-shadow: none !important;
   padding: 1.25rem 1.25rem 1.35rem;
 }
 
@@ -4315,30 +4306,16 @@ h3 {
   left: 0;
   top: 0.85rem;
   bottom: 0.85rem;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
-  background: linear-gradient(
-    180deg,
-    var(--dopamine-soft),
-    var(--dopamine) 50%,
-    var(--dopamine-deep)
-  );
+  width: 2px;
+  border-radius: 0;
+  background: var(--dopamine);
 }
 
 .app.deep .step-focus-panel,
 .app.deep .surface-desk-hero {
-  background:
-    linear-gradient(
-      165deg,
-      var(--bg-elevated) 0%,
-      var(--bg-warm) 55%,
-      var(--bg-canvas) 100%
-    ) !important;
-  border-color: color-mix(in srgb, var(--dopamine) 28%, var(--border-subtle)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 16px 40px rgba(0, 0, 0, 0.35),
-    0 0 0 1px var(--dopamine-glow) !important;
+  background: var(--bg-card) !important;
+  border-color: var(--border-subtle) !important;
+  box-shadow: none !important;
 }
 
 .step-focus-head {
@@ -4713,10 +4690,10 @@ h3 {
   flex-direction: column;
   justify-content: center;
   padding: 1.75rem 1.6rem;
-  border-radius: calc(var(--radius) + 4px);
-  background: linear-gradient(160deg, #1C1917 0%, #292524 55%, #44403C 100%);
+  border-radius: var(--radius);
+  background: #1A1A1E;
   color: #fafaf9;
-  box-shadow: var(--shadow-3);
+  box-shadow: none;
 }
 
 @media (min-width: 800px) {
@@ -4747,13 +4724,13 @@ h3 {
 /* Login pack specimen (sells the artifact) */
 .login-pack-specimen {
   padding: 0;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: #fafaf9;
   color: #0c0a09;
   border: 1px solid rgba(255, 255, 255, 0.12);
   overflow: hidden;
   margin-bottom: 1.15rem;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  box-shadow: none;
 }
 .login-pack-cover {
   padding: 1.1rem 1.05rem 0.85rem;
@@ -4800,11 +4777,11 @@ h3 {
 }
 .login-pack-pin {
   height: 42px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #d6d3d1, #a8a29e);
+  border-radius: var(--radius);
+  background: #d6d3d1;
 }
 .login-pack-pin.is-muted {
-  background: linear-gradient(135deg, #e7e5e4, #d6d3d1);
+  background: #e7e5e4;
 }
 .login-pack-foot {
   margin: 0;
@@ -5109,24 +5086,24 @@ h3 {
   transform: translateX(-50%);
   z-index: 160;
   max-width: min(92vw, 28rem);
-  padding: 0.65rem 1.15rem;
-  border-radius: var(--radius-pill);
-  background: rgba(28, 25, 23, 0.94);
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius);
+  background: #1A1A1E;
   color: #fafaf9;
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   text-align: center;
-  box-shadow: 0 12px 32px rgba(12, 10, 9, 0.28);
-  backdrop-filter: blur(2px);
+  box-shadow: none;
+  border: 1px solid transparent;
   animation: chipIn 0.35s var(--ease-out, ease-out);
   pointer-events: none;
 }
 
 .app.deep .action-toast {
-  background: rgba(250, 250, 249, 0.96);
-  color: #0c0a09;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  background: #F4F5F6;
+  color: #1A1A1E;
+  box-shadow: none;
 }
 
 .app.deep .board-inline-form {
@@ -5134,7 +5111,7 @@ h3 {
 }
 
 .app.deep .mood-add-card.is-active {
-  background: linear-gradient(145deg, rgba(28, 25, 23, 0.22), rgba(255, 255, 255, 0.04));
+  background: var(--bg-muted);
 }
 
 /* User pref: reduce motion (mirrors prefers-reduced-motion) */
@@ -6264,13 +6241,13 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .concept-lane-tab.is-active {
-  border-color: rgba(28, 25, 23, 0.4);
-  background: linear-gradient(145deg, #f5f5f4, #fff);
-  box-shadow: var(--shadow-1);
+  border-color: var(--border-strong);
+  background: var(--bg-card);
+  box-shadow: none;
 }
 
 .app.deep .concept-lane-tab.is-active {
-  background: linear-gradient(145deg, rgba(28, 25, 23, 0.22), transparent);
+  background: var(--bg-muted);
 }
 
 .concept-upload-hero {
@@ -6279,9 +6256,9 @@ html[data-reduce-motion='true'] *::after {
   gap: 0.25rem;
   padding: 1.1rem 1rem;
   margin-bottom: 1rem;
-  border: 2px dashed rgba(28, 25, 23, 0.35);
-  border-radius: var(--radius-sm);
-  background: linear-gradient(145deg, #f5f5f4, #fff);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-muted);
   cursor: pointer;
 }
 
@@ -6297,7 +6274,7 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .app.deep .concept-upload-hero {
-  background: linear-gradient(145deg, rgba(28, 25, 23, 0.18), transparent);
+  background: var(--bg-muted);
 }
 
 .concept-grid {
@@ -6370,8 +6347,8 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .concept-pack-progress {
-  height: 8px;
-  border-radius: 999px;
+  height: 6px;
+  border-radius: var(--radius);
   background: var(--bg-muted);
   overflow: hidden;
   margin-bottom: 0.35rem;
@@ -6379,8 +6356,8 @@ html[data-reduce-motion='true'] *::after {
 
 .concept-pack-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-growth));
-  border-radius: 999px;
+  background: var(--dopamine);
+  border-radius: var(--radius);
   transition: width 0.3s ease;
 }
 
@@ -7205,21 +7182,17 @@ html[data-reduce-motion='true'] *::after {
 .buddy-compact-card {
   display: flex;
   flex-direction: column;
-  border-radius: 20px;
-  background:
-    linear-gradient(165deg, #fffcf7 0%, var(--buddy-cream) 48%, #f3efe6 100%);
-  border: 1px solid rgba(125, 139, 122, 0.22);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 14px 36px rgba(28, 26, 23, 0.12),
-    0 4px 12px rgba(28, 25, 23, 0.06);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
   overflow-x: hidden;
   overflow-y: auto;
   max-height: min(72dvh, 34rem);
   overscroll-behavior: contain;
   backdrop-filter: none;
   scrollbar-width: thin;
-  scrollbar-color: rgba(125, 139, 122, 0.35) transparent;
+  scrollbar-color: color-mix(in srgb, var(--dopamine) 35%, transparent) transparent;
 }
 
 .buddy-compact-head {

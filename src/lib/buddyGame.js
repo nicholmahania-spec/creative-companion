@@ -1,6 +1,7 @@
 /**
- * Platform gamification — XP, levels, streaks, combos, daily quests, badges.
- * Local-only. Fires `cc-buddy-game` so HUD + Little Helper stay in sync.
+ * Optional quiet progress meter (bands, daily targets, marks).
+ * Local-only. Fires `cc-buddy-game` so HUD + Helper stay in sync.
+ * Off by default (prefs.showProgress).
  */
 
 const GAME_KEY = 'cc-buddy-game-v1'
@@ -20,25 +21,25 @@ export const BADGES = {
   },
   step_streak_3: {
     id: 'step_streak_3',
-    name: 'Triple play',
+    name: '3 in a day',
     desc: 'Complete 3 steps in one day',
-    icon: '🔥',
+    icon: '3',
   },
   step_10: {
     id: 'step_10',
-    name: 'Decathlete',
+    name: '10 steps',
     desc: 'Complete 10 steps all-time',
-    icon: '🔟',
+    icon: '10',
   },
   step_50: {
     id: 'step_50',
-    name: 'Ship machine',
+    name: '50 steps',
     desc: 'Complete 50 steps all-time',
-    icon: '🚀',
+    icon: '50',
   },
   break_hero: {
     id: 'break_hero',
-    name: 'Break hero',
+    name: 'Break done',
     desc: 'Finish a required Pomodoro break',
     icon: '⏱',
   },
@@ -98,65 +99,65 @@ export const BADGES = {
   },
   day_streak_7: {
     id: 'day_streak_7',
-    name: 'Week warrior',
+    name: '7-day streak',
     desc: '7-day activity streak',
-    icon: '🗓',
+    icon: '7',
   },
   break_kit_3: {
     id: 'break_kit_3',
-    name: 'Break packer',
+    name: '3 break items',
     desc: 'Complete 3 Break Kit items',
-    icon: '🧰',
+    icon: '3',
   },
   capture_10: {
     id: 'capture_10',
-    name: 'Idea net',
+    name: '10 captures',
     desc: 'Capture 10 tasks',
-    icon: '📥',
+    icon: '10',
   },
   pin_5: {
     id: 'pin_5',
-    name: 'Mood boarder',
+    name: '5 pins',
     desc: 'Pin 5 ideas',
-    icon: '📌',
+    icon: '5',
   },
   quest_master: {
     id: 'quest_master',
-    name: 'Quest master',
-    desc: 'Clear all daily quests in one day',
-    icon: '⭐',
+    name: 'Day list done',
+    desc: 'Clear all daily targets in one day',
+    icon: '✓',
   },
   combo_5: {
     id: 'combo_5',
-    name: 'On a roll',
-    desc: 'Hit a 5-step combo',
-    icon: '⚡',
+    name: '5 in a row',
+    desc: 'Complete 5 steps in a row',
+    icon: '5',
   },
   daily_goal: {
     id: 'daily_goal',
-    name: 'Daily grind',
-    desc: 'Hit the daily XP goal once',
-    icon: '📈',
+    name: 'Daily target',
+    desc: 'Hit the daily progress target once',
+    icon: '·',
   },
   exporter: {
     id: 'exporter',
-    name: 'Ship it',
+    name: 'Exported',
     desc: 'Export a project pack',
-    icon: '📤',
+    icon: '↑',
   },
   helper_friend: {
     id: 'helper_friend',
-    name: 'Not alone',
-    desc: 'Turn on Little Helper',
-    icon: '🤖',
+    name: 'Helper on',
+    desc: 'Turn on Helper',
+    icon: 'H',
   },
 }
 
-/** Daily XP target for “max productivity” feel */
+/** Daily progress target (optional meter) */
 export const DAILY_XP_GOAL = 100
 
 /**
- * Quest templates. Three are picked each calendar day.
+ * Daily targets. Three are picked each calendar day.
  * progress reads game.metrics fields.
  */
 export const QUEST_POOL = [
@@ -204,7 +205,7 @@ export const QUEST_POOL = [
   },
   {
     id: 'q_xp',
-    label: 'Earn 50 XP today',
+    label: 'Reach 50 points today',
     metric: 'todayXp',
     target: 50,
     bonusXp: 20,
@@ -387,8 +388,8 @@ function claimQuests(game, badgesUnlocked, messages) {
     if (q.done && !q.claimed) {
       game.questClaimed = [...(game.questClaimed || []), q.id]
       bonus += q.bonusXp
-      pushRecent(game, `Quest: ${q.label}`, q.bonusXp)
-      messages.push(`Quest clear: ${q.label} · +${q.bonusXp} XP`)
+      pushRecent(game, q.label, q.bonusXp)
+      messages.push(`Done: ${q.label} · +${q.bonusXp}`)
     }
   }
   const allClaimed =
@@ -626,8 +627,8 @@ export function award(action, meta = {}) {
     const goalBonus = 30
     gained += goalBonus
     game.todayXp += goalBonus
-    pushRecent(game, 'Daily XP goal hit', goalBonus)
-    messages.push(`Daily goal ${DAILY_XP_GOAL} XP · +${goalBonus} bonus`)
+    pushRecent(game, 'Daily target hit', goalBonus)
+    messages.push(`Daily target · +${goalBonus}`)
     const b = unlockBadge(game, 'daily_goal')
     if (b) badgesUnlocked.push(b)
   }
@@ -646,21 +647,19 @@ export function award(action, meta = {}) {
 
   const levelUp = game.level > prevLevel
   if (levelUp) {
-    messages.push(
-      `Level up! You're level ${game.level}. Momentum looks good on you.`
-    )
+    messages.push(`Band ${game.level}`)
   }
   if (gained > 0 && action !== 'check_in') {
     const comboBit =
       action === 'step_complete' && game.combo > 1
-        ? ` · ${game.combo}x combo`
+        ? ` · ×${game.combo}`
         : ''
     messages.push(
-      `+${gained} XP${meta.label ? ` · ${meta.label}` : ''}${comboBit}`
+      `+${gained}${meta.label ? ` · ${meta.label}` : ''}${comboBit}`
     )
   }
   for (const b of badgesUnlocked) {
-    messages.push(`Badge: ${b.icon} ${b.name} — ${b.desc}`)
+    messages.push(`${b.name}`)
   }
 
   saveGame(game)
@@ -679,7 +678,7 @@ export function award(action, meta = {}) {
 
 export function gameSummaryLine(game = loadGame()) {
   const p = xpProgress(game.xp)
-  return `Lv ${p.level} · ${game.xp} XP · ${game.dayStreak || 0}d streak · today ${game.todayXp || 0}/${DAILY_XP_GOAL}`
+  return `Band ${p.level} · ${game.xp} · ${game.dayStreak || 0}d · today ${game.todayXp || 0}/${DAILY_XP_GOAL}`
 }
 
 export function dailyGoalProgress(game = loadGame()) {

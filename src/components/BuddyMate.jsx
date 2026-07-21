@@ -715,13 +715,13 @@ export default function BuddyMate({
           openPanel()
         }}
         aria-label={`Open Helper${
-          showProgress ? `, level ${xp.level}` : ''
+          showProgress ? `, band ${xp.level}` : ''
         }${hasUnread ? ', new message' : ''}`}
         title={
           hasUnread
             ? 'New tip — click to open'
             : showProgress
-              ? `Lv ${xp.level} · Helper`
+              ? `Helper · ${xp.level}`
               : 'Helper'
         }
       >
@@ -791,7 +791,7 @@ export default function BuddyMate({
                 <div className="buddy-compact-name-row">
                   <strong className="bf-name">Helper</strong>
                   {showProgress && (
-                    <span className="buddy-compact-lv">Lv {xp.level}</span>
+                    <span className="buddy-compact-lv">{xp.level}</span>
                   )}
                   <span
                     className={`helper-ai-badge is-${aiStatus.mode}`}
@@ -835,7 +835,7 @@ export default function BuddyMate({
           {showProgress && (
             <div
               className="buddy-compact-xp"
-              aria-label={`${game.xp || 0} XP, level ${xp.level}`}
+              aria-label={`Progress band ${xp.level}`}
               title={gameSummaryLine(game)}
             >
               <div className="buddy-xp-bar">
@@ -849,7 +849,7 @@ export default function BuddyMate({
 
           {showProgress && levelBurst && (
             <p className="buddy-levelup-banner bf-levelup" role="status">
-              Level {xp.level}!
+              Band {xp.level}
             </p>
           )}
 
@@ -1112,7 +1112,7 @@ export default function BuddyMate({
               </div>
 
               {showProgress && badgeList.length > 0 && (
-                <div className="buddy-badges" aria-label="Badges">
+                <div className="buddy-badges" aria-label="Marks">
                   {badgeList.map((b) => (
                     <span
                       key={b.id}

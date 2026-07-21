@@ -833,8 +833,8 @@ export default function DesignView({
                 </div>
                 <ul className="palette-check-list">
                   {contrastPairs.length === 0 ? (
-                    <li className="panel-hint">
-                      Add at least two different colors to check contrast.
+                    <li className="panel-hint design-lect">
+                      Need 2+ colors
                     </li>
                   ) : (
                     contrastPairs.map((pair) => (
@@ -903,8 +903,8 @@ export default function DesignView({
                   {showPassPairs && (
                     <ul className="palette-pass-list">
                       {passPairs.length === 0 ? (
-                        <li className="panel-hint">
-                          No body-text pairs yet — add contrast or use Fix AA.
+                        <li className="panel-hint design-lect">
+                          No AA pairs yet — Fix AA
                         </li>
                       ) : (
                         passPairs.map((p) => (
