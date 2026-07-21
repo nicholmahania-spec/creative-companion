@@ -15,7 +15,6 @@ import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
-const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
 
 export default function DeliverView({
   locale: localeProp = 'en',
