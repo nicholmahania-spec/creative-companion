@@ -300,6 +300,8 @@ function App() {
   const [homeSelectedProjectId, setHomeSelectedProjectId] = useState(null)
   const [syncState, setSyncState] = useState('idle') // idle | syncing | ok | error
   const [syncError, setSyncError] = useState('')
+  /** Which direction last failed — decides what "Retry" actually retries */
+  const [syncErrorSource, setSyncErrorSource] = useState('push') // 'pull' | 'push'
   const [pwCurrent, setPwCurrent] = useState('')
   const [pwNext, setPwNext] = useState('')
   const [accountOpen, setAccountOpen] = useState(false)
@@ -1675,6 +1677,7 @@ function App() {
       if (cancelled) return
       if (!result.ok) {
         setSyncState('error')
+        setSyncErrorSource('pull')
         setSyncError(result.error || 'Couldn’t load cloud desk')
         setCloudHydrating(false)
         cloudSyncReady.current = true
@@ -1682,8 +1685,15 @@ function App() {
       }
       if (result.payload && Array.isArray(result.payload.projects)) {
         skipNextCloudPush.current = true
-        hydrateFromPayload(result.payload)
-        setSyncState('ok')
+        const hydrated = hydrateFromPayload(result.payload)
+        if (hydrated.ok) {
+          setSyncState('ok')
+        } else {
+          skipNextCloudPush.current = false
+          setSyncState('error')
+          setSyncErrorSource('pull')
+          setSyncError(hydrated.error || 'Couldn’t load cloud desk')
+        }
       } else {
         // Cloud empty → seed from local cache if any real work exists
         const local = exportAllData()
@@ -1696,7 +1706,10 @@ function App() {
         if (hasLocal && local.onboarded) {
           const push = await pushWorkspace(local)
           setSyncState(push.ok ? 'ok' : 'error')
-          if (!push.ok) setSyncError(push.error || 'Couldn’t upload')
+          if (!push.ok) {
+            setSyncErrorSource('push')
+            setSyncError(push.error || 'Couldn’t upload')
+          }
         } else {
           setSyncState('ok')
         }
@@ -2412,6 +2425,7 @@ function App() {
                   setCloudHydrating(false)
                   cloudSyncReady.current = true
                   setSyncState('error')
+                  setSyncErrorSource('pull')
                   setSyncError('Cloud load slow — continued locally.')
                 }}
               >
@@ -2519,6 +2533,34 @@ function App() {
                   setSyncState('syncing')
                   setSyncError('')
                   try {
+                    // A failed *pull* (resume) must retry the pull, not push
+                    // local over the cloud copy it never actually loaded.
+                    if (syncErrorSource === 'pull') {
+                      const result = await pullWorkspace()
+                      if (!result.ok) {
+                        setSyncState('error')
+                        setSyncError(result.error || 'Couldn’t load cloud desk')
+                        flashToast(result.error || i18nT(locale, 'ui.syncFail'))
+                        return
+                      }
+                      if (result.payload && Array.isArray(result.payload.projects)) {
+                        skipNextCloudPush.current = true
+                        const hydrated = hydrateFromPayload(result.payload)
+                        if (hydrated.ok) {
+                          setSyncState('ok')
+                          flashToast(i18nT(locale, 'ui.syncedOk'))
+                        } else {
+                          skipNextCloudPush.current = false
+                          setSyncState('error')
+                          setSyncError(hydrated.error || 'Couldn’t load cloud desk')
+                          flashToast(hydrated.error || i18nT(locale, 'ui.syncFail'))
+                        }
+                      } else {
+                        setSyncState('ok')
+                        flashToast(i18nT(locale, 'ui.syncedOk'))
+                      }
+                      return
+                    }
                     const result = await pushWorkspace(exportAllData())
                     if (result.ok) {
                       setSyncState('ok')
@@ -2536,7 +2578,9 @@ function App() {
                   }
                 }}
               >
-                <span className="sync-error-chip-full">Retry save</span>
+                <span className="sync-error-chip-full">
+                  {syncErrorSource === 'pull' ? 'Retry load' : 'Retry save'}
+                </span>
                 <span className="sync-error-chip-short">Retry</span>
               </button>
             )}
