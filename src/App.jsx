@@ -1728,7 +1728,7 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run on user change only
   }, [CLOUD, unlocked, cloudUser?.id])
 
-  // Debounced push to Supabase when desk changes
+  // Debounced push to Supabase when desk changes (local always saved via zustand)
   useEffect(() => {
     if (!CLOUD || !unlocked || !cloudUser || !cloudSyncReady.current) return
     if (skipNextCloudPush.current) {
@@ -1736,8 +1736,9 @@ function App() {
       return
     }
     if (cloudHydrating) return
-    setSyncState('syncing')
+    // Don't flip to "syncing" until the debounce fires — avoids flicker on every keystroke
     const t = window.setTimeout(async () => {
+      setSyncState('syncing')
       const payload = exportAllData()
       const result = await pushWorkspace(payload)
       if (result.ok) {
@@ -1747,7 +1748,7 @@ function App() {
         setSyncState('error')
         setSyncError(result.error || 'Couldn’t sync')
       }
-    }, 1200)
+    }, 1600)
     return () => window.clearTimeout(t)
   }, [
     CLOUD,
@@ -2521,21 +2522,32 @@ function App() {
               <button
                 type="button"
                 className="sync-error-chip"
+                title={syncError || 'Cloud save failed'}
                 onClick={async () => {
                   setSyncState('syncing')
-                  const result = await pushWorkspace(exportAllData())
-                  if (result.ok) {
-                    setSyncState('ok')
-                    setSyncError('')
-                    flashToast(i18nT(locale, 'ui.syncedOk'))
-                  } else {
+                  setSyncError('')
+                  try {
+                    const result = await pushWorkspace(exportAllData())
+                    if (result.ok) {
+                      setSyncState('ok')
+                      setSyncError('')
+                      flashToast(i18nT(locale, 'ui.syncedOk'))
+                    } else {
+                      setSyncState('error')
+                      setSyncError(result.error || 'Couldn’t sync')
+                      flashToast(result.error || i18nT(locale, 'ui.syncFail'))
+                    }
+                  } catch (e) {
                     setSyncState('error')
-                    setSyncError(result.error || 'Couldn’t sync')
-                    flashToast(result.error || i18nT(locale, 'ui.syncFail'))
+                    setSyncError(e?.message || 'Couldn’t sync')
+                    flashToast(e?.message || i18nT(locale, 'ui.syncFail'))
                   }
                 }}
               >
-                Save didn’t stick · Retry
+                <span className="sync-error-chip-full">
+                  Save didn’t stick · Retry
+                </span>
+                <span className="sync-error-chip-short">Retry save</span>
               </button>
             )}
             <div className="more-wrap" ref={moreWrapRef}>

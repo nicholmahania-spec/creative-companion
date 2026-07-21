@@ -118,12 +118,14 @@ export default function DefineView(props) {
   const commitProjectRename = () => {
     if (!activeProject) return
     const next = String(projectNameDraft || '').trim()
-    if (!next || next === activeProject.name) {
+    if (!next) {
       setProjectNameDraft?.(activeProject.name || '')
       return
     }
+    if (next === activeProject.name) return
     renameProject?.(activeProject.id, next)
-    flashToast?.(i18nT(locale, 'ui.projectRenamed'))
+    // Local rename always sticks; cloud chip is separate if sync fails
+    flashMicro?.(i18nT(locale, 'ui.projectRenamed') || 'Name saved')
   }
 
   return (
