@@ -19,9 +19,9 @@ const assetsDir = join(root, 'dist', 'assets')
  */
 const MAIN_JS_RAW_MAX = 440 * 1024
 /**
- * Main CSS raw max — 270 KB (v1.48.55): full path ADHD densify + Define residual.
+ * Main CSS raw max — 280 KB (v1.48.56): Settings + full path ADHD densify.
  */
-const MAIN_CSS_RAW_MAX = 270 * 1024
+const MAIN_CSS_RAW_MAX = 280 * 1024
 /** Main JS gzipped advisory max (warn only if over, still fail on raw) */
 const MAIN_JS_GZIP_WARN = 140 * 1024
 

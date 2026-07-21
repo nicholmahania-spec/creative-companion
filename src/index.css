@@ -16760,6 +16760,160 @@ select:focus,
 }
 
 /* ============================================================
+   Settings ADHD — short rows, 4px, no lecture spans
+   ============================================================ */
+.settings-studio {
+  max-width: 36rem;
+}
+.settings-studio .settings-back {
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.settings-studio .settings-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.85rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 0.35rem 0;
+  background: var(--ts-canvas, #F4F5F6);
+}
+.settings-studio .settings-jump-link {
+  border-radius: 4px !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--ts-ink, #0F172A);
+  box-shadow: none !important;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+}
+.settings-studio .panel.brand-section {
+  border-radius: 4px;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  box-shadow: none;
+  margin-bottom: 0.75rem;
+}
+.settings-studio .settings-row {
+  padding: 0.55rem 0;
+  gap: 0.75rem;
+}
+.settings-studio .settings-row strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.settings-studio .settings-meta,
+.settings-studio .settings-meta-inline {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ts-mute, #94A3B8);
+}
+.settings-studio .settings-meta-inline {
+  margin: 0;
+}
+.settings-studio .settings-actions {
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+.settings-studio .settings-actions .btn,
+.settings-studio .settings-row .btn {
+  border-radius: 4px !important;
+  min-height: 36px;
+  box-shadow: none !important;
+}
+.settings-studio .pref-switch {
+  border-radius: 4px !important;
+  width: 2.5rem;
+  height: 1.4rem;
+  box-shadow: none !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: var(--ts-canvas, #F4F5F6);
+}
+.settings-studio .pref-switch-knob {
+  border-radius: 3px !important;
+  width: 1.05rem;
+  height: 1.05rem;
+  top: 0.12rem;
+  left: 0.12rem;
+  box-shadow: none !important;
+}
+.settings-studio .pref-switch.is-on {
+  background: var(--ts-focus, #2563EB);
+  border-color: var(--ts-focus, #2563EB);
+}
+.settings-studio .pref-switch.is-on .pref-switch-knob {
+  transform: translateX(1.05rem);
+}
+.settings-studio .settings-advanced-sum {
+  cursor: pointer;
+  list-style: none;
+}
+.settings-studio .settings-advanced-sum::-webkit-details-marker {
+  display: none;
+}
+.settings-studio .settings-advanced-sum::before {
+  content: '▸ ';
+  font-size: 0.7rem;
+}
+.settings-studio .settings-advanced[open] > .settings-advanced-sum::before {
+  content: '▾ ';
+}
+.settings-studio .settings-nested {
+  margin: 0.5rem 0;
+  border-top: 1px solid var(--ts-border, #E2E8F0);
+  padding-top: 0.45rem;
+}
+.settings-studio .settings-nested > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--ts-mute, #94A3B8);
+  list-style: none;
+}
+.settings-studio .settings-nested > summary::-webkit-details-marker {
+  display: none;
+}
+.settings-studio .settings-danger-zone {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--ts-border, #E2E8F0);
+}
+.settings-studio .settings-danger-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ts-mute, #94A3B8);
+  margin: 0 0 0.4rem;
+}
+.settings-studio .settings-pw-block {
+  margin: 0.65rem 0;
+}
+.settings-studio .settings-lect,
+.settings-studio .settings-helper-note {
+  display: none !important;
+}
+.settings-studio .helper-ai-badge {
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  padding: 0.25rem 0.45rem;
+}
+.journey-gap-strip-btn {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  min-height: 36px;
+}
+
+/* ============================================================
    Research ADHD — board stage, short chrome, pin focus lock
    ============================================================ */
 .research-studio-top {
