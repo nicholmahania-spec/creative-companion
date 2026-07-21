@@ -467,7 +467,7 @@ export default function ResearchView({
                   })
                 )}
               </div>
-              <p className="panel-hint board-drop-hint">
+              <p className="panel-hint board-drop-hint design-lect">
                 Drop images here · drag pins to reorder
               </p>
             </section>

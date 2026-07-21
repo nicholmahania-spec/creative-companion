@@ -11,7 +11,7 @@ import {
   tFormat,
   pathLabel,
 } from '../lib/i18n'
-import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
+import { packReadiness } from '../lib/exportFiles'
 import InfoReveal from '../components/InfoReveal'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
@@ -28,15 +28,12 @@ export default function ReviewView({
   buildCurrentBrandPack,
   flashToast,
   flashMicro,
-  toggleBodyDoubling,
-  bodyDoubling = false,
 }) {
   const locale = normalizeLocale(localeProp)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const packSnap = buildCurrentBrandPack()
   const ready = packReadiness(packSnap)
   const miss = ready.checks.filter((c) => !c.ok)
-  const ok = ready.checks.filter((c) => c.ok)
 
   return (
     <div className="review-view surface-desk view-enter review-studio" data-nav-dir={navDir}>
@@ -119,42 +116,17 @@ export default function ReviewView({
                 placeholder="What changes…"
               />
             </div>
-            <div className="finish-secondary-row">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  if (!bodyDoubling) toggleBodyDoubling()
-                  flashToast(i18nT(locale, 'ui.helperOpenCritique'))
-                }}
-              >
-                Open Helper
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={async () => {
-                  try {
-                    const md = packBriefMarkdown(buildCurrentBrandPack())
-                    await navigator.clipboard.writeText(md)
-                    flashToast(i18nT(locale, 'ui.briefCopied'))
-                  } catch {
-                    flashToast(i18nT(locale, 'ui.briefCopyFail'))
-                  }
-                }}
-              >
-                Copy brief
-              </button>
-            </div>
           </section>
 
           <section className="panel brand-section review-ready-panel">
             <div className="brand-section-label">
-              Readiness · {ready.okCount}/{ready.checks.length}
+              {miss.length > 0
+                ? `${miss.length} gap${miss.length === 1 ? '' : 's'}`
+                : 'Ready'}
             </div>
             {miss.length > 0 ? (
               <ul className="pack-ready-list review-ready-list">
-                {miss.map((c) => (
+                {miss.slice(0, 4).map((c) => (
                   <li key={c.id} className="is-miss">
                     <button
                       type="button"
@@ -173,30 +145,12 @@ export default function ReviewView({
                         } else if (c.view) setActiveView(c.view)
                       }}
                     >
-                      Fix · {c.label}
+                      {c.label}
                     </button>
                   </li>
                 ))}
               </ul>
-            ) : (
-              <p className="panel-hint review-ready-ok">
-                Checks look solid — capture feedback, then Deliver.
-              </p>
-            )}
-            {ok.length > 0 && miss.length > 0 && (
-              <details className="review-ready-ok-details">
-                <summary className="text-link">
-                  {ok.length} already ok
-                </summary>
-                <ul className="pack-ready-list">
-                  {ok.map((c) => (
-                    <li key={c.id} className="is-ok">
-                      <span>✓ {c.label}</span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
+            ) : null}
           </section>
         </div>
       </div>

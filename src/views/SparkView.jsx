@@ -154,19 +154,6 @@ export default function SparkView({
           )}
         </div>
       </div>
-      {nextTask && (
-        <p className="mood-linked-step" style={{ marginBottom: '1rem' }}>
-          <span className="task-badge">For</span>{' '}
-          <span className="mood-linked-title">{nextTask.title}</span>
-        </p>
-      )}
-
-      {decisionLine ? (
-        <p className="ideate-chosen-line" role="status">
-          {decisionLine}
-        </p>
-      ) : null}
-
       {/* Locked 3-column shortlist — primary stage */}
       <section
         className="panel brand-section ideate-shortlist"

@@ -483,10 +483,8 @@ export default function SettingsView(props) {
 
           <section className="panel brand-section" id="settings-data">
             <div className="brand-section-label">Your data</div>
-            <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
-              {CLOUD
-                ? 'Your desk syncs to the cloud. Keep a JSON backup for portability.'
-                : 'Work is saved on this device. Export a backup if it matters.'}
+            <p className="panel-hint settings-lect" style={{ marginBottom: '0.65rem' }}>
+              {CLOUD ? 'Cloud + local cache' : 'Saved on this device'}
             </p>
             <details className="settings-advanced">
               <summary>Advanced storage</summary>
@@ -578,86 +576,43 @@ export default function SettingsView(props) {
             </div>
           </section>
 
-          <section className="panel brand-section">
-            <div className="brand-section-label">Optional sample</div>
-            <p className="panel-hint settings-lect" style={{ marginBottom: '0.65rem' }}>
-              Sample brand path · replaces workspace · backup first
-            </p>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => loadSoftSignalDemo()}
-            >
-              Load Soft Signal demo + tour
-            </button>
-          </section>
-
-          <section className="panel brand-section">
-            <div className="brand-section-label">Helper AI</div>
+            <div className="settings-row" style={{ marginTop: '0.75rem' }}>
+              <div>
+                <strong>Demo</strong>
+                <span>Replaces workspace</span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => loadSoftSignalDemo()}
+              >
+                Soft Signal
+              </button>
+            </div>
             <div className="settings-row">
               <div>
-                <strong>{aiStatus.label}</strong>
+                <strong>Helper AI</strong>
                 <span>{aiStatus.detail}</span>
               </div>
               <span className={`helper-ai-badge is-${aiStatus.mode}`}>
                 {aiStatus.short}
               </span>
             </div>
-            {aiStatus.mode === 'scripted' && (
-              <p className="panel-hint settings-lect" style={{ margin: '0.35rem 0 0' }}>
-                Live AI: <code className="settings-code">XAI_API_KEY</code> + proxy ·{' '}
-                docs/DEPLOY_AI.md
-              </p>
-            )}
-            <p className="panel-hint settings-lect" style={{ margin: '0.65rem 0 0' }}>
-              Watermark toggle on{' '}
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => setActiveView('finish')}
-              >
-                Deliver
-              </button>
-            </p>
-          </section>
-
-          <section className="panel brand-section" id="settings-about">
-            <div className="brand-section-label">About</div>
-            <div className="settings-row">
+            <div className="settings-row" id="settings-about">
               <div>
                 <strong>Version</strong>
                 <span>
                   {versionLabel()}
                   {APP_BUILD_DATE ? ` · ${APP_BUILD_DATE}` : ''}
-                  {APP_BUILD ? ` · ${APP_BUILD}` : ''}
                 </span>
               </div>
             </div>
-            <p className="panel-hint settings-lect" style={{ margin: '0 0 0.5rem' }}>
-              Calm 7-step desk for creative work (ADHD-friendly). Direction pack
-              (words, colors, logo) — not Figma
-              {CLOUD ? ' · optional cloud sync' : ''}.
-            </p>
-            <p className="panel-hint settings-lect" style={{ margin: '0 0 0.5rem' }}>
-              Kit zip on{' '}
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => setActiveView('finish')}
-              >
-                Deliver
-              </button>
-              {' '}
-              · ADHD links:{' '}
+            <p className="panel-hint settings-lect" style={{ margin: '0.5rem 0 0' }}>
               <a className="text-link" href="https://chadd.org/" target="_blank" rel="noopener noreferrer">
                 CHADD
               </a>
-              {' · US helpline 1-866-200-8098 (not medical advice)'}
+              {' · not medical advice'}
             </p>
-            <p className="panel-hint settings-lect" style={{ margin: 0 }}>
-              Offline after first visit · data stays on this device · hard-refresh after big updates
-            </p>
-          </section>
           </details>
         </div>
   )

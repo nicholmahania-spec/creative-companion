@@ -16066,6 +16066,34 @@ select:focus,
   }
 }
 
+/* Residual densify — Review / Deliver / Sketch / Ideate */
+.pack-preview-scroll-hint,
+.pack-thin-illu,
+.decision-log-strip,
+.ideate-chosen-line:empty {
+  display: none !important;
+}
+.sketch-decision-line {
+  font-size: 0.78rem;
+  color: var(--ts-mute, #94A3B8);
+  margin: 0 0 0.75rem;
+}
+.review-ready-list .pack-ready-fix,
+.pack-ready-list .pack-ready-fix {
+  font-size: 0.8125rem;
+}
+.pack-thin-warning {
+  font-size: 0.78rem;
+  margin: 0.35rem 0 0;
+}
+.settings-advanced-sum {
+  cursor: pointer;
+  list-style: none;
+}
+.settings-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+
 /* ============================================================
    Mobile Define + shell — fix cramped chapter/header/resume
    ============================================================ */

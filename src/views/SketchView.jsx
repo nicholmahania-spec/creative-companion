@@ -132,45 +132,18 @@ export default function SketchView(props) {
               )}
             </div>
 
-            <section
-              className="decision-log-strip sketch-decision-strip"
-              aria-label={i18nT(locale, 'ui.decisionLogTitle') || 'Decision log'}
-            >
-              <p className="decision-log-strip-label">
-                {i18nT(locale, 'ui.decisionLogTitle') || 'Decision log'}
+            {decisionLine ? (
+              <p className="ideate-chosen-line sketch-decision-line" role="status">
+                {decisionLine}{' '}
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => setActiveView?.('spark')}
+                >
+                  Edit
+                </button>
               </p>
-              {decisionLine ? (
-                <>
-                  <p className="decision-log-strip-line">{decisionLine}</p>
-                  <p className="panel-hint" style={{ margin: '0.35rem 0 0' }}>
-                    {i18nT(locale, 'ui.decisionSketchHint') ||
-                      'Sketch this direction. Low polish.'}
-                  </p>
-                  <div className="decision-log-strip-actions">
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => setActiveView?.('spark')}
-                    >
-                      {i18nT(locale, 'ui.decisionEditIdeate') ||
-                        'Edit on Ideate'}
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <p className="decision-log-empty">
-                  {i18nT(locale, 'ui.decisionEmpty') ||
-                    'Pick a winner on Ideate — we save why for Sketch.'}{' '}
-                  <button
-                    type="button"
-                    className="text-link"
-                    onClick={() => setActiveView?.('spark')}
-                  >
-                    {pathLabel(locale, 'ideate') || 'Ideate'}
-                  </button>
-                </p>
-              )}
-            </section>
+            ) : null}
 
             {/* Current step owns the fold — only one primary action */}
             <section
@@ -222,9 +195,7 @@ export default function SketchView(props) {
               ) : (
                 <div className="step-focus">
                   <div className="step-focus-meta">
-                    <span className="task-badge">
-                      {i18nT(locale, 'ui.doThisNow')}
-                    </span>
+                    <span className="task-badge">Now</span>
                     <span className="task-meta">
                       {({ high: 'High', med: 'Medium', low: 'Low' }[
                         nextTask.energy || 'med'

@@ -5,8 +5,9 @@
  * v7: bust after mobile Define + full-width path rail (v1.48.41–42).
  * v8: Tech-Studio blueprint implement-all (text diet, gap strip, sticky Next).
  * v9: Define single-instrument + Design 5-tab merge.
+ * v10: Review/Deliver/Settings densify pass.
  */
-const CACHE = 'cc-shell-v9'
+const CACHE = 'cc-shell-v10'
 const PRECACHE = [
   './',
   './index.html',

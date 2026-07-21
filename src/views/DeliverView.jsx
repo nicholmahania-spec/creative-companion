@@ -76,26 +76,24 @@ export default function DeliverView({
                       hideWatermark={hidePackWatermark}
                     />
                   </Suspense>
-                  <p className="pack-preview-scroll-hint">Scroll preview for full sheet</p>
                 </div>
                 <div className="pack-meta">
                   {(() => {
                     const packSnap = buildCurrentBrandPack()
                     const ready = packReadiness(packSnap)
+                    const gaps = ready.checks.filter((c) => !c.ok)
                     return (
                       <>
                         <div className="brand-section-label">
-                          Ready · {ready.okCount}/{ready.checks.length}
+                          {gaps.length > 0
+                            ? `${gaps.length} gap${gaps.length === 1 ? '' : 's'}`
+                            : 'Ready'}
                         </div>
-                        {ready.checks.some((c) => !c.ok) ? (
+                        {gaps.length > 0 ? (
                           <details className="pack-ready-details">
-                            <summary className="text-link">
-                              {ready.checks.filter((c) => !c.ok).length} to fix
-                            </summary>
+                            <summary className="text-link">Fix</summary>
                             <ul className="pack-ready-list">
-                              {ready.checks
-                                .filter((c) => !c.ok)
-                                .map((c) => (
+                              {gaps.slice(0, 5).map((c) => (
                                   <li key={c.id} className="is-miss">
                                     <button
                                       type="button"
@@ -122,27 +120,17 @@ export default function DeliverView({
                                         else if (c.view) setActiveView(c.view)
                                       }}
                                     >
-                                      Fix · {c.label}
+                                      {c.label}
                                     </button>
                                   </li>
                                 ))}
                             </ul>
                           </details>
-                        ) : (
-                          <p className="panel-hint">Ready to download</p>
-                        )}
+                        ) : null}
                         {ready.thin && (
-                          <div className="pack-thin-block">
-                            <Suspense fallback={null}>
-                              <EmptyIllustration
-                                variant="pack"
-                                className="pack-thin-illu"
-                              />
-                            </Suspense>
-                            <p className="pack-thin-warning" role="status">
-                              {i18nT(locale, 'ui.thinPack')}
-                            </p>
-                          </div>
+                          <p className="pack-thin-warning" role="status">
+                            {i18nT(locale, 'ui.thinPack')}
+                          </p>
                         )}
                       </>
                     )
