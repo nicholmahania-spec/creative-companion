@@ -15510,9 +15510,36 @@ body:has(.app.deep)::after {
   backdrop-filter: none !important;
 }
 
-.header-progress-badge,
-.journey-gap-strip {
+.header-progress-badge {
   display: none !important;
+}
+
+/* Gap strip: quiet recovery chrome (not a second nav bar) */
+.journey-gap-strip {
+  display: flex !important;
+  padding: 0.25rem 1rem !important;
+  background: transparent !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  opacity: 0.75;
+}
+
+.journey-gap-strip-btn {
+  border-radius: 4px !important;
+  font-size: 0.75rem !important;
+}
+
+.journey-sidebar .journey-progress-pill {
+  margin: 0.75rem 0.65rem 0;
+  align-self: stretch;
+  text-align: center;
+  border-radius: 4px;
+  border: 1px solid #E2E8F0;
+  background: #F4F5F6;
+  color: #1A1A1E;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem;
+  cursor: pointer;
 }
 
 .journey-sidebar {

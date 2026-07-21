@@ -86,6 +86,7 @@ import {
   sameProjectId,
 } from './lib/journeyProgress'
 
+import JourneyGapStrip from './components/JourneyGapStrip'
 import PathStepIcon from './components/PathStepIcon'
 import {
   PROCESS_PHASES,
@@ -2813,7 +2814,32 @@ function App() {
               )
             })}
           </ol>
-          {!journeyActive && (
+          {journeyActive ? (
+            <button
+              type="button"
+              className={`journey-progress-pill${
+                pathDoneCount >= 7 ? ' is-full' : ''
+              }${pathDoneCount > 0 && pathDoneCount < 7 ? ' is-partial' : ''}`}
+              data-done={pathDoneCount}
+              onClick={() => goToNextProcessGap()}
+              title={
+                pathDoneCount >= 7
+                  ? i18nT(locale, 'ui.processFullDeliver')
+                  : pathNextGap
+                    ? `Process ${pathDoneCount}/7 · ${pathLabel(locale, pathNextGap.id) || pathNextGap.label} (G)`
+                    : `Process ${pathDoneCount}/7 · G`
+              }
+              aria-label={
+                pathDoneCount >= 7
+                  ? 'Process complete, seven of seven steps have content'
+                  : pathNextGap
+                    ? `Process ${pathDoneCount} of 7. Next gap ${pathLabel(locale, pathNextGap.id) || pathNextGap.label}. Fix next gap.`
+                    : `Process ${pathDoneCount} of 7 steps have content. Fix next gap.`
+              }
+            >
+              {pathDoneCount}/7
+            </button>
+          ) : (
             <span className="journey-tools-pill" role="status" aria-live="polite">
               Tools · {toolsLabelForView(activeView)}
             </span>
@@ -2821,8 +2847,21 @@ function App() {
       </nav>
 
       <main className="main" id="main-content" tabIndex={-1} data-nav-dir={navDir}>
-        {/* Gap strip removed from default chrome (Tech-Studio: one path rail only).
-            Recovery via keyboard G + path Continue on each step. */}
+        {journeyActive && activeView !== 'review' && activeView !== 'finish' && (
+          <JourneyGapStrip
+            locale={locale}
+            thisStepFilled={thisStepFilled}
+            pathNextGap={pathNextGap}
+            leaveBehindThin={leaveBehindThin}
+            activeView={activeView}
+            getNextJourney={getNextJourney}
+            pathLabel={pathLabel}
+            i18nT={i18nT}
+            tFormat={tFormat}
+            goToNextProcessGap={goToNextProcessGap}
+            setActiveView={setActiveView}
+          />
+        )}
         {/* ===== HOME (multi-project) — master/detail, not a card grid ===== */}
         {activeView === 'home' && activeProjects.length > 1 && (() => {
           const sorted = [...projectsSummary].sort((a, b) => {
