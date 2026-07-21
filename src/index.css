@@ -15921,6 +15921,136 @@ body:has(.app.deep)::after {
   filter: none !important;
 }
 
+/* Define residual densify — chapter tabs + sticky path */
+.define-chapter-frame {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  margin: 0 0 0.75rem;
+}
+.define-chapter-nav-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto;
+}
+.define-chapter-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 4px !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  min-height: 36px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: none !important;
+  color: var(--ts-ink, #0F172A);
+}
+.define-chapter-nav-btn:not(.is-active) {
+  opacity: 0.55;
+}
+.define-chapter-nav-btn.is-active {
+  opacity: 1;
+  border-color: var(--ts-focus, #2563EB);
+  outline: 1.5px solid var(--ts-focus, #2563EB);
+  outline-offset: 0;
+}
+.define-chapter-nav-btn.is-complete .define-chapter-nav-num {
+  color: var(--ts-ink, #0F172A);
+}
+.define-chapter-nav-num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ts-mute, #94A3B8);
+}
+.define-chapter-nav-count {
+  font-size: 0.7rem;
+  color: var(--ts-mute, #94A3B8);
+  font-weight: 600;
+}
+.define-chapter-total {
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--ts-mute, #94A3B8);
+  border-radius: 4px;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  padding: 0.3rem 0.5rem;
+}
+.define-studio .define-chapter-blurb,
+.define-studio .define-board-anchor,
+.define-studio .define-first-step-chip {
+  display: none !important;
+}
+.define-studio .define-chapter-done-chip {
+  border-radius: 4px;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: none;
+}
+.define-studio .define-fab-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  padding: 0.75rem 0 0.25rem;
+  background: var(--ts-canvas, #F4F5F6);
+  border-top: 1px solid var(--ts-border, #E2E8F0);
+  box-shadow: none;
+}
+.define-studio .define-fab-hint {
+  border: none;
+  background: transparent;
+  color: var(--ts-mute, #94A3B8);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  flex: 1 1 8rem;
+}
+.define-studio .define-fab.btn-primary {
+  border-radius: 4px !important;
+  min-height: 44px;
+  box-shadow: none !important;
+}
+.define-studio .define-fab.is-quiet {
+  opacity: 0.85;
+}
+.define-studio .define-field.is-dimmed {
+  opacity: 0.25;
+  filter: blur(2px);
+  pointer-events: none;
+}
+.define-studio .define-field.is-focused {
+  opacity: 1 !important;
+  filter: none !important;
+  border-color: var(--ts-focus, #2563EB) !important;
+  border-width: 1.5px;
+  border-radius: 4px;
+  box-shadow: none !important;
+}
+.define-studio .define-input:focus {
+  border-color: var(--ts-focus, #2563EB) !important;
+  border-width: 1.5px;
+  outline: none;
+  box-shadow: none;
+}
+
 .define-field-tip,
 .define-field-tip-static,
 .define-workbook-kicker,

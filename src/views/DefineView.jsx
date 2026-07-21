@@ -20,10 +20,9 @@ import { getDetectiveProgress } from '../lib/detectiveBrief'
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 const DefineMoodCanvas = lazy(() => import('./DefineMoodCanvas'))
 
-/** Quiet chapter switcher — framed steps, desk tool not a game HUD */
+/** Compact chapter tabs — 4px slates, no progress essay */
 function DefineChapterNav({ progress, openChapter, onSelectChapter }) {
   const { chapters = [], filledCount = 0, fieldTotal = 0 } = progress || {}
-  const activeCh = chapters.find((c) => c.id === openChapter) || chapters[0]
 
   return (
     <nav className="define-chapter-frame" aria-label="Brief chapters">
@@ -55,15 +54,9 @@ function DefineChapterNav({ progress, openChapter, onSelectChapter }) {
           )
         })}
       </ol>
-      {activeCh && (
-        <p className="define-chapter-frame-now" role="status">
-          <span className="define-chapter-frame-now-title">{activeCh.title}</span>
-          <span className="define-chapter-frame-now-meta">
-            {activeCh.done}/{activeCh.total}
-            {` · ${filledCount}/${fieldTotal}`}
-          </span>
-        </p>
-      )}
+      <span className="define-chapter-total" role="status">
+        {filledCount}/{fieldTotal}
+      </span>
     </nav>
   )
 }
@@ -73,7 +66,6 @@ export default function DefineView(props) {
     locale: localeProp = 'en',
     navDir = 'none',
     activeProject = null,
-    nextTask = null,
     deskMood = [],
     deskTasks = [],
     projectPalette = [],
@@ -165,29 +157,9 @@ export default function DefineView(props) {
         onSelectChapter={setOpenChapter}
       />
 
-      {nextTask && (
-        <div className="define-first-step-chip" role="status">
-          <p className="panel-hint" style={{ margin: 0 }}>
-            {i18nT(locale, 'ui.firstStepWaiting')}{' '}
-            <strong>
-              {String(nextTask.title).slice(0, 64)}
-              {String(nextTask.title).length > 64 ? '…' : ''}
-            </strong>
-          </p>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => setActiveView('flow')}
-          >
-            {i18nT(locale, 'ui.openSketchStep') || 'Open Sketch'}
-          </button>
-        </div>
-      )}
-
       <div
         className="define-split"
         data-define-layout="form-board"
-        title="Brief and mood board stay side by side"
       >
         <div className="define-split-form" aria-label="Brief questions">
           <Suspense
@@ -214,10 +186,6 @@ export default function DefineView(props) {
               })}
             />
           </Suspense>
-
-          <a className="define-board-anchor" href="#define-mood-board">
-            Mood board
-          </a>
 
           <details className="define-secondary define-admin">
             <summary>Tools</summary>

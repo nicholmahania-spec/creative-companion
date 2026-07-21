@@ -11,15 +11,6 @@ import {
 
 export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 
-/** "a" / "a and b" / "a, b, and c" */
-function joinWithAnd(items) {
-  const list = items.filter(Boolean)
-  if (list.length === 0) return ''
-  if (list.length === 1) return list[0]
-  if (list.length === 2) return `${list[0]} and ${list[1]}`
-  return `${list.slice(0, -1).join(', ')}, and ${list[list.length - 1]}`
-}
-
 function FieldIcon({ name }) {
   const common = {
     width: 18,
@@ -238,10 +229,11 @@ export default function DetectiveSheet({
                 <span className="define-chapter-badge">{ch.num}</span>
                 <div>
                   <h3 className="define-chapter-title">{ch.title}</h3>
-                  <p className="define-chapter-blurb">{ch.blurb}</p>
                 </div>
                 {st?.complete && (
-                  <span className="define-chapter-done-chip">Chapter clear</span>
+                  <span className="define-chapter-done-chip" aria-label="Complete">
+                    ✓
+                  </span>
                 )}
               </header>
 
@@ -274,7 +266,7 @@ export default function DetectiveSheet({
                           {f.label}
                           {f.required && (
                             <span className="define-required" title="Needed">
-                              · need
+                              *
                             </span>
                           )}
                         </label>
@@ -390,73 +382,32 @@ export default function DetectiveSheet({
                 )}
               </div>
 
-              <footer className="define-chapter-foot">
-                {ch.id !== 'core' && (
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => {
-                      const idx = DETECTIVE_CHAPTERS.findIndex((c) => c.id === ch.id)
-                      if (idx > 0) setOpenChapter(DETECTIVE_CHAPTERS[idx - 1].id)
-                    }}
-                  >
-                    Back
-                  </button>
-                )}
-                <div className="define-chapter-foot-spacer" />
-                {ch.id !== 'constraints' ? (
-                  <button
-                    type="button"
-                    className="btn btn-secondary define-chapter-next"
-                    onClick={() => {
-                      const idx = DETECTIVE_CHAPTERS.findIndex((c) => c.id === ch.id)
-                      if (idx < DETECTIVE_CHAPTERS.length - 1) {
-                        setOpenChapter(DETECTIVE_CHAPTERS[idx + 1].id)
-                      }
-                    }}
-                  >
-                    Next
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      const r = applyDetectiveToBrief?.()
-                      if (r?.ok) flashToast?.('Brief filled')
-                      else flashToast?.(r?.error || 'Add a few answers first')
-                    }}
-                  >
-                    Fill brief
-                  </button>
-                )}
-              </footer>
             </article>
           )
         })}
       </div>
 
       <div
-        className={`define-fab-bar${requiredReady ? ' is-ready' : ''}`}
+        className={`define-fab-bar path-continue-row${requiredReady ? ' is-ready' : ''}`}
         role="region"
         aria-label="Continue"
       >
-        {!requiredReady && (
+        {!requiredReady && missingRequiredLabels.length > 0 && (
           <button
             type="button"
             className="define-fab-hint"
             onClick={openNextIncomplete}
           >
-            Missing: {joinWithAnd(missingRequiredLabels)}
+            Need · {missingRequiredLabels.slice(0, 3).join(' · ')}
           </button>
         )}
         <button
           type="button"
-          className={`define-fab btn${requiredReady ? ' is-ready' : ' is-quiet'}`}
+          className={`define-fab btn btn-primary work-path-next${requiredReady ? ' is-ready' : ' is-quiet'}`}
           onClick={() => {
             if (!requiredReady) {
               openNextIncomplete()
-              flashToast?.('Add the “need” fields in each chapter first')
+              flashToast?.('Need * fields first')
               return
             }
             applyDetectiveToBrief?.()

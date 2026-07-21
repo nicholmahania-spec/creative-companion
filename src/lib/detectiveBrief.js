@@ -13,7 +13,7 @@ export const DETECTIVE_CHAPTERS = [
     fields: [
       {
         id: 'goal',
-        label: 'One-sentence goal',
+        label: 'Goal',
         tip: 'One outcome that matters.',
         placeholder: 'One clear goal',
         area: true,
@@ -22,16 +22,16 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'audience',
-        label: 'Who is this for?',
+        label: 'Who',
         tip: 'Not “everyone.”',
-        placeholder: 'Who it\'s for',
+        placeholder: 'Who it’s for',
         area: false,
         icon: 'people',
         required: true,
       },
       {
         id: 'feel',
-        label: 'What should they feel or do?',
+        label: 'Feel',
         tip: '3 words max.',
         placeholder: 'Feeling',
         area: true,
@@ -49,7 +49,7 @@ export const DETECTIVE_CHAPTERS = [
     fields: [
       {
         id: 'brandWords',
-        label: 'Brand words (3–5)',
+        label: 'Words',
         tip: '3–5 adjectives.',
         placeholder: '3–5 words',
         area: false,
@@ -58,7 +58,7 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'mustHaves',
-        label: 'Must-haves',
+        label: 'Must',
         tip: 'Non-negotiables.',
         placeholder: 'Must include',
         area: true,
@@ -67,7 +67,7 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'niceToHaves',
-        label: 'Nice-to-haves',
+        label: 'Nice',
         tip: 'Optional extras.',
         placeholder: 'Nice to have',
         area: true,
@@ -76,7 +76,7 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'format',
-        label: 'Format / size',
+        label: 'Format',
         tip: 'PDF, print, social…',
         placeholder: 'Format + size',
         area: false,
@@ -94,7 +94,7 @@ export const DETECTIVE_CHAPTERS = [
     fields: [
       {
         id: 'avoid',
-        label: 'What to avoid',
+        label: 'Avoid',
         tip: 'Hard nos.',
         placeholder: 'What to avoid',
         area: true,
@@ -103,7 +103,7 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'deliverables',
-        label: 'Deliverables — what ships',
+        label: 'Ships',
         tip: 'What ships.',
         placeholder: 'Final files',
         area: true,
@@ -112,7 +112,7 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'technical',
-        label: 'Technical / production constraints',
+        label: 'Specs',
         tip: 'Print / file limits.',
         placeholder: 'Specs',
         area: true,

@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v18)
- * v17: Deliver ship · v18: Research ADHD board densify
+/* Creative Companion — offline shell + asset cache (v19)
+ * v18: Research densify · v19: Define residual ADHD pass
  */
-const CACHE = 'cc-shell-v18'
+const CACHE = 'cc-shell-v19'
 const PRECACHE = [
   './',
   './index.html',
