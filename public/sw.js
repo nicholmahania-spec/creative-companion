@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v16)
- * v15: Design 55/45 · v16: Review ADHD notes-first rewrite
+/* Creative Companion — offline shell + asset cache (v17)
+ * v16: Review notes-first · v17: Deliver ADHD ship rewrite
  */
-const CACHE = 'cc-shell-v16'
+const CACHE = 'cc-shell-v17'
 const PRECACHE = [
   './',
   './index.html',
