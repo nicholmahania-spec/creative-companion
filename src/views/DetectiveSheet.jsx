@@ -442,12 +442,12 @@ export default function DetectiveSheet({
             className="define-fab-hint"
             onClick={openNextIncomplete}
           >
-            Finish need fields to unlock the glow
+            Still need goal, audience, and brand words
           </button>
         )}
         <button
           type="button"
-          className={`define-fab btn${requiredReady ? ' is-glow' : ''}`}
+          className={`define-fab btn${requiredReady ? ' is-ready' : ' is-quiet'}`}
           onClick={() => {
             if (!requiredReady) {
               openNextIncomplete()

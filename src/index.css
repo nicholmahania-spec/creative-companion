@@ -14616,3 +14616,215 @@ body:has(.app.deep)::after {
     animation: none !important;
   }
 }
+
+/* ============================================================
+   De-gamify Define + path chrome — calm desk, not a HUD
+   ============================================================ */
+
+/* Hide legacy dopamine timeline styles if any remain in cache */
+.define-dopamine-timeline,
+.define-dopamine-track,
+.define-dopamine-fill,
+.define-dopamine-glow,
+.define-dopamine-burst,
+.define-dopamine-pct {
+  display: none !important;
+}
+
+/* Quiet chapter nav */
+.define-chapter-nav {
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 1rem 1rem;
+  border-radius: 1.15rem;
+  background: var(--define-card, #1a1a1e);
+  border: 1px solid var(--define-border, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  color: var(--define-ink, #f4f4f5);
+}
+
+.define-chapter-nav-meta {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--define-muted, rgba(244, 244, 245, 0.55));
+  font-variant-numeric: tabular-nums;
+}
+
+.define-chapter-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.define-chapter-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.65rem 0.7rem;
+  border-radius: 0.85rem;
+  border: 1px solid transparent;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--define-muted, rgba(244, 244, 245, 0.55));
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.define-chapter-nav-btn:hover {
+  color: var(--define-ink, #f4f4f5);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.define-chapter-nav-btn.is-active {
+  color: var(--define-ink, #f4f4f5);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.define-chapter-nav-btn.is-complete .define-chapter-nav-num {
+  background: color-mix(in srgb, var(--accent-growth, #2dd4bf) 28%, transparent);
+  color: var(--accent-growth, #2dd4bf);
+}
+
+.define-chapter-nav-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 750;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+}
+
+.define-chapter-nav-btn.is-active .define-chapter-nav-num {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--define-ink, #f4f4f5);
+}
+
+.define-chapter-nav-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: inherit;
+}
+
+.define-chapter-nav-count {
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .define-chapter-nav-list {
+    grid-template-columns: 1fr;
+  }
+  .define-chapter-nav-btn {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .define-chapter-nav-count {
+    margin-left: auto;
+  }
+}
+
+/* Continue CTA: solid desk button, not a pulsing power-up */
+.define-fab-bar {
+  border-color: var(--define-border, rgba(255, 255, 255, 0.08)) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  animation: none !important;
+}
+
+.define-fab-bar.is-ready {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+
+.define-fab {
+  animation: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+.define-fab.is-quiet {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--define-muted, rgba(244, 244, 245, 0.55)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.define-fab.is-ready,
+.define-fab.is-glow {
+  background: var(--text-primary, #f1f5f9) !important;
+  color: #0f172a !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+.define-fab.is-ready:hover,
+.define-fab.is-glow:hover {
+  filter: none !important;
+  transform: none !important;
+  opacity: 0.92;
+}
+
+/* Kill pulse / burst keyframes if still referenced */
+@keyframes defineFabPulse {
+  from, to { opacity: 1; }
+}
+@keyframes defineNodeBurst {
+  from, to { transform: none; }
+}
+@keyframes defineBurstRing {
+  from, to { opacity: 0; }
+}
+
+/* Path journey: no scale-pop "level select" feel */
+.journey-bar-flow .journey-step.is-active {
+  transform: none !important;
+  box-shadow: var(--shadow-1) !important;
+}
+
+.journey-bar-flow .journey-step.is-active .journey-node {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.progress-ring-fill {
+  filter: none !important;
+}
+
+.journey-progress-pill.is-partial .progress-ring-fill {
+  filter: none !important;
+}
+
+/* Soften studio eyebrow glow */
+.define-studio-eyebrow {
+  text-shadow: none !important;
+}
+
+.define-chapter-badge {
+  text-shadow: none !important;
+}
+
+.define-field.is-focused,
+.define-meta-field.is-focused {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--dopamine, #22d3ee) 40%, transparent) !important;
+  transform: none !important;
+}
+
+.define-mood-empty-icon {
+  text-shadow: none !important;
+}

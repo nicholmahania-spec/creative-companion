@@ -1,8 +1,8 @@
 /**
- * Define — split-screen studio: brief form (60%) + live mood board (40%).
- * Dopamine progress timeline reacts as fields fill in real time.
+ * Define — split-screen studio: brief form (60%) + mood board (40%).
+ * Calm chapter nav — no XP, bars, or reward effects.
  */
-import { Suspense, lazy, useState, useEffect, useRef, useMemo } from 'react'
+import { Suspense, lazy, useState, useMemo } from 'react'
 import useAppStore from '../store/useAppStore'
 import {
   normalizeLocale,
@@ -15,75 +15,44 @@ import { getDetectiveProgress } from '../lib/detectiveBrief'
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 const DefineMoodCanvas = lazy(() => import('./DefineMoodCanvas'))
 
-function DopamineTimeline({ progress, openChapter, onSelectChapter, burstId }) {
-  const { chapters = [], pct = 0, filledCount = 0, fieldTotal = 0 } = progress || {}
+/** Quiet chapter switcher — desk tool, not a game HUD */
+function DefineChapterNav({ progress, openChapter, onSelectChapter }) {
+  const { chapters = [], filledCount = 0, fieldTotal = 0 } = progress || {}
 
   return (
-    <div
-      className={`define-dopamine-timeline${burstId ? ' is-bursting' : ''}`}
-      role="navigation"
-      aria-label="Brief progress timeline"
-    >
-      <div className="define-dopamine-top">
-        <div>
-          <p className="define-dopamine-kicker">Define progress</p>
-          <p className="define-dopamine-score">
-            <span className="define-dopamine-pct">{pct}%</span>
-            <span className="define-dopamine-frac">
-              {filledCount} / {fieldTotal} fields
-            </span>
-          </p>
-        </div>
-        <p className="define-dopamine-hint">
-          Fill notes on the left — the bar answers in real time.
-        </p>
-      </div>
-
-      <div className="define-dopamine-track-wrap">
-        <div className="define-dopamine-track" aria-hidden="true">
-          <div
-            className="define-dopamine-fill"
-            style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
-          />
-          <div className="define-dopamine-glow" style={{ left: `${pct}%` }} />
-        </div>
-
-        <ol className="define-dopamine-nodes">
-          {chapters.map((ch, i) => {
-            const active = openChapter === ch.id
-            const partial = ch.done > 0 && !ch.complete
-            return (
-              <li key={ch.id} className="define-dopamine-node-wrap">
-                <button
-                  type="button"
-                  className={`define-dopamine-node${active ? ' is-active' : ''}${
-                    ch.complete ? ' is-complete' : ''
-                  }${partial ? ' is-partial' : ''}${
-                    burstId === ch.id ? ' is-burst' : ''
-                  }`}
-                  onClick={() => onSelectChapter?.(ch.id)}
-                  aria-current={active ? 'step' : undefined}
-                  aria-label={`${ch.title}: ${ch.done} of ${ch.total} filled${
-                    ch.complete ? ', complete' : ''
-                  }`}
-                >
-                  <span className="define-dopamine-node-core" aria-hidden="true">
-                    {ch.complete ? '✓' : ch.num || String(i + 1).padStart(2, '0')}
-                  </span>
-                  {ch.complete && (
-                    <span className="define-dopamine-burst" aria-hidden="true" />
-                  )}
-                </button>
-                <span className="define-dopamine-node-label">{ch.title}</span>
-                <span className="define-dopamine-node-meta">
+    <nav className="define-chapter-nav" aria-label="Brief chapters">
+      <p className="define-chapter-nav-meta">
+        {filledCount} of {fieldTotal} notes filled
+      </p>
+      <ol className="define-chapter-nav-list">
+        {chapters.map((ch) => {
+          const active = openChapter === ch.id
+          return (
+            <li key={ch.id}>
+              <button
+                type="button"
+                className={`define-chapter-nav-btn${active ? ' is-active' : ''}${
+                  ch.complete ? ' is-complete' : ''
+                }`}
+                onClick={() => onSelectChapter?.(ch.id)}
+                aria-current={active ? 'step' : undefined}
+                aria-label={`${ch.title}: ${ch.done} of ${ch.total} filled${
+                  ch.complete ? ', complete' : ''
+                }`}
+              >
+                <span className="define-chapter-nav-num" aria-hidden="true">
+                  {ch.complete ? '✓' : ch.num}
+                </span>
+                <span className="define-chapter-nav-label">{ch.title}</span>
+                <span className="define-chapter-nav-count">
                   {ch.done}/{ch.total}
                 </span>
-              </li>
-            )
-          })}
-        </ol>
-      </div>
-    </div>
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+    </nav>
   )
 }
 
@@ -125,29 +94,11 @@ export default function DefineView(props) {
 
   const [metaFocus, setMetaFocus] = useState(null)
   const [openChapter, setOpenChapter] = useState('core')
-  const [burstId, setBurstId] = useState(null)
-  const prevComplete = useRef({})
 
   const progress = useMemo(
     () => getDetectiveProgress(activeProject?.detective),
     [activeProject?.detective]
   )
-
-  // Chapter complete → burst reward
-  useEffect(() => {
-    for (const ch of progress.chapters || []) {
-      const was = prevComplete.current[ch.id]
-      if (ch.complete && was === false) {
-        setBurstId(ch.id)
-        flashMicro?.(`${ch.title} cleared`)
-        const t = window.setTimeout(() => setBurstId(null), 1400)
-        prevComplete.current[ch.id] = true
-        return () => window.clearTimeout(t)
-      }
-      prevComplete.current[ch.id] = ch.complete
-    }
-    return undefined
-  }, [progress.chapters, flashMicro])
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
   const archivedProjects = (projects || []).filter((p) => p.archived)
@@ -175,17 +126,16 @@ export default function DefineView(props) {
             {i18nT(locale, 'path.define')}
           </h1>
           <p className="page-sub define-dashboard-sub">
-            Write the brief on the left. Pin inspiration on the right. One chapter
+            Write the brief on the left. Pin references on the right. One chapter
             at a time.
           </p>
         </div>
       </header>
 
-      <DopamineTimeline
+      <DefineChapterNav
         progress={progress}
         openChapter={openChapter}
         onSelectChapter={setOpenChapter}
-        burstId={burstId}
       />
 
       {nextTask && (

@@ -252,8 +252,8 @@ export default function SettingsView(props) {
             </div>
             <div className="settings-row">
               <div>
-                <strong>Progress bar (XP)</strong>
-                <span>Optional level / quest strip under the path</span>
+                <strong>Optional progress strip</strong>
+                <span>Quiet fill meter under the path — off by default</span>
               </div>
               <button
                 type="button"
