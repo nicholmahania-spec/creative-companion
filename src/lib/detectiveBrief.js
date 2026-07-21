@@ -8,13 +8,13 @@ export const DETECTIVE_CHAPTERS = [
     id: 'core',
     num: '01',
     title: 'Core',
-    blurb: 'Who is this for, and what one outcome matters?',
+    blurb: '',
     accent: 'var(--define-ch-1)',
     fields: [
       {
         id: 'goal',
         label: 'One-sentence goal',
-        tip: 'e.g. Make a friendly booklet that helps families feel supported.',
+        tip: 'One outcome that matters.',
         placeholder: 'One clear goal',
         area: true,
         icon: 'target',
@@ -23,7 +23,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'audience',
         label: 'Who is this for?',
-        tip: 'e.g. Busy parents new to the program — not “everyone.”',
+        tip: 'Not “everyone.”',
         placeholder: 'Who it\'s for',
         area: false,
         icon: 'people',
@@ -32,8 +32,8 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'feel',
         label: 'What should they feel or do?',
-        tip: 'e.g. Hopeful, safe, clear next step.',
-        placeholder: 'Feeling, in 3 words',
+        tip: '3 words max.',
+        placeholder: 'Feeling',
         area: true,
         icon: 'heart',
         required: false,
@@ -44,13 +44,13 @@ export const DETECTIVE_CHAPTERS = [
     id: 'identity',
     num: '02',
     title: 'Identity',
-    blurb: 'Words, must-haves, and the shape of the work.',
+    blurb: '',
     accent: 'var(--define-ch-2)',
     fields: [
       {
         id: 'brandWords',
         label: 'Brand words (3–5)',
-        tip: 'e.g. Warm, trustworthy, unhurried.',
+        tip: '3–5 adjectives.',
         placeholder: '3–5 words',
         area: false,
         icon: 'spark',
@@ -59,7 +59,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'mustHaves',
         label: 'Must-haves',
-        tip: 'e.g. Logo, contact, 4 pages max.',
+        tip: 'Non-negotiables.',
         placeholder: 'Must include',
         area: true,
         icon: 'check',
@@ -68,7 +68,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'niceToHaves',
         label: 'Nice-to-haves',
-        tip: 'e.g. Photo of real families, illustration accents.',
+        tip: 'Optional extras.',
         placeholder: 'Nice to have',
         area: true,
         icon: 'star',
@@ -77,7 +77,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'format',
         label: 'Format / size',
-        tip: 'e.g. Letter PDF + Instagram square.',
+        tip: 'PDF, print, social…',
         placeholder: 'Format + size',
         area: false,
         icon: 'frame',
@@ -89,13 +89,13 @@ export const DETECTIVE_CHAPTERS = [
     id: 'constraints',
     num: '03',
     title: 'Constraints',
-    blurb: 'What ships, what to avoid, and production limits.',
+    blurb: '',
     accent: 'var(--define-ch-3)',
     fields: [
       {
         id: 'avoid',
         label: 'What to avoid',
-        tip: 'e.g. No literal icons — abstract motion only.',
+        tip: 'Hard nos.',
         placeholder: 'What to avoid',
         area: true,
         icon: 'block',
@@ -104,7 +104,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'deliverables',
         label: 'Deliverables — what ships',
-        tip: 'e.g. Master logo, style guide, 4-page catalog, website hero.',
+        tip: 'What ships.',
         placeholder: 'Final files',
         area: true,
         icon: 'box',
@@ -113,7 +113,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'technical',
         label: 'Technical / production constraints',
-        tip: 'e.g. Sharp at 32px, laser-engravable, .AI/.EPS/.SVG with transparent bg.',
+        tip: 'Print / file limits.',
         placeholder: 'Specs',
         area: true,
         icon: 'gear',

@@ -173,7 +173,6 @@ export default function InsightsView(props) {
         </div>
       </section>
       <section className="panel brand-section">
-        <div className="brand-section-label">After</div>
         <div className="timer-after-actions path-continue-row">
           {fromResearch ? (
             <>

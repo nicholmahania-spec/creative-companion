@@ -225,7 +225,7 @@ export default function SketchView(props) {
                     onChange={(e) =>
                       updateTaskWhy(nextTask.id, e.target.value)
                     }
-                    placeholder="e.g. Quiet hierarchy matches the detective goal"
+                    placeholder="Why this step"
                     aria-label="Why this draft fits the goal"
                   />
                   <div className="step-focus-actions">
@@ -514,12 +514,8 @@ export default function SketchView(props) {
                       : 'Hide'}
                 </span>
               </button>
-              {queueTasks.length === 0 ? (
-                <p className="empty-state-body" style={{ margin: '0.65rem 0 0' }}>
-                  Nothing waiting. Completing the current step promotes the next
-                  entry automatically.
-                </p>
-              ) : (queueCollapsed ? queueOpen : true) ? (
+              {queueTasks.length > 0 &&
+                (queueCollapsed ? queueOpen : true) && (
                 <div className="desk-list" style={{ marginTop: '0.75rem' }}>
                   {queueTasks.map((task, i) => (
                     <div key={task.id} className="task-row">
@@ -546,10 +542,6 @@ export default function SketchView(props) {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="empty-state-body" style={{ margin: '0.65rem 0 0' }}>
-                  Queue hidden so you only see the current step. Show when ready.
-                </p>
               )}
             </section>
 
@@ -568,11 +560,7 @@ export default function SketchView(props) {
                   {doneTasks.length === 0 ? '' : doneOpen ? 'Hide' : 'Show'}
                 </span>
               </button>
-              {doneTasks.length === 0 ? (
-                <p className="empty-state-body" style={{ margin: '0.65rem 0 0' }}>
-                  Finished steps land here — proof you moved.
-                </p>
-              ) : doneOpen ? (
+              {doneTasks.length > 0 && doneOpen ? (
                 <ul className="done-list" style={{ marginTop: '0.75rem' }}>
                   {doneTasks.map((t) => (
                     <li key={t.id}>

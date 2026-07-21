@@ -650,9 +650,7 @@ export default function DesignView({
                     Reset default
                   </button>
                 </div>
-                <p className="panel-hint design-lect" style={{ marginTop: '0.45rem', marginBottom: 0 }}>
-                  From pins {starredPinCount ? '(★ first)' : ''} · open a swatch for tints
-                </p>
+
               </div>
 
               <div className="palette-roles-editor" style={{ marginTop: '1rem' }}>
@@ -666,7 +664,7 @@ export default function DesignView({
                     title="Nudge text / accent / quiet / cover until AA targets pass"
                     onClick={() => applyAaRoleFix()}
                   >
-                    Fix roles for AA
+                    Fix AA
                   </button>
                 </div>
                 <div className="system-role-assign" style={{ marginTop: '0.45rem' }}>
@@ -701,7 +699,7 @@ export default function DesignView({
                       flashMicro(`Suggested ${brandRoleAssign} → ${suggestion}`)
                     }}
                   >
-                    ✨ Suggest a {brandRoleAssign} color
+                    Suggest
                   </button>
                 )}
                 <div className="direction-palette is-clickable" style={{ marginTop: '0.55rem' }}>
@@ -749,7 +747,7 @@ export default function DesignView({
                             [brandRoleAssign]: e.target.value,
                           })
                         }
-                        placeholder="e.g. Deep teal reads calm and trustworthy for the cover."
+                        placeholder="Why this role"
                       />
                     </div>
                   )
@@ -762,7 +760,7 @@ export default function DesignView({
                     Contrast checker
                   </p>
                   <span className="panel-hint design-lect" style={{ margin: 0 }}>
-                    AA body ≥ 4.5:1
+                    AA
                   </span>
                 </div>
                 <label className="field-label" htmlFor="check-bg">
@@ -788,14 +786,12 @@ export default function DesignView({
                     className="palette-check-preview-text"
                     style={{ color: bestTextOn(checkBg) }}
                   >
-                    Sample text on this background
+                    Aa
                   </p>
                 </div>
                 <ul className="palette-check-list">
                   {contrastPairs.length === 0 ? (
-                    <li className="panel-hint design-lect">
-                      Need 2+ colors
-                    </li>
+                    <li className="panel-hint design-lect">2+ colors</li>
                   ) : (
                     contrastPairs.map((pair) => (
                       <li
@@ -828,10 +824,10 @@ export default function DesignView({
                         </span>
                         <span className="palette-check-detail">
                           {pair.grade.aaNormal
-                            ? 'Body text OK'
+                            ? 'OK'
                             : pair.grade.aaLarge
-                              ? 'Large text only'
-                              : 'Too low for text'}
+                              ? 'Large'
+                              : 'Fail'}
                         </span>
                         {!pair.grade.aaNormal && (
                           <button
@@ -863,9 +859,7 @@ export default function DesignView({
                   {showPassPairs && (
                     <ul className="palette-pass-list">
                       {passPairs.length === 0 ? (
-                        <li className="panel-hint design-lect">
-                          No AA pairs yet — Fix AA
-                        </li>
+                        <li className="panel-hint design-lect">None</li>
                       ) : (
                         passPairs.map((p) => (
                           <li key={`${p.fg}-${p.bg}`} className="palette-pass-row">
@@ -945,7 +939,7 @@ export default function DesignView({
                   className="field-input"
                   value={activeProject?.typeWhy || ''}
                   onChange={(e) => updateBrandField('typeWhy', e.target.value)}
-                  placeholder="e.g. Fraunces feels warm and unhurried; Jakarta keeps body copy clear."
+                  placeholder="Why these fonts"
                 />
               </div>
               <div className="brand-type-pair">
@@ -1028,7 +1022,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('messagingPromise', e.target.value)
                   }
-                  placeholder="What we commit to for the customer"
+                  placeholder="Promise"
                 />
               </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
@@ -1043,7 +1037,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('messagingProof', e.target.value)
                   }
-                  placeholder="Evidence, credentials, why believe us"
+                  placeholder="Proof"
                 />
               </div>
               <div className="field-block">
@@ -1058,7 +1052,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('messagingPersonality', e.target.value)
                   }
-                  placeholder="How we sound and feel in three words + a sentence"
+                  placeholder="Personality"
                 />
               </div>
             </section>
@@ -1096,7 +1090,7 @@ export default function DesignView({
                   className="field-input"
                   value={activeProject?.logoDirection || ''}
                   onChange={(e) => setLogoDirection(e.target.value)}
-                  placeholder="e.g. Soft monoline bird mark · no drop shadows"
+                  placeholder="Mark rules"
                 />
               </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
@@ -1111,7 +1105,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('logoClearspace', e.target.value)
                   }
-                  placeholder="e.g. Clearspace = ½ mark height on all sides"
+                  placeholder="Clearspace"
                 />
               </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
@@ -1125,7 +1119,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('logoMinSize', e.target.value)
                   }
-                  placeholder="24px digital · 0.5″ print"
+                  placeholder="Min size"
                 />
               </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
@@ -1236,7 +1230,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('imageryStyle', e.target.value)
                   }
-                  placeholder="e.g. Soft natural light · documentary · warm neutrals"
+                  placeholder="Look"
                 />
               </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
@@ -1251,7 +1245,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('imageryDo', e.target.value)
                   }
-                  placeholder="Real people, hands at work, quiet environments…"
+                  placeholder="Do"
                 />
               </div>
               <div className="field-block">
@@ -1266,7 +1260,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('imageryDont', e.target.value)
                   }
-                  placeholder="Stock handshakes, neon gradients, cluttered backgrounds…"
+                  placeholder="Don't"
                 />
               </div>
             </section>

@@ -16070,7 +16070,14 @@ select:focus,
 .pack-preview-scroll-hint,
 .pack-thin-illu,
 .decision-log-strip,
-.ideate-chosen-line:empty {
+.ideate-chosen-line:empty,
+.board-drop-hint,
+.settings-helper-note,
+.design-lect {
+  display: none !important;
+}
+/* Tips off by default even when hideTips flipped for partials */
+.empty-state-body {
   display: none !important;
 }
 .sketch-decision-line {
