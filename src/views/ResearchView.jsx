@@ -165,8 +165,8 @@ export default function ResearchView({
 
   return (
     <>
-          <div className="studio-view surface-wall view-enter" data-nav-dir={navDir}>
-            <div className="flow-top">
+          <div className="studio-view surface-wall view-enter research-studio" data-nav-dir={navDir}>
+            <div className="flow-top research-studio-top">
               <div>
                 <h1 className="page-title">
                   {i18nT(locale, 'path.research')}
@@ -178,25 +178,13 @@ export default function ResearchView({
                     : ''}
                 </p>
               </div>
-              <span className="panel-count">
-                {deskMood.length} pin{deskMood.length === 1 ? '' : 's'}
-              </span>
-            </div>
-
-            <section className="panel brand-section process-tip-panel">
-              <div className="brand-section-label">
-                Research
-                <InfoReveal>
-                  {(getProcessPhase('research')?.checks || []).join(' · ')}
-                  {getProcessPhase('research')?.prompt
-                    ? ` — ${getProcessPhase('research').prompt}`
-                    : ''}
-                </InfoReveal>
-              </div>
-              <div className="finish-secondary-row">
+              <div className="research-studio-actions">
+                <span className="panel-count">
+                  {deskMood.length} pin{deskMood.length === 1 ? '' : 's'}
+                </span>
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-secondary btn-sm"
                   onClick={() => {
                     if (forcedBreak) {
                       flashToast(i18nT(locale, 'ui.breakLockFirst'))
@@ -214,16 +202,22 @@ export default function ResearchView({
                     flashToast(i18nT(locale, 'ui.researchTimerOn'))
                   }}
                 >
-                  Start Timer
+                  20‑min timer
                 </button>
+                <InfoReveal>
+                  {(getProcessPhase('research')?.checks || []).join(' · ')}
+                  {getProcessPhase('research')?.prompt
+                    ? ` — ${getProcessPhase('research').prompt}`
+                    : ''}
+                </InfoReveal>
               </div>
-            </section>
+            </div>
 
-            {/* Wall first — board is the stage */}
-            <section className="panel brand-section board-wall-panel">
+            {/* Wall is the stage — masonry when pins exist */}
+            <section className="panel brand-section board-wall-panel research-wall">
               <div className="board-wall-head">
                 <div className="brand-section-label" style={{ margin: 0 }}>
-                  Refs · {deskMood.length}
+                  Wall
                 </div>
                 {deskMood.length > 0 && (
                   <span className="panel-hint board-pack-count" style={{ margin: 0 }}>
@@ -235,7 +229,7 @@ export default function ResearchView({
                 )}
               </div>
               <div
-                className={`mood-board${deskMood.length ? ' has-pins' : ''}${
+                className={`mood-board${deskMood.length ? ' has-pins is-masonry' : ''}${
                   deskMood.length === 1 ? ' single-pin' : ''
                 }`}
                 onDragOver={(e) => e.preventDefault()}

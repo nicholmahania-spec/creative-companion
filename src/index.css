@@ -3532,9 +3532,26 @@ h3 {
   color: var(--text-primary);
 }
 
-/* Mood board — asymmetric wall */
+/* Mood board — wall stage; masonry when pins exist */
 .studio-view {
   animation: flowIn 0.45s ease-out;
+}
+
+.research-studio .research-studio-top {
+  align-items: flex-start;
+}
+
+.research-studio-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  justify-content: flex-end;
+}
+
+.research-wall {
+  /* Wall owns the fold — less card chrome around the masonry */
+  padding: 0.85rem 1rem 1rem;
 }
 
 .mood-board {
@@ -3545,21 +3562,93 @@ h3 {
   align-items: start;
 }
 
-.mood-board.has-pins .mood-card.is-hero {
+/* CSS multi-column masonry — uneven pin heights, denser wall, less grid fatigue */
+.mood-board.has-pins.is-masonry {
+  display: block;
+  columns: 3 11.5rem;
+  column-gap: 0.85rem;
+  min-height: 48vh;
+}
+
+.mood-board.has-pins.is-masonry .mood-card {
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 0.85rem;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+
+.mood-board.has-pins.is-masonry .mood-card.is-hero {
+  /* Hero leads the flow without forcing a rigid 2×2 grid hole */
+  grid-column: unset;
+  grid-row: unset;
+}
+
+.mood-board.has-pins.is-masonry .mood-pin-media {
+  height: auto;
+  min-height: 7.5rem;
+  max-height: none;
+}
+
+.mood-board.has-pins.is-masonry .mood-pin-img {
+  width: 100%;
+  height: auto;
+  max-height: 22rem;
+  object-fit: cover;
+  display: block;
+  vertical-align: middle;
+}
+
+.mood-board.has-pins.is-masonry .mood-card.is-hero .mood-pin-media,
+.mood-board.has-pins.is-masonry .mood-card.is-hero .mood-pin-face {
+  min-height: 11rem;
+}
+
+.mood-board.has-pins.is-masonry .mood-pin-face {
+  min-height: 8.5rem;
+}
+
+.mood-board.has-pins.is-masonry .empty-state {
+  column-span: all;
+}
+
+@media (max-width: 900px) {
+  .mood-board.has-pins.is-masonry {
+    columns: 2 9.5rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .mood-board.has-pins.is-masonry {
+    columns: 1;
+  }
+}
+
+.mood-board.has-pins:not(.is-masonry) .mood-card.is-hero {
   grid-column: span 2;
   grid-row: span 2;
 }
 
 .mood-board.single-pin {
+  display: grid;
+  columns: unset;
   grid-template-columns: minmax(280px, 1fr) minmax(200px, 0.55fr);
   gap: 1.25rem;
   min-height: 48vh;
+}
+
+.mood-board.single-pin.is-masonry {
+  display: grid;
+  columns: unset;
 }
 
 .mood-board.single-pin .mood-card.is-hero {
   grid-column: 1;
   grid-row: 1;
   max-width: none;
+  display: block;
+  margin: 0;
 }
 
 .mood-board.single-pin .mood-board-foot {
