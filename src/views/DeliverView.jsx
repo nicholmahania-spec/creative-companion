@@ -9,12 +9,10 @@ import {
   normalizeLocale,
   t as i18nT,
   tFormat,
-  pathLabel,
 } from '../lib/i18n'
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 
-const PathProgressPanel = lazy(() => import('../components/PathProgressPanel'))
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
 
@@ -26,10 +24,7 @@ export default function DeliverView({
   deskTasks = [],
   completedCount = 0,
   projectPalette = [],
-  pathRows = [],
   pathDoneCount = 0,
-  pathMissingLabelsList = [],
-  pathNextGap = null,
   leaveBehindThin = false,
   hidePackWatermark = false,
   setActiveView,
@@ -65,27 +60,6 @@ export default function DeliverView({
                 </p>
               </div>
             </div>
-
-            <Suspense fallback={null}>
-              <PathProgressPanel
-                steps={JOURNEY_STEPS}
-                rows={pathRows}
-                doneN={pathDoneCount}
-                missing={pathMissingLabelsList}
-                nextGap={pathNextGap}
-                showFixCta={false}
-                showMissing={false}
-                onOpenStep={(_view, step) => {
-                  const s =
-                    step ||
-                    JOURNEY_STEPS.find((x) => x.view === _view) ||
-                    pathRows.find((x) => x.view === _view)
-                  if (s) goToProcessStep(s)
-                }}
-                labelForId={(id) => pathLabel(locale, id)}
-                hint="Tap a step chip to fill gaps. Path strip or G for the next empty step — then brand book PDF."
-              />
-            </Suspense>
 
             <section className="panel brand-section finish-hero-panel pack-hero">
               <div className="pack-layout">
@@ -194,7 +168,7 @@ export default function DeliverView({
                       return (
                         <div className="deliver-words-check">
                           <p className="field-label" style={{ margin: '0 0 0.35rem' }}>
-                            Does the final piece deliver on these brand words?
+                            Brand words check
                           </p>
                           {words.map((w) => (
                             <label key={w} className="deliver-word-check-row">
@@ -226,7 +200,7 @@ export default function DeliverView({
                         onChange={(e) =>
                           updateBrandField('handoffNote', e.target.value)
                         }
-                        placeholder="What’s included, how to use the mark, contact for questions…"
+                        placeholder="What's included…"
                       />
                     </div>
                     <div className="field-block" style={{ marginTop: '0.65rem' }}>
@@ -241,11 +215,11 @@ export default function DeliverView({
                         onChange={(e) =>
                           updateBrandField('learnings', e.target.value)
                         }
-                        placeholder="What worked? What felt like me? What to improve next time? (Notes only — not a media library.)"
+                        placeholder="What worked…"
                       />
                     </div>
                     <p className="panel-hint" style={{ margin: '0.35rem 0 0.85rem' }}>
-                      This note marks Deliver done — fill it in before or after downloading.
+                      Marks Deliver done.
                     </p>
                     {thinPackPrompt && (
                       <div
@@ -383,10 +357,6 @@ export default function DeliverView({
                         ))}
                       </ul>
                     </div>
-                    <p className="panel-hint" style={{ marginTop: '0.65rem' }}>
-                      Direction leave-behind &amp; lockups — not a full design
-                      tool or Figma replacement.
-                    </p>
                     <p className="panel-hint" style={{ marginTop: '0.35rem' }}>
                       {i18nT(locale, 'ui.pdfFontHonesty')}
                     </p>
@@ -505,56 +475,9 @@ export default function DeliverView({
                 </button>
               </div>
               <p className="panel-hint" style={{ marginTop: '0.65rem' }}>
-                Log out ends this session. Download a backup first if you need a
-                file on your computer.
+                Backup first.
               </p>
             </details>
-
-            <section className="panel panel-compact pack-path-map">
-              <p className="list-heading">Your path</p>
-              <ol className="finish-map">
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('project')}>
-                    1 Define
-                  </button>
-                  {' — '}goal · brief · who
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('studio')}>
-                    2 Research
-                  </button>
-                  {' — '}refs · star up to 6
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('spark')}>
-                    3 Ideate
-                  </button>
-                  {' — '}many directions
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('flow')}>
-                    4 Sketch
-                  </button>
-                  {' — '}one step at a time
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('brand')}>
-                    5 Design
-                  </button>
-                  {' — '}artboard · voice · type
-                </li>
-                <li>
-                  <button type="button" className="text-link" onClick={() => setActiveView('review')}>
-                    6 Review
-                  </button>
-                  {' — '}critique · readiness
-                </li>
-                <li>
-                  <strong>7 Deliver</strong>
-                  {' — '}you are here · brand book PDF
-                </li>
-              </ol>
-            </section>
           </div>
   )
 }

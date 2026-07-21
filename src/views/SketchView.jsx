@@ -12,6 +12,7 @@ import {
 } from '../lib/i18n'
 import { getProcessPhase } from '../lib/processGuide'
 import { formatShortDate, urgencyLabel } from '../lib/dates'
+import InfoReveal from '../components/InfoReveal'
 import {
   formatDecisionLine,
   latestDecision,
@@ -500,21 +501,19 @@ export default function SketchView(props) {
                 if (!phase) return null
                 return (
                   <div className="process-guide-panel">
-                    <strong>
-                      {phase.label} · {phase.title}
-                    </strong>
-                    <p className="process-guide-prompt">
-                      {nextTask
-                        ? `For “${String(nextTask.title).slice(0, 60)}”: ${
-                            phase.prompt
-                          }`
-                        : phase.prompt}
-                    </p>
+                    <strong>{phase.title}</strong>
                     <ul className="process-guide-checks">
                       {phase.checks.map((c) => (
                         <li key={c}>{c}</li>
                       ))}
                     </ul>
+                    <InfoReveal>
+                      {nextTask
+                        ? `For "${String(nextTask.title).slice(0, 60)}": ${
+                            phase.prompt
+                          }`
+                        : phase.prompt}
+                    </InfoReveal>
                   </div>
                 )
               })()}

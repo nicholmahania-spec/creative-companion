@@ -511,22 +511,18 @@ h3 {
 .panel {
   margin: 0 0 1.35rem;
   padding: 1.35rem 1.4rem 1.45rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border-dim);
-  border-radius: var(--radius);
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  transition:
-    box-shadow var(--transition-slow),
-    border-color var(--transition),
-    transform var(--transition-slow);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  transition: border-color var(--transition);
 }
 
 /* Panels stay calm — interactive cards opt in */
 .panel.is-interactive:hover,
 .panel.step-focus-panel:hover {
-  box-shadow: var(--shadow-2);
+  border-color: var(--border-strong);
+  box-shadow: none;
 }
 
 .panel .mood-board {
@@ -2842,13 +2838,11 @@ h3 {
 }
 
 .btn-primary {
-  /* Quiet solid CTA — neon reserved for next-step only */
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  color: #f8fafc;
-  border: 1px solid rgba(15, 23, 42, 0.5);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 4px 16px rgba(15, 23, 42, 0.18);
+  /* Flat high-contrast dark slate fill — no gradients, no glow */
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  border: 1px solid var(--text-primary);
+  box-shadow: none;
   padding: 0.78rem 1.35rem;
   border-radius: var(--radius-sm);
   white-space: nowrap;
@@ -2857,49 +2851,35 @@ h3 {
 }
 
 .btn-primary:hover {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--accent-soft) 40%, var(--accent-primary)) 0%,
-    var(--accent-deep) 100%
-  );
+  background: var(--dopamine-deep);
+  border-color: var(--dopamine-deep);
   filter: none;
-  box-shadow: var(--shadow-hover);
+  box-shadow: none;
 }
 
 .app.deep .btn-primary {
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
-  color: #070b14;
-  border-color: rgba(248, 250, 252, 0.28);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 4px 20px rgba(0, 0, 0, 0.25);
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  border-color: var(--text-primary);
+  box-shadow: none;
 }
 
-/* Dopamine CTA — only wire to next/active actions */
+/* Primary CTA — flat solid dark slate fill, no glow/gradient */
 .btn-dopamine,
 .step-focus-actions .btn-primary,
 .home-cta,
 .journey-gap-strip-btn:not(.is-quiet):not(.is-ship),
 .path-continue-row .btn-primary,
 .work-path-next.btn-primary {
-  background: linear-gradient(
-    135deg,
-    var(--dopamine-soft) 0%,
-    var(--dopamine) 48%,
-    var(--dopamine-deep) 100%
-  );
-  color: var(--on-dopamine);
-  border: 1px solid color-mix(in srgb, var(--dopamine-soft) 55%, transparent);
-  font-weight: 750;
+  background: var(--dopamine);
+  color: #fff;
+  border: 1px solid var(--dopamine);
+  font-weight: 700;
   letter-spacing: -0.02em;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 0 0 1px color-mix(in srgb, var(--dopamine) 25%, transparent),
-    0 8px 28px var(--dopamine-glow);
+  box-shadow: none;
   transition:
-    transform 0.22s var(--ease-spring),
-    box-shadow 0.25s var(--ease-out),
-    filter 0.2s ease;
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .btn-dopamine:hover,
@@ -2908,13 +2888,11 @@ h3 {
 .journey-gap-strip-btn:not(.is-quiet):not(.is-ship):hover,
 .path-continue-row .btn-primary:hover,
 .work-path-next.btn-primary:hover {
-  background: linear-gradient(135deg, var(--dopamine) 0%, var(--dopamine-deep) 100%);
-  filter: brightness(1.06);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 0 32px var(--dopamine-glow),
-    0 12px 32px var(--dopamine-glow);
+  background: var(--dopamine-deep);
+  border-color: var(--dopamine-deep);
+  filter: none;
+  transform: none;
+  box-shadow: none;
 }
 
 .app.deep .btn-dopamine,
@@ -2923,8 +2901,8 @@ h3 {
 .app.deep .journey-gap-strip-btn:not(.is-quiet):not(.is-ship),
 .app.deep .path-continue-row .btn-primary,
 .app.deep .work-path-next.btn-primary {
-  color: var(--on-dopamine);
-  border-color: color-mix(in srgb, var(--dopamine) 50%, transparent);
+  color: #fff;
+  border-color: var(--dopamine);
 }
 
 .btn-primary:disabled {
@@ -2949,14 +2927,14 @@ h3 {
   border: 1px solid var(--border-strong);
   box-shadow: none;
   padding: 0.72rem 1.35rem;
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
 }
 
 .btn-outline:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-  background: var(--accent-glow);
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  background: transparent;
   box-shadow: none;
   filter: none;
 }
@@ -2966,24 +2944,27 @@ h3 {
   color: var(--text-secondary);
   padding: 0.5rem 0.9rem;
   font-weight: 500;
+  border-radius: var(--radius-sm);
 }
 
 .btn-ghost:hover {
-  background: var(--accent-glow);
-  color: var(--accent-primary);
+  background: var(--bg-muted);
+  color: var(--text-primary);
   box-shadow: none;
   transform: none;
 }
 
+/* Secondary — transparent fill, simple 1px slate border */
 .btn-secondary {
-  background: var(--bg-muted);
+  background: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
 }
 
 .btn-secondary:hover {
-  border-color: var(--border-strong);
-  background: color-mix(in srgb, var(--bg-muted) 70%, var(--accent-glow));
+  border-color: var(--text-primary);
+  background: var(--bg-muted);
 }
 
 /* Capture — standard form control */
@@ -8899,10 +8880,66 @@ html[data-reduce-motion='true'] *::after {
   font-weight: 650;
   max-width: 9.5rem;
   padding: 0.35rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
   background: var(--bg-elevated);
   color: var(--text-primary);
+}
+
+/* Single source of truth for step progress — lives in the header, not the workspace */
+.header-progress-badge {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.header-progress-badge:hover {
+  border-color: var(--dopamine);
+  color: var(--dopamine);
+}
+
+/* Long-form guidance stays hidden until asked for */
+.info-reveal {
+  display: inline-block;
+  margin: 0 0 0.5rem;
+}
+
+.info-reveal-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.info-reveal-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.info-reveal-toggle:hover {
+  border-color: var(--dopamine);
+  color: var(--dopamine);
+}
+
+.info-reveal-body {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
 }
 
 .work-context-line {
@@ -9143,7 +9180,7 @@ html[data-reduce-motion='true'] *::after {
 .journey-tools-pill {
   margin-left: 0.35rem;
   padding: 0.35rem 0.65rem;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   font-size: 0.72rem;
   font-weight: 750;
   background: var(--bg-muted);
@@ -10380,6 +10417,34 @@ html[data-reduce-motion='true'] *::after {
   margin-top: 0.5rem;
 }
 
+/* Asymmetric 60/40 split — live structure left, actions/checklists right */
+.review-split {
+  display: grid;
+  grid-template-columns: 60fr 40fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.review-split-left {
+  position: sticky;
+  top: 1rem;
+}
+
+.review-split-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (max-width: 860px) {
+  .review-split {
+    grid-template-columns: 1fr;
+  }
+  .review-split-left {
+    position: static;
+  }
+}
+
 .deliver-progress-list {
   list-style: none;
   margin: 0.5rem 0 0.65rem;
@@ -11044,19 +11109,19 @@ html[data-reduce-motion='true'] *::after {
 
 /* ——— Beautify v1.3.0 ——— */
 .btn-primary {
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 1px 2px rgba(12, 10, 9, 0.12);
+  box-shadow: none;
   letter-spacing: -0.01em;
 }
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 4px 14px rgba(12, 10, 9, 0.16);
-  transform: translateY(-0.5px);
+  box-shadow: none;
+  transform: none;
 }
 .btn-primary:active:not(:disabled) {
-  transform: translateY(0.5px);
-  box-shadow: 0 1px 2px rgba(12, 10, 9, 0.1);
+  transform: none;
+  box-shadow: none;
 }
 .btn-secondary {
-  box-shadow: var(--shadow-1);
+  box-shadow: none;
 }
 .main {
   max-width: 1120px;
@@ -12618,20 +12683,17 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   opacity: 0.85;
 }
 
-/* ——— Organic panels & controls (shape only) ——— */
+/* ——— Panels: sharp, flat corners ——— */
 .panel {
-  border-radius: var(--radius-organic);
+  border-radius: var(--radius-sm);
 }
 
 .btn,
 .btn-primary,
 .btn-outline,
-.btn-secondary {
-  border-radius: var(--radius-organic);
-}
-
+.btn-secondary,
 .btn-ghost {
-  border-radius: 0.85rem;
+  border-radius: var(--radius-sm);
 }
 
 .capture-row input {
@@ -12639,7 +12701,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 }
 
 .capture-row .btn-primary {
-  border-radius: var(--radius-organic);
+  border-radius: var(--radius-sm);
 }
 
 .more-menu {
@@ -13113,24 +13175,22 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 }
 
 .btn-secondary {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border-dim);
-  backdrop-filter: blur(10px);
+  background: transparent;
+  border: 1px solid var(--border-strong);
   color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-  border-color: color-mix(in srgb, var(--dopamine) 35%, var(--border-strong));
-  box-shadow: 0 0 20px color-mix(in srgb, var(--dopamine) 12%, transparent);
+  border-color: var(--text-primary);
+  box-shadow: none;
 }
 
 .header-more,
 .account-chip,
 .mate-chip {
-  background: var(--glass-bg) !important;
-  border: 1px solid var(--glass-border-dim) !important;
-  backdrop-filter: blur(12px);
-  border-radius: var(--radius-pill) !important;
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-sm) !important;
 }
 
 .account-chip-avatar {

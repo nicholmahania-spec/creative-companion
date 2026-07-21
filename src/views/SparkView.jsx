@@ -7,6 +7,7 @@ import {
   decisionFromDirection,
 } from '../lib/decisionLog'
 import useAppStore from '../store/useAppStore'
+import InfoReveal from '../components/InfoReveal'
 
 export default function SparkView({
   setActiveView,
@@ -203,12 +204,7 @@ export default function SparkView({
 
       {phase && (
         <section className="panel brand-section process-tip-panel">
-          <div className="brand-section-label">
-            {phase.title || 'Ideate checklist'}
-          </div>
-          <p className="panel-hint" style={{ marginTop: 0 }}>
-            {phase.prompt}
-          </p>
+          <div className="brand-section-label">{phase.title || 'Checklist'}</div>
           <ul
             className="process-guide-checks"
             style={{ marginBottom: 0 }}
@@ -217,14 +213,12 @@ export default function SparkView({
               <li key={c}>{c}</li>
             ))}
           </ul>
+          <InfoReveal>{phase.prompt}</InfoReveal>
         </section>
       )}
 
       <section className="panel brand-section">
-        <div className="brand-section-label">Three directions (A · B · C)</div>
-        <p className="panel-hint" style={{ marginTop: 0 }}>
-          Short titles only. Opposite ideas welcome. Pick one to sketch next.
-        </p>
+        <div className="brand-section-label">A · B · C</div>
         <div className="ideate-directions">
           {dirs.map((d) => (
             <div

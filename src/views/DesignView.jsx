@@ -33,6 +33,7 @@ import {
   tFormat,
   pathLabel,
 } from '../lib/i18n'
+import InfoReveal from '../components/InfoReveal'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
@@ -285,19 +286,13 @@ export default function DesignView({
             </div>
 
             <section className="panel brand-section process-tip-panel">
-              <div className="brand-section-label">Design checklist</div>
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                {getProcessPhase('design')?.prompt}
-              </p>
-              <ul className="process-guide-checks">
+              <div className="brand-section-label">Checklist</div>
+              <ul className="process-guide-checks" style={{ marginBottom: 0 }}>
                 {(getProcessPhase('design')?.checks || []).map((c) => (
                   <li key={c}>{c}</li>
                 ))}
               </ul>
-              <p className="panel-hint" style={{ marginBottom: 0 }}>
-                Bump version before big changes. Then Review with specific
-                questions — not “do you like it?”
-              </p>
+              <InfoReveal>{getProcessPhase('design')?.prompt}</InfoReveal>
             </section>
 
             {/* ARTBOARD — sticky preview on wide screens (not freeform edit) */}

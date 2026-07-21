@@ -86,7 +86,7 @@ import {
   sameProjectId,
 } from './lib/journeyProgress'
 import JourneyGapStrip from './components/JourneyGapStrip'
-import PathStepIcon, { ProgressRing } from './components/PathStepIcon'
+import PathStepIcon from './components/PathStepIcon'
 import {
   PROCESS_PHASES,
   getProcessPhase,
@@ -2484,6 +2484,17 @@ function App() {
                 ))}
               </select>
             )}
+            {journeyActive && (
+              <button
+                type="button"
+                className="header-progress-badge"
+                onClick={() => goToNextProcessGap()}
+                title={`Process ${pathDoneCount}/7`}
+                aria-label={`Process ${pathDoneCount} of 7 steps have content`}
+              >
+                {pathDoneCount}/7
+              </button>
+            )}
             {isFocusRunning && activeView !== 'insights' && (
               <button
                 type="button"
@@ -2790,40 +2801,7 @@ function App() {
               )
             })}
           </ol>
-          {journeyActive ? (
-            <button
-              type="button"
-              className={`journey-progress-pill${
-                pathDoneCount >= 7 ? ' is-full' : ''
-              }${pathDoneCount > 0 && pathDoneCount < 7 ? ' is-partial' : ''}`}
-              data-done={pathDoneCount}
-              onClick={() => goToNextProcessGap()}
-              title={
-                pathDoneCount >= 7
-                  ? i18nT(locale, 'ui.processFullDeliver')
-                  : pathNextGap
-                    ? `Process ${pathDoneCount}/7 · ${pathLabel(locale, pathNextGap.id) || pathNextGap.label} (G)`
-                    : `Process ${pathDoneCount}/7 · G`
-              }
-              aria-label={
-                pathDoneCount >= 7
-                  ? 'Process complete, seven of seven steps have content'
-                  : pathNextGap
-                    ? `Process ${pathDoneCount} of 7. Next gap ${pathLabel(locale, pathNextGap.id) || pathNextGap.label}. Fix next gap.`
-                    : `Process ${pathDoneCount} of 7 steps have content. Fix next gap.`
-              }
-            >
-              <ProgressRing
-                value={pathDoneCount}
-                max={7}
-                size={34}
-                stroke={3}
-                className="journey-progress-ring"
-              >
-                {pathDoneCount}/7
-              </ProgressRing>
-            </button>
-          ) : (
+          {!journeyActive && (
             <span className="journey-tools-pill" role="status" aria-live="polite">
               Tools · {toolsLabelForView(activeView)}
             </span>

@@ -11,6 +11,7 @@ import {
 } from 'react'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/processGuide'
+import InfoReveal from '../components/InfoReveal'
 import {
   pinFaceStyle,
   pinImageUrl,
@@ -183,15 +184,13 @@ export default function ResearchView({
             </div>
 
             <section className="panel brand-section process-tip-panel">
-              <div className="brand-section-label">Curious spy checklist</div>
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                {getProcessPhase('research')?.prompt}
-              </p>
+              <div className="brand-section-label">Checklist</div>
               <ul className="process-guide-checks" style={{ marginBottom: '0.75rem' }}>
                 {(getProcessPhase('research')?.checks || []).map((c) => (
                   <li key={c}>{c}</li>
                 ))}
               </ul>
+              <InfoReveal>{getProcessPhase('research')?.prompt}</InfoReveal>
               <div className="finish-secondary-row">
                 <button
                   type="button"
