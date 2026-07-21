@@ -2442,7 +2442,9 @@ function App() {
     <div
       className={`app app-shell ${theme} view-${activeView}${
         forcedBreak ? ' is-break-locked' : ''
-      }${activeView === 'finish' ? ' is-pack-view' : ''}`}
+      }${activeView === 'finish' ? ' is-pack-view' : ''}${
+        prefs.focusMode ? ' focus-mode-on' : ''
+      }`}
     >
       {forcedBreak && (
         <Suspense fallback={null}>

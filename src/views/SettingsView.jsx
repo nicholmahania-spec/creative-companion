@@ -116,6 +116,24 @@ export default function SettingsView(props) {
                 </span>
               </button>
             </div>
+            <div className="settings-row">
+              <div>
+                <strong>Focus mode</strong>
+                <span>Dim sidebar + header while typing</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!!prefs.focusMode}
+                className={`pref-switch${prefs.focusMode ? ' is-on' : ''}`}
+                onClick={() => setPref('focusMode', !prefs.focusMode)}
+              >
+                <span className="pref-switch-knob" />
+                <span className="sr-only">
+                  {prefs.focusMode ? 'On' : 'Off'}
+                </span>
+              </button>
+            </div>
           </section>
 
           <section className="panel brand-section" id="settings-presence">

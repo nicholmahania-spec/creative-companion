@@ -12468,6 +12468,18 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   grid-column: 1 / -1;
 }
 
+/* Focus mode — peripheral masking: dim chrome while a field has focus */
+.app-shell.focus-mode-on:has(.main:focus-within) > .journey-sidebar,
+.app-shell.focus-mode-on:has(.main:focus-within) > .header-redesign {
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.app-shell.focus-mode-on > .journey-sidebar,
+.app-shell.focus-mode-on > .header-redesign {
+  transition: opacity 0.2s ease;
+}
+
 .journey-sidebar {
   display: flex;
   flex-direction: column;

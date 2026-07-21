@@ -177,6 +177,8 @@ export function blankWorkspaceState() {
       showProgress: false,
       /** Helper: no timed pings / hyperfocus nags */
       helperQuiet: false,
+      /** Dim sidebar + header while a field has focus — peripheral masking */
+      focusMode: false,
       /** Pack / PDF: hide Creative Companion footer watermark */
       hidePackWatermark: false,
       /**
