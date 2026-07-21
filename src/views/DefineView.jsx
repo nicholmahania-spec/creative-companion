@@ -47,6 +47,9 @@ function DefineChapterNav({ progress, openChapter, onSelectChapter }) {
                   {ch.complete ? '✓' : ch.num}
                 </span>
                 <span className="define-chapter-nav-label">{ch.title}</span>
+                <span className="define-chapter-nav-count">
+                  {ch.done}/{ch.total}
+                </span>
               </button>
             </li>
           )

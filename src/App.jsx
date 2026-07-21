@@ -3586,9 +3586,14 @@ function App() {
         <div className="autosave-chip">✓ Saved on this device</div>
       )}
 
-      {resumeBanner && activeView !== 'home' && (
+      {resumeBanner && activeView !== 'home' && (() => {
+        const resumeTarget =
+          resumeBanner.view ||
+          (resumeBanner.step ? 'flow' : 'project')
+        const alreadyThere = activeView === resumeTarget
+        return (
         <div
-          className={`resume-banner${resumeBanner.afterBreak ? ' is-after-break' : ''}${resumeBanner.rejoinTimer ? ' is-timer' : ''}`}
+          className={`resume-banner${resumeBanner.afterBreak ? ' is-after-break' : ''}${resumeBanner.rejoinTimer ? ' is-timer' : ''}${alreadyThere ? ' is-here' : ''}`}
           role="status"
         >
           <div className="resume-banner-copy">
@@ -3602,8 +3607,8 @@ function App() {
                     ? ` · ${resumeBanner.viewLabel}`
                     : ''}
               {resumeBanner.step
-                ? ` · Next: ${String(resumeBanner.step).slice(0, 48)}${
-                    String(resumeBanner.step).length > 48 ? '…' : ''
+                ? ` · Next: ${String(resumeBanner.step).slice(0, 40)}${
+                    String(resumeBanner.step).length > 40 ? '…' : ''
                   }`
                 : !resumeBanner.decisionLine
                   ? ` · ${i18nT(locale, 'ui.resumeCaptureHint') || 'Capture a step on Sketch'}`
@@ -3616,31 +3621,44 @@ function App() {
             ) : null}
           </div>
           <div className="resume-banner-actions">
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                const view =
-                  resumeBanner.view ||
-                  (resumeBanner.step ? 'flow' : 'project')
-                setActiveView(view)
-                focusPathGapField(view)
-                setResumeBanner(null)
-              }}
-            >
-              {i18nT(locale, 'ui.resumeContinue') || 'Continue'}
-              {resumeBanner.viewLabel ? ` · ${resumeBanner.viewLabel}` : ''}
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setResumeBanner(null)}
-            >
-              {i18nT(locale, 'ui.resumeDismiss') || 'Dismiss'}
-            </button>
+            {alreadyThere ? (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  focusPathGapField(activeView)
+                  setResumeBanner(null)
+                }}
+              >
+                Got it
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  setActiveView(resumeTarget)
+                  focusPathGapField(resumeTarget)
+                  setResumeBanner(null)
+                }}
+              >
+                {i18nT(locale, 'ui.resumeContinue') || 'Continue'}
+                {resumeBanner.viewLabel ? ` · ${resumeBanner.viewLabel}` : ''}
+              </button>
+            )}
+            {!alreadyThere && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setResumeBanner(null)}
+              >
+                {i18nT(locale, 'ui.resumeDismiss') || 'Dismiss'}
+              </button>
+            )}
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {commandOpen && (
         <div
