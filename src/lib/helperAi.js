@@ -135,19 +135,15 @@ export function scriptedCoachReply(intent, activity = {}, extra = {}) {
   const a = activity || {}
   switch (intent) {
     case 'recommend':
-      return `${describeActivity(a)} ${recommendForTask(a)}`
+      return recommendForTask(a)
     case 'critique':
-      return `${describeActivity(a)} ${critiqueForTask(a)}`
+      return critiqueForTask(a)
     case 'full':
-      return `${describeActivity(a)} ${coachOnTask(a)}`
+      return coachOnTask(a)
     case 'tip':
-      return `${describeActivity(a)} ${activityTip(a)} ${recommendForTask(a)}`
+      return `${activityTip(a)} · ${recommendForTask(a)}`
     case 'stuck':
-      return `${progressLine('stuck')} ${
-        a.nextTaskTitle
-          ? `Current step: "${String(a.nextTaskTitle).slice(0, 40)}".`
-          : ''
-      } ${recommendForTask(a)}`.trim()
+      return `${progressLine('stuck')} · ${recommendForTask(a)}`
     case 'define':
     case 'clarify':
       return designProcessTip('define', a)
@@ -163,23 +159,18 @@ export function scriptedCoachReply(intent, activity = {}, extra = {}) {
       return designProcessTip('design', a)
     case 'review':
     case 'refine':
-      return `${designProcessTip('review', a)} ${twoDirectionsTip(a)}`
+      return `${designProcessTip('review', a)} · ${twoDirectionsTip(a)}`
     case 'deliver':
       return designProcessTip('deliver', a)
     case 'progress': {
-      const desk = extra.deskLabel || ''
-      const br = extra.breakLabel || ''
-      const closed = extra.closedLabel || ''
-      return [
+      const bits = [
         describeActivity(a),
-        desk,
-        br,
-        closed,
-        activityTip(a),
+        extra.deskLabel,
+        extra.breakLabel,
+        extra.closedLabel,
         recommendForTask(a),
-      ]
-        .filter(Boolean)
-        .join(' ')
+      ].filter(Boolean)
+      return bits.join(' · ')
     }
     default:
       return activityTip(a)
@@ -213,23 +204,23 @@ function intentUserPrompt(intent, activity = {}, extra = {}) {
   if (extra.userNote) lines.push(`User note: ${extra.userNote}`)
 
   const jobs = {
-    recommend: 'Give concrete next design moves for this step only.',
-    critique: 'Critique risks and hierarchy failures for this task — protect quality without expanding scope.',
-    full: 'Short recommend + critique for the current task.',
-    tip: 'One sharp craft tip plus the single best next move.',
-    stuck: 'Unstick them: one tiny action they can finish in under 10 minutes.',
-    define: 'Coach Define: audience, goal in one sentence, must-haves.',
-    research: 'Coach Research: refs, mood, timed discovery.',
-    ideate: 'Coach Ideate: many directions, shortlist A/B/C, no judging yet.',
-    sketch: 'Coach Sketch: 2–3 rough drafts, low detail.',
-    design: 'Coach Design: type, color roles, hierarchy, space.',
-    review: 'Coach Review: specific feedback questions, revise for the goal.',
-    deliver: 'Coach Deliver: files, handoff, one-line evaluation.',
-    clarify: 'Coach Define: audience, goal, constraint.',
-    structure: 'Coach Sketch: structure in words before polish.',
-    visual: 'Coach Design: color roles, type, space.',
-    refine: 'Coach Review: pick direction, fix from feedback.',
-    progress: 'Honest status check + one next move. Do not lead with XP.',
+    recommend: 'One concrete next move only. ≤2 sentences.',
+    critique: 'One main risk only. ≤2 sentences.',
+    full: 'One do + one risk. ≤3 sentences total.',
+    tip: 'One tip + one move. ≤2 sentences.',
+    stuck: 'One action under 10 minutes.',
+    define: 'Goal · who · one must. Short.',
+    research: 'Pins · why · one decision. Short.',
+    ideate: 'Quantity · shortlist. Short.',
+    sketch: '2–3 roughs · low detail. Short.',
+    design: 'Type · roles · hierarchy. Short.',
+    review: 'Specific Q · one fix. Short.',
+    deliver: 'PDF · handoff · one learn. Short.',
+    clarify: 'Goal · who. Short.',
+    structure: 'Structure in words. Short.',
+    visual: 'Color roles · type. Short.',
+    refine: 'One direction · one fix. Short.',
+    progress: 'Status + one move. No XP talk.',
   }
   lines.push(jobs[intent] || jobs.tip)
   return lines.join('\n')
@@ -243,8 +234,8 @@ export async function callXaiChat({
   system = SYSTEM_PROMPT,
   user,
   model = DEFAULT_MODEL,
-  temperature = 0.55,
-  maxTokens = 320,
+  temperature = 0.45,
+  maxTokens = 160,
   signal,
 } = {}) {
   const key = getHelperApiKey()

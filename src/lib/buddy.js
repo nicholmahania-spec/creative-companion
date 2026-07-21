@@ -4,8 +4,6 @@
  * Also: body care, time blindness, hyperfocus (so you can keep designing).
  */
 
-import { getProcessPhase } from './processGuide'
-
 export {
   DESIGN_SYSTEM_PROMPT,
   HELPER_SYSTEM_PROMPT,
@@ -140,81 +138,53 @@ export function minutesAtDesk(sessionStart, now = Date.now()) {
 }
 
 const GREETINGS = [
-  'Helper ready. Coach, Critique, or Break when you need it.',
-  'One step at a time. Open me for Coach or Critique.',
-  'Here for your path step, breaks, and clear choices.',
+  'Coach · Critique · Stuck · Break',
+  'One step. Open me if stuck.',
+  'Path + breaks. Ready.',
 ]
 
-const WATER = [
-  'Water first. Then one design decision.',
-  'Sip something. Then color or type — not both.',
-  'Three sips count. Back to the step.',
-]
+const WATER = ['Water · then one decision.', 'Sip · back to the step.', '3 sips · continue.']
 
-const FOOD = [
-  'Food check. Snack, then continue the step.',
-  'Coffee isn’t a meal. Eat something, then type.',
-  'Empty stomach muddies palette calls. Eat, then decide.',
-]
+const FOOD = ['Eat · then decide.', 'Snack first · then type.', 'Food · then palette.']
 
-const BATHROOM = [
-  'Stand and walk. The desk will wait.',
-  'Take a short break. Fresh eyes beat another 1px nudge.',
-  'Step away briefly, then return to one call.',
-]
+const BATHROOM = ['Stand · walk · return.', 'Step away · fresh eyes.', 'Break · one call after.']
 
-const PROGRESS_STEP = [
-  'Step done. Next gap when you’re ready.',
-  'Checked off. One more small step if you want.',
-  'Step complete. Keep the path moving.',
-]
+const PROGRESS_STEP = ['Step done.', 'Checked · next when ready.', 'Done · keep going.']
 
-const PROGRESS_TIMER = [
-  'Timer on. One job only.',
-  'Focus block started. Stay on this step.',
-  'Timer running. One clear decision.',
-]
+const PROGRESS_TIMER = ['Timer on · one job.', 'Focus · this step only.', 'Timer · one decision.']
 
 const STUCK = [
-  'Stuck? Name the user in one sentence, then shrink the step.',
-  'Write the job in one short line, then one tiny action.',
-  'Clarify who it’s for, then one ugly first pass.',
+  'One-line job · then tiny action.',
+  'Who is it for? · ugly first pass.',
+  'Shrink the step · ship minimum.',
 ]
 
-const IDLE = [
-  'Still here. Path step, Coach, or water.',
-  'One next move: type, layout, or copy.',
-  'Ready when you are — step, Coach, or break.',
-]
+const IDLE = ['Step · Coach · or water.', 'Type · layout · or copy.', 'Ready · pick one move.']
 
-const PRAISE = [
-  'Showing up counts. Keep the step small.',
-  'Messy first pass is correct. Polish later.',
-  'One protected step beats busy chaos.',
-]
+const PRAISE = ['Small step wins.', 'Messy first pass OK.', 'One step > chaos.']
 
 const TIME_BLIND = [
-  (clock, desk) => `It's ${clock}. Desk ~${desk}. One step, then water.`,
-  (clock, desk) => `${clock} · ~${desk} at desk. Still on one thing?`,
-  (clock, desk) => `Clock: ${clock}. You've been here ~${desk}.`,
+  (clock, desk) => `${clock} · desk ${desk}`,
+  (clock, desk) => `${clock} · ~${desk} · one thing?`,
+  (clock, desk) => `Clock ${clock} · ${desk} here`,
 ]
 
 const HYPER_SOFT = [
-  (mins) => `${mins} min in. Look away for one breath, then one decision.`,
-  (mins) => `${mins} min without a break. Stretch, then continue.`,
-  (mins) => `~${mins} min deep. Stand or water, then back.`,
+  (mins) => `${mins}m · breathe · one call`,
+  (mins) => `${mins}m · stretch · continue`,
+  (mins) => `~${mins}m · water · back`,
 ]
 
 const HYPER_STRONG = [
-  (mins) => `~${mins} min planted. Water + short step away.`,
-  (mins) => `${mins} min straight. Three minutes off is fine.`,
-  (mins) => `~${mins} min. Break soon so the next call stays clear.`,
+  (mins) => `~${mins}m · water + stand`,
+  (mins) => `${mins}m · 3 min off OK`,
+  (mins) => `~${mins}m · break soon`,
 ]
 
 const HYPER_HARD = [
-  (mins) => `~${mins} min continuous. Stand. Water. Fresh eyes.`,
-  (mins) => `${mins} min — break is quality control, not quitting.`,
-  (mins) => `~${mins} min in. Rest before the next polish pass.`,
+  (mins) => `~${mins}m · stand · water`,
+  (mins) => `${mins}m · break = QC`,
+  (mins) => `~${mins}m · rest first`,
 ]
 
 function pick(arr) {
@@ -334,222 +304,174 @@ export function classifyTask(activity = {}) {
 }
 
 const DOMAIN_LABEL = {
-  logo: 'logo / mark',
-  color: 'color system',
-  type: 'typography',
-  layout: 'UI layout / hierarchy',
-  copy: 'verbal identity / UX writing',
-  research: 'research & reference',
-  export: 'delivery / export',
-  illustration: 'illustration / graphics',
-  photo: 'imagery',
-  motion: 'motion / interaction',
-  breakdown: 'scope & planning',
-  general: 'design craft',
+  logo: 'logo',
+  color: 'color',
+  type: 'type',
+  layout: 'layout',
+  copy: 'copy',
+  research: 'research',
+  export: 'export',
+  illustration: 'illu',
+  photo: 'photo',
+  motion: 'motion',
+  breakdown: 'scope',
+  general: 'craft',
 }
 
 /**
- * Task-appropriate recommendations (what to do next).
+ * One short next move (ADHD: single action, not essay).
  */
 export function recommendForTask(activity = {}) {
   const domain = classifyTask(activity)
-  const step = short(activity.nextTaskTitle, 56)
-  const project = short(activity.projectName, 28) || 'this project'
+  const step = short(activity.nextTaskTitle, 36)
   const pins = Number(activity.pinsCount) || 0
-  const view = activity.view || 'flow'
   const energy = activity.nextTaskEnergy || 'med'
   const isMicro = !!activity.isMicroStep
   const label = DOMAIN_LABEL[domain] || DOMAIN_LABEL.general
 
-  const head = step
-    ? `Recommendation for "${step}" (${label}):`
-    : `Recommendation for ${project} · ${label}:`
-
   const byDomain = {
     logo: [
-      'Sketch 6–9 thumbnails in 10 minutes before any digital polish — quantity first.',
-      'Lock a single metaphor (e.g. shelter, growth, invitation) and reject marks that do not serve it.',
-      'Test the mark at 24px and one-color; if it dies, simplify geometry.',
-      'Why: logos fail from premature detail, not from too few roughs.',
+      '6–9 thumbnails · 10 min · no polish',
+      'One metaphor · kill the rest',
+      'Test 24px + 1-color · simplify if dead',
     ],
     color: [
-      'Assign roles, not pretty swatches: background, body text, primary action, quiet border, optional highlight.',
-      'Check body text on the main background for WCAG AA (~4.5:1). Fix contrast before adding accents.',
-      'Use one accent for CTAs only — if everything is accent, nothing is hierarchy.',
-      'Why: systems beat palettes that only look good in a grid.',
+      'Roles: bg · text · action · quiet',
+      'AA body text on bg first',
+      'One accent for CTAs only',
     ],
     type: [
-      'Pair one display/heading face with one highly legible UI/body face — stop at two families.',
-      'Define a type ramp: H1 / H2 / body / caption / button with consistent scale (e.g. 1.25).',
-      'Set line-length ~45–75 characters for body; avoid decorative fonts for long UI copy.',
-      'Why: type hierarchy is navigation for the eye.',
+      '1 heading + 1 body face max',
+      'Ramp H1/H2/body/caption',
+      'Body ~45–75 chars wide',
     ],
     layout: [
-      'Text-wireframe the screen top-to-bottom before pixels: header, primary content, proof, single CTA.',
-      'One primary action per view. Secondary actions are ghost/text — never twin primaries.',
-      'Use an 8pt spacing rhythm; align to a simple column grid. Cut any element that does not support the user job.',
-      'Why: layout is strategy expressed as space.',
+      'Wireframe top→bottom before pixels',
+      'One primary CTA · no twins',
+      '8pt rhythm · cut non-job elements',
     ],
     copy: [
-      'Write the CTA and empty-state first — they expose whether the product job is clear.',
-      'One idea per sentence. Voice: say what the user gains, not what the brand is.',
-      'Put the tagline through a "would a stranger understand in 3 seconds?" test.',
-      'Why: unclear words make polished UI feel broken.',
+      'Write CTA + empty state first',
+      'One idea per line',
+      '3-second stranger test',
     ],
     research: [
       pins < 3
-        ? 'Pin 3–5 refs max, each with a one-line note: mood, layout idea, or color role — not "nice."'
-        : 'You have enough pins. Cluster them into 2 mood directions and discard outliers.',
-      'Name the pattern you are stealing ethically (grid, crop, tone) so the board becomes rules.',
-      'Return to Sketch with one decision written as a step.',
-      'Why: uncaptioned boards become aesthetic scrolling.',
+        ? 'Pin 3–5 · one-line why each'
+        : 'Cluster → 2 moods · drop outliers',
+      'Name the steal (grid/crop/tone)',
+      'One Sketch decision from board',
     ],
     export: [
-      'Export only when identity answers: who, tone, palette roles, type pair, do/don’t.',
-      'Prefer a short pack a client can skim over a complete but confusing dump.',
-      'Check contrast and hex list on the export sheet before sending.',
-      'Why: delivery is a UX problem for the stakeholder.',
+      'Ship only if roles + type clear',
+      'Short pack > confusing dump',
+      'Check contrast + hex list',
     ],
     illustration: [
-      'Define the job of the graphic: explain, delight, or brand signal — pick one.',
-      'Limit the illustration to the brand palette; avoid a second secret rainbow.',
-      'Leave safe margin and a clear focal point; complexity should serve storytelling.',
-      'Why: illustration without a job becomes decoration tax.',
+      'One job: explain · delight · brand',
+      'Brand palette only',
+      'Clear focal · safe margin',
     ],
     photo: [
-      'Crop for subject and breath; avoid center-everything by default.',
-      'Match color grade loosely to brand neutrals so photos do not fight the UI.',
-      'Add alt/caption intent even for internal comps — it forces clarity of subject.',
-      'Why: imagery is content hierarchy, not wallpaper.',
+      'Crop for subject + breath',
+      'Grade toward brand neutrals',
+      'Subject must carry the story',
     ],
     motion: [
-      'Motion should clarify state change (enter, success, error) — not entertain.',
-      'Keep durations short (150–300ms UI); ease-out for exits of attention.',
-      'Respect reduced-motion: essential feedback must work without animation.',
-      'Why: gratuitous motion harms accessibility and trust.',
+      'Clarify state only · not entertain',
+      '150–300ms · ease-out',
+      'Works without motion too',
     ],
     breakdown: [
-      'Split by user-visible outcomes, not tool actions ("choose type pair" not "open Figma").',
-      'Order steps so each unlocks the next; put research before polish.',
-      'Cap the list — better 8 honest steps than 20 vague ones.',
-      'Why: bad breakdowns recreate overwhelm with extra checkboxes.',
+      'Outcomes not tools',
+      'Each step unlocks next',
+      '≤8 sharp steps',
     ],
     general: [
-      'Name the user job in one sentence, then do the smallest finishable slice.',
-      'Prefer hierarchy (type, space, contrast) over new decoration.',
-      'If stuck between options, write two directions in one line each and pick one for 25 minutes.',
-      'Why: criteria beat vibes when energy is limited.',
+      'One-sentence user job · smallest slice',
+      'Hierarchy > decoration',
+      'Two directions · pick one · 25 min',
     ],
   }
 
-  const lines = byDomain[domain] || byDomain.general
-  const energyNote =
+  const move = pick(byDomain[domain] || byDomain.general)
+  const head = step ? `Do · ${step} (${label})` : `Do · ${label}`
+  const tail =
     energy === 'low'
-      ? ' Energy note: keep this pass low-cognition (lists, contrast check, renames).'
-      : energy === 'high'
-        ? ' Energy note: good window for exploration or hard composition.'
+      ? ' · low energy: lists/contrast only'
+      : isMicro
+        ? ' · finish ugly · close'
         : ''
-  const microNote = isMicro
-    ? ' This is already a micro-step — finish it ugly if needed, then close it.'
-    : ''
-  const viewNote =
-    view === 'studio' && domain !== 'research'
-      ? ' You are on the board — only gather what serves this task, then leave.'
-      : view === 'brand' && domain === 'general'
-        ? ' On Brand: fill the next empty system field with intent, not completeness anxiety.'
-        : ''
-
-  return `${head} ${lines.join(' ')}${energyNote}${microNote}${viewNote}`
+  return `${head}: ${move}${tail}`
 }
 
 /**
- * Task-appropriate critique (risks / what usually goes wrong).
+ * One short risk (ADHD: single critique lens).
  */
 export function critiqueForTask(activity = {}) {
   const domain = classifyTask(activity)
-  const step = short(activity.nextTaskTitle, 56)
-  const project = short(activity.projectName, 28) || 'this project'
+  const step = short(activity.nextTaskTitle, 36)
   const pins = Number(activity.pinsCount) || 0
   const queue = Number(activity.queueCount) || 0
   const label = DOMAIN_LABEL[domain] || DOMAIN_LABEL.general
 
-  const head = step
-    ? `Critique lens on "${step}" (${label}):`
-    : `Critique lens for ${project} (${label}):`
-
   const byDomain = {
     logo: [
-      'Watch for: trends over meaning, gradients that die in one-color print, detail that vanishes small.',
-      'Ask: would this still read as the same idea if it were a rubber stamp?',
-      'If you are polishing paths before 6 rough directions exist, you are refining too early.',
+      'Risk: polish before 6 roughs',
+      'Risk: dies at 24px / 1-color',
+      'Risk: trend > meaning',
     ],
     color: [
-      'Watch for: accent everywhere, low-contrast body text, palette as decoration not roles.',
-      'Ask: which color is the only "action" color? If you cannot answer, hierarchy is muddy.',
-      'Brand-builder tip: fix text-on-bg pairs before adding a sixth swatch.',
+      'Risk: accent everywhere',
+      'Risk: low body contrast',
+      'Risk: no single action color',
     ],
     type: [
-      'Watch for: too many weights, display fonts in UI chrome, uneven scale jumps.',
-      'Ask: can a user scan H1 → body → CTA without hunting?',
-      'If everything is bold, nothing is emphasis — that is a hierarchy failure, not a style.',
+      'Risk: too many weights',
+      'Risk: display in UI chrome',
+      'Risk: all bold = no emphasis',
     ],
     layout: [
-      'Watch for: twin primary buttons, equal card weight, decorative lines instead of structure.',
-      'Ask: what is the single focal point and primary action on this view?',
-      'If you are styling shadows before the wireframe is solid, reverse the order.',
+      'Risk: twin primaries',
+      'Risk: equal card weight',
+      'Risk: style before wireframe',
     ],
     copy: [
-      'Watch for: brand poetry with no user verb, passive voice, three ideas in one line.',
-      'Ask: what should the person do or feel after reading this once?',
-      'Taglines that need a paragraph of explanation are not ready.',
+      'Risk: poetry · no user verb',
+      'Risk: 3 ideas in one line',
+      'Risk: tagline needs a paragraph',
     ],
     research: [
-      pins > 8
-        ? 'Risk: board bloat. Too many pins without captions freezes decisions.'
-        : 'Watch for: collecting without criteria — mood boards that never constrain choices.',
-      'Ask: which two pins disagree? That tension is a direction choice, not a failure.',
-      'If you have not written a decision step on Sketch, research is incomplete.',
+      pins > 8 ? 'Risk: board bloat' : 'Risk: pins with no criteria',
+      'Risk: no Sketch decision yet',
     ],
     export: [
-      'Watch for: shipping incomplete contrast, missing hex list, empty do/don’t.',
-      'Ask: can a stranger apply this brand tomorrow without a call?',
-      'Pretty export of unclear decisions still fails the stakeholder.',
+      'Risk: ship unclear decisions',
+      'Risk: missing hex / contrast',
     ],
-    illustration: [
-      'Watch for: style drift from brand palette, cluttered focal point, illustration fighting type.',
-      'Ask: if we removed the graphic, would the message still land? If yes, it may be optional.',
-    ],
-    photo: [
-      'Watch for: mixed color grades, faces cut by UI, images as pure wallpaper.',
-      'Ask: does the crop support the story or only fill a rectangle?',
-    ],
-    motion: [
-      'Watch for: motion without meaning, long durations, ignoring reduced-motion.',
-      'Ask: what state change does this animation explain?',
-    ],
+    illustration: ['Risk: style drift · clutter'],
+    photo: ['Risk: wallpaper crop'],
+    motion: ['Risk: motion without state'],
     breakdown: [
-      'Watch for: steps that are tools ("open Figma") instead of outcomes ("choose type pair").',
-      'Ask: does each step unlock the next for a user or stakeholder?',
-      queue > 8
-        ? 'Queue is heavy — critique the list length, not your discipline.'
-        : 'Prefer fewer sharper steps over a novel of tasks.',
+      queue > 8 ? 'Risk: queue too long' : 'Risk: tool-steps not outcomes',
     ],
     general: [
-      'Watch for: decorating before defining the user job; twin priorities; endless polish.',
-      'Ask: what would make this "done enough" for a first share?',
-      'If the step title is vague, the craft will scatter — rewrite the step as an outcome.',
+      'Risk: decorate before job',
+      'Risk: vague step title',
+      'Risk: endless polish',
     ],
   }
 
-  const lines = byDomain[domain] || byDomain.general
-  return `${head} ${lines.filter(Boolean).join(' ')} Why this matters: critique protects quality without expanding scope.`
+  const risk = pick(byDomain[domain] || byDomain.general)
+  const head = step ? `Watch · ${step} (${label})` : `Watch · ${label}`
+  return `${head}: ${risk}`
 }
 
 /**
- * Combined coach response: recommend + critique for current task.
+ * Combined coach: recommend + critique, still short.
  */
 export function coachOnTask(activity = {}) {
-  return `${recommendForTask(activity)} — ${critiqueForTask(activity)}`
+  return `${recommendForTask(activity)} · ${critiqueForTask(activity)}`
 }
 
 /**
@@ -557,18 +479,12 @@ export function coachOnTask(activity = {}) {
  */
 export function describeActivity(activity = {}) {
   const view = activity.view || 'flow'
-  const place = VIEW_LABELS[view] || 'the app'
-  const step = short(activity.nextTaskTitle, 40)
-  const project = short(activity.projectName, 24)
-  const domain = classifyTask(activity)
-  const domainLabel = DOMAIN_LABEL[domain]
-  if (step && view === 'flow') {
-    return `Caught you on Sketch (${project || 'mystery project'}) wrestling "${step}" — that's ${domainLabel} energy.`
-  }
-  if (step) {
-    return `You're on ${place} with "${step}" still open. Domain: ${domainLabel}. Spicy.`
-  }
-  return `You're on ${place}${project ? ` for ${project}` : ''}. Domain vibe: ${domainLabel}.`
+  const place = VIEW_LABELS[view] || 'app'
+  const step = short(activity.nextTaskTitle, 32)
+  const project = short(activity.projectName, 20)
+  const domain = DOMAIN_LABEL[classifyTask(activity)]
+  if (step) return `${place} · ${step} · ${domain}`
+  return `${place}${project ? ` · ${project}` : ''} · ${domain}`
 }
 
 /**
@@ -577,8 +493,8 @@ export function describeActivity(activity = {}) {
  * Legacy aliases: clarify→define, structure→sketch, visual→design, refine→review
  */
 export function designProcessTip(phase, activity = {}) {
-  const step = short(activity.nextTaskTitle, 42) || 'your current step'
-  const project = short(activity.projectName, 24) || 'this project'
+  const step = short(activity.nextTaskTitle, 28)
+  const project = short(activity.projectName, 20) || 'project'
   const view = activity.view || 'flow'
   const p =
     phase === 'clarify'
@@ -591,35 +507,18 @@ export function designProcessTip(phase, activity = {}) {
             ? 'review'
             : phase
 
-  const guide = getProcessPhase(p)
-  if (guide?.prompt) {
-    // Contextualize guide prompt with current step/project
-    if (p === 'ideate') {
-      return `Ideate “${step}”: ${guide.prompt}`
-    }
-    if (p === 'define') {
-      return `Define “${step}” on ${project}: ${guide.prompt}`
-    }
-    if (p === 'research') {
-      return `Research for ${project}: ${guide.prompt}`
-    }
-    if (p === 'sketch') {
-      return view === 'brand'
-        ? `Sketch/draft next hole only on Design (message → palette → type). Low detail.`
-        : `Sketch “${step}”: ${guide.prompt}`
-    }
-    if (p === 'design') {
-      return `Design “${step}”: ${guide.prompt}`
-    }
-    if (p === 'review') {
-      return `Review “${step}”: ${guide.prompt}`
-    }
-    if (p === 'deliver') {
-      return `Deliver ${project}: ${guide.prompt}`
-    }
+  const stems = {
+    define: 'Goal · who · musts',
+    research: 'Pins · ★ · why',
+    ideate: 'Many sparks · shortlist',
+    sketch: view === 'brand' ? 'One Design hole only' : '2–3 rough drafts',
+    design: 'Type · color roles · hierarchy',
+    review: 'Show pack · specific Qs · notes',
+    deliver: 'PDF · handoff · learn',
   }
-
-  return activityTip(activity)
+  const stem = stems[p] || activityTip(activity)
+  const ctx = step || project
+  return `${p[0].toUpperCase() + p.slice(1)} · ${ctx}: ${stem}`
 }
 
 /**
@@ -628,88 +527,45 @@ export function designProcessTip(phase, activity = {}) {
  */
 export function activityTip(activity = {}) {
   const view = activity.view || 'flow'
-  const step = short(activity.nextTaskTitle, 48)
+  const step = short(activity.nextTaskTitle, 32)
   const energy = activity.nextTaskEnergy || 'med'
   const queue = Number(activity.queueCount) || 0
   const done = Number(activity.doneCount) || 0
   const pins = Number(activity.pinsCount) || 0
-  const project = short(activity.projectName, 28) || 'this project'
+  const project = short(activity.projectName, 20) || 'project'
   const hasDeadline = !!activity.projectDeadline
   const dueSoon = activity.stepDueSoon
   const isMicro = !!activity.isMicroStep
   const focusOn = !!activity.isFocusRunning
 
-  if (focusOn) {
-    return step
-      ? `Timer on: only “${step}”.`
-      : 'Timer on: one atomic design action.'
-  }
-
+  if (focusOn) return step ? `Timer · only ${step}` : 'Timer · one action'
   if (view === 'studio') {
     return step
-      ? `Research for “${step}”: keep pins that constrain. Drop the rest.`
+      ? `Research · pins that constrain ${step}`
       : pins > 0
-        ? `Curate ${project} refs, then back to Sketch with one decision.`
-        : 'Pin 2–3 refs with a one-line why. Then Sketch.'
+        ? `Curate · then Sketch`
+        : 'Pin 2–3 · why · Sketch'
   }
-
-  if (view === 'brand') {
-    return `Design for ${project}: finish one layer (tagline or palette). Consistent incomplete > conflicting complete.`
-  }
-
-  if (view === 'spark') {
-    return step
-      ? `If this spark helps “${step}”, pin it or fill A/B/C. Else skip.`
-      : 'One spark → pin or A/B/C → then Sketch.'
-  }
-
-  if (view === 'review') {
-    return 'Show the leave-behind. Ask specific questions. Capture notes — then Deliver.'
-  }
-
-  if (view === 'finish') {
-    return 'Brand book PDF or print. Hand off. Note what you learned.'
-  }
-
-  if (view === 'insights') {
-    return step
-      ? `Timer is a container for “${step}”. 25 for layout, 2 for a decision.`
-      : 'Set a Sketch step first, then start a timer.'
-  }
-
+  if (view === 'brand') return `Design · one layer on ${project}`
+  if (view === 'spark') return step ? `Spark → help ${step}?` : 'Spark → A/B/C → Sketch'
+  if (view === 'review') return 'Show · ask · notes'
+  if (view === 'finish') return 'PDF · handoff · learn'
+  if (view === 'insights') return step ? `Timer for ${step}` : 'Sketch step · then timer'
   if (view === 'calendar') {
-    return hasDeadline
-      ? `Deadline on ${project}: work backward into Sketch steps.`
-      : 'Set a deadline or a personal review date, then Sketch.'
+    return hasDeadline ? `Deadline · work back` : 'Set due · Sketch'
   }
-
-  if (view === 'project') {
-    return 'Detective sheet first: goal + audience. Then Research.'
-  }
-
-  if (view === 'settings') {
-    return 'Backup if it matters. Then return to Sketch or Design.'
-  }
+  if (view === 'project') return 'Goal · who · Research'
+  if (view === 'settings') return 'Backup · then path'
 
   if (view === 'flow' || !view) {
     if (!step) {
-      return done > 0
-        ? 'Queue empty — nice. Capture the next finishable step, or micro-steps if scope is still a blob.'
-        : `No step on ${project}. One sentence outcome, then capture it.`
+      return done > 0 ? 'Queue empty · next step' : `No step · capture one`
     }
-    if (dueSoon) {
-      return `“${step}” is time-sensitive. Ship the minimum: one decision or one block.`
-    }
-    if (isMicro) {
-      return `Micro-step “${step}” — finish messy, mark complete.`
-    }
-    if (energy === 'low') {
-      return `Low energy on “${step}”: labels, contrast, spacing — or Split ×3.`
-    }
-    if (queue >= 5) {
-      return `${queue} waiting. Tunnel vision on “${step}” only.`
-    }
-    return `On “${step}”: fuzzy → Define it · messy options → Ideate · one draft → Sketch · polish → Design. One lane only.`
+    if (dueSoon) return `${step} · ship minimum`
+    if (isMicro) return `${step} · finish · check`
+    if (energy === 'low') return `${step} · labels/contrast only`
+    if (queue >= 5) return `${queue} waiting · only ${step}`
+    return `${step} · one lane only`
   }
 
   return pick(IDLE)
@@ -718,27 +574,25 @@ export function activityTip(activity = {}) {
 /** Idle check-in with design context */
 export function idleLineWithActivity(activity = {}) {
   if (Math.random() < 0.55) return activityTip(activity)
-  const place = VIEW_LABELS[activity.view] || 'your desk'
+  const place = VIEW_LABELS[activity.view] || 'desk'
   return pick([
-    `Still lurking on ${place}. Coach, Critique, a break — or a roast of your twin CTAs?`,
-    `Check-in: ${place}. Hierarchy still behaving, or is it a buffet of equal importance again?`,
+    `${place} · Coach or Break`,
     activity.nextTaskTitle
-      ? `"${short(activity.nextTaskTitle, 36)}" is still waiting. It won't do itself. (I checked.)`
-      : `On ${place} with no open step. Dramatic. Capture one job or admit you're vibing.`,
+      ? `Still · ${short(activity.nextTaskTitle, 28)}`
+      : `${place} · capture a step`,
   ])
 }
 
-/** Two design directions (refinement step) for current context */
+/** Two design directions — short A/B */
 export function twoDirectionsTip(activity = {}) {
   const view = activity.view || 'flow'
-  const project = short(activity.projectName, 24) || 'the product'
   if (view === 'brand' || view === 'studio') {
-    return `Two directions for ${project}: A) Quiet editorial — more whitespace, restrained accent, serif-or-display for titles only. B) Product-forward — stronger primary CTA, denser UI, accent reserved for actions. Pick A or B for this phase; do not blend. Why: mixed directions kill brand coherence.`
+    return 'A quiet · B product-forward · pick one'
   }
   if (view === 'flow') {
-    return `Two ways to attack the current step: A) Outcome-first — define success copy, then UI. B) Structure-first — text wireframe blocks, then words. Choose one for the next 25 minutes. Why: dual approaches in parallel create thrash.`
+    return 'A outcome-first · B structure-first · 25 min'
   }
-  return `Two directions: A) Simplify — remove one visual layer, strengthen hierarchy. B) Clarify — rewrite the primary label/CTA before any styling. Ship one. Why: refinement needs a criterion.`
+  return 'A simplify · B clarify CTA · ship one'
 }
 
 export function timeBlindLine(sessionStart, now = Date.now()) {
@@ -756,11 +610,11 @@ export function hyperfocusLine(minutesWorking) {
 }
 
 export function confirmLine(kind) {
-  if (kind === 'water') return 'Water logged. One design decision next.'
-  if (kind === 'food') return 'Food noted. Ready when you are.'
-  if (kind === 'bathroom') return 'Welcome back. Pick one hierarchy call.'
-  if (kind === 'break') return 'Break logged. Clock reset.'
-  return 'Noted.'
+  if (kind === 'water') return 'Water · one decision'
+  if (kind === 'food') return 'Food · ready'
+  if (kind === 'bathroom') return 'Back · one call'
+  if (kind === 'break') return 'Break · reset'
+  return 'OK'
 }
 
 export function whatTimeLine(sessionStart, now = Date.now()) {

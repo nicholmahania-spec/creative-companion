@@ -11,6 +11,7 @@ describe('helper persona single source', () => {
     expect(PROCESS_SPINE).toMatch(/Define/)
     expect(PROCESS_SPINE).toMatch(/Deliver/)
     expect(HELPER_SYSTEM_PROMPT).toMatch(/Define → Research → Ideate/)
+    expect(HELPER_SYSTEM_PROMPT).toMatch(/Max ~50 words|≤2 sentences|short/i)
     expect(HELPER_SYSTEM_PROMPT).not.toMatch(/Wireframing|4-step/i)
     expect(DESIGN_SYSTEM_PROMPT).toBe(HELPER_SYSTEM_PROMPT)
     expect(fromBuddy).toBe(HELPER_SYSTEM_PROMPT)
