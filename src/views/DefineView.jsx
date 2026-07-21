@@ -89,7 +89,6 @@ export default function DefineView(props) {
     handleDeleteProject,
     renameProject,
     selectProject,
-    projectPills = null,
     projectDeadline = '',
     quickInput = '',
     setQuickInput,
@@ -97,14 +96,12 @@ export default function DefineView(props) {
   } = props
 
   const locale = normalizeLocale(localeProp)
-  const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
   const archiveProject = useAppStore((s) => s.archiveProject)
   const unarchiveProject = useAppStore((s) => s.unarchiveProject)
   const addMilestone = useAppStore((s) => s.addMilestone)
   const updateMilestone = useAppStore((s) => s.updateMilestone)
   const removeMilestone = useAppStore((s) => s.removeMilestone)
 
-  const [metaFocus, setMetaFocus] = useState(null)
   const [openChapter, setOpenChapter] = useState('core')
 
   const progress = useMemo(
@@ -124,8 +121,13 @@ export default function DefineView(props) {
     }
     if (next === activeProject.name) return
     renameProject?.(activeProject.id, next)
-    // Local rename always sticks; cloud chip is separate if sync fails
     flashMicro?.(i18nT(locale, 'ui.projectRenamed') || 'Name saved')
+  }
+
+  /** One brief instrument: detective answers compose project.brief on continue */
+  const goResearch = () => {
+    applyDetectiveToBrief?.()
+    setActiveView('studio')
   }
 
   return (
@@ -134,10 +136,26 @@ export default function DefineView(props) {
       data-nav-dir={navDir}
     >
       <header className="define-dashboard-head">
-        <div>
+        <div className="define-head-row">
           <h1 className="page-title define-studio-title">
             {i18nT(locale, 'path.define')}
           </h1>
+          <input
+            id="project-name"
+            className="define-input field-input define-name-inline"
+            value={projectNameDraft}
+            onChange={(e) => setProjectNameDraft(e.target.value)}
+            onBlur={commitProjectRename}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                commitProjectRename()
+                e.currentTarget.blur()
+              }
+            }}
+            placeholder="Project name"
+            aria-label="Project name"
+          />
         </div>
       </header>
 
@@ -161,7 +179,7 @@ export default function DefineView(props) {
             className="btn btn-secondary btn-sm"
             onClick={() => setActiveView('flow')}
           >
-            {i18nT(locale, 'ui.openSketchStep') || 'Open Sketch step'}
+            {i18nT(locale, 'ui.openSketchStep') || 'Open Sketch'}
           </button>
         </div>
       )}
@@ -171,126 +189,11 @@ export default function DefineView(props) {
         data-define-layout="form-board"
         title="Brief and mood board stay side by side"
       >
-        {/* LEFT: questions — board stays visible so focus doesn’t leave the page */}
         <div className="define-split-form" aria-label="Brief questions">
-          <section
-            className={`define-meta-card${metaFocus ? ' has-focus' : ''}`}
-            aria-label="Project essentials"
-          >
-            <div
-              className={`define-meta-field${
-                metaFocus === 'name' ? ' is-focused' : ''
-              }${metaFocus && metaFocus !== 'name' ? ' is-dimmed' : ''}`}
-            >
-              <div className="define-field-label-row">
-                <span className="define-field-icon define-icon-frame" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                    <path d="M4 7h16M4 12h16M4 17h10" />
-                  </svg>
-                </span>
-                <label className="define-field-label" htmlFor="project-name">
-                  Project name
-                </label>
-              </div>
-              <div className="define-meta-row">
-                <input
-                  id="project-name"
-                  className="define-input field-input"
-                  value={projectNameDraft}
-                  onChange={(e) => setProjectNameDraft(e.target.value)}
-                  onFocus={() => setMetaFocus('name')}
-                  onBlur={() => {
-                    setMetaFocus(null)
-                    commitProjectRename()
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      commitProjectRename()
-                      e.currentTarget.blur()
-                    }
-                  }}
-                  placeholder="Client name"
-                  aria-label="Project name"
-                />
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={commitProjectRename}
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-
-            <div
-              className={`define-meta-field${
-                metaFocus === 'brief' ? ' is-focused' : ''
-              }${metaFocus && metaFocus !== 'brief' ? ' is-dimmed' : ''}`}
-            >
-              <div className="define-field-label-row">
-                <span className="define-field-icon define-icon-spark" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2.5 13.8 9l6.7.3-5.2 4.2 1.8 6.5L12 16.5 6.9 20l1.8-6.5L3.5 9.3 10.2 9 12 2.5Z" />
-                  </svg>
-                </span>
-                <label className="define-field-label" htmlFor="project-brief">
-                  Brief / positioning
-                </label>
-              </div>
-              <textarea
-                id="project-brief"
-                className="define-input field-input project-brief-input"
-                rows={2}
-                value={activeProject?.brief || ''}
-                onChange={(e) => updateProjectBrief(e.target.value)}
-                onFocus={() => setMetaFocus('brief')}
-                onBlur={() => setMetaFocus(null)}
-                placeholder="Goal + audience"
-                aria-label="Brief and positioning"
-              />
-            </div>
-
-            <div
-              className={`define-meta-field define-meta-deadline${
-                metaFocus === 'deadline' ? ' is-focused' : ''
-              }${metaFocus && metaFocus !== 'deadline' ? ' is-dimmed' : ''}`}
-            >
-              <div className="define-field-label-row">
-                <span className="define-field-icon define-icon-flag" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                    <path d="M6 21V4.5h.5c2.5 0 3.5 1.5 6 1.5s3.5-1.5 6-1.5V14c-2.5 0-3.5 1.5-6 1.5s-3.5-1.5-6-1.5H6" />
-                  </svg>
-                </span>
-                <label className="define-field-label" htmlFor="proj-deadline-field">
-                  Deadline
-                </label>
-              </div>
-              <div className="deadline-edit-row">
-                <input
-                  id="proj-deadline-field"
-                  type="date"
-                  className="define-input field-input"
-                  value={projectDeadline}
-                  onChange={(e) => setProjectDeadline(e.target.value)}
-                  onFocus={() => setMetaFocus('deadline')}
-                  onBlur={() => setMetaFocus(null)}
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setActiveView('calendar')}
-                >
-                  Calendar
-                </button>
-              </div>
-            </div>
-          </section>
-
           <Suspense
             fallback={
               <div className="define-workbook define-workbook-loading">
-                Loading brief builder…
+                Loading…
               </div>
             }
           >
@@ -305,29 +208,41 @@ export default function DefineView(props) {
               splitMode
               openChapter={openChapter}
               onOpenChapter={setOpenChapter}
-              onContinue={() => setActiveView('studio')}
+              onContinue={goResearch}
               continueLabel={tFormat(locale, 'ui.continueNext', {
                 label: pathLabel(locale, 'research') || 'Research',
               })}
             />
           </Suspense>
 
-          {projectPills && (
-            <section className="define-secondary panel brand-section">
-              {projectPills}
-            </section>
-          )}
-
           <a className="define-board-anchor" href="#define-mood-board">
-            Mood board on this page
+            Mood board
           </a>
 
           <details className="define-secondary define-admin">
-            <summary>Project tools · desk · archive</summary>
+            <summary>Tools</summary>
             <div className="define-admin-body">
-              <p className="panel-hint" style={{ marginTop: 0 }}>
-                {deskTasks.filter((t) => !t.completed).length} open on desk
-              </p>
+              <div className="field-block" style={{ marginBottom: '0.75rem' }}>
+                <label className="field-label" htmlFor="proj-deadline-field">
+                  Deadline
+                </label>
+                <div className="deadline-edit-row">
+                  <input
+                    id="proj-deadline-field"
+                    type="date"
+                    className="field-input"
+                    value={projectDeadline}
+                    onChange={(e) => setProjectDeadline(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setActiveView('calendar')}
+                  >
+                    Calendar
+                  </button>
+                </div>
+              </div>
               <div className="project-actions-row">
                 <button
                   type="button"
@@ -339,7 +254,7 @@ export default function DefineView(props) {
                     if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
                   }}
                 >
-                  Archive project
+                  Archive
                 </button>
                 {archivedProjects.length > 0 && (
                   <select

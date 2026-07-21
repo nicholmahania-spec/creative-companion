@@ -4,8 +4,9 @@
  * v6: bust after Define isFilled crash fix so clients drop bad DetectiveSheet chunks.
  * v7: bust after mobile Define + full-width path rail (v1.48.41–42).
  * v8: Tech-Studio blueprint implement-all (text diet, gap strip, sticky Next).
+ * v9: Define single-instrument + Design 5-tab merge.
  */
-const CACHE = 'cc-shell-v8'
+const CACHE = 'cc-shell-v9'
 const PRECACHE = [
   './',
   './index.html',

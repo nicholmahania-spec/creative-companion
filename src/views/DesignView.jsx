@@ -89,6 +89,7 @@ export default function DesignView({
     // Map legacy section ids into the 6-tab Tech-Studio set
     const map = {
       messaging: 'essentials',
+      voice: 'essentials',
       imagery: 'pins',
     }
     setBrandEditSectionLocal(map[brandEditSectionProp] || brandEditSectionProp)
@@ -227,34 +228,19 @@ export default function DesignView({
                   {i18nT(locale, 'path.design')}
                 </h1>
                 <p className="page-sub">
-                  <strong>{activeProject?.name || 'Project'}</strong>
-                  {' · '}
-                  pack {deskMood.filter((m) => m.inPack).length}/6
+                  {activeProject?.name || 'Project'}
+                  {' · ★'}
+                  {deskMood.filter((m) => m.inPack).length}/6
                   <InfoReveal>
                     {(getProcessPhase('design')?.checks || []).join(' · ')}
-                    {getProcessPhase('design')?.prompt
-                      ? ` — ${getProcessPhase('design').prompt}`
-                      : ''}
                   </InfoReveal>
                 </p>
               </div>
               <div className="brand-template-actions">
-                <label className="field-label design-version-label" htmlFor="design-version">
-                  Version
-                  <input
-                    id="design-version"
-                    className="field-input design-version-input"
-                    value={activeProject?.designVersion || 'v1'}
-                    onChange={(e) =>
-                      updateBrandField('designVersion', e.target.value)
-                    }
-                    aria-label="Design version"
-                  />
-                </label>
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  title="Bump before a big change (v1 → v2)"
+                  title={`Version ${activeProject?.designVersion || 'v1'} — bump`}
                   onClick={() => {
                     const r = bumpDesignVersion()
                     if (r?.ok)
@@ -265,20 +251,12 @@ export default function DesignView({
                       )
                   }}
                 >
-                  Bump
-                </button>
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={() => setActiveView('flow')}
-                >
-                  ← Sketch
+                  {activeProject?.designVersion || 'v1'}
                 </button>
                 <button
                   type="button"
                   className="btn btn-primary"
                   onClick={() => {
-                    // Encourage version discipline before review
                     const cur = String(
                       activeProject?.designVersion || 'v1'
                     ).trim()
@@ -316,13 +294,11 @@ export default function DesignView({
               </Suspense>
             </div>
 
-            <p className="system-edit-label design-edit-rail-label">Edit system</p>
             <div className="system-accordion-nav design-section-tabs" role="tablist">
               {[
                 ['essentials', 'Words'],
                 ['colors', 'Color'],
                 ['type', 'Type'],
-                ['voice', 'Voice'],
                 ['logo', 'Logo'],
                 ['pins', 'Pack'],
               ].map(([id, label]) => (
@@ -350,7 +326,7 @@ export default function DesignView({
               }`}
               hidden={brandEditSection !== 'essentials'}
             >
-              <div className="brand-section-label">Tagline &amp; positioning</div>
+              <div className="brand-section-label">Words</div>
               <div className="field-block">
                 <label className="field-label" htmlFor="brand-tagline">
                   Tagline
@@ -362,40 +338,32 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('tagline', e.target.value)
                   }
-                  placeholder="One line. Memorable."
+                  placeholder="One line"
                 />
               </div>
-              <div className="field-block" style={{ marginBottom: 0 }}>
+              <div className="field-block">
                 <label className="field-label" htmlFor="brand-brief">
-                  Positioning / brief
+                  Positioning
                 </label>
                 <textarea
                   id="brand-brief"
                   className="field-textarea"
                   value={activeProject?.brief || ''}
                   onChange={(e) => updateProjectBrief(e.target.value)}
-                  placeholder="Who is this for? What should it feel like?"
-                  rows={3}
+                  placeholder="Who · feel"
+                  rows={2}
                 />
               </div>
-            </section>
-
-            {/* 02 Voice */}
-            <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'voice'}
-            >
-              <div className="brand-section-label">Voice · do / don&apos;t</div>
-              <div className="field-block" style={{ marginBottom: '1rem' }}>
+              <div className="field-block">
                 <label className="field-label" htmlFor="brand-voice">
-                  How we sound
+                  Voice
                 </label>
                 <textarea
                   id="brand-voice"
                   className="field-textarea"
                   value={activeProject?.voice || ''}
                   onChange={(e) => updateBrandField('voice', e.target.value)}
-                  placeholder="e.g. Warm, plain-spoken, hopeful — never corporate."
+                  placeholder="How we sound"
                   rows={2}
                 />
               </div>
@@ -411,8 +379,8 @@ export default function DesignView({
                     onChange={(e) =>
                       updateBrandField('doUse', e.target.value)
                     }
-                    placeholder="Behaviors, materials, tone that fit."
-                    rows={3}
+                    placeholder="Fits"
+                    rows={2}
                   />
                 </div>
                 <div className="field-block" style={{ marginBottom: 0 }}>
@@ -426,19 +394,19 @@ export default function DesignView({
                     onChange={(e) =>
                       updateBrandField('dontUse', e.target.value)
                     }
-                    placeholder="Clichés and traps to avoid."
-                    rows={3}
+                    placeholder="Avoid"
+                    rows={2}
                   />
                 </div>
               </div>
             </section>
 
-            {/* 03 Palette + checker */}
+            {/* Color */}
             <section
               className="panel brand-section"
               hidden={brandEditSection !== 'colors'}
             >
-              <div className="brand-section-label">Colors</div>
+              <div className="brand-section-label">Color</div>
               {(() => {
                 const health = paletteHealthScore({
                   palette: projectPalette,
@@ -469,19 +437,16 @@ export default function DesignView({
                         style={{ width: `${health.score}%` }}
                       />
                     </div>
-                    <p className="panel-hint design-health-meta design-lect" style={{ margin: '0.4rem 0 0' }}>
-                      {health.harmony?.type || ''}
-                    </p>
                   </div>
                 )
               })()}
               <div className="brand-palette-block" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
-                    Palette builder
+                    Palette
                   </p>
                   <span className="panel-hint" style={{ margin: 0 }}>
-                    {projectPalette.length}/8 · saved on project
+                    {projectPalette.length}/8
                   </span>
                 </div>
 
@@ -1049,11 +1014,8 @@ export default function DesignView({
               }
             >
               <div className="brand-section-label">
-                {i18nT(locale, 'ui.messagingPillars') || 'Messaging pillars'}
+                {i18nT(locale, 'ui.messagingPillars') || 'Messages'}
               </div>
-              <p className="panel-hint design-lect" style={{ marginTop: 0 }}>
-                Promise · proof · personality
-              </p>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="msg-promise">
                   {i18nT(locale, 'ui.messagingPromise') || 'Promise'}
@@ -1106,13 +1068,10 @@ export default function DesignView({
               className="panel brand-section"
               hidden={brandEditSection !== 'logo'}
             >
-              <div className="brand-section-label">Logo lockups</div>
-              <p className="panel-hint design-lect" style={{ marginBottom: '0.75rem' }}>
-                Wordmark, mark image, clearspace
-              </p>
+              <div className="brand-section-label">Logo</div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-wordmark">
-                  Wordmark text
+                  Wordmark
                 </label>
                 <input
                   id="logo-wordmark"
@@ -1317,17 +1276,14 @@ export default function DesignView({
               className="panel brand-section"
               hidden={brandEditSection !== 'pins'}
             >
-              <div className="brand-section-label">
-                Leave-behind pins (starred on Research)
-              </div>
+              <div className="brand-section-label">Pack pins</div>
               {(() => {
                 const packPins = deskMood.filter((m) => m.inPack)
                 if (packPins.length === 0) {
                   return (
                 <div className="brand-mood-empty">
-                  <p className="empty-state-body" style={{ margin: 0 }}>
-                    Star pins on Research with ★ (max 6). Only starred pins
-                    appear here and in your leave-behind PDF.
+                  <p className="empty-state-title" style={{ margin: 0 }}>
+                    No ★ pins
                   </p>
                   <div className="finish-secondary-row" style={{ marginTop: '0.75rem' }}>
                     <button
@@ -1335,7 +1291,7 @@ export default function DesignView({
                       className="btn btn-secondary"
                       onClick={() => setActiveView('studio')}
                     >
-                      Open Research
+                      Research
                     </button>
                   </div>
                 </div>
@@ -1359,19 +1315,12 @@ export default function DesignView({
             <div className="brand-export-bar path-continue-row">
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary work-path-next"
                 onClick={() => setActiveView('review')}
               >
                 {tFormat(locale, 'ui.continueNext', {
                   label: pathLabel(locale, 'review') || 'Review',
                 })}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setActiveView('studio')}
-              >
-                Research
               </button>
             </div>
           </div>

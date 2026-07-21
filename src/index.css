@@ -16014,6 +16014,58 @@ select:focus,
   display: none;
 }
 
+/* Define — single instrument: name + chapters + detective only */
+.define-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.define-head-row .page-title {
+  margin: 0;
+  flex: 0 0 auto;
+}
+.define-name-inline {
+  flex: 1 1 12rem;
+  min-width: 0;
+  max-width: 22rem;
+  min-height: 40px;
+  border-radius: 4px !important;
+}
+.define-meta-card {
+  display: none !important; /* merged: name inline, brief = detective */
+}
+.define-admin summary {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ts-mute);
+  cursor: pointer;
+}
+.design-edit-rail-label,
+.system-edit-label {
+  display: none !important;
+}
+.design-section-tabs .system-acc-tab {
+  border-radius: 4px !important;
+  min-height: 36px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.palette-health-head .field-label {
+  font-size: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .define-head-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .define-name-inline {
+    max-width: none;
+  }
+}
+
 /* ============================================================
    Mobile Define + shell — fix cramped chapter/header/resume
    ============================================================ */

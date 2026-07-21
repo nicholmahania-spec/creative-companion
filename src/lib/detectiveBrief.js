@@ -7,7 +7,7 @@ export const DETECTIVE_CHAPTERS = [
   {
     id: 'core',
     num: '01',
-    title: 'Core goal & audience',
+    title: 'Core',
     blurb: 'Who is this for, and what one outcome matters?',
     accent: 'var(--define-ch-1)',
     fields: [
@@ -43,7 +43,7 @@ export const DETECTIVE_CHAPTERS = [
   {
     id: 'identity',
     num: '02',
-    title: 'Brand identity & scope',
+    title: 'Identity',
     blurb: 'Words, must-haves, and the shape of the work.',
     accent: 'var(--define-ch-2)',
     fields: [
@@ -88,7 +88,7 @@ export const DETECTIVE_CHAPTERS = [
   {
     id: 'constraints',
     num: '03',
-    title: 'Constraints & deliverables',
+    title: 'Constraints',
     blurb: 'What ships, what to avoid, and production limits.',
     accent: 'var(--define-ch-3)',
     fields: [
