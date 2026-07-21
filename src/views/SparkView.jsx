@@ -110,7 +110,7 @@ export default function SparkView({
   }
 
   return (
-    <div className="spark-view">
+    <div className="spark-view ideate-studio">
       <button
         type="button"
         className="back-link"
@@ -122,27 +122,41 @@ export default function SparkView({
         <div>
           <h1 className="page-title">{title}</h1>
           <p className="panel-hint ideate-progress" style={{ marginTop: '0.35rem' }}>
-            Sparks <strong>{sparksSeen}/8</strong> · Shortlist{' '}
-            <strong>{filledDirs}/3</strong>
+            Three directions · <strong>{filledDirs}/3</strong> titled
+            {chosen ? ` · Chose ${chosen.label}` : ''}
+            {sparksSeen > 0 ? ` · Sparks ${sparksSeen}/8` : ''}
+            {phase ? (
+              <InfoReveal>
+                {(phase.checks || []).join(' · ')}
+                {phase.prompt ? ` — ${phase.prompt}` : ''}
+              </InfoReveal>
+            ) : null}
           </p>
+          {projectGoal ? (
+            <p className="ideate-goal-anchor panel-hint">
+              Goal · {String(projectGoal).slice(0, 120)}
+              {String(projectGoal).length > 120 ? '…' : ''}
+            </p>
+          ) : null}
         </div>
         <div className="finish-secondary-row path-continue-row">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setActiveView('flow')}
-          >
-            {tFormat(locale, 'ui.continueNext', {
-              label: pathLabel(locale, 'sketch') || 'Sketch',
-            })}
-          </button>
-          {chosen && (
+          {chosen ? (
             <button
               type="button"
-              className="btn btn-secondary btn-sm"
+              className="btn btn-primary"
               onClick={queueChosen}
             >
               {i18nT('ui.queueChosenSketch') || 'Queue chosen → Sketch'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setActiveView('flow')}
+            >
+              {tFormat(locale, 'ui.continueNext', {
+                label: pathLabel(locale, 'sketch') || 'Sketch',
+              })}
             </button>
           )}
         </div>
@@ -159,20 +173,7 @@ export default function SparkView({
           {i18nLookup(locale, 'ui.decisionLogTitle') || 'Decision log'}
         </p>
         {decisionLine ? (
-          <>
-            <p className="decision-log-strip-line">{decisionLine}</p>
-            <div className="decision-log-strip-actions">
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setActiveView('flow')}
-              >
-                {tFormat(locale, 'ui.continueNext', {
-                  label: pathLabel(locale, 'sketch') || 'Sketch',
-                })}
-              </button>
-            </div>
-          </>
+          <p className="decision-log-strip-line">{decisionLine}</p>
         ) : (
           <p className="decision-log-empty">
             {i18nLookup(locale, 'ui.decisionEmpty') ||
@@ -181,25 +182,24 @@ export default function SparkView({
         )}
       </section>
 
-      {phase && (
-        <section className="panel brand-section process-tip-panel">
-          <div className="brand-section-label">
-            Ideate
-            <InfoReveal>
-              {(phase.checks || []).join(' · ')}
-              {phase.prompt ? ` — ${phase.prompt}` : ''}
-            </InfoReveal>
-          </div>
-        </section>
-      )}
-
-      <section className="panel brand-section">
-        <div className="brand-section-label">A · B · C</div>
-        <div className="ideate-directions">
-          {dirs.map((d) => (
+      {/* Locked 3-column shortlist — primary stage */}
+      <section
+        className="panel brand-section ideate-shortlist"
+        aria-label="Three directions A B C"
+      >
+        <div className="brand-section-label">
+          Shortlist · A · B · C
+        </div>
+        <p className="panel-hint ideate-shortlist-hint">
+          One line each. Choose one winner. Messy is fine.
+        </p>
+        <div className="ideate-directions is-locked-3">
+          {dirs.slice(0, 3).map((d) => (
             <div
               key={d.id}
-              className={`ideate-dir-card${d.chosen ? ' is-chosen' : ''}`}
+              className={`ideate-dir-card${d.chosen ? ' is-chosen' : ''}${
+                String(d.title || '').trim() ? ' has-title' : ''
+              }`}
             >
               <div className="ideate-dir-head">
                 <span className="ideate-dir-letter" aria-hidden="true">
@@ -244,7 +244,8 @@ export default function SparkView({
         </div>
       </section>
 
-      <section className="panel brand-section">
+      <section className="panel brand-section ideate-spark-tray">
+        <div className="brand-section-label">Spark tray</div>
         <div className="spark-card">
           <p>{currentSpark}</p>
         </div>

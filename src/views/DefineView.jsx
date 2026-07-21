@@ -20,44 +20,62 @@ import { getDetectiveProgress } from '../lib/detectiveBrief'
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 const DefineMoodCanvas = lazy(() => import('./DefineMoodCanvas'))
 
-/** Quiet chapter switcher — desk tool, not a game HUD */
+/** Quiet chapter switcher — framed steps, desk tool not a game HUD */
 function DefineChapterNav({ progress, openChapter, onSelectChapter }) {
   const { chapters = [], filledCount = 0, fieldTotal = 0 } = progress || {}
+  const activeCh = chapters.find((c) => c.id === openChapter) || chapters[0]
 
   return (
-    <nav className="define-chapter-nav" aria-label="Brief chapters">
-      <p className="define-chapter-nav-meta">
-        {filledCount} of {fieldTotal} notes filled
-      </p>
-      <ol className="define-chapter-nav-list">
-        {chapters.map((ch) => {
-          const active = openChapter === ch.id
-          return (
-            <li key={ch.id}>
-              <button
-                type="button"
-                className={`define-chapter-nav-btn${active ? ' is-active' : ''}${
-                  ch.complete ? ' is-complete' : ''
-                }`}
-                onClick={() => onSelectChapter?.(ch.id)}
-                aria-current={active ? 'step' : undefined}
-                aria-label={`${ch.title}: ${ch.done} of ${ch.total} filled${
-                  ch.complete ? ', complete' : ''
-                }`}
-              >
-                <span className="define-chapter-nav-num" aria-hidden="true">
-                  {ch.complete ? '✓' : ch.num}
-                </span>
-                <span className="define-chapter-nav-label">{ch.title}</span>
-                <span className="define-chapter-nav-count">
-                  {ch.done}/{ch.total}
-                </span>
-              </button>
-            </li>
-          )
-        })}
-      </ol>
-    </nav>
+    <header className="define-chapter-frame" aria-label="Brief chapters">
+      <div className="define-chapter-frame-top">
+        <p className="define-chapter-frame-kicker">Three short chapters</p>
+        <p className="define-chapter-nav-meta">
+          {filledCount} of {fieldTotal} notes filled
+        </p>
+      </div>
+      <nav className="define-chapter-nav" aria-label="Chapter list">
+        <ol className="define-chapter-nav-list">
+          {chapters.map((ch) => {
+            const active = openChapter === ch.id
+            return (
+              <li key={ch.id}>
+                <button
+                  type="button"
+                  className={`define-chapter-nav-btn${active ? ' is-active' : ''}${
+                    ch.complete ? ' is-complete' : ''
+                  }`}
+                  onClick={() => onSelectChapter?.(ch.id)}
+                  aria-current={active ? 'step' : undefined}
+                  aria-label={`${ch.title}: ${ch.done} of ${ch.total} filled${
+                    ch.complete ? ', complete' : ''
+                  }`}
+                >
+                  <span className="define-chapter-nav-num" aria-hidden="true">
+                    {ch.complete ? '✓' : ch.num}
+                  </span>
+                  <span className="define-chapter-nav-label">{ch.title}</span>
+                  <span className="define-chapter-nav-count">
+                    {ch.done}/{ch.total}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ol>
+      </nav>
+      {activeCh && (
+        <p className="define-chapter-frame-now" role="status">
+          <span className="define-chapter-frame-now-num">
+            Chapter {activeCh.num}
+          </span>
+          <span className="define-chapter-frame-now-title">{activeCh.title}</span>
+          <span className="define-chapter-frame-now-meta">
+            {activeCh.done}/{activeCh.total} in this chapter
+            {activeCh.complete ? ' · done' : ''}
+          </span>
+        </p>
+      )}
+    </header>
   )
 }
 

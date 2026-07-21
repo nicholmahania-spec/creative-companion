@@ -267,77 +267,80 @@ export default function DeliverView({
                         </div>
                       </div>
                     )}
-                    <button
-                      type="button"
-                      className="btn btn-primary pack-print-btn"
-                      onClick={() => {
+                    {(() => {
+                      const runPack = (kind) => {
                         const packSnap = buildCurrentBrandPack()
                         const ready = packReadiness(packSnap)
                         if (ready.thin) {
-                          setThinPackPrompt('print')
+                          setThinPackPrompt(kind === 'print' ? 'print' : kind)
                           return
                         }
-                        runExport('print')
-                      }}
-                    >
-                      {i18nT(locale, 'ui.printSavePdf')}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary pack-download-btn"
-                      onClick={() => {
-                        const packSnap = buildCurrentBrandPack()
-                        const ready = packReadiness(packSnap)
-                        if (ready.thin) {
-                          setThinPackPrompt('pdf')
-                          return
-                        }
-                        runExport('pdf')
-                      }}
-                    >
-                      {i18nT(locale, 'ui.downloadVectorPdf')}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary pack-download-btn"
-                      onClick={() => {
-                        const packSnap = buildCurrentBrandPack()
-                        const ready = packReadiness(packSnap)
-                        if (ready.thin) {
-                          setThinPackPrompt('kit')
-                          return
-                        }
-                        runExport('kit')
-                      }}
-                      title={
-                        i18nT(locale, 'ui.kitHint') ||
-                        'PDF + Markdown + tokens + logo'
+                        runExport(kind)
                       }
-                    >
-                      {i18nT(locale, 'ui.downloadKit') ||
-                        'Download brand kit (zip)'}
-                    </button>
-                    <p className="panel-hint" style={{ margin: '0.25rem 0 0' }}>
+                      return (
+                        <div className="pack-split-cta">
+                          <button
+                            type="button"
+                            className="btn btn-primary pack-split-main"
+                            onClick={() => runPack('pdf')}
+                          >
+                            {i18nT(locale, 'ui.downloadVectorPdf')}
+                          </button>
+                          <details className="pack-split-more">
+                            <summary
+                              className="pack-split-toggle"
+                              aria-label="More export formats"
+                            >
+                              ▾
+                            </summary>
+                            <div className="pack-split-menu" role="menu">
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="pack-split-item"
+                                onClick={() => runPack('print')}
+                              >
+                                {i18nT(locale, 'ui.printSavePdf')}
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="pack-split-item"
+                                onClick={() => runPack('kit')}
+                              >
+                                {i18nT(locale, 'ui.downloadKit') ||
+                                  'Brand kit (zip)'}
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="pack-split-item"
+                                onClick={async () => {
+                                  try {
+                                    const packSnap = buildCurrentBrandPack()
+                                    const md = packBriefMarkdown(packSnap)
+                                    await navigator.clipboard.writeText(md)
+                                    flashToast(
+                                      i18nT(locale, 'ui.leaveBehindBriefCopied')
+                                    )
+                                  } catch {
+                                    flashToast(
+                                      i18nT(locale, 'ui.leaveBehindBriefCopyFail')
+                                    )
+                                  }
+                                }}
+                              >
+                                Copy brief
+                              </button>
+                            </div>
+                          </details>
+                        </div>
+                      )
+                    })()}
+                    <p className="panel-hint pack-kit-hint">
                       {i18nT(locale, 'ui.kitHint') ||
-                        'PDF + Markdown + tokens.css + tokens.json + logo'}
+                        'Kit = PDF + Markdown + tokens + logo'}
                     </p>
-                    <button
-                      type="button"
-                      className="btn btn-ghost pack-copy-brief"
-                      onClick={async () => {
-                        try {
-                          const packSnap = buildCurrentBrandPack()
-                          const md = packBriefMarkdown(packSnap)
-                          await navigator.clipboard.writeText(md)
-                          flashToast(i18nT(locale, 'ui.leaveBehindBriefCopied'))
-                          setLastExportNote('Brief copied to clipboard')
-                        } catch {
-                          flashToast(i18nT(locale, 'ui.leaveBehindBriefCopyFail'))
-                        }
-                      }}
-                    >
-                      Copy brief
-                    </button>
                     <p className="pack-export-hint">
                       {i18nT(locale, 'ui.packHint')}
                     </p>

@@ -15126,3 +15126,221 @@ body:has(.app.deep)::after {
 .define-mood-empty-icon {
   text-shadow: none !important;
 }
+
+/* ============================================================
+   Page rewrites: Define chapter frame · Ideate 3-col · Deliver split
+   ============================================================ */
+
+.define-chapter-frame {
+  margin: 0 0 1.15rem;
+  padding: 0.9rem 1rem 0.85rem;
+  border-radius: 1.15rem;
+  background: var(--define-card, #1a1a1e);
+  border: 1px solid var(--define-border, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  color: var(--define-ink, #f4f4f5);
+}
+
+.define-chapter-frame-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+  margin-bottom: 0.55rem;
+}
+
+.define-chapter-frame-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--define-muted, rgba(244, 244, 245, 0.5));
+}
+
+.define-chapter-frame .define-chapter-nav {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.define-chapter-frame .define-chapter-nav-meta {
+  margin: 0;
+}
+
+.define-chapter-frame-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.65rem;
+  margin: 0.75rem 0 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.define-chapter-frame-now-num {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--dopamine, #22d3ee);
+}
+
+.define-chapter-frame-now-title {
+  font-weight: 700;
+  color: var(--define-ink, #f4f4f5);
+}
+
+.define-chapter-frame-now-meta {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--define-muted, rgba(244, 244, 245, 0.5));
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ideate — locked three columns (desktop) */
+.ideate-studio .ideate-shortlist {
+  margin-top: 0.35rem;
+}
+
+.ideate-shortlist-hint {
+  margin: 0.15rem 0 0.55rem;
+}
+
+.ideate-goal-anchor {
+  margin: 0.35rem 0 0;
+  max-width: 40rem;
+}
+
+.ideate-directions.is-locked-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.ideate-directions.is-locked-3 .ideate-dir-card {
+  min-height: 100%;
+  background: var(--bg-elevated, var(--bg-warm));
+  border-radius: var(--radius-sm);
+}
+
+.ideate-directions.is-locked-3 .ideate-dir-card.has-title:not(.is-chosen) {
+  border-color: color-mix(in srgb, var(--text-muted) 45%, var(--border-subtle));
+}
+
+.ideate-spark-tray {
+  margin-top: 0.85rem;
+}
+
+@media (max-width: 780px) {
+  .ideate-directions.is-locked-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Deliver — one primary + split menu */
+.pack-split-cta {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  max-width: 22rem;
+  gap: 0;
+}
+
+.pack-split-main {
+  flex: 1 1 auto;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm) !important;
+  min-height: 2.85rem;
+  justify-content: center;
+}
+
+.pack-split-more {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.pack-split-toggle {
+  list-style: none;
+  display: grid;
+  place-items: center;
+  min-width: 2.65rem;
+  height: 100%;
+  min-height: 2.85rem;
+  padding: 0 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-left: none;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--bg-muted);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pack-split-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.pack-split-more[open] .pack-split-toggle {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+}
+
+.pack-split-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  min-width: 12.5rem;
+  padding: 0.35rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated, #fff);
+  box-shadow: var(--shadow-3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pack-split-item {
+  appearance: none;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--text-primary);
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pack-split-item:hover {
+  background: var(--accent-glow, rgba(15, 23, 42, 0.06));
+}
+
+.pack-kit-hint {
+  margin: 0.35rem 0 0;
+  max-width: 22rem;
+}
+
+.app.deep .pack-split-toggle {
+  background: var(--bg-muted);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.app.deep .pack-split-menu {
+  background: var(--bg-elevated);
+}
