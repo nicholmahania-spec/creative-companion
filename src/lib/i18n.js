@@ -59,7 +59,7 @@ const EN = {
     helperOff: 'Turn Helper off',
     helperHint: 'Tips · feedback · break',
     helperBodyDoubleNote:
-      'This is body doubling — working alongside someone, even a Helper, is shown to make it easier to start a task.',
+      'Body doubling: work alongside Helper so starting is easier.',
     completeStep: 'Mark step done',
     more: 'More',
     downloadVectorPdf: 'Download brand book (PDF)',

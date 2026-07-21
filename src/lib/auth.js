@@ -145,5 +145,5 @@ export const STORAGE_EXPLAIN = {
   accessKey: ACCESS_KEY,
   sessionKey: SESSION_KEY,
   summary:
-    'Your projects, tasks, pins, brand fields, and settings are saved only in this browser’s local storage. Nothing is uploaded to a server. Clearing site data, using another device, or another browser starts empty unless you import a JSON backup.',
+    'Projects, tasks, pins, brand, and settings stay in this browser only. Other devices stay empty unless you import a JSON backup.',
 }

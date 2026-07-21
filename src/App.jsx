@@ -536,7 +536,7 @@ function App() {
   /** Micro feedback — only when user enables “All toasts” */
   const flashMicro = (msg) => flashToast(msg, { micro: true })
 
-  /** Award XP in background; only surface XP text when Progress bar is on */
+  /** Award progress in background; only append band points when strip is on */
   const notifyAction = (baseMsg, action, meta = {}) => {
     let g = null
     if (action) {
@@ -547,9 +547,9 @@ function App() {
       }
     }
     if (showProgress && g?.levelUp) {
-      flashToast(`${baseMsg} · Level ${g.newLevel}!`)
+      flashToast(`${baseMsg} · band ${g.newLevel}`)
     } else if (showProgress && g?.gained) {
-      flashToast(`${baseMsg} · +${g.gained} XP`)
+      flashToast(`${baseMsg} · +${g.gained}`)
     } else {
       flashToast(baseMsg)
     }

@@ -65,7 +65,7 @@ const COACHING = {
     title: 'Design & refine',
     plain: 'Fonts, colors, layout. Name the version before big changes.',
     prompt:
-      'Layout, type, color, clear order. Rules over vibes. Bump version (v1 → v2).',
+      'Layout, type, color, clear order. Rules over decoration. Bump version (v1 → v2).',
     checks: [
       'Color jobs set (cover / text / accent / quiet)',
       'Font pair chosen; body text easy to read',

@@ -380,11 +380,11 @@ export default function SettingsView(props) {
             <div className="brand-section-label">
               {CLOUD ? 'Account & sync' : 'Access'}
             </div>
-            <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
+            <p className="panel-hint settings-lect" style={{ marginBottom: '0.65rem' }}>
               {accessName ? `Signed in as ${accessName}. ` : ''}
               {CLOUD
-                ? 'Your desk syncs to Supabase. This browser also keeps a local cache.'
-                : 'Local password unlocks this browser only. Add Supabase env vars for cloud accounts.'}
+                ? 'Syncs to Supabase · local cache on this browser'
+                : 'Local password unlocks this browser only'}
             </p>
             {CLOUD && (
               <p className="panel-hint" style={{ marginBottom: '0.85rem' }}>
@@ -537,8 +537,8 @@ export default function SettingsView(props) {
             </div>
             <div className="settings-danger-zone">
               <p className="settings-danger-title">Danger zone</p>
-              <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
-                These replace or wipe work. Download a backup first.
+              <p className="panel-hint settings-lect" style={{ marginBottom: '0.65rem' }}>
+                Wipe work · backup first
               </p>
               <div className="settings-actions">
                 <button
@@ -580,9 +580,8 @@ export default function SettingsView(props) {
 
           <section className="panel brand-section">
             <div className="brand-section-label">Optional sample</div>
-            <p className="panel-hint" style={{ marginBottom: '0.65rem' }}>
-              Load a finished sample brand run to see the full path. It
-              replaces your current workspace — export a backup first.
+            <p className="panel-hint settings-lect" style={{ marginBottom: '0.65rem' }}>
+              Sample brand path · replaces workspace · backup first
             </p>
             <button
               type="button"
@@ -605,23 +604,20 @@ export default function SettingsView(props) {
               </span>
             </div>
             {aiStatus.mode === 'scripted' && (
-              <p className="panel-hint" style={{ margin: '0.35rem 0 0' }}>
-                For Live AI: set <code className="settings-code">XAI_API_KEY</code>{' '}
-                with a proxy (Netlify / Vite), or{' '}
-                <code className="settings-code">VITE_XAI_USE_PROXY=true</code>.
-                See docs/DEPLOY_AI.md.
+              <p className="panel-hint settings-lect" style={{ margin: '0.35rem 0 0' }}>
+                Live AI: <code className="settings-code">XAI_API_KEY</code> + proxy ·{' '}
+                docs/DEPLOY_AI.md
               </p>
             )}
-            <p className="panel-hint" style={{ margin: '0.65rem 0 0' }}>
-              Leave-behind watermark toggle lives on{' '}
+            <p className="panel-hint settings-lect" style={{ margin: '0.65rem 0 0' }}>
+              Watermark toggle on{' '}
               <button
                 type="button"
                 className="text-link"
                 onClick={() => setActiveView('finish')}
               >
                 Deliver
-              </button>{' '}
-              (client handoff).
+              </button>
             </p>
           </section>
 
@@ -637,17 +633,13 @@ export default function SettingsView(props) {
                 </span>
               </div>
             </div>
-            <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
-              Creative Companion is a calm desk for creative work (helpful for
-              ADHD): one step at a time, an optional Helper, optional break
-              locks, and a brand pack you can download
-              {CLOUD ? ' — plus optional cloud sync when set up.' : '.'}
-              {' '}
-              It is a direction pack (words, colors, logo rules) — not a full
-              design app like Figma.
+            <p className="panel-hint settings-lect" style={{ margin: '0 0 0.5rem' }}>
+              Calm 7-step desk for creative work (ADHD-friendly). Direction pack
+              (words, colors, logo) — not Figma
+              {CLOUD ? ' · optional cloud sync' : ''}.
             </p>
-            <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
-              <strong>Brand kit:</strong> On{' '}
+            <p className="panel-hint settings-lect" style={{ margin: '0 0 0.5rem' }}>
+              Kit zip on{' '}
               <button
                 type="button"
                 className="text-link"
@@ -655,49 +647,15 @@ export default function SettingsView(props) {
               >
                 Deliver
               </button>
-              , use <em>Download brand kit (zip)</em> for PDF + Markdown +
-              tokens + logo. Fill Message / Logo / Imagery on Design first.
-            </p>
-            <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
-              <strong>ADHD resources:</strong>{' '}
-              <a
-                className="text-link"
-                href="https://chadd.org/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                CHADD.org
+              {' '}
+              · ADHD links:{' '}
+              <a className="text-link" href="https://chadd.org/" target="_blank" rel="noopener noreferrer">
+                CHADD
               </a>
-              {' · '}
-              <a
-                className="text-link"
-                href="https://chadd.org/for-adults/overview/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Adults overview
-              </a>
-              {' · '}
-              <a
-                className="text-link"
-                href="https://chadd.org/about-adhd/executive-function-skills/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Executive function
-              </a>
-              . Educational links only — not medical advice. Helpline (US):
-              1-866-200-8098.
+              {' · US helpline 1-866-200-8098 (not medical advice)'}
             </p>
-            <p className="panel-hint" style={{ margin: '0 0 0.5rem' }}>
-              <strong>Offline:</strong> After one online visit, the app shell
-              and assets cache locally. Your desk data is on this device — open
-              Deliver and download when offline. Hard-refresh once after a big
-              update if the UI looks stale.
-            </p>
-            <p className="panel-hint" style={{ margin: 0 }}>
-              <strong>1.0:</strong> Full path desk + pack export, quiet/all
-              toasts, offline SPA, axe + e2e CI, perf budget. See docs/RELEASE_1.0.md.
+            <p className="panel-hint settings-lect" style={{ margin: 0 }}>
+              Offline after first visit · data stays on this device · hard-refresh after big updates
             </p>
           </section>
           </details>
