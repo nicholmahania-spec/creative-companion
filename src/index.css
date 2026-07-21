@@ -16760,6 +16760,149 @@ select:focus,
 }
 
 /* ============================================================
+   Login + shell + Calendar + Timer ADHD densify
+   ============================================================ */
+.login-page-studio {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: var(--ts-canvas, #F4F5F6);
+}
+.login-card-solo {
+  width: min(22rem, 100%);
+  border-radius: 4px;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  box-shadow: none !important;
+  padding: 1.25rem 1.15rem;
+}
+.login-page-studio .login-h1 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.15rem;
+  letter-spacing: -0.02em;
+}
+.login-page-studio .login-lede {
+  margin: 0 0 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ts-mute, #94A3B8);
+}
+.login-mode-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+.login-mode-tab {
+  flex: 1;
+  border-radius: 4px !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  min-height: 36px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: none !important;
+}
+.login-mode-tab.is-active {
+  border-color: var(--ts-focus, #2563EB);
+  outline: 1.5px solid var(--ts-focus, #2563EB);
+  outline-offset: 0;
+}
+.login-page-studio .onboard-input,
+.login-page-studio .login-submit {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  min-height: 40px;
+}
+.login-page-studio .login-submit {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.login-page-studio .login-show-pw {
+  border-radius: 4px !important;
+  min-height: 36px;
+}
+.login-page-studio .login-version {
+  margin: 0.85rem 0 0;
+  font-size: 0.7rem;
+  color: var(--ts-mute, #94A3B8);
+  text-align: center;
+}
+
+.header-redesign .header-more,
+.header-redesign .header-project-select,
+.header-redesign .timer-running-chip,
+.header-redesign .sync-error-chip {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  min-height: 36px;
+}
+.header-redesign .timer-running-chip,
+.header-redesign .sync-error-chip {
+  border: 1px solid var(--ts-border, #E2E8F0);
+  font-size: 0.78rem;
+  font-weight: 650;
+  padding: 0.3rem 0.5rem;
+}
+.journey-progress-pill {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+.journey-step {
+  border-radius: 4px !important;
+}
+
+.calendar-studio .panel.brand-section,
+.insights-studio .panel.brand-section {
+  border-radius: 4px;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  box-shadow: none;
+  margin-bottom: 0.75rem;
+}
+.calendar-studio .cal-nav .btn,
+.calendar-studio .deadline-chip {
+  border-radius: 4px !important;
+}
+.insights-studio .insights-now {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ts-mute, #94A3B8);
+}
+.insights-studio .insights-timer {
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-align: center;
+  margin: 0.5rem 0 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.insights-studio .insights-focus-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+}
+.insights-studio .insights-break-row {
+  margin-top: 0.85rem;
+  border-top: 1px solid var(--ts-border, #E2E8F0);
+  padding-top: 0.65rem;
+}
+.insights-studio .session-done-line {
+  margin: 0.65rem 0 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+  text-align: center;
+}
+.insights-studio .insights-continue {
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* ============================================================
    Settings ADHD — short rows, 4px, no lecture spans
    ============================================================ */
 .settings-studio {

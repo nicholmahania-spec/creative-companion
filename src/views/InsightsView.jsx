@@ -1,4 +1,4 @@
-/** Lazy-loaded Focus timer (off-path tool) */
+/** Focus timer — off-path tool. ADHD: one instrument, short CTAs. */
 import { normalizeLocale, t as i18nT, tFormat, pathLabel } from '../lib/i18n'
 
 export default function InsightsView(props) {
@@ -41,23 +41,24 @@ export default function InsightsView(props) {
   const toggleForceBreaks = () => {
     const next = !forceBreaksEnabled
     if (next && !prefs.forceBreaksConsented) {
-      // Shared desk consent banner (App) — no silent auto-consent
       openForceBreakConsent?.()
       return
     }
     setPref('forceBreaksEnabled', next)
-    if (!next && forcedBreak) {
-      endForcedBreak?.(true)
-    }
-    flashToast(
-      next
-        ? 'Forced breaks on — desk will lock after cycles'
-        : 'Forced breaks off — no lockout'
-    )
+    if (!next && forcedBreak) endForcedBreak?.(true)
+    flashToast(next ? 'Breaks on' : 'Breaks off')
   }
 
+  const startLabel = isFocusRunning
+    ? 'Pause'
+    : focusLeft > 0 && focusLeft < POMODORO_WORK_MIN * 60
+      ? 'Resume'
+      : focusLeft === 2 * 60
+        ? 'Start 2'
+        : 'Start 25'
+
   return (
-    <div className="insights-layout">
+    <div className="insights-layout insights-studio">
       <button
         type="button"
         className="back-link"
@@ -66,18 +67,16 @@ export default function InsightsView(props) {
         ← Path
       </button>
       <div className="flow-top">
-        <div>
-          <h1 className="page-title">Focus timer</h1>
-        </div>
+        <h1 className="page-title">Timer</h1>
+        {nextTask && (
+          <p className="insights-now" title={nextTask.title}>
+            Now · {String(nextTask.title).slice(0, 48)}
+            {String(nextTask.title).length > 48 ? '…' : ''}
+          </p>
+        )}
       </div>
-      {nextTask && (
-        <div className="mood-linked-step" style={{ marginBottom: '1rem' }}>
-          <span className="task-badge">Now</span>
-          <p className="mood-linked-title">{nextTask.title}</p>
-        </div>
-      )}
+
       <section className="panel focus-panel brand-section">
-        <div className="brand-section-label">Timer</div>
         <div className="insights-timer">
           {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
         </div>
@@ -88,13 +87,7 @@ export default function InsightsView(props) {
             className="btn btn-primary"
             disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
           >
-            {isFocusRunning
-              ? 'Pause'
-              : focusLeft > 0 && focusLeft < POMODORO_WORK_MIN * 60
-                ? 'Resume'
-                : focusLeft === 2 * 60
-                  ? 'Start 2 min'
-                  : 'Start 25 min (Pomodoro)'}
+            {startLabel}
           </button>
           <button
             type="button"
@@ -102,10 +95,10 @@ export default function InsightsView(props) {
               setTimerFocusSource?.(null)
               resetFocus(25)
             }}
-            className="btn btn-secondary"
+            className="btn btn-secondary btn-sm"
             disabled={!!forcedBreak}
           >
-            25 min
+            25
           </button>
           <button
             type="button"
@@ -113,20 +106,19 @@ export default function InsightsView(props) {
               setTimerFocusSource?.(null)
               resetFocus(2)
             }}
-            className="btn btn-ghost"
+            className="btn btn-ghost btn-sm"
             disabled={!!forcedBreak}
           >
-            2 min
+            2
           </button>
         </div>
+
         {sessionComplete && !forcedBreak && (
           <div className="session-done">
-            <p style={{ margin: '0 0 0.55rem' }}>
+            <p className="session-done-line">
               {fromResearch
-                ? i18nT(locale, 'ui.timerDoneIdeate')
-                : forceBreaksEnabled
-                  ? 'Work block done — a required break lock should open. Rest, then continue.'
-                  : 'Work block done. Forced lockouts are off — take a stretch if you want.'}
+                ? i18nT(locale, 'ui.timerDoneIdeate') || 'Done · Ideate next'
+                : 'Done'}
             </p>
             {fromResearch && (
               <div className="path-continue-row" style={{ margin: 0 }}>
@@ -139,25 +131,13 @@ export default function InsightsView(props) {
                     label: pathLabel(locale, 'ideate') || 'Ideate',
                   })}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => go('studio')}
-                >
-                  {i18nT(locale, 'ui.backToResearch')}
-                </button>
               </div>
             )}
           </div>
         )}
-        <div className="settings-row" style={{ marginTop: '0.85rem' }}>
-          <div>
-            <strong>Break lock</strong>
-            <span>
-              When on: desk locks 5–10 min after a Pomodoro (or 25+ min with
-              Helper on). Same consent as Settings.
-            </span>
-          </div>
+
+        <div className="settings-row insights-break-row">
+          <strong>Break lock</strong>
           <button
             type="button"
             role="switch"
@@ -172,59 +152,40 @@ export default function InsightsView(props) {
           </button>
         </div>
       </section>
-      <section className="panel brand-section">
-        <div className="timer-after-actions path-continue-row">
-          {fromResearch ? (
-            <>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => go('spark')}
-              >
-                {i18nT(locale, 'ui.backToIdeate')}
-              </button>
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => go('studio')}
-              >
-                {i18nT(locale, 'ui.backToResearch')}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={!nextTask}
-                onClick={() => {
-                  if (nextTask) toggleTask(nextTask.id)
-                  go('flow')
-                }}
-              >
-                Mark step done
-              </button>
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => go('flow')}
-              >
-                Back to Sketch
-                {deskTasks.length
-                  ? ` · ${completedCount}/${deskTasks.length} done`
-                  : ''}
-              </button>
-            </>
-          )}
+
+      <div className="path-continue-row insights-continue">
+        {fromResearch ? (
           <button
             type="button"
-            className="text-link"
-            onClick={() => toggleBodyDoubling()}
+            className="btn btn-primary work-path-next"
+            onClick={() => go('spark')}
           >
-            {bodyDoubling ? 'Helper on' : 'Turn Helper on'}
+            {i18nT(locale, 'ui.backToIdeate') || 'Next · Ideate'}
           </button>
-        </div>
-      </section>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-primary work-path-next"
+            disabled={!nextTask}
+            onClick={() => {
+              if (nextTask) toggleTask(nextTask.id)
+              go('flow')
+            }}
+          >
+            {nextTask ? 'Mark done' : 'Back · Sketch'}
+            {deskTasks.length
+              ? ` · ${completedCount}/${deskTasks.length}`
+              : ''}
+          </button>
+        )}
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={() => toggleBodyDoubling()}
+        >
+          {bodyDoubling ? 'Helper on' : 'Helper'}
+        </button>
+      </div>
     </div>
   )
 }

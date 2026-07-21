@@ -12,7 +12,7 @@ import {
 } from '../lib/cloudSync'
 import { versionLabel } from '../lib/version'
 import LogoLockup from './LogoLockup'
-import { normalizeLocale, t as i18nT } from '../lib/i18n'
+import { normalizeLocale } from '../lib/i18n'
 
 /** Read locale from persisted store (before unlock) when available */
 function guestLocale() {
@@ -182,7 +182,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 setInfo('')
               }}
             >
-              Create account
+              Create
             </button>
           </div>
         )}
@@ -204,12 +204,13 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
           ) : (
             mode === 'setup' && (
               <label className="onboard-label">
-                Name <span className="onboard-optional">(optional)</span>
+                Name
                 <input
                   className="onboard-input"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="username"
+                  placeholder="Optional"
                 />
               </label>
             )
@@ -246,7 +247,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
 
           {(mode === 'setup' || mode === 'signup') && (
             <label className="onboard-label">
-              Confirm password
+              Confirm
               <input
                 className="onboard-input"
                 type={showPassword ? 'text' : 'password'}
@@ -280,10 +281,10 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
               : useCloud
                 ? mode === 'login'
                   ? 'Sign in'
-                  : 'Create account'
+                  : 'Create'
                 : mode === 'setup'
-                  ? 'Create access'
-                  : 'Open desk'}
+                  ? 'Create'
+                  : 'Open'}
           </button>
 
           {useCloud && mode === 'login' && (
@@ -293,12 +294,14 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
               onClick={handleForgot}
               disabled={busy}
             >
-              Forgot password
+              Forgot
             </button>
           )}
         </form>
 
-        <p className="login-version">{versionLabel()}</p>
+        <p className="login-version" aria-hidden="true">
+          {versionLabel()}
+        </p>
       </div>
     </div>
   )

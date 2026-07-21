@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v20)
- * v19: Define residual · v20: Settings ADHD densify
+/* Creative Companion — offline shell + asset cache (v21)
+ * v20: Settings · v21: Login + Calendar + Timer shell densify
  */
-const CACHE = 'cc-shell-v20'
+const CACHE = 'cc-shell-v21'
 const PRECACHE = [
   './',
   './index.html',

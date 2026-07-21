@@ -2420,33 +2420,22 @@ function App() {
         <div className="login-page">
           <div className="login-card">
             <p className="login-lede" style={{ marginBottom: '0.5rem' }}>
-              Loading your desk from the cloud…
-            </p>
-            <p className="login-fineprint" style={{ margin: 0 }}>
-              Syncing projects, tasks, and pins
+              Loading desk…
             </p>
             {showHydratingEscape && (
-              <>
-                <p
-                  className="login-fineprint"
-                  style={{ marginTop: '0.85rem' }}
-                >
-                  Taking longer than expected — your connection may be slow.
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ marginTop: '0.5rem' }}
-                  onClick={() => {
-                    setCloudHydrating(false)
-                    cloudSyncReady.current = true
-                    setSyncState('error')
-                    setSyncError('Cloud load took too long — continued locally.')
-                  }}
-                >
-                  Continue without waiting
-                </button>
-              </>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ marginTop: '0.5rem' }}
+                onClick={() => {
+                  setCloudHydrating(false)
+                  cloudSyncReady.current = true
+                  setSyncState('error')
+                  setSyncError('Cloud load slow — continued locally.')
+                }}
+              >
+                Continue offline
+              </button>
             )}
           </div>
         </div>
@@ -2544,10 +2533,8 @@ function App() {
                   }
                 }}
               >
-                <span className="sync-error-chip-full">
-                  Save didn’t stick · Retry
-                </span>
-                <span className="sync-error-chip-short">Retry save</span>
+                <span className="sync-error-chip-full">Retry save</span>
+                <span className="sync-error-chip-short">Retry</span>
               </button>
             )}
             <div className="more-wrap" ref={moreWrapRef}>
