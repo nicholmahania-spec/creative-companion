@@ -111,6 +111,7 @@ export default function DefineMoodCanvas({
           accept="image/*"
           multiple
           className="define-mood-file"
+          aria-label="Upload reference images"
           onChange={(e) => {
             if (e.target.files?.length) ingestFiles(e.target.files)
             e.target.value = ''

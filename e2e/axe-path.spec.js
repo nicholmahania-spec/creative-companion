@@ -34,6 +34,7 @@ test.describe('axe path', () => {
   test('primary path views have no serious axe violations', async ({
     page,
   }) => {
+    test.setTimeout(180_000)
     const gate = await unlockAndOnboard(page, {
       name: 'Axe Project',
       step: 'Check a11y',

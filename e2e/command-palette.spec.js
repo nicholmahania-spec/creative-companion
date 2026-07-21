@@ -15,7 +15,7 @@ test.describe('Command palette', () => {
     skipIfCloud(test, gate)
 
     await page.keyboard.press('Control+k')
-    await expect(page.getByRole('dialog', { name: /Command palette/i })).toBeVisible({
+    await expect(page.getByRole('dialog', { name: /^Commands$/i })).toBeVisible({
       timeout: 5000,
     })
     const input = page.locator('input.command-input, input[aria-label="Filter commands"]')
@@ -38,7 +38,7 @@ test.describe('Command palette', () => {
 
     await page.keyboard.press('Control+k')
     await expect(
-      page.getByRole('dialog', { name: /Command palette/i })
+      page.getByRole('dialog', { name: /^Commands$/i })
     ).toBeVisible({ timeout: 5000 })
     const input = page.locator(
       'input.command-input, input[aria-label="Filter commands"]'
@@ -73,7 +73,7 @@ test.describe('Command palette', () => {
 
     await page.keyboard.press('Control+k')
     await expect(
-      page.getByRole('dialog', { name: /Command palette/i })
+      page.getByRole('dialog', { name: /^Commands$/i })
     ).toBeVisible({ timeout: 5000 })
     const input = page.locator(
       'input.command-input, input[aria-label="Filter commands"]'

@@ -45,7 +45,7 @@ test.describe('Offline desk', () => {
     ).toBeVisible()
     await expect(
       page.getByRole('button', {
-        name: /Download (brand book|vector) PDF/i,
+        name: /Brand book PDF/i,
       })
     ).toBeVisible()
 
