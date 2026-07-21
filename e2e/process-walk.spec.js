@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test'
 import { unlockAndOnboard, pathNav } from './helpers.js'
 
 /**
- * Full process artifacts: detective → ideate → sketch why → design bump →
- * review notes → deliver handoff/learnings → brand book CTA.
+ * Full process artifacts: detective → research pin → ideate → sketch why →
+ * design tagline + version bump → review notes → deliver handoff/learnings.
  */
 test.describe('Process walk (artifacts)', () => {
   test('fill detective through deliver fields', async ({ page }) => {
@@ -16,74 +16,53 @@ test.describe('Process walk (artifacts)', () => {
     const path = await pathNav(page)
     await expect(path).toBeVisible()
 
-    // 1 Define — detective sheet
+    // 1 Define — detective sheet (chaptered): fill required Goal/Who/Words
     await path.getByRole('button', { name: /Step 1: Define/i }).click()
     await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
-    await expect(
-      page.getByText('Design Detective Sheet', { exact: true })
-    ).toBeVisible({ timeout: 8000 })
+    await expect(page.locator('#detective-goal')).toBeVisible({ timeout: 8000 })
     await page.locator('#detective-goal').fill(
       'Make a calm cover system families can recognize in three seconds.'
     )
     await page.locator('#detective-audience').fill('Busy parents new to the program')
     await page.locator('#detective-feel').fill('Hopeful and clear — not hustle')
-    await page.getByRole('button', { name: /Fill brief from sheet/i }).click()
-    // Next gap lives on path strip (not Define header)
-    await expect(page.locator('.journey-gap-strip-btn')).toBeVisible()
-    await page
-      .getByRole('button', { name: /Continue · Research|Go to Research/i })
-      .first()
-      .click()
+    await page.getByRole('button', { name: /Identity/i }).first().click()
+    await expect(page.locator('#detective-brandWords')).toBeVisible({
+      timeout: 5000,
+    })
+    await page.locator('#detective-brandWords').fill('calm, hopeful, clear')
+    // Required filled → continue applies sheet to brief and opens Research
+    await page.getByRole('button', { name: /Next · Research/i }).click()
 
-    // 2 Research — pin + star for leave-behind
+    // 2 Research — note pin + star for leave-behind
     await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
-    await expect(page.getByText(/Curious spy checklist/i)).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: /Start 20-min research timer/i })
-    ).toBeVisible()
-    // Open note pin form if present
-    const noteBtn = page.getByRole('button', { name: /^Note$/i })
-    if (await noteBtn.count()) {
-      await noteBtn.click()
-      const noteInput = page.locator(
-        'input[placeholder*="twilight"], input[placeholder*="note" i], .board-note-input, #board-note'
-      )
-      if (await noteInput.count()) {
-        await noteInput.first().fill('Calm indigo field — safe energy')
-        await page.getByRole('button', { name: /Add pin/i }).click()
-        await page.waitForTimeout(300)
-        const star = page.locator('button.mood-pin-star').first()
-        if (await star.count()) {
-          // Real hit target (no force) — pin tools must not be covered by face
-          await star.click()
-          await expect(star).toHaveAttribute('aria-pressed', 'true')
-        }
-      }
-    }
+    // Research is now the earliest gap → quiet G strip
+    await expect(page.locator('.journey-gap-strip.is-on-gap')).toBeVisible()
+    await expect(page.locator('.journey-gap-strip-btn.is-quiet')).toHaveText('G')
+    await page.getByRole('button', { name: /^Note$/i }).click()
+    await expect(page.locator('#board-note')).toBeVisible({ timeout: 5000 })
+    await page.locator('#board-note').fill('Calm indigo field — safe energy')
+    await page.getByRole('button', { name: 'Add', exact: true }).click()
+    await page.waitForTimeout(300)
+    const star = page.locator('button.mood-pin-star').first()
+    await expect(star).toBeVisible({ timeout: 5000 })
+    // Real hit target (no force) — pin tools must not be covered by face
+    await star.click()
+    await expect(star).toHaveAttribute('aria-pressed', 'true')
 
-    // 3 Ideate — Opposite alone does not fill step; need A/B/C or pin
+    // 3 Ideate — A/B titles + why, choose the winner
     await path.getByRole('button', { name: /Step 3: Ideate/i }).click()
     await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()
-    await expect(page.getByText(/Ideate checklist|Ideate & brainstorm/i)).toBeVisible()
-    await page.getByRole('button', { name: /Opposite direction/i }).click()
-    // On earliest empty step: strip quiets (G only); no still-thin / step chip
-    await expect(page.locator('.journey-gap-strip.is-on-gap')).toBeVisible()
-    await expect(page.locator('.journey-gap-strip-btn.is-quiet')).toBeVisible()
-    await expect(page.locator('.journey-gap-strip-btn.is-quiet')).toContainText(
-      /^G$|Fill/
-    )
-    await expect(page.locator('.journey-still-thin')).toHaveCount(0)
-    await expect(page.locator('.step-fill-chip')).toHaveCount(0)
+    await page.getByRole('button', { name: /^Opposite$/i }).click()
     await page.locator('#dir-title-a').fill('Quiet editorial')
+    await page.locator('#dir-note-a').fill('Hierarchy carries calm')
     await page.locator('#dir-title-b').fill('Warm product toolkit')
+    // Hyper-focus mask disables pointer events on unfocused cards — blur first
+    await page.locator('#dir-title-b').blur()
     await page
       .locator('.ideate-dir-card')
       .first()
       .getByRole('button', { name: /Choose|Chosen/i })
       .click()
-    await expect(
-      page.getByRole('button', { name: /Queue chosen/i })
-    ).toBeVisible()
 
     // 4 Sketch — why field
     await path.getByRole('button', { name: /Step 4: Sketch/i }).click()
@@ -96,20 +75,16 @@ test.describe('Process walk (artifacts)', () => {
     // 5 Design — tagline (craft) + version bump
     await path.getByRole('button', { name: /Step 5: Design/i }).click()
     await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible()
-    await expect(page.locator('.design-preview-caption')).toBeVisible()
-    await expect(page.locator('.design-preview-caption')).toContainText(
-      /direction sheet|multi-page brand book/i
-    )
     await page.locator('#brand-tagline').fill('Calm direction you can hand over')
-    await page.getByRole('button', { name: 'Bump', exact: true }).click()
-    await expect(page.locator('#design-version')).toHaveValue(/v[2-9]/)
+    await page.getByRole('button', { name: 'v1', exact: true }).click()
+    await expect(
+      page.getByRole('button', { name: /^v[2-9]$/ })
+    ).toBeVisible({ timeout: 5000 })
 
-    // 6 Review — process strip + feedback notes
+    // 6 Review — pack readiness + feedback notes
     await path.getByRole('button', { name: /Step 6: Review/i }).click()
     await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible()
-    await expect(
-      page.getByText(/Process · \d+ of 7 steps have content/i)
-    ).toBeVisible()
+    await expect(page.getByText(/Pack · \d+\/\d+/i).first()).toBeVisible()
     await page
       .locator('#feedback-notes')
       .fill('Hierarchy clear. Keep guest line quieter.')
@@ -126,9 +101,7 @@ test.describe('Process walk (artifacts)', () => {
       .locator('#learnings-note')
       .fill('What worked: detective sheet first. Next: more real photos.')
     await expect(
-      page.getByRole('button', {
-        name: /Download (brand book|vector) PDF/i,
-      })
+      page.getByRole('button', { name: /Brand book PDF/i })
     ).toBeVisible()
   })
 })

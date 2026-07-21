@@ -18,20 +18,11 @@ test.describe('Brand book PDF', () => {
       page.locator('h1.page-title', { hasText: 'Deliver' })
     ).toBeVisible({ timeout: 10000 })
 
-    await expect(
-      page.getByText(/Process · \d+ of 7 steps have content/i)
-    ).toBeVisible()
-    // Next gap chrome: path strip (panel no longer duplicates Fix next gap)
-    await expect(page.locator('.journey-gap-strip-btn')).toBeVisible()
-    await page.locator('.journey-gap-strip-btn').click()
-    // Earliest gap for a bare project is usually Research (after define name)
-    await expect(
-      page.getByRole('heading', { name: /Research|Define|Ideate|Sketch/i })
-    ).toBeVisible({ timeout: 8000 })
+    await expect(page.getByText(/Pack · \d+\/\d+/i).first()).toBeVisible()
 
-    // G key also jumps to next gap from any path view
+    // G key jumps to the earliest process gap from any path view
     await page.keyboard.press('g')
-    await page.waitForTimeout(200)
+    await page.waitForTimeout(300)
     await expect(page.locator('h1.page-title').first()).toBeVisible()
 
     // Back to Deliver for PDF
@@ -42,7 +33,7 @@ test.describe('Brand book PDF', () => {
     ).toBeVisible({ timeout: 10000 })
 
     const downloadBtn = page.getByRole('button', {
-      name: /Download (brand book|vector) PDF/i,
+      name: /Brand book PDF/i,
     })
     await expect(downloadBtn).toBeVisible()
 

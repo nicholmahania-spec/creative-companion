@@ -65,8 +65,13 @@ export function blankDetective() {
   }
 }
 
-/** Default brand identity template fields on each project */
-export const defaultBrandIdentity = {
+/**
+ * Default brand identity template fields on each project.
+ * Factory so every project gets fresh nested objects (detective,
+ * conceptPackage, colorRoleWhy, deliverWordsChecked) — never shared refs.
+ */
+export function brandIdentityDefaults() {
+  return {
   tagline: '',
   voice: '',
   typeHeading: 'Plus Jakarta Sans Bold',
@@ -119,7 +124,11 @@ export const defaultBrandIdentity = {
     dontUse: '',
     notes: '',
   },
+  }
 }
+
+/** @deprecated shared instance — prefer brandIdentityDefaults() */
+export const defaultBrandIdentity = brandIdentityDefaults()
 
 /** Three Ideate direction slots (A/B/C) */
 export function blankDirections() {
@@ -144,7 +153,7 @@ export function createBlankProject(name = 'My project', brief = '') {
     decisionLog: [],
     palette: [...defaultProjectPalette],
     deadline: '',
-    ...defaultBrandIdentity,
+    ...brandIdentityDefaults(),
     tasks: [],
   }
 }
@@ -280,7 +289,7 @@ const useAppStore = create(
               logoDirection: '',
               palette: [...defaultProjectPalette],
               deadline: '',
-              ...defaultBrandIdentity,
+              ...brandIdentityDefaults(),
               ...project,
               active: true,
             },
@@ -618,7 +627,7 @@ const useAppStore = create(
             palette: [...defaultProjectPalette],
             deadline: '',
             directions: blankDirections(),
-            ...defaultBrandIdentity,
+            ...brandIdentityDefaults(),
             ...p,
           }
           // Merge detective so partial imports keep all keys
@@ -654,13 +663,10 @@ const useAppStore = create(
           conceptItems: Array.isArray(data.conceptItems) ? data.conceptItems : [],
           breakKit: Array.isArray(data.breakKit) ? data.breakKit : [],
           theme: data.theme === 'deep' ? 'deep' : 'warm',
+          // Full defaults first so payloads from older builds keep the
+          // intended defaults for prefs they never knew about
           prefs: {
-            soundEnabled: true,
-            reduceMotion: false,
-            bodyDoubleSilent: false,
-            forceBreaksEnabled: true,
-            queueCollapsed: true,
-            showHowItWorks: false,
+            ...blankWorkspaceState().prefs,
             ...(data.prefs || {}),
           },
           sparkIndex,
@@ -714,7 +720,9 @@ const useAppStore = create(
           return { ok: false, error: 'Project not found' }
         }
         const nextId =
-          currentProjectId === id ? remaining[0].id : currentProjectId
+          currentProjectId === id
+            ? (remaining.find((p) => !p.archived) || remaining[0]).id
+            : currentProjectId
         set({
           projects: remaining.map((p) => ({
             ...p,
@@ -769,6 +777,7 @@ const useAppStore = create(
         try {
           localStorage.removeItem('cc-hide-howto')
           localStorage.removeItem('cc-onboarded')
+          localStorage.removeItem('cc-desk')
         } catch {
           /* ignore */
         }
@@ -1305,6 +1314,7 @@ const useAppStore = create(
         if (!persisted || typeof persisted !== 'object') {
           return blankWorkspaceState()
         }
+        const blank = blankWorkspaceState()
         let moodItems = Array.isArray(persisted.moodItems)
           ? persisted.moodItems
           : []
@@ -1328,8 +1338,11 @@ const useAppStore = create(
           moodItems = next
         }
         return {
-          ...blankWorkspaceState(),
+          ...blank,
           ...persisted,
+          // Deep-merge so prefs added after the workspace was first persisted
+          // (helperQuiet, hideTips, toastMode…) keep their intended defaults
+          prefs: { ...blank.prefs, ...(persisted.prefs || {}) },
           tasks: Array.isArray(persisted.tasks) ? persisted.tasks : [],
           moodItems,
           conceptItems: Array.isArray(persisted.conceptItems)
@@ -1348,7 +1361,7 @@ const useAppStore = create(
                       ? p.directions
                       : blankDirections(),
                 }))
-              : blankWorkspaceState().projects,
+              : blank.projects,
         }
       },
       partialize: (state) => ({
@@ -1399,7 +1412,8 @@ const useAppStore = create(
             state.projects = blank.projects
             state.currentProjectId = blank.currentProjectId
           }
-          // Legacy bridge from earlier cc-desk shape (real user data only)
+          // Legacy bridge from earlier cc-desk shape (real user data only).
+          // One-time: never clobber projects the new store already has.
           const legacy = localStorage.getItem('cc-desk')
           if (!legacy) return
           const data = JSON.parse(legacy)
@@ -1409,13 +1423,23 @@ const useAppStore = create(
           if (Array.isArray(data.moodItems) && data.moodItems.length && !state.moodItems?.length) {
             state.moodItems = data.moodItems
           }
-          if (data.activeProjectId) state.currentProjectId = data.activeProjectId
-          if (Array.isArray(data.projects) && data.projects.length) {
+          const hasRealProjects = (state.projects || []).some(
+            (p) =>
+              (p.name && p.name !== 'My project') ||
+              String(p.brief || '').trim() ||
+              (Array.isArray(p.decisionLog) && p.decisionLog.length > 0)
+          )
+          if (
+            Array.isArray(data.projects) &&
+            data.projects.length &&
+            !hasRealProjects
+          ) {
             state.projects = data.projects.map((p) => ({
               logoDirection: '',
-              ...defaultBrandIdentity,
+              ...brandIdentityDefaults(),
               ...p,
             }))
+            if (data.activeProjectId) state.currentProjectId = data.activeProjectId
           }
         } catch {
           /* ignore */

@@ -2,10 +2,12 @@ import { test, expect } from '@playwright/test'
 import { unlockAndOnboard, pathNav, skipIfCloud } from './helpers.js'
 
 /**
- * Desk reliability: local unlock → path → Pack dual export · Esc overlays.
+ * Desk reliability: local unlock → path → Deliver exports · Esc overlays.
  */
 test.describe('Desk reliability', () => {
-  test('Pack shows Download PDF and Print / Save as PDF', async ({ page }) => {
+  test('Deliver shows Brand book PDF and Print under More formats', async ({
+    page,
+  }) => {
     const gate = await unlockAndOnboard(page, {
       name: 'E2E Reliability',
       step: 'Ship one step',
@@ -19,17 +21,13 @@ test.describe('Desk reliability', () => {
       page.locator('h1.page-title', { hasText: 'Deliver' })
     ).toBeVisible({ timeout: 10000 })
     await expect(
-      page.getByRole('button', { name: 'Print / Save as PDF', exact: true })
+      page.getByRole('button', { name: /Brand book PDF/i })
     ).toBeVisible()
+    await page
+      .locator('.deliver-advanced summary', { hasText: 'More formats' })
+      .click()
     await expect(
-      page.getByRole('button', {
-        name: /Download (brand book|vector) PDF/i,
-      })
-    ).toBeVisible()
-    await expect(
-      page
-        .locator('.pack-export-hint')
-        .filter({ hasText: /brand book|vector PDF|pages/i })
+      page.getByRole('button', { name: 'Print', exact: true })
     ).toBeVisible()
   })
 
@@ -54,10 +52,9 @@ test.describe('Desk reliability', () => {
       page.locator('h1.page-title', { hasText: 'Deliver' })
     ).toBeVisible({ timeout: 10000 })
     await page
-      .locator('summary.pack-more-summary, details.pack-more-actions summary')
-      .first()
+      .locator('.deliver-advanced summary', { hasText: 'More formats' })
       .click()
-    await page.getByRole('button', { name: 'Preview full' }).click()
+    await page.getByRole('button', { name: 'Preview', exact: true }).click()
     await expect(
       page.getByRole('dialog', { name: /Brand direction pack/i })
     ).toBeVisible({ timeout: 8000 })

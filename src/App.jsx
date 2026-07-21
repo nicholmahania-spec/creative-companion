@@ -42,7 +42,6 @@ const DefineView = lazy(() => import('./views/DefineView'))
 const DesignView = lazy(() => import('./views/DesignView'))
 const ReviewView = lazy(() => import('./views/ReviewView'))
 const DeliverView = lazy(() => import('./views/DeliverView'))
-const DetectiveSheet = lazy(() => import('./views/DetectiveSheet'))
 import {
   breakMinutesForWork,
   POMODORO_WORK_MIN,
@@ -72,7 +71,6 @@ import { awardAndBroadcast } from './lib/buddyGame'
 import {
   JOURNEY_STEPS,
   journeyIdForView,
-  getJourneyStep,
   getNextJourney,
   toolsLabelForView,
 } from './lib/journey'
@@ -89,11 +87,6 @@ import {
 import JourneyGapStrip from './components/JourneyGapStrip'
 import PathStepIcon from './components/PathStepIcon'
 import {
-  PROCESS_PHASES,
-  getProcessPhase,
-  processPhaseForView,
-} from './lib/processGuide'
-import {
   buildBrandPackSnapshot,
   captureSaveHandle,
   downloadBrandPackHtml,
@@ -109,17 +102,13 @@ import {
   slugifyFilename,
 } from './lib/exportFiles'
 import LogoLockup from './components/LogoLockup'
-const EmptyIllustration = lazy(() => import('./components/EmptyIllustration'))
 import {
-  LOCALES,
   normalizeLocale,
   t as i18nT,
   pathLabel,
   pathPlain,
-  pathFillHint,
   tFormat,
   localeDir,
-  isRtl,
 } from './lib/i18n'
 import { useModalFocus } from './lib/useModalFocus'
 import {
@@ -150,15 +139,12 @@ function App() {
   const currentSpark = useAppStore((s) => s.currentSpark)
   const sparkIndex = useAppStore((s) => s.sparkIndex)
   const sparksTried = useAppStore((s) => s.sparksTried)
-  const addProject = useAppStore((s) => s.addProject)
   const setCurrentProject = useAppStore((s) => s.setCurrentProject)
   const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
   const updateDetective = useAppStore((s) => s.updateDetective)
   const applyDetectiveToBrief = useAppStore((s) => s.applyDetectiveToBrief)
   const updateDirection = useAppStore((s) => s.updateDirection)
-  const setLogoDirection = useAppStore((s) => s.setLogoDirection)
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
-  const updateBrandField = useAppStore((s) => s.updateBrandField)
   const bumpDesignVersion = useAppStore((s) => s.bumpDesignVersion)
   const toggleTheme = useAppStore((s) => s.toggleTheme)
   const setBodyDoubling = useAppStore((s) => s.setBodyDoubling)
@@ -187,9 +173,8 @@ function App() {
   const clearToEmpty = useAppStore((s) => s.clearToEmpty)
   const renameProject = useAppStore((s) => s.renameProject)
   const deleteProject = useAppStore((s) => s.deleteProject)
-  const archiveProject = useAppStore((s) => s.archiveProject)
-  const unarchiveProject = useAppStore((s) => s.unarchiveProject)
   const breakKit = useAppStore((s) => s.breakKit)
+  const conceptItems = useAppStore((s) => s.conceptItems)
   const completeBreakKitItem = useAppStore((s) => s.completeBreakKitItem)
   const breakKitRef = useRef(breakKit)
   breakKitRef.current = breakKit
@@ -260,8 +245,6 @@ function App() {
   const [onboardName, setOnboardName] = useState('')
   const [onboardBrief, setOnboardBrief] = useState('')
   const [onboardFirstStep, setOnboardFirstStep] = useState('')
-  const [processPhase, setProcessPhase] = useState(null)
-  const [processOpen, setProcessOpen] = useState(false)
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [lastExportNote, setLastExportNote] = useState('')
@@ -422,15 +405,8 @@ function App() {
     return !!packReadiness(pack).thin
   }, [activeProject, deskTasks, deskMood, projectPalette])
   const completedCount = doneTasks.length
-  const progressPercent =
-    deskTasks.length > 0
-      ? Math.round((completedCount / deskTasks.length) * 100)
-      : 0
 
   const projectDeadline = activeProject?.deadline || ''
-  const projectUrgency = projectDeadline
-    ? deadlineUrgency(projectDeadline)
-    : null
 
   const calendarEvents = useMemo(() => {
     const map = {}
@@ -504,7 +480,6 @@ function App() {
   }, [activeProject?.id, activeProject?.palette, setProjectPalette])
 
   const hideHowItWorks = () => setPref('showHowItWorks', false)
-  const revealHowItWorks = () => setPref('showHowItWorks', true)
 
   const toastMode = prefs.toastMode === 'all' ? 'all' : 'quiet'
   /** Seconds non-error toasts queue before flushing together; 0 = show instantly (default) */
@@ -580,8 +555,6 @@ function App() {
     setRecentUndo(null)
     setStepFocusKey((k) => k + 1)
   }
-
-  const bumpDesignVersionIfV1 = useAppStore((s) => s.bumpDesignVersionIfV1)
 
   /**
    * Open a process step + focus a useful field (ADHD land-on-work).
@@ -877,7 +850,6 @@ function App() {
   }, [recentUndo])
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
-  const archivedProjects = (projects || []).filter((p) => p.archived)
 
   /** Per-project next-step summary for the multi-project Home dashboard */
   const projectsSummary = useMemo(
@@ -1388,7 +1360,13 @@ function App() {
       setFocusLeft(focusH.leftSec)
       setIsFocusRunning(true)
       setTimerFocusSource(focusH.source || null)
-      setPomodoroWorkStartedAt(Date.now() - (POMODORO_WORK_MIN * 60 - focusH.leftSec) * 1000)
+      // Research timer runs 20 min, not the Pomodoro 25 — pick the right total
+      // so worked-minutes (and the break length derived from it) stay honest
+      const totalSec =
+        focusH.source === 'research' ? 20 * 60 : POMODORO_WORK_MIN * 60
+      setPomodoroWorkStartedAt(
+        Date.now() - Math.max(0, totalSec - focusH.leftSec) * 1000
+      )
       setSessionComplete(false)
     } else if (focusH?.ended) {
       setFocusLeft(0)
@@ -1760,6 +1738,11 @@ function App() {
     projects,
     tasks,
     moodItems,
+    conceptItems,
+    breakKit,
+    sparkIndex,
+    sparksTried,
+    currentSpark,
     theme,
     prefs,
     currentProjectId,
@@ -1777,12 +1760,6 @@ function App() {
     setProjectNameDraft(activeProject?.name || '')
   }, [activeProject?.id, activeProject?.name])
 
-  // Path view → process phase (7-step alignment)
-  useEffect(() => {
-    const p = processPhaseForView(activeView)
-    if (p) setProcessPhase(p.id)
-  }, [activeView])
-
   // Autosave pulse — skip first mount so load doesn’t flash “Saved”
   const savePulseReady = useRef(false)
   useEffect(() => {
@@ -1793,7 +1770,7 @@ function App() {
     setSavePulse(true)
     const t = window.setTimeout(() => setSavePulse(false), 1400)
     return () => window.clearTimeout(t)
-  }, [tasks, moodItems, activeProjectId, projects, theme, prefs])
+  }, [tasks, moodItems, breakKit, activeProjectId, projects, theme, prefs])
 
   const addQuickTask = () => {
     if (!quickInput.trim()) return
@@ -1866,17 +1843,28 @@ function App() {
     }
   }
 
-  const chooseLogoDirection = (label, detail) => {
-    setLogoDirection(`${label}: ${detail}`)
-  }
-
   const finishOnboarding = (mode) => {
     if (mode === 'custom' && onboardName.trim()) {
-      const project = createNewProject(
-        onboardName.trim(),
+      const brief =
         onboardBrief.trim() ||
-          'Audience + outcome + constraint — fill as you go.'
-      )
+        'Audience + outcome + constraint — fill as you go.'
+      // First run: the workspace already holds one untouched blank project —
+      // rename it instead of appending a stray empty "My project" lane.
+      const st = useAppStore.getState()
+      const only = st.projects.length === 1 ? st.projects[0] : null
+      const untouchedBlank =
+        only &&
+        only.name === 'My project' &&
+        !String(only.brief || '').trim() &&
+        !(st.tasks || []).length
+      let project
+      if (untouchedBlank) {
+        renameProject(only.id, onboardName.trim())
+        updateProjectBrief(brief)
+        project = only
+      } else {
+        project = createNewProject(onboardName.trim(), brief)
+      }
       awardAndBroadcast('project_create', { label: onboardName.trim() })
       const stepTitle =
         onboardFirstStep.trim() ||
@@ -1948,7 +1936,7 @@ function App() {
     const pack = buildCurrentBrandPack()
     const slug = slugifyFilename(pack.projectName, 'brand-pack')
     const finishOk = (label) => {
-      const g = awardAndBroadcast('export_pack', { label })
+      awardAndBroadcast('export_pack', { label })
       const when = new Date().toLocaleTimeString([], {
         hour: 'numeric',
         minute: '2-digit',
@@ -1983,7 +1971,7 @@ function App() {
               : kind === 'json'
                 ? `${slug}-brand-pack.json`
                 : kind === 'backup'
-                  ? `creative-companion-backup-${new Date().toISOString().slice(0, 10)}.json`
+                  ? `creative-companion-backup-${toISODate()}.json`
                   : null
     const handlePromise = saveName
       ? captureSaveHandle(saveName, 'Creative Companion export')
@@ -2252,7 +2240,7 @@ function App() {
     setDoneOpen(false)
     setActiveView('flow')
     setStepFocusKey((k) => k + 1)
-    const g = awardAndBroadcast('breakdown', {
+    awardAndBroadcast('breakdown', {
       label: `${n} micro-steps`,
     })
     flashToast(
@@ -2329,17 +2317,6 @@ function App() {
     }
     reader.onerror = () => flashToast(i18nT(locale, 'ui.readFileFail'))
     reader.readAsText(file)
-  }
-
-  const commitProjectRename = () => {
-    if (!activeProject) return
-    const next = projectNameDraft.trim()
-    if (!next || next === activeProject.name) {
-      setProjectNameDraft(activeProject.name || '')
-      return
-    }
-    renameProject(activeProject.id, next)
-    flashToast(i18nT(locale, 'ui.projectRenamed'))
   }
 
   const handleDeleteProject = () => {
@@ -2446,7 +2423,6 @@ function App() {
   }
 
   const journeyActive = journeyIdForView(activeView)
-  const journeyStep = getJourneyStep(activeView)
   const journeyNext = getNextJourney(activeView)
 
   return (

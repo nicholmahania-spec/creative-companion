@@ -24,9 +24,13 @@ test.describe('Soft Signal demo', () => {
       timeout: 8000,
     })
 
+    // Demo loader lives in the collapsed Advanced group
     await page
-      .getByRole('button', { name: /Load Soft Signal demo/i })
+      .locator('summary')
+      .filter({ hasText: /Advanced/i })
+      .first()
       .click()
+    await page.getByRole('button', { name: /^Soft Signal$/i }).click()
 
     const banner = page.locator('.desk-confirm-banner')
     await expect(banner).toBeVisible({ timeout: 5000 })
@@ -38,11 +42,11 @@ test.describe('Soft Signal demo', () => {
       timeout: 12000,
     })
 
+    // Short tour opens after the demo import — dismiss it
     const dots = page.locator('.demo-tour-dots span')
     if ((await dots.count()) >= 7) {
-      expect(await dots.count()).toBeGreaterThanOrEqual(7)
       await page
-        .getByRole('button', { name: /Skip tour|Stay here|Open Deliver/i })
+        .getByRole('button', { name: /^(Skip|Stay)$/i })
         .first()
         .click()
       await page.waitForTimeout(300)
@@ -64,37 +68,29 @@ test.describe('Soft Signal demo', () => {
     const goal = await page.locator('#detective-goal').inputValue()
     expect(goal.length).toBeGreaterThan(10)
 
-    // Design still has path gap strip (not per-step Gap · G)
+    // Design keeps the N/7 pill; demo seeds leave-behind ★ pins
     await path.getByRole('button', { name: /Step 5: Design/i }).click()
     await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible()
-    await expect(page.locator('.journey-gap-strip')).toBeVisible()
     await expect(page.locator('.journey-progress-pill')).toBeVisible()
-    // Demo honesty: leave-behind ★ pins seeded (pack readiness)
-    await expect(page.getByText(/client pack [1-9]\/6|pack pins [1-9]\/6/i)).toBeVisible({
+    await expect(page.getByText(/★\s*[1-9]\/6/).first()).toBeVisible({
       timeout: 5000,
     })
-    // Brand kit fields seeded (messaging pillars)
-    // Words tab includes messaging pillars; Pack tab includes imagery
+    // Brand kit fields seeded — messaging + imagery live in collapsed
+    // sub-accordions, so assert seeded values, not visibility
     await page.getByRole('tab', { name: /^Words$/i }).click()
-    await expect(page.locator('#msg-promise')).toBeVisible({ timeout: 5000 })
-    const promise = await page.locator('#msg-promise').inputValue()
-    expect(promise.length).toBeGreaterThan(10)
+    await expect(page.locator('#msg-promise')).toHaveValue(/.{10,}/, {
+      timeout: 5000,
+    })
     await page.getByRole('tab', { name: /^Pack$/i }).click()
-    await expect(page.locator('#img-style')).toBeVisible({ timeout: 5000 })
-    const style = await page.locator('#img-style').inputValue()
-    expect(style.length).toBeGreaterThan(5)
+    await expect(page.locator('#img-style')).toHaveValue(/.{5,}/, {
+      timeout: 5000,
+    })
 
     await path.getByRole('button', { name: /Step 2: Research/i }).click()
     await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
-    await expect(page.locator('.mood-board.has-pins, .mood-card').first()).toBeVisible({
-      timeout: 8000,
-    })
-    // Strip chip uses Open · … not Jumping to …
-    const chip = page.locator('.step-fill-chip')
-    if (await chip.count()) {
-      const t = await chip.first().innerText()
-      expect(t).not.toMatch(/Jumping/i)
-    }
+    await expect(
+      page.locator('.mood-board.has-pins, .mood-card').first()
+    ).toBeVisible({ timeout: 8000 })
 
     await path.getByRole('button', { name: /Step 3: Ideate/i }).click()
     await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()

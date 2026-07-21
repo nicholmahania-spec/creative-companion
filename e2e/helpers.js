@@ -51,9 +51,8 @@ export async function unlockAndOnboard(
     if (expectOnboardDialog) {
       const { expect } = await import('@playwright/test')
       await expect(
-        page.getByRole('dialog', { name: /One project|project/i })
+        page.getByRole('dialog', { name: /New project|One project|project/i })
       ).toBeVisible()
-      await expect(page.locator('#onboard-desc')).toBeVisible()
     }
     const nameEl = page
       .locator('#onboard-name, .onboard-panel input, .onboard-input')
@@ -73,7 +72,7 @@ export async function unlockAndOnboard(
 }
 
 export async function pathNav(page) {
-  return page.getByRole('navigation', { name: /Your path/i })
+  return page.getByRole('navigation', { name: /Your (path|7 steps)/i })
 }
 
 /** Skip test if unlock returned cloud-auth skip */
