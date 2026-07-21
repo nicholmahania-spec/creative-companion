@@ -19,9 +19,9 @@ const assetsDir = join(root, 'dist', 'assets')
  */
 const MAIN_JS_RAW_MAX = 440 * 1024
 /**
- * Main CSS raw max — 285 KB (v1.48.63): forced-break densify + path ADHD.
+ * Main CSS raw max — 220 KB (v1.48.65): dead CSS purge after ADHD densify.
  */
-const MAIN_CSS_RAW_MAX = 285 * 1024
+const MAIN_CSS_RAW_MAX = 220 * 1024
 /** Main JS gzipped advisory max (warn only if over, still fail on raw) */
 const MAIN_JS_GZIP_WARN = 140 * 1024
 

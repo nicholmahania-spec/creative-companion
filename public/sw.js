@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v28)
- * v27: forced break · v28: shortcuts + export + consent densify
+/* Creative Companion — offline shell + asset cache (v29)
+ * v28: shell densify · v29: dead CSS purge (~80KB)
  */
-const CACHE = 'cc-shell-v28'
+const CACHE = 'cc-shell-v29'
 const PRECACHE = [
   './',
   './index.html',
