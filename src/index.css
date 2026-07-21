@@ -10464,34 +10464,59 @@ html[data-reduce-motion='true'] *::after {
   }
 }
 .review-pack-preview {
-  margin-top: 0.5rem;
+  margin-top: 0.35rem;
 }
 
-/* Asymmetric 60/40 split — live structure left, actions/checklists right */
+/* Review ADHD — notes 55% left · sticky preview 45% right */
 .review-split {
   display: grid;
-  grid-template-columns: 60fr 40fr;
-  gap: 1rem;
+  grid-template-columns: minmax(0, 55fr) minmax(14rem, 45fr);
+  gap: 1rem 1.15rem;
   align-items: start;
 }
 
-.review-split-left {
-  position: sticky;
-  top: 1rem;
-}
-
-.review-split-right {
+.review-edit-column {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.85rem;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.review-preview-panel {
+  grid-column: 2;
+  grid-row: 1;
+  position: sticky;
+  top: 4.5rem;
+  max-height: calc(100vh - 5.5rem);
+  overflow: auto;
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  box-shadow: none;
+}
+
+.review-split-left {
+  /* alias kept for focus-mode selectors */
 }
 
 @media (max-width: 860px) {
   .review-split {
     grid-template-columns: 1fr;
   }
-  .review-split-left {
+  .review-edit-column {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .review-preview-panel {
+    grid-column: 1;
+    grid-row: 2;
     position: static;
+    max-height: none;
+    order: 0;
   }
 }
 
@@ -10532,18 +10557,31 @@ html[data-reduce-motion='true'] *::after {
 
 .review-question-chips {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
 }
-.review-question-chips .btn {
-  text-align: left;
-  white-space: normal;
-  height: auto;
-  min-height: 2.25rem;
-  line-height: 1.35;
-  padding: 0.45rem 0.75rem;
+.review-prompt-chip {
+  appearance: none;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  color: var(--ts-ink, #0F172A);
+  border-radius: 4px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  min-height: 36px;
+  cursor: pointer;
+  box-shadow: none;
+}
+.review-prompt-chip:not(.is-active) {
+  opacity: 0.55;
+}
+.review-prompt-chip.is-active {
+  opacity: 1;
+  border-color: var(--ts-focus, #2563EB);
+  outline: 1.5px solid var(--ts-focus, #2563EB);
+  outline-offset: 0;
 }
 
 .design-version-label {
@@ -15524,61 +15562,161 @@ body:has(.app.deep)::after {
   }
 }
 
-/* Review — feedback first on right, preview sticky left */
+/* Review ADHD densify */
 .review-studio .review-lede {
-  max-width: 34rem;
+  display: none;
 }
 
-.review-preview-panel {
-  padding: 0.85rem 1rem 1rem;
+.review-goal-anchor {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--ts-mute, #94A3B8);
+  max-width: 42rem;
+}
+
+.review-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.review-top-text {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.review-status-chip {
+  flex: 0 0 auto;
+  border-radius: 4px;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--ts-mute, #94A3B8);
+  box-shadow: none;
+}
+.review-status-chip.is-ready {
+  color: var(--ts-ink, #0F172A);
+  border-color: var(--ts-ink, #0F172A);
+}
+.review-status-chip.is-gaps {
+  color: var(--ts-ink, #0F172A);
 }
 
 .review-feedback-hero {
-  order: 0;
+  margin: 0;
+  border-radius: 4px;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  box-shadow: none;
 }
 
 .review-feedback-hint {
-  margin: 0 0 0.55rem;
+  display: none;
 }
 
 .review-notes-input {
-  min-height: 7rem;
+  min-height: 8rem;
+  border-radius: 4px !important;
+}
+
+/* Focus lock — Notes is the instrument */
+.review-studio:has(.review-notes-input:focus) .review-advanced,
+.review-studio:has(.review-notes-input:focus) .review-ready-panel,
+.review-studio:has(.review-notes-input:focus) .review-preview-panel,
+.review-studio:has(.review-notes-input:focus) .review-status-chip {
+  opacity: 0.25;
+  filter: blur(2px);
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    filter 0.15s ease;
+}
+.review-studio:has(.review-notes-input:focus) .review-notes-input {
+  border-color: var(--ts-focus, #2563EB) !important;
+  border-width: 1.5px;
+  outline: none;
+  box-shadow: none;
+}
+.review-studio:has(.review-notes-input:focus) .review-goal-anchor,
+.review-studio:has(.review-notes-input:focus) .page-title {
+  opacity: 1;
+  filter: none;
+}
+
+.review-advanced {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--ts-border, #E2E8F0);
+  padding-top: 0.45rem;
+}
+.review-advanced > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--ts-mute, #94A3B8);
+  list-style: none;
+}
+.review-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+.review-advanced > summary::before {
+  content: '▸ ';
+  font-size: 0.7rem;
+}
+.review-advanced[open] > summary::before {
+  content: '▾ ';
 }
 
 .review-ready-panel {
-  opacity: 0.92;
+  margin: 0;
+  border-radius: 4px;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  box-shadow: none;
 }
 
 .review-ready-list {
   margin-top: 0.35rem;
+  list-style: none;
+  padding: 0;
+}
+
+.review-gap-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border-radius: 4px !important;
+  border: 1px solid var(--ts-border, #E2E8F0);
+  background: #FFFFFF;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  min-height: 40px;
+  cursor: pointer;
+  box-shadow: none;
+}
+.review-gap-btn:hover,
+.review-gap-btn:focus-visible {
+  border-color: var(--ts-focus, #2563EB);
+  outline: 1.5px solid var(--ts-focus, #2563EB);
+  outline-offset: 0;
 }
 
 .review-ready-ok {
-  margin: 0.35rem 0 0;
-  font-weight: 600;
-  color: var(--accent-growth, #0f766e);
+  display: none;
 }
 
-.review-ready-ok-details {
-  margin-top: 0.55rem;
-}
-
-.review-ready-ok-details > summary {
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 650;
-}
-
-.review-split-right {
-  gap: 0.85rem;
+.review-continue {
+  margin-top: 1rem;
 }
 
 @media (min-width: 861px) {
-  .review-studio .review-split {
-    grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.9fr);
-    gap: 1.15rem;
-  }
-  .review-studio .review-split-left {
+  .review-studio .review-preview-panel {
     top: 4.75rem;
   }
 }
@@ -16274,9 +16412,16 @@ select:focus,
   color: var(--ts-mute) !important;
 }
 
-/* Review split densify */
+/* Review — no dual top Next row leftovers */
 .review-studio .finish-secondary-row .btn-secondary {
   display: none;
+}
+.review-studio .review-feedback-hero .brand-section-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ts-mute, #94A3B8);
 }
 
 /* Define — single instrument: name + chapters + detective only */

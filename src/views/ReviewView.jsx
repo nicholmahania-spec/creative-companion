@@ -1,8 +1,8 @@
 /**
- * Review — leave-behind preview (left) + readiness & feedback desk (right).
- * ADHD: preview stays in view while capturing notes (no tab-away for the pack).
+ * Review — notes + gaps left (55%), sticky pack preview right (45%).
+ * ADHD: one capture surface, Review-only readiness, sticky Next → Deliver.
  */
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase, REVIEW_QUESTIONS } from '../lib/processGuide'
 import {
@@ -15,6 +15,17 @@ import { packReadiness } from '../lib/exportFiles'
 import InfoReveal from '../components/InfoReveal'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
+
+/** Short stems — full sentence only as title / Advanced */
+const REVIEW_PROMPTS = [
+  { stem: 'Hopeful?', full: REVIEW_QUESTIONS[0] },
+  { stem: 'First 3s?', full: REVIEW_QUESTIONS[1] },
+  { stem: 'Notice first?', full: REVIEW_QUESTIONS[2] },
+  { stem: 'One change?', full: REVIEW_QUESTIONS[3] },
+]
+
+/** Deliver-stage items belong on Deliver, not Review */
+const REVIEW_GAP_SKIP = new Set(['handoff', 'learnings'])
 
 export default function ReviewView({
   locale: localeProp = 'en',
@@ -33,39 +44,156 @@ export default function ReviewView({
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const packSnap = buildCurrentBrandPack()
   const ready = packReadiness(packSnap)
-  const miss = ready.checks.filter((c) => !c.ok)
+  const reviewChecks = ready.checks.filter((c) => !REVIEW_GAP_SKIP.has(c.id))
+  const miss = reviewChecks.filter((c) => !c.ok)
+  const okCount = reviewChecks.filter((c) => c.ok).length
+  const [activePrompt, setActivePrompt] = useState(0)
+
+  const goal = activeProject?.detective?.goal
+    ? String(activeProject.detective.goal)
+    : ''
+  const brandWords = activeProject?.detective?.brandWords
+    ? String(activeProject.detective.brandWords)
+    : ''
+
+  const appendPrompt = (full) => {
+    const cur = String(activeProject?.feedbackNotes || '')
+    const line = full.trim()
+    if (!line) return
+    if (cur.includes(line)) {
+      flashMicro?.('Already in notes')
+      return
+    }
+    const next = cur.trim() ? `${cur.trim()}\n• ${line}` : `• ${line}`
+    updateBrandField('feedbackNotes', next)
+    flashMicro?.('Added to notes')
+  }
+
+  const jumpGap = (c) => {
+    if (c.view === 'studio') setActiveView('studio')
+    else if (c.view === 'brand') goSystemSection(c.section || 'essentials')
+    else if (c.view === 'project') {
+      setActiveView('project')
+      window.setTimeout(
+        () => document.getElementById('detective-goal')?.focus(),
+        100
+      )
+    } else if (c.view === 'finish') setActiveView('finish')
+    else if (c.view) setActiveView(c.view)
+  }
 
   return (
-    <div className="review-view surface-desk view-enter review-studio" data-nav-dir={navDir}>
-      <div className="flow-top">
-        <div>
+    <div
+      className="review-view surface-desk view-enter review-studio"
+      data-nav-dir={navDir}
+    >
+      <div className="flow-top review-top">
+        <div className="review-top-text">
           <h1 className="page-title">{i18nT(locale, 'path.review')}</h1>
+          {(goal || brandWords) && (
+            <p className="review-goal-anchor" title={[goal, brandWords].filter(Boolean).join(' · ')}>
+              {goal
+                ? `Goal · ${goal.slice(0, 80)}${goal.length > 80 ? '…' : ''}`
+                : null}
+              {goal && brandWords ? ' · ' : ''}
+              {brandWords ? brandWords.slice(0, 48) : null}
+            </p>
+          )}
           <InfoReveal>
             {(getProcessPhase('review')?.checks || []).join(' · ')}
           </InfoReveal>
         </div>
-        <div className="finish-secondary-row path-continue-row">
-          <button
-            type="button"
-            className="btn btn-primary work-path-next"
-            onClick={() => setActiveView('finish')}
-          >
-            {tFormat(locale, 'ui.continueNext', {
-              label: pathLabel(locale, 'deliver') || 'Deliver',
-            })}
-          </button>
-        </div>
+        {miss.length === 0 ? (
+          <span className="review-status-chip is-ready" aria-live="polite">
+            {okCount}/{reviewChecks.length} ready
+          </span>
+        ) : (
+          <span className="review-status-chip is-gaps" aria-live="polite">
+            {miss.length} gap{miss.length === 1 ? '' : 's'} · {okCount}/
+            {reviewChecks.length}
+          </span>
+        )}
       </div>
 
       <div className="review-split">
-        <section className="panel brand-section review-split-left review-preview-panel">
-          <div className="brand-section-label">Leave-behind preview</div>
-          <div
-            className="pack-preview-thumb pack-preview-artboard review-pack-preview"
-            tabIndex={0}
-            role="region"
-            aria-label="Review pack preview — scroll for full sheet"
-          >
+        {/* Edit rail — notes first */}
+        <div className="review-edit-column">
+          <section className="panel brand-section review-feedback-hero">
+            <div className="brand-section-label">Notes</div>
+            <div className="field-block review-notes-block">
+              <label className="field-label sr-only" htmlFor="feedback-notes">
+                Notes
+              </label>
+              <textarea
+                id="feedback-notes"
+                className="field-input review-notes-input"
+                rows={6}
+                value={activeProject?.feedbackNotes || ''}
+                onChange={(e) =>
+                  updateBrandField('feedbackNotes', e.target.value)
+                }
+                placeholder="Change · why · keep"
+              />
+            </div>
+
+            <details className="review-advanced">
+              <summary>Prompts</summary>
+              <div
+                className="review-question-chips"
+                role="group"
+                aria-label="Review prompts"
+              >
+                {REVIEW_PROMPTS.map((p, i) => (
+                  <button
+                    key={p.stem}
+                    type="button"
+                    title={p.full}
+                    className={`review-prompt-chip${
+                      activePrompt === i ? ' is-active' : ''
+                    }`}
+                    onClick={() => {
+                      setActivePrompt(i)
+                      appendPrompt(p.full)
+                    }}
+                  >
+                    {p.stem}
+                  </button>
+                ))}
+              </div>
+            </details>
+          </section>
+
+          {miss.length > 0 && (
+            <section className="panel brand-section review-ready-panel">
+              <div className="brand-section-label">
+                Fix · {miss.length} gap{miss.length === 1 ? '' : 's'}
+              </div>
+              <ul className="pack-ready-list review-ready-list">
+                {miss.slice(0, 6).map((c) => (
+                  <li key={c.id} className="is-miss">
+                    <button
+                      type="button"
+                      className="pack-ready-fix review-gap-btn"
+                      onClick={() => jumpGap(c)}
+                    >
+                      {c.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+
+        {/* Sticky preview 45% */}
+        <section
+          className="panel brand-section review-split-left review-preview-panel"
+          tabIndex={0}
+          role="region"
+          aria-label="Pack preview"
+        >
+          <div className="design-rail-label">Preview</div>
+          <div className="pack-preview-thumb pack-preview-artboard review-pack-preview">
             <Suspense fallback={<div className="panel-hint">Loading…</div>}>
               <BrandArtboard
                 id="review-preview-artboard"
@@ -78,81 +206,18 @@ export default function ReviewView({
             </Suspense>
           </div>
         </section>
+      </div>
 
-        <div className="review-split-right">
-          <section className="panel brand-section review-feedback-hero">
-            <div className="brand-section-label">Feedback</div>
-            <div className="review-question-chips">
-              {REVIEW_QUESTIONS.map((q) => (
-                <button
-                  key={q}
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(q)
-                      flashToast(i18nT(locale, 'ui.questionCopied'))
-                    } catch {
-                      flashMicro(q.slice(0, 40))
-                    }
-                  }}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-            <div className="field-block" style={{ marginTop: '0.85rem' }}>
-              <label className="field-label" htmlFor="feedback-notes">
-                Notes
-              </label>
-              <textarea
-                id="feedback-notes"
-                className="field-input review-notes-input"
-                rows={5}
-                value={activeProject?.feedbackNotes || ''}
-                onChange={(e) =>
-                  updateBrandField('feedbackNotes', e.target.value)
-                }
-                placeholder="What changes…"
-              />
-            </div>
-          </section>
-
-          <section className="panel brand-section review-ready-panel">
-            <div className="brand-section-label">
-              {miss.length > 0
-                ? `${miss.length} gap${miss.length === 1 ? '' : 's'}`
-                : 'Ready'}
-            </div>
-            {miss.length > 0 ? (
-              <ul className="pack-ready-list review-ready-list">
-                {miss.slice(0, 4).map((c) => (
-                  <li key={c.id} className="is-miss">
-                    <button
-                      type="button"
-                      className="pack-ready-fix"
-                      onClick={() => {
-                        if (c.view === 'studio') setActiveView('studio')
-                        else if (c.view === 'brand')
-                          goSystemSection(c.section || 'essentials')
-                        else if (c.view === 'project') {
-                          setActiveView('project')
-                          window.setTimeout(
-                            () =>
-                              document.getElementById('detective-goal')?.focus(),
-                            100
-                          )
-                        } else if (c.view) setActiveView(c.view)
-                      }}
-                    >
-                      {c.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </section>
-        </div>
+      <div className="brand-export-bar path-continue-row review-continue">
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() => setActiveView('finish')}
+        >
+          {tFormat(locale, 'ui.continueNext', {
+            label: pathLabel(locale, 'deliver') || 'Deliver',
+          })}
+        </button>
       </div>
     </div>
   )
