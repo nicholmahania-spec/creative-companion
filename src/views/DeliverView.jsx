@@ -116,8 +116,8 @@ export default function DeliverView({
           aria-live="polite"
         >
           {gaps.length
-            ? `${gaps.length} gap${gaps.length === 1 ? '' : 's'} · ${okCount}/${ready.checks.length}`
-            : `${okCount}/${ready.checks.length} ready`}
+            ? `Pack · ${okCount}/${ready.checks.length}`
+            : `Pack · ${okCount}/${ready.checks.length} ready`}
         </span>
       </div>
 

@@ -2458,6 +2458,15 @@ function App() {
       }${prefs.focusRingStrength === 'high' ? ' focus-ring-high' : ''}${
         prefs.hideNavUntilBlur ? ' hide-nav-until-blur' : ''
       }${prefs.hideTips ? ' hide-tips-on' : ''}`}
+      style={{
+        ['--focus-mask-opacity']: String(
+          Math.min(0.8, Math.max(0, Number(prefs.focusMaskPct ?? 25) / 100))
+        ),
+        ['--focus-mask-blur']:
+          Number(prefs.focusMaskBlur) > 0
+            ? `${Number(prefs.focusMaskBlur)}px`
+            : '0px',
+      }}
     >
       {forcedBreak && (
         <Suspense fallback={null}>

@@ -421,101 +421,95 @@ export default function SketchView(props) {
           </section>
         )}
 
-        <section className="panel brand-section sketch-queue-panel">
-          <button
-            type="button"
-            className="section-toggle"
-            onClick={() => setQueueOpen((o) => !o)}
-            aria-expanded={
-              queueTasks.length === 0
-                ? false
-                : queueCollapsed
-                  ? queueOpen
-                  : true
-            }
-          >
-            <span className="brand-section-label" style={{ margin: 0 }}>
-              Queue · {queueTasks.length}
-            </span>
-            <span className="section-toggle-hint">
-              {queueTasks.length === 0
-                ? ''
-                : queueCollapsed && !queueOpen
-                  ? 'Show'
-                  : 'Hide'}
-            </span>
-          </button>
-          {queueTasks.length > 0 && (queueCollapsed ? queueOpen : true) && (
-            <div className="desk-list" style={{ marginTop: '0.75rem' }}>
-              {queueTasks.map((task, i) => (
-                <div key={task.id} className="task-row">
-                  <label className="task-row-label">
-                    <input
-                      type="checkbox"
-                      checked={false}
-                      onChange={() => toggleTask(task.id)}
-                    />
-                    <span className="task-row-body">
-                      <span className="task-step-num">{i + 2}</span>
-                      <span className="task-title">{task.title}</span>
-                      <span className="task-meta">
-                        {({ high: 'H', med: 'M', low: 'L' }[
-                          task.energy || 'med'
-                        ] || 'M')}
-                        {task.dueDate
-                          ? ` · ${formatShortDate(task.dueDate)}`
-                          : ''}
+        {queueTasks.length > 0 && (
+          <section className="panel brand-section sketch-queue-panel">
+            <button
+              type="button"
+              className="section-toggle"
+              onClick={() => setQueueOpen((o) => !o)}
+              aria-expanded={queueCollapsed ? queueOpen : true}
+            >
+              <span className="brand-section-label" style={{ margin: 0 }}>
+                Queue · {queueTasks.length}
+              </span>
+              <span className="section-toggle-hint">
+                {queueCollapsed && !queueOpen ? 'Show' : 'Hide'}
+              </span>
+            </button>
+            {(queueCollapsed ? queueOpen : true) && (
+              <div className="desk-list" style={{ marginTop: '0.75rem' }}>
+                {queueTasks.map((task, i) => (
+                  <div key={task.id} className="task-row">
+                    <label className="task-row-label">
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        onChange={() => toggleTask(task.id)}
+                      />
+                      <span className="task-row-body">
+                        <span className="task-step-num">{i + 2}</span>
+                        <span className="task-title">{task.title}</span>
+                        <span className="task-meta">
+                          {({ high: 'H', med: 'M', low: 'L' }[
+                            task.energy || 'med'
+                          ] || 'M')}
+                          {task.dueDate
+                            ? ` · ${formatShortDate(task.dueDate)}`
+                            : ''}
+                        </span>
                       </span>
-                    </span>
-                  </label>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
-        <section className="panel brand-section">
-          <button
-            type="button"
-            className="section-toggle"
-            onClick={() => setDoneOpen((o) => !o)}
-            aria-expanded={doneOpen}
-          >
-            <span className="brand-section-label" style={{ margin: 0 }}>
-              Done · {doneTasks.length}
-            </span>
-            <span className="section-toggle-hint">
-              {doneTasks.length === 0 ? '' : doneOpen ? 'Hide' : 'Show'}
-            </span>
-          </button>
-          {doneTasks.length > 0 && doneOpen ? (
-            <ul className="done-list" style={{ marginTop: '0.75rem' }}>
-              {doneTasks.map((t) => (
-                <li key={t.id}>
-                  <button
-                    type="button"
-                    className="done-undo"
-                    onClick={() => toggleTask(t.id)}
-                    title="Undo"
-                  >
-                    ✓
-                  </button>
-                  <span className="done-title">{t.title}</span>
-                  <button
-                    type="button"
-                    className="text-link"
-                    style={{ marginTop: 0 }}
-                    onClick={() =>
-                      confirmRemove(t.id, 'Delete this step permanently?')
-                    }
-                  >
-                    Delete
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
+        {doneTasks.length > 0 && (
+          <section className="panel brand-section">
+            <button
+              type="button"
+              className="section-toggle"
+              onClick={() => setDoneOpen((o) => !o)}
+              aria-expanded={doneOpen}
+            >
+              <span className="brand-section-label" style={{ margin: 0 }}>
+                Done · {doneTasks.length}
+              </span>
+              <span className="section-toggle-hint">
+                {doneOpen ? 'Hide' : 'Show'}
+              </span>
+            </button>
+            {doneOpen ? (
+              <ul className="done-list" style={{ marginTop: '0.75rem' }}>
+                {doneTasks.map((t) => (
+                  <li key={t.id}>
+                    <button
+                      type="button"
+                      className="done-undo"
+                      onClick={() => toggleTask(t.id)}
+                      title="Undo"
+                    >
+                      ✓
+                    </button>
+                    <span className="done-title">{t.title}</span>
+                    <button
+                      type="button"
+                      className="text-link"
+                      style={{ marginTop: 0 }}
+                      onClick={() =>
+                        confirmRemove(t.id, 'Delete this step permanently?')
+                      }
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+        )}
       </div>
 
       {journeyNext && (

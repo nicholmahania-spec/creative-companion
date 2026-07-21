@@ -111,6 +111,35 @@ export default function SettingsView(props) {
             {prefs.focusRingStrength === 'high' ? 'Normal' : 'High'}
           </button>
         </div>
+        <div className="settings-row settings-row-stack">
+          <strong>
+            Focus mask · {Number(prefs.focusMaskPct ?? 25)}%
+          </strong>
+          <input
+            type="range"
+            min={0}
+            max={80}
+            step={5}
+            className="settings-range"
+            value={Number(prefs.focusMaskPct ?? 25)}
+            aria-label="Focus mask intensity"
+            onChange={(e) =>
+              setPref('focusMaskPct', Number(e.target.value))
+            }
+          />
+        </div>
+        <div className="settings-row">
+          <strong>Mask blur</strong>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() =>
+              setPref('focusMaskBlur', Number(prefs.focusMaskBlur) > 0 ? 0 : 2)
+            }
+          >
+            {Number(prefs.focusMaskBlur) > 0 ? '2px' : 'Off'}
+          </button>
+        </div>
         <div className="settings-row">
           <strong>Batch toasts</strong>
           <select

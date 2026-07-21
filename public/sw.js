@@ -1,7 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v32)
- * v31: Helper quiet dock · v32: helperQuiet default + no auto-open
+/* Creative Companion — offline shell + asset cache (v33)
+ * v32: Helper quiet · v33: Tech-Studio blueprint pass
  */
-const CACHE = 'cc-shell-v32'
+const CACHE = 'cc-shell-v33'
 const PRECACHE = [
   './',
   './index.html',

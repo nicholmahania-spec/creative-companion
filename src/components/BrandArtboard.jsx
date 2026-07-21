@@ -114,7 +114,7 @@ export default function BrandArtboard({
             className="direction-brief"
             style={{ color: 'inherit', opacity: 0.92 }}
           >
-            {project.tagline?.trim() || 'Tagline TBD'}
+            {project.tagline?.trim() || '—'}
           </p>
         )}
       </div>
@@ -125,12 +125,12 @@ export default function BrandArtboard({
           className="artboard-brief-input"
           value={project.brief || ''}
           onChange={(e) => onBriefChange?.(e.target.value)}
-          placeholder="Who is this for? Outcome? Constraint?"
+          placeholder="Who · outcome · constraint"
           rows={2}
           aria-label="Positioning"
         />
       ) : (
-        <p className="direction-brief">{project.brief || 'No brief yet.'}</p>
+        <p className="direction-brief">{project.brief?.trim() || '—'}</p>
       )}
 
       <div className="kicker">Voice</div>
@@ -139,12 +139,12 @@ export default function BrandArtboard({
           className="artboard-brief-input"
           value={project.voice || ''}
           onChange={(e) => onVoiceChange?.(e.target.value)}
-          placeholder="How we sound — warm, plain, never corporate…"
+          placeholder="How we sound"
           rows={2}
           aria-label="Voice"
         />
       ) : (
-        <p className="direction-brief">{project.voice || '—'}</p>
+        <p className="direction-brief">{project.voice?.trim() || '—'}</p>
       )}
 
       <div className="kicker">Palette roles</div>
@@ -201,21 +201,22 @@ export default function BrandArtboard({
             <i style={{ background: roles[r.id] }} />
             {r.label}
             <code className="role-hex">{roles[r.id]}</code>
-            <code className="role-rgb">RGB {formatRgb(roles[r.id])}</code>
           </span>
         ))}
       </div>
-      <div className="direction-hex-grid">
-        {(palette || []).map((c, i) => (
-          <div key={`${c}-${i}`} className="direction-hex-chip">
-            <i style={{ background: c }} />
-            <span>
-              <code>{normalizeHex(c) || c}</code>
-              <code className="direction-hex-rgb">RGB {formatRgb(c)}</code>
-            </span>
-          </div>
-        ))}
-      </div>
+      <details className="artboard-advanced">
+        <summary>Hex</summary>
+        <div className="direction-hex-grid">
+          {(palette || []).map((c, i) => (
+            <div key={`${c}-${i}`} className="direction-hex-chip">
+              <i style={{ background: c }} />
+              <span>
+                <code>{normalizeHex(c) || c}</code>
+              </span>
+            </div>
+          ))}
+        </div>
+      </details>
 
       <div className="kicker">Typography</div>
       <div className="type-specimen">
@@ -229,11 +230,7 @@ export default function BrandArtboard({
           className="type-specimen-b"
           style={{ fontFamily: fontFamilyFromLabel(typeB) }}
         >
-          {typeB} — body for UI and long copy.
-        </p>
-        <p className="surface-meta type-specimen-note">
-          Specimen uses the family name when the font is installed or loaded;
-          edit names under Type if the face does not match.
+          {typeB}
         </p>
       </div>
 
@@ -364,7 +361,7 @@ export default function BrandArtboard({
               className="brand-card-mock-tag"
               style={{ fontFamily: fontFamilyFromLabel(typeB) }}
             >
-              {project.tagline?.trim() || 'Tagline TBD'}
+              {project.tagline?.trim() || '—'}
             </p>
             <p className="brand-card-mock-meta">hello@brand.example</p>
           </div>

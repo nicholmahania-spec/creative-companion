@@ -177,6 +177,13 @@ export function blankWorkspaceState() {
       showProgress: false,
       /** ADHD: no timed Helper pings — open Helper for Coach */
       helperQuiet: true,
+      /**
+       * Hyper-focus mask: inactive field opacity 0–80 (percent).
+       * Applied when a field is focused within path instruments.
+       */
+      focusMaskPct: 25,
+      /** Soft blur on masked peripherals (px); 0 = off */
+      focusMaskBlur: 2,
       /** Dim sidebar + header while a field has focus — peripheral masking */
       focusMode: false,
       /** 'normal' (flat 1.5px border) or 'high' (2.5px + soft outer ring) */

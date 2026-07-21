@@ -187,15 +187,27 @@ export default function SparkView({
         </section>
 
         <aside className="panel brand-section ideate-spark-tray" aria-label="Spark">
-          <div className="brand-section-label">Spark</div>
-          <div className="spark-card">
-            <p>{currentSpark}</p>
+          <div className="brand-section-label">
+            Spark
+            {currentSpark ? (
+              <InfoReveal>{currentSpark}</InfoReveal>
+            ) : null}
+          </div>
+          <div className="spark-card spark-card-stem" title={currentSpark || ''}>
+            <p>
+              {String(currentSpark || '')
+                .split(/[—.–]/)
+                [0]
+                .trim()
+                .slice(0, 72) || '—'}
+              {String(currentSpark || '').length > 72 ? '…' : ''}
+            </p>
           </div>
           <div className="spark-actions">
             <button
               type="button"
               onClick={nextSpark}
-              className="btn btn-secondary"
+              className="btn btn-primary"
             >
               New
             </button>
