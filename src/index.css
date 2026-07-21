@@ -9033,6 +9033,8 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .journey-sidebar .journey-bar-item {
   display: block;
+  /* Pack steps at the top — don't let flex-grow spread them down the column */
+  flex: 0 0 auto;
 }
 
 .journey-sidebar .journey-flow-link {
