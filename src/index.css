@@ -14098,3 +14098,245 @@ select:focus,
   color: #94A3B8 !important;
   font-weight: 700 !important;
 }
+
+/* ============================================================
+   RESPONSIVE: desktop full-bleed ≥768px · mobile focus <768px
+   ============================================================ */
+
+/* New chrome hidden by default (desktop) */
+.header-menu-toggle,
+.header-mobile-title,
+.nav-backdrop,
+.define-mobile-tabs { display: none; }
+
+/* ---- Desktop re-assert (≥768px): beat the legacy 860px stacking ---- */
+@media (min-width: 768px) {
+  .app-shell {
+    grid-template-columns: 200px 1fr !important;
+    grid-template-areas:
+      'sidebar header'
+      'sidebar main' !important;
+  }
+  .app-shell > .journey-sidebar {
+    position: static !important;
+    transform: none !important;
+    width: 200px !important;
+    max-width: 200px !important;
+    height: 100% !important;
+    flex-direction: column !important;
+    border-right: 1px solid #E2E8F0 !important;
+    border-bottom: none !important;
+    overflow-x: visible !important;
+    box-shadow: none !important;
+  }
+  .journey-sidebar .journey-bar-list {
+    flex-direction: column !important;
+    width: auto !important;
+  }
+  .journey-sidebar .journey-step {
+    border-bottom: none !important;
+    white-space: normal !important;
+  }
+  .header-menu-toggle,
+  .header-mobile-title,
+  .nav-backdrop,
+  .define-mobile-tabs { display: none !important; }
+}
+
+/* ---- Mobile focus view (<768px) ---- */
+@media (max-width: 767px) {
+  .app-shell {
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      'header'
+      'main' !important;
+  }
+
+  /* Header collapses to: [☰]  project name (center)  avatar */
+  .header { z-index: 70 !important; }
+  .header-content-simple {
+    display: flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: none !important;
+  }
+  .header-menu-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border: 1px solid #E2E8F0;
+    border-radius: 4px;
+    background: #FFFFFF;
+    color: #1A1A1E;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .header-content-simple > .brand-block { display: none !important; }
+  .header-mobile-title {
+    display: block !important;
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1A1A1E;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .header-actions {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .header-actions .header-project-select,
+  .header-actions .more-wrap,
+  .header-actions .timer-running-chip { display: none !important; }
+
+  /* Sidebar becomes a left slide-out drawer (not a horizontal strip) */
+  .app-shell > .journey-sidebar {
+    position: fixed !important;
+    top: 52px;
+    left: 0;
+    bottom: 0;
+    z-index: 60 !important;
+    width: 240px !important;
+    max-width: 82vw !important;
+    height: calc(100vh - 52px) !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    background: #F8F9FA !important;
+    border-right: 1px solid #E2E8F0 !important;
+    border-bottom: none !important;
+    box-shadow: 2px 0 16px rgba(15, 23, 42, 0.14) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 0.75rem 0 !important;
+  }
+  .app-shell.nav-open > .journey-sidebar { transform: translateX(0); }
+  .journey-sidebar .journey-bar-list {
+    flex-direction: column !important;
+    width: auto !important;
+    padding: 0 0.55rem !important;
+  }
+  .journey-sidebar .journey-step {
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    text-align: left !important;
+    border-left: 2px solid transparent !important;
+    border-bottom: none !important;
+    white-space: normal !important;
+    min-height: 44px !important;
+  }
+  .journey-sidebar .journey-node,
+  .journey-sidebar .journey-flow-link,
+  .journey-sidebar .path-step-icon { display: none !important; }
+  .journey-sidebar .journey-label { text-align: left !important; }
+
+  /* Backdrop only while the drawer is open */
+  .nav-backdrop { display: none; }
+  .app-shell.nav-open > .nav-backdrop {
+    display: block;
+    position: fixed;
+    top: 52px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 55;
+    background: rgba(15, 23, 42, 0.42);
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  /* Name field: column flex turns flex-basis into height — reset it */
+  .define-head-row { flex-direction: column; align-items: stretch; }
+  .define-name-inline {
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 44px !important;
+    max-width: none !important;
+  }
+
+  /* Define: single column, one pane at a time (no cramped split) */
+  .define-split { display: block !important; }
+  .define-split-form,
+  .define-split-mood {
+    width: 100% !important;
+    max-width: none !important;
+    position: static !important;
+  }
+  .define-split[data-mobile-pane='form'] .define-split-mood { display: none !important; }
+  .define-split[data-mobile-pane='refs'] .define-split-form { display: none !important; }
+
+  /* view-enter leaves a transform that would trap position:fixed children;
+     drop it on mobile so the bottom bar anchors to the viewport */
+  .define-dashboard {
+    transform: none !important;
+    animation: none !important;
+  }
+
+  /* Room for the fixed bottom tab bar on Define */
+  .view-project .main { padding-bottom: 4.75rem !important; }
+
+  /* Sticky bottom Form / Refs switch */
+  .define-mobile-tabs {
+    display: flex !important;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    background: #FFFFFF;
+    border-top: 1px solid #E2E8F0;
+  }
+  .define-mobile-tab {
+    flex: 1 1 50%;
+    padding: 0.9rem 0.5rem;
+    border: none;
+    border-top: 2px solid transparent;
+    background: transparent;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #64748B;
+    cursor: pointer;
+  }
+  .define-mobile-tab.is-active {
+    color: #1A1A1E;
+    background: #F4F5F6;
+    border-top-color: #2563EB;
+  }
+}
+
+/* Mobile accordion chapter header (tap to expand) */
+.define-chapter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.85rem 0.25rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.define-chapter-toggle .define-chapter-title {
+  flex: 1 1 auto;
+  margin: 0;
+}
+.define-chapter-caret {
+  flex: 0 0 auto;
+  color: #94A3B8;
+  font-size: 0.9rem;
+}

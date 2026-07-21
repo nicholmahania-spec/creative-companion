@@ -8,6 +8,7 @@ import {
   getDetectiveProgress,
   isFilled,
 } from '../lib/detectiveBrief'
+import useIsMobile from '../lib/useIsMobile'
 
 export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 
@@ -129,6 +130,9 @@ export default function DetectiveSheet({
   const openChapter = openChapterProp ?? openChapterLocal
   const setOpenChapter = onOpenChapter ?? setOpenChapterLocal
   const [focusField, setFocusField] = useState(null)
+  const isMobile = useIsMobile()
+  /** Desktop split = one continuous master scroll; mobile split = accordion */
+  const accordion = !splitMode || isMobile
 
   const progress = useMemo(() => getDetectiveProgress(detective), [detective])
   const chapterStats = progress.chapters
@@ -203,32 +207,61 @@ export default function DetectiveSheet({
 
       <div className="define-chapters">
         {DETECTIVE_CHAPTERS.map((ch) => {
-          // Split mode = master/detail single scroll: every chapter open, no tabs
-          const open = splitMode || openChapter === ch.id
+          const isOpen = openChapter === ch.id
           const st = chapterStats.find((s) => s.id === ch.id)
+          // Desktop split shows every chapter's fields at once (master scroll);
+          // accordion mode (standalone OR mobile split) shows one at a time.
+          const showFields = accordion ? isOpen : true
+          // Only fully hide the article in non-split accordion; split keeps the
+          // header visible so mobile users can tap between chapters.
+          const articleHidden = !splitMode && !isOpen
           return (
             <article
               key={ch.id}
-              className={`define-chapter${open ? ' is-open' : ''}${
-                focusField && open ? ' has-focus' : ''
+              className={`define-chapter${showFields ? ' is-open' : ''}${
+                focusField && showFields ? ' has-focus' : ''
               }`}
               data-chapter={ch.id}
               style={{ '--chapter-accent': ch.accent }}
-              hidden={!open}
+              hidden={articleHidden}
             >
-              <header className="define-chapter-head">
-                <span className="define-chapter-badge">{ch.num}</span>
-                <div>
+              {splitMode && accordion ? (
+                <button
+                  type="button"
+                  className="define-chapter-head define-chapter-toggle"
+                  onClick={() => setOpenChapter(ch.id)}
+                  aria-expanded={isOpen}
+                  aria-controls={`define-chapter-fields-${ch.id}`}
+                >
+                  <span className="define-chapter-badge">{ch.num}</span>
                   <h3 className="define-chapter-title">{ch.title}</h3>
-                </div>
-                {st?.complete && (
-                  <span className="define-chapter-done-chip" aria-label="Complete">
-                    ✓
+                  {st?.complete && (
+                    <span className="define-chapter-done-chip" aria-label="Complete">
+                      ✓
+                    </span>
+                  )}
+                  <span className="define-chapter-caret" aria-hidden="true">
+                    {isOpen ? '▾' : '▸'}
                   </span>
-                )}
-              </header>
+                </button>
+              ) : (
+                <header className="define-chapter-head">
+                  <span className="define-chapter-badge">{ch.num}</span>
+                  <div>
+                    <h3 className="define-chapter-title">{ch.title}</h3>
+                  </div>
+                  {st?.complete && (
+                    <span className="define-chapter-done-chip" aria-label="Complete">
+                      ✓
+                    </span>
+                  )}
+                </header>
+              )}
 
-              <div className="define-fields">
+              <div
+                className="define-fields"
+                id={`define-chapter-fields-${ch.id}`}
+                hidden={!showFields}>
                 {ch.fields.map((f) => {
                   const focused = focusField === f.id
                   const filled = isFilled(detective?.[f.id])

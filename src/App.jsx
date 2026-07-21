@@ -261,6 +261,7 @@ function App() {
   const prevJourneyIdx = useRef(0)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
   const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [breakdownStep, setBreakdownStep] = useState(0)
@@ -2434,7 +2435,9 @@ function App() {
         prefs.focusMode ? ' focus-mode-on' : ''
       }${prefs.focusRingStrength === 'high' ? ' focus-ring-high' : ''}${
         prefs.hideNavUntilBlur ? ' hide-nav-until-blur' : ''
-      }${prefs.hideTips ? ' hide-tips-on' : ''}`}
+      }${prefs.hideTips ? ' hide-tips-on' : ''}${
+        navOpen ? ' nav-open' : ''
+      }`}
       style={{
         ['--focus-mask-opacity']: String(
           Math.min(0.8, Math.max(0, Number(prefs.focusMaskPct ?? 25) / 100))
@@ -2463,6 +2466,15 @@ function App() {
         <div className="header-content header-content-simple">
           <button
             type="button"
+            className="header-menu-toggle"
+            aria-label={navOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen((v) => !v)}
+          >
+            <span aria-hidden="true">{navOpen ? '✕' : '☰'}</span>
+          </button>
+          <button
+            type="button"
             className="brand-block brand-block-link"
             onClick={() => setActiveView('home')}
             aria-label="Home"
@@ -2470,6 +2482,9 @@ function App() {
           >
             <LogoLockup className="logo" locale={locale} reduceMotion={reduceMotion} />
           </button>
+          <span className="header-mobile-title" aria-hidden="true">
+            {activeProject?.name || 'Creative Companion'}
+          </span>
           <div className="header-actions">
             {activeProjects.length > 1 && (
               <select
@@ -2765,6 +2780,7 @@ function App() {
                     }`}
                     onClick={() => {
                       setActiveView(step.view)
+                      setNavOpen(false)
                       // Empty steps: land focus on a useful field
                       if (!hasContent) {
                         focusPathGapTarget(pathGapFocusSelector(step.id))
@@ -2826,6 +2842,14 @@ function App() {
             </span>
           )}
       </nav>
+
+      <button
+        type="button"
+        className="nav-backdrop"
+        aria-label="Close menu"
+        tabIndex={navOpen ? 0 : -1}
+        onClick={() => setNavOpen(false)}
+      />
 
       <main className="main" id="main-content" tabIndex={-1} data-nav-dir={navDir}>
         {journeyActive && activeView !== 'review' && activeView !== 'finish' && (

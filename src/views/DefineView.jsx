@@ -15,6 +15,7 @@ import {
   tFormat,
   pathLabel,
 } from '../lib/i18n'
+import useIsMobile from '../lib/useIsMobile'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 const DefineMoodCanvas = lazy(() => import('./DefineMoodCanvas'))
@@ -53,6 +54,9 @@ export default function DefineView(props) {
   const removeMilestone = useAppStore((s) => s.removeMilestone)
 
   const [openChapter, setOpenChapter] = useState('core')
+  /** Mobile only: 'form' inputs vs 'refs' mood board — one at a time */
+  const [mobilePane, setMobilePane] = useState('form')
+  const isMobile = useIsMobile()
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
   const archivedProjects = (projects || []).filter((p) => p.archived)
@@ -107,6 +111,7 @@ export default function DefineView(props) {
       <div
         className="define-split"
         data-define-layout="form-board"
+        data-mobile-pane={mobilePane}
       >
         <div className="define-split-form" aria-label="Brief questions">
           <Suspense
@@ -246,6 +251,28 @@ export default function DefineView(props) {
           </Suspense>
         </div>
       </div>
+
+      {/* Mobile-only: toggle focus between inputs and refs (no cramped split) */}
+      {isMobile && (
+        <nav className="define-mobile-tabs" aria-label="Define panel switch">
+          <button
+            type="button"
+            className={`define-mobile-tab${mobilePane === 'form' ? ' is-active' : ''}`}
+            onClick={() => setMobilePane('form')}
+            aria-pressed={mobilePane === 'form'}
+          >
+            <span aria-hidden="true">📝</span> Form
+          </button>
+          <button
+            type="button"
+            className={`define-mobile-tab${mobilePane === 'refs' ? ' is-active' : ''}`}
+            onClick={() => setMobilePane('refs')}
+            aria-pressed={mobilePane === 'refs'}
+          >
+            <span aria-hidden="true">🖼</span> Refs
+          </button>
+        </nav>
+      )}
     </div>
   )
 }
