@@ -294,6 +294,8 @@ function App() {
   const [queueOpen, setQueueOpen] = useState(false)
   const [doneOpen, setDoneOpen] = useState(false)
   const [actionToast, setActionToast] = useState('')
+  const toastBatchRef = useRef([])
+  const toastBatchTimerRef = useRef(null)
   const [stepFocusKey, setStepFocusKey] = useState(0)
   const [stepDueOpen, setStepDueOpen] = useState(false)
   const [projectNameDraft, setProjectNameDraft] = useState('')
@@ -504,12 +506,28 @@ function App() {
   const revealHowItWorks = () => setPref('showHowItWorks', true)
 
   const toastMode = prefs.toastMode === 'all' ? 'all' : 'quiet'
+  /** Seconds non-error toasts queue before flushing together; 0 = show instantly (default) */
+  const toastBatchWindow = Number(prefs.toastBatchWindow) || 0
 
   /** @param {string} msg @param {{ micro?: boolean, important?: boolean }} [opts] */
   const flashToast = (msg, opts = {}) => {
     if (!msg) return
     // Quiet (default): skip micro successes; always show important/errors
     if (toastMode === 'quiet' && opts.micro && !opts.important) return
+    if (toastBatchWindow > 0 && !opts.important) {
+      toastBatchRef.current.push(msg)
+      if (toastBatchTimerRef.current) window.clearTimeout(toastBatchTimerRef.current)
+      toastBatchTimerRef.current = window.setTimeout(() => {
+        const batched = toastBatchRef.current
+        toastBatchRef.current = []
+        toastBatchTimerRef.current = null
+        setActionToast(
+          batched.length > 1 ? `${batched[0]} · +${batched.length - 1} more` : batched[0]
+        )
+        window.setTimeout(() => setActionToast(''), 3200)
+      }, toastBatchWindow * 1000)
+      return
+    }
     setActionToast(msg)
     window.setTimeout(() => setActionToast(''), 3200)
   }
@@ -2444,6 +2462,8 @@ function App() {
         forcedBreak ? ' is-break-locked' : ''
       }${activeView === 'finish' ? ' is-pack-view' : ''}${
         prefs.focusMode ? ' focus-mode-on' : ''
+      }${prefs.focusRingStrength === 'high' ? ' focus-ring-high' : ''}${
+        prefs.hideNavUntilBlur ? ' hide-nav-until-blur' : ''
       }`}
     >
       {forcedBreak && (

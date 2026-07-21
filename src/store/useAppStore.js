@@ -179,6 +179,10 @@ export function blankWorkspaceState() {
       helperQuiet: false,
       /** Dim sidebar + header while a field has focus — peripheral masking */
       focusMode: false,
+      /** 'normal' (flat 1.5px border) or 'high' (2.5px + soft outer ring) */
+      focusRingStrength: 'normal',
+      /** Collapse the sidebar to zero-width while a field has focus */
+      hideNavUntilBlur: false,
       /** Pack / PDF: hide Creative Companion footer watermark */
       hidePackWatermark: false,
       /**
@@ -186,6 +190,8 @@ export function blankWorkspaceState() {
        * Errors and exports always show.
        */
       toastMode: 'quiet',
+      /** Seconds non-error toasts queue before flushing together; 0 = instant (default) */
+      toastBatchWindow: 0,
       /** Product UI locale for wordmark + path labels */
       locale: 'en',
     },

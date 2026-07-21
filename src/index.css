@@ -12480,6 +12480,53 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   transition: opacity 0.2s ease;
 }
 
+/* Focus mode, phase 2 — dim the sibling panel within a split workspace too */
+.app-shell.focus-mode-on .define-split:has(.define-split-form:focus-within) .define-split-mood,
+.app-shell.focus-mode-on .review-split:has(.review-split-left:focus-within) .review-split-right,
+.app-shell.focus-mode-on .review-split:has(.review-split-right:focus-within) .review-split-left {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.define-split-mood,
+.review-split-left,
+.review-split-right {
+  transition: opacity 0.2s ease;
+}
+
+/* High-contrast focus ring — opt-in accessibility override, wins regardless of cascade */
+.focus-ring-high input:focus,
+.focus-ring-high textarea:focus,
+.focus-ring-high select:focus,
+.focus-ring-high .field-input:focus,
+.focus-ring-high .onboard-input:focus,
+.focus-ring-high .define-field.is-focused,
+.focus-ring-high .define-meta-field.is-focused {
+  border-width: 2.5px !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dopamine) 20%, transparent) !important;
+}
+
+/* Single-task lock — collapse the sidebar to zero-width while a field has focus */
+.hide-nav-until-blur:has(.main :is(input, textarea, select):focus) > .journey-sidebar {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  border-right: none;
+  overflow: hidden;
+}
+
+.hide-nav-until-blur > .journey-sidebar {
+  transition: width 0.15s ease, padding 0.15s ease;
+}
+
+.hide-nav-until-blur:has(.main :is(input, textarea, select):focus) {
+  grid-template-columns: 0 1fr;
+}
+
+.hide-nav-until-blur {
+  transition: grid-template-columns 0.15s ease;
+}
+
 .journey-sidebar {
   display: flex;
   flex-direction: column;

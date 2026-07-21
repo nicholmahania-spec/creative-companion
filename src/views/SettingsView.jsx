@@ -134,6 +134,42 @@ export default function SettingsView(props) {
                 </span>
               </button>
             </div>
+            <div className="settings-row">
+              <div>
+                <strong>Single-task lock</strong>
+                <span>Sidebar collapses to zero-width while typing</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!!prefs.hideNavUntilBlur}
+                className={`pref-switch${prefs.hideNavUntilBlur ? ' is-on' : ''}`}
+                onClick={() => setPref('hideNavUntilBlur', !prefs.hideNavUntilBlur)}
+              >
+                <span className="pref-switch-knob" />
+                <span className="sr-only">
+                  {prefs.hideNavUntilBlur ? 'On' : 'Off'}
+                </span>
+              </button>
+            </div>
+            <div className="settings-row">
+              <div>
+                <strong>Focus ring contrast</strong>
+                <span>Stronger border + outer ring on the focused field</span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() =>
+                  setPref(
+                    'focusRingStrength',
+                    prefs.focusRingStrength === 'high' ? 'normal' : 'high'
+                  )
+                }
+              >
+                {prefs.focusRingStrength === 'high' ? 'Use normal' : 'Use high'}
+              </button>
+            </div>
           </section>
 
           <section className="panel brand-section" id="settings-presence">
@@ -306,6 +342,22 @@ export default function SettingsView(props) {
               >
                 {prefs.toastMode === 'all' ? 'Use quiet' : 'Show all'}
               </button>
+            </div>
+            <div className="settings-row">
+              <div>
+                <strong>Batch toasts</strong>
+                <span>Group non-error toasts instead of firing instantly</span>
+              </div>
+              <select
+                className="field-input settings-locale-select"
+                value={String(prefs.toastBatchWindow || 0)}
+                aria-label="Batch toasts window"
+                onChange={(e) => setPref('toastBatchWindow', Number(e.target.value))}
+              >
+                <option value="0">Instant</option>
+                <option value="30">30s</option>
+                <option value="120">2 min</option>
+              </select>
             </div>
           </section>
 
