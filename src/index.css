@@ -13689,7 +13689,8 @@ body:has(.app.deep)::after {
 }
 
 .define-input.field-input::placeholder {
-  color: transparent;
+  color: var(--text-muted);
+  opacity: 0.85;
 }
 
 .define-input.field-input:focus {
@@ -14714,17 +14715,18 @@ body:has(.app.deep)::after {
   display: none;
   margin: 0.85rem 0 0;
   padding: 0.55rem 0.75rem;
-  border-radius: 0.75rem;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius);
+  border: 1px dashed var(--border-strong);
   font-size: 0.78rem;
   font-weight: 600;
-  color: rgba(244, 244, 245, 0.55);
+  color: var(--text-secondary);
   text-decoration: none;
+  background: var(--bg-muted);
 }
 
 .define-board-anchor:hover {
-  color: #f4f4f5;
-  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  border-color: var(--dopamine);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -15941,5 +15943,68 @@ body:has(.app.deep)::after {
   .define-studio .page-title {
     font-size: 1.65rem;
     margin-bottom: 0.65rem;
+  }
+
+  /* Fields denser; less ghosting when focus-isolating */
+  .define-meta-field,
+  .define-field {
+    padding: 0.65rem 0.55rem;
+    border-radius: var(--radius);
+  }
+  .define-meta-field.is-dimmed,
+  .define-field.is-dimmed {
+    opacity: 0.4;
+  }
+  .define-field-icon {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+  .define-input.field-input,
+  .define-studio .field-input {
+    padding: 0.7rem 0.8rem;
+    font-size: 1rem; /* 16px — avoid iOS zoom on focus */
+    border-radius: var(--radius);
+  }
+  .define-chapter-foot {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .define-chapter-foot .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .define-chapter-rail {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+  .define-chapter-tab {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    border-radius: var(--radius);
+  }
+  .define-chapter-tab-count {
+    margin-left: auto;
+  }
+  .define-first-step-chip {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .define-first-step-chip .btn {
+    width: 100%;
+  }
+  .define-board-anchor {
+    border-radius: var(--radius);
+    font-size: 0.75rem;
+  }
+
+  /* Hide logo wordmark on very narrow so Tools + account fit */
+  .header-redesign .logo-text,
+  .header-redesign .logo span:not(.logo-mark) {
+    max-width: 5.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

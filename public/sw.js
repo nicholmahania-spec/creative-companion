@@ -1,9 +1,11 @@
-/* Creative Companion — offline shell + asset cache (v6)
+/* Creative Companion — offline shell + asset cache (v7)
  * v4: network-first for hashed /assets/ so deploys win over sticky cache-first.
  * v5: cache name bump after brand-kit + path extracts so clients drop stale shells.
  * v6: bust after Define isFilled crash fix so clients drop bad DetectiveSheet chunks.
+ * v7: bust after mobile Define + full-width path rail (v1.48.41–42) so phones drop
+ *     the 200px Tech-Studio sidebar cache.
  */
-const CACHE = 'cc-shell-v6'
+const CACHE = 'cc-shell-v7'
 const PRECACHE = [
   './',
   './index.html',
@@ -39,55 +41,36 @@ function isHashedAsset(url) {
   return path.includes('/assets/') || /\.[a-f0-9]{6,}\.(?:js|css)$/i.test(path)
 }
 
-function shouldCacheResponse(url, res) {
-  if (!res || !res.ok) return false
-  if (res.type === 'opaque') return false
-  const path = url.pathname
-  if (path.includes('/assets/')) return true
-  if (/\.(?:js|css|svg|png|jpg|jpeg|webp|gif|woff2?|webmanifest)$/i.test(path))
-    return true
-  if (path.includes('/buddy/')) return true
-  return false
-}
-
 self.addEventListener('fetch', (event) => {
   const { request } = event
   if (request.method !== 'GET') return
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
 
-  // Navigate: network-first, offline → cached shell
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((res) => {
           const copy = res.clone()
-          caches
-            .open(CACHE)
-            .then((c) => c.put('./index.html', copy))
-            .catch(() => {})
+          caches.open(CACHE).then((c) => c.put('./', copy)).catch(() => {})
           return res
         })
         .catch(() =>
           caches
-            .match('./index.html')
-            .then((r) => r || caches.match('./') || caches.match(request)),
+            .match('./')
+            .then((r) => r || caches.match('./index.html') || caches.match(request)),
         ),
     )
     return
   }
 
-  // Hashed bundles: network-first so new deploys replace old shell quickly
   if (isHashedAsset(url)) {
     event.respondWith(
       fetch(request)
         .then((res) => {
-          if (shouldCacheResponse(url, res)) {
+          if (res.ok) {
             const copy = res.clone()
-            caches
-              .open(CACHE)
-              .then((c) => c.put(request, copy))
-              .catch(() => {})
+            caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {})
           }
           return res
         })
@@ -96,17 +79,13 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Other static: cache-first (buddy art, icons)
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached
       return fetch(request).then((res) => {
-        if (shouldCacheResponse(url, res)) {
+        if (res.ok) {
           const copy = res.clone()
-          caches
-            .open(CACHE)
-            .then((c) => c.put(request, copy))
-            .catch(() => {})
+          caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {})
         }
         return res
       })
