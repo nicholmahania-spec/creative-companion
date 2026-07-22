@@ -3068,7 +3068,7 @@ function App() {
                     : selected.nextGap
                       ? pathLabel(locale, selected.nextGap.id) ||
                         selected.nextGap.label
-                      : 'Caught up'}
+                      : 'All caught up'}
                 </h2>
                 <div className="home-cta-row">
                   <button
@@ -3150,7 +3150,7 @@ function App() {
               </>
             ) : (
               <>
-                <h1 className="home-title">Caught up</h1>
+                <h1 className="home-title">All caught up</h1>
                 <button
                   type="button"
                   className="btn btn-primary home-cta"
