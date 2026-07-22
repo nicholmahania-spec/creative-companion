@@ -12,6 +12,7 @@ import {
   pathLabel,
 } from '../lib/i18n'
 import { packReadiness } from '../lib/exportFiles'
+import InfoReveal from '../components/InfoReveal'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
@@ -45,8 +46,8 @@ export default function ReviewView({
   const ready = packReadiness(packSnap)
   const reviewChecks = ready.checks.filter((c) => !REVIEW_GAP_SKIP.has(c.id))
   const miss = reviewChecks.filter((c) => !c.ok)
-  const okCount = reviewFilters.filter((c) => c.ok).length
-  const [activePrompt, setActiveProduct] = useState(0)
+  const okCount = reviewChecks.filter((c) => c.ok).length
+  const [activePrompt, setActivePrompt] = useState(0)
 
   const goal = activeProject?.detective?.goal
     ? String(activeProject.detective.goal)
@@ -148,7 +149,7 @@ export default function ReviewView({
                       activePrompt === i ? ' is-active' : ''
                     }`}
                     onClick={() => {
-                      setActiveProdut(i)
+                      setActivePrompt(i)
                       appendPrompt(p.full)
                     }}
                   >
