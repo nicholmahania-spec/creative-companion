@@ -84,7 +84,7 @@ export default function InsightsView(props) {
           <button
             type="button"
             onClick={startOrPauseFocus}
-            className="btn btn-primary"
+            className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
             disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
           >
             {startLabel}
@@ -124,7 +124,7 @@ export default function InsightsView(props) {
               <div className="path-continue-row" style={{ margin: 0 }}>
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="btn btn-secondary"
                   onClick={() => go('spark')}
                 >
                   {tFormat(locale, 'ui.continueNext', {
@@ -157,7 +157,7 @@ export default function InsightsView(props) {
         {fromResearch ? (
           <button
             type="button"
-            className="btn btn-primary work-path-next"
+            className="btn btn-secondary work-path-next"
             onClick={() => go('spark')}
           >
             {i18nT(locale, 'ui.backToIdeate') || 'Next · Ideate'}
@@ -165,7 +165,7 @@ export default function InsightsView(props) {
         ) : (
           <button
             type="button"
-            className="btn btn-primary work-path-next"
+            className="btn btn-secondary work-path-next"
             disabled={!nextTask}
             onClick={() => {
               if (nextTask) toggleTask(nextTask.id)

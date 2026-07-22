@@ -196,7 +196,7 @@ export default function DeliverView({
                 <div className="thin-pack-prompt-actions">
                   <button
                     type="button"
-                    className="btn btn-primary btn-sm"
+                    className="btn btn-secondary btn-sm"
                     onClick={() => {
                       const kind = thinPackPrompt
                       setThinPackPrompt(null)

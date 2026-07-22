@@ -67,9 +67,9 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'niceToHaves',
-        label: 'Nice',
+        label: 'Optional',
         tip: 'Optional extras.',
-        placeholder: 'Nice to have',
+        placeholder: 'Optional items',
         area: true,
         icon: 'star',
         required: false,

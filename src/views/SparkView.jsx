@@ -99,23 +99,27 @@ export default function SparkView({
       <div className="flow-top ideate-top">
         <div className="ideate-top-text">
           <h1 className="page-title">{title}</h1>
-          <p className="ideate-progress" role="status">
-            <strong>{filledDirs}/3</strong>
-            {chosen ? ` · ${chosen.label}` : ''}
-            {phase ? (
-              <InfoReveal>
-                {(phase.checks || []).join(' · ')}
-                {phase.prompt ? ` — ${phase.prompt}` : ''}
-              </InfoReveal>
-            ) : null}
-          </p>
-          {goalLine ? (
-            <p className="ideate-goal-anchor" title={goalLine}>
-              Goal · {goalLine.slice(0, 80)}
-              {goalLine.length > 80 ? '…' : ''}
-            </p>
-          ) : null}
         </div>
+      </div>
+      <div className="ideate-meta">
+        <p className="ideate-progress" role="status">
+          <strong>{filledDirs}/3</strong>
+          {chosen ? ` · ${chosen.label}` : ''}
+        </p>
+        {phase ? (
+          <p className="ideate-phase" role="status">
+            <InfoReveal>
+              {(phase.checks || []).join(' · ')}
+              {phase.prompt ? ` — ${phase.prompt}` : ''}
+            </InfoReveal>
+          </p>
+        ) : null}
+        {goalLine ? (
+          <p className="ideate-goal" title={goalLine}>
+            Goal: {goalLine.slice(0, 80)}
+            {goalLine.length > 80 ? '…' : ''}
+          </p>
+        ) : null}
       </div>
 
       <div className="ideate-layout">
@@ -204,7 +208,7 @@ export default function SparkView({
             <button
               type="button"
               onClick={nextSpark}
-              className="btn btn-primary"
+              className="btn btn-secondary"
             >
               New
             </button>

@@ -11,8 +11,7 @@ import {
   tFormat,
   pathLabel,
 } from '../lib/i18n'
-import { packReadiness } from '../lib/exportFiles'
-import InfoReveal from '../components/InfoReveal'
+import { packReadiness
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
@@ -46,8 +45,8 @@ export default function ReviewView({
   const ready = packReadiness(packSnap)
   const reviewChecks = ready.checks.filter((c) => !REVIEW_GAP_SKIP.has(c.id))
   const miss = reviewChecks.filter((c) => !c.ok)
-  const okCount = reviewChecks.filter((c) => c.ok).length
-  const [activePrompt, setActivePrompt] = useState(0)
+  const okCount = reviewFilters.filter((c) => c.ok).length
+  const [activePrompt, setActiveProduct] = useState(0)
 
   const goal = activeProject?.detective?.goal
     ? String(activeProject.detective.goal)
@@ -91,12 +90,10 @@ export default function ReviewView({
         <div className="review-top-text">
           <h1 className="page-title">{i18nT(locale, 'path.review')}</h1>
           {(goal || brandWords) && (
-            <p className="review-goal-anchor" title={[goal, brandWords].filter(Boolean).join(' · ')}>
-              {goal
-                ? `Goal · ${goal.slice(0, 80)}${goal.length > 80 ? '…' : ''}`
-                : null}
-              {goal && brandWords ? ' · ' : ''}
-              {brandWords ? brandWords.slice(0, 48) : null}
+            <p className="review-meta-info" role="status">
+              {goal ? `Goal: ${goal.slice(0, 30)}${goal.length > 30 ? '...' : ''}` : ''}
+              {goal && brandWords ? ' • ' : ''}
+              {brandWords ? `${brandWords.slice(0, 30)}${brandWords.length > 30 ? '...' : ''}` : ''}
             </p>
           )}
           <InfoReveal>
@@ -151,7 +148,7 @@ export default function ReviewView({
                       activePrompt === i ? ' is-active' : ''
                     }`}
                     onClick={() => {
-                      setActivePrompt(i)
+                      setActiveProdut(i)
                       appendPrompt(p.full)
                     }}
                   >

@@ -2590,6 +2590,37 @@ function App() {
                 <span className="sync-error-chip-short">Retry</span>
               </button>
             )}
+
+            {/* CTA Hierarchy: Capture primary, Export outline */}
+            {[
+              'flow', 'studio', 'spark', 'brand', 'review', 'finish', 'project'
+            ].includes(activeView) && (
+              <button
+                type="button"
+                className="btn btn-primary header-capture"
+                onClick={() => {
+                  setActiveView('flow')
+                  window.setTimeout(() => {
+                    document.getElementById('desk-capture')?.focus?.()
+                  }, 60)
+                }}
+                title="Capture"
+                aria-label="Capture"
+              >
+                Capture
+              </button>
+            )}
+
+            <button
+              type="button"
+              className={`btn ${activeView === 'brand' ? 'btn-primary' : 'btn-secondary'} header-export`}
+              onClick={openExportPanel}
+              title="Export"
+              aria-label="Export"
+            >
+              Export
+            </button>
+
             <div className="more-wrap" ref={moreWrapRef}>
               <button
                 type="button"

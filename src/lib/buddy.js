@@ -149,7 +149,7 @@ const FOOD = ['Eat · then decide.', 'Snack first · then type.', 'Food · then 
 
 const BATHROOM = ['Stand · walk · return.', 'Step away · fresh eyes.', 'Break · one call after.']
 
-const PROGRESS_STEP = ['Step done.', 'Checked · next when ready.', 'Done · keep going.']
+const PROGRESS_STEP = ['Step done.', 'Checked · next when ready.', 'Done.']
 
 const PROGRESS_TIMER = ['Timer on · one job.', 'Focus · this step only.', 'Timer · one decision.']
 

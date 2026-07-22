@@ -462,7 +462,7 @@ export default function ResearchView({
             <section className="panel brand-section board-add-compact">
               <div className="board-add-toolbar">
                 {deskMood.length > 0 && (
-                  <label className="btn btn-primary board-upload-btn">
+                  <label className="btn btn-secondary board-upload-btn">
                     Upload
                     <input
                       type="file"
@@ -561,7 +561,7 @@ export default function ResearchView({
                     />
                     <button
                       type="button"
-                      className="btn btn-primary"
+                      className="btn btn-secondary"
                       onClick={submitBoardUrl}
                       disabled={!boardUrl.trim()}
                     >
@@ -588,7 +588,7 @@ export default function ResearchView({
                     />
                     <button
                       type="button"
-                      className="btn btn-primary"
+                      className="btn btn-secondary"
                       onClick={submitBoardNote}
                     >
                       Add
@@ -601,7 +601,7 @@ export default function ResearchView({
             <div className="path-continue-row research-continue">
               <button
                 type="button"
-                className="btn btn-primary work-path-next"
+                className="btn btn-secondary work-path-next"
                 onClick={() => setActiveView('spark')}
               >
                 {tFormat(locale, 'ui.continueNext', {

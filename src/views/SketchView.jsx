@@ -223,7 +223,7 @@ export default function SketchView(props) {
             <div className="step-focus-actions step-focus-actions-empty">
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-secondary"
                 onClick={() =>
                   document.getElementById('desk-capture')?.focus()
                 }
@@ -265,7 +265,7 @@ export default function SketchView(props) {
             <div className="step-focus-actions">
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-secondary"
                 onClick={completeCurrentStep}
               >
                 Done
@@ -518,7 +518,7 @@ export default function SketchView(props) {
         <div className="path-continue-row work-below-tools">
           <button
             type="button"
-            className="btn btn-primary work-path-next"
+            className="btn btn-secondary work-path-next"
             onClick={() => setActiveView(journeyNext.view)}
           >
             {tFormat(locale, 'ui.continueNext', {

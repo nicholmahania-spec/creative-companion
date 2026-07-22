@@ -230,29 +230,16 @@ export default function DesignView({
                   {activeProject?.name || 'Project'}
                   {' · ★'}
                   {deskMood.filter((m) => m.inPack).length}/6
+                  {activeProject?.detective?.goal && (
+                    <span> · Goal: {String(activeProject.detective.goal).slice(0, 20)}{String(activeProject.detective.goal).length > 20 ? '…' : ''}</span>
+                  )}
+                  {activeProject?.detective?.brandWords && (
+                    <span> · {String(activeProject.detective.brandWords).slice(0, 20)}{String(activeProject.detective.brandWords).length > 20 ? '…' : ''}</span>
+                  )}
                   <InfoReveal>
                     {(getProcessPhase('design')?.checks || []).join(' · ')}
                   </InfoReveal>
                 </p>
-                {(activeProject?.detective?.goal ||
-                  activeProject?.detective?.brandWords) && (
-                  <p className="design-goal-anchor">
-                    {activeProject?.detective?.goal
-                      ? `Goal · ${String(activeProject.detective.goal).slice(0, 80)}${
-                          String(activeProject.detective.goal).length > 80
-                            ? '…'
-                            : ''
-                        }`
-                      : null}
-                    {activeProject?.detective?.goal &&
-                    activeProject?.detective?.brandWords
-                      ? ' · '
-                      : ''}
-                    {activeProject?.detective?.brandWords
-                      ? String(activeProject.detective.brandWords).slice(0, 48)
-                      : null}
-                  </p>
-                )}
               </div>
               <div className="brand-template-actions">
                 <button
@@ -1308,7 +1295,7 @@ export default function DesignView({
             <div className="brand-export-bar path-continue-row">
               <button
                 type="button"
-                className="btn btn-primary work-path-next"
+                className="btn btn-secondary work-path-next"
                 onClick={() => setActiveView('review')}
               >
                 {tFormat(locale, 'ui.continueNext', {
