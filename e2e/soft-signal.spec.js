@@ -38,7 +38,12 @@ test.describe('Soft Signal demo', () => {
     await banner.getByRole('button', { name: /Continue|Continuar/i }).click()
     await page.waitForTimeout(1000)
 
-    await expect(page.getByText(/Soft Signal/i).first()).toBeVisible({
+    // .first() can land on the aria-hidden mobile-only title (same text,
+    // earlier in DOM order, hidden at desktop widths) — scope to visible
+    // elements so the assertion targets the one actually on screen.
+    await expect(
+      page.locator(':visible', { hasText: /Soft Signal/i }).first()
+    ).toBeVisible({
       timeout: 12000,
     })
 

@@ -25,7 +25,9 @@ test.describe('Process walk (artifacts)', () => {
     )
     await page.locator('#detective-audience').fill('Busy parents new to the program')
     await page.locator('#detective-feel').fill('Hopeful and clear — not hustle')
-    await page.getByRole('button', { name: /Identity/i }).first().click()
+    // Define now renders as a split view (form + mood board) with every
+    // chapter's fields shown at once — no chapter-tab click needed to
+    // reveal the Identity chapter's fields.
     await expect(page.locator('#detective-brandWords')).toBeVisible({
       timeout: 5000,
     })
@@ -84,7 +86,7 @@ test.describe('Process walk (artifacts)', () => {
     // 6 Review — pack readiness + feedback notes
     await path.getByRole('button', { name: /Step 6: Review/i }).click()
     await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible()
-    await expect(page.getByText(/Pack · \d+\/\d+/i).first()).toBeVisible()
+    await expect(page.getByText(/Ready · \d+\/\d+/i).first()).toBeVisible()
     await page
       .locator('#feedback-notes')
       .fill('Hierarchy clear. Keep guest line quieter.')
