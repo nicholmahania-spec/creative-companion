@@ -8975,14 +8975,19 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .app-shell {
   display: grid;
   grid-template-columns: 200px 1fr;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr;
   grid-template-areas:
     'header header'
+    'hud hud'
     'sidebar main';
 }
 
 .app-shell > .header-redesign {
   grid-area: header;
+}
+
+.app-shell > .game-hud {
+  grid-area: hud;
 }
 
 .app-shell > .journey-sidebar {
@@ -9145,6 +9150,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
     grid-template-columns: 1fr;
     grid-template-areas:
       'header'
+      'hud'
       'sidebar'
       'main';
   }
@@ -11505,6 +11511,7 @@ body:has(.app.deep)::after {
     grid-template-columns: 1fr !important;
     grid-template-areas:
       'header'
+      'hud'
       'sidebar'
       'main' !important;
   }
@@ -14159,6 +14166,7 @@ select:focus,
     grid-template-columns: 200px 1fr !important;
     grid-template-areas:
       'header header'
+      'hud hud'
       'sidebar main' !important;
   }
   .app-shell > .journey-sidebar {
@@ -14193,6 +14201,7 @@ select:focus,
     grid-template-columns: 1fr !important;
     grid-template-areas:
       'header'
+      'hud'
       'main' !important;
   }
 
