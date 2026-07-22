@@ -84,6 +84,12 @@ const EN = {
     logOutLock: 'Log out / lock',
     noStepYet: 'No step yet',
     queueClear: 'All done here',
+    step: 'step',
+    steps: 'steps',
+    completed: 'completed',
+    getStarted: 'Ready to start your first step?',
+    nextStepSuggestion: 'What’s next?',
+    addStep: 'Add step',
     noPinsYet: 'No pictures yet',
     emptyStepBody:
       'Write one small job you can finish in about 25 minutes.',

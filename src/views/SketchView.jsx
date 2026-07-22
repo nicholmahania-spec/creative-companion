@@ -216,19 +216,28 @@ export default function SketchView(props) {
               <EmptyIllustration variant="desk" />
             </Suspense>
             <p className="empty-state-title">
-              {doneTasks.length > 0
-                ? i18nT(locale, 'ui.queueClear')
-                : i18nT(locale, 'ui.noStepYet')}
+              {doneTasks.length === 0
+                ? i18nT(locale, 'ui.noStepYet')
+                : `${i18nT(locale, 'ui.queueClear')} (${doneTasks.length} ${
+                    doneTasks.length === 1
+                      ? i18nT(locale, 'ui.step')
+                      : i18nT(locale, 'ui.steps')
+                  } ${i18nT(locale, 'ui.completed')})`}
+            </p>
+            <p className="empty-state-subtitle">
+              {doneTasks.length === 0
+                ? i18nT(locale, 'ui.getStarted')
+                : i18nT(locale, 'ui.nextStepSuggestion')}
             </p>
             <div className="step-focus-actions step-focus-actions-empty">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-primary"
                 onClick={() =>
                   document.getElementById('desk-capture')?.focus()
                 }
               >
-                Add step
+                {i18nT(locale, 'ui.addStep')}
               </button>
             </div>
           </div>
