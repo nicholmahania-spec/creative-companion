@@ -41,6 +41,7 @@ const SketchView = lazy(() => import('./views/SketchView'))
 const DefineView = lazy(() => import('./views/DefineView'))
 const DefineFocusView = lazy(() => import('./views/DefineFocusView'))
 const DeliverFocusView = lazy(() => import('./views/DeliverFocusView'))
+const ResearchFocusView = lazy(() => import('./views/ResearchFocusView'))
 const DesignView = lazy(() => import('./views/DesignView'))
 const ReviewView = lazy(() => import('./views/ReviewView'))
 const DeliverView = lazy(() => import('./views/DeliverView'))
@@ -2472,6 +2473,16 @@ function App() {
             runExport={runExport}
             setActiveView={setActiveView}
           />
+        </Suspense>
+      </div>
+    )
+  }
+
+  if (activeView === 'research-focus') {
+    return (
+      <div className={`app ${theme}`}>
+        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
+          <ResearchFocusView deskMood={deskMood} setActiveView={setActiveView} />
         </Suspense>
       </div>
     )

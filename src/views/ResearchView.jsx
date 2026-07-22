@@ -206,6 +206,13 @@ export default function ResearchView({
                 >
                   ⏱
                 </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setActiveView('research-focus')}
+                >
+                  Try Focus Mode (beta)
+                </button>
                 <InfoReveal>
                   {(getProcessPhase('research')?.checks || []).join(' · ')}
                 </InfoReveal>
