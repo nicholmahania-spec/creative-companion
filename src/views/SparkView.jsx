@@ -196,11 +196,8 @@ export default function SparkView({
           <div className="spark-card spark-card-stem" title={currentSpark || ''}>
             <p>
               {String(currentSpark || '')
-                .split(/[—.–]/)
-                [0]
-                .trim()
-                .slice(0, 72) || '—'}
-              {String(currentSpark || '').length > 72 ? '…' : ''}
+                .split(/[—.–]/)[0]
+                .trim() || '—'}
             </p>
           </div>
           <div className="spark-actions">
