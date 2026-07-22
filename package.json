@@ -1,7 +1,7 @@
 {
   "name": "creative-companion-react",
   "private": true,
-  "version": "1.48.86",
+  "version": "1.48.87",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -29,7 +29,7 @@
     "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.49.0",
     "@vitejs/plugin-react": "^4.5.2",
-    "vite": "^8.1.5",
+    "vite": "^7.3.6",
     "vitest": "^4.1.10"
   }
 }
