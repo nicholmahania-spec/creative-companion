@@ -39,6 +39,7 @@ const SparkView = lazy(() => import('./views/SparkView'))
 const ResearchView = lazy(() => import('./views/ResearchView'))
 const SketchView = lazy(() => import('./views/SketchView'))
 const DefineView = lazy(() => import('./views/DefineView'))
+const DefineFocusView = lazy(() => import('./views/DefineFocusView'))
 const DesignView = lazy(() => import('./views/DesignView'))
 const ReviewView = lazy(() => import('./views/ReviewView'))
 const DeliverView = lazy(() => import('./views/DeliverView'))
@@ -2439,6 +2440,23 @@ function App() {
             )}
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // Focus Mode stages render full-bleed — no persistent sidebar/header
+  // chrome — so they bypass the app-shell grid entirely rather than
+  // nesting inside it.
+  if (activeView === 'define-focus') {
+    return (
+      <div className={`app ${theme}`}>
+        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
+          <DefineFocusView
+            activeProject={activeProject}
+            updateDetective={updateDetective}
+            setActiveView={setActiveView}
+          />
+        </Suspense>
       </div>
     )
   }

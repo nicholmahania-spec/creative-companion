@@ -14506,3 +14506,238 @@ select:focus,
   padding-top: 0.5rem !important;
   margin-top: 0.15rem;
 }
+
+/* ============================================================
+   FOCUS MODE — Tactile Minimalist rework (opt-in preview)
+   Scoped entirely under .focus-* so it cannot collide with the
+   existing Tech-Studio classes. Reuses the app's existing theme
+   variables so light/dark both work without new hardcoded colors.
+   ============================================================ */
+
+.focus-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.focus-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  flex: 0 0 auto;
+}
+
+.focus-back-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  transition: background 160ms var(--ease-out, ease-out);
+}
+
+.focus-back-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.focus-step-label {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.focus-progress-track {
+  flex: 1 1 auto;
+  height: 2px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.focus-progress-fill {
+  height: 100%;
+  background: var(--dopamine, #3D5AFE);
+  border-radius: 2px;
+  transition: width 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.focus-preview-toggle {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.4rem 0.7rem;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 160ms var(--ease-out, ease-out);
+}
+
+.focus-preview-toggle:hover {
+  border-color: var(--dopamine, #3D5AFE);
+}
+
+.focus-main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.focus-card {
+  width: 100%;
+  max-width: 34rem;
+  transition:
+    transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.focus-card-enter {
+  transform: translateY(24px) scale(0.96);
+  opacity: 0;
+}
+
+.focus-prompt {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3.2vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 0 0 1.5rem;
+  color: var(--text-primary);
+}
+
+.focus-input-inline {
+  border: none;
+  border-bottom: 2px solid var(--border-strong);
+  background: transparent;
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3.2vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--dopamine, #3D5AFE);
+  padding: 0 0.15rem;
+  min-width: 6rem;
+  width: auto;
+  display: inline-block;
+}
+
+.focus-input-inline:focus {
+  outline: none;
+  border-bottom-color: var(--dopamine, #3D5AFE);
+}
+
+.focus-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1.25rem;
+}
+
+.focus-chip {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform 160ms cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 160ms ease-out,
+    background 160ms ease-out;
+}
+
+.focus-chip:hover {
+  border-color: var(--dopamine, #3D5AFE);
+  transform: translateY(-1px);
+}
+
+.focus-chip.is-selected {
+  background: var(--dopamine, #3D5AFE);
+  border-color: var(--dopamine, #3D5AFE);
+  color: var(--on-dopamine, #fff);
+  transform: scale(1.04);
+}
+
+.focus-hint {
+  margin: 0.85rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.focus-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+}
+
+.focus-skip-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 0.25rem;
+}
+
+.focus-skip-btn:hover {
+  color: var(--text-secondary);
+}
+
+.focus-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 18, 32, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease-out;
+  z-index: 500;
+}
+
+.focus-preview-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.focus-preview-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 92vw);
+  background: var(--bg-elevated);
+  border-left: 1px solid var(--border-subtle);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  transform: translateX(100%);
+  transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  z-index: 501;
+  overflow: auto;
+  padding: 1.25rem;
+}
+
+.focus-preview-drawer.is-open {
+  transform: translateX(0);
+}

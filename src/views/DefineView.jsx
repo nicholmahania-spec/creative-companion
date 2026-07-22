@@ -143,6 +143,15 @@ export default function DefineView(props) {
             <summary>Tools</summary>
             <div className="define-admin-body">
               <div className="field-block" style={{ marginBottom: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setActiveView('define-focus')}
+                >
+                  Try Focus Mode (beta)
+                </button>
+              </div>
+              <div className="field-block" style={{ marginBottom: '0.75rem' }}>
                 <label className="field-label" htmlFor="proj-deadline-field">
                   Deadline
                 </label>
