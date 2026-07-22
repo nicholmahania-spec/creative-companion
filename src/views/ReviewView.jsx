@@ -11,7 +11,7 @@ import {
   tFormat,
   pathLabel,
 } from '../lib/i18n'
-import { packReadiness
+import { packReadiness } from '../lib/exportFiles'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 

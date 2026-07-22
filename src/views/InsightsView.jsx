@@ -163,22 +163,26 @@ export default function InsightsView(props) {
             {i18nT(locale, 'ui.backToIdeate') || 'Next · Ideate'}
           </button>
         ) : (
-          <button
-            type="button"
-            className="btn btn-secondary work-path-next"
-            disabled={!nextTask}
-            onClick={() => {
-              if (nextTask) toggleTask(nextTask.id)
-              go('flow')
-            }}
-          >
-            {nextTask ? 'Mark done' : 'Back · Sketch'}
-          </button>
-          {deskTasks.length > 0 && (
-            <p className="text-muted insight-hint">
-              {completedCount}/{deskTasks.length} steps
-            </p>
-          )}
+          <>
+            <button
+              type="button"
+              className="btn btn-secondary work-path-next"
+              disabled={!nextTask}
+              onClick={() => {
+                if (nextTask) {
+                  toggleTask(nextTask.id);
+                }
+                go('flow');
+              }}
+            >
+              {nextTask ? 'Mark done' : 'Back · Sketch'}
+            </button>
+            {(deskTasks.length > 0) && (
+              <p className="text-muted insight-hint">
+                {completedCount}/{deskTasks.length} steps
+              </p>
+            )}
+          </>
         )}
         <button
           type="button"

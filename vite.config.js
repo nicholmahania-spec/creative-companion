@@ -64,9 +64,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom'],
-          supabase: ['@supabase/supabase-js'],
+        manualChunks: (id) => {
+          if (id.includes('react')) {
+            return 'react';
+          }
+          if (id.includes('@supabase/supabase-js')) {
+            return 'supabase';
+          }
         },
       },
     },
