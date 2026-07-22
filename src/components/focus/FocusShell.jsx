@@ -1,19 +1,14 @@
-import { useState } from 'react'
-
 /**
  * Shared shell for the "Tactile Minimalist" focus-mode rework.
- * One header (progress + step label + preview toggle), one centered
- * card slot. Every focus-mode stage view renders inside this.
+ * One header (progress + step label), one centered card slot. Every
+ * focus-mode stage view renders inside this.
+ *
+ * A slide-in preview drawer (toggled from the header) is planned for
+ * stages that need a brand/pack preview (Design, Deliver) but isn't
+ * wired up yet — added back together with its CSS when a stage
+ * actually needs it, rather than shipping unused styling now.
  */
-export default function FocusShell({
-  stepLabel,
-  stepIndex,
-  stepCount,
-  onBack,
-  previewContent,
-  children,
-}) {
-  const [previewOpen, setPreviewOpen] = useState(false)
+export default function FocusShell({ stepLabel, stepIndex, stepCount, onBack, children }) {
   const pct = stepCount > 0 ? Math.round((stepIndex / stepCount) * 100) : 0
 
   return (
@@ -39,34 +34,9 @@ export default function FocusShell({
         >
           <div className="focus-progress-fill" style={{ width: `${pct}%` }} />
         </div>
-        {previewContent && (
-          <button
-            type="button"
-            className="focus-preview-toggle"
-            onClick={() => setPreviewOpen((v) => !v)}
-            aria-expanded={previewOpen}
-          >
-            Preview ▸
-          </button>
-        )}
       </header>
 
       <main className="focus-main">{children}</main>
-
-      {previewContent && (
-        <>
-          <div
-            className={`focus-preview-backdrop${previewOpen ? ' is-open' : ''}`}
-            onClick={() => setPreviewOpen(false)}
-          />
-          <aside
-            className={`focus-preview-drawer${previewOpen ? ' is-open' : ''}`}
-            aria-hidden={!previewOpen}
-          >
-            {previewContent}
-          </aside>
-        </>
-      )}
     </div>
   )
 }

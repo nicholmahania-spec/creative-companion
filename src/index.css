@@ -14541,7 +14541,7 @@ select:focus,
   cursor: pointer;
   padding: 0.25rem 0.4rem;
   border-radius: 4px;
-  transition: background 160ms var(--ease-out, ease-out);
+  transition: background 160ms;
 }
 
 .focus-back-btn:hover {
@@ -14574,23 +14574,6 @@ select:focus,
   transition: width 320ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.focus-preview-toggle {
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.4rem 0.7rem;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: border-color 160ms var(--ease-out, ease-out);
-}
-
-.focus-preview-toggle:hover {
-  border-color: var(--dopamine, #3D5AFE);
-}
-
 .focus-main {
   flex: 1 1 auto;
   display: flex;
@@ -14604,9 +14587,7 @@ select:focus,
 .focus-card {
   width: 100%;
   max-width: 34rem;
-  transition:
-    transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
-    opacity 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1), opacity 320ms;
   transform: translateY(0) scale(1);
   opacity: 1;
 }
@@ -14663,10 +14644,7 @@ select:focus,
   padding: 0.55rem 1rem;
   border-radius: 999px;
   cursor: pointer;
-  transition:
-    transform 160ms cubic-bezier(0.32, 0.72, 0, 1),
-    border-color 160ms ease-out,
-    background 160ms ease-out;
+  transition: transform 160ms, border-color 160ms, background 160ms;
 }
 
 .focus-chip:hover {
@@ -14707,37 +14685,3 @@ select:focus,
   color: var(--text-secondary);
 }
 
-.focus-preview-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(11, 18, 32, 0.4);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 220ms ease-out;
-  z-index: 500;
-}
-
-.focus-preview-backdrop.is-open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.focus-preview-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(420px, 92vw);
-  background: var(--bg-elevated);
-  border-left: 1px solid var(--border-subtle);
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
-  transform: translateX(100%);
-  transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
-  z-index: 501;
-  overflow: auto;
-  padding: 1.25rem;
-}
-
-.focus-preview-drawer.is-open {
-  transform: translateX(0);
-}
