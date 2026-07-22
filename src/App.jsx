@@ -169,6 +169,7 @@ function App() {
   const exportAllData = useAppStore((s) => s.exportAllData)
   const importAllData = useAppStore((s) => s.importAllData)
   const hydrateFromPayload = useAppStore((s) => s.hydrateFromPayload)
+  const applyImageUrlReplacements = useAppStore((s) => s.applyImageUrlReplacements)
   const clearAllData = useAppStore((s) => s.clearAllData)
   const clearToEmpty = useAppStore((s) => s.clearToEmpty)
   const renameProject = useAppStore((s) => s.renameProject)
@@ -1707,7 +1708,9 @@ function App() {
         if (hasLocal && local.onboarded) {
           const push = await pushWorkspace(local)
           setSyncState(push.ok ? 'ok' : 'error')
-          if (!push.ok) {
+          if (push.ok) {
+            applyImageUrlReplacements(push.replacements)
+          } else {
             setSyncErrorSource('push')
             setSyncError(push.error || 'Couldn’t upload')
           }
@@ -1740,6 +1743,7 @@ function App() {
       if (result.ok) {
         setSyncState('ok')
         setSyncError('')
+        applyImageUrlReplacements(result.replacements)
       } else {
         setSyncState('error')
         setSyncError(result.error || 'Couldn’t sync')
@@ -2566,6 +2570,7 @@ function App() {
                     if (result.ok) {
                       setSyncState('ok')
                       setSyncError('')
+                      applyImageUrlReplacements(result.replacements)
                       flashToast(i18nT(locale, 'ui.syncedOk'))
                     } else {
                       setSyncState('error')

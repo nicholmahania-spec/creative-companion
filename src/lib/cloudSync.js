@@ -14,6 +14,102 @@ function withTimeout(promise, ms, label) {
   ])
 }
 
+const IMAGE_BUCKET = 'workspace-images'
+
+/** Parse a `data:` URL into raw bytes + a storage-friendly extension. */
+function dataUrlToBlobInfo(dataUrl) {
+  const match = /^data:([^;,]+)(?:;charset=[^;,]+)?;base64,(.*)$/.exec(
+    dataUrl || ''
+  )
+  if (!match) return null
+  const mime = match[1] || 'image/png'
+  const base64 = match[2]
+  const ext = (mime.split('/')[1] || 'png').split('+')[0].replace('jpeg', 'jpg')
+  try {
+    const byteChars = atob(base64)
+    const bytes = new Uint8Array(byteChars.length)
+    for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i)
+    return { blob: new Blob([bytes], { type: mime }), ext, mime }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Upload one embedded `data:` image to Storage and return its public URL.
+ * Best-effort: returns null on any failure so the caller can fall back to
+ * keeping the original data URL for that one item rather than failing sync.
+ */
+async function uploadWorkspaceImage(userId, dataUrl, path) {
+  const info = dataUrlToBlobInfo(dataUrl)
+  if (!info) return null
+  try {
+    const key = `${userId}/${path}.${info.ext}`
+    const { error } = await withTimeout(
+      supabase.storage
+        .from(IMAGE_BUCKET)
+        .upload(key, info.blob, { contentType: info.mime, upsert: true }),
+      15000,
+      'Image upload'
+    )
+    if (error) return null
+    const { data } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(key)
+    return data?.publicUrl || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Replace any embedded `data:` images in a workspace payload with Storage
+ * URLs, uploading as needed. Returns a new payload (input is untouched) plus
+ * the list of replacements actually made, so the caller can mirror them into
+ * local state and avoid re-uploading the same bytes on every future sync.
+ */
+async function offloadPayloadImages(userId, payload) {
+  const outgoing = { ...(payload || {}) }
+  const replacements = []
+
+  if (Array.isArray(outgoing.moodItems)) {
+    outgoing.moodItems = await Promise.all(
+      outgoing.moodItems.map(async (item) => {
+        if (
+          item?.type === 'image' &&
+          typeof item.visual === 'string' &&
+          item.visual.startsWith('data:')
+        ) {
+          const url = await uploadWorkspaceImage(userId, item.visual, `mood/${item.id}`)
+          if (url) {
+            replacements.push({ kind: 'mood', id: item.id, url })
+            return { ...item, visual: url }
+          }
+        }
+        return item
+      })
+    )
+  }
+
+  if (Array.isArray(outgoing.projects)) {
+    outgoing.projects = await Promise.all(
+      outgoing.projects.map(async (project) => {
+        if (
+          typeof project?.logoImage === 'string' &&
+          project.logoImage.startsWith('data:')
+        ) {
+          const url = await uploadWorkspaceImage(userId, project.logoImage, `logo/${project.id}`)
+          if (url) {
+            replacements.push({ kind: 'logo', projectId: project.id, url })
+            return { ...project, logoImage: url }
+          }
+        }
+        return project
+      })
+    )
+  }
+
+  return { outgoing, replacements }
+}
+
 export async function pullWorkspace() {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: 'Supabase not configured' }
@@ -73,9 +169,19 @@ export async function pushWorkspace(payload) {
       return { ok: false, error: userErr?.message || 'Not signed in' }
     }
 
+    // Move embedded base64 images to Storage first so the JSON row we write
+    // stays small — this is what makes sync fast and reliable on mobile
+    // instead of a multi-MB payload timing out. Local state (and this
+    // function's caller) still has the original data URLs; only the outgoing
+    // copy and the Storage objects change here.
+    const { outgoing, replacements } = await offloadPayloadImages(
+      user.id,
+      payload
+    )
+
     const body = {
       user_id: user.id,
-      payload: payload || {},
+      payload: outgoing,
       updated_at: new Date().toISOString(),
     }
 
@@ -92,7 +198,7 @@ export async function pushWorkspace(payload) {
     if (error) {
       return { ok: false, error: error.message }
     }
-    return { ok: true }
+    return { ok: true, replacements }
   } catch (e) {
     return { ok: false, error: e?.message || 'Could not reach the cloud' }
   }
