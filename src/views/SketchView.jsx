@@ -143,10 +143,12 @@ export default function SketchView(props) {
           <p className="work-context-line">
             <strong>{activeProject?.name || 'Project'}</strong>
             {projectDeadline ? ` · ${formatShortDate(projectDeadline)}` : ''}
-            <span className="work-context-progress">
-              {' '}
-              · {completedCount}/{deskTasks.length || 0}
-            </span>
+            {deskTasks.length > 0 && (
+              <span className="work-context-progress">
+                {' '}
+                · {completedCount}/{deskTasks.length}
+              </span>
+            )}
           </p>
         </div>
       </div>

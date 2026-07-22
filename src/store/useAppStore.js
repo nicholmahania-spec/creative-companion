@@ -586,6 +586,38 @@ const useAppStore = create(
           },
         })),
 
+      /**
+       * Mirror pushWorkspace()'s image-offload results into local state so
+       * the next sync sees Storage URLs instead of the original data URLs —
+       * without this, every autosave would re-upload the same image bytes.
+       * Also shrinks what gets persisted to localStorage.
+       */
+      applyImageUrlReplacements: (replacements = []) => {
+        if (!Array.isArray(replacements) || !replacements.length) return
+        set((state) => {
+          const moodReps = new Map(
+            replacements.filter((r) => r.kind === 'mood').map((r) => [r.id, r.url])
+          )
+          const logoReps = new Map(
+            replacements
+              .filter((r) => r.kind === 'logo')
+              .map((r) => [r.projectId, r.url])
+          )
+          return {
+            moodItems: moodReps.size
+              ? state.moodItems.map((m) =>
+                  moodReps.has(m.id) ? { ...m, visual: moodReps.get(m.id) } : m
+                )
+              : state.moodItems,
+            projects: logoReps.size
+              ? state.projects.map((p) =>
+                  logoReps.has(p.id) ? { ...p, logoImage: logoReps.get(p.id) } : p
+                )
+              : state.projects,
+          }
+        })
+      },
+
       exportAllData: () => {
         const s = get()
         return {

@@ -101,9 +101,13 @@ export function mapPaletteRoles(palette = []) {
   }
   // Accent: mid luminance if available
   const mid = scored[Math.floor(scored.length / 2)]?.hex || darkest
+  // Text renders on top of Cover, so it must contrast against Cover — not
+  // just be "the darkest swatch," which collapses to the same hex as Cover
+  // whenever the palette's darkest color is chosen for both roles.
+  const text = bestTextOn(cover)
   return {
     cover,
-    text: darkest,
+    text,
     accent: mid,
     quiet: lightest,
     background: lightest,

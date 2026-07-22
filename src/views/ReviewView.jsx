@@ -105,11 +105,11 @@ export default function ReviewView({
         </div>
         {miss.length === 0 ? (
           <span className="review-status-chip is-ready" aria-live="polite">
-            Pack · {okCount}/{reviewChecks.length}
+            Ready · {okCount}/{reviewChecks.length}
           </span>
         ) : (
           <span className="review-status-chip is-gaps" aria-live="polite">
-            Pack · {okCount}/{reviewChecks.length}
+            Ready · {okCount}/{reviewChecks.length}
           </span>
         )}
       </div>
