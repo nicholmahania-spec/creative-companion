@@ -86,6 +86,10 @@ export default function SettingsView(props) {
 
       <section className="panel brand-section" id="settings-focus">
         <div className="brand-section-label">Focus</div>
+
+        <p className="settings-subhead">
+          Dim the sidebar and header while typing
+        </p>
         <SettingsSwitch
           label="Focus mode"
           checked={!!prefs.focusMode}
@@ -96,6 +100,10 @@ export default function SettingsView(props) {
           checked={!!prefs.hideNavUntilBlur}
           onToggle={() => setPref('hideNavUntilBlur', !prefs.hideNavUntilBlur)}
         />
+
+        <p className="settings-subhead">
+          Dim other fields while one is focused
+        </p>
         <div className="settings-row">
           <strong>Focus ring</strong>
           <button
@@ -140,6 +148,8 @@ export default function SettingsView(props) {
             {Number(prefs.focusMaskBlur) > 0 ? '2px' : 'Off'}
           </button>
         </div>
+
+        <p className="settings-subhead">Notifications</p>
         <div className="settings-row">
           <strong>Batch toasts</strong>
           <select

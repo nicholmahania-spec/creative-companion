@@ -12627,6 +12627,19 @@ select:focus,
   gap: 0.35rem !important;
 }
 
+.settings-subhead {
+  margin: 0.85rem 0 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.settings-subhead:first-of-type {
+  margin-top: 0.25rem;
+}
+
 /* Break consent — bottom strip, never mid-canvas over work */
 .force-break-consent-studio {
   position: fixed !important;
