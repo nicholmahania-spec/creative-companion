@@ -354,7 +354,7 @@ export default function SketchView(props) {
             <button
               type="button"
               onClick={() => captureStep?.()}
-              className="btn btn-secondary"
+              className="btn btn-primary"
             >
               Add
             </button>
