@@ -27,13 +27,17 @@ export async function pullWorkspace() {
       return { ok: false, error: userErr?.message || 'Not signed in' }
     }
 
+    // Workspace payloads can run several MB (mood-board images embedded as
+    // data URLs) — a mobile connection genuinely needs more than a few
+    // seconds to pull that much data, so this timeout is intentionally much
+    // longer than the tiny getUser() check above.
     const { data, error } = await withTimeout(
       supabase
         .from('user_workspaces')
         .select('payload, updated_at')
         .eq('user_id', user.id)
         .maybeSingle(),
-      6000,
+      25000,
       'Cloud desk load'
     )
 
@@ -75,11 +79,13 @@ export async function pushWorkspace(payload) {
       updated_at: new Date().toISOString(),
     }
 
+    // Same reasoning as pullWorkspace — uploading a multi-MB payload over
+    // mobile data needs real headroom, not a few seconds.
     const { error } = await withTimeout(
       supabase.from('user_workspaces').upsert(body, {
         onConflict: 'user_id',
       }),
-      6000,
+      25000,
       'Cloud desk save'
     )
 

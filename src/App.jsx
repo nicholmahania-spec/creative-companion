@@ -1653,10 +1653,11 @@ function App() {
     }
   }, [])
 
-  // Hard safety net: if cloud loading ever hangs (even past the 6s
-  // per-request timeout in cloudSync.js), never leave the user stuck on a
-  // dead screen with no way out. Short delay matters most on flaky mobile
-  // networks, where this screen is most likely to be seen.
+  // Hard safety net: if cloud loading ever hangs (even past the 25s
+  // per-request timeout in cloudSync.js — workspaces can run several MB),
+  // never leave the user stuck on a dead screen with no way out. Short
+  // delay matters most on flaky mobile networks, where this screen is
+  // most likely to be seen.
   useEffect(() => {
     if (!cloudHydrating) {
       setShowHydratingEscape(false)
