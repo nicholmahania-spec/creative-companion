@@ -173,10 +173,12 @@ export default function InsightsView(props) {
             }}
           >
             {nextTask ? 'Mark done' : 'Back · Sketch'}
-            {deskTasks.length
-              ? ` · ${completedCount}/${deskTasks.length}`
-              : ''}
           </button>
+          {deskTasks.length > 0 && (
+            <p className="text-muted insight-hint">
+              {completedCount}/{deskTasks.length} steps
+            </p>
+          )}
         )}
         <button
           type="button"
