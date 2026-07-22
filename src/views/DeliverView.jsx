@@ -280,6 +280,13 @@ export default function DeliverView({
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
+                  onClick={() => setActiveView('deliver-focus')}
+                >
+                  Try Focus Mode (beta)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
                   onClick={() => runPack('print')}
                 >
                   Print
