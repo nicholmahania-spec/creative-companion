@@ -118,3 +118,5 @@ npx netlify deploy --prod
 ## License
 
 Private prototype — update this file if you open-source it.
+
+# Trigger rebuild for GitHub Pages
