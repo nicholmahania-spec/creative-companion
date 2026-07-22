@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="720" viewBox="0 0 720 720">
+  <rect fill="#4F46E5" width="720" height="720"/>
+  <circle cx="120" cy="120" r="48" fill="#0D9488"/>
+  <circle cx="120" cy="120" r="26" fill="#F4F1EA"/>
+  <path d="M100 120 Q120 100 140 120 Q120 132 100 120" fill="#4F46E5"/>
+  <text x="48" y="280" font-family="system-ui" font-weight="700" font-size="52" fill="#F4F1EA">Soft Signal</text>
+  <text x="48" y="340" font-family="system-ui" font-size="28" fill="#A5B4FC">Ep. 12 · Slow Starts</text>
+  <text x="48" y="400" font-family="system-ui" font-size="20" fill="#E0E7FF">Guest: A. Rivera · 42 min</text>
+  <rect x="48" y="480" width="240" height="8" rx="4" fill="#0D9488"/>
+  <text x="48" y="540" font-family="system-ui" font-size="16" fill="#C7D2FE">Rules: title ≤ 2 lines · guest under title · mark top-left · no waveform clutter</text>
+</svg>

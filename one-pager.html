@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<!-- Marketing pitch sheet only — not product UI. Desk chrome follows docs/DESIGN_GRAMMAR.md (Plus Jakarta / stone). -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Creative Companion — One-pager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f7f4ee;
+        --surface: #fffcf8;
+        --ink: #1a2330;
+        --muted: #5c6b7a;
+        --faint: #8b97a3;
+        --line: #e8e1d4;
+        --accent: #1f5a6b;
+        --sage: #5b7a4e;
+        --clay: #b8794a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: 'DM Sans', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.5;
+        font-size: 14px;
+      }
+      .sheet {
+        max-width: 800px;
+        margin: 1.5rem auto;
+        padding: 2rem 2.25rem 2.5rem;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: 0 12px 40px rgba(26, 35, 48, 0.08);
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+      }
+      .mark {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: var(--accent);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 1.25rem;
+      }
+      .brand {
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .tag {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--faint);
+      }
+      h1 {
+        font-family: 'Instrument Serif', Georgia, serif;
+        font-weight: 400;
+        font-size: 2.15rem;
+        line-height: 1.15;
+        margin: 0.35rem 0 0.5rem;
+        letter-spacing: -0.02em;
+      }
+      .promise {
+        color: var(--muted);
+        font-size: 1.05rem;
+        max-width: 36rem;
+        margin: 0 0 1.25rem;
+      }
+      .pill {
+        display: inline-block;
+        background: rgba(31, 90, 107, 0.11);
+        color: var(--accent);
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem;
+        margin: 1.25rem 0;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 0.9rem 1rem;
+        background: var(--bg);
+      }
+      .card h3 {
+        margin: 0 0 0.35rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+      .card p {
+        margin: 0;
+        font-size: 0.84rem;
+        color: var(--muted);
+      }
+      .section-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin: 1.1rem 0 0.45rem;
+      }
+      ul {
+        margin: 0;
+        padding-left: 1.1rem;
+        color: var(--muted);
+      }
+      li {
+        margin: 0.25rem 0;
+      }
+      .who {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 0.85rem;
+      }
+      .swatches {
+        display: flex;
+        gap: 0.4rem;
+        margin-top: 0.5rem;
+      }
+      .sw {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+      }
+      .footer {
+        margin-top: 1.4rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        font-size: 0.8rem;
+        color: var(--faint);
+      }
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: var(--accent);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.55rem 1rem;
+        border-radius: 999px;
+      }
+      .actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+      }
+      .ghost {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--ink);
+        font: inherit;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.55rem 1rem;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      @media print {
+        body {
+          background: #fff;
+        }
+        .sheet {
+          margin: 0;
+          border: none;
+          box-shadow: none;
+          border-radius: 0;
+          max-width: none;
+          padding: 0.5in;
+        }
+        .no-print {
+          display: none !important;
+        }
+      }
+      @media (max-width: 640px) {
+        .grid,
+        .who {
+          grid-template-columns: 1fr;
+        }
+        .sheet {
+          margin: 0.75rem;
+          padding: 1.25rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <article class="sheet">
+      <div class="actions no-print">
+        <a class="cta" href="./">Open live demo →</a>
+        <button class="ghost" type="button" onclick="window.print()">
+          Print / Save PDF
+        </button>
+      </div>
+
+      <div class="top">
+        <div>
+          <div style="display: flex; gap: 0.75rem; align-items: center">
+            <div class="mark" aria-hidden="true">✦</div>
+            <div>
+              <div class="brand">Creative Companion</div>
+              <div class="tag">Product one-pager · interview handout</div>
+            </div>
+          </div>
+          <h1>Structure without shame.<br />Sparks without chaos.</h1>
+          <p class="promise">
+            A calm workflow companion for ADHD designers and photographers —
+            tiny next moves beside Illustrator, Lightroom, InDesign, and
+            Photoshop. Not another hustle app.
+          </p>
+          <span class="pill">MVP web demo · data stays on device</span>
+        </div>
+      </div>
+
+      <p class="section-label">Who it’s for</p>
+      <div class="who">
+        <div class="card">
+          <h3>Primary</h3>
+          <p>
+            Solopreneurs and small studios who ship client craft, juggle Adobe
+            tools, and freeze when the project feels too big.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Not for</h3>
+          <p>
+            Enterprise sprint theater, vanity streaks, or tools that punish
+            unfinished lists.
+          </p>
+        </div>
+      </div>
+
+      <p class="section-label">MVP capabilities</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Adaptive tasks</h3>
+          <p>
+            Name a job (café brand, wedding album). Get realistic phases and
+            5–15 minute steps.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Progress without pressure</h3>
+          <p>
+            Interactive map, dashboard, subtle phase chips. Partial progress
+            counts.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Idea Spark</h3>
+          <p>
+            Rapid-Fire clouds, word chains, constraints. One tap → task or mood
+            tile.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Mood + style lock</h3>
+          <p>
+            Drag-and-drop board, smart suggestions, gentle palette harmony —
+            not a feed.
+          </p>
+        </div>
+      </div>
+
+      <p class="section-label">ADHD-first principles</p>
+      <ul>
+        <li><strong>Skip freely</strong> — phases and tasks never trap you</li>
+        <li><strong>Enough today</strong> — stopping is a first-class action</li>
+        <li><strong>Undo always</strong> — ⌘Z / Ctrl+Z for experiments</li>
+        <li><strong>No guilt streaks</strong> — gentle wins, not fire badges</li>
+        <li>
+          <strong>Beside Adobe</strong> — lightweight links first; deep UXP
+          later
+        </li>
+      </ul>
+
+      <p class="section-label">Brand system</p>
+      <div class="card">
+        <p>
+          Paper surfaces · teal accent · sage for done · serif headlines · calm
+          density. Themes: Calm, Paper, Dusk, Dark, Ocean.
+        </p>
+        <div class="swatches" aria-label="Brand colors">
+          <span class="sw" style="background: #f7f4ee" title="Paper"></span>
+          <span class="sw" style="background: #1f5a6b" title="Accent"></span>
+          <span class="sw" style="background: #5b7a4e" title="Sage"></span>
+          <span class="sw" style="background: #b8794a" title="Clay"></span>
+          <span class="sw" style="background: #1a2330" title="Ink"></span>
+        </div>
+      </div>
+
+      <p class="section-label">Why not Notion / Asana / Milanote alone?</p>
+      <div class="card">
+        <p>
+          Those tools are strong at docs, sprints, or pure boards. Companion is
+          craft-aware micro-structure: loose idea → suggested next move → spark
+          capture → enough for today — in the language of real creative jobs.
+        </p>
+      </div>
+
+      <div class="footer">
+        <div>
+          creative-companion · prototype for interviews<br />
+          Demo path: Guest → sample project → Tasks / Spark / Mood / Map
+        </div>
+        <div style="text-align: right">
+          Validation docs in repo<br />
+          <span style="color: var(--sage)">Structure · sparks · rest</span>
+        </div>
+      </div>
+    </article>
+  </body>
+</html>

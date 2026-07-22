@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+  <rect fill="#EEF2FF" width="640" height="480"/>
+  <text x="32" y="48" font-family="system-ui" font-size="18" fill="#6366F1">SOFT SIGNAL · sketch B · mark</text>
+  <circle cx="320" cy="230" r="70" fill="#4F46E5"/>
+  <circle cx="320" cy="230" r="42" fill="#F4F1EA"/>
+  <path d="M290 230 Q320 200 350 230 Q320 250 290 230" fill="#0D9488"/>
+  <text x="220" y="360" font-family="system-ui" font-size="20" fill="#3730A3">pulse / listening mark</text>
+</svg>

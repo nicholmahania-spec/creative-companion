@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-label="Creative Companion">
+  <!-- Path mark: three rising steps (desk → pack) -->
+  <rect x="3.5" y="3.5" width="25" height="25" rx="6" stroke="currentColor" stroke-width="1.75"/>
+  <path d="M9 21.5h6.5M9 16.5h10M9 11.5h14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+</svg>

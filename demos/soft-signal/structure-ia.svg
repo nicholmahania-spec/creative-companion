@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="480" viewBox="0 0 720 480">
+  <rect fill="#F7F5F0" width="720" height="480"/>
+  <text x="28" y="40" font-family="system-ui" font-size="18" fill="#5F6D5D">SOFT SIGNAL · structure · text IA</text>
+  <rect x="40" y="80" width="140" height="56" rx="12" fill="#4F46E5"/><text x="70" y="114" fill="#fff" font-family="system-ui" font-size="16">Home</text>
+  <rect x="210" y="80" width="140" height="56" rx="12" fill="#0D9488"/><text x="240" y="114" fill="#fff" font-family="system-ui" font-size="16">Studio</text>
+  <rect x="380" y="80" width="140" height="56" rx="12" fill="#3730A3"/><text x="422" y="114" fill="#fff" font-family="system-ui" font-size="16">Shows</text>
+  <rect x="550" y="80" width="140" height="56" rx="12" fill="#1A1A1A"/><text x="575" y="114" fill="#fff" font-family="system-ui" font-size="16">Book</text>
+  <path d="M110 136 L110 180 L280 180 L280 136" fill="none" stroke="#CCC" stroke-width="2"/>
+  <path d="M450 136 L450 180 L620 180 L620 136" fill="none" stroke="#CCC" stroke-width="2"/>
+  <rect x="40" y="200" width="300" height="100" rx="12" fill="#fff" stroke="#E5E0D8"/>
+  <text x="56" y="232" font-family="system-ui" font-size="14" fill="#333">Home blocks (text wireframe)</text>
+  <text x="56" y="258" font-family="system-ui" font-size="13" fill="#666">1 Hero promise · 2 How sessions feel</text>
+  <text x="56" y="280" font-family="system-ui" font-size="13" fill="#666">3 Featured show · 4 Book CTA</text>
+  <rect x="380" y="200" width="300" height="100" rx="12" fill="#fff" stroke="#E5E0D8"/>
+  <text x="396" y="232" font-family="system-ui" font-size="14" fill="#333">Book flow</text>
+  <text x="396" y="258" font-family="system-ui" font-size="13" fill="#666">Need · Length · Sensory notes · Confirm</text>
+  <text x="396" y="280" font-family="system-ui" font-size="13" fill="#666">No dark patterns · plain language</text>
+  <text x="40" y="360" font-family="system-ui" font-size="14" fill="#0D9488">Primary CTA everywhere: “Book a calm session”</text>
+</svg>
