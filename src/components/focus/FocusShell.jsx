@@ -12,12 +12,12 @@ export default function FocusShell({ stepLabel, stepIndex, stepCount, onBack, ch
   const pct = stepCount > 0 ? Math.round((stepIndex / stepCount) * 100) : 0
 
   return (
-    <div className="focus-shell">
-      <header className="focus-header">
+    <div className="focus-shell p-4">
+      <header className="focus-header flex items-center justify-between py-3">
         {onBack && (
           <button
             type="button"
-            className="focus-back-btn"
+            className="focus-back-btn btn btn-outline btn-icon"
             onClick={onBack}
             aria-label="Back to previous step"
           >
