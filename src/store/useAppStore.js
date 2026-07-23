@@ -843,6 +843,21 @@ const useAppStore = create(
           return { tasks: [...open, ...done] }
         }),
 
+      /**
+       * Reorder a set of open tasks to a specific sequence (Sketch Focus
+       * Mode's 1-2-3 priority ranking) — everything not in orderedIds
+       * keeps its existing relative order, appended after.
+       */
+      reorderOpenTasks: (orderedIds) =>
+        set((state) => {
+          const rank = new Map(orderedIds.map((id, i) => [id, i]))
+          const ranked = state.tasks
+            .filter((t) => rank.has(t.id))
+            .sort((a, b) => rank.get(a.id) - rank.get(b.id))
+          const rest = state.tasks.filter((t) => !rank.has(t.id))
+          return { tasks: [...ranked, ...rest] }
+        }),
+
       updateTaskTitle: (id, title) =>
         set((state) => ({
           tasks: state.tasks.map((t) =>
