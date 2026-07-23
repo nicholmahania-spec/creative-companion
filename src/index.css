@@ -105,6 +105,25 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
+/* Links */
+a {
+  color: var(--dopamine);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition:
+    color var(--transition),
+    text-decoration-color var(--transition),
+    text-underline-offset var(--transition);
+}
+a:hover {
+  color: var(--dopamine-deep);
+  text-decoration-color: var(--dopamine-deep);
+}
+a:active {
+  color: var(--dopamine);
+  text-decoration-color: var(--dopamine);
+}
 
 .app.deep body,
 .app.deep {
