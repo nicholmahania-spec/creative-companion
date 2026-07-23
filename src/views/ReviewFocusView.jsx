@@ -1,24 +1,7 @@
 /**
  * 06 // Review — Focus Mode (Tactile Minimalist rework, opt-in preview).
- *
- * The blueprint's spec for this stage assumed structured client
- * comments and an AI call to translate vague feedback into checkbox
- * tasks. The real Review view stores feedback as one free-text blob
- * (feedbackNotes, bullet-appended), not discrete comment objects — but
- * those bullet lines ARE discrete items once split on newline, so the
- * one-at-a-time "Cognitive Shield" itself is fully real here.
- *
- * The AI translation is scaffolded, not live (see ../lib/feedbackAi.js
- * for why — no provider key can safely live in this static site's
- * client bundle, so it expects a server-side proxy that doesn't exist
- * yet). "Translate to checklist" only appears once
- * VITE_FEEDBACK_AI_ENDPOINT is set; until then the card says so
- * plainly instead of pretending to work.
- *
- * packReadiness's gap list is the other real, already-structured
- * checklist here — "Tagline", "★ Starred pictures", etc, each already
- * wired to jump straight to where it's fixed — so it gets the same
- * one-at-a-time treatment after notes are cleared.
+ * Added: Intent-setting step at start (phase 4 UX consistency).
+ * Then proceeds to feedback notes review and gap review as before.
  */
 import { useState } from 'react'
 import FocusShell from '../components/focus/FocusShell'
@@ -26,6 +9,7 @@ import FocusCard from '../components/focus/FocusCard'
 import useAppStore from '../store/useAppStore'
 import { packReadiness } from '../lib/exportFiles'
 import { isFeedbackAiConfigured, translateFeedback } from '../lib/feedbackAi'
+import Button from '../components/ui/Button'
 
 const REVIEW_GAP_SKIP = new Set(['handoff', 'learnings'])
 
@@ -37,6 +21,11 @@ export default function ReviewFocusView({
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
 
+  // Intent setting state
+  const [intent, setIntent] = useState('')
+  const [intentSet, setIntentSet] = useState(false)
+
+  // Original ReviewView state (moved inside intentSet conditional)
   const noteLines = String(activeProject?.feedbackNotes || '')
     .split('\n')
     .map((l) => l.trim())
@@ -86,12 +75,57 @@ export default function ReviewFocusView({
 
   const currentNote = noteLines[0]
 
+  // If intent not set, show intent input first
+  if (!intentSet) {
+    return (
+      <FocusShell stepLabel="06 // Review" stepIndex={0} stepCount={3}>
+        <FocusShell
+          stepLabel="06 // Review"
+          stepIndex={0}
+          stepCount={3}
+          showPreviewDrawer={false}
+        >
+          <div className="focus-card">
+            <p className="focus-prompt">What do you want to accomplish in your review session?</p>
+            <input
+              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+              value={intent}
+              onChange={(e) => setIntent(e.target.value)}
+              placeholder="e.g., Address all client feedback and prepare for delivery"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && intent.trim()) {
+                  setIntentSet(true)
+                }
+              }}
+            />
+            <div className="flex justify-end mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (intent.trim()) {
+                    setIntentSet(true)
+                  }
+                }}
+                disabled={!intent.trim()}
+              >
+                Start Reviewing
+              </Button>
+            </div>
+          </div>
+        </FocusShell>
+      </FocusShell>
+    )
+  }
+
+  // Main ReviewView logic (only shown after intent is set)
   if (currentNote) {
     return (
       <FocusShell
         stepLabel="06 // Review"
-        stepIndex={clearedNotes}
-        stepCount={clearedNotes + noteLines.length}
+        stepIndex={1 + clearedNotes}
+        stepCount={3}
       >
         <FocusCard cardKey={currentNote}>
           <p className="focus-hint">Note {clearedNotes + 1} of {clearedNotes + noteLines.length}</p>
@@ -156,7 +190,7 @@ export default function ReviewFocusView({
 
   if (currentGap) {
     return (
-      <FocusShell stepLabel="06 // Review" stepIndex={ready.checks.length - gaps.length} stepCount={ready.checks.length}>
+      <FocusShell stepLabel="06 // Review" stepIndex={2} stepCount={3}>
         <FocusCard cardKey={currentGap.id}>
           <p className="focus-hint">Gap</p>
           <p className="focus-prompt">{currentGap.label}</p>
@@ -178,13 +212,17 @@ export default function ReviewFocusView({
   }
 
   return (
-    <FocusShell stepLabel="06 // Review" stepIndex={1} stepCount={1}>
+    <FocusShell stepLabel="06 // Review" stepIndex={3} stepCount={3}>
       <div className="focus-card" style={{ textAlign: 'center' }}>
         <p className="focus-prompt">All caught up</p>
         <div className="focus-actions" style={{ justifyContent: 'center' }}>
-          <button type="button" className="btn btn-primary" onClick={() => setActiveView?.('finish')}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setActiveView?.('finish')}
+          >
             Next · Deliver
-          </button>
+          </Button>
         </div>
       </div>
     </FocusShell>

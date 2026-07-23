@@ -1,5 +1,7 @@
 /**
  * 07 // Deliver — Focus Mode (Tactile Minimalist rework, opt-in preview).
+ * Added: Intent-setting step at start (phase 4 UX consistency).
+ * Then proceeds to format selection and shipping as before.
  * Format Matrix + auto-naming preview + a single Ship action that runs
  * every selected export in sequence. Uses the app's real export
  * pipeline (runPack/runExport, slugifyFilename) — no new formats, no
@@ -27,6 +29,11 @@ export default function DeliverFocusView({
   runExport,
   setActiveView,
 }) {
+  // Intent setting state
+  const [intent, setIntent] = useState('')
+  const [intentSet, setIntentSet] = useState(false)
+
+  // Original DeliverView state (moved inside intentSet conditional)
   const [selected, setSelected] = useState(
     () => new Set(FORMATS.filter((f) => f.default).map((f) => f.id))
   )
@@ -70,25 +77,72 @@ export default function DeliverFocusView({
     runShip()
   }
 
+  // If intent not set, show intent input first
+  if (!intentSet) {
+    return (
+      <FocusShell stepLabel="07 // Deliver" stepIndex={0} stepCount={3}>
+        <FocusShell
+          stepLabel="07 // Deliver"
+          stepIndex={0}
+          stepCount={3}
+          showPreviewDrawer={false}
+        >
+          <div className="focus-card">
+            <p className="focus-prompt">What do you want to accomplish in your delivery session?</p>
+            <input
+              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+              value={intent}
+              onChange={(e) => setIntent(e.target.value)}
+              placeholder="e.g., Generate final brand assets and prepare for client handoff"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && intent.trim()) {
+                  setIntentSet(true)
+                }
+              }}
+            />
+            <div className="flex justify-end mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (intent.trim()) {
+                    setIntentSet(true)
+                  }
+                }}
+                disabled={!intent.trim()}
+              >
+                Start Delivery
+              </Button>
+            </div>
+          </div>
+        </FocusShell>
+      </FocusShell>
+    )
+  }
+
+  // Main DeliverView logic (only shown after intent is set)
   if (shipped) {
     return (
-      <div className="focus-shell">
-        <main className="focus-main">
-          <div className="focus-card">
-            <p className="focus-prompt">Project delivered.</p>
-            <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>
-              Your slate is completely clean.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setActiveView?.('home')}
-            >
-              Start new project
-            </Button>
-          </div>
-        </main>
-      </div>
+      <FocusShell stepLabel="07 // Deliver" stepIndex={3} stepCount={3}>
+        <div className="focus-shell">
+          <main className="focus-main">
+            <div className="focus-card">
+              <p className="focus-prompt">Project delivered.</p>
+              <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>
+                Your slate is completely clean.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveView?.('home')}
+              >
+                Start new project
+              </Button>
+            </div>
+          </main>
+        </div>
+      </FocusShell>
     )
   }
 
@@ -96,7 +150,7 @@ export default function DeliverFocusView({
     <FocusShell
       stepLabel="07 // Deliver"
       stepIndex={1}
-      stepCount={1}
+      stepCount={3}
       showPreviewDrawer={true}
       drawerContent={
         <div>
