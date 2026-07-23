@@ -1,3 +1,102 @@
-/* Border utilities */
+/* ===== Color & Background Utilities ===== */
+.bg-bg-warm { background-color: var(--bg-warm); }
+
+/* ===== Border Utilities ===== */
+.border-l { border-left-width: 1px; }
+.border-r { border-right-width: 1px; }
+.border-t { border-top-width: 1px; }
 .border-b { border-bottom-width: 1px; }
-.border-border { border-bottom-color: var(--border-subtle); }
+
+.border-border { border-color: var(--border-subtle); }
+.border-shadow { box-shadow: var(--shadow); }
+
+/* ===== Shadow Utilities ===== */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow { box-shadow: var(--shadow); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+.shadow-2xl { box-shadow: var(--shadow-2xl); }
+.shadow-inner { box-shadow: var(--shadow-inner); }
+.shadow-none { box-shadow: var(--shadow-none); }
+
+/* ===== Transition Utilities ===== */
+.transition { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter; transition-timing-function: var(--transition-easing-in-out); transition-duration: var(--transition-duration-150); }
+.transition-transform { transition-property: transform; transition-timing-function: var(--transition-easing-in-out); transition-duration: var(--transition-duration-150); }
+.duration-300 { transition-duration: var(--transition-duration-300); }
+.ease-in-out { transition-timing-function: var(--transition-easing-in-out); }
+
+/* ===== Transform Utilities ===== */
+.transform-none { transform: none; }
+/* Note: For transform values like translate-x-[0], we'll use inline styles */
+
+/* ===== Focus view specific classes ===== */
+.focus-prompt {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+.focus-hint {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.focus-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+.focus-card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--border-subtle);
+}
+.focus-input-inline {
+  @apply flex-1 border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0;
+}
+.focus-chip {
+  @apply inline-flex items-center justify-center font-semibold text-xs rounded-full px-2.5 py-0.5;
+}
+.focus-chip.is-selected {
+  @apply bg-accent text-white;
+}
+
+/* ===== Focus shell styles ===== */
+.focus-shell {
+  background-color: var(--bg-warm);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border-width: 1px;
+  border-color: var(--border-subtle);
+  overflow: hidden;
+}
+.focus-main {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: calc(var(--space-4) * 1px);
+}
+
+/* ===== Utility: gap ===== */
+.gap-0 { gap: calc(var(--space-0) * 1px); }
+.gap-0\.5 { gap: calc(var(--space-0-5) * 1px); }
+.gap-1 { gap: calc(var(--space-1) * 1px); }
+.gap-1\.5 { gap: calc(var(--space-1-5) * 1px); }
+.gap-2 { gap: calc(var(--space-2) * 1px); }
+.gap-2\.5 { gap: calc(var(--space-2-5) * 1px); }
+.gap-3 { gap: calc(var(--space-3) * 1px); }
+.gap-3\.5 { gap: calc(var(--space-3-5) * 1px); }
+.gap-4 { gap: calc(var(--space-4) * 1px); }
+.gap-5 { gap: calc(var(--space-5) * 1px); }
+.gap-6 { gap: calc(var(--space-6) * 1px); }
+.gap-8 { gap: calc(var(--space-8) * 1px); }
+.gap-10 { gap: calc(var(--space-10) * 1px); }
+.gap-12 { gap: calc(var(--space-12) * 1px); }
+.gap-16 { gap: calc(var(--space-16) * 1px); }
+.gap-20 { gap: calc(var(--space-20) * 1px); }
+.gap-24 { gap: calc(var(--space-24) * 1px); }
+.gap-32 { gap: calc(var(--space-32) * 1px); }

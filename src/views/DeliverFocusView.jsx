@@ -9,7 +9,9 @@
  */
 import { useState } from 'react'
 import FocusShell from '../components/focus/FocusShell'
+import Button from '../components/ui/Button'
 import { slugifyFilename, packReadiness } from '../lib/exportFiles'
+import BrandPreview from '../components/BrandPreview'
 
 const FORMATS = [
   { id: 'pdf', label: 'Brand Book PDF', suffix: 'brand-book.pdf', default: true },
@@ -72,18 +74,18 @@ export default function DeliverFocusView({
     return (
       <div className="focus-shell">
         <main className="focus-main">
-          <div className="focus-card" style={{ textAlign: 'center' }}>
+          <div className="focus-card">
             <p className="focus-prompt">Project delivered.</p>
             <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>
               Your slate is completely clean.
             </p>
-            <button
-              type="button"
-              className="btn btn-primary"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setActiveView?.('home')}
             >
               Start new project
-            </button>
+            </Button>
           </div>
         </main>
       </div>
@@ -91,10 +93,39 @@ export default function DeliverFocusView({
   }
 
   return (
-    <FocusShell stepLabel="07 // Deliver" stepIndex={1} stepCount={1}>
+    <FocusShell
+      stepLabel="07 // Deliver"
+      stepIndex={1}
+      stepCount={1}
+      showPreviewDrawer={true}
+      drawerContent={
+        <div>
+          <h3 className="font-semibold mb-4">Brand Preview</h3>
+          <BrandPreview projectName={activeProject?.name || 'Untitled Project'} />
+          {selected.size > 0 && (
+            <div className="mt-6">
+              <h3 className="font-semibold mb-2">Selected Exports</h3>
+              <div className="space-y-2">
+                {Array.from(selected).map((id) => {
+                  const format = FORMATS.find((f) => f.id === id)
+                  if (!format) return null
+                  return (
+                    <div key={id} className="flex justify-between">
+                      <span>{format.label}</span>
+                      <span className="font-mono">{slug}-{format.suffix}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      }
+      onDrawerToggle={(isOpen) => console.log('Drawer toggled:', isOpen)}
+    >
       <div className="focus-card" style={{ maxWidth: '30rem' }}>
         <p className="focus-prompt">Select deliverable formats</p>
-        <div className="focus-chip-row">
+        <div className="flex flex-wrap gap-2">
           {FORMATS.map((f) => (
             <button
               key={f.id}
@@ -121,10 +152,10 @@ export default function DeliverFocusView({
           </p>
         )}
 
-        <div className="focus-actions">
-          <button
-            type="button"
-            className="btn btn-primary"
+        <div className="focus-actions mt-4">
+          <Button
+            variant="outline"
+            size="sm"
             disabled={selected.size === 0 || shipping}
             onClick={ship}
           >
@@ -133,15 +164,16 @@ export default function DeliverFocusView({
               : confirmThin
                 ? 'Ship anyway'
                 : `Ship ${selected.size} format${selected.size === 1 ? '' : 's'}`}
-          </button>
+          </Button>
           {confirmThin && (
-            <button
-              type="button"
-              className="focus-skip-btn"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setConfirmThin(false)}
+              className="ml-2"
             >
               Cancel
-            </button>
+            </Button>
           )}
         </div>
       </div>
