@@ -275,6 +275,7 @@ export default function DetectiveSheet({
                           ? ' is-dimmed'
                           : ''
                       }`}
+                      data-span={f.gridSpan || 'full'}
                     >
                       <div className="define-field-label-row">
                         <span
@@ -345,6 +346,7 @@ export default function DetectiveSheet({
                         ? ' is-dimmed'
                         : ''
                     }`}
+                    data-span="full"
                   >
                     <div className="define-field-label-row">
                       <span
@@ -411,27 +413,29 @@ export default function DetectiveSheet({
         })}
       </div>
 
-      <div
-        className={`define-fab-bar path-continue-row${requiredReady ? ' is-ready' : ''}`}
-        role="region"
-        aria-label="Continue"
-      >
-        <button
-          type="button"
-          className={`define-fab btn btn-primary work-path-next${requiredReady ? ' is-ready' : ' is-quiet'}`}
-          onClick={() => {
-            if (!requiredReady) {
-              openNextIncomplete()
-              flashToast?.('Need * fields first')
-              return
-            }
-            applyDetectiveToBrief?.()
-            onContinue?.()
-          }}
+      {!splitMode && (
+        <div
+          className={`define-fab-bar path-continue-row${requiredReady ? ' is-ready' : ''}`}
+          role="region"
+          aria-label="Continue"
         >
-          {continueLabel}
-        </button>
-      </div>
+          <button
+            type="button"
+            className={`define-fab btn btn-primary work-path-next${requiredReady ? ' is-ready' : ' is-quiet'}`}
+            onClick={() => {
+              if (!requiredReady) {
+                openNextIncomplete()
+                flashToast?.('Need * fields first')
+                return
+              }
+              applyDetectiveToBrief?.()
+              onContinue?.()
+            }}
+          >
+            {continueLabel}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

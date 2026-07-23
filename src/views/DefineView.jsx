@@ -7,7 +7,7 @@
  *
  * Calm chapter nav — no XP / game HUD.
  */
-import { Suspense, lazy, useState } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import {
   normalizeLocale,
@@ -15,6 +15,7 @@ import {
   tFormat,
   pathLabel,
 } from '../lib/i18n'
+import { getDetectiveProgress } from '../lib/detectiveBrief'
 import useIsMobile from '../lib/useIsMobile'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
@@ -47,6 +48,16 @@ export default function DefineView(props) {
   } = props
 
   const locale = normalizeLocale(localeProp)
+  const progress = useMemo(
+    () => getDetectiveProgress(activeProject?.detective),
+    [activeProject?.detective]
+  )
+  const progressPct = progress.pct
+  const requiredReady = progress.requiredReady
+  const continueLabel = tFormat(locale, 'ui.continueNext', {
+    label: pathLabel(locale, 'research') || 'Research',
+  })
+
   const archiveProject = useAppStore((s) => s.archiveProject)
   const unarchiveProject = useAppStore((s) => s.unarchiveProject)
   const addMilestone = useAppStore((s) => s.addMilestone)
@@ -84,14 +95,14 @@ export default function DefineView(props) {
       className="project-view surface-desk view-enter define-studio define-dashboard"
       data-nav-dir={navDir}
     >
-      <header className="define-dashboard-head">
-        <div className="define-head-row">
-          <h1 className="page-title define-studio-title">
+      <header className="define-dash-header">
+        <div className="define-dash-title-group">
+          <span className="define-dash-kicker">
             {i18nT(locale, 'path.define')}
-          </h1>
+          </span>
           <input
             id="project-name"
-            className="define-input field-input define-name-inline"
+            className="define-name-headline"
             value={projectNameDraft}
             onChange={(e) => setProjectNameDraft(e.target.value)}
             onBlur={commitProjectRename}
@@ -105,6 +116,32 @@ export default function DefineView(props) {
             placeholder="Project name"
             aria-label="Project name"
           />
+        </div>
+        <div className="define-dash-action">
+          <div
+            className="define-progress-chip"
+            role="status"
+            aria-label={`${progressPct}% complete`}
+          >
+            <div
+              className="define-progress-chip-fill"
+              style={{ width: `${progressPct}%` }}
+            />
+            <span className="define-progress-chip-label">{progressPct}%</span>
+          </div>
+          <button
+            type="button"
+            className={`btn btn-primary define-dash-cta${requiredReady ? '' : ' is-quiet'}`}
+            onClick={() => {
+              if (!requiredReady) {
+                flashToast?.('Fill required fields first')
+                return
+              }
+              goResearch()
+            }}
+          >
+            {continueLabel}
+          </button>
         </div>
       </header>
 
@@ -133,9 +170,7 @@ export default function DefineView(props) {
               openChapter={openChapter}
               onOpenChapter={setOpenChapter}
               onContinue={goResearch}
-              continueLabel={tFormat(locale, 'ui.continueNext', {
-                label: pathLabel(locale, 'research') || 'Research',
-              })}
+              continueLabel={continueLabel}
             />
           </Suspense>
 
