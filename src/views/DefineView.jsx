@@ -118,22 +118,23 @@ export default function DefineView(props) {
           />
         </div>
         <div className="define-dash-action">
-          <div
-            className="define-progress-chip"
-            role="status"
-            aria-label={`${progressPct}% complete`}
-          >
+          <div className="define-progress-chip" role="status">
             <div
               className="define-progress-chip-fill"
               style={{ width: `${progressPct}%` }}
             />
-            <span className="define-progress-chip-label">{progressPct}%</span>
+            <span className="define-progress-chip-label">
+              {progressPct}%
+              <span className="sr-only"> complete</span>
+            </span>
           </div>
           <button
             type="button"
             className={`btn btn-primary define-dash-cta${requiredReady ? '' : ' is-quiet'}`}
             onClick={() => {
               if (!requiredReady) {
+                const next = progress.chapters.find((c) => !c.requiredDone)
+                if (next) setOpenChapter(next.id)
                 flashToast?.('Fill required fields first')
                 return
               }

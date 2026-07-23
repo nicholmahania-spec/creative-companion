@@ -191,6 +191,7 @@ export default function DetectiveSheet({
                 }${st.requiredDone && !st.complete ? ' is-ready' : ''}`}
                 onClick={() => setOpenChapter(ch.id)}
                 aria-current={active ? 'step' : undefined}
+                aria-controls={`define-chapter-content-${ch.id}`}
               >
                 <span className="define-chapter-tab-num" aria-hidden="true">
                   {st.complete ? '✓' : ch.num}
@@ -218,6 +219,7 @@ export default function DetectiveSheet({
           return (
             <article
               key={ch.id}
+              id={`define-chapter-content-${ch.id}`}
               className={`define-chapter${showFields ? ' is-open' : ''}${
                 focusField && showFields ? ' has-focus' : ''
               }`}
@@ -229,7 +231,7 @@ export default function DetectiveSheet({
                 <button
                   type="button"
                   className="define-chapter-head define-chapter-toggle"
-                  onClick={() => setOpenChapter(ch.id)}
+                  onClick={() => setOpenChapter(isOpen ? null : ch.id)}
                   aria-expanded={isOpen}
                   aria-controls={`define-chapter-fields-${ch.id}`}
                 >

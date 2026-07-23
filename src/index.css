@@ -10676,6 +10676,13 @@ body:has(.app.deep)::after {
   height: 2rem;
 }
 
+.define-dash-cta.is-quiet {
+  background: var(--bg-muted) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-subtle) !important;
+  box-shadow: none !important;
+}
+
 @media (max-width: 600px) {
   .define-dash-header {
     flex-direction: column;
@@ -10973,7 +10980,7 @@ body:has(.app.deep)::after {
 }
 
 .define-mood-pin-x:hover {
-  background: #ef4444;
+  background: var(--error, #ef4444);
 }
 
 /* Wide tablet+: keep real split so board never leaves the glance */
@@ -14581,8 +14588,7 @@ select:focus,
     max-width: none !important;
     position: static !important;
   }
-  .define-split[data-mobile-pane='form'] .define-split-mood { display: none !important; }
-  .define-split[data-mobile-pane='refs'] .define-split-form { display: none !important; }
+  /* Both panels stack vertically on mobile — board remains reachable by scrolling */
 
   /* view-enter leaves a transform that would trap position:fixed children;
      drop it on mobile so the bottom bar anchors to the viewport */
@@ -14592,7 +14598,7 @@ select:focus,
   }
 
   /* Room for the fixed bottom tab bar on Define */
-  .view-project .main { padding-bottom: 4.75rem !important; }
+  .view-project .main { padding-bottom: 1.5rem !important; }
 
   /* Sticky bottom Form / Refs switch */
   .define-mobile-tabs {
@@ -14619,7 +14625,7 @@ select:focus,
   .define-mobile-tab.is-active {
     color: var(--ts-ink, #1A1A1E);
     background: var(--ts-canvas, #F4F5F6);
-    border-top-color: #2563EB;
+    border-top-color: var(--dopamine);
   }
 }
 
