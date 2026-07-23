@@ -88,143 +88,17 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
     else setDragX(0)
   }
 
+  const exitFocus = () => setActiveView?.('studio')
+
   // If intent not set, show intent input first
   if (!intentSet) {
     return (
-      <FocusShell stepLabel="02 // Research" stepIndex={0} stepCount={2}>
-        <FocusShell
-          stepLabel="02 // Research"
-          stepIndex={0}
-          stepCount={2}
-          showPreviewDrawer={true}
-          drawerContent={
-            <ResearchPreview
-              deskMood={deskMood}
-              sessionIds={sessionIds}
-              reviewedIds={reviewedIds}
-              reviewedCount={reviewedCount}
-              loading={loading}
-              error={error}
-            />
-          }
-        >
-          <div className="focus-card">
-            <p className="focus-prompt">What do you want to accomplish in your research session?</p>
-            <input
-              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              placeholder="e.g., Find 3 inspiring color palettes for the brand"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && intent.trim()) {
-                  setIntentSet(true)
-                }
-              }}
-            />
-            <div className="flex justify-end mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (intent.trim()) {
-                    setIntentSet(true)
-                  }
-                }}
-                disabled={!intent.trim()}
-              >
-                Start Research
-              </Button>
-            </div>
-          </div>
-        </FocusShell>
-      </FocusShell>
-    )
-  }
-
-  if (deskMood.length === 0) {
-    return (
-      <FocusShell stepLabel="02 // Research" stepIndex={1} stepCount={2}>
-        <FocusShell
-          stepLabel="02 // Research"
-          stepIndex={1}
-          stepCount={2}
-          showPreviewDrawer={true}
-          drawerContent={
-            <ResearchPreview
-              deskMood={deskMood}
-              sessionIds={sessionIds}
-              reviewedIds={reviewedIds}
-              reviewedCount={reviewedCount}
-              loading={loading}
-              error={error}
-            />
-          }
-        >
-          <div className="focus-card" style={{ textAlign: 'center' }}>
-            <p className="focus-prompt">No pictures yet</p>
-            <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>
-              Add a few images or notes first — this screen is for deciding
-              what stays, not for gathering.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setActiveView?.('studio')}
-            >
-              Go add pictures
-            </Button>
-          </div>
-        </FocusShell>
-      </FocusShell>
-    )
-  }
-
-  if (!current) {
-    const kept = deskMood.filter((m) => m.inPack)
-    return (
-      <FocusShell stepLabel="02 // Research" stepIndex={2} stepCount={2}>
-        <FocusShell
-          stepLabel="02 // Research"
-          stepIndex={2}
-          stepCount={2}
-          showPreviewDrawer={true}
-          drawerContent={
-            <ResearchPreview
-              deskMood={deskMood}
-              sessionIds={sessionIds}
-              reviewedIds={reviewedIds}
-              reviewedCount={reviewedCount}
-              loading={loading}
-              error={error}
-            />
-          }
-        >
-          <div className="focus-card" style={{ textAlign: 'center' }}>
-            <p className="focus-prompt">
-              {kept.length} kept, reviewed {reviewedCount} of {sessionIds.length}
-            </p>
-            <div className="focus-actions" style={{ justifyContent: 'center' }}>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setActiveView?.('spark')}
-              >
-                Next · Ideate
-              </Button>
-            </div>
-          </div>
-        </FocusShell>
-      </FocusShell>
-    )
-  }
-
-  const rotate = Math.max(-12, Math.min(12, dragX / 12))
-
-  return (
-    <FocusShell stepLabel="02 // Research" stepIndex={1 + reviewedCount} stepCount={2}>
       <FocusShell
+        stepLabel="02 // Research"
+        stepIndex={0}
+        stepCount={2}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
           <ResearchPreview
             deskMood={deskMood}
@@ -236,65 +110,192 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
           />
         }
       >
-        <div style={{ width: '100%', maxWidth: '26rem', textAlign: 'center' }}>
-          <div
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerLeave={onPointerUp}
-            style={{
-              touchAction: 'pan-y',
-              cursor: dragging ? 'grabbing' : 'grab',
-              userSelect: 'none',
-              borderRadius: '12px',
-              border: '1px solid var(--border-subtle)',
-              background: 'var(--bg-elevated)',
-              overflow: 'hidden',
-              transform: `translateX(${dragX}px) rotate(${rotate}deg)`,
-              transition: dragging ? 'none' : 'transform 220ms cubic-bezier(0.32, 0.72, 0, 1)',
-              minHeight: '20rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: current?.type === 'image' ? 0 : '1.5rem',
+        <div className="focus-card">
+          <p className="focus-prompt">What do you want to accomplish in your research session?</p>
+          <input
+            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            placeholder="e.g., Find 3 inspiring color palettes for the brand"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && intent.trim()) {
+                setIntentSet(true)
+              }
             }}
-          >
-            {current?.type === 'image' && current.visual ? (
-              <img
-                src={current.visual}
-                alt=""
-                draggable={false}
-                style={{ width: '100%', maxHeight: '24rem', objectFit: 'cover', display: 'block' }}
-              />
-            ) : (
-              <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                {current?.note || current?.visual || 'Untitled note'}
-              </p>
-            )}
-          </div>
-
-          <p className="focus-hint" style={{ marginTop: '0.75rem' }}>
-            {reviewedCount + 1} of {sessionIds.length} reviewed · ← Backspace toss · Keep →
-          </p>
-
-          <div className="focus-actions" style={{ justifyContent: 'center' }}>
+          />
+          <div className="flex justify-end mt-4">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => commit('toss')}
+              onClick={() => {
+                if (intent.trim()) {
+                  setIntentSet(true)
+                }
+              }}
+              disabled={!intent.trim()}
             >
-              ← Toss
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => commit('keep')}
-            >
-              Keep →
+              Start Research
             </Button>
           </div>
         </div>
       </FocusShell>
+    )
+  }
+
+  if (deskMood.length === 0) {
+    return (
+      <FocusShell
+        stepLabel="02 // Research"
+        stepIndex={1}
+        stepCount={2}
+        showPreviewDrawer={true}
+        onExit={exitFocus}
+        drawerContent={
+          <ResearchPreview
+            deskMood={deskMood}
+            sessionIds={sessionIds}
+            reviewedIds={reviewedIds}
+            reviewedCount={reviewedCount}
+            loading={loading}
+            error={error}
+          />
+        }
+      >
+        <div className="focus-card" style={{ textAlign: 'center' }}>
+          <p className="focus-prompt">No pictures yet</p>
+          <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>
+            Add a few images or notes first — this screen is for deciding
+            what stays, not for gathering.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setActiveView?.('studio')}
+          >
+            Go add pictures
+          </Button>
+        </div>
+      </FocusShell>
+    )
+  }
+
+  if (!current) {
+    const kept = deskMood.filter((m) => m.inPack)
+    return (
+      <FocusShell
+        stepLabel="02 // Research"
+        stepIndex={2}
+        stepCount={2}
+        showPreviewDrawer={true}
+        onExit={exitFocus}
+        drawerContent={
+          <ResearchPreview
+            deskMood={deskMood}
+            sessionIds={sessionIds}
+            reviewedIds={reviewedIds}
+            reviewedCount={reviewedCount}
+            loading={loading}
+            error={error}
+          />
+        }
+      >
+        <div className="focus-card" style={{ textAlign: 'center' }}>
+          <p className="focus-prompt">
+            {kept.length} kept, reviewed {reviewedCount} of {sessionIds.length}
+          </p>
+          <div className="focus-actions" style={{ justifyContent: 'center' }}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setActiveView?.('spark')}
+            >
+              Next · Ideate
+            </Button>
+          </div>
+        </div>
+      </FocusShell>
+    )
+  }
+
+  const rotate = Math.max(-12, Math.min(12, dragX / 12))
+
+  return (
+    <FocusShell
+      stepLabel="02 // Research"
+      stepIndex={1 + reviewedCount}
+      stepCount={2}
+      showPreviewDrawer={true}
+      onExit={exitFocus}
+      drawerContent={
+        <ResearchPreview
+          deskMood={deskMood}
+          sessionIds={sessionIds}
+          reviewedIds={reviewedIds}
+          reviewedCount={reviewedCount}
+          loading={loading}
+          error={error}
+        />
+      }
+    >
+      <div style={{ width: '100%', maxWidth: '26rem', textAlign: 'center' }}>
+        <div
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerUp}
+          style={{
+            touchAction: 'pan-y',
+            cursor: dragging ? 'grabbing' : 'grab',
+            userSelect: 'none',
+            borderRadius: '12px',
+            border: '1px solid var(--border-subtle)',
+            background: 'var(--bg-elevated)',
+            overflow: 'hidden',
+            transform: `translateX(${dragX}px) rotate(${rotate}deg)`,
+            transition: dragging ? 'none' : 'transform 220ms cubic-bezier(0.32, 0.72, 0, 1)',
+            minHeight: '20rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: current?.type === 'image' ? 0 : '1.5rem',
+          }}
+        >
+          {current?.type === 'image' && current.visual ? (
+            <img
+              src={current.visual}
+              alt=""
+              draggable={false}
+              style={{ width: '100%', maxHeight: '24rem', objectFit: 'cover', display: 'block' }}
+            />
+          ) : (
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              {current?.note || current?.visual || 'Untitled note'}
+            </p>
+          )}
+        </div>
+
+        <p className="focus-hint" style={{ marginTop: '0.75rem' }}>
+          {reviewedCount + 1} of {sessionIds.length} reviewed · ← Backspace toss · Keep →
+        </p>
+
+        <div className="focus-actions" style={{ justifyContent: 'center' }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => commit('toss')}
+          >
+            ← Toss
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => commit('keep')}
+          >
+            Keep →
+          </Button>
+        </div>
+      </div>
     </FocusShell>
   )
 }

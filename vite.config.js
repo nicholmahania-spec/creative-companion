@@ -75,8 +75,14 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    port: 4274,
+    strictPort: true,
+  },
   // Dev: /api/xai/* → api.x.ai/v1/* with server-side XAI_API_KEY
   server: {
+    port: 5274,
+    strictPort: true,
     proxy: {
       '/api/xai': {
         target: 'https://api.x.ai',

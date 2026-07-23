@@ -144,9 +144,11 @@ export default function IdeateFocusView({
     setQueued(true)
   }
 
+  const exitFocus = () => setActiveView?.('spark')
+
   if (queued) {
     return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={1} stepCount={1}>
+      <FocusShell stepLabel="03 // Ideate" stepIndex={1} stepCount={1} onExit={exitFocus}>
         <div className="focus-card" style={{ textAlign: 'center' }}>
           <p className="focus-prompt">Direction {winner.label} queued</p>
           <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>{winner.title}</p>
@@ -160,7 +162,7 @@ export default function IdeateFocusView({
 
   if (winner) {
     return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={1} stepCount={1}>
+      <FocusShell stepLabel="03 // Ideate" stepIndex={1} stepCount={1} onExit={exitFocus}>
         <div className="focus-card" style={{ textAlign: 'center' }}>
           <p className="focus-prompt">Winner: {winner.label}</p>
           <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>{winner.title}</p>
@@ -174,7 +176,7 @@ export default function IdeateFocusView({
 
   if (bracket) {
     return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={2} stepCount={3}>
+      <FocusShell stepLabel="03 // Ideate" stepIndex={2} stepCount={3} onExit={exitFocus}>
         <div style={{ width: '100%', maxWidth: '40rem' }}>
           <p className="focus-prompt" style={{ textAlign: 'center' }}>
             Which direction wins?
@@ -215,7 +217,7 @@ export default function IdeateFocusView({
   const stepIdx = totalDirs - untitled.length
 
   return (
-    <FocusShell stepLabel="03 // Ideate" stepIndex={stepIdx} stepCount={totalDirs}>
+    <FocusShell stepLabel="03 // Ideate" stepIndex={stepIdx} stepCount={totalDirs} onExit={exitFocus}>
       <FocusCard cardKey={current?.id}>
         <p className="focus-prompt">Direction {current?.label} — one line:</p>
         <input

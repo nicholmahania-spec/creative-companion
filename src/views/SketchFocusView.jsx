@@ -33,53 +33,54 @@ export default function SketchFocusView({ setActiveView }) {
     t => t.id !== nowId && (!t.meta || isNaN(parseInt(t.meta)))
   )
 
+  const exitFocus = () => setActiveView?.('flow')
+
   // Intent setting step
   if (!intentSet) {
     return (
-      <FocusShell stepLabel="04 // Sketch" stepIndex={0} stepCount={2}>
-        <FocusShell
-          stepLabel="04 // Sketch"
-          stepIndex={0}
-          stepCount={2}
-          showPreviewDrawer={true}
-          drawerContent={
-            <SketchPreview
-              tasks={tasks}
-              nowId={nowId}
-              ranked={ranked}
-            />
-          }
-        >
-          <div className="focus-card">
-            <p className="focus-prompt">What do you want to accomplish in your sketching session?</p>
-            <input
-              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              placeholder="e.g., Explore 3 layout options for the homepage"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && intent.trim()) {
+      <FocusShell
+        stepLabel="04 // Sketch"
+        stepIndex={0}
+        stepCount={2}
+        showPreviewDrawer={true}
+        onExit={exitFocus}
+        drawerContent={
+          <SketchPreview
+            tasks={tasks}
+            nowId={nowId}
+            ranked={ranked}
+          />
+        }
+      >
+        <div className="focus-card">
+          <p className="focus-prompt">What do you want to accomplish in your sketching session?</p>
+          <input
+            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            placeholder="e.g., Explore 3 layout options for the homepage"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && intent.trim()) {
+                setIntentSet(true)
+              }
+            }}
+          />
+          <div className="flex justify-end mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (intent.trim()) {
                   setIntentSet(true)
                 }
               }}
-            />
-            <div className="flex justify-end mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (intent.trim()) {
-                    setIntentSet(true)
-                  }
-                }}
-                disabled={!intent.trim()}
-              >
-                Start Sketching
-              </Button>
-            </div>
+              disabled={!intent.trim()}
+            >
+              Start Sketching
+            </Button>
           </div>
-        </FocusShell>
+        </div>
       </FocusShell>
     )
   }
@@ -121,7 +122,7 @@ export default function SketchFocusView({ setActiveView }) {
 
   // Main sketch interface
   return (
-    <FocusShell stepLabel="04 // Sketch" stepIndex={1} stepCount={2}>
+    <FocusShell stepLabel="04 // Sketch" stepIndex={1} stepCount={2} onExit={exitFocus}>
       {/* Task input when no active task */}
       {!now && tasks.length === 0 && (
         <FocusShell
@@ -129,6 +130,7 @@ export default function SketchFocusView({ setActiveView }) {
           stepIndex={1}
           stepCount={2}
           showPreviewDrawer={true}
+          onExit={exitFocus}
           drawerContent={
             <SketchPreview
               tasks={tasks}
@@ -191,7 +193,7 @@ export default function SketchFocusView({ setActiveView }) {
 
       /* Now/upnext view when there is an active task */
       {now && (
-        <FocusShell stepLabel="04 // Sketch" stepIndex={1} stepCount={2} showPreviewDrawer={true} drawerContent={<SketchPreview tasks={tasks} nowId={nowId} ranked={ranked} />}>
+        <FocusShell stepLabel="04 // Sketch" stepIndex={1} stepCount={2} showPreviewDrawer={true} onExit={exitFocus} drawerContent={<SketchPreview tasks={tasks} nowId={nowId} ranked={ranked} />}>
           <>
             <FocusCard cardKey={`now-${now.id}`}>
               <p className="focus-prompt" style={{ textAlign: 'center' }}>
@@ -243,7 +245,7 @@ export default function SketchFocusView({ setActiveView }) {
 
       /* Completion state */
       {!now && tasks.length > 0 && (
-        <FocusShell stepLabel="04 // Sketch" stepIndex={2} stepCount={2} showPreviewDrawer={true} drawerContent={<SketchPreview tasks={tasks} nowId={nowId} ranked={ranked} />}>
+        <FocusShell stepLabel="04 // Sketch" stepIndex={2} stepCount={2} showPreviewDrawer={true} onExit={exitFocus} drawerContent={<SketchPreview tasks={tasks} nowId={nowId} ranked={ranked} />}>
           <FocusCard cardKey="complete">
             <p className="focus-prompt">All tasks captured</p>
             <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>

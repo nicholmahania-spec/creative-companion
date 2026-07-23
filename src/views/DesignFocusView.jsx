@@ -61,46 +61,47 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
     setApplied(true)
   }
 
+  const exitFocus = () => setActiveView?.('brand')
+
   // If intent not set, show intent input first
   if (!intentSet) {
     return (
-      <FocusShell stepLabel="05 // Design" stepIndex={0} stepCount={3}>
-        <FocusShell
-          stepLabel="05 // Design"
-          stepIndex={0}
-          stepCount={3}
-          showPreviewDrawer={false}
-        >
-          <div className="focus-card">
-            <p className="focus-prompt">What do you want to accomplish in your design session?</p>
-            <input
-              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              placeholder="e.g., Choose heading and body fonts that feel trustworthy"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && intent.trim()) {
+      <FocusShell
+        stepLabel="05 // Design"
+        stepIndex={0}
+        stepCount={3}
+        showPreviewDrawer={false}
+        onExit={exitFocus}
+      >
+        <div className="focus-card">
+          <p className="focus-prompt">What do you want to accomplish in your design session?</p>
+          <input
+            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            placeholder="e.g., Choose heading and body fonts that feel trustworthy"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && intent.trim()) {
+                setIntentSet(true)
+              }
+            }}
+          />
+          <div className="flex justify-end mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (intent.trim()) {
                   setIntentSet(true)
                 }
               }}
-            />
-            <div className="flex justify-end mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (intent.trim()) {
-                    setIntentSet(true)
-                  }
-                }}
-                disabled={!intent.trim()}
-              >
-                Start Designing
-              </Button>
-            </div>
+              disabled={!intent.trim()}
+            >
+              Start Designing
+            </Button>
           </div>
-        </FocusShell>
+        </div>
       </FocusShell>
     )
   }
@@ -113,6 +114,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
         stepIndex={1}
         stepCount={3}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
           <div>
             <h3 className="font-semibold mb-2">Current Brand Settings</h3>
@@ -182,6 +184,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
         stepIndex={2}
         stepCount={3}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
           <div>
             <h3 className="font-semibold mb-2">Applied Brand Settings</h3>
@@ -226,6 +229,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
         stepIndex={2}
         stepCount={3}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
           <div>
             <h3 className="font-semibold mb-2">Preview Selection</h3>
@@ -300,6 +304,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
       stepIndex={1}
       stepCount={3}
       showPreviewDrawer={true}
+      onExit={exitFocus}
       drawerContent={
         <div>
           <h3 className="font-semibold mb-2">Current Comparison</h3>

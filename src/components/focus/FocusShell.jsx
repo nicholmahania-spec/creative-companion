@@ -13,6 +13,7 @@ export default function FocusShell({
   stepIndex,
   stepCount,
   onBack,
+  onExit,
   children,
   showPreviewDrawer = false,
   drawerContent = null,
@@ -129,6 +130,16 @@ export default function FocusShell({
                 <div className="focus-progress-fill" style={{ width: `${pct}%` }} />
               </div>
             </div>
+            {onExit && (
+              <button
+                type="button"
+                className="focus-exit-btn"
+                onClick={onExit}
+                aria-label="Exit focus mode"
+              >
+                ×
+              </button>
+            )}
           </header>
 
           <main className="flex-1 overflow-y-auto">{children}</main>

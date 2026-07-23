@@ -77,46 +77,47 @@ export default function DeliverFocusView({
     runShip()
   }
 
+  const exitFocus = () => setActiveView?.('finish')
+
   // If intent not set, show intent input first
   if (!intentSet) {
     return (
-      <FocusShell stepLabel="07 // Deliver" stepIndex={0} stepCount={3}>
-        <FocusShell
-          stepLabel="07 // Deliver"
-          stepIndex={0}
-          stepCount={3}
-          showPreviewDrawer={false}
-        >
-          <div className="focus-card">
-            <p className="focus-prompt">What do you want to accomplish in your delivery session?</p>
-            <input
-              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              placeholder="e.g., Generate final brand assets and prepare for client handoff"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && intent.trim()) {
+      <FocusShell
+        stepLabel="07 // Deliver"
+        stepIndex={0}
+        stepCount={3}
+        showPreviewDrawer={false}
+        onExit={exitFocus}
+      >
+        <div className="focus-card">
+          <p className="focus-prompt">What do you want to accomplish in your delivery session?</p>
+          <input
+            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            placeholder="e.g., Generate final brand assets and prepare for client handoff"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && intent.trim()) {
+                setIntentSet(true)
+              }
+            }}
+          />
+          <div className="flex justify-end mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (intent.trim()) {
                   setIntentSet(true)
                 }
               }}
-            />
-            <div className="flex justify-end mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (intent.trim()) {
-                    setIntentSet(true)
-                  }
-                }}
-                disabled={!intent.trim()}
-              >
-                Start Delivery
-              </Button>
-            </div>
+              disabled={!intent.trim()}
+            >
+              Start Delivery
+            </Button>
           </div>
-        </FocusShell>
+        </div>
       </FocusShell>
     )
   }
@@ -124,7 +125,7 @@ export default function DeliverFocusView({
   // Main DeliverView logic (only shown after intent is set)
   if (shipped) {
     return (
-      <FocusShell stepLabel="07 // Deliver" stepIndex={3} stepCount={3}>
+      <FocusShell stepLabel="07 // Deliver" stepIndex={3} stepCount={3} onExit={exitFocus}>
         <div className="focus-shell">
           <main className="focus-main">
             <div className="focus-card">
@@ -152,6 +153,7 @@ export default function DeliverFocusView({
       stepIndex={1}
       stepCount={3}
       showPreviewDrawer={true}
+      onExit={exitFocus}
       drawerContent={
         <div>
           <h3 className="font-semibold mb-4">Brand Preview</h3>
