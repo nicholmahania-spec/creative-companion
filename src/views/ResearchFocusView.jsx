@@ -111,13 +111,15 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
         }
       >
         <div className="focus-card">
-          <p className="focus-prompt">What do you want to accomplish in your research session?</p>
+          <p id="research-intent-prompt" className="focus-prompt">What do you want to accomplish in your research session?</p>
           <input
+            id="research-intent-input"
             className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
             placeholder="e.g., Find 3 inspiring color palettes for the brand"
             autoFocus
+            aria-labelledby="research-intent-prompt"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && intent.trim()) {
                 setIntentSet(true)

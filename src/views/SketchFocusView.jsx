@@ -53,13 +53,15 @@ export default function SketchFocusView({ setActiveView }) {
         }
       >
         <div className="focus-card">
-          <p className="focus-prompt">What do you want to accomplish in your sketching session?</p>
+          <p id="sketch-intent-prompt" className="focus-prompt">What do you want to accomplish in your sketching session?</p>
           <input
+            id="sketch-intent-input"
             className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
             placeholder="e.g., Explore 3 layout options for the homepage"
             autoFocus
+            aria-labelledby="sketch-intent-prompt"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && intent.trim()) {
                 setIntentSet(true)

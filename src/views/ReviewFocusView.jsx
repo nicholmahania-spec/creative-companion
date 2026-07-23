@@ -111,13 +111,15 @@ export default function ReviewFocusView({
         }
       >
         <div className="focus-card">
-          <p className="focus-prompt">What do you want to accomplish in your review session?</p>
+          <p id="review-intent-prompt" className="focus-prompt">What do you want to accomplish in your review session?</p>
           <input
+            id="review-intent-input"
             className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
             placeholder="e.g., Address all client feedback and prepare for delivery"
             autoFocus
+            aria-labelledby="review-intent-prompt"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && intent.trim()) {
                 setIntentSet(true)

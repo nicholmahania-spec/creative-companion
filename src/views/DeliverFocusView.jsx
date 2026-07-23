@@ -90,13 +90,15 @@ export default function DeliverFocusView({
         onExit={exitFocus}
       >
         <div className="focus-card">
-          <p className="focus-prompt">What do you want to accomplish in your delivery session?</p>
+          <p id="deliver-intent-prompt" className="focus-prompt">What do you want to accomplish in your delivery session?</p>
           <input
+            id="deliver-intent-input"
             className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
             placeholder="e.g., Generate final brand assets and prepare for client handoff"
             autoFocus
+            aria-labelledby="deliver-intent-prompt"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && intent.trim()) {
                 setIntentSet(true)

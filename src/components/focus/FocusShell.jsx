@@ -1,12 +1,5 @@
-/**
- * Shared shell for the "Tactile Minimalist" focus-mode rework.
- * One header (progress + step label), one centered card slot. Every
- * focus-mode stage view renders inside this.
- *
- * A slide-in preview drawer (toggled from the header) is for stages
- * that need a brand/pack preview (Design, Deliver).
- */
 import { useState, useRef, useEffect } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function FocusShell({
   stepLabel,
@@ -115,7 +108,11 @@ export default function FocusShell({
                   aria-label={isDrawerOpen ? 'Hide preview' : 'Show preview'}
                   aria-pressed={isDrawerOpen}
                 >
-                  {isDrawerOpen ? '◀' : '▶'}
+                  {isDrawerOpen ? (
+                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  )}
                 </button>
               )}
             </div>

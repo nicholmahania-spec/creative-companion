@@ -20,13 +20,27 @@ function readPkgVersion() {
 
 function gitMeta() {
   try {
+    // Try to get git SHA first
     const sha = execSync('git rev-parse --short HEAD', {
       encoding: 'utf8',
       cwd: root,
     }).trim()
-    return { sha: sha || 'dev' }
-  } catch {
-    return { sha: 'dev' }
+    return { sha: sha || 'DEFAULT' }
+  } catch (gitError) {
+    try {
+      // Fallback: try to get it from environment variables (common in CI)
+      const envSha = process.env.VERCEL_GIT_COMMIT_SHA ||
+                    process.env.GITHUB_SHA ||
+                    process.env.GIT_COMMIT_SHA
+      if (envSha) {
+        return { sha: envSha.substring(0, 7) || 'DEFAULT' }
+      }
+    } catch (envError) {
+      // Ignore errors from env var access
+    }
+
+    // Final fallback
+    return { sha: 'DEFAULT' }
   }
 }
 

@@ -72,13 +72,15 @@ export default function IdeateFocusView({
           }
         >
           <div className="focus-card">
-            <p className="focus-prompt">What do you want to accomplish in your ideation session?</p>
+            <p id="ideate-intent-prompt" className="focus-prompt">What do you want to accomplish in your ideation session?</p>
             <input
+              id="ideate-intent-input"
               className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
               value={intent}
               onChange={(e) => setIntent(e.target.value)}
               placeholder="e.g., Explore three different brand directions for the project"
               autoFocus
+              aria-labelledby="ideate-intent-prompt"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && intent.trim()) {
                   setIntentSet(true)
