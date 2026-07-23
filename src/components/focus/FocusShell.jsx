@@ -145,7 +145,7 @@ export default function FocusShell({
                      transition-transform duration-300 ease-in-out z-50`}
         >
           <div className="p-4 border-b border-border">
-            <h2 className="font-semibold"mb-2">
+            <h2 className="font-semibold mb-2">
               Preview
             </h2>
             <button

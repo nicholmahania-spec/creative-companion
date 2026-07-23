@@ -91,7 +91,6 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
   const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(null)
-  const [passwordStrength, setPasswordStrength] = useState(null)
 
   const submit = async (e) => {
     e.preventDefault()

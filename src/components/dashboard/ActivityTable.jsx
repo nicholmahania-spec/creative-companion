@@ -1,6 +1,6 @@
 import React from 'react';
-import { useUserActivity } from '@/lib/hooks/useUserActivity';
-import { useAppStore } from '@/store/useAppStore';
+import { useUserActivity } from '../../lib/hooks/useUserActivity';
+import useAppStore from '../../store/useAppStore';
 
 export function ActivityTable() {
   const { currentProjectId } = useAppStore();
@@ -69,7 +69,7 @@ export function ActivityTable() {
   );
 }
 
-function formatActivityType(action: string): string {
+function formatActivityType(action) {
   // Convert snake_case to Title Case
   return action
     .split('_')
@@ -77,7 +77,7 @@ function formatActivityType(action: string): string {
     .join(' ');
 }
 
-function formatActivityDetails(metadata: Record<string, unknown>): string {
+function formatActivityDetails(metadata) {
   if (!metadata || Object.keys(metadata).length === 0) {
     return '-';
   }
