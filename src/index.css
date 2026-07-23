@@ -14846,6 +14846,16 @@ select:focus,
   padding: 0.3rem 0.6rem;
 }
 
+.focus-exit-btn {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-subtle);
+  padding: 0.3rem 0.6rem;
+}
+
 .focus-progress-track {
   flex: 1 1 auto;
   height: 2px;
