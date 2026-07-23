@@ -167,7 +167,7 @@ export default function DefineFocusView({
                           ${isActive
                             ? 'bg-[var(--popover)] rounded-xl font-bold border-l-2 border-[var(--dopamine)]'
                             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                          `}
+                          }`}
                         disabled={!intentSet && index > 0}
                       >
                         <step.icon className="h-4 w-4 shrink-0 mr-3" />
@@ -276,7 +276,7 @@ export default function DefineFocusView({
                             variant="outline"
                             size="icon"
                             onClick={() => {
-                              updateDetective('audience', `${whoPrimary} — ${w}`);
+                              updateDetective('audience', whoPrimary + " — " + w);
                               goNext();
                             }}
                             className="flex items-center justify-center px-3 py-2"
@@ -398,7 +398,7 @@ export default function DefineFocusView({
                   <div className="grid grid-cols-3 gap-2">
                     {/* Example colors - would come from state/theme */}
                     {[ '#EF4444', '#F97316', '#FBBF24', '#10B981', '#3B82F6', '#8B5CF6' ].map((color, index) => (
-                      <div key={index} className={`w-6 h-6 rounded-full bg-[${color}] shadow-sm`} />
+                      <div key={index} className={"w-6 h-6 rounded-full bg-" + color + " shadow-sm"} />
                     ))}
                   </div>
                 </div>
@@ -418,4 +418,3 @@ export default function DefineFocusView({
       </FocusShell>
     );
   }
-}
