@@ -134,6 +134,12 @@ export default function ResearchView({
   const submitBoardUrl = () => {
     const url = boardUrl.trim()
     if (!url) return
+    try {
+      new URL(url)
+    } catch {
+      flashToast?.('Please enter a valid URL')
+      return
+    }
     addMoodPin({
       type: 'image',
       note: '',

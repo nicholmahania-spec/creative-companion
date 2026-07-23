@@ -56,6 +56,29 @@ export default function IdeateFocusView({
   const [winner, setWinner] = useState(null)
   const [queued, setQueued] = useState(false)
 
+  const pick = (chosenDir) => {
+    if (!contenders || contenders.length === 0) {
+      setWinner(chosenDir)
+      setBracket(null)
+      setContenders(null)
+    } else {
+      setBracket([chosenDir, contenders[0]])
+      setContenders(contenders.slice(1))
+    }
+  }
+
+  useEffect(() => {
+    if (!intentSet) return
+    const onKey = (e) => {
+      if (!bracket) return
+      if (e.key === 'ArrowLeft') pick(bracket[0])
+      else if (e.key === 'ArrowRight') pick(bracket[1])
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intentSet, bracket])
+
   // If intent not set, show intent input first (phase 4)
   if (!intentSet) {
     return (
@@ -104,28 +127,6 @@ export default function IdeateFocusView({
       </FocusShell>
     )
   }
-
-  const pick = (chosenDir) => {
-    if (!contenders || contenders.length === 0) {
-      setWinner(chosenDir)
-      setBracket(null)
-      setContenders(null)
-    } else {
-      setBracket([chosenDir, contenders[0]])
-      setContenders(contenders.slice(1))
-    }
-  }
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (!bracket) return
-      if (e.key === 'ArrowLeft') pick(bracket[0])
-      else if (e.key === 'ArrowRight') pick(bracket[1])
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bracket])
 
   const queueWinner = () => {
     if (!winner || queued) return

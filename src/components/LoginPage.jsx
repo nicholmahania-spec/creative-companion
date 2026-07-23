@@ -18,7 +18,7 @@ import { normalizeLocale } from '../lib/i18n'
 const validatePasswordStrength = (password) => {
   const strength = {
     score: 0,
-    maxScore: 4,
+    maxScore: 5,
     issues: []
   };
 
@@ -282,7 +282,12 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 className="onboard-input"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (mode === 'setup' || mode === 'signup') {
+                    setPasswordStrength(validatePasswordStrength(e.target.value))
+                  }
+                }}
                 autoComplete={
                   mode === 'setup' || mode === 'signup'
                     ? 'new-password'
@@ -352,7 +357,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
           )}
 
           {error && (
-            <p className="login-error" role="alert">
+            <p id="password-error" className="login-error" role="alert">
               {error}
             </p>
           )}

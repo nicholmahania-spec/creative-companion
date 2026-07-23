@@ -189,7 +189,7 @@ export default function SketchFocusView({ setActiveView }) {
         </FocusShell>
       )}
 
-      /* Now/upnext view when there is an active task */
+      {/* Now/upnext view when there is an active task */}
       {now && (
         <FocusShell stepLabel="04 // Sketch" stepIndex={1} stepCount={2} showPreviewDrawer={true} drawerContent={<SketchPreview tasks={tasks} nowId={nowId} ranked={ranked} />}>
           <>
@@ -241,7 +241,7 @@ export default function SketchFocusView({ setActiveView }) {
         </FocusShell>
       )}
 
-      /* Completion state */
+      {/* Completion state */}
       {!now && tasks.length > 0 && (
         <FocusShell stepLabel="04 // Sketch" stepIndex={2} stepCount={2} showPreviewDrawer={true} drawerContent={<SketchPreview tasks={tasks} nowId={nowId} ranked={ranked} />}>
           <FocusCard cardKey="complete">

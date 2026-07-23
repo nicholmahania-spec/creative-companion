@@ -704,6 +704,7 @@ export default function DesignView({
                       className="palette-role-swatch-btn"
                       style={{ background: c }}
                       title={`Set as ${brandRoleAssign}`}
+                      aria-label={`Set ${c} as ${brandRoleAssign}`}
                       onClick={() => {
                         const n = normalizeHex(c) || c
                         setColorRole(brandRoleAssign, n)
@@ -1173,6 +1174,7 @@ export default function DesignView({
                             : 'Mark image added'
                         )
                       }
+                      reader.onerror = () => flashToast(i18nT(locale, 'ui.uploadFail') || 'Could not read image')
                       reader.readAsDataURL(file)
                     }}
                   />

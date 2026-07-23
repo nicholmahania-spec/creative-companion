@@ -2211,7 +2211,7 @@ function App() {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognition) {
-      alert('Voice is not supported in this browser.')
+      flashToast?.('Voice is not supported in this browser.')
       return
     }
     const recognition = new SpeechRecognition()

@@ -115,6 +115,7 @@ export default function CalendarView(props) {
           <button
             type="button"
             className="btn btn-secondary btn-sm"
+            aria-label="Previous month"
             onClick={() =>
               setCalCursor((c) => {
                 const m = c.month - 1
@@ -131,6 +132,7 @@ export default function CalendarView(props) {
           <button
             type="button"
             className="btn btn-secondary btn-sm"
+            aria-label="Next month"
             onClick={() =>
               setCalCursor((c) => {
                 const m = c.month + 1
