@@ -56,6 +56,11 @@ const base =
 export default defineConfig({
   plugins: [react()],
   base,
+  resolve: {
+    alias: {
+      '@': resolve(root, 'src'),
+    },
+  },
   define: {
     __APP_VERSION__: JSON.stringify(meta.version),
     __APP_BUILD__: JSON.stringify(meta.build),

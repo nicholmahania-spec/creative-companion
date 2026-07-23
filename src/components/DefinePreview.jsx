@@ -81,7 +81,6 @@ const DefinePreview = ({
   // Format the who field for display
   const whoPrimary = detective.audience?.split(' — ')[0] || detective.whoPrimary || ''
   const whoSecondary = detective.audience?.split(' — ')[1] || ''
-  const whoDisplay(' — ')[1] || ''
   const whoDisplay = whoPrimary && whoSecondary
     ? `${whoPrimary} — ${whoSecondary}`
     : whoPrimary || 'Not set'
@@ -145,21 +144,19 @@ const DefinePreview = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm">Goal</span>
-              <span className="px-2 py-0.5 rounded-full text-xs
-                {detective.goal ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              <span className={`px-2 py-0.5 rounded-full text-xs ${detective.goal ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                 {detective.goal ? '✓ Set' : '○ Empty'}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Audience</span>
-              <span className="px-2 py-2.rounded"
-                {whoDisplay ? 'bg-green-10.5 rounded-full text-xs
-                {whoDisplay ? 'bg-green-100 text-green-8000 variant-black family-normal" />
+              <span className={`px-2 py-0.5 rounded-full text-xs ${whoDisplay ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {whoDisplay ? '✓ Set' : '○ Empty'}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Feel</span>
-              <span className="px-2 py-0.5 rounded-full text-xs
-                {detective.feel ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              <span className={`px-2 py-0.5 rounded-full text-xs ${detective.feel ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                 {detective.feel ? '✓ Set' : '○ Empty'}
               </span>
             </div>
@@ -200,4 +197,21 @@ const DefinePreview = ({
           {(!detective.feel || (detective.feel && detective.feel.split(',').filter(f => f.trim()).length < 3)) && (
             <button
               onClick={() => {
-                // Focus on feelChispus was not found in the input.
+                // Focus on feel words section
+                setTimeout(() => {
+                  const feelChips = document.querySelectorAll('.focus-chip')
+                  if (feelChips[0]) feelChips[0].focus()
+                }, 100)
+              }}
+              className="w-full btn btn-outline"
+            >
+              Define Feel
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default DefinePreview

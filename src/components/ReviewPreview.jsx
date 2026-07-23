@@ -42,7 +42,14 @@ const ReviewPreview = ({
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Review Overview</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Review feedback and identify gaps
+          </p>
+
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
             <p className="text-sm text-muted-foreground">Loading review data...</p>
           </div>
         </div>
