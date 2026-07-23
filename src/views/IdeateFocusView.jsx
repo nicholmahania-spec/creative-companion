@@ -82,48 +82,43 @@ export default function IdeateFocusView({
   // If intent not set, show intent input first (phase 4)
   if (!intentSet) {
     return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={0} stepCount={2}>
-        <FocusShell
-          stepLabel="03 // Ideate"
-          stepIndex={0}
-          stepCount={2}
-          showPreviewDrawer={true}
-          drawerContent={
-            <IdeatePreview
-              directions={dirs}
-            />
-          }
-        >
-          <div className="focus-card">
-            <p className="focus-prompt">What do you want to accomplish in your ideation session?</p>
-            <input
-              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              placeholder="e.g., Explore three different brand directions for the project"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && intent.trim()) {
+      <FocusShell
+        stepLabel="03 // Ideate"
+        stepIndex={0}
+        stepCount={2}
+        showPreviewDrawer={true}
+        drawerContent={<IdeatePreview directions={dirs} />}
+      >
+        <div className="focus-card">
+          <p className="focus-prompt">What do you want to accomplish in your ideation session?</p>
+          <input
+            className="focus-input-inline"
+            style={{ display: 'block', width: '100%' }}
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            placeholder="e.g., Explore three different brand directions for the project"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && intent.trim()) {
+                setIntentSet(true)
+              }
+            }}
+          />
+          <div className="focus-actions">
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!intent.trim()}
+              onClick={() => {
+                if (intent.trim()) {
                   setIntentSet(true)
                 }
               }}
-            />
-            <div className="flex justify-end mt-4">
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={!intent.trim()}
-                onClick={() => {
-                  if (intent.trim()) {
-                    setIntentSet(true)
-                  }
-                }}
-              >
-                Start Ideating
-              </button>
-            </div>
+            >
+              Start Ideating
+            </button>
           </div>
-        </FocusShell>
+        </div>
       </FocusShell>
     )
   }

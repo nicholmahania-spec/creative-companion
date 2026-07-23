@@ -263,6 +263,7 @@ function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
+  const [commandActiveIdx, setCommandActiveIdx] = useState(0)
   const commandInputRef = useRef(null)
   const [resumeBanner, setResumeBanner] = useState(null)
   const [demoTour, setDemoTour] = useState(null)
@@ -840,6 +841,15 @@ function App() {
     return commandActions.filter((a) => a.label.toLowerCase().includes(q))
   }, [commandActions, commandQuery])
 
+  // Keep the highlighted command in range as the query narrows the list
+  useEffect(() => {
+    setCommandActiveIdx((i) =>
+      commandFiltered.length === 0
+        ? 0
+        : Math.min(i, commandFiltered.length - 1)
+    )
+  }, [commandFiltered.length])
+
   const commandSections = useMemo(() => {
     const order = [
       { id: 'actions', label: 'Actions' },
@@ -1245,6 +1255,10 @@ function App() {
     () => document.querySelector('.onboard-overlay'),
     []
   )
+  const getDeskConfirmRoot = useCallback(
+    () => document.querySelector('.desk-confirm-modal'),
+    []
+  )
   useModalFocus(!!exportPanel && !showBreakdown, getExportRoot, {
     initialSelector: '.export-panel-header button, button',
   })
@@ -1253,6 +1267,10 @@ function App() {
   })
   useModalFocus(!!showOnboarding, getOnboardRoot, {
     initialSelector: '#onboard-name',
+  })
+  // Destructive/blocking confirm: land focus on Cancel (safe default), trap Tab
+  useModalFocus(!!deskConfirm, getDeskConfirmRoot, {
+    initialSelector: '.desk-confirm-cancel',
   })
 
   // Flow keys (when not typing): 1–7 path · C complete · N capture · U undo · ? help
@@ -2358,6 +2376,8 @@ function App() {
     setDeskConfirm({
       kind: 'delete-project',
       label: `${i18nT(locale, 'ui.deleteProjectConfirm')} (“${name}”)`,
+      confirmLabel: 'Delete',
+      danger: true,
       onConfirm: () => {
         const result = deleteProject(id)
         if (result.ok) {
@@ -2586,6 +2606,9 @@ function App() {
         />
         </Suspense>
       )}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <header className="header header-redesign">
         <div className="header-content header-content-simple">
           <button
@@ -2916,10 +2939,6 @@ function App() {
           </div>
         </div>
       </header>
-
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
 
       {showProgress && (
         <>
@@ -3919,18 +3938,44 @@ function App() {
               ref={commandInputRef}
               className="field-input command-input"
               value={commandQuery}
-              onChange={(e) => setCommandQuery(e.target.value)}
+              onChange={(e) => {
+                setCommandQuery(e.target.value)
+                setCommandActiveIdx(0)
+              }}
               placeholder="Jump…"
               aria-label="Filter commands"
+              role="combobox"
+              aria-expanded="true"
+              aria-controls="command-listbox"
+              aria-activedescendant={
+                commandFiltered[commandActiveIdx]
+                  ? `command-opt-${commandFiltered[commandActiveIdx].id}`
+                  : undefined
+              }
               autoComplete="off"
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const first = commandFiltered[0]
-                  if (first) {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setCommandActiveIdx((i) =>
+                    commandFiltered.length
+                      ? (i + 1) % commandFiltered.length
+                      : 0
+                  )
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setCommandActiveIdx((i) =>
+                    commandFiltered.length
+                      ? (i - 1 + commandFiltered.length) %
+                        commandFiltered.length
+                      : 0
+                  )
+                } else if (e.key === 'Enter') {
+                  const pick = commandFiltered[commandActiveIdx]
+                  if (pick) {
                     e.preventDefault()
                     setCommandOpen(false)
                     setCommandQuery('')
-                    first.run()
+                    pick.run()
                   }
                 }
               }}
@@ -3939,10 +3984,11 @@ function App() {
               <div
                 className="command-list"
                 role="listbox"
+                id="command-listbox"
                 aria-label="Commands"
               >
                 {commandFiltered.length === 0 && (
-                  <p className="command-empty">—</p>
+                  <p className="command-empty">No matching commands</p>
                 )}
                 {commandSections.map((sec) => (
                   <div key={sec.id} className="command-section" role="group">
@@ -3950,23 +3996,34 @@ function App() {
                       {sec.label}
                     </div>
                     <ul className="command-section-list">
-                      {sec.items.map((a) => (
-                        <li key={a.id}>
-                          <button
-                            type="button"
-                            className="command-item"
-                            role="option"
-                            onClick={() => {
-                              setCommandOpen(false)
-                              setCommandQuery('')
-                              a.run()
-                            }}
-                          >
-                            <span className="command-item-label">{a.label}</span>
-                            {a.hint ? <kbd>{a.hint}</kbd> : null}
-                          </button>
-                        </li>
-                      ))}
+                      {sec.items.map((a) => {
+                        const isActive =
+                          commandFiltered[commandActiveIdx]?.id === a.id
+                        return (
+                          <li key={a.id}>
+                            <button
+                              type="button"
+                              id={`command-opt-${a.id}`}
+                              className={`command-item${isActive ? ' is-active' : ''}`}
+                              role="option"
+                              aria-selected={isActive}
+                              onMouseEnter={() =>
+                                setCommandActiveIdx(
+                                  commandFiltered.findIndex((c) => c.id === a.id)
+                                )
+                              }
+                              onClick={() => {
+                                setCommandOpen(false)
+                                setCommandQuery('')
+                                a.run()
+                              }}
+                            >
+                              <span className="command-item-label">{a.label}</span>
+                              {a.hint ? <kbd>{a.hint}</kbd> : null}
+                            </button>
+                          </li>
+                        )
+                      })}
                     </ul>
                   </div>
                 ))}
@@ -4069,8 +4126,9 @@ function App() {
 
       {deskConfirm && (
         <div
-          className="desk-confirm-banner"
+          className="desk-confirm-banner desk-confirm-modal"
           role="alertdialog"
+          aria-modal="true"
           aria-labelledby="desk-confirm-title"
         >
           <p id="desk-confirm-title" className="desk-confirm-body">
@@ -4079,14 +4137,16 @@ function App() {
           <div className="desk-confirm-actions">
             <button
               type="button"
-              className="btn btn-primary btn-sm"
+              className={`btn btn-sm desk-confirm-go${
+                deskConfirm.danger ? ' settings-danger' : ' btn-primary'
+              }`}
               onClick={() => deskConfirm.onConfirm?.()}
             >
-              {i18nT(locale, 'ui.continue')}
+              {deskConfirm.confirmLabel || i18nT(locale, 'ui.continue')}
             </button>
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm desk-confirm-cancel"
               onClick={() => setDeskConfirm(null)}
             >
               {i18nT(locale, 'ui.cancel')}

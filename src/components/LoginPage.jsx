@@ -104,10 +104,16 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
             setError('Passwords do not match')
             return
           }
+          if (password.length < 8) {
+            setError('Password must be at least 8 characters')
+            return
+          }
           const strength = validatePasswordStrength(password)
           setPasswordStrength(strength)
-          if (strength.score < strength.maxScore) {
-            setError(`Password requirements: ${strength.issues.join(', ')}`)
+          // Require a reasonable mix (length + at least two more categories)
+          // rather than demanding every single rule, which blocked signup.
+          if (strength.score < 3) {
+            setError(`Make it stronger: ${strength.issues.slice(0, 2).join(', ')}`)
             return
           }
           const result = await signUpWithEmail(email, password)
@@ -295,7 +301,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 }
                 autoFocus={!useCloud}
                 required
-                minLength={6}
+                minLength={mode === 'setup' || mode === 'signup' ? 8 : 6}
                 aria-invalid={!!error && error.includes('Password')}
                 aria-describedby="password-error password-strength"
               />
@@ -349,7 +355,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 onChange={(e) => setPassword2(e.target.value)}
                 autoComplete="new-password"
                 required
-                minLength={6}
+                minLength={8}
                 aria-invalid={!!error && error.includes('Passwords do not match')}
                 aria-describedby="confirm-error"
               />

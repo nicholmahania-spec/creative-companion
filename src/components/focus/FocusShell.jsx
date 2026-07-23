@@ -3,10 +3,19 @@
  * One header (progress + step label), one centered card slot. Every
  * focus-mode stage view renders inside this.
  *
+ * NOTE: this app ships NO Tailwind — styling comes from the semantic
+ * `.focus-*` tokens in src/index.css. An earlier rework used Tailwind
+ * utility classes that never resolved, leaving focus mode unstyled.
+ * This shell uses only the semantic classes (theme-aware, dark-mode safe)
+ * plus a small set of token-based inline styles for the optional drawer.
+ *
  * A slide-in preview drawer (toggled from the header) is for stages
- * that need a brand/pack preview (Design, Deliver).
+ * that want a brand/pack preview.
  */
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+
+const FOCUSABLE =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
 export default function FocusShell({
   stepLabel,
@@ -16,151 +25,161 @@ export default function FocusShell({
   children,
   showPreviewDrawer = false,
   drawerContent = null,
-  onDrawerToggle
+  onDrawerToggle,
 }) {
   const pct = stepCount > 0 ? Math.round((stepIndex / stepCount) * 100) : 0
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const drawerRef = useRef(null)
-  const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-  const firstFocusableRef = useRef(null)
-  const lastFocusableRef = useRef(null)
+  const restoreFocusRef = useRef(null)
 
-  const handleDrawerToggle = () => {
-    setIsDrawerOpen(!isDrawerOpen)
-    onDrawerToggle?.(!isDrawerOpen)
-
-    if (!isDrawerOpen) {
-      // Opening drawer - focus first element
-      requestAnimationFrame(() => {
-        if (drawerRef.current) {
-          const firstFocusable = drawerRef.current.querySelector(focusableElements)
-          if (firstFocusable) {
-            firstFocusable.focus()
-          }
-        }
-      })
+  const closeDrawer = useCallback(() => {
+    setIsDrawerOpen(false)
+    onDrawerToggle?.(false)
+    // Return focus to whatever opened the drawer
+    try {
+      restoreFocusRef.current?.focus?.()
+    } catch {
+      /* ignore */
     }
-  }
+  }, [onDrawerToggle])
 
-  // Trap focus inside drawer when open
+  const openDrawer = useCallback(() => {
+    restoreFocusRef.current = document.activeElement
+    setIsDrawerOpen(true)
+    onDrawerToggle?.(true)
+    requestAnimationFrame(() => {
+      const first = drawerRef.current?.querySelector(FOCUSABLE)
+      first?.focus?.()
+    })
+  }, [onDrawerToggle])
+
+  const toggleDrawer = useCallback(() => {
+    if (isDrawerOpen) closeDrawer()
+    else openDrawer()
+  }, [isDrawerOpen, closeDrawer, openDrawer])
+
+  // Trap focus + Escape while drawer is open
   useEffect(() => {
-    if (!isDrawerOpen) return
-
-    const handleKeyDown = (e) => {
+    if (!isDrawerOpen) return undefined
+    const onKeyDown = (e) => {
       if (e.key === 'Escape') {
-        handleDrawerToggle()
+        e.preventDefault()
+        closeDrawer()
+        return
       }
-
-      if (e.key === 'Tab') {
-        const focusableItems = drawerRef.current.querySelectorAll(focusableElements)
-        const firstItem = focusableItems[0]
-        const lastItem = focusableItems[focusableItems.length - 1]
-
-        if (e.shiftKey) { // shift + tab
-          if (document.activeElement === firstItem) {
-            e.preventDefault()
-            lastItem.focus()
-          }
-        } else { // tab
-          if (document.activeElement === lastItem) {
-            e.preventDefault()
-            firstItem.focus()
-          }
-        }
+      if (e.key !== 'Tab' || !drawerRef.current) return
+      const items = [...drawerRef.current.querySelectorAll(FOCUSABLE)].filter(
+        (el) => !el.disabled && el.offsetParent !== null
+      )
+      if (items.length === 0) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
       }
     }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [isDrawerOpen, closeDrawer])
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isDrawerOpen, handleDrawerToggle])
-
-  // Close drawer when clicking outside
+  // Close drawer when clicking outside of it
   useEffect(() => {
-    if (!isDrawerOpen) return
-
-    const handleClickOutside = (e) => {
+    if (!isDrawerOpen) return undefined
+    const onPointer = (e) => {
       if (drawerRef.current && !drawerRef.current.contains(e.target)) {
-        handleDrawerToggle()
+        closeDrawer()
       }
     }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isDrawerOpen, handleDrawerToggle])
+    document.addEventListener('pointerdown', onPointer)
+    return () => document.removeEventListener('pointerdown', onPointer)
+  }, [isDrawerOpen, closeDrawer])
 
   return (
-    <div className="flex h-[calc(100%-4rem)]">
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col">
-        <div className="focus-shell p-4">
-          <header className="flex items-center justify-between pb-3 border-b border-border">
-            {onBack && (
-              <button
-                type="button"
-                className="focus-back-btn btn btn-outline btn-icon"
-                onClick={onBack}
-                aria-label="Back to previous step"
-              >
-                ←
-              </button>
-            )}
-            <div className="flex items-center space-x-3">
-              <span className="focus-step-label">{stepLabel}</span>
-              {showPreviewDrawer && (
-                <button
-                  type="button"
-                  className="btn btn-outline btn-icon hover:bg-muted/50"
-                  onClick={handleDrawerToggle}
-                  aria-label={isDrawerOpen ? 'Hide preview' : 'Show preview'}
-                  aria-pressed={isDrawerOpen}
-                >
-                  {isDrawerOpen ? '◀' : '▶'}
-                </button>
-              )}
-            </div>
-            <div className="flex-1">
-              <div
-                className="focus-progress-track"
-                role="progressbar"
-                aria-valuenow={pct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              >
-                <div className="focus-progress-fill" style={{ width: `${pct}%` }} />
-              </div>
-            </div>
-          </header>
-
-          <main className="flex-1 overflow-y-auto">{children}</main>
+    <div className="focus-shell">
+      <header className="focus-header">
+        {onBack && (
+          <button
+            type="button"
+            className="focus-back-btn"
+            onClick={onBack}
+            aria-label="Back to previous step"
+          >
+            ←
+          </button>
+        )}
+        <span className="focus-step-label">{stepLabel}</span>
+        {showPreviewDrawer && (
+          <button
+            type="button"
+            className="focus-back-btn"
+            onClick={toggleDrawer}
+            aria-label={isDrawerOpen ? 'Hide preview' : 'Show preview'}
+            aria-expanded={isDrawerOpen}
+          >
+            {isDrawerOpen ? '◀' : '▶'}
+          </button>
+        )}
+        <div
+          className="focus-progress-track"
+          role="progressbar"
+          aria-label="Step progress"
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div className="focus-progress-fill" style={{ width: `${pct}%` }} />
         </div>
-      </div>
+      </header>
 
-      {/* Preview drawer */}
-      {showPreviewDrawer && (
+      <main className="focus-main">{children}</main>
+
+      {showPreviewDrawer && isDrawerOpen && (
         <div
           ref={drawerRef}
           role="dialog"
           aria-modal="true"
-          className={`fixed right-0 top-0 h-screen w-80 bg-warm border-l border-shadow translate-x-[${isDrawerOpen ? '0' : '100%'}]
-                     transition-transform duration-300 ease-in-out z-50`}
+          aria-label="Preview"
+          style={{
+            position: 'fixed',
+            right: 0,
+            top: 0,
+            height: '100dvh',
+            width: 'min(20rem, 90vw)',
+            background: 'var(--bg-elevated)',
+            borderLeft: '1px solid var(--border-subtle)',
+            boxShadow: '-8px 0 32px rgba(0,0,0,0.18)',
+            color: 'var(--text-primary)',
+            zIndex: 60,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
         >
-          <div className="p-4 border-b border-border">
-            <h2 className="font-semibold mb-2">
-              Preview
-            </h2>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.5rem',
+              padding: '0.9rem 1rem',
+              borderBottom: '1px solid var(--border-subtle)',
+            }}
+          >
+            <strong style={{ fontFamily: 'var(--font-display)' }}>Preview</strong>
             <button
               type="button"
-              ref={firstFocusableRef}
-              className="btn btn-outline btn-icon float-right text-sm"
-              onClick={handleDrawerToggle}
+              className="focus-back-btn"
+              onClick={closeDrawer}
               aria-label="Close preview"
             >
               ✕
             </button>
           </div>
-          <div className="p-4 overflow-y-auto h-full">
+          <div style={{ padding: '1rem', overflowY: 'auto', flex: '1 1 auto' }}>
             {drawerContent}
-            <div ref={lastFocusableRef} tabIndex={-1} />
           </div>
         </div>
       )}
