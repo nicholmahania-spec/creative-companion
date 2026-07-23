@@ -10,6 +10,7 @@ import useAppStore from '../store/useAppStore'
 import { packReadiness } from '../lib/exportFiles'
 import { isFeedbackAiConfigured, translateFeedback } from '../lib/feedbackAi'
 import Button from '../components/ui/Button'
+import ReviewPreview from '../components/ReviewPreview'
 
 const REVIEW_GAP_SKIP = new Set(['handoff', 'learnings'])
 
@@ -83,7 +84,29 @@ export default function ReviewFocusView({
           stepLabel="06 // Review"
           stepIndex={0}
           stepCount={3}
-          showPreviewDrawer={false}
+          showPreviewDrawer={true}
+          drawerContent={
+            <ReviewPreview
+              activeProject={activeProject}
+              buildCurrentBrandPack={buildCurrentBrandPack}
+              clearedNotes={clearedNotes}
+              noteLines={noteLines}
+              skippedGaps={skippedGaps}
+              translating={translating}
+              translation={translation}
+              aiReady={aiReady}
+              runTranslate={runTranslate}
+              packSnap={packSnap}
+              ready={ready}
+              goSystemSection={goSystemSection}
+              setSkippedGaps={setSkippedGaps}
+              setTranslating={setTranslating}
+              setTranslation={setTranslation}
+              updateBrandField={updateBrandField}
+              setClearedNotes={setClearedNotes}
+              setStrike={setStrike}
+            />
+          }
         >
           <div className="focus-card">
             <p className="focus-prompt">What do you want to accomplish in your review session?</p>
@@ -119,13 +142,35 @@ export default function ReviewFocusView({
     )
   }
 
-  // Main ReviewView logic (only shown after intent is set)
   if (currentNote) {
     return (
       <FocusShell
         stepLabel="06 // Review"
         stepIndex={1 + clearedNotes}
         stepCount={3}
+        showPreviewDrawer={true}
+        drawerContent={
+          <ReviewPreview
+            activeProject={activeProject}
+            buildCurrentBrandPack={buildCurrentBrandPack}
+            clearedNotes={clearedNotes}
+            noteLines={noteLines}
+            skippedGaps={skippedGaps}
+            translating={translating}
+            translation={translation}
+            aiReady={aiReady}
+            runTranslate={runTranslate}
+            packSnap={packSnap}
+            ready={ready}
+            goSystemSection={goSystemSection}
+            setSkippedGaps={setSkippedGaps}
+            setTranslating={setTranslating}
+            setTranslation={setTranslation}
+            updateBrandField={updateBrandField}
+            setClearedNotes={setClearedNotes}
+            setStrike={setStrike}
+          />
+        }
       >
         <FocusCard cardKey={currentNote}>
           <p className="focus-hint">Note {clearedNotes + 1} of {clearedNotes + noteLines.length}</p>
@@ -191,22 +236,48 @@ export default function ReviewFocusView({
   if (currentGap) {
     return (
       <FocusShell stepLabel="06 // Review" stepIndex={2} stepCount={3}>
-        <FocusCard cardKey={currentGap.id}>
-          <p className="focus-hint">Gap</p>
-          <p className="focus-prompt">{currentGap.label}</p>
-          <div className="focus-actions">
-            <button type="button" className="btn btn-primary" onClick={() => jumpGap(currentGap)}>
-              Fix now
-            </button>
-            <button
-              type="button"
-              className="focus-skip-btn"
-              onClick={() => setSkippedGaps((s) => new Set(s).add(currentGap.id))}
-            >
-              Skip
-            </button>
-          </div>
-        </FocusCard>
+        <FocusShell
+          showPreviewDrawer={true}
+          drawerContent={
+            <ReviewPreview
+              activeProject={activeProject}
+              buildCurrentBrandPack={buildCurrentBrandPack}
+              clearedNotes={clearedNotes}
+              noteLines={noteLines}
+              skippedGaps={skippedGaps}
+              translating={translating}
+              translation={translation}
+              aiReady={aiReady}
+              runTranslate={runTranslate}
+              packSnap={packSnap}
+              ready={ready}
+              goSystemSection={goSystemSection}
+              setSkippedGaps={setSkippedGaps}
+              setTranslating={setTranslating}
+              setTranslation={setTranslation}
+              updateBrandField={updateBrandField}
+              setClearedNotes={setClearedNotes}
+              setStrike={setStrike}
+            />
+          }
+        >
+          <FocusCard cardKey={currentGap.id}>
+            <p className="focus-hint">Gap</p>
+            <p className="focus-prompt">{currentGap.label}</p>
+            <div className="focus-actions">
+              <button type="button" className="btn btn-primary" onClick={() => jumpGap(currentGap)}>
+                Fix now
+              </button>
+              <button
+                type="button"
+                className="focus-skip-btn"
+                onClick={() => setSkippedGaps((s) => new Set(s).add(currentGap.id))}
+              >
+                Skip
+              </button>
+            </div>
+          </FocusCard>
+        </FocusShell>
       </FocusShell>
     )
   }

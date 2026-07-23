@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
+    "@vercel/speed-insights": "^2.0.0",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "lottie-web": "^5.12.2",

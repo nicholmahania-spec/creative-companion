@@ -1,12 +1,15 @@
 /**
  * 01 // Define — Focus Mode (Tactile Minimalist rework, opt-in preview).
+ * Added: Intent-setting step at start (phase 4 UX consistency).
  * Four single-question micro-steps replacing the open multi-field form.
+ * Then proceeds to goal/who/feel/avoid steps with preview drawers (phase 5 UX consistency).
  * Writes into the same detective fields the existing Define view uses
  * (updateDetective), so switching back and forth doesn't lose data.
  */
 import { useMemo, useState } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import FocusCard from '../components/focus/FocusCard'
+import DefinePreview from '../components/DefinePreview'
 
 const WHO_PRIMARY = ['Business', 'Consumer', 'Both']
 const WHO_SECONDARY = {
@@ -28,6 +31,12 @@ export default function DefineFocusView({
   setActiveView,
 }) {
   const detective = activeProject?.detective || {}
+
+  // Intent setting state (phase 4)
+  const [intent, setIntent] = useState('')
+  const [intentSet, setIntentSet] = useState(false)
+
+  // Original DefineView state (moved inside intentSet conditional)
   const [stepIdx, setStepIdx] = useState(0)
   const [goalDraft, setGoalDraft] = useState(detective.goal || '')
   const [whoPrimary, setWhoPrimary] = useState('')
@@ -56,12 +65,63 @@ export default function DefineFocusView({
     [whoPrimary]
   )
 
+  // If intent not set, show intent input first (phase 4)
+  if (!intentSet) {
+    return (
+      <FocusShell stepLabel="01 // Define" stepIndex={0} stepCount={4}>
+        <FocusShell
+          stepLabel="01 // Define"
+          stepIndex={0}
+          stepCount={4}
+          showPreviewDrawer={false}
+        >
+          <div className="focus-card">
+            <p className="focus-prompt">What do you want to accomplish in your definition session?</p>
+            <input
+              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+              value={intent}
+              onChange={(e) => setIntent(e.target.value)}
+              placeholder="e.g., Define brand purpose and audience for new project"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && intent.trim()) {
+                  setIntentSet(true)
+                }
+              }}
+            />
+            <div className="flex justify-end mt-4">
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!intent.trim()}
+                onClick={() => {
+                  if (intent.trim()) {
+                    setIntentSet(true)
+                  }
+                }}
+              >
+                Start Defining
+              </button>
+            </div>
+          </div>
+        </FocusShell>
+      </FocusShell>
+    )
+  }
+
+  // Main DefineView logic (only shown after intent is set) with preview drawer (phase 5)
   return (
     <FocusShell
       stepLabel="01 // Define"
       stepIndex={stepIdx}
       stepCount={STEPS.length}
-      onBack={stepIdx > 0 || whoPrimary ? goBack : undefined}
+      showPreviewDrawer={true}
+      drawerContent={
+        <DefinePreview
+          activeProject={activeProject}
+          updateDetective={updateDetective}
+        />
+      }
     >
       <FocusCard cardKey={cardKey}>
         {stepId === 'goal' && (
