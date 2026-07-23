@@ -10,10 +10,10 @@ import { useMemo, useState } from 'react';
 import FocusShell from '../components/focus/FocusShell';
 import FocusCard from '../components/focus/FocusCard';
 import DefinePreview from '../components/DefinePreview';
-import { Button } from '../components/ui/Button';
-import { ButtonGroup } from '../components/ui/ButtonGroup';
-import { Card } from '../components/ui/Card';
-import { Textarea } from '../components/ui/Textarea';
+import Button from '../components/ui/Button';
+import ButtonGroup from '../components/ui/ButtonGroup';
+import Card from '../components/ui/Card';
+import Textarea from '../components/ui/Textarea';
 import {
   NavigationMenu,
   NavigationMenuList,
