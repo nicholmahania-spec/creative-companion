@@ -32,6 +32,7 @@ const BuddyMate = lazy(() => import('./components/BuddyMate'))
 const ForcedBreakOverlay = lazy(() => import('./components/ForcedBreakOverlay'))
 const BrandArtboard = lazy(() => import('./components/BrandArtboard'))
 const GameHUD = lazy(() => import('./components/GameHUD'))
+const ActivityTable = lazy(() => import('./components/dashboard/ActivityTable'))
 const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const SettingsView = lazy(() => import('./views/SettingsView'))
@@ -2921,9 +2922,14 @@ function App() {
       </a>
 
       {showProgress && (
-        <Suspense fallback={null}>
-          <GameHUD />
-        </Suspense>
+        <>
+          <Suspense fallback={null}>
+            <GameHUD />
+          </Suspense>
+          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading activity…</div>}>
+            <ActivityTable />
+          </Suspense>
+        </>
       )}
       <nav
         className={`journey-sidebar${journeyActive ? '' : ' is-tools'}`}
