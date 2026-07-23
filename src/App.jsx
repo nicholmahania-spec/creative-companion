@@ -182,6 +182,7 @@ function App() {
   const clearToEmpty = useAppStore((s) => s.clearToEmpty)
   const renameProject = useAppStore((s) => s.renameProject)
   const deleteProject = useAppStore((s) => s.deleteProject)
+  const archiveProject = useAppStore((s) => s.archiveProject)
   const breakKit = useAppStore((s) => s.breakKit)
   const conceptItems = useAppStore((s) => s.conceptItems)
   const completeBreakKitItem = useAppStore((s) => s.completeBreakKitItem)
@@ -498,6 +499,12 @@ function App() {
   /** Seconds non-error toasts queue before flushing together; 0 = show instantly (default) */
   const toastBatchWindow = Number(prefs.toastBatchWindow) || 0
 
+  /** Readable dwell time: ~450ms/word, floor 3.2s, cap 7s (WCAG-friendly). */
+  const toastDuration = (msg) => {
+    const words = String(msg || '').trim().split(/\s+/).filter(Boolean).length
+    return Math.min(7000, Math.max(3200, words * 450))
+  }
+
   /** @param {string} msg @param {{ micro?: boolean, important?: boolean }} [opts] */
   const flashToast = (msg, opts = {}) => {
     if (!msg) return
@@ -510,15 +517,15 @@ function App() {
         const batched = toastBatchRef.current
         toastBatchRef.current = []
         toastBatchTimerRef.current = null
-        setActionToast(
+        const shown =
           batched.length > 1 ? `${batched[0]} · +${batched.length - 1} more` : batched[0]
-        )
-        window.setTimeout(() => setActionToast(''), 3200)
+        setActionToast(shown)
+        window.setTimeout(() => setActionToast(''), toastDuration(shown))
       }, toastBatchWindow * 1000)
       return
     }
     setActionToast(msg)
-    window.setTimeout(() => setActionToast(''), 3200)
+    window.setTimeout(() => setActionToast(''), toastDuration(msg))
   }
 
   /** Micro feedback — only when user enables “All toasts” */
@@ -1259,6 +1266,14 @@ function App() {
     () => document.querySelector('.desk-confirm-modal'),
     []
   )
+  const getCommandRoot = useCallback(
+    () => document.querySelector('.command-overlay'),
+    []
+  )
+  const getShortcutsRoot = useCallback(
+    () => document.querySelector('.shortcuts-overlay'),
+    []
+  )
   useModalFocus(!!exportPanel && !showBreakdown, getExportRoot, {
     initialSelector: '.export-panel-header button, button',
   })
@@ -1271,6 +1286,14 @@ function App() {
   // Destructive/blocking confirm: land focus on Cancel (safe default), trap Tab
   useModalFocus(!!deskConfirm, getDeskConfirmRoot, {
     initialSelector: '.desk-confirm-cancel',
+  })
+  // Command palette + shortcuts: trap Tab and restore focus to the opener
+  // (⌘K / Tools button) on close so keyboard users don't get dumped on <body>.
+  useModalFocus(commandOpen, getCommandRoot, {
+    initialSelector: '.command-input',
+  })
+  useModalFocus(shortcutsOpen, getShortcutsRoot, {
+    initialSelector: 'button',
   })
 
   // Flow keys (when not typing): 1–7 path · C complete · N capture · U undo · ? help
@@ -2386,6 +2409,28 @@ function App() {
         } else {
           flashToast(result.error || i18nT(locale, 'ui.deleteFail'))
         }
+        setDeskConfirm(null)
+      },
+    })
+  }
+
+  const handleArchiveProject = () => {
+    if (!activeProject) return
+    const active = (projects || []).filter((p) => !p.archived)
+    if (active.length < 2) {
+      flashToast(i18nT(locale, 'ui.keepOneProject'))
+      return
+    }
+    const id = activeProject.id
+    const name = activeProject.name
+    setDeskConfirm({
+      kind: 'archive-project',
+      label: `Archive “${name}”? It moves out of your active list — you can restore it anytime from Define.`,
+      confirmLabel: 'Archive',
+      onConfirm: () => {
+        const result = archiveProject(id)
+        if (result?.ok) flashToast(i18nT(locale, 'ui.projectArchived') || 'Project archived')
+        else flashToast(result?.error || i18nT(locale, 'ui.archiveFail') || 'Could not archive')
         setDeskConfirm(null)
       },
     })
@@ -3639,6 +3684,7 @@ function App() {
               applyDetectiveToBrief={applyDetectiveToBrief}
               setProjectDeadline={setProjectDeadline}
               handleDeleteProject={handleDeleteProject}
+              handleArchiveProject={handleArchiveProject}
               renameProject={renameProject}
               createNewProject={createNewProject}
               selectProject={selectProject}

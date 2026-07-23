@@ -65,46 +65,48 @@ export default function DefineFocusView({
     [whoPrimary]
   )
 
+  const exitFocus = () => setActiveView?.('project')
+
   // If intent not set, show intent input first (phase 4)
   if (!intentSet) {
     return (
-      <FocusShell stepLabel="01 // Define" stepIndex={0} stepCount={4}>
-        <FocusShell
-          stepLabel="01 // Define"
-          stepIndex={0}
-          stepCount={4}
-          showPreviewDrawer={false}
-        >
-          <div className="focus-card">
-            <p className="focus-prompt">What do you want to accomplish in your definition session?</p>
-            <input
-              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              placeholder="e.g., Define brand purpose and audience for new project"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && intent.trim()) {
+      <FocusShell
+        stepLabel="01 // Define"
+        stepIndex={0}
+        stepCount={4}
+        showPreviewDrawer={false}
+        onExit={exitFocus}
+      >
+        <div className="focus-card">
+          <p className="focus-prompt">What do you want to accomplish in your definition session?</p>
+          <input
+            className="focus-input-inline"
+            style={{ display: 'block', width: '100%' }}
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            placeholder="e.g., Define brand purpose and audience for new project"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && intent.trim()) {
+                setIntentSet(true)
+              }
+            }}
+          />
+          <div className="focus-actions">
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!intent.trim()}
+              onClick={() => {
+                if (intent.trim()) {
                   setIntentSet(true)
                 }
               }}
-            />
-            <div className="flex justify-end mt-4">
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={!intent.trim()}
-                onClick={() => {
-                  if (intent.trim()) {
-                    setIntentSet(true)
-                  }
-                }}
-              >
-                Start Defining
-              </button>
-            </div>
+            >
+              Start Defining
+            </button>
           </div>
-        </FocusShell>
+        </div>
       </FocusShell>
     )
   }
@@ -116,6 +118,8 @@ export default function DefineFocusView({
       stepIndex={stepIdx}
       stepCount={STEPS.length}
       showPreviewDrawer={true}
+      onBack={stepIdx > 0 || whoPrimary ? goBack : undefined}
+      onExit={exitFocus}
       drawerContent={
         <DefinePreview
           activeProject={activeProject}

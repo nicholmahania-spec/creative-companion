@@ -39,6 +39,7 @@ export default function DefineView(props) {
     applyDetectiveToBrief,
     setProjectDeadline,
     handleDeleteProject,
+    handleArchiveProject,
     renameProject,
     selectProject,
     projectDeadline = '',
@@ -215,6 +216,10 @@ export default function DefineView(props) {
                   disabled={!activeProject || activeProjects.length < 2}
                   onClick={() => {
                     if (!activeProject) return
+                    if (handleArchiveProject) {
+                      handleArchiveProject()
+                      return
+                    }
                     const r = archiveProject(activeProject.id)
                     if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
                   }}

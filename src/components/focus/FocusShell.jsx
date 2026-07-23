@@ -22,6 +22,8 @@ export default function FocusShell({
   stepIndex,
   stepCount,
   onBack,
+  backLabel = 'Back to previous step',
+  onExit,
   children,
   showPreviewDrawer = false,
   drawerContent = null,
@@ -86,6 +88,21 @@ export default function FocusShell({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [isDrawerOpen, closeDrawer])
 
+  // Escape exits focus mode entirely (when the preview drawer isn't open —
+  // that case is handled above and takes priority). Gives a keyboard user a
+  // guaranteed way out even while a text field is focused.
+  useEffect(() => {
+    if (!onExit || isDrawerOpen) return undefined
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onExit()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onExit, isDrawerOpen])
+
   // Close drawer when clicking outside of it
   useEffect(() => {
     if (!isDrawerOpen) return undefined
@@ -106,7 +123,7 @@ export default function FocusShell({
             type="button"
             className="focus-back-btn"
             onClick={onBack}
-            aria-label="Back to previous step"
+            aria-label={backLabel}
           >
             ←
           </button>
@@ -133,6 +150,17 @@ export default function FocusShell({
         >
           <div className="focus-progress-fill" style={{ width: `${pct}%` }} />
         </div>
+        {onExit && (
+          <button
+            type="button"
+            className="focus-back-btn focus-exit-btn"
+            onClick={onExit}
+            aria-label="Exit focus mode"
+            title="Exit focus mode"
+          >
+            Exit
+          </button>
+        )}
       </header>
 
       <main className="focus-main">{children}</main>

@@ -157,7 +157,9 @@ export default function ResearchView({
       note,
       visual:
         projectPalette[0] ||
-        'linear-gradient(135deg, #1C1917, #0F766E)',
+        // On-brand steel default (dopamine-ink → dopamine) instead of the
+        // off-system warm brown→teal fallback.
+        'linear-gradient(135deg, #1E3A8A, #2563EB)',
     })
     setBoardNote('')
     setBoardAddMode(null)
@@ -342,7 +344,7 @@ export default function ResearchView({
                             className="mood-pin-media mood-pin-media-btn"
                             style={
                               pinImageUrl(item)
-                                ? { backgroundColor: '#e7e5e4' }
+                                ? { backgroundColor: 'var(--bg-muted)' }
                                 : face
                             }
                             aria-label={`View pin${item.note ? `: ${item.note}` : ''}`}

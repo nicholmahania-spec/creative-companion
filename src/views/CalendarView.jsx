@@ -223,7 +223,8 @@ export default function CalendarView(props) {
         <div className="brand-section-label">Upcoming</div>
         {upcomingDeadlines.length === 0 ? (
           <p className="settings-meta" style={{ margin: 0 }}>
-            None
+            No deadlines yet — tap a day in the grid above to set one for this
+            project.
           </p>
         ) : (
           <ul className="deadline-list">

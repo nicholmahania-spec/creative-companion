@@ -91,6 +91,16 @@
   --shadow-hover: none;
   --focus-lift: 0 0 0 1.5px var(--dopamine);
 
+  /* Z-index scale — one ladder for the whole app. Stacking order, low→high:
+     base content < sticky header < dropdown menus < side drawers <
+     modal/command/lightbox overlays < toasts & confirm banners < skip link. */
+  --z-sticky: 100;
+  --z-menu: 300;
+  --z-drawer: 400;
+  --z-overlay: 600;
+  --z-toast: 800;
+  --z-skip: 900;
+
   --transition: 120ms ease;
   --transition-slow: 160ms ease;
   --ease-out: ease;
@@ -195,6 +205,17 @@ h1, h2, h3 {
   letter-spacing: var(--tracking-display);
   line-height: 1.1;
   color: var(--text-primary);
+}
+
+/* Top of the modular type ramp — bare <h1> previously fell back to the
+   UA 2em default, sitting outside the clamp-based scale. Give it an
+   explicit size so H1 → H2 → H3 → body is one intentional ramp. */
+h1 {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-display);
+  line-height: 1.06;
 }
 
 h2 {
@@ -818,7 +839,6 @@ h3 {
 }
 
 /* desk-snapshot styles live with project folio block below */
-
 /* Forced Pomodoro break — blocks entire desk */
 
 /* ——— Platform game HUD ——— */
@@ -1052,7 +1072,7 @@ h3 {
 }
 
 .game-hud-badge {
-  font-size: 0.68rem;
+  z-index: var(--z-overlay);
   font-weight: 700;
   padding: 0.25rem 0.45rem;
   border-radius: var(--radius);
@@ -1508,7 +1528,7 @@ h3 {
   justify-content: center;
   width: 1.35rem;
   height: 1.35rem;
-  border-radius: 50%;
+  box-shadow: none;
   background: var(--bg-muted);
   font-size: 0.75rem;
   font-weight: 800;
@@ -2011,6 +2031,7 @@ h3 {
   font: inherit;
   font-size: 0.875rem;
   font-weight: 600;
+  line-height: 1.1;
   letter-spacing: -0.01em;
   background: var(--bg-elevated);
   color: var(--text-primary);
@@ -2039,7 +2060,10 @@ h3 {
   color: var(--bg-canvas);
   border: 1px solid var(--text-primary);
   box-shadow: none;
-  padding: 0.78rem 1.35rem;
+  /* Match the base .btn vertical rhythm so primary/secondary/ghost all
+     resolve to the same 40px control height instead of primary sitting
+     ~7px taller than its neighbours. */
+  padding: 0.55rem 1.35rem;
   border-radius: var(--radius-sm);
   white-space: nowrap;
   font-family: var(--font-display);
@@ -2323,7 +2347,9 @@ h3 {
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-muted);
+  /* Interactive control — --text-muted (#94A3B8) is ~2.85:1 on white and
+     fails WCAG AA. Use --text-secondary (AA-passing) for the resting state. */
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0;
   margin-top: 0.55rem;
@@ -2333,7 +2359,9 @@ h3 {
 }
 
 .text-link:hover {
-  color: var(--accent-primary);
+  /* Purposeful brand accent on hover — ties the dopamine colour to
+     interactivity rather than scattering it. */
+  color: var(--dopamine);
 }
 
 /* Flow page rhythm */
@@ -2952,7 +2980,7 @@ h3 {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   background: var(--bg-canvas);
-  font: inherit;
+  box-shadow: 0 0 0 1px var(--accent-primary);
   cursor: pointer;
   color: var(--text-primary);
 }
@@ -3318,7 +3346,7 @@ h3 {
 .pref-switch {
   position: relative;
   flex-shrink: 0;
-  width: 2.75rem;
+  box-shadow: 0 0 0 1px var(--border-strong);
   height: 1.55rem;
   padding: 0;
   border: none;
@@ -3522,7 +3550,7 @@ h3 {
 }
 
 .onboard-primary {
-  width: 100%;
+  z-index: var(--z-toast);
   justify-content: center;
 }
 
@@ -4995,7 +5023,7 @@ html[data-reduce-motion='true'] *::after {
   overflow-y: auto;
   padding: 0.15rem 0.75rem 0.55rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(125, 139, 122, 0.35) transparent;
+  box-shadow: none;
 }
 
 .buddy-msg {
@@ -5400,7 +5428,7 @@ html[data-reduce-motion='true'] *::after {
   height: 3.4rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
-  padding: 0;
+  box-shadow: 0 0 0 2px var(--bg-elevated);
   background: var(--bg-card);
   box-shadow: none;
   cursor: pointer;
@@ -5571,7 +5599,7 @@ html[data-reduce-motion='true'] *::after {
 .autosave-chip {
   position: fixed;
   top: 1rem;
-  right: 1rem;
+  z-index: var(--z-overlay);
   z-index: 150;
   background: var(--text-primary);
   color: var(--bg-canvas);
@@ -6324,7 +6352,7 @@ body.cc-printing-pack .buddy-shell,
 
 .type-specimen-h {
   margin: 0 0 0.25rem;
-  font-size: 1.55rem;
+  z-index: var(--z-toast);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.15;
@@ -7423,7 +7451,7 @@ body.cc-printing-pack .buddy-shell,
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  line-height: 1.35;
+  z-index: var(--z-overlay);
 }
 
 .pack-watermark-toggle input {
@@ -8268,7 +8296,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .thin-pack-prompt-body,
 .desk-confirm-body {
   margin: 0 0 0.55rem;
-  font-size: 0.82rem;
+  z-index: var(--z-toast);
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
@@ -8794,13 +8822,17 @@ html[dir="rtl"] .buddy-shell.buddy-float {
    Palette intentionally unchanged — tokens stay as-is.
    ============================================================ */
 
-/* Shape language: squircles (radius only — not color) */
-
+/* Shape language: Tech-Studio square (4px) — flat, no lift.
+   This block is a leftover from the earlier "Gamified Minimalist"
+   pass; it was re-rounding these tokens to 1.15–1.5rem squircles and
+   re-introducing a 48px drop shadow via --focus-lift, both of which
+   contradict the flat/square blueprint lock. Keep the tokens square
+   and the lift flat so components that reference them stay on-system. */
 :root {
-  --radius-organic: 1.25rem;
-  --radius-squircle: 1.5rem;
-  --radius-node: 1.15rem;
-  --focus-lift: 0 18px 48px rgba(12, 10, 9, 0.1), 0 4px 12px rgba(12, 10, 9, 0.05);
+  --radius-organic: 4px;
+  --radius-squircle: 4px;
+  --radius-node: 4px;
+  --focus-lift: 0 0 0 1.5px var(--dopamine);
   --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
@@ -9526,7 +9558,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   left: 0;
   right: 0;
   top: 52%;
-  height: 1.5px;
+  box-shadow: none;
   background: color-mix(in srgb, var(--text-muted) 80%, transparent);
   border-radius: 2px;
   animation: strikeThrough 0.4s var(--ease-out) both;
@@ -11191,7 +11223,7 @@ body:has(.app.deep)::after {
 }
 
 .journey-progress-pill.is-partial .progress-ring-fill {
-  filter: none !important;
+  box-shadow: 0 0 0 1px var(--border-subtle);
 }
 
 /* Soften studio eyebrow glow */
@@ -13572,7 +13604,9 @@ select:focus,
   margin: 0 0 0.85rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--ts-mute, #94A3B8);
+  /* Meaningful subtitle text — use the AA-passing secondary ink rather
+     than the muted #94A3B8 (which fails contrast on the white card). */
+  color: var(--text-secondary);
 }
 
 .login-mode-tabs {
@@ -14390,7 +14424,7 @@ select:focus,
 }
 .define-workbook.is-split .define-chapter-title {
   font-size: 1.15rem !important;
-  font-weight: 700 !important;
+    border-right: 1px solid var(--border-subtle) !important;
   color: var(--text-primary) !important;
   letter-spacing: -0.02em !important;
 }
@@ -14482,7 +14516,7 @@ select:focus,
   .header-mobile-title {
     display: block !important;
     flex: 1 1 auto;
-    min-width: 0;
+    box-shadow: none !important;
     text-align: center;
     font-weight: 700;
     font-size: 0.95rem;
@@ -14800,6 +14834,16 @@ select:focus,
   text-transform: uppercase;
   color: var(--text-secondary);
   white-space: nowrap;
+}
+
+.focus-exit-btn {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-subtle);
+  padding: 0.3rem 0.6rem;
 }
 
 .focus-progress-track {

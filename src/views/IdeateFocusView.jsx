@@ -56,6 +56,8 @@ export default function IdeateFocusView({
   const [winner, setWinner] = useState(null)
   const [queued, setQueued] = useState(false)
 
+  const exitFocus = () => setActiveView?.('spark')
+
   const pick = (chosenDir) => {
     if (!contenders || contenders.length === 0) {
       setWinner(chosenDir)
@@ -87,6 +89,7 @@ export default function IdeateFocusView({
         stepIndex={0}
         stepCount={2}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={<IdeatePreview directions={dirs} />}
       >
         <div className="focus-card">
@@ -170,7 +173,7 @@ export default function IdeateFocusView({
 
   if (bracket) {
     return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={2} stepCount={3}>
+      <FocusShell stepLabel="03 // Ideate" stepIndex={2} stepCount={3} onExit={exitFocus}>
         <div style={{ width: '100%', maxWidth: '40rem' }}>
           <p className="focus-prompt" style={{ textAlign: 'center' }}>
             Which direction wins?
@@ -211,7 +214,7 @@ export default function IdeateFocusView({
   const stepIdx = totalDirs - untitled.length
 
   return (
-    <FocusShell stepLabel="03 // Ideate" stepIndex={stepIdx} stepCount={totalDirs}>
+    <FocusShell stepLabel="03 // Ideate" stepIndex={stepIdx} stepCount={totalDirs} onExit={exitFocus}>
       <FocusCard cardKey={current?.id}>
         <p className="focus-prompt">Direction {current?.label} — one line:</p>
         <input

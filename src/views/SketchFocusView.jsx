@@ -63,6 +63,8 @@ export default function SketchFocusView({ setActiveView }) {
     setNowId(task.id)
   }
 
+  const exitFocus = () => setActiveView?.('flow')
+
   // Intent setting step
   if (!intentSet) {
     return (
@@ -71,6 +73,7 @@ export default function SketchFocusView({ setActiveView }) {
         stepIndex={0}
         stepCount={2}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={preview}
       >
         <div className="focus-card">
@@ -109,6 +112,7 @@ export default function SketchFocusView({ setActiveView }) {
         stepIndex={1}
         stepCount={2}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={preview}
       >
         <FocusCard cardKey="empty">
@@ -171,6 +175,7 @@ export default function SketchFocusView({ setActiveView }) {
         stepIndex={1}
         stepCount={2}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={preview}
       >
         <FocusCard cardKey={`now-${now.id}`}>
@@ -225,6 +230,7 @@ export default function SketchFocusView({ setActiveView }) {
       stepIndex={2}
       stepCount={2}
       showPreviewDrawer={true}
+      onExit={exitFocus}
       drawerContent={preview}
     >
       <FocusCard cardKey="complete">
