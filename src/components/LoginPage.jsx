@@ -137,6 +137,16 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
     }
   }
 
+  const handleReset = () => {
+    setError('')
+    setInfo('')
+    setEmail('')
+    setPassword('')
+    setPassword2('')
+    setName('')
+    setShowPassword(false)
+  }
+
   return (
     <div className="login-page login-page-studio">
       <div className="login-card login-card-solo">
@@ -288,14 +298,24 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
           </button>
 
           {useCloud && mode === 'login' && (
-            <button
-              type="button"
-              className="text-link login-forgot"
-              onClick={handleForgot}
-              disabled={busy}
-            >
-              Forgot
-            </button>
+            <>
+              <button
+                type="button"
+                className="text-link login-forgot"
+                onClick={handleForgot}
+                disabled={busy}
+              >
+                Forgot
+              </button>
+              <button
+                type="button"
+                className="text-link login-reset ml-2"
+                onClick={handleReset}
+                disabled={busy}
+              >
+                Reset
+              </button>
+            </>
           )}
         </form>
 

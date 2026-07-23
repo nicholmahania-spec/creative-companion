@@ -3362,6 +3362,12 @@ h3 {
   font-size: 0.8125rem;
 }
 
+.login-reset {
+  align-self: flex-start;
+  margin: -0.25rem 0 0.35rem;
+  font-size: 0.8125rem;
+}
+
 .login-brand {
   display: flex;
   align-items: center;
@@ -11931,6 +11937,13 @@ body:has(.app.deep)::after {
 }
 
 .login-forgot {
+  display: block;
+  margin: 0.75rem auto 0;
+  text-align: center;
+  font-size: 0.8125rem;
+}
+
+.login-reset {
   display: block;
   margin: 0.75rem auto 0;
   text-align: center;
