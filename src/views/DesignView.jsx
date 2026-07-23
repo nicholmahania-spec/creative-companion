@@ -226,6 +226,13 @@ export default function DesignView({
                 <h1 className="page-title">
                   {i18nT(locale, 'path.design')}
                 </h1>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setActiveView('design-focus')}
+                >
+                  Try Focus Mode (beta)
+                </button>
                 <p className="page-sub">
                   {activeProject?.name || 'Project'}
                   {' · ★'}
