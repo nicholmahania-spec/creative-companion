@@ -3,26 +3,29 @@
  *
  * The blueprint's spec for this stage assumed structured client
  * comments and an AI call to translate vague feedback into checkbox
- * tasks. Neither exists here: the real Review view stores feedback as
- * one free-text blob (feedbackNotes, bullet-appended), not discrete
- * comment objects, and there's no LLM wired up — that needs a
- * provider/key decision that hasn't been made (flagged separately,
- * not built speculatively with a fake call).
+ * tasks. The real Review view stores feedback as one free-text blob
+ * (feedbackNotes, bullet-appended), not discrete comment objects — but
+ * those bullet lines ARE discrete items once split on newline, so the
+ * one-at-a-time "Cognitive Shield" itself is fully real here.
  *
- * What's real and buildable: feedbackNotes' bullet lines ARE discrete
- * items once split on newline, and packReadiness's gap list already
- * IS a concrete, actionable checklist (not vague text needing
- * translation) — "Tagline", "★ Starred pictures", etc, each already
- * wired to jump straight to where it's fixed. So this stage keeps the
- * blueprint's "one item at a time, strike it off" momentum, applied to
- * those two real, already-structured lists — notes first, then gaps —
- * instead of building a fake AI call.
+ * The AI translation is scaffolded, not live (see ../lib/feedbackAi.js
+ * for why — no provider key can safely live in this static site's
+ * client bundle, so it expects a server-side proxy that doesn't exist
+ * yet). "Translate to checklist" only appears once
+ * VITE_FEEDBACK_AI_ENDPOINT is set; until then the card says so
+ * plainly instead of pretending to work.
+ *
+ * packReadiness's gap list is the other real, already-structured
+ * checklist here — "Tagline", "★ Starred pictures", etc, each already
+ * wired to jump straight to where it's fixed — so it gets the same
+ * one-at-a-time treatment after notes are cleared.
  */
 import { useState } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import FocusCard from '../components/focus/FocusCard'
 import useAppStore from '../store/useAppStore'
 import { packReadiness } from '../lib/exportFiles'
+import { isFeedbackAiConfigured, translateFeedback } from '../lib/feedbackAi'
 
 const REVIEW_GAP_SKIP = new Set(['handoff', 'learnings'])
 
@@ -42,6 +45,17 @@ export default function ReviewFocusView({
   const [clearedNotes, setClearedNotes] = useState(0)
   const [strike, setStrike] = useState(false)
   const [skippedGaps, setSkippedGaps] = useState(() => new Set())
+  const [translating, setTranslating] = useState(false)
+  const [translation, setTranslation] = useState(null)
+  const aiReady = isFeedbackAiConfigured()
+
+  const runTranslate = async (line) => {
+    setTranslating(true)
+    setTranslation(null)
+    const result = await translateFeedback(line)
+    setTranslating(false)
+    setTranslation(result)
+  }
 
   const packSnap = buildCurrentBrandPack?.()
   const ready = packReadiness(packSnap)
@@ -66,6 +80,7 @@ export default function ReviewFocusView({
       updateBrandField('feedbackNotes', remaining.join('\n'))
       setClearedNotes((n) => n + 1)
       setStrike(false)
+      setTranslation(null)
     }, 180)
   }
 
@@ -90,6 +105,43 @@ export default function ReviewFocusView({
           >
             {currentNote.replace(/^•\s*/, '')}
           </p>
+
+          {aiReady ? (
+            <>
+              <div className="focus-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  disabled={translating}
+                  onClick={() => runTranslate(currentNote.replace(/^•\s*/, ''))}
+                >
+                  {translating ? 'Translating…' : 'Translate to checklist'}
+                </button>
+              </div>
+              {translation?.ok && translation.ambiguous && (
+                <p className="focus-hint" style={{ color: 'var(--dopamine, #3D5AFE)' }}>
+                  ⚠ Ambiguous feedback — consider asking for clarification
+                </p>
+              )}
+              {translation?.ok && translation.tasks.length > 0 && (
+                <ul style={{ margin: '0.75rem 0 0', padding: 0, listStyle: 'none' }}>
+                  {translation.tasks.map((t) => (
+                    <li key={t} className="focus-hint" style={{ color: 'var(--text-primary)' }}>
+                      ☐ {t}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {translation && !translation.ok && (
+                <p className="focus-hint">Couldn't translate that one — address it as-is.</p>
+              )}
+            </>
+          ) : (
+            <p className="focus-hint">
+              AI translation isn't set up yet — this line is just the raw note.
+            </p>
+          )}
+
           <div className="focus-actions">
             <button type="button" className="btn btn-primary" onClick={() => clearNote(currentNote)}>
               Addressed
