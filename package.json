@@ -1,7 +1,7 @@
 {
   "name": "creative-companion-react",
   "private": true,
-  "version": "1.48.103",
+  "version": "1.48.104",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,7 +14,8 @@
     "build:check": "npm run build && npm run test:perf",
     "bump": "node scripts/bump-version.mjs",
     "bump:minor": "node scripts/bump-version.mjs --minor",
-    "bump:major": "node scripts/bump-version.mjs --major"
+    "bump:major": "node scripts/bump-version.mjs --major",
+    "analyze": "ANALYZE=1 npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
@@ -31,7 +32,10 @@
     "@playwright/test": "^1.49.0",
     "@vitejs/plugin-react": "^6.0.4",
     "gh-pages": "^6.3.0",
+    "purgecss": "^8.0.0",
+    "rollup-plugin-visualizer": "^7.0.1",
     "vite": "^8.1.5",
+    "vite-plugin-purgecss": "^0.2.13",
     "vitest": "^4.1.10"
   },
   "allowScripts": {
