@@ -47,6 +47,53 @@
   margin-top: 1.5rem;
   justify-content: center;
 }
+
+/* Password strength meter styles */
+.password-strength-meter {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: var(--text-sm);
+}
+
+.password-strength-label {
+  color: var(--text-muted);
+}
+
+.password-strength-bar {
+  height: 4px;
+  background-color: var(--bg-muted);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.password-strength-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.password-strength-text {
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Focus ring adjustments for better accessibility */
+:focus-visible {
+  outline: 2px solid var(--ts-focus);
+  outline-offset: 2px;
+}
+
+/* Ensure touch targets are at least 44x44px */
+.btn-icon,
+.login-show-pw,
+.text-link {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .focus-card {
   background-color: var(--bg-card);
   border-radius: var(--radius-lg);

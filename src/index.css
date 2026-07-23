@@ -33,6 +33,11 @@
   --border-hairline: #E2E8F0;
   --highlight-inset: none;
 
+  /* Status colors for form validation */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+
   /* Aliases some later rules reference with hardcoded light fallbacks
      (var(--ts-x, #hex)) — defining them here makes those rules follow the
      active theme instead of always resolving to the light fallback. */

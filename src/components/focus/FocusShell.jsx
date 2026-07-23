@@ -6,7 +6,7 @@
  * A slide-in preview drawer (toggled from the header) is for stages
  * that need a brand/pack preview (Design, Deliver).
  */
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 export default function FocusShell({
   stepLabel,
@@ -20,11 +20,73 @@ export default function FocusShell({
 }) {
   const pct = stepCount > 0 ? Math.round((stepIndex / stepCount) * 100) : 0
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const drawerRef = useRef(null)
+  const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  const firstFocusableRef = useRef(null)
+  const lastFocusableRef = useRef(null)
 
   const handleDrawerToggle = () => {
     setIsDrawerOpen(!isDrawerOpen)
     onDrawerToggle?.(!isDrawerOpen)
+
+    if (!isDrawerOpen) {
+      // Opening drawer - focus first element
+      requestAnimationFrame(() => {
+        if (drawerRef.current) {
+          const firstFocusable = drawerRef.current.querySelector(focusableElements)
+          if (firstFocusable) {
+            firstFocusable.focus()
+          }
+        }
+      })
+    }
   }
+
+  // Trap focus inside drawer when open
+  useEffect(() => {
+    if (!isDrawerOpen) return
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleDrawerToggle()
+      }
+
+      if (e.key === 'Tab') {
+        const focusableItems = drawerRef.current.querySelectorAll(focusableElements)
+        const firstItem = focusableItems[0]
+        const lastItem = focusableItems[focusableItems.length - 1]
+
+        if (e.shiftKey) { // shift + tab
+          if (document.activeElement === firstItem) {
+            e.preventDefault()
+            lastItem.focus()
+          }
+        } else { // tab
+          if (document.activeElement === lastItem) {
+            e.preventDefault()
+            firstItem.focus()
+          }
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isDrawerOpen, handleDrawerToggle])
+
+  // Close drawer when clicking outside
+  useEffect(() => {
+    if (!isDrawerOpen) return
+
+    const handleClickOutside = (e) => {
+      if (drawerRef.current && !drawerRef.current.contains(e.target)) {
+        handleDrawerToggle()
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isDrawerOpen, handleDrawerToggle])
 
   return (
     <div className="flex h-[calc(100%-4rem)]">
@@ -76,13 +138,19 @@ export default function FocusShell({
       {/* Preview drawer */}
       {showPreviewDrawer && (
         <div
+          ref={drawerRef}
+          role="dialog"
+          aria-modal="true"
           className={`fixed right-0 top-0 h-screen w-80 bg-warm border-l border-shadow translate-x-[${isDrawerOpen ? '0' : '100%'}]
                      transition-transform duration-300 ease-in-out z-50`}
         >
           <div className="p-4 border-b border-border">
-            <h2 className="font-semibold text-lg text-primary mb-2">Preview</h2>
+            <h2 className="font-semibold"mb-2">
+              Preview
+            </h2>
             <button
               type="button"
+              ref={firstFocusableRef}
               className="btn btn-outline btn-icon float-right text-sm"
               onClick={handleDrawerToggle}
               aria-label="Close preview"
@@ -92,6 +160,7 @@ export default function FocusShell({
           </div>
           <div className="p-4 overflow-y-auto h-full">
             {drawerContent}
+            <div ref={lastFocusableRef} tabIndex={-1} />
           </div>
         </div>
       )}

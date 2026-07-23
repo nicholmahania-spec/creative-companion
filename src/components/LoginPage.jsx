@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   hasAccessSetup,
   setupAccess,
@@ -13,6 +13,52 @@ import {
 import { versionLabel } from '../lib/version'
 import LogoLockup from './LogoLockup'
 import { normalizeLocale } from '../lib/i18n'
+
+// Password strength validation
+const validatePasswordStrength = (password) => {
+  const strength = {
+    score: 0,
+    maxScore: 4,
+    issues: []
+  };
+
+  // Length check
+  if (password.length >= 8) {
+    strength.score++;
+  } else {
+    strength.issues.push('At least 8 characters');
+  }
+
+  // Contains uppercase
+  if (/[A-Z]/.test(password)) {
+    strength.score++;
+  } else {
+    strength.issues.push('Include uppercase letter');
+  }
+
+  // Contains lowercase
+  if (/[a-z]/.test(password)) {
+    strength.score++;
+  } else {
+    strength.issues.push('Include lowercase letter');
+  }
+
+  // Contains number
+  if (/\d/.test(password)) {
+    strength.score++;
+  } else {
+    strength.issues.push('Include a number');
+  }
+
+  // Contains special character
+  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    strength.score++;
+  } else {
+    strength.issues.push('Include special character (!@#$%^&*)');
+  }
+
+  return strength;
+};
 
 /** Read locale from persisted store (before unlock) when available */
 function guestLocale() {
@@ -44,6 +90,8 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
+  const [passwordStrength, setPasswordStrength] = useState(null)
+  const [passwordStrength, setPasswordStrength] = useState(null)
 
   const submit = async (e) => {
     e.preventDefault()
@@ -57,8 +105,10 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
             setError('Passwords do not match')
             return
           }
-          if (password.length < 6) {
-            setError('Password must be at least 6 characters')
+          const strength = validatePasswordStrength(password)
+          setPasswordStrength(strength)
+          if (strength.score < strength.maxScore) {
+            setError(`Password requirements: ${strength.issues.join(', ')}`)
             return
           }
           const result = await signUpWithEmail(email, password)
@@ -242,6 +292,8 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 autoFocus={!useCloud}
                 required
                 minLength={6}
+                aria-invalid={!!error && error.includes('Password')}
+                aria-describedby="password-error password-strength"
               />
               <button
                 type="button"
@@ -253,6 +305,34 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
+            {(mode === 'setup' || mode === 'signup') && (
+              <div className="password-strength-meter" id="password-strength">
+                <div className="password-strength-label">Password strength:</div>
+                <div className="password-strength-bar">
+                  <div
+                    className="password-strength-fill"
+                    style={{
+                      width: `${passwordStrength && passwordStrength.score > 0 ? (passwordStrength.score / passwordStrength.maxScore) * 100 : 0}%`,
+                      backgroundColor: passwordStrength && passwordStrength.score > 0
+                        ? passwordStrength.score === passwordStrength.maxScore
+                          ? 'var(--success)'
+                          : passwordStrength.score >= passwordStrength.maxScore * 0.6
+                            ? 'var(--warning)'
+                            : 'var(--error)'
+                        : 'var(--border-subtle)'
+                    }}
+                  ></div>
+                </div>
+                <div className="password-strength-text">
+                  {passwordStrength ?
+                    passwordStrength.score === passwordStrength.maxScore ? 'Strong' :
+                    passwordStrength.score >= passwordStrength.maxScore * 0.6 ? 'Medium' :
+                    'Weak' :
+                    'Enter password'
+                  }
+                </div>
+              </div>
+            )}
           </label>
 
           {(mode === 'setup' || mode === 'signup') && (
@@ -266,6 +346,8 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 autoComplete="new-password"
                 required
                 minLength={6}
+                aria-invalid={!!error && error.includes('Passwords do not match')}
+                aria-describedby="confirm-error"
               />
             </label>
           )}
