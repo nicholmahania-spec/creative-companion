@@ -45,6 +45,7 @@ const ResearchFocusView = lazy(() => import('./views/ResearchFocusView'))
 const IdeateFocusView = lazy(() => import('./views/IdeateFocusView'))
 const SketchFocusView = lazy(() => import('./views/SketchFocusView'))
 const DesignFocusView = lazy(() => import('./views/DesignFocusView'))
+const ReviewFocusView = lazy(() => import('./views/ReviewFocusView'))
 const DesignView = lazy(() => import('./views/DesignView'))
 const ReviewView = lazy(() => import('./views/ReviewView'))
 const DeliverView = lazy(() => import('./views/DeliverView'))
@@ -2526,6 +2527,21 @@ function App() {
       <div className={`app ${theme}`}>
         <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
           <DesignFocusView activeProject={activeProject} setActiveView={setActiveView} />
+        </Suspense>
+      </div>
+    )
+  }
+
+  if (activeView === 'review-focus') {
+    return (
+      <div className={`app ${theme}`}>
+        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
+          <ReviewFocusView
+            activeProject={activeProject}
+            buildCurrentBrandPack={buildCurrentBrandPack}
+            setActiveView={setActiveView}
+            goSystemSection={goSystemSection}
+          />
         </Suspense>
       </div>
     )

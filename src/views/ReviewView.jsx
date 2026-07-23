@@ -90,6 +90,13 @@ export default function ReviewView({
       <div className="flow-top review-top">
         <div className="review-top-text">
           <h1 className="page-title">{i18nT(locale, 'path.review')}</h1>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => setActiveView('review-focus')}
+          >
+            Try Focus Mode (beta)
+          </button>
           {(goal || brandWords) && (
             <p className="review-meta-info" role="status">
               {goal ? `Goal: ${goal.slice(0, 30)}${goal.length > 30 ? '...' : ''}` : ''}
