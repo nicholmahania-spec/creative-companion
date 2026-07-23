@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 
-const ResearchPreview = ({ deskMood = [], sessionIds = [], reviewedIds = new Set(), reviewedCount = 0 }) => {
+const ResearchPreview = ({
+  deskMood = [],
+  sessionIds = [],
+  reviewedIds = new Set(),
+  reviewedCount = 0,
+  loading = false,
+  error = null
+}) => {
   const { brand } = useAppStore((s) => s)
   const { moodPins = [] } = brand
 
@@ -15,6 +22,75 @@ const ResearchPreview = ({ deskMood = [], sessionIds = [], reviewedIds = new Set
   const recentKept = deskMood
     .filter(item => item.inPack || moodPins.includes(item.id))
     .slice(0, 4)
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Research Board</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Curating inspiration for your brand direction
+          </p>
+
+          <div className="border rounded-lg p-4 text-center">
+            <p className="text-danger">Error loading research data</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {error.message || 'Unknown error'}
+            </p>
+            <button
+              onClick={() => {
+                // In a real app, this would trigger a refetch
+                // For now, we'll just console.log as state comes from store
+                console.log('Retry requested for research data')
+              }}
+              className="btn btn-outline mt-2"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Research Board</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Curating inspiration for your brand direction
+          </p>
+
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-sm text-muted-foreground">Loading research data...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle empty state
+  if (totalItems === 0 && sessionSize === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Research Board</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Curating inspiration for your brand direction
+          </p>
+
+          <div className="border rounded-lg p-4 text-center">
+            <p className="text-muted-foreground">No research data available</p>
+            <p className="text-xs mt-2">Add images or notes in the Research view to begin curating</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">

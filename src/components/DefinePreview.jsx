@@ -1,12 +1,87 @@
 import { useMemo } from 'react'
 import useAppStore from '../store/useAppStore'
 
-const DefinePreview = ({ activeProject, updateDetective }) => {
+const DefinePreview = ({
+  activeProject,
+  updateDetective,
+  loading = false,
+  error = null
+}) => {
+  // Handle error state
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Project Definition</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Define your brand's purpose and audience
+          </p>
+
+          <div className="border rounded-lg p-4 text-center">
+            <p className="text-danger">Error loading project definition data</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {error.message || 'Unknown error'}
+            </p>
+            <button
+              onClick={() => {
+                // In a real app, this would trigger a refetch
+                // For now, we'll just console.log as state comes from store
+                console.log('Retry requested for project definition data')
+              }}
+              className="btn btn-outline mt-2"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Project Definition</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Define your brand's purpose and audience
+          </p>
+
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-sm text-muted-foreground">Loading project definition data...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle empty state
+  if (!activeProject) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Project Definition</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Define your brand's purpose and audience
+          </p>
+
+          <div className="border rounded-lg p-4 text-center">
+            <p className="text-muted-foreground">No project data available</p>
+            <p className="text-xs mt-2">Define your project in the Define view to begin</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const detective = activeProject?.detective || {}
 
   // Format the who field for display
   const whoPrimary = detective.audience?.split(' — ')[0] || detective.whoPrimary || ''
   const whoSecondary = detective.audience?.split(' — ')[1] || ''
+  const whoDisplay(' — ')[1] || ''
   const whoDisplay = whoPrimary && whoSecondary
     ? `${whoPrimary} — ${whoSecondary}`
     : whoPrimary || 'Not set'
@@ -77,10 +152,9 @@ const DefinePreview = ({ activeProject, updateDetective }) => {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Audience</span>
-              <span className="px-2 py-0.5 rounded-full text-xs
-                {whoDisplay ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                {whoDisplay ? '✓ Set' : '○ Empty'}
-              </span>
+              <span className="px-2 py-2.rounded"
+                {whoDisplay ? 'bg-green-10.5 rounded-full text-xs
+                {whoDisplay ? 'bg-green-100 text-green-8000 variant-black family-normal" />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Feel</span>
@@ -126,35 +200,4 @@ const DefinePreview = ({ activeProject, updateDetective }) => {
           {(!detective.feel || (detective.feel && detective.feel.split(',').filter(f => f.trim()).length < 3)) && (
             <button
               onClick={() => {
-                // Focus on feel section
-                setTimeout(() => {
-                  const feelChips = document.querySelectorAll('.focus-chip')
-                  if (feelChips[0]) feelChips[0].focus()
-                }, 100)
-              }}
-              className="w-full btn btn-outline"
-            >
-              Define Feelings
-          </button>
-          )}
-          {!detective.avoid && (
-            <button
-              onClick={() => {
-                // Focus on avoid input
-                setTimeout(() => {
-                  const avoidInput = document.querySelector('.focus-card input[placeholder*="optional"]')
-                  if (avoidInput) avoidInput.focus()
-                }, 100)
-              }}
-              className="w-full btn btn-outline"
-            >
-              Define What to Avoid
-          </button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default DefinePreview
+                // Focus on feelChispus was not found in the input.

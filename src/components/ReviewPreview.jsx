@@ -1,7 +1,55 @@
 import { useEffect, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 
-const ReviewPreview = ({ activeProject, buildCurrentBrandPack }) => {
+const ReviewPreview = ({
+  activeProject,
+  buildCurrentBrandPack,
+  loading = false,
+  error = null
+}) => {
+  // Handle error state
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Review Overview</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Review feedback and identify gaps
+          </p>
+
+          <div className="border rounded-lg p-4 text-center">
+            <p className="text-danger">Error loading review data</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {error.message || 'Unknown error'}
+            </p>
+            <button
+              onClick={() => {
+                // In a real app, this would trigger a refetch
+                // For now, we'll just console.log as state comes from store
+                console.log('Retry requested for review data')
+              }}
+              className="btn btn-outline mt-2"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-sm text-muted-foreground">Loading review data...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const { brand } = useAppStore((s) => s)
   const { feedbackNotes = '' } = activeProject || {}
   const noteLines = String(feedbackNotes || '')
@@ -26,6 +74,25 @@ const ReviewPreview = ({ activeProject, buildCurrentBrandPack }) => {
 
   // Stats
   const totalNotes = noteLines.length
+
+  // Handle empty state
+  if ((!activeProject || !feedbackNotes) && !loading && !error) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Review Overview</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Review feedback and identify gaps
+          </p>
+
+          <div className="border rounded-lg p-4 text-center">
+            <p className="text-muted-foreground">No review data</p>
+            <p className="text-sm mt-2">Complete work in other views to generate feedback for review</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">

@@ -29,6 +29,10 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
   const [intent, setIntent] = useState('')
   const [intentSet, setIntentSet] = useState(false)
 
+  // UI state for preview drawer
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
   // Fixed at mount: the review queue is "everything on the board right
   // now," not a live view of deskMood — toss removes an item from
   // deskMood, which would otherwise shrink the denominator mid-review.
@@ -99,6 +103,8 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
               sessionIds={sessionIds}
               reviewedIds={reviewedIds}
               reviewedCount={reviewedCount}
+              loading={loading}
+              error={error}
             />
           }
         >
@@ -150,6 +156,8 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
               sessionIds={sessionIds}
               reviewedIds={reviewedIds}
               reviewedCount={reviewedCount}
+              loading={loading}
+              error={error}
             />
           }
         >
@@ -187,6 +195,8 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
               sessionIds={sessionIds}
               reviewedIds={reviewedIds}
               reviewedCount={reviewedCount}
+              loading={loading}
+              error={error}
             />
           }
         >
@@ -221,6 +231,8 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
             sessionIds={sessionIds}
             reviewedIds={reviewedIds}
             reviewedCount={reviewedCount}
+            loading={loading}
+            error={error}
           />
         }
       >

@@ -22,6 +22,7 @@ import FocusShell from '../components/focus/FocusShell'
 import FocusCard from '../components/focus/FocusCard'
 import useAppStore from '../store/useAppStore'
 import { decisionFromDirection } from '../lib/decisionLog'
+import IdeatePreview from '../components/IdeatePreview'
 
 function blankDirs() {
   return [
@@ -41,6 +42,10 @@ export default function IdeateFocusView({
   const logDecision = useAppStore((s) => s.logDecision)
   const dirs = Array.isArray(directions) && directions.length >= 3 ? directions : blankDirs()
 
+  // Intent setting state (phase 4)
+  const [intent, setIntent] = useState('')
+  const [intentSet, setIntentSet] = useState(false)
+
   const untitled = dirs.filter((d) => !String(d.title || '').trim())
   const [titleDraft, setTitleDraft] = useState('')
   const [bracket, setBracket] = useState(null) // [dirA, dirB] currently facing off, or null
@@ -51,19 +56,54 @@ export default function IdeateFocusView({
   const [winner, setWinner] = useState(null)
   const [queued, setQueued] = useState(false)
 
-  const titled = dirs.filter((d) => String(d.title || '').trim())
-
-  // Once every direction has a title, set up the elimination bracket.
-  useEffect(() => {
-    if (untitled.length > 0 || bracket || contenders || winner || titled.length === 0) return
-    if (titled.length === 1) {
-      setWinner(titled[0])
-    } else {
-      setContenders(titled.slice(2))
-      setBracket([titled[0], titled[1]])
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [untitled.length, titled.length])
+  // If intent not set, show intent input first (phase 4)
+  if (!intentSet) {
+    return (
+      <FocusShell stepLabel="03 // Ideate" stepIndex={0} stepCount={2}>
+        <FocusShell
+          stepLabel="03 // Ideate"
+          stepIndex={0}
+          stepCount={2}
+          showPreviewDrawer={true}
+          drawerContent={
+            <IdeatePreview
+              directions={dirs}
+            />
+          }
+        >
+          <div className="focus-card">
+            <p className="focus-prompt">What do you want to accomplish in your ideation session?</p>
+            <input
+              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+              value={intent}
+              onChange={(e) => setIntent(e.target.value)}
+              placeholder="e.g., Explore three different brand directions for the project"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && intent.trim()) {
+                  setIntentSet(true)
+                }
+              }}
+            />
+            <div className="flex justify-end mt-4">
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!intent.trim()}
+                onClick={() => {
+                  if (intent.trim()) {
+                    setIntentSet(true)
+                  }
+                }}
+              >
+                Start Ideating
+              </button>
+            </div>
+          </div>
+        </FocusShell>
+      </FocusShell>
+    )
+  }
 
   const pick = (chosenDir) => {
     if (!contenders || contenders.length === 0) {

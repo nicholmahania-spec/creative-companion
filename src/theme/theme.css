@@ -1,24 +1,26 @@
-/* ===== Color & Background Utilities ===== */
-.bg-bg-warm { background-color: var(--bg-warm); }
+/* ===== Motion Configuration ===== */
+/* Add to the root variables in theme.css */
 
-/* ===== Border Utilities ===== */
-.border-l { border-left-width: 1px; }
-.border-r { border-right-width: 1px; }
-.border-t { border-top-width: 1px; }
-.border-b { border-bottom-width: 1px; }
+:root {
+  /* Motion settings - respecting reduced motion preferences */
+  --motion-enabled: true;
 
-.border-border { border-color: var(--border-subtle); }
-.border-shadow { box-shadow: var(--shadow); }
+  /* Animation durations */
+  --duration-instant: 50ms;
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
 
-/* ===== Shadow Utilities ===== */
-.shadow-sm { box-shadow: var(--shadow-sm); }
-.shadow { box-shadow: var(--shadow); }
-.shadow-md { box-shadow: var(--shadow-md); }
-.shadow-lg { box-shadow: var(--shadow-lg); }
-.shadow-xl { box-shadow: var(--shadow-xl); }
-.shadow-2xl { box-shadow: var(--shadow-2xl); }
-.shadow-inner { box-shadow: var(--shadow-inner); }
-.shadow-none { box-shadow: var(--shadow-none); }
+  /* Animation easing */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-expected: cubic-bezier(0, 0, 0.2, 1); /* For motions that start user-initiated */
+
+  /* Physics-based springs (for more advanced animations) */
+  --spring-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --spring-soft: cubic-bezier(0.16, 0.84, 0.44, 1);
+}
 
 /* ===== Transition Utilities ===== */
 .transition { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter; transition-timing-function: var(--transition-easing-in-out); transition-duration: var(--transition-duration-150); }
@@ -113,37 +115,10 @@
   @apply bg-accent text-white;
 }
 
-/* ===== Focus shell styles ===== */
-.focus-shell {
-  background-color: var(--bg-warm);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  border-width: 1px;
-  border-color: var(--border-subtle);
-  overflow: hidden;
+/* Motion-disabled overrides - will be applied via JS when prefers-reduced-motion is true */
+[data-motion-reduced="true"] {
+  --duration-instant: 0ms;
+  --duration-fast: 0ms;
+  --duration-normal: 0ms;
+  --duration-slow: 0ms;
 }
-.focus-main {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  padding: calc(var(--space-4) * 1px);
-}
-
-/* ===== Utility: gap ===== */
-.gap-0 { gap: calc(var(--space-0) * 1px); }
-.gap-0\.5 { gap: calc(var(--space-0-5) * 1px); }
-.gap-1 { gap: calc(var(--space-1) * 1px); }
-.gap-1\.5 { gap: calc(var(--space-1-5) * 1px); }
-.gap-2 { gap: calc(var(--space-2) * 1px); }
-.gap-2\.5 { gap: calc(var(--space-2-5) * 1px); }
-.gap-3 { gap: calc(var(--space-3) * 1px); }
-.gap-3\.5 { gap: calc(var(--space-3-5) * 1px); }
-.gap-4 { gap: calc(var(--space-4) * 1px); }
-.gap-5 { gap: calc(var(--space-5) * 1px); }
-.gap-6 { gap: calc(var(--space-6) * 1px); }
-.gap-8 { gap: calc(var(--space-8) * 1px); }
-.gap-10 { gap: calc(var(--space-10) * 1px); }
-.gap-12 { gap: calc(var(--space-12) * 1px); }
-.gap-16 { gap: calc(var(--space-16) * 1px); }
-.gap-20 { gap: calc(var(--space-20) * 1px); }
-.gap-24 { gap: calc(var(--space-24) * 1px); }
-.gap-32 { gap: calc(var(--space-32) * 1px); }

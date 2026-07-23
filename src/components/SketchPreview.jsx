@@ -1,7 +1,82 @@
 import { useState } from 'react'
 import useAppStore from '../store/useAppStore'
 
-const SketchPreview = ({ tasks = [], nowId = null, ranked = false }) => {
+const SketchPreview = ({
+  tasks = [],
+  nowId = null,
+  ranked = false,
+  loading = false,
+  error = null
+}) => {
+  // Handle error state
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Sketch Board</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Capture and prioritize your ideas
+          </p>
+
+          <div className="border rounded-lg p-4 text-center">
+            <p className="text-danger">Error loading sketch data</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {error.message || 'Unknown error'}
+            </p>
+            <button
+              onClick={() => {
+                // In a real app, this would trigger a refetch
+                // For now, we'll just console.log as state comes from store
+                console.log('Retry requested for sketch data')
+              }}
+              className="btn btn-outline mt-2"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Sketch Board</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Capture and prioritize your ideas
+          </p>
+
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-sm text-muted-foreground">Loading sketch data...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle empty state
+  if (tasks.length === 0 && !loading && !error) {
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Sketch Board</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Capture and prioritize your ideas
+          </p>
+
+          <div className="border rounded-lg p-4 text-center">
+            <p className="text-muted-foreground">No tasks yet</p>
+            <p className="text-sm mt-2">Start by capturing your first idea</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const [draft, setDraft] = useState('')
 
   // Helper to get current "now" task
