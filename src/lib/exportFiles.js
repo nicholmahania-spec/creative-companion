@@ -1468,19 +1468,22 @@ export async function downloadBrandPackVectorPdf(
       setFont(label || pack?.typeBody, role, size)
       pdf.setTextColor(color[0], color[1], color[2])
       const lines = pdf.splitTextToSize(str, maxW)
-      const lineH = size * 1.5  // Increased from 1.35 to 1.5 for better readability
-      ensureSpace(lines.length * lineH + 6)
+      const lineH = size * 1.5  // Line height: 1.5x font size for readability
+      const paragraphSpacing = Math.max(6, Math.round(size * 0.2))  // Paragraph spacing: 20% of font size (min 6px)
+      ensureSpace(lines.length * lineH + paragraphSpacing)
       pdf.text(lines, margin, y)
-      y += lines.length * lineH + 8  // Increased from 6 to 8 for better paragraph spacing
+      y += lines.length * lineH + paragraphSpacing
     }
 
     const kicker = (label) => {
-      ensureSpace(28)  // Increased from 22 to 28 for better spacing above section headers
+      const headerSpacingBefore = 20  // Space before section header
+      const headerSpacingAfter = 18   // Space after section header
+      ensureSpace(headerSpacingBefore)
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(9)  // Increased from 8 to 9 for better readability
       pdf.setTextColor(100, 100, 100)
       pdf.text(String(label).toUpperCase(), margin, y)
-      y += 18  // Increased from 14 to 18 for better spacing below section headers
+      y += headerSpacingAfter
     }
 
     const pageTitle = (title, sub) => {
