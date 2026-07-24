@@ -109,7 +109,7 @@ export const initPerformanceMonitoring = ({ onPerfEntry, debug = false } = {}) =
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries();
       const lastEntry = entries[entries.length - 1];
-      if (onReport) {
+      if (onReport && lastEntry) {
         onReport({
           name: 'LCP',
           value: Math.round(lastEntry.startTime),
@@ -130,7 +130,7 @@ export const initPerformanceMonitoring = ({ onPerfEntry, debug = false } = {}) =
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries();
       const lastEntry = entries[entries.length - 1];
-      if (onReport) {
+      if (onReport && lastEntry) {
         onReport({
           name: 'TTI',
           value: Math.round(lastEntry.startTime),

@@ -404,6 +404,14 @@ export async function exportToFigmaFormat(designData) {
   };
 }
 
+export function hasFigmaSession() {
+  return loadTokens()
+}
+
+export function logoutFromFigma() {
+  clearTokens()
+}
+
 export default {
   initializeFigmaService,
   isFigmaConfigured,
@@ -417,6 +425,8 @@ export default {
   figmaNodeToInternal,
   extractColorStylesFromFile,
   exportToFigmaFormat,
+  hasFigmaSession,
+  logoutFromFigma,
   // Token management (for internal use)
   _setTokens: setTokens,
   _clearTokens: clearTokens,
