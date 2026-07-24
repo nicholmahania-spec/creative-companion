@@ -102,6 +102,19 @@ export default defineConfig({
   server: {
     port: 5274,
     strictPort: true,
+    headers: {
+      'Content-Security-Policy': [
+        "default-src 'self'",
+        "img-src 'self' data: https:",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://api.x.ai",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com data:",
+        "connect-src 'self' ws://localhost:* http://localhost:* https://*.supabase.co https://api.x.ai https://fonts.googleapis.com https://fonts.gstatic.com",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ].join('; '),
+    },
     proxy: {
       '/api/xai': {
         target: 'https://api.x.ai',
