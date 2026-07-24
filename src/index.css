@@ -14278,15 +14278,26 @@ select:focus {
 
 /* Chapters now flow as one master scroll — bold section dividers, no tab loop */
 .define-chapter-frame { display: none !important; }
-.define-workbook.is-split .define-chapter {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 1rem;
-  margin-top: 0.5rem;
+
+/* Remove the outer card so Define matches the open layout of other views */
+.define-workbook.is-split {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
 }
-.define-workbook.is-split .define-chapter:first-child {
-  border-top: none;
-  padding-top: 0;
-  margin-top: 0;
+
+/* Give each chapter its own panel card (like Design's brand-section panels) */
+.define-workbook.is-split .define-chapter {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 0.5rem !important;
+  padding: 1.25rem !important;
+  margin-top: 0 !important;
+  margin-bottom: 1rem !important;
+}
+.define-workbook.is-split .define-chapter:last-child {
+  margin-bottom: 0 !important;
 }
 .define-workbook.is-split .define-chapter-title {
   font-size: 1.15rem !important;
