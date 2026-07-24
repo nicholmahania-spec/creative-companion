@@ -84,10 +84,10 @@ export default function DefineView(props) {
 
   return (
     <div
-      className="project-view surface-desk view-enter define-studio define-dashboard"
+      className="brand-layout surface-document define-studio define-dashboard view-enter"
       data-nav-dir={navDir}
     >
-      <div className="flow-top">
+      <div className="brand-template-top">
         <div>
           <h1 className="page-title">
             {i18nT(locale, 'path.define')}
