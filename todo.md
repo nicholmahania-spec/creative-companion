@@ -86,6 +86,42 @@ The timeout `setTimeout` is not cleared when the promise resolves successfully, 
 
 ---
 
+## Mood-board / Research enhancement roadmap (2026-07-24)
+
+Evaluated a broad mood-board feature wishlist against this app's actual shape — a
+guided 7-step workflow (Define→Research→Ideate→Sketch→Design→Review→Deliver)
+with a masonry mood board inside Research, not a freeform canvas tool. Filtered
+to what extends the existing architecture vs. what would fight it.
+
+### Phase 1 — building now (approved, both in parallel)
+1. **Link Parser for Research URL pins** — `submitBoardUrl()` currently treats
+   any pasted URL as a direct image src. Add a Supabase Edge Function
+   (`link-preview`) that fetches the target URL server-side (avoids browser
+   CORS) and parses `<title>` / OpenGraph tags (`og:title`, `og:image`,
+   `og:description`). ResearchView shows a real preview card (title + image +
+   source) instead of assuming the link is a raw image. Falls back to
+   treating the URL as a direct image if parsing fails, so existing behavior
+   for direct image links doesn't regress.
+2. **Color swatches extracted from mood images** — client-side dominant-color
+   sampling (canvas `getImageData`) run on each image pin. Extracted swatches
+   shown as a row of suggestions on the pin; clicking one calls the existing
+   `addPaletteColor(hex)` action to add it to the project palette. Suggestion
+   only — never auto-writes to the palette.
+
+### Phase 2 — later, not yet scoped
+- Eyedropper: sample a color from any point on a pinned image (not just
+  dominant colors) directly into the palette.
+- Aspect-ratio cropper for uploads before pinning.
+
+### Someday / maybe (explicitly deferred — conflicts with the app's guided-workflow design)
+- Infinite canvas, layer ordering (bring to front/back) — the app is
+  intentionally a structured masonry grid inside one step, not a freeform
+  board; this would fight the existing architecture rather than extend it.
+- Texture/pattern library, integrated stock-asset search — large scope,
+  third-party licensing/API dependency, not core to the workflow.
+
+---
+
 ## Next session starting point
 
 1. Start with **ReviewFocusView.jsx** nested FocusShell fix (HIGH #1) — it's the natural continuation of the UX agent's work
