@@ -16,20 +16,16 @@ import {
   pathLabel,
 } from '../lib/i18n'
 import { getDetectiveProgress } from '../lib/detectiveBrief'
-import useIsMobile from '../lib/useIsMobile'
 import { trackWorkflowTransition, trackFeatureUsage } from '../lib/analytics'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
-const DefineMoodCanvas = lazy(() => import('./DefineMoodCanvas'))
 
 export default function DefineView(props) {
   const {
     locale: localeProp = 'en',
     navDir = 'none',
     activeProject = null,
-    deskMood = [],
     deskTasks = [],
-    projectPalette = [],
     projects = [],
     projectNameDraft = '',
     setProjectNameDraft,
@@ -67,10 +63,7 @@ export default function DefineView(props) {
   const removeMilestone = useAppStore((s) => s.removeMilestone)
 
   const [openChapter, setOpenChapter] = useState('core')
-  /** Mobile only: 'form' inputs vs 'refs' mood board — one at a time */
-  const [mobilePane, setMobilePane] = useState('form')
   const [restoreSelect, setRestoreSelect] = useState('')
-  const isMobile = useIsMobile()
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
   const archivedProjects = (projects || []).filter((p) => p.archived)
@@ -123,32 +116,9 @@ export default function DefineView(props) {
         </div>
       </div>
 
-      {/* Mobile-only: inline segmented control above the panels */}
-      {isMobile && (
-        <nav className="define-mobile-tabs" aria-label="Define panel switch">
-          <button
-            type="button"
-            className={`define-mobile-tab${mobilePane === 'form' ? ' is-active' : ''}`}
-            onClick={() => setMobilePane('form')}
-            aria-pressed={mobilePane === 'form'}
-          >
-            Form
-          </button>
-          <button
-            type="button"
-            className={`define-mobile-tab${mobilePane === 'refs' ? ' is-active' : ''}`}
-            onClick={() => setMobilePane('refs')}
-            aria-pressed={mobilePane === 'refs'}
-          >
-            Refs
-          </button>
-        </nav>
-      )}
-
       <div
         className="define-split"
-        data-define-layout="form-board"
-        data-mobile-pane={mobilePane}
+        data-define-layout="form-only"
       >
         <div className="define-split-form" aria-label="Brief questions">
           <Suspense
@@ -284,19 +254,6 @@ export default function DefineView(props) {
               </div>
             </div>
           </details>
-        </div>
-
-        {/* RIGHT: pinned inspiration — same project pins as Research */}
-        <div className="define-split-mood" aria-label="Inspiration beside the brief">
-          <Suspense fallback={<div className="define-mood define-mood-loading">Loading board…</div>}>
-            <DefineMoodCanvas
-              deskMood={deskMood}
-              projectId={activeProject?.id}
-              projectPalette={projectPalette}
-              flashToast={flashToast}
-              flashMicro={flashMicro}
-            />
-          </Suspense>
         </div>
       </div>
 

@@ -10798,7 +10798,7 @@ body:has(.app.deep)::after {
 
 .define-split {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(16rem, 2fr); /* ~60/40 */
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.15rem;
   align-items: start;
 }
@@ -11058,7 +11058,7 @@ body:has(.app.deep)::after {
 
 @media (min-width: 840px) {
 .define-split {
-    grid-template-columns: minmax(0, 3fr) minmax(15rem, 2fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
