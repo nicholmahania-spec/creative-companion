@@ -1,5 +1,4 @@
 // performance monitoring utilities
-import { PerformanceObserver } from 'perf_hooks';
 
 let onPerfCallback = null;
 let debugFlag = false;
