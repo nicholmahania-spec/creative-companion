@@ -17,6 +17,7 @@ import {
 } from '../lib/i18n'
 import { getDetectiveProgress } from '../lib/detectiveBrief'
 import useIsMobile from '../lib/useIsMobile'
+import { trackWorkflowTransition, trackFeatureUsage } from '../lib/analytics'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 const DefineMoodCanvas = lazy(() => import('./DefineMoodCanvas'))
@@ -68,6 +69,7 @@ export default function DefineView(props) {
   const [openChapter, setOpenChapter] = useState('core')
   /** Mobile only: 'form' inputs vs 'refs' mood board — one at a time */
   const [mobilePane, setMobilePane] = useState('form')
+  const [restoreSelect, setRestoreSelect] = useState('')
   const isMobile = useIsMobile()
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
@@ -82,6 +84,7 @@ export default function DefineView(props) {
     }
     if (next === activeProject.name) return
     renameProject?.(activeProject.id, next)
+    trackFeatureUsage('project_rename', { projectId: activeProject.id, projectName: next })
     flashMicro?.(i18nT(locale, 'ui.projectRenamed') || 'Name saved')
   }
 
@@ -93,17 +96,17 @@ export default function DefineView(props) {
 
   return (
     <div
-      className="project-view surface-desk view-enter define-studio define-dashboard"
+      className="brand-layout surface-document define-studio define-dashboard view-enter"
       data-nav-dir={navDir}
     >
-      <header className="define-dash-header">
-        <div className="define-dash-title-group">
-          <span className="define-dash-kicker">
+      <div className="brand-template-top">
+        <div>
+          <h1 className="page-title">
             {i18nT(locale, 'path.define')}
           </span>
           <input
             id="project-name"
-            className="define-name-headline"
+            className="define-name-inline"
             value={projectNameDraft}
             onChange={(e) => setProjectNameDraft(e.target.value)}
             onBlur={commitProjectRename}
@@ -118,34 +121,29 @@ export default function DefineView(props) {
             aria-label="Project name"
           />
         </div>
-        <div className="define-dash-action">
-          <div className="define-progress-chip" role="status">
-            <div
-              className="define-progress-chip-fill"
-              style={{ width: `${progressPct}%` }}
-            />
-            <span className="define-progress-chip-label">
-              {progressPct}%
-              <span className="sr-only"> complete</span>
-            </span>
-          </div>
+      </div>
+
+      {/* Mobile-only: inline segmented control above the panels */}
+      {isMobile && (
+        <nav className="define-mobile-tabs" aria-label="Define panel switch">
           <button
             type="button"
-            className={`btn btn-primary define-dash-cta${requiredReady ? '' : ' is-quiet'}`}
-            onClick={() => {
-              if (!requiredReady) {
-                const next = progress.chapters.find((c) => !c.requiredDone)
-                if (next) setOpenChapter(next.id)
-                flashToast?.('Fill required fields first')
-                return
-              }
-              goResearch()
-            }}
+            className={`define-mobile-tab${mobilePane === 'form' ? ' is-active' : ''}`}
+            onClick={() => setMobilePane('form')}
+            aria-pressed={mobilePane === 'form'}
           >
-            {continueLabel}
+            Form
           </button>
-        </div>
-      </header>
+          <button
+            type="button"
+            className={`define-mobile-tab${mobilePane === 'refs' ? ' is-active' : ''}`}
+            onClick={() => setMobilePane('refs')}
+            aria-pressed={mobilePane === 'refs'}
+          >
+            Refs
+          </button>
+        </nav>
+      )}
 
       <div
         className="define-split"
@@ -229,13 +227,13 @@ export default function DefineView(props) {
                 {archivedProjects.length > 0 && (
                   <select
                     className="header-project-select"
-                    defaultValue=""
+                    value={restoreSelect}
                     onChange={(e) => {
                       const id = e.target.value
                       if (!id) return
                       unarchiveProject(Number(id) || id)
                       selectProject(Number(id) || id)
-                      e.target.value = ''
+                      setRestoreSelect('')
                     }}
                     aria-label="Restore archived project"
                   >

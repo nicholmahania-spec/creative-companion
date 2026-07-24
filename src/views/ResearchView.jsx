@@ -22,6 +22,7 @@ import {
   tFormat,
 } from '../lib/i18n'
 import { useModalFocus } from '../lib/useModalFocus'
+import { trackMoodPinOperation, trackBoardSubmission, trackTimerOperation } from '../lib/analytics'
 
 export default function ResearchView({
   locale: localeProp = 'en',
@@ -115,7 +116,10 @@ export default function ResearchView({
         )
         return
       }
-      pins.forEach((pin) => addMoodPin(pin))
+      pins.forEach((pin) => {
+        addMoodPin(pin)
+        trackMoodPinOperation('add', pin)
+      })
       if (skipped.length) {
         flashToast?.(
           `Added ${pins.length} · skipped ${skipped.length} (size/type)`
@@ -134,17 +138,14 @@ export default function ResearchView({
   const submitBoardUrl = () => {
     const url = boardUrl.trim()
     if (!url) return
-    try {
-      new URL(url)
-    } catch {
-      flashToast?.('Please enter a valid URL')
-      return
-    }
-    addMoodPin({
+    const pin = {
       type: 'image',
       note: '',
       visual: url,
-    })
+    }
+    addMoodPin(pin)
+    trackBoardSubmission('url')
+    trackMoodPinOperation('add', pin)
     setBoardUrl('')
     setBoardAddMode(null)
     notifyAction?.('Pin added', 'mood_pin', { label: 'URL pin' })
@@ -152,15 +153,16 @@ export default function ResearchView({
 
   const submitBoardNote = () => {
     const note = boardNote.trim() || 'Direction note'
-    addMoodPin({
+    const pin = {
       type: 'quote',
       note,
       visual:
         projectPalette[0] ||
-        // On-brand steel default (dopamine-ink → dopamine) instead of the
-        // off-system warm brown→teal fallback.
-        'linear-gradient(135deg, #1E3A8A, #2563EB)',
-    })
+        'linear-gradient(135deg, #1C1917, #0F766E)',
+    }
+    addMoodPin(pin)
+    trackBoardSubmission('note')
+    trackMoodPinOperation('add', pin)
     setBoardNote('')
     setBoardAddMode(null)
     notifyAction?.('Pin added', 'mood_pin', { label: 'Note pin' })
@@ -398,6 +400,11 @@ export default function ResearchView({
                                   flashMicro(
                                     r.inPack ? '★ pack' : '☆ pack'
                                   )
+                                // Track the operation
+                                trackMoodPinOperation(
+                                  r.inPack ? 'toggle_pack_on' : 'toggle_pack_off',
+                                  { ...item, inPack: r.inPack }
+                                )
                               }}
                             >
                               {item.inPack ? '★' : '☆'}
@@ -415,7 +422,11 @@ export default function ResearchView({
                                     <button
                                       type="button"
                                       className="btn btn-ghost mood-pin-order"
-                                      onClick={() => movePackPin(item.id, 'up')}
+                                      onClick={() => {
+                                    movePackPin(item.id, 'up')
+                                    // Track the operation
+                                    trackMoodPinOperation('move_pack_up', item)
+                                  }}
                                     >
                                       ↑
                                     </button>
@@ -437,7 +448,11 @@ export default function ResearchView({
                                           flashToast(
                                             r.error || 'Could not set hero'
                                           )
-                                        else flashMicro(i18nT(locale, 'ui.heroPinSet'))
+                                        else {
+                                          flashMicro(i18nT(locale, 'ui.heroPinSet'))
+                                          // Track the operation
+                                          trackMoodPinOperation('set_hero', { ...item, packHero: r.inPack })
+                                        }
                                       }}
                                     >
                                       Hero
@@ -447,7 +462,11 @@ export default function ResearchView({
                                 <button
                                   type="button"
                                   className="btn btn-ghost mood-pin-remove"
-                                  onClick={() => removeMoodPin(item.id)}
+                                  onClick={() => {
+                              removeMoodPin(item.id)
+                              // Track mood pin removal
+                              trackMoodPinOperation('remove', { ...item })
+                            }}
                                 >
                                   Remove
                                 </button>
@@ -461,9 +480,10 @@ export default function ResearchView({
                                 : ''
                             }`}
                             value={item.note || ''}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               updateMoodPinNote(item.id, e.target.value)
-                            }
+                              trackMoodPinOperation('update_note', { ...item, note: e.target.value })
+                            }}
                             placeholder={
                               item.inPack ? 'Why ★' : 'Caption…'
                             }

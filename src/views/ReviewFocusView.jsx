@@ -3,14 +3,14 @@
  * Added: Intent-setting step at start (phase 4 UX consistency).
  * Then proceeds to feedback notes review and gap review as before.
  */
-import { useState } from 'react'
+import { useState, Suspense, lazy } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import FocusCard from '../components/focus/FocusCard'
 import useAppStore from '../store/useAppStore'
 import { packReadiness } from '../lib/exportFiles'
 import { isFeedbackAiConfigured, translateFeedback } from '../lib/feedbackAi'
 import Button from '../components/ui/Button'
-import ReviewPreview from '../components/ReviewPreview'
+const ReviewPreview = lazy(() => import('../components/ReviewPreview'))
 
 const REVIEW_GAP_SKIP = new Set(['handoff', 'learnings'])
 
@@ -76,16 +76,27 @@ export default function ReviewFocusView({
 
   const currentNote = noteLines[0]
 
+  const exitFocus = () => setActiveView?.('review')
+
   // If intent not set, show intent input first
   if (!intentSet) {
     return (
-      <FocusShell stepLabel="06 // Review" stepIndex={0} stepCount={3}>
-        <FocusShell
-          stepLabel="06 // Review"
-          stepIndex={0}
-          stepCount={3}
-          showPreviewDrawer={true}
-          drawerContent={
+      <FocusShell
+        stepLabel="06 // Review"
+        stepIndex={0}
+        stepCount={3}
+        showPreviewDrawer={true}
+        onExit={exitFocus}
+        drawerContent={
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
             <ReviewPreview
               activeProject={activeProject}
               buildCurrentBrandPack={buildCurrentBrandPack}
@@ -106,38 +117,40 @@ export default function ReviewFocusView({
               setClearedNotes={setClearedNotes}
               setStrike={setStrike}
             />
-          }
-        >
-          <div className="focus-card">
-            <p className="focus-prompt">What do you want to accomplish in your review session?</p>
-            <input
-              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              placeholder="e.g., Address all client feedback and prepare for delivery"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && intent.trim()) {
+          </Suspense>
+        }
+      >
+        <div className="focus-card">
+          <p id="review-intent-prompt" className="focus-prompt">What do you want to accomplish in your review session?</p>
+          <input
+            id="review-intent-input"
+            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            placeholder="e.g., Address all client feedback and prepare for delivery"
+            autoFocus
+            aria-labelledby="review-intent-prompt"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && intent.trim()) {
+                setIntentSet(true)
+              }
+            }}
+          />
+          <div className="flex justify-end mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (intent.trim()) {
                   setIntentSet(true)
                 }
               }}
-            />
-            <div className="flex justify-end mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (intent.trim()) {
-                    setIntentSet(true)
-                  }
-                }}
-                disabled={!intent.trim()}
-              >
-                Start Reviewing
-              </Button>
-            </div>
+              disabled={!intent.trim()}
+            >
+              Start Reviewing
+            </Button>
           </div>
-        </FocusShell>
+        </div>
       </FocusShell>
     )
   }
@@ -149,27 +162,38 @@ export default function ReviewFocusView({
         stepIndex={1 + clearedNotes}
         stepCount={3}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
-          <ReviewPreview
-            activeProject={activeProject}
-            buildCurrentBrandPack={buildCurrentBrandPack}
-            clearedNotes={clearedNotes}
-            noteLines={noteLines}
-            skippedGaps={skippedGaps}
-            translating={translating}
-            translation={translation}
-            aiReady={aiReady}
-            runTranslate={runTranslate}
-            packSnap={packSnap}
-            ready={ready}
-            goSystemSection={goSystemSection}
-            setSkippedGaps={setSkippedGaps}
-            setTranslating={setTranslating}
-            setTranslation={setTranslation}
-            updateBrandField={updateBrandField}
-            setClearedNotes={setClearedNotes}
-            setStrike={setStrike}
-          />
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
+            <ReviewPreview
+              activeProject={activeProject}
+              buildCurrentBrandPack={buildCurrentBrandPack}
+              clearedNotes={clearedNotes}
+              noteLines={noteLines}
+              skippedGaps={skippedGaps}
+              translating={translating}
+              translation={translation}
+              aiReady={aiReady}
+              runTranslate={runTranslate}
+              packSnap={packSnap}
+              ready={ready}
+              goSystemSection={goSystemSection}
+              setSkippedGaps={setSkippedGaps}
+              setTranslating={setTranslating}
+              setTranslation={setTranslation}
+              updateBrandField={updateBrandField}
+              setClearedNotes={setClearedNotes}
+              setStrike={setStrike}
+            />
+          </Suspense>
         }
       >
         <FocusCard cardKey={currentNote}>
@@ -235,10 +259,22 @@ export default function ReviewFocusView({
 
   if (currentGap) {
     return (
-      <FocusShell stepLabel="06 // Review" stepIndex={2} stepCount={3}>
-        <FocusShell
-          showPreviewDrawer={true}
-          drawerContent={
+      <FocusShell
+        stepLabel="06 // Review"
+        stepIndex={2}
+        stepCount={3}
+        showPreviewDrawer={true}
+        onExit={exitFocus}
+        drawerContent={
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
             <ReviewPreview
               activeProject={activeProject}
               buildCurrentBrandPack={buildCurrentBrandPack}
@@ -259,31 +295,31 @@ export default function ReviewFocusView({
               setClearedNotes={setClearedNotes}
               setStrike={setStrike}
             />
-          }
-        >
-          <FocusCard cardKey={currentGap.id}>
-            <p className="focus-hint">Gap</p>
-            <p className="focus-prompt">{currentGap.label}</p>
-            <div className="focus-actions">
-              <button type="button" className="btn btn-primary" onClick={() => jumpGap(currentGap)}>
-                Fix now
-              </button>
-              <button
-                type="button"
-                className="focus-skip-btn"
-                onClick={() => setSkippedGaps((s) => new Set(s).add(currentGap.id))}
-              >
-                Skip
-              </button>
-            </div>
-          </FocusCard>
-        </FocusShell>
+          </Suspense>
+        }
+      >
+        <FocusCard cardKey={currentGap.id}>
+          <p className="focus-hint">Gap</p>
+          <p className="focus-prompt">{currentGap.label}</p>
+          <div className="focus-actions">
+            <button type="button" className="btn btn-primary" onClick={() => jumpGap(currentGap)}>
+              Fix now
+            </button>
+            <button
+              type="button"
+              className="focus-skip-btn"
+              onClick={() => setSkippedGaps((s) => new Set(s).add(currentGap.id))}
+            >
+              Skip
+            </button>
+          </div>
+        </FocusCard>
       </FocusShell>
     )
   }
 
   return (
-    <FocusShell stepLabel="06 // Review" stepIndex={3} stepCount={3}>
+    <FocusShell stepLabel="06 // Review" stepIndex={3} stepCount={3} onExit={exitFocus}>
       <div className="focus-card" style={{ textAlign: 'center' }}>
         <p className="focus-prompt">All caught up</p>
         <div className="focus-actions" style={{ justifyContent: 'center' }}>

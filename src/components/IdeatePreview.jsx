@@ -1,85 +1,91 @@
-const IdeatePreview = ({ directions = [] }) => {
-  const titled = directions.filter((d) => String(d.title || '').trim())
-  const chosen = directions.find((d) => d.chosen)
+import { useMemo, useCallback, memo } from 'react'
+import { measure } from '../lib/performance'
 
+const IdeatePreview = memo(({ directions = [] }) => {
+  // Helper to measure rendering time
+  const measureTime = (name, fn) => {
+    const start = performance.now()
+    const result = fn()
+    const end = performance.now()
+    measure(name, start, end)
+    return result
+  }
+
+  // Handle empty state
   if (directions.length === 0) {
-    return (
+    return measureTime('IdeatePreview_empty', () => (
       <div className="space-y-4">
         <div className="border rounded-lg p-4">
           <h3 className="font-semibold text-lg mb-2">Directions</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Narrow down your creative directions
+            Narrowing your brand directions
           </p>
+
           <div className="border rounded-lg p-4 text-center">
-            <p className="text-muted-foreground">No directions yet</p>
-            <p className="text-sm mt-2">Add directions in the Spark view to begin ideating</p>
+            <p className="text-muted-foreground">No directions available</p>
+            <p className="text-xs mt-2">Add directions in the Ideate view to begin</p>
           </div>
         </div>
       </div>
-    )
+    ))
   }
 
-  return (
+  const titled = directions.filter((d) => String(d.title || '').trim())
+  const chosen = directions.find((d) => d.chosen)
+
+  return measureTime('IdeatePreview_content', () => (
     <div className="space-y-4">
       <div className="border rounded-lg p-4">
         <h3 className="font-semibold text-lg mb-2">Directions</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Narrow down your creative directions
+          Narrowing your brand directions
         </p>
 
+        {/* Stats */}
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="font-medium text-muted-foreground">Total</p>
-              <p className="text-lg font-semibold">{directions.length}</p>
-            </div>
-            <div>
-              <p className="font-medium text-muted-foreground">Titled</p>
-              <p className="text-lg font-semibold">{titled.length}</p>
-            </div>
+          <div className="flex justify-between text-sm">
+            <span>Total:</span>
+            <span className="font-mono">{directions.length}</span>
           </div>
-
+          <div className="flex justify-between text-sm">
+            <span>Titled:</span>
+            <span className="font-mono">{titled.length}</span>
+          </div>
           {chosen && (
-            <div className="mt-4 pt-4 border-t border-border/50">
-              <p className="font-medium mb-2">Chosen Direction:</p>
-              <div className="bg-muted/50 rounded p-3">
-                <p className="font-semibold">{chosen.label}: {chosen.title}</p>
-                {chosen.note && <p className="text-sm text-muted-foreground mt-1">{chosen.note}</p>}
-              </div>
-            </div>
-          )}
-
-          {titled.length > 0 && !chosen && (
-            <div className="mt-4 pt-4 border-t border-border/50">
-              <p className="font-medium mb-2">Candidates:</p>
-              <div className="space-y-2">
-                {titled.map((d) => (
-                  <div key={d.id} className="p-3 bg-muted/50 rounded border-l-2 border-l-[var(--dopamine,#3D5AFE)]">
-                    <p className="font-semibold text-sm">{d.label}: {d.title}</p>
-                    {d.note && <p className="text-xs text-muted-foreground mt-0.5">{d.note}</p>}
-                  </div>
-                ))}
-              </div>
+            <div className="flex justify-between text-sm">
+              <span>Chosen:</span>
+              <span className="font-mono text-[var(--dopamine,#3D5AFE)]">{chosen.label}</span>
             </div>
           )}
         </div>
-      </div>
 
-      <div className="border rounded-lg p-4">
-        <h3 className="font-semibold text-lg mb-2">Status</h3>
-        <div className="space-y-2">
-          {directions.map((d) => (
-            <div key={d.id} className="flex items-center justify-between">
-              <span className="text-sm">Direction {d.label}</span>
-              <span className={`px-2 py-0.5 rounded-full text-xs ${d.chosen ? 'bg-green-100 text-green-800' : d.title ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}`}>
-                {d.chosen ? '✓ Chosen' : d.title ? '○ Titled' : '○ Empty'}
-              </span>
+        {/* Directions list */}
+        {titled.length > 0 && (
+          <>
+            <p className="font-medium mb-4 mt-2">Directions:</p>
+            <div className="space-y-2">
+              {titled.map((d) => (
+                <div
+                  key={d.id}
+                  className={`border rounded p-2 text-sm ${d.chosen ? 'border-[var(--dopamine,#3D5AFE)]' : 'border-border'}`}
+                >
+                  <span className="font-semibold">{d.label}:</span> {d.title}
+                  {d.chosen && <span className="ml-2 text-[var(--dopamine,#3D5AFE)]">★ chosen</span>}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
+
+        {/* Winner queued message */}
+        {chosen && (
+          <p className="text-sm text-muted-foreground mt-4">
+            Winner queued: <span className="font-medium">{chosen.title}</span>
+          </p>
+        )}
       </div>
     </div>
-  )
-}
+  ))
+})
 
 export default IdeatePreview

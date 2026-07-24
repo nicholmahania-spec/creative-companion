@@ -2,7 +2,7 @@
  * Sketch — fold owns the step; capture secondary; queue/done collapsed.
  * Tech-Studio ADHD: one primary (Done), sticky Next, focus isolation.
  */
-import { Suspense, lazy, useState } from 'react'
+import { Suspense, lazy, useState, useRef, useEffect } from 'react'
 import useAppStore from '../store/useAppStore'
 import {
   normalizeLocale,
@@ -18,6 +18,7 @@ import {
   latestDecision,
   chosenDirection,
 } from '../lib/decisionLog'
+import { trackFeatureUsage } from '../lib/analytics'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
 
@@ -143,7 +144,10 @@ export default function SketchView(props) {
           <button
             type="button"
             className="btn btn-ghost btn-sm"
-            onClick={() => setActiveView('sketch-focus')}
+            onClick={() => {
+              setActiveView('sketch-focus')
+              trackFeatureUsage('sketch_focus_mode', 'opened')
+            }}
           >
             Try Focus Mode (beta)
           </button>
@@ -166,7 +170,10 @@ export default function SketchView(props) {
           <button
             type="button"
             className="text-link"
-            onClick={() => setActiveView?.('spark')}
+            onClick={() => {
+              setActiveView?.('spark')
+              trackFeatureUsage('decision_log_edit', 'opened')
+            }}
           >
             Edit
           </button>
@@ -192,7 +199,10 @@ export default function SketchView(props) {
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
-                onClick={() => ideateDirs.forEach(queueDraft)}
+                onClick={() => {
+                  ideateDirs.forEach(queueDraft)
+                  trackFeatureUsage('ideate_queue_all', 'used')
+                }}
               >
                 Queue all
               </button>
@@ -363,13 +373,21 @@ export default function SketchView(props) {
               id="desk-capture"
               value={quickInput}
               onChange={(e) => setQuickInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && captureStep?.()}
+              onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                captureStep?.();
+                trackFeatureUsage('sketch_task_added', 'capture', { source: 'desk_capture_enter' });
+              }
+            }}
               placeholder="Next step"
               aria-label="Add to desk"
             />
             <button
               type="button"
-              onClick={() => captureStep?.()}
+              onClick={() => {
+                captureStep?.();
+                trackFeatureUsage('sketch_task_added', 'capture', { source: 'desk_capture_button' });
+              }}
               className="btn btn-primary"
             >
               Add
@@ -462,7 +480,10 @@ export default function SketchView(props) {
                       <input
                         type="checkbox"
                         checked={false}
-                        onChange={() => toggleTask(task.id)}
+                        onChange={() => {
+                toggleTask(task.id);
+                trackFeatureUsage('sketch_task_toggled', 'toggle', { taskId: task.id, source: 'queue_checkbox' });
+              }}
                       />
                       <span className="task-row-body">
                         <span className="task-step-num">{i + 2}</span>

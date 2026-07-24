@@ -17,12 +17,12 @@
  * updateDirection/logDecision/addTask calls SparkView's "queue"
  * button uses, so Sketch sees the exact same result either way.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense, lazy } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import FocusCard from '../components/focus/FocusCard'
 import useAppStore from '../store/useAppStore'
 import { decisionFromDirection } from '../lib/decisionLog'
-import IdeatePreview from '../components/IdeatePreview'
+const IdeatePreview = lazy(() => import('../components/IdeatePreview'))
 
 function blankDirs() {
   return [
@@ -56,7 +56,66 @@ export default function IdeateFocusView({
   const [winner, setWinner] = useState(null)
   const [queued, setQueued] = useState(false)
 
-  const exitFocus = () => setActiveView?.('spark')
+  // If intent not set, show intent input first (phase 4)
+  if (!intentSet) {
+    return (
+      <FocusShell stepLabel="03 // Ideate" stepIndex={0} stepCount={2}>
+        <FocusShell
+          stepLabel="03 // Ideate"
+          stepIndex={0}
+          stepCount={2}
+          showPreviewDrawer={true}
+          drawerContent={
+            <Suspense fallback={
+              <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+                <div className="space-y-4">
+                  <div className="h-4 w-32 bg-border rounded"></div>
+                  <div className="h-4 w-24 bg-border rounded"></div>
+                  <div className="h-4 w-40 bg-border rounded"></div>
+                </div>
+              </div>
+            }>
+              <IdeatePreview
+                directions={dirs}
+              />
+            </Suspense>
+          }
+        >
+          <div className="focus-card">
+            <p id="ideate-intent-prompt" className="focus-prompt">What do you want to accomplish in your ideation session?</p>
+            <input
+              id="ideate-intent-input"
+              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+              value={intent}
+              onChange={(e) => setIntent(e.target.value)}
+              placeholder="e.g., Explore three different brand directions for the project"
+              autoFocus
+              aria-labelledby="ideate-intent-prompt"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && intent.trim()) {
+                  setIntentSet(true)
+                }
+              }}
+            />
+            <div className="flex justify-end mt-4">
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!intent.trim()}
+                onClick={() => {
+                  if (intent.trim()) {
+                    setIntentSet(true)
+                  }
+                }}
+              >
+                Start Ideating
+              </button>
+            </div>
+          </div>
+        </FocusShell>
+      </FocusShell>
+    )
+  }
 
   const pick = (chosenDir) => {
     if (!contenders || contenders.length === 0) {
@@ -143,9 +202,11 @@ export default function IdeateFocusView({
     setQueued(true)
   }
 
+  const exitFocus = () => setActiveView?.('spark')
+
   if (queued) {
     return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={1} stepCount={1}>
+      <FocusShell stepLabel="03 // Ideate" stepIndex={1} stepCount={1} onExit={exitFocus}>
         <div className="focus-card" style={{ textAlign: 'center' }}>
           <p className="focus-prompt">Direction {winner.label} queued</p>
           <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>{winner.title}</p>
@@ -159,7 +220,7 @@ export default function IdeateFocusView({
 
   if (winner) {
     return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={1} stepCount={1}>
+      <FocusShell stepLabel="03 // Ideate" stepIndex={1} stepCount={1} onExit={exitFocus}>
         <div className="focus-card" style={{ textAlign: 'center' }}>
           <p className="focus-prompt">Winner: {winner.label}</p>
           <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>{winner.title}</p>

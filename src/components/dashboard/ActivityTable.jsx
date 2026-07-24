@@ -1,6 +1,6 @@
 import React from 'react';
-import { useUserActivity } from '../../lib/hooks/useUserActivity';
-import useAppStore from '../../store/useAppStore';
+import { useUserActivity } from '@/lib/hooks/useUserActivity';
+import useAppStore from '@/store/useAppStore';
 
 export function ActivityTable() {
   const { currentProjectId } = useAppStore();

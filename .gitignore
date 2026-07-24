@@ -29,7 +29,3 @@ test-results/
 yarn-debug.log*
 yarn-error.log*
 .vercel
-.env*
-
-# Local Netlify folder
-.netlify

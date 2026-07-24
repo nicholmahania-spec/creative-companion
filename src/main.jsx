@@ -3,6 +3,41 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import { versionLabel, APP_BUILD_DATE } from './lib/version'
+import { initPerformanceMonitoring } from './lib/performance'
+import { initAnalytics } from './lib/analytics'
+// Sentry initialization
+if (import.meta.env.VITE_SENTRY_DSN) {
+  import('@sentry/react').then(({ init }) => {
+    init({
+      dsn: import.meta.env.VITE_SENTRY_DSN,
+      // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
+      // We recommend adjusting this value in production
+      tracesSampleRate: 1.0,
+    })
+  }).catch(err => {
+    console.error('Failed to initialize Sentry', err)
+  })
+}
+// Initialize analytics
+initAnalytics({
+  enabled: import.meta.env.PROD || import.meta.env.DEV === false // Enable in production and preview
+});
+
+// Initialize performance monitoring
+if (typeof window !== 'undefined') {
+  initPerformanceMonitoring({
+    onPerfEntry: (entry) => {
+      // Send to analytics or logging service in production
+      if (import.meta.env.PROD) {
+        // Could send to analytics endpoint here
+        console.debug('Performance:', entry);
+      } else {
+        console.info('Performance:', entry);
+      }
+    },
+    debug: import.meta.env.DEV
+  });
+}
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

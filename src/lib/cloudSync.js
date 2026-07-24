@@ -6,12 +6,11 @@ import { supabase, isSupabaseConfigured } from './supabase'
  */
 /** Reject after ms so a stalled network request can't hang the UI forever. */
 function withTimeout(promise, ms, label) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(`${label} timed out`)), ms)
-    ),
-  ])
+  let timerId
+  const timeout = new Promise((_, reject) => {
+    timerId = setTimeout(() => reject(new Error(`${label} timed out`)), ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timerId))
 }
 
 const IMAGE_BUCKET = 'workspace-images'

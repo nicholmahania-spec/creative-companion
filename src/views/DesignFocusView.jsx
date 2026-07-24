@@ -74,21 +74,22 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
         onExit={exitFocus}
       >
         <div className="focus-card">
-          <p className="focus-prompt">What do you want to accomplish in your design session?</p>
+          <p id="design-intent-prompt" className="focus-prompt">What do you want to accomplish in your design session?</p>
           <input
-            className="focus-input-inline"
-            style={{ display: 'block', width: '100%' }}
+            id="design-intent-input"
+            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
             placeholder="e.g., Choose heading and body fonts that feel trustworthy"
             autoFocus
+            aria-labelledby="design-intent-prompt"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && intent.trim()) {
                 setIntentSet(true)
               }
             }}
           />
-          <div className="focus-actions">
+          <div className="flex justify-end mt-4">
             <Button
               variant="outline"
               size="sm"
@@ -115,6 +116,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
         stepIndex={1}
         stepCount={3}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
           <div>
             <h3 className="font-semibold mb-2">Current Brand Settings</h3>
@@ -184,6 +186,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
         stepIndex={2}
         stepCount={3}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
           <div>
             <h3 className="font-semibold mb-2">Applied Brand Settings</h3>
@@ -228,6 +231,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
         stepIndex={2}
         stepCount={3}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
           <div>
             <h3 className="font-semibold mb-2">Preview Selection</h3>
@@ -273,7 +277,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             style={{
               fontFamily: fontFamilyFromLabel(winner.heading),
               fontWeight: 700,
-              fontSize: '2rem',
+              fontSize: 'clamp(1.5rem, 6vw, 2rem)',
               margin: '0.5rem 0',
               color: 'var(--text-primary)',
               textAlign: 'center',
@@ -302,6 +306,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
       stepIndex={1}
       stepCount={3}
       showPreviewDrawer={true}
+      onExit={exitFocus}
       drawerContent={
         <div>
           <h3 className="font-semibold mb-2">Current Comparison</h3>
@@ -341,9 +346,9 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
       }
       onExit={exitFocus}
     >
-      <div style={{ width: '100%', maxWidth: '42rem' }}>
-        <p className="focus-prompt" style={{ textAlign: 'center' }}>Which pairing wins?</p>
-        <div className="focus-actions" style={{ gap: '1rem', marginTop: '1rem' }}>
+      <div className="w-full max-w-2xl">
+        <p className="focus-prompt text-center">Which pairing wins?</p>
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
           {bracket.map((pair, i) => (
             <button
               key={pair.id}
@@ -360,21 +365,21 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
                 padding: '1rem',
               }}
             >
-              <span className="focus-hint" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              <span className="hidden sm:block text-xs text-muted mb-2">
                 {i === 0 ? '← Left arrow' : 'Right arrow →'}
               </span>
               <p
                 style={{
                   fontFamily: fontFamilyFromLabel(pair.heading),
                   fontWeight: 700,
-                  fontSize: '1.75rem',
+                  fontSize: 'clamp(1.25rem, 4vw, 1.75rem)',
                   margin: '0.5rem 0 0.25rem',
                   color: 'var(--text-primary)',
                 }}
               >
                 Aa Bb
               </p>
-              <p style={{ fontFamily: fontFamilyFromLabel(pair.body), fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+              <p style={{ fontFamily: fontFamilyFromLabel(pair.body), fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)', color: 'var(--text-secondary)' }}>
                 {pair.label}
               </p>
             </button>
