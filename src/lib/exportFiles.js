@@ -23,6 +23,24 @@ import {
   ROLE_JOBS,
 } from './brandSystem'
 
+// Typographic scale and vertical rhythm system
+const BASE_UNIT = 4  // 4px base unit for vertical rhythm
+const SPACING = {
+  xs: BASE_UNIT,      // 4px
+  sm: BASE_UNIT * 2,  // 8px
+  md: BASE_UNIT * 3,  // 12px
+  lg: BASE_UNIT * 4,  // 16px
+  xl: BASE_UNIT * 5,  // 20px
+  '2xl': BASE_UNIT * 6, // 24px
+  '3xl': BASE_UNIT * 7, // 28px
+  '4xl': BASE_UNIT * 8  // 32px
+}
+const LINE_HEIGHT = {
+  tight: 1.2,   // For headings
+  normal: 1.5,  // For body text
+  relaxed: 1.6  // For captions/notes
+}
+
 /** Safe filename from a project title */
 export function slugifyFilename(name, fallback = 'creative-companion') {
   const s = String(name || '')
@@ -1459,7 +1477,25 @@ export async function downloadBrandPackVectorPdf(
       pdf.setFontSize(size)
     }
 
-    const writeWrapped = (
+    // Design token system for consistent typography and spacing
+const BASE_UNIT = 4  // Base unit for 4pt grid system
+const SPACING = {
+  xs: BASE_UNIT,      // 4px
+  sm: BASE_UNIT * 2,  // 8px
+  md: BASE_UNIT * 3,  // 12px
+  lg: BASE_UNIT * 4,  // 16px
+  xl: BASE_UNIT * 5,  // 20px
+  '2xl': BASE_UNIT * 6, // 24px
+  '3xl': BASE_UNIT * 7, // 28px
+  '4xl': BASE_UNIT * 8  // 32px
+}
+const LINE_HEIGHT = {
+  tight: 1.2,  // For headings
+  normal: 1.5, // For body text
+  relaxed: 1.6 // For captions/notes
+}
+
+const writeWrapped = (
       text,
       { size = 11, role = 'body', color = [12, 10, 9], label, maxW = contentW } = {}
     ) => {
@@ -1468,45 +1504,72 @@ export async function downloadBrandPackVectorPdf(
       setFont(label || pack?.typeBody, role, size)
       pdf.setTextColor(color[0], color[1], color[2])
       const lines = pdf.splitTextToSize(str, maxW)
-      const lineH = size * 1.35
-      ensureSpace(lines.length * lineH + 4)
+
+      // Determine line height multiplier based on role
+      let lineHeightMultiplier
+      if (role === 'heading') {
+        lineHeightMultiplier = LINE_HEIGHT.tight   // Tighter line height for headings
+      } else if (role === 'body' || role === undefined) {
+        lineHeightMultiplier = LINE_HEIGHT.normal   // Standard line height for body text
+      } else {
+        lineHeightMultiplier = LINE_HEIGHT.relaxed   // More relaxed for captions/notes
+      }
+      const lineH = size * lineHeightMultiplier
+
+      // Paragraph spacing: proportional to font size (20% of font size, min BASE_UNIT)
+      const paragraphSpacing = Math.max(BASE_UNIT, Math.round(size * 0.2))
+
+      ensureSpace(lines.length * lineH + paragraphSpacing)
       pdf.text(lines, margin, y)
-      y += lines.length * lineH + 6
+      y += lines.length * lineH + paragraphSpacing
     }
 
     const kicker = (label) => {
-      ensureSpace(22)
+      // Use proper spacing from our scale
+      const headerSpacingBefore = SPACING.lg   // 16px before header
+      const headerSpacingAfter = SPACING.md    // 12px after header (better balance)
+      ensureSpace(headerSpacingBefore)
       pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(8)
+      pdf.setFontSize(9)  // Increased from 8 to 9 for better readability
       pdf.setTextColor(100, 100, 100)
       pdf.text(String(label).toUpperCase(), margin, y)
-      y += 14
+      y += headerSpacingAfter
     }
 
     const pageTitle = (title, sub) => {
+      // Use proper typographic scale and spacing
       pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(8)
+      pdf.setFontSize(9)  // Increased from 8 to 9
       pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
       pdf.text('BRAND BOOK', margin, y)
-      y += 16
-      setFont(pack?.typeHeading, 'heading', 20)
+      y += SPACING.md  // 12px after BRAND BOOK
+
+      setFont(pack?.typeHeading, 'heading', 22)  // 22pt heading
       pdf.setTextColor(12, 10, 9)
       pdf.text(title, margin, y)
-      y += 22
+
+      // Calculate heading line height (22pt * 1.2 = 26.4px)
+      const headingLineHeight = 22 * LINE_HEIGHT.tight
+      y += headingLineHeight + SPACING.sm  // Add space after heading
+
       if (sub) {
         pdf.setFont('helvetica', 'normal')
-        pdf.setFontSize(10)
+        pdf.setFontSize(11)  // 11pt subtitle
         pdf.setTextColor(90, 90, 90)
         const lines = pdf.splitTextToSize(sub, contentW)
         pdf.text(lines, margin, y)
-        y += lines.length * 13 + 12
+
+        // Calculate subtitle line height (11pt * 1.5 = 16.5px)
+        const subtitleLineHeight = 11 * LINE_HEIGHT.normal
+        y += lines.length * subtitleLineHeight + SPACING.lg  // Space after subtitle
       } else {
-        y += 6
+        y += SPACING.md  // Space if no subtitle
       }
+
       pdf.setDrawColor(220, 220, 220)
       pdf.setLineWidth(0.5)
       pdf.line(margin, y, margin + contentW, y)
-      y += 16
+      y += SPACING.lg  // Space before content begins
     }
 
     const drawFooters = () => {
