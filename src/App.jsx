@@ -2747,7 +2747,7 @@ function App() {
 
             <button
               type="button"
-              className={`btn ${activeView === 'brand' ? 'btn-primary' : 'btn-secondary'} header-export`}
+              className="btn btn-secondary header-export"
               onClick={openExportPanel}
               title="Export"
               aria-label="Export"

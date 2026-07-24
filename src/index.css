@@ -463,9 +463,33 @@ h3 {
   outline-offset: 3px;
 }
 
+.header-capture,
+.header-export,
 .header-more {
   font-size: 0.8125rem !important;
   padding: 0.4rem 0.85rem !important;
+  border-radius: var(--radius-pill) !important;
+}
+
+/* Export is always outline in the header — never competes with Capture */
+.header-export {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-strong) !important;
+}
+
+.header-export:hover {
+  border-color: var(--text-primary) !important;
+  background: var(--bg-muted) !important;
+}
+
+/* Tools is ghost — no border unless hovered */
+.header-more {
+  border-color: transparent !important;
+}
+
+.header-more:hover {
+  border-color: var(--border-strong) !important;
 }
 
 /* Account chip — Settings + Sign out always one click */
