@@ -7,6 +7,7 @@ import {
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/breakKit'
 import versionService from '../services/versionService'
+import { trackVersionAction } from '../lib/analytics'
 
 /**
  * Ideate tool prompts (not fake client data).
@@ -542,14 +543,21 @@ const useAppStore = create(
         const n = m ? Number(m[1]) + 1 : 2
         const next = `v${n}`
         set({
-          projects: state.projects.map((proj) =>
+          projects: state.projects.map((state.projects.map((proj) =>
             proj.id === state.currentProjectId
               ? { ...proj, designVersion: next }
               : proj
           ),
         })
         // Create a version snapshot after bumping version
-        await versionService.autoVersion('version bump')
+        const versionId = await versionService.autoVersion('version bump')
+        // Track version creation
+        if (versionId) {
+          const version = await versionService.getVersionById(versionId)
+          if (version) {
+            trackVersionAction('create', version)
+          }
+        }
         return { ok: true, version: next }
       },
 
@@ -567,7 +575,14 @@ const useAppStore = create(
         }
         const result = {...get().bumpDesignVersion(), bumped: true}
         // Create a version snapshot after bumping version from v1
-        await versionService.autoVersion('initial version bump')
+        const versionId = await versionService.autoVersion('initial version bump')
+        // Track version creation
+        if (versionId) {
+          const version = await versionService.getVersionById(versionId)
+          if (version) {
+            trackVersionAction('create', version)
+          }
+        }
         return {...result, version: result.version}
       },
 
@@ -1634,7 +1649,14 @@ const useAppStore = create(
         }))
 
         // Create a version when applying template
-        versionService.autoVersion('template-applied')
+        const versionId = await versionService.autoVersion('template-applied')
+        // Track version creation
+        if (versionId) {
+          const version = await versionService.getVersionById(versionId)
+          if (version) {
+            trackVersionAction('create', version)
+          }
+        }
 
         return { ok: true }
       },

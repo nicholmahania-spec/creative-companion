@@ -1,6 +1,7 @@
 // Version Service for managing project versions and diffing capabilities
 import useAppStore from '../store/useAppStore'
 import { buildColorSystem } from '../lib/brandSystem'
+import { trackVersionAction } from '../lib/analytics'
 
 /**
  * Version Service
@@ -100,6 +101,9 @@ class VersionService {
         severity: 'patch' // patch, minor, major
       }
     }
+
+    // Track version creation
+    trackVersionAction('create', versionData)
 
     return versionData
   }
@@ -306,8 +310,7 @@ class VersionService {
       if (aKeys.length !== bKeys.length) return false
 
       return aKeys.every(key =>
-        b.hasOwnProperty(key) && this.valuesEqual(a[key], b[key])
-      )
+        b.hasOwnProperty(key) && this.valuesEqual(a[key], b[key]))
     }
 
     return false
@@ -390,6 +393,9 @@ class VersionService {
       if (!version) {
         throw new Error('Version not found')
       }
+
+      // Track version restoration
+      trackVersionAction('restore', version)
 
       // Get current state
       const store = useAppStore.getState()
