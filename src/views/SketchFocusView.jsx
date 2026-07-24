@@ -178,7 +178,7 @@ export default function SketchFocusView({ setActiveView }) {
                     meta: '',
                     completed: false,
                     seeded: false,
-                    projectId: null, // TODO: get from context
+                    projectId: activeProject?.id || useAppStore.getState().currentProjectId,
                     dueDate: '',
                   })
                   setDraft('')
@@ -199,7 +199,7 @@ export default function SketchFocusView({ setActiveView }) {
                       meta: '',
                       completed: false,
                       seeded: false,
-                      projectId: null, // TODO: get from context
+                      projectId: activeProject?.id || useAppStore.getState().currentProjectId,
                       dueDate: '',
                     })
                     setDraft('')

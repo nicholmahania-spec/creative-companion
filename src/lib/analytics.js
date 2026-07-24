@@ -2,12 +2,14 @@
 let analyticsInitialized = false;
 let analyticsEndpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT || '';
 let analyticsEnabled = false;
+let visibilityChangeListener = null;
 
 /**
  * Initialize analytics with optional configuration
  * @param {Object} config - Configuration options
  * @param {string} config.endpoint - Analytics endpoint URL
  * @param {boolean} config.enabled - Whether analytics tracking is enabled
+ * @returns {Object} Cleanup function
  */
 export const initAnalytics = ({ endpoint, enabled = true } = {}) => {
   if (typeof window === 'undefined') return;
@@ -18,6 +20,34 @@ export const initAnalytics = ({ endpoint, enabled = true } = {}) => {
 
   // Track page view on initialization
   trackPageView();
+
+  // Set up visibility change listener
+  if (typeof window !== 'undefined') {
+    visibilityChangeListener = () => {
+      if (!document.hidden) {
+        trackPageView();
+      }
+    };
+    document.addEventListener('visibilitychange', visibilityChangeListener);
+  }
+
+  // Return cleanup function
+  return () => {
+    cleanupAnalytics();
+  };
+};
+
+/**
+ * Cleanup analytics resources
+ */
+export const cleanupAnalytics = () => {
+  if (typeof window !== 'undefined' && visibilityChangeListener) {
+    document.removeEventListener('visibilitychange', visibilityChangeListener);
+    visibilityChangeListener = null;
+  }
+  analyticsInitialized = false;
+  analyticsEnabled = false;
+  analyticsEndpoint = '';
 };
 
 /**
@@ -25,7 +55,7 @@ export const initAnalytics = ({ endpoint, enabled = true } = {}) => {
  * @returns {boolean}
  */
 const isAnalyticsEnabled = () => {
-  return analyticsInitialized && typeof window !== 'undefined';
+  return analyticsInitialized === true && typeof window !== 'undefined';
 };
 
 /**
@@ -33,12 +63,15 @@ const isAnalyticsEnabled = () => {
  * @param {string} path - Current path
  * @param {string} title - Page title
  */
-export const trackPageView = (path = window.location.pathname, title = document.title) => {
+export const trackPageView = (path, title) => {
   if (!isAnalyticsEnabled()) return;
 
+  const pathValue = path ?? window.location.pathname;
+  const titleValue = title ?? document.title;
+
   trackEvent('page_view', {
-    path,
-    title,
+    path: pathValue,
+    title: titleValue,
     timestamp: new Date().toISOString()
   });
 };
