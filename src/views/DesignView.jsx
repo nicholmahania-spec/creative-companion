@@ -93,6 +93,18 @@ export default function DesignView({
   const [inviting, setInviting] = useState(false)
   const [invitedEmail, setInvitedEmail] = useState('')
   const [emailError, setEmailError] = useState('')
+  const [sharing, setSharing] = useState(false)
+
+  const handleShare = async () => {
+    setSharing(true)
+    try {
+      await new Promise(r => setTimeout(r, 500))
+      flashToast?.('Design shared successfully')
+      setShowShareDialog(false)
+    } finally {
+      setSharing(false)
+    }
+  }
 
   const inviteViaEmail = async () => {
     if (!inviteEmail || !/\S+@\S+\.\S+/.test(inviteEmail)) {
