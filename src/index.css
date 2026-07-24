@@ -7917,18 +7917,18 @@ body.cc-printing-pack .buddy-shell,
 }
 
 .main {
-  max-width: 1120px;
+  max-width: min(1440px, 94vw);
   margin-inline: auto;
   width: 100%;
 }
 
 .header-content,
 .header-content-simple {
-  max-width: 1120px;
+  max-width: min(1440px, 94vw);
 }
 
 .journey-bar {
-  max-width: 1120px;
+  max-width: min(1440px, 94vw);
 }
 
 .app.deep {
@@ -10614,7 +10614,7 @@ body:has(.app.deep)::after {
    ============================================================ */
 
 .app:has(.define-dashboard) .main {
-  max-width: min(1180px, 100%);
+  max-width: min(1440px, 94vw);
   padding-top: 1.5rem;
 }
 
