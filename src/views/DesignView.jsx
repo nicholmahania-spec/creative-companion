@@ -2045,7 +2045,10 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                             https://designcompanion.com/projects/{activeProject?.id || '123abc'}
                           </p>
                           <button
-                            onClick={copyLink}
+                            onClick={() => {
+                              const el = document.getElementById('shareable-link')
+                              navigator.clipboard?.writeText(el?.textContent?.trim() || '')
+                            }}
                             className="ml-auto text-sm text-blue-600 hover:text-blue-800"
                           >
                             Copy Link
