@@ -1468,45 +1468,45 @@ export async function downloadBrandPackVectorPdf(
       setFont(label || pack?.typeBody, role, size)
       pdf.setTextColor(color[0], color[1], color[2])
       const lines = pdf.splitTextToSize(str, maxW)
-      const lineH = size * 1.35
-      ensureSpace(lines.length * lineH + 4)
+      const lineH = size * 1.5  // Increased from 1.35 to 1.5 for better readability
+      ensureSpace(lines.length * lineH + 6)
       pdf.text(lines, margin, y)
-      y += lines.length * lineH + 6
+      y += lines.length * lineH + 8  // Increased from 6 to 8 for better paragraph spacing
     }
 
     const kicker = (label) => {
-      ensureSpace(22)
+      ensureSpace(28)  // Increased from 22 to 28 for better spacing above section headers
       pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(8)
+      pdf.setFontSize(9)  // Increased from 8 to 9 for better readability
       pdf.setTextColor(100, 100, 100)
       pdf.text(String(label).toUpperCase(), margin, y)
-      y += 14
+      y += 18  // Increased from 14 to 18 for better spacing below section headers
     }
 
     const pageTitle = (title, sub) => {
       pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(8)
+      pdf.setFontSize(9)  // Increased from 8 to 9
       pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
       pdf.text('BRAND BOOK', margin, y)
-      y += 16
-      setFont(pack?.typeHeading, 'heading', 20)
+      y += 20  // Increased from 16 to 20
+      setFont(pack?.typeHeading, 'heading', 22)  // Increased from 20 to 22
       pdf.setTextColor(12, 10, 9)
       pdf.text(title, margin, y)
-      y += 22
+      y += 28  // Increased from 22 to 28
       if (sub) {
         pdf.setFont('helvetica', 'normal')
-        pdf.setFontSize(10)
+        pdf.setFontSize(11)  // Increased from 10 to 11
         pdf.setTextColor(90, 90, 90)
         const lines = pdf.splitTextToSize(sub, contentW)
         pdf.text(lines, margin, y)
-        y += lines.length * 13 + 12
+        y += lines.length * 16 + 16  // Increased line height from 13 to 16 and spacing from 12 to 16
       } else {
-        y += 6
+        y += 12  // Increased from 6 to 12
       }
       pdf.setDrawColor(220, 220, 220)
       pdf.setLineWidth(0.5)
       pdf.line(margin, y, margin + contentW, y)
-      y += 16
+      y += 20  // Increased from 16 to 20
     }
 
     const drawFooters = () => {
@@ -1906,7 +1906,7 @@ export async function downloadBrandPackVectorPdf(
     const dontLines = pdf.splitTextToSize(dontT || '—', colW)
     pdf.text(doLines, margin, y)
     pdf.text(dontLines, margin + colW + 16, y)
-    y += Math.max(doLines.length, dontLines.length) * 14 + 20
+    y += Math.max(doLines.length, dontLines.length) * 16.5 + 20  // 11pt * 1.5 line height
 
     const dirs = pack?.directions || []
     if (dirs.length) {
