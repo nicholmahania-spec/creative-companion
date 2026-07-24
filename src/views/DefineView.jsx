@@ -57,6 +57,7 @@ export default function DefineView(props) {
   const [openChapter, setOpenChapter] = useState('core')
   /** Mobile only: 'form' inputs vs 'refs' mood board — one at a time */
   const [mobilePane, setMobilePane] = useState('form')
+  const [restoreSelect, setRestoreSelect] = useState('')
   const isMobile = useIsMobile()
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
@@ -190,13 +191,13 @@ export default function DefineView(props) {
                 {archivedProjects.length > 0 && (
                   <select
                     className="header-project-select"
-                    defaultValue=""
+                    value={restoreSelect}
                     onChange={(e) => {
                       const id = e.target.value
                       if (!id) return
                       unarchiveProject(Number(id) || id)
                       selectProject(Number(id) || id)
-                      e.target.value = ''
+                      setRestoreSelect('')
                     }}
                     aria-label="Restore archived project"
                   >
