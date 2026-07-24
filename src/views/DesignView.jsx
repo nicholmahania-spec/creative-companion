@@ -1955,7 +1955,7 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                             <h4 className="font-medium">Selected Version</h4>
                             <p className="text-sm text-color-muted">
                               {selectedVersion?.versionLabel || 'Unnamed'} •{" "}
-                              {new Date(selectedVersion.timestamp).toLocaleString()}
+                              {selectedVersion?.timestamp ? new Date(selectedVersion.timestamp).toLocaleString() : '—'}
                             </p>
                           </div>
                         </div>

@@ -62,15 +62,15 @@ export function captureSaveHandle(filename, description = 'Download') {
   const mime = mimeForName(name)
   const ext = name.includes('.') ? `.${name.split('.').pop()}` : ''
   try {
-    return window.showSaveFilePicker({
+    const p = window.showSaveFilePicker({
       suggestedName: name,
-      types: [
-        {
-          description,
-          accept: { [mime]: ext ? [ext] : ['.bin'] },
-        },
-      ],
+      types: [{ description, accept: { [mime]: ext ? [ext] : ['.bin'] } }],
     })
+    // Mark the promise as handled so an AbortError (user cancel) while the
+    // caller does async pre-work doesn't fire an "unhandled rejection".
+    // writeToSaveHandle still catches it with cancelled:true when it awaits.
+    p.catch(() => {})
+    return p
   } catch {
     return null
   }

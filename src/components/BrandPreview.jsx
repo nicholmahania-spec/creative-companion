@@ -3,7 +3,7 @@ import useAppStore from '../store/useAppStore'
 import { TYPE_PAIRS } from '../lib/color'
 
 const BrandPreview = memo(({ projectName }) => {
-  const { tagline, typeHeading, typeBody, colors } = useAppStore((s) => s.brand)
+  const { tagline, typeHeading, typeBody, colors } = useAppStore((s) => s.brand ?? {})
 
   const previewData = useMemo(() => ({
     tagline: tagline || 'Your tagline here',
