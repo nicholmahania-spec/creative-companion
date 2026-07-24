@@ -2071,7 +2071,7 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                     <div className="bg-gray-50 rounded-lg p-4 border">
                       <div className="flex items-center space-x-3">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h3m8 0Hv-9a4 4 0 00-4-4H5a4 4 0 00-4 4v13a4 4 0 004 4h12a4 4 0 004-4v-3z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                         <div>
                           <p className="font-medium text-color-primary shareable-link" id="shareable-link">
