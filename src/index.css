@@ -3126,6 +3126,10 @@ h3 {
 
 /* Hero current-step card — flat Tech-Studio surface */
 
+.step-focus-panel {
+  position: relative;
+}
+
 .step-focus-panel::before {
   content: '';
   position: absolute;
