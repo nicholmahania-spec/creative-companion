@@ -11,22 +11,7 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log the error to an error reporting service
     console.error('UI Error:', error, errorInfo);
-
-    // Try to send to Sentry if available
-    try {
-      // Dynamically import Sentry to avoid bundling if not used
-      import('@sentry/react').then(({ captureException }) => {
-        captureException(error, { extra: errorInfo });
-      }).catch((importError) => {
-        // Sentry not available or failed to load, ignore silently
-        console.debug('Sentry not available:', importError);
-      });
-    } catch (importError) {
-      // Dynamic import failed (e.g., in environments without dynamic import support)
-      console.debug('Sentry dynamic import failed:', importError);
-    }
   }
 
   render() {

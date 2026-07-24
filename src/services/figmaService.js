@@ -1,5 +1,4 @@
 // Figma API Service for handling file operations, authentication, and data sync
-import { v4 as uuidv4 } from 'uuid';
 
 // Figma API configuration
 const FIGMA_API_BASE = 'https://api.figma.com/v1';

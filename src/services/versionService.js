@@ -1,5 +1,5 @@
 // Version Service for managing project versions and diffing capabilities
-import { useAppStore } from '../store/useAppStore'
+import useAppStore from '../store/useAppStore'
 import { buildColorSystem } from '../lib/brandSystem'
 
 /**

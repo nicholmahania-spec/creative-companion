@@ -229,3 +229,13 @@ export const usePerformanceMonitor = () => {
     },
   };
 };
+
+export const measureTime = (name, fn) => {
+  const start = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  const result = fn();
+  const end = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  if (debugFlag) {
+    console.debug(`[PERF] ${name}: ${(end - start).toFixed(2)}ms`);
+  }
+  return result;
+};

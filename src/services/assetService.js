@@ -1,6 +1,5 @@
 // Asset Service for handling file uploads, optimization, and management
 import { supabase } from '../lib/supabase'
-import { v4 as uuidv4 } from 'uuid'
 
 /**
  * Upload an image file to Supabase storage
@@ -16,7 +15,7 @@ export async function uploadImage(file, bucket = 'assets', path = null) {
 
   // Generate unique filename if path not provided
   const fileExt = file.name.split('.').pop()
-  const fileName = `${uuidv4()}.${fileExt}`
+  const fileName = `${crypto.randomUUID()}.${fileExt}`
   const filePath = path || `${Date.now()}/${fileName}`
 
   try {

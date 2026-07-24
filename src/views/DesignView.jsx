@@ -313,46 +313,6 @@ export default function DesignView({
     }
   }
 
-  // Load version diff between selected version and current state
-  const loadVersionDiff = async (versionId) => {
-    if (!versionId) return
-
-    setLoadingDiff(true)
-    setDiffResult(null)
-    try {
-      const version = await versionService.getVersionById(versionId)
-      if (!version) {
-        setDiffResult({ error: 'Version not found' })
-        return
-      }
-
-      // Get current state
-      const store = useAppStore.getState()
-      const { currentProjectId } = store
-
-      if (!currentProjectId) {
-        setDiffResult({ error: 'No active project' })
-        return
-      }
-
-      // Create a snapshot of current state for comparison
-      const currentVersion = await versionService.createVersionSnapshot()
-      if (!currentVersion) {
-        setDiffResult({ error: 'Unable to create current version snapshot' })
-        return
-      }
-
-      // Calculate diff between selected version and current state
-      const diff = versionService.diffVersions(version, currentVersion)
-      setDiffResult(diff)
-    } catch (error) {
-      console.error('Failed to load version diff:', error)
-      setDiffResult({ error: 'Failed to generate diff' })
-    } finally {
-      setLoadingDiff(false)
-    }
-  }
-
   // Honor parent jump (e.g. readiness “fix palette roles”)
   useEffect(() => {
     if (!brandEditSectionProp) return
@@ -520,6 +480,7 @@ export default function DesignView({
   }
 
   return (
+    <>
           <div className="brand-layout surface-document system-view design-studio view-enter" data-nav-dir={navDir}>
             <div className="brand-template-top">
               <div>
@@ -1402,7 +1363,7 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                             setImportedColors([]);
                             setImportedDesign(null);
                             setFigmaFileKey('');
-                          }
+                          }}
                           className="mt-3 w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
                         >
                           Add Colors to Palette
@@ -1594,7 +1555,7 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                   onChange={(e) => setLogoDirection(e.target.value)}
                   placeholder="Mark rules"
                 />
-              </div
+              </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-clearspace">
                   Clearspace
@@ -1920,7 +1881,7 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                               </p>
                             )}
                           </div>
-                        )}
+                        ))}
                       </div>
                     )}
                   </div>
@@ -2141,8 +2102,8 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                       className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {inviting ? 'Inviting...' : 'Invite'}
-                    }
-</div>
+                    </button>
+                  </div>
 
                   {invitedEmail && (
                     <p className="text-sm text-green-600 mt-2">
@@ -2252,7 +2213,7 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                               </div>
                             </div>
                           </div>
-                        )}
+                        ))}
                       </div>
                     )}
                   </div>
@@ -2350,5 +2311,6 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
               </div>
             </div>
           )}
-        )
+    </>
+  )
 }

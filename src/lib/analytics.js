@@ -188,6 +188,51 @@ export const endPerformanceTimer = (timerName, properties = {}) => {
   }
 };
 
+export const trackChapterNavigation = (chapterId, chapterTitle) => {
+  trackEvent('chapter_navigation', {
+    chapterId,
+    chapterTitle,
+  });
+};
+
+export const trackMoodPinOperation = (action, pin) => {
+  trackEvent('mood_pin_operation', {
+    action,
+    pinId: pin?.id,
+    pinLabel: pin?.label,
+  });
+};
+
+export const trackBoardSubmission = (boardId, pinCount) => {
+  trackEvent('board_submission', {
+    boardId,
+    pinCount,
+  });
+};
+
+export const trackTimerOperation = (action, timerName) => {
+  trackEvent('timer_operation', {
+    action,
+    timerName,
+  });
+};
+
+export const trackDetectiveFieldUpdate = (fieldId, value, chapterId) => {
+  trackEvent('detective_field_update', {
+    fieldId,
+    chapterId,
+    hasValue: !!value,
+  });
+};
+
+export const trackMilestoneOperation = (action, milestone) => {
+  trackEvent('milestone_operation', {
+    action,
+    milestoneId: milestone?.id,
+    milestoneLabel: milestone?.label,
+  });
+};
+
 // Auto-track page visibility changes
 if (typeof window !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
