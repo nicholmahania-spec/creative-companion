@@ -21,6 +21,7 @@ import {
   DEFAULT_LOGO_MIN_SIZE,
   TYPE_SCALE,
   ROLE_JOBS,
+  colorSpec,
 } from './brandSystem'
 
 // Typographic scale and vertical rhythm system
@@ -560,6 +561,11 @@ export function packBriefMarkdown(pack = {}) {
   }
   if ((pack.palette || []).length) {
     lines.push(`**Palette:** ${(pack.palette || []).join(' · ')}`, '')
+    ;(pack.palette || []).forEach((hex) => {
+      const spec = colorSpec(hex)
+      if (spec) lines.push(`- ${spec.hex} — ${spec.rgb} — ${spec.cmyk}`)
+    })
+    lines.push('')
   }
   if (pack.typeHeading || pack.typeBody) {
     lines.push(
@@ -1704,6 +1710,7 @@ const writeWrapped = (
       ensureSpace(swH + 36)
       show.forEach((hex, i) => {
         const rgb = hexToRgb(hex) || [136, 136, 136]
+        const spec = colorSpec(hex)
         const x = margin + i * swW
         pdf.setFillColor(rgb[0], rgb[1], rgb[2])
         pdf.rect(x, y, swW - 4, swH, 'F')
@@ -1711,8 +1718,14 @@ const writeWrapped = (
         pdf.setFontSize(7)
         pdf.setTextColor(70, 70, 70)
         pdf.text(String(hex).toUpperCase(), x, y + swH + 10)
+        if (spec) {
+          pdf.setFontSize(6)
+          pdf.setTextColor(120, 120, 120)
+          pdf.text(spec.rgb, x, y + swH + 19)
+          pdf.text(spec.cmyk, x, y + swH + 27)
+        }
       })
-      y += swH + 22
+      y += swH + 40
     } else {
       writeWrapped('No palette yet — add colors on Design.', { size: 11 })
     }

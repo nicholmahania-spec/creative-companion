@@ -6,7 +6,10 @@ import {
   mapPaletteRoles,
   normalizeHex,
 } from '../lib/color'
+import { colorSpec } from '../lib/brandSystem'
 import { pinFaceStyle } from '../lib/moodPins'
+
+const formatCmyk = (hex) => colorSpec(hex)?.cmyk || ''
 
 const ROLE_KEYS = [
   { id: 'cover', label: 'Cover' },
@@ -201,17 +204,20 @@ export default function BrandArtboard({
             <i style={{ background: roles[r.id] }} />
             {r.label}
             <code className="role-hex">{roles[r.id]}</code>
+            <code className="role-cmyk">CMYK {formatCmyk(roles[r.id])}</code>
           </span>
         ))}
       </div>
       <details className="artboard-advanced">
-        <summary>Hex</summary>
+        <summary>Hex / RGB / CMYK</summary>
         <div className="direction-hex-grid">
           {(palette || []).map((c, i) => (
             <div key={`${c}-${i}`} className="direction-hex-chip">
               <i style={{ background: c }} />
               <span>
                 <code>{normalizeHex(c) || c}</code>
+                <code className="direction-hex-rgb">RGB {formatRgb(c)}</code>
+                <code className="direction-hex-cmyk">CMYK {formatCmyk(c)}</code>
               </span>
             </div>
           ))}
