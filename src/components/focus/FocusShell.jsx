@@ -100,7 +100,7 @@ export default function FocusShell({
   }, [isDrawerOpen, isDrawerContentLoaded, drawerContent])
 
   return (
-    <div className="flex h-[calc(100%-4rem)]">
+    <div className="flex flex-col">
       {/* Main content area */}
       <div className="flex-1 flex flex-col">
         <div className="focus-shell p-4">
@@ -126,10 +126,11 @@ export default function FocusShell({
                   aria-pressed={isDrawerOpen}
                 >
                   {isDrawerOpen ? (
-                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                    <ChevronLeft className="h-4 w-4 hidden sm:block" aria-hidden="true" />
                   ) : (
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    <ChevronRight className="h-4 w-4 hidden sm:block" aria-hidden="true" />
                   )}
+                  <span className="sm:hidden text-xs">{isDrawerOpen ? '▼' : '▲'}</span>
                 </button>
               )}
             </div>
@@ -162,37 +163,59 @@ export default function FocusShell({
 
       {/* Preview drawer with lazy loading */}
       {showPreviewDrawer && (
-        <div
-          ref={drawerRef}
-          role="dialog"
-          aria-modal="true"
-          className={`fixed right-0 top-0 h-screen w-80 bg-warm border-l border-shadow translate-x-[${isDrawerOpen ? '0' : '100%'}]
-                     transition-transform duration-300 ease-in-out z-50`}
-        >
-          <div className="p-4 border-b border-border">
-            <h2 className="font-semibold mb-2">
-              Preview
-            </h2>
-            <button
-              type="button"
-              ref={firstFocusableRef}
-              className="btn btn-outline btn-icon float-right text-sm"
+        <>
+          {/* Mobile backdrop */}
+          {isDrawerOpen && (
+            <div
+              className="fixed inset-0 bg-black/30 z-40 sm:hidden"
               onClick={handleDrawerToggle}
-              aria-label="Close preview"
-            >
-              ✕
-            </button>
+              aria-hidden="true"
+            />
+          )}
+          <div
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            className={[
+              // Mobile: bottom sheet
+              'fixed bottom-0 left-0 right-0 max-h-[70vh] rounded-t-2xl',
+              // Desktop: right sidebar
+              'sm:bottom-auto sm:left-auto sm:right-0 sm:top-0 sm:h-screen sm:w-80 sm:rounded-none',
+              // Shared
+              'bg-background border border-border flex flex-col',
+              'transition-transform duration-300 ease-in-out z-50',
+              // Slide state — mobile uses translate-y, desktop uses translate-x
+              isDrawerOpen
+                ? 'translate-y-0 sm:translate-y-0 sm:translate-x-0'
+                : 'translate-y-full sm:translate-y-0 sm:translate-x-full',
+            ].join(' ')}
+          >
+            {/* Mobile drag handle */}
+            <div className="flex justify-center pt-2 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <h2 className="font-semibold">Preview</h2>
+              <button
+                type="button"
+                ref={firstFocusableRef}
+                className="btn btn-outline btn-icon text-sm"
+                onClick={handleDrawerToggle}
+                aria-label="Close preview"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1 min-h-0">
+              {isDrawerContentLoaded && drawerContent !== null ? (
+                <>
+                  {drawerContent}
+                  <div ref={lastFocusableRef} tabIndex={-1} />
+                </>
+              ) : null}
+            </div>
           </div>
-          <div className="p-4 overflow-y-auto h-full">
-            {/* Drawer content */}
-            {isDrawerContentLoaded && drawerContent !== null ? (
-              <>
-                {drawerContent}
-                <div ref={lastFocusableRef} tabIndex={-1} />
-              </>
-            ) : null}
-          </div>
-        </div>
+        </>
       )}
     </div>
   )

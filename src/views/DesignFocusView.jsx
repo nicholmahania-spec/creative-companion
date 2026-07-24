@@ -277,7 +277,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             style={{
               fontFamily: fontFamilyFromLabel(winner.heading),
               fontWeight: 700,
-              fontSize: '2rem',
+              fontSize: 'clamp(1.5rem, 6vw, 2rem)',
               margin: '0.5rem 0',
               color: 'var(--text-primary)',
               textAlign: 'center',
@@ -348,28 +348,28 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
     >
       <div className="w-full max-w-2xl">
         <p className="focus-prompt text-center">Which pairing wins?</p>
-        <div className="flex gap-4 mt-4">
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
           {bracket.map((pair, i) => (
             <div
               key={pair.id}
               onClick={() => pick(pair)}
               className="flex-1 cursor-pointer border border-border rounded-md bg-white p-4 hover:bg-muted/50 transition-colors"
             >
-              <span className="block text-xs text-muted mb-2">
+              <span className="hidden sm:block text-xs text-muted mb-2">
                 {i === 0 ? '← Left arrow' : 'Right arrow →'}
               </span>
               <p
                 style={{
                   fontFamily: fontFamilyFromLabel(pair.heading),
                   fontWeight: 700,
-                  fontSize: '1.75rem',
+                  fontSize: 'clamp(1.25rem, 4vw, 1.75rem)',
                   margin: '0.5rem 0 0.25rem',
                   color: 'var(--text-primary)',
                 }}
               >
                 Aa Bb
               </p>
-              <p style={{ fontFamily: fontFamilyFromLabel(pair.body), fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+              <p style={{ fontFamily: fontFamilyFromLabel(pair.body), fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)', color: 'var(--text-secondary)' }}>
                 {pair.label}
               </p>
             </div>
