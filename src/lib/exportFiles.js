@@ -623,7 +623,7 @@ export function brandPackToHtml(pack) {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-  .sheet { max-width: 560px; margin: 0 auto; padding: 1.5rem 1.25rem 2.5rem; }
+  .sheet { max-width: 560px; margin: 0 auto; padding: 1.75rem 1.25rem 2.75rem; }
   .direction-sheet {
     background: #fff;
     border: 1px solid rgba(11,18,32,.08);
@@ -632,7 +632,7 @@ export function brandPackToHtml(pack) {
   }
   .export-identity-cover {
     border-radius: 12px;
-    padding: 1.35rem 1.25rem 1.15rem;
+    padding: 1.5rem 1.25rem 1.35rem;
     margin-bottom: 1.15rem;
     background: ${cover};
     color: ${coverFg};
@@ -643,21 +643,21 @@ export function brandPackToHtml(pack) {
     letter-spacing: 0;
     text-transform: none;
     color: rgba(11,18,32,.55);
-    margin: 1.15rem 0 0.4rem;
+    margin: 1.25rem 0 0.6rem;
   }
   .export-identity-cover .kicker { color: inherit; opacity: 0.85; margin-top: 0; }
   .direction-title {
     font-size: clamp(1.5rem, 3vw, 1.9rem);
     font-weight: 700;
     letter-spacing: -0.03em;
-    margin: 0.15rem 0 0.5rem;
+    margin: 0.2rem 0 0.7rem;
     line-height: 1.15;
     color: inherit;
   }
   .direction-brief {
     color: rgba(11,18,32,.65);
-    line-height: 1.55;
-    margin: 0 0 0.5rem;
+    line-height: 1.6;
+    margin: 0 0 0.6rem;
     font-size: 0.95rem;
     white-space: pre-wrap;
   }
@@ -667,7 +667,7 @@ export function brandPackToHtml(pack) {
     height: 52px;
     border-radius: 12px;
     overflow: hidden;
-    margin: 0.5rem 0 0.35rem;
+    margin: 0.75rem 0 0.5rem;
   }
   .direction-palette > div { flex: 1; }
   .direction-hex {
@@ -682,14 +682,14 @@ export function brandPackToHtml(pack) {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.85rem;
-    margin: 0.5rem 0 0.25rem;
+    margin: 0.75rem 0 0.35rem;
   }
   @media (max-width: 520px) { .export-do-dont { grid-template-columns: 1fr; } }
   .direction-pins {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0.55rem;
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
   }
   .direction-pin {
     border: 1px solid rgba(11,18,32,.08);
@@ -705,14 +705,14 @@ export function brandPackToHtml(pack) {
     line-height: 1.35;
   }
   .direction-tasks {
-    margin: 0.4rem 0 0;
+    margin: 0.6rem 0 0;
     padding-left: 1.1rem;
     color: rgba(11,18,32,.65);
     font-size: 0.9rem;
     line-height: 1.45;
   }
   .direction-foot {
-    margin-top: 1.5rem;
+    margin-top: 1.75rem;
     padding-top: 0.85rem;
     border-top: 1px solid rgba(11,18,32,.08);
     font-size: 0.72rem;
