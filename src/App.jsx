@@ -9,6 +9,8 @@ import {
 } from 'react'
 import useAppStore from './store/useAppStore'
 import { DEFAULT_PALETTE } from './lib/color'
+import { trackExportAction } from './lib/analytics'
+import ErrorBoundary from './components/error/ErrorBoundary'
 import {
   BREAKDOWN_DEPTHS,
   generateProjectMicrosteps,
@@ -1976,6 +1978,8 @@ function App() {
             : `${label || kind.toUpperCase()} saved · ${when}`
         )
       }
+      // Track export action
+      trackExportAction(kind, true)
       // XP stays in Progress HUD — success toast stays human leave-behind language
       flashToast(
         kind === 'backup'
@@ -2021,12 +2025,16 @@ function App() {
             })}`
           )
           finishOk('Brand kit')
-        } else if (result.cancelled)
+          trackExportAction('kit', true)
+        } else if (result.cancelled) {
           flashToast(i18nT(locale, 'ui.saveCancelled'))
-        else
+          trackExportAction('kit', false)
+        } else {
           flashToast(
             result.error || i18nT(locale, 'ui.downloadFailed') || 'Kit failed'
           )
+          trackExportAction('kit', false)
+        }
       })()
       return
     }
@@ -2050,9 +2058,12 @@ function App() {
             })}`
           )
           finishOk('Brand book PDF')
-        } else if (result.cancelled)
+          trackExportAction('pdf', true)
+        } else if (result.cancelled) {
           flashToast(i18nT(locale, 'ui.saveCancelled'))
-        else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+          trackExportAction('pdf', false)
+        } else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+          trackExportAction('pdf', false)
       })()
       return
     }
@@ -2088,9 +2099,12 @@ function App() {
             })}`
           )
           finishOk('Preview PDF')
-        } else if (result.cancelled)
+          trackExportAction('pdf-preview', true)
+        } else if (result.cancelled) {
           flashToast(i18nT(locale, 'ui.saveCancelled'))
-        else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+          trackExportAction('pdf-preview', false)
+        } else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+          trackExportAction('pdf-preview', false)
       })()
       return
     }
@@ -2098,10 +2112,14 @@ function App() {
     if (kind === 'html') {
       void Promise.resolve(downloadBrandPackHtml(pack, handlePromise)).then(
         (result) => {
-          if (result.ok) finishOk('Brand HTML')
-          else if (result.cancelled)
+          if (result.ok) {
+            finishOk('Brand HTML')
+            trackExportAction('html', true)
+          } else if (result.cancelled) {
             flashToast(i18nT(locale, 'ui.saveCancelled'))
-          else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            trackExportAction('html', false)
+          } else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            trackExportAction('html', false)
         }
       )
       return
@@ -2121,9 +2139,13 @@ function App() {
       void Promise.resolve(downloadBrandPackJson(pack, handlePromise)).then(
         (result) => {
           if (result.ok) finishOk('Brand JSON')
-          else if (result.cancelled)
+          else if (result.cancelled) {
             flashToast(i18nT(locale, 'ui.saveCancelled'))
-          else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            trackExportAction('json', false)
+          } else {
+            flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            trackExportAction('json', false)
+          }
         }
       )
       return
@@ -2131,7 +2153,10 @@ function App() {
     if (kind === 'backup') {
       const result = downloadWorkspaceBackup(exportAllData())
       if (result.ok) finishOk('Workspace backup')
-      else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+      else {
+        flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+        trackExportAction('backup', false)
+      }
       return
     }
     if (kind === 'print') {
@@ -2152,7 +2177,11 @@ function App() {
           })
           setLastExportNote(`Print dialog · ${when} — Save as PDF if you want a file`)
           flashToast(i18nT(locale, 'ui.printDialogOpen'))
-        } else flashToast(r.error || i18nT(locale, 'ui.printFailed'))
+          trackExportAction('print', true)
+        } else {
+          flashToast(r.error || i18nT(locale, 'ui.printFailed'))
+          trackExportAction('print', false)
+        }
       }, exportPanel ? 50 : 180)
       return
     }

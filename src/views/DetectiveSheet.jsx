@@ -2,13 +2,20 @@
  * Define — Design Detective Sheet as chaptered studio workspace.
  * Three focus cards · micro-icons · hyper-focus fields · clean inputs.
  */
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useRef } from 'react'
 import {
   DETECTIVE_CHAPTERS,
   getDetectiveProgress,
   isFilled,
 } from '../lib/detectiveBrief'
 import useIsMobile from '../lib/useIsMobile'
+import {
+  trackDetectiveFieldUpdate,
+  trackMilestoneOperation,
+  trackChapterNavigation,
+  startPerformanceTimer,
+  endPerformanceTimer
+} from '../lib/analytics'
 
 export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 
@@ -146,7 +153,10 @@ export default function DetectiveSheet({
       const st = chapterStats.find((s) => s.id === ch.id)
       return st && !st.requiredDone
     })
-    if (next) setOpenChapter(next.id)
+    if (next) {
+      setOpenChapter(next.id)
+      trackChapterNavigation(next.id, 'open')
+    }
   }, [chapterStats, setOpenChapter])
 
   /** Only the required fields actually still empty — not a static list of
@@ -189,7 +199,10 @@ export default function DetectiveSheet({
                 className={`define-chapter-tab${active ? ' is-active' : ''}${
                   st.complete ? ' is-complete' : ''
                 }${st.requiredDone && !st.complete ? ' is-ready' : ''}`}
-                onClick={() => setOpenChapter(ch.id)}
+                onClick={() => {
+                  setOpenChapter(ch.id)
+                  trackChapterNavigation(ch.id, 'open')
+                }}
                 aria-current={active ? 'step' : undefined}
               >
                 <span className="define-chapter-tab-num" aria-hidden="true">
@@ -307,9 +320,14 @@ export default function DetectiveSheet({
                             className="define-input field-input"
                             rows={3}
                             value={detective?.[f.id] || ''}
-                            onChange={(e) =>
-                              updateDetective?.(f.id, e.target.value)
-                            }
+                            onChange={(e) => {
+                              const fieldId = f.id;
+                              const startTime = `detective_field_${fieldId}_${Date.now()}`;
+                              startPerformanceTimer(startTime);
+                              updateDetective?.(f.id, e.target.value);
+                              trackDetectiveFieldUpdate(f.id, e.target.value, ch.id);
+                              endPerformanceTimer(startTime, { fieldId, chapterId: ch.id });
+                            }}
                             onFocus={() => setFocusField(f.id)}
                             onBlur={() => setFocusField(null)}
                             placeholder={f.placeholder}
@@ -320,9 +338,14 @@ export default function DetectiveSheet({
                             id={`detective-${f.id}`}
                             className="define-input field-input"
                             value={detective?.[f.id] || ''}
-                            onChange={(e) =>
-                              updateDetective?.(f.id, e.target.value)
-                            }
+                            onChange={(e) => {
+                              const fieldId = f.id;
+                              const startTime = `detective_field_${fieldId}_${Date.now()}`;
+                              startPerformanceTimer(startTime);
+                              updateDetective?.(f.id, e.target.value);
+                              trackDetectiveFieldUpdate(f.id, e.target.value, ch.id);
+                              endPerformanceTimer(startTime, { fieldId, chapterId: ch.id });
+                            }}
                             onFocus={() => setFocusField(f.id)}
                             onBlur={() => setFocusField(null)}
                             placeholder={f.placeholder}
@@ -369,9 +392,13 @@ export default function DetectiveSheet({
                           <input
                             className="define-input field-input"
                             value={m.label}
-                            onChange={(e) =>
-                              updateMilestone?.(m.id, 'label', e.target.value)
-                            }
+                            onChange={(e) => {
+                              const timerId = `milestone_update_${m.id}_label`;
+                              startPerformanceTimer(timerId);
+                              updateMilestone?.(m.id, 'label', e.target.value);
+                              trackMilestoneOperation('update', { id: m.id, label: e.target.value, date: m.date });
+                              endPerformanceTimer(timerId, { milestoneId: m.id, field: 'label' });
+                            }}
                             placeholder="Milestone"
                             aria-label="Milestone name"
                           />
@@ -379,15 +406,26 @@ export default function DetectiveSheet({
                             type="date"
                             className="define-input field-input detective-milestone-date"
                             value={m.date}
-                            onChange={(e) =>
-                              updateMilestone?.(m.id, 'date', e.target.value)
-                            }
+                            onChange={(e) => {
+                              const timerId = `milestone_update_${m.id}_date`;
+                              startPerformanceTimer(timerId);
+                              updateMilestone?.(m.id, 'date', e.target.value);
+                              trackMilestoneOperation('update', { id: m.id, label: m.label, date: e.target.value });
+                              endPerformanceTimer(timerId, { milestoneId: m.id, field: 'date' });
+                            }}
                             aria-label="Milestone date"
                           />
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm"
-                            onClick={() => removeMilestone?.(m.id)}
+                            onClick={() => {
+                              const timerId = `milestone_remove_${m.id}`;
+                              startPerformanceTimer(timerId);
+                              removeMilestone?.(m.id);
+                              // Track milestone removal
+                              trackMilestoneOperation('remove', { id: m.id, label: m.label, date: m.date });
+                              endPerformanceTimer(timerId, { milestoneId: m.id });
+                            }}
                             aria-label="Remove milestone"
                           >
                             ✕
@@ -397,7 +435,14 @@ export default function DetectiveSheet({
                       <button
                         type="button"
                         className="btn btn-secondary btn-sm"
-                        onClick={() => addMilestone?.('', '')}
+                        onClick={() => {
+                              const timerId = `milestone_add_${Date.now()}`;
+                              startPerformanceTimer(timerId);
+                              addMilestone?.('', '');
+                              // Track adding a new milestone (empty initially)
+                              trackMilestoneOperation('add', { id: Date.now(), label: '', date: '' });
+                              endPerformanceTimer(timerId, { action: 'add' });
+                            }}
                       >
                         + Add
                       </button>
@@ -427,6 +472,8 @@ export default function DetectiveSheet({
             }
             applyDetectiveToBrief?.()
             onContinue?.()
+            // Track completing the detective sheet
+            trackFeatureUsage('detective_sheet', 'completed')
           }}
         >
           {continueLabel}

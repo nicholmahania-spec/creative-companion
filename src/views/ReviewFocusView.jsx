@@ -3,14 +3,14 @@
  * Added: Intent-setting step at start (phase 4 UX consistency).
  * Then proceeds to feedback notes review and gap review as before.
  */
-import { useState } from 'react'
+import { useState, Suspense, lazy } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import FocusCard from '../components/focus/FocusCard'
 import useAppStore from '../store/useAppStore'
 import { packReadiness } from '../lib/exportFiles'
 import { isFeedbackAiConfigured, translateFeedback } from '../lib/feedbackAi'
 import Button from '../components/ui/Button'
-import ReviewPreview from '../components/ReviewPreview'
+const ReviewPreview = lazy(() => import('../components/ReviewPreview'))
 
 const REVIEW_GAP_SKIP = new Set(['handoff', 'learnings'])
 
@@ -88,26 +88,36 @@ export default function ReviewFocusView({
         showPreviewDrawer={true}
         onExit={exitFocus}
         drawerContent={
-          <ReviewPreview
-            activeProject={activeProject}
-            buildCurrentBrandPack={buildCurrentBrandPack}
-            clearedNotes={clearedNotes}
-            noteLines={noteLines}
-            skippedGaps={skippedGaps}
-            translating={translating}
-            translation={translation}
-            aiReady={aiReady}
-            runTranslate={runTranslate}
-            packSnap={packSnap}
-            ready={ready}
-            goSystemSection={goSystemSection}
-            setSkippedGaps={setSkippedGaps}
-            setTranslating={setTranslating}
-            setTranslation={setTranslation}
-            updateBrandField={updateBrandField}
-            setClearedNotes={setClearedNotes}
-            setStrike={setStrike}
-          />
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
+            <ReviewPreview
+              activeProject={activeProject}
+              buildCurrentBrandPack={buildCurrentBrandPack}
+              clearedNotes={clearedNotes}
+              noteLines={noteLines}
+              skippedGaps={skippedGaps}
+              translating={translating}
+              translation={translation}
+              aiReady={aiReady}
+              runTranslate={runTranslate}
+              packSnap={packSnap}
+              ready={ready}
+              goSystemSection={goSystemSection}
+              setSkippedGaps={setSkippedGaps}
+              setTranslating={setTranslating}
+              setTranslation={setTranslation}
+              updateBrandField={updateBrandField}
+              setClearedNotes={setClearedNotes}
+              setStrike={setStrike}
+            />
+          </Suspense>
         }
       >
         <div className="focus-card">
@@ -154,26 +164,36 @@ export default function ReviewFocusView({
         showPreviewDrawer={true}
         onExit={exitFocus}
         drawerContent={
-          <ReviewPreview
-            activeProject={activeProject}
-            buildCurrentBrandPack={buildCurrentBrandPack}
-            clearedNotes={clearedNotes}
-            noteLines={noteLines}
-            skippedGaps={skippedGaps}
-            translating={translating}
-            translation={translation}
-            aiReady={aiReady}
-            runTranslate={runTranslate}
-            packSnap={packSnap}
-            ready={ready}
-            goSystemSection={goSystemSection}
-            setSkippedGaps={setSkippedGaps}
-            setTranslating={setTranslating}
-            setTranslation={setTranslation}
-            updateBrandField={updateBrandField}
-            setClearedNotes={setClearedNotes}
-            setStrike={setStrike}
-          />
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
+            <ReviewPreview
+              activeProject={activeProject}
+              buildCurrentBrandPack={buildCurrentBrandPack}
+              clearedNotes={clearedNotes}
+              noteLines={noteLines}
+              skippedGaps={skippedGaps}
+              translating={translating}
+              translation={translation}
+              aiReady={aiReady}
+              runTranslate={runTranslate}
+              packSnap={packSnap}
+              ready={ready}
+              goSystemSection={goSystemSection}
+              setSkippedGaps={setSkippedGaps}
+              setTranslating={setTranslating}
+              setTranslation={setTranslation}
+              updateBrandField={updateBrandField}
+              setClearedNotes={setClearedNotes}
+              setStrike={setStrike}
+            />
+          </Suspense>
         }
       >
         <FocusCard cardKey={currentNote}>
@@ -246,26 +266,36 @@ export default function ReviewFocusView({
         showPreviewDrawer={true}
         onExit={exitFocus}
         drawerContent={
-          <ReviewPreview
-            activeProject={activeProject}
-            buildCurrentBrandPack={buildCurrentBrandPack}
-            clearedNotes={clearedNotes}
-            noteLines={noteLines}
-            skippedGaps={skippedGaps}
-            translating={translating}
-            translation={translation}
-            aiReady={aiReady}
-            runTranslate={runTranslate}
-            packSnap={packSnap}
-            ready={ready}
-            goSystemSection={goSystemSection}
-            setSkippedGaps={setSkippedGaps}
-            setTranslating={setTranslating}
-            setTranslation={setTranslation}
-            updateBrandField={updateBrandField}
-            setClearedNotes={setClearedNotes}
-            setStrike={setStrike}
-          />
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
+            <ReviewPreview
+              activeProject={activeProject}
+              buildCurrentBrandPack={buildCurrentBrandPack}
+              clearedNotes={clearedNotes}
+              noteLines={noteLines}
+              skippedGaps={skippedGaps}
+              translating={translating}
+              translation={translation}
+              aiReady={aiReady}
+              runTranslate={runTranslate}
+              packSnap={packSnap}
+              ready={ready}
+              goSystemSection={goSystemSection}
+              setSkippedGaps={setSkippedGaps}
+              setTranslating={setTranslating}
+              setTranslation={setTranslation}
+              updateBrandField={updateBrandField}
+              setClearedNotes={setClearedNotes}
+              setStrike={setStrike}
+            />
+          </Suspense>
         }
       >
         <FocusCard cardKey={currentGap.id}>

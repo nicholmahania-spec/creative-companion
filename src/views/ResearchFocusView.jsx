@@ -13,11 +13,11 @@
  * that this stage get a real swipe gesture, not just a mouse-drag
  * standing in for one.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, Suspense, lazy } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import useAppStore from '../store/useAppStore'
 import Button from '../components/ui/Button'
-import ResearchPreview from '../components/ResearchPreview'
+const ResearchPreview = lazy(() => import('../components/ResearchPreview'))
 
 const SWIPE_COMMIT_PX = 90
 
@@ -100,14 +100,24 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
         showPreviewDrawer={true}
         onExit={exitFocus}
         drawerContent={
-          <ResearchPreview
-            deskMood={deskMood}
-            sessionIds={sessionIds}
-            reviewedIds={reviewedIds}
-            reviewedCount={reviewedCount}
-            loading={loading}
-            error={error}
-          />
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
+            <ResearchPreview
+              deskMood={deskMood}
+              sessionIds={sessionIds}
+              reviewedIds={reviewedIds}
+              reviewedCount={reviewedCount}
+              loading={loading}
+              error={error}
+            />
+          </Suspense>
         }
       >
         <div className="focus-card">
@@ -154,14 +164,24 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
         showPreviewDrawer={true}
         onExit={exitFocus}
         drawerContent={
-          <ResearchPreview
-            deskMood={deskMood}
-            sessionIds={sessionIds}
-            reviewedIds={reviewedIds}
-            reviewedCount={reviewedCount}
-            loading={loading}
-            error={error}
-          />
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
+            <ResearchPreview
+              deskMood={deskMood}
+              sessionIds={sessionIds}
+              reviewedIds={reviewedIds}
+              reviewedCount={reviewedCount}
+              loading={loading}
+              error={error}
+            />
+          </Suspense>
         }
       >
         <div className="focus-card" style={{ textAlign: 'center' }}>
@@ -192,14 +212,24 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
         showPreviewDrawer={true}
         onExit={exitFocus}
         drawerContent={
-          <ResearchPreview
-            deskMood={deskMood}
-            sessionIds={sessionIds}
-            reviewedIds={reviewedIds}
-            reviewedCount={reviewedCount}
-            loading={loading}
-            error={error}
-          />
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
+            <ResearchPreview
+              deskMood={deskMood}
+              sessionIds={sessionIds}
+              reviewedIds={reviewedIds}
+              reviewedCount={reviewedCount}
+              loading={loading}
+              error={error}
+            />
+          </Suspense>
         }
       >
         <div className="focus-card" style={{ textAlign: 'center' }}>

@@ -16,6 +16,7 @@ import {
   pathLabel,
 } from '../lib/i18n'
 import useIsMobile from '../lib/useIsMobile'
+import { trackWorkflowTransition, trackFeatureUsage } from '../lib/analytics'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 const DefineMoodCanvas = lazy(() => import('./DefineMoodCanvas'))
@@ -70,6 +71,7 @@ export default function DefineView(props) {
     }
     if (next === activeProject.name) return
     renameProject?.(activeProject.id, next)
+    trackFeatureUsed('project_rename', { projectId: activeProject.id, projectName: next })
     flashMicro?.(i18nT(locale, 'ui.projectRenamed') || 'Name saved')
   }
 

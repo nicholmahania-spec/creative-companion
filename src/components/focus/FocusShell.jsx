@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { measureTime } from '../../lib/performance'
 
 export default function FocusShell({
   stepLabel,
@@ -15,26 +16,30 @@ export default function FocusShell({
   const pct = stepCount > 0 ? Math.round((stepIndex / stepCount) * 100) : 0
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const drawerRef = useRef(null)
+  const [isDrawerContentLoaded, setIsDrawerContentLoaded] = useState(false)
   const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
   const firstFocusableRef = useRef(null)
   const lastFocusableRef = useRef(null)
 
-  const handleDrawerToggle = () => {
-    setIsDrawerOpen(!isDrawerOpen)
-    onDrawerToggle?.(!isDrawerOpen)
+  // Measure drawer toggle performance
+  const handleDrawerToggle = useCallback(() => {
+    return measureTime('drawer-toggle', () => {
+      setIsDrawerOpen(!isDrawerOpen)
+      onDrawerToggle?.(!isDrawerOpen)
 
-    if (!isDrawerOpen) {
-      // Opening drawer - focus first element
-      requestAnimationFrame(() => {
-        if (drawerRef.current) {
-          const firstFocusable = drawerRef.current.querySelector(focusableElements)
-          if (firstFocusable) {
-            firstFocusable.focus()
+      if (!isDrawerOpen) {
+        // Opening drawer - focus first element
+        requestAnimationFrame(() => {
+          if (drawerRef.current) {
+            const firstFocusable = drawerRef.current.querySelector(focusableElements)
+            if (firstFocusable) {
+              firstFocusable.focus()
+            }
           }
-        }
-      })
-    }
-  }
+        })
+      }
+    })
+  }, [isDrawerOpen, onDrawerToggle])
 
   // Trap focus inside drawer when open
   useEffect(() => {
@@ -81,6 +86,18 @@ export default function FocusShell({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isDrawerOpen, handleDrawerToggle])
+
+  // Load drawer content when drawer opens (lazy loading)
+  useEffect(() => {
+    if (isDrawerOpen && !isDrawerContentLoaded && drawerContent !== null) {
+      setIsDrawerContentLoaded(true)
+    }
+
+    // Unload content when drawer closes to free memory
+    if (!isDrawerOpen && isDrawerContentLoaded) {
+      setIsDrawerContentLoaded(false)
+    }
+  }, [isDrawerOpen, isDrawerContentLoaded, drawerContent])
 
   return (
     <div className="flex h-[calc(100%-4rem)]">
@@ -143,7 +160,7 @@ export default function FocusShell({
         </div>
       </div>
 
-      {/* Preview drawer */}
+      {/* Preview drawer with lazy loading */}
       {showPreviewDrawer && (
         <div
           ref={drawerRef}
@@ -167,8 +184,13 @@ export default function FocusShell({
             </button>
           </div>
           <div className="p-4 overflow-y-auto h-full">
-            {drawerContent}
-            <div ref={lastFocusableRef} tabIndex={-1} />
+            {/* Drawer content */}
+            {isDrawerContentLoaded && drawerContent !== null ? (
+              <>
+                {drawerContent}
+                <div ref={lastFocusableRef} tabIndex={-1} />
+              </>
+            ) : null}
           </div>
         </div>
       )}

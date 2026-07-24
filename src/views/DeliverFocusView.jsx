@@ -9,11 +9,11 @@
  * that hasn't been made yet, so this stage only does what the app can
  * already do today).
  */
-import { useState } from 'react'
+import { useState, Suspense, lazy } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import Button from '../components/ui/Button'
 import { slugifyFilename, packReadiness } from '../lib/exportFiles'
-import BrandPreview from '../components/BrandPreview'
+const BrandPreview = lazy(() => import('../components/BrandPreview'))
 
 const FORMATS = [
   { id: 'pdf', label: 'Brand Book PDF', suffix: 'brand-book.pdf', default: true },
@@ -159,7 +159,17 @@ export default function DeliverFocusView({
       drawerContent={
         <div>
           <h3 className="font-semibold mb-4">Brand Preview</h3>
-          <BrandPreview projectName={activeProject?.name || 'Untitled Project'} />
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
+            <BrandPreview projectName={activeProject?.name || 'Untitled Project'} />
+          </Suspense>
           {selected.size > 0 && (
             <div className="mt-6">
               <h3 className="font-semibold mb-2">Selected Exports</h3>

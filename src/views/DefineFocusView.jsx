@@ -6,14 +6,14 @@
  * Writes into the same detective fields the existing Define view uses
  * (updateDetective), so switching back and forth doesn't lose data.
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useState, Suspense, lazy, useRef, useEffect } from 'react';
 import FocusShell from '../components/focus/FocusShell';
 import FocusCard from '../components/focus/FocusCard';
-import DefinePreview from '../components/DefinePreview';
 import Button from '../components/ui/Button';
 import ButtonGroup from '../components/ui/ButtonGroup';
 import Card from '../components/ui/Card';
 import Textarea from '../components/ui/Textarea';
+const DefinePreview = lazy(() => import('../components/DefinePreview'));
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -24,6 +24,7 @@ import {
   NavigationMenuViewport,
 } from '@radix-ui/react-navigation-menu';
 import { Target, Users, Pencil, Palette, Eye, Package, Settings } from 'lucide-react';
+import { trackFeatureUsage, startPerformanceTimer, endPerformanceTimer } from '../lib/analytics';
 
 const WHO_PRIMARY = ['Business', 'Consumer', 'Both'];
 const WHO_SECONDARY = {
@@ -71,15 +72,30 @@ export default function DefineFocusView({
   const cardKey = `${stepId}-${whoPrimary}`;
 
   const goNext = () => {
-    if (stepIdx < STEPS.length - 1) setStepIdx((i) => i + 1);
-    else setActiveView?.('studio');
+    const currentStepId = STEPS[stepIdx]?.id;
+    let nextStepId;
+    if (stepIdx < STEPS.length - 1) {
+      nextStepId = STEPS[stepIdx + 1]?.id;
+      setStepIdx((i) => i + 1);
+      trackFeatureUsage('define_focus', 'step_next', { from: currentStepId, to: nextStepId });
+    } else {
+      nextStepId = 'studio';
+      setActiveView?.('studio');
+      trackFeatureUsage('define_focus', 'step_next', { from: currentStepId, to: nextStepId });
+    }
   };
   const goBack = () => {
     if (whoPrimary && stepId === 'who') {
       setWhoPrimary('');
+      trackFeatureUsage('define_focus', 'who_primary_cleared');
       return;
     }
-    if (stepIdx > 0) setStepIdx((i) => i - 1);
+    if (stepIdx > 0) {
+      const currentStepId = STEPS[stepIdx]?.id;
+      const previousStepId = STEPS[stepIdx - 1]?.id;
+      setStepIdx((i) => i - 1);
+      trackFeatureUsage('define_focus', 'step_back', { from: currentStepId, to: previousStepId });
+    }
   };
 
   const secondaryChips = useMemo(
@@ -88,6 +104,34 @@ export default function DefineFocusView({
   );
 
   const exitFocus = () => setActiveView?.('project');
+
+  // Performance timing for steps
+  const stepTimerRef = useRef(null);
+  useEffect(() => {
+    if (!intentSet) return;
+
+    // If there was a previous step, end its timer
+    if (stepTimerRef.current) {
+      endPerformanceTimer(stepTimerRef.current);
+      stepTimerRef.current = null;
+    }
+
+    // Start a timer for the current step
+    const currentStepId = STEPS[stepIdx]?.id;
+    if (currentStepId) {
+      const timerId = `define_focus_step_${currentStepId}`;
+      startPerformanceTimer(timerId);
+      stepTimerRef.current = timerId;
+    }
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      if (stepTimerRef.current) {
+        endPerformanceTimer(stepTimerRef.current);
+        stepTimerRef.current = null;
+      }
+    };
+  }, [stepIdx, intentSet]);
 
   // If intent not set, show intent input first (phase 4)
   if (!intentSet) {
@@ -112,6 +156,7 @@ export default function DefineFocusView({
             onKeyDown={(e) => {
               if (e.key === 'Enter' && intent.trim()) {
                 setIntentSet(true);
+                trackFeatureUsage('define_focus', 'intent_set', { intent: intent.trim() });
               }
             }}
           />
@@ -123,6 +168,7 @@ export default function DefineFocusView({
               onClick={() => {
                 if (intent.trim()) {
                   setIntentSet(true);
+                  trackFeatureUsage('define_focus', 'intent_set', { intent: intent.trim() });
                 }
               }}
             >
@@ -142,10 +188,18 @@ export default function DefineFocusView({
       stepCount={STEPS.length}
       showPreviewDrawer={true}
       drawerContent={
-        <DefinePreview
-          activeProject={activeProject}
-          updateDetective={updateDetective}
-        />
+        <Suspense fallback={<div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+          <div className="space-y-4">
+            <div className="h-4 w-32 bg-border rounded"></div>
+            <div className="h-4 w-24 bg-border rounded"></div>
+            <div className="h-4 w-40 bg-border rounded"></div>
+          </div>
+        </div>}>
+          <DefinePreview
+            activeProject={activeProject}
+            updateDetective={updateDetective}
+          />
+        </Suspense>
       }
       onBack={stepIdx > 0 || whoPrimary ? goBack : undefined}
       onExit={exitFocus}

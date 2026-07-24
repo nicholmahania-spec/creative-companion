@@ -1,15 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback, memo } from 'react'
 import useAppStore from '../store/useAppStore'
+import { recordMetric, measureTime } from '../lib/performance'
 
-const DefinePreview = ({
-  activeProject,
-  updateDetective,
-  loading = false,
-  error = null
-}) => {
+const DefinePreview = memo(({ activeProject, updateDetective, loading = false, error = null }) => {
   // Handle error state
   if (error) {
-    return (
+    return measureTime('DefinePreview_error', () => (
       <div className="space-y-4">
         <div className="border rounded-lg p-4">
           <h3 className="font-semibold text-lg mb-2">Project Definition</h3>
@@ -35,12 +31,12 @@ const DefinePreview = ({
           </div>
         </div>
       </div>
-    )
+    ))
   }
 
   // Handle loading state
   if (loading) {
-    return (
+    return measureTime('DefinePreview_loading', () => (
       <div className="space-y-4">
         <div className="border rounded-lg p-4">
           <h3 className="font-semibold text-lg mb-2">Project Definition</h3>
@@ -54,12 +50,12 @@ const DefinePreview = ({
           </div>
         </div>
       </div>
-    )
+    ))
   }
 
   // Handle empty state
   if (!activeProject) {
-    return (
+    return measureTime('DefinePreview_empty', () => (
       <div className="space-y-4">
         <div className="border rounded-lg p-4">
           <h3 className="font-semibold text-lg mb-2">Project Definition</h3>
@@ -73,7 +69,7 @@ const DefinePreview = ({
           </div>
         </div>
       </div>
-    )
+    ))
   }
 
   const detective = activeProject?.detective || {}
@@ -85,7 +81,7 @@ const DefinePreview = ({
     ? `${whoPrimary} — ${whoSecondary}`
     : whoPrimary || 'Not set'
 
-  return (
+  return measureTime('DefinePreview_content', () => (
     <div className="space-y-4">
       <div className="border rounded-lg p-4">
         <h3 className="font-semibold text-lg mb-2">Project Definition</h3>
@@ -162,56 +158,56 @@ const DefinePreview = ({
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Quick actions */}
-      <div className="border rounded-lg p-4">
-        <h3 className="font-semibold text-lg mb-2">Quick Actions</h3>
-        <div className="space-y-3">
-          <button
-            onClick={() => {
-              // Focus on goal input
-              setTimeout(() => {
-                const goalInput = document.querySelector('.focus-card input[placeholder*="do what"]')
-                if (goalInput) goalInput.focus()
-              }, 100)
-            }}
-            className="w-full btn btn-outline"
-          >
-            Define Goal
-          </button>
-          {!whoPrimary && (
-            <button
-              onClick={() => {
-                // Focus on who section
-                setTimeout(() => {
-                  const whoRadios = document.querySelectorAll('.focus-chip')
-                  if (whoRadios[0]) whoRadios[0].focus()
-                }, 100)
-              }}
-              className="w-full btn btn-outline"
-            >
-              Define Audience
-            </button>
-          )}
-          {(!detective.feel || (detective.feel && detective.feel.split(',').filter(f => f.trim()).length < 3)) && (
-            <button
-              onClick={() => {
-                // Focus on feel words section
-                setTimeout(() => {
-                  const feelChips = document.querySelectorAll('.focus-chip')
-                  if (feelChips[0]) feelChips[0].focus()
-                }, 100)
-              }}
-              className="w-full btn btn-outline"
-            >
-              Define Feel
-            </button>
-          )}
+        {/* Quick actions */}
+        <div className="border rounded-lg p-4">
+          <h3 className="font-semibold text-lg mb-2">Quick Actions</h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  // Focus on goal input
+                  setTimeout(() => {
+                    const goalInput = document.querySelector('.focus-card input[placeholder*="do what"]')
+                    if (goalInput) goalInput.focus()
+                  }, 100)
+                }}
+                className="w-full btn btn-outline"
+              >
+                Define Goal
+              </button>
+              {!whoPrimary && (
+                <button
+                  onClick={() => {
+                    // Focus on who section
+                    setTimeout(() => {
+                      const whoRadios = document.querySelectorAll('.focus-chip')
+                      if (whoRadios[0]) whoRadios[0].focus()
+                    }, 100)
+                  }}
+                  className="w-full btn btn-outline"
+                >
+                  Define Audience
+                </button>
+              )}
+              {(!detective.feel || (detective.feel && detective.feel.split(',').filter(f => f.trim()).length < 3)) && (
+                <button
+                  onClick={() => {
+                    // Focus on feel words section
+                    setTimeout(() => {
+                      const feelChips = document.querySelectorAll('.focus-chip')
+                      if (feelChips[0]) feelChips[0].focus()
+                    }, 100)
+                  }}
+                  className="w-full btn btn-outline"
+                >
+                  Define Feel
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  )
-}
+    ));
+  });
 
 export default DefinePreview

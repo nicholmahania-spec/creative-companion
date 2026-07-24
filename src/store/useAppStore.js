@@ -6,6 +6,7 @@ import {
 } from '../lib/decisionLog'
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/breakKit'
+import versionService from '../services/versionService'
 
 /**
  * Ideate tool prompts (not fake client data).
@@ -213,6 +214,9 @@ export function blankWorkspaceState() {
       /** Product UI locale for wordmark + path labels */
       locale: 'en',
     },
+    // Template management
+    templates: [],
+    currentTemplateId: null,
   }
 }
 
@@ -221,7 +225,11 @@ export const seedTasks = []
 export const seedProjects = []
 export const seedMoodItems = []
 
-const initial = blankWorkspaceState()
+const initial = {
+  ...blankWorkspaceState(),
+  templates: [],
+  currentTemplateId: null,
+}
 
 const useAppStore = create(
   persist(
@@ -525,7 +533,7 @@ const useAppStore = create(
        * Bump designVersion vN → vN+1 (or set v2 if freeform).
        * Call before big design changes.
        */
-      bumpDesignVersion: () => {
+      bumpDesignVersion: async () => {
         const state = get()
         const p = state.projects.find((x) => x.id === state.currentProjectId)
         if (!p) return { ok: false }
@@ -540,6 +548,8 @@ const useAppStore = create(
               : proj
           ),
         })
+        // Create a version snapshot after bumping version
+        await versionService.autoVersion('version bump')
         return { ok: true, version: next }
       },
 
@@ -547,7 +557,7 @@ const useAppStore = create(
        * If still on v1, bump once after a major design action (kit, mark, type pair).
        * Avoids keystroke spam — only discrete intentional actions call this.
        */
-      bumpDesignVersionIfV1: () => {
+      bumpDesignVersionIfV1: async () => {
         const state = get()
         const p = state.projects.find((x) => x.id === state.currentProjectId)
         if (!p) return { ok: false, bumped: false }
@@ -555,7 +565,10 @@ const useAppStore = create(
         if (!/^v?1$/i.test(cur) && cur !== '') {
           return { ok: true, bumped: false, version: cur }
         }
-        return { ...get().bumpDesignVersion(), bumped: true }
+        const result = {...get().bumpDesignVersion(), bumped: true}
+        // Create a version snapshot after bumping version from v1
+        await versionService.autoVersion('initial version bump')
+        return {...result, version: result.version}
       },
 
       toggleTheme: () =>
@@ -1425,6 +1438,9 @@ const useAppStore = create(
         sparksTried: state.sparksTried ?? 0,
         currentSpark: state.currentSpark,
         prefs: state.prefs,
+        // Template persistence
+        templates: state.templates,
+        currentTemplateId: state.currentTemplateId,
       }),
       onRehydrateStorage: () => (state) => {
         try {
@@ -1492,6 +1508,141 @@ const useAppStore = create(
           /* ignore */
         }
       },
+      // Template Management
+      saveAsTemplate: (name, description = '') => {
+        const state = get()
+        const { currentProjectId, projects } = state
+
+        if (!currentProjectId) return { ok: false, error: 'No active project' }
+
+        const project = projects.find(p => p.id === currentProjectId)
+        if (!project) return { ok: false, error: 'Project not found' }
+
+        // Create template from current project state
+        const template = {
+          id: `template-${Date.now()}`,
+          name,
+          description,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          // Store the essential design elements that make up a template
+          data: {
+            tagline: project.tagline,
+            voice: project.voice,
+            typeHeading: project.typeHeading,
+            typeBody: project.typeBody,
+            logoWordmark: project.logoWordmark,
+            logoDirection: project.logoDirection,
+            logoImage: project.logoImage,
+            logoClearspace: project.logoClearspace,
+            logoMinSize: project.logoMinSize,
+            logoDonts: project.logoDonts,
+            palette: [...project.palette],
+            colorRoles: project.colorRoles ? { ...project.colorRoles } : null,
+            messagingPromise: project.messagingPromise,
+            messagingProof: project.messagingProof,
+            messagingPersonality: project.messagingPersonality,
+            imageryStyle: project.imageryStyle,
+            imageryDo: project.imageryDo,
+            imageryDont: project.imageryDont,
+            detective: project.detective ? {
+              goal: project.detective.goal,
+              audience: project.detective.audience,
+              feel: project.detective.feel,
+              mustHaves: project.detective.mustHaves,
+              niceToHaves: project.detective.niceToHaves,
+              format: project.detective.format,
+              avoid: project.detective.avoid,
+              deliverables: project.detective.deliverables,
+              technical: project.detective.technical,
+              milestones: project.detective.milestones ? [...project.detective.milestones] : [],
+              brandWords: project.detective.brandWords
+            } : null,
+            conceptPackage: project.conceptPackage ? {
+              audience: project.conceptPackage.audience,
+              outcome: project.conceptPackage.outcome,
+              concept: project.conceptPackage.concept,
+              voice: project.conceptPackage.voice,
+              visualDirection: project.conceptPackage.visualDirection,
+              doUse: project.conceptPackage.doUse,
+              dontUse: project.conceptPackage.dontUse,
+              notes: project.conceptPackage.notes
+            } : null,
+            directions: project.directions ? [...project.directions].map(d => ({ ...d })) : [],
+            tasks: project.tasks ? [...project.tasks].map(t => ({ ...t })) : [],
+            moodItems: project.moodItems ? [...project.moodItems].map(m => ({ ...m })) : []
+          }
+        }
+
+        set(state => ({
+          templates: [...state.templates, template]
+        }))
+
+        return { ok: true, templateId: template.id }
+      },
+
+      getTemplates: () => {
+        const state = get()
+        return [...state.templates].sort((a, b) =>
+          new Date(b.updatedAt) - new Date(a.updatedAt)
+        )
+      },
+
+      getTemplateById: (templateId) => {
+        const state = get()
+        return state.templates.find(t => t.id === templateId) || null
+      },
+
+      updateTemplate: (templateId, updates) => {
+        set(state => ({
+          templates: state.templates.map(template =>
+            template.id === templateId
+              ? { ...template, ...updates, updatedAt: new Date().toISOString() }
+              : template
+          )
+        }))
+        return { ok: true }
+      },
+
+      deleteTemplate: (templateId) => {
+        set(state => ({
+          templates: state.templates.filter(t => t.id !== templateId)
+        }))
+        return { ok: true }
+      },
+
+      applyTemplate: (templateId) => {
+        const state = get()
+        const template = state.templates.find(t => t.id === templateId)
+        if (!template) return { ok: false, error: 'Template not found' }
+
+        const { currentProjectId, projects } = state
+        if (!currentProjectId) return { ok: false, error: 'No active project' }
+
+        // Apply template data to current project
+        set(state => ({
+          projects: state.projects.map(project =>
+            project.id === currentProjectId
+              ? {
+                  ...project,
+                  ...template.data,
+                  // Increment version when applying template
+                  designVersion: `v${parseInt(project.designVersion.replace('v', '')) + 1}`
+                }
+              : project
+          )
+        }))
+
+        // Create a version when applying template
+        versionService.autoVersion('template-applied')
+
+        return { ok: true }
+      },
+
+      setCurrentTemplateId: (templateId) => {
+        set({ currentTemplateId: templateId })
+        return { ok: true }
+      }
     }
   )
 )

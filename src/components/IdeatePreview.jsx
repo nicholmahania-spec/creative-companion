@@ -1,9 +1,19 @@
-const IdeatePreview = ({ directions = [] }) => {
-  const titled = directions.filter((d) => String(d.title || '').trim())
-  const chosen = directions.find((d) => d.chosen)
+import { useMemo, useCallback, memo } from 'react'
+import { measure } from '../lib/performance'
 
+const IdeatePreview = memo(({ directions = [] }) => {
+  // Helper to measure rendering time
+  const measureTime = (name, fn) => {
+    const start = performance.now()
+    const result = fn()
+    const end = performance.now()
+    measure(name, start, end)
+    return result
+  }
+
+  // Handle empty state
   if (directions.length === 0) {
-    return (
+    return measureTime('IdeatePreview_empty', () => (
       <div className="space-y-4">
         <div className="border rounded-lg p-4">
           <h3 className="font-semibold text-lg mb-2">Directions</h3>
@@ -17,10 +27,13 @@ const IdeatePreview = ({ directions = [] }) => {
           </div>
         </div>
       </div>
-    )
+    ))
   }
 
-  return (
+  const titled = directions.filter((d) => String(d.title || '').trim())
+  const chosen = directions.find((d) => d.chosen)
+
+  return measureTime('IdeatePreview_content', () => (
     <div className="space-y-4">
       <div className="border rounded-lg p-4">
         <h3 className="font-semibold text-lg mb-2">Directions</h3>
@@ -28,6 +41,7 @@ const IdeatePreview = ({ directions = [] }) => {
           Narrowing your brand directions
         </p>
 
+        {/* Stats */}
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
             <span>Total:</span>
@@ -37,11 +51,18 @@ const IdeatePreview = ({ directions = [] }) => {
             <span>Titled:</span>
             <span className="font-mono">{titled.length}</span>
           </div>
+          {chosen && (
+            <div className="flex justify-between text-sm">
+              <span>Chosen:</span>
+              <span className="font-mono text-[var(--dopamine,#3D5AFE)]">{chosen.label}</span>
+            </div>
+          )}
         </div>
 
+        {/* Directions list */}
         {titled.length > 0 && (
           <>
-            <p className="font-medium mt-4 mb-2">Directions:</p>
+            <p className="font-medium mb-4 mt-2">Directions:</p>
             <div className="space-y-2">
               {titled.map((d) => (
                 <div
@@ -56,6 +77,7 @@ const IdeatePreview = ({ directions = [] }) => {
           </>
         )}
 
+        {/* Winner queued message */}
         {chosen && (
           <p className="text-sm text-muted-foreground mt-4">
             Winner queued: <span className="font-medium">{chosen.title}</span>
@@ -63,7 +85,7 @@ const IdeatePreview = ({ directions = [] }) => {
         )}
       </div>
     </div>
-  )
-}
+  ))
+})
 
 export default IdeatePreview

@@ -5,12 +5,12 @@
  *
  * Added: Intent-setting step at start (phase 4 UX consistency).
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense, lazy } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import FocusCard from '../components/focus/FocusCard'
 import useAppStore from '../store/useAppStore'
 import Button from '../components/ui/Button'
-import SketchPreview from '../components/SketchPreview'
+const SketchPreview = lazy(() => import('../components/SketchPreview'))
 
 export default function SketchFocusView({ setActiveView }) {
   const [draft, setDraft] = useState('')
@@ -45,11 +45,21 @@ export default function SketchFocusView({ setActiveView }) {
         showPreviewDrawer={true}
         onExit={exitFocus}
         drawerContent={
-          <SketchPreview
-            tasks={tasks}
-            nowId={nowId}
-            ranked={ranked}
-          />
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
+            <SketchPreview
+              tasks={tasks}
+              nowId={nowId}
+              ranked={ranked}
+            />
+          </Suspense>
         }
       >
         <div className="focus-card">
@@ -134,11 +144,21 @@ export default function SketchFocusView({ setActiveView }) {
           showPreviewDrawer={true}
           onExit={exitFocus}
           drawerContent={
-            <SketchPreview
-              tasks={tasks}
-              nowId={nowId}
-              ranked={ranked}
-            />
+            <Suspense fallback={
+              <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+                <div className="space-y-4">
+                  <div className="h-4 w-32 bg-border rounded"></div>
+                  <div className="h-4 w-24 bg-border rounded"></div>
+                  <div className="h-4 w-40 bg-border rounded"></div>
+                </div>
+              </div>
+            }>
+              <SketchPreview
+                tasks={tasks}
+                nowId={nowId}
+                ranked={ranked}
+              />
+            </Suspense>
           }
         >
           <FocusCard cardKey="empty">

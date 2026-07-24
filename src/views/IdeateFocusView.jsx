@@ -17,12 +17,12 @@
  * updateDirection/logDecision/addTask calls SparkView's "queue"
  * button uses, so Sketch sees the exact same result either way.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense, lazy } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import FocusCard from '../components/focus/FocusCard'
 import useAppStore from '../store/useAppStore'
 import { decisionFromDirection } from '../lib/decisionLog'
-import IdeatePreview from '../components/IdeatePreview'
+const IdeatePreview = lazy(() => import('../components/IdeatePreview'))
 
 function blankDirs() {
   return [
@@ -66,9 +66,19 @@ export default function IdeateFocusView({
           stepCount={2}
           showPreviewDrawer={true}
           drawerContent={
-            <IdeatePreview
-              directions={dirs}
-            />
+            <Suspense fallback={
+              <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+                <div className="space-y-4">
+                  <div className="h-4 w-32 bg-border rounded"></div>
+                  <div className="h-4 w-24 bg-border rounded"></div>
+                  <div className="h-4 w-40 bg-border rounded"></div>
+                </div>
+              </div>
+            }>
+              <IdeatePreview
+                directions={dirs}
+              />
+            </Suspense>
           }
         >
           <div className="focus-card">
