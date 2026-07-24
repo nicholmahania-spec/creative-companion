@@ -87,14 +87,14 @@ export default function DefineView(props) {
       className="project-view surface-desk view-enter define-studio define-dashboard"
       data-nav-dir={navDir}
     >
-      <header className="define-dashboard-head">
-        <div className="define-head-row">
-          <h1 className="page-title define-studio-title">
+      <div className="flow-top">
+        <div>
+          <h1 className="page-title">
             {i18nT(locale, 'path.define')}
           </h1>
           <input
             id="project-name"
-            className="define-input field-input define-name-inline"
+            className="define-name-inline"
             value={projectNameDraft}
             onChange={(e) => setProjectNameDraft(e.target.value)}
             onBlur={commitProjectRename}
@@ -109,7 +109,7 @@ export default function DefineView(props) {
             aria-label="Project name"
           />
         </div>
-      </header>
+      </div>
 
       {/* Mobile-only: inline segmented control above the panels */}
       {isMobile && (
