@@ -111,6 +111,28 @@ export default function DefineView(props) {
         </div>
       </header>
 
+      {/* Mobile-only: inline segmented control above the panels */}
+      {isMobile && (
+        <nav className="define-mobile-tabs" aria-label="Define panel switch">
+          <button
+            type="button"
+            className={`define-mobile-tab${mobilePane === 'form' ? ' is-active' : ''}`}
+            onClick={() => setMobilePane('form')}
+            aria-pressed={mobilePane === 'form'}
+          >
+            Form
+          </button>
+          <button
+            type="button"
+            className={`define-mobile-tab${mobilePane === 'refs' ? ' is-active' : ''}`}
+            onClick={() => setMobilePane('refs')}
+            aria-pressed={mobilePane === 'refs'}
+          >
+            Refs
+          </button>
+        </nav>
+      )}
+
       <div
         className="define-split"
         data-define-layout="form-board"
@@ -264,27 +286,6 @@ export default function DefineView(props) {
         </div>
       </div>
 
-      {/* Mobile-only: toggle focus between inputs and refs (no cramped split) */}
-      {isMobile && (
-        <nav className="define-mobile-tabs" aria-label="Define panel switch">
-          <button
-            type="button"
-            className={`define-mobile-tab${mobilePane === 'form' ? ' is-active' : ''}`}
-            onClick={() => setMobilePane('form')}
-            aria-pressed={mobilePane === 'form'}
-          >
-            <span aria-hidden="true">📝</span> Form
-          </button>
-          <button
-            type="button"
-            className={`define-mobile-tab${mobilePane === 'refs' ? ' is-active' : ''}`}
-            onClick={() => setMobilePane('refs')}
-            aria-pressed={mobilePane === 'refs'}
-          >
-            <span aria-hidden="true">🖼</span> Refs
-          </button>
-        </nav>
-      )}
     </div>
   )
 }
