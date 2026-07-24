@@ -80,6 +80,13 @@ export function brandIdentityDefaults() {
   typeBody: 'Plus Jakarta Sans Regular',
   doUse: '',
   dontUse: '',
+  /** Org contact info — letterhead / envelope / email signature templates */
+  orgAddress: '',
+  orgPhone: '',
+  orgEmail: '',
+  orgWebsite: '',
+  /** Business-card contacts: [{ id, name, title, phone, email }] */
+  contacts: [],
   /** Optional overrides; null/empty keys fall back to mapPaletteRoles(palette) */
   colorRoles: null,
   /** Why each assigned color role fits the Define brand words */
@@ -663,6 +670,43 @@ const useAppStore = create(
               ...p,
               assetAudit: (p.assetAudit || []).filter((it) => it.id !== id),
             }
+          }),
+        })),
+
+      /** Business-card contacts — letterhead/envelope stay single, org-wide */
+      addContact: () =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const contact = {
+              id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              name: '',
+              title: '',
+              phone: '',
+              email: '',
+            }
+            return { ...p, contacts: [...(p.contacts || []), contact] }
+          }),
+        })),
+
+      updateContact: (id, field, value) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              contacts: (p.contacts || []).map((c) =>
+                c.id === id ? { ...c, [field]: value } : c
+              ),
+            }
+          }),
+        })),
+
+      removeContact: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return { ...p, contacts: (p.contacts || []).filter((c) => c.id !== id) }
           }),
         })),
 

@@ -39,6 +39,7 @@ import InfoReveal from '../components/InfoReveal'
 import { trackTemplateAction } from '../lib/analytics'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
+const StationeryKit = lazy(() => import('../components/StationeryKit'))
 
 export default function DesignView({
   locale: localeProp = 'en',
@@ -56,6 +57,9 @@ export default function DesignView({
 }) {
   const locale = normalizeLocale(localeProp)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
+  const addContact = useAppStore((s) => s.addContact)
+  const updateContact = useAppStore((s) => s.updateContact)
+  const removeContact = useAppStore((s) => s.removeContact)
   const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
   const updatePaletteColor = useAppStore((s) => s.updatePaletteColor)
@@ -614,6 +618,7 @@ export default function DesignView({
                 ['figma', 'Figma'],
                 ['logo', 'Logo'],
                 ['pins', 'Pack'],
+                ['stationery', 'Stationery'],
               ].map(([id, label]) => (
                 <button
                   key={id}
@@ -1812,6 +1817,25 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                   />
                 </div>
               </details>
+            </section>
+
+            {/* Stationery — letterhead, business card, envelope, email signature */}
+            <section
+              className="panel brand-section"
+              hidden={brandEditSection !== 'stationery'}
+            >
+              <div className="brand-section-label">Stationery</div>
+              <Suspense fallback={<div className="panel-hint">Loading…</div>}>
+                <StationeryKit
+                  activeProject={activeProject}
+                  projectPalette={projectPalette}
+                  updateBrandField={updateBrandField}
+                  addContact={addContact}
+                  updateContact={updateContact}
+                  removeContact={removeContact}
+                  flashToast={flashToast}
+                />
+              </Suspense>
             </section>
             </div>
 

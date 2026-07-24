@@ -10765,6 +10765,185 @@ body:has(.app.deep)::after {
   text-align: center;
 }
 
+/* Stationery — letterhead / business card / envelope / email signature */
+
+.stationery-kit {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.stationery-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stationery-form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.6rem;
+}
+
+.stationery-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.stationery-contacts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stationery-contact-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1fr 1.4fr auto;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.stationery-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.stationery-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  background: var(--bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.stationery-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.stationery-card-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.stationery-preview-wrap {
+  display: flex;
+  justify-content: center;
+  background: var(--bg-muted);
+  border-radius: 0.4rem;
+  padding: 0.75rem;
+}
+
+.stationery-letterhead {
+  width: 220px;
+  aspect-ratio: 8.5 / 11;
+  background: #ffffff;
+  color: #1c1917;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+  font-size: 0.5rem;
+}
+.stationery-letterhead-header {
+  padding: 0.7rem;
+  border-bottom: 2px solid;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.stationery-logo-img {
+  max-height: 1.4rem;
+  max-width: 60%;
+  object-fit: contain;
+}
+.stationery-letterhead-body {
+  flex: 1;
+}
+.stationery-letterhead-footer {
+  padding: 0.5rem 0.7rem;
+  border-top: 1px solid;
+  font-size: 0.4rem;
+  color: #57534e;
+}
+
+.stationery-card-face {
+  width: 250px;
+  aspect-ratio: 3.5 / 2;
+  border-radius: 0.3rem;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+}
+.stationery-card-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.stationery-card-title {
+  font-size: 0.65rem;
+  opacity: 0.85;
+}
+.stationery-card-contact {
+  font-size: 0.6rem;
+  margin-top: 0.4rem;
+}
+.stationery-card-org {
+  font-size: 0.6rem;
+  font-weight: 700;
+  margin-top: 0.3rem;
+}
+
+.stationery-envelope {
+  width: 300px;
+  aspect-ratio: 9.5 / 4.125;
+  background: #ffffff;
+  color: #1c1917;
+  padding: 0.6rem;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: flex-start;
+}
+.stationery-envelope-return {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.55rem;
+  gap: 0.15rem;
+}
+
+.stationery-signature {
+  width: 280px;
+  background: #ffffff;
+  color: #1c1917;
+  padding: 0.75rem;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+  border-radius: 0.3rem;
+}
+.stationery-sig-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.stationery-sig-org {
+  font-size: 0.68rem;
+  font-weight: 700;
+  margin-top: 0.1rem;
+}
+.stationery-sig-contact {
+  font-size: 0.62rem;
+  color: #57534e;
+  margin-top: 0.3rem;
+}
+
 .define-admin .project-actions-row {
   display: flex;
   flex-wrap: wrap;
