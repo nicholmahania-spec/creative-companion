@@ -12415,25 +12415,6 @@ select:focus {
   outline: 1.5px solid var(--ts-focus);
 }
 
-/* Resume = top whisper, not bottom modal theater */
-
-.resume-banner {
-  position: fixed !important;
-  top: 0 !important;
-  bottom: auto !important;
-  left: 0 !important;
-  right: 0 !important;
-  transform: none !important;
-  width: 100% !important;
-  max-width: none !important;
-  border-radius: 0 !important;
-  border: none !important;
-  border-bottom: 1px solid var(--ts-border) !important;
-  box-shadow: none !important;
-  padding: 0.45rem 1rem !important;
-  z-index: 50;
-}
-
 .resume-banner-body {
   font-size: 0.78rem !important;
   -webkit-line-clamp: 1;

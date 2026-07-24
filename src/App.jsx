@@ -2810,22 +2810,12 @@ function App() {
                     document.getElementById('desk-capture')?.focus?.()
                   }, 60)
                 }}
-                title="Capture"
-                aria-label="Capture"
+                title="Quickly add a task to your desk"
+                aria-label="Quick add"
               >
-                Capture
+                Quick add
               </button>
             )}
-
-            <button
-              type="button"
-              className="btn btn-secondary header-export"
-              onClick={openExportPanel}
-              title="Export"
-              aria-label="Export"
-            >
-              Export
-            </button>
 
             <div className="more-wrap" ref={moreWrapRef}>
               <button
@@ -2844,6 +2834,17 @@ function App() {
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      openExportPanel()
+                      setMoreOpen(false)
+                    }}
+                  >
+                    Export
+                  </button>
                   <button
                     type="button"
                     role="menuitem"
