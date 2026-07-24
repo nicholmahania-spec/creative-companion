@@ -93,20 +93,20 @@ guided 7-step workflow (Define→Research→Ideate→Sketch→Design→Review→
 with a masonry mood board inside Research, not a freeform canvas tool. Filtered
 to what extends the existing architecture vs. what would fight it.
 
-### Phase 1 — building now (approved, both in parallel)
-1. **Link Parser for Research URL pins** — `submitBoardUrl()` currently treats
-   any pasted URL as a direct image src. Add a Supabase Edge Function
-   (`link-preview`) that fetches the target URL server-side (avoids browser
-   CORS) and parses `<title>` / OpenGraph tags (`og:title`, `og:image`,
-   `og:description`). ResearchView shows a real preview card (title + image +
-   source) instead of assuming the link is a raw image. Falls back to
-   treating the URL as a direct image if parsing fails, so existing behavior
-   for direct image links doesn't regress.
-2. **Color swatches extracted from mood images** — client-side dominant-color
-   sampling (canvas `getImageData`) run on each image pin. Extracted swatches
-   shown as a row of suggestions on the pin; clicking one calls the existing
-   `addPaletteColor(hex)` action to add it to the project palette. Suggestion
-   only — never auto-writes to the palette.
+### Phase 1 — DONE (commit `9c12599`)
+1. **Link Parser for Research URL pins** — done. `submitBoardUrl()` now calls
+   a deployed Supabase Edge Function (`link-preview`, project `shzkqbtoepqqdkjgupry`)
+   that fetches the target URL server-side and parses `<title>` / OpenGraph
+   tags. Shows a real preview (title + image + source host); falls back to
+   treating the URL as a direct image if parsing fails or Supabase isn't
+   configured.
+2. **Color swatches extracted from mood images** — done. `src/lib/extractColors.js`
+   does client-side dominant-color sampling (canvas `getImageData`) on each
+   uploaded image pin. Suggested swatches show under the pin; clicking one
+   calls `addPaletteColor(hex)`. Verified end-to-end (extract → click →
+   palette updates). Note: extraction silently no-ops for pasted external
+   image URLs without permissive CORS headers (by design — see commit
+   message for the crossOrigin tradeoff); works reliably for local uploads.
 
 ### Phase 2 — later, not yet scoped
 - Eyedropper: sample a color from any point on a pinned image (not just
