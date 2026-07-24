@@ -15343,6 +15343,71 @@ select:focus {
   margin-top: 0.85rem;
 }
 
+/* Hours & invoice panel — reuses .running-todo-panel chrome */
+
+.hours-invoice-panel {
+  gap: 0.75rem;
+}
+
+.hours-log-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.hours-log-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.1rem;
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--ts-border, var(--border-subtle));
+}
+.hours-log-date {
+  flex: 0 0 auto;
+  font-weight: 650;
+  opacity: 0.8;
+}
+.hours-log-note {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+.hours-log-hours {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
+.hours-entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--ts-border, var(--border-subtle));
+}
+.hours-entry-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0.35rem;
+}
+
+.hours-invoice-totals {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--ts-border, var(--border-subtle));
+}
+
 .journey-project-row {
   display: flex;
   align-items: center;

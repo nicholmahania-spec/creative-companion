@@ -113,6 +113,7 @@ import {
 } from './lib/exportFiles'
 import LogoLockup from './components/LogoLockup'
 import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
+import { HoursInvoicePanel } from './components/HoursInvoice'
 import { guessRunningTodoStage } from './lib/runningTodoStages'
 import {
   normalizeLocale,
@@ -268,6 +269,7 @@ function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [runningTodoPromptOpen, setRunningTodoPromptOpen] = useState(false)
   const [runningTodoPanelOpen, setRunningTodoPanelOpen] = useState(false)
+  const [hoursPanelOpen, setHoursPanelOpen] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
   const [commandActiveIdx, setCommandActiveIdx] = useState(0)
@@ -367,6 +369,9 @@ function App() {
   const addAssetAuditItem = useAppStore((s) => s.addAssetAuditItem)
   const updateAssetAuditItem = useAppStore((s) => s.updateAssetAuditItem)
   const removeAssetAuditItem = useAppStore((s) => s.removeAssetAuditItem)
+  const setHourlyRate = useAppStore((s) => s.setHourlyRate)
+  const addTimeEntry = useAppStore((s) => s.addTimeEntry)
+  const removeTimeEntry = useAppStore((s) => s.removeTimeEntry)
 
   // Every time a project is opened: clear yesterday's completed to-dos (if
   // the day rolled over) and prompt for anything to add to the running list.
@@ -2890,6 +2895,17 @@ function App() {
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
+                      setHoursPanelOpen(true)
+                      setMoreOpen(false)
+                    }}
+                  >
+                    Hours &amp; invoice
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
                       setActiveView('insights')
                       setMoreOpen(false)
                     }}
@@ -4177,6 +4193,17 @@ function App() {
           setRunningTodoPanelOpen(false)
           setRunningTodoPromptOpen(true)
         }}
+      />
+      <HoursInvoicePanel
+        open={hoursPanelOpen}
+        onClose={() => setHoursPanelOpen(false)}
+        orgName={activeProject?.logoWordmark || activeProject?.name || ''}
+        hourlyRate={activeProject?.hourlyRate || ''}
+        timeLog={activeProject?.timeLog || []}
+        onSetRate={setHourlyRate}
+        onAddEntry={addTimeEntry}
+        onRemoveEntry={removeTimeEntry}
+        flashToast={flashToast}
       />
 
       {shortcutsOpen && (

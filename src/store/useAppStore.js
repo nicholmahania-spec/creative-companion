@@ -166,6 +166,9 @@ export function createBlankProject(name = 'My project', brief = '') {
     tasks: [],
     runningTodo: blankRunningTodo(),
     assetAudit: [],
+    /** Lightweight hours/invoice tracking — hourly rate + logged entries */
+    hourlyRate: '',
+    timeLog: [],
   }
 }
 
@@ -707,6 +710,40 @@ const useAppStore = create(
           projects: state.projects.map((p) => {
             if (p.id !== state.currentProjectId) return p
             return { ...p, contacts: (p.contacts || []).filter((c) => c.id !== id) }
+          }),
+        })),
+
+      /** Lightweight hours/invoice tracking — separate from creative workflow */
+      setHourlyRate: (rate) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId ? { ...p, hourlyRate: rate } : p
+          ),
+        })),
+
+      addTimeEntry: ({ date, hours, note = '' }) =>
+        set((state) => {
+          const h = Number(hours)
+          if (!date || !Number.isFinite(h) || h <= 0) return state
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== state.currentProjectId) return p
+              const entry = {
+                id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                date,
+                hours: h,
+                note: String(note || '').trim(),
+              }
+              return { ...p, timeLog: [...(p.timeLog || []), entry] }
+            }),
+          }
+        }),
+
+      removeTimeEntry: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return { ...p, timeLog: (p.timeLog || []).filter((t) => t.id !== id) }
           }),
         })),
 
