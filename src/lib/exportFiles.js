@@ -528,7 +528,7 @@ export function brandPackToMarkdown(pack) {
     })
     lines.push('')
   }
-  // Full system appendix: roles, codes, AA pairs, type scale, logo don’ts, imagery
+  // Full system appendix: roles, codes, AA pairs, type scale, logo don'ts, imagery
   const withSystem = appendSystemMarkdown(lines, pack)
   withSystem.push(
     '---',
@@ -1621,8 +1621,8 @@ const writeWrapped = (
       '02  Positioning · messaging · voice',
       '03  Color system · codes · AA pairs',
       '04  Typography · type scale',
-      '05  Logo lockups · don’ts',
-      '06  Usage · do / don’t',
+      "05  Logo lockups · don'ts",
+      "06  Usage · do / don't",
       '07  Imagery · mood pins',
       '08  Application mock · handoff',
     ]
@@ -1658,11 +1658,10 @@ const writeWrapped = (
       if (det.format)
         writeWrapped(`Format / constraint: ${det.format}`, { size: 11 })
     }
-    kicker('Positioning')
-    writeWrapped(pack?.brief || 'No brief yet — add on Define.', {
-      size: 12,
-      label: pack?.typeBody,
-    })
+    if (pack?.brief) {
+      kicker('Positioning')
+      writeWrapped(pack.brief, { size: 12, label: pack?.typeBody })
+    }
     kicker('Tagline')
     writeWrapped(tag, { size: 14, role: 'heading', label: pack?.typeHeading })
     if (
@@ -1678,11 +1677,10 @@ const writeWrapped = (
       if (pack.messagingPersonality)
         writeWrapped(`Personality: ${pack.messagingPersonality}`, { size: 11 })
     }
-    kicker('Voice')
-    writeWrapped(pack?.voice || 'Voice TBD — set on Design.', {
-      size: 12,
-      label: pack?.typeBody,
-    })
+    if (pack?.voice) {
+      kicker('Voice')
+      writeWrapped(pack.voice, { size: 12, label: pack?.typeBody })
+    }
     if (pack?.designVersion) {
       kicker('Design version')
       writeWrapped(String(pack.designVersion), { size: 11 })
@@ -1906,11 +1904,11 @@ const writeWrapped = (
       `Min size: ${pack?.logoMinSize || DEFAULT_LOGO_MIN_SIZE}`,
       { size: 10, color: [60, 60, 60] }
     )
-    kicker("Logo don’ts")
+    kicker("Logo don'ts")
     logoDontsList(pack).forEach((rule) => {
       writeWrapped(`• ${rule}`, { size: 10 })
     })
-    // Visual don’ts strip (labels only — keeps PDF lean)
+    // Visual don'ts strip (labels only — keeps PDF lean)
     ensureSpace(48)
     kicker('Avoid (examples)')
     const avoidLabels = ['Stretch', 'Recolor wild', 'Low contrast']
@@ -1933,7 +1931,7 @@ const writeWrapped = (
 
     // ═══════════════ PAGE 6 — Usage ═══════════════
     newPage()
-    pageTitle('Usage', 'Do and don’t — ship rules, not vibes.')
+    pageTitle('Usage', "Do and don't — ship rules, not vibes.")
     const doT = String(pack?.doUse || '').trim()
     const dontT = String(pack?.dontUse || '').trim()
     const colW = (contentW - 16) / 2
@@ -1976,20 +1974,12 @@ const writeWrapped = (
         writeWrapped(`Style: ${pack.imageryStyle}`, { size: 11 })
       if (pack.imageryDo) writeWrapped(`Do: ${pack.imageryDo}`, { size: 11 })
       if (pack.imageryDont)
-        writeWrapped(`Don’t: ${pack.imageryDont}`, { size: 11 })
-    } else {
-      writeWrapped(
-        'Add imagery style / do / don’t on Design → Imagery for a fuller chapter.',
-        { size: 10, color: [90, 90, 90] }
-      )
+        writeWrapped(`Don't: ${pack.imageryDont}`, { size: 11 })
     }
     kicker('Starred refs')
     const pins = pack?.pins || []
     if (!pins.length) {
-      writeWrapped(
-        'No starred pins yet — open Research and star up to 6 for the leave-behind.',
-        { size: 11 }
-      )
+      // no pins — leave section blank rather than leaking internal UI copy
     } else {
       const cols = 3
       const gap = 12
@@ -2053,15 +2043,20 @@ const writeWrapped = (
       pdf.setFillColor(fgRgb[0], fgRgb[1], fgRgb[2])
       pdf.circle(margin + cardW - 36, y + 40, 14, 'F')
     }
+    // Text on the quiet (light) background — derive contrast from that surface,
+    // not from the "text" role which is intended for use on dark cover surfaces.
+    const cardTextHex = bestTextOn(quietHex)
+    const cardTextRgb = hexToRgb(cardTextHex) || [28, 25, 23]
     setFont(pack?.typeHeading, 'heading', 14)
-    pdf.setTextColor(textRgb[0], textRgb[1], textRgb[2])
+    pdf.setTextColor(cardTextRgb[0], cardTextRgb[1], cardTextRgb[2])
     pdf.text(String(wordmark).slice(0, 28), margin + 24, y + 40)
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(9)
-    pdf.setTextColor(80, 80, 80)
+    pdf.setTextColor(cardTextRgb[0], cardTextRgb[1], cardTextRgb[2])
     const cardTag = pdf.splitTextToSize(tag, cardW - 100)
     pdf.text(cardTag.slice(0, 2), margin + 24, y + 58)
     pdf.setFontSize(8)
+    pdf.setTextColor(cardTextRgb[0], cardTextRgb[1], cardTextRgb[2])
     pdf.text('hello@brand.example  ·  brand.example', margin + 24, y + 120)
     y += cardH + 20
     writeWrapped(

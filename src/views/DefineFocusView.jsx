@@ -103,8 +103,6 @@ export default function DefineFocusView({
     [whoPrimary]
   );
 
-  const exitFocus = () => setActiveView?.('project');
-
   // Performance timing for steps
   const stepTimerRef = useRef(null);
   useEffect(() => {

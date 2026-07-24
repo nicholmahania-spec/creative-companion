@@ -476,27 +476,11 @@ export default function DetectiveSheet({
             }
             applyDetectiveToBrief?.()
             onContinue?.()
-            // Track completing the detective sheet
-            trackFeatureUsage('detective_sheet', 'completed')
           }}
         >
-          <button
-            type="button"
-            className={`define-fab btn btn-primary work-path-next${requiredReady ? ' is-ready' : ' is-quiet'}`}
-            onClick={() => {
-              if (!requiredReady) {
-                openNextIncomplete()
-                flashToast?.('Need * fields first')
-                return
-              }
-              applyDetectiveToBrief?.()
-              onContinue?.()
-            }}
-          >
-            {continueLabel}
-          </button>
-        </div>
-      )}
+          {continueLabel}
+        </button>
+      </div>
     </div>
   )
 }

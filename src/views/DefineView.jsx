@@ -103,7 +103,7 @@ export default function DefineView(props) {
         <div>
           <h1 className="page-title">
             {i18nT(locale, 'path.define')}
-          </span>
+          </h1>
           <input
             id="project-name"
             className="define-name-inline"

@@ -7,351 +7,126 @@
  * this app ships no Tailwind. Each state renders a single FocusShell
  * (no nesting) so there is exactly one header + progress bar on screen.
  */
-import { useEffect, useState, Suspense, lazy } from 'react'
+import { useState } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import FocusCard from '../components/focus/FocusCard'
-import Button from '../components/ui/Button'
-const SketchPreview = lazy(() => import('../components/SketchPreview'))
+import useAppStore from '../store/useAppStore'
 
-export default function SketchFocusView({ setActiveView }) {
+export default function SketchFocusView({ deskTasks, projectId, setActiveView }) {
+  const toggleTask = useAppStore((s) => s.toggleTask)
+  const reorderOpenTasks = useAppStore((s) => s.reorderOpenTasks)
+  const addTask = useAppStore((s) => s.addTask)
+
+  const openTasks = (deskTasks || []).filter((t) => !t.completed)
   const [draft, setDraft] = useState('')
-  const [tasks, setTasks] = useState([])
-  const [nowId, setNowId] = useState(null)
-  const [ranked, setRanked] = useState(false)
 
-  // Intent setting state
-  const [intent, setIntent] = useState('')
-  const [intentSet, setIntentSet] = useState(false)
-
-  // Helper to get current "now" task
-  const now = tasks.find((t) => t.id === nowId) || null
-  // Get ranked (numbered) upnext tasks
-  const upNext = tasks
-    .filter((t) => t.id !== nowId && t.meta && !isNaN(parseInt(t.meta)))
-    .sort((a, b) => (parseInt(a.meta) || 0) - (parseInt(b.meta) || 0))
-  // Get unranked upnext tasks
-  const unrankedUpNext = tasks.filter(
-    (t) => t.id !== nowId && (!t.meta || isNaN(parseInt(t.meta)))
-  )
+  const nowTask = openTasks[0] || null
+  const upNext = openTasks.slice(1, 4)
 
   const exitFocus = () => setActiveView?.('flow')
 
-  // Intent setting step
-  if (!intentSet) {
+  // Empty state — capture a task first
+  if (!nowTask && !draft && openTasks.length === 0) {
     return (
       <FocusShell
         stepLabel="04 // Sketch"
         stepIndex={0}
         stepCount={2}
-        showPreviewDrawer={true}
-        onExit={exitFocus}
-        drawerContent={
-          <Suspense fallback={
-            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
-              <div className="space-y-4">
-                <div className="h-4 w-32 bg-border rounded"></div>
-                <div className="h-4 w-24 bg-border rounded"></div>
-                <div className="h-4 w-40 bg-border rounded"></div>
-              </div>
-            </div>
-          }>
-            <SketchPreview
-              tasks={tasks}
-              nowId={nowId}
-              ranked={ranked}
-            />
-          </Suspense>
-        }
+        onBack={exitFocus}
       >
-        <div className="focus-card">
-          <p id="sketch-intent-prompt" className="focus-prompt">What do you want to accomplish in your sketching session?</p>
-          <input
-            id="sketch-intent-input"
-            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-            value={intent}
-            onChange={(e) => setIntent(e.target.value)}
-            placeholder="e.g., Explore 3 layout options for the homepage"
-            autoFocus
-            aria-labelledby="sketch-intent-prompt"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && intent.trim()) {
-                setIntentSet(true)
-              }
-            }}
-          />
-          <div className="flex justify-end mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (intent.trim()) {
-                  setIntentSet(true)
-                }
-              }}
-              disabled={!intent.trim()}
-            >
-              Start Sketching
-            </Button>
-          </div>
-        </div>
-      </FocusShell>
-    )
-  }
-
-  // Helper functions
-  const addTask = (task) => {
-    setTasks((prev) => {
-      const next = [...prev, task]
-      // First capture becomes the active "now" so the user lands on work
-      if (!nowId) setNowId(task.id)
-      return next
-    })
-    setDraft('')
-  }
-
-  const toggleTask = (id) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    )
-    // If completing the current now task, advance to next
-    if (id === nowId) {
-      const next = upNext[0] || unrankedUpNext[0]
-      setNowId(next ? next.id : null)
-    }
-  }
-
-  const promote = (task) => {
-    setRanked(true)
-    setNowId(task.id)
-  }
-
-  const exitFocus = () => setActiveView?.('flow')
-
-  // Intent setting step
-  if (!intentSet) {
-    return (
-      <FocusShell
-        stepLabel="04 // Sketch"
-        stepIndex={0}
-        stepCount={2}
-        showPreviewDrawer={true}
-        onExit={exitFocus}
-        drawerContent={preview}
-      >
-        <div className="focus-card">
-          <p className="focus-prompt">What do you want to accomplish in your sketching session?</p>
+        <FocusCard cardKey="capture">
+          <p className="focus-prompt">What's the one thing to sketch?</p>
           <input
             className="focus-input-inline"
             style={{ display: 'block', width: '100%' }}
-            value={intent}
-            onChange={(e) => setIntent(e.target.value)}
-            placeholder="e.g., Explore 3 layout options for the homepage"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="e.g. Homepage layout exploration"
             autoFocus
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && intent.trim()) setIntentSet(true)
+              if (e.key === 'Enter' && draft.trim()) {
+                addTask({ title: draft.trim(), projectId: projectId || null })
+                setDraft('')
+              }
             }}
           />
           <div className="focus-actions">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => intent.trim() && setIntentSet(true)}
-              disabled={!intent.trim()}
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!draft.trim()}
+              onClick={() => {
+                if (draft.trim()) {
+                  addTask({ title: draft.trim(), projectId: projectId || null })
+                  setDraft('')
+                }
+              }}
             >
-              Start Sketching
-            </Button>
+              Add
+            </button>
+            <button type="button" className="focus-skip-btn" onClick={exitFocus}>
+              Exit
+            </button>
           </div>
-        </div>
+        </FocusCard>
       </FocusShell>
     )
   }
 
-  // Main sketch interface
-  return (
-    <FocusShell stepLabel="04 // Sketch" stepIndex={1} stepCount={2} onExit={exitFocus}>
-      {/* Task input when no active task */}
-      {!now && tasks.length === 0 && (
-        <FocusShell
-          stepLabel="04 // Sketch"
-          stepIndex={1}
-          stepCount={2}
-          showPreviewDrawer={true}
-          onExit={exitFocus}
-          drawerContent={
-            <Suspense fallback={
-              <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
-                <div className="space-y-4">
-                  <div className="h-4 w-32 bg-border rounded"></div>
-                  <div className="h-4 w-24 bg-border rounded"></div>
-                  <div className="h-4 w-40 bg-border rounded"></div>
-                </div>
-              </div>
-            }>
-              <SketchPreview
-                tasks={tasks}
-                nowId={nowId}
-                ranked={ranked}
-              />
-            </Suspense>
-          }
-        >
-          <FocusCard cardKey="empty">
-            <p className="focus-prompt">What's on your mind?</p>
-            <input
-              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Capture a task or idea"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && draft.trim()) {
-                  addTask({
-                    id: Date.now() + Math.random(),
-                    title: draft.trim(),
-                    energy: 'med',
-                    meta: '',
-                    completed: false,
-                    seeded: false,
-                    projectId: activeProject?.id || useAppStore.getState().currentProjectId,
-                    dueDate: '',
-                  })
-                }
-              }}
-            />
-            <div className="focus-actions">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!draft.trim()}
-                onClick={() => {
-                  if (draft.trim()) {
-                    addTask({
-                      id: Date.now() + Math.random(),
-                      title: draft.trim(),
-                      energy: 'med',
-                      meta: '',
-                      completed: false,
-                      seeded: false,
-                      projectId: activeProject?.id || useAppStore.getState().currentProjectId,
-                      dueDate: '',
-                    })
-                    setDraft('')
-                  }
-                }}
-              >
-                Add
-              </Button>
-            </div>
-          </FocusCard>
-        </FocusShell>
-      )}
-
-      /* Now/upnext view when there is an active task */
-      {now && (
-        <FocusShell stepLabel="04 // Sketch" stepIndex={1} stepCount={2} showPreviewDrawer={true} onExit={exitFocus} drawerContent={<SketchPreview tasks={tasks} nowId={nowId} ranked={ranked} />}>
-          <>
-            <FocusCard cardKey={`now-${now.id}`}>
-              <p className="focus-prompt" style={{ textAlign: 'center' }}>
-                {now.title}
-              </p>
-              <div className="focus-actions" style={{ justifyContent: 'center' }}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toggleTask(now.id)}
-                >
-                  {now.completed ? 'Undo' : 'Done'}
-                </Button>
-                {unrankedUpNext.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => promote(now)}
-                    className="ml-2"
-                  >
-                    Next · Design
-                  </Button>
-                )}
-              </div>
-            </FocusCard>
-
-  // Active "now" task + up-next lane
-  if (now) {
+  // Active now task
+  if (nowTask) {
     return (
       <FocusShell
         stepLabel="04 // Sketch"
         stepIndex={1}
         stepCount={2}
-        showPreviewDrawer={true}
-        onExit={exitFocus}
-        drawerContent={preview}
+        onBack={exitFocus}
       >
-        <FocusCard cardKey={`now-${now.id}`}>
-          <p className="focus-prompt" style={{ textAlign: 'center' }}>
-            {now.title}
-          </p>
+        <FocusCard cardKey={`now-${nowTask.id}`}>
+          <p className="focus-hint">Now</p>
+          <p className="focus-prompt" style={{ textAlign: 'center' }}>{nowTask.title}</p>
           <div className="focus-actions" style={{ justifyContent: 'center' }}>
-            <Button variant="outline" size="sm" onClick={() => toggleTask(now.id)}>
-              {now.completed ? 'Undo' : 'Done'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setActiveView?.('brand')}
-              className="ml-2"
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => toggleTask(nowTask.id)}
             >
-              Next · Design
-            </Button>
+              {nowTask.completed ? 'Undo' : 'Done ✓'}
+            </button>
           </div>
+          {upNext.length > 0 && (
+            <>
+              <p className="focus-hint" style={{ marginTop: '2rem' }}>Up next — tap to promote</p>
+              <div className="focus-chip-row">
+                {upNext.map((t, i) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className="focus-chip"
+                    onClick={() => reorderOpenTasks([t.id, ...openTasks.filter((x) => x.id !== t.id).map((x) => x.id)])}
+                  >
+                    {i + 1} · {t.title}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </FocusCard>
-
-      /* Completion state */
-      {!now && tasks.length > 0 && (
-        <FocusShell stepLabel="04 // Sketch" stepIndex={2} stepCount={2} showPreviewDrawer={true} onExit={exitFocus} drawerContent={<SketchPreview tasks={tasks} nowId={nowId} ranked={ranked} />}>
-          <FocusCard cardKey="complete">
-            <p className="focus-prompt">All tasks captured</p>
-            <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>
-              {tasks.length} task{tasks.length === 1 ? '' : 's'} ready to sketch
-            </p>
-            <div className="focus-chip-row" style={{ justifyContent: 'center' }}>
-              {[...upNext, ...unrankedUpNext].map((t, i) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className="focus-chip"
-                  onClick={() => promote(t)}
-                >
-                  {i + 1} · {t.title}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </FocusShell>
     )
   }
 
-  // All captured / completed — move forward to Design (the next path step)
+  // All done
   return (
-    <FocusShell
-      stepLabel="04 // Sketch"
-      stepIndex={2}
-      stepCount={2}
-      showPreviewDrawer={true}
-      onExit={exitFocus}
-      drawerContent={preview}
-    >
-      <FocusCard cardKey="complete">
+    <FocusShell stepLabel="04 // Sketch" stepIndex={2} stepCount={2}>
+      <div className="focus-card" style={{ textAlign: 'center' }}>
         <p className="focus-prompt">All tasks captured</p>
-        <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>
-          {tasks.length} task{tasks.length === 1 ? '' : 's'} ready to sketch
-        </p>
         <div className="focus-actions" style={{ justifyContent: 'center' }}>
-          <Button variant="outline" size="sm" onClick={() => setActiveView?.('brand')}>
+          <button type="button" className="btn btn-primary" onClick={() => setActiveView?.('brand')}>
             Next · Design
-          </Button>
+          </button>
         </div>
-      </FocusCard>
+      </div>
     </FocusShell>
   )
 }

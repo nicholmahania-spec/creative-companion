@@ -11,7 +11,7 @@ import { trackVersionAction } from '../lib/analytics'
 
 /**
  * Ideate tool prompts (not fake client data).
- * ≥8 for energy UI. Opposites live in oppositeSparks only (no “Opposite day” here).
+ * ≥8 for energy UI. Opposites live in oppositeSparks only (no "Opposite day" here).
  * Mix brand leave-behind + UI/UX (empty state, primary action, hierarchy).
  */
 export const sparkPrompts = [
@@ -94,7 +94,7 @@ export function brandIdentityDefaults() {
   logoClearspace: '',
   /** Min reproduction size note */
   logoMinSize: '',
-  /** Logo don’ts — one per line; defaults apply in export if empty */
+  /** Logo don'ts — one per line; defaults apply in export if empty */
   logoDonts: '',
   /** Messaging pillars */
   messagingPromise: '',
@@ -543,7 +543,7 @@ const useAppStore = create(
         const n = m ? Number(m[1]) + 1 : 2
         const next = `v${n}`
         set({
-          projects: state.projects.map((state.projects.map((proj) =>
+          projects: state.projects.map((proj) =>
             proj.id === state.currentProjectId
               ? { ...proj, designVersion: next }
               : proj
@@ -928,9 +928,9 @@ const useAppStore = create(
         const short =
           task.title.slice(0, 40) + (task.title.length > 40 ? '…' : '')
         const steps = [
-          `Name the one feeling “${short}” must land (1 sentence)`,
+          `Name the one feeling "${short}" must land (1 sentence)`,
           `Gather 3–5 refs that match that feeling (mood board)`,
-          `Do a 15‑min messy first pass on “${short}” — ugly OK`,
+          `Do a 15‑min messy first pass on "${short}" — ugly OK`,
         ]
         const newItems = steps.map((title, i) => ({
           id: Date.now() + i + 1,
@@ -1626,7 +1626,7 @@ const useAppStore = create(
         return { ok: true }
       },
 
-      applyTemplate: (templateId) => {
+      applyTemplate: async (templateId) => {
         const state = get()
         const template = state.templates.find(t => t.id === templateId)
         if (!template) return { ok: false, error: 'Template not found' }

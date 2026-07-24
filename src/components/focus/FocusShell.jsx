@@ -194,9 +194,7 @@ export default function FocusShell({
             Exit
           </button>
         )}
-      </header>
-
-      <main className="focus-main">{children}</main>
+      </div>
 
       {/* Preview drawer with lazy loading */}
       {showPreviewDrawer && (
