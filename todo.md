@@ -150,6 +150,37 @@ unfinished items and the sorted state.
 
 ---
 
+## Real-project fit gaps — Sparrow's Promise Brand Clean-Up (2026-07-24)
+
+App is built for creating a brand from scratch (Define→Research→Ideate→
+Sketch→Design). This real project is audit-and-document an *existing* brand
+(explicitly "no new logo design, no rebranding, no strategy") — Ideate/Sketch
+don't apply; work goes Define (scope) → Design (document what exists) →
+Deliver. Approved 4-part build, in order:
+
+### A. CMYK + structured logo usage fields — building now
+- Add CMYK conversion (`src/lib/color.js`) alongside existing HEX/RGB.
+- Add structured logo-usage fields (clear-space, minimum size) to brand
+  identity data, beyond the existing freeform doUse/dontUse text box.
+- Surface both in Design view + the Brand Book PDF export.
+
+### B. In-app asset-audit tracker — not started
+- New list (Define or Research) where each uploaded existing file gets
+  tagged usable / outdated / missing. Distinct from the mood board
+  (inspiration) and the running to-do list (tasks).
+
+### C. Real fillable brand-recognition templates — not started
+- Actual letterhead / business card / envelope / email-signature templates
+  filled with the org's real name+contact info, exportable as finished
+  files. Replaces the existing generic "sample business card" proof-of-
+  system mock for this use case (keep that mock for the from-scratch flow).
+
+### D. Lightweight hours/invoice tracker — not started
+- Per-project time log (hours × rate) + simple itemized invoice export.
+  New, small business-ops module; no overlap with existing features.
+
+---
+
 ## Next session starting point
 
 1. Start with **ReviewFocusView.jsx** nested FocusShell fix (HIGH #1) — it's the natural continuation of the UX agent's work
