@@ -5782,7 +5782,8 @@ html[data-reduce-motion='true'] *::after {
   color: var(--text-primary);
 }
 
-.direction-hex-chip .direction-hex-rgb {
+.direction-hex-chip .direction-hex-rgb,
+.direction-hex-chip .direction-hex-cmyk {
   font-size: 0.6rem;
   font-weight: 600;
   color: var(--text-muted);
@@ -6787,7 +6788,8 @@ body.cc-printing-pack .buddy-shell,
   margin-left: 0.15rem;
 }
 
-.role-rgb {
+.role-rgb,
+.role-cmyk {
   font-size: 0.58rem;
   font-weight: 600;
   opacity: 0.55;
