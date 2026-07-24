@@ -1,17 +1,7 @@
 /**
  * 05 // Design — Focus Mode (Tactile Minimalist rework, opt-in preview).
- *
- * The blueprint's spec for this stage (auto-injected variation matrix
- * on a wireframe layout, shuffled with Spacebar) assumes a layout
- * engine this app doesn't have — DesignView edits brand fields
- * (tagline/palette/type/logo), it doesn't compose page layouts. What
- * *is* directly buildable here, and what the blueprint got right for
- * the domain, is the font-pairing showdown — DesignView is genuinely
- * where type gets chosen (updateBrandField('typeHeading'/'typeBody')),
- * unlike Ideate, where the same idea didn't fit. So this stage does:
- * one-line tagline, then a real head-to-head between this app's
- * curated TYPE_PAIRS, rendered with actual font-family specimens via
- * fontFamilyFromLabel — not placeholder text standing in for type.
+ * Added: Intent-setting step at start (phase 4 UX consistency).
+ * Then proceeds to tagline setting and font pairing as before.
  */
 import { useEffect, useState } from 'react'
 import FocusShell from '../components/focus/FocusShell'
@@ -30,6 +20,11 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const { brandFields } = useAppStore((s) => s)
 
+  // Intent setting state
+  const [intent, setIntent] = useState('')
+  const [intentSet, setIntentSet] = useState(false)
+
+  // Original DesignView state (moved inside intentSet conditional)
   const [taglineDone, setTaglineDone] = useState(!!activeProject?.tagline)
   const [taglineDraft, setTaglineDraft] = useState(activeProject?.tagline || '')
   const [bracket, setBracket] = useState([BRACKET_PAIRS[0], BRACKET_PAIRS[1]])
@@ -66,13 +61,62 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
     setApplied(true)
   }
 
-  if (!taglineDone) {
+  const exitFocus = () => setActiveView?.('brand')
+
+  // If intent not set, show intent input first
+  if (!intentSet) {
     return (
       <FocusShell
         stepLabel="05 // Design"
         stepIndex={0}
-        stepCount={2}
+        stepCount={3}
+        showPreviewDrawer={false}
+        onExit={exitFocus}
+      >
+        <div className="focus-card">
+          <p id="design-intent-prompt" className="focus-prompt">What do you want to accomplish in your design session?</p>
+          <input
+            id="design-intent-input"
+            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            placeholder="e.g., Choose heading and body fonts that feel trustworthy"
+            autoFocus
+            aria-labelledby="design-intent-prompt"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && intent.trim()) {
+                setIntentSet(true)
+              }
+            }}
+          />
+          <div className="flex justify-end mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (intent.trim()) {
+                  setIntentSet(true)
+                }
+              }}
+              disabled={!intent.trim()}
+            >
+              Start Designing
+            </Button>
+          </div>
+        </div>
+      </FocusShell>
+    )
+  }
+
+  // Main DesignView logic (only shown after intent is set)
+  if (!taglineDone) {
+    return (
+      <FocusShell
+        stepLabel="05 // Design"
+        stepIndex={1}
+        stepCount={3}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
           <div>
             <h3 className="font-semibold mb-2">Current Brand Settings</h3>
@@ -92,7 +136,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             </div>
           </div>
         }
-        onDrawerToggle={(isOpen) => console.log('Drawer toggled:', isOpen)}
+        onExit={exitFocus}
       >
         <FocusCard cardKey="tagline">
           <p className="focus-prompt">One-line tagline:</p>
@@ -109,7 +153,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
               }
             }}
           />
-          <div className="flex justify-end mt-4">
+          <div className="focus-actions">
             <Button
               variant="outline"
               size="sm"
@@ -140,8 +184,9 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
       <FocusShell
         stepLabel="05 // Design"
         stepIndex={2}
-        stepCount={2}
+        stepCount={3}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
           <div>
             <h3 className="font-semibold mb-2">Applied Brand Settings</h3>
@@ -161,11 +206,11 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             </div>
           </div>
         }
-        onDrawerToggle={(isOpen) => console.log('Drawer toggled:', isOpen)}
+        onExit={exitFocus}
       >
         <div className="focus-card">
           <p className="focus-prompt text-center">Type set: {winner.label}</p>
-          <div className="flex justify-center mt-4">
+          <div className="focus-actions" style={{ justifyContent: 'center' }}>
             <Button
               variant="outline"
               size="sm"
@@ -184,8 +229,9 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
       <FocusShell
         stepLabel="05 // Design"
         stepIndex={2}
-        stepCount={2}
+        stepCount={3}
         showPreviewDrawer={true}
+        onExit={exitFocus}
         drawerContent={
           <div>
             <h3 className="font-semibold mb-2">Preview Selection</h3>
@@ -223,7 +269,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             </div>
           </div>
         }
-        onDrawerToggle={(isOpen) => console.log('Drawer toggled:', isOpen)}
+        onExit={exitFocus}
       >
         <div className="focus-card">
           <p className="focus-hint text-center">Winner</p>
@@ -231,7 +277,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             style={{
               fontFamily: fontFamilyFromLabel(winner.heading),
               fontWeight: 700,
-              fontSize: '2rem',
+              fontSize: 'clamp(1.5rem, 6vw, 2rem)',
               margin: '0.5rem 0',
               color: 'var(--text-primary)',
               textAlign: 'center',
@@ -240,7 +286,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             Aa Bb Cc
           </p>
           <p className="focus-hint text-center" style={{ marginBottom: '1.5rem' }}>{winner.label}</p>
-          <div className="flex justify-center mt-4">
+          <div className="focus-actions" style={{ justifyContent: 'center' }}>
             <Button
               variant="outline"
               size="sm"
@@ -258,8 +304,9 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
     <FocusShell
       stepLabel="05 // Design"
       stepIndex={1}
-      stepCount={2}
+      stepCount={3}
       showPreviewDrawer={true}
+      onExit={exitFocus}
       drawerContent={
         <div>
           <h3 className="font-semibold mb-2">Current Comparison</h3>
@@ -297,35 +344,45 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
           </div>
         </div>
       }
-      onDrawerToggle={(isOpen) => console.log('Drawer toggled:', isOpen)}
+      onExit={exitFocus}
     >
       <div className="w-full max-w-2xl">
         <p className="focus-prompt text-center">Which pairing wins?</p>
-        <div className="flex gap-4 mt-4">
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
           {bracket.map((pair, i) => (
-            <div
+            <button
               key={pair.id}
+              type="button"
               onClick={() => pick(pair)}
-              className="flex-1 cursor-pointer border border-border rounded-md bg-white p-4 hover:bg-muted/50 transition-colors"
+              style={{
+                flex: 1,
+                textAlign: 'left',
+                cursor: 'pointer',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '12px',
+                background: 'var(--bg-elevated)',
+                color: 'var(--text-primary)',
+                padding: '1rem',
+              }}
             >
-              <span className="block text-xs text-muted mb-2">
+              <span className="hidden sm:block text-xs text-muted mb-2">
                 {i === 0 ? '← Left arrow' : 'Right arrow →'}
               </span>
               <p
                 style={{
                   fontFamily: fontFamilyFromLabel(pair.heading),
                   fontWeight: 700,
-                  fontSize: '1.75rem',
+                  fontSize: 'clamp(1.25rem, 4vw, 1.75rem)',
                   margin: '0.5rem 0 0.25rem',
                   color: 'var(--text-primary)',
                 }}
               >
                 Aa Bb
               </p>
-              <p style={{ fontFamily: fontFamilyFromLabel(pair.body), fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+              <p style={{ fontFamily: fontFamilyFromLabel(pair.body), fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)', color: 'var(--text-secondary)' }}>
                 {pair.label}
               </p>
-            </div>
+            </button>
           ))}
         </div>
       </div>

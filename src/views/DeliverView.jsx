@@ -401,15 +401,6 @@ export default function DeliverView({
         </section>
       </div>
 
-      <div className="brand-export-bar path-continue-row deliver-continue">
-        <button
-          type="button"
-          className="btn btn-primary work-path-next pack-split-main"
-          onClick={() => runPack('pdf')}
-        >
-          {i18nT(locale, 'ui.downloadVectorPdf')}
-        </button>
-      </div>
-    </div>
+          </div>
   )
 }

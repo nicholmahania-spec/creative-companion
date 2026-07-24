@@ -9,6 +9,8 @@ import {
 } from 'react'
 import useAppStore from './store/useAppStore'
 import { DEFAULT_PALETTE } from './lib/color'
+import { trackExportAction } from './lib/analytics'
+import ErrorBoundary from './components/error/ErrorBoundary'
 import {
   BREAKDOWN_DEPTHS,
   generateProjectMicrosteps,
@@ -182,6 +184,7 @@ function App() {
   const clearToEmpty = useAppStore((s) => s.clearToEmpty)
   const renameProject = useAppStore((s) => s.renameProject)
   const deleteProject = useAppStore((s) => s.deleteProject)
+  const archiveProject = useAppStore((s) => s.archiveProject)
   const breakKit = useAppStore((s) => s.breakKit)
   const conceptItems = useAppStore((s) => s.conceptItems)
   const completeBreakKitItem = useAppStore((s) => s.completeBreakKitItem)
@@ -263,6 +266,7 @@ function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
+  const [commandActiveIdx, setCommandActiveIdx] = useState(0)
   const commandInputRef = useRef(null)
   const [resumeBanner, setResumeBanner] = useState(null)
   const [demoTour, setDemoTour] = useState(null)
@@ -497,6 +501,12 @@ function App() {
   /** Seconds non-error toasts queue before flushing together; 0 = show instantly (default) */
   const toastBatchWindow = Number(prefs.toastBatchWindow) || 0
 
+  /** Readable dwell time: ~450ms/word, floor 3.2s, cap 7s (WCAG-friendly). */
+  const toastDuration = (msg) => {
+    const words = String(msg || '').trim().split(/\s+/).filter(Boolean).length
+    return Math.min(7000, Math.max(3200, words * 450))
+  }
+
   /** @param {string} msg @param {{ micro?: boolean, important?: boolean }} [opts] */
   const flashToast = (msg, opts = {}) => {
     if (!msg) return
@@ -509,15 +519,15 @@ function App() {
         const batched = toastBatchRef.current
         toastBatchRef.current = []
         toastBatchTimerRef.current = null
-        setActionToast(
+        const shown =
           batched.length > 1 ? `${batched[0]} · +${batched.length - 1} more` : batched[0]
-        )
-        window.setTimeout(() => setActionToast(''), 3200)
+        setActionToast(shown)
+        window.setTimeout(() => setActionToast(''), toastDuration(shown))
       }, toastBatchWindow * 1000)
       return
     }
     setActionToast(msg)
-    window.setTimeout(() => setActionToast(''), 3200)
+    window.setTimeout(() => setActionToast(''), toastDuration(msg))
   }
 
   /** Micro feedback — only when user enables “All toasts” */
@@ -839,6 +849,15 @@ function App() {
     if (!q) return commandActions
     return commandActions.filter((a) => a.label.toLowerCase().includes(q))
   }, [commandActions, commandQuery])
+
+  // Keep the highlighted command in range as the query narrows the list
+  useEffect(() => {
+    setCommandActiveIdx((i) =>
+      commandFiltered.length === 0
+        ? 0
+        : Math.min(i, commandFiltered.length - 1)
+    )
+  }, [commandFiltered.length])
 
   const commandSections = useMemo(() => {
     const order = [
@@ -1245,6 +1264,18 @@ function App() {
     () => document.querySelector('.onboard-overlay'),
     []
   )
+  const getDeskConfirmRoot = useCallback(
+    () => document.querySelector('.desk-confirm-modal'),
+    []
+  )
+  const getCommandRoot = useCallback(
+    () => document.querySelector('.command-overlay'),
+    []
+  )
+  const getShortcutsRoot = useCallback(
+    () => document.querySelector('.shortcuts-overlay'),
+    []
+  )
   useModalFocus(!!exportPanel && !showBreakdown, getExportRoot, {
     initialSelector: '.export-panel-header button, button',
   })
@@ -1253,6 +1284,18 @@ function App() {
   })
   useModalFocus(!!showOnboarding, getOnboardRoot, {
     initialSelector: '#onboard-name',
+  })
+  // Destructive/blocking confirm: land focus on Cancel (safe default), trap Tab
+  useModalFocus(!!deskConfirm, getDeskConfirmRoot, {
+    initialSelector: '.desk-confirm-cancel',
+  })
+  // Command palette + shortcuts: trap Tab and restore focus to the opener
+  // (⌘K / Tools button) on close so keyboard users don't get dumped on <body>.
+  useModalFocus(commandOpen, getCommandRoot, {
+    initialSelector: '.command-input',
+  })
+  useModalFocus(shortcutsOpen, getShortcutsRoot, {
+    initialSelector: 'button',
   })
 
   // Flow keys (when not typing): 1–7 path · C complete · N capture · U undo · ? help
@@ -1976,6 +2019,8 @@ function App() {
             : `${label || kind.toUpperCase()} saved · ${when}`
         )
       }
+      // Track export action
+      trackExportAction(kind, true)
       // XP stays in Progress HUD — success toast stays human leave-behind language
       flashToast(
         kind === 'backup'
@@ -2021,12 +2066,16 @@ function App() {
             })}`
           )
           finishOk('Brand kit')
-        } else if (result.cancelled)
+          trackExportAction('kit', true)
+        } else if (result.cancelled) {
           flashToast(i18nT(locale, 'ui.saveCancelled'))
-        else
+          trackExportAction('kit', false)
+        } else {
           flashToast(
             result.error || i18nT(locale, 'ui.downloadFailed') || 'Kit failed'
           )
+          trackExportAction('kit', false)
+        }
       })()
       return
     }
@@ -2050,9 +2099,12 @@ function App() {
             })}`
           )
           finishOk('Brand book PDF')
-        } else if (result.cancelled)
+          trackExportAction('pdf', true)
+        } else if (result.cancelled) {
           flashToast(i18nT(locale, 'ui.saveCancelled'))
-        else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+          trackExportAction('pdf', false)
+        } else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+          trackExportAction('pdf', false)
       })()
       return
     }
@@ -2088,9 +2140,12 @@ function App() {
             })}`
           )
           finishOk('Preview PDF')
-        } else if (result.cancelled)
+          trackExportAction('pdf-preview', true)
+        } else if (result.cancelled) {
           flashToast(i18nT(locale, 'ui.saveCancelled'))
-        else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+          trackExportAction('pdf-preview', false)
+        } else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+          trackExportAction('pdf-preview', false)
       })()
       return
     }
@@ -2098,10 +2153,14 @@ function App() {
     if (kind === 'html') {
       void Promise.resolve(downloadBrandPackHtml(pack, handlePromise)).then(
         (result) => {
-          if (result.ok) finishOk('Brand HTML')
-          else if (result.cancelled)
+          if (result.ok) {
+            finishOk('Brand HTML')
+            trackExportAction('html', true)
+          } else if (result.cancelled) {
             flashToast(i18nT(locale, 'ui.saveCancelled'))
-          else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            trackExportAction('html', false)
+          } else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            trackExportAction('html', false)
         }
       )
       return
@@ -2121,9 +2180,13 @@ function App() {
       void Promise.resolve(downloadBrandPackJson(pack, handlePromise)).then(
         (result) => {
           if (result.ok) finishOk('Brand JSON')
-          else if (result.cancelled)
+          else if (result.cancelled) {
             flashToast(i18nT(locale, 'ui.saveCancelled'))
-          else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            trackExportAction('json', false)
+          } else {
+            flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            trackExportAction('json', false)
+          }
         }
       )
       return
@@ -2131,7 +2194,10 @@ function App() {
     if (kind === 'backup') {
       const result = downloadWorkspaceBackup(exportAllData())
       if (result.ok) finishOk('Workspace backup')
-      else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+      else {
+        flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+        trackExportAction('backup', false)
+      }
       return
     }
     if (kind === 'print') {
@@ -2152,7 +2218,11 @@ function App() {
           })
           setLastExportNote(`Print dialog · ${when} — Save as PDF if you want a file`)
           flashToast(i18nT(locale, 'ui.printDialogOpen'))
-        } else flashToast(r.error || i18nT(locale, 'ui.printFailed'))
+          trackExportAction('print', true)
+        } else {
+          flashToast(r.error || i18nT(locale, 'ui.printFailed'))
+          trackExportAction('print', false)
+        }
       }, exportPanel ? 50 : 180)
       return
     }
@@ -2211,7 +2281,7 @@ function App() {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognition) {
-      alert('Voice is not supported in this browser.')
+      flashToast?.('Voice is not supported in this browser.')
       return
     }
     const recognition = new SpeechRecognition()
@@ -2358,6 +2428,8 @@ function App() {
     setDeskConfirm({
       kind: 'delete-project',
       label: `${i18nT(locale, 'ui.deleteProjectConfirm')} (“${name}”)`,
+      confirmLabel: 'Delete',
+      danger: true,
       onConfirm: () => {
         const result = deleteProject(id)
         if (result.ok) {
@@ -2366,6 +2438,28 @@ function App() {
         } else {
           flashToast(result.error || i18nT(locale, 'ui.deleteFail'))
         }
+        setDeskConfirm(null)
+      },
+    })
+  }
+
+  const handleArchiveProject = () => {
+    if (!activeProject) return
+    const active = (projects || []).filter((p) => !p.archived)
+    if (active.length < 2) {
+      flashToast(i18nT(locale, 'ui.keepOneProject'))
+      return
+    }
+    const id = activeProject.id
+    const name = activeProject.name
+    setDeskConfirm({
+      kind: 'archive-project',
+      label: `Archive “${name}”? It moves out of your active list — you can restore it anytime from Define.`,
+      confirmLabel: 'Archive',
+      onConfirm: () => {
+        const result = archiveProject(id)
+        if (result?.ok) flashToast(i18nT(locale, 'ui.projectArchived') || 'Project archived')
+        else flashToast(result?.error || i18nT(locale, 'ui.archiveFail') || 'Could not archive')
         setDeskConfirm(null)
       },
     })
@@ -2586,6 +2680,9 @@ function App() {
         />
         </Suspense>
       )}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <header className="header header-redesign">
         <div className="header-content header-content-simple">
           <button
@@ -2718,7 +2815,7 @@ function App() {
 
             <button
               type="button"
-              className={`btn ${activeView === 'brand' ? 'btn-primary' : 'btn-secondary'} header-export`}
+              className="btn btn-secondary header-export"
               onClick={openExportPanel}
               title="Export"
               aria-label="Export"
@@ -2916,10 +3013,6 @@ function App() {
           </div>
         </div>
       </header>
-
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
 
       {showProgress && (
         <>
@@ -3620,6 +3713,7 @@ function App() {
               applyDetectiveToBrief={applyDetectiveToBrief}
               setProjectDeadline={setProjectDeadline}
               handleDeleteProject={handleDeleteProject}
+              handleArchiveProject={handleArchiveProject}
               renameProject={renameProject}
               createNewProject={createNewProject}
               selectProject={selectProject}
@@ -3919,18 +4013,44 @@ function App() {
               ref={commandInputRef}
               className="field-input command-input"
               value={commandQuery}
-              onChange={(e) => setCommandQuery(e.target.value)}
+              onChange={(e) => {
+                setCommandQuery(e.target.value)
+                setCommandActiveIdx(0)
+              }}
               placeholder="Jump…"
               aria-label="Filter commands"
+              role="combobox"
+              aria-expanded="true"
+              aria-controls="command-listbox"
+              aria-activedescendant={
+                commandFiltered[commandActiveIdx]
+                  ? `command-opt-${commandFiltered[commandActiveIdx].id}`
+                  : undefined
+              }
               autoComplete="off"
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const first = commandFiltered[0]
-                  if (first) {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setCommandActiveIdx((i) =>
+                    commandFiltered.length
+                      ? (i + 1) % commandFiltered.length
+                      : 0
+                  )
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setCommandActiveIdx((i) =>
+                    commandFiltered.length
+                      ? (i - 1 + commandFiltered.length) %
+                        commandFiltered.length
+                      : 0
+                  )
+                } else if (e.key === 'Enter') {
+                  const pick = commandFiltered[commandActiveIdx]
+                  if (pick) {
                     e.preventDefault()
                     setCommandOpen(false)
                     setCommandQuery('')
-                    first.run()
+                    pick.run()
                   }
                 }
               }}
@@ -3939,10 +4059,11 @@ function App() {
               <div
                 className="command-list"
                 role="listbox"
+                id="command-listbox"
                 aria-label="Commands"
               >
                 {commandFiltered.length === 0 && (
-                  <p className="command-empty">—</p>
+                  <p className="command-empty">No matching commands</p>
                 )}
                 {commandSections.map((sec) => (
                   <div key={sec.id} className="command-section" role="group">
@@ -3950,23 +4071,34 @@ function App() {
                       {sec.label}
                     </div>
                     <ul className="command-section-list">
-                      {sec.items.map((a) => (
-                        <li key={a.id}>
-                          <button
-                            type="button"
-                            className="command-item"
-                            role="option"
-                            onClick={() => {
-                              setCommandOpen(false)
-                              setCommandQuery('')
-                              a.run()
-                            }}
-                          >
-                            <span className="command-item-label">{a.label}</span>
-                            {a.hint ? <kbd>{a.hint}</kbd> : null}
-                          </button>
-                        </li>
-                      ))}
+                      {sec.items.map((a) => {
+                        const isActive =
+                          commandFiltered[commandActiveIdx]?.id === a.id
+                        return (
+                          <li key={a.id}>
+                            <button
+                              type="button"
+                              id={`command-opt-${a.id}`}
+                              className={`command-item${isActive ? ' is-active' : ''}`}
+                              role="option"
+                              aria-selected={isActive}
+                              onMouseEnter={() =>
+                                setCommandActiveIdx(
+                                  commandFiltered.findIndex((c) => c.id === a.id)
+                                )
+                              }
+                              onClick={() => {
+                                setCommandOpen(false)
+                                setCommandQuery('')
+                                a.run()
+                              }}
+                            >
+                              <span className="command-item-label">{a.label}</span>
+                              {a.hint ? <kbd>{a.hint}</kbd> : null}
+                            </button>
+                          </li>
+                        )
+                      })}
                     </ul>
                   </div>
                 ))}
@@ -4069,8 +4201,9 @@ function App() {
 
       {deskConfirm && (
         <div
-          className="desk-confirm-banner"
+          className="desk-confirm-banner desk-confirm-modal"
           role="alertdialog"
+          aria-modal="true"
           aria-labelledby="desk-confirm-title"
         >
           <p id="desk-confirm-title" className="desk-confirm-body">
@@ -4079,14 +4212,16 @@ function App() {
           <div className="desk-confirm-actions">
             <button
               type="button"
-              className="btn btn-primary btn-sm"
+              className={`btn btn-sm desk-confirm-go${
+                deskConfirm.danger ? ' settings-danger' : ' btn-primary'
+              }`}
               onClick={() => deskConfirm.onConfirm?.()}
             >
-              {i18nT(locale, 'ui.continue')}
+              {deskConfirm.confirmLabel || i18nT(locale, 'ui.continue')}
             </button>
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm desk-confirm-cancel"
               onClick={() => setDeskConfirm(null)}
             >
               {i18nT(locale, 'ui.cancel')}

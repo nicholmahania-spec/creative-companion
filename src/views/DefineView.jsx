@@ -7,7 +7,7 @@
  *
  * Calm chapter nav — no XP / game HUD.
  */
-import { Suspense, lazy, useState } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import {
   normalizeLocale,
@@ -15,7 +15,9 @@ import {
   tFormat,
   pathLabel,
 } from '../lib/i18n'
+import { getDetectiveProgress } from '../lib/detectiveBrief'
 import useIsMobile from '../lib/useIsMobile'
+import { trackWorkflowTransition, trackFeatureUsage } from '../lib/analytics'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 const DefineMoodCanvas = lazy(() => import('./DefineMoodCanvas'))
@@ -38,6 +40,7 @@ export default function DefineView(props) {
     applyDetectiveToBrief,
     setProjectDeadline,
     handleDeleteProject,
+    handleArchiveProject,
     renameProject,
     selectProject,
     projectDeadline = '',
@@ -47,6 +50,16 @@ export default function DefineView(props) {
   } = props
 
   const locale = normalizeLocale(localeProp)
+  const progress = useMemo(
+    () => getDetectiveProgress(activeProject?.detective),
+    [activeProject?.detective]
+  )
+  const progressPct = progress.pct
+  const requiredReady = progress.requiredReady
+  const continueLabel = tFormat(locale, 'ui.continueNext', {
+    label: pathLabel(locale, 'research') || 'Research',
+  })
+
   const archiveProject = useAppStore((s) => s.archiveProject)
   const unarchiveProject = useAppStore((s) => s.unarchiveProject)
   const addMilestone = useAppStore((s) => s.addMilestone)
@@ -56,6 +69,7 @@ export default function DefineView(props) {
   const [openChapter, setOpenChapter] = useState('core')
   /** Mobile only: 'form' inputs vs 'refs' mood board — one at a time */
   const [mobilePane, setMobilePane] = useState('form')
+  const [restoreSelect, setRestoreSelect] = useState('')
   const isMobile = useIsMobile()
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
@@ -70,6 +84,7 @@ export default function DefineView(props) {
     }
     if (next === activeProject.name) return
     renameProject?.(activeProject.id, next)
+    trackFeatureUsage('project_rename', { projectId: activeProject.id, projectName: next })
     flashMicro?.(i18nT(locale, 'ui.projectRenamed') || 'Name saved')
   }
 
@@ -81,17 +96,17 @@ export default function DefineView(props) {
 
   return (
     <div
-      className="project-view surface-desk view-enter define-studio define-dashboard"
+      className="brand-layout surface-document define-studio define-dashboard view-enter"
       data-nav-dir={navDir}
     >
-      <header className="define-dashboard-head">
-        <div className="define-head-row">
-          <h1 className="page-title define-studio-title">
+      <div className="brand-template-top">
+        <div>
+          <h1 className="page-title">
             {i18nT(locale, 'path.define')}
-          </h1>
+          </span>
           <input
             id="project-name"
-            className="define-input field-input define-name-inline"
+            className="define-name-inline"
             value={projectNameDraft}
             onChange={(e) => setProjectNameDraft(e.target.value)}
             onBlur={commitProjectRename}
@@ -106,7 +121,29 @@ export default function DefineView(props) {
             aria-label="Project name"
           />
         </div>
-      </header>
+      </div>
+
+      {/* Mobile-only: inline segmented control above the panels */}
+      {isMobile && (
+        <nav className="define-mobile-tabs" aria-label="Define panel switch">
+          <button
+            type="button"
+            className={`define-mobile-tab${mobilePane === 'form' ? ' is-active' : ''}`}
+            onClick={() => setMobilePane('form')}
+            aria-pressed={mobilePane === 'form'}
+          >
+            Form
+          </button>
+          <button
+            type="button"
+            className={`define-mobile-tab${mobilePane === 'refs' ? ' is-active' : ''}`}
+            onClick={() => setMobilePane('refs')}
+            aria-pressed={mobilePane === 'refs'}
+          >
+            Refs
+          </button>
+        </nav>
+      )}
 
       <div
         className="define-split"
@@ -133,9 +170,7 @@ export default function DefineView(props) {
               openChapter={openChapter}
               onOpenChapter={setOpenChapter}
               onContinue={goResearch}
-              continueLabel={tFormat(locale, 'ui.continueNext', {
-                label: pathLabel(locale, 'research') || 'Research',
-              })}
+              continueLabel={continueLabel}
             />
           </Suspense>
 
@@ -179,6 +214,10 @@ export default function DefineView(props) {
                   disabled={!activeProject || activeProjects.length < 2}
                   onClick={() => {
                     if (!activeProject) return
+                    if (handleArchiveProject) {
+                      handleArchiveProject()
+                      return
+                    }
                     const r = archiveProject(activeProject.id)
                     if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
                   }}
@@ -188,13 +227,13 @@ export default function DefineView(props) {
                 {archivedProjects.length > 0 && (
                   <select
                     className="header-project-select"
-                    defaultValue=""
+                    value={restoreSelect}
                     onChange={(e) => {
                       const id = e.target.value
                       if (!id) return
                       unarchiveProject(Number(id) || id)
                       selectProject(Number(id) || id)
-                      e.target.value = ''
+                      setRestoreSelect('')
                     }}
                     aria-label="Restore archived project"
                   >
@@ -261,27 +300,6 @@ export default function DefineView(props) {
         </div>
       </div>
 
-      {/* Mobile-only: toggle focus between inputs and refs (no cramped split) */}
-      {isMobile && (
-        <nav className="define-mobile-tabs" aria-label="Define panel switch">
-          <button
-            type="button"
-            className={`define-mobile-tab${mobilePane === 'form' ? ' is-active' : ''}`}
-            onClick={() => setMobilePane('form')}
-            aria-pressed={mobilePane === 'form'}
-          >
-            <span aria-hidden="true">📝</span> Form
-          </button>
-          <button
-            type="button"
-            className={`define-mobile-tab${mobilePane === 'refs' ? ' is-active' : ''}`}
-            onClick={() => setMobilePane('refs')}
-            aria-pressed={mobilePane === 'refs'}
-          >
-            <span aria-hidden="true">🖼</span> Refs
-          </button>
-        </nav>
-      )}
     </div>
   )
 }

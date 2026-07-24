@@ -53,9 +53,7 @@ export default function InsightsView(props) {
     ? 'Pause'
     : focusLeft > 0 && focusLeft < POMODORO_WORK_MIN * 60
       ? 'Resume'
-      : focusLeft === 2 * 60
-        ? 'Start 2'
-        : 'Start 25'
+      : 'Start 25'
 
   return (
     <div className="insights-layout insights-studio">

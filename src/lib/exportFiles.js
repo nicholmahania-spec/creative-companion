@@ -23,6 +23,24 @@ import {
   ROLE_JOBS,
 } from './brandSystem'
 
+// Typographic scale and vertical rhythm system
+const BASE_UNIT = 4  // 4px base unit for vertical rhythm
+const SPACING = {
+  xs: BASE_UNIT,      // 4px
+  sm: BASE_UNIT * 2,  // 8px
+  md: BASE_UNIT * 3,  // 12px
+  lg: BASE_UNIT * 4,  // 16px
+  xl: BASE_UNIT * 5,  // 20px
+  '2xl': BASE_UNIT * 6, // 24px
+  '3xl': BASE_UNIT * 7, // 28px
+  '4xl': BASE_UNIT * 8  // 32px
+}
+const LINE_HEIGHT = {
+  tight: 1.2,   // For headings
+  normal: 1.5,  // For body text
+  relaxed: 1.6  // For captions/notes
+}
+
 /** Safe filename from a project title */
 export function slugifyFilename(name, fallback = 'creative-companion') {
   const s = String(name || '')
@@ -62,15 +80,15 @@ export function captureSaveHandle(filename, description = 'Download') {
   const mime = mimeForName(name)
   const ext = name.includes('.') ? `.${name.split('.').pop()}` : ''
   try {
-    return window.showSaveFilePicker({
+    const p = window.showSaveFilePicker({
       suggestedName: name,
-      types: [
-        {
-          description,
-          accept: { [mime]: ext ? [ext] : ['.bin'] },
-        },
-      ],
+      types: [{ description, accept: { [mime]: ext ? [ext] : ['.bin'] } }],
     })
+    // Mark the promise as handled so an AbortError (user cancel) while the
+    // caller does async pre-work doesn't fire an "unhandled rejection".
+    // writeToSaveHandle still catches it with cancelled:true when it awaits.
+    p.catch(() => {})
+    return p
   } catch {
     return null
   }
@@ -605,16 +623,16 @@ export function brandPackToHtml(pack) {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-  .sheet { max-width: 560px; margin: 0 auto; padding: 1.5rem 1.25rem 2.5rem; }
+  .sheet { max-width: 560px; margin: 0 auto; padding: 1.75rem 1.25rem 2.75rem; }
   .direction-sheet {
     background: #fff;
     border: 1px solid rgba(11,18,32,.08);
     border-radius: 18px;
-    padding: 1.75rem 1.6rem;
+    padding: 2rem 1.6rem;
   }
   .export-identity-cover {
     border-radius: 12px;
-    padding: 1.35rem 1.25rem 1.15rem;
+    padding: 1.5rem 1.25rem 1.35rem;
     margin-bottom: 1.15rem;
     background: ${cover};
     color: ${coverFg};
@@ -625,21 +643,21 @@ export function brandPackToHtml(pack) {
     letter-spacing: 0;
     text-transform: none;
     color: rgba(11,18,32,.55);
-    margin: 1.15rem 0 0.4rem;
+    margin: 1.25rem 0 0.6rem;
   }
   .export-identity-cover .kicker { color: inherit; opacity: 0.85; margin-top: 0; }
   .direction-title {
     font-size: clamp(1.5rem, 3vw, 1.9rem);
     font-weight: 700;
     letter-spacing: -0.03em;
-    margin: 0.15rem 0 0.5rem;
+    margin: 0.2rem 0 0.7rem;
     line-height: 1.15;
     color: inherit;
   }
   .direction-brief {
     color: rgba(11,18,32,.65);
-    line-height: 1.55;
-    margin: 0 0 0.5rem;
+    line-height: 1.6;
+    margin: 0 0 0.6rem;
     font-size: 0.95rem;
     white-space: pre-wrap;
   }
@@ -649,7 +667,7 @@ export function brandPackToHtml(pack) {
     height: 52px;
     border-radius: 12px;
     overflow: hidden;
-    margin: 0.5rem 0 0.35rem;
+    margin: 0.75rem 0 0.5rem;
   }
   .direction-palette > div { flex: 1; }
   .direction-hex {
@@ -664,14 +682,14 @@ export function brandPackToHtml(pack) {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.85rem;
-    margin: 0.5rem 0 0.25rem;
+    margin: 0.75rem 0 0.35rem;
   }
   @media (max-width: 520px) { .export-do-dont { grid-template-columns: 1fr; } }
   .direction-pins {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0.55rem;
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
   }
   .direction-pin {
     border: 1px solid rgba(11,18,32,.08);
@@ -687,15 +705,15 @@ export function brandPackToHtml(pack) {
     line-height: 1.35;
   }
   .direction-tasks {
-    margin: 0.4rem 0 0;
+    margin: 0.6rem 0 0;
     padding-left: 1.1rem;
     color: rgba(11,18,32,.65);
     font-size: 0.9rem;
     line-height: 1.45;
   }
   .direction-foot {
-    margin-top: 1.5rem;
-    padding-top: 0.85rem;
+    margin-top: 1.75rem;
+    padding-top: 1rem;
     border-top: 1px solid rgba(11,18,32,.08);
     font-size: 0.72rem;
     color: rgba(11,18,32,.42);
@@ -1459,7 +1477,8 @@ export async function downloadBrandPackVectorPdf(
       pdf.setFontSize(size)
     }
 
-    const writeWrapped = (
+    
+const writeWrapped = (
       text,
       { size = 11, role = 'body', color = [12, 10, 9], label, maxW = contentW } = {}
     ) => {
@@ -1468,45 +1487,72 @@ export async function downloadBrandPackVectorPdf(
       setFont(label || pack?.typeBody, role, size)
       pdf.setTextColor(color[0], color[1], color[2])
       const lines = pdf.splitTextToSize(str, maxW)
-      const lineH = size * 1.35
-      ensureSpace(lines.length * lineH + 4)
+
+      // Determine line height multiplier based on role
+      let lineHeightMultiplier
+      if (role === 'heading') {
+        lineHeightMultiplier = LINE_HEIGHT.tight   // Tighter line height for headings
+      } else if (role === 'body' || role === undefined) {
+        lineHeightMultiplier = LINE_HEIGHT.normal   // Standard line height for body text
+      } else {
+        lineHeightMultiplier = LINE_HEIGHT.relaxed   // More relaxed for captions/notes
+      }
+      const lineH = size * lineHeightMultiplier
+
+      // Paragraph spacing: proportional to font size (20% of font size, min BASE_UNIT)
+      const paragraphSpacing = Math.max(BASE_UNIT, Math.round(size * 0.2))
+
+      ensureSpace(lines.length * lineH + paragraphSpacing)
       pdf.text(lines, margin, y)
-      y += lines.length * lineH + 6
+      y += lines.length * lineH + paragraphSpacing
     }
 
     const kicker = (label) => {
-      ensureSpace(22)
+      // Use proper spacing from our scale
+      const headerSpacingBefore = SPACING.lg   // 16px before header
+      const headerSpacingAfter = SPACING.md    // 12px after header (better balance)
+      ensureSpace(headerSpacingBefore)
       pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(8)
+      pdf.setFontSize(9)  // Increased from 8 to 9 for better readability
       pdf.setTextColor(100, 100, 100)
       pdf.text(String(label).toUpperCase(), margin, y)
-      y += 14
+      y += headerSpacingAfter
     }
 
     const pageTitle = (title, sub) => {
+      // Use proper typographic scale and spacing
       pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(8)
+      pdf.setFontSize(9)  // Increased from 8 to 9
       pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
       pdf.text('BRAND BOOK', margin, y)
-      y += 16
-      setFont(pack?.typeHeading, 'heading', 20)
+      y += SPACING.md  // 12px after BRAND BOOK
+
+      setFont(pack?.typeHeading, 'heading', 22)  // 22pt heading
       pdf.setTextColor(12, 10, 9)
       pdf.text(title, margin, y)
-      y += 22
+
+      // Calculate heading line height (22pt * 1.2 = 26.4px)
+      const headingLineHeight = 22 * LINE_HEIGHT.tight
+      y += headingLineHeight + SPACING.sm  // Add space after heading
+
       if (sub) {
         pdf.setFont('helvetica', 'normal')
-        pdf.setFontSize(10)
+        pdf.setFontSize(11)  // 11pt subtitle
         pdf.setTextColor(90, 90, 90)
         const lines = pdf.splitTextToSize(sub, contentW)
         pdf.text(lines, margin, y)
-        y += lines.length * 13 + 12
+
+        // Calculate subtitle line height (11pt * 1.5 = 16.5px)
+        const subtitleLineHeight = 11 * LINE_HEIGHT.normal
+        y += lines.length * subtitleLineHeight + SPACING.lg  // Space after subtitle
       } else {
-        y += 6
+        y += SPACING.md  // Space if no subtitle
       }
+
       pdf.setDrawColor(220, 220, 220)
       pdf.setLineWidth(0.5)
       pdf.line(margin, y, margin + contentW, y)
-      y += 16
+      y += SPACING.lg  // Space before content begins
     }
 
     const drawFooters = () => {
@@ -1906,7 +1952,7 @@ export async function downloadBrandPackVectorPdf(
     const dontLines = pdf.splitTextToSize(dontT || '—', colW)
     pdf.text(doLines, margin, y)
     pdf.text(dontLines, margin + colW + 16, y)
-    y += Math.max(doLines.length, dontLines.length) * 14 + 20
+    y += Math.max(doLines.length, dontLines.length) * 16.5 + 20  // 11pt * 1.5 line height
 
     const dirs = pack?.directions || []
     if (dirs.length) {

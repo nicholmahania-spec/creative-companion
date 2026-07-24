@@ -1,95 +1,130 @@
-/**
- * Shared shell for the "Tactile Minimalist" focus-mode rework.
- * One header (progress + step label), one centered card slot. Every
- * focus-mode stage view renders inside this.
- *
- * A slide-in preview drawer (toggled from the header) is for stages
- * that need a brand/pack preview (Design, Deliver).
- */
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { measureTime } from '../../lib/performance'
 
 export default function FocusShell({
   stepLabel,
   stepIndex,
   stepCount,
   onBack,
+  onExit,
   children,
   showPreviewDrawer = false,
   drawerContent = null,
-  onDrawerToggle
+  onDrawerToggle,
 }) {
   const pct = stepCount > 0 ? Math.round((stepIndex / stepCount) * 100) : 0
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const drawerRef = useRef(null)
+  const [isDrawerContentLoaded, setIsDrawerContentLoaded] = useState(false)
   const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
   const firstFocusableRef = useRef(null)
   const lastFocusableRef = useRef(null)
 
-  const handleDrawerToggle = () => {
-    setIsDrawerOpen(!isDrawerOpen)
-    onDrawerToggle?.(!isDrawerOpen)
+  // Measure drawer toggle performance
+  const handleDrawerToggle = useCallback(() => {
+    return measureTime('drawer-toggle', () => {
+      setIsDrawerOpen(!isDrawerOpen)
+      onDrawerToggle?.(!isDrawerOpen)
 
-    if (!isDrawerOpen) {
-      // Opening drawer - focus first element
-      requestAnimationFrame(() => {
-        if (drawerRef.current) {
-          const firstFocusable = drawerRef.current.querySelector(focusableElements)
-          if (firstFocusable) {
-            firstFocusable.focus()
+      if (!isDrawerOpen) {
+        // Opening drawer - focus first element
+        requestAnimationFrame(() => {
+          if (drawerRef.current) {
+            const firstFocusable = drawerRef.current.querySelector(focusableElements)
+            if (firstFocusable) {
+              firstFocusable.focus()
+            }
           }
-        }
-      })
-    }
-  }
+        })
+      }
+    })
+  }, [isDrawerOpen, onDrawerToggle])
 
-  // Trap focus inside drawer when open
+  const openDrawer = useCallback(() => {
+    restoreFocusRef.current = document.activeElement
+    setIsDrawerOpen(true)
+    onDrawerToggle?.(true)
+    requestAnimationFrame(() => {
+      const first = drawerRef.current?.querySelector(FOCUSABLE)
+      first?.focus?.()
+    })
+  }, [onDrawerToggle])
+
+  const toggleDrawer = useCallback(() => {
+    if (isDrawerOpen) closeDrawer()
+    else openDrawer()
+  }, [isDrawerOpen, closeDrawer, openDrawer])
+
+  // Trap focus + Escape while drawer is open
   useEffect(() => {
-    if (!isDrawerOpen) return
-
-    const handleKeyDown = (e) => {
+    if (!isDrawerOpen) return undefined
+    const onKeyDown = (e) => {
       if (e.key === 'Escape') {
-        handleDrawerToggle()
+        e.preventDefault()
+        closeDrawer()
+        return
       }
-
-      if (e.key === 'Tab') {
-        const focusableItems = drawerRef.current.querySelectorAll(focusableElements)
-        const firstItem = focusableItems[0]
-        const lastItem = focusableItems[focusableItems.length - 1]
-
-        if (e.shiftKey) { // shift + tab
-          if (document.activeElement === firstItem) {
-            e.preventDefault()
-            lastItem.focus()
-          }
-        } else { // tab
-          if (document.activeElement === lastItem) {
-            e.preventDefault()
-            firstItem.focus()
-          }
-        }
+      if (e.key !== 'Tab' || !drawerRef.current) return
+      const items = [...drawerRef.current.querySelectorAll(FOCUSABLE)].filter(
+        (el) => !el.disabled && el.offsetParent !== null
+      )
+      if (items.length === 0) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
       }
     }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [isDrawerOpen, closeDrawer])
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isDrawerOpen, handleDrawerToggle])
-
-  // Close drawer when clicking outside
+  // Escape exits focus mode entirely (when the preview drawer isn't open —
+  // that case is handled above and takes priority). Gives a keyboard user a
+  // guaranteed way out even while a text field is focused.
   useEffect(() => {
-    if (!isDrawerOpen) return
-
-    const handleClickOutside = (e) => {
-      if (drawerRef.current && !drawerRef.current.contains(e.target)) {
-        handleDrawerToggle()
+    if (!onExit || isDrawerOpen) return undefined
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onExit()
       }
     }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onExit, isDrawerOpen])
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isDrawerOpen, handleDrawerToggle])
+  // Close drawer when clicking outside of it
+  useEffect(() => {
+    if (!isDrawerOpen) return undefined
+    const onPointer = (e) => {
+      if (drawerRef.current && !drawerRef.current.contains(e.target)) {
+        closeDrawer()
+      }
+    }
+    document.addEventListener('pointerdown', onPointer)
+    return () => document.removeEventListener('pointerdown', onPointer)
+  }, [isDrawerOpen, closeDrawer])
+
+  // Load drawer content when drawer opens (lazy loading)
+  useEffect(() => {
+    if (isDrawerOpen && !isDrawerContentLoaded && drawerContent !== null) {
+      setIsDrawerContentLoaded(true)
+    }
+
+    // Unload content when drawer closes to free memory
+    if (!isDrawerOpen && isDrawerContentLoaded) {
+      setIsDrawerContentLoaded(false)
+    }
+  }, [isDrawerOpen, isDrawerContentLoaded, drawerContent])
 
   return (
-    <div className="flex h-[calc(100%-4rem)]">
+    <div className="flex flex-col">
       {/* Main content area */}
       <div className="flex-1 flex flex-col">
         <div className="focus-shell p-4">
@@ -114,7 +149,12 @@ export default function FocusShell({
                   aria-label={isDrawerOpen ? 'Hide preview' : 'Show preview'}
                   aria-pressed={isDrawerOpen}
                 >
-                  {isDrawerOpen ? '◀' : '▶'}
+                  {isDrawerOpen ? (
+                    <ChevronLeft className="h-4 w-4 hidden sm:block" aria-hidden="true" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 hidden sm:block" aria-hidden="true" />
+                  )}
+                  <span className="sm:hidden text-xs">{isDrawerOpen ? '▼' : '▲'}</span>
                 </button>
               )}
             </div>
@@ -129,40 +169,90 @@ export default function FocusShell({
                 <div className="focus-progress-fill" style={{ width: `${pct}%` }} />
               </div>
             </div>
+            {onExit && (
+              <button
+                type="button"
+                className="focus-exit-btn"
+                onClick={onExit}
+                aria-label="Exit focus mode"
+              >
+                ×
+              </button>
+            )}
           </header>
 
           <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
-      </div>
+        {onExit && (
+          <button
+            type="button"
+            className="focus-back-btn focus-exit-btn"
+            onClick={onExit}
+            aria-label="Exit focus mode"
+            title="Exit focus mode"
+          >
+            Exit
+          </button>
+        )}
+      </header>
 
-      {/* Preview drawer */}
+      <main className="focus-main">{children}</main>
+
+      {/* Preview drawer with lazy loading */}
       {showPreviewDrawer && (
-        <div
-          ref={drawerRef}
-          role="dialog"
-          aria-modal="true"
-          className={`fixed right-0 top-0 h-screen w-80 bg-warm border-l border-shadow translate-x-[${isDrawerOpen ? '0' : '100%'}]
-                     transition-transform duration-300 ease-in-out z-50`}
-        >
-          <div className="p-4 border-b border-border">
-            <h2 className="font-semibold"mb-2">
-              Preview
-            </h2>
-            <button
-              type="button"
-              ref={firstFocusableRef}
-              className="btn btn-outline btn-icon float-right text-sm"
+        <>
+          {/* Mobile backdrop */}
+          {isDrawerOpen && (
+            <div
+              className="fixed inset-0 bg-black/30 z-40 sm:hidden"
               onClick={handleDrawerToggle}
-              aria-label="Close preview"
-            >
-              ✕
-            </button>
+              aria-hidden="true"
+            />
+          )}
+          <div
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            className={[
+              // Mobile: bottom sheet
+              'fixed bottom-0 left-0 right-0 max-h-[70vh] rounded-t-2xl',
+              // Desktop: right sidebar
+              'sm:bottom-auto sm:left-auto sm:right-0 sm:top-0 sm:h-screen sm:w-80 sm:rounded-none',
+              // Shared
+              'bg-background border border-border flex flex-col',
+              'transition-transform duration-300 ease-in-out z-50',
+              // Slide state — mobile uses translate-y, desktop uses translate-x
+              isDrawerOpen
+                ? 'translate-y-0 sm:translate-y-0 sm:translate-x-0'
+                : 'translate-y-full sm:translate-y-0 sm:translate-x-full',
+            ].join(' ')}
+          >
+            {/* Mobile drag handle */}
+            <div className="flex justify-center pt-2 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <h2 className="font-semibold">Preview</h2>
+              <button
+                type="button"
+                ref={firstFocusableRef}
+                className="btn btn-outline btn-icon text-sm"
+                onClick={handleDrawerToggle}
+                aria-label="Close preview"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1 min-h-0">
+              {isDrawerContentLoaded && drawerContent !== null ? (
+                <>
+                  {drawerContent}
+                  <div ref={lastFocusableRef} tabIndex={-1} />
+                </>
+              ) : null}
+            </div>
           </div>
-          <div className="p-4 overflow-y-auto h-full">
-            {drawerContent}
-            <div ref={lastFocusableRef} tabIndex={-1} />
-          </div>
-        </div>
+        </>
       )}
     </div>
   )

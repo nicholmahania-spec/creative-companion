@@ -18,13 +18,27 @@ function readPkgVersion() {
 
 function gitMeta() {
   try {
+    // Try to get git SHA first
     const sha = execSync('git rev-parse --short HEAD', {
       encoding: 'utf8',
       cwd: root,
     }).trim()
-    return { sha: sha || 'dev' }
-  } catch {
-    return { sha: 'dev' }
+    return { sha: sha || 'DEFAULT' }
+  } catch (gitError) {
+    try {
+      // Fallback: try to get it from environment variables (common in CI)
+      const envSha = process.env.VERCEL_GIT_COMMIT_SHA ||
+                    process.env.GITHUB_SHA ||
+                    process.env.GIT_COMMIT_SHA
+      if (envSha) {
+        return { sha: envSha.substring(0, 7) || 'DEFAULT' }
+      }
+    } catch (envError) {
+      // Ignore errors from env var access
+    }
+
+    // Final fallback
+    return { sha: 'DEFAULT' }
   }
 }
 
@@ -56,6 +70,11 @@ const base =
 export default defineConfig({
   plugins: [react()],
   base,
+  resolve: {
+    alias: {
+      '@': resolve(root, 'src'),
+    },
+  },
   define: {
     __APP_VERSION__: JSON.stringify(meta.version),
     __APP_BUILD__: JSON.stringify(meta.build),
@@ -75,8 +94,27 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    port: 4274,
+    strictPort: true,
+  },
   // Dev: /api/xai/* → api.x.ai/v1/* with server-side XAI_API_KEY
   server: {
+    port: 5274,
+    strictPort: true,
+    headers: {
+      'Content-Security-Policy': [
+        "default-src 'self'",
+        "img-src 'self' data: https:",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://api.x.ai",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com data:",
+        "connect-src 'self' ws://localhost:* http://localhost:* https://*.supabase.co https://api.x.ai https://fonts.googleapis.com https://fonts.gstatic.com",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ].join('; '),
+    },
     proxy: {
       '/api/xai': {
         target: 'https://api.x.ai',
