@@ -72,7 +72,7 @@ export default function DefineView(props) {
     }
     if (next === activeProject.name) return
     renameProject?.(activeProject.id, next)
-    trackFeatureUsed('project_rename', { projectId: activeProject.id, projectName: next })
+    trackFeatureUsage('project_rename', { projectId: activeProject.id, projectName: next })
     flashMicro?.(i18nT(locale, 'ui.projectRenamed') || 'Name saved')
   }
 

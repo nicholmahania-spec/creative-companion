@@ -1996,7 +1996,7 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                                     <div>
                                       <h4 className="font-medium mb-2">Modified ({diffResult.modified.length})</h4>
                                       <div className="space-y-2">
-                                        {Result.modified.map((change) => (
+                                        {diffResult.modified.map((change) => (
                                           <div key={change.field} className="text-sm">
                                             <span className="font-medium">{change.field}:</span>
                                             {" "}
