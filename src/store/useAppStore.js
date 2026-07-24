@@ -158,6 +158,7 @@ export function createBlankProject(name = 'My project', brief = '') {
     ...brandIdentityDefaults(),
     tasks: [],
     runningTodo: blankRunningTodo(),
+    assetAudit: [],
   }
 }
 
@@ -615,6 +616,55 @@ const useAppStore = create(
             }),
           }
         }),
+
+      /**
+       * Asset audit — inventory of existing brand files, each tagged
+       * usable / outdated / missing. Distinct from the mood board
+       * (inspiration) and the running to-do list (tasks).
+       */
+      addAssetAuditItem: ({ name, note = '', status = 'usable', fileDataUrl = '' }) =>
+        set((state) => {
+          const trimmed = String(name || '').trim()
+          if (!trimmed) return state
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== state.currentProjectId) return p
+              const item = {
+                id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                name: trimmed,
+                note: String(note || '').trim(),
+                status,
+                fileDataUrl: fileDataUrl || '',
+                createdAt: Date.now(),
+              }
+              return { ...p, assetAudit: [...(p.assetAudit || []), item] }
+            }),
+          }
+        }),
+
+      updateAssetAuditItem: (id, patch) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              assetAudit: (p.assetAudit || []).map((it) =>
+                it.id === id ? { ...it, ...patch } : it
+              ),
+            }
+          }),
+        })),
+
+      removeAssetAuditItem: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              assetAudit: (p.assetAudit || []).filter((it) => it.id !== id),
+            }
+          }),
+        })),
 
       /** Partial update of brand identity template fields */
       updateBrandField: (field, value) =>

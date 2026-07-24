@@ -363,6 +363,10 @@ function App() {
   const removeRunningTodoItem = useAppStore((s) => s.removeRunningTodoItem)
   const sortRunningTodo = useAppStore((s) => s.sortRunningTodo)
   const resetRunningTodoIfNewDay = useAppStore((s) => s.resetRunningTodoIfNewDay)
+  const assetAudit = activeProject?.assetAudit || []
+  const addAssetAuditItem = useAppStore((s) => s.addAssetAuditItem)
+  const updateAssetAuditItem = useAppStore((s) => s.updateAssetAuditItem)
+  const removeAssetAuditItem = useAppStore((s) => s.removeAssetAuditItem)
 
   // Every time a project is opened: clear yesterday's completed to-dos (if
   // the day rolled over) and prompt for anything to add to the running list.
@@ -3758,6 +3762,10 @@ function App() {
               setProjectDeadline={setProjectDeadline}
               handleDeleteProject={handleDeleteProject}
               handleArchiveProject={handleArchiveProject}
+              assetAudit={assetAudit}
+              addAssetAuditItem={addAssetAuditItem}
+              updateAssetAuditItem={updateAssetAuditItem}
+              removeAssetAuditItem={removeAssetAuditItem}
               renameProject={renameProject}
               createNewProject={createNewProject}
               selectProject={selectProject}

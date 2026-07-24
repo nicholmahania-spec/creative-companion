@@ -17,6 +17,7 @@ import {
 } from '../lib/i18n'
 import { getDetectiveProgress } from '../lib/detectiveBrief'
 import { trackWorkflowTransition, trackFeatureUsage } from '../lib/analytics'
+import AssetAudit from '../components/AssetAudit'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 
@@ -37,6 +38,10 @@ export default function DefineView(props) {
     setProjectDeadline,
     handleDeleteProject,
     handleArchiveProject,
+    assetAudit = [],
+    addAssetAuditItem,
+    updateAssetAuditItem,
+    removeAssetAuditItem,
     renameProject,
     selectProject,
     projectDeadline = '',
@@ -143,6 +148,19 @@ export default function DefineView(props) {
               continueLabel={continueLabel}
             />
           </Suspense>
+
+          <details className="define-secondary define-admin">
+            <summary>Asset audit{assetAudit.length ? ` (${assetAudit.length})` : ''}</summary>
+            <div className="define-admin-body">
+              <AssetAudit
+                items={assetAudit}
+                onAdd={addAssetAuditItem}
+                onUpdate={updateAssetAuditItem}
+                onRemove={removeAssetAuditItem}
+                flashToast={flashToast}
+              />
+            </div>
+          </details>
 
           <details className="define-secondary define-admin">
             <summary>Tools</summary>
