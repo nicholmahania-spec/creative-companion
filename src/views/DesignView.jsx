@@ -88,6 +88,27 @@ export default function DesignView({
   const [loadingDiff, setLoadingDiff] = useState(false)
   // Share dialog state
   const [showShareDialog, setShowShareDialog] = useState(false)
+  const [permission, setPermission] = useState('view')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviting, setInviting] = useState(false)
+  const [invitedEmail, setInvitedEmail] = useState('')
+  const [emailError, setEmailError] = useState('')
+
+  const inviteViaEmail = async () => {
+    if (!inviteEmail || !/\S+@\S+\.\S+/.test(inviteEmail)) {
+      setEmailError('Please enter a valid email address')
+      return
+    }
+    setEmailError('')
+    setInviting(true)
+    try {
+      await new Promise(r => setTimeout(r, 500))
+      setInvitedEmail(inviteEmail)
+      setInviteEmail('')
+    } finally {
+      setInviting(false)
+    }
+  }
 
   // Template management state
   const [templates, setTemplates] = useState([])
@@ -174,9 +195,9 @@ export default function DesignView({
   const loadTemplates = async () => {
     setLoadingTemplates(true)
     try {
-      const store = useAppStore.getState()
-      const templates = store.getTemplates()
-      setTemplates(templates)
+      const state = useAppStore.getState()
+      const raw = state.templates || []
+      setTemplates([...raw].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
     } catch (error) {
       console.error('Failed to load templates:', error)
       flashToast?.('Failed to load templates')
@@ -205,7 +226,7 @@ export default function DesignView({
         // Track template save action - we need to get the newly created template
         // Since the store.saveAsTemplate returns the templateId, we can use that
         // or get the updated templates list
-        const updatedTemplates = store.getTemplates()
+        const updatedTemplates = [...(useAppStore.getState().templates || [])].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
         const newTemplate = updatedTemplates.find(t =>
           t.name === name.trim() &&
           t.description === description.trim()
