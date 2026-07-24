@@ -1,6 +1,6 @@
 // Analytics service for tracking user interactions and feature usage
 let analyticsInitialized = false;
-let analyticsEndpoint = '/api/analytics'; // Default endpoint, can be configured
+let analyticsEndpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT || '';
 let analyticsEnabled = false;
 
 /**
@@ -63,9 +63,8 @@ export const trackEvent = (eventName, properties = {}) => {
     return;
   }
 
-  // In production, send to analytics endpoint
-  if (import.meta.env.PROD) {
-    // Send asynchronously to avoid blocking UI
+  // In production, send to analytics endpoint only if one is configured
+  if (import.meta.env.PROD && analyticsEndpoint) {
     if (navigator.sendBeacon) {
       navigator.sendBeacon(analyticsEndpoint, JSON.stringify(eventData));
     } else {
