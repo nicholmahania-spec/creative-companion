@@ -512,6 +512,13 @@ export default function DesignView({
     flashMicro?.(`${fg} → ${fix.hex} · ${formatRatio(fix.ratio)}`)
   }
 
+  const fmtDiffVal = (v) => {
+    if (v === null || v === undefined) return '—'
+    if (Array.isArray(v)) return v.join(', ')
+    if (typeof v === 'object') return JSON.stringify(v)
+    return String(v)
+  }
+
   return (
     <>
           <div className="brand-layout surface-document system-view design-studio view-enter" data-nav-dir={navDir}>
@@ -2000,9 +2007,9 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                                           <div key={change.field} className="text-sm">
                                             <span className="font-medium">{change.field}:</span>
                                             {" "}
-                                            <span className="text-color-muted">{change.oldValue}</span>
+                                            <span className="text-color-muted">{fmtDiffVal(change.oldValue)}</span>
                                             <span className="ml-2 text-red-600">→</span>
-                                            <span className="ml-2 text-green-600">{change.newValue}</span>
+                                            <span className="ml-2 text-green-600">{fmtDiffVal(change.newValue)}</span>
                                           </div>
                                         ))}
                                       </div>
@@ -2016,7 +2023,7 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                                           <div key={change.field} className="text-sm">
                                             <span className="font-medium">{change.field}:</span>
                                             {" "}
-                                            <span className="text-green-600">{change.value}</span>
+                                            <span className="text-green-600">{fmtDiffVal(change.value)}</span>
                                           </div>
                                         ))}
                                       </div>
@@ -2030,7 +2037,7 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                                           <div key={change.field} className="text-sm">
                                             <span className="font-medium">{change.field}:</span>
                                             {" "}
-                                            <span className="text-red-600">{change.value}</span>
+                                            <span className="text-red-600">{fmtDiffVal(change.value)}</span>
                                           </div>
                                         ))}
                                       </div>
