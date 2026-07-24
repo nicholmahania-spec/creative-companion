@@ -7024,6 +7024,25 @@ body.cc-printing-pack .buddy-shell,
   gap: 0.35rem;
 }
 
+.mood-pin-swatches {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.4rem 0.55rem 0.1rem;
+}
+
+.mood-pin-swatch {
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.mood-pin-swatch:hover {
+  transform: scale(1.15);
+}
+
 .mood-pin-star {
   position: relative;
   z-index: 3;

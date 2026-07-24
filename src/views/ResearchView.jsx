@@ -15,6 +15,7 @@ import {
   pinImageUrl,
   readImageFilesAsPins,
 } from '../lib/moodPins'
+import { extractDominantColors } from '../lib/extractColors'
 import {
   normalizeLocale,
   t as i18nT,
@@ -23,6 +24,7 @@ import {
 } from '../lib/i18n'
 import { useModalFocus } from '../lib/useModalFocus'
 import { trackMoodPinOperation, trackBoardSubmission, trackTimerOperation } from '../lib/analytics'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
 export default function ResearchView({
   locale: localeProp = 'en',
@@ -50,8 +52,11 @@ export default function ResearchView({
   const movePackPin = useAppStore((s) => s.movePackPin)
   const setPackHeroPin = useAppStore((s) => s.setPackHeroPin)
   const reorderBoardPins = useAppStore((s) => s.reorderBoardPins)
+  const addPaletteColor = useAppStore((s) => s.addPaletteColor)
+  const [pinSwatches, setPinSwatches] = useState({})
 
   const [boardUrl, setBoardUrl] = useState('')
+  const [boardUrlBusy, setBoardUrlBusy] = useState(false)
   const [boardNote, setBoardNote] = useState('')
   const [boardAddMode, setBoardAddMode] = useState(null)
   const [boardDragId, setBoardDragId] = useState(null)
@@ -135,20 +140,52 @@ export default function ResearchView({
     })
   }
 
-  const submitBoardUrl = () => {
+  const submitBoardUrl = async () => {
     const url = boardUrl.trim()
-    if (!url) return
-    const pin = {
-      type: 'image',
-      note: '',
-      visual: url,
+    if (!url || boardUrlBusy) return
+
+    const addPinAndReset = (pin) => {
+      addMoodPin(pin)
+      trackBoardSubmission('url')
+      trackMoodPinOperation('add', pin)
+      setBoardUrl('')
+      setBoardAddMode(null)
+      notifyAction?.('Pin added', 'mood_pin', { label: 'URL pin' })
     }
-    addMoodPin(pin)
-    trackBoardSubmission('url')
-    trackMoodPinOperation('add', pin)
-    setBoardUrl('')
-    setBoardAddMode(null)
-    notifyAction?.('Pin added', 'mood_pin', { label: 'URL pin' })
+
+    // Direct image links (or a misconfigured/offline backend) fall back to
+    // the original behavior: treat the pasted URL as the image itself.
+    const asDirectImagePin = () => ({ type: 'image', note: '', visual: url })
+
+    if (!isSupabaseConfigured() || !supabase) {
+      addPinAndReset(asDirectImagePin())
+      return
+    }
+
+    setBoardUrlBusy(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('link-preview', {
+        body: { url },
+      })
+      if (error || !data?.ok) {
+        addPinAndReset(asDirectImagePin())
+        return
+      }
+      if (data.isImage) {
+        addPinAndReset(asDirectImagePin())
+        return
+      }
+      const note = [data.title, data.host].filter(Boolean).join(' · ')
+      addPinAndReset(
+        data.image
+          ? { type: 'image', note, visual: data.image, link: data.url || url }
+          : { type: 'quote', note, visual: '#44403C', link: data.url || url }
+      )
+    } catch {
+      addPinAndReset(asDirectImagePin())
+    } finally {
+      setBoardUrlBusy(false)
+    }
   }
 
   const submitBoardNote = () => {
@@ -341,6 +378,7 @@ export default function ResearchView({
                         }${item.packHero ? ' is-pack-hero' : ''}`}
                       >
                         {isImageFace ? (
+                          <>
                           <button
                             type="button"
                             className="mood-pin-media mood-pin-media-btn"
@@ -360,9 +398,40 @@ export default function ResearchView({
                                 loading="lazy"
                                 decoding="async"
                                 draggable={false}
+                                onLoad={(e) => {
+                                  if (pinSwatches[item.id]) return
+                                  const colors = extractDominantColors(e.currentTarget, 4)
+                                  if (colors.length) {
+                                    setPinSwatches((prev) => ({ ...prev, [item.id]: colors }))
+                                  }
+                                }}
                               />
                             ) : null}
                           </button>
+                          {pinSwatches[item.id]?.length ? (
+                            <div className="mood-pin-swatches" aria-label="Suggested colors from this image">
+                              {pinSwatches[item.id].map((hex) => (
+                                <button
+                                  key={hex}
+                                  type="button"
+                                  className="mood-pin-swatch"
+                                  style={{ backgroundColor: hex }}
+                                  title={`Add ${hex} to palette`}
+                                  aria-label={`Add ${hex} to palette`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if ((projectPalette?.length || 0) >= 8) {
+                                      flashToast('Palette is full (max 8)')
+                                      return
+                                    }
+                                    addPaletteColor(hex)
+                                    flashMicro(`+ ${hex} to palette`)
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          ) : null}
+                          </>
                         ) : (
                           <div
                             className="mood-pin-face"
@@ -604,9 +673,9 @@ export default function ResearchView({
                       type="button"
                       className="btn btn-secondary"
                       onClick={submitBoardUrl}
-                      disabled={!boardUrl.trim()}
+                      disabled={!boardUrl.trim() || boardUrlBusy}
                     >
-                      Add
+                      {boardUrlBusy ? 'Adding…' : 'Add'}
                     </button>
                   </div>
                 </div>
