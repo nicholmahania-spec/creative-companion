@@ -240,7 +240,7 @@ export default function SparkView({
       <div className="path-continue-row ideate-send-row">
         <button
           type="button"
-          className="btn btn-primary work-path-next"
+          className="btn btn-secondary work-path-next"
           onClick={queueChosen}
           disabled={!canSend}
           title={canSend ? undefined : 'Choose a titled direction first'}
