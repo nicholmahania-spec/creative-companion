@@ -34,6 +34,8 @@ export const initPerformanceMonitoring = ({ onPerfEntry, debug = false } = {}) =
           const lastEntry = clsEntries[clsEntries.length - 1];
 
           if (
+            lastEntry &&
+            firstEntry &&
             entry.startTime - lastEntry.startTime < 1000 &&
             entry.startTime - firstEntry.startTime < 5000
           ) {
