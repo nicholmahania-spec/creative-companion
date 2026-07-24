@@ -66,25 +66,15 @@ export const trackEvent = (eventName, properties = {}) => {
   // In production, send to analytics endpoint
   if (import.meta.env.PROD) {
     // Send asynchronously to avoid blocking UI
-    navigator.sendBeacon && navigator.sendBeacon(
-      analyticsEndpoint,
-      JSON.stringify(eventData)
-    ).catch(err => {
-      console.warn('Failed to send analytics:', err);
-    });
-
-    // Fallback for browsers that don't support sendBeacon
-    if (!navigator.sendBeacon) {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(analyticsEndpoint, JSON.stringify(eventData));
+    } else {
       fetch(analyticsEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(eventData),
-        keepalive: true
-      }).catch(err => {
-        console.warn('Failed to send analytics:', err);
-      });
+        keepalive: true,
+      }).catch(() => {});
     }
   }
 };
