@@ -133,6 +133,8 @@ export default function DefineFocusView({
     };
   }, [stepIdx, intentSet]);
 
+  const exitFocus = () => setActiveView?.('project')
+
   // If intent not set, show intent input first (phase 4)
   if (!intentSet) {
     return (
@@ -187,6 +189,8 @@ export default function DefineFocusView({
       stepIndex={stepIdx}
       stepCount={STEPS.length}
       showPreviewDrawer={true}
+      onBack={stepIdx > 0 || whoPrimary ? goBack : undefined}
+      onExit={exitFocus}
       drawerContent={
         <Suspense fallback={<div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
           <div className="space-y-4">

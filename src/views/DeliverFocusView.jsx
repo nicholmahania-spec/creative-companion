@@ -189,11 +189,11 @@ export default function DeliverFocusView({
           )}
         </div>
       }
-      onDrawerToggle={(isOpen) => console.log('Drawer toggled:', isOpen)}
+      onExit={exitFocus}
     >
       <div className="focus-card" style={{ maxWidth: '30rem' }}>
         <p className="focus-prompt">Select deliverable formats</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="focus-chip-row" style={{ flexWrap: 'wrap' }}>
           {FORMATS.map((f) => (
             <button
               key={f.id}

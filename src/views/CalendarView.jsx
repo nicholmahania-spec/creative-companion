@@ -115,6 +115,7 @@ export default function CalendarView(props) {
           <button
             type="button"
             className="btn btn-secondary btn-sm"
+            aria-label="Previous month"
             onClick={() =>
               setCalCursor((c) => {
                 const m = c.month - 1
@@ -131,6 +132,7 @@ export default function CalendarView(props) {
           <button
             type="button"
             className="btn btn-secondary btn-sm"
+            aria-label="Next month"
             onClick={() =>
               setCalCursor((c) => {
                 const m = c.month + 1
@@ -221,7 +223,8 @@ export default function CalendarView(props) {
         <div className="brand-section-label">Upcoming</div>
         {upcomingDeadlines.length === 0 ? (
           <p className="settings-meta" style={{ margin: 0 }}>
-            None
+            No deadlines yet — tap a day in the grid above to set one for this
+            project.
           </p>
         ) : (
           <ul className="deadline-list">

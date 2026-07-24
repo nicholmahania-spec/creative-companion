@@ -136,7 +136,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             </div>
           </div>
         }
-        onDrawerToggle={(isOpen) => console.log('Drawer toggled:', isOpen)}
+        onExit={exitFocus}
       >
         <FocusCard cardKey="tagline">
           <p className="focus-prompt">One-line tagline:</p>
@@ -153,7 +153,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
               }
             }}
           />
-          <div className="flex justify-end mt-4">
+          <div className="focus-actions">
             <Button
               variant="outline"
               size="sm"
@@ -206,11 +206,11 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             </div>
           </div>
         }
-        onDrawerToggle={(isOpen) => console.log('Drawer toggled:', isOpen)}
+        onExit={exitFocus}
       >
         <div className="focus-card">
           <p className="focus-prompt text-center">Type set: {winner.label}</p>
-          <div className="flex justify-center mt-4">
+          <div className="focus-actions" style={{ justifyContent: 'center' }}>
             <Button
               variant="outline"
               size="sm"
@@ -269,7 +269,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             </div>
           </div>
         }
-        onDrawerToggle={(isOpen) => console.log('Drawer toggled:', isOpen)}
+        onExit={exitFocus}
       >
         <div className="focus-card">
           <p className="focus-hint text-center">Winner</p>
@@ -286,7 +286,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             Aa Bb Cc
           </p>
           <p className="focus-hint text-center" style={{ marginBottom: '1.5rem' }}>{winner.label}</p>
-          <div className="flex justify-center mt-4">
+          <div className="focus-actions" style={{ justifyContent: 'center' }}>
             <Button
               variant="outline"
               size="sm"
@@ -344,16 +344,26 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
           </div>
         </div>
       }
-      onDrawerToggle={(isOpen) => console.log('Drawer toggled:', isOpen)}
+      onExit={exitFocus}
     >
       <div className="w-full max-w-2xl">
         <p className="focus-prompt text-center">Which pairing wins?</p>
         <div className="flex flex-col sm:flex-row gap-4 mt-4">
           {bracket.map((pair, i) => (
-            <div
+            <button
               key={pair.id}
+              type="button"
               onClick={() => pick(pair)}
-              className="flex-1 cursor-pointer border border-border rounded-md bg-white p-4 hover:bg-muted/50 transition-colors"
+              style={{
+                flex: 1,
+                textAlign: 'left',
+                cursor: 'pointer',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '12px',
+                background: 'var(--bg-elevated)',
+                color: 'var(--text-primary)',
+                padding: '1rem',
+              }}
             >
               <span className="hidden sm:block text-xs text-muted mb-2">
                 {i === 0 ? '← Left arrow' : 'Right arrow →'}
@@ -372,7 +382,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
               <p style={{ fontFamily: fontFamilyFromLabel(pair.body), fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)', color: 'var(--text-secondary)' }}>
                 {pair.label}
               </p>
-            </div>
+            </button>
           ))}
         </div>
       </div>

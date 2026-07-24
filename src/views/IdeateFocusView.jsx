@@ -129,6 +129,7 @@ export default function IdeateFocusView({
   }
 
   useEffect(() => {
+    if (!intentSet) return
     const onKey = (e) => {
       if (!bracket) return
       if (e.key === 'ArrowLeft') pick(bracket[0])
@@ -137,7 +138,52 @@ export default function IdeateFocusView({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bracket])
+  }, [intentSet, bracket])
+
+  // If intent not set, show intent input first (phase 4)
+  if (!intentSet) {
+    return (
+      <FocusShell
+        stepLabel="03 // Ideate"
+        stepIndex={0}
+        stepCount={2}
+        showPreviewDrawer={true}
+        onExit={exitFocus}
+        drawerContent={<IdeatePreview directions={dirs} />}
+      >
+        <div className="focus-card">
+          <p className="focus-prompt">What do you want to accomplish in your ideation session?</p>
+          <input
+            className="focus-input-inline"
+            style={{ display: 'block', width: '100%' }}
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            placeholder="e.g., Explore three different brand directions for the project"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && intent.trim()) {
+                setIntentSet(true)
+              }
+            }}
+          />
+          <div className="focus-actions">
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!intent.trim()}
+              onClick={() => {
+                if (intent.trim()) {
+                  setIntentSet(true)
+                }
+              }}
+            >
+              Start Ideating
+            </button>
+          </div>
+        </div>
+      </FocusShell>
+    )
+  }
 
   const queueWinner = () => {
     if (!winner || queued) return

@@ -7,7 +7,7 @@
  *
  * Calm chapter nav — no XP / game HUD.
  */
-import { Suspense, lazy, useState } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import {
   normalizeLocale,
@@ -15,6 +15,7 @@ import {
   tFormat,
   pathLabel,
 } from '../lib/i18n'
+import { getDetectiveProgress } from '../lib/detectiveBrief'
 import useIsMobile from '../lib/useIsMobile'
 import { trackWorkflowTransition, trackFeatureUsage } from '../lib/analytics'
 
@@ -39,6 +40,7 @@ export default function DefineView(props) {
     applyDetectiveToBrief,
     setProjectDeadline,
     handleDeleteProject,
+    handleArchiveProject,
     renameProject,
     selectProject,
     projectDeadline = '',
@@ -48,6 +50,16 @@ export default function DefineView(props) {
   } = props
 
   const locale = normalizeLocale(localeProp)
+  const progress = useMemo(
+    () => getDetectiveProgress(activeProject?.detective),
+    [activeProject?.detective]
+  )
+  const progressPct = progress.pct
+  const requiredReady = progress.requiredReady
+  const continueLabel = tFormat(locale, 'ui.continueNext', {
+    label: pathLabel(locale, 'research') || 'Research',
+  })
+
   const archiveProject = useAppStore((s) => s.archiveProject)
   const unarchiveProject = useAppStore((s) => s.unarchiveProject)
   const addMilestone = useAppStore((s) => s.addMilestone)
@@ -91,7 +103,7 @@ export default function DefineView(props) {
         <div>
           <h1 className="page-title">
             {i18nT(locale, 'path.define')}
-          </h1>
+          </span>
           <input
             id="project-name"
             className="define-name-inline"
@@ -158,9 +170,7 @@ export default function DefineView(props) {
               openChapter={openChapter}
               onOpenChapter={setOpenChapter}
               onContinue={goResearch}
-              continueLabel={tFormat(locale, 'ui.continueNext', {
-                label: pathLabel(locale, 'research') || 'Research',
-              })}
+              continueLabel={continueLabel}
             />
           </Suspense>
 
@@ -204,6 +214,10 @@ export default function DefineView(props) {
                   disabled={!activeProject || activeProjects.length < 2}
                   onClick={() => {
                     if (!activeProject) return
+                    if (handleArchiveProject) {
+                      handleArchiveProject()
+                      return
+                    }
                     const r = archiveProject(activeProject.id)
                     if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
                   }}

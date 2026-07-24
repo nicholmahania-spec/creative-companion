@@ -11,7 +11,7 @@ export default function FocusShell({
   children,
   showPreviewDrawer = false,
   drawerContent = null,
-  onDrawerToggle
+  onDrawerToggle,
 }) {
   const pct = stepCount > 0 ? Math.round((stepIndex / stepCount) * 100) : 0
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -41,51 +41,75 @@ export default function FocusShell({
     })
   }, [isDrawerOpen, onDrawerToggle])
 
-  // Trap focus inside drawer when open
-  useEffect(() => {
-    if (!isDrawerOpen) return
+  const openDrawer = useCallback(() => {
+    restoreFocusRef.current = document.activeElement
+    setIsDrawerOpen(true)
+    onDrawerToggle?.(true)
+    requestAnimationFrame(() => {
+      const first = drawerRef.current?.querySelector(FOCUSABLE)
+      first?.focus?.()
+    })
+  }, [onDrawerToggle])
 
-    const handleKeyDown = (e) => {
+  const toggleDrawer = useCallback(() => {
+    if (isDrawerOpen) closeDrawer()
+    else openDrawer()
+  }, [isDrawerOpen, closeDrawer, openDrawer])
+
+  // Trap focus + Escape while drawer is open
+  useEffect(() => {
+    if (!isDrawerOpen) return undefined
+    const onKeyDown = (e) => {
       if (e.key === 'Escape') {
-        handleDrawerToggle()
+        e.preventDefault()
+        closeDrawer()
+        return
       }
-
-      if (e.key === 'Tab') {
-        const focusableItems = drawerRef.current.querySelectorAll(focusableElements)
-        const firstItem = focusableItems[0]
-        const lastItem = focusableItems[focusableItems.length - 1]
-
-        if (e.shiftKey) { // shift + tab
-          if (document.activeElement === firstItem) {
-            e.preventDefault()
-            lastItem.focus()
-          }
-        } else { // tab
-          if (document.activeElement === lastItem) {
-            e.preventDefault()
-            firstItem.focus()
-          }
-        }
+      if (e.key !== 'Tab' || !drawerRef.current) return
+      const items = [...drawerRef.current.querySelectorAll(FOCUSABLE)].filter(
+        (el) => !el.disabled && el.offsetParent !== null
+      )
+      if (items.length === 0) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
       }
     }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [isDrawerOpen, closeDrawer])
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isDrawerOpen, handleDrawerToggle])
-
-  // Close drawer when clicking outside
+  // Escape exits focus mode entirely (when the preview drawer isn't open —
+  // that case is handled above and takes priority). Gives a keyboard user a
+  // guaranteed way out even while a text field is focused.
   useEffect(() => {
-    if (!isDrawerOpen) return
-
-    const handleClickOutside = (e) => {
-      if (drawerRef.current && !drawerRef.current.contains(e.target)) {
-        handleDrawerToggle()
+    if (!onExit || isDrawerOpen) return undefined
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onExit()
       }
     }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onExit, isDrawerOpen])
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isDrawerOpen, handleDrawerToggle])
+  // Close drawer when clicking outside of it
+  useEffect(() => {
+    if (!isDrawerOpen) return undefined
+    const onPointer = (e) => {
+      if (drawerRef.current && !drawerRef.current.contains(e.target)) {
+        closeDrawer()
+      }
+    }
+    document.addEventListener('pointerdown', onPointer)
+    return () => document.removeEventListener('pointerdown', onPointer)
+  }, [isDrawerOpen, closeDrawer])
 
   // Load drawer content when drawer opens (lazy loading)
   useEffect(() => {
@@ -159,7 +183,20 @@ export default function FocusShell({
 
           <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
-      </div>
+        {onExit && (
+          <button
+            type="button"
+            className="focus-back-btn focus-exit-btn"
+            onClick={onExit}
+            aria-label="Exit focus mode"
+            title="Exit focus mode"
+          >
+            Exit
+          </button>
+        )}
+      </header>
+
+      <main className="focus-main">{children}</main>
 
       {/* Preview drawer with lazy loading */}
       {showPreviewDrawer && (

@@ -31,6 +31,7 @@
   --border-subtle: #E2E8F0;
   --border-strong: #CBD5E1;
   --border-hairline: #E2E8F0;
+  --border-accent: #94A3B8; /* hover-emphasis border, used by .field-input:hover */
   --highlight-inset: none;
 
   /* Status colors for form validation */
@@ -46,7 +47,18 @@
   --ts-ink: var(--text-primary);
   --ts-mute: var(--text-secondary);
   --ts-border: var(--border-subtle);
-  --ts-focus: #2563EB;
+  --ts-focus: var(--dopamine);
+
+  /* Surface / border aliases referenced by a few rules — defined here so
+     they resolve to themed tokens instead of an undefined value (which was
+     silently dropping hover borders and pinning surfaces to white). */
+  --bg-surface: var(--bg-elevated);
+  --border-default: var(--border-subtle);
+  --border-focus: var(--border-accent);
+
+  /* Focus ring — one brand-consistent language across the whole app. */
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--dopamine) 22%, transparent);
+  --focus-ring-width: 2px;
 
   /* Legacy "glass" tokens kept flat/opaque — components still reference
    * these names; redefining them here removes the glass look everywhere
@@ -158,6 +170,7 @@ a:active {
   --text-muted: rgba(148, 163, 184, 0.82);
   --border-subtle: rgba(148, 163, 184, 0.16);
   --border-strong: rgba(148, 163, 184, 0.26);
+  --border-accent: rgba(148, 163, 184, 0.45);
   --highlight-inset: none;
   --accent-primary: #E2E8F0;
   --accent-deep: #F8FAFC;
@@ -201,6 +214,17 @@ h1, h2, h3 {
   letter-spacing: var(--tracking-display);
   line-height: 1.1;
   color: var(--text-primary);
+}
+
+/* Top of the modular type ramp — bare <h1> previously fell back to the
+   UA 2em default, sitting outside the clamp-based scale. Give it an
+   explicit size so H1 → H2 → H3 → body is one intentional ramp. */
+h1 {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-display);
+  line-height: 1.06;
 }
 
 h2 {
@@ -269,6 +293,7 @@ h3 {
 }
 
 .field-textarea:focus {
+  /* Unified focus language — dopamine border + ring (matches .field-input) */
   outline: none;
   border-bottom-color: var(--dopamine);
   box-shadow: none;
@@ -839,7 +864,6 @@ h3 {
 }
 
 /* desk-snapshot styles live with project folio block below */
-
 /* Forced Pomodoro break — blocks entire desk */
 
 /* ——— Platform game HUD ——— */
@@ -1073,7 +1097,7 @@ h3 {
 }
 
 .game-hud-badge {
-  font-size: 0.68rem;
+  z-index: var(--z-overlay);
   font-weight: 700;
   padding: 0.25rem 0.45rem;
   border-radius: var(--radius);
@@ -1529,7 +1553,7 @@ h3 {
   justify-content: center;
   width: 1.35rem;
   height: 1.35rem;
-  border-radius: 50%;
+  box-shadow: none;
   background: var(--bg-muted);
   font-size: 0.75rem;
   font-weight: 800;
@@ -2020,36 +2044,39 @@ h3 {
 /* ——— Buttons ——— */
 
 .btn {
-  padding: 0.65rem 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.55rem 1.2rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
   cursor: pointer;
   font: inherit;
   font-size: 0.875rem;
   font-weight: 600;
+  line-height: 1.1;
   letter-spacing: -0.01em;
   background: var(--bg-elevated);
   color: var(--text-primary);
   box-shadow: var(--highlight-inset);
   transition:
-    transform var(--transition),
     border-color var(--transition),
     background var(--transition),
     color var(--transition),
-    box-shadow var(--transition),
-    filter var(--transition);
+    box-shadow var(--transition);
 }
 
+/* Tech Studio: flat feedback — border + surface shift, no shadow/scale */
 .btn:hover {
   border-color: var(--border-strong);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  filter: brightness(1.02);
+  background: var(--bg-muted);
 }
 
 .btn:active {
-  transform: translateY(0) scale(0.97);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  background: var(--bg-muted);
+  border-color: var(--border-strong);
 }
 
 .btn-primary {
@@ -2058,7 +2085,10 @@ h3 {
   color: var(--bg-canvas);
   border: 1px solid var(--text-primary);
   box-shadow: none;
-  padding: 0.78rem 1.35rem;
+  /* Match the base .btn vertical rhythm so primary/secondary/ghost all
+     resolve to the same 40px control height instead of primary sitting
+     ~7px taller than its neighbours. */
+  padding: 0.55rem 1.35rem;
   border-radius: var(--radius-sm);
   white-space: nowrap;
   font-family: var(--font-display);
@@ -2069,50 +2099,12 @@ h3 {
   background: var(--dopamine-deep);
   border-color: var(--dopamine-deep);
   filter: none;
-  box-shadow: 0 4px 12px rgba(61, 90, 254, 0.3);
-  transform: translateY(-2px) scale(1.02);
+  box-shadow: none;
 }
 
 .btn-primary:active {
-  transform: translateY(0) scale(0.97);
-  box-shadow: 0 1px 4px rgba(61, 90, 254, 0.2);
-}
-
-.app.deep .btn-primary {
-  background: var(--text-primary);
-  color: var(--bg-canvas);
-  border-color: var(--text-primary);
-  box-shadow: none;
-}
-
-/* Primary CTA — flat solid dark slate fill, no glow/gradient */
-
-.btn-primary:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Outline = secondary chrome CTA (G4.2 Export default) */
-
-.btn-primary {
-  /* Flat high-contrast dark slate fill — no gradients, no glow */
-  background: var(--text-primary);
-  color: var(--bg-canvas);
-  border: 1px solid var(--text-primary);
-  box-shadow: none;
-  padding: 0.78rem 1.35rem;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  font-family: var(--font-display);
-  letter-spacing: -0.02em;
-}
-
-.btn-primary:hover {
-  background: var(--dopamine-deep);
-  border-color: var(--dopamine-deep);
-  filter: none;
+  background: var(--dopamine);
+  border-color: var(--dopamine);
   box-shadow: none;
 }
 
@@ -2188,6 +2180,7 @@ h3 {
 }
 
 .capture-row input:focus {
+  /* Match .field-input focus — dopamine border + ring, themed surface */
   outline: none;
   border-bottom-color: var(--dopamine);
   box-shadow: none;
@@ -2380,7 +2373,9 @@ h3 {
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-muted);
+  /* Interactive control — --text-muted (#94A3B8) is ~2.85:1 on white and
+     fails WCAG AA. Use --text-secondary (AA-passing) for the resting state. */
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0;
   margin-top: 0.55rem;
@@ -2390,7 +2385,9 @@ h3 {
 }
 
 .text-link:hover {
-  color: var(--accent-primary);
+  /* Purposeful brand accent on hover — ties the dopamine colour to
+     interactivity rather than scattering it. */
+  color: var(--dopamine);
 }
 
 /* Flow page rhythm */
@@ -3011,7 +3008,7 @@ h3 {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   background: var(--bg-canvas);
-  font: inherit;
+  box-shadow: 0 0 0 1px var(--accent-primary);
   cursor: pointer;
   color: var(--text-primary);
 }
@@ -3377,7 +3374,7 @@ h3 {
 .pref-switch {
   position: relative;
   flex-shrink: 0;
-  width: 2.75rem;
+  box-shadow: 0 0 0 1px var(--border-strong);
   height: 1.55rem;
   padding: 0;
   border: none;
@@ -3581,7 +3578,7 @@ h3 {
 }
 
 .onboard-primary {
-  width: 100%;
+  z-index: var(--z-toast);
   justify-content: center;
 }
 
@@ -3779,9 +3776,16 @@ html[data-reduce-motion='true'] *::after {
   font-size: 0.85rem;
   padding: 0.35rem 0.5rem;
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg-warm);
   color: var(--text-primary);
+}
+
+.capture-due-input:focus,
+.step-due-input:focus {
+  outline: none;
+  border-color: var(--dopamine);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dopamine) 22%, transparent);
 }
 
 .step-due-input {
@@ -4010,10 +4014,8 @@ html[data-reduce-motion='true'] *::after {
   background: transparent;
 }
 
-.field-input:active {
-  border-color: var(--dopamine);
-  background: var(--bg-elevated);
-  transform: translateY(1px);
+.field-input:focus-visible {
+  outline: none;
 }
 
 .brand-do-dont {
@@ -5041,7 +5043,7 @@ html[data-reduce-motion='true'] *::after {
   overflow-y: auto;
   padding: 0.15rem 0.75rem 0.55rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(125, 139, 122, 0.35) transparent;
+  box-shadow: none;
 }
 
 .buddy-msg {
@@ -5446,7 +5448,7 @@ html[data-reduce-motion='true'] *::after {
   height: 3.4rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
-  padding: 0;
+  box-shadow: 0 0 0 2px var(--bg-elevated);
   background: var(--bg-card);
   box-shadow: none;
   cursor: pointer;
@@ -5617,7 +5619,7 @@ html[data-reduce-motion='true'] *::after {
 .autosave-chip {
   position: fixed;
   top: 1rem;
-  right: 1rem;
+  z-index: var(--z-overlay);
   z-index: 150;
   background: var(--text-primary);
   color: var(--bg-canvas);
@@ -5968,7 +5970,8 @@ body.cc-printing-pack .buddy-shell,
 }
 
 :focus-visible {
-  outline: 3px solid var(--accent-primary);
+  /* One brand-consistent focus language — dopamine accent, not near-black ink */
+  outline: var(--focus-ring-width) solid var(--dopamine);
   outline-offset: 2px;
 }
 
@@ -6369,7 +6372,7 @@ body.cc-printing-pack .buddy-shell,
 
 .type-specimen-h {
   margin: 0 0 0.25rem;
-  font-size: 1.55rem;
+  z-index: var(--z-toast);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.15;
@@ -7468,7 +7471,7 @@ body.cc-printing-pack .buddy-shell,
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  line-height: 1.35;
+  z-index: var(--z-overlay);
 }
 
 .pack-watermark-toggle input {
@@ -8317,7 +8320,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .thin-pack-prompt-body,
 .desk-confirm-body {
   margin: 0 0 0.55rem;
-  font-size: 0.82rem;
+  z-index: var(--z-toast);
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
@@ -8796,7 +8799,8 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 }
 
 .command-item:hover,
-.command-item:focus-visible {
+.command-item:focus-visible,
+.command-item.is-active {
   background: var(--bg-muted);
   outline: none;
 }
@@ -8831,7 +8835,8 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 }
 
 .app.deep .command-item:hover,
-.app.deep .command-item:focus-visible {
+.app.deep .command-item:focus-visible,
+.app.deep .command-item.is-active {
   background: rgba(255, 255, 255, 0.06);
 }
 
@@ -8841,13 +8846,17 @@ html[dir="rtl"] .buddy-shell.buddy-float {
    Palette intentionally unchanged — tokens stay as-is.
    ============================================================ */
 
-/* Shape language: squircles (radius only — not color) */
-
+/* Shape language: Tech-Studio square (4px) — flat, no lift.
+   This block is a leftover from the earlier "Gamified Minimalist"
+   pass; it was re-rounding these tokens to 1.15–1.5rem squircles and
+   re-introducing a 48px drop shadow via --focus-lift, both of which
+   contradict the flat/square blueprint lock. Keep the tokens square
+   and the lift flat so components that reference them stay on-system. */
 :root {
-  --radius-organic: 1.25rem;
-  --radius-squircle: 1.5rem;
-  --radius-node: 1.15rem;
-  --focus-lift: 0 18px 48px rgba(12, 10, 9, 0.1), 0 4px 12px rgba(12, 10, 9, 0.05);
+  --radius-organic: 4px;
+  --radius-squircle: 4px;
+  --radius-node: 4px;
+  --focus-lift: 0 0 0 1.5px var(--dopamine);
   --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
@@ -9120,11 +9129,12 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .app-shell {
   display: grid;
   grid-template-columns: 200px 1fr;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto 1fr auto;
   grid-template-areas:
     'header header'
     'hud hud'
-    'sidebar main';
+    'sidebar main'
+    'footer footer';
 }
 
 .app-shell > .header-redesign {
@@ -9144,7 +9154,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 }
 
 .app-shell > .app-footer {
-  grid-column: 1 / -1;
+  grid-area: footer;
 }
 
 /* Focus mode — peripheral masking: dim chrome while a field has focus */
@@ -9297,7 +9307,8 @@ html[dir="rtl"] .buddy-shell.buddy-float {
       'header'
       'hud'
       'sidebar'
-      'main';
+      'main'
+      'footer';
   }
 
 .journey-sidebar {
@@ -9478,11 +9489,14 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 }
 
 .step-focus-actions .btn-primary:hover {
-  transform: translateY(-2px) scale(1.015);
+  /* Flat: fill shift only, no lift/scale */
+  transform: none;
+  background: var(--dopamine-deep);
 }
 
 .step-focus-actions .btn-primary:active {
-  transform: translateY(0) scale(0.98);
+  transform: none;
+  background: var(--dopamine-ink);
 }
 
 .task-badge {
@@ -9568,7 +9582,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   left: 0;
   right: 0;
   top: 52%;
-  height: 1.5px;
+  box-shadow: none;
   background: color-mix(in srgb, var(--text-muted) 80%, transparent);
   border-radius: 2px;
   animation: strikeThrough 0.4s var(--ease-out) both;
@@ -10441,9 +10455,23 @@ body:has(.app.deep)::after {
 }
 
 .define-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  align-items: start;
+}
+
+.define-field[data-span="full"] {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 600px) {
+  .define-fields {
+    grid-template-columns: 1fr;
+  }
+  .define-field[data-span="full"] {
+    grid-column: 1;
+  }
 }
 
 .define-milestones-list {
@@ -10594,6 +10622,125 @@ body:has(.app.deep)::after {
   margin-bottom: 1rem;
 }
 
+/* ——— Dashboard action header ——— */
+
+.define-dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem 0.75rem 1.1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+}
+
+.define-dash-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.define-dash-kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.define-name-headline {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.define-name-headline::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.define-name-headline:focus {
+  outline: none;
+  box-shadow: 0 2px 0 var(--dopamine);
+}
+
+.define-dash-action {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.define-progress-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  padding: 0 0.85rem;
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  min-width: 3.75rem;
+}
+
+.define-progress-chip-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  background: color-mix(in srgb, var(--dopamine) 20%, transparent);
+  transition: width 0.4s ease;
+  pointer-events: none;
+}
+
+.define-progress-chip-label {
+  position: relative;
+  font-size: 0.72rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+.define-dash-cta {
+  white-space: nowrap;
+  font-size: 0.875rem;
+  padding: 0.45rem 1rem;
+  height: 2rem;
+}
+
+.define-dash-cta.is-quiet {
+  background: var(--bg-muted) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-subtle) !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 600px) {
+  .define-dash-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .define-dash-action {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 /* ——— Brief progress strip (flat) ——— */
 
 @keyframes defineNodeBurst {
@@ -10648,11 +10795,16 @@ body:has(.app.deep)::after {
 
 .define-workbook.is-split {
   margin-bottom: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
 }
 
-.define-workbook.is-split .define-fab-bar {
-  position: sticky;
-  bottom: 0.75rem;
+.define-workbook.is-split .define-chapter {
+  background: var(--bg-elevated);
+  border-color: var(--border-subtle);
+  margin-bottom: 0.75rem;
 }
 
 /* Mood canvas */
@@ -10874,7 +11026,7 @@ body:has(.app.deep)::after {
 }
 
 .define-mood-pin-x:hover {
-  background: #ef4444;
+  background: var(--error, #ef4444);
 }
 
 /* Wide tablet+: keep real split so board never leaves the glance */
@@ -11094,7 +11246,7 @@ body:has(.app.deep)::after {
 }
 
 .journey-progress-pill.is-partial .progress-ring-fill {
-  filter: none !important;
+  box-shadow: 0 0 0 1px var(--border-subtle);
 }
 
 /* Soften studio eyebrow glow */
@@ -11657,7 +11809,8 @@ body:has(.app.deep)::after {
       'header'
       'hud'
       'sidebar'
-      'main' !important;
+      'main'
+      'footer' !important;
   }
 
 .journey-sidebar {
@@ -11774,7 +11927,7 @@ body:has(.app.deep)::after {
 
 .journey-sidebar .journey-step.is-active {
   background: var(--bg-elevated) !important;
-  box-shadow: inset 2px 0 0 #2563EB !important;
+  box-shadow: inset 2px 0 0 var(--dopamine) !important;
   transform: none !important;
 }
 
@@ -12157,7 +12310,7 @@ body:has(.app.deep)::after {
   --ts-ink: #1A1A1E;
   --ts-mute: #94A3B8;
   --ts-border: #E2E8F0;
-  --ts-focus: #2563EB;
+  --ts-focus: var(--dopamine);
   --ts-radius: 4px;
 }
 
@@ -12724,7 +12877,7 @@ select:focus {
   background: var(--ts-panel, #FFFFFF) !important;
   border: 1px solid var(--ts-border, #E2E8F0) !important;
   border-left: none !important;
-  box-shadow: inset 2px 0 0 #2563EB !important;
+  box-shadow: inset 2px 0 0 var(--dopamine) !important;
 }
 .journey-sidebar .journey-step.is-done:not(.is-active) {
   opacity: 0.55;
@@ -13482,7 +13635,9 @@ select:focus {
   margin: 0 0 0.85rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--ts-mute, #94A3B8);
+  /* Meaningful subtitle text — use the AA-passing secondary ink rather
+     than the muted #94A3B8 (which fails contrast on the white card). */
+  color: var(--text-secondary);
 }
 
 .login-mode-tabs {
@@ -14325,7 +14480,7 @@ select:focus {
 }
 .define-workbook.is-split .define-chapter-title {
   font-size: 1.15rem !important;
-  font-weight: 700 !important;
+    border-right: 1px solid var(--border-subtle) !important;
   color: var(--text-primary) !important;
   letter-spacing: -0.02em !important;
 }
@@ -14351,7 +14506,8 @@ select:focus {
     grid-template-areas:
       'header header'
       'hud hud'
-      'sidebar main' !important;
+      'sidebar main'
+      'footer footer' !important;
   }
   .app-shell > .journey-sidebar {
     position: static !important;
@@ -14416,7 +14572,7 @@ select:focus {
   .header-mobile-title {
     display: block !important;
     flex: 1 1 auto;
-    min-width: 0;
+    box-shadow: none !important;
     text-align: center;
     font-weight: 700;
     font-size: 0.95rem;
@@ -14508,8 +14664,7 @@ select:focus {
     max-width: none !important;
     position: static !important;
   }
-  .define-split[data-mobile-pane='form'] .define-split-mood { display: none !important; }
-  .define-split[data-mobile-pane='refs'] .define-split-form { display: none !important; }
+  /* Both panels stack vertically on mobile — board remains reachable by scrolling */
 
   /* view-enter leaves a transform that would trap position:fixed children;
      drop it on mobile so the bottom bar anchors to the viewport */
@@ -14748,6 +14903,26 @@ select:focus {
   text-transform: uppercase;
   color: var(--text-secondary);
   white-space: nowrap;
+}
+
+.focus-exit-btn {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-subtle);
+  padding: 0.3rem 0.6rem;
+}
+
+.focus-exit-btn {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-subtle);
+  padding: 0.3rem 0.6rem;
 }
 
 .focus-progress-track {

@@ -1042,6 +1042,7 @@ export default function DesignView({
                       className="palette-role-swatch-btn"
                       style={{ background: c }}
                       title={`Set as ${brandRoleAssign}`}
+                      aria-label={`Set ${c} as ${brandRoleAssign}`}
                       onClick={() => {
                         const n = normalizeHex(c) || c
                         setColorRole(brandRoleAssign, n)

@@ -290,6 +290,12 @@ export default function ResearchView({
               >
                 {deskMood.length === 0 ? (
                   <div className="empty-state empty-state-craft research-empty">
+                    <p className="empty-state-title">Your mood board is empty</p>
+                    <p className="empty-state-subtitle">
+                      Add references that capture the feel you’re after — upload
+                      images, drag one in, or paste an image URL. Star up to 6 to
+                      carry them into your brand direction.
+                    </p>
                     <label className="btn btn-primary board-upload-btn">
                       Upload images
                       <input
@@ -340,7 +346,7 @@ export default function ResearchView({
                             className="mood-pin-media mood-pin-media-btn"
                             style={
                               pinImageUrl(item)
-                                ? { backgroundColor: '#e7e5e4' }
+                                ? { backgroundColor: 'var(--bg-muted)' }
                                 : face
                             }
                             aria-label={`View pin${item.note ? `: ${item.note}` : ''}`}

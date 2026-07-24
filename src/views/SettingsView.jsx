@@ -273,6 +273,7 @@ export default function SettingsView(props) {
             <button
               type="button"
               className="btn btn-secondary btn-sm"
+              disabled={syncState === 'syncing'}
               onClick={async () => {
                 setSyncState('syncing')
                 const result = await pushWorkspace(exportAllData())
@@ -287,7 +288,7 @@ export default function SettingsView(props) {
                 }
               }}
             >
-              Sync
+              {syncState === 'syncing' ? 'Syncing…' : 'Sync'}
             </button>
           )}
           <button
@@ -336,12 +337,14 @@ export default function SettingsView(props) {
                 autoComplete="current-password"
               />
               <input
+                id="pw-next"
                 type="password"
                 className="field-input"
                 value={pwNext}
                 onChange={(e) => setPwNext(e.target.value)}
                 placeholder="New (6+)"
                 autoComplete="new-password"
+                aria-label="New password"
               />
               <button
                 type="button"
