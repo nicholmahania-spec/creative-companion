@@ -528,6 +528,7 @@ h3 {
   align-items: center;
   gap: 0.4rem;
   max-width: 9.5rem;
+  min-height: 2.5rem;
   padding: 0.28rem 0.55rem 0.28rem 0.28rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
@@ -12413,7 +12414,7 @@ select:focus {
 /* Resume = top whisper, not bottom modal theater */
 
 .resume-banner {
-  position: sticky !important;
+  position: fixed !important;
   top: 0 !important;
   bottom: auto !important;
   left: 0 !important;
@@ -13694,13 +13695,17 @@ select:focus {
   text-align: center;
 }
 
-.header-redesign .header-more,
 .header-redesign .header-project-select,
 .header-redesign .timer-running-chip,
 .header-redesign .sync-error-chip {
   border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
   min-height: 36px;
+}
+
+.header-redesign .header-more {
+  box-shadow: none !important;
+  min-height: 40px;
 }
 
 .header-redesign .timer-running-chip,
@@ -14543,7 +14548,8 @@ select:focus {
     grid-template-areas:
       'header'
       'hud'
-      'main' !important;
+      'main'
+      'footer' !important;
   }
 
   /* Header collapses to: [☰]  project name (center)  avatar */
