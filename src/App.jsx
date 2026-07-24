@@ -2924,17 +2924,6 @@ function App() {
                   >
                     Command · ⌘K
                   </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('settings')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    {i18nT(locale, 'ui.settings')}
-                  </button>
                 </div>
               )}
             </div>
