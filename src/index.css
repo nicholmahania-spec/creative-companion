@@ -14827,6 +14827,194 @@ select:focus {
   color: #B91C1C;
 }
 
+/* Running to-do ("fridge list") — drawer styled like the left path rail,
+   but escaped from the app-shell grid (fixed overlay, not a grid item). */
+
+.running-todo-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.32);
+  z-index: 200;
+}
+
+.running-todo-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 201;
+  width: min(320px, 100vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 0.85rem;
+  background: var(--ts-panel, var(--bg-elevated));
+  border-left: 1px solid var(--ts-border, var(--border-subtle));
+  color: var(--ts-ink, var(--text-primary));
+  overflow-y: auto;
+  box-shadow: -2px 0 16px rgba(15, 23, 42, 0.14);
+}
+
+.running-todo-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ts-border, var(--border-subtle));
+  margin-bottom: 0.25rem;
+}
+.running-todo-panel-head .journey-projects-heading {
+  font-size: 0.78rem;
+}
+
+.running-todo-empty {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.1rem;
+}
+
+.running-todo-group {
+  margin-bottom: 0.6rem;
+}
+
+.running-todo-group-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin: 0.4rem 0 0.25rem;
+}
+
+.running-todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.running-todo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.2rem;
+  border-radius: 4px;
+}
+.running-todo-row:hover {
+  background: var(--ts-canvas, #EEF0F2);
+}
+.running-todo-row.is-done .running-todo-row-text {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.running-todo-check {
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  border: 1px solid var(--ts-border, var(--border-strong));
+  background: transparent;
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.running-todo-row.is-done .running-todo-check {
+  background: var(--dopamine, #2563EB);
+  border-color: var(--dopamine, #2563EB);
+}
+
+.running-todo-row-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.running-todo-recommend {
+  align-self: flex-start;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: var(--dopamine, #2563EB);
+  color: #FFFFFF;
+}
+
+.running-todo-remove {
+  flex: 0 0 auto;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.running-todo-remove:hover {
+  background: rgba(185, 28, 28, 0.1);
+  color: #B91C1C;
+}
+
+.running-todo-panel-actions {
+  margin-top: auto;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--ts-border, var(--border-subtle));
+}
+.running-todo-panel-actions .btn {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .running-todo-panel {
+    width: 100vw;
+  }
+}
+
+/* Add-item prompt — reuses .export-overlay / .export-panel chrome */
+
+.running-todo-prompt-panel {
+  max-width: 26rem;
+}
+
+.running-todo-prompt-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.running-todo-prompt-added {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.running-todo-prompt-added li::before {
+  content: '✓ ';
+}
+
+.running-todo-prompt-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.85rem;
+}
+
 .journey-project-row {
   display: flex;
   align-items: center;

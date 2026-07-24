@@ -112,6 +112,8 @@ import {
   slugifyFilename,
 } from './lib/exportFiles'
 import LogoLockup from './components/LogoLockup'
+import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
+import { guessRunningTodoStage } from './lib/runningTodoStages'
 import {
   normalizeLocale,
   t as i18nT,
@@ -264,6 +266,8 @@ function App() {
   const [deskConfirm, setDeskConfirm] = useState(null)
   const [forceBreakConsentOpen, setForceBreakConsentOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [runningTodoPromptOpen, setRunningTodoPromptOpen] = useState(false)
+  const [runningTodoPanelOpen, setRunningTodoPanelOpen] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
   const [commandActiveIdx, setCommandActiveIdx] = useState(0)
@@ -353,6 +357,22 @@ function App() {
 
   const activeProjectId = currentProjectId
   const activeProject = projects.find((p) => p.id === activeProjectId)
+  const runningTodo = activeProject?.runningTodo || null
+  const addRunningTodoItem = useAppStore((s) => s.addRunningTodoItem)
+  const toggleRunningTodoItem = useAppStore((s) => s.toggleRunningTodoItem)
+  const removeRunningTodoItem = useAppStore((s) => s.removeRunningTodoItem)
+  const sortRunningTodo = useAppStore((s) => s.sortRunningTodo)
+  const resetRunningTodoIfNewDay = useAppStore((s) => s.resetRunningTodoIfNewDay)
+
+  // Every time a project is opened: clear yesterday's completed to-dos (if
+  // the day rolled over) and prompt for anything to add to the running list.
+  useEffect(() => {
+    if (!activeProjectId) return
+    resetRunningTodoIfNewDay(activeProjectId)
+    setRunningTodoPromptOpen(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProjectId])
+
   const projectPalette =
     activeProject?.palette?.length > 0
       ? activeProject.palette
@@ -2469,6 +2489,11 @@ function App() {
     })
   }
 
+  const handleAddRunningTodoItem = (text) => {
+    const currentStageId = journeyIdForView(activeView) || 'define'
+    addRunningTodoItem(text, guessRunningTodoStage(text, currentStageId))
+  }
+
   const handleSignOut = async () => {
     if (CLOUD) {
       await signOutCloud()
@@ -2844,6 +2869,17 @@ function App() {
                     }}
                   >
                     Export
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setRunningTodoPanelOpen(true)
+                      setMoreOpen(false)
+                    }}
+                  >
+                    To-do list
                   </button>
                   <button
                     type="button"
@@ -4115,6 +4151,25 @@ function App() {
           </div>
         </div>
       )}
+
+      <RunningTodoAddModal
+        open={runningTodoPromptOpen && activeView !== 'home'}
+        onClose={() => setRunningTodoPromptOpen(false)}
+        onAdd={handleAddRunningTodoItem}
+        stageLabel={pathLabel(locale, journeyIdForView(activeView) || 'define')}
+      />
+      <RunningTodoPanel
+        open={runningTodoPanelOpen}
+        onClose={() => setRunningTodoPanelOpen(false)}
+        runningTodo={runningTodo}
+        onToggle={toggleRunningTodoItem}
+        onRemove={removeRunningTodoItem}
+        onSort={sortRunningTodo}
+        onOpenAdd={() => {
+          setRunningTodoPanelOpen(false)
+          setRunningTodoPromptOpen(true)
+        }}
+      />
 
       {shortcutsOpen && (
         <div

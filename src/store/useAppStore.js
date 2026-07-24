@@ -157,7 +157,13 @@ export function createBlankProject(name = 'My project', brief = '') {
     deadline: '',
     ...brandIdentityDefaults(),
     tasks: [],
+    runningTodo: blankRunningTodo(),
   }
+}
+
+/** Fridge-list style running to-do, separate from desk tasks. */
+export function blankRunningTodo() {
+  return { items: [], sorted: false, lastResetDate: toISODate(new Date()) }
 }
 
 export function blankWorkspaceState() {
@@ -521,6 +527,94 @@ const useAppStore = create(
             return { ...p, palette: next }
           }),
         })),
+
+      /**
+       * Running to-do ("fridge list") — separate from desk tasks. Items are
+       * keyword-tagged to one of the 7 workflow stages at add time. Stays
+       * flat/unsorted until sortRunningTodo() is called once; after that,
+       * new items still land pre-sorted into their stage automatically.
+       */
+      addRunningTodoItem: (text, stage) =>
+        set((state) => {
+          const trimmed = String(text || '').trim()
+          if (!trimmed) return state
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== state.currentProjectId) return p
+              const rt = p.runningTodo || blankRunningTodo()
+              const item = {
+                id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                text: trimmed,
+                stage,
+                completed: false,
+                createdAt: Date.now(),
+              }
+              return { ...p, runningTodo: { ...rt, items: [...rt.items, item] } }
+            }),
+          }
+        }),
+
+      toggleRunningTodoItem: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const rt = p.runningTodo
+            if (!rt) return p
+            return {
+              ...p,
+              runningTodo: {
+                ...rt,
+                items: rt.items.map((it) =>
+                  it.id === id ? { ...it, completed: !it.completed } : it
+                ),
+              },
+            }
+          }),
+        })),
+
+      removeRunningTodoItem: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const rt = p.runningTodo
+            if (!rt) return p
+            return {
+              ...p,
+              runningTodo: { ...rt, items: rt.items.filter((it) => it.id !== id) },
+            }
+          }),
+        })),
+
+      sortRunningTodo: () =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const rt = p.runningTodo || blankRunningTodo()
+            return { ...p, runningTodo: { ...rt, sorted: true } }
+          }),
+        })),
+
+      /** Daily reset: clears completed items only; keeps sorted state and
+       *  unfinished items as-is. Safe to call repeatedly — no-ops same-day. */
+      resetRunningTodoIfNewDay: (projectId) =>
+        set((state) => {
+          const today = toISODate(new Date())
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== projectId) return p
+              const rt = p.runningTodo
+              if (!rt || rt.lastResetDate === today) return p
+              return {
+                ...p,
+                runningTodo: {
+                  ...rt,
+                  items: rt.items.filter((it) => !it.completed),
+                  lastResetDate: today,
+                },
+              }
+            }),
+          }
+        }),
 
       /** Partial update of brand identity template fields */
       updateBrandField: (field, value) =>
