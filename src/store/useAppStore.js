@@ -534,7 +534,7 @@ const useAppStore = create(
        * Bump designVersion vN → vN+1 (or set v2 if freeform).
        * Call before big design changes.
        */
-      bumpDesignVersion: async () => {
+      bumpDesignVersion: () => {
         const state = get()
         const p = state.projects.find((x) => x.id === state.currentProjectId)
         if (!p) return { ok: false }
@@ -549,15 +549,14 @@ const useAppStore = create(
               : proj
           ),
         })
-        // Create a version snapshot after bumping version
-        const versionId = await versionService.autoVersion('version bump')
-        // Track version creation
-        if (versionId) {
-          const version = await versionService.getVersionById(versionId)
-          if (version) {
-            trackVersionAction('create', version)
+        // Fire-and-forget version snapshot — must not block the synchronous return
+        versionService.autoVersion('version bump').then((versionId) => {
+          if (versionId) {
+            versionService.getVersionById(versionId).then((version) => {
+              if (version) trackVersionAction('create', version)
+            })
           }
-        }
+        }).catch(() => {})
         return { ok: true, version: next }
       },
 
@@ -565,7 +564,7 @@ const useAppStore = create(
        * If still on v1, bump once after a major design action (kit, mark, type pair).
        * Avoids keystroke spam — only discrete intentional actions call this.
        */
-      bumpDesignVersionIfV1: async () => {
+      bumpDesignVersionIfV1: () => {
         const state = get()
         const p = state.projects.find((x) => x.id === state.currentProjectId)
         if (!p) return { ok: false, bumped: false }
@@ -574,15 +573,14 @@ const useAppStore = create(
           return { ok: true, bumped: false, version: cur }
         }
         const result = {...get().bumpDesignVersion(), bumped: true}
-        // Create a version snapshot after bumping version from v1
-        const versionId = await versionService.autoVersion('initial version bump')
-        // Track version creation
-        if (versionId) {
-          const version = await versionService.getVersionById(versionId)
-          if (version) {
-            trackVersionAction('create', version)
+        // Fire-and-forget version snapshot — must not block the synchronous return
+        versionService.autoVersion('initial version bump').then((versionId) => {
+          if (versionId) {
+            versionService.getVersionById(versionId).then((version) => {
+              if (version) trackVersionAction('create', version)
+            })
           }
-        }
+        }).catch(() => {})
         return {...result, version: result.version}
       },
 
