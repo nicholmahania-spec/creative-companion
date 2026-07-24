@@ -4,8 +4,6 @@ import { readFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import purge from 'vite-plugin-purgecss'
-import { visualizer } from 'rollup-plugin-visualizer'
 
 const root = dirname(fileURLToPath(import.meta.url))
 
@@ -70,24 +68,7 @@ const base =
   process.env.GITHUB_PAGES === 'true' ? '/creative-companion/' : './'
 
 export default defineConfig({
-  plugins: [
-    react(),
-    process.env.NODE_ENV === 'production' ? purge({
-      content: [
-        './src/**/*.jsx',
-        './src/**/*.js',
-        './src/**/*.css',
-        './index.html'
-      ],
-      safelist: []
-    }) : null,
-    process.env.ANALYZE ? visualizer({
-      filename: 'stats.html',
-      open: false,
-      gzip: true,
-      brotli: true
-    }) : null
-  ].filter(Boolean),
+  plugins: [react()],
   base,
   resolve: {
     alias: {
