@@ -156,28 +156,35 @@ App is built for creating a brand from scratch (Define→Research→Ideate→
 Sketch→Design). This real project is audit-and-document an *existing* brand
 (explicitly "no new logo design, no rebranding, no strategy") — Ideate/Sketch
 don't apply; work goes Define (scope) → Design (document what exists) →
-Deliver. Approved 4-part build, in order:
+Deliver. All 4 approved phases DONE (commits `c46036b`..`d45ff42`):
 
-### A. CMYK + structured logo usage fields — building now
-- Add CMYK conversion (`src/lib/color.js`) alongside existing HEX/RGB.
-- Add structured logo-usage fields (clear-space, minimum size) to brand
-  identity data, beyond the existing freeform doUse/dontUse text box.
-- Surface both in Design view + the Brand Book PDF export.
+### A. CMYK on every palette swatch — done (`c46036b`, `eaf3ed8`)
+Turned out clear-space/min-size/logo-don'ts/imagery-guidelines already existed
+end-to-end (initial gap analysis was wrong there) — only real gap was CMYK,
+which existed for the 4 role rows but not the full palette swatch grid, the
+markdown export, or the in-app BrandArtboard preview. Fixed all three, reusing
+the existing `colorSpec()`/`hexToCmyk()` in `brandSystem.js`.
 
-### B. In-app asset-audit tracker — not started
-- New list (Define or Research) where each uploaded existing file gets
-  tagged usable / outdated / missing. Distinct from the mood board
-  (inspiration) and the running to-do list (tasks).
+### B. In-app asset-audit tracker — done (`0f8642b`)
+New "Asset audit" collapsible section in Define (above Tools). Log each
+existing file, tag usable/outdated/missing, optional note + thumbnail.
+`src/components/AssetAudit.jsx`, `assetAudit[]` per project.
 
-### C. Real fillable brand-recognition templates — not started
-- Actual letterhead / business card / envelope / email-signature templates
-  filled with the org's real name+contact info, exportable as finished
-  files. Replaces the existing generic "sample business card" proof-of-
-  system mock for this use case (keep that mock for the from-scratch flow).
+### C. Real fillable brand-recognition templates — done (`fbffb2e`)
+New "Stationery" tab in Design: letterhead (8.5x11in), business card
+(3.5x2in, per contact), envelope (#10), email signature (HTML+PNG) — all
+filled with real palette/type/logo/org contact info and exported at correct
+physical page sizes via `src/lib/stationery.js`. Verified: downloaded and
+opened a valid letterhead PDF.
 
-### D. Lightweight hours/invoice tracker — not started
-- Per-project time log (hours × rate) + simple itemized invoice export.
-  New, small business-ops module; no overlap with existing features.
+### D. Lightweight hours/invoice tracker — done (`d45ff42`)
+New "Hours & invoice" Tools-menu entry, drawer UI matching the running
+to-do panel. Log dated hours against a rate, see running totals, export a
+simple itemized invoice PDF (`src/lib/invoice.js`). Verified: totals math
+correct, valid PDF downloaded.
+
+All 119 tests pass; each phase verified end-to-end in a headless browser
+before commit.
 
 ---
 
