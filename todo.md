@@ -122,6 +122,34 @@ to what extends the existing architecture vs. what would fight it.
 
 ---
 
+## Running to-do list ("fridge list") — DONE (commit `66c0b0b`)
+
+Per-project todo list, deliberately kept separate from the existing desk-tasks/
+quick-add system. `src/components/RunningTodo.jsx` (popup + drawer),
+`src/lib/runningTodoStages.js` (keyword stage tagging), store fields/actions in
+`useAppStore.js` (`runningTodo`, `addRunningTodoItem`, `toggleRunningTodoItem`,
+`removeRunningTodoItem`, `sortRunningTodo`, `resetRunningTodoIfNewDay`).
+
+Behavior: centered "anything to add?" popup on every project open (any view) →
+items keyword-tagged to one of the 7 stages, falling back to the current
+stage → stays flat until "Sort" is pressed once → then groups by stage with a
+"Start here" badge on the first incomplete item per group → "Add to list"
+button opens the same popup and new items auto-file into their stage group
+without re-sorting → daily reset clears completed items only, keeps
+unfinished items and the sorted state.
+
+### Open follow-ups (not yet built, recommended but unconfirmed)
+1. **Research-page popup collision** — the add-todo popup currently doesn't
+   special-case the Research view. Since Research already has its own inline
+   URL/Note add-pin popovers, recommend suppressing the to-do popup while
+   Research's own inline add form is open, so they don't compete for
+   attention on the busiest page. Not built yet — needs confirmation.
+2. **Mobile drawer vs. bottom sheet** — shipped as a full-width drawer on
+   ≤640px (not a distinct bottom-sheet redesign). Revisit once tried on an
+   actual phone.
+
+---
+
 ## Next session starting point
 
 1. Start with **ReviewFocusView.jsx** nested FocusShell fix (HIGH #1) — it's the natural continuation of the UX agent's work
