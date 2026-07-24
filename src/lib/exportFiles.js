@@ -1506,7 +1506,7 @@ export async function downloadBrandPackVectorPdf(
       pdf.setDrawColor(220, 220, 220)
       pdf.setLineWidth(0.5)
       pdf.line(margin, y, margin + contentW, y)
-      y += 20  // Increased from 16 to 20
+      y += 28  // Increased from 20 to 28 for more space before content
     }
 
     const drawFooters = () => {
