@@ -14784,12 +14784,45 @@ select:focus {
   overflow-y: auto;
 }
 
+.journey-project-row-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0.15rem;
+}
+
+.journey-project-row-delete {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #94A3B8;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.journey-project-row-wrap:hover .journey-project-row-delete,
+.journey-project-row-wrap:focus-within .journey-project-row-delete {
+  opacity: 1;
+}
+.journey-project-row-delete:hover {
+  background: rgba(185, 28, 28, 0.1);
+  color: #B91C1C;
+}
+
 .journey-project-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
   width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 0.45rem 0.6rem;
   border: none;
   border-left: 2px solid transparent;

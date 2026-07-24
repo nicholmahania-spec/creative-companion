@@ -2417,14 +2417,13 @@ function App() {
     reader.readAsText(file)
   }
 
-  const handleDeleteProject = () => {
-    if (!activeProject) return
+  const handleDeleteProjectById = (id, name) => {
+    if (!id) return
     if (projects.length <= 1) {
       flashToast(i18nT(locale, 'ui.keepOneProject'))
       return
     }
-    const id = activeProject.id
-    const name = activeProject.name
+    const wasActive = id === activeProjectId
     setDeskConfirm({
       kind: 'delete-project',
       label: `${i18nT(locale, 'ui.deleteProjectConfirm')} (“${name}”)`,
@@ -2434,13 +2433,18 @@ function App() {
         const result = deleteProject(id)
         if (result.ok) {
           flashToast(i18nT(locale, 'ui.projectDeleted'))
-          setActiveView('project')
+          if (wasActive) setActiveView('project')
         } else {
           flashToast(result.error || i18nT(locale, 'ui.deleteFail'))
         }
         setDeskConfirm(null)
       },
     })
+  }
+
+  const handleDeleteProject = () => {
+    if (!activeProject) return
+    handleDeleteProjectById(activeProject.id, activeProject.name)
   }
 
   const handleArchiveProject = () => {
@@ -3052,7 +3056,7 @@ function App() {
               {projectsSummary.map(({ project: p, doneCount }) => {
                 const isActive = p.id === activeProjectId
                 return (
-                  <li key={p.id}>
+                  <li key={p.id} className="journey-project-row-wrap">
                     <button
                       type="button"
                       className={`journey-project-row${isActive ? ' is-active' : ''}`}
@@ -3068,6 +3072,20 @@ function App() {
                         {doneCount}/7
                       </span>
                     </button>
+                    {projects.length > 1 && (
+                      <button
+                        type="button"
+                        className="journey-project-row-delete"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteProjectById(p.id, p.name)
+                        }}
+                        aria-label={`Delete “${p.name}”`}
+                        title="Delete project"
+                      >
+                        ×
+                      </button>
+                    )}
                   </li>
                 )
               })}
