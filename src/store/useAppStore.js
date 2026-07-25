@@ -50,6 +50,8 @@ export function blankDetective() {
     // Overview & administration
     clientName: '',
     primaryContact: '',
+    clientEmail: '',
+    clientPhone: '',
     startDeadline: '',
     budgetRange: '',
     // Company background & strategy
@@ -1863,6 +1865,8 @@ const useAppStore = create(
             detective: project.detective ? {
               clientName: project.detective.clientName,
               primaryContact: project.detective.primaryContact,
+              clientEmail: project.detective.clientEmail,
+              clientPhone: project.detective.clientPhone,
               startDeadline: project.detective.startDeadline,
               budgetRange: project.detective.budgetRange,
               goal: project.detective.goal,

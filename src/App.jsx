@@ -37,6 +37,7 @@ const GameHUD = lazy(() => import('./components/GameHUD'))
 const ActivityTable = lazy(() => import('./components/dashboard/ActivityTable'))
 const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
+const ClientsView = lazy(() => import('./views/ClientsView'))
 const SettingsView = lazy(() => import('./views/SettingsView'))
 const SparkView = lazy(() => import('./views/SparkView'))
 const ResearchView = lazy(() => import('./views/ResearchView'))
@@ -3038,6 +3039,17 @@ function App() {
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
+                      setActiveView('clients')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    Clients
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
                       setActiveView('spark')
                       setMoreOpen(false)
                     }}
@@ -3725,6 +3737,17 @@ function App() {
               setProjectDeadline={setProjectDeadline}
               activeProject={activeProject}
               upcomingDeadlines={upcomingDeadlines}
+            />
+          </Suspense>
+        )}
+
+        {/* ===== CLIENTS (lazy) ===== */}
+        {activeView === 'clients' && (
+          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading clients…</div>}>
+            <ClientsView
+              projects={projects}
+              selectProject={selectProject}
+              setActiveView={setActiveView}
             />
           </Suspense>
         )}

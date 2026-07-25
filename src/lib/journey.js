@@ -101,6 +101,8 @@ export function toolsLabelForView(view) {
       return 'Timer'
     case 'calendar':
       return 'Calendar'
+    case 'clients':
+      return 'Clients'
     case 'settings':
       return 'Settings'
     case 'concept':
