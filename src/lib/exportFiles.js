@@ -10,6 +10,7 @@
 import { pinFaceCssText, pinVisualKind } from './moodPins'
 import { toISODate } from './dates'
 import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
+import { DETECTIVE_CHAPTERS } from './detectiveBrief'
 import {
   appendSystemMarkdown,
   buildColorSystem,
@@ -2594,5 +2595,146 @@ export async function downloadFormPdf(
     return { ok: false, error: 'Browser blocked the download' }
   } catch (e) {
     return { ok: false, error: e?.message || 'Form PDF generation failed' }
+  }
+}
+
+/**
+ * Project overview PDF — a clean, single-document export of the Define
+ * page's actual brief fields (DETECTIVE_CHAPTERS), either filled in
+ * (professional handoff copy) or blank with ruled lines (print, have a
+ * client fill it by hand, scan it back in).
+ *
+ * @param {object} project - project.detective holds the answers
+ * @param {{ blank?: boolean, clientName?: string }} [options]
+ */
+export async function downloadProjectOverviewPdf(project, options = {}) {
+  try {
+    if (!jsPdfModulePromise) {
+      jsPdfModulePromise = import('jspdf').catch((err) => {
+        jsPdfModulePromise = null
+        throw err
+      })
+    }
+    const jsPdfMod = await jsPdfModulePromise
+    const { jsPDF } = jsPdfMod
+    const blank = !!options.blank
+    const margin = 48
+    const pageW = 612
+    const pageH = 792
+    const contentW = pageW - margin * 2
+    const bottom = pageH - margin - 18
+    const pdf = new jsPDF({ unit: 'pt', format: 'letter', compress: true })
+
+    const clientName = options.clientName || project?.detective?.clientName || project?.name || ''
+    const day = new Date().toLocaleDateString()
+    let y = margin
+    let pageIndex = 1
+
+    const footer = () => {
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(8)
+      pdf.setTextColor(150, 150, 150)
+      pdf.text(`Creative Companion · Project overview`, margin, pageH - 24)
+      pdf.text(`${pageIndex}`, pageW - margin, pageH - 24, { align: 'right' })
+    }
+
+    const newPage = () => {
+      footer()
+      pdf.addPage()
+      pageIndex += 1
+      y = margin
+    }
+
+    const ensureSpace = (need) => {
+      if (y + need <= bottom) return
+      newPage()
+    }
+
+    // Header
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(20)
+    pdf.setTextColor(20, 18, 17)
+    pdf.text('Project overview', margin, y + 18)
+    y += 30
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(10)
+    pdf.setTextColor(120, 120, 120)
+    pdf.text(
+      blank
+        ? `${clientName || 'Client'} · fill in and return`
+        : `${clientName || 'Untitled project'} · ${day}`,
+      margin,
+      y
+    )
+    y += 24
+
+    DETECTIVE_CHAPTERS.forEach((chapter) => {
+      ensureSpace(40)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(9)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text(`${chapter.num} · ${chapter.title.toUpperCase()}`, margin, y)
+      y += 16
+      pdf.setDrawColor(220, 220, 220)
+      pdf.line(margin, y - 6, pageW - margin, y - 6)
+
+      chapter.fields.forEach((f) => {
+        const answer = blank ? '' : String(project?.detective?.[f.id] || '').trim()
+        ensureSpace(f.area ? 60 : 34)
+
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(9.5)
+        pdf.setTextColor(30, 28, 27)
+        pdf.text(f.label, margin, y)
+        y += 13
+
+        if (blank) {
+          const lines = f.area ? 3 : 1
+          for (let i = 0; i < lines; i += 1) {
+            ensureSpace(16)
+            pdf.setDrawColor(200, 200, 200)
+            pdf.line(margin, y, pageW - margin, y)
+            y += 16
+          }
+        } else if (answer) {
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(10)
+          pdf.setTextColor(60, 56, 54)
+          const wrapped = pdf.splitTextToSize(answer, contentW)
+          ensureSpace(wrapped.length * 13)
+          pdf.text(wrapped, margin, y)
+          y += wrapped.length * 13 + 4
+        } else {
+          pdf.setFont('helvetica', 'italic')
+          pdf.setFontSize(9.5)
+          pdf.setTextColor(180, 180, 180)
+          pdf.text('—', margin, y)
+          y += 13
+        }
+        y += 6
+      })
+      y += 10
+    })
+
+    footer()
+
+    const slug = slugifyFilename(clientName || project?.name, 'project-overview')
+    const name = blank ? `${slug}-overview-blank.pdf` : `${slug}-overview.pdf`
+    const blob = pdf.output('blob')
+
+    try {
+      pdf.save(name)
+      return { ok: true, method: 'jspdf-save', pages: pdf.getNumberOfPages() }
+    } catch {
+      // fall through
+    }
+
+    const viaAnchor = downloadBlob(blob, name)
+    if (viaAnchor.ok) {
+      return { ...viaAnchor, method: viaAnchor.method || 'anchor', pages: pdf.getNumberOfPages() }
+    }
+    return { ok: false, error: 'Browser blocked the download' }
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Project overview PDF generation failed' }
   }
 }

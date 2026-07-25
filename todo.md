@@ -182,6 +182,24 @@ before commit.
 
 ---
 
+## Feature ideas — not yet scoped, not yet built
+
+### Client contract signing before work begins
+User needs a contract the client signs before any work starts. Natural home
+is the new client portal (`/c/:portalId`) — it already has the client's
+attention, no-login access, and a step-gating model, so a "sign before the
+project unlocks" gate fits the existing shape. Not designed yet — open
+questions: does the studio upload their own contract PDF or does the app
+template one; is a typed-name + timestamp signature enough or does this
+need real e-signature/audit-trail rigor (legal question, not a UI one);
+should an unsigned contract actually *block* pushing steps to the client
+or just show a warning. Do not build until asked. Run through the
+`adhd-executive-function-advisor` before design — a hard gate that blocks
+work is exactly the kind of thing that can wreck task initiation if the
+user is ready to start and the client hasn't signed yet.
+
+---
+
 ## Feature ideas — built 2026-07-25
 
 Both items below were previously logged as "not yet scoped, do not build
@@ -203,6 +221,29 @@ upload path already used by Design → Logo, just reachable via drag-and-drop
 right where the export preview already lives, with no navigation away.
 `App.jsx` (`handleCoverImageDrop`, `.export-artboard-wrap` drop handlers),
 `src/index.css` (`.export-cover-drop-hint`, `.is-cover-drop-active`).
+
+### Project overview: export / client portal / paper-scan import — DONE (2026-07-25)
+Three paths, all reachable from Tools → "Share project overview":
+1. **Export a PDF of this page** — formatted, multi-page PDF of the actual
+   Define/`DETECTIVE_CHAPTERS` fields (`downloadProjectOverviewPdf()` in
+   `exportFiles.js`).
+2. **Client dashboard link** (`/c/:portalId`, no login — mirrors the
+   existing `/f/:shareId` pattern) — studio pushes individual journey steps
+   to the client, client sees only those, and can approve / request changes
+   with a note, chat with the studio, and fill in the Project overview form
+   themselves. A submitted form merges into `project.detective` via
+   `mergeDetectiveAnswers` (never blanks an already-filled field).
+   New tables `public.client_portals` + `public.client_portal_messages`
+   (owner-only RLS) with anon-callable SECURITY DEFINER RPCs; client code
+   in `src/lib/clientPortal.js`, `src/components/PublicClientPortal.jsx`,
+   studio side in `src/components/ProjectOverviewShare.jsx`.
+3. **Print blank / scan back in** — download a blank ruled PDF for a client
+   to fill by hand, then upload a photo/scan. `tesseract.js` OCR
+   (`src/lib/overviewOcr.js`) *proposes* answers matched against known
+   field labels; a mandatory review/edit screen shows every extracted line
+   before anything saves. Deliberately never auto-fills silently —
+   handwriting OCR is unreliable and a wrong silent overwrite is worse
+   than no import.
 
 ### Highlight-to-explain — DONE
 Scoped down from a live/LLM explain-anything feature (which would need a

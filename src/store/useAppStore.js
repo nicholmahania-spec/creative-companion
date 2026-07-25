@@ -245,6 +245,9 @@ export function createBlankProject(name = 'My project', brief = '') {
     /** Public link token (discovery_shares.id) sent to the client, if any */
     discoveryShareId: null,
     discoveryShareStatus: null,
+    /** Client portal (client_portals.id) — dashboard link with step
+     *  push/approval, chat, and the fillable Project overview form. */
+    clientPortalId: null,
   }
 }
 
@@ -777,6 +780,29 @@ const useAppStore = create(
           projects: state.projects.map((p) =>
             p.id === state.currentProjectId ? { ...p, discoveryUpload: upload } : p
           ),
+        })),
+
+      setClientPortalId: (portalId) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId ? { ...p, clientPortalId: portalId } : p
+          ),
+        })),
+
+      /** Merge answers that came from a client (portal form or an OCR'd
+       *  paper form) into the project's own Define/detective answers.
+       *  Only fills fields that actually have a value — never blanks
+       *  something already filled in. */
+      mergeDetectiveAnswers: (incoming) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const merged = { ...(p.detective || {}) }
+            Object.entries(incoming || {}).forEach(([k, v]) => {
+              if (String(v || '').trim()) merged[k] = v
+            })
+            return { ...p, detective: merged }
+          }),
         })),
 
       setDiscoveryShare: (shareId, status = 'pending') =>

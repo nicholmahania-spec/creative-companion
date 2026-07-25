@@ -116,6 +116,7 @@ import HighlightExplain from './components/HighlightExplain'
 import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
 import { HoursInvoicePanel } from './components/HoursInvoice'
 import { DiscoveryBriefPanel } from './components/DiscoveryBrief'
+import { ProjectOverviewSharePanel } from './components/ProjectOverviewShare'
 import { guessRunningTodoStage } from './lib/runningTodoStages'
 import {
   normalizeLocale,
@@ -278,6 +279,7 @@ function App() {
   const [researchAddOpen, setResearchAddOpen] = useState(false)
   const [hoursPanelOpen, setHoursPanelOpen] = useState(false)
   const [discoveryPanelOpen, setDiscoveryPanelOpen] = useState(false)
+  const [overviewSharePanelOpen, setOverviewSharePanelOpen] = useState(false)
   const [demoTour, setDemoTour] = useState(null)
   const [navDir, setNavDir] = useState('none')
   const prevJourneyIdx = useRef(0)
@@ -378,6 +380,8 @@ function App() {
   const setDiscoveryUpload = useAppStore((s) => s.setDiscoveryUpload)
   const setDiscoveryShare = useAppStore((s) => s.setDiscoveryShare)
   const mergeDiscoveryAnswers = useAppStore((s) => s.mergeDiscoveryAnswers)
+  const setClientPortalId = useAppStore((s) => s.setClientPortalId)
+  const mergeDetectiveAnswers = useAppStore((s) => s.mergeDetectiveAnswers)
 
   // Every time a project is opened: clear yesterday's completed to-dos (if
   // the day rolled over) and prompt for anything to add to the running list.
@@ -2705,6 +2709,17 @@ function App() {
                   >
                     <span aria-hidden="true">?</span> Discovery brief
                   </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setOverviewSharePanelOpen(true)
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">↗</span> Share project overview
+                  </button>
                   <p className="more-menu-group-label">App</p>
                   <button
                     type="button"
@@ -3827,6 +3842,16 @@ function App() {
         shareStatus={activeProject?.discoveryShareStatus || null}
         onSetShare={setDiscoveryShare}
         onMergeAnswers={mergeDiscoveryAnswers}
+      />
+      <ProjectOverviewSharePanel
+        open={overviewSharePanelOpen}
+        onClose={() => setOverviewSharePanelOpen(false)}
+        project={activeProject}
+        portalId={activeProject?.clientPortalId || null}
+        onSetPortalId={setClientPortalId}
+        onApplyAnswers={mergeDetectiveAnswers}
+        flashToast={flashToast}
+        flashMicro={flashMicro}
       />
 
       <BeforeAfterOverlay
