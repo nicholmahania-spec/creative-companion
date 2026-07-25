@@ -36,3 +36,21 @@ and cleverness are subordinate to this lens. If a proposed change adds
 friction (extra required decisions, ambiguous locked states, silent state
 loss, shame-coded errors) it needs to be reworked or rejected, even if it is
 otherwise good software design.
+
+## Pending idea — do not build yet (user has no concept of time / numbers don't register)
+
+The user has explicitly said "I have no concept of time and numbers mean
+nothing" — a real constraint, not a preference. This directly affects the
+planned time-tracking/stats feature (see conversation history: replacing the
+Pomodoro forced-break with passive time tracking + per-project stats).
+
+Whatever that feature becomes, it must NOT rely on raw numbers/clock time as
+the primary way information is shown to the user (no "1h 47m", no "3:15 PM",
+no countdown). Time needs to be represented some other way that actually
+registers for someone who is time-blind — this still needs to be figured
+out (visual/relative/comparative representations, session counts, etc. are
+candidate directions, not decided). Consult the
+`adhd-executive-function-advisor` subagent on this specifically before
+designing the stats view.
+
+**Explicitly deferred — do not implement until asked.**
