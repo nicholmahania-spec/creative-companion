@@ -28,6 +28,19 @@ Active development branch: `claude/debug-code-6u77sp`
 - `src/App.jsx` — central orchestration / prop-drilling hub
 - `src/store/useAppStore.js` — Zustand store
 
+## UI rule — modals/popups always center, never bottom/top sheets
+
+On mobile, popup/dialog cards (Discovery brief, Before/After, Shortcuts,
+Command palette, confirmations, etc.) must render centered on screen, same
+as desktop. Never slide up from the bottom or drop down from the top —
+the user has said this explicitly: "I do not like popups that come from the
+bottom or top. I need things front and center." All shared overlay chrome
+lives in `.export-overlay`/`.export-panel` in `src/index.css` — keep
+`align-items: center` at every breakpoint. (Persistent side panels that are
+genuinely drawers for browsing a list, like the running to-do panel, are a
+different pattern and not covered by this rule — this is about dialogs/popups
+specifically.)
+
 ## Design rule — ADHD / executive function first (non-negotiable)
 
 Creative Companion exists to reduce executive-function friction for creative

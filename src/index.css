@@ -6685,7 +6685,7 @@ body.cc-printing-pack .buddy-shell,
 
 .export-overlay {
     padding: 0.75rem;
-    align-items: flex-start;
+    align-items: center;
   }
 
 .export-panel.portfolio-export {
