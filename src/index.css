@@ -5963,6 +5963,41 @@ body.cc-printing-pack .buddy-shell,
   .form-preview .btn {
     display: none !important;
   }
+
+  /* Generic "print this page" mode — any view, via the header print button.
+     Hide chrome (sidebar, header, floating buttons), show #main-content only. */
+body.cc-printing-page .journey-sidebar,
+  body.cc-printing-page .header,
+  body.cc-printing-page .nav-backdrop,
+  body.cc-printing-page .buddy-shell,
+  body.cc-printing-page .buddy-fab,
+  body.cc-printing-page .game-hud,
+  body.cc-printing-page .app-footer,
+  body.cc-printing-page .todo-fab,
+  body.cc-printing-page .no-print {
+    display: none !important;
+  }
+
+body.cc-printing-page .app-shell {
+    display: block !important;
+  }
+
+body.cc-printing-page .main {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+body.cc-printing-page input,
+  body.cc-printing-page textarea,
+  body.cc-printing-page select {
+    border: none !important;
+    background: transparent !important;
+  }
+
+body.cc-printing-page button {
+    display: none !important;
+  }
 }
 
 .brand-artboard.hide-watermark .direction-foot {

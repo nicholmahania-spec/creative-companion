@@ -2201,6 +2201,31 @@ export function printElementById(elementId, options = {}) {
 }
 
 /**
+ * Print the current page's main content (opens print dialog for PDF).
+ * Generic — works on whatever view is active, unlike printElementById
+ * which targets the brand-pack artboard specifically.
+ * @param {{ title?: string }} [options]
+ */
+export function printCurrentPage(options = {}) {
+  const el = document.getElementById('main-content')
+  if (!el) return { ok: false, error: 'Nothing to print' }
+  try {
+    document.body.classList.add('cc-printing-page')
+    const prevTitle = document.title
+    if (options.title) document.title = options.title
+    window.print()
+    document.title = prevTitle
+    window.setTimeout(() => {
+      document.body.classList.remove('cc-printing-page')
+    }, 500)
+    return { ok: true }
+  } catch (e) {
+    document.body.classList.remove('cc-printing-page')
+    return { ok: false, error: e?.message || 'Print failed' }
+  }
+}
+
+/**
  * Form-specific PDF generation utilities
  * Extends the existing PDF generation capabilities for forms
  */

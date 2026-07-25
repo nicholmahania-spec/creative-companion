@@ -40,6 +40,13 @@ const ICONS = {
       <path d="M9.5 7h9M9.5 12h9M9.5 17h9" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
     </>
   ),
+  print: (
+    <>
+      <path d="M6.5 8.5v-5h11v5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="3.5" y="8.5" width="17" height="8" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.75" />
+      <rect x="6.5" y="14" width="11" height="6.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+    </>
+  ),
 }
 
 export default function HeaderIcon({ name, className = '' }) {

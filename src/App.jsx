@@ -103,6 +103,7 @@ import {
   packReadiness,
   preloadPdfEngine,
   printElementById,
+  printCurrentPage,
   slugifyFilename,
 } from './lib/exportFiles'
 import LogoLockup from './components/LogoLockup'
@@ -2569,6 +2570,19 @@ function App() {
               aria-label="Clients"
             >
               <HeaderIcon name="people" />
+            </button>
+
+            <button
+              type="button"
+              className="header-icon-btn"
+              onClick={() => {
+                const r = printCurrentPage()
+                if (!r.ok) flashToast(r.error || 'Print failed')
+              }}
+              title="Print / Save as PDF"
+              aria-label="Print or save this page as PDF"
+            >
+              <HeaderIcon name="print" />
             </button>
 
             <div className="more-wrap" ref={moreWrapRef}>
