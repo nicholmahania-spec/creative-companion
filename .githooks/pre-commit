@@ -1,0 +1,7 @@
+#!/bin/sh
+# Bump the patch version on every commit and stage the result.
+# Skip with `git commit --no-verify` when a commit shouldn't bump
+# (e.g. amending, or a commit that only touches this hook itself).
+
+npm run --silent bump || exit 1
+git add package.json package-lock.json
