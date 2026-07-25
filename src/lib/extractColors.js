@@ -65,3 +65,35 @@ export function extractDominantColors(img, count = 4) {
     return []
   }
 }
+
+/**
+ * Eyedropper: sample the exact pixel color at a normalized point on an
+ * already-loaded image (not just its overall dominant colors).
+ * @param {HTMLImageElement} img Already-loaded image element.
+ * @param {number} xRatio 0..1 position across the image's displayed width.
+ * @param {number} yRatio 0..1 position down the image's displayed height.
+ * @returns {string|null} Hex color, or null on failure (tainted canvas, etc).
+ */
+export function sampleColorAt(img, xRatio, yRatio) {
+  if (!img || !img.naturalWidth || !img.naturalHeight) return null
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = img.naturalWidth
+    canvas.height = img.naturalHeight
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return null
+    ctx.drawImage(img, 0, 0)
+    const x = Math.min(
+      img.naturalWidth - 1,
+      Math.max(0, Math.round(xRatio * img.naturalWidth))
+    )
+    const y = Math.min(
+      img.naturalHeight - 1,
+      Math.max(0, Math.round(yRatio * img.naturalHeight))
+    )
+    const { data } = ctx.getImageData(x, y, 1, 1)
+    return `#${toHex(data[0])}${toHex(data[1])}${toHex(data[2])}`
+  } catch {
+    return null
+  }
+}

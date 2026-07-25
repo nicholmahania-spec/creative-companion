@@ -1311,6 +1311,15 @@ const useAppStore = create(
           ),
         })),
 
+      /** Reposition which part of an image pin shows through the cropped
+       * tile/pack thumbnails (0-100 percentages, CSS background-position). */
+      setMoodPinFocal: (id, focalX, focalY) =>
+        set((state) => ({
+          moodItems: state.moodItems.map((m) =>
+            m.id === id ? { ...m, focalX, focalY } : m
+          ),
+        })),
+
       /**
        * Star/unstar a pin for the brand pack (max 6 per project).
        * @returns {{ ok: boolean, error?: string, inPack?: boolean }}

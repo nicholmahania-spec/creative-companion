@@ -59,10 +59,11 @@ export function pinFaceStyle(pin = {}) {
   const kind = pinVisualKind(pin)
   const visual = pin?.visual || ''
   if (kind === 'image') {
+    const hasFocal = Number.isFinite(pin?.focalX) && Number.isFinite(pin?.focalY)
     return {
       backgroundImage: `url(${visual})`,
       backgroundSize: 'cover',
-      backgroundPosition: 'center',
+      backgroundPosition: hasFocal ? `${pin.focalX}% ${pin.focalY}%` : 'center',
       backgroundRepeat: 'no-repeat',
       backgroundColor: '#e7e5e4',
     }

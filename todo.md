@@ -52,11 +52,20 @@ Checked all 6 items below against current code before touching anything:
 5. `cloudSync.js` `withTimeout` timer leak — **already fixed** (`.finally(() => clearTimeout(timerId))` present).
 6. Export buttons allow double-click — **fixed this session** (commit `0090289`): `exportBusy` guard in `runExport()`, panel buttons disabled while exporting.
 
-Remaining a11y sub-items from #6 (modal focus-trap coverage, command palette ARIA
-structure, skip-link DOM order) not re-verified — pick up if revisiting a11y.
+Remaining a11y sub-items from #6 — re-verified 2026-07-25:
+- **Modal focus-trap coverage** — found 2 real gaps: `demoTour` and
+  `showCreativeReset` dialogs had `role="dialog"` but no `useModalFocus()`
+  call, so Tab could escape them. Fixed: added `useModalFocus` for both
+  (`App.jsx`).
+- **Command palette ARIA structure** — no command palette exists anywhere
+  in the codebase (only a leftover CSS comment). Item was stale/moot.
+- **Skip-link DOM order** — already correct; `.skip-link` renders before
+  `header`/sidebar/`main` in normal flow (the one exception, `ForcedBreakOverlay`
+  rendering before it during a forced break, is a full-screen blocking
+  overlay anyway, so order doesn't matter there).
 
 ### LOW — Graphic design agent known-remaining items
-- `border-radius` inconsistency: many hardcoded `8/10/12/14/16px` values coexist with the `4px` token language. Broad normalization would touch ~15k-line `index.css` — risk/reward tradeoff.
+- `border-radius` inconsistency: many hardcoded `8/10/12/14/16px` values coexist with the `4px` token language. Broad normalization would touch ~16k-line `index.css` — deliberately left alone (2026-07-25): the risk of a blind pass breaking unrelated rules outweighs a cosmetic consistency win. Revisit with a scoped, reviewed diff if picked up again, not a sweep.
 - `EmptyIllustration.jsx` has mixed stroke weights (4/2.25/2/1.75/1.5) — intentional for a decorative illustration, not a bug.
 
 ---
@@ -83,10 +92,20 @@ to what extends the existing architecture vs. what would fight it.
    image URLs without permissive CORS headers (by design — see commit
    message for the crossOrigin tradeoff); works reliably for local uploads.
 
-### Phase 2 — later, not yet scoped
-- Eyedropper: sample a color from any point on a pinned image (not just
-  dominant colors) directly into the palette.
-- Aspect-ratio cropper for uploads before pinning.
+### Phase 2 — DONE (2026-07-25)
+- **Eyedropper** — done. Click anywhere on a pin's lightbox image to sample
+  that exact pixel and add it to the palette (`sampleColorAt()` in
+  `src/lib/extractColors.js`, wired in `ResearchView.jsx`'s lightbox).
+- **Crop-focus control** (replaces the originally-scoped "aspect-ratio
+  cropper" — see rationale below) — done. "Adjust crop focus" button in the
+  lightbox lets you tap where the image should be centered when it's
+  cover-cropped into the small tile/pack thumbnail (`setMoodPinFocal` store
+  action, `pin.focalX`/`focalY` consumed by `pinFaceStyle()` in
+  `moodPins.js`). A full drag-to-crop-any-aspect-ratio UI was scoped down to
+  this single-tap control — it gets the same real problem (an
+  auto-center-crop cutting off the important part of an image) solved with
+  zero extra decision screens (no aspect ratio picker, no confirm step),
+  matching the app's decision-fatigue-first design rule.
 
 ### Someday / maybe (explicitly deferred — conflicts with the app's guided-workflow design)
 - Infinite canvas, layer ordering (bring to front/back) — the app is
@@ -113,12 +132,12 @@ button opens the same popup and new items auto-file into their stage group
 without re-sorting → daily reset clears completed items only, keeps
 unfinished items and the sorted state.
 
-### Open follow-ups (not yet built, recommended but unconfirmed)
-1. **Research-page popup collision** — the add-todo popup currently doesn't
-   special-case the Research view. Since Research already has its own inline
-   URL/Note add-pin popovers, recommend suppressing the to-do popup while
-   Research's own inline add form is open, so they don't compete for
-   attention on the busiest page. Not built yet — needs confirmation.
+### Open follow-ups
+1. **Research-page popup collision** — DONE (2026-07-25). `ResearchView.jsx`
+   now reports `boardAddMode` open/closed up via a new `onAddPinModeChange`
+   prop; `App.jsx` suppresses `RunningTodoAddModal` while it's true, so the
+   running to-do prompt and Research's own inline URL/Note add-pin popover
+   never compete for attention.
 2. **Mobile drawer vs. bottom sheet** — shipped as a full-width drawer on
    ≤640px (not a distinct bottom-sheet redesign). Revisit once tried on an
    actual phone.
@@ -163,30 +182,40 @@ before commit.
 
 ---
 
-## Feature ideas — not yet scoped, not yet built
+## Feature ideas — built 2026-07-25
 
-### Custom brand guide layout upload
-User wants to upload their own layout/template to use for the brand guide,
-instead of being locked into one generic built-in template — so each
-user's brand guide can look like their own style, not a generic default.
-Not designed yet — open questions: what format is "upload a layout" (a
-file format like PDF/InDesign/Figma? a set of style parameters? an image
-reference the export engine maps onto?), how it integrates with the
-existing `stationery.js`/brand-book PDF export pipeline, and how a user
-without design tools picks/creates a layout in the first place. Do not
-build until asked; run through the `adhd-executive-function-advisor`
-subagent before design — a "bring your own layout" feature is exactly the
-kind of thing that can turn into decision fatigue (blank-canvas paralysis,
-too many format options) if not scoped carefully.
+Both items below were previously logged as "not yet scoped, do not build
+until asked." The user explicitly asked for them to be built. Consulted
+`adhd-executive-function-advisor` first per CLAUDE.md and scoped each down
+to the minimal shape it recommended (see below) rather than the original
+open-ended version, specifically to avoid decision fatigue / blank-canvas
+paralysis / shame-coded dead ends.
 
-### Highlight-to-explain ("explain this simply")
-User can select/highlight any text in the app and the helper bot explains it
-in plain, simple terms. Not designed yet — mechanism (popover vs. sidebar,
-what "simple terms" means concretely, which surfaces support it) still
-undecided. Do not build until asked. Run through the
-`adhd-executive-function-advisor` subagent before design (cognitive load is
-the top priority per CLAUDE.md) — a highlight-to-explain feature needs to
-add zero extra steps/decisions to trigger, or it defeats its own purpose.
+### Custom brand guide cover — DONE
+Scoped down from "upload a whole layout/template" (blank-canvas paralysis,
+format-choice decision fatigue) to: drop an image directly onto the export
+panel's live cover preview to use it as the brand book cover art. Zero
+required configuration — export works identically whether you customize it
+or not; the live preview itself (`BrandArtboard` inside the export panel)
+is the ambient "this is my brand" evidence the user asked for elsewhere.
+Reuses the existing `setLogoImage` store action + `assetService.uploadImage`
+upload path already used by Design → Logo, just reachable via drag-and-drop
+right where the export preview already lives, with no navigation away.
+`App.jsx` (`handleCoverImageDrop`, `.export-artboard-wrap` drop handlers),
+`src/index.css` (`.export-cover-drop-hint`, `.is-cover-drop-active`).
+
+### Highlight-to-explain — DONE
+Scoped down from a live/LLM explain-anything feature (which would need a
+backend LLM call this client-only app doesn't have, and would need a
+"sorry, no explanation available" fallback that reads as a shame-coded dead
+end) to: a fixed glossary of real design/brand jargon terms used across the
+app. Selecting a *known* term shows a small, centered (per the modal-
+centering rule) plain-language explanation immediately — no intermediate
+"Explain simply" button, no confirmation step. Selecting anything
+unmatched does nothing at all, so the feature can never fail visibly; it's
+either a small win or invisible. `src/lib/glossary.js` (curated term list +
+`lookupGlossaryTerm()`), `src/components/HighlightExplain.jsx` (selection
+listener + popover), mounted globally in `App.jsx`.
 
 ---
 

@@ -15,7 +15,7 @@ import {
   pinImageUrl,
   readImageFilesAsPins,
 } from '../lib/moodPins'
-import { extractDominantColors } from '../lib/extractColors'
+import { extractDominantColors, sampleColorAt } from '../lib/extractColors'
 import {
   normalizeLocale,
   t as i18nT,
@@ -44,6 +44,7 @@ export default function ResearchView({
   setPomodoroWorkStartedAt,
   setIsFocusRunning,
   setTimerFocusSource,
+  onAddPinModeChange,
 }) {
   const locale = normalizeLocale(localeProp)
   const addMoodPin = useAppStore((s) => s.addMoodPin)
@@ -51,6 +52,7 @@ export default function ResearchView({
   const updateMoodPinNote = useAppStore((s) => s.updateMoodPinNote)
   const toggleMoodPinInPack = useAppStore((s) => s.toggleMoodPinInPack)
   const movePackPin = useAppStore((s) => s.movePackPin)
+  const setMoodPinFocal = useAppStore((s) => s.setMoodPinFocal)
   const setPackHeroPin = useAppStore((s) => s.setPackHeroPin)
   const reorderBoardPins = useAppStore((s) => s.reorderBoardPins)
   const addPaletteColor = useAppStore((s) => s.addPaletteColor)
@@ -60,8 +62,16 @@ export default function ResearchView({
   const [boardUrlBusy, setBoardUrlBusy] = useState(false)
   const [boardNote, setBoardNote] = useState('')
   const [boardAddMode, setBoardAddMode] = useState(null)
+
+  // Suppress the running to-do popup while this view's own inline add-pin
+  // form is open, so they don't compete for attention.
+  useEffect(() => {
+    onAddPinModeChange?.(Boolean(boardAddMode))
+    return () => onAddPinModeChange?.(false)
+  }, [boardAddMode, onAddPinModeChange])
   const [boardDragId, setBoardDragId] = useState(null)
   const [boardLightbox, setBoardLightbox] = useState(null)
+  const [lightboxFocalMode, setLightboxFocalMode] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [formSubmitting, setFormSubmitting] = useState(false)
   const [formData, setFormData] = useState({})
@@ -73,6 +83,12 @@ export default function ResearchView({
   useModalFocus(!!boardLightbox, getLightboxRoot, {
     initialSelector: '.board-lightbox-close',
   })
+
+  // Leaving crop-focus mode whenever the lightbox pin changes/closes keeps
+  // the click-to-pick-color behavior the default, expected action.
+  useEffect(() => {
+    setLightboxFocalMode(false)
+  }, [boardLightbox?.id])
 
   // Esc / arrows / block path shortcuts while lightbox open (capture phase)
   useEffect(() => {
@@ -744,10 +760,40 @@ export default function ResearchView({
               </button>
               {pinImageUrl(boardLightbox) ? (
                 <img
-                  className="board-lightbox-visual board-lightbox-img"
+                  className={`board-lightbox-visual board-lightbox-img board-lightbox-eyedrop${
+                    lightboxFocalMode ? ' is-focal-mode' : ''
+                  }`}
                   src={pinImageUrl(boardLightbox)}
                   alt={boardLightbox.note || 'Research pin'}
                   decoding="async"
+                  title={
+                    lightboxFocalMode
+                      ? 'Click the part of the image you want centered in the tile'
+                      : 'Click anywhere on the image to add that color to your palette'
+                  }
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const xRatio = (e.clientX - rect.left) / rect.width
+                    const yRatio = (e.clientY - rect.top) / rect.height
+                    if (lightboxFocalMode) {
+                      setMoodPinFocal(
+                        boardLightbox.id,
+                        Math.round(xRatio * 100),
+                        Math.round(yRatio * 100)
+                      )
+                      flashMicro('Crop focus set')
+                      setLightboxFocalMode(false)
+                      return
+                    }
+                    if ((projectPalette?.length || 0) >= 8) {
+                      flashToast('Palette is full (max 8)')
+                      return
+                    }
+                    const hex = sampleColorAt(e.currentTarget, xRatio, yRatio)
+                    if (!hex) return
+                    addPaletteColor(hex)
+                    flashMicro(`+ ${hex} to palette`)
+                  }}
                 />
               ) : (
                 <div
@@ -768,6 +814,22 @@ export default function ResearchView({
                     : 'Esc to close'
                 })()}
               </p>
+              {pinImageUrl(boardLightbox) ? (
+                <div className="board-lightbox-eyedrop-row">
+                  <p className="board-lightbox-eyedrop-hint">
+                    {lightboxFocalMode
+                      ? 'Tap the image where you want it centered'
+                      : 'Click the image to pick a color into your palette'}
+                  </p>
+                  <button
+                    type="button"
+                    className={`btn btn-ghost btn-sm${lightboxFocalMode ? ' is-on' : ''}`}
+                    onClick={() => setLightboxFocalMode((v) => !v)}
+                  >
+                    {lightboxFocalMode ? 'Cancel' : 'Adjust crop focus'}
+                  </button>
+                </div>
+              ) : null}
               <div className="board-lightbox-actions">
                 {deskMood.length > 1 && (
                   <>

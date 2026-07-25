@@ -112,6 +112,7 @@ import BeforeAfterChip from './components/BeforeAfterChip'
 import BeforeAfterOverlay from './components/BeforeAfterOverlay'
 import HeaderIcon from './components/HeaderIcon'
 import PullToRefresh from './components/PullToRefresh'
+import HighlightExplain from './components/HighlightExplain'
 import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
 import { HoursInvoicePanel } from './components/HoursInvoice'
 import { DiscoveryBriefPanel } from './components/DiscoveryBrief'
@@ -133,6 +134,7 @@ import {
   STORAGE_EXPLAIN,
 } from './lib/auth'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import assetService from './services/assetService'
 import {
   pullWorkspace,
   pushWorkspace,
@@ -187,6 +189,7 @@ function App() {
   const clearAllData = useAppStore((s) => s.clearAllData)
   const clearToEmpty = useAppStore((s) => s.clearToEmpty)
   const renameProject = useAppStore((s) => s.renameProject)
+  const setLogoImage = useAppStore((s) => s.setLogoImage)
   const deleteProject = useAppStore((s) => s.deleteProject)
   const archiveProject = useAppStore((s) => s.archiveProject)
   const unarchiveProject = useAppStore((s) => s.unarchiveProject)
@@ -272,6 +275,7 @@ function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [runningTodoPromptOpen, setRunningTodoPromptOpen] = useState(false)
   const [runningTodoPanelOpen, setRunningTodoPanelOpen] = useState(false)
+  const [researchAddOpen, setResearchAddOpen] = useState(false)
   const [hoursPanelOpen, setHoursPanelOpen] = useState(false)
   const [discoveryPanelOpen, setDiscoveryPanelOpen] = useState(false)
   const [demoTour, setDemoTour] = useState(null)
@@ -1042,6 +1046,14 @@ function App() {
     () => document.querySelector('.shortcuts-overlay'),
     []
   )
+  const getDemoTourRoot = useCallback(
+    () => document.querySelector('.demo-tour-overlay'),
+    []
+  )
+  const getCreativeResetRoot = useCallback(
+    () => document.querySelector('.reset-panel')?.closest('.export-overlay') || null,
+    []
+  )
   useModalFocus(!!exportPanel && !showBreakdown, getExportRoot, {
     initialSelector: '.export-panel-header button, button',
   })
@@ -1058,6 +1070,12 @@ function App() {
   // Shortcuts panel: trap Tab and restore focus to the opener on close.
   useModalFocus(shortcutsOpen, getShortcutsRoot, {
     initialSelector: 'button',
+  })
+  useModalFocus(!!demoTour, getDemoTourRoot, {
+    initialSelector: 'button',
+  })
+  useModalFocus(!!showCreativeReset, getCreativeResetRoot, {
+    initialSelector: '.reset-row',
   })
 
   // Flow keys (when not typing): 1–7 path · C complete · N capture · U undo · ? help
@@ -1538,6 +1556,29 @@ function App() {
     if (next === activeProject.name) return
     renameProject(activeProject.id, next)
     flashMicro('Name saved')
+  }
+
+  const [coverDropActive, setCoverDropActive] = useState(false)
+
+  /** Lets a user drop their own image straight onto the export preview's
+   * cover to use it as the brand book's cover art — same upload this project
+   * already supports from Design → Logo, just reachable without navigating
+   * away first. Doing nothing keeps the existing generic cover, so this adds
+   * zero required steps. */
+  const handleCoverImageDrop = async (file) => {
+    if (!file || !file.type?.startsWith('image/')) return
+    if (file.size > 2.5 * 1024 * 1024) {
+      flashToast('Cover image must be under 2.5MB')
+      return
+    }
+    try {
+      const result = await assetService.uploadImage(file, 'assets', `logos/${Date.now()}-${file.name}`)
+      setLogoImage(result.url)
+      flashMicro('Cover image updated')
+    } catch (error) {
+      console.error('Error uploading cover image:', error)
+      flashToast('Failed to upload image. Please try again.')
+    }
   }
 
   // Autosave pulse — skip first mount so load doesn’t flash “Saved”
@@ -2407,6 +2448,7 @@ function App() {
         Skip to main content
       </a>
       <PullToRefresh reduceMotion={reduceMotion} />
+      <HighlightExplain />
       <header className="header header-redesign">
         <div className="header-content header-content-simple">
           <button
@@ -3247,6 +3289,7 @@ function App() {
               setPomodoroWorkStartedAt={setPomodoroWorkStartedAt}
               setIsFocusRunning={setIsFocusRunning}
               setTimerFocusSource={setTimerFocusSource}
+              onAddPinModeChange={setResearchAddOpen}
             />
           </Suspense>
         )}
@@ -3731,7 +3774,7 @@ function App() {
       )}
 
       <RunningTodoAddModal
-        open={runningTodoPromptOpen && activeView !== 'home'}
+        open={runningTodoPromptOpen && activeView !== 'home' && !researchAddOpen}
         onClose={() => setRunningTodoPromptOpen(false)}
         onAdd={handleAddRunningTodoItem}
         stageLabel={pathLabel(locale, journeyIdForView(activeView) || 'define')}
@@ -3940,7 +3983,24 @@ function App() {
               </button>
             </div>
 
-            <div className="export-artboard-wrap">
+            <div
+              className={`export-artboard-wrap${coverDropActive ? ' is-cover-drop-active' : ''}`}
+              onDragOver={(e) => {
+                if (!e.dataTransfer?.types?.includes('Files')) return
+                e.preventDefault()
+                setCoverDropActive(true)
+              }}
+              onDragLeave={(e) => {
+                if (e.currentTarget.contains(e.relatedTarget)) return
+                setCoverDropActive(false)
+              }}
+              onDrop={(e) => {
+                if (!e.dataTransfer?.files?.length) return
+                e.preventDefault()
+                setCoverDropActive(false)
+                handleCoverImageDrop(e.dataTransfer.files[0])
+              }}
+            >
               <Suspense fallback={<div className="panel-hint">…</div>}>
                 <BrandArtboard
                   id="direction-sheet"
@@ -3962,6 +4022,11 @@ function App() {
                   editable={false}
                 />
               </Suspense>
+              <p className="export-cover-drop-hint">
+                {activeProject?.logoImage
+                  ? 'Drop a new image here to replace the cover'
+                  : 'Drop an image here to use it on the cover'}
+              </p>
               {exportPanel.openTasks.length > 0 && (
                 <div className="export-open-work">
                   <div className="kicker">Open</div>
