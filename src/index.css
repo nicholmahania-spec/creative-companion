@@ -16322,3 +16322,20 @@ select:focus {
   color: var(--text-secondary);
 }
 
+
+.define-deadline-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.define-deadline-inline label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.define-deadline-inline input[type="date"] {
+  width: 150px;
+}

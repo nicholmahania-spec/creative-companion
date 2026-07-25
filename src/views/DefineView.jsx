@@ -90,6 +90,23 @@ export default function DefineView(props) {
             aria-label="Project name"
           />
         </div>
+        <div className="define-deadline-inline">
+          <label htmlFor="proj-deadline-field">Deadline</label>
+          <input
+            id="proj-deadline-field"
+            type="date"
+            className="field-input"
+            value={projectDeadline}
+            onChange={(e) => setProjectDeadline(e.target.value)}
+          />
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => setActiveView('calendar')}
+          >
+            Calendar
+          </button>
+        </div>
         <button type="button" className="btn btn-primary" onClick={saveBrief}>
           Save
         </button>
@@ -118,28 +135,6 @@ export default function DefineView(props) {
               onOpenChapter={setOpenChapter}
             />
           </Suspense>
-
-          <div className="define-secondary field-block">
-            <label className="field-label" htmlFor="proj-deadline-field">
-              Deadline
-            </label>
-            <div className="deadline-edit-row">
-              <input
-                id="proj-deadline-field"
-                type="date"
-                className="field-input"
-                value={projectDeadline}
-                onChange={(e) => setProjectDeadline(e.target.value)}
-              />
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setActiveView('calendar')}
-              >
-                Calendar
-              </button>
-            </div>
-          </div>
 
           <div className="define-secondary field-block">
             <label className="field-label" htmlFor="define-desk-add">
