@@ -10,7 +10,15 @@ function withTimeout(promise, ms, label) {
   const timeout = new Promise((_, reject) => {
     timerId = setTimeout(() => reject(new Error(`${label} timed out`)), ms)
   })
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timerId))
+  return Promise.race([promise, timeout])
+    .then(result => {
+      clearTimeout(timerId)
+      return result
+    })
+    .catch(error => {
+      clearTimeout(timerId)
+      throw error
+    })
 }
 
 const IMAGE_BUCKET = 'workspace-images'
