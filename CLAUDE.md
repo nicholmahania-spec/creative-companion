@@ -60,6 +60,14 @@ When choices compete, pick whichever one requires the user to think, decide,
 or remember less — even over other ADHD-friendly considerations. Simpler
 and dumber beats clever and complex.
 
+**Decision fatigue carries that same top-priority weight, not a lesser
+sub-point of cognitive load.** Every extra choice a screen forces — an extra
+button, an unsorted list the user has to read fully to find one item, a
+setting to configure, a disambiguation step — is a real cost even when each
+one looks small individually. Default aggressively; group/order lists so
+the common case never requires reading the whole thing; never fix one kind
+of friction by introducing a new decision elsewhere.
+
 ## User feedback on ADHD issues — direct quotes, carried forward as standing lessons
 
 Real things the user has said about their own experience of the app, kept
