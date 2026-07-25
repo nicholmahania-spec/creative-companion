@@ -47,6 +47,34 @@ When choices compete, pick whichever one requires the user to think, decide,
 or remember less — even over other ADHD-friendly considerations. Simpler
 and dumber beats clever and complex.
 
+## User feedback on ADHD issues — direct quotes, carried forward as standing lessons
+
+Real things the user has said about their own experience of the app, kept
+verbatim so the intent doesn't get diluted on retelling. Weigh these as
+concretely as the advisor subagent's own principles when making design calls.
+
+- **Hidden/collapsed content is invisible, not "one click away."** On the
+  Project overview page's collapsed `Tools`/`Asset audit` sections: "they are
+  hidden and my first thought was 'I have no idea what this is.' It's a
+  cognitive load issue and invisible." A closed `<details>` with a bare label
+  is a memory test, not a control — if the user can't see what's inside, they
+  don't open it.
+- **"Bottom of the page" is functionally just as hidden as a collapsed
+  panel.** On moving Archive/Delete to a footer strip: "if its at the
+  bottom - I won't see it or use it." Scroll position is not a safe place to
+  put something that needs to be seen — below-the-fold and behind-a-toggle
+  are the same failure for this user. Prefer chrome that's visible in the
+  same spot on every screen (e.g. near the project header) over "put it at
+  the bottom" as a default fix for declutter.
+- **Progress/comparison should read as evidence, not require re-opening a
+  tool.** On Asset audit: "I feel like it would be helpful to see that during
+  each step of the process. I want like a before-and-after thing going as I
+  build the brand." The user wants ambient, glanceable proof of progress
+  (a before/after signal), not the editing tool itself surfaced everywhere.
+  Distinguish "I want to see this is happening" (→ a small always-visible
+  read-only indicator) from "I want to use this tool" (→ stays in one place,
+  opened on demand) — don't conflate the two into one big always-open panel.
+
 ## Pending idea — do not build yet (user has no concept of time / numbers don't register)
 
 The user has explicitly said "I have no concept of time and numbers mean
