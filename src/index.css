@@ -14851,7 +14851,6 @@ select:focus {
 }
 .define-workbook.is-split .define-chapter-title {
   font-size: 1.15rem !important;
-    border-right: 1px solid var(--border-subtle) !important;
   color: var(--text-primary) !important;
   letter-spacing: -0.02em !important;
 }

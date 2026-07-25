@@ -2475,6 +2475,7 @@ function App() {
                 ))}
               </select>
             )}
+            {(isFocusRunning || (CLOUD && syncState === 'error')) && (
             <div className="header-status-slot">
             {isFocusRunning && (
               <button
@@ -2548,6 +2549,7 @@ function App() {
               </button>
             )}
             </div>
+            )}
 
             <button
               type="button"
