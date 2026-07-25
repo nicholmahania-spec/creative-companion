@@ -11,6 +11,11 @@ npm test        # vitest unit tests
 npm run bump    # increment version in src/lib/version.js
 ```
 
+## Git workflow rule — version bump
+
+**Always run `npm run bump` before/with every push to `main`.** No push to
+main without a version bump in the same batch of commits.
+
 ## Branch
 
 Active development branch: `claude/debug-code-6u77sp`
