@@ -262,6 +262,7 @@ function App() {
   const [onboardFirstStep, setOnboardFirstStep] = useState('')
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
+  const [exportBusy, setExportBusy] = useState(false)
   const [lastExportNote, setLastExportNote] = useState('')
   /** @type {null | { kind: string, label: string, onConfirm: () => void }} */
   const [deskConfirm, setDeskConfirm] = useState(null)
@@ -2033,6 +2034,8 @@ function App() {
   }
 
   const runExport = (kind) => {
+    if (exportBusy) return
+    setExportBusy(true)
     const pack = buildCurrentBrandPack()
     const slug = slugifyFilename(pack.projectName, 'brand-pack')
     const finishOk = (label) => {
@@ -2105,7 +2108,7 @@ function App() {
           )
           trackExportAction('kit', false)
         }
-      })()
+      })().finally(() => setExportBusy(false))
       return
     }
 
@@ -2134,7 +2137,7 @@ function App() {
           trackExportAction('pdf', false)
         } else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
           trackExportAction('pdf', false)
-      })()
+      })().finally(() => setExportBusy(false))
       return
     }
 
@@ -2175,7 +2178,7 @@ function App() {
           trackExportAction('pdf-preview', false)
         } else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
           trackExportAction('pdf-preview', false)
-      })()
+      })().finally(() => setExportBusy(false))
       return
     }
 
@@ -2191,7 +2194,7 @@ function App() {
           } else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
             trackExportAction('html', false)
         }
-      )
+      ).finally(() => setExportBusy(false))
       return
     }
     if (kind === 'md') {
@@ -2202,7 +2205,7 @@ function App() {
             flashToast(i18nT(locale, 'ui.saveCancelled'))
           else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
         }
-      )
+      ).finally(() => setExportBusy(false))
       return
     }
     if (kind === 'json') {
@@ -2217,7 +2220,7 @@ function App() {
             trackExportAction('json', false)
           }
         }
-      )
+      ).finally(() => setExportBusy(false))
       return
     }
     if (kind === 'backup') {
@@ -2227,6 +2230,7 @@ function App() {
         flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
         trackExportAction('backup', false)
       }
+      setExportBusy(false)
       return
     }
     if (kind === 'print') {
@@ -2252,10 +2256,12 @@ function App() {
           flashToast(r.error || i18nT(locale, 'ui.printFailed'))
           trackExportAction('print', false)
         }
+        setExportBusy(false)
       }, exportPanel ? 50 : 180)
       return
     }
     flashToast(i18nT(locale, 'ui.unknownExport'))
+    setExportBusy(false)
   }
   runExportRef.current = runExport
 
@@ -4408,6 +4414,7 @@ function App() {
                 type="button"
                 className="btn btn-primary"
                 onClick={() => runExport('pdf')}
+                disabled={exportBusy}
               >
                 {i18nT(locale, 'ui.downloadVectorPdf')}
               </button>
@@ -4422,10 +4429,10 @@ function App() {
             <details className="export-more-formats no-print">
               <summary>More</summary>
               <div className="finish-more-formats-list">
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => runExport('html')}>HTML</button>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => runExport('md')}>MD</button>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => runExport('json')}>JSON</button>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => runExport('print')}>Print</button>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('html')}>HTML</button>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('md')}>MD</button>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('json')}>JSON</button>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('print')}>Print</button>
               </div>
             </details>
           </div>
