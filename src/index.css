@@ -15351,12 +15351,6 @@ select:focus {
   max-width: 26rem;
 }
 
-.running-todo-prompt-hint {
-  margin: 0 0 0.75rem;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
 .running-todo-prompt-added {
   list-style: none;
   margin: 0.6rem 0 0;
@@ -15374,6 +15368,7 @@ select:focus {
 .running-todo-prompt-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 0.5rem;
   margin-top: 0.85rem;
 }
 
@@ -16078,22 +16073,6 @@ select:focus {
   color: var(--text-primary);
 }
 
-.before-after-columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.before-after-col h4 {
-  margin: 0 0 0.5rem;
-  font-size: 0.875rem;
-}
-
-.before-after-empty {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-}
-
 .before-after-list {
   list-style: none;
   margin: 0;
@@ -16113,23 +16092,12 @@ select:focus {
   font-size: 0.8125rem;
 }
 
-.before-after-item-status {
-  text-transform: capitalize;
-  color: var(--text-secondary);
-}
-
 .before-after-item.is-done {
   color: var(--text-primary);
 }
 
 .before-after-item.is-open {
   color: var(--text-secondary);
-}
-
-@media (max-width: 640px) {
-  .before-after-columns {
-    grid-template-columns: 1fr;
-  }
 }
 
 .clients-view-head {
@@ -16353,3 +16321,4 @@ select:focus {
   font-size: 0.8125rem;
   color: var(--text-secondary);
 }
+

@@ -11,6 +11,15 @@ npm test        # vitest unit tests
 npm run bump    # increment version in src/lib/version.js
 ```
 
+## Workflow rule — never assume, always confirm before touching code
+
+**Never make a design/placement/behavior decision on your own judgment and
+just implement it.** Even when a fix seems obvious or was implied by an
+earlier conversation, stop and ask for explicit confirmation before editing
+code — including follow-up fixes to something just discussed. The user has
+said this directly: "never assume. always ask for confirmation before
+touching the code." This applies to every change, not just large ones.
+
 ## Git workflow rule — version bump
 
 **Always run `npm run bump` before/with every push to `main`.** No push to

@@ -1,18 +1,18 @@
 /**
- * Before/After summary — read-only, derived from state that already
- * exists elsewhere (asset audit + brand fields). Adds zero new data
+ * Brand progress summary — read-only, derived from state that already
+ * exists elsewhere (brand fields on the project). Adds zero new data
  * entry anywhere; this is a glanceable progress signal, not a tool.
  */
 import { isStockProjectPalette } from './journeyProgress'
 
-const AFTER_ITEMS = [
+const PROGRESS_ITEMS = [
   { id: 'palette', label: 'colors' },
   { id: 'logo', label: 'logo' },
   { id: 'tagline', label: 'tagline' },
   { id: 'voice', label: 'voice' },
 ]
 
-function afterItemDone(id, project = {}) {
+function progressItemDone(id, project = {}) {
   switch (id) {
     case 'palette':
       return (project.palette || []).length >= 2 && !isStockProjectPalette(project.palette)
@@ -27,21 +27,14 @@ function afterItemDone(id, project = {}) {
   }
 }
 
-export function beforeAfterSummary(project = {}, assetAudit = []) {
-  const beforeTotal = assetAudit.length
-  const beforeOutdated = assetAudit.filter(
-    (it) => it.status === 'outdated' || it.status === 'missing'
-  ).length
-
-  const doneItems = AFTER_ITEMS.filter((it) => afterItemDone(it.id, project))
-  const remainingItems = AFTER_ITEMS.filter((it) => !afterItemDone(it.id, project))
+export function brandProgressSummary(project = {}) {
+  const doneItems = PROGRESS_ITEMS.filter((it) => progressItemDone(it.id, project))
+  const remainingItems = PROGRESS_ITEMS.filter((it) => !progressItemDone(it.id, project))
 
   return {
-    beforeTotal,
-    beforeOutdated,
-    afterDoneLabels: doneItems.map((it) => it.label),
-    afterRemainingLabels: remainingItems.map((it) => it.label),
-    afterDoneCount: doneItems.length,
-    afterTotal: AFTER_ITEMS.length,
+    doneLabels: doneItems.map((it) => it.label),
+    remainingLabels: remainingItems.map((it) => it.label),
+    doneCount: doneItems.length,
+    total: PROGRESS_ITEMS.length,
   }
 }

@@ -9,15 +9,8 @@
  */
 import { Suspense, lazy, useMemo, useState } from 'react'
 import useAppStore from '../store/useAppStore'
-import {
-  normalizeLocale,
-  t as i18nT,
-  tFormat,
-  pathLabel,
-} from '../lib/i18n'
-import { getDetectiveProgress } from '../lib/detectiveBrief'
-import { trackWorkflowTransition, trackFeatureUsage } from '../lib/analytics'
-import AssetAudit from '../components/AssetAudit'
+import { normalizeLocale, t as i18nT } from '../lib/i18n'
+import { trackFeatureUsage } from '../lib/analytics'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 
@@ -30,15 +23,10 @@ export default function DefineView(props) {
     projectNameDraft = '',
     setProjectNameDraft,
     setActiveView,
-    flashToast,
     flashMicro,
     updateDetective,
     applyDetectiveToBrief,
     setProjectDeadline,
-    assetAudit = [],
-    addAssetAuditItem,
-    updateAssetAuditItem,
-    removeAssetAuditItem,
     renameProject,
     projectDeadline = '',
     quickInput = '',
@@ -47,15 +35,6 @@ export default function DefineView(props) {
   } = props
 
   const locale = normalizeLocale(localeProp)
-  const progress = useMemo(
-    () => getDetectiveProgress(activeProject?.detective),
-    [activeProject?.detective]
-  )
-  const progressPct = progress.pct
-  const requiredReady = progress.requiredReady
-  const continueLabel = tFormat(locale, 'ui.continueNext', {
-    label: pathLabel(locale, 'research') || 'Research',
-  })
 
   const addMilestone = useAppStore((s) => s.addMilestone)
   const updateMilestone = useAppStore((s) => s.updateMilestone)
@@ -76,10 +55,12 @@ export default function DefineView(props) {
     flashMicro?.(i18nT(locale, 'ui.projectRenamed') || 'Name saved')
   }
 
-  /** One brief instrument: detective answers compose project.brief on continue */
-  const goResearch = () => {
+  /** Save composes detective answers into project.brief. Deliberately does
+   * not navigate anywhere — moving to Research stays the user's own call
+   * (sidebar), never something a "Save" click pushes them into. */
+  const saveBrief = () => {
     applyDetectiveToBrief?.()
-    setActiveView('studio')
+    flashMicro?.(i18nT(locale, 'ui.briefSaved') || 'Saved')
   }
 
   return (
@@ -109,6 +90,9 @@ export default function DefineView(props) {
             aria-label="Project name"
           />
         </div>
+        <button type="button" className="btn btn-primary" onClick={saveBrief}>
+          Save
+        </button>
       </div>
 
       <div
@@ -126,16 +110,12 @@ export default function DefineView(props) {
             <DetectiveSheet
               detective={activeProject?.detective}
               updateDetective={updateDetective}
-              applyDetectiveToBrief={applyDetectiveToBrief}
-              flashToast={flashToast}
               addMilestone={addMilestone}
               updateMilestone={updateMilestone}
               removeMilestone={removeMilestone}
               splitMode
               openChapter={openChapter}
               onOpenChapter={setOpenChapter}
-              onContinue={goResearch}
-              continueLabel={continueLabel}
             />
           </Suspense>
 
@@ -159,20 +139,6 @@ export default function DefineView(props) {
                 Calendar
               </button>
             </div>
-          </div>
-
-          <div className="define-secondary">
-            <h2 className="define-section-title">Asset audit</h2>
-            <p className="define-section-hint">
-              Existing files you already have — mark what's usable, outdated, or missing.
-            </p>
-            <AssetAudit
-              items={assetAudit}
-              onAdd={addAssetAuditItem}
-              onUpdate={updateAssetAuditItem}
-              onRemove={removeAssetAuditItem}
-              flashToast={flashToast}
-            />
           </div>
 
           <div className="define-secondary field-block">
@@ -206,7 +172,6 @@ export default function DefineView(props) {
           </div>
         </div>
       </div>
-
     </div>
   )
 }
