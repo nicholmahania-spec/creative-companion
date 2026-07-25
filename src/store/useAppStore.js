@@ -47,20 +47,42 @@ export const defaultProjectPalette = [
 /** Empty Design Detective Sheet (Define step) */
 export function blankDetective() {
   return {
+    // Overview & administration
+    clientName: '',
+    primaryContact: '',
+    startDeadline: '',
+    budgetRange: '',
+    // Company background & strategy
     goal: '',
+    story: '',
+    usp: '',
+    brandWords: '',
+    fiveYearVision: '',
+    // Target audience & market
     audience: '',
     feel: '',
-    mustHaves: '',
-    niceToHaves: '',
-    format: '',
-    /** 3-5 words this brand should feel like — referenced by later "why" prompts */
-    brandWords: '',
+    audiencePains: '',
+    competitors: '',
+    // Brand voice & creative direction
+    toneOfVoice: '',
+    visualStyleKeywords: '',
+    brandAsPerson: '',
+    brandSpectrum: '',
+    admiredBrands: '',
+    inspirationLinks: '',
     /** What to avoid — carried forward so it isn't lost by the time Design happens */
     avoid: '',
+    // Deliverables & technical scope
     /** What specifically ships — one line per deliverable */
     deliverables: '',
+    mustHaves: '',
     /** File formats, scalability, production/technical requirements */
     technical: '',
+    format: '',
+    niceToHaves: '',
+    existingAssets: '',
+    launchDate: '',
+    decisionMakers: '',
     /** Milestones: [{ id, label, date }] — a brief can have several dated
      * checkpoints, not just one overall deadline */
     milestones: [],
@@ -77,9 +99,19 @@ export function blankDetective() {
 export function composeBriefFromDetective(detective) {
   const d = { ...blankDetective(), ...(detective || {}) }
   const parts = []
+  if (d.clientName?.trim()) parts.push(`Client: ${d.clientName.trim()}`)
   if (d.goal?.trim()) parts.push(`Goal: ${d.goal.trim()}`)
+  if (d.story?.trim()) parts.push(`Story: ${d.story.trim()}`)
+  if (d.usp?.trim()) parts.push(`Unique selling point: ${d.usp.trim()}`)
+  if (d.brandWords?.trim()) parts.push(`Words: ${d.brandWords.trim()}`)
   if (d.audience?.trim()) parts.push(`Audience: ${d.audience.trim()}`)
   if (d.feel?.trim()) parts.push(`Feel: ${d.feel.trim()}`)
+  if (d.audiencePains?.trim())
+    parts.push(`Audience pains/desires: ${d.audiencePains.trim()}`)
+  if (d.competitors?.trim()) parts.push(`Competitors: ${d.competitors.trim()}`)
+  if (d.toneOfVoice?.trim()) parts.push(`Tone of voice: ${d.toneOfVoice.trim()}`)
+  if (d.visualStyleKeywords?.trim())
+    parts.push(`Visual style: ${d.visualStyleKeywords.trim()}`)
   if (d.mustHaves?.trim()) parts.push(`Must-haves: ${d.mustHaves.trim()}`)
   if (d.niceToHaves?.trim())
     parts.push(`Nice-to-haves: ${d.niceToHaves.trim()}`)
@@ -88,6 +120,11 @@ export function composeBriefFromDetective(detective) {
   if (d.deliverables?.trim())
     parts.push(`Deliverables: ${d.deliverables.trim()}`)
   if (d.technical?.trim()) parts.push(`Technical: ${d.technical.trim()}`)
+  if (d.existingAssets?.trim())
+    parts.push(`Existing assets to keep: ${d.existingAssets.trim()}`)
+  if (d.launchDate?.trim()) parts.push(`Launch date: ${d.launchDate.trim()}`)
+  if (d.decisionMakers?.trim())
+    parts.push(`Decision-makers: ${d.decisionMakers.trim()}`)
   if ((d.milestones || []).length) {
     const ms = d.milestones
       .filter((m) => m.label?.trim())
@@ -1824,17 +1861,35 @@ const useAppStore = create(
             imageryDo: project.imageryDo,
             imageryDont: project.imageryDont,
             detective: project.detective ? {
+              clientName: project.detective.clientName,
+              primaryContact: project.detective.primaryContact,
+              startDeadline: project.detective.startDeadline,
+              budgetRange: project.detective.budgetRange,
               goal: project.detective.goal,
+              story: project.detective.story,
+              usp: project.detective.usp,
+              brandWords: project.detective.brandWords,
+              fiveYearVision: project.detective.fiveYearVision,
               audience: project.detective.audience,
               feel: project.detective.feel,
-              mustHaves: project.detective.mustHaves,
-              niceToHaves: project.detective.niceToHaves,
-              format: project.detective.format,
+              audiencePains: project.detective.audiencePains,
+              competitors: project.detective.competitors,
+              toneOfVoice: project.detective.toneOfVoice,
+              visualStyleKeywords: project.detective.visualStyleKeywords,
+              brandAsPerson: project.detective.brandAsPerson,
+              brandSpectrum: project.detective.brandSpectrum,
+              admiredBrands: project.detective.admiredBrands,
+              inspirationLinks: project.detective.inspirationLinks,
               avoid: project.detective.avoid,
               deliverables: project.detective.deliverables,
+              mustHaves: project.detective.mustHaves,
+              niceToHaves: project.detective.niceToHaves,
               technical: project.detective.technical,
+              format: project.detective.format,
+              existingAssets: project.detective.existingAssets,
+              launchDate: project.detective.launchDate,
+              decisionMakers: project.detective.decisionMakers,
               milestones: project.detective.milestones ? [...project.detective.milestones] : [],
-              brandWords: project.detective.brandWords
             } : null,
             conceptPackage: project.conceptPackage ? {
               audience: project.conceptPackage.audience,
