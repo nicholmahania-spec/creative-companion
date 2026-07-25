@@ -165,6 +165,20 @@ before commit.
 
 ## Feature ideas — not yet scoped, not yet built
 
+### Custom brand guide layout upload
+User wants to upload their own layout/template to use for the brand guide,
+instead of being locked into one generic built-in template — so each
+user's brand guide can look like their own style, not a generic default.
+Not designed yet — open questions: what format is "upload a layout" (a
+file format like PDF/InDesign/Figma? a set of style parameters? an image
+reference the export engine maps onto?), how it integrates with the
+existing `stationery.js`/brand-book PDF export pipeline, and how a user
+without design tools picks/creates a layout in the first place. Do not
+build until asked; run through the `adhd-executive-function-advisor`
+subagent before design — a "bring your own layout" feature is exactly the
+kind of thing that can turn into decision fatigue (blank-canvas paralysis,
+too many format options) if not scoped carefully.
+
 ### Highlight-to-explain ("explain this simply")
 User can select/highlight any text in the app and the helper bot explains it
 in plain, simple terms. Not designed yet — mechanism (popover vs. sidebar,
