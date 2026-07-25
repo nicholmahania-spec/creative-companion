@@ -37,6 +37,11 @@ friction (extra required decisions, ambiguous locked states, silent state
 loss, shame-coded errors) it needs to be reworked or rejected, even if it is
 otherwise good software design.
 
+**Reducing cognitive load is the single biggest priority within this rule.**
+When choices compete, pick whichever one requires the user to think, decide,
+or remember less — even over other ADHD-friendly considerations. Simpler
+and dumber beats clever and complex.
+
 ## Pending idea — do not build yet (user has no concept of time / numbers don't register)
 
 The user has explicitly said "I have no concept of time and numbers mean
