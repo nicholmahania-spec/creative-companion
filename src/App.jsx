@@ -2694,6 +2694,17 @@ function App() {
                   >
                     <span aria-hidden="true">$</span> Hours &amp; invoice
                   </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setDiscoveryPanelOpen(true)
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">?</span> Discovery brief
+                  </button>
                   <p className="more-menu-group-label">App</p>
                   <button
                     type="button"
