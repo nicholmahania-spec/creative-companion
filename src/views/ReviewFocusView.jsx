@@ -99,7 +99,7 @@ export default function ReviewFocusView({
             autoFocus
             aria-labelledby="review-intent-prompt"
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && intent.trim()) {
+              if (e.key === 'Enter' && intent.trim()' && e.key === 'Enter' && intent.trim()) {
                 setIntentSet(true)
               }
             }}
@@ -297,6 +297,7 @@ export default function ReviewFocusView({
             <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
               <div className="space-y-4">
                 <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg="h-4 w-32 bg-border rounded"></div>
                 <div className="h-4 w-24 bg-border rounded"></div>
                 <div className="h-4 w-40 bg-border rounded"></div>
               </div>
