@@ -2593,6 +2593,7 @@ function App() {
                 )}
               </div>
             )}
+            <div className="header-status-slot">
             {isFocusRunning && (
               <button
                 type="button"
@@ -2664,6 +2665,7 @@ function App() {
                 <span className="sync-error-chip-short">Retry</span>
               </button>
             )}
+            </div>
 
             <button
               type="button"
@@ -2673,16 +2675,6 @@ function App() {
               aria-label="Add to your to-do list"
             >
               +
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-ghost header-clients-btn"
-              onClick={() => setActiveView('clients')}
-              title="Clients"
-              aria-label="Clients"
-            >
-              👤
             </button>
 
             <div className="more-wrap" ref={moreWrapRef}>
@@ -2702,6 +2694,40 @@ function App() {
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">
+                  <p className="more-menu-group-label">Go to</p>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setActiveView('insights')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">⏱</span> {i18nT(locale, 'ui.timer')}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setActiveView('calendar')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">📅</span> {i18nT(locale, 'ui.calendar')}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setActiveView('clients')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">👤</span> Clients
+                  </button>
                   <p className="more-menu-group-label">This project</p>
                   <button
                     type="button"
@@ -2735,28 +2761,6 @@ function App() {
                     }}
                   >
                     <span aria-hidden="true">$</span> Hours &amp; invoice
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('insights')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">⏱</span> {i18nT(locale, 'ui.timer')}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('calendar')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">📅</span> {i18nT(locale, 'ui.calendar')}
                   </button>
                   <p className="more-menu-group-label">App</p>
                   <button

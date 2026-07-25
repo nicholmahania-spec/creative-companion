@@ -139,80 +139,71 @@ export default function DefineView(props) {
             />
           </Suspense>
 
-          <details className="define-secondary define-admin">
-            <summary>Asset audit{assetAudit.length ? ` (${assetAudit.length})` : ''}</summary>
-            <div className="define-admin-body">
-              <AssetAudit
-                items={assetAudit}
-                onAdd={addAssetAuditItem}
-                onUpdate={updateAssetAuditItem}
-                onRemove={removeAssetAuditItem}
-                flashToast={flashToast}
+          <div className="define-secondary field-block">
+            <label className="field-label" htmlFor="proj-deadline-field">
+              Deadline
+            </label>
+            <div className="deadline-edit-row">
+              <input
+                id="proj-deadline-field"
+                type="date"
+                className="field-input"
+                value={projectDeadline}
+                onChange={(e) => setProjectDeadline(e.target.value)}
               />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setActiveView('calendar')}
+              >
+                Calendar
+              </button>
             </div>
-          </details>
+          </div>
 
-          <details className="define-secondary define-admin">
-            <summary>Tools</summary>
-            <div className="define-admin-body">
-              <div className="field-block" style={{ marginBottom: '0.75rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setActiveView('define-focus')}
-                >
-                  Try Focus Mode (beta)
-                </button>
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.75rem' }}>
-                <label className="field-label" htmlFor="proj-deadline-field">
-                  Deadline
-                </label>
-                <div className="deadline-edit-row">
-                  <input
-                    id="proj-deadline-field"
-                    type="date"
-                    className="field-input"
-                    value={projectDeadline}
-                    onChange={(e) => setProjectDeadline(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setActiveView('calendar')}
-                  >
-                    Calendar
-                  </button>
-                </div>
-              </div>
-              <details className="project-quick-add">
-                <summary className="text-link">Quick add to desk</summary>
-                <div className="capture-row" style={{ marginTop: '0.5rem' }}>
-                  <input
-                    value={quickInput}
-                    onChange={(e) => setQuickInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
-                    aria-label="Add to desk"
-                  />
-                  <button type="button" onClick={addQuickTask} className="btn btn-secondary">
-                    Add
-                  </button>
-                </div>
-              </details>
-              {deskTasks.length > 0 && (
-                <ul className="desk-snapshot">
-                  {deskTasks.slice(0, 5).map((t) => (
-                    <li key={t.id} className={t.completed ? 'is-done' : undefined}>
-                      <span className="desk-snapshot-mark" aria-hidden="true">
-                        {t.completed ? '✓' : '·'}
-                      </span>
-                      <span>{t.title}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+          <div className="define-secondary">
+            <h2 className="define-section-title">Asset audit</h2>
+            <p className="define-section-hint">
+              Existing files you already have — mark what's usable, outdated, or missing.
+            </p>
+            <AssetAudit
+              items={assetAudit}
+              onAdd={addAssetAuditItem}
+              onUpdate={updateAssetAuditItem}
+              onRemove={removeAssetAuditItem}
+              flashToast={flashToast}
+            />
+          </div>
+
+          <div className="define-secondary field-block">
+            <label className="field-label" htmlFor="define-desk-add">
+              Add a step to this project
+            </label>
+            <div className="capture-row">
+              <input
+                id="define-desk-add"
+                value={quickInput}
+                onChange={(e) => setQuickInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
+                aria-label="Add a step to this project"
+              />
+              <button type="button" onClick={addQuickTask} className="btn btn-secondary">
+                Add
+              </button>
             </div>
-          </details>
+            {deskTasks.length > 0 && (
+              <ul className="desk-snapshot">
+                {deskTasks.slice(0, 5).map((t) => (
+                  <li key={t.id} className={t.completed ? 'is-done' : undefined}>
+                    <span className="desk-snapshot-mark" aria-hidden="true">
+                      {t.completed ? '✓' : '·'}
+                    </span>
+                    <span>{t.title}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
 
