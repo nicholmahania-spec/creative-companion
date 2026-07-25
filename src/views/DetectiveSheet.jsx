@@ -160,7 +160,7 @@ export default function DetectiveSheet({
   }, [chapterStats, setOpenChapter])
 
   /** Only the required fields actually still empty — not a static list of
-   * all three, which reads as wrong once some of them are filled in. */
+   * all of them, which reads as wrong once some are filled in. */
   return (
     <div className={`define-workbook${splitMode ? ' is-split' : ''}`}>
       {!splitMode && (
@@ -169,7 +169,7 @@ export default function DetectiveSheet({
             <p className="define-workbook-kicker">Brief</p>
             <h2 className="define-workbook-title">Brief builder</h2>
             <p className="define-workbook-lede">
-              Three chapters. Fill before polish.
+              Fill before polish.
             </p>
           </div>
           <div
