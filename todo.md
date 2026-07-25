@@ -163,6 +163,19 @@ before commit.
 
 ---
 
+## Feature ideas — not yet scoped, not yet built
+
+### Highlight-to-explain ("explain this simply")
+User can select/highlight any text in the app and the helper bot explains it
+in plain, simple terms. Not designed yet — mechanism (popover vs. sidebar,
+what "simple terms" means concretely, which surfaces support it) still
+undecided. Do not build until asked. Run through the
+`adhd-executive-function-advisor` subagent before design (cognitive load is
+the top priority per CLAUDE.md) — a highlight-to-explain feature needs to
+add zero extra steps/decisions to trigger, or it defeats its own purpose.
+
+---
+
 ## Next session starting point
 
 1. Start with **ReviewFocusView.jsx** nested FocusShell fix (HIGH #1) — it's the natural continuation of the UX agent's work
