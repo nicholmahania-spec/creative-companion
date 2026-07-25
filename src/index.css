@@ -16477,6 +16477,24 @@ select:focus {
   background: var(--bg-muted);
 }
 
+/* Desktop: bigger, and anchored top-right (clear of the sticky header)
+   instead of bottom-right, so it doesn't sit over page content or
+   compete with the mobile bottom thumb-zone placement. */
+@media (min-width: 768px) {
+  .todo-fab {
+    top: 4.75rem;
+    bottom: auto;
+    right: 1.5rem;
+    width: 3.75rem;
+    height: 3.75rem;
+  }
+
+  .todo-fab .header-icon-svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 .define-title-row {
   display: flex;
   align-items: flex-start;
