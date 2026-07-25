@@ -65,9 +65,6 @@ export default function ResearchView({
   const [showFormModal, setShowFormModal] = useState(false)
   const [formSubmitting, setFormSubmitting] = useState(false)
   const [formData, setFormData] = useState({})
-  const [showFormModal, setShowFormModal] = useState(false)
-  const [formData, setFormData] = useState({})
-  const [formSubmitting, setFormSubmitting] = useState(false)
 
   const getLightboxRoot = useCallback(
     () => document.querySelector('.board-lightbox-overlay'),

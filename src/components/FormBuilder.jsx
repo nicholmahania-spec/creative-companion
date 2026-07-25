@@ -267,3 +267,4 @@ export function FormBuilder({
     </form>
   )
 }
+export default FormBuilder

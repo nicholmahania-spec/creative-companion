@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react'
 import { extractPdfFormData } from '../lib/formPdfUtils'
-import { flashToast } from '../App' // This will be passed as prop
 
 /**
  * PDF upload component with drag-and-drop and file upload and form field extraction

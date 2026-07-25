@@ -110,7 +110,7 @@ export function FormField({
           {options.map(option => (
             <option key={option.value || option} value={option.value || option}>
               {option.label || option}
-            >
+            </option>
           ))}
         </select>
       )}
@@ -199,3 +199,4 @@ export function FormField({
     </div>
   )
 }
+export default FormField
