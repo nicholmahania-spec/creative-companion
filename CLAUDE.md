@@ -68,6 +68,14 @@ one looks small individually. Default aggressively; group/order lists so
 the common case never requires reading the whole thing; never fix one kind
 of friction by introducing a new decision elsewhere.
 
+**Every ADHD audit/finding must state four things, not two: the problem, why
+it's a problem for ADHD (which mechanism it hits — task initiation, working
+memory, decision fatigue, time blindness, rejection sensitivity/shame,
+object permanence, interruption recovery), the solution, and why that
+solution actually helps ADHD.** A problem or fix stated without its "why" is
+incomplete — restate it with the reasoning included, don't just list bare
+findings.
+
 ## User feedback on ADHD issues — direct quotes, carried forward as standing lessons
 
 Real things the user has said about their own experience of the app, kept
