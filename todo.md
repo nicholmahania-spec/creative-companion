@@ -43,42 +43,17 @@
 
 ## Remaining TODO
 
-### HIGH — UX bugs still open
+### Resolved (2026-07-25 sweep — most of this backlog was stale)
+Checked all 6 items below against current code before touching anything:
+1. `ReviewFocusView.jsx` nested FocusShell — **already fixed**, no nesting exists (4 clean single-shell branches, `onExit` wired on all).
+2. `console.log`/`alert()` in Preview components — **already clean**, none found.
+3. `InsightsView.jsx` `'Start 2'` dead code — **already gone**.
+4. `DefineView.jsx` DOM mutation (`e.target.value = ''`) — **already gone**.
+5. `cloudSync.js` `withTimeout` timer leak — **already fixed** (`.finally(() => clearTimeout(timerId))` present).
+6. Export buttons allow double-click — **fixed this session** (commit `0090289`): `exportBusy` guard in `runExport()`, panel buttons disabled while exporting.
 
-#### 1. `ReviewFocusView.jsx` — nested FocusShell (UX agent was mid-fix when rate-limited)
-Lines 82–141 and 238–281 each wrap an inner `FocusShell` inside an outer `FocusShell`, causing double-rendered shell chrome (two progress bars, two headers). Pattern to fix, matching how `217408b` fixed `DeliverFocusView`:
-- Flatten: keep only the inner `FocusShell`, hoist `stepLabel`/`stepIndex`/`stepCount`/`onExit` up to it
-- Outer shell at line 82 is missing `onExit` (no `exitFocus` wired)
-- Add `const exitFocus = () => setActiveView?.('studio')` (checking what the correct target should be)
-
-#### 2. `console.log` / `alert()` in Preview components
-These log/alert in production:
-- `src/components/DefinePreview.jsx:29` — `console.log('Retry requested...')`
-- `src/components/ResearchPreview.jsx:45` — `console.log('Retry requested...')`
-- `src/components/ReviewPreview.jsx:32` — `console.log('Retry requested...')`
-- `src/components/ReviewPreview.jsx:218` — `console.log('Jump to ...')`
-- `src/components/ReviewPreview.jsx:232` — `alert('AI feedback requires backend setup...')`
-- `src/components/SketchPreview.jsx:30` — `console.log('Retry requested...')`
-
-Fix: remove `console.log` calls (or demote to `/* noop */`). For `ReviewPreview.jsx:232`, replace `alert()` with `flashToast?.()` if available in context, otherwise just remove.
-
-### MEDIUM — Deferred from earlier code review (not yet addressed)
-
-#### 3. `src/views/InsightsView.jsx` — unreachable dead code
-`'Start 2'` branch is unreachable. Find and remove.
-
-#### 4. `src/views/DefineView.jsx` line ~226 — direct DOM mutation
-`e.target.value = ''` resets a select by mutating the DOM directly instead of using controlled state. Replace with a React state variable for the select value.
-
-#### 5. `src/lib/cloudSync.js` — `withTimeout` timer leak
-The timeout `setTimeout` is not cleared when the promise resolves successfully, leaving a dangling timer. Add `clearTimeout(timerId)` in the resolution path.
-
-#### 6. `src/App.jsx` — multiple accessibility gaps
-- Several modal overlays lack `focus-trap` + `aria-modal="true"` (keyboard users can tab behind the modal)
-- Command palette has invalid ARIA structure
-- Skip-to-content link is not the first focusable element in the DOM
-- `flashToast` timer not cleared before setting a new one (timer accumulation)
-- Export buttons allow double-click (no `disabled` guard during export)
+Remaining a11y sub-items from #6 (modal focus-trap coverage, command palette ARIA
+structure, skip-link DOM order) not re-verified — pick up if revisiting a11y.
 
 ### LOW — Graphic design agent known-remaining items
 - `border-radius` inconsistency: many hardcoded `8/10/12/14/16px` values coexist with the `4px` token language. Broad normalization would touch ~15k-line `index.css` — risk/reward tradeoff.
