@@ -6040,6 +6040,21 @@ body.cc-printing-pack .buddy-shell,
   color: var(--text-primary);
 }
 
+@media (min-width: 768px) {
+  .header-name-input-desktop {
+    display: block !important;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 650;
+    max-width: 11rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+  }
+}
+
 /* Single source of truth for step progress — lives in the header, not the workspace */
 
 /* Long-form guidance stays hidden until asked for */
@@ -14488,28 +14503,6 @@ select:focus {
   flex: 0 0 auto;
 }
 
-.define-name-inline {
-  display: block;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-secondary, #727272);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  padding: 0.1rem 0;
-  margin: 0;
-  width: 100%;
-  max-width: 24rem;
-  outline: none;
-  transition: border-color 0.15s, background 0.15s, padding 0.15s;
-}
-.define-name-inline:hover,
-.define-name-inline:focus {
-  border-color: var(--border, #E7E7E7);
-  background: var(--surface, #fff);
-  padding: 0.1rem 0.5rem;
-}
-
 .define-admin summary {
   font-size: 0.75rem;
   font-weight: 600;
@@ -14526,12 +14519,6 @@ select:focus {
 
 .palette-health-head .field-label {
   font-size: 0.75rem;
-}
-
-@media (max-width: 640px) {
-.define-name-inline {
-    max-width: none;
-  }
 }
 
 /* Residual densify — Review / Deliver / Sketch / Ideate */
@@ -14953,6 +14940,7 @@ select:focus {
   .header-mobile-title {
     display: block !important;
     flex: 1 1 auto;
+    min-width: 0;
     box-shadow: none !important;
     text-align: left;
     font-weight: 700;
@@ -14962,6 +14950,17 @@ select:focus {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  input.header-mobile-title {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+  }
+  input.header-mobile-title:focus {
+    outline: none;
+    text-overflow: clip;
+  }
+  .header-name-input-desktop { display: none !important; }
   .header-actions {
     flex: 0 0 auto !important;
     display: flex !important;
@@ -15031,10 +15030,6 @@ select:focus {
     padding: 0;
     margin: 0;
     cursor: pointer;
-  }
-
-  .define-name-inline {
-    max-width: none !important;
   }
 
   /* Define: single column, one pane at a time (no cramped split) */
@@ -16406,7 +16401,7 @@ select:focus {
     flex-wrap: nowrap;
   }
 
-  .define-title-row > div {
+  .define-title-row .page-title {
     min-width: 0;
     flex: 1 1 auto;
   }

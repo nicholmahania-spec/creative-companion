@@ -1525,6 +1525,18 @@ function App() {
     setProjectNameDraft(activeProject?.name || '')
   }, [activeProject?.id, activeProject?.name])
 
+  const commitHeaderProjectRename = () => {
+    if (!activeProject) return
+    const next = String(projectNameDraft || '').trim()
+    if (!next) {
+      setProjectNameDraft(activeProject.name || '')
+      return
+    }
+    if (next === activeProject.name) return
+    renameProject(activeProject.id, next)
+    flashMicro('Name saved')
+  }
+
   // Autosave pulse — skip first mount so load doesn’t flash “Saved”
   const savePulseReady = useRef(false)
   useEffect(() => {
@@ -2412,10 +2424,43 @@ function App() {
           >
             <LogoLockup className="logo" locale={locale} reduceMotion={reduceMotion} />
           </button>
-          <span className="header-mobile-title" aria-hidden="true">
-            {activeProject?.name || 'Creative Companion'}
-          </span>
+          {activeProject ? (
+            <input
+              className="header-mobile-title header-name-input"
+              value={projectNameDraft}
+              onChange={(e) => setProjectNameDraft(e.target.value)}
+              onBlur={commitHeaderProjectRename}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  commitHeaderProjectRename()
+                  e.currentTarget.blur()
+                }
+              }}
+              aria-label="Project name"
+            />
+          ) : (
+            <span className="header-mobile-title" aria-hidden="true">
+              Creative Companion
+            </span>
+          )}
           <div className="header-actions">
+            {activeProject && (
+              <input
+                className="header-name-input header-name-input-desktop"
+                value={projectNameDraft}
+                onChange={(e) => setProjectNameDraft(e.target.value)}
+                onBlur={commitHeaderProjectRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    commitHeaderProjectRename()
+                    e.currentTarget.blur()
+                  }
+                }}
+                aria-label="Project name"
+              />
+            )}
             {activeProjects.length > 1 && (
               <select
                 className="header-project-select"

@@ -10,7 +10,6 @@
 import { Suspense, lazy, useMemo, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { normalizeLocale, t as i18nT } from '../lib/i18n'
-import { trackFeatureUsage } from '../lib/analytics'
 import HeaderIcon from '../components/HeaderIcon'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
@@ -21,14 +20,11 @@ export default function DefineView(props) {
     navDir = 'none',
     activeProject = null,
     deskTasks = [],
-    projectNameDraft = '',
-    setProjectNameDraft,
     setActiveView,
     flashMicro,
     updateDetective,
     applyDetectiveToBrief,
     setProjectDeadline,
-    renameProject,
     projectDeadline = '',
     quickInput = '',
     setQuickInput,
@@ -42,19 +38,6 @@ export default function DefineView(props) {
   const removeMilestone = useAppStore((s) => s.removeMilestone)
 
   const [openChapter, setOpenChapter] = useState('core')
-
-  const commitProjectRename = () => {
-    if (!activeProject) return
-    const next = String(projectNameDraft || '').trim()
-    if (!next) {
-      setProjectNameDraft?.(activeProject.name || '')
-      return
-    }
-    if (next === activeProject.name) return
-    renameProject?.(activeProject.id, next)
-    trackFeatureUsage('project_rename', { projectId: activeProject.id, projectName: next })
-    flashMicro?.(i18nT(locale, 'ui.projectRenamed') || 'Name saved')
-  }
 
   /** Save composes detective answers into project.brief. Deliberately does
    * not navigate anywhere — moving to Research stays the user's own call
@@ -71,27 +54,9 @@ export default function DefineView(props) {
     >
       <div className="brand-template-top">
         <div className="define-title-row">
-          <div>
-            <h1 className="page-title">
-              {i18nT(locale, 'path.define')}
-            </h1>
-            <input
-              id="project-name"
-              className="define-name-inline"
-              value={projectNameDraft}
-              onChange={(e) => setProjectNameDraft(e.target.value)}
-              onBlur={commitProjectRename}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  commitProjectRename()
-                  e.currentTarget.blur()
-                }
-              }}
-              placeholder="Project name"
-              aria-label="Project name"
-            />
-          </div>
+          <h1 className="page-title">
+            {i18nT(locale, 'path.define')}
+          </h1>
           <button type="button" className="btn btn-primary" onClick={saveBrief}>
             Save
           </button>
