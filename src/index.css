@@ -5929,6 +5929,40 @@ body.cc-printing-pack .buddy-shell,
   body.cc-printing-pack .board-lightbox-overlay {
     display: none !important;
   }
+
+  /* Form print mode styles */
+  .form-preview {
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    background: #fff;
+  }
+  .form-preview .form-title {
+    text-align: center;
+    font-size: 18pt;
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+  .form-preview .form-fields {
+    margin-bottom: 24px;
+  }
+  .form-preview .form-field-row {
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+  }
+  .form-preview .form-field-label {
+    font-weight: bold;
+    min-width: 150px;
+    display: inline-block;
+  }
+  .form-preview .form-field-value {
+    /* Allow word breaking */
+    word-wrap: break-word;
+  }
+  /* Hide the print button when printing */
+  .form-preview .btn {
+    display: none !important;
+  }
 }
 
 .brand-artboard.hide-watermark .direction-foot {

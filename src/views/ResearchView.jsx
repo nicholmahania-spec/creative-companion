@@ -25,6 +25,7 @@ import {
 import { useModalFocus } from '../lib/useModalFocus'
 import { trackMoodPinOperation, trackBoardSubmission, trackTimerOperation } from '../lib/analytics'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import FormBuilder from '../components/FormBuilder'
 
 export default function ResearchView({
   locale: localeProp = 'en',
@@ -61,6 +62,12 @@ export default function ResearchView({
   const [boardAddMode, setBoardAddMode] = useState(null)
   const [boardDragId, setBoardDragId] = useState(null)
   const [boardLightbox, setBoardLightbox] = useState(null)
+  const [showFormModal, setShowFormModal] = useState(false)
+  const [formSubmitting, setFormSubmitting] = useState(false)
+  const [formData, setFormData] = useState({})
+  const [showFormModal, setShowFormModal] = useState(false)
+  const [formData, setFormData] = useState({})
+  const [formSubmitting, setFormSubmitting] = useState(false)
 
   const getLightboxRoot = useCallback(
     () => document.querySelector('.board-lightbox-overlay'),
@@ -259,6 +266,16 @@ export default function ResearchView({
                   onClick={() => setActiveView('research-focus')}
                 >
                   Try Focus Mode (beta)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => {
+                    setShowFormModal(true);
+                    setFormData({}); // Reset form data when opening
+                  }}
+                >
+                  📝 Form
                 </button>
                 <InfoReveal>
                   {(getProcessPhase('research')?.checks || []).join(' · ')}
@@ -806,6 +823,57 @@ export default function ResearchView({
                   {boardLightbox.inPack ? '★ Pack' : '☆ Pack'}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Form Modal */}
+        {showFormModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-xl font-bold">Create Form</h2>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setShowFormModal(false)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <FormBuilder
+                schema={{}} // Empty schema for now - will be enhanced later
+                mode="admin"
+                onSubmit={async (formData) => {
+                  setFormSubmitting(true);
+                  try {
+                    // Submit form data to Supabase
+                    const result = await submitForm(
+                      formData,
+                      'research_form',
+                      activeProjectId || null
+                    );
+
+                    if (result.success) {
+                      flashToast?.('Form submitted successfully!');
+                      setFormData(result.data || {});
+
+                      // Also store in local state for potential PDF export
+                      setFormData(formData);
+                    } else {
+                      flashToast?.(`Failed to submit form: ${result.error}`);
+                    }
+                  } catch (error) {
+                    flashToast?.(`Error submitting form: ${error.message}`);
+                  } finally {
+                    setFormSubmitting(false);
+                  }
+                }}
+                onCancel={() => setShowFormModal(false)}
+                submitting={formSubmitting}
+                flashToast={flashToast}
+              />
             </div>
           </div>
         )}

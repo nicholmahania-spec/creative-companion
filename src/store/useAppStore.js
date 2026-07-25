@@ -959,6 +959,7 @@ const useAppStore = create(
           moodItems: s.moodItems,
           conceptItems: s.conceptItems || [],
           breakKit: s.breakKit || [],
+          forms: s.forms || [],
           theme: s.theme,
           prefs: s.prefs,
           sparkIndex: s.sparkIndex,
@@ -1024,6 +1025,7 @@ const useAppStore = create(
           moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
           conceptItems: Array.isArray(data.conceptItems) ? data.conceptItems : [],
           breakKit: Array.isArray(data.breakKit) ? data.breakKit : [],
+          forms: Array.isArray(data.forms) ? data.forms : [],
           theme: data.theme === 'deep' ? 'deep' : 'warm',
           // Full defaults first so payloads from older builds keep the
           // intended defaults for prefs they never knew about
