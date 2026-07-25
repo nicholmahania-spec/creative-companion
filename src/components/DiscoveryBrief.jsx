@@ -13,6 +13,11 @@ import {
   discoveryBriefToPlainText,
   countAnswered,
 } from '../lib/discoveryBrief'
+import {
+  createDiscoveryShare,
+  discoveryShareUrl,
+  fetchDiscoveryShare,
+} from '../lib/discoveryShare'
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 
@@ -37,6 +42,11 @@ export function DiscoveryBriefPanel({
   upload = null,
   onSetUpload,
   flashToast,
+  projectId = null,
+  shareId = null,
+  shareStatus = null,
+  onSetShare,
+  onMergeAnswers,
 }) {
   const [mode, setMode] = useState('menu')
   const [callIndex, setCallIndex] = useState(0)
@@ -115,6 +125,11 @@ export function DiscoveryBriefPanel({
             onSetUpload={onSetUpload}
             onBack={backToMenu}
             flashToast={flashToast}
+            projectId={projectId}
+            shareId={shareId}
+            shareStatus={shareStatus}
+            onSetShare={onSetShare}
+            onMergeAnswers={onMergeAnswers}
           />
         )}
       </div>
@@ -205,7 +220,52 @@ function CallMode({ answers, onUpdateField, index, setIndex, onBack }) {
   )
 }
 
-function HandoffMode({ answers, clientName, upload, onSetUpload, onBack, flashToast }) {
+function HandoffMode({
+  answers,
+  clientName,
+  upload,
+  onSetUpload,
+  onBack,
+  flashToast,
+  projectId,
+  shareId,
+  shareStatus,
+  onSetShare,
+  onMergeAnswers,
+}) {
+  const [creatingLink, setCreatingLink] = useState(false)
+  const [checkingLink, setCheckingLink] = useState(false)
+
+  const handleCreateLink = async () => {
+    setCreatingLink(true)
+    const r = await createDiscoveryShare({ projectLocalId: projectId, clientName, answers })
+    setCreatingLink(false)
+    if (!r.ok) {
+      flashToast?.(r.error || 'Couldn’t create the link')
+      return
+    }
+    onSetShare?.(r.shareId, 'pending')
+    navigator.clipboard?.writeText(discoveryShareUrl(r.shareId))
+    flashToast?.('Client link created and copied')
+  }
+
+  const handleCheckSubmission = async () => {
+    if (!shareId) return
+    setCheckingLink(true)
+    const r = await fetchDiscoveryShare(shareId)
+    setCheckingLink(false)
+    if (!r.ok) {
+      flashToast?.(r.error || 'Couldn’t check the link')
+      return
+    }
+    if (r.status !== 'submitted') {
+      flashToast?.('Client hasn’t submitted yet')
+      return
+    }
+    onMergeAnswers?.(r.answers)
+    flashToast?.('Client’s answers merged in')
+  }
+
   const handleUpload = (file) => {
     if (!file) return
     if (file.size > MAX_UPLOAD_BYTES) {
@@ -233,11 +293,74 @@ function HandoffMode({ answers, clientName, upload, onSetUpload, onBack, flashTo
     return `mailto:?subject=${subject}&body=${body}`
   }
 
+  const linkMailtoHref = () => {
+    const subject = encodeURIComponent(`Quick brand questionnaire${clientName ? ` — ${clientName}` : ''}`)
+    const body = encodeURIComponent(
+      `Hi — before we start, could you fill out this quick brand questionnaire?\n\n${discoveryShareUrl(shareId)}\n\nTakes about 10 minutes, and you can leave anything blank if you're not sure yet.`
+    )
+    return `mailto:?subject=${subject}&body=${body}`
+  }
+
   return (
     <div className="discovery-brief-handoff">
       <button type="button" className="btn btn-ghost btn-sm discovery-brief-back" onClick={onBack}>
         ← Back
       </button>
+
+      <div className="discovery-brief-handoff-block">
+        <p className="discovery-brief-hint">
+          Send a link the client fills out themselves — no account needed. Their answers
+          come back into this project once submitted.
+        </p>
+        {!shareId ? (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={creatingLink}
+            onClick={handleCreateLink}
+          >
+            {creatingLink ? 'Creating link…' : 'Create client link'}
+          </button>
+        ) : (
+          <>
+            <div className="discovery-brief-share-row">
+              <input
+                className="field-input"
+                readOnly
+                value={discoveryShareUrl(shareId)}
+                onFocus={(e) => e.target.select()}
+              />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  navigator.clipboard?.writeText(discoveryShareUrl(shareId))
+                  flashToast?.('Link copied')
+                }}
+              >
+                Copy
+              </button>
+            </div>
+            <div className="discovery-brief-handoff-actions">
+              <a className="btn btn-secondary" href={linkMailtoHref()}>
+                Email link to client
+              </a>
+              {shareStatus === 'submitted' ? (
+                <span className="discovery-brief-hint">Client submitted — merged in.</span>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={checkingLink}
+                  onClick={handleCheckSubmission}
+                >
+                  {checkingLink ? 'Checking…' : 'Check for client’s answers'}
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
       <div className="discovery-brief-handoff-block">
         <p className="discovery-brief-hint">

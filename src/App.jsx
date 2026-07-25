@@ -372,6 +372,8 @@ function App() {
   const removeTimeEntry = useAppStore((s) => s.removeTimeEntry)
   const updateDiscoveryField = useAppStore((s) => s.updateDiscoveryField)
   const setDiscoveryUpload = useAppStore((s) => s.setDiscoveryUpload)
+  const setDiscoveryShare = useAppStore((s) => s.setDiscoveryShare)
+  const mergeDiscoveryAnswers = useAppStore((s) => s.mergeDiscoveryAnswers)
 
   // Every time a project is opened: clear yesterday's completed to-dos (if
   // the day rolled over) and prompt for anything to add to the running list.
@@ -3764,6 +3766,11 @@ function App() {
         upload={activeProject?.discoveryUpload || null}
         onSetUpload={setDiscoveryUpload}
         flashToast={flashToast}
+        projectId={activeProject?.id || null}
+        shareId={activeProject?.discoveryShareId || null}
+        shareStatus={activeProject?.discoveryShareStatus || null}
+        onSetShare={setDiscoveryShare}
+        onMergeAnswers={mergeDiscoveryAnswers}
       />
 
       <BeforeAfterOverlay

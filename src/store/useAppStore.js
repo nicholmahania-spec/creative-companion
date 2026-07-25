@@ -181,7 +181,7 @@ export function brandIdentityDefaults() {
   imageryStyle: '',
   imageryDo: '',
   imageryDont: '',
-  /** Design version label (v1, v2…) */
+  /** Design version label (v1, v2...) */
   designVersion: 'v1',
   /** Review: feedback notes from client / self */
   feedbackNotes: '',
@@ -242,6 +242,9 @@ export function createBlankProject(name = 'My project', brief = '') {
      *  plus an optional completed-form file the client sent back. */
     discoveryAnswers: {},
     discoveryUpload: null,
+    /** Public link token (discovery_shares.id) sent to the client, if any */
+    discoveryShareId: null,
+    discoveryShareStatus: null,
   }
 }
 
@@ -776,6 +779,30 @@ const useAppStore = create(
           ),
         })),
 
+      setDiscoveryShare: (shareId, status = 'pending') =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId
+              ? { ...p, discoveryShareId: shareId, discoveryShareStatus: status }
+              : p
+          ),
+        })),
+
+      /** Bulk-merge answers the client submitted via their public link.
+       *  Only fills fields the client actually answered — never blanks
+       *  something the studio user already filled in. */
+      mergeDiscoveryAnswers: (clientAnswers) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const merged = { ...(p.discoveryAnswers || {}) }
+            Object.entries(clientAnswers || {}).forEach(([k, v]) => {
+              if (String(v || '').trim()) merged[k] = v
+            })
+            return { ...p, discoveryAnswers: merged, discoveryShareStatus: 'submitted' }
+          }),
+        })),
+
       /** Partial update of brand identity template fields */
       updateBrandField: (field, value) =>
         set((state) => ({
@@ -1180,7 +1207,7 @@ const useAppStore = create(
         const task = tasks.find((t) => t.id === taskId)
         if (!task) return
         const short =
-          task.title.slice(0, 40) + (task.title.length > 40 ? '…' : '')
+          task.title.slice(0, 40) + (task.title.length > 40 ? '...' : '')
         const steps = [
           `Name the one feeling "${short}" must land (1 sentence)`,
           `Gather 3–5 refs that match that feeling (mood board)`,
@@ -1670,7 +1697,7 @@ const useAppStore = create(
           ...blank,
           ...persisted,
           // Deep-merge so prefs added after the workspace was first persisted
-          // (helperQuiet, hideTips, toastMode…) keep their intended defaults
+          // (helperQuiet, hideTips, toastMode...) keep their intended defaults
           prefs: { ...blank.prefs, ...(persisted.prefs || {}) },
           tasks: Array.isArray(persisted.tasks) ? persisted.tasks : [],
           moodItems,

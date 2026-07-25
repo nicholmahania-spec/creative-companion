@@ -1,10 +1,15 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
+import PublicDiscoveryFill from './components/PublicDiscoveryFill.jsx'
 import './index.css'
 import { versionLabel, APP_BUILD_DATE } from './lib/version'
 import { initPerformanceMonitoring } from './lib/performance'
 import { initAnalytics } from './lib/analytics'
+
+/** Public client-fill link (/f/:shareId) — no auth, no app shell. Checked
+ *  before anything else boots so a client never needs an account. */
+const publicFormMatch = /^\/f\/([^/]+)\/?$/.exec(window.location.pathname)
 // Sentry initialization
 if (import.meta.env.VITE_SENTRY_DSN) {
   import('@sentry/react').then(({ init }) => {
@@ -41,7 +46,11 @@ if (typeof window !== 'undefined') {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    {publicFormMatch ? (
+      <PublicDiscoveryFill shareId={publicFormMatch[1]} />
+    ) : (
+      <App />
+    )}
   </StrictMode>,
 )
 

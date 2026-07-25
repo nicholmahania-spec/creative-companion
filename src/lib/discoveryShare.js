@@ -1,0 +1,78 @@
+/**
+ * Public discovery-brief link — lets a studio user hand a client a
+ * no-login URL to fill in their own answers, which flow back into the
+ * project once submitted.
+ *
+ * Server side: public.discovery_shares (owner-only RLS) plus two
+ * SECURITY DEFINER functions so the anon client never touches the
+ * table directly — get_discovery_share (read) and
+ * submit_discovery_share (single-use write, pending -> submitted).
+ */
+import { supabase, isSupabaseConfigured } from './supabase'
+
+/** Build the client-facing URL for a share id. */
+export function discoveryShareUrl(shareId) {
+  return `${window.location.origin}/f/${shareId}`
+}
+
+/**
+ * Create a new share row for the given project, owned by the current
+ * signed-in user.
+ * @returns {Promise<{ ok: true, shareId: string } | { ok: false, error: string }>}
+ */
+export async function createDiscoveryShare({ projectLocalId, clientName, answers }) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  const { data: userData } = await supabase.auth.getUser()
+  const ownerId = userData?.user?.id
+  if (!ownerId) return { ok: false, error: 'Sign in to send a client link' }
+
+  const { data, error } = await supabase
+    .from('discovery_shares')
+    .insert({
+      owner_id: ownerId,
+      project_local_id: projectLocalId || null,
+      client_name: clientName || null,
+      answers: answers || {},
+    })
+    .select('id')
+    .single()
+
+  if (error) return { ok: false, error: error.message || 'Couldn’t create the link' }
+  return { ok: true, shareId: data.id }
+}
+
+/**
+ * Fetch a share by id — usable by anyone with the link (no auth),
+ * via the get_discovery_share() RPC.
+ */
+export async function fetchDiscoveryShare(shareId) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  const { data, error } = await supabase.rpc('get_discovery_share', {
+    share_id: shareId,
+  })
+  if (error) return { ok: false, error: error.message || 'Couldn’t load the form' }
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row) return { ok: false, error: 'This link isn’t valid' }
+  return { ok: true, clientName: row.client_name, answers: row.answers || {}, status: row.status }
+}
+
+/**
+ * Submit a client's answers — single-use (server rejects if the share
+ * has already been submitted).
+ */
+export async function submitDiscoveryShare(shareId, answers) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  const { data, error } = await supabase.rpc('submit_discovery_share', {
+    share_id: shareId,
+    submitted_answers: answers || {},
+  })
+  if (error) return { ok: false, error: error.message || 'Couldn’t submit the form' }
+  if (!data) return { ok: false, error: 'This form was already submitted' }
+  return { ok: true }
+}

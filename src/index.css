@@ -15629,6 +15629,16 @@ select:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  align-items: center;
+}
+.discovery-brief-share-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+.discovery-brief-share-row .field-input {
+  flex: 1 1 auto;
+  font-size: 0.85rem;
 }
 .discovery-brief-attach {
   display: inline-flex;
@@ -16551,4 +16561,58 @@ select:focus {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Public discovery-brief fill page (/f/:shareId) — standalone, no app shell */
+.public-fill-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 1.25rem;
+  background: var(--bg-muted, #F4F4F4);
+}
+
+.public-fill-card {
+  width: 100%;
+  max-width: 42rem;
+  background: var(--bg-elevated, #fff);
+  border: 1px solid var(--border-subtle, #E7E7E7);
+  border-radius: var(--radius, 0.5rem);
+  padding: 2rem 1.75rem;
+}
+
+.public-fill-title {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.public-fill-lede {
+  margin: 0 0 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.public-fill-status {
+  color: var(--text-secondary);
+}
+
+.public-fill-section {
+  border: none;
+  padding: 0;
+  margin: 0 0 1.75rem;
+}
+
+.public-fill-section legend {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  padding: 0;
+}
+
+.public-fill-error {
+  color: var(--accent-danger, #C0392B);
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
 }
