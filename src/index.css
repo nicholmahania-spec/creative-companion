@@ -14917,6 +14917,7 @@ select:focus {
   .header { z-index: 70 !important; }
   .header-content-simple {
     display: flex !important;
+    flex-wrap: nowrap !important;
     align-items: center;
     gap: 0.5rem;
     max-width: none !important;
@@ -14964,6 +14965,7 @@ select:focus {
   .header-actions {
     flex: 0 0 auto !important;
     display: flex !important;
+    flex-wrap: nowrap !important;
     align-items: center;
     gap: 0.35rem;
   }
