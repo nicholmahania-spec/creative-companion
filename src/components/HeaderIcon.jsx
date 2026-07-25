@@ -32,6 +32,14 @@ const ICONS = {
       <path d="M4.5 19.5c.9-4.3 3.6-6.5 7.5-6.5s6.6 2.2 7.5 6.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
     </>
   ),
+  list: (
+    <>
+      <circle cx="5.5" cy="7" r="1.15" fill="currentColor" />
+      <circle cx="5.5" cy="12" r="1.15" fill="currentColor" />
+      <circle cx="5.5" cy="17" r="1.15" fill="currentColor" />
+      <path d="M9.5 7h9M9.5 12h9M9.5 17h9" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </>
+  ),
 }
 
 export default function HeaderIcon({ name, className = '' }) {

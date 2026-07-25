@@ -3988,6 +3988,16 @@ function App() {
         </div>
       )}
 
+      <button
+        type="button"
+        className="todo-fab"
+        onClick={() => setRunningTodoPanelOpen(true)}
+        title="To-do list"
+        aria-label="Open your to-do list"
+      >
+        <HeaderIcon name="list" />
+      </button>
+
       {/* Helper — presence coach, not a freeform chatbot */}
       {bodyDoubling && (
         <Suspense fallback={null}>
