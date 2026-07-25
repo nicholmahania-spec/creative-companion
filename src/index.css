@@ -16262,3 +16262,35 @@ select:focus {
   display: flex;
   gap: 0.375rem;
 }
+
+.header-add-btn {
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0.375rem 0.75rem !important;
+  font-weight: 700;
+}
+
+.header-clients-btn {
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.375rem 0.625rem;
+}
+
+.more-menu-group-label {
+  margin: 0.5rem 0.5rem 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.more-menu-group-label:first-child {
+  margin-top: 0.25rem;
+}
+
+.project-menu-note {
+  margin: -0.15rem 0.625rem 0.375rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}

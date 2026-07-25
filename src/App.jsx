@@ -278,10 +278,6 @@ function App() {
   const [runningTodoPanelOpen, setRunningTodoPanelOpen] = useState(false)
   const [hoursPanelOpen, setHoursPanelOpen] = useState(false)
   const [discoveryPanelOpen, setDiscoveryPanelOpen] = useState(false)
-  const [commandOpen, setCommandOpen] = useState(false)
-  const [commandQuery, setCommandQuery] = useState('')
-  const [commandActiveIdx, setCommandActiveIdx] = useState(0)
-  const commandInputRef = useRef(null)
   const [resumeBanner, setResumeBanner] = useState(null)
   const [demoTour, setDemoTour] = useState(null)
   const [navDir, setNavDir] = useState('none')
@@ -666,255 +662,8 @@ function App() {
     [setCurrentProject, goToProcessStep, setActiveView]
   )
 
-  /** Filled after runExport is defined — command palette export actions use this */
+  /** Filled after runExport is defined — export actions ref this. */
   const runExportRef = useRef(/** @type {null | ((kind: string) => void)} */ (null))
-
-  const commandActions = useMemo(() => {
-    /** @type {{ id: string, label: string, hint: string, group: 'actions'|'path'|'tools', run: () => void, when?: () => boolean }[]} */
-    const acts = [
-      // —— Actions (desk recovery first) ——
-      {
-        id: 'complete',
-        label: 'Complete current step',
-        hint: 'C',
-        group: 'actions',
-        run: () => completeCurrentStep(),
-        when: () => !!nextTask,
-      },
-      {
-        id: 'capture',
-        label: 'New capture on Sketch',
-        hint: 'N',
-        group: 'actions',
-        run: () => {
-          setActiveView('flow')
-          window.setTimeout(
-            () => document.getElementById('desk-capture')?.focus?.(),
-            60
-          )
-        },
-      },
-      {
-        id: 'fix-next-gap',
-        label:
-          pathDoneCount >= 7
-            ? 'Process full · open Deliver'
-            : `Fix next process gap (${pathDoneCount}/7)`,
-        hint: 'G',
-        group: 'actions',
-        run: () => goToNextProcessGap(),
-      },
-      // —— Path 1–7 (spaced step · label) ——
-      {
-        id: 'define',
-        label: '1 · Define',
-        hint: '1',
-        group: 'path',
-        run: () => setActiveView('project'),
-      },
-      {
-        id: 'research',
-        label: '2 · Research',
-        hint: '2',
-        group: 'path',
-        run: () => setActiveView('studio'),
-      },
-      {
-        id: 'ideate',
-        label: '3 · Ideate',
-        hint: '3',
-        group: 'path',
-        run: () => setActiveView('spark'),
-      },
-      {
-        id: 'sketch',
-        label: '4 · Sketch',
-        hint: '4',
-        group: 'path',
-        run: () => setActiveView('flow'),
-      },
-      {
-        id: 'design',
-        label: '5 · Design',
-        hint: '5',
-        group: 'path',
-        run: () => setActiveView('brand'),
-      },
-      {
-        id: 'review',
-        label: '6 · Review',
-        hint: '6',
-        group: 'path',
-        run: () => setActiveView('review'),
-      },
-      {
-        id: 'deliver',
-        label: '7 · Deliver',
-        hint: '7',
-        group: 'path',
-        run: () => setActiveView('finish'),
-      },
-      // —— Tools & extras ——
-      {
-        id: 'timer',
-        label: 'Open Focus timer',
-        hint: '',
-        group: 'tools',
-        run: () => setActiveView('insights'),
-      },
-      {
-        id: 'helper',
-        label: bodyDoubling ? 'Turn Helper off' : 'Turn Helper on',
-        hint: '',
-        group: 'tools',
-        run: () => toggleBodyDoubling(),
-      },
-      {
-        id: 'keys',
-        label: 'Keyboard shortcuts',
-        hint: '?',
-        group: 'tools',
-        run: () => setShortcutsOpen(true),
-      },
-      {
-        id: 'settings',
-        label: 'Open Settings',
-        hint: '',
-        group: 'tools',
-        run: () => setActiveView('settings'),
-      },
-      {
-        id: 'detective',
-        label: 'Open Design Detective Sheet',
-        hint: '',
-        group: 'tools',
-        run: () => {
-          setActiveView('project')
-          window.setTimeout(
-            () => document.getElementById('detective-goal')?.focus?.(),
-            120
-          )
-        },
-      },
-      {
-        id: 'bump-version',
-        label: 'Bump design version',
-        hint: '',
-        group: 'tools',
-        run: () => {
-          const r = bumpDesignVersion()
-          if (r?.ok)
-            flashMicro(
-              tFormat(locale, 'ui.versionBumped', { version: r.version })
-            )
-          setActiveView('brand')
-        },
-      },
-      {
-        id: 'research-timer',
-        label: 'Start 20-min research timer',
-        hint: '',
-        group: 'tools',
-        run: () => {
-          if (forcedBreak) {
-            flashToast(i18nT(locale, 'ui.breakLockFirst'))
-            return
-          }
-          setSessionComplete(false)
-          setTimerFocusSource('research')
-          setFocusLeft(20 * 60)
-          setPomodoroWorkStartedAt(Date.now())
-          setIsFocusRunning(true)
-          setActiveView('insights')
-          saveDeskSession({
-            activeView: 'insights',
-            projectId: activeProjectId,
-            focus: serializeFocus({
-              running: true,
-              leftSec: 20 * 60,
-              source: 'research',
-            }),
-          })
-          notifyAction('Focus on', 'focus_start', {
-            label: 'Research timer',
-          })
-          flashToast(i18nT(locale, 'ui.researchTimerOn'))
-        },
-      },
-      {
-        id: 'brand-kit',
-        label: i18nT(locale, 'ui.downloadKit') || 'Download brand kit (zip)',
-        hint: '',
-        group: 'tools',
-        run: () => {
-          if (forcedBreak) {
-            flashToast(i18nT(locale, 'ui.breakLockFirst'))
-            return
-          }
-          setActiveView('finish')
-          window.setTimeout(() => {
-            runExportRef.current?.('kit')
-          }, 80)
-        },
-      },
-      {
-        id: 'brand-book-pdf',
-        label: i18nT(locale, 'ui.downloadVectorPdf') || 'Download brand book PDF',
-        hint: '',
-        group: 'tools',
-        run: () => {
-          if (forcedBreak) {
-            flashToast(i18nT(locale, 'ui.breakLockFirst'))
-            return
-          }
-          setActiveView('finish')
-          window.setTimeout(() => {
-            runExportRef.current?.('pdf')
-          }, 80)
-        },
-      },
-    ]
-    return acts.filter((a) => (a.when ? a.when() : true))
-  }, [
-    nextTask,
-    bodyDoubling,
-    setActiveView,
-    toggleBodyDoubling,
-    bumpDesignVersion,
-    forcedBreak,
-    goToNextProcessGap,
-    pathDoneCount,
-    locale,
-  ])
-
-  const commandFiltered = useMemo(() => {
-    const q = commandQuery.trim().toLowerCase()
-    if (!q) return commandActions
-    return commandActions.filter((a) => a.label.toLowerCase().includes(q))
-  }, [commandActions, commandQuery])
-
-  // Keep the highlighted command in range as the query narrows the list
-  useEffect(() => {
-    setCommandActiveIdx((i) =>
-      commandFiltered.length === 0
-        ? 0
-        : Math.min(i, commandFiltered.length - 1)
-    )
-  }, [commandFiltered.length])
-
-  const commandSections = useMemo(() => {
-    const order = [
-      { id: 'actions', label: 'Actions' },
-      { id: 'path', label: 'Path' },
-      { id: 'tools', label: 'Tools' },
-    ]
-    return order
-      .map((sec) => ({
-        ...sec,
-        items: commandFiltered.filter((a) => a.group === sec.id),
-      }))
-      .filter((sec) => sec.items.length > 0)
-  }, [commandFiltered])
 
   // Auto-clear undo window
   useEffect(() => {
@@ -969,25 +718,11 @@ function App() {
     </div>
   )
 
-  // Keyboard: ⌘K command palette · Esc dismiss overlays (priority: topmost first)
+  // Keyboard: Esc dismiss overlays (priority: topmost first)
   useEffect(() => {
     const handleKey = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setCommandOpen(true)
-        setCommandQuery('')
-        setMoreOpen(false)
-        window.requestAnimationFrame(() => commandInputRef.current?.focus?.())
-        return
-      }
       if (e.key !== 'Escape') return
       // Topmost dialogs first
-      if (commandOpen) {
-        e.preventDefault()
-        setCommandOpen(false)
-        setCommandQuery('')
-        return
-      }
       if (shortcutsOpen) {
         e.preventDefault()
         setShortcutsOpen(false)
@@ -1031,7 +766,6 @@ function App() {
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [
-    commandOpen,
     shortcutsOpen,
     demoTour,
     deskConfirm,
@@ -1312,10 +1046,6 @@ function App() {
     () => document.querySelector('.desk-confirm-modal'),
     []
   )
-  const getCommandRoot = useCallback(
-    () => document.querySelector('.command-overlay'),
-    []
-  )
   const getShortcutsRoot = useCallback(
     () => document.querySelector('.shortcuts-overlay'),
     []
@@ -1333,11 +1063,7 @@ function App() {
   useModalFocus(!!deskConfirm, getDeskConfirmRoot, {
     initialSelector: '.desk-confirm-cancel',
   })
-  // Command palette + shortcuts: trap Tab and restore focus to the opener
-  // (⌘K / Tools button) on close so keyboard users don't get dumped on <body>.
-  useModalFocus(commandOpen, getCommandRoot, {
-    initialSelector: '.command-input',
-  })
+  // Shortcuts panel: trap Tab and restore focus to the opener on close.
   useModalFocus(shortcutsOpen, getShortcutsRoot, {
     initialSelector: 'button',
   })
@@ -1363,7 +1089,6 @@ function App() {
         demoTour ||
         deskConfirm ||
         forceBreakConsentOpen ||
-        commandOpen ||
         document.querySelector('.board-lightbox-overlay') ||
         document.querySelector('.thin-pack-prompt')
       ) {
@@ -1428,7 +1153,6 @@ function App() {
     demoTour,
     deskConfirm,
     forceBreakConsentOpen,
-    commandOpen,
     shortcutsOpen,
     nextTask,
     recentUndo,
@@ -2821,6 +2545,11 @@ function App() {
                     >
                       Archive project
                     </button>
+                    {activeProjects.length < 2 && (
+                      <p className="project-menu-note">
+                        Needs a second active project to switch to.
+                      </p>
+                    )}
                     {archivedProjects.length > 0 && (
                       <select
                         className="project-menu-restore"
@@ -2855,11 +2584,16 @@ function App() {
                     >
                       Delete project
                     </button>
+                    {projects.length <= 1 && (
+                      <p className="project-menu-note">
+                        This is your only project.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
             )}
-            {isFocusRunning && activeView !== 'insights' && (
+            {isFocusRunning && (
               <button
                 type="button"
                 className="timer-running-chip"
@@ -2931,25 +2665,25 @@ function App() {
               </button>
             )}
 
-            {/* CTA Hierarchy: Capture primary, Export outline */}
-            {[
-              'flow', 'studio', 'spark', 'brand', 'review', 'finish', 'project'
-            ].includes(activeView) && (
-              <button
-                type="button"
-                className="btn btn-primary header-capture"
-                onClick={() => {
-                  setActiveView('flow')
-                  window.setTimeout(() => {
-                    document.getElementById('desk-capture')?.focus?.()
-                  }, 60)
-                }}
-                title="Quickly add a task to your desk"
-                aria-label="Quick add"
-              >
-                Quick add
-              </button>
-            )}
+            <button
+              type="button"
+              className="btn btn-primary header-add-btn"
+              onClick={() => setRunningTodoPromptOpen(true)}
+              title="Add to your to-do list"
+              aria-label="Add to your to-do list"
+            >
+              +
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-ghost header-clients-btn"
+              onClick={() => setActiveView('clients')}
+              title="Clients"
+              aria-label="Clients"
+            >
+              👤
+            </button>
 
             <div className="more-wrap" ref={moreWrapRef}>
               <button
@@ -2968,6 +2702,7 @@ function App() {
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">
+                  <p className="more-menu-group-label">This project</p>
                   <button
                     type="button"
                     role="menuitem"
@@ -2977,7 +2712,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    Export
+                    <span aria-hidden="true">⬇</span> Export
                   </button>
                   <button
                     type="button"
@@ -2988,7 +2723,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    To-do list
+                    <span aria-hidden="true">✓</span> To-do list
                   </button>
                   <button
                     type="button"
@@ -2999,18 +2734,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    Hours &amp; invoice
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setDiscoveryPanelOpen(true)
-                      setMoreOpen(false)
-                    }}
-                  >
-                    Discovery brief
+                    <span aria-hidden="true">$</span> Hours &amp; invoice
                   </button>
                   <button
                     type="button"
@@ -3021,7 +2745,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    {i18nT(locale, 'ui.timer')}
+                    <span aria-hidden="true">⏱</span> {i18nT(locale, 'ui.timer')}
                   </button>
                   <button
                     type="button"
@@ -3032,30 +2756,9 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    {i18nT(locale, 'ui.calendar')}
+                    <span aria-hidden="true">📅</span> {i18nT(locale, 'ui.calendar')}
                   </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('clients')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    Clients
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('spark')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    Spark
-                  </button>
+                  <p className="more-menu-group-label">App</p>
                   <button
                     type="button"
                     role="menuitem"
@@ -3069,12 +2772,10 @@ function App() {
                       } else {
                         flashMicro(i18nT(locale, 'ui.helperOffMicro'))
                       }
-                      setMoreOpen(false)
                     }}
                   >
-                    {bodyDoubling
-                      ? i18nT(locale, 'ui.helperOff')
-                      : i18nT(locale, 'ui.helperOn')}
+                    <span aria-hidden="true">🤝</span> Helper:{' '}
+                    {bodyDoubling ? 'on' : 'off'}
                   </button>
                   <button
                     type="button"
@@ -3085,22 +2786,7 @@ function App() {
                       setShortcutsOpen(true)
                     }}
                   >
-                    Keyboard
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      setCommandOpen(true)
-                      setCommandQuery('')
-                      window.requestAnimationFrame(() =>
-                        commandInputRef.current?.focus?.()
-                      )
-                    }}
-                  >
-                    Command · ⌘K
+                    <span aria-hidden="true">⌨</span> Keyboard shortcuts
                   </button>
                 </div>
               )}
@@ -4202,122 +3888,6 @@ function App() {
         )
       })()}
 
-      {commandOpen && (
-        <div
-          className="export-overlay command-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="command-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setCommandOpen(false)
-              setCommandQuery('')
-            }
-          }}
-        >
-          <div className="export-panel command-panel command-studio">
-            <h3 id="command-title" className="sr-only">
-              Commands
-            </h3>
-            <input
-              ref={commandInputRef}
-              className="field-input command-input"
-              value={commandQuery}
-              onChange={(e) => {
-                setCommandQuery(e.target.value)
-                setCommandActiveIdx(0)
-              }}
-              placeholder="Jump…"
-              aria-label="Filter commands"
-              role="combobox"
-              aria-expanded="true"
-              aria-controls="command-listbox"
-              aria-activedescendant={
-                commandFiltered[commandActiveIdx]
-                  ? `command-opt-${commandFiltered[commandActiveIdx].id}`
-                  : undefined
-              }
-              autoComplete="off"
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowDown') {
-                  e.preventDefault()
-                  setCommandActiveIdx((i) =>
-                    commandFiltered.length
-                      ? (i + 1) % commandFiltered.length
-                      : 0
-                  )
-                } else if (e.key === 'ArrowUp') {
-                  e.preventDefault()
-                  setCommandActiveIdx((i) =>
-                    commandFiltered.length
-                      ? (i - 1 + commandFiltered.length) %
-                        commandFiltered.length
-                      : 0
-                  )
-                } else if (e.key === 'Enter') {
-                  const pick = commandFiltered[commandActiveIdx]
-                  if (pick) {
-                    e.preventDefault()
-                    setCommandOpen(false)
-                    setCommandQuery('')
-                    pick.run()
-                  }
-                }
-              }}
-            />
-            <div className="command-list-wrap">
-              <div
-                className="command-list"
-                role="listbox"
-                id="command-listbox"
-                aria-label="Commands"
-              >
-                {commandFiltered.length === 0 && (
-                  <p className="command-empty">No matching commands</p>
-                )}
-                {commandSections.map((sec) => (
-                  <div key={sec.id} className="command-section" role="group">
-                    <div className="command-section-label" aria-hidden="true">
-                      {sec.label}
-                    </div>
-                    <ul className="command-section-list">
-                      {sec.items.map((a) => {
-                        const isActive =
-                          commandFiltered[commandActiveIdx]?.id === a.id
-                        return (
-                          <li key={a.id}>
-                            <button
-                              type="button"
-                              id={`command-opt-${a.id}`}
-                              className={`command-item${isActive ? ' is-active' : ''}`}
-                              role="option"
-                              aria-selected={isActive}
-                              onMouseEnter={() =>
-                                setCommandActiveIdx(
-                                  commandFiltered.findIndex((c) => c.id === a.id)
-                                )
-                              }
-                              onClick={() => {
-                                setCommandOpen(false)
-                                setCommandQuery('')
-                                a.run()
-                              }}
-                            >
-                              <span className="command-item-label">{a.label}</span>
-                              {a.hint ? <kbd>{a.hint}</kbd> : null}
-                            </button>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <RunningTodoAddModal
         open={runningTodoPromptOpen && activeView !== 'home'}
         onClose={() => setRunningTodoPromptOpen(false)}
@@ -4406,10 +3976,6 @@ function App() {
               </li>
               <li>
                 <kbd>?</kbd> This
-              </li>
-              <li>
-                <kbd>⌘</kbd>
-                <kbd>K</kbd> Commands
               </li>
               <li>
                 <kbd>Esc</kbd> Close / Helper
