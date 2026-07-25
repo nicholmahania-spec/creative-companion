@@ -143,7 +143,7 @@ export default function DefineView(props) {
 
           <div className="define-secondary field-block">
             <label className="field-label" htmlFor="define-desk-add">
-              Add a step to this project
+              Add a task
             </label>
             <div className="capture-row">
               <input
@@ -151,7 +151,7 @@ export default function DefineView(props) {
                 value={quickInput}
                 onChange={(e) => setQuickInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
-                aria-label="Add a step to this project"
+                aria-label="Add a task"
               />
               <button type="button" onClick={addQuickTask} className="btn btn-secondary">
                 Add
