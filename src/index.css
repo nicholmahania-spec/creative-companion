@@ -5988,11 +5988,50 @@ body.cc-printing-page .main {
     margin: 0 !important;
   }
 
+  /* Strip form-control chrome so filled-in values read as typeset copy,
+     not editable fields — this is the bulk of the "looks like a form"
+     problem. Placeholder/empty fields go blank rather than showing
+     grey prompt text, since a blank line reads as a document, not a form. */
 body.cc-printing-page input,
   body.cc-printing-page textarea,
   body.cc-printing-page select {
     border: none !important;
+    border-bottom: 1px solid #ccc !important;
     background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0.15rem 0 !important;
+    color: #0A0A0A !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+body.cc-printing-page input::placeholder,
+  body.cc-printing-page textarea::placeholder {
+    color: transparent !important;
+  }
+
+body.cc-printing-page input::-webkit-calendar-picker-indicator {
+    display: none !important;
+  }
+
+body.cc-printing-page textarea {
+    resize: none !important;
+    overflow: visible !important;
+  }
+
+body.cc-printing-page select {
+    border-bottom: 1px solid #ccc !important;
+  }
+
+  /* Keep field groups from splitting awkwardly across a page break */
+body.cc-printing-page .field-block,
+  body.cc-printing-page .define-chapter,
+  body.cc-printing-page .define-field {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
 body.cc-printing-page button {
