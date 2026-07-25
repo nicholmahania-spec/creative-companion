@@ -16296,13 +16296,16 @@ select:focus {
   min-width: 110px;
 }
 
-/* These sections used to be collapsed <details> — now always visible,
-   so they should not carry the faded "secondary/receded" treatment. */
+/* These sections used to be collapsed <details> — now always visible.
+   Match the numbered chapter cards' look so they read as part of the
+   same brief, not a bolted-on afterthought sitting on the bare page. */
 .define-secondary {
   opacity: 1;
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--border-subtle);
+  margin-top: 1.25rem;
+  border-radius: 0.5rem;
+  background: var(--bg-muted);
+  border: 1px solid var(--define-border);
+  padding: 1.15rem 1.1rem 1.2rem;
 }
 
 .define-section-title {
