@@ -19,115 +19,12 @@ import {
 
 export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 
-function FieldIcon({ name }) {
-  const common = {
-    width: 18,
-    height: 18,
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 1.75,
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-    'aria-hidden': true,
-    focusable: false,
-  }
-  switch (name) {
-    case 'target':
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="8" />
-          <circle cx="12" cy="12" r="3.5" />
-          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22" />
-        </svg>
-      )
-    case 'people':
-      return (
-        <svg {...common}>
-          <circle cx="9" cy="8" r="3" />
-          <path d="M3.5 19c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5" />
-          <circle cx="17" cy="9" r="2.5" />
-          <path d="M15 15.2c1.8.3 3.2 1.4 3.8 3.8" />
-        </svg>
-      )
-    case 'heart':
-      return (
-        <svg {...common}>
-          <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
-        </svg>
-      )
-    case 'spark':
-      return (
-        <svg {...common}>
-          <path d="M12 2.5 13.8 9l6.7.3-5.2 4.2 1.8 6.5L12 16.5 6.9 20l1.8-6.5L3.5 9.3 10.2 9 12 2.5Z" />
-        </svg>
-      )
-    case 'check':
-      return (
-        <svg {...common}>
-          <path d="M5 12.5 10 17.5 19 7" />
-          <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
-        </svg>
-      )
-    case 'star':
-      return (
-        <svg {...common}>
-          <path d="M12 3.5 14.2 9l5.8.4-4.5 3.7 1.4 5.7L12 15.8 7.1 18.8l1.4-5.7L4 9.4 9.8 9 12 3.5Z" />
-        </svg>
-      )
-    case 'frame':
-      return (
-        <svg {...common}>
-          <rect x="4" y="5" width="16" height="14" rx="2" />
-          <path d="M4 9h16" />
-        </svg>
-      )
-    case 'block':
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="8" />
-          <path d="M7 7l10 10" />
-        </svg>
-      )
-    case 'box':
-      return (
-        <svg {...common}>
-          <path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5v-7Z" />
-          <path d="M4 8.5 12 13l8-4.5M12 13v7" />
-        </svg>
-      )
-    case 'gear':
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="3" />
-          <path d="M12 4.5v2M12 17.5v2M4.5 12h2M17.5 12h2M6.5 6.5l1.4 1.4M16.1 16.1l1.4 1.4M17.5 6.5l-1.4 1.4M7.9 16.1l-1.4 1.4" />
-        </svg>
-      )
-    case 'flag':
-      return (
-        <svg {...common}>
-          <path d="M6 21V4.5h.5c2.5 0 3.5 1.5 6 1.5s3.5-1.5 6-1.5V14c-2.5 0-3.5 1.5-6 1.5s-3.5-1.5-6-1.5H6" />
-        </svg>
-      )
-    default:
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="7" />
-        </svg>
-      )
-  }
-}
-
 export default function DetectiveSheet({
   detective = {},
   updateDetective,
-  applyDetectiveToBrief,
-  flashToast,
   addMilestone,
   updateMilestone,
   removeMilestone,
-  onContinue,
-  continueLabel = 'Next · Research',
   /** Hide internal progress chrome when parent owns the dopamine timeline */
   splitMode = false,
   openChapter: openChapterProp,
@@ -293,12 +190,6 @@ export default function DetectiveSheet({
                       data-span={f.gridSpan || 'full'}
                     >
                       <div className="define-field-label-row">
-                        <span
-                          className={`define-field-icon define-icon-${f.icon}`}
-                          aria-hidden="true"
-                        >
-                          <FieldIcon name={f.icon} />
-                        </span>
                         <label
                           className="define-field-label"
                           htmlFor={`detective-${f.id}`}
@@ -374,12 +265,6 @@ export default function DetectiveSheet({
                     data-span="full"
                   >
                     <div className="define-field-label-row">
-                      <span
-                        className="define-field-icon define-icon-flag"
-                        aria-hidden="true"
-                      >
-                        <FieldIcon name="flag" />
-                      </span>
                       <span className="define-field-label">Milestones</span>
                     </div>
                     <div
