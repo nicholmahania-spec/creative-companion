@@ -110,6 +110,7 @@ import StepDependencyReminder from './components/StepDependencyReminder'
 import BeforeAfterChip from './components/BeforeAfterChip'
 import BeforeAfterOverlay from './components/BeforeAfterOverlay'
 import HeaderIcon from './components/HeaderIcon'
+import PullToRefresh from './components/PullToRefresh'
 import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
 import { HoursInvoicePanel } from './components/HoursInvoice'
 import { DiscoveryBriefPanel } from './components/DiscoveryBrief'
@@ -2390,6 +2391,7 @@ function App() {
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
+      <PullToRefresh reduceMotion={reduceMotion} />
       <header className="header header-redesign">
         <div className="header-content header-content-simple">
           <button

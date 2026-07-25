@@ -16415,3 +16415,43 @@ select:focus {
     flex: 0 0 auto;
   }
 }
+
+.pull-refresh-indicator {
+  position: fixed;
+  top: 0.5rem;
+  left: 50%;
+  transform: translate(-50%, 0);
+  z-index: 250;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pull-refresh-spinner {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--text-primary);
+}
+
+.pull-refresh-indicator.is-ready .pull-refresh-spinner {
+  border-top-color: var(--text-primary);
+}
+
+.pull-refresh-spinner.is-spinning {
+  animation: pullRefreshSpin 0.6s linear infinite;
+}
+
+@keyframes pullRefreshSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
