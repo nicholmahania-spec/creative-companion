@@ -1992,7 +1992,6 @@ function App() {
     })
 
   const openExportPanel = () => {
-    setExportLoading(true)
     const pack = buildCurrentBrandPack()
     setExportPanel({
       ...pack,
@@ -2029,7 +2028,6 @@ function App() {
           : i18nT(locale, 'ui.leaveBehindSaved'),
         { important: true }
       )
-      setExportLoading(false)
     }
 
     // Capture File System Access handle WHILE we still have the user-gesture.
