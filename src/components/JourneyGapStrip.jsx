@@ -1,16 +1,14 @@
 /**
- * Under-path recovery only when the user is ON the empty step (quiet G),
- * or path is full (ship). Primary “Next · …” lives on each step.
- * Never shout “First empty · Define” while working later steps.
+ * Under-path recovery only when the path is full (ship). Primary
+ * “Next · …” lives on each step. Never shout “First empty · Define”
+ * while working later steps.
  */
 export default function JourneyGapStrip({
   locale,
   pathNextGap = null,
   leaveBehindThin = false,
   activeView,
-  pathLabel,
   i18nT,
-  goToNextProcessGap,
   setActiveView,
   thisStepFilled,
 }) {
@@ -42,16 +40,6 @@ export default function JourneyGapStrip({
               : 'ui.pathMarkPackThin'
           )}
         </span>
-      )}
-      {onEarliestGap && pathNextGap && (
-        <button
-          type="button"
-          className="journey-gap-strip-btn is-quiet"
-          onClick={() => goToNextProcessGap()}
-          title={`G · ${pathLabel(locale, pathNextGap.id) || pathNextGap.label}`}
-        >
-          G
-        </button>
       )}
       {pathFull && (
         <button

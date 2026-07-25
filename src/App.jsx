@@ -3064,9 +3064,7 @@ function App() {
             pathNextGap={pathNextGap}
             leaveBehindThin={leaveBehindThin}
             activeView={activeView}
-            pathLabel={pathLabel}
             i18nT={i18nT}
-            goToNextProcessGap={goToNextProcessGap}
             setActiveView={setActiveView}
           />
         )}
