@@ -2590,17 +2590,19 @@ function App() {
             <div className="more-wrap" ref={moreWrapRef}>
               <button
                 type="button"
-                className="btn btn-secondary header-more"
+                className="header-icon-btn"
                 aria-expanded={moreOpen}
                 aria-haspopup="menu"
                 aria-controls="tools-menu"
                 id="tools-menu-button"
+                title={i18nT(locale, 'ui.tools')}
+                aria-label={i18nT(locale, 'ui.tools')}
                 onClick={() => {
                   setMoreOpen(!moreOpen)
                   setAccountOpen(false)
                 }}
               >
-                {i18nT(locale, 'ui.tools')}
+                <HeaderIcon name="tools" />
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">

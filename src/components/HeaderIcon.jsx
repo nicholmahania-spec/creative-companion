@@ -47,6 +47,16 @@ const ICONS = {
       <rect x="6.5" y="14" width="11" height="6.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
     </>
   ),
+  tools: (
+    <path
+      d="M14.7 6.3a3.5 3.5 0 0 0-4.62 4.62L4.5 16.5a1.5 1.5 0 0 0 2.12 2.12l5.58-5.58a3.5 3.5 0 0 0 4.62-4.62l-2.2 2.2-1.9-.6-.6-1.9 2.2-2.2Z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
 }
 
 export default function HeaderIcon({ name, className = '' }) {
