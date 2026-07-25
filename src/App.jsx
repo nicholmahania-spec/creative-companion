@@ -284,7 +284,7 @@ function App() {
   const prevJourneyIdx = useRef(0)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
-  const [projectMenuOpen, setProjectMenuOpen] = useState(false)
+  const [openProjectMenuId, setOpenProjectMenuId] = useState(null)
   const [beforeAfterOpen, setBeforeAfterOpen] = useState(false)
   const [restoreSelect, setRestoreSelect] = useState('')
   const [navOpen, setNavOpen] = useState(false)
@@ -333,7 +333,6 @@ function App() {
   const [accountOpen, setAccountOpen] = useState(false)
   const [buddyWinPulse, setBuddyWinPulse] = useState(0)
   const moreWrapRef = useRef(null)
-  const projectMenuRef = useRef(null)
   const accountWrapRef = useRef(null)
   const importFileRef = useRef(null)
   const cloudSyncReady = useRef(false)
@@ -1385,9 +1384,9 @@ function App() {
     prevJourneyIdx.current = idx
   }, [activeView])
 
-  // Close More / Account menus on outside click / Escape
+  // Close More / Account / sidebar project menus on outside click / Escape
   useEffect(() => {
-    if (!moreOpen && !accountOpen && !projectMenuOpen) return
+    if (!moreOpen && !accountOpen && !openProjectMenuId) return
     const onPointer = (e) => {
       if (
         moreOpen &&
@@ -1403,19 +1402,15 @@ function App() {
       ) {
         setAccountOpen(false)
       }
-      if (
-        projectMenuOpen &&
-        projectMenuRef.current &&
-        !projectMenuRef.current.contains(e.target)
-      ) {
-        setProjectMenuOpen(false)
+      if (openProjectMenuId && !e.target.closest('.journey-project-row-menu-wrap')) {
+        setOpenProjectMenuId(null)
       }
     }
     const onKey = (e) => {
       if (e.key === 'Escape') {
         setMoreOpen(false)
         setAccountOpen(false)
-        setProjectMenuOpen(false)
+        setOpenProjectMenuId(null)
       }
     }
     document.addEventListener('pointerdown', onPointer)
@@ -1424,7 +1419,7 @@ function App() {
       document.removeEventListener('pointerdown', onPointer)
       document.removeEventListener('keydown', onKey)
     }
-  }, [moreOpen, accountOpen, projectMenuOpen])
+  }, [moreOpen, accountOpen, openProjectMenuId])
 
   // Surface sync errors as action toast (not only footer)
   useEffect(() => {
@@ -2507,88 +2502,6 @@ function App() {
                 ))}
               </select>
             )}
-            {activeProject && (
-              <div className="project-menu-wrap" ref={projectMenuRef}>
-                <button
-                  type="button"
-                  className="btn btn-ghost header-project-menu-btn"
-                  aria-haspopup="menu"
-                  aria-expanded={projectMenuOpen}
-                  aria-controls="project-menu"
-                  id="project-menu-button"
-                  title="Project actions"
-                  onClick={() => setProjectMenuOpen((v) => !v)}
-                >
-                  ⋯
-                </button>
-                {projectMenuOpen && (
-                  <div
-                    className="project-menu"
-                    role="menu"
-                    id="project-menu"
-                    aria-labelledby="project-menu-button"
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="project-menu-item"
-                      disabled={activeProjects.length < 2}
-                      onClick={() => {
-                        const r = archiveProject(activeProject.id)
-                        if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
-                        setProjectMenuOpen(false)
-                      }}
-                    >
-                      Archive project
-                    </button>
-                    {activeProjects.length < 2 && (
-                      <p className="project-menu-note">
-                        Needs a second active project to switch to.
-                      </p>
-                    )}
-                    {archivedProjects.length > 0 && (
-                      <select
-                        className="project-menu-restore"
-                        value={restoreSelect}
-                        onChange={(e) => {
-                          const id = e.target.value
-                          if (!id) return
-                          unarchiveProject(Number(id) || id)
-                          selectProject(Number(id) || id)
-                          setRestoreSelect('')
-                          setProjectMenuOpen(false)
-                        }}
-                        aria-label="Restore archived project"
-                      >
-                        <option value="">Restore archived…</option>
-                        {archivedProjects.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="project-menu-item project-menu-danger"
-                      disabled={projects.length <= 1}
-                      onClick={() => {
-                        setProjectMenuOpen(false)
-                        handleDeleteProjectById(activeProject.id, activeProject.name)
-                      }}
-                    >
-                      Delete project
-                    </button>
-                    {projects.length <= 1 && (
-                      <p className="project-menu-note">
-                        This is your only project.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
             <div className="header-status-slot">
             {isFocusRunning && (
               <button
@@ -2907,6 +2820,7 @@ function App() {
             <ul className="journey-projects-list">
               {projectsSummary.map(({ project: p, doneCount }) => {
                 const isActive = p.id === activeProjectId
+                const menuOpen = openProjectMenuId === p.id
                 return (
                   <li key={p.id} className="journey-project-row-wrap">
                     <button
@@ -2924,24 +2838,90 @@ function App() {
                         {doneCount}/7
                       </span>
                     </button>
-                    {projects.length > 1 && (
+                    <div className="journey-project-row-menu-wrap">
                       <button
                         type="button"
-                        className="journey-project-row-delete"
+                        className="journey-project-row-menu-btn"
+                        aria-haspopup="menu"
+                        aria-expanded={menuOpen}
+                        aria-label={`Project actions for “${p.name}”`}
+                        title="Project actions"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleDeleteProjectById(p.id, p.name)
+                          setOpenProjectMenuId(menuOpen ? null : p.id)
                         }}
-                        aria-label={`Delete “${p.name}”`}
-                        title="Delete project"
                       >
-                        ×
+                        ⋯
                       </button>
-                    )}
+                      {menuOpen && (
+                        <div
+                          className="journey-project-row-menu"
+                          role="menu"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="project-menu-item"
+                            disabled={activeProjects.length < 2}
+                            onClick={() => {
+                              const r = archiveProject(p.id)
+                              if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
+                              setOpenProjectMenuId(null)
+                            }}
+                          >
+                            Archive project
+                          </button>
+                          {activeProjects.length < 2 && (
+                            <p className="project-menu-note">
+                              Needs a second active project to switch to.
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="project-menu-item project-menu-danger"
+                            disabled={projects.length <= 1}
+                            onClick={() => {
+                              setOpenProjectMenuId(null)
+                              handleDeleteProjectById(p.id, p.name)
+                            }}
+                          >
+                            Delete project
+                          </button>
+                          {projects.length <= 1 && (
+                            <p className="project-menu-note">
+                              This is your only project.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </li>
                 )
               })}
             </ul>
+            {archivedProjects.length > 0 && (
+              <select
+                className="journey-projects-restore"
+                value={restoreSelect}
+                onChange={(e) => {
+                  const id = e.target.value
+                  if (!id) return
+                  unarchiveProject(Number(id) || id)
+                  selectProject(Number(id) || id)
+                  setRestoreSelect('')
+                }}
+                aria-label="Restore archived project"
+              >
+                <option value="">Restore archived…</option>
+                {archivedProjects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <ol className="journey-bar-list">
             {JOURNEY_STEPS.map((step, idx) => {

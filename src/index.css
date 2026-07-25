@@ -15164,29 +15164,61 @@ select:focus {
   gap: 0.15rem;
 }
 
-.journey-project-row-delete {
+.journey-project-row-menu-wrap {
+  position: relative;
   flex: 0 0 auto;
+}
+
+.journey-project-row-menu-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 1.6rem;
+  height: 100%;
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: #A1A1A1;
+  color: var(--text-muted);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-.journey-project-row-wrap:hover .journey-project-row-delete,
-.journey-project-row-wrap:focus-within .journey-project-row-delete {
+.journey-project-row-wrap:hover .journey-project-row-menu-btn,
+.journey-project-row-wrap:focus-within .journey-project-row-menu-btn,
+.journey-project-row-menu-btn[aria-expanded="true"] {
   opacity: 1;
 }
-.journey-project-row-delete:hover {
-  background: rgba(185, 28, 28, 0.1);
-  color: #B91C1C;
+.journey-project-row-menu-btn:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+.journey-project-row-menu {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 180px;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.journey-projects-restore {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.8125rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
 }
 
 /* Running to-do ("fridge list") — drawer styled like the left path rail,
@@ -15993,32 +16025,6 @@ select:focus {
 
 .step-dependency-reminder-fields .field-input {
   flex: 1 1 200px;
-}
-
-.project-menu-wrap {
-  position: relative;
-}
-
-.header-project-menu-btn {
-  padding: 0.375rem 0.625rem;
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.project-menu {
-  position: absolute;
-  top: calc(100% + 0.25rem);
-  right: 0;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 180px;
-  padding: 0.5rem;
-  border-radius: 4px;
-  background: var(--bg-elevated, #FFFFFF);
-  border: 1px solid var(--border-subtle);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .project-menu-item {
