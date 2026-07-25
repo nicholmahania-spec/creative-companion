@@ -16339,3 +16339,9 @@ select:focus {
 .define-deadline-inline input[type="date"] {
   width: 150px;
 }
+
+.header-icon-btn {
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.375rem 0.625rem;
+}

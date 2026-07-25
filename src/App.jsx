@@ -2665,6 +2665,26 @@ function App() {
 
             <button
               type="button"
+              className="btn btn-ghost header-icon-btn"
+              onClick={() => setActiveView('calendar')}
+              title="Calendar"
+              aria-label="Calendar"
+            >
+              📅
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-ghost header-icon-btn"
+              onClick={() => setActiveView('clients')}
+              title="Clients"
+              aria-label="Clients"
+            >
+              👥
+            </button>
+
+            <button
+              type="button"
               className="btn btn-primary header-add-btn"
               onClick={() => setRunningTodoPromptOpen(true)}
               title="Add to your to-do list"
@@ -2701,28 +2721,6 @@ function App() {
                     }}
                   >
                     <span aria-hidden="true">⏱</span> {i18nT(locale, 'ui.timer')}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('calendar')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">📅</span> {i18nT(locale, 'ui.calendar')}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('clients')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">👤</span> Clients
                   </button>
                   <p className="more-menu-group-label">This project</p>
                   <button
