@@ -2504,7 +2504,7 @@ function App() {
 
             <button
               type="button"
-              className="btn btn-ghost header-icon-btn"
+              className="header-icon-btn"
               onClick={() => setActiveView('calendar')}
               title="Calendar"
               aria-label="Calendar"
@@ -2514,7 +2514,7 @@ function App() {
 
             <button
               type="button"
-              className="btn btn-ghost header-icon-btn"
+              className="header-icon-btn"
               onClick={() => setActiveView('clients')}
               title="Clients"
               aria-label="Clients"
