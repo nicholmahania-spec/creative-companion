@@ -69,15 +69,8 @@ import {
   hydrateForcedBreak,
   hydrateFocus,
   tickForcedBreak,
-  buildResumeBanner,
   focusPathGapField,
-  VIEW_RESUME_LABELS,
 } from './lib/sessionResume'
-import {
-  formatDecisionLine,
-  latestDecision,
-  chosenDirection,
-} from './lib/decisionLog'
 import { awardAndBroadcast } from './lib/buddyGame'
 import {
   JOURNEY_STEPS,
@@ -278,7 +271,6 @@ function App() {
   const [runningTodoPanelOpen, setRunningTodoPanelOpen] = useState(false)
   const [hoursPanelOpen, setHoursPanelOpen] = useState(false)
   const [discoveryPanelOpen, setDiscoveryPanelOpen] = useState(false)
-  const [resumeBanner, setResumeBanner] = useState(null)
   const [demoTour, setDemoTour] = useState(null)
   const [navDir, setNavDir] = useState('none')
   const prevJourneyIdx = useRef(0)
@@ -1255,73 +1247,6 @@ function App() {
     timerFocusSource,
     activeView,
     activeProjectId,
-  ])
-
-  // Once per browser session: stronger resume strip (view + decision + field focus)
-  useEffect(() => {
-    if (!unlocked || !onboarded || cloudHydrating) return undefined
-    try {
-      if (sessionStorage.getItem('cc-resume-shown') === '1') return undefined
-      sessionStorage.setItem('cc-resume-shown', '1')
-    } catch {
-      /* ignore */
-    }
-    // Don't stack banner on top of an active forced break
-    if (forcedBreakRef.current) return undefined
-
-    const session = loadDeskSession() || {
-      activeView,
-      forcedBreak: null,
-      focus: null,
-    }
-    const dec =
-      latestDecision(activeProject?.decisionLog, 'direction') ||
-      latestDecision(activeProject?.decisionLog)
-    const fromChosen = chosenDirection(activeProject)
-    const decisionLine =
-      formatDecisionLine(dec) ||
-      (fromChosen
-        ? formatDecisionLine({
-            label: fromChosen.label,
-            title: fromChosen.title,
-            why: fromChosen.note,
-          })
-        : '')
-
-    const banner = buildResumeBanner({
-      session,
-      projectName: activeProject?.name || '',
-      nextStepTitle: nextTask?.title || '',
-      decisionLine,
-      activeView,
-    })
-
-    // Always show when we have a named project or desk step or decision
-    if (!banner.name && !banner.step && !banner.decisionLine) return undefined
-    if (banner.name === 'Project' && !banner.step && !banner.decisionLine && !activeProject?.name) {
-      return undefined
-    }
-
-    // Localize path label when possible
-    const stepId = journeyIdForView(banner.view)
-    const viewLabel = stepId
-      ? pathLabel(locale, stepId) || VIEW_RESUME_LABELS[banner.view]
-      : VIEW_RESUME_LABELS[banner.view] || banner.viewLabel
-
-    setResumeBanner({
-      ...banner,
-      viewLabel,
-    })
-    return undefined
-  }, [
-    unlocked,
-    onboarded,
-    cloudHydrating,
-    activeProject?.name,
-    activeProject?.decisionLog,
-    nextTask?.title,
-    activeView,
-    locale,
   ])
 
   // Warm PDF engine on Pack (no XP for merely opening the page)
@@ -3792,72 +3717,6 @@ function App() {
       {savePulse && (
         <div className="autosave-chip">✓ Saved</div>
       )}
-
-      {resumeBanner && activeView !== 'home' && (() => {
-        const resumeTarget =
-          resumeBanner.view ||
-          (resumeBanner.step ? 'flow' : 'project')
-        const alreadyThere = activeView === resumeTarget
-        return (
-        <div
-          className={`resume-banner${resumeBanner.afterBreak ? ' is-after-break' : ''}${resumeBanner.rejoinTimer ? ' is-timer' : ''}${alreadyThere ? ' is-here' : ''}`}
-          role="status"
-        >
-          <div className="resume-banner-copy">
-            <p className="resume-banner-body">
-              <strong>{resumeBanner.name}</strong>
-              {resumeBanner.afterBreak
-                ? ' · After break'
-                : resumeBanner.rejoinTimer
-                  ? ' · Timer on'
-                  : resumeBanner.viewLabel
-                    ? ` · ${resumeBanner.viewLabel}`
-                    : ''}
-              {resumeBanner.step
-                ? ` · ${String(resumeBanner.step).slice(0, 32)}${
-                    String(resumeBanner.step).length > 32 ? '…' : ''
-                  }`
-                : ''}
-            </p>
-          </div>
-          <div className="resume-banner-actions">
-            {alreadyThere ? (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => {
-                  focusPathGapField(activeView)
-                  setResumeBanner(null)
-                }}
-              >
-                OK
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => {
-                  setActiveView(resumeTarget)
-                  focusPathGapField(resumeTarget)
-                  setResumeBanner(null)
-                }}
-              >
-                Continue
-              </button>
-            )}
-            {!alreadyThere && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setResumeBanner(null)}
-              >
-                ×
-              </button>
-            )}
-          </div>
-        </div>
-        )
-      })()}
 
       <RunningTodoAddModal
         open={runningTodoPromptOpen && activeView !== 'home'}
