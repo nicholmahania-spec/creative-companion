@@ -13,8 +13,14 @@ export async function submitForm(formData, formName = 'unnamed_form', projectId 
       return { success: false, error: 'Supabase not configured' }
     }
 
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: 'Not signed in' }
+    }
+
     // Prepare the record to insert
     const record = {
+      owner_id: user.id,
       form_name: formName,
       form_data: formData,
       submitted_at: new Date().toISOString(),
