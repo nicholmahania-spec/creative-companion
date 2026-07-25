@@ -212,17 +212,6 @@ export default function ReviewView({
         </section>
       </div>
 
-      <div className="brand-export-bar path-continue-row review-continue">
-        <button
-          type="button"
-          className="btn btn-secondary work-path-next"
-          onClick={() => setActiveView('finish')}
-        >
-          {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'deliver') || 'Deliver',
-          })}
-        </button>
-      </div>
     </div>
   )
 }

@@ -1861,17 +1861,6 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
               </Suspense>
             </div>
 
-            <div className="brand-export-bar path-continue-row">
-              <button
-                type="button"
-                className="btn btn-secondary work-path-next"
-                onClick={() => setActiveView('review')}
-              >
-                {tFormat(locale, 'ui.continueNext', {
-                  label: pathLabel(locale, 'review') || 'Review',
-                })}
-              </button>
-            </div>
           </div>
 
           {/* Version History Modal */}

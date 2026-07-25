@@ -152,29 +152,17 @@ export default function InsightsView(props) {
       </section>
 
       <div className="path-continue-row insights-continue">
-        {fromResearch ? (
-          <button
-            type="button"
-            className="btn btn-secondary work-path-next"
-            onClick={() => go('spark')}
-          >
-            {i18nT(locale, 'ui.backToIdeate') || 'Next · Ideate'}
-          </button>
-        ) : (
+        {fromResearch ? null : (
           <>
-            <button
-              type="button"
-              className="btn btn-secondary work-path-next"
-              disabled={!nextTask}
-              onClick={() => {
-                if (nextTask) {
-                  toggleTask(nextTask.id);
-                }
-                go('flow');
-              }}
-            >
-              {nextTask ? 'Mark done' : 'Back · Sketch'}
-            </button>
+            {nextTask && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => toggleTask(nextTask.id)}
+              >
+                Mark done
+              </button>
+            )}
             {(deskTasks.length > 0) && (
               <p className="text-muted insight-hint">
                 {completedCount}/{deskTasks.length} steps

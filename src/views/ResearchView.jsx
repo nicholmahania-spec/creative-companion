@@ -708,17 +708,6 @@ export default function ResearchView({
               )}
             </section>
 
-            <div className="path-continue-row research-continue">
-              <button
-                type="button"
-                className="btn btn-secondary work-path-next"
-                onClick={() => setActiveView('spark')}
-              >
-                {tFormat(locale, 'ui.continueNext', {
-                  label: pathLabel(locale, 'ideate') || 'Ideate',
-                })}
-              </button>
-            </div>
           </div>
         {boardLightbox && (
           <div
