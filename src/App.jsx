@@ -2522,16 +2522,6 @@ function App() {
               <HeaderIcon name="people" />
             </button>
 
-            <button
-              type="button"
-              className="btn btn-primary header-add-btn"
-              onClick={() => setRunningTodoPromptOpen(true)}
-              title="Add to your to-do list"
-              aria-label="Add to your to-do list"
-            >
-              +
-            </button>
-
             <div className="more-wrap" ref={moreWrapRef}>
               <button
                 type="button"
@@ -2596,24 +2586,6 @@ function App() {
                     <span aria-hidden="true">$</span> Hours &amp; invoice
                   </button>
                   <p className="more-menu-group-label">App</p>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      const next = !bodyDoubling
-                      toggleBodyDoubling()
-                      if (next) {
-                        awardAndBroadcast('helper_on', { label: 'Helper' })
-                        flashMicro(i18nT(locale, 'ui.helperOnMicro'))
-                      } else {
-                        flashMicro(i18nT(locale, 'ui.helperOffMicro'))
-                      }
-                    }}
-                  >
-                    <HeaderIcon name="helper" /> Helper:{' '}
-                    {bodyDoubling ? 'on' : 'off'}
-                  </button>
                   <button
                     type="button"
                     role="menuitem"
@@ -3998,8 +3970,9 @@ function App() {
         <HeaderIcon name="list" />
       </button>
 
-      {/* Helper — presence coach, not a freeform chatbot */}
-      {bodyDoubling && (
+      {/* Helper — presence coach, not a freeform chatbot. Hidden for now,
+          revisit as a future feature; store/prop wiring left intact. */}
+      {false && bodyDoubling && (
         <Suspense fallback={null}>
         <BuddyMate
           onClose={() => setBodyDoubling(false)}
