@@ -16357,3 +16357,13 @@ select:focus {
     opacity: 1;
   }
 }
+
+.header-icon-svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.more-menu-item .header-icon-svg {
+  margin-right: 0.35rem;
+  vertical-align: -3px;
+}

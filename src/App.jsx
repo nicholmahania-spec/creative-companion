@@ -109,6 +109,7 @@ import LogoLockup from './components/LogoLockup'
 import StepDependencyReminder from './components/StepDependencyReminder'
 import BeforeAfterChip from './components/BeforeAfterChip'
 import BeforeAfterOverlay from './components/BeforeAfterOverlay'
+import HeaderIcon from './components/HeaderIcon'
 import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
 import { HoursInvoicePanel } from './components/HoursInvoice'
 import { DiscoveryBriefPanel } from './components/DiscoveryBrief'
@@ -2508,7 +2509,7 @@ function App() {
               title="Calendar"
               aria-label="Calendar"
             >
-              📅
+              <HeaderIcon name="calendar" />
             </button>
 
             <button
@@ -2518,7 +2519,7 @@ function App() {
               title="Clients"
               aria-label="Clients"
             >
-              👥
+              <HeaderIcon name="people" />
             </button>
 
             <button
@@ -2558,7 +2559,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <span aria-hidden="true">⏱</span> {i18nT(locale, 'ui.timer')}
+                    <HeaderIcon name="timer" /> {i18nT(locale, 'ui.timer')}
                   </button>
                   <p className="more-menu-group-label">This project</p>
                   <button
@@ -2610,7 +2611,7 @@ function App() {
                       }
                     }}
                   >
-                    <span aria-hidden="true">🤝</span> Helper:{' '}
+                    <HeaderIcon name="helper" /> Helper:{' '}
                     {bodyDoubling ? 'on' : 'off'}
                   </button>
                   <button
