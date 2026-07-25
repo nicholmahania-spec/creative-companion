@@ -6,7 +6,7 @@
  */
 
 export const RUNNING_TODO_STAGES = [
-  { id: 'define', label: 'Define' },
+  { id: 'define', label: 'Project overview' },
   { id: 'research', label: 'Research' },
   { id: 'ideate', label: 'Ideate' },
   { id: 'sketch', label: 'Sketch' },

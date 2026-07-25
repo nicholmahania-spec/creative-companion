@@ -20,7 +20,7 @@ const EN = {
   tagline: 'A calm desk for creative work (ADHD-friendly)',
   pathAria: 'Your 7 steps in Creative Companion',
   path: {
-    define: 'Define',
+    define: 'Project overview',
     research: 'Research',
     ideate: 'Ideate',
     sketch: 'Sketch',
@@ -28,7 +28,7 @@ const EN = {
     review: 'Review',
     deliver: 'Deliver',
     // legacy aliases (fallback if old keys appear)
-    project: 'Define',
+    project: 'Project overview',
     work: 'Sketch',
     board: 'Research',
     system: 'Design',

@@ -216,7 +216,7 @@ export function idleLine() {
 const VIEW_LABELS = {
   flow: 'Sketch',
   studio: 'Research',
-  project: 'Define',
+  project: 'Project overview',
   brand: 'Design',
   finish: 'Deliver',
   spark: 'Ideate',

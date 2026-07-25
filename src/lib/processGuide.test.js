@@ -30,7 +30,7 @@ describe('processGuide — 7 design steps', () => {
   })
 
   it('resolves each phase', () => {
-    expect(getProcessPhase('define').short).toBe('Define')
+    expect(getProcessPhase('define').short).toBe('Project overview')
     expect(getProcessPhase('deliver').view).toBe('finish')
   })
 

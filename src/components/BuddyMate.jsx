@@ -643,7 +643,7 @@ export default function BuddyMate({
       {
         flow: 'Sketch',
         studio: 'Research',
-        project: 'Define',
+        project: 'Project overview',
         brand: 'Design',
         finish: 'Deliver',
         spark: 'Ideate',

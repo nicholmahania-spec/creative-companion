@@ -28,7 +28,7 @@ describe('i18n wordmark + path + catalog', () => {
 
   it('localizes path labels', () => {
     expect(pathLabel('en', 'sketch')).toBe('Sketch')
-    expect(pathLabel('en', 'define')).toBe('Define')
+    expect(pathLabel('en', 'define')).toBe('Project overview')
     expect(pathLabel('en', 'deliver')).toBe('Deliver')
     // legacy aliases still resolve
     expect(pathLabel('en', 'work')).toBe('Sketch')

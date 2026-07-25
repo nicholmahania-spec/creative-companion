@@ -9,7 +9,7 @@ export const JOURNEY_STEPS = [
     id: 'define',
     view: 'project',
     num: '1',
-    label: 'Define',
+    label: 'Project overview',
     plain: 'Who is this for? How should it feel? Write one clear goal.',
     nextView: 'studio',
     nextLabel: 'Go to Research',

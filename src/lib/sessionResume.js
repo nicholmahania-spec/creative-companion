@@ -229,7 +229,7 @@ export function isPathView(view) {
 
 /** Label map for resume banner (EN fallback; UI may i18n). */
 export const VIEW_RESUME_LABELS = {
-  project: 'Define',
+  project: 'Project overview',
   studio: 'Research',
   spark: 'Ideate',
   flow: 'Sketch',

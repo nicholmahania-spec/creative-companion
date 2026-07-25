@@ -38,7 +38,7 @@ const DefinePreview = memo(({ activeProject, loading = false, error = null }) =>
           <h3 className="font-semibold text-lg mb-2">Project Definition</h3>
           <div className="border rounded-lg p-4 text-center">
             <p className="text-muted-foreground">No project data available</p>
-            <p className="text-xs mt-2">Define your project in the Define view to begin</p>
+            <p className="text-xs mt-2">Define your project in the Project overview view to begin</p>
           </div>
         </div>
       </div>
