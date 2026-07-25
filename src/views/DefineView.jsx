@@ -70,26 +70,31 @@ export default function DefineView(props) {
       data-nav-dir={navDir}
     >
       <div className="brand-template-top">
-        <div>
-          <h1 className="page-title">
-            {i18nT(locale, 'path.define')}
-          </h1>
-          <input
-            id="project-name"
-            className="define-name-inline"
-            value={projectNameDraft}
-            onChange={(e) => setProjectNameDraft(e.target.value)}
-            onBlur={commitProjectRename}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                commitProjectRename()
-                e.currentTarget.blur()
-              }
-            }}
-            placeholder="Project name"
-            aria-label="Project name"
-          />
+        <div className="define-title-row">
+          <div>
+            <h1 className="page-title">
+              {i18nT(locale, 'path.define')}
+            </h1>
+            <input
+              id="project-name"
+              className="define-name-inline"
+              value={projectNameDraft}
+              onChange={(e) => setProjectNameDraft(e.target.value)}
+              onBlur={commitProjectRename}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  commitProjectRename()
+                  e.currentTarget.blur()
+                }
+              }}
+              placeholder="Project name"
+              aria-label="Project name"
+            />
+          </div>
+          <button type="button" className="btn btn-primary" onClick={saveBrief}>
+            Save
+          </button>
         </div>
         <div className="define-deadline-inline">
           <label htmlFor="proj-deadline-field">Deadline</label>
@@ -110,9 +115,6 @@ export default function DefineView(props) {
             <HeaderIcon name="calendar" />
           </button>
         </div>
-        <button type="button" className="btn btn-primary" onClick={saveBrief}>
-          Save
-        </button>
       </div>
 
       <div
