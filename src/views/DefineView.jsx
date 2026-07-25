@@ -27,7 +27,6 @@ export default function DefineView(props) {
     navDir = 'none',
     activeProject = null,
     deskTasks = [],
-    projects = [],
     projectNameDraft = '',
     setProjectNameDraft,
     setActiveView,
@@ -36,14 +35,11 @@ export default function DefineView(props) {
     updateDetective,
     applyDetectiveToBrief,
     setProjectDeadline,
-    handleDeleteProject,
-    handleArchiveProject,
     assetAudit = [],
     addAssetAuditItem,
     updateAssetAuditItem,
     removeAssetAuditItem,
     renameProject,
-    selectProject,
     projectDeadline = '',
     quickInput = '',
     setQuickInput,
@@ -61,17 +57,11 @@ export default function DefineView(props) {
     label: pathLabel(locale, 'research') || 'Research',
   })
 
-  const archiveProject = useAppStore((s) => s.archiveProject)
-  const unarchiveProject = useAppStore((s) => s.unarchiveProject)
   const addMilestone = useAppStore((s) => s.addMilestone)
   const updateMilestone = useAppStore((s) => s.updateMilestone)
   const removeMilestone = useAppStore((s) => s.removeMilestone)
 
   const [openChapter, setOpenChapter] = useState('core')
-  const [restoreSelect, setRestoreSelect] = useState('')
-
-  const activeProjects = (projects || []).filter((p) => !p.archived)
-  const archivedProjects = (projects || []).filter((p) => p.archived)
 
   const commitProjectRename = () => {
     if (!activeProject) return
@@ -195,45 +185,6 @@ export default function DefineView(props) {
                   </button>
                 </div>
               </div>
-              <div className="project-actions-row">
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  disabled={!activeProject || activeProjects.length < 2}
-                  onClick={() => {
-                    if (!activeProject) return
-                    if (handleArchiveProject) {
-                      handleArchiveProject()
-                      return
-                    }
-                    const r = archiveProject(activeProject.id)
-                    if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
-                  }}
-                >
-                  Archive
-                </button>
-                {archivedProjects.length > 0 && (
-                  <select
-                    className="header-project-select"
-                    value={restoreSelect}
-                    onChange={(e) => {
-                      const id = e.target.value
-                      if (!id) return
-                      unarchiveProject(Number(id) || id)
-                      selectProject(Number(id) || id)
-                      setRestoreSelect('')
-                    }}
-                    aria-label="Restore archived project"
-                  >
-                    <option value="">Restore archived…</option>
-                    {archivedProjects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
               <details className="project-quick-add">
                 <summary className="text-link">Quick add to desk</summary>
                 <div className="capture-row" style={{ marginTop: '0.5rem' }}>
@@ -260,16 +211,6 @@ export default function DefineView(props) {
                   ))}
                 </ul>
               )}
-              <div className="project-danger-zone">
-                <button
-                  type="button"
-                  className="btn btn-ghost settings-danger"
-                  disabled={projects.length <= 1}
-                  onClick={handleDeleteProject}
-                >
-                  Delete this project
-                </button>
-              </div>
             </div>
           </details>
         </div>

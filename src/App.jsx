@@ -113,6 +113,8 @@ import {
 } from './lib/exportFiles'
 import LogoLockup from './components/LogoLockup'
 import StepDependencyReminder from './components/StepDependencyReminder'
+import BeforeAfterChip from './components/BeforeAfterChip'
+import BeforeAfterOverlay from './components/BeforeAfterOverlay'
 import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
 import { HoursInvoicePanel } from './components/HoursInvoice'
 import { DiscoveryBriefPanel } from './components/DiscoveryBrief'
@@ -190,6 +192,7 @@ function App() {
   const renameProject = useAppStore((s) => s.renameProject)
   const deleteProject = useAppStore((s) => s.deleteProject)
   const archiveProject = useAppStore((s) => s.archiveProject)
+  const unarchiveProject = useAppStore((s) => s.unarchiveProject)
   const breakKit = useAppStore((s) => s.breakKit)
   const conceptItems = useAppStore((s) => s.conceptItems)
   const completeBreakKitItem = useAppStore((s) => s.completeBreakKitItem)
@@ -284,6 +287,9 @@ function App() {
   const prevJourneyIdx = useRef(0)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [projectMenuOpen, setProjectMenuOpen] = useState(false)
+  const [beforeAfterOpen, setBeforeAfterOpen] = useState(false)
+  const [restoreSelect, setRestoreSelect] = useState('')
   const [navOpen, setNavOpen] = useState(false)
   const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
@@ -330,6 +336,7 @@ function App() {
   const [accountOpen, setAccountOpen] = useState(false)
   const [buddyWinPulse, setBuddyWinPulse] = useState(0)
   const moreWrapRef = useRef(null)
+  const projectMenuRef = useRef(null)
   const accountWrapRef = useRef(null)
   const importFileRef = useRef(null)
   const cloudSyncReady = useRef(false)
@@ -916,6 +923,7 @@ function App() {
   }, [recentUndo])
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
+  const archivedProjects = (projects || []).filter((p) => p.archived)
 
   /** Per-project next-step summary for the multi-project Home dashboard */
   const projectsSummary = useMemo(
@@ -1658,7 +1666,7 @@ function App() {
 
   // Close More / Account menus on outside click / Escape
   useEffect(() => {
-    if (!moreOpen && !accountOpen) return
+    if (!moreOpen && !accountOpen && !projectMenuOpen) return
     const onPointer = (e) => {
       if (
         moreOpen &&
@@ -1674,11 +1682,19 @@ function App() {
       ) {
         setAccountOpen(false)
       }
+      if (
+        projectMenuOpen &&
+        projectMenuRef.current &&
+        !projectMenuRef.current.contains(e.target)
+      ) {
+        setProjectMenuOpen(false)
+      }
     }
     const onKey = (e) => {
       if (e.key === 'Escape') {
         setMoreOpen(false)
         setAccountOpen(false)
+        setProjectMenuOpen(false)
       }
     }
     document.addEventListener('pointerdown', onPointer)
@@ -1687,7 +1703,7 @@ function App() {
       document.removeEventListener('pointerdown', onPointer)
       document.removeEventListener('keydown', onKey)
     }
-  }, [moreOpen, accountOpen])
+  }, [moreOpen, accountOpen, projectMenuOpen])
 
   // Surface sync errors as action toast (not only footer)
   useEffect(() => {
@@ -2770,6 +2786,78 @@ function App() {
                 ))}
               </select>
             )}
+            {activeProject && (
+              <div className="project-menu-wrap" ref={projectMenuRef}>
+                <button
+                  type="button"
+                  className="btn btn-ghost header-project-menu-btn"
+                  aria-haspopup="menu"
+                  aria-expanded={projectMenuOpen}
+                  aria-controls="project-menu"
+                  id="project-menu-button"
+                  title="Project actions"
+                  onClick={() => setProjectMenuOpen((v) => !v)}
+                >
+                  ⋯
+                </button>
+                {projectMenuOpen && (
+                  <div
+                    className="project-menu"
+                    role="menu"
+                    id="project-menu"
+                    aria-labelledby="project-menu-button"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="project-menu-item"
+                      disabled={activeProjects.length < 2}
+                      onClick={() => {
+                        const r = archiveProject(activeProject.id)
+                        if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
+                        setProjectMenuOpen(false)
+                      }}
+                    >
+                      Archive project
+                    </button>
+                    {archivedProjects.length > 0 && (
+                      <select
+                        className="project-menu-restore"
+                        value={restoreSelect}
+                        onChange={(e) => {
+                          const id = e.target.value
+                          if (!id) return
+                          unarchiveProject(Number(id) || id)
+                          selectProject(Number(id) || id)
+                          setRestoreSelect('')
+                          setProjectMenuOpen(false)
+                        }}
+                        aria-label="Restore archived project"
+                      >
+                        <option value="">Restore archived…</option>
+                        {archivedProjects.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="project-menu-item project-menu-danger"
+                      disabled={projects.length <= 1}
+                      onClick={() => {
+                        setProjectMenuOpen(false)
+                        handleDeleteProjectById(activeProject.id, activeProject.name)
+                      }}
+                    >
+                      Delete project
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             {isFocusRunning && activeView !== 'insights' && (
               <button
                 type="button"
@@ -3278,6 +3366,13 @@ function App() {
             i18nT={i18nT}
             goToNextProcessGap={goToNextProcessGap}
             setActiveView={setActiveView}
+          />
+        )}
+        {journeyActive && (
+          <BeforeAfterChip
+            project={activeProject}
+            assetAudit={assetAudit}
+            onOpen={() => setBeforeAfterOpen(true)}
           />
         )}
         {/* ===== HOME (multi-project) — master/detail, not a card grid ===== */}
@@ -3795,7 +3890,6 @@ function App() {
               deskMood={deskMood}
               deskTasks={deskTasks}
               projectPalette={projectPalette}
-              projects={projects}
               projectNameDraft={projectNameDraft}
               setProjectNameDraft={setProjectNameDraft}
               setActiveView={setActiveView}
@@ -3804,15 +3898,12 @@ function App() {
               updateDetective={updateDetective}
               applyDetectiveToBrief={applyDetectiveToBrief}
               setProjectDeadline={setProjectDeadline}
-              handleDeleteProject={handleDeleteProject}
-              handleArchiveProject={handleArchiveProject}
               assetAudit={assetAudit}
               addAssetAuditItem={addAssetAuditItem}
               updateAssetAuditItem={updateAssetAuditItem}
               removeAssetAuditItem={removeAssetAuditItem}
               renameProject={renameProject}
               createNewProject={createNewProject}
-              selectProject={selectProject}
               goSystemSection={goSystemSection}
               completedCount={completedCount}
               projectPills={projectPills}
@@ -4242,6 +4333,13 @@ function App() {
         upload={activeProject?.discoveryUpload || null}
         onSetUpload={setDiscoveryUpload}
         flashToast={flashToast}
+      />
+
+      <BeforeAfterOverlay
+        open={beforeAfterOpen}
+        onClose={() => setBeforeAfterOpen(false)}
+        project={activeProject}
+        assetAudit={assetAudit}
       />
 
       {shortcutsOpen && (
