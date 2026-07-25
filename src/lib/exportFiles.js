@@ -355,6 +355,7 @@ export function buildBrandPackSnapshot({
     imageryDo: p.imageryDo || '',
     imageryDont: p.imageryDont || '',
     decisionLog: Array.isArray(p.decisionLog) ? p.decisionLog : [],
+    discoveryAnswers: p.discoveryAnswers || {},
   }
 }
 
@@ -1624,13 +1625,15 @@ const writeWrapped = (
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
     const toc = [
       '01  Cover',
-      '02  Positioning · messaging · voice',
-      '03  Color system · codes · AA pairs',
-      '04  Typography · type scale',
-      "05  Logo lockups · don'ts",
-      "06  Usage · do / don't",
-      '07  Imagery · mood pins',
-      '08  Application mock · handoff',
+      '02  Project overview',
+      '03  Previous state',
+      '04  Positioning · messaging · voice',
+      '05  Color system · codes · AA pairs',
+      '06  Typography · type scale',
+      "07  Logo lockups · don'ts",
+      "08  Usage · do / don't",
+      '09  Imagery · mood pins',
+      '10  Application mock · handoff',
     ]
     toc.forEach((line) => {
       pdf.text(line, margin, y)
@@ -1639,7 +1642,88 @@ const writeWrapped = (
     pdf.setFontSize(9)
     pdf.text(day, margin, pageH - margin)
 
-    // ═══════════════ PAGE 2 — Positioning ═══════════════
+    // ═══════════════ PAGE 2 — Project overview ═══════════════
+    const disc = pack?.discoveryAnswers || {}
+    const hasDiscovery = Object.values(disc).some((v) => String(v || '').trim())
+    newPage()
+    pageTitle(
+      'Project overview',
+      'Client, administration, and company background from discovery.'
+    )
+    if (hasDiscovery) {
+      if (disc.clientName || disc.primaryContact) {
+        kicker('Client')
+        if (disc.clientName) writeWrapped(disc.clientName, { size: 14, role: 'heading' })
+        if (disc.primaryContact)
+          writeWrapped(`Primary contact: ${disc.primaryContact}`, { size: 11 })
+      }
+      if (disc.startDeadline || disc.budgetRange) {
+        kicker('Administration')
+        if (disc.startDeadline)
+          writeWrapped(`Start & deadline: ${disc.startDeadline}`, { size: 11 })
+        if (disc.budgetRange)
+          writeWrapped(`Budget range: ${disc.budgetRange}`, { size: 11 })
+      }
+      if (disc.story) {
+        kicker('The story')
+        writeWrapped(disc.story, { size: 11 })
+      }
+      if (disc.offering) {
+        kicker('What they offer')
+        writeWrapped(disc.offering, { size: 11 })
+      }
+      if (disc.problem) {
+        kicker('The problem this solves')
+        writeWrapped(disc.problem, { size: 11 })
+      }
+      if (disc.coreValues) {
+        kicker('Core values')
+        writeWrapped(disc.coreValues, { size: 11 })
+      }
+      if (disc.usp) {
+        kicker('Unique selling proposition')
+        writeWrapped(disc.usp, { size: 11 })
+      }
+      if (disc.targetAudience || disc.audiencePains || disc.desiredFeeling) {
+        kicker('Target audience')
+        if (disc.targetAudience) writeWrapped(disc.targetAudience, { size: 11 })
+        if (disc.audiencePains)
+          writeWrapped(`Biggest frustration/desire: ${disc.audiencePains}`, { size: 11 })
+        if (disc.desiredFeeling)
+          writeWrapped(`Should feel: ${disc.desiredFeeling}`, { size: 11 })
+      }
+      if (disc.competitors) {
+        kicker('Competitors')
+        writeWrapped(disc.competitors, { size: 11 })
+      }
+    } else {
+      writeWrapped(
+        'No discovery brief answers yet — fill out the Discovery Brief (Define > Discovery brief) to populate this page.',
+        { size: 11, color: [140, 140, 140] }
+      )
+    }
+
+    // ═══════════════ PAGE 3 — Previous state ═══════════════
+    newPage()
+    pageTitle(
+      'Previous state',
+      "What existed before this project — kept assets, prior identity."
+    )
+    if (disc.existingAssets) {
+      kicker('Existing assets to keep')
+      writeWrapped(disc.existingAssets, { size: 12 })
+    } else {
+      writeWrapped(
+        'No previous brand assets logged yet — capture them in the Discovery Brief under "Existing assets to keep" (current logo, colors, photography to preserve).',
+        { size: 11, color: [140, 140, 140] }
+      )
+    }
+    if (disc.elementsToAvoid) {
+      kicker('Elements to avoid carrying forward')
+      writeWrapped(disc.elementsToAvoid, { size: 11 })
+    }
+
+    // ═══════════════ PAGE 4 — Positioning ═══════════════
     newPage()
     pageTitle(
       'Positioning · messaging · voice',
@@ -1696,7 +1780,7 @@ const writeWrapped = (
       writeWrapped(String(pack.deadline), { size: 11 })
     }
 
-    // ═══════════════ PAGE 3 — Color ═══════════════
+    // ═══════════════ PAGE 5 — Color ═══════════════
     newPage()
     pageTitle(
       'Color system',
@@ -1780,7 +1864,7 @@ const writeWrapped = (
       })
     }
 
-    // ═══════════════ PAGE 4 — Typography ═══════════════
+    // ═══════════════ PAGE 6 — Typography ═══════════════
     newPage()
     pageTitle(
       'Typography',
@@ -1823,7 +1907,7 @@ const writeWrapped = (
       color: [90, 90, 90],
     })
 
-    // ═══════════════ PAGE 5 — Logo lockups ═══════════════
+    // ═══════════════ PAGE 7 — Logo lockups ═══════════════
     newPage()
     pageTitle(
       'Logo lockups',
@@ -1942,7 +2026,7 @@ const writeWrapped = (
     })
     y += 48
 
-    // ═══════════════ PAGE 6 — Usage ═══════════════
+    // ═══════════════ PAGE 8 — Usage ═══════════════
     newPage()
     pageTitle('Usage', "Do and don't — ship rules, not vibes.")
     const doT = String(pack?.doUse || '').trim()
@@ -1975,7 +2059,7 @@ const writeWrapped = (
       })
     }
 
-    // ═══════════════ PAGE 7 — Imagery + Mood ═══════════════
+    // ═══════════════ PAGE 9 — Imagery + Mood ═══════════════
     newPage()
     pageTitle(
       'Imagery & mood',
@@ -2033,7 +2117,7 @@ const writeWrapped = (
       }
     }
 
-    // ═══════════════ PAGE 8 — Application mock + handoff ═══════════════
+    // ═══════════════ PAGE 10 — Application mock + handoff ═══════════════
     newPage()
     pageTitle(
       'Application mock',
