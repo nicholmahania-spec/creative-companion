@@ -11,6 +11,7 @@ import { Suspense, lazy, useMemo, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { normalizeLocale, t as i18nT } from '../lib/i18n'
 import { trackFeatureUsage } from '../lib/analytics'
+import HeaderIcon from '../components/HeaderIcon'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 
@@ -101,10 +102,12 @@ export default function DefineView(props) {
           />
           <button
             type="button"
-            className="btn btn-ghost btn-sm"
+            className="header-icon-btn"
             onClick={() => setActiveView('calendar')}
+            title="Calendar"
+            aria-label="Calendar"
           >
-            Calendar
+            <HeaderIcon name="calendar" />
           </button>
         </div>
         <button type="button" className="btn btn-primary" onClick={saveBrief}>
