@@ -373,10 +373,6 @@ function App() {
   const removeRunningTodoItem = useAppStore((s) => s.removeRunningTodoItem)
   const sortRunningTodo = useAppStore((s) => s.sortRunningTodo)
   const resetRunningTodoIfNewDay = useAppStore((s) => s.resetRunningTodoIfNewDay)
-  const assetAudit = activeProject?.assetAudit || []
-  const addAssetAuditItem = useAppStore((s) => s.addAssetAuditItem)
-  const updateAssetAuditItem = useAppStore((s) => s.updateAssetAuditItem)
-  const removeAssetAuditItem = useAppStore((s) => s.removeAssetAuditItem)
   const setHourlyRate = useAppStore((s) => s.setHourlyRate)
   const addTimeEntry = useAppStore((s) => s.addTimeEntry)
   const removeTimeEntry = useAppStore((s) => s.removeTimeEntry)
@@ -3071,7 +3067,6 @@ function App() {
         {journeyActive && (
           <BeforeAfterChip
             project={activeProject}
-            assetAudit={assetAudit}
             onOpen={() => setBeforeAfterOpen(true)}
           />
         )}
@@ -3609,10 +3604,6 @@ function App() {
               updateDetective={updateDetective}
               applyDetectiveToBrief={applyDetectiveToBrief}
               setProjectDeadline={setProjectDeadline}
-              assetAudit={assetAudit}
-              addAssetAuditItem={addAssetAuditItem}
-              updateAssetAuditItem={updateAssetAuditItem}
-              removeAssetAuditItem={removeAssetAuditItem}
               renameProject={renameProject}
               createNewProject={createNewProject}
               goSystemSection={goSystemSection}
@@ -3934,7 +3925,6 @@ function App() {
         open={beforeAfterOpen}
         onClose={() => setBeforeAfterOpen(false)}
         project={activeProject}
-        assetAudit={assetAudit}
       />
 
       {shortcutsOpen && (

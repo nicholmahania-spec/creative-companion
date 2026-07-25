@@ -17,7 +17,6 @@ import {
 } from '../lib/i18n'
 import { getDetectiveProgress } from '../lib/detectiveBrief'
 import { trackWorkflowTransition, trackFeatureUsage } from '../lib/analytics'
-import AssetAudit from '../components/AssetAudit'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 
@@ -35,10 +34,6 @@ export default function DefineView(props) {
     updateDetective,
     applyDetectiveToBrief,
     setProjectDeadline,
-    assetAudit = [],
-    addAssetAuditItem,
-    updateAssetAuditItem,
-    removeAssetAuditItem,
     renameProject,
     projectDeadline = '',
     quickInput = '',
@@ -159,20 +154,6 @@ export default function DefineView(props) {
                 Calendar
               </button>
             </div>
-          </div>
-
-          <div className="define-secondary">
-            <h2 className="define-section-title">Asset audit</h2>
-            <p className="define-section-hint">
-              Existing files you already have — mark what's usable, outdated, or missing.
-            </p>
-            <AssetAudit
-              items={assetAudit}
-              onAdd={addAssetAuditItem}
-              onUpdate={updateAssetAuditItem}
-              onRemove={removeAssetAuditItem}
-              flashToast={flashToast}
-            />
           </div>
 
           <div className="define-secondary field-block">
