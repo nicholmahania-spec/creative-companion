@@ -15408,6 +15408,103 @@ select:focus {
   border-top: 1px solid var(--ts-border, var(--border-subtle));
 }
 
+/* Discovery brief — merged project brief + client questionnaire */
+
+.discovery-brief-panel {
+  max-width: 40rem;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.discovery-brief-progress {
+  margin: 0 0 1rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.discovery-brief-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.discovery-brief-menu .btn {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.discovery-brief-back {
+  margin-bottom: 0.75rem;
+}
+
+.discovery-brief-hint {
+  margin: 0.15rem 0 0.4rem;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.discovery-brief-section {
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.9rem;
+}
+.discovery-brief-section > summary {
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.discovery-brief-call {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.discovery-brief-call-progress {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.discovery-brief-call-question {
+  margin: 0.2rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.discovery-brief-call-input {
+  margin-top: 0.5rem;
+}
+.discovery-brief-call-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.discovery-brief-handoff-block {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.discovery-brief-handoff-block:last-child {
+  border-bottom: none;
+}
+.discovery-brief-handoff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.discovery-brief-attach {
+  display: inline-flex;
+}
+.discovery-brief-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+}
+
 .journey-project-row {
   display: flex;
   align-items: center;

@@ -460,27 +460,6 @@ export default function DetectiveSheet({
         })}
       </div>
 
-      <div
-        className={`define-fab-bar path-continue-row${requiredReady ? ' is-ready' : ''}`}
-        role="region"
-        aria-label="Continue"
-      >
-        <button
-          type="button"
-          className={`define-fab btn btn-primary work-path-next${requiredReady ? ' is-ready' : ' is-quiet'}`}
-          onClick={() => {
-            if (!requiredReady) {
-              openNextIncomplete()
-              flashToast?.('Need * fields first')
-              return
-            }
-            applyDetectiveToBrief?.()
-            onContinue?.()
-          }}
-        >
-          {continueLabel}
-        </button>
-      </div>
     </div>
   )
 }

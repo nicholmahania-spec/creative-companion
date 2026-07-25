@@ -68,6 +68,37 @@ export function blankDetective() {
 }
 
 /**
+ * Compose the free-text brief from Detective Sheet answers. Pure function
+ * so it can run on every keystroke (updateDetective) as well as from the
+ * standalone applyDetectiveToBrief action, instead of only ever running
+ * when a "Next"/continue button happens to be clicked.
+ * @returns {string}
+ */
+export function composeBriefFromDetective(detective) {
+  const d = { ...blankDetective(), ...(detective || {}) }
+  const parts = []
+  if (d.goal?.trim()) parts.push(`Goal: ${d.goal.trim()}`)
+  if (d.audience?.trim()) parts.push(`Audience: ${d.audience.trim()}`)
+  if (d.feel?.trim()) parts.push(`Feel: ${d.feel.trim()}`)
+  if (d.mustHaves?.trim()) parts.push(`Must-haves: ${d.mustHaves.trim()}`)
+  if (d.niceToHaves?.trim())
+    parts.push(`Nice-to-haves: ${d.niceToHaves.trim()}`)
+  if (d.format?.trim()) parts.push(`Format / constraint: ${d.format.trim()}`)
+  if (d.avoid?.trim()) parts.push(`Avoid: ${d.avoid.trim()}`)
+  if (d.deliverables?.trim())
+    parts.push(`Deliverables: ${d.deliverables.trim()}`)
+  if (d.technical?.trim()) parts.push(`Technical: ${d.technical.trim()}`)
+  if ((d.milestones || []).length) {
+    const ms = d.milestones
+      .filter((m) => m.label?.trim())
+      .map((m) => `${m.label.trim()}${m.date ? ` (${m.date})` : ''}`)
+      .join(', ')
+    if (ms) parts.push(`Milestones: ${ms}`)
+  }
+  return parts.join('\n\n')
+}
+
+/**
  * Default brand identity template fields on each project.
  * Factory so every project gets fresh nested objects (detective,
  * conceptPackage, colorRoleWhy, deliverWordsChecked) — never shared refs.
@@ -169,6 +200,10 @@ export function createBlankProject(name = 'My project', brief = '') {
     /** Lightweight hours/invoice tracking — hourly rate + logged entries */
     hourlyRate: '',
     timeLog: [],
+    /** Client discovery brief (pre-Define): answers keyed by field id,
+     *  plus an optional completed-form file the client sent back. */
+    discoveryAnswers: {},
+    discoveryUpload: null,
   }
 }
 
@@ -345,7 +380,8 @@ const useAppStore = create(
           projects: state.projects.map((p) => {
             if (p.id !== state.currentProjectId) return p
             const det = { ...blankDetective(), ...(p.detective || {}), [field]: value }
-            return { ...p, detective: det }
+            const brief = composeBriefFromDetective(det)
+            return { ...p, detective: det, brief: brief || p.brief }
           }),
         })),
 
@@ -359,7 +395,9 @@ const useAppStore = create(
               ...(det.milestones || []),
               { id: Date.now(), label: label || '', date: date || '' },
             ]
-            return { ...p, detective: { ...det, milestones } }
+            const nextDet = { ...det, milestones }
+            const brief = composeBriefFromDetective(nextDet)
+            return { ...p, detective: nextDet, brief: brief || p.brief }
           }),
         })),
 
@@ -371,7 +409,9 @@ const useAppStore = create(
             const milestones = (det.milestones || []).map((m) =>
               m.id === id ? { ...m, [field]: value } : m
             )
-            return { ...p, detective: { ...det, milestones } }
+            const nextDet = { ...det, milestones }
+            const brief = composeBriefFromDetective(nextDet)
+            return { ...p, detective: nextDet, brief: brief || p.brief }
           }),
         })),
 
@@ -386,33 +426,14 @@ const useAppStore = create(
         })),
 
       /** Compose free brief from detective sheet answers */
+      /** @deprecated brief now auto-syncs from updateDetective(); kept for
+       *  any external callers wanting an explicit one-shot recompute. */
       applyDetectiveToBrief: () => {
         const state = get()
         const p = state.projects.find((x) => x.id === state.currentProjectId)
         if (!p) return { ok: false }
-        const d = { ...blankDetective(), ...(p.detective || {}) }
-        const parts = []
-        if (d.goal?.trim()) parts.push(`Goal: ${d.goal.trim()}`)
-        if (d.audience?.trim()) parts.push(`Audience: ${d.audience.trim()}`)
-        if (d.feel?.trim()) parts.push(`Feel: ${d.feel.trim()}`)
-        if (d.mustHaves?.trim()) parts.push(`Must-haves: ${d.mustHaves.trim()}`)
-        if (d.niceToHaves?.trim())
-          parts.push(`Nice-to-haves: ${d.niceToHaves.trim()}`)
-        if (d.format?.trim()) parts.push(`Format / constraint: ${d.format.trim()}`)
-        if (d.avoid?.trim()) parts.push(`Avoid: ${d.avoid.trim()}`)
-        if (d.deliverables?.trim())
-          parts.push(`Deliverables: ${d.deliverables.trim()}`)
-        if (d.technical?.trim())
-          parts.push(`Technical: ${d.technical.trim()}`)
-        if ((d.milestones || []).length) {
-          const ms = d.milestones
-            .filter((m) => m.label?.trim())
-            .map((m) => `${m.label.trim()}${m.date ? ` (${m.date})` : ''}`)
-            .join(', ')
-          if (ms) parts.push(`Milestones: ${ms}`)
-        }
-        if (!parts.length) return { ok: false, error: 'Fill detective fields first' }
-        const brief = parts.join('\n\n')
+        const brief = composeBriefFromDetective(p.detective)
+        if (!brief) return { ok: false, error: 'Fill detective fields first' }
         set({
           projects: state.projects.map((proj) =>
             proj.id === state.currentProjectId ? { ...proj, brief } : proj
@@ -745,6 +766,25 @@ const useAppStore = create(
             if (p.id !== state.currentProjectId) return p
             return { ...p, timeLog: (p.timeLog || []).filter((t) => t.id !== id) }
           }),
+        })),
+
+      /** Client discovery brief — merged project-brief + questionnaire */
+      updateDiscoveryField: (fieldId, value) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              discoveryAnswers: { ...(p.discoveryAnswers || {}), [fieldId]: value },
+            }
+          }),
+        })),
+
+      setDiscoveryUpload: (upload) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId ? { ...p, discoveryUpload: upload } : p
+          ),
         })),
 
       /** Partial update of brand identity template fields */

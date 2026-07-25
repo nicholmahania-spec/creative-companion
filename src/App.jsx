@@ -114,6 +114,7 @@ import {
 import LogoLockup from './components/LogoLockup'
 import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
 import { HoursInvoicePanel } from './components/HoursInvoice'
+import { DiscoveryBriefPanel } from './components/DiscoveryBrief'
 import { guessRunningTodoStage } from './lib/runningTodoStages'
 import {
   normalizeLocale,
@@ -271,6 +272,7 @@ function App() {
   const [runningTodoPromptOpen, setRunningTodoPromptOpen] = useState(false)
   const [runningTodoPanelOpen, setRunningTodoPanelOpen] = useState(false)
   const [hoursPanelOpen, setHoursPanelOpen] = useState(false)
+  const [discoveryPanelOpen, setDiscoveryPanelOpen] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
   const [commandActiveIdx, setCommandActiveIdx] = useState(0)
@@ -373,6 +375,8 @@ function App() {
   const setHourlyRate = useAppStore((s) => s.setHourlyRate)
   const addTimeEntry = useAppStore((s) => s.addTimeEntry)
   const removeTimeEntry = useAppStore((s) => s.removeTimeEntry)
+  const updateDiscoveryField = useAppStore((s) => s.updateDiscoveryField)
+  const setDiscoveryUpload = useAppStore((s) => s.setDiscoveryUpload)
 
   // Every time a project is opened: clear yesterday's completed to-dos (if
   // the day rolled over) and prompt for anything to add to the running list.
@@ -2912,6 +2916,17 @@ function App() {
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
+                      setDiscoveryPanelOpen(true)
+                      setMoreOpen(false)
+                    }}
+                  >
+                    Discovery brief
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
                       setActiveView('insights')
                       setMoreOpen(false)
                     }}
@@ -4209,6 +4224,16 @@ function App() {
         onSetRate={setHourlyRate}
         onAddEntry={addTimeEntry}
         onRemoveEntry={removeTimeEntry}
+        flashToast={flashToast}
+      />
+      <DiscoveryBriefPanel
+        open={discoveryPanelOpen}
+        onClose={() => setDiscoveryPanelOpen(false)}
+        answers={activeProject?.discoveryAnswers || {}}
+        onUpdateField={updateDiscoveryField}
+        clientName={activeProject?.name || ''}
+        upload={activeProject?.discoveryUpload || null}
+        onSetUpload={setDiscoveryUpload}
         flashToast={flashToast}
       />
 
