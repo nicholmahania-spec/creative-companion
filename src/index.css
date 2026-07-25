@@ -16417,6 +16417,29 @@ select:focus {
   }
 }
 
+/* Desktop: title-row shrink-wraps, so Save sits right next to the title
+   instead of on the right where Deadline already lives. Unwrap the row
+   and push Save to the far right, after Deadline. */
+@media (min-width: 641px) {
+  .define-dashboard .brand-template-top {
+    justify-content: flex-start;
+  }
+
+  .define-dashboard .define-title-row {
+    display: contents;
+  }
+
+  .define-dashboard .define-deadline-inline {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .define-dashboard .define-title-row .btn-primary {
+    order: 3;
+    margin-left: 0.75rem;
+  }
+}
+
 .pull-refresh-indicator {
   position: fixed;
   top: 0.5rem;
