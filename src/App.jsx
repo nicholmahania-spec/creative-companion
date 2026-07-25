@@ -112,6 +112,7 @@ import {
   slugifyFilename,
 } from './lib/exportFiles'
 import LogoLockup from './components/LogoLockup'
+import StepDependencyReminder from './components/StepDependencyReminder'
 import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
 import { HoursInvoicePanel } from './components/HoursInvoice'
 import { DiscoveryBriefPanel } from './components/DiscoveryBrief'
@@ -3469,6 +3470,7 @@ function App() {
         {/* ===== SKETCH (lazy) ===== */}
         {activeView === 'flow' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Sketch…</div>}>
+            <StepDependencyReminder stepId="sketch" stepLabel="Sketch" />
             <SketchView
               locale={locale}
               navDir={navDir}
@@ -3522,6 +3524,7 @@ function App() {
         {/* ===== RESEARCH (lazy) ===== */}
         {activeView === 'studio' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Research…</div>}>
+            <StepDependencyReminder stepId="research" stepLabel="Research" />
             <ResearchView
               locale={locale}
               navDir={navDir}
@@ -3546,6 +3549,7 @@ function App() {
         {/* ===== SPARK (lazy) ===== */}
         {activeView === 'spark' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
+            <StepDependencyReminder stepId="ideate" stepLabel="Ideate" />
             <SparkView
               setActiveView={setActiveView}
               nextTask={nextTask}
@@ -3636,6 +3640,7 @@ function App() {
         {/* ===== DESIGN (lazy) ===== */}
         {activeView === 'brand' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Design…</div>}>
+            <StepDependencyReminder stepId="design" stepLabel="Design" />
             <DesignView
               locale={locale}
               navDir={navDir}
@@ -3655,6 +3660,7 @@ function App() {
         {/* ===== REVIEW (lazy) ===== */}
         {activeView === 'review' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Review…</div>}>
+            <StepDependencyReminder stepId="review" stepLabel="Review" />
             <ReviewView
               locale={locale}
               navDir={navDir}
@@ -3681,6 +3687,7 @@ function App() {
         {/* ===== DELIVER (lazy) ===== */}
         {activeView === 'finish' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Deliver…</div>}>
+            <StepDependencyReminder stepId="deliver" stepLabel="Deliver" />
             <DeliverView
               locale={locale}
               navDir={navDir}

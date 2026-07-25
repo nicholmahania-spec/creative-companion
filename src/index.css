@@ -15938,3 +15938,30 @@ select:focus {
   box-shadow: none !important;
   filter: none !important;
 }
+
+.step-dependency-reminder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.step-dependency-reminder-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.step-dependency-reminder-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.step-dependency-reminder-fields .field-input {
+  flex: 1 1 200px;
+}
