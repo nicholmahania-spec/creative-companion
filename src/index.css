@@ -15317,12 +15317,6 @@ select:focus {
   max-width: 26rem;
 }
 
-.running-todo-prompt-hint {
-  margin: 0 0 0.75rem;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
 .running-todo-prompt-added {
   list-style: none;
   margin: 0.6rem 0 0;
@@ -15340,6 +15334,7 @@ select:focus {
 .running-todo-prompt-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 0.5rem;
   margin-top: 0.85rem;
 }
 

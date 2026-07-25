@@ -6,8 +6,11 @@
 import { useState } from 'react'
 import { RUNNING_TODO_STAGES } from '../lib/runningTodoStages'
 
-/** Centered "anything to add?" popup — shown on opening a project. */
+/** Centered "anything to add?" popup — shown on opening a project.
+ * Opens as a plain yes/no question; the input only appears after "Yes"
+ * (recognition, not recall/generation, at the highest-friction moment). */
 export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel }) {
+  const [answered, setAnswered] = useState(false)
   const [text, setText] = useState('')
   const [added, setAdded] = useState([])
 
@@ -21,6 +24,17 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel }) {
     setText('')
   }
 
+  const close = () => {
+    // Never silently drop something half-typed.
+    const trimmed = text.trim()
+    if (trimmed) {
+      onAdd(trimmed)
+      setText('')
+    }
+    setAnswered(false)
+    onClose()
+  }
+
   return (
     <div
       className="export-overlay running-todo-prompt-overlay"
@@ -28,47 +42,54 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel }) {
       aria-modal="true"
       aria-labelledby="running-todo-prompt-title"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
+        if (e.target === e.currentTarget) close()
       }}
     >
       <div className="export-panel running-todo-prompt-panel">
         <div className="export-panel-header">
           <h3 id="running-todo-prompt-title" style={{ margin: 0 }}>
-            Anything to add to your to-do list?
+            Anything to add?
           </h3>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
-            ×
-          </button>
         </div>
-        <p className="running-todo-prompt-hint">
-          Jot it down now — you can sort it into {stageLabel || 'your workflow'} later.
-        </p>
-        <div className="capture-row">
-          <input
-            autoFocus
-            className="field-input"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submit()}
-            placeholder="e.g. Pick a font pairing"
-            aria-label="New to-do item"
-          />
-          <button type="button" className="btn btn-secondary" onClick={submit} disabled={!text.trim()}>
-            Add
-          </button>
-        </div>
-        {added.length > 0 && (
-          <ul className="running-todo-prompt-added">
-            {added.map((t, i) => (
-              <li key={i}>{t}</li>
-            ))}
-          </ul>
+
+        {!answered ? (
+          <div className="running-todo-prompt-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setAnswered(true)}>
+              Yes
+            </button>
+            <button type="button" className="btn btn-primary" onClick={close}>
+              Not now
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="capture-row">
+              <input
+                autoFocus
+                className="field-input"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submit()}
+                aria-label="New to-do item"
+              />
+              <button type="button" className="btn btn-secondary" onClick={submit} disabled={!text.trim()}>
+                Add
+              </button>
+            </div>
+            {added.length > 0 && (
+              <ul className="running-todo-prompt-added">
+                {added.map((t, i) => (
+                  <li key={i}>{t}</li>
+                ))}
+              </ul>
+            )}
+            <div className="running-todo-prompt-actions">
+              <button type="button" className="btn btn-primary" onClick={close}>
+                Done
+              </button>
+            </div>
+          </>
         )}
-        <div className="running-todo-prompt-actions">
-          <button type="button" className="btn btn-primary" onClick={onClose}>
-            Done
-          </button>
-        </div>
       </div>
     </div>
   )
