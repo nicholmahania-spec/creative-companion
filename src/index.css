@@ -10537,6 +10537,10 @@ body:has(.app.deep)::after {
   align-items: start;
 }
 
+.define-fields[hidden] {
+  display: none;
+}
+
 .define-field[data-span="full"] {
   grid-column: 1 / -1;
 }
