@@ -320,6 +320,7 @@ function App() {
   const [actionToast, setActionToast] = useState('')
   const toastBatchRef = useRef([])
   const toastBatchTimerRef = useRef(null)
+  const toastTimeoutId = useRef(null)
   const [stepFocusKey, setStepFocusKey] = useState(0)
   const [stepDueOpen, setStepDueOpen] = useState(false)
   const [projectNameDraft, setProjectNameDraft] = useState('')
@@ -614,6 +615,11 @@ function App() {
   /** @param {string} msg @param {{ micro?: boolean, important?: boolean }} [opts] */
   const flashToast = (msg, opts = {}) => {
     if (!msg) return
+    // Clear any existing timeout to prevent accumulation
+    if (toastTimeoutId.current !== null) {
+      window.clearTimeout(toastTimeoutId.current)
+      toastTimeoutId.current = null
+    }
     // Quiet (default): skip micro successes; always show important/errors
     if (toastMode === 'quiet' && opts.micro && !opts.important) return
     if (toastBatchWindow > 0 && !opts.important) {
@@ -626,12 +632,12 @@ function App() {
         const shown =
           batched.length > 1 ? `${batched[0]} · +${batched.length - 1} more` : batched[0]
         setActionToast(shown)
-        window.setTimeout(() => setActionToast(''), toastDuration(shown))
+        toastTimeoutId.current = window.setTimeout(() => setActionToast(''), toastDuration(shown))
       }, toastBatchWindow * 1000)
       return
     }
     setActionToast(msg)
-    window.setTimeout(() => setActionToast(''), toastDuration(msg))
+    toastTimeoutId.current = window.setTimeout(() => setActionToast(''), toastDuration(msg))
   }
 
   /** Micro feedback — only when user enables “All toasts” */
@@ -1827,6 +1833,7 @@ function App() {
     })
 
   const openExportPanel = () => {
+    setExportLoading(true)
     const pack = buildCurrentBrandPack()
     setExportPanel({
       ...pack,
@@ -1863,6 +1870,7 @@ function App() {
           : i18nT(locale, 'ui.leaveBehindSaved'),
         { important: true }
       )
+      setExportLoading(false)
     }
 
     // Capture File System Access handle WHILE we still have the user-gesture.

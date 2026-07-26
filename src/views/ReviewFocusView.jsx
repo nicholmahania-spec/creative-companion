@@ -87,38 +87,6 @@ export default function ReviewFocusView({
         stepCount={3}
         showPreviewDrawer={true}
         onExit={exitFocus}
-        drawerContent={
-          <Suspense fallback={
-            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
-              <div className="space-y-4">
-                <div className="h-4 w-32 bg-border rounded"></div>
-                <div className="h-4 w-24 bg-border rounded"></div>
-                <div className="h-4 w-40 bg-border rounded"></div>
-              </div>
-            </div>
-          }>
-            <ReviewPreview
-              activeProject={activeProject}
-              buildCurrentBrandPack={buildCurrentBrandPack}
-              clearedNotes={clearedNotes}
-              noteLines={noteLines}
-              skippedGaps={skippedGaps}
-              translating={translating}
-              translation={translation}
-              aiReady={aiReady}
-              runTranslate={runTranslate}
-              packSnap={packSnap}
-              ready={ready}
-              goSystemSection={goSystemSection}
-              setSkippedGaps={setSkippedGaps}
-              setTranslating={setTranslating}
-              setTranslation={setTranslation}
-              updateBrandField={updateBrandField}
-              setClearedNotes={setClearedNotes}
-              setStrike={setStrike}
-            />
-          </Suspense>
-        }
       >
         <div className="focus-card">
           <p id="review-intent-prompt" className="focus-prompt">What do you want to accomplish in your review session?</p>
@@ -151,19 +119,9 @@ export default function ReviewFocusView({
             </Button>
           </div>
         </div>
-      </FocusShell>
-    )
-  }
 
-  if (currentNote) {
-    return (
-      <FocusShell
-        stepLabel="06 // Review"
-        stepIndex={1 + clearedNotes}
-        stepCount={3}
-        showPreviewDrawer={true}
-        onExit={exitFocus}
-        drawerContent={
+        {/* Preview drawer moved outside FocusShell to avoid nesting */}
+        <div style={{ position: 'fixed', top: 0, right: 0, height: '100%', width: '300px', maxWidth: '90vw' }}>
           <Suspense fallback={
             <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
               <div className="space-y-4">
@@ -194,64 +152,112 @@ export default function ReviewFocusView({
               setStrike={setStrike}
             />
           </Suspense>
-        }
-      >
-        <FocusCard cardKey={currentNote}>
-          <p className="focus-hint">Note {clearedNotes + 1} of {clearedNotes + noteLines.length}</p>
-          <p
-            className="focus-prompt"
-            style={{
-              textDecoration: strike ? 'line-through' : 'none',
-              color: strike ? 'var(--text-muted)' : 'var(--text-primary)',
-              transition: 'color 180ms, text-decoration-color 180ms',
-            }}
-          >
-            {currentNote.replace(/^•\s*/, '')}
-          </p>
-
-          {aiReady ? (
-            <>
-              <div className="focus-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  disabled={translating}
-                  onClick={() => runTranslate(currentNote.replace(/^•\s*/, ''))}
-                >
-                  {translating ? 'Translating…' : 'Translate to checklist'}
-                </button>
-              </div>
-              {translation?.ok && translation.ambiguous && (
-                <p className="focus-hint" style={{ color: 'var(--dopamine, #3D5AFE)' }}>
-                  ⚠ Ambiguous feedback — consider asking for clarification
-                </p>
-              )}
-              {translation?.ok && translation.tasks.length > 0 && (
-                <ul style={{ margin: '0.75rem 0 0', padding: 0, listStyle: 'none' }}>
-                  {translation.tasks.map((t) => (
-                    <li key={t} className="focus-hint" style={{ color: 'var(--text-primary)' }}>
-                      ☐ {t}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {translation && !translation.ok && (
-                <p className="focus-hint">Couldn't translate that one — address it as-is.</p>
-              )}
-            </>
-          ) : (
-            <p className="focus-hint">
-              AI translation isn't set up yet — this line is just the raw note.
-            </p>
-          )}
-
-          <div className="focus-actions">
-            <button type="button" className="btn btn-primary" onClick={() => clearNote(currentNote)}>
-              Addressed
-            </button>
-          </div>
-        </FocusCard>
+        </div>
       </FocusShell>
+    )
+  }
+
+  if (currentNote) {
+    return (
+      <>
+        <FocusShell
+          stepLabel="06 // Review"
+          stepIndex={1 + clearedNotes}
+          stepCount={3}
+          showPreviewDrawer={true}
+          onExit={exitFocus}
+        >
+          <FocusCard cardKey={currentNote}>
+            <p className="focus-hint">Note {clearedNotes + 1} of {clearedNotes + noteLines.length}</p>
+            <p
+              className="focus-prompt"
+              style={{
+                textDecoration: strike ? 'line-through' : 'none',
+                color: strike ? 'var(--text-muted)' : 'var(--text-primary)',
+                transition: 'color 180ms, text-decoration-color 180ms',
+              }}
+            >
+              {currentNote.replace(/^•\s*/, '')}
+            </p>
+
+            {aiReady ? (
+              <>
+                <div className="focus-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    disabled={translating}
+                    onClick={() => runTranslate(currentNote.replace(/^•\s*/, ''))}
+                  >
+                    {translating ? 'Translating…' : 'Translate to checklist'}
+                  </button>
+                </div>
+                {translation?.ok && translation.ambiguous && (
+                  <p className="focus-hint" style={{ color: 'var(--dopamine, #3D5AFE)' }}>
+                    ⚠ Ambiguous feedback — consider asking for clarification
+                  </p>
+                )}
+                {translation?.ok && translation.tasks.length > 0 && (
+                  <ul style={{ margin: '0.75rem 0 0', padding: 0, listStyle: 'none' }}>
+                    {translation.tasks.map((t) => (
+                      <li key={t} className="focus-hint" style={{ color: 'var(--text-primary)' }}>
+                        ☐ {t}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {translation && !translation.ok && (
+                  <p className="focus-hint">Couldn't translate that one — address it as-is.</p>
+                )}
+              </>
+            ) : (
+              <p className="focus-hint">
+                AI translation isn't set up yet — this line is just the raw note.
+              </p>
+            )}
+
+            <div className="focus-actions">
+              <button type="button" className="btn btn-primary" onClick={() => clearNote(currentNote)}>
+                Addressed
+              </button>
+            </div>
+          </FocusCard>
+        </FocusShell>
+
+        {/* Preview drawer moved outside FocusShell to avoid nesting */}
+        <div style={{ position: 'fixed', top: 0, right: 0, height: '100%', width: '300px', maxWidth: '90vw' }}>
+          <Suspense fallback={
+            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-border rounded"></div>
+                <div className="h-4 w-24 bg-border rounded"></div>
+                <div className="h-4 w-40 bg-border rounded"></div>
+              </div>
+            </div>
+          }>
+            <ReviewPreview
+              activeProject={activeProject}
+              buildCurrentBrandPack={buildCurrentBrandPack}
+              clearedNotes={clearedNotes}
+              noteLines={noteLines}
+              skippedGaps={skippedGaps}
+              translating={translating}
+              translation={translation}
+              aiReady={aiReady}
+              runTranslate={runTranslate}
+              packSnap={packSnap}
+              ready={ready}
+              goSystemSection={goSystemSection}
+              setSkippedGaps={setSkippedGaps}
+              setTranslating={setTranslating}
+              setTranslation={setTranslation}
+              updateBrandField={updateBrandField}
+              setClearedNotes={setClearedNotes}
+              setStrike={setStrike}
+            />
+          </Suspense>
+        </div>
+      </>
     )
   }
 
@@ -259,13 +265,34 @@ export default function ReviewFocusView({
 
   if (currentGap) {
     return (
-      <FocusShell
-        stepLabel="06 // Review"
-        stepIndex={2}
-        stepCount={3}
-        showPreviewDrawer={true}
-        onExit={exitFocus}
-        drawerContent={
+      <>
+        <FocusShell
+          stepLabel="06 // Review"
+          stepIndex={2}
+          stepCount={3}
+          showPreviewDrawer={true}
+          onExit={exitFocus}
+        >
+          <FocusCard cardKey={currentGap.id}>
+            <p className="focus-hint">Gap</p>
+            <p className="focus-prompt">{currentGap.label}</p>
+            <div className="focus-actions">
+              <button type="button" className="btn btn-primary" onClick={() => jumpGap(currentGap)}>
+                Fix now
+              </button>
+              <button
+                type="button"
+                className="focus-skip-btn"
+                onClick={() => setSkippedGaps((s) => new Set(s).add(currentGap.id))}
+              >
+                Skip
+              </button>
+            </div>
+          </FocusCard>
+        </FocusShell>
+
+        {/* Preview drawer moved outside FocusShell to avoid nesting */}
+        <div style={{ position: 'fixed', top: 0, right: 0, height: '100%', width: '300px', maxWidth: '90vw' }}>
           <Suspense fallback={
             <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
               <div className="space-y-4">
@@ -296,42 +323,61 @@ export default function ReviewFocusView({
               setStrike={setStrike}
             />
           </Suspense>
-        }
-      >
-        <FocusCard cardKey={currentGap.id}>
-          <p className="focus-hint">Gap</p>
-          <p className="focus-prompt">{currentGap.label}</p>
-          <div className="focus-actions">
-            <button type="button" className="btn btn-primary" onClick={() => jumpGap(currentGap)}>
-              Fix now
-            </button>
-            <button
-              type="button"
-              className="focus-skip-btn"
-              onClick={() => setSkippedGaps((s) => new Set(s).add(currentGap.id))}
-            >
-              Skip
-            </button>
-          </div>
-        </FocusCard>
-      </FocusShell>
+        </div>
+      </>
     )
   }
 
   return (
-    <FocusShell stepLabel="06 // Review" stepIndex={3} stepCount={3} onExit={exitFocus}>
-      <div className="focus-card" style={{ textAlign: 'center' }}>
-        <p className="focus-prompt">All caught up</p>
-        <div className="focus-actions" style={{ justifyContent: 'center' }}>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setActiveView?.('finish')}
-          >
-            Next · Deliver
-          </Button>
+    <>
+      <FocusShell stepLabel="06 // Review" stepIndex={3} stepCount={3} onExit={exitFocus}>
+        <div className="focus-card" style={{ textAlign: 'center' }}>
+          <p className="focus-prompt">All caught up</p>
+          <div className="focus-actions" style={{ justifyContent: 'center' }}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setActiveView?.('finish')}
+            >
+              Next · Deliver
+            </Button>
+          </div>
         </div>
+      </FocusShell>
+
+      {/* Preview drawer moved outside FocusShell to avoid nesting */}
+      <div style={{ position: 'fixed', top: 0, right: 0, height: '100%', width: '300px', maxWidth: '90vw' }}>
+        <Suspense fallback={
+          <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
+            <div className="space-y-4">
+              <div className="h-4 w-32 bg-border rounded"></div>
+              <div className="h-4 w-24 bg-border rounded"></div>
+              <div className="h-4 w-40 bg-border rounded"></div>
+            </div>
+          </div>
+        }>
+          <ReviewPreview
+            activeProject={activeProject}
+            buildCurrentBrandPack={buildCurrentBrandPack}
+            clearedNotes={clearedNotes}
+            noteLines={noteLines}
+            skippedGaps={skippedGaps}
+            translating={translating}
+            translation={translation}
+            aiReady={aiReady}
+            runTranslate={runTranslate}
+            packSnap={packSnap}
+            ready={ready}
+            goSystemSection={goSystemSection}
+            setSkippedGaps={setSkippedGaps}
+            setTranslating={setTranslating}
+            setTranslation={setTranslation}
+            updateBrandField={updateBrandField}
+            setClearedNotes={setClearedNotes}
+            setStrike={setStrike}
+          />
+        </Suspense>
       </div>
-    </FocusShell>
+    </>
   )
 }
