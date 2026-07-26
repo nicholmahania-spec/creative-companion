@@ -2509,7 +2509,8 @@ h3 {
 }
 
 .desk-snapshot li.is-done {
-  opacity: 0.45;
+  /* Solid muted token, not opacity: 0.45 composited to 2.85:1. */
+  color: var(--text-muted);
   text-decoration: line-through;
   text-decoration-color: var(--text-muted);
 }
@@ -5690,6 +5691,10 @@ html[data-reduce-motion='true'] *::after {
 .autosave-chip {
   position: fixed;
   top: 1rem;
+  /* Explicit inset: with no left/right, a fixed element keeps its static
+   * position — here that meant an arbitrary implicit grid cell, overlapping
+   * header chrome. */
+  right: 1rem;
   z-index: var(--z-overlay);
   z-index: 150;
   background: var(--text-primary);
@@ -6168,7 +6173,8 @@ body.cc-printing-page button {
 
 @media (prefers-reduced-motion: reduce) {
 .studio-mate-avatar,
-  .autosave-chip {
+  .autosave-chip,
+  .define-chapter {
     animation: none;
   }
 
@@ -7570,7 +7576,7 @@ body.cc-printing-page button {
 
 .sketch-now .step-focus-title:focus,
 .sketch-now .field-input:focus {
-  border-bottom-color: #606060 !important;
+  border-bottom-color: var(--dopamine) !important;
   box-shadow: none !important;
   outline: none !important;
 }
@@ -10479,7 +10485,6 @@ body:has(.app.deep)::after {
 
 .define-input.field-input::placeholder {
   color: var(--text-muted);
-  opacity: 0.85;
 }
 
 .define-input.field-input:focus {
@@ -10652,8 +10657,9 @@ body:has(.app.deep)::after {
   letter-spacing: 0.04em;
   background: none;
   padding: 0;
-  color: inherit;
-  opacity: 0.6;
+  /* The chapter numbers are the page's wayfinding device — at 0.6 opacity
+   * they composited to 2.5:1, the faintest marks on the screen. */
+  color: var(--text-secondary);
 }
 
 /* min-width: 0 is load-bearing, not defensive. A flex item's default
@@ -10679,14 +10685,17 @@ body:has(.app.deep)::after {
   font-size: var(--fs-1);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  opacity: 0.75;
+  /* Solid token, no opacity: stacking opacity on --text-secondary (itself
+   * rgba) composited to ~3.4:1, under the 4.5:1 floor by a route the
+   * typography test can't see. */
+  color: var(--text-secondary);
 }
 
 /* Deliberately quieter than the x/y count: it's reassurance, not a target. */
 .define-chapter-tab-need {
   font-weight: 500;
   font-variant-numeric: normal;
-  opacity: 0.8;
+  color: var(--text-muted);
 }
 
 /* The 560px block that used to live here restacked the rail to one column and
@@ -12600,14 +12609,26 @@ body:has(.app.deep)::after {
 .define-studio .field-input {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1.5px solid var(--ts-border, var(--border-strong)) !important;
+  /* --field-line, not --ts-border: the divider grey measured 1.13:1 against
+   * the canvas, so an empty field was indistinguishable from blank page.
+   * A control boundary needs the 3:1 non-text floor. */
+  border-bottom: 1.5px solid var(--field-line) !important;
   color: var(--ts-ink, #1A1A1A) !important;
 }
 
 .define-input.field-input:focus {
-  border-bottom-color: #606060 !important;
+  /* Theme token, not a literal: the hardcoded light-grey failed 3:1 in dark
+   * mode; 2px makes focus findable on a 30-field borderless form. */
+  border-bottom-color: var(--dopamine) !important;
+  border-bottom-width: 2px !important;
   box-shadow: none !important;
   outline: none;
+}
+
+/* Keyboard focus must survive the outline suppression above. */
+.define-input.field-input:focus-visible {
+  outline: 2px solid var(--dopamine) !important;
+  outline-offset: 2px;
 }
 
 /* Login solo card */
@@ -13269,6 +13290,13 @@ select:focus {
    * the field being typed — de-emphasise them, never make them illegible. */
   --focus-mask-opacity: 0.6;
   --focus-mask-blur: 0px;
+  /* Form-control boundary — clears the 3:1 non-text floor on the canvas,
+   * unlike the divider greys (--border-subtle composited at 1.13:1). */
+  --field-line: #8A8A8A;
+}
+
+.app.deep {
+  --field-line: #7A7A7A;
 }
 
 .journey-sidebar {
@@ -15086,7 +15114,9 @@ select:focus {
 }
 .define-chapter-caret {
   flex: 0 0 auto;
-  color: #A1A1A1;
+  /* Theme token: #A1A1A1 was 2.4:1, and this caret is the only expand cue
+   * on mobile chapter headers (3:1 non-text floor). */
+  color: var(--text-secondary);
   font-size: var(--fs-2);
 }
 
@@ -16375,6 +16405,13 @@ select:focus {
   padding: 0.25rem;
   cursor: pointer;
   color: var(--text-secondary);
+  /* 44px touch target — was ~26px, and it's the only calendar route here. */
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border-radius: var(--radius);
+}
+.header-icon-btn:hover {
+  background: var(--bg-muted);
 }
 
 .header-icon-btn:hover {
@@ -16504,7 +16541,9 @@ select:focus {
 }
 
 .define-start-here-list .btn {
-  min-height: 40px;
+  /* 44px: the page's primary anti-stall control is also its most-tapped
+   * element on a phone — it must be the easiest thing to hit, not 40px. */
+  min-height: 2.75rem;
 }
 
 .define-start-here.is-done .define-start-here-title {

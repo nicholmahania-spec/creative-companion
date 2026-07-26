@@ -18,6 +18,12 @@ import {
 
 export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 
+/** Smooth scrolling is a vestibular trigger for some users; honor the OS pref. */
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+
 export default function DetectiveSheet({
   detective = {},
   updateDetective,
@@ -75,7 +81,7 @@ export default function DetectiveSheet({
       requestAnimationFrame(() => {
         const el = document.getElementById(`detective-${fieldId}`)
         if (!el) return
-        el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        el.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
         el.focus()
       })
     },
@@ -135,7 +141,7 @@ export default function DetectiveSheet({
                 <button
                   key={f.id}
                   type="button"
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary"
                   onClick={() => jumpToField(f.id, f.chapterId)}
                 >
                   {f.label}
@@ -171,7 +177,7 @@ export default function DetectiveSheet({
                     requestAnimationFrame(() => {
                       document
                         .getElementById(`define-chapter-content-${ch.id}`)
-                        ?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+                        ?.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
                     })
                   }
                 }}
@@ -234,7 +240,7 @@ export default function DetectiveSheet({
                   aria-controls={`define-chapter-fields-${ch.id}`}
                 >
                   <span className="define-chapter-badge">{ch.num}</span>
-                  <h3 className="define-chapter-title">{ch.title}</h3>
+                  <h2 className="define-chapter-title">{ch.title}</h2>
                   {st?.complete && (
                     <span className="define-chapter-done-chip" aria-label="Complete">
                       ✓
@@ -248,7 +254,7 @@ export default function DetectiveSheet({
                 <header className="define-chapter-head">
                   <span className="define-chapter-badge">{ch.num}</span>
                   <div>
-                    <h3 className="define-chapter-title">{ch.title}</h3>
+                    <h2 className="define-chapter-title">{ch.title}</h2>
                   </div>
                   {st?.complete && (
                     <span className="define-chapter-done-chip" aria-label="Complete">

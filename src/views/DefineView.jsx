@@ -150,11 +150,18 @@ export default function DefineView(props) {
             id="proj-deadline-field"
             type="date"
             className="field-input"
+            aria-describedby="proj-deadline-relative"
             value={projectDeadline}
             onChange={(e) => setProjectDeadline(e.target.value)}
           />
           {deadlineRelative && (
-            <span className="define-deadline-relative">{deadlineRelative}</span>
+            <span
+              id="proj-deadline-relative"
+              className="define-deadline-relative"
+              aria-live="polite"
+            >
+              {deadlineRelative}
+            </span>
           )}
           <button
             type="button"
@@ -244,7 +251,7 @@ export default function DefineView(props) {
         className="define-split"
         data-define-layout="form-only"
       >
-        <div className="define-split-form" aria-label="Brief questions">
+        <div className="define-split-form" role="region" aria-label="Brief questions">
           <Suspense
             fallback={
               <div className="define-workbook define-workbook-loading">

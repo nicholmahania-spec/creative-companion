@@ -3835,7 +3835,7 @@ function App() {
       )}
 
       {savePulse && (
-        <div className="autosave-chip">✓ Saved</div>
+        <div className="autosave-chip" role="status">✓ Saved</div>
       )}
 
       <RunningTodoAddModal
