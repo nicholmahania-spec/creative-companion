@@ -9361,12 +9361,18 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .app-shell {
   display: grid;
   grid-template-columns: 200px 1fr;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto auto 1fr auto;
   grid-template-areas:
     'header header'
+    'rail rail'
     'hud hud'
     'sidebar main'
     'footer footer';
+}
+
+/* Without an explicit area the rail auto-placed into the sidebar column. */
+.app-shell > .step-rail {
+  grid-area: rail;
 }
 
 .app-shell > .header-redesign {
@@ -10588,9 +10594,8 @@ body:has(.app.deep)::after {
   margin-left: 0;
   /* Align under the label (num is 1.5rem + the tab's column gap). */
   padding-left: calc(1.5rem + var(--space-3));
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Wrap rather than ellipsis: "needed ones …" told you nothing. */
+  white-space: normal;
   font-size: var(--fs-1);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -14248,6 +14253,7 @@ select:focus {
     grid-template-columns: 200px 1fr !important;
     grid-template-areas:
       'header header'
+      'rail rail'
       'hud hud'
       'sidebar main'
       'footer footer' !important;
@@ -15743,6 +15749,13 @@ select:focus {
 
 .define-milestones-compact .define-milestones-list {
   gap: var(--space-2);
+  /* Flex column stretches children — "+ Add" was spanning the full content
+     width and reading as a drop zone rather than a small action. */
+  align-items: flex-start;
+}
+
+.define-milestones-compact .detective-milestone-row {
+  align-self: stretch;
 }
 
 .detective-milestone-row.is-pending-removal {
