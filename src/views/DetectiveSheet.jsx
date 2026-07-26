@@ -215,9 +215,13 @@ export default function DetectiveSheet({
             <article
               key={ch.id}
               id={`define-chapter-content-${ch.id}`}
+              // `is-current` carries the panel surface. Desktop split shows
+              // every chapter's fields at once, so without it all five cards
+              // sit at identical weight and none of them reads as "the one
+              // you're in" — which is also where a Start-with-these jump lands.
               className={`define-chapter${showFields ? ' is-open' : ''}${
-                focusField && showFields ? ' has-focus' : ''
-              }`}
+                isOpen ? ' is-current' : ''
+              }${focusField && showFields ? ' has-focus' : ''}`}
               data-chapter={ch.id}
               style={{ '--chapter-accent': ch.accent }}
               hidden={articleHidden}
