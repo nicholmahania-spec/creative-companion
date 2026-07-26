@@ -94,6 +94,24 @@ has been verified to actually fail when the bug is reintroduced.
   length before this. Uncapped body copy runs ~140 characters on a wide
   screen and the eye loses the return sweep.
 
+## Container rules — enforced by `src/lib/containers.test.js`
+
+- **One corner radius: `var(--radius)` = 4px.** Plus `--radius-none` (0) and
+  `--radius-pill` (999px), and `50%` for circles. Never a literal.
+  `--radius-sm` / `-organic` / `-squircle` / `-node` survive as **aliases**
+  so ~130 rules didn't need touching — they must never become separate sizes
+  again. There were 39 distinct radii before this, with 4/6/8/10px all in
+  play for the same kind of card.
+- **Snap spacing to `--space-1..7`** (0.25/0.5/0.75/1/1.5/2/3rem) and type to
+  `--fs-1..6`. 229 distinct paddings and 66 font sizes existed before; that's
+  why nothing lined up. The ramps are defined — new work uses them, and
+  existing rules get converted as they're touched, not in a big sweep.
+- **426 container rules draw only seven shapes** (border+fill ±shadow, fill
+  only ±shadow, outline only ±shadow, bare). 135 of them set a radius on
+  something with no border and no background — rounding an invisible box.
+  Prefer whitespace and type weight for hierarchy; add a border only when
+  space genuinely can't do the job.
+
 Known and not yet fixed: **five stacked override layers** (`grep -n "lock"`
 around lines 9961, 10037, 12015, 12858, 13388, 14494) totalling ~4.5k lines
 and ~650 `!important`s. Do not add a sixth. If a style needs overriding,
