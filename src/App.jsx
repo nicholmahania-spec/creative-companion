@@ -133,6 +133,7 @@ import {
   localeDir,
 } from './lib/i18n'
 import { useModalFocus } from './lib/useModalFocus'
+import useIsMobile from './lib/useIsMobile'
 import {
   isSessionOpen,
   closeSession,
@@ -197,6 +198,7 @@ function App() {
   const renameProject = useAppStore((s) => s.renameProject)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
   const setProjectLastView = useAppStore((s) => s.setProjectLastView)
+  const isMobileViewport = useIsMobile()
   const deleteProject = useAppStore((s) => s.deleteProject)
   const archiveProject = useAppStore((s) => s.archiveProject)
   const unarchiveProject = useAppStore((s) => s.unarchiveProject)
@@ -2973,6 +2975,10 @@ function App() {
       <nav
         className={`journey-sidebar${journeyActive ? '' : ' is-tools'}`}
         aria-label={i18nT(locale, 'pathAria')}
+        /* Parked off-canvas on mobile, its 10 buttons stayed keyboard-
+           reachable — Tab from the header walked into an invisible drawer.
+           inert only applies below 768px, where the drawer is closed. */
+        inert={isMobileViewport && !navOpen ? '' : undefined}
       >
           <div className="journey-projects-section" aria-label="Your projects">
             <div className="journey-projects-head">

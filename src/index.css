@@ -10584,6 +10584,10 @@ body:has(.app.deep)::after {
 .define-chapter-tab-label {
   flex: 1 1 auto;
   min-width: 0;
+  /* "Deliverables" needs ~95px of glyph in a 78px track at 768 and simply
+     painted outside its box — no scrollbar, because overflow stayed visible
+     all the way up. Wrap instead of spilling. */
+  overflow-wrap: anywhere;
   font-family: var(--font-display);
   font-size: var(--fs-2);
   font-weight: 600;
@@ -15831,6 +15835,20 @@ select:focus {
   justify-content: center;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
   cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+/* The FAB is fixed, so page padding only clears it once you've scrolled to
+   the bottom — mid-scroll it sat on form rows and won the click (z-index 90
+   vs auto). While a field has focus you're filling the brief, not capturing
+   a task, so it steps out of the way instead of covering the input. */
+body:has(input:focus, textarea:focus, select:focus) .todo-fab {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .todo-fab { transition: none; }
 }
 
 .todo-fab:hover {
@@ -16681,6 +16699,8 @@ textarea.artboard-brief-input {
   }
   .app-shell > .journey-sidebar .journey-projects-head {
     margin-bottom: var(--space-3) !important;
+    /* Match the rows' 12px inset — the heading sat flush to the edge. */
+    padding-left: var(--space-3);
   }
   .app-shell > .journey-sidebar .journey-projects-heading {
     /* was #A1A1A1 on the panel — 2.3:1, under the enforced floor */
