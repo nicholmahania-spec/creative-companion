@@ -134,6 +134,9 @@
 
   /* Measure and rhythm, per the typography rules in CLAUDE.md. */
   --measure: 65ch;
+  /* Brief builder content column. Two field columns plus a gap, at a width
+     where a label stays adjacent to its own input. */
+  --define-col: 56rem;
   --leading-body: 1.55;
   --leading-heading: 1.2;
 
@@ -315,7 +318,7 @@ h3 {
 
 .page-sub {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--fs-3);
   font-weight: 500;
   color: var(--text-secondary);
   line-height: 1.55;
@@ -10426,7 +10429,7 @@ body:has(.app.deep)::after {
 
 .define-field-label {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: var(--fs-3);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--define-ink);
@@ -10440,7 +10443,7 @@ body:has(.app.deep)::after {
   border-radius: 50%;
   display: inline-grid;
   place-items: center;
-  font-size: 0.7rem;
+  font-size: var(--fs-1);
   font-weight: 700;
   background: color-mix(in srgb, var(--accent-growth, #A0A0A0) 25%, transparent);
   color: var(--accent-growth, #A0A0A0);
@@ -10463,7 +10466,7 @@ body:has(.app.deep)::after {
   background: transparent;
   color: var(--define-ink, var(--text-primary));
   font: inherit;
-  font-size: 0.95rem;
+  font-size: var(--fs-3);
   font-weight: 500;
   line-height: 1.45;
   transition: border-color var(--transition);
@@ -10543,14 +10546,14 @@ body:has(.app.deep)::after {
 
 .define-progress-num {
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: var(--fs-1);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--define-ink);
 }
 
 .define-progress-meta {
-  font-size: 0.68rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   color: var(--define-muted);
   font-variant-numeric: tabular-nums;
@@ -10562,25 +10565,32 @@ body:has(.app.deep)::after {
    the eye lands on instead of competing with an outline drawn around nothing.
    Grouping comes from alignment and from the gap below being larger than the
    gap between tabs. */
+/* One per row, not a 3-column grid. Five items in three columns leaves a
+   ragged 3 + 2 with dead space beside the last two — the "nothing lines up"
+   complaint in its most literal form. A single column gives every tab the
+   same left edge and the same right edge, and reads as the ordered list it
+   actually is. */
 .define-chapter-rail {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-2);
-  margin-bottom: var(--space-5);
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin-bottom: var(--space-6);
   padding: 0;
   border: none;
   background: none;
 }
 
+/* A row, not a card: number · title · count, with the count pushed right so
+   all five counts sit on one edge and can be compared without reading across. */
 .define-chapter-tab {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   /* No outline, no fill. Five identical rectangles told you nothing about
-     which chapter you were in; a solid fill on the active one and plain text
-     for the rest says it at a glance and draws four fewer shapes. */
+     which chapter you were in; a fill on the active one and plain text for the
+     rest says it at a glance and draws four fewer shapes. */
   border: none;
   border-radius: var(--radius);
   background: transparent;
@@ -10601,12 +10611,14 @@ body:has(.app.deep)::after {
   background: var(--bg-muted);
 }
 
-/* The one filled shape in the band. In a greyscale palette a solid fill is
-   the only "you are here" signal that survives a glance. */
+/* Marked the same way the chapter itself is — a left rule plus full-strength
+   ink. A solid dark fill worked as a signal but became the heaviest thing on
+   the page, outranking "Start with these", which is the one control that has
+   to win. One visual language for "you are here", used twice. */
 .define-chapter-tab.is-active {
-  color: var(--bg-elevated);
-  background: var(--text-primary);
-  box-shadow: none;
+  color: var(--text-primary);
+  background: var(--bg-muted);
+  box-shadow: inset 2px 0 0 var(--text-primary);
   transform: none;
 }
 
@@ -10627,6 +10639,8 @@ body:has(.app.deep)::after {
 /* Plain text, not a chip. The number is a label, and a rounded box around two
    characters is one of the 135 rules that round an invisible container. */
 .define-chapter-tab-num {
+  flex: 0 0 auto;
+  min-width: 1.5rem;
   font-family: var(--font-display);
   font-size: var(--fs-1);
   font-weight: 700;
@@ -10637,7 +10651,13 @@ body:has(.app.deep)::after {
   opacity: 0.6;
 }
 
+/* min-width: 0 is load-bearing, not defensive. A flex item's default
+   min-width is auto, so "Project Overview & Administration" refuses to
+   shrink below its longest word and shoves the count off the right edge at
+   phone widths — the count is the whole point of the row. */
 .define-chapter-tab-label {
+  flex: 1 1 auto;
+  min-width: 0;
   font-family: var(--font-display);
   font-size: var(--fs-2);
   font-weight: 700;
@@ -10645,7 +10665,12 @@ body:has(.app.deep)::after {
   line-height: 1.2;
 }
 
+/* flex-shrink: 0 for the same reason the label shrinks — whichever of the two
+   gives way, it must not be the count. */
 .define-chapter-tab-count {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding-left: var(--space-2);
   font-size: var(--fs-1);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -10659,21 +10684,9 @@ body:has(.app.deep)::after {
   opacity: 0.8;
 }
 
-@media (max-width: 560px) {
-.define-chapter-rail {
-    grid-template-columns: 1fr;
-  }
-
-.define-chapter-tab {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.55rem;
-  }
-
-.define-chapter-tab-count {
-    margin-left: auto;
-  }
-}
+/* The 560px block that used to live here restacked the rail to one column and
+   turned the tabs into rows. That is now the layout at every width, so the
+   override said nothing the base rule didn't. */
 
 /* Open chapter card */
 
@@ -10735,7 +10748,7 @@ body:has(.app.deep)::after {
 .define-chapter-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--fs-5);
+  font-size: var(--fs-4);
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--define-ink);
@@ -10754,17 +10767,13 @@ body:has(.app.deep)::after {
   color: var(--text-secondary);
 }
 
-/* Capped. At full desktop width a two-column row put a label and its input
-   hundreds of pixels apart, so the label's meaning had to be held in working
-   memory across the traverse — the same return-sweep failure the 65ch prose
-   rule exists to prevent, applied to form rows. The page stays wide; only the
-   working column narrows, which keeps each label adjacent to its own input. */
+/* No max-width of its own — the page column (--define-col) sets the width for
+   every block, which is the only way they end up sharing a right edge. */
 .define-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3) var(--space-4);
   align-items: start;
-  max-width: 60rem;
 }
 
 .define-fields[hidden] {
@@ -10817,7 +10826,7 @@ body:has(.app.deep)::after {
   border: none;
   background: none;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   color: var(--define-muted);
   cursor: pointer;
@@ -10837,7 +10846,7 @@ body:has(.app.deep)::after {
   background: var(--define-card-lift);
   color: var(--define-muted);
   font-family: var(--font-display);
-  font-size: 1.02rem;
+  font-size: var(--fs-3);
   font-weight: 700;
   letter-spacing: -0.02em;
   cursor: pointer;
@@ -10884,7 +10893,7 @@ body:has(.app.deep)::after {
 .define-admin > summary {
   cursor: pointer;
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: var(--fs-2);
   font-weight: 700;
   color: var(--define-muted);
   list-style: none;
@@ -11248,10 +11257,16 @@ body:has(.app.deep)::after {
   padding-top: 1.5rem;
 }
 
+/* One content column for the whole page.
+   This was `max-width: none`, so every block below it picked its own width:
+   the Start-with-these buttons ended at one x, the chapter tabs at another,
+   the field grid at a third. Nothing shared a right edge, which is what
+   "nothing lines up" actually was — not the individual boxes. Left-aligned
+   rather than centred so the left edge never moves as content changes. */
 .define-dashboard {
-  max-width: none;
+  max-width: var(--define-col);
   margin-inline: 0;
-  padding-bottom: 2rem;
+  padding-bottom: var(--space-6);
 }
 
 .define-dashboard-head {
@@ -11344,7 +11359,7 @@ body:has(.app.deep)::after {
 
 .define-progress-chip-label {
   position: relative;
-  font-size: 0.72rem;
+  font-size: var(--fs-1);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
@@ -11543,7 +11558,7 @@ body:has(.app.deep)::after {
   flex: 1;
   min-width: 0;
   padding: 0.55rem 0.75rem;
-  font-size: 0.85rem;
+  font-size: var(--fs-2);
 }
 
 .define-mood-tip {
@@ -12497,7 +12512,7 @@ body:has(.app.deep)::after {
 /* Define residual densify — chapter tabs + sticky path */
 
 .define-chapter-total {
-  font-size: 0.75rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   border-radius: var(--radius);
@@ -12536,7 +12551,7 @@ body:has(.app.deep)::after {
   border: none;
   background: transparent;
   color: var(--ts-mute, #A1A1A1);
-  font-size: 0.78rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   cursor: pointer;
   text-align: left;
@@ -12660,7 +12675,7 @@ body:has(.app.deep)::after {
 /* Research toolbar densify */
 
 .research-studio .page-sub {
-  font-size: 0.8125rem;
+  font-size: var(--fs-1);
   color: #A1A1A1;
 }
 
@@ -12883,8 +12898,11 @@ select:focus {
 
 /* Page titles */
 
+/* One step above a section title (--fs-4). It was 1.25rem while chapter
+   headings sat at 1.5rem, so "Project overview" read as less important than
+   the sections inside it. */
 .page-title {
-  font-size: 1.25rem !important;
+  font-size: var(--fs-5) !important;
   font-weight: 700 !important;
   letter-spacing: -0.02em;
   color: var(--ts-ink) !important;
@@ -14515,7 +14533,7 @@ select:focus {
 }
 
 .define-admin summary {
-  font-size: 0.75rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   color: var(--ts-mute);
   cursor: pointer;
@@ -14681,7 +14699,7 @@ select:focus {
   }
 
 .define-studio .page-title {
-    font-size: 1.65rem;
+    font-size: var(--fs-5);
     margin-bottom: 0.65rem;
   }
 
@@ -14695,25 +14713,22 @@ select:focus {
 .define-input.field-input,
   .define-studio .field-input {
     padding: 0.7rem 0.8rem;
-    font-size: 1rem; /* 16px — avoid iOS zoom on focus */
+    font-size: var(--fs-3); /* 16px — avoid iOS zoom on focus */
     border-radius: var(--radius);
   }
 
-.define-chapter-rail {
-    grid-template-columns: 1fr;
-    gap: 0.35rem;
-  }
-
+/* Only the touch target is still width-specific — the row layout, the gap and
+   the right-aligned count are the base rule now. */
 .define-chapter-tab {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.5rem;
     min-height: 44px;
-    border-radius: var(--radius);
   }
 
-.define-chapter-tab-count {
-    margin-left: auto;
+/* The current-chapter rule still marks the chapter, but the 1.5rem inset it
+   sits in is a desktop measurement — at 360px it's ~8% of the screen taken
+   from the fields, which are already the narrowest thing on the page. Keep
+   the mark, halve the indent. */
+.define-chapter {
+    padding-left: var(--space-3);
   }
 
 /* Hide logo wordmark on very narrow so Tools + account fit */
@@ -14787,16 +14802,9 @@ select:focus {
   color: #565656 !important;
 }
 
-/* Massive bold Define header — beat the global 1.25rem page-title clamp.
-   Token-driven ink so it stays legible in both light and dark themes. */
-.define-studio-title.page-title {
-  font-size: clamp(2.4rem, 4vw, 3rem) !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.04em !important;
-  line-height: 1.02 !important;
-  color: var(--text-primary) !important;
-  margin: 0 !important;
-}
+/* .define-studio-title removed — no JSX has used the class since the Define
+   header was rewritten, so this was a fourth competing page-title size that
+   never applied to anything. */
 
 /* Remove the outer card so Define matches the open layout of other views */
 .define-workbook.is-split {
@@ -14817,7 +14825,7 @@ select:focus {
   margin-bottom: 0 !important;
 }
 .define-workbook.is-split .define-chapter-title {
-  font-size: var(--fs-5) !important;
+  font-size: var(--fs-4) !important;
   color: var(--text-primary) !important;
   letter-spacing: -0.02em !important;
 }
@@ -15072,7 +15080,7 @@ select:focus {
 .define-chapter-caret {
   flex: 0 0 auto;
   color: #A1A1A1;
-  font-size: 0.9rem;
+  font-size: var(--fs-2);
 }
 
 /* Sidebar "Projects" — its own section above the step path, listing
@@ -16297,13 +16305,13 @@ select:focus {
 
 .define-section-title {
   margin: 0 0 0.35rem;
-  font-size: 1rem;
+  font-size: var(--fs-3);
   font-weight: 700;
 }
 
 .define-section-hint {
   margin: 0 0 0.75rem;
-  font-size: 0.8125rem;
+  font-size: var(--fs-1);
   color: var(--text-secondary);
 }
 
@@ -16315,7 +16323,7 @@ select:focus {
 }
 
 .define-deadline-inline label {
-  font-size: 0.8125rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   color: var(--text-secondary);
   white-space: nowrap;
@@ -16424,7 +16432,7 @@ select:focus {
 /* Plain-language deadline. Read-only signal beside the date input, not a
    second control — an ISO date carries no felt urgency. */
 .define-deadline-relative {
-  font-size: 0.8125rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   color: var(--text-secondary);
   white-space: nowrap;
