@@ -63,9 +63,15 @@ function resolveAppVersion() {
 
 const meta = resolveAppVersion()
 
-// GitHub Pages project site: https://<user>.github.io/creative-companion/
+// Netlify (primary) serves from the root, so '/' — absolute asset URLs.
+// GitHub Pages project sites live under a subpath instead.
+//
+// Must NOT be './': relative asset URLs resolve against the *current*
+// route, so on a deep link like /c/<portalId> the browser would request
+// /c/assets/index-*.js, miss, get the SPA rewrite to index.html, and try
+// to parse HTML as JavaScript — a blank page on every public client link.
 const base =
-  process.env.GITHUB_PAGES === 'true' ? '/creative-companion/' : './'
+  process.env.GITHUB_PAGES === 'true' ? '/creative-companion/' : '/'
 
 export default defineConfig({
   plugins: [react()],

@@ -22,6 +22,19 @@ jobs:
           GITHUB_PAGES: 'true'
       - run: npm run test:perf
 
+      # Guard the public deep links (/f/:id, /c/:id). Relative asset URLs
+      # resolve against the current route, so './assets/...' 404s on any
+      # deep link and the app boots to a blank page — invisible until a
+      # client actually clicks their link. Netlify build must be root-absolute.
+      - name: Netlify build uses root-absolute asset URLs
+        run: |
+          npm run build
+          if grep -q 'src="\./assets/' dist/index.html; then
+            echo "::error::vite base is relative — deep links (/c/:id) will break. Use '/' not './'."
+            exit 1
+          fi
+          echo "OK: assets are root-absolute"
+
   e2e:
     runs-on: ubuntu-latest
     needs: unit

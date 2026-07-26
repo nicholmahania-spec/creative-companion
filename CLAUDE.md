@@ -29,6 +29,25 @@ main without a version bump in the same batch of commits.
 
 Active development branch: `claude/debug-code-6u77sp`
 
+## Deploy — Netlify is primary; never use a relative base
+
+Netlify serves from the **root**, so `vite.config.js` uses `base: '/'`.
+GitHub Pages (secondary, `GITHUB_PAGES=true`) serves from
+`/creative-companion/` instead.
+
+**`base` must never be `'./'`.** Relative asset URLs resolve against the
+*current route*, so on a public deep link like `/c/<portalId>` the browser
+requests `/c/assets/index-*.js`, misses, gets the SPA rewrite to
+`index.html`, and tries to parse HTML as JavaScript — a blank page on every
+client link. Works at the root, breaks everywhere else. CI guards this.
+
+Public deep links (`/f/:shareId`, `/c/:portalId`) must build URLs with
+`publicUrl()` and match routes via `routePath()` from `src/lib/appPaths.js`
+— never `window.location.origin` or a raw `location.pathname` — so they
+survive both root and subpath deploys. SPA fallback: `netlify.toml` +
+`public/_redirects` for Netlify, `dist/404.html` (copied in the workflow)
+for Pages.
+
 ## Key files
 
 - `todo.md` — prioritized remaining work list
