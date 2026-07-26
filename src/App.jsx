@@ -405,6 +405,19 @@ function App() {
   useEffect(() => {
     if (!activeProjectId) return
     resetRunningTodoIfNewDay(activeProjectId)
+    // First-ever open of a project stays quiet: "Anything to add?" only
+    // parses once you know the running list exists, and interrupting the
+    // very first arrival at the brief costs momentum exactly when task
+    // initiation is hardest. From the second open on, it's recognition.
+    const seenKey = `cc-todo-prompt-seen-${activeProjectId}`
+    try {
+      if (!localStorage.getItem(seenKey)) {
+        localStorage.setItem(seenKey, '1')
+        return
+      }
+    } catch {
+      /* storage unavailable — fall through to the prompt */
+    }
     setRunningTodoPromptOpen(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeProjectId])
@@ -3777,12 +3790,12 @@ function App() {
               New project
             </h2>
             <label className="onboard-label" htmlFor="onboard-name">
-              Name
+              Client / project name
               <input
                 id="onboard-name"
                 value={onboardName}
                 onChange={(e) => setOnboardName(e.target.value)}
-                placeholder="Project name"
+                placeholder="Usually the client's name"
                 className="onboard-input"
                 autoFocus
                 autoComplete="off"
@@ -3794,7 +3807,7 @@ function App() {
                 id="onboard-step"
                 value={onboardFirstStep}
                 onChange={(e) => setOnboardFirstStep(e.target.value)}
-                placeholder="Optional · Sketch later"
+                placeholder="One small task to start with — you can skip this"
                 className="onboard-input"
                 autoComplete="off"
               />
@@ -3807,7 +3820,7 @@ function App() {
                   id="onboard-brief"
                   value={onboardBrief}
                   onChange={(e) => setOnboardBrief(e.target.value)}
-                  placeholder="Who · outcome · constraint"
+                  placeholder="What’s the job? One line is plenty"
                   rows={2}
                   className="onboard-input"
                 />
@@ -3820,7 +3833,7 @@ function App() {
                 disabled={!onboardName.trim()}
                 onClick={() => finishOnboarding('custom')}
               >
-                Start · Define
+                Start the brief
               </button>
               <button
                 type="button"
@@ -3830,6 +3843,9 @@ function App() {
                 Skip
               </button>
             </div>
+            {!onboardName.trim() && (
+              <p className="onboard-gate-hint">Add a name to start.</p>
+            )}
           </div>
         </div>
       )}

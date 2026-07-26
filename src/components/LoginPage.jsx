@@ -217,6 +217,13 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 ? 'Set password'
                 : 'Unlock desk'}
           </p>
+          {!useCloud && mode === 'setup' && (
+            <p className="login-lede login-setup-explain">
+              A calm workspace for freelance design projects. Your work is
+              stored on this device — this password locks it, and there's no
+              reset, so save it somewhere safe.
+            </p>
+          )}
         </div>
 
         {useCloud && (
@@ -315,6 +322,11 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
+            {(mode === 'setup' || mode === 'signup') && (
+              <p className="login-pw-hint">
+                8+ characters, mixing upper/lowercase, numbers or symbols.
+              </p>
+            )}
             {(mode === 'setup' || mode === 'signup') && (
               <div className="password-strength-meter" id="password-strength">
                 <div className="password-strength-label">Password strength:</div>

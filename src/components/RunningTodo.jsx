@@ -22,8 +22,6 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel, skipAsk 
     if (open) setAnswered(skipAsk)
   }, [open, skipAsk])
 
-  if (!open) return null
-
   const submit = () => {
     const trimmed = text.trim()
     if (!trimmed) return
@@ -43,6 +41,23 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel, skipAsk 
     onClose()
   }
 
+  // Esc must work on every modal, and it reuses the same safe close —
+  // half-typed text is captured, never dropped.
+  useEffect(() => {
+    if (!open) return undefined
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        close()
+      }
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, text])
+
+  if (!open) return null
+
   return (
     <div
       className="export-overlay running-todo-prompt-overlay"
@@ -59,6 +74,12 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel, skipAsk 
             {skipAsk ? 'Add to your list' : 'Anything to add?'}
           </h3>
         </div>
+
+        {!skipAsk && (
+          <p className="running-todo-prompt-hint">
+            Loose tasks on your mind? They'll go on your running to-do list.
+          </p>
+        )}
 
         {!answered ? (
           <div className="running-todo-prompt-actions">
@@ -78,6 +99,7 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel, skipAsk 
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && submit()}
+                placeholder="e.g. Send the invoice"
                 aria-label="New to-do item"
               />
               <button type="button" className="btn btn-secondary" onClick={submit} disabled={!text.trim()}>

@@ -15394,7 +15394,35 @@ select:focus {
 
 /* Add-item prompt — reuses .export-overlay / .export-panel chrome */
 
+.running-todo-prompt-hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-2);
+  color: var(--text-secondary);
+}
+
+.onboard-gate-hint {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.login-setup-explain {
+  max-width: 32ch;
+  margin: 0.35rem auto 0;
+  color: var(--text-secondary);
+}
+
+.login-pw-hint {
+  margin: 0.3rem 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
 .running-todo-prompt-panel {
+  /* Never run to the viewport edge — at 390px the "Not now" button was
+   * partially clipped. */
+  max-width: min(26rem, calc(100vw - 2 * var(--space-4)));
+
   max-width: 26rem;
 }
 

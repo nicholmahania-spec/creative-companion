@@ -230,7 +230,7 @@ const EN = {
     breakDone: 'Break done · welcome back',
     researchTimerOn: 'Research · 20 min',
     breakLockFirst: 'Finish break first',
-    deskReady: 'Desk is ready — write the goal, then go to Research',
+    deskReady: 'Project created — start with the goal, then head to Research',
     emptyDeskFirst: 'Empty desk — write your first real step',
     forceBreaksReview: 'Break lock · check Settings',
     forceBreaksOn: 'Break lock on',
