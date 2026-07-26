@@ -200,6 +200,41 @@ user is ready to start and the client hasn't signed yet.
 
 ---
 
+## Seven-agent Project overview audit — all 5 fix batches shipped (2026-07-26)
+
+Fan-out of 5 specialist agents (ADHD advisor, UX, UI, code review, graphic
+design) + the user's 2 custom skills (layout-integrity, ux-workflow-audit —
+both ran the live app in a browser). Findings verified against HEAD, deduped,
+approved by the user in batches, and shipped:
+
+- **A — 9 bugs** (v1.48.172): per-keystroke analytics exception, double-click
+  focus mask, "Add a task" page ejection, zero-width milestone input, two
+  360px overflows (live-verified), backwards title row, focus-stealing
+  auto-jump, milestone id collisions + stale exports.
+- **B — contrast/a11y floors** (v1.48.176): --field-line token for input
+  boundaries, themed 2px focus + restored keyboard ring, opacity-stacking
+  text failures onto solid tokens, 44px touch targets, reduced-motion
+  gating, heading/ARIA structure.
+- **C — 11 advisor-gated design changes** (v1.48.174): start-here emphasis
+  (3 filled chips max), weight tiers, deadline-phrase promotion, capture
+  input removed (snapshot moved to header band), field type onto ramps,
+  date-field consolidation (startDeadline/launchDate/format deleted),
+  plain-language labels, tips-as-placeholders, mobile single-accordion +
+  no rail, per-project defineOpenChapter, milestones under deadline with
+  8s undo, 5-col rail with short labels.
+- **D — first-run copy** (v1.48.178): login explains the app + no-reset
+  password warning + upfront rules, "Anything to add?" first-open
+  suppression + context + Esc + 390px fix, client-first new-project card,
+  jargon toast reworded.
+- **E — dead code + test hardening** (v1.48.180): -763 lines of verified-dead
+  JSX/CSS/schema; typography.test.js gained 3 guards (opacity-on-text,
+  font-size off-ramp, deleted-selector resurrection) — each verified to
+  fail when its bug is reintroduced.
+
+Still open from the audits (not approved, low priority): breakpoint
+unification (560/600/640/767 disagree between 561-767px), "0/6 notes" vs
+rail-count noun mismatch, autosave pulse debounce, named-milestone concept.
+
 ## Feature ideas — built 2026-07-25
 
 Both items below were previously logged as "not yet scoped, do not build
