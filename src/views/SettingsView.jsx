@@ -121,7 +121,7 @@ export default function SettingsView(props) {
         </div>
         <div className="settings-row settings-row-stack">
           <strong>
-            Focus mask · {Number(prefs.focusMaskPct ?? 25)}%
+            Focus mask · {Number(prefs.focusMaskPct ?? 60)}%
           </strong>
           <input
             type="range"
@@ -129,7 +129,7 @@ export default function SettingsView(props) {
             max={80}
             step={5}
             className="settings-range"
-            value={Number(prefs.focusMaskPct ?? 25)}
+            value={Number(prefs.focusMaskPct ?? 60)}
             aria-label="Focus mask intensity"
             onChange={(e) =>
               setPref('focusMaskPct', Number(e.target.value))

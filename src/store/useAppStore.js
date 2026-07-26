@@ -437,7 +437,16 @@ const useAppStore = create(
             const det = { ...blankDetective(), ...(p.detective || {}) }
             const milestones = [
               ...(det.milestones || []),
-              { id: Date.now(), label: label || '', date: date || '' },
+              // Not Date.now(): two adds in the same millisecond collided,
+              // and update/remove match by id — an edit would hit both rows.
+              {
+                id:
+                  typeof crypto !== 'undefined' && crypto.randomUUID
+                    ? crypto.randomUUID()
+                    : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                label: label || '',
+                date: date || '',
+              },
             ]
             const nextDet = { ...det, milestones }
             const brief = composeBriefFromDetective(nextDet)
@@ -465,7 +474,11 @@ const useAppStore = create(
             if (p.id !== state.currentProjectId) return p
             const det = { ...blankDetective(), ...(p.detective || {}) }
             const milestones = (det.milestones || []).filter((m) => m.id !== id)
-            return { ...p, detective: { ...det, milestones } }
+            const nextDet = { ...det, milestones }
+            // Recompose like add/update do — without this, a deleted
+            // milestone vanished from the UI but lived on in every export.
+            const brief = composeBriefFromDetective(nextDet)
+            return { ...p, detective: nextDet, brief: brief || p.brief }
           }),
         })),
 

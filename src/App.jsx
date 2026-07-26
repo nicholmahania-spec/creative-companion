@@ -1636,7 +1636,10 @@ function App() {
     return () => window.clearTimeout(t)
   }, [tasks, moodItems, breakKit, activeProjectId, projects, theme, prefs])
 
-  const addQuickTask = () => {
+  /** Capture a task. `navigate: false` keeps the user on the current view —
+   * used by Define's inline capture, where jumping to Flow mid-brief threw
+   * away chapter/scroll/focus state (interruption-recovery cost). */
+  const addQuickTask = ({ navigate = true } = {}) => {
     if (!quickInput.trim()) return
     addTask({
       id: Date.now(),
@@ -1653,7 +1656,7 @@ function App() {
     })
     setQuickInput('')
     setCaptureDue('')
-    setActiveView('flow')
+    if (navigate) setActiveView('flow')
   }
 
   const resetFocus = (minutes = POMODORO_WORK_MIN) => {
@@ -2465,7 +2468,7 @@ function App() {
       }`}
       style={{
         ['--focus-mask-opacity']: String(
-          Math.min(0.8, Math.max(0, Number(prefs.focusMaskPct ?? 25) / 100))
+          Math.min(0.8, Math.max(0, Number(prefs.focusMaskPct ?? 60) / 100))
         ),
         ['--focus-mask-blur']:
           Number(prefs.focusMaskBlur) > 0

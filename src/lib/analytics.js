@@ -176,6 +176,13 @@ export const trackWorkflowTransition = (fromView, toView) => {
   });
 };
 
+/** Start-mark names by timer name, so endPerformanceTimer can measure
+ * against the mark that actually exists. Rebuilding the name from a fresh
+ * Date.now()/Math.random() (the previous approach) never matched, so
+ * performance.measure threw a DOMException on every keystroke that ended
+ * a timer. */
+const activeTimerMarks = new Map();
+
 /**
  * Start a performance timer
  * @param {string} timerName - Name of the timer
@@ -184,8 +191,7 @@ export const startPerformanceTimer = (timerName) => {
   if (typeof performance !== 'undefined' && typeof performance.mark === 'function') {
     const markName = `timer-${timerName}-start-${Date.now()}-${Math.random()}`;
     performance.mark(markName);
-    // Store the mark name for later cleanup (in a real implementation, we'd use a Map)
-    // For simplicity, we're relying on the cleanup in endPerformanceTimer
+    activeTimerMarks.set(timerName, markName);
   }
 };
 
@@ -196,18 +202,25 @@ export const startPerformanceTimer = (timerName) => {
  */
 export const endPerformanceTimer = (timerName, properties = {}) => {
   if (typeof performance !== 'undefined' && typeof performance.mark === 'function' && typeof performance.measure === 'function') {
+    const startMarkName = activeTimerMarks.get(timerName);
+    if (!startMarkName) return;
+    activeTimerMarks.delete(timerName);
     const endMarkName = `timer-${timerName}-end-${Date.now()}-${Math.random()}`;
-    performance.mark(endMarkName);
-    performance.measure(`timer-${timerName}`, `timer-${timerName}-start-${Date.now()}-${Math.random()}`, endMarkName);
-    const measure = performance.getEntriesByName(`timer-${timerName}`).pop();
-    if (measure) {
-      trackEvent('performance_timing', {
-        name: timerName,
-        duration: measure.duration,
-        ...properties
-      });
-      // Clean up the marks and measures
-      performance.clearMarks(`timer-${timerName}-start-${Date.now()}-${Math.random()}`);
+    try {
+      performance.mark(endMarkName);
+      performance.measure(`timer-${timerName}`, startMarkName, endMarkName);
+      const measure = performance.getEntriesByName(`timer-${timerName}`).pop();
+      if (measure) {
+        trackEvent('performance_timing', {
+          name: timerName,
+          duration: measure.duration,
+          ...properties
+        });
+      }
+    } catch {
+      // A missing/cleared mark must never break the caller's input handler.
+    } finally {
+      performance.clearMarks(startMarkName);
       performance.clearMarks(endMarkName);
       performance.clearMeasures(`timer-${timerName}`);
     }

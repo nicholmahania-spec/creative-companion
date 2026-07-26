@@ -138,10 +138,10 @@ export default function DefineView(props) {
                 id="define-desk-add"
                 value={quickInput}
                 onChange={(e) => setQuickInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
+                onKeyDown={(e) => e.key === 'Enter' && addQuickTask({ navigate: false })}
                 aria-label="Add a task"
               />
-              <button type="button" onClick={addQuickTask} className="btn btn-secondary">
+              <button type="button" onClick={() => addQuickTask({ navigate: false })} className="btn btn-secondary">
                 Add
               </button>
             </div>

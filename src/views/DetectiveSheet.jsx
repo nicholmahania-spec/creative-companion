@@ -86,18 +86,19 @@ export default function DetectiveSheet({
     [setOpenChapter]
   )
 
-  /** On arrival, land on the first thing that still needs answering instead
-   * of the top of a 35-field scroll. Desktop only — stealing focus on mobile
-   * pops the keyboard over the page every time the project is opened. */
+  /** On arrival, open the chapter that still needs answers — but never
+   * scroll or steal focus. The page moving on its own before the user has
+   * read anything forces re-orientation as the first act, re-fired on every
+   * return visit, and duplicated what "Start with these" does better (an
+   * explicit, user-chosen jump). Opening the right chapter is enough. */
   const didAutoStart = useRef(false)
   useEffect(() => {
     if (didAutoStart.current) return
     const first = requiredEmpty[0]
     if (!first) return
     didAutoStart.current = true
-    if (isMobile) setOpenChapter(first.chapterId)
-    else jumpToField(first.id, first.chapterId)
-  }, [requiredEmpty, isMobile, jumpToField, setOpenChapter])
+    setOpenChapter(first.chapterId)
+  }, [requiredEmpty, setOpenChapter])
 
   return (
     <div className={`define-workbook${splitMode ? ' is-split' : ''}`}>
@@ -271,10 +272,6 @@ export default function DetectiveSheet({
                       key={f.id}
                       className={`define-field${focused ? ' is-focused' : ''}${
                         filled ? ' is-filled' : ''
-                      }${
-                        focusField && !focused && openChapter === ch.id
-                          ? ' is-dimmed'
-                          : ''
                       }`}
                       data-span={f.gridSpan || 'full'}
                     >
@@ -344,12 +341,6 @@ export default function DetectiveSheet({
                   <div
                     className={`define-field define-milestones${
                       focusField === 'milestones' ? ' is-focused' : ''
-                    }${
-                      focusField &&
-                      focusField !== 'milestones' &&
-                      openChapter === ch.id
-                        ? ' is-dimmed'
-                        : ''
                     }`}
                     data-span="full"
                   >

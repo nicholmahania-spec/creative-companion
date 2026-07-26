@@ -1956,8 +1956,12 @@ h3 {
   min-width: 0;
 }
 
+/* Must out-specify .define-input.field-input's width: 100% — with 100%
+ * winning, the date input refused to shrink and the milestone label input
+ * collapsed to ~0px, making the whole repeater unusable. */
+.detective-milestone-row .detective-milestone-date.define-input.field-input,
 .detective-milestone-date {
-  flex: 0 0 auto;
+  flex: 0 0 10rem;
   width: auto;
 }
 
@@ -12568,18 +12572,14 @@ body:has(.app.deep)::after {
   opacity: 0.85;
 }
 
-.define-studio .define-field.is-dimmed {
-  opacity: 0.25;
-  filter: blur(2px);
-  pointer-events: none;
-}
-
+/* .is-dimmed removed: the JS-driven dim compared against openChapter, which
+ * desktop master-scroll doesn't update on focus — so it blurred chapters the
+ * user wasn't even in, and its pointer-events: none made every field-to-field
+ * move cost two clicks. The :focus-within mask below is the one dim that
+ * remains, and it's self-consistent by construction. */
 .define-studio .define-field.is-focused {
   opacity: 1 !important;
   filter: none !important;
-  border-color: var(--ts-focus, #606060) !important;
-  border-width: 1.5px;
-  border-radius: var(--radius);
   box-shadow: none !important;
 }
 
@@ -13264,8 +13264,10 @@ select:focus {
    Blueprint lock — rail hierarchy + focus mask vars + Ideate stem
    ============================================================ */
 :root {
-  --focus-mask-opacity: 0.25;
-  --focus-mask-blur: 2px;
+  /* 0.6, not 0.25: neighbouring answers are working-memory scaffolding for
+   * the field being typed — de-emphasise them, never make them illegible. */
+  --focus-mask-opacity: 0.6;
+  --focus-mask-blur: 0px;
 }
 
 .journey-sidebar {
@@ -13314,12 +13316,12 @@ select:focus {
 .deliver-studio:has(.deliver-focus-field:focus) .deliver-advanced,
 .deliver-studio:has(.deliver-focus-field:focus) .deliver-preview-panel,
 .design-studio .system-role-assign .role-pick-chip:not(.is-active) {
+  /* No pointer-events: none here — it made the first click on a masked
+   * sibling dead (mousedown fell through to the container), so every
+   * field-to-field move cost two clicks. No blur — it destroys legibility
+   * of answers the user needs to glance back at. */
   opacity: var(--focus-mask-opacity) !important;
-  filter: blur(var(--focus-mask-blur));
-  pointer-events: none;
-  transition:
-    opacity 0.15s ease,
-    filter 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .spark-card-stem p {
@@ -14918,7 +14920,11 @@ select:focus {
   .header-content-simple > .brand-block { display: none !important; }
   .header-mobile-title {
     display: block !important;
-    flex: 1 1 auto;
+    /* flex-basis 0 + width 0, not auto: an input's intrinsic width (~20ch)
+     * otherwise propagates into the app grid's single column, widening the
+     * whole page to ~438px and clipping every view at 360px viewports. */
+    flex: 1 1 0%;
+    width: 0;
     min-width: 0;
     box-shadow: none !important;
     text-align: left;
@@ -16318,6 +16324,7 @@ select:focus {
 
 .define-deadline-inline {
   display: flex;
+  flex-wrap: wrap; /* nowrap overflowed to 450px at 360vw once a date was set */
   align-items: center;
   gap: 0.5rem;
 }
@@ -16330,7 +16337,10 @@ select:focus {
 }
 
 .define-deadline-inline input[type="date"] {
-  width: 150px;
+  /* Not a fixed px width: date-control chrome varies by browser/locale and
+   * clipped at 150px; fixed widths also fed the 360px row overflow. */
+  min-width: 9rem;
+  width: auto;
 }
 
 .header-icon-btn {
@@ -16511,7 +16521,9 @@ select:focus {
     margin-left: auto;
   }
 
-  .define-dashboard .define-title-row .btn-primary {
+  /* .btn, not .btn-primary: the button changed class when Save became
+   * Share/export, which silently broke the ordering this block exists for. */
+  .define-dashboard .define-title-row .btn {
     order: 3;
     margin-left: 0.75rem;
   }
