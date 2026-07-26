@@ -12,7 +12,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { normalizeLocale, t as i18nT } from '../lib/i18n'
-import HeaderIcon from '../components/HeaderIcon'
 import { DETECTIVE_CHAPTERS, getDetectiveProgress } from '../lib/detectiveBrief'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
@@ -26,7 +25,6 @@ export default function DefineView(props) {
     navDir = 'none',
     activeProject = null,
     deskTasks = [],
-    setActiveView,
     updateDetective,
     onOpenShare,
     setProjectDeadline,
@@ -163,15 +161,6 @@ export default function DefineView(props) {
               {deadlineRelative}
             </span>
           )}
-          <button
-            type="button"
-            className="header-icon-btn"
-            onClick={() => setActiveView('calendar')}
-            title="Calendar"
-            aria-label="Calendar"
-          >
-            <HeaderIcon name="calendar" />
-          </button>
         </div>
 
         <div className="define-milestones-compact">

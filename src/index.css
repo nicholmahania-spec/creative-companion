@@ -6202,17 +6202,7 @@ body.cc-printing-page button {
   letter-spacing: -0.03em;
 }
 
-.header-project-select {
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  max-width: 9.5rem;
-  padding: 0.35rem 0.5rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-}
+
 
 @media (min-width: 768px) {
   .header-name-input-desktop {
@@ -13579,7 +13569,6 @@ select:focus {
   text-align: center;
 }
 
-.header-redesign .header-project-select,
 .header-redesign .timer-running-chip,
 .header-redesign .sync-error-chip {
   border-radius: var(--radius-sm) !important;
@@ -14093,12 +14082,7 @@ select:focus {
     min-width: 0;
   }
 
-.header-project-select {
-    flex: 1 1 100%;
-    max-width: none;
-    width: 100%;
-    order: -1;
-  }
+
 
 .sync-error-chip {
     flex: 1 1 100%;
@@ -14364,9 +14348,8 @@ select:focus {
     align-items: center;
     gap: 0.35rem;
   }
-  .header-actions .header-project-select,
-  .header-actions .more-wrap,
-  .header-actions .timer-running-chip { display: none !important; }
+.header-actions .more-wrap,
+.header-actions .timer-running-chip { display: none !important; }
 
   /* Sidebar becomes a left slide-out drawer (not a horizontal strip) */
   .app-shell > .journey-sidebar {

@@ -2597,20 +2597,10 @@ function App() {
                 aria-label="Project name"
               />
             )}
-            {activeProjects.length > 1 && (
-              <select
-                className="header-project-select"
-                value={activeProjectId || ''}
-                onChange={(e) => selectProject(Number(e.target.value) || e.target.value)}
-                aria-label="Project"
-              >
-                {activeProjects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            )}
+            {/* No project <select> here: it duplicated the rename input's text
+                ("Test Project" twice, a which-one-do-I-use fork) while hiding
+                every other project behind a dropdown. The sidebar list is the
+                switcher — always visible, one click, with progress counts. */}
             {(isFocusRunning || (CLOUD && syncState === 'error')) && (
             <div className="header-status-slot">
             {isFocusRunning && (
