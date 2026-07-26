@@ -10577,10 +10577,11 @@ body:has(.app.deep)::after {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-1);
-  padding: var(--space-3);
-  /* The rail no longer draws a box, so each tab carries its own outline —
-     otherwise the inactive ones are invisible until hovered. */
-  border: 1px solid var(--border-subtle);
+  padding: var(--space-2) var(--space-3);
+  /* No outline, no fill. Five identical rectangles told you nothing about
+     which chapter you were in; a solid fill on the active one and plain text
+     for the rest says it at a glance and draws four fewer shapes. */
+  border: none;
   border-radius: var(--radius);
   background: transparent;
   color: var(--define-muted);
@@ -10596,54 +10597,56 @@ body:has(.app.deep)::after {
 }
 
 .define-chapter-tab:hover {
-  color: var(--define-ink);
+  color: var(--text-primary);
   background: var(--bg-muted);
 }
 
+/* The one filled shape in the band. In a greyscale palette a solid fill is
+   the only "you are here" signal that survives a glance. */
 .define-chapter-tab.is-active {
-  color: var(--define-ink);
-  background: var(--define-card-lift);
-  border-color: var(--dopamine, var(--define-ch-1));
+  color: var(--bg-elevated);
+  background: var(--text-primary);
   box-shadow: none;
   transform: none;
 }
 
-.define-chapter-tab.is-complete .define-chapter-tab-num {
-  background: var(--accent-growth, #A0A0A0);
-  color: #222222;
+.define-chapter-tab.is-active .define-chapter-tab-num,
+.define-chapter-tab.is-active .define-chapter-tab-count {
+  color: inherit;
+  background: none;
+  opacity: 0.75;
 }
 
+/* Completion reads off the count text ("7/7 · needed ones done"), so the
+   number doesn't need a filled chip to say it a second time. */
+.define-chapter-tab.is-complete .define-chapter-tab-count {
+  opacity: 1;
+  font-weight: 700;
+}
+
+/* Plain text, not a chip. The number is a label, and a rounded box around two
+   characters is one of the 135 rules that round an invisible container. */
 .define-chapter-tab-num {
-  display: inline-grid;
-  place-items: center;
-  min-width: 1.65rem;
-  height: 1.35rem;
-  padding: 0 0.35rem;
-  border-radius: var(--radius);
   font-family: var(--font-display);
-  font-size: 0.65rem;
+  font-size: var(--fs-1);
   font-weight: 700;
   letter-spacing: 0.04em;
-  background: var(--bg-muted);
-  color: var(--define-muted);
-}
-
-.define-chapter-tab.is-active .define-chapter-tab-num {
-  background: var(--dopamine, var(--define-ch-1));
-  color: #fff;
-  box-shadow: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  opacity: 0.6;
 }
 
 .define-chapter-tab-label {
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: var(--fs-2);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
 .define-chapter-tab-count {
-  font-size: 0.65rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   opacity: 0.75;
@@ -10678,19 +10681,24 @@ body:has(.app.deep)::after {
    same undifferentiated wall as no hierarchy at all — surface only means
    "work here" if exactly one thing has it. `.is-current` (below) gets the
    surface; the rest are separated by space, not by a box. */
+/* No card. Chapters are separated by space and by the weight of their titles,
+   not by a rectangle each. */
 .define-chapter {
-  border-radius: var(--radius);
+  border-radius: var(--radius-none);
   background: none;
-  border: 1px solid transparent;
-  padding: var(--space-4) 0;
+  border: none;
+  border-left: 2px solid transparent;
+  padding: 0 0 0 var(--space-5);
   box-shadow: none;
   animation: defineChapterIn 0.35s var(--ease-out, ease);
 }
 
+/* The single exception to "no borders on this page". Space can group, but it
+   can't say *which* of five equally-spaced chapters you're in — and this is
+   where a Start-with-these jump lands, so arriving somewhere unmarked breaks
+   the jump. One hairline, doing a job whitespace genuinely can't do. */
 .define-chapter.is-current {
-  background: var(--bg-elevated);
-  border-color: var(--border-subtle);
-  padding: var(--space-5);
+  border-left-color: var(--text-primary);
 }
 
 @keyframes defineChapterIn {
@@ -10710,8 +10718,8 @@ body:has(.app.deep)::after {
   align-items: flex-start;
   gap: var(--space-3) var(--space-4);
   margin-bottom: var(--space-4);
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--define-border);
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .define-chapter-badge {
@@ -10723,24 +10731,27 @@ body:has(.app.deep)::after {
   text-shadow: none;
 }
 
+/* Carries the section break now that the card doesn't. */
 .define-chapter-title {
-  margin: 0 0 0.2rem;
+  margin: 0;
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: var(--fs-5);
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--define-ink);
 }
 
+/* A tick, not a badge. It was a bordered, filled, rounded box around a single
+   check character. */
 .define-chapter-done-chip {
   margin-left: auto;
-  padding: 0.28rem 0.65rem;
-  border-radius: var(--radius);
-  font-size: 0.68rem;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius-none);
+  font-size: var(--fs-3);
   font-weight: 700;
-  background: color-mix(in srgb, var(--accent-growth, #A0A0A0) 18%, transparent);
-  color: var(--accent-growth, #A0A0A0);
-  border: 1px solid color-mix(in srgb, var(--accent-growth, #A0A0A0) 35%, transparent);
+  color: var(--text-secondary);
 }
 
 /* Capped. At full desktop width a two-column row put a label and its input
@@ -11427,7 +11438,7 @@ body:has(.app.deep)::after {
 }
 
 .define-workbook.is-split .define-chapter {
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-7);
 }
 
 /* Mood canvas */
@@ -12495,12 +12506,12 @@ body:has(.app.deep)::after {
   padding: 0.3rem 0.5rem;
 }
 
+/* Was re-boxing the tick this layer up; see the base rule. */
 .define-studio .define-chapter-done-chip {
-  border-radius: var(--radius);
-  border: 1px solid var(--ts-border, #E7E7E7);
-  background: var(--ts-panel, #FFFFFF);
-  padding: 0.15rem 0.4rem;
-  font-size: 0.75rem;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: var(--fs-3);
   font-weight: 700;
   box-shadow: none;
 }
@@ -14800,13 +14811,13 @@ select:focus {
    layer only owns rhythm. */
 .define-workbook.is-split .define-chapter {
   margin-top: 0 !important;
-  margin-bottom: var(--space-5) !important;
+  margin-bottom: var(--space-7) !important;
 }
 .define-workbook.is-split .define-chapter:last-child {
   margin-bottom: 0 !important;
 }
 .define-workbook.is-split .define-chapter-title {
-  font-size: var(--fs-4) !important;
+  font-size: var(--fs-5) !important;
   color: var(--text-primary) !important;
   letter-spacing: -0.02em !important;
 }
@@ -16427,19 +16438,21 @@ select:focus {
    mode this page has is not finding chapter 3, it's opening it and not
    starting, so the anti-stall control gets the accent and everything else
    stays quiet. */
+/* No box. The palette is greyscale, so a tinted rectangle can't make this
+   louder than its neighbours — a 6% mix of a mid grey into white is the page
+   background. Size, weight and the space around it do the work instead. */
 .define-start-here {
-  margin: 0 0 var(--space-5);
-  padding: var(--space-4);
-  border: 1px solid var(--dopamine, var(--border-strong));
-  border-left-width: 3px;
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--dopamine, #606060) 6%, var(--bg-elevated));
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  border: none;
+  background: none;
 }
 
 .define-start-here-title {
   margin: 0 0 var(--space-3);
-  font-size: var(--fs-3);
+  font-size: var(--fs-4);
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--text-primary);
 }
 
