@@ -280,11 +280,11 @@ export default function DetectiveSheet({
                           htmlFor={`detective-${f.id}`}
                         >
                           {f.label}
-                          {f.required && (
-                            <span className="define-required" title="Needed">
-                              *
-                            </span>
-                          )}
+                          {/* No required asterisk. It's a convention you have
+                              to already know, its tooltip never appears on
+                              touch, and this view is only ever seen by the
+                              person who set the brief up. The chapter rail
+                              already says how many fields are needed. */}
                         </label>
                         {filled && (
                           <span className="define-field-check" aria-hidden="true">

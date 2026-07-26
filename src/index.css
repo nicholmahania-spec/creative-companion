@@ -10384,13 +10384,6 @@ body:has(.app.deep)::after {
   margin: 0;
 }
 
-.define-required {
-  font-size: 0.72rem;
-  font-weight: 650;
-  color: var(--dopamine, var(--define-ch-1));
-  letter-spacing: 0.02em;
-}
-
 .define-field-check {
   margin-left: auto;
   width: 1.35rem;
