@@ -41,6 +41,14 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
+      # GitHub Pages has no SPA rewrite (public/_redirects is Netlify/
+      # Cloudflare-only), so a deep link like /creative-companion/c/<id>
+      # would 404. Pages serves 404.html for unknown paths — making it a
+      # copy of index.html boots the app, which then reads the real path
+      # and renders the public client page.
+      - name: SPA fallback for deep links (/f/:id, /c/:id)
+        run: cp dist/index.html dist/404.html
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

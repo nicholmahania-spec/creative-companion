@@ -10,10 +10,11 @@
  * touches the tables directly (mirrors discoveryShare.js's pattern).
  */
 import { supabase, isSupabaseConfigured } from './supabase'
+import { publicUrl } from './appPaths'
 
 /** Build the client-facing URL for a portal id. */
 export function clientPortalUrl(portalId) {
-  return `${window.location.origin}/c/${portalId}`
+  return publicUrl('c', portalId)
 }
 
 /**

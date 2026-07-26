@@ -9,10 +9,11 @@
  * submit_discovery_share (single-use write, pending -> submitted).
  */
 import { supabase, isSupabaseConfigured } from './supabase'
+import { publicUrl } from './appPaths'
 
 /** Build the client-facing URL for a share id. */
 export function discoveryShareUrl(shareId) {
-  return `${window.location.origin}/f/${shareId}`
+  return publicUrl('f', shareId)
 }
 
 /**

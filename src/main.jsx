@@ -3,16 +3,20 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import PublicDiscoveryFill from './components/PublicDiscoveryFill.jsx'
 import PublicClientPortal from './components/PublicClientPortal.jsx'
+import { routePath } from './lib/appPaths'
 import './index.css'
 import { versionLabel, APP_BUILD_DATE } from './lib/version'
 import { initPerformanceMonitoring } from './lib/performance'
 import { initAnalytics } from './lib/analytics'
 
 /** Public client-fill link (/f/:shareId) — no auth, no app shell. Checked
- *  before anything else boots so a client never needs an account. */
-const publicFormMatch = /^\/f\/([^/]+)\/?$/.exec(window.location.pathname)
+ *  before anything else boots so a client never needs an account.
+ *  routePath() strips the deploy base ('/creative-companion/' on GitHub
+ *  Pages) so these patterns work wherever the app is mounted. */
+const path = routePath()
+const publicFormMatch = /^\/f\/([^/]+)\/?$/.exec(path)
 /** Public client-dashboard link (/c/:portalId) — same no-auth pattern. */
-const publicPortalMatch = /^\/c\/([^/]+)\/?$/.exec(window.location.pathname)
+const publicPortalMatch = /^\/c\/([^/]+)\/?$/.exec(path)
 // Sentry initialization
 if (import.meta.env.VITE_SENTRY_DSN) {
   import('@sentry/react').then(({ init }) => {
