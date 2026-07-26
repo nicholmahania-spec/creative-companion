@@ -10505,8 +10505,13 @@ body:has(.app.deep)::after {
 .define-chapter-tab {
   display: flex;
   flex-direction: row;
+  /* min-width 0: grid items default to min-content width, so the count text
+   * overflowed the 1fr track and painted over the next tab. wrap: the
+   * count/"needed" line drops under the label instead of colliding. */
+  min-width: 0;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-3);
+  gap: var(--space-1) var(--space-3);
   padding: var(--space-2) var(--space-3);
   /* No outline, no fill. Five identical rectangles told you nothing about
      which chapter you were in; a fill on the active one and plain text for the
@@ -10589,9 +10594,13 @@ body:has(.app.deep)::after {
 /* flex-shrink: 0 for the same reason the label shrinks — whichever of the two
    gives way, it must not be the count. */
 .define-chapter-tab-count {
-  flex: 0 0 auto;
-  margin-left: auto;
-  padding-left: var(--space-2);
+  flex: 1 1 100%;
+  margin-left: 0;
+  /* Align under the label (num is 1.5rem + the tab's column gap). */
+  padding-left: calc(1.5rem + var(--space-3));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: var(--fs-1);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -14442,6 +14451,9 @@ select:focus {
 /* Mobile accordion chapter header (tap to expand) */
 .define-chapter-toggle {
   display: flex;
+  /* nowrap + shrinkable title: the check/caret were wrapping onto their own
+   * stray line under long chapter titles at phone widths. */
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.6rem;
   width: 100%;
@@ -15737,6 +15749,13 @@ select:focus {
   flex-direction: column;
   gap: var(--space-2);
   margin-top: var(--space-3);
+  /* Full row of the header band — wedged beside the title it fought the
+   * deadline for space on both desktop and mobile. */
+  flex: 1 1 100%;
+}
+
+.brand-template-top .define-secondary {
+  flex: 1 1 100%;
 }
 
 .define-milestones-compact .define-milestones-list {
@@ -15950,6 +15969,11 @@ select:focus {
   .define-dashboard .define-title-row .btn {
     order: 3;
     margin-left: 0.75rem;
+  }
+
+  .define-dashboard .define-milestones-compact,
+  .define-dashboard .brand-template-top .define-secondary {
+    order: 4;
   }
 }
 
@@ -16614,4 +16638,17 @@ textarea.artboard-brief-input {
 .define-chapter p,
 .define-start-here-title {
   max-width: 65ch;
+}
+
+.define-chapter-toggle .define-chapter-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  /* Collapsed accordion rows read as a list; 3rem gaps made five closed
+   * chapters fill two screens of mostly empty space. */
+  .define-workbook.is-split .define-chapter {
+    margin-bottom: var(--space-4) !important;
+  }
 }
