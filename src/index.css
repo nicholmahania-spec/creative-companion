@@ -10538,7 +10538,11 @@ body:has(.app.deep)::after {
    to win. One visual language for "you are here", used twice. */
 .define-chapter-tab.is-active {
   color: var(--text-primary);
-  background: var(--bg-muted);
+  font-weight: 700;
+  /* No background here: hover uses the same fill, so with the mouse in the
+     rail two tabs read as "current" at once. Position is the left rule and
+     ink weight; the fill belongs to hover alone. */
+  background: none;
   box-shadow: inset 2px 0 0 var(--text-primary);
   transform: none;
 }
@@ -15925,6 +15929,11 @@ select:focus {
 
 .define-start-here.is-done .define-start-here-title {
   margin: 0;
+  /* Read once, then it's just reassurance — it shouldn't stay the loudest
+     thing on the page, competing with the page title. */
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 @media (max-width: 640px) {
