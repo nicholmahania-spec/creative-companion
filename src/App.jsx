@@ -196,6 +196,7 @@ function App() {
   const clearToEmpty = useAppStore((s) => s.clearToEmpty)
   const renameProject = useAppStore((s) => s.renameProject)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
+  const setProjectLastView = useAppStore((s) => s.setProjectLastView)
   const deleteProject = useAppStore((s) => s.deleteProject)
   const archiveProject = useAppStore((s) => s.archiveProject)
   const unarchiveProject = useAppStore((s) => s.unarchiveProject)
@@ -722,6 +723,27 @@ function App() {
       return null
     },
     [setCurrentProject, goToProcessStep, setActiveView]
+  )
+
+  /** Open a project where the user actually left it. Jumping to a computed
+   * "first gap" drops them somewhere they didn't choose — if you stopped
+   * mid-Sketch, being teleported to Research costs a re-orientation every
+   * time. Gap-jumping stays on the explicitly labelled Continue button. */
+  // Record the journey view in play so a later switch back can resume it.
+  useEffect(() => {
+    if (!activeProjectId) return
+    if (!JOURNEY_STEPS.some((st) => st.view === activeView)) return
+    setProjectLastView(activeProjectId, activeView)
+  }, [activeProjectId, activeView, setProjectLastView])
+
+  const openProjectWhereLeftOff = useCallback(
+    (projectId) => {
+      const target = (projects || []).find((p) => p.id === projectId)
+      setCurrentProject(projectId)
+      setActiveView(target?.lastView || 'project')
+      setNavOpen(false)
+    },
+    [projects, setCurrentProject, setActiveView]
   )
 
   /** Filled after runExport is defined — export actions ref this. */
@@ -2782,6 +2804,31 @@ function App() {
                   >
                     <span aria-hidden="true">?</span> Discovery brief
                   </button>
+                  {/* Archive/Delete moved here from the sidebar's hover-only
+                      "⋯", which was invisible on touch and at a glance —
+                      destructive actions need one learnable home. */}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      handleArchiveProject()
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">□</span> Archive project
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item is-danger"
+                    onClick={() => {
+                      handleDeleteProject()
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">×</span> Delete project
+                  </button>
                   <button
                     type="button"
                     role="menuitem"
@@ -2861,6 +2908,58 @@ function App() {
         </div>
       </header>
 
+      {/* Step rail — desktop only (CSS-hidden below 768px, where the drawer
+          still carries the step list). Answers "where am I" by position, and
+          the one button names its own destination so the seven-way choice
+          collapses to a zero-decision default. */}
+      {journeyActive && (
+        <nav className="step-rail" aria-label="Process position">
+          <ol className="step-rail-list">
+            {JOURNEY_STEPS.map((step) => {
+              const active = journeyActive === step.id
+              const label = pathLabel(locale, step.id) || step.label
+              const done =
+                !active &&
+                pathStepHasContent(step.id, {
+                  project: activeProject,
+                  moodItems: deskMood,
+                  tasks: deskTasks,
+                  sparkIndex,
+                  palette: projectPalette,
+                })
+              return (
+                <li key={step.id}>
+                  <button
+                    type="button"
+                    className={`step-rail-step${active ? ' is-active' : ''}${
+                      done ? ' is-done' : ''
+                    }`}
+                    onClick={() => setActiveView(step.view)}
+                    aria-current={active ? 'step' : undefined}
+                    aria-label={`Step ${step.num}: ${label}${done ? ', done' : ''}`}
+                    title={`${label} · key ${step.num}`}
+                  >
+                    {done && (
+                      <span className="step-rail-check" aria-hidden="true">✓</span>
+                    )}
+                    {label}
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+          {pathNextGap && (
+            <button
+              type="button"
+              className="btn btn-primary step-rail-cta"
+              onClick={() => goToProcessStep(pathNextGap, { micro: 'next' })}
+            >
+              Continue → {pathLabel(locale, pathNextGap.id) || pathNextGap.label}
+            </button>
+          )}
+        </nav>
+      )}
+
       {showProgress && (
         <>
           <Suspense fallback={null}>
@@ -2896,22 +2995,24 @@ function App() {
               </button>
             </div>
             <ul className="journey-projects-list">
-              {projectsSummary.map(({ project: p, doneCount }) => {
+              {projectsSummary.map(({ project: p, doneCount, nextGap }) => {
                 const isActive = p.id === activeProjectId
                 const menuOpen = openProjectMenuId === p.id
+                // A named next action beats a ratio: "1/7" has to be decoded
+                // into a meaning and still doesn't say what to do.
+                const nextLabel = nextGap
+                  ? `Next: ${pathLabel(locale, nextGap.id) || nextGap.label}`
+                  : 'Ready to deliver'
                 return (
                   <li key={p.id} className="journey-project-row-wrap">
                     <button
                       type="button"
                       className={`journey-project-row${isActive ? ' is-active' : ''}`}
-                      onClick={() => {
-                        if (!isActive) switchProjectAndContinue(p.id)
-                        else setActiveView('project')
-                        setNavOpen(false)
-                      }}
+                      onClick={() => openProjectWhereLeftOff(p.id)}
                       aria-current={isActive ? 'true' : undefined}
                     >
                       <span className="journey-project-row-name">{p.name}</span>
+                      <span className="journey-project-row-next">{nextLabel}</span>
                       <span className="journey-project-row-count">
                         {doneCount}/7
                       </span>

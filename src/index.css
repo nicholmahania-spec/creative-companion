@@ -16635,3 +16635,169 @@ textarea.artboard-brief-input {
     margin-bottom: var(--space-4) !important;
   }
 }
+
+/* ============================================================
+   SIDEBAR + STEP RAIL — desktop redesign (≥768px)
+
+   The sidebar answers one question ("whose work am I in") and the rail
+   answers the other ("where am I in it"), instead of stacking two
+   hierarchies in one column of nine identical boxes. Mobile keeps the
+   drawer untouched — every rule here is inside a min-width query.
+   ============================================================ */
+@media (min-width: 768px) {
+  /* --- sidebar: switcher only --- */
+  .app-shell > .journey-sidebar .journey-bar-list {
+    display: none !important; /* steps live in the rail on desktop */
+  }
+  .app-shell > .journey-sidebar .journey-tools-pill {
+    display: none !important;
+  }
+
+  .app-shell > .journey-sidebar .journey-projects-section {
+    border: none !important;
+    padding: var(--space-4) 0 0 !important;
+  }
+  .app-shell > .journey-sidebar .journey-projects-head {
+    margin-bottom: var(--space-3) !important;
+  }
+  .app-shell > .journey-sidebar .journey-projects-heading {
+    /* was #A1A1A1 on the panel — 2.3:1, under the enforced floor */
+    color: var(--text-muted) !important;
+  }
+  .app-shell > .journey-sidebar .journey-project-row-menu-wrap {
+    /* Hover-only affordance — invisible at a glance and on touch. Archive
+       and Delete now live in Tools → This project. */
+    display: none !important;
+  }
+  .app-shell > .journey-sidebar .journey-projects-list {
+    /* No scroll cap: 2-8 projects is the real cardinality, and hiding the
+       entity the app is organised around to save spare vertical space is
+       the same failure as putting it below the fold. */
+    max-height: none !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .app-shell > .journey-sidebar .journey-project-row {
+    /* No box. One 2px edge marks the current project; everything else is
+       type weight and whitespace. */
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    width: 100%;
+    border: none !important;
+    border-left: 2px solid transparent !important;
+    border-radius: var(--radius-none) !important;
+    background: none !important;
+    box-shadow: none !important;
+    padding: 0 0 0 var(--space-3) !important;
+    text-align: left;
+    min-height: 0 !important;
+  }
+  .app-shell > .journey-sidebar .journey-project-row.is-active {
+    border-left-color: var(--text-primary) !important;
+    background: none !important;
+  }
+  .app-shell > .journey-sidebar .journey-project-row-name {
+    /* Full name, wrapping: "Test Proj…" is a memory test on the entity that
+       IS the project's identity, and two clients sharing a prefix become
+       indistinguishable. */
+    display: block;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    font-size: var(--fs-2);
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--text-secondary);
+  }
+  .app-shell > .journey-sidebar .journey-project-row.is-active .journey-project-row-name {
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .app-shell > .journey-sidebar .journey-project-row-next {
+    font-size: var(--fs-1);
+    font-weight: 500;
+    color: var(--text-muted);
+    line-height: 1.3;
+  }
+  .app-shell > .journey-sidebar .journey-project-row-count {
+    /* "1/7" is a ratio to decode that produces no next action, and "0/7" on
+       a fresh project reads as a scoreboard of nothing done. The named next
+       step above replaces it; kept for screen readers only. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* --- step rail --- */
+  .step-rail {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+    padding: var(--space-2) var(--space-5);
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .step-rail-list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+  .step-rail-step {
+    border: none;
+    background: none;
+    padding: 2px 0;
+    font: inherit;
+    font-size: var(--fs-2);
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .step-rail-step:hover {
+    color: var(--text-primary);
+  }
+  .step-rail-step.is-done {
+    color: var(--text-secondary);
+  }
+  .step-rail-step.is-active {
+    color: var(--text-primary);
+    font-weight: 700;
+    border-bottom-color: var(--text-primary);
+  }
+  .step-rail-step:focus-visible {
+    outline: 2px solid var(--dopamine);
+    outline-offset: 2px;
+  }
+  .step-rail-check {
+    margin-right: var(--space-1);
+  }
+  .step-rail-cta {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+}
+
+/* Rail is desktop-only chrome — the drawer still carries the steps below. */
+@media (max-width: 767px) {
+  .step-rail { display: none; }
+}
+
+/* Destructive Tools entry — red is reserved for exactly this. */
+.more-menu-item.is-danger {
+  color: var(--danger);
+}

@@ -229,6 +229,9 @@ export function createBlankProject(name = 'My project', brief = '') {
     deadline: '',
     /** Which Define chapter accordion is open; unset until the user opens one */
     defineOpenChapter: null,
+    /** Last journey view opened in this project, so switching back resumes
+     *  where you were instead of teleporting you to a computed "first gap". */
+    lastView: null,
     ...brandIdentityDefaults(),
     tasks: [],
     runningTodo: blankRunningTodo(),
@@ -511,6 +514,14 @@ const useAppStore = create(
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === projectId ? { ...p, defineOpenChapter: chapterId } : p
+          ),
+        })),
+
+      /** Remember the view a project was last on. */
+      setProjectLastView: (projectId, view) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId && p.lastView !== view ? { ...p, lastView: view } : p
           ),
         })),
 
