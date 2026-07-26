@@ -69,6 +69,36 @@ genuinely drawers for browsing a list, like the running to-do panel, are a
 different pattern and not covered by this rule — this is about dialogs/popups
 specifically.)
 
+## Typography rules — enforced by `src/lib/typography.test.js`
+
+These are not preferences. Each one encodes a bug that shipped and was
+invisible in review. `npm test` fails if any is broken, and each guardrail
+has been verified to actually fail when the bug is reintroduced.
+
+- **Size type in `rem`, never `px`.** Respects the user's browser setting.
+- **Three numeric font weights only: 500 / 600 / 700.** Anything else must
+  first be added to the `Plus+Jakarta+Sans:wght@` request in `index.html`.
+  Asking for a weight the family doesn't ship gets rounded inconsistently —
+  that was 111 rules pretending to be three weights while rendering as one.
+- **`--font-sans` must lead with a family `index.html` actually loads.**
+  It led with Inter, which was never loaded, so every screen silently
+  rendered in the fallback.
+- **Muted text must clear 4.5:1** (WCAG AA — note AAA is 7:1) against the
+  *worst* surface it lands on: `#F5F5F5` in light, `#2F2F2F` in dark. Dark
+  values must be solid hex, never `rgba()` — alpha composites below the
+  floor. `--text-muted` sat at 2.58:1 across 127 usages.
+- **Never re-hardcode `--ts-mute`** (or any theme token) further down the
+  file. A literal at line ~12.8k shadowed the theme-aware definition at
+  line 59, making the fix above it dead code. Reference `var(--text-muted)`.
+- **Cap prose at 65ch.** Only two containers in ~17k lines constrained line
+  length before this. Uncapped body copy runs ~140 characters on a wide
+  screen and the eye loses the return sweep.
+
+Known and not yet fixed: **five stacked override layers** (`grep -n "lock"`
+around lines 9961, 10037, 12015, 12858, 13388, 14494) totalling ~4.5k lines
+and ~650 `!important`s. Do not add a sixth. If a style needs overriding,
+fix the base rule.
+
 ## What this actually is — a customer/project management system
 
 Creative Companion is the user's **customer and project management system**,
