@@ -1,7 +1,7 @@
 {
   "name": "creative-companion-react",
   "private": true,
-  "version": "1.48.196",
+  "version": "1.48.198",
   "type": "module",
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",

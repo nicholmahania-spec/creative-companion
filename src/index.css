@@ -10602,11 +10602,9 @@ body:has(.app.deep)::after {
   margin-left: 0;
   /* Align under the label (num is 1.5rem + the tab's column gap). */
   padding-left: calc(1.5rem + var(--space-3));
-  /* Wrap rather than ellipsis: "needed ones …" told you nothing. */
   white-space: normal;
   font-size: var(--fs-1);
   font-weight: 500;
-  font-variant-numeric: tabular-nums;
   /* Solid token, no opacity: stacking opacity on --text-secondary (itself
    * rgba) composited to ~3.4:1, under the 4.5:1 floor by a route the
    * typography test can't see. */

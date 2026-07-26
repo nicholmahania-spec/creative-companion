@@ -154,16 +154,17 @@ export default function DetectiveSheet({
                   {st.complete ? '✓' : ch.num}
                 </span>
                 <span className="define-chapter-tab-label">{ch.railLabel || ch.title}</span>
+                {/* Just the floor, no ratio. "0/5" is a number to decode
+                    that produces no action, and the zero reads as a
+                    scoreboard of nothing done — the same reason the sidebar
+                    dropped n/7. What's left to do is the whole message. */}
                 <span className="define-chapter-tab-count">
-                  {st.done}/{st.total}
-                  {/* Name the real floor. "0/7" alone reads as seven
-                      obligations; most chapters gate nothing at all. */}
                   <span className="define-chapter-tab-need">
                     {st.requiredRemaining > 0
-                      ? ` · ${st.requiredRemaining} needed`
+                      ? `${st.requiredRemaining} needed`
                       : st.requiredTotal > 0
-                        ? ' · needed ones done'
-                        : ' · none needed'}
+                        ? 'needed ones done'
+                        : 'none needed'}
                   </span>
                 </span>
               </button>
