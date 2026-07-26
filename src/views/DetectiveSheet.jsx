@@ -55,6 +55,11 @@ export default function DetectiveSheet({
     [detective]
   )
 
+  /** Capped at three: a row of eight equally-loud buttons is another list to
+   * read, which is the scanning cost this block exists to remove. The count
+   * in the heading must match what's rendered. */
+  const startHere = useMemo(() => requiredEmpty.slice(0, 3), [requiredEmpty])
+
   /** Jump straight to one named field. Opening the chapter first matters in
    * accordion mode, where the input is not mounted until it opens. */
   const jumpToField = useCallback(
@@ -92,13 +97,13 @@ export default function DetectiveSheet({
       {/* Named remaining work, front and centre. Four labels to read instead
           of thirty-five, and each one is a jump, not a reminder to go find it. */}
       <div className={`define-start-here${requiredEmpty.length === 0 ? ' is-done' : ''}`}>
-        {requiredEmpty.length > 0 ? (
+        {startHere.length > 0 ? (
           <>
             <p className="define-start-here-title">
-              Start with {requiredEmpty.length === 1 ? 'this one' : `these ${requiredEmpty.length}`}
+              Start with {startHere.length === 1 ? 'this one' : `these ${startHere.length}`}
             </p>
             <div className="define-start-here-list">
-              {requiredEmpty.slice(0, 3).map((f) => (
+              {startHere.map((f) => (
                 <button
                   key={f.id}
                   type="button"

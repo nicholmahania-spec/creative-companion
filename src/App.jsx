@@ -2950,7 +2950,11 @@ function App() {
               )
             })}
           </ol>
-          {pathNextGap && (
+          {/* Only when it actually goes somewhere. When the next gap IS the
+              current page, "Continue → Project overview" points at the screen
+              you're already on — a control that does nothing is worse than no
+              control. "Start with these" is the call to action on that page. */}
+          {pathNextGap && pathNextGap.view !== activeView && (
             <button
               type="button"
               className="btn btn-primary step-rail-cta"
