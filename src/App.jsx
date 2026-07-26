@@ -117,7 +117,13 @@ import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
 import { HoursInvoicePanel } from './components/HoursInvoice'
 import { DiscoveryBriefPanel } from './components/DiscoveryBrief'
 import { ProjectOverviewSharePanel } from './components/ProjectOverviewShare'
+import {
+  ClientInboxChip,
+  ClientInboxPanel,
+  useClientInbox,
+} from './components/ClientInbox'
 import { guessRunningTodoStage } from './lib/runningTodoStages'
+import { installAutoGrow } from './lib/autoGrow'
 import {
   normalizeLocale,
   t as i18nT,
@@ -159,7 +165,6 @@ function App() {
   const setCurrentProject = useAppStore((s) => s.setCurrentProject)
   const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
   const updateDetective = useAppStore((s) => s.updateDetective)
-  const applyDetectiveToBrief = useAppStore((s) => s.applyDetectiveToBrief)
   const updateDirection = useAppStore((s) => s.updateDirection)
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
   const bumpDesignVersion = useAppStore((s) => s.bumpDesignVersion)
@@ -276,10 +281,14 @@ function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [runningTodoPromptOpen, setRunningTodoPromptOpen] = useState(false)
   const [runningTodoPanelOpen, setRunningTodoPanelOpen] = useState(false)
+  /** True when the add popup was opened by an explicit "Add to list" click,
+   *  so it skips the "Anything to add?" yes/no gate. */
+  const [runningTodoAddDirect, setRunningTodoAddDirect] = useState(false)
   const [researchAddOpen, setResearchAddOpen] = useState(false)
   const [hoursPanelOpen, setHoursPanelOpen] = useState(false)
   const [discoveryPanelOpen, setDiscoveryPanelOpen] = useState(false)
   const [overviewSharePanelOpen, setOverviewSharePanelOpen] = useState(false)
+  const [clientInboxOpen, setClientInboxOpen] = useState(false)
   const [demoTour, setDemoTour] = useState(null)
   const [navDir, setNavDir] = useState('none')
   const prevJourneyIdx = useRef(0)
@@ -331,10 +340,8 @@ function App() {
   const [syncErrorSource, setSyncErrorSource] = useState('push') // 'pull' | 'push'
   const [pwCurrent, setPwCurrent] = useState('')
   const [pwNext, setPwNext] = useState('')
-  const [accountOpen, setAccountOpen] = useState(false)
   const [buddyWinPulse, setBuddyWinPulse] = useState(0)
   const moreWrapRef = useRef(null)
-  const accountWrapRef = useRef(null)
   const importFileRef = useRef(null)
   const cloudSyncReady = useRef(false)
   const skipNextCloudPush = useRef(false)
@@ -368,6 +375,9 @@ function App() {
   const activeProjectId = currentProjectId
   const activeProject = projects.find((p) => p.id === activeProjectId)
   const runningTodo = activeProject?.runningTodo || null
+  // Open items only — never "3 of 11". A denominator turns a next-action cue
+  // into a progress verdict, which invites the "I'm behind" read.
+  const openTodoCount = (runningTodo?.items || []).filter((it) => !it.completed).length
   const addRunningTodoItem = useAppStore((s) => s.addRunningTodoItem)
   const toggleRunningTodoItem = useAppStore((s) => s.toggleRunningTodoItem)
   const removeRunningTodoItem = useAppStore((s) => s.removeRunningTodoItem)
@@ -382,6 +392,13 @@ function App() {
   const mergeDiscoveryAnswers = useAppStore((s) => s.mergeDiscoveryAnswers)
   const setClientPortalId = useAppStore((s) => s.setClientPortalId)
   const mergeDetectiveAnswers = useAppStore((s) => s.mergeDetectiveAnswers)
+  const portalSeen = useAppStore((s) => s.portalSeen)
+  const markPortalSeen = useAppStore((s) => s.markPortalSeen)
+
+  // Textareas grow to fit their content instead of carrying a resize grip.
+  // No-ops entirely in browsers with native `field-sizing` (the CSS handles
+  // it there); this only installs the JS sizer for the ones without it.
+  useEffect(() => installAutoGrow(), [])
 
   // Every time a project is opened: clear yesterday's completed to-dos (if
   // the day rolled over) and prompt for anything to add to the running list.
@@ -525,6 +542,38 @@ function App() {
   }, [projects, tasks])
 
   const selectProject = (id) => setCurrentProject(id)
+
+  /** Client activity, across every project. Polls only while cloud sync is
+   *  configured; the chip degrades to a plain "sign in" prompt otherwise. */
+  const clientInbox = useClientInbox({
+    enabled: CLOUD,
+    projects,
+    seen: portalSeen,
+  })
+
+  /** Opening an inbox item takes you to the thing it's about — switching
+   *  project first if the item belongs to a different one, so the context
+   *  never has to be reassembled by hand. */
+  const goToInboxTarget = useCallback(
+    (row) => {
+      if (!row) return
+      const target = projects.find((p) => String(p.id) === String(row.projectLocalId))
+      if (target && String(target.id) !== String(currentProjectId)) setCurrentProject(target.id)
+      if (row.targetView) setActiveView(row.targetView)
+    },
+    [projects, currentProjectId, setCurrentProject]
+  )
+
+  const openInboxPortal = useCallback(
+    (row) => {
+      if (row) {
+        const target = projects.find((p) => String(p.id) === String(row.projectLocalId))
+        if (target && String(target.id) !== String(currentProjectId)) setCurrentProject(target.id)
+      }
+      setOverviewSharePanelOpen(true)
+    },
+    [projects, currentProjectId, setCurrentProject]
+  )
 
   // Seed missing project palettes
   useEffect(() => {
@@ -758,7 +807,6 @@ function App() {
         return
       }
       setMoreOpen(false)
-      setAccountOpen(false)
       setShowCreativeReset(false)
       // Ask Helper to tuck if expanded
       window.dispatchEvent(new CustomEvent('cc-helper-minimize'))
@@ -853,7 +901,6 @@ function App() {
     setPomodoroWorkStartedAt(null)
     clearFocusSession()
     setMoreOpen(false)
-    setAccountOpen(false)
     // Remember path view so unlock returns user where they were
     preBreakViewRef.current = activeView
     const endsAt = Date.now() + totalSec * 1000
@@ -1338,7 +1385,7 @@ function App() {
 
   // Close More / Account / sidebar project menus on outside click / Escape
   useEffect(() => {
-    if (!moreOpen && !accountOpen && !openProjectMenuId) return
+    if (!moreOpen && !openProjectMenuId) return
     const onPointer = (e) => {
       if (
         moreOpen &&
@@ -1347,13 +1394,6 @@ function App() {
       ) {
         setMoreOpen(false)
       }
-      if (
-        accountOpen &&
-        accountWrapRef.current &&
-        !accountWrapRef.current.contains(e.target)
-      ) {
-        setAccountOpen(false)
-      }
       if (openProjectMenuId && !e.target.closest('.journey-project-row-menu-wrap')) {
         setOpenProjectMenuId(null)
       }
@@ -1361,7 +1401,6 @@ function App() {
     const onKey = (e) => {
       if (e.key === 'Escape') {
         setMoreOpen(false)
-        setAccountOpen(false)
         setOpenProjectMenuId(null)
       }
     }
@@ -1371,7 +1410,7 @@ function App() {
       document.removeEventListener('pointerdown', onPointer)
       document.removeEventListener('keydown', onKey)
     }
-  }, [moreOpen, accountOpen, openProjectMenuId])
+  }, [moreOpen, openProjectMenuId])
 
   // Surface sync errors as action toast (not only footer)
   useEffect(() => {
@@ -2494,6 +2533,38 @@ function App() {
             </span>
           )}
           <div className="header-actions">
+            {/* Labelled, not a 5th identical glyph. This is the highest-
+                frequency control in the app; as an icon among icons it would
+                cost a five-way scan on every open, resolved only by hovering
+                for a tooltip. The count is ambient evidence the list has
+                something in it — otherwise the list doesn't exist between
+                opens and re-checking it depends on remembering to. No badge
+                at zero: a "0" reads as a scoreboard of nothing done. */}
+            <button
+              type="button"
+              className="header-todo-pill"
+              onClick={() => setRunningTodoPanelOpen(true)}
+              aria-label={
+                openTodoCount
+                  ? `To-do list, ${openTodoCount} open`
+                  : 'To-do list, nothing open'
+              }
+            >
+              <HeaderIcon name="list" />
+              <span>To-do</span>
+              {openTodoCount > 0 && (
+                <span className="header-todo-count" aria-hidden="true">
+                  {openTodoCount}
+                </span>
+              )}
+            </button>
+            {/* Same chip, same place, on every screen — whether or not this
+                project has a client link yet. One target to learn, and the
+                only entry point to client activity. */}
+            <ClientInboxChip
+              hasUnread={clientInbox.hasUnread}
+              onOpen={() => setClientInboxOpen(true)}
+            />
             {activeProject && (
               <input
                 className="header-name-input header-name-input-desktop"
@@ -2620,35 +2691,27 @@ function App() {
               <HeaderIcon name="people" />
             </button>
 
-            <button
-              type="button"
-              className="header-icon-btn"
-              onClick={() => {
-                const r = printCurrentPage()
-                if (!r.ok) flashToast(r.error || 'Print failed')
-              }}
-              title="Print / Save as PDF"
-              aria-label="Print or save this page as PDF"
-            >
-              <HeaderIcon name="print" />
-            </button>
+            {/* Print moved into the Tools menu. It's genuinely low-frequency,
+                and the header was about to gain a wider control — leaving the
+                icon row to grow is how the to-do button ended up colliding
+                with page content in the first place. */}
 
             <div className="more-wrap" ref={moreWrapRef}>
               <button
                 type="button"
-                className="header-icon-btn"
+                className="header-tools-btn"
                 aria-expanded={moreOpen}
                 aria-haspopup="menu"
                 aria-controls="tools-menu"
                 id="tools-menu-button"
-                title={i18nT(locale, 'ui.tools')}
-                aria-label={i18nT(locale, 'ui.tools')}
-                onClick={() => {
-                  setMoreOpen(!moreOpen)
-                  setAccountOpen(false)
-                }}
+                onClick={() => setMoreOpen(!moreOpen)}
               >
                 <HeaderIcon name="tools" />
+                {/* Labelled in text, not icon-only. This menu is now the home
+                    for Settings and Log out, and people are conditioned to
+                    hunt for an avatar for those — a bare glyph makes finding
+                    them a recall problem instead of a read. */}
+                <span>{i18nT(locale, 'ui.tools')}</span>
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">
@@ -2676,16 +2739,20 @@ function App() {
                   >
                     <span aria-hidden="true">⬇</span> Export
                   </button>
+                  {/* The to-do list now has one door: the labelled pill in the
+                      header. Two live triggers means two things to check and
+                      an ambiguous "are these the same list?". */}
                   <button
                     type="button"
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
-                      setRunningTodoPanelOpen(true)
                       setMoreOpen(false)
+                      const r = printCurrentPage()
+                      if (!r.ok) flashToast(r.error || 'Print failed')
                     }}
                   >
-                    <span aria-hidden="true">✓</span> To-do list
+                    <HeaderIcon name="print" /> Print / Save as PDF
                   </button>
                   <button
                     type="button"
@@ -2720,7 +2787,20 @@ function App() {
                   >
                     <span aria-hidden="true">↗</span> Share project overview
                   </button>
-                  <p className="more-menu-group-label">App</p>
+                  {/* "Account", not "App" — that's the word you go looking
+                      for when you want Settings or Log out. */}
+                  <p className="more-menu-group-label">Account</p>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setActiveView('settings')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">⚙</span> {i18nT(locale, 'ui.settings')}
+                  </button>
                   <button
                     type="button"
                     role="menuitem"
@@ -2732,86 +2812,45 @@ function App() {
                   >
                     <span aria-hidden="true">⌨</span> Keyboard shortcuts
                   </button>
-                </div>
-              )}
-            </div>
-
-            <div className="account-wrap" ref={accountWrapRef}>
-              <button
-                type="button"
-                className={`account-chip${accountOpen ? ' is-open' : ''}${
-                  activeView === 'settings' ? ' is-active' : ''
-                }`}
-                id="account-menu-button"
-                aria-expanded={accountOpen}
-                aria-haspopup="menu"
-                aria-controls="account-menu"
-                onClick={() => {
-                  setAccountOpen(!accountOpen)
-                  setMoreOpen(false)
-                }}
-              >
-                <span className="account-chip-avatar" aria-hidden="true">
-                  {(accessName || 'U').charAt(0).toUpperCase()}
-                </span>
-                <span className="account-chip-label">
-                  {accessName
-                    ? accessName.includes('@')
-                      ? accessName.split('@')[0]
-                      : accessName
-                    : 'You'}
-                </span>
-              </button>
-              {accountOpen && (
-                <div className="account-menu" role="menu" id="account-menu" aria-labelledby="account-menu-button">
-                  <p className="account-menu-email">
-                    {accessName || (CLOUD ? 'Signed in' : 'This device')}
-                  </p>
-                  {CLOUD && (
-                    <p className="account-menu-sync">
-                      {syncState === 'syncing'
-                        ? 'Saving…'
-                        : syncState === 'error'
-                          ? 'Save error'
-                          : 'Saved'}
-                    </p>
-                  )}
                   <button
                     type="button"
                     role="menuitem"
-                    className="account-menu-item"
-                    onClick={() => {
-                      setActiveView('settings')
-                      setAccountOpen(false)
-                    }}
-                  >
-                    {i18nT(locale, 'ui.settings')}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="account-menu-item"
+                    className="more-menu-item"
                     onClick={() => {
                       toggleTheme()
-                      setAccountOpen(false)
+                      setMoreOpen(false)
                     }}
                   >
+                    <span aria-hidden="true">◐</span>{' '}
                     {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
                   </button>
                   <button
                     type="button"
                     role="menuitem"
-                    className="account-menu-item account-menu-danger"
+                    className="more-menu-item more-menu-danger"
                     onClick={() => {
-                      setAccountOpen(false)
+                      setMoreOpen(false)
                       handleSignOut()
                     }}
                   >
+                    <span aria-hidden="true">→</span>{' '}
                     {CLOUD ? 'Log out' : 'Log out / lock'}
                   </button>
                 </div>
               )}
             </div>
+
+            {/* Absence of an error is not the same reassurance as "saved" —
+                you can't tell "no error" from "nothing is happening". Not a
+                button: it answers the question at a glance and costs no
+                decision. Errors keep their own retry chip above. */}
+            {CLOUD && syncState !== 'error' && (
+              <span className="header-saved" aria-live="polite">
+                <span className="header-saved-dot" aria-hidden="true" />
+                {syncState === 'syncing' ? 'Saving…' : 'Saved'}
+              </span>
+            )}
+
           </div>
         </div>
       </header>
@@ -3586,7 +3625,7 @@ function App() {
               flashToast={flashToast}
               flashMicro={flashMicro}
               updateDetective={updateDetective}
-              applyDetectiveToBrief={applyDetectiveToBrief}
+              onOpenShare={() => setOverviewSharePanelOpen(true)}
               setProjectDeadline={setProjectDeadline}
               renameProject={renameProject}
               createNewProject={createNewProject}
@@ -3801,9 +3840,13 @@ function App() {
 
       <RunningTodoAddModal
         open={runningTodoPromptOpen && activeView !== 'home' && !researchAddOpen}
-        onClose={() => setRunningTodoPromptOpen(false)}
+        onClose={() => {
+          setRunningTodoPromptOpen(false)
+          setRunningTodoAddDirect(false)
+        }}
         onAdd={handleAddRunningTodoItem}
         stageLabel={pathLabel(locale, journeyIdForView(activeView) || 'define')}
+        skipAsk={runningTodoAddDirect}
       />
       <RunningTodoPanel
         open={runningTodoPanelOpen}
@@ -3814,6 +3857,7 @@ function App() {
         onSort={sortRunningTodo}
         onOpenAdd={() => {
           setRunningTodoPanelOpen(false)
+          setRunningTodoAddDirect(true)
           setRunningTodoPromptOpen(true)
         }}
       />
@@ -3850,6 +3894,18 @@ function App() {
         portalId={activeProject?.clientPortalId || null}
         onSetPortalId={setClientPortalId}
         onApplyAnswers={mergeDetectiveAnswers}
+        flashToast={flashToast}
+        flashMicro={flashMicro}
+      />
+
+      <ClientInboxPanel
+        open={clientInboxOpen}
+        onClose={() => setClientInboxOpen(false)}
+        inbox={clientInbox}
+        seen={portalSeen}
+        onMarkSeen={markPortalSeen}
+        onGoToView={goToInboxTarget}
+        onOpenPortal={openInboxPortal}
         flashToast={flashToast}
         flashMicro={flashMicro}
       />
@@ -4110,9 +4166,18 @@ function App() {
         className="todo-fab"
         onClick={() => setRunningTodoPanelOpen(true)}
         title="To-do list"
-        aria-label="Open your to-do list"
+        aria-label={
+          openTodoCount
+            ? `Open your to-do list, ${openTodoCount} open`
+            : 'Open your to-do list, nothing open'
+        }
       >
         <HeaderIcon name="list" />
+        {openTodoCount > 0 && (
+          <span className="todo-fab-count" aria-hidden="true">
+            {openTodoCount}
+          </span>
+        )}
       </button>
 
       {/* Helper — presence coach, not a freeform chatbot. Hidden for now,

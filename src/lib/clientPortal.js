@@ -115,6 +115,53 @@ export async function fetchStudioMessages(portalId) {
   return { ok: true, messages: data || [] }
 }
 
+/**
+ * Studio side: every portal this user owns, across all projects.
+ *
+ * This is the only server-side way to find a portal — `clientPortalId` lives
+ * in localStorage on one device, so without this a cleared cache or a second
+ * machine orphans a portal permanently. RLS already scopes to the owner; the
+ * explicit `owner_id` filter is belt-and-braces.
+ *
+ * @returns {Promise<{ ok: true, portals: object[] } | { ok: false, error: string, signedOut?: boolean }>}
+ */
+export async function fetchOwnerPortals() {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  const { data: userData } = await supabase.auth.getUser()
+  const ownerId = userData?.user?.id
+  if (!ownerId) {
+    return { ok: false, signedOut: true, error: 'Sign in to see client activity' }
+  }
+  const { data, error } = await supabase
+    .from('client_portals')
+    .select('*')
+    .eq('owner_id', ownerId)
+    .order('updated_at', { ascending: false })
+  if (error) return { ok: false, error: error.message || 'Couldn’t load your client links' }
+  return { ok: true, portals: data || [] }
+}
+
+/**
+ * Studio side: messages for many portals in one round trip.
+ * @param {string[]} portalIds
+ */
+export async function fetchMessagesForPortals(portalIds) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  const ids = (portalIds || []).filter(Boolean)
+  if (!ids.length) return { ok: true, messages: [] }
+  const { data, error } = await supabase
+    .from('client_portal_messages')
+    .select('*')
+    .in('portal_id', ids)
+    .order('created_at', { ascending: true })
+  if (error) return { ok: false, error: error.message || 'Couldn’t load messages' }
+  return { ok: true, messages: data || [] }
+}
+
 // ── Anon (client-facing) access — all via SECURITY DEFINER RPCs ──
 
 /** Client side: fetch the portal's visible state (no auth). */

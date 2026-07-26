@@ -375,6 +375,12 @@ export function getDetectiveProgress(detective = {}) {
       total,
       done,
       requiredDone,
+      // Split out separately from `total` so the rail can say how many of a
+      // chapter's fields actually gate anything. Most chapters gate nothing;
+      // without this every field reads as mandatory and 30 empty boxes look
+      // like 30 failures.
+      requiredTotal: required.length,
+      requiredRemaining: required.filter((f) => !isFilled(detective?.[f.id])).length,
       complete: done === total && total > 0,
       pct: total ? Math.round((done / total) * 100) : 0,
     }

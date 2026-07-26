@@ -2,7 +2,7 @@
  * Define — Design Detective Sheet as chaptered studio workspace.
  * Three focus cards · micro-icons · hyper-focus fields · clean inputs.
  */
-import { useMemo, useState, useCallback, useRef } from 'react'
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import {
   DETECTIVE_CHAPTERS,
   getDetectiveProgress,
@@ -58,6 +58,47 @@ export default function DetectiveSheet({
 
   /** Only the required fields actually still empty — not a static list of
    * all of them, which reads as wrong once some are filled in. */
+  const requiredEmpty = useMemo(
+    () =>
+      DETECTIVE_CHAPTERS.flatMap((ch) =>
+        ch.fields
+          .filter((f) => f.required && !isFilled(detective?.[f.id]))
+          .map((f) => ({ id: f.id, label: f.label, chapterId: ch.id }))
+      ),
+    [detective]
+  )
+
+  /** Jump straight to one named field. Opening the chapter first matters in
+   * accordion mode, where the input is not mounted until it opens. */
+  const jumpToField = useCallback(
+    (fieldId, chapterId) => {
+      if (chapterId) {
+        setOpenChapter(chapterId)
+        trackChapterNavigation(chapterId, 'open')
+      }
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`detective-${fieldId}`)
+        if (!el) return
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        el.focus()
+      })
+    },
+    [setOpenChapter]
+  )
+
+  /** On arrival, land on the first thing that still needs answering instead
+   * of the top of a 35-field scroll. Desktop only — stealing focus on mobile
+   * pops the keyboard over the page every time the project is opened. */
+  const didAutoStart = useRef(false)
+  useEffect(() => {
+    if (didAutoStart.current) return
+    const first = requiredEmpty[0]
+    if (!first) return
+    didAutoStart.current = true
+    if (isMobile) setOpenChapter(first.chapterId)
+    else jumpToField(first.id, first.chapterId)
+  }, [requiredEmpty, isMobile, jumpToField, setOpenChapter])
+
   return (
     <div className={`define-workbook${splitMode ? ' is-split' : ''}`}>
       {!splitMode && (
@@ -84,8 +125,35 @@ export default function DetectiveSheet({
         </header>
       )}
 
-      {!splitMode && (
-        <nav className="define-chapter-rail" aria-label="Brief chapters">
+      {/* Named remaining work, front and centre. Four labels to read instead
+          of thirty-five, and each one is a jump, not a reminder to go find it. */}
+      <div className={`define-start-here${requiredEmpty.length === 0 ? ' is-done' : ''}`}>
+        {requiredEmpty.length > 0 ? (
+          <>
+            <p className="define-start-here-title">
+              Start with {requiredEmpty.length === 1 ? 'this one' : `these ${requiredEmpty.length}`}
+            </p>
+            <div className="define-start-here-list">
+              {requiredEmpty.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => jumpToField(f.id, f.chapterId)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="define-start-here-title">
+            Everything needed is answered — the rest is optional detail.
+          </p>
+        )}
+      </div>
+
+      <nav className="define-chapter-rail" aria-label="Brief chapters">
           {DETECTIVE_CHAPTERS.map((ch, i) => {
             const st = chapterStats[i]
             const active = openChapter === ch.id
@@ -99,6 +167,15 @@ export default function DetectiveSheet({
                 onClick={() => {
                   setOpenChapter(ch.id)
                   trackChapterNavigation(ch.id, 'open')
+                  // Master-scroll mode renders every chapter at once, so the
+                  // rail has to move the page, not just change which is open.
+                  if (!accordion) {
+                    requestAnimationFrame(() => {
+                      document
+                        .getElementById(`define-chapter-content-${ch.id}`)
+                        ?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+                    })
+                  }
                 }}
                 aria-current={active ? 'step' : undefined}
                 aria-controls={`define-chapter-content-${ch.id}`}
@@ -109,12 +186,20 @@ export default function DetectiveSheet({
                 <span className="define-chapter-tab-label">{ch.title}</span>
                 <span className="define-chapter-tab-count">
                   {st.done}/{st.total}
+                  {/* Name the real floor. "0/7" alone reads as seven
+                      obligations; most chapters gate nothing at all. */}
+                  <span className="define-chapter-tab-need">
+                    {st.requiredRemaining > 0
+                      ? ` · ${st.requiredRemaining} needed`
+                      : st.requiredTotal > 0
+                        ? ' · needed ones done'
+                        : ' · none needed'}
+                  </span>
                 </span>
               </button>
             )
           })}
-        </nav>
-      )}
+      </nav>
 
       <div className="define-chapters">
         {DETECTIVE_CHAPTERS.map((ch) => {

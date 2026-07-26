@@ -39,6 +39,13 @@
   --warning: #A7A7A7;
   --error: #EF4444;
 
+  /* Semantic status pair for approve / changes-requested badges. Previously
+     these were only ever written as var(--danger, #hex) fallbacks with three
+     different spellings and no definition, so they never followed the theme. */
+  --danger: #B91C1C;
+  --accent-danger: var(--danger);
+  --positive: #15803D;
+
   /* Aliases some later rules reference with hardcoded light fallbacks
      (var(--ts-x, #hex)) — defining them here makes those rules follow the
      active theme instead of always resolving to the light fallback. */
@@ -172,6 +179,9 @@ a:active {
   --border-strong: rgba(161, 161, 161, 0.26);
   --border-accent: rgba(161, 161, 161, 0.45);
   --highlight-inset: none;
+  --danger: #F87171;
+  --accent-danger: var(--danger);
+  --positive: #4ADE80;
   --accent-primary: #E7E7E7;
   --accent-deep: #FAFAFA;
   --accent-soft: #A1A1A1;
@@ -286,7 +296,6 @@ h3 {
   font: inherit;
   font-size: 0.95rem;
   color: var(--text-primary);
-  resize: vertical;
   min-height: 5rem;
   line-height: 1.5;
   transition: border-color var(--transition);
@@ -2484,7 +2493,6 @@ h3 {
   font: inherit;
   background: transparent;
   color: var(--text-primary);
-  resize: vertical;
   transition: border-color var(--transition);
 }
 
@@ -6634,7 +6642,6 @@ body.cc-printing-page button {
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 0.55rem 0.65rem;
-  resize: vertical;
   margin: 0 0 0.35rem;
 }
 
@@ -10417,7 +10424,6 @@ body:has(.app.deep)::after {
   font-size: 0.95rem;
   font-weight: 500;
   line-height: 1.45;
-  resize: vertical;
   transition: border-color var(--transition);
 }
 
@@ -10594,6 +10600,13 @@ body:has(.app.deep)::after {
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   opacity: 0.75;
+}
+
+/* Deliberately quieter than the x/y count: it's reassurance, not a target. */
+.define-chapter-tab-need {
+  font-weight: 550;
+  font-variant-numeric: normal;
+  opacity: 0.8;
 }
 
 @media (max-width: 560px) {
@@ -15506,6 +15519,9 @@ select:focus {
 }
 
 .running-todo-panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-top: auto;
   padding-top: 0.6rem;
   border-top: 1px solid var(--ts-border, var(--border-subtle));
@@ -15642,9 +15658,11 @@ select:focus {
 }
 
 .discovery-brief-hint {
+  /* Carries real content (client notes, form status, OCR warnings), not
+     decoration — --text-muted at 0.76rem lands near 2.3:1 and fails AA. */
   margin: 0.15rem 0 0.4rem;
-  font-size: 0.76rem;
-  color: var(--text-muted);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
 }
 
 .discovery-brief-section {
@@ -15706,7 +15724,10 @@ select:focus {
   margin-bottom: 0.65rem;
 }
 .discovery-brief-share-row .field-input {
+  /* min-width: 0 or the flex default (auto) refuses to shrink below the
+     full portal URL and overflows the panel at phone widths. */
   flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.85rem;
 }
 .discovery-brief-attach {
@@ -16203,7 +16224,7 @@ select:focus {
 }
 
 .project-menu-item.project-menu-danger {
-  color: var(--danger, #B91C1C);
+  color: var(--danger);
 }
 
 .project-menu-restore {
@@ -16546,22 +16567,40 @@ select:focus {
   background: var(--bg-muted);
 }
 
-/* Desktop: bigger, and anchored top-right (clear of the sticky header)
-   instead of bottom-right, so it doesn't sit over page content or
-   compete with the mobile bottom thumb-zone placement. */
+/* Desktop has no floating button at all — the to-do list lives in the header
+   as a labelled pill. The old top-right anchoring was fixed to the viewport
+   while no page reserved space for it, so around 1344px it landed on top of
+   the page header's primary action and swallowed its clicks. Header chrome
+   participates in layout, which makes that collision impossible rather than
+   merely unlikely at the widths we happened to test.
+
+   Mobile keeps the FAB: nothing collides there, and moving the most-used
+   control to the top of a phone puts it outside the thumb arc. What memory
+   anchors to is the control's identity — same icon, same count — not its
+   coordinates. */
 @media (min-width: 768px) {
   .todo-fab {
-    top: 4.75rem;
-    bottom: auto;
-    right: 1.5rem;
-    width: 3.75rem;
-    height: 3.75rem;
+    display: none;
   }
+}
 
-  .todo-fab .header-icon-svg {
-    width: 24px;
-    height: 24px;
-  }
+/* Count badge on the mobile FAB — same signal the desktop pill carries, so
+   the list is visibly non-empty without opening it. */
+.todo-fab-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  border: 2px solid var(--bg-elevated);
+  background: var(--text-primary);
+  color: var(--bg-elevated);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
 }
 
 .define-title-row {
@@ -16569,6 +16608,46 @@ select:focus {
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+/* Plain-language deadline. Read-only signal beside the date input, not a
+   second control — an ISO date carries no felt urgency. */
+.define-deadline-relative {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* "Start with these" — the required-and-empty fields, named and jumped to
+   directly, so arriving on the page never means reading all 35 labels. */
+.define-start-here {
+  margin: 0 0 1.1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+}
+
+.define-start-here-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.define-start-here-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.define-start-here-list .btn {
+  min-height: 40px;
+}
+
+.define-start-here.is-done .define-start-here-title {
+  margin: 0;
 }
 
 @media (max-width: 640px) {
@@ -16699,7 +16778,7 @@ select:focus {
 }
 
 .public-fill-error {
-  color: var(--accent-danger, #C0392B);
+  color: var(--danger);
   font-size: 0.85rem;
   margin: 0 0 0.75rem;
 }
@@ -16752,13 +16831,13 @@ select:focus {
 }
 
 .client-portal-step-badge.is-approved {
-  color: var(--text-primary);
-  border-color: var(--text-primary);
+  color: var(--positive);
+  border-color: var(--positive);
 }
 
 .client-portal-step-badge.is-changes_requested {
-  color: var(--danger, #C0392B);
-  border-color: var(--danger, #C0392B);
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 .client-portal-step-actions {
@@ -16791,16 +16870,23 @@ select:focus {
 }
 
 .client-portal-chat-sender {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .client-portal-chat-msg.is-client {
   padding-left: 0.75rem;
   border-left: 2px solid var(--border-subtle);
+}
+
+/* Own messages need their own mark too — otherwise the only attribution
+   signal is a line of small uppercase text. */
+.client-portal-chat-msg.is-studio {
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--dopamine);
 }
 
 .client-portal-chat-form {
@@ -16824,9 +16910,23 @@ select:focus {
 .overview-share-step {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.65rem;
+  min-height: 44px;
+  padding: 0 0.15rem;
   font-size: 0.88rem;
   cursor: pointer;
+}
+
+.overview-share-step input[type='checkbox'] {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+/* Badge aligns right, matching .client-portal-step-head's label+badge pairing
+   instead of butting against the label text. */
+.overview-share-step .client-portal-step-badge {
+  margin-left: auto;
 }
 
 .overview-share-notes {
@@ -16839,6 +16939,396 @@ select:focus {
   overflow-y: auto;
 }
 
+/* Portal mode scrolls well past 85vh — the title and the only close control
+   must not scroll away with it. */
+.overview-share-title {
+  margin: 0;
+}
+
+.overview-share-close {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.overview-share-panel .export-panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding-bottom: 0.5rem;
+  background: var(--bg-card);
+}
+
+/* One spacing system for all three modes; previously each mode inherited
+   whatever margins its children happened to carry. */
+.overview-share-portal,
+.overview-share-paper,
+.overview-share-review {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: stretch;
+}
+
+.overview-share-portal .btn,
+.overview-share-portal a.btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.overview-share-portal .discovery-brief-back,
+.overview-share-paper .discovery-brief-back,
+.overview-share-review .discovery-brief-back {
+  align-self: flex-start;
+  width: auto;
+}
+
+.overview-share-portal .discovery-brief-share-row .btn,
+.overview-share-portal .client-portal-chat-form .btn,
+.overview-share-portal .discovery-brief-handoff-actions .btn {
+  width: auto;
+}
+
+/* Status + refresh live at the top of portal mode. Bottom placement is a
+   documented blind spot for this user, not a minor layout preference. */
+.overview-share-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.overview-share-status .discovery-brief-hint {
+  margin: 0;
+}
+
 .overview-share-review .field-block {
   margin-bottom: 0.75rem;
+}
+
+/* Fields the scan did not pick up — shown so the user can see what is
+   missing rather than having to remember the full field list. */
+.overview-share-missed {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.overview-share-missed ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+/* Determinate visual progress — the percentage alone does not register. */
+.overview-share-progress {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  overflow: hidden;
+  margin: 0.35rem 0 0;
+}
+
+.overview-share-progress-fill {
+  height: 100%;
+  background: var(--dopamine);
+  transition: width var(--transition);
+}
+
+/* ── Client inbox ─────────────────────────────────────────────────────────
+   Deliberately number-free: unread is a filled dot, never a count, and no
+   timestamps appear in the list. Recency is carried by sort order plus the
+   "Seen before this" divider. No red anywhere — a red badge on client
+   feedback reads as a verdict and gets avoided rather than opened. */
+.client-inbox-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.client-inbox-chip:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover, var(--surface));
+}
+
+.client-inbox-chip.has-new {
+  color: var(--text-primary);
+  border-color: var(--dopamine);
+}
+
+.client-inbox-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  background: transparent;
+}
+
+.client-inbox-chip.has-new .client-inbox-chip-dot {
+  background: var(--dopamine);
+  border-color: var(--dopamine);
+}
+
+.client-inbox-panel {
+  max-width: 32rem;
+  width: 100%;
+}
+
+.client-inbox-title {
+  margin: 0;
+}
+
+.client-inbox-close {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.client-inbox-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.client-inbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.client-inbox-row.is-new {
+  border-color: var(--dopamine);
+}
+
+.client-inbox-row-glyph {
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.client-inbox-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.client-inbox-row-title {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+/* The client's own words on the row: the dread comes from not knowing what
+   it says, so it has to be readable without opening anything. */
+.client-inbox-row-preview {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.client-inbox-row-project {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.client-inbox-row-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.35rem;
+  border-radius: 50%;
+  background: var(--dopamine);
+}
+
+.client-inbox-divider {
+  margin: 0.6rem 0 0.2rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.client-inbox-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.client-inbox-note {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.client-inbox-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.client-inbox-detail-where {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.client-inbox-detail-body {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.client-inbox-detail-body.is-empty {
+  color: var(--text-secondary);
+}
+
+.client-inbox-reply {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ── Header to-do pill, Tools label, saved indicator ───────────────────
+   The to-do list is the highest-frequency control in the app, so it is the
+   only text-bearing item at the leading edge of the header group — findable
+   by shape in peripheral vision rather than by reading a row of identical
+   glyphs. Matches .client-inbox-chip metrics so the two read as siblings. */
+.header-todo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.header-todo-pill:hover {
+  background: var(--surface-hover, var(--surface));
+}
+
+.header-todo-count {
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--text-primary);
+  color: var(--surface);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+/* Tools carries text because it is now the home for Settings and Log out. */
+.header-tools-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 36px;
+  padding: 0 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.header-tools-btn:hover,
+.header-tools-btn[aria-expanded='true'] {
+  color: var(--text-primary);
+  background: var(--surface-hover, var(--surface));
+}
+
+.more-menu-danger {
+  color: var(--danger, #a8321f);
+}
+
+/* Read-only. Answers "is my work safe" at a glance so the question never
+   opens; nothing to click, so it costs no decision. */
+.header-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.header-saved-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--success, #1d6b3f);
+}
+
+@media (max-width: 900px) {
+  .header-saved {
+    display: none;
+  }
+}
+
+/* Below the desktop breakpoint the FAB is back, so the header pill would be
+   a second door to the same list. */
+@media (max-width: 767px) {
+  .header-todo-pill {
+    display: none;
+  }
+}
+
+/* ── Text boxes grow to fit; no drag handle ────────────────────────────
+   A resize grip is a decision ("is this big enough?") bolted onto a box you
+   are trying to think into, and a fixed-height box that scrolls hides your
+   own earlier sentences at exactly the moment you are still forming the
+   thought. Auto-growing removes both: the container is never managed, and
+   everything written stays on screen.
+
+   `field-sizing: content` does this natively. Browsers without it fall back
+   to the JS sizer in src/lib/autoGrow.js, which sets an inline height. */
+textarea.field-textarea,
+textarea.define-input,
+textarea.onboard-input,
+textarea.artboard-brief-input {
+  resize: none;
+  overflow-y: hidden;
+  field-sizing: content;
 }

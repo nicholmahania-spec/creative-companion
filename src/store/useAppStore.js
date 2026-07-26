@@ -789,6 +789,19 @@ const useAppStore = create(
           ),
         })),
 
+      /** Snapshot of client activity already seen, keyed by portal id.
+       *  Compared field-by-field to decide what's new — see clientInbox.js
+       *  for why this is a content diff and not a timestamp. */
+      portalSeen: {},
+
+      /** Record a portal's activity as seen. Only ever called on an explicit
+       *  open — never on a poll or a hover, so nothing silently stops being
+       *  new while the user isn't looking. */
+      markPortalSeen: (portalId, snapshot) =>
+        set((state) => ({
+          portalSeen: { ...(state.portalSeen || {}), [portalId]: snapshot },
+        })),
+
       /** Merge answers that came from a client (portal form or an OCR'd
        *  paper form) into the project's own Define/detective answers.
        *  Only fills fields that actually have a value — never blanks
@@ -1057,11 +1070,14 @@ const useAppStore = create(
         try {
           const data = typeof raw === 'string' ? JSON.parse(raw) : raw
           return get().hydrateFromPayload(data)
-        } catch (e) {
-          return {
-            ok: false,
-            error: e?.message || 'Could not read backup',
-          }
+        } catch {
+          // Deliberately swallow the parser's own message. `JSON.parse` throws
+          // things like "Unexpected token '<' ... is not valid JSON", which
+          // names an internal format and a character offset — it reads as a
+          // verdict on the user rather than on the file, and it tells them
+          // nothing they can act on. Callers fall back to their own plain
+          // wording ("Could not import that file"), localised.
+          return { ok: false }
         }
       },
 
@@ -1769,6 +1785,7 @@ const useAppStore = create(
         sparksTried: state.sparksTried ?? 0,
         currentSpark: state.currentSpark,
         prefs: state.prefs,
+        portalSeen: state.portalSeen || {},
         // Template persistence
         templates: state.templates,
         currentTemplateId: state.currentTemplateId,
@@ -1778,6 +1795,7 @@ const useAppStore = create(
           if (!state) return
           const onboardFlag = localStorage.getItem('cc-onboarded')
           if (onboardFlag === '1') state.onboarded = true
+          if (!state.portalSeen || typeof state.portalSeen !== 'object') state.portalSeen = {}
           if (!Array.isArray(state.tasks)) state.tasks = []
           if (!Array.isArray(state.moodItems)) state.moodItems = []
           if (!Array.isArray(state.conceptItems)) state.conceptItems = []

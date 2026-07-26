@@ -11,6 +11,7 @@ import { pinFaceCssText, pinVisualKind } from './moodPins'
 import { toISODate } from './dates'
 import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
 import { DETECTIVE_CHAPTERS } from './detectiveBrief'
+import { OVERVIEW_FIELD_PREFIX } from './overviewOcr'
 import {
   appendSystemMarkdown,
   buildColorSystem,
@@ -2623,7 +2624,13 @@ export async function downloadProjectOverviewPdf(project, options = {}) {
     const pageH = 792
     const contentW = pageW - margin * 2
     const bottom = pageH - margin - 18
-    const pdf = new jsPDF({ unit: 'pt', format: 'letter', compress: true })
+    // The blank (fillable) variant must NOT be compressed. jsPDF writes the
+    // /AcroForm catalog entry as a compressed stream, and pdf-lib then fails
+    // with "Expected instance of PDFDict, but got instance of PDFRawStream"
+    // when we try to read the filled-in copy back — i.e. we'd generate a form
+    // we couldn't read. The uncompressed form parses fine and the size cost is
+    // negligible for a text-only page.
+    const pdf = new jsPDF({ unit: 'pt', format: 'letter', compress: !blank })
 
     const clientName = options.clientName || project?.detective?.clientName || project?.name || ''
     const day = new Date().toLocaleDateString()
@@ -2690,8 +2697,25 @@ export async function downloadProjectOverviewPdf(project, options = {}) {
 
         if (blank) {
           const lines = f.area ? 3 : 1
+          const boxTop = y - 10
+          const boxH = lines * 16
+          ensureSpace(boxH)
+
+          // A real AcroForm text field, so a client who fills this in on
+          // screen produces a file we can read back exactly — no OCR, no
+          // handwriting guesswork. The ruled lines stay underneath so the
+          // same PDF is still printable and fillable by hand.
+          const { AcroFormTextField } = jsPdfMod
+          if (AcroFormTextField) {
+            const field = new AcroFormTextField()
+            field.fieldName = `${OVERVIEW_FIELD_PREFIX}${f.id}`
+            field.Rect = [margin, boxTop, contentW, boxH]
+            field.multiline = !!f.area
+            field.fontSize = 10
+            pdf.addField(field)
+          }
+
           for (let i = 0; i < lines; i += 1) {
-            ensureSpace(16)
             pdf.setDrawColor(200, 200, 200)
             pdf.line(margin, y, pageW - margin, y)
             y += 16

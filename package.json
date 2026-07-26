@@ -1,7 +1,7 @@
 {
   "name": "creative-companion-react",
   "private": true,
-  "version": "1.48.155",
+  "version": "1.48.158",
   "type": "module",
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
@@ -26,14 +26,18 @@
     "@supabase/supabase-js": "^2.110.7",
     "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.1",
+    "gh": "^2.8.9",
+    "github": "^14.0.0",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "lottie-web": "^5.12.2",
     "lucide-react": "^1.26.0",
     "pdf-lib": "^1.17.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "pdfjs-dist": "^5.7.284",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "tesseract.js": "^7.0.0",
+    "vercel": "^57.0.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
@@ -41,16 +45,27 @@
     "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.49.0",
     "@vitejs/plugin-react": "^6.0.4",
+    "esbuild": "^0.28.1",
     "gh-pages": "^6.3.0",
     "purgecss": "^8.0.0",
     "rollup-plugin-visualizer": "^7.0.1",
+    "tsup": "^8.5.1",
     "vite": "^8.1.5",
     "vite-plugin-purgecss": "^0.2.13",
     "vitest": "^4.1.10"
   },
+  "overrides": {
+    "tsup": {
+      "esbuild": "0.28.1"
+    }
+  },
   "allowScripts": {
     "core-js@3.49.0": true,
     "fsevents@2.3.3": true,
-    "fsevents@2.3.2": true
+    "fsevents@2.3.2": true,
+    "esbuild@0.27.7": true,
+    "esbuild@0.25.12": true,
+    "tesseract.js@7.0.0": true,
+    "esbuild@0.28.1": true
   }
 }

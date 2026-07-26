@@ -1,9 +1,11 @@
 /**
- * Define — split-screen studio: brief form (60%) + mood board (40%).
+ * Define — brief form studio.
  *
- * ADHD: side-by-side kills “tab-switching amnesia.” Inspiration stays pinned
- * next to the questions so users don’t leave the page to look at refs and
- * forget what they were answering. Do not collapse to form-only.
+ * NOTE: this used to be a 60/40 split with a mood board pinned beside the
+ * questions, and the header comment still claimed that was an ADHD guarantee
+ * long after `data-define-layout` was hardcoded to "form-only" and the board
+ * stopped rendering at all. The claim is removed rather than left lying:
+ * restoring the board is a separate, deliberate piece of work.
  *
  * Calm chapter nav — no XP / game HUD.
  */
@@ -21,9 +23,8 @@ export default function DefineView(props) {
     activeProject = null,
     deskTasks = [],
     setActiveView,
-    flashMicro,
     updateDetective,
-    applyDetectiveToBrief,
+    onOpenShare,
     setProjectDeadline,
     projectDeadline = '',
     quickInput = '',
@@ -39,13 +40,24 @@ export default function DefineView(props) {
 
   const [openChapter, setOpenChapter] = useState('core')
 
-  /** Save composes detective answers into project.brief. Deliberately does
-   * not navigate anywhere — moving to Research stays the user's own call
-   * (sidebar), never something a "Save" click pushes them into. */
-  const saveBrief = () => {
-    applyDetectiveToBrief?.()
-    flashMicro?.(i18nT(locale, 'ui.briefSaved') || 'Saved')
-  }
+  /** Plain-language deadline beside the date input. A read-only signal, not
+   * a second control — an ISO date carries no felt urgency. */
+  const deadlineRelative = useMemo(() => {
+    if (!projectDeadline) return ''
+    const due = new Date(`${projectDeadline}T00:00:00`)
+    if (Number.isNaN(due.getTime())) return ''
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const days = Math.round((due - today) / 86400000)
+    if (days < -1) return 'Overdue'
+    if (days === -1) return 'Was due yesterday'
+    if (days === 0) return 'Due today'
+    if (days === 1) return 'Due tomorrow'
+    if (days <= 6) return 'Due this week'
+    if (days <= 13) return 'Due next week'
+    if (days <= 31) return 'Due in a few weeks'
+    return 'Due later on'
+  }, [projectDeadline])
 
   return (
     <div
@@ -57,8 +69,16 @@ export default function DefineView(props) {
           <h1 className="page-title">
             {i18nT(locale, 'path.define')}
           </h1>
-          <button type="button" className="btn btn-primary" onClick={saveBrief}>
-            Save
+          {/* Replaces the old "Save" button, which called a @deprecated action
+              (the brief already autosaves on every keystroke) and toasted a raw
+              i18n key. Sharing is the real action this page needs, and it was
+              buried in the Tools dropdown. */}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => onOpenShare?.()}
+          >
+            Share / export
           </button>
         </div>
         <div className="define-deadline-inline">
@@ -70,6 +90,9 @@ export default function DefineView(props) {
             value={projectDeadline}
             onChange={(e) => setProjectDeadline(e.target.value)}
           />
+          {deadlineRelative && (
+            <span className="define-deadline-relative">{deadlineRelative}</span>
+          )}
           <button
             type="button"
             className="header-icon-btn"

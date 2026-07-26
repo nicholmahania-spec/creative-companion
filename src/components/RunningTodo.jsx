@@ -3,16 +3,24 @@
  * Stays flat/unsorted until Sort groups it by the 7 workflow stages;
  * after that, new items land pre-tagged into their stage automatically.
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { RUNNING_TODO_STAGES } from '../lib/runningTodoStages'
 
-/** Centered "anything to add?" popup — shown on opening a project.
- * Opens as a plain yes/no question; the input only appears after "Yes"
- * (recognition, not recall/generation, at the highest-friction moment). */
-export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel }) {
-  const [answered, setAnswered] = useState(false)
+/** Centered "anything to add?" popup.
+ *
+ * Unprompted (on opening a project) it opens as a plain yes/no question; the
+ * input only appears after "Yes" (recognition, not recall/generation, at the
+ * highest-friction moment). When the user came here by clicking "Add to
+ * list" they have already answered that question, so `skipAsk` drops them
+ * straight into the input rather than asking it again. */
+export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel, skipAsk = false }) {
+  const [answered, setAnswered] = useState(skipAsk)
   const [text, setText] = useState('')
   const [added, setAdded] = useState([])
+
+  useEffect(() => {
+    if (open) setAnswered(skipAsk)
+  }, [open, skipAsk])
 
   if (!open) return null
 
@@ -31,7 +39,7 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel }) {
       onAdd(trimmed)
       setText('')
     }
-    setAnswered(false)
+    setAnswered(skipAsk)
     onClose()
   }
 
@@ -48,7 +56,7 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel }) {
       <div className="export-panel running-todo-prompt-panel">
         <div className="export-panel-header">
           <h3 id="running-todo-prompt-title" style={{ margin: 0 }}>
-            Anything to add?
+            {skipAsk ? 'Add to your list' : 'Anything to add?'}
           </h3>
         </div>
 
@@ -164,19 +172,21 @@ export function RunningTodoPanel({
           })
         )}
 
+        {/* Add is unconditional. It used to render only once the list had
+            been sorted — but sorting needs items, and Sort is disabled while
+            the list is empty, so an empty list had no way in at all. */}
         <div className="running-todo-panel-actions">
-          {!sorted ? (
+          <button type="button" className="btn btn-primary" onClick={onOpenAdd}>
+            Add to list
+          </button>
+          {!sorted && (
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-secondary"
               onClick={onSort}
               disabled={items.length === 0}
             >
               Sort
-            </button>
-          ) : (
-            <button type="button" className="btn btn-secondary" onClick={onOpenAdd}>
-              Add to list
             </button>
           )}
         </div>
