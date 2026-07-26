@@ -69,6 +69,25 @@ genuinely drawers for browsing a list, like the running to-do panel, are a
 different pattern and not covered by this rule — this is about dialogs/popups
 specifically.)
 
+## What this actually is — a customer/project management system
+
+Creative Companion is the user's **customer and project management system**,
+not a brief-writing tool that happens to store a client name. The client is
+the first-class entity; projects hang off clients. Repeat clients are the
+normal shape of the business, not an edge case.
+
+Consequences that keep getting re-derived wrong:
+
+- **The client is the project's identity.** Don't invent a second, competing
+  name for the same thing (this is why the header project-name input was
+  redundant — `detective.clientName` already wins in exports, export
+  filenames, and the client portal).
+- **Grouping and disambiguating work under a client is core**, not a
+  patch for a rare collision.
+- **Chapter 01 of the brief is the client record**, not form-filling.
+  Email, phone, primary contact, decision-makers are CRM fields that happen
+  to live inside a brief — word and treat them accordingly.
+
 ## Design rule — ADHD / executive function first (non-negotiable)
 
 Creative Companion exists to reduce executive-function friction for creative

@@ -27,7 +27,11 @@
 
   --text-primary: #1A1A1A;
   --text-secondary: rgba(26, 26, 26, 0.68);
-  --text-muted: #A1A1A1;
+  /* Was #A1A1A1, which scored 2.58:1 on white and 2.37:1 on the canvas grey
+     against a 4.5:1 floor — and it's used 127 times, so every hint, count and
+     secondary line in the app failed. #6B6B73 is 5.28:1 on white, 4.84:1 on
+     canvas, and still reads as clearly secondary next to #1A1A1A. */
+  --text-muted: #6B6B73;
   --border-subtle: #E7E7E7;
   --border-strong: #D3D3D3;
   --border-hairline: #E7E7E7;
@@ -80,7 +84,10 @@
   --mesh-2: transparent;
   --mesh-3: transparent;
 
-  --font-sans: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Inter used to lead this stack but was never loaded by index.html, so every
+     screen silently rendered in the second font anyway. Naming the font we
+     actually load means what's specified is what's drawn. */
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-display: var(--font-sans);
   --tracking-display: -0.01em;
 
@@ -174,7 +181,10 @@ a:active {
   --bg-muted: #2F2F2F;
   --text-primary: #F4F4F4;
   --text-secondary: rgba(231, 231, 231, 0.78);
-  --text-muted: rgba(161, 161, 161, 0.82);
+  /* Solid, not alpha: the old rgba(161,161,161,.82) dropped below 4.5:1 once
+     it composited over the lighter surfaces (#2F2F2F). #ADADAD is 5.97:1 on
+     the worst of them and 8.14:1 on canvas. */
+  --text-muted: #ADADAD;
   --border-subtle: rgba(161, 161, 161, 0.16);
   --border-strong: rgba(161, 161, 161, 0.26);
   --border-accent: rgba(161, 161, 161, 0.45);
@@ -249,7 +259,7 @@ h3 {
   font-family: var(--font-display);
   font-size: 1.1rem;
   letter-spacing: -0.03em;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Page headers — dramatic scale */
@@ -568,7 +578,7 @@ h3 {
   background: var(--text-primary);
   color: var(--bg-canvas);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
@@ -693,7 +703,7 @@ h3 {
 .settings-danger-title {
   margin: 0 0 0.25rem;
   font-size: 0.8rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.02em;
   color: #b91c1c;
 }
@@ -911,7 +921,7 @@ h3 {
 
 .game-hud-level {
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--accent-deep);
   flex-shrink: 0;
@@ -982,7 +992,7 @@ h3 {
   background: #565656;
   color: #fff;
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 700;
   animation: gameHudBurst 1.5s ease forwards;
   pointer-events: none;
   box-shadow: none;
@@ -1076,7 +1086,7 @@ h3 {
 }
 
 .game-hud-quest-check {
-  font-weight: 800;
+  font-weight: 700;
   color: var(--accent-growth);
   line-height: 1.3;
 }
@@ -1139,7 +1149,7 @@ h3 {
 .forced-break-eyebrow {
   margin: 0 0 0.4rem;
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--accent-growth);
@@ -1148,7 +1158,7 @@ h3 {
 .forced-break-title {
   margin: 0 0 0.65rem;
   font-size: 1.35rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--text-primary);
 }
@@ -1163,7 +1173,7 @@ h3 {
 
 .forced-break-clock {
   font-size: clamp(2.5rem, 8vw, 3.25rem);
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.04em;
   color: var(--accent-deep);
@@ -1200,7 +1210,7 @@ h3 {
 .forced-break-kit-head {
   margin: 0 0 0.2rem;
   font-size: 0.92rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-primary);
   text-align: center;
@@ -1257,7 +1267,7 @@ h3 {
   flex-shrink: 0;
   width: 1.25rem;
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--accent-growth);
   line-height: 1.3;
 }
@@ -1318,7 +1328,7 @@ h3 {
 .forced-break-checklist li::before {
   content: '○ ';
   color: var(--accent-growth);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* Break kit editor (buddy More panel) */
@@ -1400,7 +1410,7 @@ h3 {
   color: #EFEFEF;
   font: inherit;
   font-size: 0.7rem;
-  font-weight: 800;
+  font-weight: 700;
   padding: 0.35rem 0.6rem;
   cursor: pointer;
 }
@@ -1435,7 +1445,7 @@ h3 {
   background: transparent;
   font: inherit;
   font-size: 0.85rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   padding: 0.15rem 0.25rem;
   cursor: pointer;
@@ -1566,7 +1576,7 @@ h3 {
   box-shadow: none;
   background: var(--bg-muted);
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-secondary);
 }
 
@@ -1598,7 +1608,7 @@ h3 {
 .home-eyebrow {
   margin: 0 0 0.75rem;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1607,7 +1617,7 @@ h3 {
 .home-kicker {
   margin: 0;
   font-size: 0.95rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--accent-primary);
 }
 
@@ -1843,7 +1853,7 @@ h3 {
   align-items: center;
   justify-content: center;
   font-size: 0.6rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-muted);
   position: relative;
   z-index: 1;
@@ -1864,7 +1874,7 @@ h3 {
 
 .home-md-step.is-current .home-md-step-label {
   color: var(--text-primary);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .journey-step.is-active .journey-num {
@@ -2890,7 +2900,7 @@ h3 {
 .reset-label {
   flex: 1;
   font-size: 1.05rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
@@ -3183,7 +3193,7 @@ h3 {
   border-radius: 0;
   font: inherit;
   font-size: clamp(1.25rem, 2.5vw, 1.55rem);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.3;
   color: var(--text-primary);
@@ -4332,7 +4342,7 @@ html[data-reduce-motion='true'] *::after {
 
 .palette-health-score {
   font-size: 1.1rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -4642,7 +4652,7 @@ html[data-reduce-motion='true'] *::after {
 
 .bf-name {
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: #3A3A3A;
 }
@@ -4985,7 +4995,7 @@ html[data-reduce-motion='true'] *::after {
 
 .buddy-compact-titles .bf-name {
   font-size: 0.84rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--buddy-ink);
   line-height: 1.2;
@@ -4993,7 +5003,7 @@ html[data-reduce-motion='true'] *::after {
 
 .buddy-compact-lv {
   font-size: 0.62rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--buddy-sage);
   background: rgba(133, 133, 133, 0.14);
@@ -5297,7 +5307,7 @@ html[data-reduce-motion='true'] *::after {
   background: rgba(191, 191, 191, 0.2);
   color: #535353;
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -6135,14 +6145,14 @@ body.cc-printing-page button {
 
 .header-redesign .brand-block .logo {
   font-size: 1.05rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
 }
 
 .header-project-select {
   font: inherit;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
   max-width: 9.5rem;
   padding: 0.35rem 0.5rem;
   border-radius: var(--radius-sm);
@@ -6156,7 +6166,7 @@ body.cc-printing-page button {
     display: block !important;
     font: inherit;
     font-size: 0.8rem;
-    font-weight: 650;
+    font-weight: 600;
     max-width: 11rem;
     padding: 0.35rem 0.5rem;
     border-radius: var(--radius-sm);
@@ -6214,7 +6224,7 @@ body.cc-printing-page button {
 
 .work-context-progress {
   color: var(--text-muted);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .flow-top-compact {
@@ -6223,21 +6233,21 @@ body.cc-printing-page button {
 
 .step-focus-title {
   font-size: clamp(1.35rem, 3.2vw, 1.85rem) !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
   letter-spacing: -0.03em;
 }
 
 .work-below-tools {
   margin: 0.85rem 0 1rem;
   font-size: 0.85rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
 .mood-pin-star {
   font: inherit;
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 700;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   background: var(--bg-elevated);
@@ -6304,7 +6314,7 @@ body.cc-printing-page button {
   display: grid;
   gap: 0.25rem;
   font-size: 0.88rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .pack-ready-list .is-ok {
@@ -6323,7 +6333,7 @@ body.cc-printing-page button {
   border: 1px solid rgba(116, 116, 116, 0.2);
   color: var(--text-primary);
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.4;
 }
 
@@ -6354,7 +6364,7 @@ body.cc-printing-page button {
   padding: 0.35rem 0.65rem;
   border-radius: var(--radius-sm);
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 700;
   background: var(--bg-muted);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
@@ -6367,7 +6377,7 @@ body.cc-printing-page button {
   padding: 0.35rem 0.65rem;
   border-radius: var(--radius);
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 700;
   background: var(--bg-muted);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
@@ -6450,7 +6460,7 @@ body.cc-printing-page button {
 
 .journey-gap-strip.is-pack-thin .journey-leavebehind-thin {
   color: var(--text-secondary);
-  font-weight: 550;
+  font-weight: 500;
 }
 
 /* Primary linear continue (stronger than strip G) */
@@ -6464,7 +6474,7 @@ body.cc-printing-page button {
 }
 
 .path-continue-row .btn-primary {
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .work-below-tools .btn-primary.work-path-next,
@@ -6561,7 +6571,7 @@ body.cc-printing-page button {
   z-index: 9500;
   font: inherit;
   font-size: 0.85rem;
-  font-weight: 750;
+  font-weight: 700;
   padding: 0.55rem 1rem;
   border-radius: var(--radius);
   border: 1px solid var(--border-strong);
@@ -6624,7 +6634,7 @@ body.cc-printing-page button {
   margin: 0.35rem 0 0;
   font: inherit;
   font-size: 1.05rem;
-  font-weight: 650;
+  font-weight: 600;
   background: transparent;
   border: 1px dashed currentColor;
   border-radius: 8px;
@@ -6739,7 +6749,7 @@ body.cc-printing-page button {
 
 .mood-pin-order.is-on,
 .mood-pin-star.is-hero {
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .mood-pin-tools {
@@ -6899,7 +6909,7 @@ body.cc-printing-page button {
   background: rgba(255, 255, 255, 0.92);
   color: #0A0A0A;
   font-size: 0.62rem;
-  font-weight: 800;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6958,7 +6968,7 @@ body.cc-printing-page button {
 
 .role-hex {
   font-size: 0.62rem;
-  font-weight: 650;
+  font-weight: 600;
   opacity: 0.75;
   margin-left: 0.15rem;
 }
@@ -7455,7 +7465,7 @@ body.cc-printing-page button {
   border-radius: var(--radius-sm) !important;
   padding: 0.3rem 0.55rem;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
   text-align: left;
   max-width: 12rem;
@@ -7767,7 +7777,7 @@ body.cc-printing-page button {
   }
 
 .journey-step.is-active .journey-label {
-    font-weight: 800;
+    font-weight: 700;
   }
 
 .journey-num {
@@ -8028,7 +8038,7 @@ body.cc-printing-page button {
   align-items: center;
   gap: 0.45rem;
   font-size: 0.85rem;
-  font-weight: 550;
+  font-weight: 500;
   color: var(--text-primary);
   padding: 0.2rem 0;
   cursor: pointer;
@@ -8618,7 +8628,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .onboard-brief-details summary {
   cursor: pointer;
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 600;
   margin-bottom: 0.45rem;
 }
 
@@ -8658,7 +8668,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .board-pack-bulk summary {
   cursor: pointer;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .board-pack-bulk-actions {
@@ -8829,7 +8839,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .logo-variant-label {
   font-size: 0.65rem;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   opacity: 0.75;
@@ -8922,7 +8932,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   background: var(--bg-muted);
   font-family: inherit;
   font-size: 0.75rem;
-  font-weight: 750;
+  font-weight: 700;
   text-align: center;
 }
 
@@ -8985,7 +8995,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .command-section-label {
   font-size: 0.68rem;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -9013,7 +9023,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   background: transparent;
   font: inherit;
   font-size: 0.88rem;
-  font-weight: 650;
+  font-weight: 600;
   text-align: left;
   color: var(--text-primary);
   cursor: pointer;
@@ -9033,7 +9043,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .command-item kbd {
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 700;
   padding: 0.12rem 0.35rem;
   border-radius: 6px;
   border: 1px solid var(--border-subtle);
@@ -9125,7 +9135,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   position: relative;
   z-index: 1;
   font-size: 0.58rem;
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -9579,7 +9589,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .game-hud-xp-ring .progress-ring-label {
   font-size: 0.52rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.05;
   color: var(--accent-deep);
 }
@@ -9665,7 +9675,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   border-radius: 0.55rem;
   background: var(--bg-muted);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 700;
   transition: background 0.25s ease, color 0.25s ease, transform 0.3s var(--ease-spring);
 }
 
@@ -9699,7 +9709,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .step-focus-title {
   font-size: clamp(1.4rem, 3.2vw, 1.85rem);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.035em;
 }
 
@@ -9707,7 +9717,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   border-radius: var(--radius-organic);
   padding: 0.85rem 1.45rem;
   font-size: 0.95rem;
-  font-weight: 750;
+  font-weight: 700;
   transition:
     transform 0.2s var(--ease-spring),
     box-shadow 0.22s ease,
@@ -9746,7 +9756,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .work-page-title {
   font-size: clamp(1.15rem, 2vw, 1.35rem);
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: -0.03em;
 }
 
@@ -10392,7 +10402,7 @@ body:has(.app.deep)::after {
   display: inline-grid;
   place-items: center;
   font-size: 0.7rem;
-  font-weight: 800;
+  font-weight: 700;
   background: color-mix(in srgb, var(--accent-growth, #A0A0A0) 25%, transparent);
   color: var(--accent-growth, #A0A0A0);
 }
@@ -10495,14 +10505,14 @@ body:has(.app.deep)::after {
 .define-progress-num {
   font-family: var(--font-display);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--define-ink);
 }
 
 .define-progress-meta {
   font-size: 0.68rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--define-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -10568,7 +10578,7 @@ body:has(.app.deep)::after {
   border-radius: var(--radius);
   font-family: var(--font-display);
   font-size: 0.65rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.04em;
   background: var(--bg-muted);
   color: var(--define-muted);
@@ -10590,14 +10600,14 @@ body:has(.app.deep)::after {
 
 .define-chapter-tab-count {
   font-size: 0.65rem;
-  font-weight: 650;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   opacity: 0.75;
 }
 
 /* Deliberately quieter than the x/y count: it's reassurance, not a target. */
 .define-chapter-tab-need {
-  font-weight: 550;
+  font-weight: 500;
   font-variant-numeric: normal;
   opacity: 0.8;
 }
@@ -10653,7 +10663,7 @@ body:has(.app.deep)::after {
 .define-chapter-badge {
   font-family: var(--font-display);
   font-size: 1.1rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--chapter-accent, var(--define-ch-1));
   text-shadow: none;
@@ -10673,7 +10683,7 @@ body:has(.app.deep)::after {
   padding: 0.28rem 0.65rem;
   border-radius: var(--radius);
   font-size: 0.68rem;
-  font-weight: 750;
+  font-weight: 700;
   background: color-mix(in srgb, var(--accent-growth, #A0A0A0) 18%, transparent);
   color: var(--accent-growth, #A0A0A0);
   border: 1px solid color-mix(in srgb, var(--accent-growth, #A0A0A0) 35%, transparent);
@@ -10757,7 +10767,7 @@ body:has(.app.deep)::after {
   color: var(--define-muted);
   font-family: var(--font-display);
   font-size: 1.02rem;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: -0.02em;
   cursor: pointer;
   transition:
@@ -10903,7 +10913,7 @@ body:has(.app.deep)::after {
 }
 .asset-audit-row-name {
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -10919,7 +10929,7 @@ body:has(.app.deep)::after {
 .asset-audit-status-select {
   flex: 0 0 auto;
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: 600;
   padding: 0.25rem 0.4rem;
   border-radius: 0.4rem;
   border: 1px solid var(--border-subtle);
@@ -11264,7 +11274,7 @@ body:has(.app.deep)::after {
 .define-progress-chip-label {
   position: relative;
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   letter-spacing: 0.02em;
@@ -11426,7 +11436,7 @@ body:has(.app.deep)::after {
   background: none;
   font: inherit;
   font-size: 0.85rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
 }
@@ -11531,7 +11541,7 @@ body:has(.app.deep)::after {
 .define-mood-pin-note {
   margin: 0;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.35;
   color: #FAFAFA;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -11687,7 +11697,7 @@ body:has(.app.deep)::after {
   padding: 0 0.3rem;
   border-radius: var(--radius);
   font-size: 0.65rem;
-  font-weight: 750;
+  font-weight: 700;
   background: var(--border-subtle);
   color: inherit;
 }
@@ -12073,7 +12083,7 @@ body:has(.app.deep)::after {
 .design-advanced > summary {
   cursor: pointer;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-mute, var(--text-secondary));
   list-style: none;
 }
@@ -12095,7 +12105,7 @@ body:has(.app.deep)::after {
 .design-edit-rail-label {
   margin: 0 0 0.45rem;
   font-size: 0.68rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -12220,7 +12230,7 @@ body:has(.app.deep)::after {
   background: var(--ts-panel, #FFFFFF);
   padding: 0.35rem 0.55rem;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   box-shadow: none;
 }
@@ -12283,7 +12293,7 @@ body:has(.app.deep)::after {
 .review-advanced > summary {
   cursor: pointer;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   list-style: none;
 }
@@ -12599,7 +12609,7 @@ body:has(.app.deep)::after {
 
 .define-chapter-total {
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   border-radius: 4px;
   border: 1px solid var(--ts-border, #E7E7E7);
@@ -12707,7 +12717,7 @@ body:has(.app.deep)::after {
 
 .define-chapter-frame .define-chapter-nav-count {
   font-size: 0.65rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
   opacity: 0.85;
@@ -12863,7 +12873,10 @@ body:has(.app.deep)::after {
   --ts-canvas: #F5F5F5;
   --ts-panel: #FFFFFF;
   --ts-ink: #1A1A1A;
-  --ts-mute: #A1A1A1;
+  /* Was a hardcoded #A1A1A1 that shadowed the theme-aware definition at the
+     top of the file and failed contrast in both themes. Point it at the real
+     token so it follows the theme and the fix. */
+  --ts-mute: var(--text-muted);
   --ts-border: #E7E7E7;
   --ts-focus: var(--dopamine);
   --ts-radius: 4px;
@@ -13036,7 +13049,7 @@ select:focus {
 
 .empty-state-title {
   font-size: 0.95rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Design preview label only */
@@ -13109,7 +13122,7 @@ select:focus {
   background: var(--ts-panel, #FFFFFF);
   padding: 0.35rem 0.55rem;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-ink, #171717);
   box-shadow: none;
 }
@@ -13172,7 +13185,7 @@ select:focus {
 .deliver-advanced > summary {
   cursor: pointer;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   list-style: none;
 }
@@ -13354,7 +13367,7 @@ select:focus {
 
 .export-studio .export-more-formats > summary {
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   cursor: pointer;
 }
@@ -13423,7 +13436,7 @@ select:focus {
   border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   margin: 0.5rem 0.55rem 0 !important;
 }
 
@@ -13466,7 +13479,7 @@ select:focus {
 .artboard-advanced > summary {
   cursor: pointer;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   color: #A1A1A1;
   list-style: none;
 }
@@ -13565,7 +13578,7 @@ select:focus {
   border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* ============================================================
@@ -13666,7 +13679,7 @@ select:focus {
 
 .forced-break-studio .forced-break-hint {
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   text-align: center;
   margin: 0.75rem 0 0.5rem;
@@ -13790,7 +13803,7 @@ select:focus {
 
 .onboard-studio .onboard-label {
   font-size: 0.8125rem;
-  font-weight: 650;
+  font-weight: 600;
   margin-bottom: 0.65rem;
 }
 
@@ -13809,7 +13822,7 @@ select:focus {
 .onboard-studio .onboard-brief-details > summary {
   cursor: pointer;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   list-style: none;
 }
@@ -13875,7 +13888,7 @@ select:focus {
 .game-hud-studio .game-hud-chip {
   border-radius: var(--radius-sm) !important;
   font-size: 0.7rem;
-  font-weight: 650;
+  font-weight: 600;
   box-shadow: none;
   padding: 0.1rem 0.3rem;
 }
@@ -13927,7 +13940,7 @@ select:focus {
 .buddy-studio .bf-status {
   font-size: 0.72rem;
   color: var(--ts-mute, #A1A1A1);
-  font-weight: 550;
+  font-weight: 500;
   max-width: 10.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -13987,7 +14000,7 @@ select:focus {
   box-shadow: none !important;
   min-height: 36px;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
   border: 1px solid var(--ts-border, #E7E7E7);
   background: var(--ts-panel, #FFFFFF);
   color: var(--ts-ink, #171717);
@@ -14014,7 +14027,7 @@ select:focus {
 .buddy-studio .buddy-hyper-banner {
   border-radius: 4px;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   margin: 0 0 0.35rem;
   padding: 0.3rem 0.45rem;
 }
@@ -14039,7 +14052,7 @@ select:focus {
   border: 1px solid var(--ts-border, #E7E7E7);
   background: var(--ts-panel, #FFFFFF);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .buddy-studio .buddy-check.is-due {
@@ -14122,7 +14135,7 @@ select:focus {
   border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .command-panel {
@@ -14246,7 +14259,7 @@ select:focus {
 .header-redesign .sync-error-chip {
   border: 1px solid var(--ts-border, #E7E7E7);
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
   padding: 0.3rem 0.5rem;
 }
 
@@ -14304,7 +14317,7 @@ select:focus {
 .insights-studio .session-done-line {
   margin: 0.65rem 0 0.35rem;
   font-size: 0.875rem;
-  font-weight: 650;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -14449,7 +14462,7 @@ select:focus {
 .settings-studio .settings-nested > summary {
   cursor: pointer;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   list-style: none;
 }
@@ -14480,7 +14493,7 @@ select:focus {
 .settings-studio .helper-ai-badge {
   border-radius: 4px;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   padding: 0.25rem 0.45rem;
 }
 
@@ -14511,7 +14524,7 @@ select:focus {
 .research-status {
   margin: 0.2rem 0 0;
   font-size: 0.8125rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-ink, #171717);
 }
 
@@ -14582,7 +14595,7 @@ select:focus {
 .research-advanced > summary {
   cursor: pointer;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   list-style: none;
 }
@@ -14968,7 +14981,7 @@ select:focus {
    Token-driven ink so it stays legible in both light and dark themes. */
 .define-studio-title.page-title {
   font-size: clamp(2.4rem, 4vw, 3rem) !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
   letter-spacing: -0.04em !important;
   line-height: 1.02 !important;
   color: var(--text-primary) !important;
@@ -15583,7 +15596,7 @@ select:focus {
 }
 .hours-log-date {
   flex: 0 0 auto;
-  font-weight: 650;
+  font-weight: 600;
   opacity: 0.8;
 }
 .hours-log-note {
@@ -16743,7 +16756,7 @@ select:focus {
 .public-fill-title {
   margin: 0 0 1rem;
   font-size: 1.35rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -16810,7 +16823,7 @@ select:focus {
 }
 
 .client-portal-step-label {
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .client-portal-step-badge {
@@ -17324,4 +17337,23 @@ textarea.artboard-brief-input {
   resize: none;
   overflow-y: hidden;
   field-sizing: content;
+}
+
+/* ============================================================
+   MEASURE — line length for body copy
+   Before this, exactly two containers in ~17k lines constrained
+   line length (28ch and 32ch, both headings). Everything else ran
+   the full width of its container: on a 1440px screen that's a
+   ~140-character line, and the eye loses its place on the return
+   sweep back to the left edge. 65ch keeps prose in the 60–70
+   band without changing any layout — it only caps, never stretches.
+   ============================================================ */
+
+.page-sub,
+.panel-hint,
+.forced-break-body,
+.info-reveal-body,
+.define-chapter p,
+.define-start-here-title {
+  max-width: 65ch;
 }
