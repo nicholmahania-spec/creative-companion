@@ -8807,53 +8807,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 /* Pack title ceremony — Fraunces display (loaded in index.html) */
 
-/* Session resume + keyboard sheet */
-
-.resume-banner {
-  position: fixed;
-  left: 50%;
-  /* Bottom — must not cover path bar / Tools */
-  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
-  top: auto;
-  transform: translateX(-50%);
-  z-index: 120;
-  width: min(92vw, 26rem);
-  padding: 0.75rem 0.9rem;
-  border-radius: var(--radius);
-  border: 1px solid rgba(26, 26, 26, 0.14);
-  background: #FAFAFA;
-  box-shadow: var(--shadow-2);
-  pointer-events: auto;
-}
-
-.resume-banner-copy {
-  margin: 0 0 0.5rem;
-}
-
-.resume-banner-body {
-  margin: 0;
-  font-size: 0.84rem;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--text-primary);
-}
-
-.resume-banner.is-after-break {
-  border-color: rgba(86, 86, 86, 0.35);
-  box-shadow: 0 0 0 1px rgba(86, 86, 86, 0.12), var(--shadow-2);
-}
-
-.resume-banner-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.app.deep .resume-banner {
-  background: var(--bg-elevated);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
 /* Logo variants (Design) */
 
 .logo-variant-grid {
@@ -10386,56 +10339,13 @@ body:has(.app.deep)::after {
   background: transparent;
 }
 
-.define-studio-title {
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 2.6rem);
-  letter-spacing: var(--tracking-display, -0.04em);
-  margin-bottom: 0.35rem;
-}
-
 /* Project essentials card */
-
-/* Active-cell focus isolation: click a field, everything else drops to
- * 25% opacity — no glow, no scale, just contrast doing the isolating. */
-
-.define-field.is-filled:not(.is-focused) {
-  border-color: color-mix(in srgb, var(--accent-growth, #A0A0A0) 25%, transparent);
-}
 
 .define-field-label-row {
   display: flex;
   align-items: center;
   gap: 0.55rem;
   margin-bottom: 0.45rem;
-}
-
-.define-field-icon {
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--radius);
-  flex-shrink: 0;
-  color: var(--define-ink);
-  background: var(--define-card-lift);
-  border: 1px solid var(--define-border);
-  box-shadow: none;
-}
-
-.define-icon-people,
-.define-icon-heart,
-.define-icon-spark,
-.define-icon-check,
-.define-icon-star,
-.define-icon-frame,
-.define-icon-block,
-.define-icon-box,
-.define-icon-gear,
-.define-icon-flag,
-.define-icon-target {
-  background: var(--define-card-lift);
-  color: var(--define-ink);
-  box-shadow: none;
 }
 
 .define-field-label {
@@ -10754,7 +10664,7 @@ body:has(.app.deep)::after {
   font-size: var(--fs-3);
   font-weight: 500;
   letter-spacing: -0.03em;
-  color: var(--chapter-accent, var(--define-ch-1));
+  color: var(--define-ch-1);
   text-shadow: none;
 }
 
@@ -10815,114 +10725,25 @@ body:has(.app.deep)::after {
 
 /* Floating next CTA */
 
-.define-fab-bar {
-  position: sticky;
-  bottom: 1rem;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.45rem;
-  margin-top: 1.25rem;
-  padding: 0.65rem;
-  border-radius: var(--radius);
-  background: var(--bg-elevated);
-  border: 1px solid var(--define-border);
-  box-shadow: none;
-}
 
-.define-fab-bar.is-ready {
-  border-color: var(--dopamine, var(--define-ch-1));
-  box-shadow: none;
-}
 
-.define-fab-hint {
-  border: none;
-  background: none;
-  font: inherit;
-  font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--define-muted);
-  cursor: pointer;
-  text-align: center;
-  padding: 0.15rem;
-}
 
-.define-fab-hint:hover {
-  color: var(--define-ink);
-}
 
-.define-fab {
-  width: 100%;
-  padding: 0.95rem 1.25rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--define-border);
-  background: var(--define-card-lift);
-  color: var(--define-muted);
-  font-family: var(--font-display);
-  font-size: var(--fs-3);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  cursor: pointer;
-  transition:
-    background 0.22s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
-}
 
-.define-fab.is-glow {
-  color: #fff;
-  background: var(--dopamine, var(--define-ch-1));
-  border-color: var(--dopamine, var(--define-ch-1));
-  box-shadow: none;
-}
 
-.define-fab.is-glow:hover {
-  background: var(--dopamine-deep, var(--define-ch-1));
-}
 
 /* Secondary / admin — recedes */
 
-.define-secondary,
-.define-admin {
+.define-secondary {
   margin-top: 1.25rem;
   opacity: 0.72;
   transition: opacity 0.2s ease;
 }
 
-.define-secondary:hover,
-.define-admin:hover,
-.define-admin[open] {
+.define-secondary:hover {
   opacity: 1;
 }
 
-.define-admin {
-  border-radius: var(--radius);
-  background: var(--define-card);
-  border: 1px solid var(--define-border);
-  padding: 0.85rem 1.1rem 1rem;
-  color: var(--define-ink);
-}
-
-.define-admin > summary {
-  cursor: pointer;
-  font-family: var(--font-display);
-  font-size: var(--fs-2);
-  font-weight: 700;
-  color: var(--define-muted);
-  list-style: none;
-}
-
-.define-admin > summary::-webkit-details-marker {
-  display: none;
-}
-
-.define-admin-body {
-  margin-top: 0.85rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
 
 /* Asset audit — existing brand-file inventory, tagged usable/outdated/missing */
 
@@ -11250,16 +11071,8 @@ body:has(.app.deep)::after {
   margin-top: 0.3rem;
 }
 
-.define-admin .project-actions-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
 
 @media (prefers-reduced-motion: reduce) {
-.define-fab.is-glow {
-    animation: none;
-  }
 }
 
 /* ============================================================
@@ -11289,64 +11102,12 @@ body:has(.app.deep)::after {
 
 /* ——— Dashboard action header ——— */
 
-.define-dash-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem 0.75rem 1.1rem;
-  margin-bottom: 1rem;
-  border-radius: var(--radius);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-}
 
-.define-dash-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-  flex: 1;
-}
 
-.define-dash-kicker {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  line-height: 1;
-}
 
-.define-name-headline {
-  width: 100%;
-  background: transparent;
-  border: none;
-  padding: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-  line-height: 1.25;
-}
 
-.define-name-headline::placeholder {
-  color: var(--text-muted);
-  opacity: 0.7;
-}
 
-.define-name-headline:focus {
-  outline: none;
-  box-shadow: 0 2px 0 var(--dopamine);
-}
 
-.define-dash-action {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  flex-shrink: 0;
-}
 
 .define-progress-chip {
   position: relative;
@@ -11380,30 +11141,9 @@ body:has(.app.deep)::after {
   letter-spacing: 0.02em;
 }
 
-.define-dash-cta {
-  white-space: nowrap;
-  font-size: 0.875rem;
-  padding: 0.45rem 1rem;
-  height: 2rem;
-}
 
-.define-dash-cta.is-quiet {
-  background: var(--bg-muted) !important;
-  color: var(--text-secondary) !important;
-  border-color: var(--border-subtle) !important;
-  box-shadow: none !important;
-}
 
 @media (max-width: 600px) {
-  .define-dash-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-  .define-dash-action {
-    width: 100%;
-    justify-content: space-between;
-  }
 }
 
 /* ——— Brief progress strip (flat) ——— */
@@ -11450,13 +11190,6 @@ body:has(.app.deep)::after {
   gap: 0;
 }
 
-.define-split-mood {
-  min-width: 0;
-  position: sticky;
-  top: 4.75rem;
-  max-height: calc(100vh - 5.5rem);
-  z-index: 5;
-}
 
 .define-workbook.is-split {
   margin-bottom: 0;
@@ -11487,210 +11220,30 @@ body:has(.app.deep)::after {
   overflow: hidden;
 }
 
-.define-mood-loading {
-  min-height: 16rem;
-  display: grid;
-  place-items: center;
-  color: var(--text-muted);
-  font-weight: 600;
-}
 
-.define-mood-title {
-  margin: 0 0 0.3rem;
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-}
 
-.define-mood-drop {
-  position: relative;
-  border-radius: var(--radius);
-  border: 1.5px dashed var(--border-strong);
-  background: var(--bg-muted);
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease;
-}
 
-.define-mood-drop.is-over {
-  border-color: var(--dopamine);
-  background: var(--dopamine-glow);
-  box-shadow: none;
-}
 
-.define-mood-file {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  pointer-events: none;
-}
 
-.define-mood-drop-btn {
-  width: 100%;
-  padding: 0.85rem 1rem;
-  border: none;
-  background: none;
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
 
-.define-mood-drop-btn:hover {
-  color: var(--dopamine);
-}
 
-.define-mood-swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
 
-.define-mood-swatch {
-  width: 1.65rem;
-  height: 1.65rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-strong);
-  cursor: pointer;
-  padding: 0;
-  transition: border-color 0.2s ease;
-}
 
-.define-mood-swatch:hover {
-  border-color: var(--dopamine);
-}
 
-.define-mood-note-row {
-  display: flex;
-  gap: 0.4rem;
-}
 
-.define-mood-note-row .define-input {
-  flex: 1;
-  min-width: 0;
-  padding: 0.55rem 0.75rem;
-  font-size: var(--fs-2);
-}
 
-.define-mood-tip {
-  margin: 0;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  display: flex;
-  gap: 0.35rem;
-  align-items: baseline;
-}
 
-.define-mood-wall {
-  flex: 1;
-  min-height: 10rem;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-  padding-right: 0.15rem;
-  align-content: start;
-}
 
-.define-mood-empty {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  min-height: 8rem;
-  padding: 1.25rem;
-  text-align: center;
-  border-radius: var(--radius);
-  border: 1px dashed var(--border-strong);
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
 
-.define-mood-empty-icon {
-  font-size: 1.5rem;
-  color: var(--dopamine);
-  text-shadow: none;
-}
 
-.define-mood-pin {
-  position: relative;
-  min-height: 5.5rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-subtle);
-  overflow: hidden;
-  box-shadow: none;
-}
 
-.define-mood-pin.is-note {
-  min-height: 4.5rem;
-  padding: 0.55rem 0.55rem 1.5rem;
-}
 
-.define-mood-pin.is-swatch {
-  min-height: 3.5rem;
-}
 
-.define-mood-pin-note {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  line-height: 1.35;
-  color: #FAFAFA;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
 
-.define-mood-pin-cap {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin: 0;
-  padding: 0.35rem 0.45rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #FAFAFA;
-  background: color-mix(in srgb, #000 55%, transparent);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-.define-mood-pin-actions {
-  position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
-  display: flex;
-  gap: 0.15rem;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
 
-.define-mood-pin:hover .define-mood-pin-actions {
-  opacity: 1;
-}
 
-.define-mood-pin-x,
-.define-mood-pin-edit {
-  width: 1.4rem;
-  height: 1.4rem;
-  border: none;
-  border-radius: var(--radius);
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  font-size: 0.7rem;
-  cursor: pointer;
-  line-height: 1;
-}
 
-.define-mood-pin-x:hover {
-  background: var(--error, #ef4444);
-}
 
 /* Wide tablet+: keep real split so board never leaves the glance */
 
@@ -11709,12 +11262,6 @@ body:has(.app.deep)::after {
     grid-template-columns: 1fr;
   }
 
-.define-split-mood {
-    position: relative;
-    top: auto;
-    max-height: none;
-    order: 2;
-  }
 
 .define-split-form {
     order: 1;
@@ -11741,45 +11288,11 @@ body:has(.app.deep)::after {
 
 /* Continue CTA: solid desk button, not a pulsing power-up */
 
-.define-fab-bar {
-  border-color: var(--define-border, var(--border-subtle)) !important;
-  box-shadow: none !important;
-  animation: none !important;
-}
 
-.define-fab-bar.is-ready {
-  border-color: var(--border-strong) !important;
-  box-shadow: none !important;
-}
 
-.define-fab {
-  animation: none !important;
-  box-shadow: none !important;
-  filter: none !important;
-  transform: none !important;
-}
 
-.define-fab.is-quiet {
-  background: var(--bg-muted, var(--define-card-lift)) !important;
-  color: var(--define-muted, var(--text-secondary)) !important;
-  border: 1px solid var(--border-subtle) !important;
-}
 
-.define-fab.is-ready,
-.define-fab.is-glow {
-  background: var(--dopamine) !important;
-  color: #fff !important;
-  border: 1px solid transparent !important;
-  box-shadow: none !important;
-  animation: none !important;
-}
 
-.define-fab.is-ready:hover,
-.define-fab.is-glow:hover {
-  filter: none !important;
-  transform: none !important;
-  opacity: 0.92;
-}
 
 /* Kill pulse / burst keyframes if still referenced */
 
@@ -11821,9 +11334,6 @@ body:has(.app.deep)::after {
   text-shadow: none !important;
 }
 
-.define-mood-empty-icon {
-  text-shadow: none !important;
-}
 
 /* ============================================================
    Page rewrites: Ideate 3-col · Deliver split
@@ -12518,22 +12028,9 @@ body:has(.app.deep)::after {
 
 /* Define mood board never dims (context anchor) */
 
-.define-split-mood {
-  opacity: 1 !important;
-  filter: none !important;
-}
 
 /* Define residual densify — chapter tabs + sticky path */
 
-.define-chapter-total {
-  font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--ts-mute, #A1A1A1);
-  border-radius: var(--radius);
-  border: 1px solid var(--ts-border, #E7E7E7);
-  background: var(--ts-panel, #FFFFFF);
-  padding: 0.3rem 0.5rem;
-}
 
 /* Was re-boxing the tick this layer up; see the base rule. */
 .define-studio .define-chapter-done-chip {
@@ -12543,43 +12040,6 @@ body:has(.app.deep)::after {
   font-size: var(--fs-3);
   font-weight: 600;
   box-shadow: none;
-}
-
-.define-studio .define-fab-bar {
-  position: sticky;
-  bottom: 0;
-  z-index: 20;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.85rem;
-  padding: 0.75rem 0 0.25rem;
-  background: var(--ts-canvas, #F5F5F5);
-  border-top: 1px solid var(--ts-border, #E7E7E7);
-  box-shadow: none;
-}
-
-.define-studio .define-fab-hint {
-  border: none;
-  background: transparent;
-  color: var(--ts-mute, #A1A1A1);
-  font-size: var(--fs-1);
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-  flex: 1 1 8rem;
-}
-
-.define-studio .define-fab.btn-primary {
-  border-radius: var(--radius-sm) !important;
-  min-height: 44px;
-  box-shadow: none !important;
-}
-
-.define-studio .define-fab.is-quiet {
-  opacity: 0.85;
 }
 
 /* .is-dimmed removed: the JS-driven dim compared against openChapter, which
@@ -12598,11 +12058,6 @@ body:has(.app.deep)::after {
   border-width: 1.5px;
   outline: none;
   box-shadow: none;
-}
-
-.define-field-icon {
-  border-radius: var(--radius-sm) !important;
-  box-shadow: none !important;
 }
 
 .define-input.field-input,
@@ -12708,11 +12163,6 @@ body:has(.app.deep)::after {
 .app-shell.focus-mode-on:has(.main:focus-within) > .journey-sidebar,
 .app-shell.focus-mode-on:has(.main:focus-within) > .header-redesign {
   opacity: 0.25 !important;
-}
-
-.app-shell.focus-mode-on .define-split:has(.define-split-form:focus-within) .define-split-mood {
-  /* Board stays as context — do not dim mood when typing form */
-  opacity: 1 !important;
 }
 
 /* Hide tips mode — instructional chrome off by default */
@@ -12857,11 +12307,6 @@ textarea:focus,
 
 select:focus {
   outline: 1.5px solid var(--ts-focus);
-}
-
-.resume-banner-body {
-  font-size: 0.78rem !important;
-  -webkit-line-clamp: 1;
 }
 
 /* Deliver export stack hierarchy */
@@ -14014,17 +13459,6 @@ select:focus {
   overflow: hidden;
 }
 
-.resume-banner {
-  border-radius: var(--radius-sm) !important;
-  border: 1px solid var(--ts-border, #E7E7E7);
-  box-shadow: none !important;
-  background: var(--ts-panel, #FFFFFF);
-}
-
-.resume-banner .btn {
-  border-radius: var(--radius-sm) !important;
-}
-
 .autosave-chip {
   border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
@@ -14550,25 +13984,8 @@ select:focus {
 
 /* Define — single instrument: name + chapters + detective only */
 
-.define-head-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.65rem 1rem;
-  margin-bottom: 0.75rem;
-}
 
-.define-head-row .page-title {
-  margin: 0;
-  flex: 0 0 auto;
-}
 
-.define-admin summary {
-  font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--ts-mute);
-  cursor: pointer;
-}
 
 .design-section-tabs .system-acc-tab {
   border-radius: var(--radius-sm) !important;
@@ -14698,47 +14115,9 @@ select:focus {
     text-overflow: unset !important;
   }
 
-/* Resume banner — denser, less cover */
-
-.resume-banner {
-    width: calc(100vw - 1.25rem);
-    max-width: none;
-    bottom: max(0.65rem, env(safe-area-inset-bottom, 0px));
-    border-radius: var(--radius);
-    box-shadow: none;
-    border: 1px solid var(--border-subtle);
-    padding: 0.65rem 0.75rem;
-    max-height: 38vh;
-    overflow: auto;
-  }
-
-.resume-banner-body {
-    font-size: 0.78rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-.resume-banner-actions {
-    gap: 0.35rem;
-  }
-
-.resume-banner-actions .btn {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
 .define-studio .page-title {
     font-size: var(--fs-5);
     margin-bottom: 0.65rem;
-  }
-
-/* Fields denser; less ghosting when focus-isolating */
-
-.define-field-icon {
-    width: 1.65rem;
-    height: 1.65rem;
   }
 
 .define-input.field-input,
@@ -14833,10 +14212,6 @@ select:focus {
   color: #565656 !important;
 }
 
-/* .define-studio-title removed — no JSX has used the class since the Define
-   header was rewritten, so this was a fourth competing page-title size that
-   never applied to anything. */
-
 /* Remove the outer card so Define matches the open layout of other views */
 .define-workbook.is-split {
   background: transparent !important;
@@ -14872,8 +14247,7 @@ select:focus {
 /* New chrome hidden by default (desktop) */
 .header-menu-toggle,
 .header-mobile-title,
-.nav-backdrop,
-.define-mobile-tabs { display: none; }
+.nav-backdrop { display: none; }
 
 /* ---- Desktop re-assert (≥768px): beat the legacy 860px stacking ---- */
 @media (min-width: 768px) {
@@ -14907,8 +14281,7 @@ select:focus {
   }
   .header-menu-toggle,
   .header-mobile-title,
-  .nav-backdrop,
-  .define-mobile-tabs { display: none !important; }
+  .nav-backdrop { display: none !important; }
 }
 
 /* ---- Mobile focus view (<768px) ---- */
@@ -15049,13 +14422,12 @@ select:focus {
 
   /* Define: single column, one pane at a time (no cramped split) */
   .define-split { display: block !important; }
-  .define-split-form,
-  .define-split-mood {
+  .define-split-form {
     width: 100% !important;
     max-width: none !important;
     position: static !important;
   }
-  /* Both panels stack vertically on mobile — board remains reachable by scrolling */
+  /* Board panel removed with the mood board (DefineMoodCanvas is unimported) */
 
   /* view-enter leaves a transform that would trap position:fixed children;
      drop it on mobile so the bottom bar anchors to the viewport */
@@ -15065,34 +14437,6 @@ select:focus {
   }
 
   /* Inline segmented Form / Refs toggle */
-  .define-mobile-tabs {
-    display: flex !important;
-    align-self: flex-start;
-    margin: 0.75rem 0 0.25rem;
-    background: var(--ts-canvas, #F5F5F5);
-    border: 1px solid var(--ts-border, #E7E7E7);
-    border-radius: var(--radius-pill);
-    padding: 3px;
-    gap: 2px;
-  }
-  .define-mobile-tab {
-    flex: 1 1 50%;
-    padding: 0.35rem 1rem;
-    border: none;
-    border-radius: var(--radius-pill);
-    background: transparent;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--ts-mute, #727272);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.15s, color 0.15s;
-  }
-  .define-mobile-tab.is-active {
-    color: var(--ts-ink, #1A1A1A);
-    background: var(--ts-panel, #FFFFFF);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
 }
 
 /* Mobile accordion chapter header (tap to expand) */
@@ -16369,17 +15713,7 @@ select:focus {
   padding: 0;
 }
 
-.define-section-title {
-  margin: 0 0 0.35rem;
-  font-size: var(--fs-3);
-  font-weight: 700;
-}
 
-.define-section-hint {
-  margin: 0 0 0.75rem;
-  font-size: var(--fs-1);
-  color: var(--text-secondary);
-}
 
 
 .define-deadline-inline {

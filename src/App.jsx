@@ -3631,23 +3631,11 @@ function App() {
               locale={locale}
               navDir={navDir}
               activeProject={activeProject}
-              nextTask={nextTask}
-              deskMood={deskMood}
               deskTasks={deskTasks}
-              projectPalette={projectPalette}
-              projectNameDraft={projectNameDraft}
-              setProjectNameDraft={setProjectNameDraft}
               setActiveView={setActiveView}
-              flashToast={flashToast}
-              flashMicro={flashMicro}
               updateDetective={updateDetective}
               onOpenShare={() => setOverviewSharePanelOpen(true)}
               setProjectDeadline={setProjectDeadline}
-              renameProject={renameProject}
-              createNewProject={createNewProject}
-              goSystemSection={goSystemSection}
-              completedCount={completedCount}
-              projectPills={projectPills}
               projectDeadline={projectDeadline}
             />
           </Suspense>

@@ -130,6 +130,100 @@ describe('typography guardrails', () => {
     ).toEqual([])
   })
 
+  it('never dims text-bearing .define- selectors below full opacity', () => {
+    // The token check above only ever looks at colour. `.define-chapter-tab-count`
+    // shipped `opacity: 0.75` directly on the count text, which composites well
+    // under the 4.5:1 floor even though `--text-secondary` itself passes — an
+    // opacity dimmer is the same failure as a bad colour, just invisible to a
+    // token grep. This walks every rule touching a `.define-` selector and
+    // fails on any sub-1 opacity that isn't a reviewed, contrast-checked
+    // exception below.
+    const ruleRe = /([^{}]+)\{([^{}]*)\}/g
+    const offenders = []
+    let m
+    while ((m = ruleRe.exec(css))) {
+      const selector = m[1].replace(/\/\*[\s\S]*?\*\//g, '').trim()
+      const body = m[2]
+      if (!selector || !/\.define-/.test(selector)) continue
+      const opacities = [...body.matchAll(/opacity:\s*([\d.]+)/g)]
+      for (const o of opacities) {
+        if (Number(o[1]) < 1) offenders.push(selector)
+      }
+    }
+    // Reviewed and contrast-checked (see comment above each in index.css):
+    //  - `.is-active .define-chapter-tab-num/-count` composites to 6.98:1
+    //    (light) / 7.60:1 (dark) against its own background — a deliberate
+    //    secondary-emphasis affordance, not the accidental-dimming bug.
+    //  - `.define-secondary` (the "Recent tasks" block) — a low-emphasis
+    //    container whose text is checked separately.
+    const normalize = (s) => s.replace(/\s+/g, ' ').trim()
+    const ALLOWLIST = new Set(
+      [
+        '.define-chapter-tab.is-active .define-chapter-tab-num,\n.define-chapter-tab.is-active .define-chapter-tab-count',
+        '.define-secondary',
+      ].map(normalize),
+    )
+    const unexpected = offenders.filter((sel) => !ALLOWLIST.has(normalize(sel)))
+    expect(unexpected).toEqual([])
+  })
+
+  it('sizes .define- text off the --fs scale, never a raw literal', () => {
+    // Guards the ramp the same way the bare rem-vs-px check does, but scoped
+    // to Define: a raw literal here is how a one-off size sneaks back in
+    // between sweeps of the rest of the file.
+    const ruleRe = /([^{}]+)\{([^{}]*)\}/g
+    const offenders = []
+    let m
+    while ((m = ruleRe.exec(css))) {
+      const selector = m[1].replace(/\/\*[\s\S]*?\*\//g, '').trim()
+      const body = m[2]
+      if (!selector || !/\.define-/.test(selector)) continue
+      const sizes = [...body.matchAll(/font-size:\s*([^;]+);/g)]
+      for (const s of sizes) {
+        const val = s[1].trim()
+        const allowed =
+          /^var\(--fs-\d\)/.test(val) ||
+          /^clamp\(/.test(val) ||
+          val === 'inherit' ||
+          /^[\d.]+em$/.test(val)
+        if (!allowed) offenders.push(`${selector.replace(/\s+/g, ' ')} -> ${val}`)
+      }
+    }
+    // Nothing currently needs an exception — an empty allowlist means any
+    // future raw literal fails loudly instead of blending in.
+    const ALLOWLIST = new Set([])
+    const unexpected = offenders.filter((o) => !ALLOWLIST.has(o))
+    expect(unexpected).toEqual([])
+  })
+
+  it('never lets deleted Define selectors quietly come back', () => {
+    // Batch E removed these as dead — verified unused in src/**/*.jsx at the
+    // time. If one of these strings reappears in index.css, either the
+    // deletion regressed or someone pasted the rule back without re-adding
+    // the JSX that would justify it. Either way, that's worth a loud failure
+    // rather than a silent re-accumulation.
+    const DEAD_SELECTORS = [
+      '.define-field-icon',
+      '.define-icon-people',
+      '.define-fab-bar',
+      '.define-mobile-tabs',
+      '.define-admin-body',
+      '.define-dash-header',
+      '.define-name-headline',
+      '.define-head-row',
+      '.define-studio-title',
+      '.define-chapter-total',
+      '.define-section-title',
+      '.define-section-hint',
+      '.define-split-mood',
+      '.define-mood-wall',
+      '.resume-banner',
+    ]
+    for (const selector of DEAD_SELECTORS) {
+      expect(css.includes(selector), `${selector} should stay deleted`).toBe(false)
+    }
+  })
+
   it('constrains body copy to a readable measure', () => {
     const capped = [...css.matchAll(/max-width:\s*(\d+)ch/g)].map((m) => Number(m[1]))
     expect(capped.length, 'no ch-based measure found').toBeGreaterThan(0)

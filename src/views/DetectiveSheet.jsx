@@ -42,21 +42,6 @@ export default function DetectiveSheet({
 
   const progress = useMemo(() => getDetectiveProgress(detective), [detective])
   const chapterStats = progress.chapters
-  const requiredReady = progress.requiredReady
-  const filledCount = progress.filledCount
-  const fieldTotal = progress.fieldTotal
-  const progressPct = progress.pct
-
-  const openNextIncomplete = useCallback(() => {
-    const next = DETECTIVE_CHAPTERS.find((ch) => {
-      const st = chapterStats.find((s) => s.id === ch.id)
-      return st && !st.requiredDone
-    })
-    if (next) {
-      setOpenChapter(next.id)
-      trackChapterNavigation(next.id, 'open')
-    }
-  }, [chapterStats, setOpenChapter])
 
   /** Only the required fields actually still empty — not a static list of
    * all of them, which reads as wrong once some are filled in. */
@@ -104,30 +89,6 @@ export default function DetectiveSheet({
 
   return (
     <div className={`define-workbook${splitMode ? ' is-split' : ''}`}>
-      {!splitMode && (
-        <header className="define-workbook-head">
-          <div className="define-workbook-head-text">
-            <p className="define-workbook-kicker">Brief</p>
-            <h2 className="define-workbook-title">Brief builder</h2>
-            <p className="define-workbook-lede">
-              Fill before polish.
-            </p>
-          </div>
-          <div
-            className="define-workbook-progress"
-            role="status"
-            aria-label={`${filledCount} of ${fieldTotal} fields filled`}
-          >
-            <div className="define-progress-ring" style={{ '--p': progressPct }}>
-              <span className="define-progress-num">{progressPct}%</span>
-            </div>
-            <span className="define-progress-meta">
-              {filledCount}/{fieldTotal} notes
-            </span>
-          </div>
-        </header>
-      )}
-
       {/* Named remaining work, front and centre. Four labels to read instead
           of thirty-five, and each one is a jump, not a reminder to go find it. */}
       <div className={`define-start-here${requiredEmpty.length === 0 ? ' is-done' : ''}`}>
@@ -226,9 +187,8 @@ export default function DetectiveSheet({
               // you're in" — which is also where a Start-with-these jump lands.
               className={`define-chapter${showFields ? ' is-open' : ''}${
                 isOpen ? ' is-current' : ''
-              }${focusField && showFields ? ' has-focus' : ''}`}
+              }`}
               data-chapter={ch.id}
-              style={{ '--chapter-accent': ch.accent }}
               hidden={articleHidden}
             >
               {splitMode && accordion ? (
