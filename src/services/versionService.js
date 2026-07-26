@@ -67,7 +67,6 @@ class VersionService {
           feel: project.detective.feel,
           mustHaves: project.detective.mustHaves,
           niceToHaves: project.detective.niceToHaves,
-          format: project.detective.format,
           avoid: project.detective.avoid,
           deliverables: project.detective.deliverables,
           technical: project.detective.technical,

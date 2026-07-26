@@ -52,7 +52,6 @@ export function blankDetective() {
     primaryContact: '',
     clientEmail: '',
     clientPhone: '',
-    startDeadline: '',
     budgetRange: '',
     // Company background & strategy
     goal: '',
@@ -80,10 +79,8 @@ export function blankDetective() {
     mustHaves: '',
     /** File formats, scalability, production/technical requirements */
     technical: '',
-    format: '',
     niceToHaves: '',
     existingAssets: '',
-    launchDate: '',
     decisionMakers: '',
     /** Milestones: [{ id, label, date }] — a brief can have several dated
      * checkpoints, not just one overall deadline */
@@ -117,14 +114,12 @@ export function composeBriefFromDetective(detective) {
   if (d.mustHaves?.trim()) parts.push(`Must-haves: ${d.mustHaves.trim()}`)
   if (d.niceToHaves?.trim())
     parts.push(`Nice-to-haves: ${d.niceToHaves.trim()}`)
-  if (d.format?.trim()) parts.push(`Format / constraint: ${d.format.trim()}`)
   if (d.avoid?.trim()) parts.push(`Avoid: ${d.avoid.trim()}`)
   if (d.deliverables?.trim())
     parts.push(`Deliverables: ${d.deliverables.trim()}`)
   if (d.technical?.trim()) parts.push(`Technical: ${d.technical.trim()}`)
   if (d.existingAssets?.trim())
     parts.push(`Existing assets to keep: ${d.existingAssets.trim()}`)
-  if (d.launchDate?.trim()) parts.push(`Launch date: ${d.launchDate.trim()}`)
   if (d.decisionMakers?.trim())
     parts.push(`Decision-makers: ${d.decisionMakers.trim()}`)
   if ((d.milestones || []).length) {
@@ -232,6 +227,8 @@ export function createBlankProject(name = 'My project', brief = '') {
     decisionLog: [],
     palette: [...defaultProjectPalette],
     deadline: '',
+    /** Which Define chapter accordion is open; unset until the user opens one */
+    defineOpenChapter: null,
     ...brandIdentityDefaults(),
     tasks: [],
     runningTodo: blankRunningTodo(),
@@ -505,6 +502,15 @@ const useAppStore = create(
             p.id === state.currentProjectId
               ? { ...p, deadline: deadline || '' }
               : p
+          ),
+        })),
+
+      /** Persist which Define chapter accordion is open per-project, so
+       * leaving and returning restores it instead of resetting to the top. */
+      setDefineOpenChapter: (projectId, chapterId) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId ? { ...p, defineOpenChapter: chapterId } : p
           ),
         })),
 
@@ -1912,7 +1918,6 @@ const useAppStore = create(
               primaryContact: project.detective.primaryContact,
               clientEmail: project.detective.clientEmail,
               clientPhone: project.detective.clientPhone,
-              startDeadline: project.detective.startDeadline,
               budgetRange: project.detective.budgetRange,
               goal: project.detective.goal,
               story: project.detective.story,
@@ -1934,9 +1939,7 @@ const useAppStore = create(
               mustHaves: project.detective.mustHaves,
               niceToHaves: project.detective.niceToHaves,
               technical: project.detective.technical,
-              format: project.detective.format,
               existingAssets: project.detective.existingAssets,
-              launchDate: project.detective.launchDate,
               decisionMakers: project.detective.decisionMakers,
               milestones: project.detective.milestones ? [...project.detective.milestones] : [],
             } : null,

@@ -1747,8 +1747,6 @@ const writeWrapped = (
         writeWrapped(`Must-haves: ${det.mustHaves}`, { size: 11 })
       if (det.niceToHaves)
         writeWrapped(`Nice-to-haves: ${det.niceToHaves}`, { size: 10, color: [70, 70, 70] })
-      if (det.format)
-        writeWrapped(`Format / constraint: ${det.format}`, { size: 11 })
     }
     if (pack?.brief) {
       kicker('Positioning')

@@ -11,7 +11,6 @@ import {
 import useIsMobile from '../lib/useIsMobile'
 import {
   trackDetectiveFieldUpdate,
-  trackMilestoneOperation,
   trackChapterNavigation,
   startPerformanceTimer,
   endPerformanceTimer
@@ -22,9 +21,6 @@ export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 export default function DetectiveSheet({
   detective = {},
   updateDetective,
-  addMilestone,
-  updateMilestone,
-  removeMilestone,
   /** Hide internal progress chrome when parent owns the dopamine timeline */
   splitMode = false,
   openChapter: openChapterProp,
@@ -135,11 +131,11 @@ export default function DetectiveSheet({
               Start with {requiredEmpty.length === 1 ? 'this one' : `these ${requiredEmpty.length}`}
             </p>
             <div className="define-start-here-list">
-              {requiredEmpty.map((f) => (
+              {requiredEmpty.slice(0, 3).map((f) => (
                 <button
                   key={f.id}
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-primary btn-sm"
                   onClick={() => jumpToField(f.id, f.chapterId)}
                 >
                   {f.label}
@@ -154,6 +150,7 @@ export default function DetectiveSheet({
         )}
       </div>
 
+      {!isMobile && (
       <nav className="define-chapter-rail" aria-label="Brief chapters">
           {DETECTIVE_CHAPTERS.map((ch, i) => {
             const st = chapterStats[i]
@@ -184,7 +181,7 @@ export default function DetectiveSheet({
                 <span className="define-chapter-tab-num" aria-hidden="true">
                   {st.complete ? '✓' : ch.num}
                 </span>
-                <span className="define-chapter-tab-label">{ch.title}</span>
+                <span className="define-chapter-tab-label">{ch.railLabel || ch.title}</span>
                 <span className="define-chapter-tab-count">
                   {st.done}/{st.total}
                   {/* Name the real floor. "0/7" alone reads as seven
@@ -201,6 +198,7 @@ export default function DetectiveSheet({
             )
           })}
       </nav>
+      )}
 
       <div className="define-chapters">
         {DETECTIVE_CHAPTERS.map((ch) => {
@@ -231,7 +229,7 @@ export default function DetectiveSheet({
                 <button
                   type="button"
                   className="define-chapter-head define-chapter-toggle"
-                  onClick={() => setOpenChapter(isOpen ? null : ch.id)}
+                  onClick={() => setOpenChapter(ch.id)}
                   aria-expanded={isOpen}
                   aria-controls={`define-chapter-fields-${ch.id}`}
                 >
@@ -310,8 +308,7 @@ export default function DetectiveSheet({
                             }}
                             onFocus={() => setFocusField(f.id)}
                             onBlur={() => setFocusField(null)}
-                            placeholder={f.placeholder}
-                            title={f.tip}
+                            placeholder={f.tip || undefined}
                           />
                         ) : (
                           <input
@@ -328,96 +325,13 @@ export default function DetectiveSheet({
                             }}
                             onFocus={() => setFocusField(f.id)}
                             onBlur={() => setFocusField(null)}
-                            placeholder={f.placeholder}
-                            title={f.tip}
+                            placeholder={f.tip || undefined}
                           />
                         )}
                       </div>
                     </div>
                   )
                 })}
-
-                {ch.id === 'constraints' && (
-                  <div
-                    className={`define-field define-milestones${
-                      focusField === 'milestones' ? ' is-focused' : ''
-                    }`}
-                    data-span="full"
-                  >
-                    <div className="define-field-label-row">
-                      <span className="define-field-label">Milestones</span>
-                    </div>
-                    <div
-                      className="define-milestones-list"
-                      onFocusCapture={() => setFocusField('milestones')}
-                      onBlurCapture={(e) => {
-                        if (!e.currentTarget.contains(e.relatedTarget)) {
-                          setFocusField(null)
-                        }
-                      }}
-                    >
-                      {(detective?.milestones || []).map((m) => (
-                        <div key={m.id} className="detective-milestone-row">
-                          <input
-                            className="define-input field-input"
-                            value={m.label}
-                            onChange={(e) => {
-                              const timerId = `milestone_update_${m.id}_label`;
-                              startPerformanceTimer(timerId);
-                              updateMilestone?.(m.id, 'label', e.target.value);
-                              trackMilestoneOperation('update', { id: m.id, label: e.target.value, date: m.date });
-                              endPerformanceTimer(timerId, { milestoneId: m.id, field: 'label' });
-                            }}
-                            placeholder="Milestone"
-                            aria-label="Milestone name"
-                          />
-                          <input
-                            type="date"
-                            className="define-input field-input detective-milestone-date"
-                            value={m.date}
-                            onChange={(e) => {
-                              const timerId = `milestone_update_${m.id}_date`;
-                              startPerformanceTimer(timerId);
-                              updateMilestone?.(m.id, 'date', e.target.value);
-                              trackMilestoneOperation('update', { id: m.id, label: m.label, date: e.target.value });
-                              endPerformanceTimer(timerId, { milestoneId: m.id, field: 'date' });
-                            }}
-                            aria-label="Milestone date"
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => {
-                              const timerId = `milestone_remove_${m.id}`;
-                              startPerformanceTimer(timerId);
-                              removeMilestone?.(m.id);
-                              // Track milestone removal
-                              trackMilestoneOperation('remove', { id: m.id, label: m.label, date: m.date });
-                              endPerformanceTimer(timerId, { milestoneId: m.id });
-                            }}
-                            aria-label="Remove milestone"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => {
-                              const timerId = `milestone_add_${Date.now()}`;
-                              startPerformanceTimer(timerId);
-                              addMilestone?.('', '');
-                              // Track adding a new milestone (empty initially)
-                              trackMilestoneOperation('add', { id: Date.now(), label: '', date: '' });
-                              endPerformanceTimer(timerId, { action: 'add' });
-                            }}
-                      >
-                        + Add
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
 
             </article>

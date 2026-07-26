@@ -2493,7 +2493,8 @@ h3 {
   color: var(--text-secondary);
   font-size: 0.9375rem;
   line-height: 1.45;
-  border-top: 1px solid var(--border-hairline);
+  background: none;
+  border: none;
 }
 
 .desk-snapshot li {
@@ -10433,10 +10434,10 @@ body:has(.app.deep)::after {
 
 .define-field-label {
   font-family: var(--font-display);
-  font-size: var(--fs-3);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--define-ink);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -10576,7 +10577,7 @@ body:has(.app.deep)::after {
    actually is. */
 .define-chapter-rail {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(5, 1fr);
   gap: 0;
   margin-bottom: var(--space-6);
   padding: 0;
@@ -10637,7 +10638,7 @@ body:has(.app.deep)::after {
    number doesn't need a filled chip to say it a second time. */
 .define-chapter-tab.is-complete .define-chapter-tab-count {
   opacity: 1;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 /* Plain text, not a chip. The number is a label, and a rounded box around two
@@ -10647,7 +10648,7 @@ body:has(.app.deep)::after {
   min-width: 1.5rem;
   font-family: var(--font-display);
   font-size: var(--fs-1);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.04em;
   background: none;
   padding: 0;
@@ -10664,7 +10665,7 @@ body:has(.app.deep)::after {
   min-width: 0;
   font-family: var(--font-display);
   font-size: var(--fs-2);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
@@ -10676,7 +10677,7 @@ body:has(.app.deep)::after {
   margin-left: auto;
   padding-left: var(--space-2);
   font-size: var(--fs-1);
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   opacity: 0.75;
 }
@@ -10742,7 +10743,7 @@ body:has(.app.deep)::after {
 .define-chapter-badge {
   font-family: var(--font-display);
   font-size: var(--fs-3);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: -0.03em;
   color: var(--chapter-accent, var(--define-ch-1));
   text-shadow: none;
@@ -10767,7 +10768,7 @@ body:has(.app.deep)::after {
   background: none;
   border-radius: var(--radius-none);
   font-size: var(--fs-3);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-secondary);
 }
 
@@ -10851,7 +10852,7 @@ body:has(.app.deep)::after {
   color: var(--define-muted);
   font-family: var(--font-display);
   font-size: var(--fs-3);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
   cursor: pointer;
   transition:
@@ -12531,7 +12532,7 @@ body:has(.app.deep)::after {
   background: none;
   padding: 0;
   font-size: var(--fs-3);
-  font-weight: 700;
+  font-weight: 600;
   box-shadow: none;
 }
 
@@ -14833,7 +14834,7 @@ select:focus {
 }
 .define-workbook.is-split .define-chapter-badge {
   color: var(--text-muted) !important;
-  font-weight: 700 !important;
+  font-weight: 500 !important;
 }
 
 /* ============================================================
@@ -16297,16 +16298,17 @@ select:focus {
   min-width: 110px;
 }
 
-/* These sections used to be collapsed <details> — now always visible.
-   Match the numbered chapter cards' look so they read as part of the
-   same brief, not a bolted-on afterthought sitting on the bare page. */
+/* Now only wraps the read-only desk-snapshot list, relocated into the header
+   band (item 4) as ambient evidence of in-flight work, not a boxed tool — no
+   background, no border. Whitespace + the shared define-field-label treatment
+   carry it instead. */
 .define-secondary {
   opacity: 1;
-  margin-top: 1.25rem;
-  border-radius: var(--radius);
-  background: var(--bg-muted);
-  border: 1px solid var(--define-border);
-  padding: 1.15rem 1.1rem 1.2rem;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-none);
+  background: none;
+  border: none;
+  padding: 0;
 }
 
 .define-section-title {
@@ -16331,9 +16333,30 @@ select:focus {
 
 .define-deadline-inline label {
   font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 500;
+  color: var(--text-muted);
   white-space: nowrap;
+}
+
+/* Milestones relocated into the header band (item 10): compact, ambient,
+   directly under the deadline row — not a repeater buried inside a chapter. */
+.define-milestones-compact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.define-milestones-compact .define-milestones-list {
+  gap: var(--space-2);
+}
+
+.detective-milestone-row.is-pending-removal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--text-muted);
 }
 
 .define-deadline-inline input[type="date"] {
@@ -16442,9 +16465,9 @@ select:focus {
 /* Plain-language deadline. Read-only signal beside the date input, not a
    second control — an ISO date carries no felt urgency. */
 .define-deadline-relative {
-  font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: var(--fs-3);
+  font-weight: 700;
+  color: var(--text-primary);
   white-space: nowrap;
 }
 
@@ -16456,9 +16479,9 @@ select:focus {
    mode this page has is not finding chapter 3, it's opening it and not
    starting, so the anti-stall control gets the accent and everything else
    stays quiet. */
-/* No box. The palette is greyscale, so a tinted rectangle can't make this
-   louder than its neighbours — a 6% mix of a mid grey into white is the page
-   background. Size, weight and the space around it do the work instead. */
+/* The jump chips are filled primary buttons — a real box, not whitespace
+   doing the work. That's deliberate now: this is the one control on the
+   page allowed to look like a call to action, so it should read as one. */
 .define-start-here {
   margin: 0 0 var(--space-6);
   padding: 0;
@@ -16468,7 +16491,7 @@ select:focus {
 
 .define-start-here-title {
   margin: 0 0 var(--space-3);
-  font-size: var(--fs-4);
+  font-size: var(--fs-5);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-primary);

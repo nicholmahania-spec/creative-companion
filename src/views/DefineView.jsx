@@ -9,12 +9,16 @@
  *
  * Calm chapter nav — no XP / game HUD.
  */
-import { Suspense, lazy, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { normalizeLocale, t as i18nT } from '../lib/i18n'
 import HeaderIcon from '../components/HeaderIcon'
+import { DETECTIVE_CHAPTERS, getDetectiveProgress } from '../lib/detectiveBrief'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
+
+/** How long a removed milestone stays undoable before the delete actually commits. */
+const MILESTONE_UNDO_MS = 8000
 
 export default function DefineView(props) {
   const {
@@ -27,9 +31,6 @@ export default function DefineView(props) {
     onOpenShare,
     setProjectDeadline,
     projectDeadline = '',
-    quickInput = '',
-    setQuickInput,
-    addQuickTask,
   } = props
 
   const locale = normalizeLocale(localeProp)
@@ -37,8 +38,70 @@ export default function DefineView(props) {
   const addMilestone = useAppStore((s) => s.addMilestone)
   const updateMilestone = useAppStore((s) => s.updateMilestone)
   const removeMilestone = useAppStore((s) => s.removeMilestone)
+  const setDefineOpenChapter = useAppStore((s) => s.setDefineOpenChapter)
 
-  const [openChapter, setOpenChapter] = useState('core')
+  const projectId = activeProject?.id
+  const storedOpenChapter = activeProject?.defineOpenChapter
+
+  /** Unset for a project → open the first chapter that still needs a
+   * required answer, or the first chapter overall once everything required
+   * is filled. Once the user taps a chapter, the store field takes over. */
+  const openChapter = useMemo(() => {
+    if (storedOpenChapter) return storedOpenChapter
+    const progress = getDetectiveProgress(activeProject?.detective)
+    const firstIncomplete = progress.chapters.find((c) => !c.requiredDone)
+    return firstIncomplete ? firstIncomplete.id : DETECTIVE_CHAPTERS[0].id
+  }, [storedOpenChapter, activeProject?.detective])
+
+  const setOpenChapter = useCallback(
+    (chapterId) => {
+      if (projectId) setDefineOpenChapter(projectId, chapterId)
+    },
+    [projectId, setDefineOpenChapter]
+  )
+
+  const milestones = activeProject?.detective?.milestones || []
+  /** Milestone rows queued for removal: id -> timeout handle. Purely
+   * transient UI state — never belongs in the store. */
+  const [pendingRemovals, setPendingRemovals] = useState({})
+  const pendingRemovalsRef = useRef(pendingRemovals)
+  pendingRemovalsRef.current = pendingRemovals
+
+  const scheduleRemoveMilestone = useCallback(
+    (id) => {
+      const timeoutId = setTimeout(() => {
+        removeMilestone?.(id)
+        setPendingRemovals((prev) => {
+          const next = { ...prev }
+          delete next[id]
+          return next
+        })
+      }, MILESTONE_UNDO_MS)
+      setPendingRemovals((prev) => ({ ...prev, [id]: timeoutId }))
+    },
+    [removeMilestone]
+  )
+
+  const undoRemoveMilestone = useCallback((id) => {
+    setPendingRemovals((prev) => {
+      const timeoutId = prev[id]
+      if (timeoutId) clearTimeout(timeoutId)
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }, [])
+
+  // If this view unmounts with removals still pending, commit them now
+  // instead of leaking the timers (and instead of silently un-deleting).
+  useEffect(() => {
+    return () => {
+      Object.keys(pendingRemovalsRef.current).forEach((id) => {
+        clearTimeout(pendingRemovalsRef.current[id])
+        removeMilestone?.(id)
+      })
+    }
+  }, [removeMilestone])
 
   /** Plain-language deadline beside the date input. A read-only signal, not
    * a second control — an ISO date carries no felt urgency. */
@@ -103,6 +166,78 @@ export default function DefineView(props) {
             <HeaderIcon name="calendar" />
           </button>
         </div>
+
+        <div className="define-milestones-compact">
+          <span className="define-field-label">Milestones</span>
+          <div className="define-milestones-list">
+            {milestones.map((m) => {
+              const isPending = Boolean(pendingRemovals[m.id])
+              if (isPending) {
+                return (
+                  <div key={m.id} className="detective-milestone-row is-pending-removal">
+                    <span>Removed</span>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => undoRemoveMilestone(m.id)}
+                    >
+                      Undo
+                    </button>
+                  </div>
+                )
+              }
+              return (
+                <div key={m.id} className="detective-milestone-row">
+                  <input
+                    className="define-input field-input"
+                    value={m.label}
+                    onChange={(e) => updateMilestone?.(m.id, 'label', e.target.value)}
+                    placeholder="What happens"
+                    aria-label="Milestone name"
+                  />
+                  <input
+                    type="date"
+                    className="define-input field-input detective-milestone-date"
+                    value={m.date}
+                    onChange={(e) => updateMilestone?.(m.id, 'date', e.target.value)}
+                    aria-label="Milestone date"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => scheduleRemoveMilestone(m.id)}
+                    aria-label="Remove milestone"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )
+            })}
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => addMilestone?.('', '')}
+            >
+              + Add
+            </button>
+          </div>
+        </div>
+
+        {deskTasks.length > 0 && (
+          <div className="define-secondary field-block">
+            <label className="define-field-label">Recent tasks</label>
+            <ul className="desk-snapshot">
+              {deskTasks.slice(0, 5).map((t) => (
+                <li key={t.id} className={t.completed ? 'is-done' : undefined}>
+                  <span className="desk-snapshot-mark" aria-hidden="true">
+                    {t.completed ? '✓' : '·'}
+                  </span>
+                  <span>{t.title}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       <div
@@ -120,44 +255,11 @@ export default function DefineView(props) {
             <DetectiveSheet
               detective={activeProject?.detective}
               updateDetective={updateDetective}
-              addMilestone={addMilestone}
-              updateMilestone={updateMilestone}
-              removeMilestone={removeMilestone}
               splitMode
               openChapter={openChapter}
               onOpenChapter={setOpenChapter}
             />
           </Suspense>
-
-          <div className="define-secondary field-block">
-            <label className="field-label" htmlFor="define-desk-add">
-              Add a task
-            </label>
-            <div className="capture-row">
-              <input
-                id="define-desk-add"
-                value={quickInput}
-                onChange={(e) => setQuickInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addQuickTask({ navigate: false })}
-                aria-label="Add a task"
-              />
-              <button type="button" onClick={() => addQuickTask({ navigate: false })} className="btn btn-secondary">
-                Add
-              </button>
-            </div>
-            {deskTasks.length > 0 && (
-              <ul className="desk-snapshot">
-                {deskTasks.slice(0, 5).map((t) => (
-                  <li key={t.id} className={t.completed ? 'is-done' : undefined}>
-                    <span className="desk-snapshot-mark" aria-hidden="true">
-                      {t.completed ? '✓' : '·'}
-                    </span>
-                    <span>{t.title}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
         </div>
       </div>
     </div>

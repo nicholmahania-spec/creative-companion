@@ -15,6 +15,7 @@ export const DETECTIVE_CHAPTERS = [
     id: 'overview',
     num: '01',
     title: 'Project Overview & Administration',
+    railLabel: 'Client',
     blurb: '',
     accent: 'var(--define-ch-1)',
     fields: [
@@ -59,16 +60,6 @@ export const DETECTIVE_CHAPTERS = [
         gridSpan: 'half',
       },
       {
-        id: 'startDeadline',
-        label: 'Start date & deadline',
-        tip: 'Rough dates are fine.',
-        placeholder: 'Start · deadline',
-        area: false,
-        icon: 'flag',
-        required: false,
-        gridSpan: 'half',
-      },
-      {
         id: 'budgetRange',
         label: 'Budget range',
         tip: 'Ballpark is fine.',
@@ -84,6 +75,7 @@ export const DETECTIVE_CHAPTERS = [
     id: 'core',
     num: '02',
     title: 'Company Background & Strategy',
+    railLabel: 'Company',
     blurb: '',
     accent: 'var(--define-ch-1)',
     fields: [
@@ -119,7 +111,7 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'brandWords',
-        label: 'Words',
+        label: 'Three to five words',
         tip: '3–5 adjectives / core values.',
         placeholder: '3–5 words',
         area: false,
@@ -143,12 +135,13 @@ export const DETECTIVE_CHAPTERS = [
     id: 'market',
     num: '03',
     title: 'Target Audience & Market',
+    railLabel: 'Audience',
     blurb: '',
     accent: 'var(--define-ch-2)',
     fields: [
       {
         id: 'audience',
-        label: 'Who',
+        label: "Who it's for",
         tip: 'Not "everyone." Age, lifestyle, interests.',
         placeholder: "Who it's for",
         area: false,
@@ -158,7 +151,7 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'feel',
-        label: 'Feel',
+        label: 'How it should feel',
         tip: 'How they should feel using this.',
         placeholder: 'Feeling',
         area: false,
@@ -192,6 +185,7 @@ export const DETECTIVE_CHAPTERS = [
     id: 'identity',
     num: '04',
     title: 'Brand Voice & Creative Direction',
+    railLabel: 'Direction',
     blurb: '',
     accent: 'var(--define-ch-2)',
     fields: [
@@ -271,12 +265,13 @@ export const DETECTIVE_CHAPTERS = [
     id: 'constraints',
     num: '05',
     title: 'Deliverables & Technical Scope',
+    railLabel: 'Deliverables',
     blurb: '',
     accent: 'var(--define-ch-3)',
     fields: [
       {
         id: 'deliverables',
-        label: 'Ships',
+        label: 'What we deliver',
         tip: 'Must-have deliverables — logo, cards, social kit, packaging…',
         placeholder: 'Final files',
         area: true,
@@ -286,7 +281,7 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'mustHaves',
-        label: 'Must',
+        label: 'Non-negotiables',
         tip: 'Non-negotiables.',
         placeholder: 'Non-negotiables',
         area: true,
@@ -296,7 +291,7 @@ export const DETECTIVE_CHAPTERS = [
       },
       {
         id: 'technical',
-        label: 'Specs',
+        label: 'File formats',
         tip: 'File formats — vector .AI/.EPS, raster .PNG/.JPG, guidelines PDF.',
         placeholder: 'Specs',
         area: true,
@@ -305,18 +300,8 @@ export const DETECTIVE_CHAPTERS = [
         gridSpan: 'half',
       },
       {
-        id: 'format',
-        label: 'Format',
-        tip: 'PDF, print, social…',
-        placeholder: 'Format + size',
-        area: false,
-        icon: 'frame',
-        required: false,
-        gridSpan: 'half',
-      },
-      {
         id: 'niceToHaves',
-        label: 'Optional',
+        label: 'Nice to have',
         tip: 'Nice-to-have extras.',
         placeholder: 'Optional items',
         area: true,
@@ -331,16 +316,6 @@ export const DETECTIVE_CHAPTERS = [
         placeholder: 'Existing assets',
         area: true,
         icon: 'box',
-        required: false,
-        gridSpan: 'half',
-      },
-      {
-        id: 'launchDate',
-        label: 'Ideal launch date',
-        tip: '',
-        placeholder: 'Launch date',
-        area: false,
-        icon: 'flag',
         required: false,
         gridSpan: 'half',
       },

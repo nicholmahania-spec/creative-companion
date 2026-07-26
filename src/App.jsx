@@ -3636,9 +3636,6 @@ function App() {
               completedCount={completedCount}
               projectPills={projectPills}
               projectDeadline={projectDeadline}
-              quickInput={quickInput}
-              setQuickInput={setQuickInput}
-              addQuickTask={addQuickTask}
             />
           </Suspense>
         )}
