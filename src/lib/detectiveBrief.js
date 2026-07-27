@@ -10,6 +10,26 @@
  * initiation on a huge form.
  */
 
+/** Standard brand-identity scope. `extra` marks what is quoted separately —
+ *  saying so on the form itself prevents the awkward conversation later. */
+export const DELIVERABLE_OPTIONS = [
+  { id: 'logoPrimary', label: 'Primary logo' },
+  { id: 'logoVariations', label: 'Logo variations (stacked, horizontal, icon)' },
+  { id: 'colourPalette', label: 'Colour palette' },
+  { id: 'typography', label: 'Typefaces' },
+  { id: 'guidelines', label: 'Brand guidelines document' },
+  { id: 'businessCard', label: 'Business cards' },
+  { id: 'socialKit', label: 'Social media profile graphics' },
+  { id: 'stationery', label: 'Letterhead and stationery', extra: true },
+  { id: 'emailSignature', label: 'Email signature', extra: true },
+  { id: 'packaging', label: 'Packaging', extra: true },
+  { id: 'signage', label: 'Signage or vehicle graphics', extra: true },
+  { id: 'merch', label: 'Apparel or merchandise', extra: true },
+  { id: 'printCollateral', label: 'Brochures or print material', extra: true },
+  { id: 'illustration', label: 'Custom icons or illustration', extra: true },
+  { id: 'website', label: 'Website design', extra: true },
+]
+
 /**
  * NOTE ON FIELD IDS: several no longer match their question, because the
  * wording moved to plain language while the ids stayed put (renaming an id
@@ -256,25 +276,6 @@ export function isFilled(val) {
   return String(val || '').trim().length > 0
 }
 
-/** Standard brand-identity scope. `extra` marks what is quoted separately —
- *  saying so on the form itself prevents the awkward conversation later. */
-export const DELIVERABLE_OPTIONS = [
-  { id: 'logoPrimary', label: 'Primary logo' },
-  { id: 'logoVariations', label: 'Logo variations (stacked, horizontal, icon)' },
-  { id: 'colourPalette', label: 'Colour palette' },
-  { id: 'typography', label: 'Typefaces' },
-  { id: 'guidelines', label: 'Brand guidelines document' },
-  { id: 'businessCard', label: 'Business cards' },
-  { id: 'socialKit', label: 'Social media profile graphics' },
-  { id: 'stationery', label: 'Letterhead and stationery', extra: true },
-  { id: 'emailSignature', label: 'Email signature', extra: true },
-  { id: 'packaging', label: 'Packaging', extra: true },
-  { id: 'signage', label: 'Signage or vehicle graphics', extra: true },
-  { id: 'merch', label: 'Apparel or merchandise', extra: true },
-  { id: 'printCollateral', label: 'Brochures or print material', extra: true },
-  { id: 'illustration', label: 'Custom icons or illustration', extra: true },
-  { id: 'website', label: 'Website design', extra: true },
-]
 
 export function getDetectiveProgress(detective = {}) {
   const chapters = DETECTIVE_CHAPTERS.map((ch) => {
