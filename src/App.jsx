@@ -407,6 +407,7 @@ function App() {
   const setHourlyRate = useAppStore((s) => s.setHourlyRate)
   const addTimeEntry = useAppStore((s) => s.addTimeEntry)
   const removeTimeEntry = useAppStore((s) => s.removeTimeEntry)
+  const removeWorkEntry = useAppStore((s) => s.removeWorkEntry)
   const updateDiscoveryField = useAppStore((s) => s.updateDiscoveryField)
   const setDiscoveryUpload = useAppStore((s) => s.setDiscoveryUpload)
   const setDiscoveryShare = useAppStore((s) => s.setDiscoveryShare)
@@ -3726,6 +3727,8 @@ function App() {
               openForceBreakConsent={() => setForceBreakConsentOpen(true)}
               timerFocusSource={timerFocusSource}
               setTimerFocusSource={setTimerFocusSource}
+              workLog={activeProject?.workLog || []}
+              onRemoveWorkEntry={removeWorkEntry}
               locale={locale}
             />
           </Suspense>

@@ -254,9 +254,13 @@ export function createBlankProject(name = 'My project', brief = '') {
     ...brandIdentityDefaults(),
     tasks: [],
     runningTodo: blankRunningTodo(),
-    /** Lightweight hours/invoice tracking — hourly rate + logged entries */
+    /** Billable hours — hand-entered only. What a client gets charged is a
+     *  claim you make deliberately, so nothing writes here automatically. */
     hourlyRate: '',
     timeLog: [],
+    /** Private record of clocked work, written by the work clock. Never
+     *  billed, never exported to a client. Yours. */
+    workLog: [],
     /** Client discovery brief (pre-Define): answers keyed by field id,
      *  plus an optional completed-form file the client sent back. */
     discoveryAnswers: {},
@@ -826,13 +830,26 @@ const useAppStore = create(
           }),
         })),
 
+      /** Drop a row from the private work log. A measured record you disagree
+       *  with is still yours to correct. */
+      removeWorkEntry: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return { ...p, workLog: (p.workLog || []).filter((t) => t.id !== id) }
+          }),
+        })),
+
       /**
-       * Record time actually worked, from the running timer.
+       * Record time actually worked, from the work clock.
        *
-       * The timer computed `workedMin` only to size a forced break and then
-       * discarded it, so nothing in the app had ever recorded how long
-       * anything took — while `timeLog` sat here already driving the hours
-       * invoice, waiting to be written to by hand.
+       * Writes to `workLog`, NOT to `timeLog`. These were the same array and
+       * should never have been: the clock is the user clocking their own
+       * hours, for themselves, and an invoice is a claim made to a client.
+       * Wiring one into the other means every idle page you left open, every
+       * stage you passed through, silently becomes something someone is
+       * asked to pay for — and you would be reviewing a bill rather than
+       * writing one. Billable hours stay hand-entered.
        *
        * Accumulates into ONE entry per stage per day rather than appending a
        * row every time you pause. A day of real work is dozens of
@@ -852,10 +869,8 @@ const useAppStore = create(
           return {
             projects: state.projects.map((p) => {
               if (p.id !== target) return p
-              const log = [...(p.timeLog || [])]
-              const i = log.findIndex(
-                (e) => e.date === date && e.stage === label && e.auto
-              )
+              const log = [...(p.workLog || [])]
+              const i = log.findIndex((e) => e.date === date && e.stage === label)
               if (i >= 0) {
                 log[i] = {
                   ...log[i],
@@ -868,12 +883,9 @@ const useAppStore = create(
                   stage: label,
                   hours: Math.round((minutes / 60) * 100) / 100,
                   note: label,
-                  /* Marks it as measured rather than typed, so a hand-entered
-                     row is never silently added to. */
-                  auto: true,
                 })
               }
-              return { ...p, timeLog: log }
+              return { ...p, workLog: log }
             }),
           }
         }),
@@ -1977,7 +1989,7 @@ const useAppStore = create(
           }
         },
       },
-      version: 4,
+      version: 5,
       migrate: (persisted, fromVersion) => {
         // Keep real user data; only normalize missing arrays
         if (!persisted || typeof persisted !== 'object') {
@@ -2024,6 +2036,19 @@ const useAppStore = create(
             Array.isArray(persisted.projects) && persisted.projects.length
               ? persisted.projects.map((p) => ({
                   ...p,
+                  /* v5: the work clock used to write into `timeLog`, the
+                     array the invoice bills from. Lift those measured rows
+                     out into the private `workLog` where they belong — an
+                     invoice should contain only what was entered by hand. */
+                  timeLog: (Array.isArray(p.timeLog) ? p.timeLog : []).filter(
+                    (e) => !e?.auto
+                  ),
+                  workLog: [
+                    ...(Array.isArray(p.workLog) ? p.workLog : []),
+                    ...(Array.isArray(p.timeLog) ? p.timeLog : []).filter(
+                      (e) => e?.auto
+                    ),
+                  ],
                   decisionLog: Array.isArray(p.decisionLog) ? p.decisionLog : [],
                   directions:
                     Array.isArray(p.directions) && p.directions.length >= 3

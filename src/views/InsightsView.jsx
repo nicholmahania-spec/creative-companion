@@ -28,6 +28,8 @@ export default function InsightsView(props) {
     openForceBreakConsent,
     timerFocusSource = null,
     setTimerFocusSource,
+    workLog = [],
+    onRemoveWorkEntry,
     locale: localeProp = 'en',
   } = props
 
@@ -150,6 +152,51 @@ export default function InsightsView(props) {
             </span>
           </button>
         </div>
+      </section>
+
+      {/* Your clocked hours. Deliberately NOT the invoice: this is the
+          record of where the time went, kept for you, and nothing here is
+          billed or sent anywhere. Hours & invoice stays hand-entered. */}
+      <section className="panel brand-section work-log-panel">
+        <h2 className="work-log-title">Your hours</h2>
+        {workLog.length === 0 ? (
+          <p className="work-log-empty">
+            The clock fills this in while you work. Just for you — nothing here
+            goes on an invoice.
+          </p>
+        ) : (
+          <>
+            <ul className="work-log-list">
+              {[...workLog]
+                .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+                .map((e) => (
+                  <li key={e.id} className="work-log-row">
+                    <span className="work-log-date">{e.date}</span>
+                    <span className="work-log-stage">{e.stage || e.note}</span>
+                    <span className="work-log-hours">
+                      {Number(e.hours).toFixed(2)}h
+                    </span>
+                    {onRemoveWorkEntry && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => onRemoveWorkEntry(e.id)}
+                        aria-label={`Remove ${e.stage || 'entry'} on ${e.date}`}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </li>
+                ))}
+            </ul>
+            <p className="work-log-total">
+              {workLog
+                .reduce((s, e) => s + (Number(e.hours) || 0), 0)
+                .toFixed(2)}
+              h logged
+            </p>
+          </>
+        )}
       </section>
 
       <div className="path-continue-row insights-continue">

@@ -85,7 +85,10 @@ export function HoursInvoicePanel({
         </div>
 
         {timeLog.length === 0 ? (
-          <p className="running-todo-empty">No hours logged yet.</p>
+          <p className="running-todo-empty">
+            No billable hours yet. These are entered by hand — your work clock
+            keeps its own record under Timer, and never bills from it.
+          </p>
         ) : (
           <ul className="hours-log-list">
             {timeLog.map((e) => (

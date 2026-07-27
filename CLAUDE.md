@@ -278,3 +278,20 @@ candidate directions, not decided). Consult the
 designing the stats view.
 
 **Explicitly deferred — do not implement until asked.**
+
+## The work clock is private; the invoice is hand-entered
+
+Two records, never wired together:
+
+- `project.workLog` — written by the work clock. Where the time went, kept
+  for the user, for themselves. Never billed, never sent to a client.
+- `project.timeLog` — billable hours. Hand-entered only. Nothing writes here
+  automatically, and no measured row is ever added to it.
+
+They were one array. In the user's words: "i like the invoice idea but it
+shouldnt be linked to the working clock. the working clock is just for me."
+An invoice is a claim you make to another person; a clock is a note you keep
+to yourself. Auto-filling the first from the second means every idle page you
+left open and every stage you passed through quietly becomes something
+someone is asked to pay for — and you end up reviewing your own bill rather
+than writing it. The daily report (parked in todo.md) reads `workLog`.
