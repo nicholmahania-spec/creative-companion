@@ -94,6 +94,39 @@ describe('discovery -> detective bridge', () => {
     expect(p.detective.projectTitle).toBeUndefined()
   })
 
+  it('mirrors detective-only ids too, not just the shared ones', () => {
+    // Both public routes now send the detective schema, so a client answers
+    // ids like `goal` that never existed on the discovery schema. Mirroring
+    // only the intersection would silently drop them.
+    expect(sharedIds).not.toContain('goal')
+    useAppStore.getState().mergeDiscoveryAnswers({ goal: 'Look established' })
+    expect(current().detective.goal).toBe('Look established')
+  })
+
+  it('mirrors checklist answers, which arrive as arrays', () => {
+    useAppStore
+      .getState()
+      .mergeDiscoveryAnswers({ deliverablesPicked: ['logoPrimary', 'typography'] })
+    expect(current().detective.deliverablesPicked).toEqual([
+      'logoPrimary',
+      'typography',
+    ])
+  })
+
+  it('treats an empty array as unanswered, not as an answer', () => {
+    const id = useAppStore.getState().currentProjectId
+    useAppStore.setState((s) => ({
+      projects: s.projects.map((p) =>
+        p.id === id
+          ? { ...p, detective: { ...p.detective, deliverablesPicked: ['logoPrimary'] } }
+          : p
+      ),
+    }))
+    useAppStore.getState().mergeDiscoveryAnswers({ deliverablesPicked: [] })
+    // the designer's existing picks survive an empty client submission
+    expect(current().detective.deliverablesPicked).toEqual(['logoPrimary'])
+  })
+
   it('leaves other projects untouched', () => {
     const other = createBlankProject('Untouched', '')
     useAppStore.setState((s) => ({ projects: [...s.projects, other] }))

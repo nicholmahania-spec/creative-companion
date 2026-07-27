@@ -1,5 +1,4 @@
 import { DELIVERABLE_OPTIONS, DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
-import { DISCOVERY_FIELDS } from '../lib/discoveryBrief'
 import { FOCUS_MASK_MIN_PCT } from '../lib/uiPrefs'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
@@ -13,22 +12,20 @@ import versionService from '../services/versionService'
 import { trackVersionAction } from '../lib/analytics'
 
 /**
- * Field ids that exist in BOTH questionnaire schemas — detectiveBrief
- * (the Define sheet, stored on `project.detective`) and discoveryBrief
- * (the public share form, stored on `project.discoveryAnswers`).
+ * Every field id the Define sheet knows about.
  *
- * Derived rather than hard-coded so it cannot drift as either schema
- * changes. Currently 12 ids. The remaining discovery fields have no
- * detective equivalent and are intentionally left where they are —
- * rehoming them is a product decision about which wording ships, not
- * something to infer here.
+ * Client submissions are mirrored onto `project.detective` for any id in
+ * this set. Both public routes now send the detective schema, so in the
+ * normal case every answered id is mirrored. Older submissions made against
+ * the discovery schema still land correctly: the ids the two schemas share
+ * are detective ids too, and the ones they do not share are ignored rather
+ * than inventing keys the sheet cannot render.
+ *
+ * Derived rather than hard-coded so it cannot drift as the schema changes.
  */
-const SHARED_BRIEF_FIELD_IDS = (() => {
-  const detectiveIds = new Set(
-    DETECTIVE_CHAPTERS.flatMap((c) => (c.fields || []).map((f) => f.id))
-  )
-  return DISCOVERY_FIELDS.filter((f) => detectiveIds.has(f.id)).map((f) => f.id)
-})()
+const DETECTIVE_FIELD_IDS = new Set(
+  DETECTIVE_CHAPTERS.flatMap((c) => (c.fields || []).map((f) => f.id))
+)
 
 /**
  * Ideate tool prompts (not fake client data).
@@ -902,10 +899,17 @@ const useAppStore = create(
               if (String(v || '').trim()) merged[k] = v
             })
             const detective = { ...(p.detective || {}) }
-            SHARED_BRIEF_FIELD_IDS.forEach((id) => {
-              const incoming = clientAnswers?.[id]
-              if (!String(incoming || '').trim()) return
-              if (String(detective[id] || '').trim()) return
+            Object.entries(clientAnswers || {}).forEach(([id, incoming]) => {
+              if (!DETECTIVE_FIELD_IDS.has(id)) return
+              const filled = Array.isArray(incoming)
+                ? incoming.length > 0
+                : String(incoming || '').trim().length > 0
+              if (!filled) return
+              const existing = detective[id]
+              const alreadySet = Array.isArray(existing)
+                ? existing.length > 0
+                : String(existing || '').trim().length > 0
+              if (alreadySet) return
               detective[id] = incoming
             })
             return {

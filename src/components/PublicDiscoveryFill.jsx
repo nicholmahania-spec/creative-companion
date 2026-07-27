@@ -4,7 +4,8 @@
  * whole authenticated app shell) — see the /f/:id check in App.jsx.
  */
 import { useEffect, useState } from 'react'
-import { DISCOVERY_SECTIONS } from '../lib/discoveryBrief'
+import { DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
+import ClientBriefFields from './ClientBriefFields'
 import { fetchDiscoveryShare, submitDiscoveryShare } from '../lib/discoveryShare'
 
 export default function PublicDiscoveryFill({ shareId }) {
@@ -65,7 +66,7 @@ export default function PublicDiscoveryFill({ shareId }) {
             permission to skip, before the first question. */}
         {loadState === 'ready' && (
           <p className="public-fill-lede">
-            About 10 minutes · {DISCOVERY_SECTIONS.length} short sections ·
+            About 10 minutes · {DETECTIVE_CHAPTERS.length} short sections ·
             leave anything blank if you’re not sure yet.
           </p>
         )}
@@ -89,38 +90,11 @@ export default function PublicDiscoveryFill({ shareId }) {
 
         {loadState === 'ready' && (
           <form onSubmit={handleSubmit}>
-            <p className="public-fill-lede">
-              Fill in what you can — leave anything blank if you're not sure yet.
-            </p>
-            {DISCOVERY_SECTIONS.map((section) => (
-              <fieldset key={section.id} className="public-fill-section">
-                <legend>{section.label}</legend>
-                {section.fields.map((f) => (
-                  <div className="field-block" key={f.id}>
-                    <label className="field-label" htmlFor={`pf-${f.id}`}>
-                      {f.label}
-                    </label>
-                    {f.prompt && <p className="discovery-brief-hint">{f.prompt}</p>}
-                    {f.type === 'textarea' ? (
-                      <textarea
-                        id={`pf-${f.id}`}
-                        className="field-input"
-                        rows={3}
-                        value={answers[f.id] || ''}
-                        onChange={(e) => updateField(f.id, e.target.value)}
-                      />
-                    ) : (
-                      <input
-                        id={`pf-${f.id}`}
-                        className="field-input"
-                        value={answers[f.id] || ''}
-                        onChange={(e) => updateField(f.id, e.target.value)}
-                      />
-                    )}
-                  </div>
-                ))}
-              </fieldset>
-            ))}
+            <ClientBriefFields
+              answers={answers}
+              onChange={updateField}
+              idPrefix="pf"
+            />
 
             {error && <p className="public-fill-error">{error}</p>}
 

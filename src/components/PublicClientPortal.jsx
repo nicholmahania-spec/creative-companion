@@ -9,7 +9,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { JOURNEY_STEPS } from '../lib/journey'
-import { DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
+import ClientBriefFields from './ClientBriefFields'
 import {
   fetchClientPortal,
   fetchClientPortalMessages,
@@ -204,74 +204,13 @@ export default function PublicClientPortal({ portalId }) {
                 <p className="public-fill-lede">
                   Fill in what you can — leave anything blank if you're not sure yet.
                 </p>
-                {DETECTIVE_CHAPTERS.map((chapter) => (
-                  <fieldset key={chapter.id} className="public-fill-section">
-                    <legend>{chapter.title}</legend>
-                    {/* designerOnly fields (budget, file formats) are
-                        unanswerable for a client and only invite a wrong or
-                        embarrassed guess — the designer records them. */}
-                    {chapter.fields.filter((f) => !f.designerOnly).map((f) => (
-                      <div className="field-block" key={f.id}>
-                        <label className="field-label" htmlFor={`cp-${f.id}`}>
-                          {f.label}
-                        </label>
-                        {f.tip && <p className="discovery-brief-hint">{f.tip}</p>}
-                        {f.type === 'checklist' ? (
-                          <div className="define-checklist">
-                            {[
-                              { key: 'included', label: 'Included', items: f.options.filter((o) => !o.extra) },
-                              { key: 'extra', label: 'Quoted separately', items: f.options.filter((o) => o.extra) },
-                            ].map((g) => (
-                              <fieldset key={g.key} className="define-checklist-group">
-                                <legend className="define-checklist-legend">{g.label}</legend>
-                                {g.items.map((o) => {
-                                  const picked = Array.isArray(formAnswers[f.id]) ? formAnswers[f.id] : []
-                                  const on = picked.includes(o.id)
-                                  return (
-                                    <label key={o.id} className={`define-check-row${on ? ' is-on' : ''}`}>
-                                      <input
-                                        type="checkbox"
-                                        checked={on}
-                                        onChange={() =>
-                                          setFormAnswers((a) => ({
-                                            ...a,
-                                            [f.id]: on
-                                              ? picked.filter((x) => x !== o.id)
-                                              : [...picked, o.id],
-                                          }))
-                                        }
-                                      />
-                                      <span>{o.label}</span>
-                                    </label>
-                                  )
-                                })}
-                              </fieldset>
-                            ))}
-                          </div>
-                        ) : f.area ? (
-                          <textarea
-                            id={`cp-${f.id}`}
-                            className="field-input"
-                            rows={3}
-                            value={formAnswers[f.id] || ''}
-                            onChange={(e) =>
-                              setFormAnswers((a) => ({ ...a, [f.id]: e.target.value }))
-                            }
-                          />
-                        ) : (
-                          <input
-                            id={`cp-${f.id}`}
-                            className="field-input"
-                            value={formAnswers[f.id] || ''}
-                            onChange={(e) =>
-                              setFormAnswers((a) => ({ ...a, [f.id]: e.target.value }))
-                            }
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </fieldset>
-                ))}
+                <ClientBriefFields
+                  answers={formAnswers}
+                  onChange={(id, value) =>
+                    setFormAnswers((a) => ({ ...a, [id]: value }))
+                  }
+                  idPrefix="cp"
+                />
                 <button type="submit" className="btn btn-primary" disabled={formSubmitting}>
                   {formSubmitting ? 'Submitting…' : 'Submit'}
                 </button>
