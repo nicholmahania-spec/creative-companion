@@ -433,8 +433,18 @@ dropping it, which is what the placeholder-only treatment does on screen.
 - `e2e/brand-book-pdf.spec.js` exists, so there is somewhere to assert the new
   section renders
 
-**Open question for when we build it:** the two references are both BLANK
-templates a client fills in. Ours is the opposite — a COMPLETED brief being
-handed over. Decide whether unanswered fields are omitted, shown as gaps, or
-shown with their example text, because a printed brand book full of empty
-ruled boxes reads as unfinished work rather than a deliverable.
+**Resolved — what this document IS.** It ships as part of the concept-to-
+delivery package, alongside the logo, palette and guidelines. So it is not a
+form and not a worksheet: it is the RECORD OF WHAT WAS AGREED, handed to the
+client at the end.
+
+Two consequences for the design:
+- Unanswered fields are OMITTED, not rendered blank. An empty ruled box in a
+  deliverable reads as "we never did this"; leaving it out reads as "this was
+  not part of the scope". Same data, opposite impression. This is the main way
+  our version departs from both references, which are blank templates to fill
+  in — we should borrow their typography and structure, not their empty boxes.
+- The `tip` example text is guidance for ANSWERING and mostly should not
+  survive into the handover. Keep it only where the answer is a format or a
+  list whose shape the example clarifies; drop it everywhere the answer speaks
+  for itself. Decide per field rather than globally.
