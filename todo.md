@@ -338,3 +338,26 @@ is the purest form of one.
 **Existing queue to build on:** the running to-do already stores items tagged
 by stage (`runningTodoStages.js`), so Helper does not need a new task system —
 only the ability to pick up an item and return something.
+
+---
+
+## Domain note — Ideate vs Sketch (for those pages)
+
+Supplied by the owner, 2026-07-27. These are two different things and the
+app should not treat them as one:
+
+**Ideation is the process** — a broad cognitive phase for generating and
+exploring many concepts. Divergent, not visual by necessity: mind-mapping,
+word banking, "what if" questioning, listing. The goal is VOLUME and RANGE
+over quality, keeping concepts cheap and malleable before committing to any.
+
+**Sketching is a tool** — a rapid, informal visual rendering used to get a
+thought out of the head and onto paper or screen. It is one vehicle used
+WITHIN ideation, aimed at immediate visualisation, fast iteration on a single
+theme, and communicating spatial or structural thinking.
+
+Implication for the app: Ideate should support non-drawing methods (lists,
+word banks, prompts, "what if"), and should reward quantity — a page that
+asks for one good idea is modelling the wrong thing. Sketch is where a single
+theme gets drawn and iterated. Check whether the current SparkView/Ideate
+pushes toward one polished answer instead of many rough ones.

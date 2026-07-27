@@ -236,6 +236,13 @@ a:active {
      repeated marks in the header band, separating its least important
      content. */
   --border-hairline: rgba(161, 161, 161, 0.16);
+  /* --ts-focus was declared only on :root, and custom properties resolve at
+     the element that declares them — so it froze at the LIGHT --dopamine
+     (#606060) and inherited that literal into dark, where it measures 2.44:1
+     on a panel and 2.90:1 on canvas, both under the 3:1 non-text floor. It
+     backs roughly forty focus and active indicators across the app, so every
+     one of them was failing in the default theme. */
+  --ts-focus: var(--dopamine);
   --highlight-inset: none;
   --danger: #F87171;
   --accent-danger: var(--danger);
@@ -2149,6 +2156,16 @@ h3 {
 .btn:active {
   background: var(--bg-muted);
   border-color: var(--border-strong);
+}
+
+/* There was no disabled rule at all — a disabled button rendered identically
+   to a live one, down to `cursor: pointer`, so the URL "Add" button looked
+   clickable while doing nothing. A control that cannot say it is unavailable
+   sends the user hunting for a fault that isn't there. */
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-primary {
@@ -7300,7 +7317,12 @@ body.cc-printing-page button {
   position: relative;
   overflow: hidden;
   min-height: 60vh;
-  touch-action: none;
+  /* pan-y, not none. The Upload / Take photo / URL / Note toolbar sits BELOW
+     the board, so `none` turned a 60vh-tall element into a scroll trap: on a
+     phone, one-finger drag anywhere over the board refused to scroll the
+     page, leaving every control for adding a pin unreachable behind it.
+     Vertical page scroll is preserved; horizontal is still ours for panning. */
+  touch-action: pan-y;
   cursor: grab;
   overscroll-behavior: contain;
 }
@@ -7335,9 +7357,20 @@ body.cc-printing-page button {
 }
 
 /* Selection reads as a ring in --text-primary: the one value in a grayscale
-   palette guaranteed to beat an arbitrary photograph in either theme. */
+   palette guaranteed to beat an arbitrary photograph in either theme.
+   Divided by the stage scale so it stays 2px on screen — everything inside
+   the transform shrinks with zoom, and at a realistic Fit-all (~0.32) an
+   un-corrected 2px ring renders at 0.64px, i.e. gone. */
 .mood-card.is-canvas-pin.is-selected {
-  box-shadow: 0 0 0 2px var(--text-primary);
+  box-shadow: 0 0 0 calc(2px / var(--canvas-scale, 1)) var(--text-primary);
+}
+
+/* Hover feedback that fits a draggable. The masonry rule lifted the card 2px
+   on hover, which on an absolutely-positioned pin meant it jumped the moment
+   the cursor arrived and stayed 2px off the grab point for the whole drag. */
+.mood-card.is-canvas-pin:hover {
+  transform: none;
+  border-color: var(--field-line);
 }
 
 /* The canvas sizes pins by width; images take their natural height so the
@@ -7357,17 +7390,28 @@ body.cc-printing-page button {
   object-fit: contain;
 }
 
+/* Counter-scaled so the grip is a constant size on screen. Inside the stage
+   transform a 16px handle becomes ~5px at a typical Fit-all and ~2px at the
+   0.15 zoom floor — unusable exactly when a crowded board makes you most
+   likely to want it. 24px authored, to clear the target minimum. */
 .mood-card-resize {
   position: absolute;
-  right: -6px;
-  bottom: -6px;
-  width: 16px;
-  height: 16px;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  height: 24px;
   border: 1.5px solid var(--text-primary);
   background: var(--bg-elevated);
   border-radius: var(--radius-sm);
   cursor: nwse-resize;
   touch-action: none;
+  transform: scale(calc(1 / var(--canvas-scale, 1))) translate(35%, 35%);
+  transform-origin: 100% 100%;
+}
+
+.mood-card-resize:hover,
+.mood-card-resize:active {
+  background: var(--bg-muted);
 }
 
 /* Link preview footer on a pinned URL. Quiet — it identifies the reference,

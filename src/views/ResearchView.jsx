@@ -497,11 +497,42 @@ export default function ResearchView({
                   }
                 }}
               >
+              {/* Outside the transform, deliberately. Rendered as a stage
+                  child it inherited pan and zoom — so on an empty board a
+                  single trackpad gesture could push the only explanation of
+                  what this page is for, and its only Upload button, off
+                  screen for good. Fit all is hidden at zero pins, so there
+                  was no way back. The one surface that must never move is
+                  the one telling you how to start. */}
+              {deskMood.length === 0 && (
+                <div className="empty-state empty-state-craft research-empty">
+                  <p className="empty-state-title">Your mood board is empty</p>
+                  <p className="empty-state-subtitle">
+                    Drop pictures here, or upload.
+                  </p>
+                  <label className="btn btn-primary board-upload-btn">
+                    Upload images
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
+                      multiple
+                      className="sr-only"
+                      onChange={(e) => {
+                        uploadMoodFiles(e.target.files)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                </div>
+              )}
               <div
                 className={`mood-board mood-canvas-stage${deskMood.length ? ' has-pins' : ''}`}
                 style={{
                   transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
                   transformOrigin: '0 0',
+                  // Exposed so chrome can counter-scale — see .mood-card-resize
+                  // and .is-selected in the canvas CSS block.
+                  '--canvas-scale': scale,
                 }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
@@ -556,29 +587,7 @@ export default function ResearchView({
                   }
                 }}
               >
-                {deskMood.length === 0 ? (
-                  <div className="empty-state empty-state-craft research-empty">
-                    <p className="empty-state-title">Your mood board is empty</p>
-                    <p className="empty-state-subtitle">
-                      Add references that capture the feel you’re after — upload
-                      images, drag one in, or paste an image URL. Star up to 6 to
-                      carry them into your brand direction.
-                    </p>
-                    <label className="btn btn-primary board-upload-btn">
-                      Upload images
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
-                        multiple
-                        className="sr-only"
-                        onChange={(e) => {
-                          uploadMoodFiles(e.target.files)
-                          e.target.value = ''
-                        }}
-                      />
-                    </label>
-                  </div>
-                ) : (
+                {deskMood.length === 0 ? null : (
                   deskMood.map((item, index) => {
                     const face = pinFaceStyle(item)
                     const isImageFace = Boolean(face.backgroundImage?.includes('url('))

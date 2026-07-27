@@ -114,10 +114,11 @@ export function useCanvasViewport(viewportRef) {
           setTy((y) => py - ((py - y) * s) / prev)
           return s
         })
-      } else {
-        setTx((x) => x - e.deltaX)
-        setTy((y) => y - e.deltaY)
       }
+      /* No plain-wheel panning. It stole the page's own scroll for the whole
+         height of the board, which put the add-a-pin toolbar below it out of
+         reach. Zoom is ctrl/⌘+wheel (and trackpad pinch, which browsers
+         report the same way); panning is drag, which is unambiguous. */
     },
     [viewportRef]
   )
