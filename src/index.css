@@ -17721,3 +17721,37 @@ textarea.artboard-brief-input {
 .define-check-row:hover {
   color: var(--text-primary);
 }
+
+/* ============================================================
+   Wide monitors — let the shell use the screen it was given
+   ============================================================
+   Every shell element was capped at min(1440px, 94vw), a cap written
+   when 1440 *was* the wide case. On a 2000px display that left 280px
+   dead on each side and pushed the header's own items — To-do, Client,
+   project name, Timer, Tools — into a huddle in the middle with empty
+   gutters either side. Header chrome has no line length to protect:
+   it is a row of controls, and controls belong at the edges they
+   navigate from.
+
+   So the two caps are now different things:
+   --shell-max  chrome (header, journey bar). Spans the display.
+   --read-max   prose and forms. Still 1440 — widening a text column
+                past that hurts reading, which is why the cap existed.
+*/
+:root {
+  --shell-max: min(2400px, 96vw);
+  --read-max: min(1440px, 94vw);
+}
+
+.header-content,
+.header-content-simple,
+.journey-bar {
+  max-width: var(--shell-max);
+}
+
+/* A canvas is not prose. The mood board was rendering ~720px wide on a
+   2000px screen — the one surface in the app whose whole job is to give
+   you room to spread things out, boxed into a third of the display. */
+.app:has(.mood-canvas-viewport) .main {
+  max-width: var(--shell-max);
+}
