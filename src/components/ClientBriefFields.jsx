@@ -16,8 +16,9 @@
  */
 import { DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
 import BriefSpectrum from './BriefSpectrum'
+import BriefAttach from './BriefAttach'
 
-export default function ClientBriefFields({ answers = {}, onChange, idPrefix }) {
+export default function ClientBriefFields({ answers = {}, onChange, idPrefix, targetId }) {
   return DETECTIVE_CHAPTERS.map((chapter) => (
     <fieldset key={chapter.id} className="public-fill-section">
       <legend>{chapter.title}</legend>
@@ -132,6 +133,15 @@ export default function ClientBriefFields({ answers = {}, onChange, idPrefix }) 
                   className="field-input"
                   value={answers[f.id] || ''}
                   onChange={(e) => onChange(f.id, e.target.value)}
+                />
+              )}
+              {f.attach && targetId && (
+                <BriefAttach
+                  targetId={targetId}
+                  files={answers[`${f.id}Files`] || []}
+                  onChange={(next) => onChange(`${f.id}Files`, next)}
+                  idPrefix={idPrefix}
+                  fieldId={f.id}
                 />
               )}
             </div>

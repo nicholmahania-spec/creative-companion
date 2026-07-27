@@ -235,6 +235,7 @@ export default function PublicClientPortal({ portalId }) {
                     setFormAnswers((a) => ({ ...a, [id]: value }))
                   }
                   idPrefix="cp"
+                  targetId={portalId}
                 />
                 {/* Beside the button that caused it. This used to render only
                     at the very bottom of the page, several screens below the

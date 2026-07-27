@@ -25,7 +25,9 @@ import { trackVersionAction } from '../lib/analytics'
  * Derived rather than hard-coded so it cannot drift as the schema changes.
  */
 const DETECTIVE_FIELD_IDS = new Set(
-  DETECTIVE_CHAPTERS.flatMap((c) => (c.fields || []).map((f) => f.id))
+  DETECTIVE_CHAPTERS.flatMap((c) =>
+    (c.fields || []).flatMap((f) => (f.attach ? [f.id, `${f.id}Files`] : [f.id]))
+  )
 )
 
 /**
@@ -981,7 +983,15 @@ const useAppStore = create(
          different project if the user switched while the fetch was in
          flight — and because the merge only fills blanks, one client's
          answers appearing on another client's brief would be silent. */
-      mergeDiscoveryAnswers: (projectId, clientAnswers) =>
+      mergeDiscoveryAnswers: (projectId, clientAnswers) => {
+        // Images the client attached under "What look are you drawn to?" go
+        // onto the Research wall, not just into the brief — a file three
+        // scrolls into a chapter is invisible in practice, and the wall is
+        // where the designer actually looks. Existing-asset files stay in
+        // the brief only: they're the *old* identity, not new inspiration.
+        const inspirationFiles = Array.isArray(clientAnswers?.inspirationLinksFiles)
+          ? clientAnswers.inspirationLinksFiles
+          : []
         set((state) => ({
           projects: state.projects.map((p) => {
             const target = projectId ?? state.currentProjectId
@@ -998,6 +1008,17 @@ const useAppStore = create(
                 : String(incoming || '').trim().length > 0
               if (!filled) return
               const existing = detective[id]
+              // Attachment lists are additive, not a value to protect —
+              // the designer's own uploads and the client's shouldn't be
+              // able to clobber each other, only merge.
+              if (id.endsWith('Files') && Array.isArray(incoming)) {
+                const seen = new Set((existing || []).map((f) => f.url))
+                detective[id] = [
+                  ...(existing || []),
+                  ...incoming.filter((f) => !seen.has(f.url)),
+                ]
+                return
+              }
               const alreadySet = Array.isArray(existing)
                 ? existing.length > 0
                 : String(existing || '').trim().length > 0
@@ -1011,7 +1032,20 @@ const useAppStore = create(
               discoveryShareStatus: 'submitted',
             }
           }),
-        })),
+        }))
+        if (inspirationFiles.length) {
+          const state = get()
+          const target = projectId ?? state.currentProjectId
+          inspirationFiles.forEach((f) => {
+            get().addMoodPin({
+              projectId: target,
+              type: 'image',
+              visual: f.url,
+              note: 'From the client’s brief',
+            })
+          })
+        }
+      },
 
       /** Partial update of brand identity template fields */
       updateBrandField: (field, value) =>

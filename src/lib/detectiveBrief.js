@@ -271,8 +271,9 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'inspirationLinks',
         label: 'What look are you drawn to?',
-        tip: 'Paste links or describe it',
+        tip: 'Describe it, or attach images',
         area: true,
+        attach: true,
         required: false,
         gridSpan: 'half',
       },
@@ -321,8 +322,9 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'existingAssets',
         label: 'Do you have anything already?',
-        tip: 'Old logo, colours, fonts, photos',
+        tip: 'Old logo, colours, or attach it',
         area: true,
+        attach: true,
         required: false,
         gridSpan: 'half',
       },

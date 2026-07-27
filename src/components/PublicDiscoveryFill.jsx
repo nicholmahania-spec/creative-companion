@@ -138,6 +138,7 @@ export default function PublicDiscoveryFill({ shareId }) {
               answers={answers}
               onChange={updateField}
               idPrefix="pf"
+              targetId={shareId}
             />
 
             {error && <p className="public-fill-error">{error}</p>}

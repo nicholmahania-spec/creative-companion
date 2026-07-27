@@ -403,6 +403,30 @@ export default function DetectiveSheet({
                             placeholder={f.tip || undefined}
                           />
                         )}
+                        {/* Read-only — the designer doesn't re-upload here.
+                            Inspiration images already landed on the Research
+                            wall on submit; existing-asset files (the old
+                            identity) stay reference-only in the brief. */}
+                        {f.attach && Array.isArray(detective?.[`${f.id}Files`]) &&
+                          detective[`${f.id}Files`].length > 0 && (
+                            <div className="define-attach-thumbs">
+                              {detective[`${f.id}Files`].map((file) => (
+                                <a
+                                  key={file.url}
+                                  href={file.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="define-attach-thumb"
+                                  title={file.name || 'Attachment'}
+                                >
+                                  <img src={file.url} alt={file.name || 'Attachment'} />
+                                </a>
+                              ))}
+                              {f.id === 'inspirationLinks' && (
+                                <span className="define-attach-note">Also on the Research wall</span>
+                              )}
+                            </div>
+                          )}
                       </div>
                       </>
                       )}

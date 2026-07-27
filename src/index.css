@@ -17821,3 +17821,107 @@ textarea.artboard-brief-input {
 .define-choice .define-check-row input {
   accent-color: var(--text-primary);
 }
+
+/* ============================================================
+   Brief file attachments — client-facing (BriefAttach) and the
+   designer's read-only view of what a client attached (DetectiveSheet)
+   ============================================================
+   Thumbnails only, no card chrome around them — the image is already a
+   visual object, wrapping it in another bordered box is rounding an
+   invisible corner. */
+.brief-attach {
+  margin-top: var(--space-2);
+}
+
+.brief-attach-row,
+.define-attach-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.brief-attach-thumb,
+.define-attach-thumb {
+  position: relative;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-muted);
+  flex-shrink: 0;
+}
+
+.brief-attach-thumb img,
+.define-attach-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Sending / failed both dim the thumb — the difference is the label
+   underneath, not the image, so a client scanning the row can tell at a
+   glance which files still need attention without reading every caption. */
+.brief-attach-thumb.is-sending img,
+.brief-attach-thumb.is-failed img {
+  opacity: 0.5;
+}
+
+.brief-attach-status {
+  position: absolute;
+  inset: auto 0 0 0;
+  font-size: var(--fs-1);
+  text-align: center;
+  padding: var(--space-1);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+}
+
+.brief-attach-status button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: var(--fs-1);
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.brief-attach-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: var(--fs-2);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.brief-attach-add {
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 1px dashed var(--border-hairline);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-1);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.brief-attach-note {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
+.define-attach-note {
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  align-self: center;
+}
