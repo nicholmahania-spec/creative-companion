@@ -259,6 +259,26 @@ export default function ResearchView({
   const starred = deskMood.filter((m) => m.inPack).length
   const words = String(brandWords || '').trim()
 
+  /* Start timing on arrival, once. Research is the stage where an hour
+     disappears without registering, so the session that most needs recording
+     is the one you are least likely to remember to start. Deliberately does
+     NOT navigate anywhere and does not restart a timer already running —
+     arriving here should begin the clock and change nothing else about the
+     page. Skipped during a forced break, which owns the timer. */
+  const didAutoStartTimer = useRef(false)
+  useEffect(() => {
+    if (didAutoStartTimer.current) return
+    if (forcedBreak) return
+    didAutoStartTimer.current = true
+    setSessionComplete?.(false)
+    setTimerFocusSource?.('research')
+    setFocusLeft?.(20 * 60)
+    setPomodoroWorkStartedAt?.(Date.now())
+    setIsFocusRunning?.(true)
+    trackTimerOperation?.('auto_start', { source: 'research' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forcedBreak])
+
   /* Only offer "Take photo" where a camera actually exists. `capture` is
      ignored by desktop browsers, which would silently turn the button into a
      second file picker — a control that lies about what it does is worse than
@@ -464,7 +484,11 @@ export default function ResearchView({
                     setFocusLeft(20 * 60)
                     setPomodoroWorkStartedAt(Date.now())
                     setIsFocusRunning(true)
-                    setActiveView('insights')
+                    /* No setActiveView('insights'). Starting the research
+                       timer used to navigate off Research — you pressed a
+                       timer for the work you were about to do and the page
+                       carrying that work disappeared, so the first act of a
+                       timed session was finding your way back. */
                     notifyAction('Focus on', 'focus_start', {
                       label: 'Research timer',
                     })
@@ -472,13 +496,6 @@ export default function ResearchView({
                   }}
                 >
                   ⏱
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setActiveView('research-focus')}
-                >
-                  Try Focus Mode (beta)
                 </button>
                 <InfoReveal>
                   {(getProcessPhase('research')?.checks || []).join(' · ')}

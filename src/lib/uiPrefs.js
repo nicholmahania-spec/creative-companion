@@ -6,6 +6,24 @@
 const UI_PREFS_KEY = 'cc-ui-prefs';
 
 /**
+ * The theme the device is asking for.
+ *
+ * The app hard-coded 'deep' in three places and never read
+ * prefers-color-scheme anywhere, so it opened dark on a machine set to light
+ * and stayed that way. Someone who has set their OS to light has already
+ * stated a preference; opening against it is the app overruling a decision
+ * the user made once for everything.
+ *
+ * 'warm' is this project's light theme, 'deep' its dark one.
+ */
+export function deviceTheme() {
+  if (typeof window === 'undefined' || !window.matchMedia) return 'deep';
+  return window.matchMedia('(prefers-color-scheme: light)').matches
+    ? 'warm'
+    : 'deep';
+}
+
+/**
  * Focus-mask intensity bounds, as percentages.
  *
  * The floor is a legibility floor, not a taste one. Masked fields are the

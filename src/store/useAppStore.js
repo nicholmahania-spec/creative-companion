@@ -1,5 +1,5 @@
 import { DELIVERABLE_OPTIONS, DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
-import { FOCUS_MASK_MIN_PCT } from '../lib/uiPrefs'
+import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
@@ -284,7 +284,12 @@ export function blankWorkspaceState() {
     moodItems: [],
     conceptItems: [],
     breakKit: [],
-    theme: 'deep',
+    theme: deviceTheme(),
+    /* 'auto' until the user actually toggles. Without this there is no way
+       to tell "chose dark" from "never chose anything and got the old
+       hard-coded default", so a device set to light could never be
+       followed. */
+    themeSource: 'auto',
     bodyDoubling: false,
     onboarded: false,
     sparkIndex: 0,
@@ -359,7 +364,8 @@ const useAppStore = create(
       moodItems: [],
       conceptItems: [],
       breakKit: [],
-      theme: 'deep',
+      theme: deviceTheme(),
+      themeSource: 'auto',
       bodyDoubling: false,
       onboarded: false,
       sparkIndex: 0,
@@ -995,12 +1001,23 @@ const useAppStore = create(
         return {...result, version: result.version}
       },
 
+      /* Toggling is an explicit choice, so it pins the theme: the device is
+         only followed until the user says otherwise, and then never again
+         unless they reset it. */
       toggleTheme: () =>
         set((state) => ({
           theme: state.theme === 'warm' ? 'deep' : 'warm',
+          themeSource: 'user',
         })),
 
-      setTheme: (theme) => set({ theme }),
+      setTheme: (theme) => set({ theme, themeSource: 'user' }),
+
+      /** Follow the OS again — used on load and on live scheme changes while
+       *  the user has not pinned a theme. */
+      applyDeviceTheme: () =>
+        set((state) =>
+          state.themeSource === 'user' ? {} : { theme: deviceTheme() }
+        ),
 
       toggleBodyDoubling: () =>
         set((state) => ({ bodyDoubling: !state.bodyDoubling })),
@@ -1972,6 +1989,10 @@ const useAppStore = create(
         conceptItems: state.conceptItems || [],
         breakKit: state.breakKit || [],
         theme: state.theme,
+        /* Must persist alongside `theme`, or an explicit choice survives only
+           until reload — themeSource would reset to 'auto' and the device
+           listener would quietly overwrite the theme the user picked. */
+        themeSource: state.themeSource,
         onboarded: state.onboarded,
         sparkIndex: state.sparkIndex,
         oppositeIndex: state.oppositeIndex ?? 0,

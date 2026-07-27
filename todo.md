@@ -361,3 +361,30 @@ word banks, prompts, "what if"), and should reward quantity — a page that
 asks for one good idea is modelling the wrong thing. Sketch is where a single
 theme gets drawn and iterated. Check whether the current SparkView/Ideate
 pushes toward one polished answer instead of many rough ones.
+
+## Helper bot — time tracking and the daily report (2026-07-27)
+
+Requested alongside the parked Helper work above; same blockers apply.
+
+**Wanted:** Helper tracks time worked, builds a spreadsheet of what was worked
+on and for how long each day, and sends a daily report.
+
+**Foundation now in place:** the Research timer auto-starts on arrival and no
+longer navigates away, so a stage visit is already a timed session with a
+`timerFocusSource`. The other stages still start theirs manually — do the same
+there before building any reporting on top, or the data will have a hole in it
+shaped like every page except Research.
+
+**Design constraints, from CLAUDE.md and this session:**
+- The report must not be built out of raw clock numbers as its primary
+  reading. The owner has stated plainly that they have no concept of time and
+  numbers do not register. "2h 14m on Research" is the wrong shape; relative
+  and comparative forms are the direction to explore.
+- Consult `adhd-executive-function-advisor` before designing the stats view —
+  CLAUDE.md names this specific feature and says to.
+- A daily report is an outbound message on a schedule. Anything that sends on
+  the user's behalf needs explicit confirmation per send, or an explicit
+  standing opt-in the user set up knowingly.
+- The spreadsheet is a real artefact: decide whether it is generated on demand
+  (xlsx/csv download) or written to a connected service. On demand is simpler
+  and needs no new credentials.

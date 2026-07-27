@@ -405,6 +405,23 @@ function App() {
   // it there); this only installs the JS sizer for the ones without it.
   useEffect(() => installAutoGrow(), [])
 
+  /* Follow the OS colour scheme until the user pins a theme. Applied on load
+     because a persisted workspace carries whatever theme was stored — usually
+     the old hard-coded 'deep' that nobody actually chose — and applied live,
+     because switching your machine to light at dusk should carry the app with
+     it rather than leaving one window bright against everything else.
+     `themeSource: 'user'` stops both, so an explicit choice is never
+     overruled. */
+  const applyDeviceTheme = useAppStore((s) => s.applyDeviceTheme)
+  useEffect(() => {
+    applyDeviceTheme?.()
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined
+    const mq = window.matchMedia('(prefers-color-scheme: light)')
+    const onChange = () => applyDeviceTheme?.()
+    mq.addEventListener?.('change', onChange)
+    return () => mq.removeEventListener?.('change', onChange)
+  }, [applyDeviceTheme])
+
   // Every time a project is opened: clear yesterday's completed to-dos, if
   // the day rolled over. Housekeeping only — nothing is shown to the user.
   //
