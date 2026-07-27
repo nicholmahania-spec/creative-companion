@@ -212,6 +212,18 @@ concretely as the advisor subagent's own principles when making design calls.
   are the same failure for this user. Prefer chrome that's visible in the
   same spot on every screen (e.g. near the project header) over "put it at
   the bottom" as a default fix for declutter.
+- **A prompt whose answer is always the same is a toll, not a prompt.** On
+  the "Anything to add?" running-to-do modal that opened on every project
+  arrival: "the notes popup is getting annoying and i feel like i wont use it
+  but i will always dismiss." Predictable dismissal is the signal — the user
+  is paying a decision on every visit for something they have already decided
+  about, and the cost recurs while the value never arrives. Do not answer
+  this with a "don't ask again" checkbox or a settings toggle: that bills a
+  *second* decision to stop the first, and finding it is its own task. Remove
+  the interruption and leave the capability reachable on demand from chrome
+  that is already permanently on screen. Applies to any recurring
+  modal/nudge/confirm, not just this one — if the honest prediction is that
+  the user will always pick the same option, it should not be asked.
 - **Progress/comparison should read as evidence, not require re-opening a
   tool.** On Asset audit: "I feel like it would be helpful to see that during
   each step of the process. I want like a before-and-after thing going as I

@@ -405,27 +405,26 @@ function App() {
   // it there); this only installs the JS sizer for the ones without it.
   useEffect(() => installAutoGrow(), [])
 
-  // Every time a project is opened: clear yesterday's completed to-dos (if
-  // the day rolled over) and prompt for anything to add to the running list.
+  // Every time a project is opened: clear yesterday's completed to-dos, if
+  // the day rolled over. Housekeeping only — nothing is shown to the user.
+  //
+  // This used to also auto-open the "Anything to add?" modal. The seen-key
+  // only ever suppressed the FIRST open of a given project, so from the
+  // second open onward it interrupted every single arrival and every project
+  // switch. A prompt whose answer is always the same is not a prompt, it is
+  // a toll: it costs a decision on every visit and returns nothing, which is
+  // the decision-fatigue failure this project treats as non-negotiable.
+  // The user's own words: "i feel like i wont use it but i will always
+  // dismiss."
+  //
+  // Nothing is lost. The running list keeps its permanent entry points — the
+  // to-do FAB ("Open your to-do list") and the header pill — and the panel's
+  // own "Add" button still opens this same popup on request, in its
+  // skipAsk form. Capability on demand, no interruption.
   useEffect(() => {
     if (!activeProjectId) return
     resetRunningTodoIfNewDay(activeProjectId)
-    // First-ever open of a project stays quiet: "Anything to add?" only
-    // parses once you know the running list exists, and interrupting the
-    // very first arrival at the brief costs momentum exactly when task
-    // initiation is hardest. From the second open on, it's recognition.
-    const seenKey = `cc-todo-prompt-seen-${activeProjectId}`
-    try {
-      if (!localStorage.getItem(seenKey)) {
-        localStorage.setItem(seenKey, '1')
-        return
-      }
-    } catch {
-      /* storage unavailable — fall through to the prompt */
-    }
-    setRunningTodoPromptOpen(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeProjectId])
+  }, [activeProjectId, resetRunningTodoIfNewDay])
 
   const projectPalette =
     activeProject?.palette?.length > 0
