@@ -2512,8 +2512,13 @@ function App() {
         navOpen ? ' nav-open' : ''
       }`}
       style={{
+        /* Floor is 0.4, not 0. index.css states the rule for this token:
+           neighbouring answers are working-memory scaffolding, so they get
+           de-emphasised but never made illegible. A floor of 0 allowed
+           exactly that — at 0.25 the masked field text already computes to
+           roughly 2:1, under the 4.5 floor. 0.4 keeps it readable. */
         ['--focus-mask-opacity']: String(
-          Math.min(0.8, Math.max(0, Number(prefs.focusMaskPct ?? 60) / 100))
+          Math.min(0.8, Math.max(0.4, Number(prefs.focusMaskPct ?? 60) / 100))
         ),
         ['--focus-mask-blur']:
           Number(prefs.focusMaskBlur) > 0
@@ -2740,7 +2745,10 @@ function App() {
                 className="header-tools-btn"
                 aria-expanded={moreOpen}
                 aria-haspopup="menu"
-                aria-controls="tools-menu"
+                // Set only while the menu exists: it is conditionally
+                // rendered below, so a static aria-controls pointed at a
+                // missing id whenever the menu was closed.
+                aria-controls={moreOpen ? 'tools-menu' : undefined}
                 id="tools-menu-button"
                 onClick={() => setMoreOpen(!moreOpen)}
               >
@@ -2990,7 +2998,10 @@ function App() {
         /* Parked off-canvas on mobile, its 10 buttons stayed keyboard-
            reachable — Tab from the header walked into an invisible drawer.
            inert only applies below 768px, where the drawer is closed. */
-        inert={isMobileViewport && !navOpen ? '' : undefined}
+        /* `true`, not '': React treats an empty string as false for boolean
+           attributes, so the drawer was never actually inert and the bug
+           this comment describes was still live. */
+        inert={isMobileViewport && !navOpen ? true : undefined}
       >
           <div className="journey-projects-section" aria-label="Your projects">
             <div className="journey-projects-head">

@@ -14523,8 +14523,9 @@ select:focus {
 .journey-projects-add {
   display: inline-grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  /* 24px, the WCAG 2.2 target-size minimum (2.5.8). Was 20x20. */
+  width: 24px;
+  height: 24px;
   border: 1px solid var(--ts-border, #E7E7E7);
   border-radius: var(--radius);
   background: var(--ts-panel, #FFFFFF);
@@ -15054,10 +15055,15 @@ select:focus {
   font-size: 0.65rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #A1A1A1;
+  /* Themed: #A1A1A1 cleared the floor on the dark sidebar but not on the
+     light one. */
+  color: var(--text-muted);
 }
 .journey-project-row.is-active .journey-project-row-count {
-  color: #606060;
+  /* Was #606060 on the elevated active row: 2.44:1 at 10.4px, the worst
+     contrast left on the page. --text-secondary tracks the theme and stays
+     a step below the row label rather than a step below legibility. */
+  color: var(--text-secondary);
 }
 
 /* Divider under the Projects section */

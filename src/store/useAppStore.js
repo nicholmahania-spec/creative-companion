@@ -1,4 +1,5 @@
-import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
+import { DELIVERABLE_OPTIONS, DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
+import { DISCOVERY_FIELDS } from '../lib/discoveryBrief'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
@@ -9,6 +10,24 @@ import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/breakKit'
 import versionService from '../services/versionService'
 import { trackVersionAction } from '../lib/analytics'
+
+/**
+ * Field ids that exist in BOTH questionnaire schemas — detectiveBrief
+ * (the Define sheet, stored on `project.detective`) and discoveryBrief
+ * (the public share form, stored on `project.discoveryAnswers`).
+ *
+ * Derived rather than hard-coded so it cannot drift as either schema
+ * changes. Currently 12 ids. The remaining discovery fields have no
+ * detective equivalent and are intentionally left where they are —
+ * rehoming them is a product decision about which wording ships, not
+ * something to infer here.
+ */
+const SHARED_BRIEF_FIELD_IDS = (() => {
+  const detectiveIds = new Set(
+    DETECTIVE_CHAPTERS.flatMap((c) => (c.fields || []).map((f) => f.id))
+  )
+  return DISCOVERY_FIELDS.filter((f) => detectiveIds.has(f.id)).map((f) => f.id)
+})()
 
 /**
  * Ideate tool prompts (not fake client data).
@@ -212,7 +231,12 @@ export function blankDirections() {
 
 /** Fresh real desk — no sample clients or fake tasks */
 export function createBlankProject(name = 'My project', brief = '') {
-  const id = Date.now()
+  /* Date.now() alone collides for anything created inside the same
+     millisecond, and every store action selects with `p.id === id` — so two
+     projects sharing an id means a write to one silently writes to both.
+     Same shape as the task/decision ids elsewhere in this file. Existing
+     numeric ids keep working; only new projects get the suffix. */
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
   return {
     id,
     name: name || 'My project',
@@ -856,7 +880,16 @@ const useAppStore = create(
 
       /** Bulk-merge answers the client submitted via their public link.
        *  Only fills fields the client actually answered — never blanks
-       *  something the studio user already filled in. */
+       *  something the studio user already filled in.
+       *
+       *  Also mirrors the shared ids into `detective`. The two
+       *  questionnaires are separate schemas stored under separate keys,
+       *  so a client filling /f/:shareId wrote only to discoveryAnswers
+       *  and the Define sheet — which reads `detective` — never showed a
+       *  word of it. Mirroring is deliberately one-way and submit-only:
+       *  ids are NOT renamed (detectiveBrief's header explains that
+       *  renaming orphans saved answers), and a value the studio user has
+       *  already entered always wins over the client's. */
       mergeDiscoveryAnswers: (clientAnswers) =>
         set((state) => ({
           projects: state.projects.map((p) => {
@@ -865,7 +898,19 @@ const useAppStore = create(
             Object.entries(clientAnswers || {}).forEach(([k, v]) => {
               if (String(v || '').trim()) merged[k] = v
             })
-            return { ...p, discoveryAnswers: merged, discoveryShareStatus: 'submitted' }
+            const detective = { ...(p.detective || {}) }
+            SHARED_BRIEF_FIELD_IDS.forEach((id) => {
+              const incoming = clientAnswers?.[id]
+              if (!String(incoming || '').trim()) return
+              if (String(detective[id] || '').trim()) return
+              detective[id] = incoming
+            })
+            return {
+              ...p,
+              discoveryAnswers: merged,
+              detective,
+              discoveryShareStatus: 'submitted',
+            }
           }),
         })),
 
