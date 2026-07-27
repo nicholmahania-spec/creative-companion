@@ -266,6 +266,22 @@ function App() {
   const [forcedBreak, setForcedBreak] = useState(null)
   const focusMinutes = Math.floor(focusLeft / 60)
   const focusSeconds = focusLeft % 60
+
+  /* Seconds worked in the current run, counting UP. `focusLeft` counts DOWN
+     toward a forced break — that is the Pomodoro, a different job — and
+     showing it made the chip read as a deadline you were losing rather than
+     a record of what you had done. Ticked by the same interval that runs the
+     countdown, so it advances only while the clock is genuinely running:
+     never during a forced break, and never across an idle pause. */
+  const [sessionSeconds, setSessionSeconds] = useState(0)
+  const sessionLabel = (() => {
+    const m = Math.floor(sessionSeconds / 60)
+    if (m < 1) return 'just started'
+    if (m < 60) return `${m}m`
+    const h = Math.floor(m / 60)
+    const rem = m % 60
+    return rem ? `${h}h ${rem}m` : `${h}h`
+  })()
   const forcedBreakRef = useRef(null)
   forcedBreakRef.current = forcedBreak
   /** View to restore after forced break ends */
@@ -1081,6 +1097,24 @@ function App() {
 
   const logWorkedTime = useAppStore((s) => s.logWorkedTime)
 
+  /* ── The work clock is INDEPENDENT of the Pomodoro ──────────────────────
+     They used to be one clock: `isFocusRunning` drove both, so the record of
+     what you worked on stopped dead at 25 minutes and handed you a forced
+     break. Two unrelated jobs — one quietly keeping a log, the other pacing
+     you — and tying them together meant the log could only ever describe the
+     first 25 minutes of anything.
+
+     This clock runs whenever you are on a project stage and not idle. No
+     target, no end, no forced break: it stops when you stop. The Pomodoro
+     keeps its own countdown and is headed for Helper. */
+  const STAGE_VIEWS = [
+    'define', 'research', 'ideate', 'sketch',
+    'design', 'review', 'deliver', 'studio',
+  ]
+  const [workIdle, setWorkIdle] = useState(false)
+  const workRunning =
+    STAGE_VIEWS.includes(String(activeView || '')) && !workIdle && !forcedBreak
+
   /** Bank the stretch that just ended. Called on idle, on stopping, and on
    *  leaving — anywhere the clock stops for any reason. */
   const bankWorkSegment = useCallback(
@@ -1093,26 +1127,35 @@ function App() {
     [logWorkedTime, activeProjectId, timerFocusSource, activeView]
   )
 
+  /** Open a stretch when the clock starts, bank it when it stops. */
   useEffect(() => {
-    if (isFocusRunning && !forcedBreak) {
+    if (workRunning) {
       if (!workSegmentStartRef.current) workSegmentStartRef.current = Date.now()
     } else {
       bankWorkSegment()
     }
-  }, [isFocusRunning, forcedBreak, bankWorkSegment])
+  }, [workRunning, bankWorkSegment])
+
+  /** One second per second, for as long as you are working. Its own interval,
+   *  not the Pomodoro's — that one dies at zero and takes the record with it. */
+  useEffect(() => {
+    if (!workRunning) return undefined
+    const id = window.setInterval(() => setSessionSeconds((s) => s + 1), 1000)
+    return () => window.clearInterval(id)
+  }, [workRunning])
 
   useEffect(() => {
     const mark = () => {
       lastActivityRef.current = Date.now()
       if (idlePausedRef.current) {
         idlePausedRef.current = false
+        setWorkIdle(false)
         /* Hand back the window that was counted while nobody was here. Idle
            is only detectable after the fact — you cannot know someone stopped
            until they have been stopped a while — so by the time the check
            fires, the clock has already run through the whole window. Pausing
            alone would keep that mistake on the books. */
-        setFocusLeft((left) => Math.min(POMODORO_WORK_MIN * 60, left + IDLE_MS / 1000))
-        setIsFocusRunning(true)
+        setSessionSeconds((s) => Math.max(0, s - IDLE_MS / 1000))
         flashToast?.('Back — the last 10 minutes weren’t counted')
       }
     }
@@ -1123,18 +1166,18 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (!isFocusRunning || forcedBreak) return undefined
+    if (!workRunning) return undefined
     const id = window.setInterval(() => {
       if (Date.now() - lastActivityRef.current < IDLE_MS) return
       idlePausedRef.current = true
       // Bank only up to when activity actually stopped, not to now — the idle
       // window itself is never logged as work.
       bankWorkSegment(lastActivityRef.current)
-      setIsFocusRunning(false)
+      setWorkIdle(true)
     }, 15000)
     return () => window.clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocusRunning, forcedBreak, bankWorkSegment])
+  }, [workRunning, bankWorkSegment])
 
   /* Closing the tab mid-session would otherwise lose the stretch entirely. */
   useEffect(() => {
@@ -2745,16 +2788,37 @@ function App() {
                 ("Test Project" twice, a which-one-do-I-use fork) while hiding
                 every other project behind a dropdown. The sidebar list is the
                 switcher — always visible, one click, with progress counts. */}
-            {(isFocusRunning || (CLOUD && syncState === 'error')) && (
+            {(workRunning || isFocusRunning || (CLOUD && syncState === 'error')) && (
             <div className="header-status-slot">
+            {workRunning && (
+              <button
+                type="button"
+                className="work-clock-chip"
+                onClick={() => setActiveView('insights')}
+                title="Clocked work time — runs by itself while you work"
+              >
+                {/* The CLOCK: hours at work, kept automatically. Counts up,
+                    in minutes not mm:ss — a seconds digit changing every
+                    second is motion in the corner of the eye all day, and it
+                    is finer than any decision it informs. No icon: this is
+                    not a control, it is a readout. */}
+                Working · {sessionLabel}
+              </button>
+            )}
+            {/* The TIMER: separate chip, separate job, and only here because
+                you switched it on. The clock records; the timer is the thing
+                you reach for when time blindness needs help. They were one
+                control, which made choosing the timer indistinguishable from
+                simply being at work — and made stopping the timer look like
+                clocking off. ⏱ marks it as the chosen tool. */}
             {isFocusRunning && (
               <button
                 type="button"
-                className="timer-running-chip"
+                className="focus-timer-chip"
                 onClick={() => setActiveView('insights')}
-                title="Timer running"
+                title="Focus timer you started — separate from clocked hours"
               >
-                Timer {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
+                ⏱ {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
               </button>
             )}
             {CLOUD && syncState === 'error' && (
@@ -3641,6 +3705,7 @@ function App() {
               nextTask={nextTask}
               focusMinutes={focusMinutes}
               focusSeconds={focusSeconds}
+              sessionLabel={sessionLabel}
               forcedBreak={forcedBreak}
               startOrPauseFocus={startOrPauseFocus}
               resetFocus={resetFocus}

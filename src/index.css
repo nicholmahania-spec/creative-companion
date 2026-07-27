@@ -705,6 +705,8 @@ h3 {
 }
 
 .timer-running-chip,
+.work-clock-chip,
+.focus-timer-chip,
 .sync-error-chip {
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
@@ -720,6 +722,25 @@ h3 {
   background: rgba(106, 106, 106, 0.12);
   color: var(--accent-growth);
   border-color: rgba(106, 106, 106, 0.25);
+}
+
+/* Two chips, two jobs, and they must not look like one control in two
+   states. The CLOCK is a readout of hours worked — it runs itself, so it is
+   quiet, unfilled, and carries no icon. */
+.work-clock-chip {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--field-line);
+  font-weight: 600;
+}
+
+/* The TIMER is something you switched on. It is filled and carries ⏱, so a
+   glance says "I chose this" rather than "this is just what work looks
+   like" — and so turning it off never reads as clocking off. */
+.focus-timer-chip {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--text-primary);
 }
 
 .sync-error-chip {

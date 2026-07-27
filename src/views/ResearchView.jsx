@@ -259,25 +259,22 @@ export default function ResearchView({
   const starred = deskMood.filter((m) => m.inPack).length
   const words = String(brandWords || '').trim()
 
-  /* Start timing on arrival, once. Research is the stage where an hour
-     disappears without registering, so the session that most needs recording
-     is the one you are least likely to remember to start. Deliberately does
-     NOT navigate anywhere and does not restart a timer already running —
-     arriving here should begin the clock and change nothing else about the
-     page. Skipped during a forced break, which owns the timer. */
-  const didAutoStartTimer = useRef(false)
+  /* Arriving here starts the CLOCK, not the timer.
+   *
+   * The work clock runs itself in App for any stage view — that is clocking
+   * in, and it is what makes the hours log honest without anyone having to
+   * remember to press something. This used to auto-start the focus timer as
+   * well, which quietly erased the distinction: the countdown appeared
+   * because you walked in, so choosing the timer looked identical to simply
+   * being at work, and turning it off looked like clocking off.
+   *
+   * The timer is a tool for time blindness and stays a deliberate act — the
+   * ⏱ button, pressed on purpose. Only the source is claimed here, so the
+   * clock knows which stage to bill. */
   useEffect(() => {
-    if (didAutoStartTimer.current) return
-    if (forcedBreak) return
-    didAutoStartTimer.current = true
-    setSessionComplete?.(false)
     setTimerFocusSource?.('research')
-    setFocusLeft?.(20 * 60)
-    setPomodoroWorkStartedAt?.(Date.now())
-    setIsFocusRunning?.(true)
-    trackTimerOperation?.('auto_start', { source: 'research' })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [forcedBreak])
+  }, [])
 
   /* Only offer "Take photo" where a camera actually exists. `capture` is
      ignored by desktop browsers, which would silently turn the button into a

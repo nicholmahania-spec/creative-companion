@@ -7,6 +7,7 @@ export default function InsightsView(props) {
     nextTask,
     focusMinutes,
     focusSeconds,
+    sessionLabel,
     forcedBreak,
     startOrPauseFocus,
     resetFocus,
@@ -75,9 +76,9 @@ export default function InsightsView(props) {
       </div>
 
       <section className="panel focus-panel brand-section">
-        <div className="insights-timer">
-          {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
-        </div>
+        {/* Time worked, counting up. This read mm:ss of time REMAINING,
+            which framed a work session as something running out. */}
+        <div className="insights-timer">{sessionLabel || 'not started'}</div>
         <div className="insights-focus-actions">
           <button
             type="button"
