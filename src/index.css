@@ -14273,6 +14273,68 @@ select:focus {
   box-shadow: none !important;
 }
 
+/* ── Chapter rail in the right gutter (wide screens only) ────────────────
+   At >=768px this page is a master scroll of ~22 fields across 5 chapters,
+   and the rail — the only per-chapter "N needed" readout — scrolled out of
+   view after the first screenful. Rebuilding "which chapter am I in, how
+   much is left" from memory, repeatedly, is a working-memory tax on
+   information the page already knows. Sticking it in the gutter turns that
+   reconstruction back into a glance, and costs no content width: the
+   dashboard is a fixed 56rem column with margin-inline:0, so the space to
+   its right was already empty.
+
+   Breakpoint is measured, not guessed. The gutter is
+   viewport - 200px sidebar - 56rem content: 156px at 1280 (too narrow for
+   this rail) and 476px at 1600. 1400 is the first common width where the
+   260px track plus a --space-6 gap fits with room to spare. Below it the
+   rail simply stays in flow where it is.
+
+   The rail does NOT move in the DOM — it is placed by grid, so tab order
+   and screen-reader sequence are unchanged. Only .define-workbook dissolves
+   (in split mode it is already stripped to zero styling by the rule above);
+   .define-split-form keeps its box because it carries role="region", and
+   display:contents on a landmark risks dropping it from the a11y tree. */
+@media (min-width: 1400px) {
+  .define-dashboard {
+    max-width: calc(var(--define-col) + var(--space-6) + 260px);
+  }
+  /* The header band stays on the content column; the gutter holds the rail
+     and nothing else, permanently. */
+  .define-dashboard > .brand-template-top {
+    max-width: var(--define-col);
+  }
+  .define-workbook.is-split {
+    display: contents;
+  }
+  .define-split-form {
+    display: grid;
+    grid-template-columns: minmax(0, var(--define-col)) 260px;
+    grid-template-rows: auto 1fr;
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  .define-split-form .define-start-here {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .define-split-form .define-chapters {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .define-split-form .define-chapter-rail {
+    grid-column: 2;
+    /* Spans both content rows so the sticky box has the full column height
+       to travel in. No max-height and no overflow: five rows fit in any
+       viewport tall enough to warrant this, and a clipped or
+       separately-scrolling rail is worse than no rail. */
+    grid-row: 1 / -1;
+    align-self: start;
+    position: sticky;
+    top: var(--space-6);
+    margin-bottom: 0;
+  }
+}
+
 /* Split view previously gave every chapter a panel card. It now inherits the
    base treatment — quiet, with `.is-current` carrying the surface — so this
    layer only owns rhythm. */
