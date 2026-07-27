@@ -7313,10 +7313,28 @@ body.cc-printing-page button {
    wide screenshot arrived as the same rectangle — on a mood board the shape
    of a reference IS part of what you are comparing, so the canvas lets each
    pin keep its own. */
+/* The canvas has to look like a surface. It had no background and no edge,
+   so in dark mode it was the same near-black as the page — you could not see
+   where the board started, where it ended, or that panning had done anything.
+   A recessed fill plus a border draws the boundary; the dot grid is the part
+   that makes movement legible, since on an empty or sparse board there is
+   otherwise nothing to move against. The grid is drawn on the viewport and
+   offset by the pan, so it translates with the content but never scales into
+   either a moiré or a handful of giant blobs. */
 .mood-canvas-viewport {
   position: relative;
   overflow: hidden;
   min-height: 60vh;
+  border: 1px solid var(--field-line);
+  border-radius: var(--radius);
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--border-strong) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+  background-position: var(--canvas-pan-x, 0) var(--canvas-pan-y, 0);
   /* pan-y, not none. The Upload / Take photo / URL / Note toolbar sits BELOW
      the board, so `none` turned a 60vh-tall element into a scroll trap: on a
      phone, one-finger drag anywhere over the board refused to scroll the
@@ -7396,15 +7414,45 @@ body.cc-printing-page button {
    likely to want it. 24px authored, to clear the target minimum. */
 .mood-card-resize {
   position: absolute;
-  right: 0;
-  bottom: 0;
   width: 24px;
   height: 24px;
   border: 1.5px solid var(--text-primary);
   background: var(--bg-elevated);
   border-radius: var(--radius-sm);
-  cursor: nwse-resize;
   touch-action: none;
+}
+
+/* Each corner anchors to its own edge and counter-scales about that corner,
+   so all four stay a constant 24px on screen at any zoom and none of them
+   drift off the pin as it resizes. */
+.mood-card-resize.is-nw {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+  transform: scale(calc(1 / var(--canvas-scale, 1))) translate(-35%, -35%);
+  transform-origin: 0 0;
+}
+
+.mood-card-resize.is-ne {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+  transform: scale(calc(1 / var(--canvas-scale, 1))) translate(35%, -35%);
+  transform-origin: 100% 0;
+}
+
+.mood-card-resize.is-sw {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+  transform: scale(calc(1 / var(--canvas-scale, 1))) translate(-35%, 35%);
+  transform-origin: 0 100%;
+}
+
+.mood-card-resize.is-se {
+  bottom: 0;
+  right: 0;
+  cursor: nwse-resize;
   transform: scale(calc(1 / var(--canvas-scale, 1))) translate(35%, 35%);
   transform-origin: 100% 100%;
 }
@@ -7551,8 +7599,17 @@ body.cc-printing-page button {
   font-size: var(--fs-1);
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
-  min-width: 3.5ch;
+  min-width: 4.5ch;
   text-align: center;
+}
+
+/* States how the surface works, in the one place you look when it isn't
+   behaving — none of pan, zoom or drag announced itself before. */
+.mood-canvas-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
 }
 
 /* No hover gate. The note is the only record of WHY a picture is on the

@@ -54,6 +54,24 @@ export function useCanvasViewport(viewportRef) {
     [viewportRef]
   )
 
+  /** Jump to an exact zoom about the viewport centre — backs the percentage
+   *  readout doubling as a "reset to 100%" button. */
+  const zoomTo = useCallback(
+    (target) => {
+      const el = viewportRef.current
+      const rect = el?.getBoundingClientRect()
+      const cx = rect ? rect.width / 2 : 0
+      const cy = rect ? rect.height / 2 : 0
+      setScale((prev) => {
+        const s = clampScale(target)
+        setTx((x) => cx - ((cx - x) * s) / prev)
+        setTy((y) => cy - ((cy - y) * s) / prev)
+        return s
+      })
+    },
+    [viewportRef]
+  )
+
   /** Frame the whole board with a margin. The escape hatch. */
   const fitAll = useCallback(
     (bounds) => {
@@ -137,5 +155,5 @@ export function useCanvasViewport(viewportRef) {
     [viewportRef, tx, ty, scale]
   )
 
-  return { scale, tx, ty, zoomAt, zoomBy, fitAll, startPan, onWheel, toStage }
+  return { scale, tx, ty, zoomAt, zoomBy, zoomTo, fitAll, startPan, onWheel, toStage }
 }

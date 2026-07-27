@@ -273,7 +273,7 @@ export default function ResearchView({
      "where does this go?" and an existing board opens already arranged —
      positioning is available, never required. */
   const viewportRef = useRef(null)
-  const { scale, tx, ty, zoomBy, fitAll, startPan, onWheel, toStage } =
+  const { scale, tx, ty, zoomBy, zoomTo, fitAll, startPan, onWheel, toStage } =
     useCanvasViewport(viewportRef)
   const [selectedPinId, setSelectedPinId] = useState(null)
   const dragRef = useRef(null)
@@ -301,6 +301,10 @@ export default function ResearchView({
       originY: g.y,
       startX: start.x,
       startY: start.y,
+      // Screen-space origin for the movement threshold below.
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      armed: false,
     }
     setSelectedPinId(item.id)
     bringMoodPinToFront?.(item.id)
@@ -308,16 +312,33 @@ export default function ResearchView({
     e.preventDefault()
   }
 
-  const beginPinResize = (e, item, index) => {
+  /* Any corner, not just the bottom-right. Which corner you reach for is
+     decided by where the pin already is and where you want it to end up —
+     forcing every resize through one corner means half of them have to be
+     followed by a move to put the pin back. The corners anchored on the
+     opposite edge (anything with n or w) also shift x/y as the size changes,
+     so the corner you are NOT holding stays put — otherwise "resize" silently
+     becomes "resize and slide", which is the thing that makes a board feel
+     like it is fighting you. */
+  const beginPinResize = (e, item, index, corner) => {
     const g = pinGeometry(item, index)
     const start = toStage(e.clientX, e.clientY)
+    // Height is derived from the image's own ratio, so read it off the DOM
+    // rather than assuming — the 4:3 clamp is gone and pins differ.
+    const el = e.currentTarget.closest('.mood-card')
+    const originH = el ? el.getBoundingClientRect().height / scale : g.w
     dragRef.current = {
       id: item.id,
       mode: 'resize',
+      corner,
       originW: g.w,
+      originH,
+      originX: g.x,
+      originY: g.y,
       startX: start.x,
     }
     setSelectedPinId(item.id)
+    bringMoodPinToFront?.(item.id)
     e.stopPropagation()
     e.preventDefault()
   }
@@ -328,15 +349,39 @@ export default function ResearchView({
       if (!d) return
       const p = toStage(e.clientX, e.clientY)
       if (d.mode === 'move') {
+        /* Don't move until the pointer has actually travelled. Dragging
+           began on the first pixel of pointer-down, so simply clicking a pin
+           to select it — or pressing one to reach its star — shifted it a few
+           px, and a board you cannot touch without disturbing is a board you
+           stop touching. 4px is below deliberate movement and above hand
+           tremor and trackpad noise. */
+        if (!d.armed) {
+          const travelled = Math.hypot(
+            e.clientX - d.startClientX,
+            e.clientY - d.startClientY
+          )
+          if (travelled < 4) return
+          d.armed = true
+        }
         setMoodPinLayout?.(d.id, {
           x: Math.round(d.originX + (p.x - d.startX)),
           y: Math.round(d.originY + (p.y - d.startY)),
         })
       } else {
-        const next = d.originW + (p.x - d.startX)
-        setMoodPinLayout?.(d.id, {
-          w: Math.round(Math.min(PIN_MAX_W, Math.max(PIN_MIN_W, next))),
-        })
+        // West-side corners grow as the pointer moves LEFT.
+        const grows = d.corner === 'nw' || d.corner === 'sw' ? -1 : 1
+        const w = Math.round(
+          Math.min(PIN_MAX_W, Math.max(PIN_MIN_W, d.originW + grows * (p.x - d.startX)))
+        )
+        const patch = { w }
+        // Keep the opposite corner pinned: shift x/y by whatever the size
+        // actually changed by (after clamping, so hitting the min or max
+        // stops the pin dead rather than letting it drift).
+        const dw = w - d.originW
+        const dh = d.originW > 0 ? dw * (d.originH / d.originW) : 0
+        if (d.corner === 'nw' || d.corner === 'sw') patch.x = Math.round(d.originX - dw)
+        if (d.corner === 'nw' || d.corner === 'ne') patch.y = Math.round(d.originY - dh)
+        setMoodPinLayout?.(d.id, patch)
       }
     }
     const onUp = () => {
@@ -619,27 +664,42 @@ export default function ResearchView({
                   >
                     Fit all
                   </button>
+                  {/* Bigger steps and a reset. 1.2x per click meant crossing
+                      a useful zoom range took a dozen presses on two small
+                      ghost buttons, and there was no way back to 1:1 short of
+                      counting clicks — the percentage was a read-only label
+                      sitting between them, which is exactly where you would
+                      expect to click to reset it. */}
                   <div className="mood-canvas-zoom">
                     <button
                       type="button"
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => zoomBy(1 / 1.2)}
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => zoomBy(1 / 1.4)}
                       aria-label="Zoom out"
                     >
                       −
                     </button>
-                    <span className="mood-canvas-zoom-level">
-                      {Math.round(scale * 100)}%
-                    </span>
                     <button
                       type="button"
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => zoomBy(1.2)}
+                      className="btn btn-ghost btn-sm mood-canvas-zoom-level"
+                      onClick={() => zoomTo(1)}
+                      title="Reset to 100%"
+                    >
+                      {Math.round(scale * 100)}%
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => zoomBy(1.4)}
                       aria-label="Zoom in"
                     >
                       +
                     </button>
                   </div>
+                  <p className="mood-canvas-hint">
+                    Drag a pin to move · drag the board to pan · ⌘/Ctrl + scroll
+                    or pinch to zoom
+                  </p>
                   {selectedPinId && (
                     <div className="mood-canvas-layer">
                       <button
@@ -663,6 +723,9 @@ export default function ResearchView({
               <div
                 ref={viewportRef}
                 className={`mood-canvas-viewport${deskMood.length ? ' has-pins' : ''}`}
+                // Pan offset for the dot grid, so the surface moves with the
+                // board and panning is visible even on an empty canvas.
+                style={{ '--canvas-pan-x': `${tx}px`, '--canvas-pan-y': `${ty}px` }}
                 onWheel={onWheel}
                 onPointerDown={(e) => {
                   // Dragging empty canvas pans; clicking it clears selection.
@@ -1007,13 +1070,17 @@ export default function ResearchView({
                         {/* Resize grip. Only on the selected pin, so a board
                             at rest shows none of them — the handle is a tool,
                             not decoration on every card. */}
-                        {selectedPinId === item.id && (
-                          <span
-                            className="mood-card-resize"
-                            role="presentation"
-                            onPointerDown={(e) => beginPinResize(e, item, index)}
-                          />
-                        )}
+                        {selectedPinId === item.id &&
+                          ['nw', 'ne', 'sw', 'se'].map((corner) => (
+                            <span
+                              key={corner}
+                              className={`mood-card-resize is-${corner}`}
+                              role="presentation"
+                              onPointerDown={(e) =>
+                                beginPinResize(e, item, index, corner)
+                              }
+                            />
+                          ))}
                       </article>
                     )
                   })
