@@ -284,6 +284,29 @@ export function isFilled(val) {
   return String(val || '').trim().length > 0
 }
 
+/**
+ * Capped at three. A row of eight equally-loud buttons is another list to
+ * read, which is the scanning cost the "Start with these" block exists to
+ * remove. The count in the heading must match what is rendered.
+ */
+export const START_HERE_CAP = 3
+
+/**
+ * The required fields actually still empty — not a static list of all of
+ * them, which reads as wrong the moment some are filled in.
+ *
+ * Lives here rather than in a component because two surfaces need it: the
+ * sheet opens the first incomplete chapter from it, and the header band
+ * renders the jump buttons from it.
+ */
+export function getRequiredEmpty(detective = {}) {
+  return DETECTIVE_CHAPTERS.flatMap((ch) =>
+    ch.fields
+      .filter((f) => f.required && !isFilled(detective?.[f.id]))
+      .map((f) => ({ id: f.id, label: f.label, chapterId: ch.id }))
+  )
+}
+
 
 export function getDetectiveProgress(detective = {}) {
   const chapters = DETECTIVE_CHAPTERS.map((ch) => {

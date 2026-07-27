@@ -13,6 +13,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import useAppStore from '../store/useAppStore'
 import { normalizeLocale, t as i18nT } from '../lib/i18n'
 import { DETECTIVE_CHAPTERS, getDetectiveProgress } from '../lib/detectiveBrief'
+import DefineStartHere from '../components/DefineStartHere'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 
@@ -163,6 +164,16 @@ export default function DefineView(props) {
           )}
         </div>
 
+        {/* Above the milestone list, not below it: the milestone rows are a
+            quicker, more satisfying task than answering a brief question, and
+            sitting them in front of the only anti-stall control on the page
+            let the cheap task intercept the intended one. Its position is
+            also fixed now — it used to slide down as milestones were added. */}
+        <DefineStartHere
+          detective={activeProject?.detective}
+          onOpenChapter={setOpenChapter}
+        />
+
         <div className="define-milestones-compact">
           <span className="define-field-label">Milestones</span>
           <div className="define-milestones-list">
@@ -254,6 +265,7 @@ export default function DefineView(props) {
               splitMode
               openChapter={openChapter}
               onOpenChapter={setOpenChapter}
+              showStartHere={false}
             />
           </Suspense>
         </div>

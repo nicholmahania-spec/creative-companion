@@ -6,7 +6,9 @@ import { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import {
   DETECTIVE_CHAPTERS,
   getDetectiveProgress,
+  getRequiredEmpty,
   isFilled,
+  START_HERE_CAP,
 } from '../lib/detectiveBrief'
 import useIsMobile from '../lib/useIsMobile'
 import {
@@ -67,6 +69,10 @@ export default function DetectiveSheet({
   splitMode = false,
   openChapter: openChapterProp,
   onOpenChapter,
+  /** DefineView renders "Start with these" itself, up in the header band
+   *  above the milestone list — see components/DefineStartHere. Standalone
+   *  uses of this sheet keep their own copy. */
+  showStartHere = true,
 }) {
   const [openChapterLocal, setOpenChapterLocal] = useState('core')
   const openChapter = openChapterProp ?? openChapterLocal
@@ -79,22 +85,16 @@ export default function DetectiveSheet({
   const progress = useMemo(() => getDetectiveProgress(detective), [detective])
   const chapterStats = progress.chapters
 
-  /** Only the required fields actually still empty — not a static list of
-   * all of them, which reads as wrong once some are filled in. */
-  const requiredEmpty = useMemo(
-    () =>
-      DETECTIVE_CHAPTERS.flatMap((ch) =>
-        ch.fields
-          .filter((f) => f.required && !isFilled(detective?.[f.id]))
-          .map((f) => ({ id: f.id, label: f.label, chapterId: ch.id }))
-      ),
-    [detective]
-  )
+  /** Shared with DefineStartHere — the sheet needs it to decide which
+   * chapter to open on arrival, the header band needs it for the jump
+   * buttons, and two copies of "which required fields are still empty"
+   * would eventually disagree. */
+  const requiredEmpty = useMemo(() => getRequiredEmpty(detective), [detective])
 
-  /** Capped at three: a row of eight equally-loud buttons is another list to
-   * read, which is the scanning cost this block exists to remove. The count
-   * in the heading must match what's rendered. */
-  const startHere = useMemo(() => requiredEmpty.slice(0, 3), [requiredEmpty])
+  const startHere = useMemo(
+    () => requiredEmpty.slice(0, START_HERE_CAP),
+    [requiredEmpty]
+  )
 
   /** Jump straight to one named field. Opening the chapter first matters in
    * accordion mode, where the input is not mounted until it opens. */
@@ -138,31 +138,33 @@ export default function DetectiveSheet({
     <div className={`define-workbook${splitMode ? ' is-split' : ''}`}>
       {/* Named remaining work, front and centre. Four labels to read instead
           of thirty-five, and each one is a jump, not a reminder to go find it. */}
-      <div className={`define-start-here${requiredEmpty.length === 0 ? ' is-done' : ''}`}>
-        {startHere.length > 0 ? (
-          <>
+      {showStartHere && (
+        <div className={`define-start-here${requiredEmpty.length === 0 ? ' is-done' : ''}`}>
+          {startHere.length > 0 ? (
+            <>
+              <p className="define-start-here-title">
+                Start with {startHere.length === 1 ? 'this one' : `these ${startHere.length}`}
+              </p>
+              <div className="define-start-here-list">
+                {startHere.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => jumpToField(f.id, f.chapterId)}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
             <p className="define-start-here-title">
-              Start with {startHere.length === 1 ? 'this one' : `these ${startHere.length}`}
+              Everything needed is answered — the rest is optional detail.
             </p>
-            <div className="define-start-here-list">
-              {startHere.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => jumpToField(f.id, f.chapterId)}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <p className="define-start-here-title">
-            Everything needed is answered — the rest is optional detail.
-          </p>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {!isMobile && (
       <nav className="define-chapter-rail" aria-label="Brief chapters">
