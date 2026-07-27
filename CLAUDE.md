@@ -193,6 +193,34 @@ one sentence (an asymmetry nobody can explain is indistinguishable from a bug),
 and it inherits the container/typography constraints rather than being exempt
 from them.
 
+## Decided: the Research wall stays ONE wall — no lanes, no direction folders
+
+Real brand practice explores 2–3 distinct visual directions before
+committing, so this comes up every time someone reviews the Research page.
+It has been considered and rejected, by the owner directly.
+
+Every mechanism for splitting the wall bills a decision **at capture time** —
+the moment a pin arrives, "which direction is this?" — and that is a question
+you usually cannot answer until the wall is full. It is the wrong moment to
+ask, and there is no client to present routes to, so the taxonomy would be
+pure overhead on the user's own thinking. It also fragments the one thing the
+wall must keep: peripheral vision across everything at once. Split three ways
+and you get three walls too small to compare.
+
+The lighter mechanism already exists — the ★ pack IS a committed direction,
+and the per-pin note is where the reasoning lives. If a second direction is
+ever genuinely wanted, the right shape is at project level (a second project,
+or a duplicated pack), never a new axis inside the wall.
+
+## Client approval attaches to deliverables, not to stages
+
+The Define page is client-facing (they fill it via /f/ and /c/). Research is
+private working space. But "everything after Define is private" is too
+simple: approval gates attach to things you SHOW — three logo concepts, a
+design, a final pack — which land in Design/Review/Deliver. PublicClientPortal
+already carries per-step approve / request-changes with notes; the question
+for those pages is whether they feed it, not whether approval belongs.
+
 ## User feedback on ADHD issues — direct quotes, carried forward as standing lessons
 
 Real things the user has said about their own experience of the app, kept

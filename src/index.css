@@ -7285,9 +7285,13 @@ body.cc-printing-page button {
   pointer-events: auto;
 }
 
-.mood-card.is-pack-pin:not(:hover):not(:focus-within) .mood-pin-note-input {
-  display: none;
-}
+/* No hover gate. The note is the only record of WHY a picture is on the
+   board — the image itself carries none of that — so hiding it until the
+   cursor happens to be on top means the reasoning is gone on every return
+   visit, and gone permanently on touch, where there is no hover at all.
+   The user's own standing note applies literally here: hidden content is
+   invisible, not one click away. It also made `.needs-why` dead styling: a
+   prompt to fill in a field you cannot see. */
 
 /* Pack as presentation surface */
 
@@ -7388,12 +7392,12 @@ body.cc-printing-page button {
   aspect-ratio: 16 / 10;
 }
 
-.mood-card:not(.is-pack-pin) .mood-pin-note-input {
-  display: none;
-}
-
-.mood-card.is-pack-pin .mood-pin-note-input,
-.mood-card:focus-within .mood-pin-note-input {
+/* Always rendered, starred or not. An unstarred pin's caption field was
+   display:none and revealed only by :focus-within — but the field is the
+   thing you would focus, and you cannot focus a display:none element, so the
+   "Caption…" placeholder was unreachable by any means. Captioning an
+   unstarred pin was impossible rather than merely hidden. */
+.mood-card .mood-pin-note-input {
   display: block;
 }
 
@@ -14185,14 +14189,15 @@ select:focus {
 
 /* Focus lock — active pin note dims siblings */
 
-.research-studio .mood-board:has(.mood-pin-note-input:focus) .mood-card:not(:focus-within) {
-  opacity: 0.25;
-  filter: blur(2px);
-  pointer-events: none;
-  transition:
-    opacity 0.15s ease,
-    filter 0.15s ease;
-}
+/* This selector is already in the shared focus-mask group earlier in this
+   file, whose comment records why blur and pointer-events:none were removed:
+   the blur destroys legibility of what you are glancing back at, and the dead
+   pointer-events swallowed the first click on every masked sibling. Both were
+   re-added here, on the one page where they cost the most — a mood board is a
+   comparison surface, so blurring the neighbours while you type why you
+   starred a pin removes the exact thing you are describing. The local
+   opacity: 0.25 also undercut the measured 4.5:1 legibility floor.
+   Deleted entirely; the shared rule governs. */
 
 .research-studio .mood-board:has(.mood-pin-note-input:focus) .mood-card:focus-within {
   opacity: 1;
