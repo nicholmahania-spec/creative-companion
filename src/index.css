@@ -14446,20 +14446,47 @@ select:focus {
   margin-bottom: 0.75rem;
 }
 
+/* Centred in the canvas, not stacked at the top of it. The message sits in
+   normal flow as a sibling of the absolutely-positioned stage, so a
+   min-height alone only ever pinned it to the top edge of a 60vh surface
+   with the rest of the board empty beneath it. Filling the viewport and
+   centring both axes puts it where the eye lands.
+
+   pointer-events: none so it never intercepts the surface it is describing —
+   the canvas underneath stays pannable and droppable straight through the
+   text, which matters now that dropping is the canvas's only way in. There
+   is nothing interactive left inside it to lose. */
 .research-empty {
-  grid-column: 1 / -1;
-  width: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 12rem;
-  padding: 1.5rem;
+  padding: var(--space-6);
+  pointer-events: none;
 }
 
+/* Measure, not a pixel guess. 32rem rendered ~73 characters per line at this
+   font size — the very top of the comfortable range, and centred text should
+   sit well below it: every line starts at a different x, so the eye has to
+   re-find the beginning on each return sweep, and long lines make that miss.
+   `ch` ties the limit to the font, so it holds if the type scale changes.
+   Line-height is opened up for the same reason — centred, unjustified copy
+   needs more air between lines to track. */
 .research-empty .empty-state-subtitle {
-  max-width: 32rem;
+  /* 38ch measures ~52 actual characters: `ch` is the width of "0", which is
+     wider than average lowercase, so the unit overshoots the real count by
+     roughly a third. */
+  max-width: 38ch;
+  line-height: 1.55;
+  text-wrap: balance;
+}
+
+.research-empty .empty-state-title {
+  margin-bottom: var(--space-2);
 }
 
 .research-studio .board-add-compact {
