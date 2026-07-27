@@ -20,8 +20,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'clientName',
         label: 'Client / company name',
-        tip: 'Who this is for.',
-        placeholder: 'Client or company name',
+        tip: 'Trading name is fine — whatever customers call you.',
         area: false,
         required: true,
         gridSpan: 'half',
@@ -29,8 +28,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'primaryContact',
         label: 'Primary contact & role',
-        tip: 'Who signs off.',
-        placeholder: 'Name & role',
+        tip: 'e.g. Sarah Whitton, Owner',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -38,8 +36,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'clientEmail',
         label: 'Client email',
-        tip: 'For tap-to-email from the directory.',
-        placeholder: 'Email address',
+        tip: 'Best address for project updates.',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -47,8 +44,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'clientPhone',
         label: 'Client phone',
-        tip: 'For tap-to-call from the directory.',
-        placeholder: 'Phone number',
+        tip: 'Optional — only if something needs a quick answer.',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -56,8 +52,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'budgetRange',
         label: 'Budget range',
-        tip: 'Ballpark is fine.',
-        placeholder: 'Budget range',
+        tip: 'A range is fine. Say “not sure” if you’d rather talk it through.',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -73,8 +68,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'goal',
         label: 'Goal',
-        tip: 'One outcome that matters — the problem this solves.',
-        placeholder: 'One clear goal',
+        tip: 'e.g. “People keep mistaking us for a much smaller company.”',
         area: true,
         required: true,
         gridSpan: 'full',
@@ -82,8 +76,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'story',
         label: 'The story',
-        tip: 'How it started, why it exists.',
-        placeholder: 'Origin & mission',
+        tip: 'Even a couple of lines — who started it, and why.',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -91,8 +84,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'usp',
         label: 'What the company does',
-        tip: 'The kind of business it is, and the services or products it offers.',
-        placeholder: 'The kind of business it is, and the services or products it offers.',
+        tip: 'e.g. “Small-batch coffee roastery — we sell online and wholesale to cafés.”',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -100,8 +92,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'brandWords',
         label: 'Core values',
-        tip: 'The values the brand is built on.',
-        placeholder: 'The values the brand is built on.',
+        tip: 'e.g. honesty over polish, no hard sell, everything made locally.',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -117,8 +108,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'audience',
         label: 'Who is your target audience',
-        tip: 'Not "everyone" — age, lifestyle, interests.',
-        placeholder: 'Not "everyone" — age, lifestyle, interests.',
+        tip: 'e.g. new parents, 25–40, buying gifts they can’t find on the high street.',
         area: false,
         required: true,
         gridSpan: 'half',
@@ -126,8 +116,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'feel',
         label: 'How it should feel',
-        tip: 'How they should feel using this.',
-        placeholder: 'Feeling',
+        tip: 'e.g. reassured, curious, like they’ve found something before everyone else.',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -135,8 +124,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'audiencePains',
         label: 'Their biggest frustration or desire',
-        tip: '',
-        placeholder: 'Pains / desires',
+        tip: 'The thing they complain about, or wish existed.',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -144,8 +132,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'competitors',
         label: 'Competitors',
-        tip: '2–3 direct competitors — what you like/dislike about their branding.',
-        placeholder: 'Competitors',
+        tip: 'Two or three names, and what you think of how they look.',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -161,8 +148,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'toneOfVoice',
         label: 'Three words that describe the brand',
-        tip: 'Three words a customer would use for this business.',
-        placeholder: 'Three words a customer would use for this business.',
+        tip: 'e.g. “quick, honest, no nonsense”',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -170,8 +156,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'brandAsPerson',
         label: 'The brand as a person',
-        tip: 'Describe the brand as if it were a person you know.',
-        placeholder: 'Describe the brand as if it were a person you know.',
+        tip: 'e.g. the friend who always knows a good restaurant — warm, a bit blunt, never showy.',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -179,8 +164,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'inspirationLinks',
         label: 'The look and feel you want',
-        tip: 'Share images, links or anything that shows the style you are drawn to.',
-        placeholder: 'Share images, links or anything that shows the style you are drawn to.',
+        tip: 'Paste any links, or just describe it — other brands, packaging, a colour you keep coming back to.',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -188,8 +172,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'avoid',
         label: 'What to avoid',
-        tip: 'Words, colours, styles or anything else this brand should stay away from.',
-        placeholder: 'Words, colours, styles or anything else this brand should stay away from.',
+        tip: 'e.g. “nothing pastel”, “no stock photos of people in headsets”.',
         area: true,
         required: false,
         gridSpan: 'full',
@@ -205,8 +188,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'deliverables',
         label: 'What we deliver',
-        tip: 'Must-have deliverables — logo, cards, social kit, packaging…',
-        placeholder: 'Final files',
+        tip: 'Logo, business cards, social graphics, packaging — list whatever you know you need.',
         area: true,
         required: true,
         gridSpan: 'half',
@@ -214,8 +196,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'technical',
         label: 'File formats',
-        tip: 'File formats — vector .AI/.EPS, raster .PNG/.JPG, guidelines PDF.',
-        placeholder: 'Specs',
+        tip: 'Leave blank if you’re not sure — standard print and web formats are included either way.',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -223,8 +204,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'existingAssets',
         label: 'Existing assets',
-        tip: 'Any current logo, colours, fonts or photography — if so, please upload them.',
-        placeholder: 'Any current logo, colours, fonts or photography — if so, please upload them.',
+        tip: 'An old logo, brand colours, fonts, photos — anything you’ve got, even if you don’t like it.',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -232,8 +212,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'decisionMakers',
         label: 'Anyone else to include',
-        tip: 'Anyone who should see and review the work — they get the client link too. Leave blank if it is just you.',
-        placeholder: 'Anyone who should see and review the work — they get the client link too. Leave blank if it is just you.',
+        tip: 'Names and emails — they’ll get the same link. Leave blank if it’s just you.',
         area: false,
         required: false,
         gridSpan: 'half',
