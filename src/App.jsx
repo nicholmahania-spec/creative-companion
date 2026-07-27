@@ -1060,6 +1060,95 @@ function App() {
     )
   }
 
+  /* ── Idle handling ───────────────────────────────────────────────────────
+     The timer counts time at the desk, not time working, so walking away
+     bills you for the walk. Worse for the record than for the countdown:
+     these sessions are meant to become a log of what was actually worked on,
+     and a lunch break silently logged as Research makes the whole log
+     untrustworthy.
+
+     Idle can only be detected AFTER the fact — you cannot know someone
+     stopped until they have been stopped a while. So by the time this fires,
+     the timer has already counted the full idle window. Pausing alone would
+     keep that mistake; the window is handed back on resume, which is what
+     makes the recorded time honest rather than merely stopped. */
+  const IDLE_MS = 10 * 60 * 1000
+  const lastActivityRef = useRef(Date.now())
+  const idlePausedRef = useRef(false)
+  /** When the current stretch of actual work began. Reset on every pause and
+   *  resume, so what gets logged is worked time, never wall-clock time. */
+  const workSegmentStartRef = useRef(null)
+
+  const logWorkedTime = useAppStore((s) => s.logWorkedTime)
+
+  /** Bank the stretch that just ended. Called on idle, on stopping, and on
+   *  leaving — anywhere the clock stops for any reason. */
+  const bankWorkSegment = useCallback(
+    (endedAt = Date.now()) => {
+      const started = workSegmentStartRef.current
+      workSegmentStartRef.current = null
+      if (!started) return
+      logWorkedTime?.(activeProjectId, timerFocusSource || activeView, endedAt - started)
+    },
+    [logWorkedTime, activeProjectId, timerFocusSource, activeView]
+  )
+
+  useEffect(() => {
+    if (isFocusRunning && !forcedBreak) {
+      if (!workSegmentStartRef.current) workSegmentStartRef.current = Date.now()
+    } else {
+      bankWorkSegment()
+    }
+  }, [isFocusRunning, forcedBreak, bankWorkSegment])
+
+  useEffect(() => {
+    const mark = () => {
+      lastActivityRef.current = Date.now()
+      if (idlePausedRef.current) {
+        idlePausedRef.current = false
+        /* Hand back the window that was counted while nobody was here. Idle
+           is only detectable after the fact — you cannot know someone stopped
+           until they have been stopped a while — so by the time the check
+           fires, the clock has already run through the whole window. Pausing
+           alone would keep that mistake on the books. */
+        setFocusLeft((left) => Math.min(POMODORO_WORK_MIN * 60, left + IDLE_MS / 1000))
+        setIsFocusRunning(true)
+        flashToast?.('Back — the last 10 minutes weren’t counted')
+      }
+    }
+    const events = ['pointerdown', 'keydown', 'wheel', 'touchstart']
+    events.forEach((n) => window.addEventListener(n, mark, { passive: true }))
+    return () => events.forEach((n) => window.removeEventListener(n, mark))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (!isFocusRunning || forcedBreak) return undefined
+    const id = window.setInterval(() => {
+      if (Date.now() - lastActivityRef.current < IDLE_MS) return
+      idlePausedRef.current = true
+      // Bank only up to when activity actually stopped, not to now — the idle
+      // window itself is never logged as work.
+      bankWorkSegment(lastActivityRef.current)
+      setIsFocusRunning(false)
+    }, 15000)
+    return () => window.clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocusRunning, forcedBreak, bankWorkSegment])
+
+  /* Closing the tab mid-session would otherwise lose the stretch entirely. */
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') bankWorkSegment()
+    }
+    window.addEventListener('visibilitychange', onHide)
+    window.addEventListener('pagehide', onHide)
+    return () => {
+      window.removeEventListener('visibilitychange', onHide)
+      window.removeEventListener('pagehide', onHide)
+    }
+  }, [bankWorkSegment])
+
   // Focus countdown — when a Pomodoro ends, force a break
   useEffect(() => {
     if (!isFocusRunning || forcedBreak) return undefined

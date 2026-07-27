@@ -375,6 +375,16 @@ longer navigates away, so a stage visit is already a timed session with a
 there before building any reporting on top, or the data will have a hole in it
 shaped like every page except Research.
 
+**Pomodoro is Helper's, not the timer's.** Requested 2026-07-27: the
+Pomodoro should be linked to the Helper bot. The split that makes sense from
+what now exists: the RUNNING timer measures and records work (done — it
+auto-starts, excludes idle, and writes to project.timeLog), while the
+POMODORO — the 25-minute limit and the forced break at zero — becomes
+Helper's job. Helper is the thing with a voice, so it is the right place for
+"you have been at this a while", and it already has a break-kit surface in
+BuddyMate to hand people into. That also stops the same clock doing two
+unrelated jobs: one silently keeping a record, the other interrupting you.
+
 **Design constraints, from CLAUDE.md and this session:**
 - The report must not be built out of raw clock numbers as its primary
   reading. The owner has stated plainly that they have no concept of time and

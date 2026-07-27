@@ -826,6 +826,58 @@ const useAppStore = create(
           }),
         })),
 
+      /**
+       * Record time actually worked, from the running timer.
+       *
+       * The timer computed `workedMin` only to size a forced break and then
+       * discarded it, so nothing in the app had ever recorded how long
+       * anything took — while `timeLog` sat here already driving the hours
+       * invoice, waiting to be written to by hand.
+       *
+       * Accumulates into ONE entry per stage per day rather than appending a
+       * row every time you pause. A day of real work is dozens of
+       * start/stops, and a log with sixty four-minute rows is not a record of
+       * a day, it is a transcript of your attention.
+       *
+       * @param {number} ms - milliseconds worked, idle already excluded
+       */
+      logWorkedTime: (projectId, stage, ms) =>
+        set((state) => {
+          const minutes = Math.round((Number(ms) || 0) / 60000)
+          // Under a minute is noise from a page you passed through.
+          if (minutes < 1) return {}
+          const target = projectId ?? state.currentProjectId
+          const date = new Date().toISOString().slice(0, 10)
+          const label = String(stage || 'work')
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== target) return p
+              const log = [...(p.timeLog || [])]
+              const i = log.findIndex(
+                (e) => e.date === date && e.stage === label && e.auto
+              )
+              if (i >= 0) {
+                log[i] = {
+                  ...log[i],
+                  hours: Math.round((log[i].hours + minutes / 60) * 100) / 100,
+                }
+              } else {
+                log.push({
+                  id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                  date,
+                  stage: label,
+                  hours: Math.round((minutes / 60) * 100) / 100,
+                  note: label,
+                  /* Marks it as measured rather than typed, so a hand-entered
+                     row is never silently added to. */
+                  auto: true,
+                })
+              }
+              return { ...p, timeLog: log }
+            }),
+          }
+        }),
+
       /** Client discovery brief — merged project-brief + questionnaire */
       updateDiscoveryField: (fieldId, value) =>
         set((state) => ({
