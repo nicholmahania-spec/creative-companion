@@ -7370,6 +7370,40 @@ body.cc-printing-page button {
   touch-action: none;
 }
 
+/* Link preview footer on a pinned URL. Quiet — it identifies the reference,
+   it does not compete with the image above it. */
+.mood-pin-link {
+  padding: var(--space-2) var(--space-3) 0;
+}
+
+.mood-pin-link-desc {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  /* Two lines is enough to tell one reference from another; the full text is
+     a click away on the link itself. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mood-pin-link-host {
+  display: inline-block;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  text-decoration: none;
+  /* 44px row so the link is a real target on touch, without inflating the
+     visible text. */
+  padding: var(--space-2) 0;
+}
+
+.mood-pin-link-host:hover,
+.mood-pin-link-host:focus-visible {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
 .mood-canvas-bar {
   display: flex;
   align-items: center;

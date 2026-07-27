@@ -302,3 +302,39 @@ listener + popover), mounted globally in `App.jsx`.
 3. Address MEDIUM items in order (DefineView controlled select, cloudSync timer, App.jsx a11y)
 4. After all fixes: run `npm run bump` to increment the version
 
+
+---
+
+## PARKED — Helper bot doing side tasks (2026-07-27)
+
+Scope agreed, deliberately deferred. Recorded so it does not need re-deriving.
+
+**What was decided:** Helper should take on side tasks on demand — you ask,
+it works, you get a result in a few seconds. Not background/queued. All three
+task classes are wanted eventually:
+- **Writing drafts** — client emails, brief summary, "why ★" notes for
+  starred pins, a direction statement from the research board, palette names.
+- **Tidying** — dedupe near-identical pins, sort/stage-tag the running to-do,
+  propose which 6 pins to star and why.
+- **Fetching/enriching** — proper link previews, palette extraction and
+  naming from pinned images, tracing an image's source.
+
+**Hard constraint:** Helper must never write to the brief, board or palette
+directly. Every result is a draft the user accepts or bins. CLAUDE.md treats
+silent state changes as a failure mode, and a bot quietly editing the project
+is the purest form of one.
+
+**Two blockers, in order:**
+
+1. **Helper is not currently an AI.** No `VITE_XAI_API_KEY` is set, and
+   `helperAi.js` falls back to the scripted replies in `buddy.js` whenever
+   the key is missing. Every Helper response today comes from a lookup table.
+2. **The key cannot simply be added.** Vite inlines `VITE_*` values into the
+   bundle at build time, so a real key would ship to every visitor's browser
+   and be trivially extractable. `helperAi.js` says as much in its own header.
+   A `helper-chat` Supabase edge function holding the key server-side is the
+   precondition — same shape as the existing `link-preview` function.
+
+**Existing queue to build on:** the running to-do already stores items tagged
+by stage (`runningTodoStages.js`), so Helper does not need a new task system —
+only the ability to pick up an item and return something.

@@ -211,11 +211,23 @@ export default function ResearchView({
         addPinAndReset(asDirectImagePin())
         return
       }
-      const note = [data.title, data.host].filter(Boolean).join(' · ')
+      /* Keep the preview fields as fields. They used to be squashed into one
+         caption string — `title · host` — and `description` was fetched and
+         thrown away entirely, so a link pin rendered as a bare image or a
+         flat colour chip with no indication of where it came from. Storing
+         them lets the card show what the link actually is, which is the
+         whole reason for fetching a preview. */
+      const previewPin = {
+        note: data.title || data.host || '',
+        link: data.url || url,
+        linkHost: data.host || '',
+        linkTitle: data.title || '',
+        linkDescription: data.description || '',
+      }
       addPinAndReset(
         data.image
-          ? { type: 'image', note, visual: data.image, link: data.url || url }
-          : { type: 'quote', note, visual: '#44403C', link: data.url || url }
+          ? { ...previewPin, type: 'image', visual: data.image }
+          : { ...previewPin, type: 'quote', visual: '#44403C' }
       )
     } catch {
       addPinAndReset(asDirectImagePin())
@@ -243,6 +255,17 @@ export default function ResearchView({
 
   const starred = deskMood.filter((m) => m.inPack).length
   const words = String(brandWords || '').trim()
+
+  /* Only offer "Take photo" where a camera actually exists. `capture` is
+     ignored by desktop browsers, which would silently turn the button into a
+     second file picker — a control that lies about what it does is worse than
+     no control. Feature-detect rather than sniff the user agent. */
+  const canCapturePhoto = useMemo(() => {
+    if (typeof document === 'undefined' || typeof navigator === 'undefined') return false
+    const supportsCapture = 'capture' in document.createElement('input')
+    const hasTouch = navigator.maxTouchPoints > 0
+    return supportsCapture && hasTouch
+  }, [])
 
   /* ── Canvas ─────────────────────────────────────────────────────────────
      The board is a free canvas rather than a grid. Pins that have never been
@@ -644,8 +667,30 @@ export default function ResearchView({
                             style={face}
                           >
                             <p className="mood-pin-caption">
-                              {item.note || 'Note'}
+                              {item.linkTitle || item.note || 'Note'}
                             </p>
+                          </div>
+                        )}
+                        {/* A pinned link should say what it is. Without this a
+                            reference from the web was an unlabelled image or a
+                            grey rectangle, and you could not tell a competitor's
+                            site from a stock photo without opening it. */}
+                        {item.link && (
+                          <div className="mood-pin-link">
+                            {item.linkDescription && (
+                              <p className="mood-pin-link-desc">
+                                {item.linkDescription}
+                              </p>
+                            )}
+                            <a
+                              className="mood-pin-link-host"
+                              href={item.link}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              onPointerDown={(e) => e.stopPropagation()}
+                            >
+                              {item.linkHost || 'Open link'} ↗
+                            </a>
                           </div>
                         )}
                         <div className="mood-pin-tools">
@@ -795,6 +840,28 @@ export default function ResearchView({
                       type="file"
                       accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
                       multiple
+                      className="sr-only"
+                      onChange={(e) => {
+                        uploadMoodFiles(e.target.files)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                )}
+                {/* Separate control, not a second option inside the picker.
+                    `capture` asks the OS for the camera directly, so on a
+                    phone this is one tap to a viewfinder instead of tapping
+                    Upload and then hunting for "Take Photo" in a sheet —
+                    which is the whole point when the reference you want is
+                    the thing in front of you. Hidden where there is no
+                    camera, so it is never a dead control. */}
+                {canCapturePhoto && (
+                  <label className="btn btn-secondary board-upload-btn">
+                    Take photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
                       className="sr-only"
                       onChange={(e) => {
                         uploadMoodFiles(e.target.files)
