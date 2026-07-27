@@ -230,6 +230,12 @@ a:active {
   --border-subtle: rgba(161, 161, 161, 0.16);
   --border-strong: rgba(161, 161, 161, 0.26);
   --border-accent: rgba(161, 161, 161, 0.45);
+  /* Was never redefined here, so all seven usages inherited the light
+     #E7E7E7 into dark mode — on the Define page that painted the Recent
+     tasks dividers as near-white rules on a #151515 canvas, the brightest
+     repeated marks in the header band, separating its least important
+     content. */
+  --border-hairline: rgba(161, 161, 161, 0.16);
   --highlight-inset: none;
   --danger: #F87171;
   --accent-danger: var(--danger);
@@ -10430,6 +10436,19 @@ body:has(.app.deep)::after {
   text-align: right;
 }
 
+/* A five-point scale is a wide control. In the two-column field grid its
+   half-column is ~271px, and once the poles take their shared track the five
+   steps get 14px each — under the 24px target-size minimum, and narrow
+   enough that the nowrap poles push the row into horizontal overflow. Give
+   the scales the whole row until the columns are actually wide enough to
+   hold them; above this they pair back up into the 2x2 block, which is
+   worth keeping. */
+@media (max-width: 1199px) {
+  .define-field[data-span='half']:has(.brief-spectrum) {
+    grid-column: 1 / -1;
+  }
+}
+
 /* The chosen point, in words. Quiet — it confirms, it does not compete with
    the question above it. */
 .brief-spectrum-answer {
@@ -10440,6 +10459,34 @@ body:has(.app.deep)::after {
 
 .brief-spectrum-clear-hint {
   color: var(--text-muted);
+}
+
+/* Standing assurance, not an event. Quiet, fixed, always true. */
+.define-autosave-note {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+/* Mobile-only per-chapter remaining count — the rail's job when there is
+   no rail. Pushed to the row's end so all five align. */
+.define-chapter-head-need {
+  margin-left: auto;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Success deserves more than the page's quietest grey. */
+.public-fill-done-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-4);
+  font-weight: 700;
+}
+
+.public-fill-submit-note {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-2);
+  color: var(--text-secondary);
 }
 
 .brief-spectrum-step {
@@ -10480,10 +10527,13 @@ body:has(.app.deep)::after {
   background: var(--text-primary);
 }
 
-.brief-spectrum-step input[type='radio']:focus-visible {
-  outline: 2px solid var(--text-primary);
-  outline-offset: 2px;
-}
+/* No local focus ring. This was the only focus indicator on the page not
+   using --dopamine, and worse, it drew the ring in --text-primary — the same
+   ink the checked dot is filled with. Arrow-keying a radio group checks as
+   it moves, so a focused-and-checked dot became a dark dot inside a
+   concentric dark ring: focus and selection rendered identically on the one
+   control where they always change together. The global :focus-visible rule
+   handles this correctly. */
 
 /* The tick sits beside the group rather than in a label row, since a
    spectrum has no single label line to hang it on. */
@@ -10824,7 +10874,12 @@ body:has(.app.deep)::after {
 /* A tick, not a badge. It was a bordered, filled, rounded box around a single
    check character. */
 .define-chapter-done-chip {
-  margin-left: auto;
+  /* Beside the title, not pushed to the far edge. This is the same
+     margin-left:auto that was removed from .define-field-check for the same
+     reason: up to five ticks stacking on the content column's right edge,
+     marking finished work, tens of centimetres from the titles they refer
+     to. Half of that fix had been applied; this is the other half. */
+  margin-left: 0;
   padding: 0;
   border: none;
   background: none;
@@ -12948,6 +13003,14 @@ select:focus {
    opacity transitions per pass down to 4 that land on meaningful
    boundaries. It marks a place, not a cursor — which is what recovering
    from an interruption actually needs. */
+/* Below 768px the four non-current chapters render as collapsed headers, so
+   dimming the chapter dims the entire accordion navigation — the only way to
+   move between chapters at that width, since the rail is not rendered. Keep
+   the toggles at full strength; the mask still recedes the content. */
+.define-chapters:focus-within .define-chapter:not(:focus-within) .define-chapter-toggle {
+  opacity: 1 !important;
+}
+
 .define-chapters:focus-within .define-chapter:not(:focus-within),
 .ideate-directions:focus-within .ideate-dir-card:not(:focus-within),
 .research-studio .mood-board:has(.mood-pin-note-input:focus) .mood-card:not(:focus-within),

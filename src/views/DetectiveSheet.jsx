@@ -2,15 +2,15 @@
  * Define — Design Detective Sheet as chaptered studio workspace.
  * Three focus cards · micro-icons · hyper-focus fields · clean inputs.
  */
-import { useMemo, useState, useCallback, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import {
   DETECTIVE_CHAPTERS,
   getDetectiveProgress,
   getRequiredEmpty,
   isFilled,
-  START_HERE_CAP,
 } from '../lib/detectiveBrief'
 import useIsMobile from '../lib/useIsMobile'
+import DefineStartHere from '../components/DefineStartHere'
 import BriefSpectrum from '../components/BriefSpectrum'
 import {
   trackDetectiveFieldUpdate,
@@ -92,35 +92,6 @@ export default function DetectiveSheet({
    * would eventually disagree. */
   const requiredEmpty = useMemo(() => getRequiredEmpty(detective), [detective])
 
-  const startHere = useMemo(
-    () => requiredEmpty.slice(0, START_HERE_CAP),
-    [requiredEmpty]
-  )
-
-  /** Jump straight to one named field. Opening the chapter first matters in
-   * accordion mode, where the input is not mounted until it opens. */
-  const jumpToField = useCallback(
-    (fieldId, chapterId) => {
-      if (chapterId) {
-        setOpenChapter(chapterId)
-        trackChapterNavigation(chapterId, 'open')
-      }
-      requestAnimationFrame(() => {
-        const el =
-          document.getElementById(`detective-${fieldId}`) ||
-          // Checklist fields have no single input to focus — land on the
-          // first checkbox so the jump still puts the cursor on the work.
-          document
-            .getElementById(`detective-field-${fieldId}`)
-            ?.querySelector('input[type="checkbox"]')
-        if (!el) return
-        el.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
-        el.focus()
-      })
-    },
-    [setOpenChapter]
-  )
-
   /** On arrival, open the chapter that still needs answers — but never
    * scroll or steal focus. The page moving on its own before the user has
    * read anything forces re-orientation as the first act, re-fired on every
@@ -148,34 +119,14 @@ export default function DetectiveSheet({
 
   return (
     <div className={`define-workbook${splitMode ? ' is-split' : ''}`}>
-      {/* Named remaining work, front and centre. Four labels to read instead
-          of thirty-five, and each one is a jump, not a reminder to go find it. */}
+      {/* One implementation, shared with DefineView. This used to be a second
+          inlined copy of the block plus its own jumpToField — dead in the
+          only live call path, since DefineView passes showStartHere={false}
+          and renders the component itself. Two copies of the page's only
+          anti-stall control, one of them unreachable, is exactly how a
+          regression lands somewhere nobody looks. */}
       {showStartHere && (
-        <div className={`define-start-here${requiredEmpty.length === 0 ? ' is-done' : ''}`}>
-          {startHere.length > 0 ? (
-            <>
-              <p className="define-start-here-title">
-                Start with {startHere.length === 1 ? 'this one' : `these ${startHere.length}`}
-              </p>
-              <div className="define-start-here-list">
-                {startHere.map((f) => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => jumpToField(f.id, f.chapterId)}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className="define-start-here-title">
-              Everything needed is answered — the rest is optional detail.
-            </p>
-          )}
-        </div>
+        <DefineStartHere detective={detective} onOpenChapter={setOpenChapter} />
       )}
 
       {!isMobile && (
@@ -206,8 +157,14 @@ export default function DetectiveSheet({
                 aria-current={active ? 'step' : undefined}
                 aria-controls={`define-chapter-content-${ch.id}`}
               >
+                {/* The tick fires when the chapter's REQUIRED work is done,
+                    not when every optional field is filled. `complete` counts
+                    all fields, so chapter 04 — eight fields, none required —
+                    could never earn it, and adding the four spectrums pushed
+                    the mark further away for work the user had already
+                    finished. Reward what the page actually gates on. */}
                 <span className="define-chapter-tab-num" aria-hidden="true">
-                  {st.complete ? '✓' : ch.num}
+                  {st.requiredDone ? '✓' : ch.num}
                 </span>
                 <span className="define-chapter-tab-label">{ch.railLabel || ch.title}</span>
                 {/* Just the floor, no ratio. "0/5" is a number to decode
@@ -263,9 +220,18 @@ export default function DetectiveSheet({
                 >
                   <span className="define-chapter-badge">{ch.num}</span>
                   <h2 className="define-chapter-title">{ch.title}</h2>
-                  {st?.complete && (
+                  {st?.requiredDone && (
                     <span className="define-chapter-done-chip" aria-label="Complete">
                       ✓
+                    </span>
+                  )}
+                  {/* The rail is not rendered below 768px, so without this the
+                      phone has no per-chapter "how much is left" at all — and
+                      scrolling back to check costs more there, not less.
+                      Reuses the string the rail already computes. */}
+                  {st?.requiredRemaining > 0 && (
+                    <span className="define-chapter-head-need">
+                      {st.requiredRemaining} needed
                     </span>
                   )}
                   <span className="define-chapter-caret" aria-hidden="true">
@@ -307,22 +273,21 @@ export default function DetectiveSheet({
                           control. The tick still rides along beside it. */}
                       {f.type === 'spectrum' ? (
                         <div className="define-field-control">
-                          <div className="define-spectrum-row">
-                            <BriefSpectrum
-                              field={f}
-                              value={detective?.[f.id] || ''}
-                              onChange={(v) => {
-                                updateDetective?.(f.id, v)
-                                trackDetectiveFieldUpdate(f.id, v, ch.id)
-                              }}
-                              idPrefix="detective"
-                            />
-                            {filled && (
-                              <span className="define-field-check" aria-hidden="true">
-                                ✓
-                              </span>
-                            )}
-                          </div>
+                          {/* No tick here. A spectrum already says it is
+                              answered twice — the filled dot and the worded
+                              answer line beneath it — and the tick could only
+                              sit past the whole scale at the cell's right
+                              edge, which is the far-edge placement removed
+                              from .define-field-check for the same reason. */}
+                          <BriefSpectrum
+                            field={f}
+                            value={detective?.[f.id] || ''}
+                            onChange={(v) => {
+                              updateDetective?.(f.id, v)
+                              trackDetectiveFieldUpdate(f.id, v, ch.id)
+                            }}
+                            idPrefix="detective"
+                          />
                         </div>
                       ) : (
                       <>

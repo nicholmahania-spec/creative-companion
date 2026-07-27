@@ -41,7 +41,12 @@ export async function createClientPortal({ projectLocalId, clientName, detective
     .select('id')
     .single()
 
-  if (error) return { ok: false, error: error.message || 'Couldn’t create the portal' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t create the portal', error)
+    return { ok: false, error: 'Couldn’t create the portal' }
+  }
   return { ok: true, portalId: data.id }
 }
 
@@ -54,7 +59,12 @@ export async function setPortalStepVisibility(portalId, stepVisibility) {
     .from('client_portals')
     .update({ step_visibility: stepVisibility, updated_at: new Date().toISOString() })
     .eq('id', portalId)
-  if (error) return { ok: false, error: error.message || 'Couldn’t update the portal' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t update the portal', error)
+    return { ok: false, error: 'Couldn’t update the portal' }
+  }
   return { ok: true }
 }
 
@@ -71,7 +81,12 @@ export async function setPortalDetectiveAnswers(portalId, detectiveAnswers) {
       updated_at: new Date().toISOString(),
     })
     .eq('id', portalId)
-  if (error) return { ok: false, error: error.message || 'Couldn’t send the form' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t send the form', error)
+    return { ok: false, error: 'Couldn’t send the form' }
+  }
   return { ok: true }
 }
 
@@ -85,7 +100,12 @@ export async function fetchPortalStudioView(portalId) {
     .select('*')
     .eq('id', portalId)
     .single()
-  if (error) return { ok: false, error: error.message || 'Couldn’t load the portal' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t load the portal', error)
+    return { ok: false, error: 'Couldn’t load the portal' }
+  }
   return { ok: true, portal: data }
 }
 
@@ -97,7 +117,12 @@ export async function postStudioMessage(portalId, body) {
   const { error } = await supabase
     .from('client_portal_messages')
     .insert({ portal_id: portalId, sender: 'studio', body })
-  if (error) return { ok: false, error: error.message || 'Couldn’t send the message' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t send the message', error)
+    return { ok: false, error: 'Couldn’t send the message' }
+  }
   return { ok: true }
 }
 
@@ -111,7 +136,12 @@ export async function fetchStudioMessages(portalId) {
     .select('*')
     .eq('portal_id', portalId)
     .order('created_at', { ascending: true })
-  if (error) return { ok: false, error: error.message || 'Couldn’t load messages' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t load messages', error)
+    return { ok: false, error: 'Couldn’t load messages' }
+  }
   return { ok: true, messages: data || [] }
 }
 
@@ -139,7 +169,12 @@ export async function fetchOwnerPortals() {
     .select('*')
     .eq('owner_id', ownerId)
     .order('updated_at', { ascending: false })
-  if (error) return { ok: false, error: error.message || 'Couldn’t load your client links' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t load your client links', error)
+    return { ok: false, error: 'Couldn’t load your client links' }
+  }
   return { ok: true, portals: data || [] }
 }
 
@@ -158,7 +193,12 @@ export async function fetchMessagesForPortals(portalIds) {
     .select('*')
     .in('portal_id', ids)
     .order('created_at', { ascending: true })
-  if (error) return { ok: false, error: error.message || 'Couldn’t load messages' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t load messages', error)
+    return { ok: false, error: 'Couldn’t load messages' }
+  }
   return { ok: true, messages: data || [] }
 }
 
@@ -170,7 +210,12 @@ export async function fetchClientPortal(portalId) {
     return { ok: false, error: 'Cloud sync isn’t configured' }
   }
   const { data, error } = await supabase.rpc('get_client_portal', { portal_id: portalId })
-  if (error) return { ok: false, error: error.message || 'Couldn’t load the portal' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t load the portal', error)
+    return { ok: false, error: 'Couldn’t load the portal' }
+  }
   const row = Array.isArray(data) ? data[0] : data
   if (!row) return { ok: false, error: 'This link isn’t valid' }
   return {
@@ -192,7 +237,12 @@ export async function fetchClientPortalMessages(portalId) {
   const { data, error } = await supabase.rpc('get_client_portal_messages', {
     portal_id_in: portalId,
   })
-  if (error) return { ok: false, error: error.message || 'Couldn’t load messages' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t load messages', error)
+    return { ok: false, error: 'Couldn’t load messages' }
+  }
   return { ok: true, messages: data || [] }
 }
 
@@ -205,7 +255,12 @@ export async function postClientPortalMessage(portalId, body) {
     portal_id_in: portalId,
     body_in: body,
   })
-  if (error) return { ok: false, error: error.message || 'Couldn’t send the message' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t send the message', error)
+    return { ok: false, error: 'Couldn’t send the message' }
+  }
   if (!data) return { ok: false, error: 'This link isn’t valid' }
   return { ok: true }
 }
@@ -221,7 +276,12 @@ export async function respondToPortalStep(portalId, stepId, status, note = '') {
     status_in: status,
     note_in: note,
   })
-  if (error) return { ok: false, error: error.message || 'Couldn’t save your response' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t save your response', error)
+    return { ok: false, error: 'Couldn’t save your response' }
+  }
   if (!data) return { ok: false, error: 'This link isn’t valid' }
   return { ok: true }
 }
@@ -235,7 +295,12 @@ export async function submitClientPortalForm(portalId, answers) {
     portal_id_in: portalId,
     submitted: answers || {},
   })
-  if (error) return { ok: false, error: error.message || 'Couldn’t submit the form' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t submit the form', error)
+    return { ok: false, error: 'Couldn’t submit the form' }
+  }
   if (!data) return { ok: false, error: 'This form was already submitted' }
   return { ok: true }
 }

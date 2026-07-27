@@ -17,8 +17,6 @@ import DefineStartHere from '../components/DefineStartHere'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 
-/** How long a removed milestone stays undoable before the delete actually commits. */
-const MILESTONE_UNDO_MS = 8000
 
 export default function DefineView(props) {
   const {
@@ -68,23 +66,26 @@ export default function DefineView(props) {
 
   const scheduleRemoveMilestone = useCallback(
     (id) => {
-      const timeoutId = setTimeout(() => {
-        removeMilestone?.(id)
-        setPendingRemovals((prev) => {
-          const next = { ...prev }
-          delete next[id]
-          return next
-        })
-      }, MILESTONE_UNDO_MS)
-      setPendingRemovals((prev) => ({ ...prev, [id]: timeoutId }))
+      // Capture the project at schedule time. This view stays mounted across
+      // project switches, so without it a delete queued on project A fired
+      // against whatever was current 8 seconds later and quietly did nothing.
+      const ownerProjectId = projectId
+      // No countdown. The undo row simply stays until the view unmounts,
+      // where the cleanup below commits it. An 8-second silent timer is the
+      // most time-blindness-hostile control shape there is: look away, answer
+      // a question, glance back, and the row is gone with no trace of whether
+      // you deleted it or imagined it. Removing the deadline is also less
+      // code than visualising one, and a countdown ring would render exactly
+      // the number that does not register for this user.
+      setPendingRemovals((prev) => ({ ...prev, [id]: { timeoutId: null, ownerProjectId } }))
     },
-    [removeMilestone]
+    [removeMilestone, projectId]
   )
 
   const undoRemoveMilestone = useCallback((id) => {
     setPendingRemovals((prev) => {
-      const timeoutId = prev[id]
-      if (timeoutId) clearTimeout(timeoutId)
+      const entry = prev[id]
+      if (entry?.timeoutId) clearTimeout(entry.timeoutId)
       const next = { ...prev }
       delete next[id]
       return next
@@ -93,11 +94,12 @@ export default function DefineView(props) {
 
   // If this view unmounts with removals still pending, commit them now
   // instead of leaking the timers (and instead of silently un-deleting).
+  // Each commits against the project it was scheduled on.
   useEffect(() => {
     return () => {
-      Object.keys(pendingRemovalsRef.current).forEach((id) => {
-        clearTimeout(pendingRemovalsRef.current[id])
-        removeMilestone?.(id)
+      Object.entries(pendingRemovalsRef.current).forEach(([id, entry]) => {
+        clearTimeout(entry?.timeoutId)
+        removeMilestone?.(id, entry?.ownerProjectId)
       })
     }
   }, [removeMilestone])
@@ -168,6 +170,13 @@ export default function DefineView(props) {
               {deadlineRelative}
             </span>
           )}
+          {/* The old Save button was removed for good reasons, but nothing
+              replaced the assurance it carried: ~20 fields autosave with no
+              statement anywhere that they do, and the per-field ✓ means "this
+              is non-empty", not "this is safe". State the property, not the
+              event — "Saved 2 minutes ago" is a moving number, and numbers do
+              not register for this user. */}
+          <span className="define-autosave-note">Saves as you type</span>
         </div>
 
         {/* Above the milestone list, not below it: the milestone rows are a
@@ -187,8 +196,15 @@ export default function DefineView(props) {
               const isPending = Boolean(pendingRemovals[m.id])
               if (isPending) {
                 return (
-                  <div key={m.id} className="detective-milestone-row is-pending-removal">
-                    <span>Removed</span>
+                  <div
+                    key={m.id}
+                    className="detective-milestone-row is-pending-removal"
+                    role="status"
+                  >
+                    {/* Name what went. Remove two inside the undo window and
+                        two rows both reading "Removed" gave no way to tell
+                        which Undo was which. */}
+                    <span>Removed “{m.label || 'Untitled'}”</span>
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"

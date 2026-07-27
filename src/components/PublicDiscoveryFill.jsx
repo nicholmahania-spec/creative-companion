@@ -15,6 +15,13 @@ export default function PublicDiscoveryFill({ shareId }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  /* Answers live only in component state until Submit, and the link is
+     single-use — so a client who closes the tab, is called away, or has a
+     phone evict the page loses twenty answers with no way back and no
+     acknowledgement that anything happened. Draft to localStorage on every
+     keystroke and restore it on load. */
+  const draftKey = `cc-fill-draft-${shareId}`
+
   useEffect(() => {
     let cancelled = false
     fetchDiscoveryShare(shareId).then((r) => {
@@ -29,16 +36,41 @@ export default function PublicDiscoveryFill({ shareId }) {
         return
       }
       setClientName(r.clientName || '')
-      setAnswers(r.answers || {})
+      // Server answers first, then anything typed locally and never sent —
+      // the local draft is strictly newer than what the server has.
+      let restored = r.answers || {}
+      try {
+        const draft = JSON.parse(localStorage.getItem(draftKey) || 'null')
+        if (draft && typeof draft === 'object') restored = { ...restored, ...draft }
+      } catch {
+        /* unparseable draft is not worth blocking the form over */
+      }
+      setAnswers(restored)
       setLoadState('ready')
     })
     return () => {
       cancelled = true
     }
-  }, [shareId])
+  }, [shareId, draftKey])
 
   const updateField = (fieldId, value) =>
-    setAnswers((a) => ({ ...a, [fieldId]: value }))
+    setAnswers((a) => {
+      const next = { ...a, [fieldId]: value }
+      try {
+        localStorage.setItem(draftKey, JSON.stringify(next))
+      } catch {
+        /* private mode / quota — the form still works, it just won't survive */
+      }
+      return next
+    })
+
+  /* An all-blank submit permanently burns a single-use link, merges nothing,
+     and leaves both sides in a dead end that needs a new link and an awkward
+     email. Blocking only the all-blank case keeps the "leave anything blank"
+     promise intact for every partial answer. */
+  const hasAnyAnswer = Object.values(answers).some((v) =>
+    Array.isArray(v) ? v.length > 0 : String(v || '').trim().length > 0
+  )
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -49,6 +81,11 @@ export default function PublicDiscoveryFill({ shareId }) {
     if (!r.ok) {
       setError(r.error)
       return
+    }
+    try {
+      localStorage.removeItem(draftKey)
+    } catch {
+      /* nothing to clean up */
     }
     setLoadState('submitted')
   }
@@ -81,11 +118,18 @@ export default function PublicDiscoveryFill({ shareId }) {
           </p>
         )}
 
+        {/* Success was rendered in the same grey one-liner as a broken link.
+            After ten minutes of work, the form vanishing and being replaced
+            by the page's quietest treatment reads as failure at a glance. */}
         {loadState === 'submitted' && (
-          <p className="public-fill-status">
-            Thanks — this has already been submitted. If you need to change an answer,
-            ask your contact to send you a fresh link.
-          </p>
+          <div className="public-fill-done">
+            <h2 className="public-fill-done-title">Thanks — that’s sent</h2>
+            <p className="public-fill-status">
+              Your designer has your answers and will be in touch. This link
+              only works once, so it won’t reopen — ask them for a fresh one if
+              you need to change something.
+            </p>
+          </div>
         )}
 
         {loadState === 'ready' && (
@@ -98,7 +142,18 @@ export default function PublicDiscoveryFill({ shareId }) {
 
             {error && <p className="public-fill-error">{error}</p>}
 
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
+            {/* Said before the button, not after the fact. The lede invites a
+                partial answer; without this the one-shot submit is a trap
+                sprung on someone who did as they were told. */}
+            <p className="public-fill-submit-note">
+              You can send this once — take your time.
+            </p>
+
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={submitting || !hasAnyAnswer}
+            >
               {submitting ? 'Submitting…' : 'Submit'}
             </button>
           </form>

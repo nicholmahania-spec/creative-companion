@@ -49,7 +49,15 @@ export default function PublicClientPortal({ portalId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portalId])
 
+  /* Skip the first run. On load `messages` goes [] -> fetched, and scrolling
+     on that transition dropped the client at the chat block — well below the
+     fold — without ever seeing the steps or the form they were sent for. */
+  const didFirstScroll = useRef(false)
   useEffect(() => {
+    if (!didFirstScroll.current) {
+      didFirstScroll.current = true
+      return
+    }
     chatEndRef.current?.scrollIntoView({ block: 'nearest' })
   }, [messages])
 
@@ -58,10 +66,14 @@ export default function PublicClientPortal({ portalId }) {
     if (m.ok) setMessages(m.messages)
   }
 
+  /* Every handler clears `error` first. Without it one transient failure left
+     a red line on the card for the rest of the session, including after
+     everything afterwards succeeded. */
   const sendMessage = async (e) => {
     e.preventDefault()
     const body = chatInput.trim()
     if (!body) return
+    setError('')
     setSending(true)
     const r = await postClientPortalMessage(portalId, body)
     setSending(false)
@@ -73,18 +85,29 @@ export default function PublicClientPortal({ portalId }) {
     await refreshMessages()
   }
 
+  /* Approve is the highest-stakes thing on this page and it was a bare click:
+     two round-trips with both buttons live and unchanged, so on a slow
+     connection a client sees nothing happen and presses again. */
+  const [pendingStepId, setPendingStepId] = useState(null)
+
   const respondStep = async (stepId, status) => {
+    if (pendingStepId) return
+    setError('')
+    setPendingStepId(stepId)
     const note = noteDrafts[stepId] || ''
     const r = await respondToPortalStep(portalId, stepId, status, note)
     if (!r.ok) {
+      setPendingStepId(null)
       setError(r.error)
       return
     }
     await load()
+    setPendingStepId(null)
   }
 
   const submitForm = async (e) => {
     e.preventDefault()
+    setError('')
     setFormSubmitting(true)
     const r = await submitClientPortalForm(portalId, formAnswers)
     setFormSubmitting(false)
@@ -166,13 +189,15 @@ export default function PublicClientPortal({ portalId }) {
                         <button
                           type="button"
                           className="btn btn-primary btn-sm"
+                          disabled={pendingStepId === step.id}
                           onClick={() => respondStep(step.id, 'approved')}
                         >
-                          Approve
+                          {pendingStepId === step.id ? 'Saving…' : 'Approve'}
                         </button>
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
+                          disabled={pendingStepId === step.id}
                           onClick={() => respondStep(step.id, 'changes_requested')}
                         >
                           Request changes
@@ -211,6 +236,10 @@ export default function PublicClientPortal({ portalId }) {
                   }
                   idPrefix="cp"
                 />
+                {/* Beside the button that caused it. This used to render only
+                    at the very bottom of the page, several screens below the
+                    submit, so a failed submit looked like nothing happened. */}
+                {error && <p className="public-fill-error">{error}</p>}
                 <button type="submit" className="btn btn-primary" disabled={formSubmitting}>
                   {formSubmitting ? 'Submitting…' : 'Submit'}
                 </button>

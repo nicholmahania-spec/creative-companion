@@ -489,10 +489,16 @@ const useAppStore = create(
           }),
         })),
 
-      removeMilestone: (id) =>
+      /* Takes the project the removal was scheduled against. The delete is
+         deferred behind an undo window, so by the time it fires the user may
+         have switched projects — and resolving against currentProjectId then
+         meant the filter matched nothing, the row was never removed, and the
+         milestone silently reappeared next time they opened that project. */
+      removeMilestone: (id, projectId) =>
         set((state) => ({
           projects: state.projects.map((p) => {
-            if (p.id !== state.currentProjectId) return p
+            const target = projectId ?? state.currentProjectId
+            if (p.id !== target) return p
             const det = { ...blankDetective(), ...(p.detective || {}) }
             const milestones = (det.milestones || []).filter((m) => m.id !== id)
             const nextDet = { ...det, milestones }

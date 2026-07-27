@@ -40,7 +40,12 @@ export async function createDiscoveryShare({ projectLocalId, clientName, answers
     .select('id')
     .single()
 
-  if (error) return { ok: false, error: error.message || 'Couldn’t create the link' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t create the link', error)
+    return { ok: false, error: 'Couldn’t create the link' }
+  }
   return { ok: true, shareId: data.id }
 }
 
@@ -55,7 +60,12 @@ export async function fetchDiscoveryShare(shareId) {
   const { data, error } = await supabase.rpc('get_discovery_share', {
     share_id: shareId,
   })
-  if (error) return { ok: false, error: error.message || 'Couldn’t load the form' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t load the form', error)
+    return { ok: false, error: 'Couldn’t load the form' }
+  }
   const row = Array.isArray(data) ? data[0] : data
   if (!row) return { ok: false, error: 'This link isn’t valid' }
   return { ok: true, clientName: row.client_name, answers: row.answers || {}, status: row.status }
@@ -73,7 +83,12 @@ export async function submitDiscoveryShare(shareId, answers) {
     share_id: shareId,
     submitted_answers: answers || {},
   })
-  if (error) return { ok: false, error: error.message || 'Couldn’t submit the form' }
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t submit the form', error)
+    return { ok: false, error: 'Couldn’t submit the form' }
+  }
   if (!data) return { ok: false, error: 'This form was already submitted' }
   return { ok: true }
 }
