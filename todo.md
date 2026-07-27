@@ -388,3 +388,53 @@ shaped like every page except Research.
 - The spreadsheet is a real artefact: decide whether it is generated on demand
   (xlsx/csv download) or written to a connected service. On demand is simpler
   and needs no new credentials.
+
+## Brief PDF in the brand book — reference designs (2026-07-27)
+
+Owner supplied two reference briefs for how the completed design brief should
+look when downloaded as part of the brand guide book. Deferred; recorded so
+the intent is not lost.
+
+**Reference A — VENT Graphics "Your Creative Brief template"**
+- Branded header: wordmark top-left, contact block top-right (name, role,
+  site, email, phone), role line in the accent colour
+- Accent-coloured section heading + one-line explainer beneath it
+- Answers sit in ruled boxes with the label INSIDE the box, top-left
+  ("Name:", "Project Overview:", "Objectives:")
+- Boxes are sized to the expected answer — a name box is one line, an
+  objectives box is a deep block
+- Small accent-coloured hint UNDER each box, not inside it ("Provide a brief
+  description of the project.", "List desired outcomes and deliverables…")
+
+**Reference B — "The Concept Design Brief"**
+- Logo + wordmark lockup, then a full-width accent rule
+- Short intro paragraph explaining why detail helps
+- Two-column body: bold section label in a narrow LEFT column (CLIENT INFO /
+  PROJECT INFO / BUILDING DETAILS), all content in the right column
+- Each question in bold, followed by "/ For example, …" guidance in regular
+  weight — the example is part of the question, not a separate hint
+- Explicit "Answer:" label with a bulleted placeholder line
+- Footer: page number, dotted leader rule, brand name, document title
+
+**Common pattern to take forward:** a question is never asked bare. Every
+field carries a worked example or a format hint, and the answer area is
+visually distinct from the prompt. That matches the `tip` rule already in
+detectiveBrief — the PDF should render `tip` as the example line rather than
+dropping it, which is what the placeholder-only treatment does on screen.
+
+**What already exists to build on:**
+- `jspdf` 4.2.1, `pdf-lib` 1.17.1, `pdfjs-dist` are all installed
+- `downloadBrandPackVectorPdf()` in `src/lib/exportFiles.js` already composes
+  a vector brand book with real font embedding (`setFont` by role) and
+  `pdf.addPage()` pagination — the brief becomes a section in that, not a new
+  pipeline
+- `brand-book.pdf` is already written into the export zip (`exportFiles.js`
+  ~line 912), so there is a defined home for it
+- `e2e/brand-book-pdf.spec.js` exists, so there is somewhere to assert the new
+  section renders
+
+**Open question for when we build it:** the two references are both BLANK
+templates a client fills in. Ours is the opposite — a COMPLETED brief being
+handed over. Decide whether unanswered fields are omitted, shown as gaps, or
+shown with their example text, because a printed brand book full of empty
+ruled boxes reads as unfinished work rather than a deliverable.
