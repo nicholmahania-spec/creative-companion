@@ -7349,6 +7349,12 @@ body.cc-printing-page button {
   cursor: grabbing;
 }
 
+/* Confirms the drop while the files are still in the air. */
+.mood-canvas-viewport.is-drop-active {
+  border-color: var(--text-primary);
+  background-color: var(--bg-elevated);
+}
+
 .mood-canvas-stage {
   position: absolute;
   inset: 0;

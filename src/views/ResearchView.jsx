@@ -79,6 +79,9 @@ export default function ResearchView({
     return () => onAddPinModeChange?.(false)
   }, [boardAddMode, onAddPinModeChange])
   const [boardDragId, setBoardDragId] = useState(null)
+  /** Dragging files over the canvas — without feedback, "drop pictures here"
+   *  is a claim the surface never confirms until after you let go. */
+  const [boardDropActive, setBoardDropActive] = useState(false)
   const [boardLightbox, setBoardLightbox] = useState(null)
   const [lightboxFocalMode, setLightboxFocalMode] = useState(false)
 
@@ -722,11 +725,31 @@ export default function ResearchView({
               )}
               <div
                 ref={viewportRef}
-                className={`mood-canvas-viewport${deskMood.length ? ' has-pins' : ''}`}
+                className={`mood-canvas-viewport${deskMood.length ? ' has-pins' : ''}${
+                  boardDropActive ? ' is-drop-active' : ''
+                }`}
                 // Pan offset for the dot grid, so the surface moves with the
                 // board and panning is visible even on an empty canvas.
                 style={{ '--canvas-pan-x': `${tx}px`, '--canvas-pan-y': `${ty}px` }}
                 onWheel={onWheel}
+                /* Drop target is the whole canvas, not the stage. It used to
+                   be on the stage only, which worked by accident — the stage
+                   is absolutely positioned over the viewport, so it happened
+                   to catch drops aimed at the empty state. With the Upload
+                   button gone from the canvas, dropping is the canvas's only
+                   way in, and it should not depend on stacking order. */
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  if (e.dataTransfer?.types?.includes('Files')) setBoardDropActive(true)
+                }}
+                onDragLeave={(e) => {
+                  if (e.target === e.currentTarget) setBoardDropActive(false)
+                }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setBoardDropActive(false)
+                  if (e.dataTransfer.files?.length) uploadMoodFiles(e.dataTransfer.files)
+                }}
                 onPointerDown={(e) => {
                   // Dragging empty canvas pans; clicking it clears selection.
                   if (e.target === e.currentTarget || e.target.classList.contains('mood-canvas-stage')) {
@@ -751,24 +774,18 @@ export default function ResearchView({
                       only place the page explained itself — what starring is
                       for, that URLs work, and that this is a board you
                       arrange rather than a list. */}
+                  {/* No Upload button here. Upload now sits in the toolbar
+                      above the board with URL and Note, so a second one on
+                      the canvas was the same action offered twice, three
+                      inches apart — and it made the canvas look like a
+                      dropzone widget rather than the work surface it is. The
+                      canvas keeps the drop target; the button lives with its
+                      siblings. */}
                   <p className="empty-state-subtitle">
-                    Drag pictures in, or use Upload, URL or Note above.
-                    Drag pins to arrange them; star up to 6 to carry into
-                    your brand direction.
+                    Drop pictures anywhere here, or use Upload, URL or Note
+                    above. Drag pins to arrange them; star up to 6 to carry
+                    into your brand direction.
                   </p>
-                  <label className="btn btn-primary board-upload-btn">
-                    Upload images
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
-                      multiple
-                      className="sr-only"
-                      onChange={(e) => {
-                        uploadMoodFiles(e.target.files)
-                        e.target.value = ''
-                      }}
-                    />
-                  </label>
                 </div>
               )}
               <div
