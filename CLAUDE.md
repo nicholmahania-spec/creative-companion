@@ -171,6 +171,28 @@ solution actually helps ADHD.** A problem or fix stated without its "why" is
 incomplete — restate it with the reasoning included, don't just list bare
 findings.
 
+## Design agent — `editorial-layout-director`
+
+For composition, not correctness. Reach for it when a screen passes every
+audit — grid, ramps, contrast — and still reads flat, generic, or
+template-shaped, or when laying out a new page that should look designed
+rather than assembled. It works in intentional asymmetry, dynamic whitespace,
+and optical balance (the eye weighs, it doesn't measure), and it finishes with
+a squint test: blur the page to 25%, and if the elements that survive aren't
+in priority order, the composition failed no matter how it reads at full size.
+
+**It ranks below `adhd-executive-function-advisor`, always.** Aesthetics are
+subordinate to executive function here — that's the rule above, and it's the
+reason the product exists. The agent is written to drop any composition that
+adds a decision, hides something behind a fold or a toggle, or makes the next
+action less obvious, however much better it looks. If the two agents disagree,
+the advisor wins and the layout gets reworked, not the rule.
+
+Two other things it's bound by: it must be able to justify every asymmetry in
+one sentence (an asymmetry nobody can explain is indistinguishable from a bug),
+and it inherits the container/typography constraints rather than being exempt
+from them.
+
 ## User feedback on ADHD issues — direct quotes, carried forward as standing lessons
 
 Real things the user has said about their own experience of the app, kept
