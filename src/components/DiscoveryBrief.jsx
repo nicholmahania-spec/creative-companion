@@ -283,7 +283,11 @@ function HandoffMode({
       flashToast?.('Client hasn’t submitted yet')
       return
     }
-    onMergeAnswers?.(r.answers)
+    // Pass the project this check was started for, not whatever is current
+    // when the fetch resolves — the user can switch projects mid-request,
+    // and the merge only fills blanks, so landing on the wrong client would
+    // be silent.
+    onMergeAnswers?.(projectId, r.answers)
     flashToast?.('Client’s answers merged in')
   }
 

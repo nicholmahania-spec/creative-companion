@@ -890,10 +890,16 @@ const useAppStore = create(
        *  ids are NOT renamed (detectiveBrief's header explains that
        *  renaming orphans saved answers), and a value the studio user has
        *  already entered always wins over the client's. */
-      mergeDiscoveryAnswers: (clientAnswers) =>
+      /* Takes the project id the check was started for. It used to write to
+         whichever project was current when the promise resolved, which is a
+         different project if the user switched while the fetch was in
+         flight — and because the merge only fills blanks, one client's
+         answers appearing on another client's brief would be silent. */
+      mergeDiscoveryAnswers: (projectId, clientAnswers) =>
         set((state) => ({
           projects: state.projects.map((p) => {
-            if (p.id !== state.currentProjectId) return p
+            const target = projectId ?? state.currentProjectId
+            if (p.id !== target) return p
             const merged = { ...(p.discoveryAnswers || {}) }
             Object.entries(clientAnswers || {}).forEach(([k, v]) => {
               if (String(v || '').trim()) merged[k] = v

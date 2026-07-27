@@ -10409,12 +10409,37 @@ body:has(.app.deep)::after {
 }
 
 .brief-spectrum-pole {
+  /* Shared minimum track, so all four scales get an identical dot ladder.
+     With flex:0 0 auto each pole sized to its own word, so "Bold/Minimal"
+     and "High-end/Affordable" produced different pitches — measured 23px of
+     drift on the fifth dot between two scales sitting one above the other.
+     That is the "nothing lines up" failure the rail rewrite exists to kill,
+     arriving again through the newest control. min-width, not a fixed
+     basis: this component is shared with the client routes, so a longer
+     pole from a future field should widen rather than wrap. */
   flex: 0 0 auto;
+  min-width: 5.5rem;
   font-size: var(--fs-1);
   color: var(--text-secondary);
   /* The poles name the axis; they are not the answer, so they stay quieter
      than the dots the user is actually choosing between. */
   white-space: nowrap;
+}
+
+.brief-spectrum-pole:last-of-type {
+  text-align: right;
+}
+
+/* The chosen point, in words. Quiet — it confirms, it does not compete with
+   the question above it. */
+.brief-spectrum-answer {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
+.brief-spectrum-clear-hint {
+  color: var(--text-muted);
 }
 
 .brief-spectrum-step {
@@ -10433,7 +10458,13 @@ body:has(.app.deep)::after {
   width: 14px;
   height: 14px;
   margin: 0;
-  border: 1.5px solid var(--border-strong);
+  /* --field-line, not --border-strong. The border is the ONLY affordance an
+     unanswered dot has — no fill, no track, no number — and --border-strong
+     measured 1.59:1 against the canvas, well under the 3:1 non-text floor
+     (WCAG 1.4.11). Four scales read as blank gaps between two words.
+     --field-line is the token that exists for exactly this: 3.17:1 light,
+     4.25:1 dark, with the reasoning recorded where it is defined. */
+  border: 1.5px solid var(--field-line);
   border-radius: var(--radius-pill);
   background: transparent;
   cursor: pointer;

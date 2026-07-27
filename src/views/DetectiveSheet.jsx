@@ -128,12 +128,23 @@ export default function DetectiveSheet({
    * explicit, user-chosen jump). Opening the right chapter is enough. */
   const didAutoStart = useRef(false)
   useEffect(() => {
+    // Only when this sheet owns its own chapter state. When a parent supplies
+    // `openChapter` it has already decided: DefineView resolves the stored
+    // `defineOpenChapter` first and only falls back to the first incomplete
+    // chapter when nothing is stored. Running anyway did not just lose that
+    // race, it destroyed the record — `setOpenChapter` is the parent's
+    // persisting callback, so every arrival wrote chapter 01 over wherever
+    // the user actually left off. Verified before this guard: a stored
+    // "constraints" came back as "overview" after a reload, which made the
+    // resume feature dead for any project with an unfilled required field —
+    // nearly all of them, since clientName is required.
+    if (openChapterProp != null) return
     if (didAutoStart.current) return
     const first = requiredEmpty[0]
     if (!first) return
     didAutoStart.current = true
     setOpenChapter(first.chapterId)
-  }, [requiredEmpty, setOpenChapter])
+  }, [requiredEmpty, setOpenChapter, openChapterProp])
 
   return (
     <div className={`define-workbook${splitMode ? ' is-split' : ''}`}>

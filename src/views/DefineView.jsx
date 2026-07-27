@@ -148,7 +148,13 @@ export default function DefineView(props) {
           <input
             id="proj-deadline-field"
             type="date"
-            className="field-input"
+            /* `define-input` too: the Define layer's !important border rule
+               is scoped to `.define-input.field-input`, so without it this
+               field loses the focus border and gains no replacement — it
+               rendered pixel-identical focused and unfocused. Every
+               milestone input already carries both classes; this one was
+               missed. */
+            className="define-input field-input"
             aria-describedby="proj-deadline-relative"
             value={projectDeadline}
             onChange={(e) => setProjectDeadline(e.target.value)}

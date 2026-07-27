@@ -30,6 +30,8 @@ const sharedIds = (() => {
   return DISCOVERY_FIELDS.filter((f) => det.has(f.id)).map((f) => f.id)
 })()
 
+const currentId = () => useAppStore.getState().currentProjectId
+
 const current = () => {
   const s = useAppStore.getState()
   return s.projects.find((p) => p.id === s.currentProjectId)
@@ -45,7 +47,7 @@ describe('discovery -> detective bridge', () => {
   })
 
   it('client answers on shared ids reach the Define sheet', () => {
-    useAppStore.getState().mergeDiscoveryAnswers({
+    useAppStore.getState().mergeDiscoveryAnswers(currentId(), {
       clientName: 'Blackbird Coffee',
       story: 'Started in a garage in 2019.',
     })
@@ -65,7 +67,7 @@ describe('discovery -> detective bridge', () => {
           : p
       ),
     }))
-    useAppStore.getState().mergeDiscoveryAnswers({ clientName: 'Client loses' })
+    useAppStore.getState().mergeDiscoveryAnswers(currentId(), { clientName: 'Client loses' })
     const p = current()
     expect(p.detective.clientName).toBe('Designer wins')
     // still recorded on its own schema
@@ -79,7 +81,7 @@ describe('discovery -> detective bridge', () => {
         p.id === id ? { ...p, detective: { ...p.detective, story: '' } } : p
       ),
     }))
-    useAppStore.getState().mergeDiscoveryAnswers({ story: '   ', usp: '' })
+    useAppStore.getState().mergeDiscoveryAnswers(currentId(), { story: '   ', usp: '' })
     const p = current()
     expect(String(p.detective.story || '')).toBe('')
     expect(String(p.detective.usp || '')).toBe('')
@@ -88,7 +90,7 @@ describe('discovery -> detective bridge', () => {
   it('does not invent detective keys for discovery-only fields', () => {
     // projectTitle exists only on the discovery schema.
     expect(sharedIds).not.toContain('projectTitle')
-    useAppStore.getState().mergeDiscoveryAnswers({ projectTitle: 'Rebrand' })
+    useAppStore.getState().mergeDiscoveryAnswers(currentId(), { projectTitle: 'Rebrand' })
     const p = current()
     expect(p.discoveryAnswers.projectTitle).toBe('Rebrand')
     expect(p.detective.projectTitle).toBeUndefined()
@@ -99,14 +101,14 @@ describe('discovery -> detective bridge', () => {
     // ids like `goal` that never existed on the discovery schema. Mirroring
     // only the intersection would silently drop them.
     expect(sharedIds).not.toContain('goal')
-    useAppStore.getState().mergeDiscoveryAnswers({ goal: 'Look established' })
+    useAppStore.getState().mergeDiscoveryAnswers(currentId(), { goal: 'Look established' })
     expect(current().detective.goal).toBe('Look established')
   })
 
   it('mirrors checklist answers, which arrive as arrays', () => {
     useAppStore
       .getState()
-      .mergeDiscoveryAnswers({ deliverablesPicked: ['logoPrimary', 'typography'] })
+      .mergeDiscoveryAnswers(currentId(), { deliverablesPicked: ['logoPrimary', 'typography'] })
     expect(current().detective.deliverablesPicked).toEqual([
       'logoPrimary',
       'typography',
@@ -122,15 +124,36 @@ describe('discovery -> detective bridge', () => {
           : p
       ),
     }))
-    useAppStore.getState().mergeDiscoveryAnswers({ deliverablesPicked: [] })
+    useAppStore.getState().mergeDiscoveryAnswers(currentId(), { deliverablesPicked: [] })
     // the designer's existing picks survive an empty client submission
     expect(current().detective.deliverablesPicked).toEqual(['logoPrimary'])
+  })
+
+  it('merges into the project the check started for, not whichever is current', () => {
+    // The studio user opens the panel for client A, presses "check
+    // submission", then switches to client B while the fetch is in flight.
+    // Resolving against currentProjectId would put A's answers on B's brief,
+    // and because the merge only fills blanks it would be silent.
+    const clientA = currentId()
+    const clientB = createBlankProject('Client B', '')
+    useAppStore.setState((s) => ({
+      projects: [...s.projects, clientB],
+      currentProjectId: clientB.id, // user switched mid-request
+    }))
+    useAppStore.getState().mergeDiscoveryAnswers(clientA, {
+      clientName: 'Belongs to A',
+    })
+    const a = useAppStore.getState().projects.find((p) => p.id === clientA)
+    const b = useAppStore.getState().projects.find((p) => p.id === clientB.id)
+    expect(a.detective.clientName).toBe('Belongs to A')
+    expect(b.detective.clientName || '').toBe('')
+    expect(b.discoveryShareStatus).not.toBe('submitted')
   })
 
   it('leaves other projects untouched', () => {
     const other = createBlankProject('Untouched', '')
     useAppStore.setState((s) => ({ projects: [...s.projects, other] }))
-    useAppStore.getState().mergeDiscoveryAnswers({ clientName: 'Only mine' })
+    useAppStore.getState().mergeDiscoveryAnswers(currentId(), { clientName: 'Only mine' })
     const p = useAppStore.getState().projects.find((x) => x.id === other.id)
     expect(p.detective.clientName || '').toBe('')
     expect(p.discoveryShareStatus).not.toBe('submitted')

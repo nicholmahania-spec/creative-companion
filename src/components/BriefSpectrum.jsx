@@ -16,6 +16,7 @@ export default function BriefSpectrum({ field, value, onChange, idPrefix }) {
   const choices = spectrumChoices(field.poles)
   const group = `${idPrefix}-${field.id}`
   const [start, end] = field.poles || []
+  const chosen = choices.find((c) => c.value === value)
 
   return (
     <fieldset className="brief-spectrum">
@@ -54,6 +55,22 @@ export default function BriefSpectrum({ field, value, onChange, idPrefix }) {
           {end}
         </span>
       </div>
+      {/* Say the answer in words once there is one. A filled dot at position
+          four of five is a position, not an answer — reading it back meant
+          measuring it against the two pole words, and `title` never fires on
+          touch, which is most clients. It also gives the clear gesture
+          somewhere to be stated: re-clicking the chosen point already
+          worked, but invisibly, and an undo nobody can find is no undo at
+          all on a question the form says you may leave blank. */}
+      {chosen && (
+        <p className="brief-spectrum-answer">
+          {chosen.label}
+          <span className="brief-spectrum-clear-hint">
+            {' '}
+            · click again to clear
+          </span>
+        </p>
+      )}
     </fieldset>
   )
 }
