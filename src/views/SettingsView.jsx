@@ -1,4 +1,9 @@
 import { helperAiStatus } from '../lib/helperAi'
+import {
+  FOCUS_MASK_MIN_PCT,
+  FOCUS_MASK_MAX_PCT,
+  clampFocusMaskPct,
+} from '../lib/uiPrefs'
 import { LOCALES, normalizeLocale, t as i18nT } from '../lib/i18n'
 
 /** Settings — short labels, Focus first, Advanced collapsed. */
@@ -119,17 +124,22 @@ export default function SettingsView(props) {
             {prefs.focusRingStrength === 'high' ? 'Normal' : 'High'}
           </button>
         </div>
+        {/* Track starts at the floor, and the number shown is the clamped
+            value the app actually applies. Before, the slider ran from 0 and
+            displayed a stored 25% while the app applied 40% — every position
+            below the floor was dead travel, so dragging did nothing and the
+            readout disagreed with the screen. */}
         <div className="settings-row settings-row-stack">
           <strong>
-            Focus mask · {Number(prefs.focusMaskPct ?? 60)}%
+            Focus mask · {clampFocusMaskPct(prefs.focusMaskPct)}%
           </strong>
           <input
             type="range"
-            min={0}
-            max={80}
+            min={FOCUS_MASK_MIN_PCT}
+            max={FOCUS_MASK_MAX_PCT}
             step={5}
             className="settings-range"
-            value={Number(prefs.focusMaskPct ?? 60)}
+            value={clampFocusMaskPct(prefs.focusMaskPct)}
             aria-label="Focus mask intensity"
             onChange={(e) =>
               setPref('focusMaskPct', Number(e.target.value))

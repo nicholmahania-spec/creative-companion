@@ -6,6 +6,29 @@
 const UI_PREFS_KEY = 'cc-ui-prefs';
 
 /**
+ * Focus-mask intensity bounds, as percentages.
+ *
+ * The floor is a legibility floor, not a taste one. Masked fields are the
+ * user's own answers, kept on screen as working-memory scaffolding while
+ * they type the next one — index.css states the rule for this token:
+ * de-emphasise, never make illegible. Below 65% the composite fails the
+ * 4.5:1 contrast floor: at 40% masked text measures 3.59:1 on the dark
+ * canvas and 2.48:1 on the light one; 60% still only reaches 4.44:1 in
+ * light. 65% clears both (7.5:1 dark, 5.22:1 light).
+ *
+ * Exported so the slider, the stored default, and the value the app
+ * actually applies all read from one place — they disagreed before, and a
+ * control that displays a value it isn't applying is worse than no control.
+ */
+export const FOCUS_MASK_MIN_PCT = 65;
+export const FOCUS_MASK_MAX_PCT = 80;
+export const clampFocusMaskPct = (pct) =>
+  Math.min(
+    FOCUS_MASK_MAX_PCT,
+    Math.max(FOCUS_MASK_MIN_PCT, Number(pct ?? FOCUS_MASK_MIN_PCT))
+  );
+
+/**
  * Default UI preferences object.
  * These values are used when no saved preferences exist.
  */
@@ -25,8 +48,9 @@ const DEFAULTS = {
     showProgress: false,
     /** ADHD: no timed Helper pings — open Helper for Coach */
     helperQuiet: true,
-    /** Horizontal width of the focus mask (0-100) */
-    focusMaskPct: 25,
+    /** Focus-mask intensity (%). Bounded by FOCUS_MASK_MIN/MAX_PCT above —
+     *  was 25, which the app never actually applied. */
+    focusMaskPct: FOCUS_MASK_MIN_PCT,
     /** Soft blur on masked peripherals (px); 0 = off */
     focusMaskBlur: 2,
     /** Dim sidebar + header while a field has focus — peripheral masking */

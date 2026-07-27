@@ -10353,17 +10353,29 @@ body:has(.app.deep)::after {
   margin: 0;
 }
 
+/* Glyph, not a badge. This was a 1.35rem filled circle pushed to the far
+   right by margin-left:auto, so on a filled-in sheet ~20 of them formed two
+   columns of accent dots — the heaviest repeated texture on the page, all of
+   it marking work already DONE, competing with the two controls that say
+   what is LEFT ("Start with these 3" and the rail's "N needed"). A filled
+   shape reads as an object at a glance; a small glyph on the label's own
+   baseline reads as punctuation and dissolves into the text.
+
+   The tick itself stays: it fires the moment a field fills, and that
+   immediate per-field confirmation is the only "you did that" on the sheet.
+   Dropping the mark entirely would have cost a real feedback signal to solve
+   a problem removing the fill already solves.
+
+   Colour must be a text token now that there is no background behind it —
+   --accent-growth (#A0A0A0) measures 2.4:1 as bare text on the light
+   canvas. */
 .define-field-check {
-  margin-left: auto;
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 50%;
-  display: inline-grid;
-  place-items: center;
+  /* No margin-left: auto — the label row is a flex row with its own 0.55rem
+     gap, which is what now sets the tick beside the label. */
+  margin-left: 0;
   font-size: var(--fs-1);
   font-weight: 700;
-  background: color-mix(in srgb, var(--accent-growth, #A0A0A0) 25%, transparent);
-  color: var(--accent-growth, #A0A0A0);
+  color: var(--text-secondary);
 }
 
 .define-field-control {
@@ -12807,14 +12819,23 @@ select:focus {
 }
 
 /* Hyper-focus mask uses prefs vars set on .app-shell */
-/* Trigger is .define-chapters (the whole sheet), not .define-fields (one
-   chapter). At >=768px every chapter renders at once, so the old scope dimmed
-   the other fields in the chapter you were typing in while leaving the four
-   chapters you were NOT in at full strength — the subject became the faintest
-   region on screen. Field-level granularity is kept, per the
-   --focus-mask-opacity note above; only the ancestor widens, so every
-   unfocused field on the sheet now recedes equally. */
-.define-chapters:focus-within .define-field:not(:focus-within),
+/* Trigger is .define-chapters (the whole sheet); target is the CHAPTER, not
+   the field. Two separate decisions, both load-bearing:
+
+   The trigger was .define-fields (one chapter). At >=768px every chapter
+   renders at once, so that dimmed the other fields in the chapter you were
+   typing in while leaving the four chapters you were NOT in at full
+   strength — the subject became the faintest region on screen.
+
+   The target is a chapter because the fields beside the one you are typing
+   in are working-memory scaffolding: writing "primary contact" while "client
+   name" and "email" sit greyed out forces a re-read or a defocus, which is
+   the tax the mask exists to remove. Chapter granularity keeps that context
+   bright, recedes only the regions you are not in, and cuts ~22 whole-page
+   opacity transitions per pass down to 4 that land on meaningful
+   boundaries. It marks a place, not a cursor — which is what recovering
+   from an interruption actually needs. */
+.define-chapters:focus-within .define-chapter:not(:focus-within),
 .ideate-directions:focus-within .ideate-dir-card:not(:focus-within),
 .research-studio .mood-board:has(.mood-pin-note-input:focus) .mood-card:not(:focus-within),
 .review-studio:has(.review-notes-input:focus) .review-ready-panel,

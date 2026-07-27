@@ -9,6 +9,7 @@ import {
 } from 'react'
 import useAppStore from './store/useAppStore'
 import { DEFAULT_PALETTE } from './lib/color'
+import { clampFocusMaskPct } from './lib/uiPrefs'
 import { trackExportAction } from './lib/analytics'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
@@ -2512,13 +2513,14 @@ function App() {
         navOpen ? ' nav-open' : ''
       }`}
       style={{
-        /* Floor is 0.4, not 0. index.css states the rule for this token:
-           neighbouring answers are working-memory scaffolding, so they get
-           de-emphasised but never made illegible. A floor of 0 allowed
-           exactly that — at 0.25 the masked field text already computes to
-           roughly 2:1, under the 4.5 floor. 0.4 keeps it readable. */
+        /* Bounds live in lib/uiPrefs so the slider, the stored default and
+           the applied value cannot drift apart. The floor is a legibility
+           floor: masked fields are the user's own answers, kept readable as
+           working-memory scaffolding. Measured composites — 40%: 3.59:1
+           dark / 2.48:1 light; 60%: 6.55 / 4.44; 65%: 7.5 / 5.22. Only 65
+           clears 4.5:1 in both themes. */
         ['--focus-mask-opacity']: String(
-          Math.min(0.8, Math.max(0.4, Number(prefs.focusMaskPct ?? 60) / 100))
+          clampFocusMaskPct(prefs.focusMaskPct) / 100
         ),
         ['--focus-mask-blur']:
           Number(prefs.focusMaskBlur) > 0

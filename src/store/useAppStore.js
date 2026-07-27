@@ -1,5 +1,6 @@
 import { DELIVERABLE_OPTIONS, DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
 import { DISCOVERY_FIELDS } from '../lib/discoveryBrief'
+import { FOCUS_MASK_MIN_PCT } from '../lib/uiPrefs'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
@@ -306,10 +307,12 @@ export function blankWorkspaceState() {
       /** ADHD: no timed Helper pings — open Helper for Coach */
       helperQuiet: true,
       /**
-       * Hyper-focus mask: inactive field opacity 0–80 (percent).
-       * Applied when a field is focused within path instruments.
+       * Hyper-focus mask: inactive field opacity, as a percent, bounded by
+       * FOCUS_MASK_MIN_PCT..FOCUS_MASK_MAX_PCT in lib/uiPrefs. The floor is
+       * a legibility floor — see the note there. Was 25, a value the app
+       * never actually applied.
        */
-      focusMaskPct: 25,
+      focusMaskPct: FOCUS_MASK_MIN_PCT,
       /** Soft blur on masked peripherals (px); 0 = off */
       focusMaskBlur: 2,
       /** Dim sidebar + header while a field has focus — peripheral masking */
