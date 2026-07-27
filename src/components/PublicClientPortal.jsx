@@ -207,7 +207,10 @@ export default function PublicClientPortal({ portalId }) {
                 {DETECTIVE_CHAPTERS.map((chapter) => (
                   <fieldset key={chapter.id} className="public-fill-section">
                     <legend>{chapter.title}</legend>
-                    {chapter.fields.map((f) => (
+                    {/* designerOnly fields (budget, file formats) are
+                        unanswerable for a client and only invite a wrong or
+                        embarrassed guess — the designer records them. */}
+                    {chapter.fields.filter((f) => !f.designerOnly).map((f) => (
                       <div className="field-block" key={f.id}>
                         <label className="field-label" htmlFor={`cp-${f.id}`}>
                           {f.label}
