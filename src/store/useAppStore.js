@@ -90,6 +90,7 @@ export function blankDetective() {
     avoid: '',
     // Deliverables & technical scope
     /** What specifically ships — one line per deliverable */
+    engagementType: '',
     deliverablesPicked: [],
     deliverables: '',
     /** File formats, scalability, production/technical requirements */
@@ -124,6 +125,14 @@ export function composeBriefFromDetective(detective) {
   if (d.competitors?.trim()) parts.push(`Competitors: ${d.competitors.trim()}`)
   if (d.toneOfVoice?.trim()) parts.push(`Tone of voice: ${d.toneOfVoice.trim()}`)
   if (d.avoid?.trim()) parts.push(`Avoid: ${d.avoid.trim()}`)
+  if (d.engagementType) {
+    const names = {
+      new: 'New brand, starting from scratch',
+      rebrand: 'Rebrand, replacing what exists',
+      extend: 'Adding to an existing brand',
+    }
+    parts.push(`Engagement: ${names[d.engagementType] || d.engagementType}`)
+  }
   if (Array.isArray(d.deliverablesPicked) && d.deliverablesPicked.length) {
     const names = d.deliverablesPicked
       .map((id) => DELIVERABLE_OPTIONS.find((o) => o.id === id)?.label || id)

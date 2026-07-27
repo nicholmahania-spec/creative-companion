@@ -145,39 +145,17 @@ export default function DefineView(props) {
             Share / export
           </button>
         </div>
-        <div className="define-deadline-inline">
-          <label htmlFor="proj-deadline-field">Deadline</label>
-          <input
-            id="proj-deadline-field"
-            type="date"
-            /* `define-input` too: the Define layer's !important border rule
-               is scoped to `.define-input.field-input`, so without it this
-               field loses the focus border and gains no replacement — it
-               rendered pixel-identical focused and unfocused. Every
-               milestone input already carries both classes; this one was
-               missed. */
-            className="define-input field-input"
-            aria-describedby="proj-deadline-relative"
-            value={projectDeadline}
-            onChange={(e) => setProjectDeadline(e.target.value)}
-          />
-          {deadlineRelative && (
-            <span
-              id="proj-deadline-relative"
-              className="define-deadline-relative"
-              aria-live="polite"
-            >
+        {/* The date input moved into the brief itself ("Is there a date this
+            needs to be done by?"). What stays here is read-only: an ISO date
+            carries no felt urgency, and this phrase is the only thing on the
+            page that makes time concrete. Not a second control. */}
+        {deadlineRelative && (
+          <div className="define-deadline-inline">
+            <span className="define-deadline-relative" aria-live="polite">
               {deadlineRelative}
             </span>
-          )}
-          {/* The old Save button was removed for good reasons, but nothing
-              replaced the assurance it carried: ~20 fields autosave with no
-              statement anywhere that they do, and the per-field ✓ means "this
-              is non-empty", not "this is safe". State the property, not the
-              event — "Saved 2 minutes ago" is a moving number, and numbers do
-              not register for this user. */}
-          <span className="define-autosave-note">Saves as you type</span>
-        </div>
+          </div>
+        )}
 
         {/* Above the milestone list, not below it: the milestone rows are a
             quicker, more satisfying task than answering a brief question, and
@@ -288,6 +266,8 @@ export default function DefineView(props) {
               openChapter={openChapter}
               onOpenChapter={setOpenChapter}
               showStartHere={false}
+              projectDeadline={projectDeadline}
+              setProjectDeadline={setProjectDeadline}
             />
           </Suspense>
         </div>

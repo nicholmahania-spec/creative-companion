@@ -63,6 +63,30 @@ function ChecklistField({ field, selected, onToggle }) {
   )
 }
 
+/** Radio group rendered as visible rows, not a <select>: a closed dropdown
+ *  hides its own options until opened, which is a memory test — and this is
+ *  the question that frames the whole project. */
+function ChoiceField({ field, value, onPick }) {
+  return (
+    <div className="define-choice" role="radiogroup" aria-label={field.label}>
+      {field.options.map((o) => {
+        const on = value === o.id
+        return (
+          <label key={o.id} className={`define-check-row${on ? ' is-on' : ''}`}>
+            <input
+              type="radio"
+              name={`detective-${field.id}`}
+              checked={on}
+              onChange={() => onPick(o.id)}
+            />
+            <span>{o.label}</span>
+          </label>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function DetectiveSheet({
   detective = {},
   updateDetective,
@@ -74,6 +98,11 @@ export default function DetectiveSheet({
    *  above the milestone list — see components/DefineStartHere. Standalone
    *  uses of this sheet keep their own copy. */
   showStartHere = true,
+  /** The deadline lives on the project record, not in `detective` — it drives
+   *  the calendar and the relative label — so it is threaded in rather than
+   *  read from the answers object. */
+  projectDeadline = '',
+  setProjectDeadline,
 }) {
   const [openChapterLocal, setOpenChapterLocal] = useState('core')
   const openChapter = openChapterProp ?? openChapterLocal
@@ -90,7 +119,7 @@ export default function DetectiveSheet({
    * chapter to open on arrival, the header band needs it for the jump
    * buttons, and two copies of "which required fields are still empty"
    * would eventually disagree. */
-  const requiredEmpty = useMemo(() => getRequiredEmpty(detective), [detective])
+  const requiredEmpty = useMemo(() => getRequiredEmpty(detective, projectDeadline), [detective, projectDeadline])
 
   /** On arrival, open the chapter that still needs answers — but never
    * scroll or steal focus. The page moving on its own before the user has
@@ -310,7 +339,26 @@ export default function DetectiveSheet({
                         )}
                       </div>
                       <div className="define-field-control">
-                        {f.type === 'checklist' ? (
+                        {f.type === 'choice' ? (
+                          <ChoiceField
+                            field={f}
+                            value={detective?.[f.id]}
+                            onPick={(v) => {
+                              updateDetective?.(f.id, v)
+                              trackDetectiveFieldUpdate(f.id, v, ch.id)
+                            }}
+                          />
+                        ) : f.type === 'date' ? (
+                          <input
+                            id={`detective-${f.id}`}
+                            type="date"
+                            className="define-input field-input"
+                            value={projectDeadline}
+                            onChange={(e) => setProjectDeadline?.(e.target.value)}
+                            onFocus={() => setFocusField(f.id)}
+                            onBlur={() => setFocusField(null)}
+                          />
+                        ) : f.type === 'checklist' ? (
                           <ChecklistField
                             field={f}
                             selected={detective?.[f.id]}

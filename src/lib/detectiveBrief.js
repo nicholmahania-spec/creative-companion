@@ -73,6 +73,27 @@ export const DETECTIVE_CHAPTERS = [
         gridSpan: 'half',
       },
       {
+        id: 'engagementType',
+        label: 'Where are you starting from?',
+        tip: 'Closest one is fine.',
+        type: 'choice',
+        options: [
+          { id: 'new', label: 'Starting from scratch — no brand yet' },
+          { id: 'rebrand', label: 'Rebranding — replacing what exists now' },
+          { id: 'extend', label: 'Adding to a brand that already works' },
+        ],
+        required: true,
+        gridSpan: 'full',
+      },
+      {
+        id: 'projectDeadline',
+        label: 'Is there a date this needs to be done by?',
+        tip: 'Leave blank if open.',
+        type: 'date',
+        required: false,
+        gridSpan: 'half',
+      },
+      {
         id: 'primaryContact',
         label: 'Your name and job title',
         tip: 'e.g. Sarah Whitton, Owner',
@@ -360,10 +381,15 @@ export function spectrumChoices(poles = []) {
  * sheet opens the first incomplete chapter from it, and the header band
  * renders the jump buttons from it.
  */
-export function getRequiredEmpty(detective = {}) {
+export function getRequiredEmpty(detective = {}, projectDeadline = '') {
   return DETECTIVE_CHAPTERS.flatMap((ch) =>
     ch.fields
-      .filter((f) => f.required && !isFilled(detective?.[f.id]))
+      .filter(
+        (f) =>
+          f.required &&
+          // The date field lives on the project record, not in `detective`.
+          !isFilled(f.type === 'date' ? projectDeadline : detective?.[f.id])
+      )
       .map((f) => ({ id: f.id, label: f.label, chapterId: ch.id }))
   )
 }

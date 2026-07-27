@@ -17808,3 +17808,16 @@ textarea.artboard-brief-input {
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
+
+/* Single-choice rows share the checklist's row treatment — same control
+   language, so "pick one" and "pick many" don't look like separate systems. */
+.define-choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.define-choice .define-check-row input {
+  accent-color: var(--text-primary);
+}

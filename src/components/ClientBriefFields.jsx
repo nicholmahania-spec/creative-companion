@@ -48,7 +48,34 @@ export default function ClientBriefFields({ answers = {}, onChange, idPrefix }) 
                 {f.label}
               </label>
               {f.tip && <p className="discovery-brief-hint">{f.tip}</p>}
-              {f.type === 'checklist' ? (
+              {f.type === 'choice' ? (
+                /* Same row treatment as the checklist so "pick one" and
+                   "pick many" don't read as two different systems. */
+                <div className="define-choice" role="radiogroup" aria-label={f.label}>
+                  {f.options.map((o) => {
+                    const on = answers[f.id] === o.id
+                    return (
+                      <label key={o.id} className={`define-check-row${on ? ' is-on' : ''}`}>
+                        <input
+                          type="radio"
+                          name={fieldId}
+                          checked={on}
+                          onChange={() => onChange(f.id, o.id)}
+                        />
+                        <span>{o.label}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              ) : f.type === 'date' ? (
+                <input
+                  id={fieldId}
+                  type="date"
+                  className="field-input"
+                  value={answers[f.id] || ''}
+                  onChange={(e) => onChange(f.id, e.target.value)}
+                />
+              ) : f.type === 'checklist' ? (
                 <div className="define-checklist">
                   {[
                     {
