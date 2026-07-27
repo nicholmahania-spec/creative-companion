@@ -15990,31 +15990,41 @@ select:focus {
   filter: none !important;
 }
 
-.step-dependency-reminder {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  border-radius: var(--radius);
-  background: var(--bg-muted);
-  border: 1px solid var(--border-subtle);
-}
-
-.step-dependency-reminder-text {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.step-dependency-reminder-fields {
+/* Brief answers carried into the step that uses them. Replaces the boxed
+   "works better with" nag and its inline Define inputs — see the note in
+   StepDependencyReminder.jsx. No card, no border: this is reference, and it
+   should read as a caption on the page rather than a panel competing with
+   the work. One row, truncating, so adding a long answer can never push the
+   page's actual controls down. */
+.step-context-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2) var(--space-5);
+  margin-bottom: var(--space-4);
+  min-width: 0;
 }
 
-.step-dependency-reminder-fields .field-input {
-  flex: 1 1 200px;
+.step-context-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  min-width: 0;
+  max-width: 32rem;
+  font-size: var(--fs-1);
+}
+
+.step-context-label {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+}
+
+.step-context-value {
+  min-width: 0;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .project-menu-item {

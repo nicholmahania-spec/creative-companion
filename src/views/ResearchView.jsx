@@ -442,6 +442,173 @@ export default function ResearchView({
                 visible and never behind a menu — it is the guarantee that a
                 pin dragged out of view can always be found again, which is
                 what makes a free canvas safe here at all. */}
+            {/* Above the board, and never gated on pin count. This strip used
+                to sit BELOW a 60vh canvas, so on a fresh board the only
+                visible way in was one button inside the empty state: URL and
+                Note were off-screen (258px of scrolling on a phone) and
+                Upload was not rendered at all until a pin already existed.
+                Every route in was hidden at exactly the moment you had
+                nothing and needed one. */}
+            <section className="panel brand-section board-add-compact">
+              <div className="board-add-toolbar">
+                {(
+                  <label className="btn btn-secondary board-upload-btn">
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
+                      multiple
+                      className="sr-only"
+                      onChange={(e) => {
+                        uploadMoodFiles(e.target.files)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                )}
+                {/* Separate control, not a second option inside the picker.
+                    `capture` asks the OS for the camera directly, so on a
+                    phone this is one tap to a viewfinder instead of tapping
+                    Upload and then hunting for "Take Photo" in a sheet —
+                    which is the whole point when the reference you want is
+                    the thing in front of you. Hidden where there is no
+                    camera, so it is never a dead control. */}
+                {canCapturePhoto && (
+                  <label className="btn btn-secondary board-upload-btn">
+                    Take photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="sr-only"
+                      onChange={(e) => {
+                        uploadMoodFiles(e.target.files)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                )}
+                <button
+                  type="button"
+                  className={`btn btn-ghost btn-sm research-add-toggle${
+                    boardAddMode === 'url' ? ' is-on' : ''
+                  }`}
+                  onClick={() =>
+                    setBoardAddMode((m) => (m === 'url' ? null : 'url'))
+                  }
+                >
+                  URL
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-ghost btn-sm research-add-toggle${
+                    boardAddMode === 'note' ? ' is-on' : ''
+                  }`}
+                  onClick={() =>
+                    setBoardAddMode((m) => (m === 'note' ? null : 'note'))
+                  }
+                >
+                  Note
+                </button>
+                {deskMood.length > 0 && (
+                  <details className="board-pack-bulk research-advanced">
+                    <summary>Pack tools</summary>
+                    <div className="board-pack-bulk-actions">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => {
+                          const open = deskMood.filter((m) => !m.inPack)
+                          let added = 0
+                          for (const p of open) {
+                            if (
+                              deskMood.filter((m) => m.inPack).length + added >=
+                              6
+                            )
+                              break
+                            const r = toggleMoodPinInPack(p.id)
+                            if (r.ok && r.inPack) added++
+                          }
+                          if (!added) {
+                            flashToast(
+                              deskMood.filter((m) => m.inPack).length >= 6
+                                ? i18nT(locale, 'ui.leaveBehindFull')
+                                : 'Nothing left to star'
+                            )
+                          }
+                        }}
+                      >
+                        Star next
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => {
+                          deskMood
+                            .filter((m) => m.inPack)
+                            .forEach((p) => toggleMoodPinInPack(p.id))
+                        }}
+                      >
+                        Clear ★
+                      </button>
+                    </div>
+                  </details>
+                )}
+              </div>
+              {boardAddMode === 'url' && (
+                <div className="board-inline-form">
+                  <label className="field-label sr-only" htmlFor="board-url">
+                    URL
+                  </label>
+                  <div className="capture-row">
+                    <input
+                      id="board-url"
+                      className="field-input"
+                      value={boardUrl}
+                      onChange={(e) => setBoardUrl(e.target.value)}
+                      placeholder="https://…"
+                      onKeyDown={(e) =>
+                        e.key === 'Enter' && submitBoardUrl()
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={submitBoardUrl}
+                      disabled={!boardUrl.trim() || boardUrlBusy}
+                    >
+                      {boardUrlBusy ? 'Adding…' : 'Add'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {boardAddMode === 'note' && (
+                <div className="board-inline-form">
+                  <label className="field-label sr-only" htmlFor="board-note">
+                    Note
+                  </label>
+                  <div className="capture-row">
+                    <input
+                      id="board-note"
+                      className="field-input"
+                      value={boardNote}
+                      onChange={(e) => setBoardNote(e.target.value)}
+                      placeholder="Direction note"
+                      onKeyDown={(e) =>
+                        e.key === 'Enter' && submitBoardNote()
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={submitBoardNote}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
             <section className="panel brand-section board-wall-panel research-wall">
               {deskMood.length > 0 && (
                 <div className="mood-canvas-bar">
@@ -515,8 +682,16 @@ export default function ResearchView({
               {deskMood.length === 0 && (
                 <div className="empty-state empty-state-craft research-empty">
                   <p className="empty-state-title">Your mood board is empty</p>
+                  {/* The three routes in, named. I had cut this down to
+                      "Drop pictures here, or upload" while moving the empty
+                      state out of the canvas transform, which removed the
+                      only place the page explained itself — what starring is
+                      for, that URLs work, and that this is a board you
+                      arrange rather than a list. */}
                   <p className="empty-state-subtitle">
-                    Drop pictures here, or upload.
+                    Drag pictures in, or use Upload, URL or Note above.
+                    Drag pins to arrange them; star up to 6 to carry into
+                    your brand direction.
                   </p>
                   <label className="btn btn-primary board-upload-btn">
                     Upload images
@@ -847,167 +1022,6 @@ export default function ResearchView({
               </div>
             </section>
 
-            {/* Compact add — below the wall */}
-            <section className="panel brand-section board-add-compact">
-              <div className="board-add-toolbar">
-                {deskMood.length > 0 && (
-                  <label className="btn btn-secondary board-upload-btn">
-                    Upload
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
-                      multiple
-                      className="sr-only"
-                      onChange={(e) => {
-                        uploadMoodFiles(e.target.files)
-                        e.target.value = ''
-                      }}
-                    />
-                  </label>
-                )}
-                {/* Separate control, not a second option inside the picker.
-                    `capture` asks the OS for the camera directly, so on a
-                    phone this is one tap to a viewfinder instead of tapping
-                    Upload and then hunting for "Take Photo" in a sheet —
-                    which is the whole point when the reference you want is
-                    the thing in front of you. Hidden where there is no
-                    camera, so it is never a dead control. */}
-                {canCapturePhoto && (
-                  <label className="btn btn-secondary board-upload-btn">
-                    Take photo
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="sr-only"
-                      onChange={(e) => {
-                        uploadMoodFiles(e.target.files)
-                        e.target.value = ''
-                      }}
-                    />
-                  </label>
-                )}
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm research-add-toggle${
-                    boardAddMode === 'url' ? ' is-on' : ''
-                  }`}
-                  onClick={() =>
-                    setBoardAddMode((m) => (m === 'url' ? null : 'url'))
-                  }
-                >
-                  URL
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm research-add-toggle${
-                    boardAddMode === 'note' ? ' is-on' : ''
-                  }`}
-                  onClick={() =>
-                    setBoardAddMode((m) => (m === 'note' ? null : 'note'))
-                  }
-                >
-                  Note
-                </button>
-                {deskMood.length > 0 && (
-                  <details className="board-pack-bulk research-advanced">
-                    <summary>Pack tools</summary>
-                    <div className="board-pack-bulk-actions">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => {
-                          const open = deskMood.filter((m) => !m.inPack)
-                          let added = 0
-                          for (const p of open) {
-                            if (
-                              deskMood.filter((m) => m.inPack).length + added >=
-                              6
-                            )
-                              break
-                            const r = toggleMoodPinInPack(p.id)
-                            if (r.ok && r.inPack) added++
-                          }
-                          if (!added) {
-                            flashToast(
-                              deskMood.filter((m) => m.inPack).length >= 6
-                                ? i18nT(locale, 'ui.leaveBehindFull')
-                                : 'Nothing left to star'
-                            )
-                          }
-                        }}
-                      >
-                        Star next
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => {
-                          deskMood
-                            .filter((m) => m.inPack)
-                            .forEach((p) => toggleMoodPinInPack(p.id))
-                        }}
-                      >
-                        Clear ★
-                      </button>
-                    </div>
-                  </details>
-                )}
-              </div>
-              {boardAddMode === 'url' && (
-                <div className="board-inline-form">
-                  <label className="field-label sr-only" htmlFor="board-url">
-                    URL
-                  </label>
-                  <div className="capture-row">
-                    <input
-                      id="board-url"
-                      className="field-input"
-                      value={boardUrl}
-                      onChange={(e) => setBoardUrl(e.target.value)}
-                      placeholder="https://…"
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && submitBoardUrl()
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={submitBoardUrl}
-                      disabled={!boardUrl.trim() || boardUrlBusy}
-                    >
-                      {boardUrlBusy ? 'Adding…' : 'Add'}
-                    </button>
-                  </div>
-                </div>
-              )}
-              {boardAddMode === 'note' && (
-                <div className="board-inline-form">
-                  <label className="field-label sr-only" htmlFor="board-note">
-                    Note
-                  </label>
-                  <div className="capture-row">
-                    <input
-                      id="board-note"
-                      className="field-input"
-                      value={boardNote}
-                      onChange={(e) => setBoardNote(e.target.value)}
-                      placeholder="Direction note"
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && submitBoardNote()
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={submitBoardNote}
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-              )}
-            </section>
 
           </div>
         {boardLightbox && (
