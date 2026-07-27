@@ -468,8 +468,6 @@ export function brandPackToMarkdown(pack) {
     if (d.goal) lines.push(`- **Goal:** ${d.goal}`)
     if (d.audience) lines.push(`- **Audience:** ${d.audience}`)
     if (d.feel) lines.push(`- **Feel:** ${d.feel}`)
-    if (d.mustHaves) lines.push(`- **Must-haves:** ${d.mustHaves}`)
-    if (d.niceToHaves) lines.push(`- **Nice-to-haves:** ${d.niceToHaves}`)
     if (d.format) lines.push(`- **Format:** ${d.format}`)
     lines.push('')
   }
@@ -1737,16 +1735,12 @@ const writeWrapped = (
       writeWrapped(decisionLine, { size: 12, role: 'heading' })
     }
     const det = pack?.detective || {}
-    if (det.goal || det.audience || det.feel || det.mustHaves) {
+    if (det.goal || det.audience || det.feel) {
       kicker('Design Detective Sheet')
       if (det.goal) writeWrapped(`Goal: ${det.goal}`, { size: 12, role: 'heading' })
       if (det.audience)
         writeWrapped(`Audience: ${det.audience}`, { size: 11 })
       if (det.feel) writeWrapped(`Feel: ${det.feel}`, { size: 11 })
-      if (det.mustHaves)
-        writeWrapped(`Must-haves: ${det.mustHaves}`, { size: 11 })
-      if (det.niceToHaves)
-        writeWrapped(`Nice-to-haves: ${det.niceToHaves}`, { size: 10, color: [70, 70, 70] })
     }
     if (pack?.brief) {
       kicker('Positioning')

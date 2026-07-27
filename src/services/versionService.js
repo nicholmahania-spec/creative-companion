@@ -65,8 +65,6 @@ class VersionService {
           goal: project.detective.goal,
           audience: project.detective.audience,
           feel: project.detective.feel,
-          mustHaves: project.detective.mustHaves,
-          niceToHaves: project.detective.niceToHaves,
           avoid: project.detective.avoid,
           deliverables: project.detective.deliverables,
           technical: project.detective.technical,

@@ -58,7 +58,6 @@ export function blankDetective() {
     story: '',
     usp: '',
     brandWords: '',
-    fiveYearVision: '',
     // Target audience & market
     audience: '',
     feel: '',
@@ -66,20 +65,15 @@ export function blankDetective() {
     competitors: '',
     // Brand voice & creative direction
     toneOfVoice: '',
-    visualStyleKeywords: '',
     brandAsPerson: '',
-    brandSpectrum: '',
-    admiredBrands: '',
     inspirationLinks: '',
     /** What to avoid — carried forward so it isn't lost by the time Design happens */
     avoid: '',
     // Deliverables & technical scope
     /** What specifically ships — one line per deliverable */
     deliverables: '',
-    mustHaves: '',
     /** File formats, scalability, production/technical requirements */
     technical: '',
-    niceToHaves: '',
     existingAssets: '',
     decisionMakers: '',
     /** Milestones: [{ id, label, date }] — a brief can have several dated
@@ -109,11 +103,6 @@ export function composeBriefFromDetective(detective) {
     parts.push(`Audience pains/desires: ${d.audiencePains.trim()}`)
   if (d.competitors?.trim()) parts.push(`Competitors: ${d.competitors.trim()}`)
   if (d.toneOfVoice?.trim()) parts.push(`Tone of voice: ${d.toneOfVoice.trim()}`)
-  if (d.visualStyleKeywords?.trim())
-    parts.push(`Visual style: ${d.visualStyleKeywords.trim()}`)
-  if (d.mustHaves?.trim()) parts.push(`Must-haves: ${d.mustHaves.trim()}`)
-  if (d.niceToHaves?.trim())
-    parts.push(`Nice-to-haves: ${d.niceToHaves.trim()}`)
   if (d.avoid?.trim()) parts.push(`Avoid: ${d.avoid.trim()}`)
   if (d.deliverables?.trim())
     parts.push(`Deliverables: ${d.deliverables.trim()}`)
@@ -1934,21 +1923,15 @@ const useAppStore = create(
               story: project.detective.story,
               usp: project.detective.usp,
               brandWords: project.detective.brandWords,
-              fiveYearVision: project.detective.fiveYearVision,
               audience: project.detective.audience,
               feel: project.detective.feel,
               audiencePains: project.detective.audiencePains,
               competitors: project.detective.competitors,
               toneOfVoice: project.detective.toneOfVoice,
-              visualStyleKeywords: project.detective.visualStyleKeywords,
               brandAsPerson: project.detective.brandAsPerson,
-              brandSpectrum: project.detective.brandSpectrum,
-              admiredBrands: project.detective.admiredBrands,
               inspirationLinks: project.detective.inspirationLinks,
               avoid: project.detective.avoid,
               deliverables: project.detective.deliverables,
-              mustHaves: project.detective.mustHaves,
-              niceToHaves: project.detective.niceToHaves,
               technical: project.detective.technical,
               existingAssets: project.detective.existingAssets,
               decisionMakers: project.detective.decisionMakers,
