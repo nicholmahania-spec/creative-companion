@@ -7285,6 +7285,114 @@ body.cc-printing-page button {
   pointer-events: auto;
 }
 
+/* ── Mood canvas ─────────────────────────────────────────────────────────
+   The board is a free canvas: pan, zoom, drag, resize, layer. Pins are
+   absolutely positioned in stage coordinates and the stage is transformed as
+   a whole, so zooming is one composited transform rather than a relayout of
+   every card.
+
+   Aspect ratio is deliberately NOT constrained here. The old wall forced
+   every pin to 4/3 with !important, which meant a tall type specimen and a
+   wide screenshot arrived as the same rectangle — on a mood board the shape
+   of a reference IS part of what you are comparing, so the canvas lets each
+   pin keep its own. */
+.mood-canvas-viewport {
+  position: relative;
+  overflow: hidden;
+  min-height: 60vh;
+  touch-action: none;
+  cursor: grab;
+  overscroll-behavior: contain;
+}
+
+.mood-canvas-viewport:active {
+  cursor: grabbing;
+}
+
+.mood-canvas-stage {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.mood-canvas-stage.has-pins {
+  display: block;
+  columns: auto;
+}
+
+.mood-card.is-canvas-pin {
+  position: absolute;
+  margin: 0;
+  break-inside: auto;
+  cursor: grab;
+  /* Only the geometry animates on selection — never position, which would
+     fight the pointer during a drag. */
+  transition: box-shadow var(--transition);
+}
+
+.mood-card.is-canvas-pin:active {
+  cursor: grabbing;
+}
+
+/* Selection reads as a ring in --text-primary: the one value in a grayscale
+   palette guaranteed to beat an arbitrary photograph in either theme. */
+.mood-card.is-canvas-pin.is-selected {
+  box-shadow: 0 0 0 2px var(--text-primary);
+}
+
+/* The canvas sizes pins by width; images take their natural height so the
+   reference keeps its proportions. */
+.mood-card.is-canvas-pin .mood-pin-media,
+.mood-card.is-canvas-pin .mood-pin-face {
+  aspect-ratio: auto;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+}
+
+.mood-card.is-canvas-pin .mood-pin-img {
+  position: static;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.mood-card-resize {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--text-primary);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.mood-canvas-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.mood-canvas-zoom,
+.mood-canvas-layer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mood-canvas-zoom-level {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.5ch;
+  text-align: center;
+}
+
 /* No hover gate. The note is the only record of WHY a picture is on the
    board — the image itself carries none of that — so hiding it until the
    cursor happens to be on top means the reasoning is gone on every return

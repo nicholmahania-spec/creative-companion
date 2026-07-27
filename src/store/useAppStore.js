@@ -1454,6 +1454,64 @@ const useAppStore = create(
         })),
 
       /**
+       * Canvas geometry for one pin: position, size and stacking order.
+       *
+       * Additive and optional — a pin with no `x`/`y` has simply never been
+       * moved, and the canvas auto-places it from `boardOrder`. That is what
+       * makes this safe to add to boards that already exist, and it is also
+       * the rule that keeps the canvas decision-free: arriving pins land
+       * somewhere sensible, so arranging is something you may do, never
+       * something you must do before you can work.
+       *
+       * @param {object} patch - any of { x, y, w, h, z }
+       */
+      setMoodPinLayout: (id, patch = {}) =>
+        set((state) => ({
+          moodItems: state.moodItems.map((m) =>
+            m.id === id ? { ...m, ...patch } : m
+          ),
+        })),
+
+      /** Raise a pin above every other pin in its own project. Scoped per
+       *  project so one busy board cannot inflate z for the others. */
+      bringMoodPinToFront: (id) =>
+        set((state) => {
+          const pin = (state.moodItems || []).find((m) => m.id === id)
+          if (!pin) return {}
+          const projectId = pin.projectId ?? state.currentProjectId
+          const top = (state.moodItems || []).reduce((max, m) => {
+            const same = m.projectId == null || m.projectId === projectId
+            return same ? Math.max(max, m.z ?? 0) : max
+          }, 0)
+          if ((pin.z ?? 0) === top && top > 0) return {}
+          return {
+            moodItems: state.moodItems.map((m) =>
+              m.id === id ? { ...m, z: top + 1 } : m
+            ),
+          }
+        }),
+
+      /** Drop a pin behind every other pin in its project. Uses a floor of 0
+       *  rather than negative z so nothing can slip behind the canvas itself. */
+      sendMoodPinToBack: (id) =>
+        set((state) => {
+          const pin = (state.moodItems || []).find((m) => m.id === id)
+          if (!pin) return {}
+          const projectId = pin.projectId ?? state.currentProjectId
+          const scoped = (state.moodItems || []).filter(
+            (m) => m.projectId == null || m.projectId === projectId
+          )
+          const bottom = scoped.reduce((min, m) => Math.min(min, m.z ?? 0), 0)
+          return {
+            moodItems: state.moodItems.map((m) => {
+              if (m.id === id) return { ...m, z: bottom }
+              const same = m.projectId == null || m.projectId === projectId
+              return same ? { ...m, z: (m.z ?? 0) + 1 } : m
+            }),
+          }
+        }),
+
+      /**
        * Star/unstar a pin for the brand pack (max 6 per project).
        * @returns {{ ok: boolean, error?: string, inPack?: boolean }}
        */

@@ -100,6 +100,68 @@ export function pinFaceCssText(pin = {}) {
   return parts.join(';')
 }
 
+/* ── Canvas geometry ──────────────────────────────────────────────────────
+   The board is a free canvas: pins carry x/y/w/z in stage coordinates. None
+   of that is required — a pin that has never been moved has no x/y, and
+   `autoPlacePin` derives one from its board order.
+
+   That fallback is the whole reason the canvas does not cost a decision.
+   Dropping an image never asks "where?", it lands in the next grid slot and
+   can be moved later or never. It also means existing boards open arranged
+   rather than piled at the origin. */
+
+/** Default pin width on the canvas, in stage px. */
+export const PIN_DEFAULT_W = 240
+/** Smallest a pin may be dragged — below this the star and menu stop being
+ *  usable targets, so it is a floor on the controls, not on taste. */
+export const PIN_MIN_W = 120
+export const PIN_MAX_W = 1200
+/** Columns used when auto-placing. Wide enough to read as a wall, narrow
+ *  enough that a fresh board fits one screen at Fit-all. */
+const AUTO_COLS = 4
+const AUTO_GAP = 28
+
+/** Where a never-moved pin sits, derived from its position in board order. */
+export function autoPlacePin(index, width = PIN_DEFAULT_W) {
+  const col = index % AUTO_COLS
+  const row = Math.floor(index / AUTO_COLS)
+  return {
+    x: col * (width + AUTO_GAP),
+    y: row * (width * 0.78 + AUTO_GAP),
+  }
+}
+
+/** Resolve a pin's canvas geometry, falling back to auto-placement. */
+export function pinGeometry(pin = {}, index = 0) {
+  const w = Number.isFinite(pin.w) ? pin.w : PIN_DEFAULT_W
+  const placed = Number.isFinite(pin.x) && Number.isFinite(pin.y)
+  const auto = placed ? null : autoPlacePin(index, w)
+  return {
+    x: placed ? pin.x : auto.x,
+    y: placed ? pin.y : auto.y,
+    w,
+    z: Number.isFinite(pin.z) ? pin.z : 0,
+    placed,
+  }
+}
+
+/** Bounding box of every pin, for Fit all. Heights are unknown until the
+ *  images load, so this estimates with the same ratio auto-placement uses —
+ *  Fit all only has to guarantee nothing is off-screen, not be pixel-exact. */
+export function boardBounds(pins = []) {
+  if (!pins.length) return { x: 0, y: 0, w: 1, h: 1 }
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  pins.forEach((pin, i) => {
+    const g = pinGeometry(pin, i)
+    const h = g.w * 0.95
+    minX = Math.min(minX, g.x)
+    minY = Math.min(minY, g.y)
+    maxX = Math.max(maxX, g.x + g.w)
+    maxY = Math.max(maxY, g.y + h)
+  })
+  return { x: minX, y: minY, w: Math.max(1, maxX - minX), h: Math.max(1, maxY - minY) }
+}
+
 /** Long-edge cap for stored pin images, in CSS pixels.
  *
  *  Pins are persisted as data URLs inside the localStorage-backed store, and

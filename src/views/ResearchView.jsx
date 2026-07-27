@@ -6,6 +6,8 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
+  useRef,
 } from 'react'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/processGuide'
@@ -14,7 +16,12 @@ import {
   pinFaceStyle,
   pinImageUrl,
   readImageFilesAsPins,
+  pinGeometry,
+  boardBounds,
+  PIN_MIN_W,
+  PIN_MAX_W,
 } from '../lib/moodPins'
+import { useCanvasViewport } from '../lib/useCanvasViewport'
 import { extractDominantColors, sampleColorAt } from '../lib/extractColors'
 import {
   normalizeLocale,
@@ -55,6 +62,9 @@ export default function ResearchView({
   const setPackHeroPin = useAppStore((s) => s.setPackHeroPin)
   const reorderBoardPins = useAppStore((s) => s.reorderBoardPins)
   const addPaletteColor = useAppStore((s) => s.addPaletteColor)
+  const setMoodPinLayout = useAppStore((s) => s.setMoodPinLayout)
+  const bringMoodPinToFront = useAppStore((s) => s.bringMoodPinToFront)
+  const sendMoodPinToBack = useAppStore((s) => s.sendMoodPinToBack)
   const [pinSwatches, setPinSwatches] = useState({})
 
   const [boardUrl, setBoardUrl] = useState('')
@@ -234,6 +244,111 @@ export default function ResearchView({
   const starred = deskMood.filter((m) => m.inPack).length
   const words = String(brandWords || '').trim()
 
+  /* ── Canvas ─────────────────────────────────────────────────────────────
+     The board is a free canvas rather than a grid. Pins that have never been
+     moved are auto-placed from their board order, so a new pin never asks
+     "where does this go?" and an existing board opens already arranged —
+     positioning is available, never required. */
+  const viewportRef = useRef(null)
+  const { scale, tx, ty, zoomBy, fitAll, startPan, onWheel, toStage } =
+    useCanvasViewport(viewportRef)
+  const [selectedPinId, setSelectedPinId] = useState(null)
+  const dragRef = useRef(null)
+  const didInitialFit = useRef(false)
+
+  const bounds = useMemo(() => boardBounds(deskMood), [deskMood])
+
+  // Frame the whole board on first open, so nobody lands on empty canvas with
+  // their pins somewhere off-screen.
+  useEffect(() => {
+    if (didInitialFit.current || !deskMood.length) return
+    didInitialFit.current = true
+    const id = requestAnimationFrame(() => fitAll(bounds))
+    return () => cancelAnimationFrame(id)
+  }, [deskMood.length, bounds, fitAll])
+
+  const beginPinDrag = (e, item, index) => {
+    if (e.button != null && e.button !== 0) return
+    const g = pinGeometry(item, index)
+    const start = toStage(e.clientX, e.clientY)
+    dragRef.current = {
+      id: item.id,
+      mode: 'move',
+      originX: g.x,
+      originY: g.y,
+      startX: start.x,
+      startY: start.y,
+    }
+    setSelectedPinId(item.id)
+    bringMoodPinToFront?.(item.id)
+    e.stopPropagation()
+    e.preventDefault()
+  }
+
+  const beginPinResize = (e, item, index) => {
+    const g = pinGeometry(item, index)
+    const start = toStage(e.clientX, e.clientY)
+    dragRef.current = {
+      id: item.id,
+      mode: 'resize',
+      originW: g.w,
+      startX: start.x,
+    }
+    setSelectedPinId(item.id)
+    e.stopPropagation()
+    e.preventDefault()
+  }
+
+  useEffect(() => {
+    const onMove = (e) => {
+      const d = dragRef.current
+      if (!d) return
+      const p = toStage(e.clientX, e.clientY)
+      if (d.mode === 'move') {
+        setMoodPinLayout?.(d.id, {
+          x: Math.round(d.originX + (p.x - d.startX)),
+          y: Math.round(d.originY + (p.y - d.startY)),
+        })
+      } else {
+        const next = d.originW + (p.x - d.startX)
+        setMoodPinLayout?.(d.id, {
+          w: Math.round(Math.min(PIN_MAX_W, Math.max(PIN_MIN_W, next))),
+        })
+      }
+    }
+    const onUp = () => {
+      dragRef.current = null
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+  }, [toStage, setMoodPinLayout])
+
+  /* Arrow keys nudge the selected pin. The pointer path is a mouse-only
+     capability otherwise, and dragging is the whole interaction here. */
+  useEffect(() => {
+    if (!selectedPinId) return undefined
+    const onKey = (e) => {
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      const idx = deskMood.findIndex((m) => m.id === selectedPinId)
+      if (idx < 0) return
+      const g = pinGeometry(deskMood[idx], idx)
+      const step = e.shiftKey ? 40 : 8
+      e.preventDefault()
+      setMoodPinLayout?.(selectedPinId, {
+        x: g.x + (e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0),
+        y: g.y + (e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0),
+      })
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedPinId, deskMood, setMoodPinLayout])
+
   return (
     <>
           <div className="studio-view surface-wall view-enter research-studio" data-nav-dir={navDir}>
@@ -292,12 +407,79 @@ export default function ResearchView({
               </div>
             </div>
 
-            {/* Wall is the stage — masonry when pins exist */}
+            {/* The canvas is the stage. Fit all is deliberately always
+                visible and never behind a menu — it is the guarantee that a
+                pin dragged out of view can always be found again, which is
+                what makes a free canvas safe here at all. */}
             <section className="panel brand-section board-wall-panel research-wall">
+              {deskMood.length > 0 && (
+                <div className="mood-canvas-bar">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => fitAll(bounds)}
+                  >
+                    Fit all
+                  </button>
+                  <div className="mood-canvas-zoom">
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => zoomBy(1 / 1.2)}
+                      aria-label="Zoom out"
+                    >
+                      −
+                    </button>
+                    <span className="mood-canvas-zoom-level">
+                      {Math.round(scale * 100)}%
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => zoomBy(1.2)}
+                      aria-label="Zoom in"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {selectedPinId && (
+                    <div className="mood-canvas-layer">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => bringMoodPinToFront?.(selectedPinId)}
+                      >
+                        Bring to front
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => sendMoodPinToBack?.(selectedPinId)}
+                      >
+                        Send to back
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               <div
-                className={`mood-board${deskMood.length ? ' has-pins is-masonry' : ''}${
-                  deskMood.length === 1 ? ' single-pin' : ''
-                }`}
+                ref={viewportRef}
+                className={`mood-canvas-viewport${deskMood.length ? ' has-pins' : ''}`}
+                onWheel={onWheel}
+                onPointerDown={(e) => {
+                  // Dragging empty canvas pans; clicking it clears selection.
+                  if (e.target === e.currentTarget || e.target.classList.contains('mood-canvas-stage')) {
+                    setSelectedPinId(null)
+                    startPan(e)
+                  }
+                }}
+              >
+              <div
+                className={`mood-board mood-canvas-stage${deskMood.length ? ' has-pins' : ''}`}
+                style={{
+                  transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
+                  transformOrigin: '0 0',
+                }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault()
@@ -383,24 +565,22 @@ export default function ResearchView({
                       item.type === 'spark' ||
                       item.type === 'color' ||
                       item.type === 'note'
+                    const geo = pinGeometry(item, index)
                     return (
                       <article
                         key={item.id || index}
                         data-pin-id={item.id}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData(
-                            'text/cc-pin-id',
-                            String(item.id)
-                          )
-                          e.dataTransfer.effectAllowed = 'move'
-                          setBoardDragId(item.id)
+                        onPointerDown={(e) => beginPinDrag(e, item, index)}
+                        style={{
+                          left: `${geo.x}px`,
+                          top: `${geo.y}px`,
+                          width: `${geo.w}px`,
+                          zIndex: geo.z,
                         }}
-                        onDragEnd={() => setBoardDragId(null)}
-                        className={`mood-card${isQuote && !isImageFace ? ' is-quote' : ''}${
-                          index === 0 ? ' is-hero' : ''
+                        className={`mood-card is-canvas-pin${
+                          isQuote && !isImageFace ? ' is-quote' : ''
                         }${item.inPack ? ' is-pack-pin' : ''}${
-                          boardDragId === item.id ? ' is-dragging' : ''
+                          selectedPinId === item.id ? ' is-selected' : ''
                         }${item.packHero ? ' is-pack-hero' : ''}`}
                       >
                         {isImageFace ? (
@@ -587,10 +767,21 @@ export default function ResearchView({
                             }
                           />
                         </div>
+                        {/* Resize grip. Only on the selected pin, so a board
+                            at rest shows none of them — the handle is a tool,
+                            not decoration on every card. */}
+                        {selectedPinId === item.id && (
+                          <span
+                            className="mood-card-resize"
+                            role="presentation"
+                            onPointerDown={(e) => beginPinResize(e, item, index)}
+                          />
+                        )}
                       </article>
                     )
                   })
                 )}
+              </div>
               </div>
             </section>
 
