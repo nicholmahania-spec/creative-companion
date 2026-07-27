@@ -16841,3 +16841,56 @@ textarea.artboard-brief-input {
 .more-menu-item.is-danger {
   color: var(--danger);
 }
+
+/* ============================================================
+   Deliverables checklist — the whole scope, visible at once
+   ============================================================ */
+.define-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-2);
+}
+
+.define-checklist-group {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.define-checklist-legend {
+  padding: 0 0 var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.define-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  /* 44px row: this is the most-tapped control on the page for a client. */
+  min-height: 2.75rem;
+  padding: var(--space-1) 0;
+  font-size: var(--fs-2);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.define-check-row.is-on {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.define-check-row input {
+  flex: 0 0 auto;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.15rem;
+  accent-color: var(--text-primary);
+}
+
+.define-check-row:hover {
+  color: var(--text-primary);
+}

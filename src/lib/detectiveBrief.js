@@ -206,12 +206,21 @@ export const DETECTIVE_CHAPTERS = [
     railLabel: 'Needs',
     fields: [
       {
-        id: 'deliverables',
+        id: 'deliverablesPicked',
         label: 'What do you need made?',
-        tip: 'Logo, business cards, social graphics, packaging — list whatever you know you need.',
-        area: true,
+        tip: 'Tick everything you know you want. Anything marked “quoted separately” is priced on its own — ticking it just tells me you’re interested.',
+        type: 'checklist',
+        options: DELIVERABLE_OPTIONS,
         required: true,
-        gridSpan: 'half',
+        gridSpan: 'full',
+      },
+      {
+        id: 'deliverables',
+        label: 'Anything else you need?',
+        tip: 'Anything not on the list above.',
+        area: true,
+        required: false,
+        gridSpan: 'full',
       },
       {
         id: 'technical',
@@ -243,8 +252,29 @@ export const DETECTIVE_CHAPTERS = [
 ]
 
 export function isFilled(val) {
+  if (Array.isArray(val)) return val.length > 0
   return String(val || '').trim().length > 0
 }
+
+/** Standard brand-identity scope. `extra` marks what is quoted separately —
+ *  saying so on the form itself prevents the awkward conversation later. */
+export const DELIVERABLE_OPTIONS = [
+  { id: 'logoPrimary', label: 'Primary logo' },
+  { id: 'logoVariations', label: 'Logo variations (stacked, horizontal, icon)' },
+  { id: 'colourPalette', label: 'Colour palette' },
+  { id: 'typography', label: 'Typefaces' },
+  { id: 'guidelines', label: 'Brand guidelines document' },
+  { id: 'businessCard', label: 'Business cards' },
+  { id: 'socialKit', label: 'Social media profile graphics' },
+  { id: 'stationery', label: 'Letterhead and stationery', extra: true },
+  { id: 'emailSignature', label: 'Email signature', extra: true },
+  { id: 'packaging', label: 'Packaging', extra: true },
+  { id: 'signage', label: 'Signage or vehicle graphics', extra: true },
+  { id: 'merch', label: 'Apparel or merchandise', extra: true },
+  { id: 'printCollateral', label: 'Brochures or print material', extra: true },
+  { id: 'illustration', label: 'Custom icons or illustration', extra: true },
+  { id: 'website', label: 'Website design', extra: true },
+]
 
 export function getDetectiveProgress(detective = {}) {
   const chapters = DETECTIVE_CHAPTERS.map((ch) => {

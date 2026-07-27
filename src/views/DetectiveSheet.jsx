@@ -24,6 +24,42 @@ const prefersReducedMotion = () =>
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
 
+/** Checkboxes, not a dropdown or a text box: the whole list has to be
+ *  visible at once — a client can't tick what they can't see, and a closed
+ *  control is a memory test. Items quoted separately are labelled inline so
+ *  ticking one never turns into a surprise on the invoice. */
+function ChecklistField({ field, selected, onToggle }) {
+  const picked = Array.isArray(selected) ? selected : []
+  const groups = [
+    { key: 'included', label: 'Included', items: field.options.filter((o) => !o.extra) },
+    { key: 'extra', label: 'Quoted separately', items: field.options.filter((o) => o.extra) },
+  ]
+  return (
+    <div className="define-checklist">
+      {groups.map((g) => (
+        <fieldset key={g.key} className="define-checklist-group">
+          <legend className="define-checklist-legend">{g.label}</legend>
+          {g.items.map((o) => {
+            const on = picked.includes(o.id)
+            return (
+              <label key={o.id} className={`define-check-row${on ? ' is-on' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={on}
+                  onChange={() =>
+                    onToggle(on ? picked.filter((x) => x !== o.id) : [...picked, o.id])
+                  }
+                />
+                <span>{o.label}</span>
+              </label>
+            )
+          })}
+        </fieldset>
+      ))}
+    </div>
+  )
+}
+
 export default function DetectiveSheet({
   detective = {},
   updateDetective,
@@ -69,7 +105,13 @@ export default function DetectiveSheet({
         trackChapterNavigation(chapterId, 'open')
       }
       requestAnimationFrame(() => {
-        const el = document.getElementById(`detective-${fieldId}`)
+        const el =
+          document.getElementById(`detective-${fieldId}`) ||
+          // Checklist fields have no single input to focus — land on the
+          // first checkbox so the jump still puts the cursor on the work.
+          document
+            .getElementById(`detective-field-${fieldId}`)
+            ?.querySelector('input[type="checkbox"]')
         if (!el) return
         el.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
         el.focus()
@@ -240,6 +282,7 @@ export default function DetectiveSheet({
                   return (
                     <div
                       key={f.id}
+                      id={`detective-field-${f.id}`}
                       className={`define-field${focused ? ' is-focused' : ''}${
                         filled ? ' is-filled' : ''
                       }`}
@@ -264,7 +307,16 @@ export default function DetectiveSheet({
                         )}
                       </div>
                       <div className="define-field-control">
-                        {f.area ? (
+                        {f.type === 'checklist' ? (
+                          <ChecklistField
+                            field={f}
+                            selected={detective?.[f.id]}
+                            onToggle={(next) => {
+                              updateDetective?.(f.id, next)
+                              trackDetectiveFieldUpdate(f.id, next.join(', '), ch.id)
+                            }}
+                          />
+                        ) : f.area ? (
                           <textarea
                             id={`detective-${f.id}`}
                             className="define-input field-input"

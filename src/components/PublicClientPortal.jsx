@@ -216,7 +216,39 @@ export default function PublicClientPortal({ portalId }) {
                           {f.label}
                         </label>
                         {f.tip && <p className="discovery-brief-hint">{f.tip}</p>}
-                        {f.area ? (
+                        {f.type === 'checklist' ? (
+                          <div className="define-checklist">
+                            {[
+                              { key: 'included', label: 'Included', items: f.options.filter((o) => !o.extra) },
+                              { key: 'extra', label: 'Quoted separately', items: f.options.filter((o) => o.extra) },
+                            ].map((g) => (
+                              <fieldset key={g.key} className="define-checklist-group">
+                                <legend className="define-checklist-legend">{g.label}</legend>
+                                {g.items.map((o) => {
+                                  const picked = Array.isArray(formAnswers[f.id]) ? formAnswers[f.id] : []
+                                  const on = picked.includes(o.id)
+                                  return (
+                                    <label key={o.id} className={`define-check-row${on ? ' is-on' : ''}`}>
+                                      <input
+                                        type="checkbox"
+                                        checked={on}
+                                        onChange={() =>
+                                          setFormAnswers((a) => ({
+                                            ...a,
+                                            [f.id]: on
+                                              ? picked.filter((x) => x !== o.id)
+                                              : [...picked, o.id],
+                                          }))
+                                        }
+                                      />
+                                      <span>{o.label}</span>
+                                    </label>
+                                  )
+                                })}
+                              </fieldset>
+                            ))}
+                          </div>
+                        ) : f.area ? (
                           <textarea
                             id={`cp-${f.id}`}
                             className="field-input"

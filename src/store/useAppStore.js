@@ -1,3 +1,4 @@
+import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
@@ -71,6 +72,7 @@ export function blankDetective() {
     avoid: '',
     // Deliverables & technical scope
     /** What specifically ships — one line per deliverable */
+    deliverablesPicked: [],
     deliverables: '',
     /** File formats, scalability, production/technical requirements */
     technical: '',
@@ -104,8 +106,14 @@ export function composeBriefFromDetective(detective) {
   if (d.competitors?.trim()) parts.push(`Competitors: ${d.competitors.trim()}`)
   if (d.toneOfVoice?.trim()) parts.push(`Tone of voice: ${d.toneOfVoice.trim()}`)
   if (d.avoid?.trim()) parts.push(`Avoid: ${d.avoid.trim()}`)
+  if (Array.isArray(d.deliverablesPicked) && d.deliverablesPicked.length) {
+    const names = d.deliverablesPicked
+      .map((id) => DELIVERABLE_OPTIONS.find((o) => o.id === id)?.label || id)
+      .join(', ')
+    parts.push(`Deliverables: ${names}`)
+  }
   if (d.deliverables?.trim())
-    parts.push(`Deliverables: ${d.deliverables.trim()}`)
+    parts.push(`Also needed: ${d.deliverables.trim()}`)
   if (d.technical?.trim()) parts.push(`Technical: ${d.technical.trim()}`)
   if (d.existingAssets?.trim())
     parts.push(`Existing assets to keep: ${d.existingAssets.trim()}`)
