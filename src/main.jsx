@@ -70,15 +70,44 @@ if (import.meta.env.DEV) {
 
 // PWA: offline shell + cached assets. Desk data is localStorage (works offline).
 // Failures are silent so login still works without SW.
+//
+// Production only. In dev the cached shell wins over what the dev server is
+// serving, so edits appear not to land: the file on disk is correct, Vite
+// serves the correct module, and the page runs the previous one. That failure
+// is worse than it sounds because it is silent and it lies — a fixed bug
+// reappears, and a half-updated module graph throws errors ("Invalid hook
+// call") that point at code which is not actually wrong.
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const swUrl = `${import.meta.env.BASE_URL}sw.js`
-    navigator.serviceWorker
-      .register(swUrl)
-      .then((reg) => {
-        // Pick up new shell when a fresh deploy is available
-        if (reg && reg.update) reg.update().catch(() => {})
-      })
-      .catch(() => {})
-  })
+  if (import.meta.env.DEV) {
+    // Skipping registration is not enough on its own: a worker installed by
+    // an earlier build stays active and keeps serving its cache. Tear down
+    // whatever is already there, once, on load.
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+        .then((results) => {
+          if (!results.some(Boolean)) return
+          console.info(
+            '[dev] Unregistered a service worker left over from a production build — reload once if the page looks stale.'
+          )
+          if (typeof caches === 'undefined') return undefined
+          return caches
+            .keys()
+            .then((names) => Promise.all(names.map((n) => caches.delete(n))))
+        })
+        .catch(() => {})
+    })
+  } else {
+    window.addEventListener('load', () => {
+      const swUrl = `${import.meta.env.BASE_URL}sw.js`
+      navigator.serviceWorker
+        .register(swUrl)
+        .then((reg) => {
+          // Pick up new shell when a fresh deploy is available
+          if (reg && reg.update) reg.update().catch(() => {})
+        })
+        .catch(() => {})
+    })
+  }
 }
