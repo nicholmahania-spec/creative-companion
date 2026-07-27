@@ -10488,7 +10488,15 @@ body:has(.app.deep)::after {
    actually is. */
 .define-chapter-rail {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  /* One column, as the comment above has always specified. This was
+     repeat(5, 1fr): each ~172px track left ~112px for the count line after
+     .define-chapter-tab-count's padding-left, so some tabs wrapped to two
+     lines and some didn't — five tabs of unequal height with no shared
+     baseline, which is the exact "nothing lines up" failure predicted four
+     lines up. One column also restores the premise of the .is-active 2px
+     inset left rule, which reads as a position marker in a vertical stack
+     and as a divider between tabs in a horizontal one. */
+  grid-template-columns: 1fr;
   gap: 0;
   margin-bottom: var(--space-6);
   padding: 0;
@@ -12790,7 +12798,14 @@ select:focus {
 }
 
 /* Hyper-focus mask uses prefs vars set on .app-shell */
-.define-fields:focus-within .define-field:not(:focus-within),
+/* Trigger is .define-chapters (the whole sheet), not .define-fields (one
+   chapter). At >=768px every chapter renders at once, so the old scope dimmed
+   the other fields in the chapter you were typing in while leaving the four
+   chapters you were NOT in at full strength — the subject became the faintest
+   region on screen. Field-level granularity is kept, per the
+   --focus-mask-opacity note above; only the ancestor widens, so every
+   unfocused field on the sheet now recedes equally. */
+.define-chapters:focus-within .define-field:not(:focus-within),
 .ideate-directions:focus-within .ideate-dir-card:not(:focus-within),
 .research-studio .mood-board:has(.mood-pin-note-input:focus) .mood-card:not(:focus-within),
 .review-studio:has(.review-notes-input:focus) .review-ready-panel,
@@ -16073,10 +16088,22 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
   color: var(--text-secondary);
 }
 
+/* Related items sit close, unrelated items sit far. This gap was 1.75rem
+   while .field-block inside it was 2rem — the interval *within* a group was
+   larger than the interval *between* groups, so the five sections read as
+   one undifferentiated 30-item list and no grouping survived at all. The
+   section break is now the largest interval on the page, and fields inside
+   a section are pulled tighter than the global default (rule below). */
 .public-fill-section {
   border: none;
   padding: 0;
-  margin: 0 0 1.75rem;
+  margin: 0 0 var(--space-7);
+}
+
+/* Scoped to this card only — the global .field-block 2rem still applies
+   everywhere else. Pairs with the rule above to make grouping legible. */
+.public-fill-card .field-block {
+  margin-bottom: var(--space-5);
 }
 
 .public-fill-section legend {
