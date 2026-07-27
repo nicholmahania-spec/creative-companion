@@ -100,6 +100,60 @@ export function pinFaceCssText(pin = {}) {
   return parts.join(';')
 }
 
+/** Long-edge cap for stored pin images, in CSS pixels.
+ *
+ *  Pins are persisted as data URLs inside the localStorage-backed store, and
+ *  localStorage is ~5MB for the WHOLE origin — shared with the brief, tasks
+ *  and every project. A single 3MB phone photo becomes ~4MB of base64, so two
+ *  of them exceeded the budget and the write threw QuotaExceededError. Because
+ *  the store persists one blob, that failure took the brief and the projects
+ *  down with it, silently, until the next reload revealed the loss.
+ *
+ *  1600px is well beyond what a reference thumbnail or the lightbox needs, and
+ *  it brings a typical photo to ~200KB — a ~20x reduction that makes the cap
+ *  unreachable in normal use. */
+export const MAX_STORED_IMAGE_DIM = 1600
+
+/** Re-encode an image data URL down to MAX_STORED_IMAGE_DIM on its long edge.
+ *  Resolves to the original string if anything fails — a slightly-too-large
+ *  pin is better than a lost one. */
+function downscaleDataUrl(dataUrl, mime) {
+  return new Promise((resolve) => {
+    if (typeof document === 'undefined' || !String(dataUrl).startsWith('data:image')) {
+      resolve(dataUrl)
+      return
+    }
+    const img = new Image()
+    img.onload = () => {
+      try {
+        const { naturalWidth: w, naturalHeight: h } = img
+        if (!w || !h) return resolve(dataUrl)
+        const longEdge = Math.max(w, h)
+        if (longEdge <= MAX_STORED_IMAGE_DIM) return resolve(dataUrl)
+        const scale = MAX_STORED_IMAGE_DIM / longEdge
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(w * scale)
+        canvas.height = Math.round(h * scale)
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return resolve(dataUrl)
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        // PNG round-trips badly for photographs; JPEG at 0.82 is
+        // indistinguishable at reference size and a fraction of the bytes.
+        // Transparency is preserved by keeping PNG when that is the source.
+        const out =
+          mime === 'image/png'
+            ? canvas.toDataURL('image/png')
+            : canvas.toDataURL('image/jpeg', 0.82)
+        resolve(out && out.length < dataUrl.length ? out : dataUrl)
+      } catch {
+        resolve(dataUrl)
+      }
+    }
+    img.onerror = () => resolve(dataUrl)
+    img.src = dataUrl
+  })
+}
+
 /**
  * Read image files into pin-ready objects (data URLs).
  * @returns {Promise<{ pins: object[], skipped: string[] }>}
@@ -125,13 +179,16 @@ export function readImageFilesAsPins(fileList, { maxBytes = MAX_IMAGE_BYTES } = 
         new Promise((resolve) => {
           const reader = new FileReader()
           reader.onload = (ev) => {
-            resolve({
-              id: Date.now() + i + Math.floor(Math.random() * 1000),
-              type: 'image',
-              note: String(file.name || 'Upload').replace(/\.[^.]+$/, '') || 'Upload',
-              visual: ev.target?.result || '',
-              sourceName: file.name || '',
-              mime: file.type || 'image/*',
+            const raw = ev.target?.result || ''
+            void downscaleDataUrl(raw, file.type).then((visual) => {
+              resolve({
+                id: Date.now() + i + Math.floor(Math.random() * 1000),
+                type: 'image',
+                note: String(file.name || 'Upload').replace(/\.[^.]+$/, '') || 'Upload',
+                visual,
+                sourceName: file.name || '',
+                mime: file.type || 'image/*',
+              })
             })
           }
           reader.onerror = () => {

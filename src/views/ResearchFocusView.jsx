@@ -24,6 +24,9 @@ const SWIPE_COMMIT_PX = 90
 export default function ResearchFocusView({ deskMood = [], setActiveView }) {
   const toggleMoodPinInPack = useAppStore((s) => s.toggleMoodPinInPack)
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
+  const addMoodPin = useAppStore((s) => s.addMoodPin)
+  /** Inline, because this view has no toast channel of its own. */
+  const [notice, setNotice] = useState('')
 
   // Intent setting state
   const [intent, setIntent] = useState('')
@@ -53,10 +56,43 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
   const current = deskMood.find((m) => m.id === currentId)
   const reviewedCount = reviewedIds.size
 
+  /* The last tossed pin, kept whole so it can be put back. Toss is a hard
+     delete from the store and an uploaded image exists nowhere else, so
+     without this a mis-swipe — or a stray Backspace, which is muscle memory
+     for "undo my typing" — destroyed a reference permanently and silently.
+     Reversibility is also what makes fast triage possible at all: if a wrong
+     call costs nothing, the user can move quickly instead of deliberating
+     over every card. */
+  const [lastTossed, setLastTossed] = useState(null)
+
+  const undoToss = () => {
+    if (!lastTossed) return
+    addMoodPin?.(lastTossed)
+    setReviewedIds((prev) => {
+      const next = new Set(prev)
+      next.delete(lastTossed.id)
+      return next
+    })
+    setLastTossed(null)
+  }
+
   const commit = (direction) => {
     if (!current) return
-    if (direction === 'keep') toggleMoodPinInPack?.(current.id)
-    else removeMoodPin?.(current.id)
+    if (direction === 'keep') {
+      // The pack caps at 6 and the store REFUSES past it, returning
+      // {ok:false}. Discarding that result advanced the card and recorded the
+      // pin as decided while nothing had actually been kept — work the user
+      // believed was saved, discovered missing later with no way to tell which.
+      const r = toggleMoodPinInPack?.(current.id)
+      if (r && r.ok === false) {
+        setNotice(r.error || 'Six is the max — unstar one to swap')
+        return
+      }
+    } else {
+      setLastTossed(current)
+      removeMoodPin?.(current.id)
+    }
+    setNotice('')
     setReviewedIds((prev) => new Set(prev).add(current.id))
     setDragX(0)
   }
@@ -311,6 +347,12 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
           {reviewedCount + 1} of {sessionIds.length} reviewed · ← Backspace toss · Keep →
         </p>
 
+        {notice && (
+          <p className="focus-hint" role="status" style={{ marginTop: '0.5rem' }}>
+            {notice}
+          </p>
+        )}
+
         <div className="focus-actions" style={{ justifyContent: 'center' }}>
           <Button
             variant="outline"
@@ -327,6 +369,18 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
             Keep →
           </Button>
         </div>
+
+        {/* Stays until the next toss replaces it — no timer. A countdown on
+            the only route back to a deleted reference is a deadline the user
+            cannot perceive, and the whole point is that a wrong swipe costs
+            nothing. */}
+        {lastTossed && (
+          <div className="focus-actions" style={{ justifyContent: 'center' }}>
+            <Button variant="ghost" size="sm" onClick={undoToss}>
+              Undo toss{lastTossed.note ? ` — ${String(lastTossed.note).slice(0, 28)}` : ''}
+            </Button>
+          </div>
+        )}
       </div>
     </FocusShell>
   )

@@ -1806,6 +1806,50 @@ const useAppStore = create(
     }),
     {
       name: 'creative-companion-storage',
+      /* Wrapped so a full localStorage cannot fail silently. The store
+         persists as ONE blob, so a write that throws QuotaExceededError does
+         not just lose the pin that overflowed it — the brief, the tasks and
+         every project stop saving too, with no error anywhere and no sign
+         until a reload shows the work gone. Images are the only realistic way
+         to fill it (see MAX_STORED_IMAGE_DIM), so the message names them. */
+      storage: {
+        getItem: (key) => {
+          try {
+            const value = localStorage.getItem(key)
+            return value ? JSON.parse(value) : null
+          } catch {
+            return null
+          }
+        },
+        setItem: (key, value) => {
+          try {
+            localStorage.setItem(key, JSON.stringify(value))
+          } catch (err) {
+            const quota =
+              err?.name === 'QuotaExceededError' ||
+              err?.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+              err?.code === 22
+            console.error(
+              quota
+                ? '[store] Browser storage is full — changes are NOT being saved. Remove some mood board images.'
+                : '[store] Could not save to browser storage.',
+              err
+            )
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(
+                new CustomEvent('cc-storage-error', { detail: { quota } })
+              )
+            }
+          }
+        },
+        removeItem: (key) => {
+          try {
+            localStorage.removeItem(key)
+          } catch {
+            /* nothing to remove */
+          }
+        },
+      },
       version: 4,
       migrate: (persisted, fromVersion) => {
         // Keep real user data; only normalize missing arrays

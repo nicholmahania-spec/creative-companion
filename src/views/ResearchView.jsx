@@ -126,6 +126,12 @@ export default function ResearchView({
   const uploadMoodFiles = (fileList) => {
     const list = Array.from(fileList || [])
     if (!list.length) return
+    /* Stamp the project the upload STARTED on. Reading and downscaling files
+       is async, and addMoodPin resolves `pin.projectId ?? currentProjectId`
+       when its reducer runs — so dropping an image on project A and switching
+       to B before the read finished filed the pin under B, silently.
+       reorderBoardPins already takes an explicit projectId for this reason. */
+    const ownerProjectId = activeProjectId
     void readImageFilesAsPins(list).then(({ pins, skipped }) => {
       if (!pins.length) {
         flashToast?.(
@@ -138,7 +144,7 @@ export default function ResearchView({
         return
       }
       pins.forEach((pin) => {
-        addMoodPin(pin)
+        addMoodPin({ ...pin, projectId: ownerProjectId ?? pin.projectId })
         trackMoodPinOperation('add', pin)
       })
       if (skipped.length) {
@@ -160,8 +166,12 @@ export default function ResearchView({
     const url = boardUrl.trim()
     if (!url || boardUrlBusy) return
 
+    // Same capture-before-await rule as uploadMoodFiles: the link-preview
+    // round-trip can outlive the user's stay on this project.
+    const ownerProjectId = activeProjectId
+
     const addPinAndReset = (pin) => {
-      addMoodPin(pin)
+      addMoodPin({ ...pin, projectId: ownerProjectId ?? pin.projectId })
       trackBoardSubmission('url')
       trackMoodPinOperation('add', pin)
       setBoardUrl('')
