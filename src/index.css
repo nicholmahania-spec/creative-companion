@@ -10384,6 +10384,88 @@ body:has(.app.deep)::after {
   gap: 0.5rem;
 }
 
+/* ── Positioning spectrum ────────────────────────────────────────────────
+   Poles at the ends, five dots between, and no numbers anywhere: a 1–5
+   scale would make every answer a translation step, both for the client
+   picking one and for whoever reads the finished brief. Each dot carries a
+   worded accessible name ("Mostly playful") so a screen reader announces a
+   position rather than an index. */
+.brief-spectrum {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.brief-spectrum > legend {
+  padding: 0;
+  margin-bottom: var(--space-3);
+}
+
+.brief-spectrum-scale {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.brief-spectrum-pole {
+  flex: 0 0 auto;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  /* The poles name the axis; they are not the answer, so they stay quieter
+     than the dots the user is actually choosing between. */
+  white-space: nowrap;
+}
+
+.brief-spectrum-step {
+  flex: 1 1 0;
+  display: grid;
+  place-items: center;
+  /* 44px tall hit area on a 14px dot — the row is the target, not the dot,
+     the same way the deliverables checklist rows work. */
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.brief-spectrum-step input[type='radio'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.brief-spectrum-step input[type='radio']:hover {
+  border-color: var(--text-primary);
+}
+
+.brief-spectrum-step input[type='radio']:checked {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+}
+
+.brief-spectrum-step input[type='radio']:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+
+/* The tick sits beside the group rather than in a label row, since a
+   spectrum has no single label line to hang it on. */
+.define-spectrum-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.define-spectrum-row .brief-spectrum {
+  flex: 1 1 auto;
+}
+
 .define-input.field-input,
 .define-studio .field-input {
   width: 100%;

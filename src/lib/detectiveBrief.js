@@ -209,6 +209,44 @@ export const DETECTIVE_CHAPTERS = [
         required: false,
         gridSpan: 'half',
       },
+      /* Four picks instead of four sentences. Every other question here asks
+         the client to compose prose; these ask them to point at a spot on a
+         line, which is far less work per unit of signal and gives answers
+         that can be compared across projects. Ids are the ones the old
+         discovery schema used, so anything a client already answered there
+         carries over untouched rather than being orphaned. */
+      {
+        id: 'spectrumModernTraditional',
+        label: 'Modern or traditional?',
+        type: 'spectrum',
+        poles: ['Modern', 'Traditional'],
+        required: false,
+        gridSpan: 'half',
+      },
+      {
+        id: 'spectrumPlayfulProfessional',
+        label: 'Playful or professional?',
+        type: 'spectrum',
+        poles: ['Playful', 'Professional'],
+        required: false,
+        gridSpan: 'half',
+      },
+      {
+        id: 'spectrumHighEndAffordable',
+        label: 'High-end or affordable?',
+        type: 'spectrum',
+        poles: ['High-end', 'Affordable'],
+        required: false,
+        gridSpan: 'half',
+      },
+      {
+        id: 'spectrumBoldMinimalist',
+        label: 'Bold or minimal?',
+        type: 'spectrum',
+        poles: ['Bold', 'Minimal'],
+        required: false,
+        gridSpan: 'half',
+      },
       {
         id: 'inspirationLinks',
         label: 'What look are you drawn to?',
@@ -290,6 +328,29 @@ export function isFilled(val) {
  * remove. The count in the heading must match what is rendered.
  */
 export const START_HERE_CAP = 3
+
+/**
+ * The five points of a `type: 'spectrum'` field, built from its two poles.
+ *
+ * Words, never numbers. The user has stated plainly that "numbers mean
+ * nothing" to them, and a 1–5 scale would make every answer a translation
+ * step for the person reading the finished brief as well as the client
+ * filling it in. "Mostly playful" needs no key.
+ *
+ * The stored value is a stable token, not the label, so the wording can be
+ * rewritten later without orphaning answers already saved on real projects —
+ * the same rule the id note at the top of this file describes.
+ */
+export function spectrumChoices(poles = []) {
+  const [a = '', b = ''] = poles
+  return [
+    { value: 'a', label: a },
+    { value: 'mostly-a', label: `Mostly ${a.toLowerCase()}` },
+    { value: 'balanced', label: 'Both equally' },
+    { value: 'mostly-b', label: `Mostly ${b.toLowerCase()}` },
+    { value: 'b', label: b },
+  ]
+}
 
 /**
  * The required fields actually still empty — not a static list of all of

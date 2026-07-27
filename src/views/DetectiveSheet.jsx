@@ -11,6 +11,7 @@ import {
   START_HERE_CAP,
 } from '../lib/detectiveBrief'
 import useIsMobile from '../lib/useIsMobile'
+import BriefSpectrum from '../components/BriefSpectrum'
 import {
   trackDetectiveFieldUpdate,
   trackChapterNavigation,
@@ -290,6 +291,30 @@ export default function DetectiveSheet({
                       }`}
                       data-span={f.gridSpan || 'full'}
                     >
+                      {/* A spectrum is a radio group: it carries its own
+                          legend, because <label for=…> can only point at one
+                          control. The tick still rides along beside it. */}
+                      {f.type === 'spectrum' ? (
+                        <div className="define-field-control">
+                          <div className="define-spectrum-row">
+                            <BriefSpectrum
+                              field={f}
+                              value={detective?.[f.id] || ''}
+                              onChange={(v) => {
+                                updateDetective?.(f.id, v)
+                                trackDetectiveFieldUpdate(f.id, v, ch.id)
+                              }}
+                              idPrefix="detective"
+                            />
+                            {filled && (
+                              <span className="define-field-check" aria-hidden="true">
+                                ✓
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                      <>
                       <div className="define-field-label-row">
                         <label
                           className="define-field-label"
@@ -355,6 +380,8 @@ export default function DetectiveSheet({
                           />
                         )}
                       </div>
+                      </>
+                      )}
                     </div>
                   )
                 })}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DETECTIVE_CHAPTERS } from './detectiveBrief'
+import { DETECTIVE_CHAPTERS, spectrumChoices } from './detectiveBrief'
 
 /**
  * Both public routes — /f/:shareId and /c/:portalId — render the detective
@@ -31,7 +31,50 @@ describe('client-facing brief contract', () => {
         expect(Array.isArray(f.options), `${f.id} needs options`).toBe(true)
         expect(f.options.length).toBeGreaterThan(0)
       }
+      if (f.type === 'spectrum') {
+        expect(Array.isArray(f.poles), `${f.id} needs poles`).toBe(true)
+        expect(f.poles.length, `${f.id} needs exactly two poles`).toBe(2)
+        expect(f.poles.every((p) => p && p.trim())).toBe(true)
+      }
     }
+  })
+
+  it('spectrum scales are worded, never numbered, and store stable tokens', () => {
+    const spectrums = clientVisible.filter((f) => f.type === 'spectrum')
+    expect(spectrums.length).toBeGreaterThan(0)
+    for (const f of spectrums) {
+      const choices = spectrumChoices(f.poles)
+      expect(choices.length).toBe(5)
+      // The user has said numbers mean nothing to them; a 1-5 scale would
+      // make every answer a translation step.
+      for (const c of choices) {
+        expect(c.label, `${f.id} label should not be a number`).not.toMatch(/^\d+$/)
+        expect(c.label.trim().length).toBeGreaterThan(0)
+      }
+      // Stored value is a token, so the wording can change without
+      // orphaning answers already saved on real projects.
+      expect(choices.map((c) => c.value)).toEqual([
+        'a',
+        'mostly-a',
+        'balanced',
+        'mostly-b',
+        'b',
+      ])
+      expect(choices[0].label).toBe(f.poles[0])
+      expect(choices[4].label).toBe(f.poles[1])
+    }
+  })
+
+  it('spectrum ids match the old schema so existing answers carry over', () => {
+    // These ids came from discoveryBrief. Renaming them would orphan any
+    // answer a client already gave through the old share form.
+    const ids = clientVisible.filter((f) => f.type === 'spectrum').map((f) => f.id)
+    expect(ids.sort()).toEqual([
+      'spectrumBoldMinimalist',
+      'spectrumHighEndAffordable',
+      'spectrumModernTraditional',
+      'spectrumPlayfulProfessional',
+    ])
   })
 
   it('the deliverables checklist splits into included vs quoted separately', () => {

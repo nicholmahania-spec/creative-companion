@@ -15,6 +15,7 @@
  * "Unique Selling Proposition (USP)".
  */
 import { DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
+import BriefSpectrum from './BriefSpectrum'
 
 export default function ClientBriefFields({ answers = {}, onChange, idPrefix }) {
   return DETECTIVE_CHAPTERS.map((chapter) => (
@@ -27,6 +28,20 @@ export default function ClientBriefFields({ answers = {}, onChange, idPrefix }) 
         .filter((f) => !f.designerOnly)
         .map((f) => {
           const fieldId = `${idPrefix}-${f.id}`
+          // A radio group is labelled by its own legend, not by a
+          // <label for=…>, which can only point at one control.
+          if (f.type === 'spectrum') {
+            return (
+              <div className="field-block" key={f.id}>
+                <BriefSpectrum
+                  field={f}
+                  value={answers[f.id] || ''}
+                  onChange={(v) => onChange(f.id, v)}
+                  idPrefix={idPrefix}
+                />
+              </div>
+            )
+          }
           return (
             <div className="field-block" key={f.id}>
               <label className="field-label" htmlFor={fieldId}>
