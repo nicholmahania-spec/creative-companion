@@ -7611,6 +7611,100 @@ body.cc-printing-page button {
 
 /* States how the surface works, in the one place you look when it isn't
    behaving — none of pan, zoom or drag announced itself before. */
+/* ── Shortlist strip ─────────────────────────────────────────────────────
+   The ★ pack, made visible. A horizontal row rather than a grid: the set is
+   capped at six, so one glance should take in all of it and how much room is
+   left — a wrapping grid would make a shortlist of three look like the start
+   of a wall. */
+.research-shortlist {
+  margin-top: var(--space-5);
+}
+
+.research-shortlist-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.research-shortlist-title {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 700;
+}
+
+/* Room left, not "3/6" — the ratio pattern this project has removed three
+   times now. */
+.research-shortlist-count {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.research-shortlist-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.research-shortlist-item {
+  position: relative;
+}
+
+.research-shortlist-face {
+  display: block;
+  width: 92px;
+  height: 92px;
+  padding: 0;
+  border: 1px solid var(--field-line);
+  border-radius: var(--radius);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+}
+
+.research-shortlist-face:hover,
+.research-shortlist-face:focus-visible {
+  border-color: var(--text-primary);
+}
+
+/* 24px, the target-size minimum — this removes something, so it should not
+   be the smallest thing on the row. */
+.research-shortlist-drop {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--field-line);
+  border-radius: var(--radius-pill);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: var(--fs-1);
+  cursor: pointer;
+}
+
+.research-shortlist-drop:hover {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+/* Rubber band. Lives inside the stage so it shares the pins' coordinate
+   space — the rectangle you draw is the rectangle that tests for hits. */
+.mood-marquee {
+  position: absolute;
+  z-index: 9999;
+  pointer-events: none;
+  border: 1px solid var(--text-primary);
+  background: color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+
 .mood-canvas-hint {
   flex: 1 1 100%;
   margin: 0;

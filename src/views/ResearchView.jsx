@@ -298,7 +298,55 @@ export default function ResearchView({
   const viewportRef = useRef(null)
   const { scale, tx, ty, zoomBy, zoomTo, fitAll, startPan, onWheel, toStage } =
     useCanvasViewport(viewportRef)
-  const [selectedPinId, setSelectedPinId] = useState(null)
+  /* A SET, not one id. Narrowing a board means acting on several pins at
+     once — starring the four that belong together, pushing a cluster behind
+     the rest — and doing that one pin at a time is the friction that makes
+     people not bother. */
+  const [selectedPinIds, setSelectedPinIds] = useState(() => new Set())
+  const selectedPinId = selectedPinIds.size === 1 ? [...selectedPinIds][0] : null
+  const selectPin = (id, additive) =>
+    setSelectedPinIds((prev) => {
+      if (!additive) return new Set([id])
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const clearSelection = () => setSelectedPinIds(new Set())
+
+  /** Rubber-band rectangle in stage coords while shift-dragging empty canvas. */
+  const [marquee, setMarquee] = useState(null)
+  const marqueeRef = useRef(null)
+
+  /** Shortlist everything selected, stopping cleanly at the cap rather than
+   *  silently dropping the overflow — the store refuses past 6 and returns
+   *  {ok:false}, which callers used to discard. */
+  const starSelected = () => {
+    const ids = [...selectedPinIds].filter((id) => {
+      const pin = deskMood.find((m) => m.id === id)
+      return pin && !pin.inPack
+    })
+    if (!ids.length) {
+      flashToast?.('Already shortlisted')
+      return
+    }
+    let added = 0
+    let refused = 0
+    ids.forEach((id) => {
+      const r = toggleMoodPinInPack?.(id)
+      if (r && r.ok === false) refused++
+      else added++
+    })
+    if (refused) {
+      flashToast?.(
+        added
+          ? `Shortlisted ${added} · ${refused} over the 6 limit`
+          : 'Shortlist is full — unstar one to swap'
+      )
+    } else if (added) {
+      flashToast?.(`Shortlisted ${added}`)
+    }
+  }
   const dragRef = useRef(null)
   const didInitialFit = useRef(false)
 
@@ -315,13 +363,33 @@ export default function ResearchView({
 
   const beginPinDrag = (e, item, index) => {
     if (e.button != null && e.button !== 0) return
-    const g = pinGeometry(item, index)
     const start = toStage(e.clientX, e.clientY)
+
+    /* Cmd/Ctrl toggles this pin in the selection. A plain press on a pin that
+       is ALREADY selected keeps the whole group, so dragging a multi-selection
+       does not collapse to the one pin you happened to grab — otherwise every
+       group move would silently become a single move. */
+    const additive = e.metaKey || e.ctrlKey
+    const alreadyIn = selectedPinIds.has(item.id)
+    if (additive || !alreadyIn) selectPin(item.id, additive)
+
+    // Freeze the group's starting geometry so each pin moves by the same
+    // delta. Read now, because the selection state update is async.
+    const groupIds =
+      !additive && alreadyIn ? [...selectedPinIds] : [item.id]
+    const group = groupIds
+      .map((id) => {
+        const idx = deskMood.findIndex((m) => m.id === id)
+        if (idx < 0) return null
+        const gg = pinGeometry(deskMood[idx], idx)
+        return { id, x: gg.x, y: gg.y }
+      })
+      .filter(Boolean)
+
     dragRef.current = {
       id: item.id,
       mode: 'move',
-      originX: g.x,
-      originY: g.y,
+      group,
       startX: start.x,
       startY: start.y,
       // Screen-space origin for the movement threshold below.
@@ -329,7 +397,6 @@ export default function ResearchView({
       startClientY: e.clientY,
       armed: false,
     }
-    setSelectedPinId(item.id)
     bringMoodPinToFront?.(item.id)
     e.stopPropagation()
     e.preventDefault()
@@ -360,11 +427,50 @@ export default function ResearchView({
       originY: g.y,
       startX: start.x,
     }
-    setSelectedPinId(item.id)
+    selectPin(item.id, false)
     bringMoodPinToFront?.(item.id)
     e.stopPropagation()
     e.preventDefault()
   }
+
+  /* Marquee: track the rectangle, then select every pin that INTERSECTS it —
+     not only those fully enclosed. Requiring full containment means a large
+     reference you clearly dragged across gets skipped, which reads as the
+     selection being broken rather than strict. */
+  useEffect(() => {
+    if (!marquee) return undefined
+    const onMove = (e) => {
+      const start = marqueeRef.current
+      if (!start) return
+      const p = toStage(e.clientX, e.clientY)
+      setMarquee({
+        x: Math.min(start.x, p.x),
+        y: Math.min(start.y, p.y),
+        w: Math.abs(p.x - start.x),
+        h: Math.abs(p.y - start.y),
+      })
+    }
+    const onUp = () => {
+      const m = marquee
+      marqueeRef.current = null
+      setMarquee(null)
+      if (!m || (m.w < 4 && m.h < 4)) return
+      const hit = deskMood.filter((pin, i) => {
+        const g = pinGeometry(pin, i)
+        const h = g.w * 0.95
+        return (
+          g.x < m.x + m.w && g.x + g.w > m.x && g.y < m.y + m.h && g.y + h > m.y
+        )
+      })
+      if (hit.length) setSelectedPinIds(new Set(hit.map((p) => p.id)))
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+  }, [marquee, deskMood, toStage])
 
   useEffect(() => {
     const onMove = (e) => {
@@ -386,9 +492,15 @@ export default function ResearchView({
           if (travelled < 4) return
           d.armed = true
         }
-        setMoodPinLayout?.(d.id, {
-          x: Math.round(d.originX + (p.x - d.startX)),
-          y: Math.round(d.originY + (p.y - d.startY)),
+        const dx = p.x - d.startX
+        const dy = p.y - d.startY
+        // Move the whole selection by the same delta, so a group keeps its
+        // arrangement instead of collapsing onto the pin being dragged.
+        d.group.forEach((g) => {
+          setMoodPinLayout?.(g.id, {
+            x: Math.round(g.x + dx),
+            y: Math.round(g.y + dy),
+          })
         })
       } else {
         // West-side corners grow as the pointer moves LEFT.
@@ -421,24 +533,27 @@ export default function ResearchView({
   /* Arrow keys nudge the selected pin. The pointer path is a mouse-only
      capability otherwise, and dragging is the whole interaction here. */
   useEffect(() => {
-    if (!selectedPinId) return undefined
+    if (!selectedPinIds.size) return undefined
     const onKey = (e) => {
       if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return
       const tag = document.activeElement?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
-      const idx = deskMood.findIndex((m) => m.id === selectedPinId)
-      if (idx < 0) return
-      const g = pinGeometry(deskMood[idx], idx)
       const step = e.shiftKey ? 40 : 8
       e.preventDefault()
-      setMoodPinLayout?.(selectedPinId, {
-        x: g.x + (e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0),
-        y: g.y + (e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0),
+      // Every selected pin moves together, keeping their relative positions.
+      selectedPinIds.forEach((id) => {
+        const idx = deskMood.findIndex((m) => m.id === id)
+        if (idx < 0) return
+        const g = pinGeometry(deskMood[idx], idx)
+        setMoodPinLayout?.(id, {
+          x: g.x + (e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0),
+          y: g.y + (e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0),
+        })
       })
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selectedPinId, deskMood, setMoodPinLayout])
+  }, [selectedPinIds, deskMood, setMoodPinLayout])
 
   return (
     <>
@@ -717,24 +832,46 @@ export default function ResearchView({
                     </button>
                   </div>
                   <p className="mood-canvas-hint">
-                    Drag a pin to move · drag the board to pan · ⌘/Ctrl + scroll
-                    or pinch to zoom
+                    Drag a pin to move · drag the board to pan · ⌘/Ctrl-click or
+                    Shift-drag to select several · ⌘/Ctrl + scroll to zoom
                   </p>
-                  {selectedPinId && (
+                  {selectedPinIds.size > 0 && (
                     <div className="mood-canvas-layer">
+                      {/* Narrowing in one gesture. Starring a shortlist one
+                          pin at a time is the friction that stops people
+                          doing it at all. */}
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => starSelected()}
+                      >
+                        ★ Shortlist
+                        {selectedPinIds.size > 1 ? ` ${selectedPinIds.size}` : ''}
+                      </button>
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm"
-                        onClick={() => bringMoodPinToFront?.(selectedPinId)}
+                        onClick={() =>
+                          selectedPinIds.forEach((id) => bringMoodPinToFront?.(id))
+                        }
                       >
                         Bring to front
                       </button>
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm"
-                        onClick={() => sendMoodPinToBack?.(selectedPinId)}
+                        onClick={() =>
+                          selectedPinIds.forEach((id) => sendMoodPinToBack?.(id))
+                        }
                       >
                         Send to back
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={clearSelection}
+                      >
+                        Deselect
                       </button>
                     </div>
                   )}
@@ -768,11 +905,24 @@ export default function ResearchView({
                   if (e.dataTransfer.files?.length) uploadMoodFiles(e.dataTransfer.files)
                 }}
                 onPointerDown={(e) => {
-                  // Dragging empty canvas pans; clicking it clears selection.
-                  if (e.target === e.currentTarget || e.target.classList.contains('mood-canvas-stage')) {
-                    setSelectedPinId(null)
-                    startPan(e)
+                  const onEmpty =
+                    e.target === e.currentTarget ||
+                    e.target.classList.contains('mood-canvas-stage')
+                  if (!onEmpty) return
+                  /* Shift+drag draws a marquee; a plain drag still pans.
+                     Figma has it the other way round, but pan-on-drag is what
+                     this board already taught and what its hint line says, and
+                     silently reassigning the primary gesture is worse than
+                     putting the newer one on a modifier. */
+                  if (e.shiftKey) {
+                    const p = toStage(e.clientX, e.clientY)
+                    marqueeRef.current = { x: p.x, y: p.y }
+                    setMarquee({ x: p.x, y: p.y, w: 0, h: 0 })
+                    e.preventDefault()
+                    return
                   }
+                  clearSelection()
+                  startPan(e)
                 }}
               >
               {/* Outside the transform, deliberately. Rendered as a stage
@@ -867,6 +1017,17 @@ export default function ResearchView({
                   }
                 }}
               >
+                {marquee && (
+                  <div
+                    className="mood-marquee"
+                    style={{
+                      left: `${marquee.x}px`,
+                      top: `${marquee.y}px`,
+                      width: `${marquee.w}px`,
+                      height: `${marquee.h}px`,
+                    }}
+                  />
+                )}
                 {deskMood.length === 0 ? null : (
                   deskMood.map((item, index) => {
                     const face = pinFaceStyle(item)
@@ -892,7 +1053,7 @@ export default function ResearchView({
                         className={`mood-card is-canvas-pin${
                           isQuote && !isImageFace ? ' is-quote' : ''
                         }${item.inPack ? ' is-pack-pin' : ''}${
-                          selectedPinId === item.id ? ' is-selected' : ''
+                          selectedPinIds.has(item.id) ? ' is-selected' : ''
                         }${item.packHero ? ' is-pack-hero' : ''}`}
                       >
                         {isImageFace ? (
@@ -1104,7 +1265,7 @@ export default function ResearchView({
                         {/* Resize grip. Only on the selected pin, so a board
                             at rest shows none of them — the handle is a tool,
                             not decoration on every card. */}
-                        {selectedPinId === item.id &&
+                        {selectedPinIds.has(item.id) &&
                           ['nw', 'ne', 'sw', 'se'].map((corner) => (
                             <span
                               key={corner}
@@ -1123,7 +1284,51 @@ export default function ResearchView({
               </div>
             </section>
 
-
+            {/* The narrowed-down set, as an actual section. Starring already
+                existed and already feeds Design and Deliver, but it was only
+                ever an outline on a pin somewhere in the board — so the one
+                thing the stage is FOR, the shortlist, was the one thing you
+                could not look at. Deliberately not a second concept: this is
+                the same ★ pack, finally visible. */}
+            {starred > 0 && (
+              <section className="panel brand-section research-shortlist">
+                <div className="research-shortlist-head">
+                  <h2 className="research-shortlist-title">Shortlist</h2>
+                  <p className="research-shortlist-count">
+                    {starred >= 6
+                      ? 'Full — unstar one to swap'
+                      : `Room for ${6 - starred} more`}
+                  </p>
+                </div>
+                <ul className="research-shortlist-strip">
+                  {deskMood
+                    .filter((m) => m.inPack)
+                    .map((pin) => (
+                      <li key={pin.id} className="research-shortlist-item">
+                        <button
+                          type="button"
+                          className="research-shortlist-face"
+                          style={pinFaceStyle(pin)}
+                          title={pin.note || 'Open'}
+                          onClick={() => setBoardLightbox(pin)}
+                        >
+                          <span className="sr-only">
+                            {pin.note || 'Shortlisted pin'}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="research-shortlist-drop"
+                          onClick={() => toggleMoodPinInPack?.(pin.id)}
+                          aria-label={`Remove ${pin.note || 'pin'} from shortlist`}
+                        >
+                          ✕
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              </section>
+            )}
           </div>
         {boardLightbox && (
           <div
