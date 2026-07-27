@@ -1,4 +1,5 @@
 import { DELIVERABLE_OPTIONS, DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
+import { liftMeasuredRows } from './workLogSeparation'
 import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
@@ -2088,6 +2089,22 @@ const useAppStore = create(
           if (onboardFlag === '1') state.onboarded = true
           if (!state.portalSeen || typeof state.portalSeen !== 'object') state.portalSeen = {}
           if (!Array.isArray(state.tasks)) state.tasks = []
+          /* An invoice must never contain a row nobody typed. The v5 migration
+             lifts measured rows out of `timeLog`, but a migration runs once —
+             it cannot hold an invariant, only establish it. Any auto row that
+             appears in `timeLog` afterwards (a stale tab still running the old
+             writer, a synced payload from an older client) would sit there
+             permanently, billable. So this is checked on every load. */
+          /* Applied with setState rather than by assigning to `state`, so it
+             both takes effect and is written back to storage. Mutating the
+             rehydrated draft leaves the stored copy untouched: the row comes
+             back on the next load, and any later write persists it again. */
+          queueMicrotask(() => {
+            const cur = useAppStore.getState().projects
+            if (!Array.isArray(cur)) return
+            const next = liftMeasuredRows(cur)
+            if (next !== cur) useAppStore.setState({ projects: next })
+          })
           if (!Array.isArray(state.moodItems)) state.moodItems = []
           if (!Array.isArray(state.conceptItems)) state.conceptItems = []
           if (!Array.isArray(state.breakKit)) state.breakKit = []

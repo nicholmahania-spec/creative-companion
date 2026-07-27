@@ -17762,16 +17762,10 @@ textarea.artboard-brief-input {
    Separate surface from Hours & invoice on purpose. The clock is the
    user clocking their own time; the invoice is a claim made to a
    client. They shared one array once, which meant every idle page left
-   open quietly became something someone was asked to pay for. */
-.work-log-panel {
-  margin-top: var(--space-4);
-}
+   open quietly became something someone was asked to pay for.
 
-.work-log-title {
-  font-size: var(--fs-2);
-  margin: 0 0 var(--space-2);
-}
-
+   Its own panel rather than a section of the Timer page: opening hours
+   you already worked should not land you on a countdown. */
 .work-log-empty {
   color: var(--text-secondary);
   max-width: 42ch;

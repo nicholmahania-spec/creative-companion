@@ -295,3 +295,12 @@ to yourself. Auto-filling the first from the second means every idle page you
 left open and every stage you passed through quietly becomes something
 someone is asked to pay for — and you end up reviewing your own bill rather
 than writing it. The daily report (parked in todo.md) reads `workLog`.
+
+## The clock's stage list comes from JOURNEY_STEPS
+
+`STAGE_VIEWS` in App.jsx must be derived from `JOURNEY_STEPS`, never written
+out by hand. It was once a literal list of stage *names* ('define',
+'research', 'ideate', 'sketch', 'design', 'deliver') — but the view ids are
+'project', 'studio', 'spark', 'flow', 'brand', 'review', 'finish'. Only two
+of the eight strings were real, so the work clock was silent on five of the
+seven stages: an afternoon in Design recorded nothing.

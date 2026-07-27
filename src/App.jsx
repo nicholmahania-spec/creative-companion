@@ -116,6 +116,7 @@ import PullToRefresh from './components/PullToRefresh'
 import HighlightExplain from './components/HighlightExplain'
 import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
 import { HoursInvoicePanel } from './components/HoursInvoice'
+import { WorkLogPanel } from './components/WorkLogPanel'
 import { DiscoveryBriefPanel } from './components/DiscoveryBrief'
 import { ProjectOverviewSharePanel } from './components/ProjectOverviewShare'
 import {
@@ -306,6 +307,7 @@ function App() {
   const [runningTodoAddDirect, setRunningTodoAddDirect] = useState(false)
   const [researchAddOpen, setResearchAddOpen] = useState(false)
   const [hoursPanelOpen, setHoursPanelOpen] = useState(false)
+  const [workLogPanelOpen, setWorkLogPanelOpen] = useState(false)
   const [discoveryPanelOpen, setDiscoveryPanelOpen] = useState(false)
   const [overviewSharePanelOpen, setOverviewSharePanelOpen] = useState(false)
   const [clientInboxOpen, setClientInboxOpen] = useState(false)
@@ -1108,10 +1110,17 @@ function App() {
      This clock runs whenever you are on a project stage and not idle. No
      target, no end, no forced break: it stops when you stop. The Pomodoro
      keeps its own countdown and is headed for Helper. */
-  const STAGE_VIEWS = [
-    'define', 'research', 'ideate', 'sketch',
-    'design', 'review', 'deliver', 'studio',
-  ]
+  /* Derived from JOURNEY_STEPS, not written out by hand. This WAS a literal
+     list — 'define', 'research', 'ideate', 'sketch', 'design', 'deliver' —
+     and only two of those eight strings are real view ids. The clock was
+     therefore silent on five of the seven stages: you could work an
+     afternoon in Design and it would record nothing, because `activeView`
+     there is 'brand'. A stage list that has to be kept in step with the
+     journey by hand will drift again, so it reads from the journey. */
+  const STAGE_VIEWS = useMemo(
+    () => JOURNEY_STEPS.map((s) => s.view).filter(Boolean),
+    []
+  )
   const [workIdle, setWorkIdle] = useState(false)
   const workRunning =
     STAGE_VIEWS.includes(String(activeView || '')) && !workIdle && !forcedBreak
@@ -2795,7 +2804,11 @@ function App() {
               <button
                 type="button"
                 className="work-clock-chip"
-                onClick={() => setActiveView('insights')}
+                /* Opens the clock's OWN record. This opened the Timer view,
+                   which undid the separation at the last step: you clicked a
+                   readout of hours already worked and landed on a countdown,
+                   which reads as the clock having started something. */
+                onClick={() => setWorkLogPanelOpen(true)}
                 title="Clocked work time — runs by itself while you work"
               >
                 {/* The CLOCK: hours at work, kept automatically. Counts up,
@@ -3727,8 +3740,6 @@ function App() {
               openForceBreakConsent={() => setForceBreakConsentOpen(true)}
               timerFocusSource={timerFocusSource}
               setTimerFocusSource={setTimerFocusSource}
-              workLog={activeProject?.workLog || []}
-              onRemoveWorkEntry={removeWorkEntry}
               locale={locale}
             />
           </Suspense>
@@ -4159,6 +4170,12 @@ function App() {
           setRunningTodoAddDirect(true)
           setRunningTodoPromptOpen(true)
         }}
+      />
+      <WorkLogPanel
+        open={workLogPanelOpen}
+        onClose={() => setWorkLogPanelOpen(false)}
+        workLog={activeProject?.workLog || []}
+        onRemoveEntry={removeWorkEntry}
       />
       <HoursInvoicePanel
         open={hoursPanelOpen}
