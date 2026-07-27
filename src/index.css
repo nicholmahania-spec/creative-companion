@@ -7414,6 +7414,90 @@ body.cc-printing-page button {
   background: var(--bg-muted);
 }
 
+/* ── Focus Mode board summary ────────────────────────────────────────────
+   Was 100% Tailwind classes against a project with no Tailwind, so none of
+   it resolved: unstyled text, and a progress bar with no height. */
+.research-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.research-preview-title {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 700;
+}
+
+.research-preview-status {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--text-primary);
+}
+
+.research-preview-note {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.research-preview-error {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--danger);
+}
+
+.research-preview-subhead {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
+/* A bar, not a percentage. It is a shape that grows — readable at a glance
+   without resolving a number. */
+.research-preview-bar {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+  overflow: hidden;
+}
+
+.research-preview-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--text-primary);
+  transition: width var(--transition);
+}
+
+.research-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+}
+
+.research-preview-thumb {
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+  border: 1px solid var(--field-line);
+}
+
+.research-preview-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.research-preview-thumb-note {
+  padding: var(--space-1);
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
 /* Link preview footer on a pinned URL. Quiet — it identifies the reference,
    it does not compete with the image above it. */
 .mood-pin-link {

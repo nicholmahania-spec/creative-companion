@@ -137,13 +137,7 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
         onExit={exitFocus}
         drawerContent={
           <Suspense fallback={
-            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
-              <div className="space-y-4">
-                <div className="h-4 w-32 bg-border rounded"></div>
-                <div className="h-4 w-24 bg-border rounded"></div>
-                <div className="h-4 w-40 bg-border rounded"></div>
-              </div>
-            </div>
+            <p className="research-preview-note">Loading board…</p>
           }>
             <ResearchPreview
               deskMood={deskMood}
@@ -158,32 +152,35 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
       >
         <div className="focus-card">
           <p id="research-intent-prompt" className="focus-prompt">What do you want to accomplish in your research session?</p>
+          {/* `focus-input-inline` is the only real class here; the rest were
+              Tailwind against a project with no Tailwind, so the field had no
+              border, no padding and no focus ring. */}
           <input
             id="research-intent-input"
-            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
+            className="focus-input-inline field-input"
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
-            placeholder="e.g., Find 3 inspiring color palettes for the brand"
+            placeholder="Optional — e.g. find 3 palettes"
             autoFocus
             aria-labelledby="research-intent-prompt"
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && intent.trim()) {
-                setIntentSet(true)
-              }
+              if (e.key === 'Enter') setIntentSet(true)
             }}
           />
-          <div className="flex justify-end mt-4">
+          {/* Not a gate. This was required to proceed, and the answer was
+              then never read again — a sentence you had to compose before
+              you could look at your own pictures, thrown away the moment it
+              let you in. Naming a session's purpose can help, so it stays;
+              being unable to start without it is the part that had to go.
+              If it is filled in, it now rides along as an anchor during the
+              review rather than being discarded. */}
+          <div className="focus-actions">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                if (intent.trim()) {
-                  setIntentSet(true)
-                }
-              }}
-              disabled={!intent.trim()}
+              onClick={() => setIntentSet(true)}
             >
-              Start Research
+              {intent.trim() ? 'Start' : 'Skip and start'}
             </Button>
           </div>
         </div>
@@ -201,13 +198,7 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
         onExit={exitFocus}
         drawerContent={
           <Suspense fallback={
-            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
-              <div className="space-y-4">
-                <div className="h-4 w-32 bg-border rounded"></div>
-                <div className="h-4 w-24 bg-border rounded"></div>
-                <div className="h-4 w-40 bg-border rounded"></div>
-              </div>
-            </div>
+            <p className="research-preview-note">Loading board…</p>
           }>
             <ResearchPreview
               deskMood={deskMood}
@@ -249,13 +240,7 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
         onExit={exitFocus}
         drawerContent={
           <Suspense fallback={
-            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
-              <div className="space-y-4">
-                <div className="h-4 w-32 bg-border rounded"></div>
-                <div className="h-4 w-24 bg-border rounded"></div>
-                <div className="h-4 w-40 bg-border rounded"></div>
-              </div>
-            </div>
+            <p className="research-preview-note">Loading board…</p>
           }>
             <ResearchPreview
               deskMood={deskMood}
@@ -343,8 +328,19 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
           )}
         </div>
 
+        {/* The intent, if one was given — visible while you decide rather
+            than collected and dropped. */}
+        {intent.trim() && (
+          <p className="focus-hint" style={{ marginTop: '0.75rem' }}>
+            Looking for: {intent.trim()}
+          </p>
+        )}
+
+        {/* What is LEFT, not a ratio. "3 of 12 reviewed" is two numbers to
+            subtract before it means anything; the sidebar and the chapter
+            rail both dropped this same pattern for the same reason. */}
         <p className="focus-hint" style={{ marginTop: '0.75rem' }}>
-          {reviewedCount + 1} of {sessionIds.length} reviewed · ← Backspace toss · Keep →
+          {Math.max(0, sessionIds.length - reviewedCount)} left · ← Backspace toss · Keep →
         </p>
 
         {notice && (

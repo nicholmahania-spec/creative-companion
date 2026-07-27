@@ -380,9 +380,17 @@ export default function ResearchView({
                 <h1 className="page-title">
                   {i18nT(locale, 'path.research')}
                 </h1>
+                {/* Floor, not ratio. "★ 3/6" is a number to decode that
+                    produces no next action, and it reads as a scoreboard
+                    three-fifths empty — the same pattern the project sidebar
+                    and the Define chapter rail both removed, with the
+                    reasoning recorded in each. Say what is still open, or
+                    say it is done. */}
                 <p className="research-status" role="status">
                   {starred > 0
-                    ? `★ ${starred}/6`
+                    ? starred >= 6
+                      ? '★ pack full'
+                      : `★ ${starred} starred · room for ${6 - starred}`
                     : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
                 </p>
                 {words ? (
