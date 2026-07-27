@@ -78,8 +78,20 @@ export function DiscoveryBriefPanel({
           </button>
         </div>
 
+        {/* Just the floor, no ratio — the same call the rail and the project
+            sidebar already made, for the same reason: "24/30" is a number to
+            decode that produces no next action, and a low first number reads
+            as a scoreboard of nothing done. What's left is the whole message.
+            The full count stays available to screen readers. */}
         <p className="discovery-brief-progress">
-          {answeredCount}/{totalCount} answered
+          <span aria-hidden="true">
+            {totalCount - answeredCount > 0
+              ? `${totalCount - answeredCount} left`
+              : 'All answered'}
+          </span>
+          <span className="sr-only">
+            {answeredCount} of {totalCount} answered
+          </span>
         </p>
 
         {mode === 'menu' && (
@@ -207,14 +219,23 @@ function CallMode({ answers, onUpdateField, index, setIndex, onBack }) {
         >
           Previous
         </button>
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={index >= DISCOVERY_FIELDS.length - 1}
-          onClick={() => setIndex((i) => Math.min(DISCOVERY_FIELDS.length - 1, i + 1))}
-        >
-          Next question
-        </button>
+        {/* The script ends with a way out, not with the primary button going
+            grey. A finished run that offers no next action reads as an
+            unfinished one, and the only route back was the small ghost
+            "← Back" at the top of the panel. */}
+        {index >= DISCOVERY_FIELDS.length - 1 ? (
+          <button type="button" className="btn btn-primary" onClick={onBack}>
+            Done — back to brief
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setIndex((i) => Math.min(DISCOVERY_FIELDS.length - 1, i + 1))}
+          >
+            Next question
+          </button>
+        )}
       </div>
     </div>
   )

@@ -59,6 +59,17 @@ export default function PublicDiscoveryFill({ shareId }) {
           Brand discovery questionnaire{clientName ? ` — ${clientName}` : ''}
         </h1>
 
+        {/* The invite email promises "about 10 minutes" and says blanks are
+            fine; the page it lands on said neither. An unbounded form with
+            no stated end is a bounce — say how long it is and give explicit
+            permission to skip, before the first question. */}
+        {loadState === 'ready' && (
+          <p className="public-fill-lede">
+            About 10 minutes · {DISCOVERY_SECTIONS.length} short sections ·
+            leave anything blank if you’re not sure yet.
+          </p>
+        )}
+
         {loadState === 'loading' && (
           <p className="public-fill-status">Loading…</p>
         )}

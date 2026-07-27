@@ -14267,6 +14267,16 @@ select:focus {
   color: var(--text-primary) !important;
   letter-spacing: -0.02em !important;
 }
+/* Weight carries "you are here", not just the 2px rule. In split mode all
+   five chapters render at once and every title was identical — 700 at
+   --fs-4 — so the only position marker was a hairline at the far left,
+   which is easy to miss on a long scroll and vanishes at a glance. Ink
+   weight reads before edges do. The current chapter keeps the rule above;
+   the rest step back one level without becoming hard to read. */
+.define-workbook.is-split .define-chapter:not(.is-current) .define-chapter-title {
+  font-weight: 600 !important;
+  color: var(--text-secondary) !important;
+}
 .define-workbook.is-split .define-chapter-badge {
   color: var(--text-muted) !important;
   font-weight: 500 !important;
@@ -16095,17 +16105,20 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
   padding: 2rem 1.75rem;
 }
 
+/* On the ramp, per the convert-as-touched rule. 1.35rem title over a 1rem
+   legend is a rounding error, not a hierarchy; --fs-5 over --fs-3 gives the
+   two levels a real ratio. */
 .public-fill-title {
-  margin: 0 0 1rem;
-  font-size: 1.35rem;
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-5);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .public-fill-lede {
-  margin: 0 0 1.5rem;
+  margin: 0 0 var(--space-5);
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: var(--fs-2);
 }
 
 .public-fill-status {
@@ -16132,8 +16145,8 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
 
 .public-fill-section legend {
   font-weight: 700;
-  font-size: 1rem;
-  margin-bottom: 0.75rem;
+  font-size: var(--fs-3);
+  margin-bottom: var(--space-3);
   padding: 0;
 }
 

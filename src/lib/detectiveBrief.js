@@ -48,6 +48,14 @@ export const DELIVERABLE_OPTIONS = [
  * permission. A tip that restates its label is a bug: the client portal
  * renders label and tip stacked, so a restatement prints the same sentence
  * twice and reads as broken.
+ *
+ * `tip` is capped at FIVE WORDS. DetectiveSheet renders it as the input's
+ * placeholder, where a long sentence is truncated by the field width, is
+ * unreadable at placeholder contrast, and disappears the moment typing
+ * starts — so length there buys nothing. Say the example, the format, or
+ * the permission, and stop. The same string is the client portal's helper
+ * text; if a field genuinely needs a longer explanation for clients, give
+ * it its own key rather than growing this one back.
  */
 export const DETECTIVE_CHAPTERS = [
   {
@@ -59,7 +67,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'clientName',
         label: 'Business name',
-        tip: 'Trading name is fine — whatever customers call you.',
+        tip: 'Trading name is fine',
         area: false,
         required: true,
         gridSpan: 'half',
@@ -83,7 +91,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'clientPhone',
         label: 'Phone',
-        tip: 'Optional — only if something needs a quick answer.',
+        tip: 'Optional — for quick questions',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -91,7 +99,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'budgetRange',
         label: 'What budget do you have in mind?',
-        tip: 'A range is fine. Say “not sure” if you’d rather talk it through.',
+        tip: 'A range is fine',
         area: false,
         designerOnly: true,
         required: false,
@@ -108,7 +116,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'goal',
         label: 'What do you want this project to change?',
-        tip: 'e.g. “People keep mistaking us for a much smaller company.”',
+        tip: 'e.g. “We look too small”',
         area: true,
         required: true,
         gridSpan: 'full',
@@ -116,7 +124,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'story',
         label: 'How did the business start?',
-        tip: 'Even a couple of lines — who started it, and why.',
+        tip: 'Two lines is plenty',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -124,7 +132,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'usp',
         label: 'What does your business do?',
-        tip: 'e.g. “Small-batch coffee roastery — we sell online and wholesale to cafés.”',
+        tip: 'e.g. small-batch coffee roastery',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -132,7 +140,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'brandWords',
         label: 'What matters most in how you do business?',
-        tip: 'e.g. honesty over polish, no hard sell, everything made locally.',
+        tip: 'e.g. honesty over polish',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -148,7 +156,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'audience',
         label: 'Who are your customers?',
-        tip: 'e.g. new parents, 25–40, buying gifts they can’t find on the high street.',
+        tip: 'e.g. new parents buying gifts',
         area: false,
         required: true,
         gridSpan: 'half',
@@ -156,7 +164,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'feel',
         label: 'How should people feel when they come across your brand?',
-        tip: 'e.g. reassured, curious, like they’ve found something before everyone else.',
+        tip: 'e.g. reassured, curious, ahead',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -164,7 +172,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'audiencePains',
         label: 'What frustrates your customers most?',
-        tip: 'The thing they complain about, or wish existed.',
+        tip: 'What they complain about',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -172,7 +180,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'competitors',
         label: 'Who else does what you do?',
-        tip: 'Two or three names, and what you think of how they look.',
+        tip: 'Two or three names',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -196,7 +204,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'brandAsPerson',
         label: 'If your business were a person, what would they be like?',
-        tip: 'e.g. the friend who always knows a good restaurant — warm, a bit blunt, never showy.',
+        tip: 'e.g. warm, blunt, never showy',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -204,7 +212,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'inspirationLinks',
         label: 'What look are you drawn to?',
-        tip: 'Paste any links, or just describe it — other brands, packaging, a colour you keep coming back to.',
+        tip: 'Paste links or describe it',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -212,7 +220,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'avoid',
         label: 'Is there anything you definitely don’t want?',
-        tip: 'e.g. “nothing pastel”, “no stock photos of people in headsets”.',
+        tip: 'e.g. “nothing pastel, no headsets”',
         area: true,
         required: false,
         gridSpan: 'full',
@@ -228,7 +236,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'deliverablesPicked',
         label: 'What do you need made?',
-        tip: 'Tick everything you know you want. Anything marked “quoted separately” is priced on its own — ticking it just tells me you’re interested.',
+        tip: 'Tick everything you want',
         type: 'checklist',
         options: DELIVERABLE_OPTIONS,
         required: true,
@@ -237,7 +245,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'deliverables',
         label: 'Anything else you need?',
-        tip: 'Anything not on the list above.',
+        tip: 'Anything not listed above',
         area: true,
         required: false,
         gridSpan: 'full',
@@ -245,7 +253,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'technical',
         label: 'Any file types you know you’ll need?',
-        tip: 'Leave blank if you’re not sure — standard print and web formats are included either way.',
+        tip: 'Leave blank if unsure',
         area: true,
         designerOnly: true,
         required: false,
@@ -254,7 +262,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'existingAssets',
         label: 'Do you have anything already?',
-        tip: 'An old logo, brand colours, fonts, photos — anything you’ve got, even if you don’t like it.',
+        tip: 'Old logo, colours, fonts, photos',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -262,7 +270,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'decisionMakers',
         label: 'Who else needs to approve this?',
-        tip: 'Names and emails — they’ll get the same link. Leave blank if it’s just you.',
+        tip: 'Names and emails, or blank',
         area: false,
         required: false,
         gridSpan: 'half',
