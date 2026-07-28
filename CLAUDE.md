@@ -50,6 +50,21 @@ code — including follow-up fixes to something just discussed. The user has
 said this directly: "never assume. always ask for confirmation before
 touching the code." This applies to every change, not just large ones.
 
+**An explicit instruction scopes this, and only for the work it names.**
+Clarified by the owner 2026-07-28: *"ask unless I give you other
+instructions."* So "build all three", "next phase", "apply it" are real
+go-aheads — carry that piece out without stopping at every step inside it.
+But the permission ends with the piece of work it named. When it is done,
+come back and ask; do not roll into the next thing on your own read of what
+follows.
+
+The failure mode this exists to stop is momentum: a session where each
+single-word approval is treated as covering everything after it, and design
+decisions that were mine to *propose* get quietly *made* instead. That
+happened across the research phases on 2026-07-28 — where the client survey
+lived, whether the case study prints hours, whether writing guidelines
+default or stay blank. All defensible, none confirmed.
+
 ## Git workflow rule — version bump (MANUAL — hooks don't work here)
 
 **Bump the version yourself, in the same shell sequence as the commit, using
@@ -60,6 +75,13 @@ the right command for what the commit actually is:**
 
 Then `git add package.json package-lock.json` and commit — same commit,
 not a follow-up one.
+
+**Currently suspended, by the owner's instruction (2026-07-28):** bumps are
+being held until the research-phases work is finished, then done as a single
+`npm run bump:major`. The phase commits on `feat/research-phases-1-2`,
+`feat/phase-3-scope-revisions`, `feat/phase-4-touchpoints` and
+`feat/phase-6-case-study` therefore carry no bump of their own, and that is
+deliberate — do not "fix" them.
 
 **This used to be a git hook (`.githooks/prepare-commit-msg`). It is
 disabled and must not be re-enabled without testing first.** In this repo's
