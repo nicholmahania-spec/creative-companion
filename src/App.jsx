@@ -2381,7 +2381,7 @@ function App() {
     // Critical for PDF (async jsPDF load) and helps Chrome when anchor download is blocked.
     const saveName =
       kind === 'pdf' || kind === 'pdf-preview'
-        ? `${slug}-brand-direction.pdf`
+        ? `${slug}-brand-book.pdf`
         : kind === 'kit'
           ? `${slug}-brand-kit.zip`
           : kind === 'html'

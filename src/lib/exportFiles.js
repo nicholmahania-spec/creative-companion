@@ -1324,7 +1324,7 @@ export async function downloadBrandPackPdfRaster(pack, handlePromise = null, opt
     if (overlay) overlay.style.overflow = prev.overlayOverflow || ''
 
     const slug = slugifyFilename(pack.projectName, 'brand-pack')
-    const name = `${slug}-brand-direction.pdf`
+    const name = `${slug}-brand-book.pdf`
     const { blob, pdf } = await canvasPagesToPdfBlob(canvas)
 
     if (handlePromise) {

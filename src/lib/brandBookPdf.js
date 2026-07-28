@@ -1,7 +1,7 @@
 /**
  * Application-first brand book (vector PDF).
- * Designed like a leave-behind system deck: cover world → strategy → agreed
- * brief → logo → color → type → imagery → applications — not a form dump.
+ * Designed like a leave-behind system deck: cover world → logo → color → type
+ * → imagery → applications — not a form dump.
  */
 import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
 import {
@@ -12,7 +12,7 @@ import {
   TYPE_SCALE,
   ROLE_JOBS,
 } from './brandSystem'
-import { filledDetectiveChapters } from './detectiveBrief'
+import { briefHighlightsForPack } from './detectiveBrief'
 import { pinVisualKind } from './moodPins'
 import { slugifyFilename, downloadBlob, writeToSaveHandle } from './exportFiles'
 
@@ -73,10 +73,16 @@ function imageFormatFromDataUrl(url) {
   return null
 }
 
-async function rasterizeToPngDataUrl(src) {
+/**
+ * Rasterize any drawable image to a jsPDF-safe JPEG data URL.
+ * Re-encodes existing PNG/JPEG too — strips alpha and odd PNG encodings that
+ * silently fail in addImage (blank imagery tiles).
+ * @param {string} src
+ * @param {{ max?: number, mime?: 'image/jpeg'|'image/png', quality?: number }} [opts]
+ */
+async function rasterizeForPdf(src, opts = {}) {
   const s = String(src || '').trim()
   if (!s) return ''
-  if (imageFormatFromDataUrl(s)) return s
   if (
     /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(s) ||
     s.startsWith('linear-gradient') ||
@@ -84,15 +90,24 @@ async function rasterizeToPngDataUrl(src) {
   ) {
     return ''
   }
-  if (typeof document === 'undefined' || typeof Image === 'undefined') return ''
+  // Node / non-DOM: pass through only PNG/JPEG data URLs
+  if (typeof document === 'undefined' || typeof Image === 'undefined') {
+    return imageFormatFromDataUrl(s) ? s : ''
+  }
+  const max = opts.max || 960
+  const mime = opts.mime || 'image/jpeg'
+  const quality = opts.quality ?? 0.88
   return new Promise((resolve) => {
     try {
       const img = new Image()
       img.crossOrigin = 'anonymous'
       img.onload = () => {
         try {
-          const w = Math.max(1, Math.min(img.naturalWidth || 512, 1024))
-          const h = Math.max(1, Math.min(img.naturalHeight || 512, 1024))
+          const nw = Math.max(1, img.naturalWidth || 512)
+          const nh = Math.max(1, img.naturalHeight || 512)
+          const scale = Math.min(1, max / Math.max(nw, nh))
+          const w = Math.max(1, Math.round(nw * scale))
+          const h = Math.max(1, Math.round(nh * scale))
           const c = document.createElement('canvas')
           c.width = w
           c.height = h
@@ -101,8 +116,17 @@ async function rasterizeToPngDataUrl(src) {
             resolve('')
             return
           }
+          // Opaque cream fill so transparent marks don't vanish on cream lockups
+          if (mime === 'image/jpeg') {
+            ctx.fillStyle = '#F7F3EC'
+            ctx.fillRect(0, 0, w, h)
+          }
           ctx.drawImage(img, 0, 0, w, h)
-          resolve(c.toDataURL('image/png'))
+          resolve(
+            mime === 'image/png'
+              ? c.toDataURL('image/png')
+              : c.toDataURL('image/jpeg', quality)
+          )
         } catch {
           resolve('')
         }
@@ -118,17 +142,30 @@ async function rasterizeToPngDataUrl(src) {
 async function preparePackRasters(pack) {
   if (!pack || typeof pack !== 'object') return pack
   let logoImage = pack.logoImage || ''
-  if (logoImage && !imageFormatFromDataUrl(logoImage)) {
-    logoImage = (await rasterizeToPngDataUrl(logoImage)) || logoImage
+  if (logoImage) {
+    // Keep logo as PNG so soft transparency works on cover; re-encode for safety
+    const r = await rasterizeForPdf(logoImage, {
+      max: 512,
+      mime: 'image/png',
+    })
+    if (r) logoImage = r
+    else if (!imageFormatFromDataUrl(logoImage)) logoImage = ''
   }
   const pins = await Promise.all(
     (Array.isArray(pack.pins) ? pack.pins : []).map(async (p) => {
       const visual = String(p?.visual || '')
-      if (visual.startsWith('data:image') && !imageFormatFromDataUrl(visual)) {
-        const r = await rasterizeToPngDataUrl(visual)
-        return r ? { ...p, visual: r } : p
-      }
-      return p
+      const kind = pinVisualKind(p)
+      if (kind !== 'image') return p
+      // Always re-encode image pins to JPEG — reliable jsPDF embed
+      const r = await rasterizeForPdf(visual, {
+        max: 720,
+        mime: 'image/jpeg',
+        quality: 0.86,
+      })
+      // Node path: pass through valid PNG/JPEG data URLs unchanged
+      if (r) return { ...p, visual: r }
+      if (imageFormatFromDataUrl(visual)) return p
+      return { ...p, visual: '' }
     })
   )
   return { ...pack, logoImage, pins }
@@ -214,7 +251,7 @@ export async function downloadBrandPackVectorPdf(
     const pins = Array.isArray(pack?.pins) ? pack.pins : []
     const decision = decisionLineFromPack(pack)
     const voice = String(pack?.voice || '').trim()
-    const chapters = filledDetectiveChapters(pack?.detective || {})
+    const briefRows = briefHighlightsForPack(pack?.detective || {}, 6)
 
     let pageIndex = 0
     let y = margin
@@ -250,11 +287,7 @@ export async function downloadBrandPackVectorPdf(
         pdf.setPage(i)
         pdf.setFont('helvetica', 'normal')
         pdf.setFontSize(8)
-        /* 100, not 150. #969696 on white measures 2.96:1 — under the 4.5:1
-           floor — on a footer that carries the page numbers and the studio
-           name in a document sent to clients. 100,100,100 is 5.92:1 and is
-           already this file's dominant muted grey, so this fixes the
-           contrast and one of its several unlabelled greys at once. */
+        // 100/100/100 ≈ 5.9:1 on white (footer is client-facing meta)
         pdf.setTextColor(100, 100, 100)
         pdf.text(left, margin, pageH - 22)
         pdf.text(`${i} / ${total}`, pageW - margin, pageH - 22, {
@@ -443,83 +476,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     // ═══════════════════════════════════════════════
-    // 3. AGREED BRIEF — the record of what was agreed, not a form
-    // ═══════════════════════════════════════════════
-    // Pattern from two studio reference briefs (see todo.md): a question is
-    // never asked bare. Every answer keeps its worked example (the field's
-    // `tip`) directly beneath the question, and the answer itself sits in a
-    // visually distinct box rather than running on as plain text — the same
-    // distinction the on-screen form already makes between label and input.
-    let briefStartPage = 0
-    if (chapters.length) {
-      newPage()
-      briefStartPage = pageIndex + 1
-      pageHead('Agreed brief', 'The answers that shaped this system.')
-
-      const ensureRoom = (need) => {
-        if (y + need > pageH - 60) {
-          newPage()
-          pageHead('Agreed brief', 'The answers that shaped this system.')
-        }
-      }
-
-      chapters.forEach((ch) => {
-        ensureRoom(34)
-        sectionLabel(`${ch.num} · ${ch.title}`)
-
-        ch.rows.forEach((row) => {
-          pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(11)
-          const qLines = pdf.splitTextToSize(pdfSafeText(row.label), contentW)
-          // A dozen tips already open with "e.g." in the schema — don't
-          // double it.
-          const tipText = row.tip
-            ? /^e\.g\.?\s/i.test(row.tip)
-              ? row.tip
-              : `e.g. ${row.tip}`
-            : ''
-          const tipLines = tipText
-            ? pdf.splitTextToSize(pdfSafeText(tipText), contentW)
-            : []
-          pdf.setFont('helvetica', 'normal')
-          pdf.setFontSize(11)
-          const ansLines = pdf
-            .splitTextToSize(pdfSafeText(row.answer), contentW - 24)
-            .slice(0, 6)
-
-          const boxH = ansLines.length * 14 + 16
-          const blockH =
-            qLines.length * 14 + (tipLines.length ? tipLines.length * 11 + 4 : 0) + 10 + boxH + 16
-          ensureRoom(blockH)
-
-          pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(11)
-          pdf.setTextColor(20, 18, 17)
-          pdf.text(qLines, margin, y)
-          y += qLines.length * 14
-
-          if (tipLines.length) {
-            pdf.setFont('helvetica', 'normal')
-            pdf.setFontSize(9)
-            pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
-            pdf.text(tipLines, margin, y)
-            y += tipLines.length * 11 + 4
-          }
-          y += 6
-
-          pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
-          pdf.roundedRect(margin, y, contentW, boxH, 4, 4, 'F')
-          pdf.setFont('helvetica', 'normal')
-          pdf.setFontSize(11)
-          pdf.setTextColor(inkOnQuiet[0], inkOnQuiet[1], inkOnQuiet[2])
-          pdf.text(ansLines, margin + 12, y + 18)
-          y += boxH + 16
-        })
-      })
-    }
-
-    // ═══════════════════════════════════════════════
-    // 4. LOGO SYSTEM
+    // 3. LOGO SYSTEM
     // ═══════════════════════════════════════════════
     newPage()
     pageHead('Logo system', 'Primary lockups, reverse, mono, and clearspace.')
@@ -528,7 +485,7 @@ export async function downloadBrandPackVectorPdf(
     const lockH = 120
     const markSize = 48
 
-    const lockup = (x, yy, w, h, label, bg, ink, border) => {
+    const lockup = (x, yy, w, h, label, bg, ink, border, { mono = true } = {}) => {
       pdf.setFillColor(bg[0], bg[1], bg[2])
       if (border) {
         pdf.setDrawColor(border[0], border[1], border[2])
@@ -541,14 +498,17 @@ export async function downloadBrandPackVectorPdf(
       pdf.setFontSize(7)
       pdf.setTextColor(ink[0], ink[1], ink[2])
       pdf.text(label.toUpperCase(), x + 14, yy + 16)
-      tryLogo(x + 16, yy + 36, markSize, ink, { monochrome: true })
+      // Primary shows the real mark when uploaded; reverse/mono stay ink-only
+      tryLogo(x + 16, yy + 36, markSize, ink, { monochrome: mono })
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(13)
       const wm = pdf.splitTextToSize(pdfSafeText(wordmark), w - markSize - 44)
       pdf.text(wm.slice(0, 2), x + 16 + markSize + 12, yy + 36 + markSize / 2 + 4)
     }
 
-    lockup(margin, y, lockW, lockH, 'Primary', quietRgb, inkOnQuiet, [220, 220, 220])
+    lockup(margin, y, lockW, lockH, 'Primary', quietRgb, inkOnQuiet, [220, 220, 220], {
+      mono: false,
+    })
     lockup(margin + lockW + 14, y, lockW, lockH, 'Reverse', coverRgb, fgRgb, null)
     y += lockH + 12
     lockup(margin, y, lockW, lockH, 'Mono', [255, 255, 255], [28, 25, 23], [200, 200, 200])
@@ -607,7 +567,7 @@ export async function downloadBrandPackVectorPdf(
     y += 48
 
     // ═══════════════════════════════════════════════
-    // 5. COLOR SYSTEM — designed spread
+    // 4. COLOR SYSTEM — designed spread
     // ═══════════════════════════════════════════════
     newPage()
     pageHead('Color system', 'Roles first. Use them as jobs, not decoration.')
@@ -682,7 +642,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     // ═══════════════════════════════════════════════
-    // 6. TYPE — specimen spread
+    // 5. TYPE — specimen spread
     // ═══════════════════════════════════════════════
     newPage()
     pageHead(
@@ -747,7 +707,7 @@ export async function downloadBrandPackVectorPdf(
     })
 
     // ═══════════════════════════════════════════════
-    // 7. IMAGERY (if any)
+    // 6. IMAGERY (if any)
     // ═══════════════════════════════════════════════
     if (
       pins.length ||
@@ -818,7 +778,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     // ═══════════════════════════════════════════════
-    // 8. APPLICATIONS — the heart of the book
+    // 7. APPLICATIONS — the heart of the book
     // ═══════════════════════════════════════════════
     newPage()
     pageHead(
@@ -946,7 +906,7 @@ export async function downloadBrandPackVectorPdf(
     )
 
     // ═══════════════════════════════════════════════
-    // 9. USAGE (if any)
+    // 8. USAGE (if any)
     // ═══════════════════════════════════════════════
     if (doT || dontT) {
       newPage()
@@ -994,7 +954,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     // ═══════════════════════════════════════════════
-    // 10. HANDOFF (compact)
+    // 9. HANDOFF (compact)
     // ═══════════════════════════════════════════════
     newPage()
     pageHead('Handoff', 'What to take into your design tool next.')
@@ -1035,23 +995,33 @@ export async function downloadBrandPackVectorPdf(
       )
     }
 
-    // The full agreed-brief answers already have their own section (with
-    // each answer's worked example) — a second, capped-at-8 echo here would
-    // be exactly the kind of duplicate copy that drifts as the first one is
-    // edited. A page pointer costs the reader nothing to skip.
-    if (briefStartPage) {
+    // Strategy highlights only — never the full questionnaire, never field tips
+    if (briefRows.length) {
       y += 40
-      if (y > pageH - 60) {
+      if (y > pageH - 200) {
         newPage()
+        pageHead('Brief highlights', 'Strategy answers that drove the system.')
+      } else {
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(8)
+        pdf.setTextColor(100, 100, 100)
+        pdf.text('BRIEF HIGHLIGHTS', margin, y)
+        y += 16
       }
-      pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(10)
-      pdf.setTextColor(100, 100, 100)
-      pdf.text(
-        pdfSafeText(`Full agreed brief — page ${briefStartPage}`),
-        margin,
-        y
-      )
+      for (const row of briefRows) {
+        if (y > pageH - 60) break
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(9)
+        pdf.setTextColor(90, 90, 90)
+        pdf.text(pdfSafeText(row.label), margin, y)
+        y += 12
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(10)
+        pdf.setTextColor(30, 28, 27)
+        const ans = pdf.splitTextToSize(pdfSafeText(row.answer), contentW)
+        pdf.text(ans.slice(0, 2), margin, y)
+        y += ans.slice(0, 2).length * 13 + 10
+      }
     }
 
     footerAll()
