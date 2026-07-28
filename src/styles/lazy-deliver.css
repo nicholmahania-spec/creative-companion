@@ -272,6 +272,40 @@
   overflow-x: clip;
 }
 
+/* Pack page must never widen the shell (artboard + context strip) */
+.app.is-pack-view,
+.app.is-pack-view .main,
+.app.is-pack-view .main > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.app.is-pack-view .main {
+  overflow-x: clip;
+  box-sizing: border-box;
+}
+
+.app.is-pack-view .before-after-chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deliver-primary-ship {
+  position: static;
+  justify-content: stretch;
+  border-top: none;
+  margin-top: 0.35rem;
+  padding-top: 0;
+  background: transparent;
+}
+
+.deliver-primary-ship .btn-primary {
+  width: 100%;
+  justify-content: center;
+}
+
 .deliver-top {
   display: flex;
   flex-wrap: wrap;

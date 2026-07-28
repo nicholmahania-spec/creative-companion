@@ -27,6 +27,11 @@ export function fieldLabel(fieldId) {
   return FIELD_META[fieldId]?.label || fieldId
 }
 
+/** Full field def for formatDetectiveAnswer (checklist/spectrum/etc.). */
+export function fieldMeta(fieldId) {
+  return FIELD_META[fieldId] || null
+}
+
 export function fieldPlaceholder(fieldId) {
   return FIELD_META[fieldId]?.placeholder || ''
 }

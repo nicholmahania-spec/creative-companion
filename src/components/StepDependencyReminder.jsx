@@ -22,7 +22,12 @@
  * nothing at all; the brief is where they get answered.
  */
 import useAppStore from '../store/useAppStore'
-import { STEP_DEPENDENCIES, fieldLabel } from '../lib/stepDependencies'
+import {
+  STEP_DEPENDENCIES,
+  fieldLabel,
+  fieldMeta,
+} from '../lib/stepDependencies'
+import { formatDetectiveAnswer } from '../lib/detectiveBrief'
 
 export default function StepDependencyReminder({ stepId }) {
   const detective = useAppStore(
@@ -32,8 +37,11 @@ export default function StepDependencyReminder({ stepId }) {
   const answered = (STEP_DEPENDENCIES[stepId] || [])
     .map((id) => {
       const raw = detective?.[id]
+      const meta = fieldMeta(id)
       let value = ''
-      if (Array.isArray(raw)) {
+      if (meta) {
+        value = String(formatDetectiveAnswer(meta, raw) || '').trim()
+      } else if (Array.isArray(raw)) {
         value = raw.length ? raw.join(', ') : ''
       } else {
         value = String(raw || '').trim()
