@@ -1341,3 +1341,12 @@
 .brand-direction-why-label {
   margin-top: var(--space-2);
 }
+
+/* Names which A/B/C slot Identity is showing, so a switch made later in
+   Ideate reads as "now showing B" rather than the field going blank. */
+.brand-direction-slot {
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: normal;
+}

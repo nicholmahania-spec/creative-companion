@@ -309,3 +309,7 @@
 .before-after-item.is-open {
   color: var(--text-secondary);
 }
+.sketch-feedback-shared-hint {
+  font-weight: 500;
+  color: var(--text-muted);
+}

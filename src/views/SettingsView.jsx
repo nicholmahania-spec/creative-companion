@@ -361,7 +361,10 @@ export default function SettingsView(props) {
               onClick={() => {
                 ask('Wipe desk · one blank project?', () => {
                   clearToEmpty()
-                  setActiveView('flow')
+                  // 'flow' (Touchpoints/Sketch) is the 4th of 5 stops — a
+                  // brand-new blank project starts at Strategy (Define),
+                  // not mid-journey with nothing yet to sketch.
+                  setActiveView('project')
                   flashToast('Empty desk ready')
                 })
               }}

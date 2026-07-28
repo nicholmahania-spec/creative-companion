@@ -19,6 +19,7 @@ export default function CalendarView(props) {
     setProjectDeadline,
     activeProject,
     upcomingDeadlines: upcomingProp,
+    onOpenTaskPanel,
     /** Journey view to restore when leaving Calendar. */
     pathReturnView = 'project',
   } = props
@@ -203,9 +204,14 @@ export default function CalendarView(props) {
                       if (ev.projectId != null) {
                         selectProject(ev.projectId)
                       }
-                      setActiveView(
-                        ev.type === 'project' ? 'project' : 'flow'
-                      )
+                      // Tasks aren't tied to any one journey stage — the
+                      // running to-do list is where this one actually
+                      // lives, not Sketch specifically.
+                      if (ev.type === 'project') {
+                        setActiveView('project')
+                      } else {
+                        onOpenTaskPanel?.()
+                      }
                     }}
                   >
                     {ev.type === 'project' ? '◆ ' : '· '}
@@ -253,7 +259,7 @@ export default function CalendarView(props) {
                       setActiveView('project')
                     } else if (row.projectId != null) {
                       selectProject(row.projectId)
-                      setActiveView('flow')
+                      onOpenTaskPanel?.()
                     }
                   }}
                 >

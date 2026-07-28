@@ -644,6 +644,14 @@ export default function DesignView({
               <div className="field-block brand-direction-block">
                 <label className="field-label" htmlFor="brand-direction-title">
                   Direction you're building
+                  {/* If Ideate later switches which direction is chosen,
+                      this box silently starts showing a different (often
+                      blank) one — nothing else here would say so. Naming
+                      which slot it is makes a switch visible instead of
+                      reading as the text having vanished. */}
+                  {identityTarget.label && (
+                    <span className="brand-direction-slot"> — {identityTarget.label}</span>
+                  )}
                 </label>
                 <input
                   id="brand-direction-title"
@@ -1463,6 +1471,11 @@ export default function DesignView({
                   ))}
                   <option value="custom">Custom labels…</option>
                 </select>
+                <p className="panel-hint">
+                  Shows here and on the artboard preview. The PDF and exported
+                  files still use the app's default typeface — this picker
+                  doesn't change those yet.
+                </p>
               </div>
               <div className="brand-type-pair">
                 <div className="field-block">
