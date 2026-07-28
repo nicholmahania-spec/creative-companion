@@ -2752,6 +2752,44 @@ function App() {
     })
   }
 
+  /** Full brand-guide sample — every brand-book chapter has content. */
+  const runHarborHearthImport = async () => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.BASE_URL}demos/harbor-hearth-workspace.json`
+      )
+      if (!res.ok) throw new Error('Demo file missing')
+      const data = await res.json()
+      const result = importAllData(data)
+      if (result.ok) {
+        setBodyDoubling(true)
+        setActiveView('finish')
+        setDemoTour(null)
+        notifyAction(
+          'Harbor & Hearth demo loaded · open Pack for full brand book',
+          'project_create',
+          { label: 'Harbor & Hearth demo' }
+        )
+      } else {
+        flashToast(result.error || i18nT(locale, 'ui.demoLoadFail'))
+      }
+    } catch (e) {
+      flashToast(e?.message || 'Could not load Harbor & Hearth demo')
+    }
+  }
+
+  const loadHarborHearthDemo = () => {
+    setDeskConfirm({
+      kind: 'demo',
+      label:
+        'Load Harbor & Hearth full brand guide demo? Replaces workspace. Backup first if needed.',
+      onConfirm: () => {
+        setDeskConfirm(null)
+        void runHarborHearthImport()
+      },
+    })
+  }
+
   const handleImportBackup = (file) => {
     if (!file) return
     const reader = new FileReader()
@@ -4205,6 +4243,7 @@ function App() {
               clearAllData={clearAllData}
               setShowOnboarding={setShowOnboarding}
               loadSoftSignalDemo={loadSoftSignalDemo}
+              loadHarborHearthDemo={loadHarborHearthDemo}
               versionLabel={versionLabel}
               APP_BUILD={APP_BUILD}
               APP_BUILD_DATE={APP_BUILD_DATE}

@@ -47,6 +47,7 @@ export default function SettingsView(props) {
     clearAllData,
     setShowOnboarding,
     loadSoftSignalDemo,
+    loadHarborHearthDemo,
     versionLabel,
     APP_BUILD_DATE,
     STORAGE_EXPLAIN,
@@ -458,13 +459,25 @@ export default function SettingsView(props) {
           </details>
           <div className="settings-row">
             <strong>Demo</strong>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => loadSoftSignalDemo()}
-            >
-              Soft Signal
-            </button>
+            <div className="settings-row-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => loadSoftSignalDemo()}
+              >
+                Soft Signal
+              </button>
+              {typeof loadHarborHearthDemo === 'function' && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => loadHarborHearthDemo()}
+                  title="Full fictitious brand with every brand-book chapter filled"
+                >
+                  Harbor &amp; Hearth
+                </button>
+              )}
+            </div>
           </div>
           <div className="settings-row">
             <strong>Helper AI</strong>
