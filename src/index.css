@@ -11898,8 +11898,17 @@ body:has(.app.deep)::after {
 /* Wide tablet+: keep real split so board never leaves the glance */
 
 @media (min-width: 840px) {
-.define-split {
-    grid-template-columns: minmax(0, 1fr);
+  /* ~60% form / ~40% mood board — AGENTS.md split workspace */
+  .define-split[data-define-layout='form-mood'] {
+    grid-template-columns: minmax(0, 1.5fr) minmax(14rem, 1fr);
+    gap: 1.25rem;
+  }
+
+  .define-split[data-define-layout='form-mood'] .define-split-mood {
+    position: sticky;
+    top: 4.5rem;
+    align-self: start;
+    min-width: 0;
   }
 }
 
@@ -16316,6 +16325,29 @@ select:focus {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.step-context-missing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.step-context-strip.is-missing-only {
+  border-left: 2px solid var(--border-strong);
+}
+
+.step-context-missing-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .project-menu-item {

@@ -34,6 +34,8 @@ export default function ReviewFocusView({
 
   const [clearedNotes, setClearedNotes] = useState(0)
   const [strike, setStrike] = useState(false)
+  /** Soft archive of last addressed line — undo restores it. */
+  const [lastRemoved, setLastRemoved] = useState(null)
   const [skippedGaps, setSkippedGaps] = useState(() => new Set())
   const [translating, setTranslating] = useState(false)
   const [translation, setTranslation] = useState(null)
@@ -67,11 +69,20 @@ export default function ReviewFocusView({
     setStrike(true)
     window.setTimeout(() => {
       const remaining = noteLines.filter((l) => l !== line)
+      setLastRemoved(line)
       updateBrandField('feedbackNotes', remaining.join('\n'))
       setClearedNotes((n) => n + 1)
       setStrike(false)
       setTranslation(null)
     }, 180)
+  }
+
+  const undoLastRemoved = () => {
+    if (!lastRemoved) return
+    const next = [lastRemoved, ...noteLines].join('\n')
+    updateBrandField('feedbackNotes', next)
+    setLastRemoved(null)
+    setClearedNotes((n) => Math.max(0, n - 1))
   }
 
   const currentNote = noteLines[0]
@@ -221,6 +232,18 @@ export default function ReviewFocusView({
                 Addressed
               </button>
             </div>
+            {lastRemoved ? (
+              <p className="focus-hint" style={{ marginTop: '0.75rem' }} role="status">
+                Moved aside ·{' '}
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={undoLastRemoved}
+                >
+                  Undo
+                </button>
+              </p>
+            ) : null}
           </FocusCard>
         </FocusShell>
 

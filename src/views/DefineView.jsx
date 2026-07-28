@@ -1,12 +1,6 @@
 /**
- * Define — brief form studio.
- *
- * NOTE: this used to be a 60/40 split with a mood board pinned beside the
- * questions, and the header comment still claimed that was an ADHD guarantee
- * long after `data-define-layout` was hardcoded to "form-only" and the board
- * stopped rendering at all. The claim is removed rather than left lying:
- * restoring the board is a separate, deliberate piece of work.
- *
+ * Define — brief form studio with mood board pinned beside questions
+ * (AGENTS.md: side-by-side to prevent tab-switching amnesia).
  * Calm chapter nav — no XP / game HUD.
  */
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -16,6 +10,7 @@ import { DETECTIVE_CHAPTERS, getDetectiveProgress } from '../lib/detectiveBrief'
 import DefineStartHere from '../components/DefineStartHere'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
+const DefineMoodCanvas = lazy(() => import('./DefineMoodCanvas'))
 
 
 export default function DefineView(props) {
@@ -24,11 +19,15 @@ export default function DefineView(props) {
     navDir = 'none',
     activeProject = null,
     deskTasks = [],
+    deskMood = [],
+    projectPalette = [],
     updateDetective,
     onOpenShare,
     setActiveView,
     setProjectDeadline,
     projectDeadline = '',
+    flashToast,
+    flashMicro,
   } = props
 
   const locale = normalizeLocale(localeProp)
@@ -250,7 +249,7 @@ export default function DefineView(props) {
 
       <div
         className="define-split"
-        data-define-layout="form-only"
+        data-define-layout="form-mood"
       >
         <div className="define-split-form" role="region" aria-label="Brief questions">
           <Suspense
@@ -269,6 +268,22 @@ export default function DefineView(props) {
               showStartHere={false}
               projectDeadline={projectDeadline}
               setProjectDeadline={setProjectDeadline}
+            />
+          </Suspense>
+        </div>
+        {/* RIGHT: pinned inspiration — same project pins as Research */}
+        <div className="define-split-mood" aria-label="Inspiration beside the brief">
+          <Suspense
+            fallback={
+              <div className="define-mood define-mood-loading">Loading board…</div>
+            }
+          >
+            <DefineMoodCanvas
+              deskMood={deskMood}
+              projectId={activeProject?.id}
+              projectPalette={projectPalette}
+              flashToast={flashToast}
+              flashMicro={flashMicro}
             />
           </Suspense>
         </div>

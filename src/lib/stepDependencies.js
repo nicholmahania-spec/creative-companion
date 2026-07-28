@@ -8,10 +8,11 @@ import { DETECTIVE_CHAPTERS } from './detectiveBrief'
 export const STEP_DEPENDENCIES = {
   research: ['audience', 'goal'],
   ideate: ['goal', 'audience'],
-  sketch: ['deliverables', 'goal'],
-  design: ['deliverables', 'clientName'],
+  // deliverablesPicked is the required checklist id (not free-text deliverables)
+  sketch: ['deliverablesPicked', 'goal'],
+  design: ['deliverablesPicked', 'clientName'],
   review: ['goal'],
-  deliver: ['deliverables', 'clientName'],
+  deliver: ['deliverablesPicked', 'clientName'],
 }
 
 const FIELD_META = DETECTIVE_CHAPTERS.flatMap((ch) => ch.fields).reduce(
@@ -33,5 +34,9 @@ export function fieldPlaceholder(fieldId) {
 /** Field ids for a step that are still empty on the given detective object. */
 export function missingDependencies(stepId, detective = {}) {
   const ids = STEP_DEPENDENCIES[stepId] || []
-  return ids.filter((id) => !String(detective?.[id] || '').trim())
+  return ids.filter((id) => {
+    const v = detective?.[id]
+    if (Array.isArray(v)) return v.length === 0
+    return !String(v || '').trim()
+  })
 }
