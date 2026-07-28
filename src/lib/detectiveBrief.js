@@ -104,7 +104,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'clientEmail',
         label: 'Email',
-        tip: 'Best address for project updates.',
+        tip: 'e.g. you@studio.com',
         area: false,
         required: false,
         gridSpan: 'half',
@@ -193,7 +193,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'audiencePains',
         label: 'What frustrates your customers most?',
-        tip: 'What they complain about',
+        tip: 'e.g. slow replies, no return',
         area: true,
         required: false,
         gridSpan: 'half',
@@ -296,7 +296,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'deliverablesPicked',
         label: 'What do you need made?',
-        tip: 'Tick everything you want',
+        tip: 'Core pack first is fine',
         type: 'checklist',
         options: DELIVERABLE_OPTIONS,
         required: true,
@@ -305,7 +305,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'deliverables',
         label: 'Anything else you need?',
-        tip: 'Anything not listed above',
+        tip: 'e.g. shop sign, menus',
         area: true,
         required: false,
         gridSpan: 'full',

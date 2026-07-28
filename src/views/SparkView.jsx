@@ -307,7 +307,7 @@ export default function SparkView({
               onClick={useSparkAsTitle}
               className="btn btn-secondary"
             >
-              Use as next empty title
+              Use as next A/B/C title
             </button>
             <button
               type="button"

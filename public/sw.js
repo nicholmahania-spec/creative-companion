@@ -1,8 +1,7 @@
-/* Creative Companion — offline shell + asset cache (v35)
- * v33: blueprint · v34: residual densify (rail 200, export/command)
- * v35: faster cloud-load timeout + escape hatch (mobile "stuck loading" fix)
+/* Creative Companion — offline shell + asset cache (v36)
+ * v35: cloud-load escape · v36: put both shell keys on navigate
  */
-const CACHE = 'cc-shell-v35'
+const CACHE = 'cc-shell-v36'
 const PRECACHE = [
   './',
   './index.html',
@@ -48,8 +47,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((res) => {
-          const copy = res.clone()
-          caches.open(CACHE).then((c) => c.put('./', copy)).catch(() => {})
+          const copyA = res.clone()
+          const copyB = res.clone()
+          caches.open(CACHE).then((c) => {
+            c.put('./', copyA).catch(() => {})
+            c.put('./index.html', copyB).catch(() => {})
+          })
           return res
         })
         .catch(() =>

@@ -10,7 +10,8 @@ import { trackVersionAction } from '../lib/analytics'
 class VersionService {
   constructor() {
     this.storageKey = 'project-versions'
-    this.maxVersionsPerProject = 50 // Keep last 50 versions
+    /** Low cap — snapshots must not compete with desk localStorage quota. */
+    this.maxVersionsPerProject = 8
   }
 
   /**
@@ -41,13 +42,14 @@ class VersionService {
         typeBody: project.typeBody,
         logoWordmark: project.logoWordmark,
         logoDirection: project.logoDirection,
-        logoImage: project.logoImage,
+        // Never store logoImage / mood image data URLs here — they fill quota.
+        logoImage: project.logoImage ? '[image-omitted]' : '',
         logoClearspace: project.logoClearspace,
         logoMinSize: project.logoMinSize,
         logoDonts: project.logoDonts,
 
         // Color system
-        palette: [...project.palette], // Copy array
+        palette: Array.isArray(project.palette) ? [...project.palette] : [],
         colorRoles: project.colorRoles ? { ...project.colorRoles } : null,
 
         // Messaging
@@ -60,36 +62,34 @@ class VersionService {
         imageryDo: project.imageryDo,
         imageryDont: project.imageryDont,
 
-        // Detective sheet (Define phase)
-        detective: project.detective ? {
-          goal: project.detective.goal,
-          audience: project.detective.audience,
-          feel: project.detective.feel,
-          avoid: project.detective.avoid,
-          deliverables: project.detective.deliverables,
-          technical: project.detective.technical,
-          milestones: project.detective.milestones ? [...project.detective.milestones] : [],
-          brandWords: project.detective.brandWords
-        } : null,
+        // Full detective text (no binary attach files)
+        detective: project.detective
+          ? (() => {
+              const d = { ...project.detective }
+              Object.keys(d).forEach((k) => {
+                if (k.endsWith('Files')) delete d[k]
+              })
+              return d
+            })()
+          : null,
 
-        // Concept package (Ideate phase)
-        conceptPackage: project.conceptPackage ? {
-          audience: project.conceptPackage.audience,
-          outcome: project.conceptPackage.outcome,
-          concept: project.conceptPackage.concept,
-          voice: project.conceptPackage.voice,
-          visualDirection: project.conceptPackage.visualDirection,
-          doUse: project.conceptPackage.doUse,
-          dontUse: project.conceptPackage.dontUse,
-          notes: project.conceptPackage.notes
-        } : null,
+        conceptPackage: project.conceptPackage
+          ? { ...project.conceptPackage }
+          : null,
 
-        // Directions (Ideate phase)
-        directions: project.directions ? [...project.directions].map(d => ({ ...d })) : [],
+        directions: project.directions
+          ? project.directions.map((d) => ({ ...d }))
+          : [],
 
-        // Tasks and mood items (for context)
-        tasks: project.tasks ? [...project.tasks].map(t => ({ ...t })) : [],
-        moodItems: project.moodItems ? [...project.moodItems].map(m => ({ ...m })) : []
+        // Tasks only — mood pin images live on the root store, not here
+        tasks: Array.isArray(project.tasks)
+          ? project.tasks.map((t) => ({
+              id: t.id,
+              title: t.title,
+              why: t.why,
+              completed: t.completed,
+            }))
+          : [],
       },
 
       // Metadata about what changed since last version (to be filled by diff)
@@ -446,22 +446,31 @@ class VersionService {
       await updateBrandField('imageryDo', data.imageryDo || '')
       await updateBrandField('imageryDont', data.imageryDont || '')
 
-      // Restore detective sheet
-      if (data.detective) {
-        // Update each detective field
+      // Restore detective via real store writes (not empty stubs)
+      const st = useAppStore.getState()
+      if (data.detective && typeof st.updateDetective === 'function') {
         Object.entries(data.detective).forEach(([field, value]) => {
-          // Again, would need specific update methods
+          if (field.endsWith('Files')) return
+          try {
+            st.updateDetective(field, value)
+          } catch {
+            /* skip unknown fields */
+          }
         })
       }
-
-      // Restore concept package
-      if (data.conceptPackage) {
-        // Update concept package fields
-      }
-
-      // Restore directions
-      if (data.directions) {
-        // Update directions - would need specific methods
+      if (Array.isArray(data.directions) && typeof st.updateDirection === 'function') {
+        data.directions.forEach((d) => {
+          if (!d?.id) return
+          try {
+            st.updateDirection(d.id, {
+              title: d.title,
+              note: d.note,
+              chosen: d.chosen,
+            })
+          } catch {
+            /* skip */
+          }
+        })
       }
 
       return true

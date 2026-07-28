@@ -1608,13 +1608,23 @@ export default function DesignView({
                         return
                       }
 
-                      // Always store as a data URL on the project — works offline,
-                      // no cloud required. Cloud storage is not assumed.
+                      // Local data URL + downscale (same pipeline as mood pins)
                       const reader = new FileReader()
                       reader.onerror = () =>
                         flashToast('Could not read that image. Try another file.')
-                      reader.onload = () => {
-                        setLogoImage(reader.result)
+                      reader.onload = async () => {
+                        try {
+                          const { downscaleDataUrl } = await import(
+                            '../lib/moodPins'
+                          )
+                          const scaled = await downscaleDataUrl(
+                            reader.result,
+                            file.type
+                          )
+                          setLogoImage(scaled)
+                        } catch {
+                          setLogoImage(reader.result)
+                        }
                         const bump = bumpDesignVersionIfV1()
                         flashMicro(
                           bump?.bumped

@@ -246,13 +246,23 @@ export async function callXaiChat({
   // Proxy injects Authorization server-side; only send client key for direct api.x.ai
   if (key !== 'proxy') {
     headers.Authorization = `Bearer ${key}`
+  } else {
+    // Optional shared secret for Netlify proxy (production requires it)
+    try {
+      const proxySecret = String(
+        import.meta.env?.VITE_XAI_PROXY_SECRET || ''
+      ).trim()
+      if (proxySecret) headers['X-CC-Proxy-Key'] = proxySecret
+    } catch {
+      /* ignore */
+    }
   }
 
   const res = await fetch(`${base}/chat/completions`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
-      model,
+      model: DEFAULT_MODEL,
       temperature,
       max_tokens: maxTokens,
       messages: [

@@ -349,7 +349,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                   {passwordStrength ?
                     passwordStrength.score === passwordStrength.maxScore ? 'Strong' :
                     passwordStrength.score >= passwordStrength.maxScore * 0.6 ? 'Medium' :
-                    'Weak' :
+                    'Needs more mix' :
                     'Enter password'
                   }
                 </div>
@@ -417,7 +417,7 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 onClick={handleReset}
                 disabled={busy}
               >
-                Reset
+                Clear form
               </button>
             </>
           )}

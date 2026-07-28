@@ -181,8 +181,9 @@ export const MAX_STORED_IMAGE_DIM = 1600
 
 /** Re-encode an image data URL down to MAX_STORED_IMAGE_DIM on its long edge.
  *  Resolves to the original string if anything fails — a slightly-too-large
- *  pin is better than a lost one. */
-function downscaleDataUrl(dataUrl, mime) {
+ *  pin is better than a lost one.
+ *  Also used for logo/cover marks so they do not blow localStorage quota. */
+export function downscaleDataUrl(dataUrl, mime) {
   return new Promise((resolve) => {
     if (typeof document === 'undefined' || !String(dataUrl).startsWith('data:image')) {
       resolve(dataUrl)

@@ -1922,13 +1922,20 @@ function App() {
       flashToast('Cover image must be under 2.5MB')
       return
     }
-    // Local data URL only — no cloud dependency, no fake “upload” path
+    // Local data URL, downscaled like mood pins — protects localStorage quota
     const reader = new FileReader()
     reader.onerror = () =>
       flashToast('Could not read that image. Try another file.')
-    reader.onload = () => {
-      setLogoImage(reader.result)
-      flashMicro('Cover image updated')
+    reader.onload = async () => {
+      try {
+        const { downscaleDataUrl } = await import('./lib/moodPins')
+        const scaled = await downscaleDataUrl(reader.result, file.type)
+        setLogoImage(scaled)
+        flashMicro('Cover image updated')
+      } catch {
+        setLogoImage(reader.result)
+        flashMicro('Cover image updated')
+      }
     }
     reader.readAsDataURL(file)
   }
@@ -3551,6 +3558,11 @@ function App() {
                           selected.nextGap.label
                         : 'All caught up'}
                 </h2>
+                {pathFull && !packReady ? (
+                  <p className="home-kicker" style={{ marginTop: '0.35rem' }}>
+                    Pack still thin — open Deliver to fill gaps or ship anyway
+                  </p>
+                ) : null}
                 <div className="home-cta-row">
                   <button
                     type="button"
@@ -4210,7 +4222,7 @@ function App() {
                 className="btn btn-ghost btn-sm onboard-demo"
                 onClick={() => finishOnboarding('empty')}
               >
-                Skip
+                Empty desk
               </button>
             </div>
             {!onboardName.trim() && (

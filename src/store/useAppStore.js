@@ -66,43 +66,21 @@ export const defaultProjectPalette = [
 ]
 
 /** Empty Design Detective Sheet (Define step) */
+/** Blank detective object derived from DETECTIVE_CHAPTERS so factory cannot
+ *  drift from the schema (spectra, *Files, checklist arrays stay in sync). */
 export function blankDetective() {
-  return {
-    // Overview & administration
-    clientName: '',
-    primaryContact: '',
-    clientEmail: '',
-    clientPhone: '',
-    budgetRange: '',
-    // Company background & strategy
-    goal: '',
-    story: '',
-    usp: '',
-    brandWords: '',
-    // Target audience & market
-    audience: '',
-    feel: '',
-    audiencePains: '',
-    competitors: '',
-    // Brand voice & creative direction
-    toneOfVoice: '',
-    brandAsPerson: '',
-    inspirationLinks: '',
-    /** What to avoid — carried forward so it isn't lost by the time Design happens */
-    avoid: '',
-    // Deliverables & technical scope
-    /** What specifically ships — one line per deliverable */
-    engagementType: '',
-    deliverablesPicked: [],
-    deliverables: '',
-    /** File formats, scalability, production/technical requirements */
-    technical: '',
-    existingAssets: '',
-    decisionMakers: '',
-    /** Milestones: [{ id, label, date }] — a brief can have several dated
-     * checkpoints, not just one overall deadline */
+  const d = {
+    /** Milestones: [{ id, label, date }] — not a chapter field, store-only */
     milestones: [],
   }
+  for (const ch of DETECTIVE_CHAPTERS) {
+    for (const f of ch.fields || []) {
+      if (f.type === 'checklist') d[f.id] = []
+      else d[f.id] = ''
+      if (f.attach) d[`${f.id}Files`] = []
+    }
+  }
+  return d
 }
 
 /**
@@ -548,11 +526,21 @@ const useAppStore = create(
         return { ok: true }
       },
 
+      /** Project calendar deadline. Also mirrors detective.projectDeadline so
+       *  overview chapter fill + getDetectiveProgress stay honest. */
       setProjectDeadline: (deadline) =>
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === state.currentProjectId
-              ? { ...p, deadline: deadline || '' }
+              ? {
+                  ...p,
+                  deadline: deadline || '',
+                  detective: {
+                    ...blankDetective(),
+                    ...(p.detective || {}),
+                    projectDeadline: deadline || '',
+                  },
+                }
               : p
           ),
         })),
@@ -1042,8 +1030,20 @@ const useAppStore = create(
               if (alreadySet) return
               detective[id] = incoming
             })
+            // Client deadline → project.deadline (calendar) if studio empty
+            const clientDeadline = String(
+              clientAnswers?.projectDeadline || ''
+            ).trim()
+            const nextDeadline =
+              clientDeadline && !String(p.deadline || '').trim()
+                ? clientDeadline
+                : p.deadline || ''
+            if (clientDeadline && !String(detective.projectDeadline || '').trim()) {
+              detective.projectDeadline = clientDeadline
+            }
             return {
               ...p,
+              deadline: nextDeadline,
               discoveryAnswers: merged,
               detective,
               discoveryShareStatus: 'submitted',
@@ -2253,7 +2253,8 @@ const useAppStore = create(
             typeBody: project.typeBody,
             logoWordmark: project.logoWordmark,
             logoDirection: project.logoDirection,
-            logoImage: project.logoImage,
+            // Omit binary mark from templates (localStorage quota)
+            logoImage: '',
             logoClearspace: project.logoClearspace,
             logoMinSize: project.logoMinSize,
             logoDonts: project.logoDonts,
@@ -2265,30 +2266,13 @@ const useAppStore = create(
             imageryStyle: project.imageryStyle,
             imageryDo: project.imageryDo,
             imageryDont: project.imageryDont,
-            detective: project.detective ? {
-              clientName: project.detective.clientName,
-              primaryContact: project.detective.primaryContact,
-              clientEmail: project.detective.clientEmail,
-              clientPhone: project.detective.clientPhone,
-              budgetRange: project.detective.budgetRange,
-              goal: project.detective.goal,
-              story: project.detective.story,
-              usp: project.detective.usp,
-              brandWords: project.detective.brandWords,
-              audience: project.detective.audience,
-              feel: project.detective.feel,
-              audiencePains: project.detective.audiencePains,
-              competitors: project.detective.competitors,
-              toneOfVoice: project.detective.toneOfVoice,
-              brandAsPerson: project.detective.brandAsPerson,
-              inspirationLinks: project.detective.inspirationLinks,
-              avoid: project.detective.avoid,
-              deliverables: project.detective.deliverables,
-              technical: project.detective.technical,
-              existingAssets: project.detective.existingAssets,
-              decisionMakers: project.detective.decisionMakers,
-              milestones: project.detective.milestones ? [...project.detective.milestones] : [],
-            } : null,
+            // Full detective clone (no hand-whitelist) — required fields + spectra
+            detective: project.detective
+              ? {
+                  ...blankDetective(),
+                  ...JSON.parse(JSON.stringify(project.detective)),
+                }
+              : null,
             conceptPackage: project.conceptPackage ? {
               audience: project.conceptPackage.audience,
               outcome: project.conceptPackage.outcome,
