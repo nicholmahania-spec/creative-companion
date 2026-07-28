@@ -16,7 +16,7 @@
 |-------|------|--------|
 | 1 | Make the brand book tell the truth | **DONE** — `e39ba7e` + gap-close |
 | 2 | Get paid properly (invoice) | **DONE** — `bfc1c5c`, branch `feat/payable-invoice` |
-| 3 | Scope and revisions | **DONE** — migration not yet applied |
+| 3 | Scope and revisions | **DONE** — migration applied |
 | 4 | Touchpoints becomes real | not started |
 | 5 | Contract | not started |
 | 6 | Case study export | not started |
@@ -120,13 +120,16 @@ client already has bookmarked. Same id, same RLS, same 30s poll.
 - Status is three states naming their own next action, never a date. The
   scale is worded, not numbered.
 
-⚠️ **The migration has not been applied.** `20260728170000_client_portal_survey.sql`
-is written but not run against the remote database, so the feature is inert
-until it is. Note it **drops and recreates** `get_client_portal` — the return
-columns change, and Postgres refuses `create or replace` in that case — so
-there is a brief window during which the public portal page cannot load.
-It was also not validated against a real Postgres: Docker was not running on
-this machine.
+✅ **Migration applied 2026-07-28** to `shzkqbtoepqqdkjgupry`, and verified
+against the live database rather than trusted: questions redact to `[]` while
+`not_sent` and appear once `sent`; the first submit returns true, the second
+returns false, and the first answer survives the second attempt. Run against a
+temporary portal row inside a transaction that deliberately aborts, so nothing
+persisted.
+
+Note it **dropped and recreated** `get_client_portal` — the return columns
+changed and Postgres refuses `create or replace` in that case — so there was a
+brief window during which the public portal page could not load.
 
 ### Phase 4 — Touchpoints becomes real
 
