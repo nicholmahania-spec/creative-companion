@@ -16,7 +16,7 @@
 |-------|------|--------|
 | 1 | Make the brand book tell the truth | **DONE** — `e39ba7e` + gap-close |
 | 2 | Get paid properly (invoice) | **DONE** — `bfc1c5c`, branch `feat/payable-invoice` |
-| 3 | Scope and revisions | not started |
+| 3 | Scope and revisions | **DONE** except item 8 (client survey) |
 | 4 | Touchpoints becomes real | not started |
 | 5 | Contract | not started |
 | 6 | Case study export | not started |
@@ -72,16 +72,43 @@ Items 1, 2. The 11-point invoice checklist, plus line items that can be
 **flat-price or hourly**. `addTimeEntry` rejected anything without hours, so a
 fixed-fee project could not be invoiced honestly.
 
-### Phase 3 — Scope and revisions
+### Phase 3 — Scope and revisions — items 3, 4, 5, 10, 9-half DONE
 
-Items 3, 4, 5, 10, and the useful half of 9. Scope checklist at project start
-(deliverables in plain terms · revision count **as a number** · file formats ·
-one decision-maker · out-of-scope named). Revision rounds with a definition, a
-limit, a counter, and a pause-and-ask at the limit. Feedback log — Reviewer /
-Issue / Decision / Status — which becomes what the Review stop actually
-produces.
+**Shipped 2026-07-28.** `src/lib/revisions.js` holds the counting rules;
+`ScopePanel` (Define) owns the checklist; `RevisionRounds` (Review) owns the
+rounds and the feedback log.
 
-Plus item **8** (client survey): the owner moved this into Phase 3.
+- **Scope checklist (10, 9-half).** Five parts. Two the brief already asks —
+  deliverables and file formats — are *shown, not duplicated*, linking into
+  the brief chapter rather than giving the same answer a second input. Three
+  were new: `scopeRevisionsIncluded` (a number, never "as needed"),
+  `scopeApprover` (one name — the brief's `decisionMakers` asks the plural
+  question, "who else approves"), and `scopeOutOf`, which is the half of a
+  scope that actually gets argued about.
+- **Revision rounds (3).** Open one, finish one; one open at a time, or "which
+  round am I on" becomes unanswerable. `revisionLine()` says where you are in
+  plain words and **never mentions elapsed time** — pinned by a test.
+- **Revision billing (4).** Per-round / hourly / one flat fee. Billing is
+  **opt-in and never inferred**: passing the agreed count changes the wording
+  and offers a tick box, and a round that *was* included cannot be billed even
+  if the box is ticked. A billed round becomes a `timeLog` line — the array
+  the invoice bills from — and never touches `workLog`, the private clock.
+- **Feedback log (5).** Reviewer / Issue / Decision / Status, exactly the
+  article's shape. Resolved rows stay at full legibility; weight carries the
+  state rather than strikethrough or fade.
+
+Nothing blocks. Reaching the revision limit changes what the app *says*, never
+what it lets you do.
+
+**Still open in this phase: item 8, the client survey** — deliberately not
+bolted on, and not dropped. A survey is a thing you send a client and collect
+answers back from, which is a third instance of the "create link / copy /
+poll for a response" shape the app already runs twice (`discovery_shares`,
+`client_portals`). The ADHD review of the contract feature named that exact
+pattern as the thing to avoid — a third parallel link system triples the
+"which link was that" working-memory tax. It should almost certainly ride on
+the existing portal rather than get its own, and that is a design decision
+worth making on purpose rather than at the end of a long phase.
 
 ### Phase 4 — Touchpoints becomes real
 
@@ -136,14 +163,14 @@ parked item was not recovered.** Ask before assuming nothing is missing.
 |---|------|--------|-------------------|
 | 1 | Invoice: number, dates, payment methods, contact, tax, notes | invoice | 8 of 11 missing → **done P2** |
 | 2 | Invoice: fixed-price line items | pricing pages | impossible, hours×rate only → **done P2** |
-| 3 | Revision rounds: define a round, set a limit, pause at limit | revisions | no concept of it |
-| 4 | Revision billing: hourly / per-round / flat | revisions | — |
-| 5 | Feedback log: Reviewer / Issue / Decision / Status | style guide | — |
+| 3 | Revision rounds: define a round, set a limit, pause at limit | revisions | no concept of it → **done P3** |
+| 4 | Revision billing: hourly / per-round / flat | revisions | — → **done P3** |
+| 5 | Feedback log: Reviewer / Issue / Decision / Status | style guide | — → **done P3** |
 | 6 | Contract: 9 sections, generated from brief | contract | — |
 | 7 | Trademark / name check before design | brand identity | — |
-| 8 | Client survey: mid-project, post, retainer | survey | — |
-| 9 | Onboarding stage: welcome, expectations, **one decision-maker** | onboarding | — |
-| 10 | Scope checklist: deliverables, revision count as a number, formats, decision-maker, out-of-scope | PM | partial |
+| 8 | Client survey: mid-project, post, retainer | survey | — · **still open**, see Phase 3 |
+| 9 | Onboarding stage: welcome, expectations, **one decision-maker** | onboarding | — · decision-maker **done P3**, rest open |
+| 10 | Scope checklist: deliverables, revision count as a number, formats, decision-maker, out-of-scope | PM | partial → **done P3** |
 | 11 | Portal: "what's next", contract reference, document hub, review scheduling | portal + ClickUp | partial |
 | 12 | Brief: where the brand will be used | questionnaire | ❌ → **done P1** |
 | 13 | Brief: accessibility constraints | questionnaire | ❌ → **done P1** |
