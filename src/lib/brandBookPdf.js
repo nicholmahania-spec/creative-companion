@@ -575,39 +575,44 @@ export async function downloadBrandPackVectorPdf(
     y += lockH + 14
 
     // Clearspace + don'ts row
+    // Box is 96pt tall; text baseline needs clear air below it (font sits
+    // above the y we pass). Too little advance caused "DON'T" to sit inside
+    // the dashed clearspace square.
+    const clearBox = 96
+    const clearTop = y
     const cs = 64
     pdf.setDrawColor(200, 200, 200)
     pdf.setLineDashPattern([2, 2], 0)
-    pdf.rect(margin, y, 96, 96)
+    pdf.rect(margin, clearTop, clearBox, clearBox)
     pdf.setLineDashPattern([], 0)
-    tryLogo(margin + 16, y + 16, cs, inkOnQuiet, { monochrome: true })
+    tryLogo(margin + 16, clearTop + 16, cs, inkOnQuiet, { monochrome: true })
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     pdf.setTextColor(100, 100, 100)
-    pdf.text('CLEARSPACE', margin + 112, y + 16)
+    pdf.text('CLEARSPACE', margin + 112, clearTop + 16)
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(9)
     pdf.setTextColor(50, 50, 50)
-    pdf.text(
-      pdf.splitTextToSize(
+    const clearLines = pdf
+      .splitTextToSize(
         pdfSafeText(pack?.logoClearspace || DEFAULT_LOGO_CLEARSPACE),
         contentW - 120
-      ).slice(0, 3),
-      margin + 112,
-      y + 32
-    )
+      )
+      .slice(0, 3)
+    pdf.text(clearLines, margin + 112, clearTop + 32)
     pdf.text(
       pdfSafeText(`Min: ${pack?.logoMinSize || DEFAULT_LOGO_MIN_SIZE}`),
       margin + 112,
-      y + 78
+      clearTop + 78
     )
-    y += 100
+    // Clearspace box bottom + gap, never underlap following labels
+    y = clearTop + clearBox + 22
 
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     pdf.setTextColor(100, 100, 100)
     pdf.text("DON'T", margin, y)
-    y += 10
+    y += 12
     const avoidW = (contentW - 16) / 3
     ;['Stretch', 'Recolor wild', 'Low contrast'].forEach((lab, i) => {
       const x = margin + i * (avoidW + 8)
@@ -972,12 +977,26 @@ export async function downloadBrandPackVectorPdf(
       pageHead('Usage', 'Ship rules - clear guardrails, room to make.')
 
       const colW = (contentW - 16) / 2
-      const boxH = 200
+      const headH = 28
+      const bodyPad = 14
+      const lineH = 14
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(11)
+      const doLines = doT
+        ? pdf.splitTextToSize(pdfSafeText(doT), colW - 28)
+        : []
+      const dontLines = dontT
+        ? pdf.splitTextToSize(pdfSafeText(dontT), colW - 28)
+        : []
+      // Size cards to the text — fixed 200pt boxes left a half-page of empty tint
+      const bodyLines = Math.max(doLines.length, dontLines.length, 2)
+      const boxH = headH + bodyPad + bodyLines * lineH + bodyPad
+
       // DO
       pdf.setFillColor(236, 250, 246)
       pdf.roundedRect(margin, y, colW, boxH, 8, 8, 'F')
       pdf.setFillColor(15, 118, 110)
-      pdf.roundedRect(margin, y, colW, 28, 8, 8, 'F')
+      pdf.roundedRect(margin, y, colW, headH, 8, 8, 'F')
       pdf.rect(margin, y + 14, colW, 14, 'F')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(11)
@@ -986,30 +1005,27 @@ export async function downloadBrandPackVectorPdf(
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(11)
       pdf.setTextColor(20, 18, 17)
-      pdf.text(
-        pdf.splitTextToSize(pdfSafeText(doT), colW - 28),
-        margin + 14,
-        y + 48
-      )
+      if (doLines.length) {
+        pdf.text(doLines, margin + 14, y + headH + bodyPad + 2)
+      }
 
       // DON'T
+      const dx = margin + colW + 16
       pdf.setFillColor(254, 242, 242)
-      pdf.roundedRect(margin + colW + 16, y, colW, boxH, 8, 8, 'F')
+      pdf.roundedRect(dx, y, colW, boxH, 8, 8, 'F')
       pdf.setFillColor(185, 28, 28)
-      pdf.roundedRect(margin + colW + 16, y, colW, 28, 8, 8, 'F')
-      pdf.rect(margin + colW + 16, y + 14, colW, 14, 'F')
+      pdf.roundedRect(dx, y, colW, headH, 8, 8, 'F')
+      pdf.rect(dx, y + 14, colW, 14, 'F')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(11)
       pdf.setTextColor(255, 255, 255)
-      pdf.text("DON'T", margin + colW + 32, y + 19)
+      pdf.text("DON'T", dx + 16, y + 19)
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(11)
       pdf.setTextColor(20, 18, 17)
-      pdf.text(
-        pdf.splitTextToSize(pdfSafeText(dontT), colW - 28),
-        margin + colW + 30,
-        y + 48
-      )
+      if (dontLines.length) {
+        pdf.text(dontLines, dx + 14, y + headH + bodyPad + 2)
+      }
     }
 
     // ═══════════════════════════════════════════════
