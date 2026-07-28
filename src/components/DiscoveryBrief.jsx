@@ -5,7 +5,8 @@
  * client (email draft + downloadable fillable markdown, or accept a
  * completed file back).
  */
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useModalFocus } from '../lib/useModalFocus'
 import { downscaleDataUrl } from '../lib/moodPins'
 import {
   DISCOVERY_SECTIONS,
@@ -52,6 +53,12 @@ export function DiscoveryBriefPanel({
   const [mode, setMode] = useState('menu')
   const [callIndex, setCallIndex] = useState(0)
 
+  /* Focus trap, focus restore, and Escape — this dialog had none of them.
+     It set aria-modal="true", which tells assistive tech the rest of the page
+     is inert, while Tab walked straight out into the page behind it. */
+  const panelRef = useRef(null)
+  useModalFocus(open, () => panelRef.current, { onClose })
+
   if (!open) return null
 
   const answeredCount = countAnswered(answers)
@@ -61,6 +68,7 @@ export function DiscoveryBriefPanel({
 
   return (
     <div
+      ref={panelRef}
       className="export-overlay discovery-brief-overlay"
       role="dialog"
       aria-modal="true"
@@ -74,7 +82,12 @@ export function DiscoveryBriefPanel({
           <h3 id="discovery-brief-title" style={{ margin: 0 }}>
             Discovery brief
           </h3>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={onClose}
+            aria-label="Close discovery brief"
+          >
             ×
           </button>
         </div>

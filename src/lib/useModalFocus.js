@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -7,14 +7,33 @@ const FOCUSABLE =
  * Focus trap + restore for a single open modal root.
  * @param {boolean} open
  * @param {() => (HTMLElement|null)} getRoot — return dialog container
- * @param {{ initialSelector?: string }} [opts]
+ * @param {{ initialSelector?: string, onClose?: () => void }} [opts]
+ *   onClose — if given, Escape closes the dialog. Escape was handled by each
+ *   modal separately or, in several, not at all: the Discovery brief could
+ *   only be dismissed by finding its "×", while the shortcuts dialog beside
+ *   it closed on Escape, so the same gesture worked or didn't depending on
+ *   which panel was open. A trap that keeps focus in but has no keyboard way
+ *   out is the wrong half of the pattern.
  */
 export function useModalFocus(open, getRoot, opts = {}) {
   const initialSelector = opts.initialSelector || ''
 
+  /* getRoot and onClose are almost always inline arrows, so their identity
+     changes on every render. With them in the dependency array the effect
+     tore down and re-ran constantly — and its cleanup restores focus to
+     whatever was focused BEFORE the modal opened, so each re-run yanked focus
+     back out. The dialog opened with focus still on document.body: a trap
+     with nothing trapped in it. Held in refs so the effect keys on `open`
+     alone while still calling the latest callbacks. */
+  const getRootRef = useRef(getRoot)
+  const onCloseRef = useRef(opts.onClose)
+  getRootRef.current = getRoot
+  onCloseRef.current = opts.onClose
+
   useEffect(() => {
     if (!open) return undefined
-    const root = typeof getRoot === 'function' ? getRoot() : null
+    const getR = getRootRef.current
+    const root = typeof getR === 'function' ? getR() : null
     if (!root) return undefined
 
     const prev = document.activeElement
@@ -38,6 +57,11 @@ export function useModalFocus(open, getRoot, opts = {}) {
     const raf = window.requestAnimationFrame(focusInitial)
 
     const onKey = (e) => {
+      if (e.key === 'Escape' && onCloseRef.current) {
+        e.preventDefault()
+        onCloseRef.current()
+        return
+      }
       if (e.key !== 'Tab') return
       const focusable = list()
       if (focusable.length === 0) return
@@ -63,5 +87,5 @@ export function useModalFocus(open, getRoot, opts = {}) {
         }
       }
     }
-  }, [open, getRoot, initialSelector])
+  }, [open, initialSelector])
 }
