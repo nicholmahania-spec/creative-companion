@@ -246,7 +246,8 @@ export async function downloadBrandPackVectorPdf(
       const left = hideWatermark
         ? pdfSafeText(projectName).slice(0, 40)
         : pdfSafeText(`Creative Companion · ${projectName}`).slice(0, 48)
-      for (let i = 1; i <= total; i++) {
+      // Page 1 is a clean cover — no TOC, no page chrome footer
+      for (let i = 2; i <= total; i++) {
         pdf.setPage(i)
         pdf.setFont('helvetica', 'normal')
         pdf.setFontSize(8)
@@ -301,62 +302,58 @@ export async function downloadBrandPackVectorPdf(
     }
 
     // ═══════════════════════════════════════════════
-    // 1. COVER — full brand world
+    // 1. COVER — full brand world (clean, centered)
     // ═══════════════════════════════════════════════
     pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
     pdf.rect(0, 0, pageW, pageH, 'F')
     pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
     pdf.rect(0, 0, pageW, 10, 'F')
-    // Quiet block bottom third for TOC feel without prose dump
-    pdf.setFillColor(
-      Math.min(255, coverRgb[0] + 12),
-      Math.min(255, coverRgb[1] + 12),
-      Math.min(255, coverRgb[2] + 12)
-    )
-    pdf.rect(0, pageH - 160, pageW, 160, 'F')
+
+    // Centered stack: label → logo → name → tagline → rule
+    const cx = pageW / 2
+    const markSizeCover = 88
+    // Vertically center the brand block in the upper two-thirds
+    let cy = pageH * 0.22
 
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(9)
-    pdf.text('VISUAL IDENTITY SYSTEM', margin + 8, margin + 36)
+    pdf.text('VISUAL IDENTITY SYSTEM', cx, cy, { align: 'center' })
 
-    tryLogo(margin + 8, margin + 70, 88, fgRgb)
+    cy += 32
+    tryLogo(cx - markSizeCover / 2, cy, markSizeCover, fgRgb, {
+      monochrome: true,
+    })
+    cy += markSizeCover + 40
+
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(36)
-    const titleLines = pdf.splitTextToSize(pdfSafeText(projectName), contentW - 16)
-    pdf.text(titleLines, margin + 8, margin + 200)
-    let cy = margin + 200 + titleLines.length * 40
+    const titleLines = pdf.splitTextToSize(
+      pdfSafeText(projectName),
+      contentW - 24
+    )
+    pdf.text(titleLines, cx, cy, { align: 'center' })
+    cy += titleLines.length * 40 + 16
+
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(16)
-    const tagLines = pdf.splitTextToSize(pdfSafeText(tag), contentW - 16)
-    pdf.text(tagLines, margin + 8, cy)
-    cy += tagLines.length * 22 + 16
-    pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
-    pdf.rect(margin + 8, cy, 56, 3, 'F')
+    const tagLines = pdf.splitTextToSize(pdfSafeText(tag), contentW - 24)
+    pdf.text(tagLines, cx, cy, { align: 'center' })
+    cy += tagLines.length * 22 + 20
 
-    // Bottom strip labels
+    // Centered gold rule
+    const ruleW = 56
+    pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+    pdf.rect(cx - ruleW / 2, cy, ruleW, 3, 'F')
+
+    // Quiet meta — centered, single line
     pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(9)
-    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
-    const toc = [
-      'Logo',
-      'Color',
-      'Type',
-      pins.length ? 'Imagery' : null,
-      'Applications',
-      doT || dontT ? 'Usage' : null,
-    ].filter(Boolean)
-    toc.forEach((t, i) => {
-      pdf.text(pdfSafeText(t), margin + 8 + i * 90, pageH - 100)
-    })
     pdf.setFontSize(8)
-    pdf.text(day, margin + 8, pageH - 40)
-    pdf.text(
-      pdfSafeText(hideWatermark ? projectName : 'Creative Companion'),
-      pageW - margin,
-      pageH - 40,
-      { align: 'right' }
-    )
+    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
+    const meta = hideWatermark
+      ? day
+      : `${day}  ·  Creative Companion`
+    pdf.text(meta, cx, pageH - 40, { align: 'center' })
 
     // ═══════════════════════════════════════════════
     // 2. STRATEGY STRIP — one page, designed tiles
@@ -575,39 +572,44 @@ export async function downloadBrandPackVectorPdf(
     y += lockH + 14
 
     // Clearspace + don'ts row
+    // Box is 96pt tall; text baseline needs clear air below it (font sits
+    // above the y we pass). Too little advance caused "DON'T" to sit inside
+    // the dashed clearspace square.
+    const clearBox = 96
+    const clearTop = y
     const cs = 64
     pdf.setDrawColor(200, 200, 200)
     pdf.setLineDashPattern([2, 2], 0)
-    pdf.rect(margin, y, 96, 96)
+    pdf.rect(margin, clearTop, clearBox, clearBox)
     pdf.setLineDashPattern([], 0)
-    tryLogo(margin + 16, y + 16, cs, inkOnQuiet, { monochrome: true })
+    tryLogo(margin + 16, clearTop + 16, cs, inkOnQuiet, { monochrome: true })
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     pdf.setTextColor(100, 100, 100)
-    pdf.text('CLEARSPACE', margin + 112, y + 16)
+    pdf.text('CLEARSPACE', margin + 112, clearTop + 16)
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(9)
     pdf.setTextColor(50, 50, 50)
-    pdf.text(
-      pdf.splitTextToSize(
+    const clearLines = pdf
+      .splitTextToSize(
         pdfSafeText(pack?.logoClearspace || DEFAULT_LOGO_CLEARSPACE),
         contentW - 120
-      ).slice(0, 3),
-      margin + 112,
-      y + 32
-    )
+      )
+      .slice(0, 3)
+    pdf.text(clearLines, margin + 112, clearTop + 32)
     pdf.text(
       pdfSafeText(`Min: ${pack?.logoMinSize || DEFAULT_LOGO_MIN_SIZE}`),
       margin + 112,
-      y + 78
+      clearTop + 78
     )
-    y += 100
+    // Clearspace box bottom + gap, never underlap following labels
+    y = clearTop + clearBox + 22
 
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     pdf.setTextColor(100, 100, 100)
     pdf.text("DON'T", margin, y)
-    y += 10
+    y += 12
     const avoidW = (contentW - 16) / 3
     ;['Stretch', 'Recolor wild', 'Low contrast'].forEach((lab, i) => {
       const x = margin + i * (avoidW + 8)
@@ -972,12 +974,26 @@ export async function downloadBrandPackVectorPdf(
       pageHead('Usage', 'Ship rules - clear guardrails, room to make.')
 
       const colW = (contentW - 16) / 2
-      const boxH = 200
+      const headH = 28
+      const bodyPad = 14
+      const lineH = 14
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(11)
+      const doLines = doT
+        ? pdf.splitTextToSize(pdfSafeText(doT), colW - 28)
+        : []
+      const dontLines = dontT
+        ? pdf.splitTextToSize(pdfSafeText(dontT), colW - 28)
+        : []
+      // Size cards to the text — fixed 200pt boxes left a half-page of empty tint
+      const bodyLines = Math.max(doLines.length, dontLines.length, 2)
+      const boxH = headH + bodyPad + bodyLines * lineH + bodyPad
+
       // DO
       pdf.setFillColor(236, 250, 246)
       pdf.roundedRect(margin, y, colW, boxH, 8, 8, 'F')
       pdf.setFillColor(15, 118, 110)
-      pdf.roundedRect(margin, y, colW, 28, 8, 8, 'F')
+      pdf.roundedRect(margin, y, colW, headH, 8, 8, 'F')
       pdf.rect(margin, y + 14, colW, 14, 'F')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(11)
@@ -986,30 +1002,27 @@ export async function downloadBrandPackVectorPdf(
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(11)
       pdf.setTextColor(20, 18, 17)
-      pdf.text(
-        pdf.splitTextToSize(pdfSafeText(doT), colW - 28),
-        margin + 14,
-        y + 48
-      )
+      if (doLines.length) {
+        pdf.text(doLines, margin + 14, y + headH + bodyPad + 2)
+      }
 
       // DON'T
+      const dx = margin + colW + 16
       pdf.setFillColor(254, 242, 242)
-      pdf.roundedRect(margin + colW + 16, y, colW, boxH, 8, 8, 'F')
+      pdf.roundedRect(dx, y, colW, boxH, 8, 8, 'F')
       pdf.setFillColor(185, 28, 28)
-      pdf.roundedRect(margin + colW + 16, y, colW, 28, 8, 8, 'F')
-      pdf.rect(margin + colW + 16, y + 14, colW, 14, 'F')
+      pdf.roundedRect(dx, y, colW, headH, 8, 8, 'F')
+      pdf.rect(dx, y + 14, colW, 14, 'F')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(11)
       pdf.setTextColor(255, 255, 255)
-      pdf.text("DON'T", margin + colW + 32, y + 19)
+      pdf.text("DON'T", dx + 16, y + 19)
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(11)
       pdf.setTextColor(20, 18, 17)
-      pdf.text(
-        pdf.splitTextToSize(pdfSafeText(dontT), colW - 28),
-        margin + colW + 30,
-        y + 48
-      )
+      if (dontLines.length) {
+        pdf.text(dontLines, dx + 14, y + headH + bodyPad + 2)
+      }
     }
 
     // ═══════════════════════════════════════════════
