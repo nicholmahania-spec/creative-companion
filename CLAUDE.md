@@ -304,3 +304,52 @@ out by hand. It was once a literal list of stage *names* ('define',
 'project', 'studio', 'spark', 'flow', 'brand', 'review', 'finish'. Only two
 of the eight strings were real, so the work clock was silent on five of the
 seven stages: an afternoon in Design recorded nothing.
+
+## Session log — 2026-07-27/28: rebase, client uploads, branch cleanup
+
+**Rebase conflict resolved (v1.48.247, `a2dfb9c`).** A concurrent push moved
+`main` from 1.48.214 to 1.48.245 while this session's engagement-type +
+deadline commit was in flight, conflicting in six files. Notable resolution:
+upstream had extracted the client-facing questionnaire renderer into
+`ClientBriefFields.jsx` (shared by `/c/:portalId` and `/f/:shareId`) — took
+that structure and added the missing `choice`/`date` field-type branches to
+it, rather than reverting to the old per-surface copies. Also: upstream added
+`src/lib/clientBriefContract.test.js`, which caps client-facing field `tip`
+text at 6 words — several tips in this session were rewritten shorter to
+satisfy it. **Lesson recorded here so it isn't re-learned:** a
+`replace("=======\n")` string match during manual conflict resolution can
+silently match a `/* ==== */` banner comment instead of an actual conflict
+marker — resolve CSS conflicts by line number, not by string search, and
+always confirm with a full build afterward (LightningCSS caught this one with
+"Invalid empty selector").
+
+**Client image/file attachments shipped (v1.48.249, `d03f21d`).** Clients can
+now attach images to "What look are you drawn to?" and "Do you have anything
+already?" on both public brief routes, alongside the existing text (never
+replacing it — a live project's typed answer must never silently become an
+empty array). Files go to a new `client-uploads` Supabase Storage bucket,
+public-read, with an anon INSERT policy gated by
+`is_client_upload_target()` (SECURITY DEFINER) so a write only succeeds into
+a folder named after a share/portal id that actually exists — no service key,
+no edge function. Attachments live in sibling `${fieldId}Files` keys, never
+replacing the field's string value. Inspiration images auto-pin onto the
+Research wall on merge (note: "From the client's brief") so Research isn't a
+blank page when a client already sent reference images; existing-asset files
+(old logo, etc.) stay in the brief only — they're the old identity, not new
+inspiration. Failed uploads stay on-screen with an in-place retry rather than
+a toast, per the ADHD advisor's review (object permanence + rejection
+sensitivity for a stranger uploading from a phone). **Known gap, not fixed:**
+the client-portal form-submit path (`/c/:portalId`) still has no pull-back
+mechanism into the project at all — pre-existing, not introduced this
+session, but worth closing if the portal's own form-fill is meant to feed the
+brief the same way `/f/:shareId` does via `mergeDiscoveryAnswers`.
+
+**Branch audit.** `claude/debug-code-6u77sp` and `fix/save-button-alignment`
+were stale WIP branches from earlier sessions (Jul 24–25), both superseded by
+what had since landed on `main` — one would have reintroduced removed
+questionnaire fields, the other's one live change (`submitForm`'s owner_id
+null-check) was already on `main` in a slightly different form. Both deleted
+locally; remote deletion on `origin` returned HTTP 403 — this session's git
+credentials cannot delete remote refs, so that needs doing from a surface
+with actual push/admin rights to the GitHub repo. `gh-pages` is not a feature
+branch — it's the CI-published Pages deploy target — and was left alone.
