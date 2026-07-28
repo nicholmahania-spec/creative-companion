@@ -95,11 +95,16 @@ export default defineConfig({
        loudly enough to notice. */
     rolldownOptions: {
       output: {
-        codeSplitting: true,
-        /* Rolldown's replacement for manualChunks. Vendor code changes on a
-           different schedule from app code, so keeping it in its own chunk
-           means a normal app deploy doesn't invalidate it in anyone's cache. */
-        advancedChunks: {
+        /* Vendor code changes on a different schedule from app code, so it
+           keeps its own chunk — a normal app deploy then doesn't invalidate
+           React and Supabase in everyone's cache.
+
+           Spelled under `codeSplitting`, not the older `advancedChunks`,
+           which Rolldown now warns is deprecated. A config key the bundler
+           has stopped reading is exactly how this app came to ship as one
+           3.3MB chunk: `build.rollupOptions` was silently ignored for
+           months while every React.lazy() boundary was re-merged. */
+        codeSplitting: {
           groups: [
             { name: 'react', test: /node_modules[/\\](react|react-dom|scheduler)[/\\]/ },
             { name: 'supabase', test: /node_modules[/\\]@supabase[/\\]/ },
