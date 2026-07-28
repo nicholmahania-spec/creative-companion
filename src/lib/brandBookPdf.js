@@ -370,6 +370,37 @@ export async function downloadBrandPackVectorPdf(
     pdf.text(meta, cx, pageH - 40, { align: 'center' })
 
     // ═══════════════════════════════════════════════
+    // ═══════════════════════════════════════════════
+    // 1b. STORY — why this brand exists, in the client's words
+    // ═══════════════════════════════════════════════
+    /* Every style-guide structure opens with the brand story, and the brief
+       has asked for it all along ("How did the business start?", "What does
+       your business do?", "three words a customer would use"). None of the
+       three were printed anywhere. A guide without them is a spec sheet. */
+    const storyBlocks = [
+      ['Story', pack?.story],
+      ['What they do', pack?.usp],
+      ['In their words', pack?.toneOfVoice],
+    ].filter(([, v]) => String(v || '').trim())
+
+    if (storyBlocks.length) {
+      newPage()
+      pageHead('Story', 'Why this brand exists, in their own words.')
+      storyBlocks.forEach(([label, value]) => {
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(8)
+        pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
+        pdf.text(pdfSafeText(label.toUpperCase()), margin, y)
+        y += 14
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(11)
+        pdf.setTextColor(40, 40, 40)
+        const lines = pdf.splitTextToSize(pdfSafeText(String(value)), contentW)
+        pdf.text(lines, margin, y)
+        y += lines.length * 15 + 18
+      })
+    }
+
     // 2. STRATEGY STRIP — one page, designed tiles
     // ═══════════════════════════════════════════════
     newPage()
@@ -426,9 +457,15 @@ export async function downloadBrandPackVectorPdf(
       const row = Math.floor(i / 2)
       const x = margin + col * (cellW + 12)
       const yy = y + row * (cellH + 10)
-      // Ensure integer coordinates for crisp rendering
+      /* Round `yy`, the per-ROW position — not `y`, the top of the block.
+         Rounding `y` gave every tile the same vertical origin, so row two
+         (Personality, Voice) painted directly over row one (Promise, Proof)
+         and the Direction page showed two tiles where there are four.
+         Same stale-snapshot mistake as the Agreed brief block, in a second
+         place: there the cursor advanced under a captured value, here a
+         computed row offset was discarded for the value it was derived from. */
       const crispX = Math.round(x)
-      const crispY = Math.round(y)
+      const crispY = Math.round(yy)
       const crispCellW = Math.round(cellW)
       const crispCellH = Math.round(cellH)
 
@@ -442,7 +479,7 @@ export async function downloadBrandPackVectorPdf(
       pdf.setFontSize(10)
       const bl = pdf.splitTextToSize(pdfSafeText(tile.body), crispCellW - 28)
       if (bl.length > 0) {
-        pdf.text(bl.slice(0, 4), crispX + 14, crispY + 32)  // Adjusted from yy + 30 to yy + 32 for better vertical centering
+        pdf.text(bl.slice(0, 4), crispX + 14, crispY + 32)
       }
     })
     y += 2 * (cellH + 10) + 8  // Reduced from +14 to +8
@@ -1078,6 +1115,15 @@ export async function downloadBrandPackVectorPdf(
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(11)
     pdf.setTextColor(50, 50, 50)
+    /* Constraints the client named that the next person must honour.
+       `technical` (file types) and `accessibilityNeeds` were both collected
+       and never printed — so whoever opened this book had to guess, or ask
+       the client again for something they had already answered. */
+    const constraints = [
+      ['File formats needed', pack?.technical],
+      ['Accessibility', pack?.accessibilityNeeds],
+    ].filter(([, v]) => String(v || '').trim())
+
     const kit = [
       'brand-book.pdf  ·  this visual system',
       'brand.md  ·  written leave-behind',
@@ -1088,6 +1134,20 @@ export async function downloadBrandPackVectorPdf(
       pdf.text(pdfSafeText(line), margin + 18, y + 52 + i * 16)
     })
     y += 140
+
+    constraints.forEach(([label, value]) => {
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(8)
+      pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
+      pdf.text(pdfSafeText(label.toUpperCase()), margin, y)
+      y += 13
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(11)
+      pdf.setTextColor(40, 40, 40)
+      const lines = pdf.splitTextToSize(pdfSafeText(String(value)), contentW)
+      pdf.text(lines, margin, y)
+      y += lines.length * 15 + 16
+    })
 
     if (pack?.handoffNote?.trim()) {
       pdf.setFont('helvetica', 'bold')

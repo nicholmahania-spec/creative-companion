@@ -12,6 +12,24 @@
 
 /** Standard brand-identity scope. `extra` marks what is quoted separately —
  *  saying so on the form itself prevents the awkward conversation later. */
+/**
+ * Where a brand actually shows up. Separate from DELIVERABLE_OPTIONS on
+ * purpose: what to MAKE and where it LIVES are different answers, and only
+ * the second one tells you whether the mark has to survive a shop sign or a
+ * 32px avatar. Nothing asked this before, so the Touchpoints stop had no
+ * client input at all.
+ */
+export const BRAND_SURFACE_OPTIONS = [
+  { id: 'website', label: 'Website' },
+  { id: 'social', label: 'Social media' },
+  { id: 'packaging', label: 'Packaging' },
+  { id: 'print', label: 'Print — cards, brochures, posters' },
+  { id: 'signage', label: 'Signage or a physical space' },
+  { id: 'merch', label: 'Merchandise' },
+  { id: 'app', label: 'An app or digital product' },
+  { id: 'email', label: 'Email' },
+]
+
 export const DELIVERABLE_OPTIONS = [
   { id: 'logoPrimary', label: 'Primary logo' },
   { id: 'logoVariations', label: 'Logo variations (stacked, horizontal, icon)' },
@@ -215,6 +233,22 @@ export const DETECTIVE_CHAPTERS = [
     railLabel: 'Look',
     fields: [
       {
+        id: 'messagingPromise',
+        label: 'What do you promise your customers?',
+        tip: 'e.g. same-day, or made by hand',
+        area: false,
+        required: false,
+        gridSpan: 'half',
+      },
+      {
+        id: 'messagingProof',
+        label: 'What proves it?',
+        tip: 'A result, a review, a number',
+        area: false,
+        required: false,
+        gridSpan: 'half',
+      },
+      {
         id: 'toneOfVoice',
         label: 'If a customer described you in three words, what would they be?',
         tip: 'e.g. “quick, honest, no nonsense”',
@@ -320,11 +354,41 @@ export const DETECTIVE_CHAPTERS = [
         gridSpan: 'half',
       },
       {
+        id: 'brandSurfaces',
+        label: 'Where will this be used?',
+        tip: 'Pick all that apply',
+        type: 'checklist',
+        options: BRAND_SURFACE_OPTIONS,
+        required: false,
+        gridSpan: 'full',
+      },
+      {
+        /* Split out of the old catch-all "Do you have anything already?".
+           A style guide and a logo branch differently: a guide means you are
+           extending a system, a logo alone means you are building one around
+           an existing mark. One box could not say which. */
+        id: 'existingStyleGuide',
+        label: 'Is there a brand style guide already?',
+        tip: 'Attach it, or say no',
+        area: true,
+        attach: true,
+        required: false,
+        gridSpan: 'half',
+      },
+      {
         id: 'existingAssets',
-        label: 'Do you have anything already?',
+        label: 'Any existing logo or artwork?',
         tip: 'Old logo, colours, or attach it',
         area: true,
         attach: true,
+        required: false,
+        gridSpan: 'half',
+      },
+      {
+        id: 'accessibilityNeeds',
+        label: 'Any accessibility needs we should design to?',
+        tip: 'e.g. large type, high contrast',
+        area: false,
         required: false,
         gridSpan: 'half',
       },

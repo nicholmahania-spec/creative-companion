@@ -289,6 +289,7 @@ export function buildBrandPackSnapshot({
         ? p.palette
         : ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9']
 
+  const d = p.detective || {}
   return {
     exportedAt: new Date().toISOString(),
     app: 'Creative Companion',
@@ -301,6 +302,21 @@ export function buildBrandPackSnapshot({
     logoClearspace: p.logoClearspace || '',
     designVersion: p.designVersion || 'v1',
     detective: p.detective || null,
+    /* Client answers the brand book needs at the top level.
+       brandBookPdf reads `pack.messagingPromise` / `pack.messagingProof`, but
+       nothing ever put them there — so the Direction page fell through to
+       `voice` for Promise AND Personality AND Voice, printing one sentence
+       three times, with Proof as a bare "—". The questions now exist in the
+       brief; this is the wire between them.
+
+       `story`, `usp`, `toneOfVoice` and `technical` were asked and then never
+       printed anywhere at all. */
+    story: d.story || '',
+    usp: d.usp || '',
+    toneOfVoice: d.toneOfVoice || '',
+    technical: d.technical || '',
+    accessibilityNeeds: d.accessibilityNeeds || '',
+    brandSurfaces: Array.isArray(d.brandSurfaces) ? d.brandSurfaces : [],
     feedbackNotes: p.feedbackNotes || '',
     handoffNote: p.handoffNote || '',
     learnings: p.learnings || '',
@@ -358,8 +374,13 @@ export function buildBrandPackSnapshot({
     contacts: Array.isArray(p.contacts) ? p.contacts : [],
     logoMinSize: p.logoMinSize || '',
     logoDonts: p.logoDonts || '',
-    messagingPromise: p.messagingPromise || '',
-    messagingProof: p.messagingProof || '',
+    /* Falls back to the client's own answer. `project.messagingPromise` is
+       read in three places (BrandArtboard, brandSystem, the brand book) and
+       written in none — so Promise fell through to `voice` and Proof printed
+       "\u2014". The brief now asks both; a designer-side value still wins if one
+       ever exists. */
+    messagingPromise: p.messagingPromise || d.messagingPromise || '',
+    messagingProof: p.messagingProof || d.messagingProof || '',
     messagingPersonality: p.messagingPersonality || '',
     imageryStyle: p.imageryStyle || '',
     imageryDo: p.imageryDo || '',
