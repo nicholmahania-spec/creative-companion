@@ -57,6 +57,14 @@ export function ProjectOverviewSharePanel({
   /** Lives at panel level, not inside PaperMode, so closing the panel does
    *  not unmount a review the user is halfway through. */
   const [draft, setDraft] = useState(null)
+  /* Every draft carries the project it belongs to. A review can sit open
+     indefinitely — the panel is deliberately built so closing it does not
+     discard one — so by the time Apply is pressed the active project may be
+     a different one entirely. */
+  const beginReview = useCallback(
+    (d) => setDraft({ ...d, ownerProjectId: d?.ownerProjectId ?? project?.id }),
+    [project?.id]
+  )
   const panelRef = useRef(null)
   const restoreFocusRef = useRef(null)
 
@@ -157,7 +165,7 @@ export function ProjectOverviewSharePanel({
             onChange={setDraft}
             onCancel={() => setDraft(null)}
             onApply={(cleaned) => {
-              onApplyAnswers?.(cleaned)
+              onApplyAnswers?.(cleaned, draft.ownerProjectId)
               setDraft(null)
               flashMicro?.('Answers saved to the project')
             }}
@@ -179,7 +187,7 @@ export function ProjectOverviewSharePanel({
                 project={project}
                 portalId={portalId}
                 onSetPortalId={onSetPortalId}
-                onReview={setDraft}
+                onReview={beginReview}
                 onBack={() => setMode('menu')}
                 flashToast={flashToast}
                 flashMicro={flashMicro}
@@ -189,7 +197,7 @@ export function ProjectOverviewSharePanel({
             {mode === 'paper' && (
               <PaperMode
                 project={project}
-                onReview={setDraft}
+                onReview={beginReview}
                 onBack={() => setMode('menu')}
                 flashToast={flashToast}
               />
@@ -605,6 +613,11 @@ function PaperMode({ project, onReview, onBack, flashToast }) {
 
   const handleScan = async (file) => {
     if (!file) return
+    /* Stamp the project the scan STARTED on. Reading it later would resolve
+       to whatever is open when OCR finishes — and OCR of handwriting runs for
+       seconds. Same reason ResearchView captures ownerProjectId before its
+       upload read. */
+    const ownerProjectId = project?.id
     const isPdf =
       file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '')
 
@@ -620,6 +633,7 @@ function PaperMode({ project, onReview, onBack, flashToast }) {
           source: 'pdfform',
           answers: form.answers,
           current: project?.detective || {},
+          ownerProjectId,
         })
         return
       }
@@ -644,6 +658,7 @@ function PaperMode({ project, onReview, onBack, flashToast }) {
         source: 'paper',
         answers: scan.answers,
         current: project?.detective || {},
+        ownerProjectId,
       })
       return
     }
@@ -664,6 +679,7 @@ function PaperMode({ project, onReview, onBack, flashToast }) {
       source: 'paper',
       answers: r.answers,
       current: project?.detective || {},
+      ownerProjectId,
     })
   }
 

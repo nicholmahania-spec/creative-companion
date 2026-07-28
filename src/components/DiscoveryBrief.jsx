@@ -6,6 +6,7 @@
  * completed file back).
  */
 import { useState } from 'react'
+import { downscaleDataUrl } from '../lib/moodPins'
 import {
   DISCOVERY_SECTIONS,
   DISCOVERY_FIELDS,
@@ -298,8 +299,16 @@ function HandoffMode({
       return
     }
     const reader = new FileReader()
-    reader.onload = (ev) => {
-      onSetUpload({ name: file.name, dataUrl: String(ev.target?.result || ''), mime: file.type })
+    reader.onload = async (ev) => {
+      /* An 8MB upload becomes ~10.6MB of base64 — more than the whole
+         localStorage budget for the origin. Images get downscaled; a PDF
+         passes through untouched, since downscaleDataUrl only acts on
+         `data:image` and returns its input on any failure. */
+      const dataUrl = await downscaleDataUrl(
+        String(ev.target?.result || ''),
+        file.type
+      )
+      onSetUpload({ name: file.name, dataUrl, mime: file.type })
       flashToast?.('Completed form attached')
     }
     reader.onerror = () => flashToast?.(`Couldn't read ${file.name}`)

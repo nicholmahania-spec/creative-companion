@@ -10,12 +10,11 @@
  * `templates` was in exactly that gap, so every cloud sync erased the user's
  * saved templates with no error and no undo.
  *
- * The first test is the general guard — it compares the two key sets rather
- * than checking a hand-written list, so a field added to `partialize` later
- * fails here instead of quietly going lossy.
+ * The first test reads PERSISTED_KEYS, the same list `partialize` uses, so a
+ * field added to persistence later fails here instead of quietly going lossy.
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import useAppStore from './useAppStore'
+import useAppStore, { PERSISTED_KEYS } from './useAppStore'
 
 /** Keys that are intentionally local-only and must NOT travel in a payload. */
 const DELIBERATELY_LOCAL = new Set([
@@ -36,13 +35,12 @@ describe('workspace round-trip', () => {
 
   it('exports every key that persistence keeps', () => {
     const payload = useAppStore.getState().exportAllData()
-    const persisted = [
-      'projects', 'tasks', 'moodItems', 'conceptItems', 'breakKit',
-      'theme', 'themeSource', 'onboarded', 'sparkIndex', 'oppositeIndex',
-      'sparksTried', 'currentSpark', 'prefs', 'portalSeen',
-      'templates', 'currentTemplateId',
-    ]
-    const missing = persisted.filter(
+    /* Reads PERSISTED_KEYS — the list `partialize` itself uses. This was a
+       hand-typed copy of those sixteen strings while the docstring above
+       claimed it compared the two key sets, so the guard against stale copies
+       was itself a stale copy waiting to happen: a field added to partialize
+       would have been dropped from the payload with the test still green. */
+    const missing = PERSISTED_KEYS.filter(
       (k) => !(k in payload) && !DELIBERATELY_LOCAL.has(k)
     )
     expect(missing).toEqual([])

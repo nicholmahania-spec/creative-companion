@@ -7,7 +7,7 @@ import {
   normalizeHex,
 } from '../lib/color'
 import { colorSpec } from '../lib/brandSystem'
-import { pinFaceStyle } from '../lib/moodPins'
+import { downscaleDataUrl, pinFaceStyle } from '../lib/moodPins'
 
 const formatCmyk = (hex) => colorSpec(hex)?.cmyk || ''
 
@@ -328,8 +328,15 @@ export default function BrandArtboard({
                 return
               }
               const reader = new FileReader()
-              reader.onload = () =>
-                onLogoImage?.({ ok: true, dataUrl: reader.result })
+              /* Downscale before it reaches the store. A 2.5MB mark becomes
+                 ~3.3MB of base64 in localStorage, against a ~5MB origin
+                 budget — one logo could exhaust it. downscaleDataUrl passes
+                 non-images through untouched and returns the original on any
+                 failure, so this cannot lose the upload. */
+              reader.onload = async () => {
+                const dataUrl = await downscaleDataUrl(reader.result, file.type)
+                onLogoImage?.({ ok: true, dataUrl })
+              }
               reader.readAsDataURL(file)
             }}
           />

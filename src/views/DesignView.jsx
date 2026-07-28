@@ -401,6 +401,10 @@ export default function DesignView({
       flashToast?.('Add Research pins first (color, gradient, or image).')
       return
     }
+    /* The project these pins belong to, captured before the await.
+       Extraction decodes every pinned image, and without this the colours
+       landed on whichever project was open when it finished. */
+    const ownerProjectId = activeProject?.id
     setExtractingPins(true)
     try {
       const result = await extractPaletteFromPins(deskMood, {
@@ -413,7 +417,7 @@ export default function DesignView({
         )
         return
       }
-      setProjectPalette(result.colors)
+      setProjectPalette(result.colors, ownerProjectId)
       setHexDrafts({})
       setTintOpenIndex(null)
       const src = result.sources

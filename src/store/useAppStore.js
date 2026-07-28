@@ -348,6 +348,60 @@ const initial = {
   currentTemplateId: null,
 }
 
+
+/**
+ * Exactly what persistence keeps — and therefore exactly what a workspace
+ * payload must carry.
+ *
+ * `PERSISTED_KEYS` exists so `partialize`, `exportAllData` and the round-trip
+ * test can read ONE list instead of three copies. They were three copies:
+ * `templates` was in partialize and missing from the payload, so every cloud
+ * sync and every JSON backup silently destroyed the user's saved templates.
+ * The test written to catch that then hard-coded its own sixteen-string copy
+ * of the list, which would not have caught the next one — the same mistake,
+ * inside its own fix.
+ *
+ * `defaults` are applied for keys whose stored value may be absent.
+ */
+export const PERSISTED_KEYS = [
+  'projects',
+  'currentProjectId',
+  'tasks',
+  'moodItems',
+  'conceptItems',
+  'breakKit',
+  'theme',
+  /* Must persist alongside `theme`, or an explicit choice survives only until
+     reload — themeSource would reset to 'auto' and the device listener would
+     quietly overwrite the theme the user picked. */
+  'themeSource',
+  'onboarded',
+  'sparkIndex',
+  'oppositeIndex',
+  'sparksTried',
+  'currentSpark',
+  'prefs',
+  'portalSeen',
+  'templates',
+  'currentTemplateId',
+]
+
+const PERSIST_DEFAULTS = {
+  conceptItems: [],
+  breakKit: [],
+  oppositeIndex: 0,
+  sparksTried: 0,
+  portalSeen: {},
+}
+
+export function pickPersisted(state) {
+  const out = {}
+  for (const k of PERSISTED_KEYS) {
+    out[k] = state[k] ?? PERSIST_DEFAULTS[k] ?? state[k]
+  }
+  return out
+}
+
 const useAppStore = create(
   persist(
     (set, get) => ({
@@ -637,10 +691,17 @@ const useAppStore = create(
         })),
 
       /** Replace full palette for active project (max 8) */
-      setProjectPalette: (palette) =>
+      /**
+       * @param {string[]} palette
+       * @param {string|number} [projectId] - the project the palette was
+       *   extracted FROM. Extraction decodes every pinned image, so without
+       *   this a project switch mid-extraction overwrote the new project's
+       *   palette with the old one's colours.
+       */
+      setProjectPalette: (palette, projectId) =>
         set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === state.currentProjectId
+            p.id === (projectId ?? state.currentProjectId)
               ? {
                   ...p,
                   palette: (palette || []).slice(0, 8),
@@ -950,10 +1011,18 @@ const useAppStore = create(
        *  paper form) into the project's own Define/detective answers.
        *  Only fills fields that actually have a value — never blanks
        *  something already filled in. */
-      mergeDetectiveAnswers: (incoming) =>
+      /**
+       * @param {object} incoming - answers to merge
+       * @param {string|number} [projectId] - the project the work STARTED on.
+       *   Pass it whenever an await sits between the user's action and this
+       *   call: OCR of a scanned form runs for seconds, and resolving
+       *   `currentProjectId` at apply time merged a client's answers into
+       *   whichever project happened to be open when it finished.
+       */
+      mergeDetectiveAnswers: (incoming, projectId) =>
         set((state) => ({
           projects: state.projects.map((p) => {
-            if (p.id !== state.currentProjectId) return p
+            if (p.id !== (projectId ?? state.currentProjectId)) return p
             const merged = { ...(p.detective || {}) }
             Object.entries(incoming || {}).forEach(([k, v]) => {
               if (String(v || '').trim()) merged[k] = v
@@ -2145,29 +2214,7 @@ const useAppStore = create(
               : blank.projects,
         }
       },
-      partialize: (state) => ({
-        projects: state.projects,
-        currentProjectId: state.currentProjectId,
-        tasks: state.tasks,
-        moodItems: state.moodItems,
-        conceptItems: state.conceptItems || [],
-        breakKit: state.breakKit || [],
-        theme: state.theme,
-        /* Must persist alongside `theme`, or an explicit choice survives only
-           until reload — themeSource would reset to 'auto' and the device
-           listener would quietly overwrite the theme the user picked. */
-        themeSource: state.themeSource,
-        onboarded: state.onboarded,
-        sparkIndex: state.sparkIndex,
-        oppositeIndex: state.oppositeIndex ?? 0,
-        sparksTried: state.sparksTried ?? 0,
-        currentSpark: state.currentSpark,
-        prefs: state.prefs,
-        portalSeen: state.portalSeen || {},
-        // Template persistence
-        templates: state.templates,
-        currentTemplateId: state.currentTemplateId,
-      }),
+      partialize: (state) => pickPersisted(state),
       onRehydrateStorage: () => (state) => {
         try {
           if (!state) return
