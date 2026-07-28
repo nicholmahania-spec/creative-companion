@@ -3574,9 +3574,6 @@ function App() {
                     >
                       <span className="journey-project-row-name">{p.name}</span>
                       <span className="journey-project-row-next">{nextLabel}</span>
-                      <span className="journey-project-row-count">
-                        {doneCount}/{PATH_STEP_COUNT}
-                      </span>
                     </button>
                     <div className="journey-project-row-menu-wrap">
                       <button
