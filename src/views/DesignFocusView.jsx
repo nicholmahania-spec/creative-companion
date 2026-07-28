@@ -18,7 +18,6 @@ const BRACKET_PAIRS = TYPE_PAIRS.slice(0, 4)
 
 export default function DesignFocusView({ activeProject, setActiveView }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
-  const { brandFields } = useAppStore((s) => s)
 
   // Intent setting state
   const [intent, setIntent] = useState('')
@@ -32,6 +31,10 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
   const [winner, setWinner] = useState(null)
   const [applied, setApplied] = useState(false)
 
+  // Brand fields live on the project, not a store slice named brandFields
+  const typeHeading = activeProject?.typeHeading || ''
+  const typeBody = activeProject?.typeBody || ''
+
   const pick = (chosenPair) => {
     if (contenders.length === 0) {
       setWinner(chosenPair)
@@ -42,8 +45,9 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
     }
   }
 
+  // Hooks must run every render (before any conditional return)
   useEffect(() => {
-    if (!taglineDone) return
+    if (!intentSet || !taglineDone) return undefined
     const onKey = (e) => {
       if (!bracket) return
       if (e.key === 'ArrowLeft') pick(bracket[0])
@@ -52,7 +56,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bracket, taglineDone])
+  }, [bracket, taglineDone, intentSet])
 
   const applyWinner = () => {
     if (!winner) return
@@ -127,16 +131,15 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
               </div>
               <div className="flex justify-between">
                 <span>Heading Font:</span>
-                <span className="font-mono">{brandFields.typeHeading || '(not set)'}</span>
+                <span className="font-mono">{typeHeading || '(not set)'}</span>
               </div>
               <div className="flex justify-between">
                 <span>Body Font:</span>
-                <span className="font-mono">{brandFields.typeBody || '(not set)'}</span>
+                <span className="font-mono">{typeBody || '(not set)'}</span>
               </div>
             </div>
           </div>
         }
-        onExit={exitFocus}
       >
         <FocusCard cardKey="tagline">
           <p className="focus-prompt">One-line tagline:</p>
@@ -206,7 +209,6 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             </div>
           </div>
         }
-        onExit={exitFocus}
       >
         <div className="focus-card">
           <p className="focus-prompt text-center">Type set: {winner.label}</p>
@@ -269,7 +271,6 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
             </div>
           </div>
         }
-        onExit={exitFocus}
       >
         <div className="focus-card">
           <p className="focus-hint text-center">Winner</p>

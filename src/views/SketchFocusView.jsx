@@ -45,7 +45,17 @@ export default function SketchFocusView({ deskTasks, projectId, setActiveView })
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter' && draft.trim()) {
-                addTask({ title: draft.trim(), projectId: projectId || null })
+                addTask?.({
+                  id: Date.now() + Math.random(),
+                  title: draft.trim(),
+                  energy: 'med',
+                  meta: '',
+                  why: '',
+                  completed: false,
+                  seeded: false,
+                  projectId: projectId || null,
+                  dueDate: '',
+                })
                 setDraft('')
               }
             }}
@@ -57,7 +67,17 @@ export default function SketchFocusView({ deskTasks, projectId, setActiveView })
               disabled={!draft.trim()}
               onClick={() => {
                 if (draft.trim()) {
-                  addTask({ title: draft.trim(), projectId: projectId || null })
+                  addTask?.({
+                    id: Date.now() + Math.random(),
+                    title: draft.trim(),
+                    energy: 'med',
+                    meta: '',
+                    why: '',
+                    completed: false,
+                    seeded: false,
+                    projectId: projectId || null,
+                    dueDate: '',
+                  })
                   setDraft('')
                 }
               }}

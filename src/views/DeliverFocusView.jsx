@@ -55,15 +55,21 @@ export default function DeliverFocusView({
 
   const runShip = async () => {
     setShipping(true)
-    for (const f of FORMATS) {
-      if (!selected.has(f.id)) continue
-      runExport?.(f.id)
-      // Give each download a beat to start before triggering the next —
-      // browsers can drop rapid-fire simultaneous downloads.
-      await new Promise((r) => setTimeout(r, 350))
+    try {
+      for (const f of FORMATS) {
+        if (!selected.has(f.id)) continue
+        // runExport returns a Promise and rejects re-entry while busy —
+        // await each format so multi-select Ship actually exports all.
+        const result = await Promise.resolve(runExport?.(f.id))
+        if (result?.busy) {
+          await new Promise((r) => setTimeout(r, 500))
+          await Promise.resolve(runExport?.(f.id))
+        }
+      }
+    } finally {
+      setShipping(false)
+      setShipped(true)
     }
-    setShipping(false)
-    setShipped(true)
   }
 
   const ship = () => {

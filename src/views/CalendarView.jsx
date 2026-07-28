@@ -18,6 +18,8 @@ export default function CalendarView(props) {
     setProjectDeadline,
     activeProject,
     upcomingDeadlines: upcomingProp,
+    /** Journey view to restore when leaving Calendar. */
+    pathReturnView = 'project',
   } = props
 
   const [pendingDeadline, setPendingDeadline] = useState(null)
@@ -40,7 +42,7 @@ export default function CalendarView(props) {
       <button
         type="button"
         className="back-link"
-        onClick={() => setActiveView('flow')}
+        onClick={() => setActiveView(pathReturnView || 'project')}
       >
         ← Path
       </button>

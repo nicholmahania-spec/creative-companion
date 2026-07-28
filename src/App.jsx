@@ -295,6 +295,8 @@ function App() {
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [exportBusy, setExportBusy] = useState(false)
+  /** Sync guard so sequential await runExport() does not re-enter on stale React state. */
+  const exportBusyRef = useRef(false)
   const [lastExportNote, setLastExportNote] = useState('')
   /** @type {null | { kind: string, label: string, onConfirm: () => void }} */
   const [deskConfirm, setDeskConfirm] = useState(null)
@@ -2011,8 +2013,14 @@ function App() {
     })
   }
 
+  /**
+   * Export one format. Returns a Promise so multi-format Focus Ship can await
+   * each step (exportBusy used to no-op every call after the first).
+   * @returns {Promise<{ ok?: boolean, busy?: boolean, cancelled?: boolean }>}
+   */
   const runExport = (kind) => {
-    if (exportBusy) return
+    if (exportBusyRef.current) return Promise.resolve({ ok: false, busy: true })
+    exportBusyRef.current = true
     setExportBusy(true)
     const pack = buildCurrentBrandPack()
     const slug = slugifyFilename(pack.projectName, 'brand-pack')
@@ -2060,11 +2068,16 @@ function App() {
       ? captureSaveHandle(saveName, 'Creative Companion export')
       : null
 
+    const clearBusy = () => {
+      exportBusyRef.current = false
+      setExportBusy(false)
+    }
+
     if (kind === 'kit') {
       flashToast(i18nT(locale, 'ui.kitBuilding') || 'Building brand kit…', {
         important: true,
       })
-      void (async () => {
+      return (async () => {
         const result = await downloadBrandKitZip(pack, handlePromise, {
           hideWatermark: hidePackWatermark,
         })
@@ -2076,7 +2089,6 @@ function App() {
             })}`
           )
           finishOk('Brand kit')
-          trackExportAction('kit', true)
         } else if (result.cancelled) {
           flashToast(i18nT(locale, 'ui.saveCancelled'))
           trackExportAction('kit', false)
@@ -2086,15 +2098,15 @@ function App() {
           )
           trackExportAction('kit', false)
         }
-      })().finally(() => setExportBusy(false))
-      return
+        return result
+      })().finally(clearBusy)
     }
 
     if (kind === 'pdf') {
       // Vector direction pack (text + swatches as PDF primitives)
       void preloadPdfEngine()
       flashToast(i18nT(locale, 'ui.pdfBuilding'), { important: true })
-      void (async () => {
+      return (async () => {
         const result = await downloadBrandPackPdf(pack, handlePromise, {
           hideWatermark: hidePackWatermark,
           mode: 'vector',
@@ -2109,14 +2121,15 @@ function App() {
             })}`
           )
           finishOk('Brand book PDF')
-          trackExportAction('pdf', true)
         } else if (result.cancelled) {
           flashToast(i18nT(locale, 'ui.saveCancelled'))
           trackExportAction('pdf', false)
-        } else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+        } else {
+          flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
           trackExportAction('pdf', false)
-      })().finally(() => setExportBusy(false))
-      return
+        }
+        return result
+      })().finally(clearBusy)
     }
 
     if (kind === 'pdf-preview') {
@@ -2125,7 +2138,7 @@ function App() {
       if (!hasSystem && !exportPanel) openExportPanel()
       void preloadPdfEngine()
       flashToast(i18nT(locale, 'ui.pdfPreviewing'), { important: true })
-      void (async () => {
+      return (async () => {
         await new Promise((r) =>
           requestAnimationFrame(() => requestAnimationFrame(r))
         )
@@ -2150,45 +2163,47 @@ function App() {
             })}`
           )
           finishOk('Preview PDF')
-          trackExportAction('pdf-preview', true)
         } else if (result.cancelled) {
           flashToast(i18nT(locale, 'ui.saveCancelled'))
           trackExportAction('pdf-preview', false)
-        } else flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+        } else {
+          flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
           trackExportAction('pdf-preview', false)
-      })().finally(() => setExportBusy(false))
-      return
+        }
+        return result
+      })().finally(clearBusy)
     }
 
     if (kind === 'html') {
-      void Promise.resolve(downloadBrandPackHtml(pack, handlePromise)).then(
-        (result) => {
+      return Promise.resolve(downloadBrandPackHtml(pack, handlePromise))
+        .then((result) => {
           if (result.ok) {
             finishOk('Brand HTML')
-            trackExportAction('html', true)
           } else if (result.cancelled) {
             flashToast(i18nT(locale, 'ui.saveCancelled'))
             trackExportAction('html', false)
-          } else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+          } else {
+            flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
             trackExportAction('html', false)
-        }
-      ).finally(() => setExportBusy(false))
-      return
+          }
+          return result
+        })
+        .finally(clearBusy)
     }
     if (kind === 'md') {
-      void Promise.resolve(downloadBrandPackMarkdown(pack, handlePromise)).then(
-        (result) => {
+      return Promise.resolve(downloadBrandPackMarkdown(pack, handlePromise))
+        .then((result) => {
           if (result.ok) finishOk('Brand Markdown')
           else if (result.cancelled)
             flashToast(i18nT(locale, 'ui.saveCancelled'))
           else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
-        }
-      ).finally(() => setExportBusy(false))
-      return
+          return result
+        })
+        .finally(clearBusy)
     }
     if (kind === 'json') {
-      void Promise.resolve(downloadBrandPackJson(pack, handlePromise)).then(
-        (result) => {
+      return Promise.resolve(downloadBrandPackJson(pack, handlePromise))
+        .then((result) => {
           if (result.ok) finishOk('Brand JSON')
           else if (result.cancelled) {
             flashToast(i18nT(locale, 'ui.saveCancelled'))
@@ -2197,9 +2212,9 @@ function App() {
             flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
             trackExportAction('json', false)
           }
-        }
-      ).finally(() => setExportBusy(false))
-      return
+          return result
+        })
+        .finally(clearBusy)
     }
     if (kind === 'backup') {
       const result = downloadWorkspaceBackup(exportAllData())
@@ -2208,38 +2223,43 @@ function App() {
         flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
         trackExportAction('backup', false)
       }
-      setExportBusy(false)
-      return
+      clearBusy()
+      return Promise.resolve(result)
     }
     if (kind === 'print') {
       if (!exportPanel) openExportPanel()
-      window.setTimeout(() => {
-        const el =
-          document.getElementById('direction-sheet') ||
-          document.getElementById('system-artboard') ||
-          document.getElementById('pack-preview-artboard')
-        const r = el
-          ? printElementById(el.id, { hideWatermark: hidePackWatermark })
-          : { ok: false, error: i18nT(locale, 'ui.nothingToPrint') }
-        if (r.ok) {
-          awardAndBroadcast('export_pack', { label: 'Print / PDF' })
-          const when = new Date().toLocaleTimeString([], {
-            hour: 'numeric',
-            minute: '2-digit',
-          })
-          setLastExportNote(`Print dialog · ${when} — Save as PDF if you want a file`)
-          flashToast(i18nT(locale, 'ui.printDialogOpen'))
-          trackExportAction('print', true)
-        } else {
-          flashToast(r.error || i18nT(locale, 'ui.printFailed'))
-          trackExportAction('print', false)
-        }
-        setExportBusy(false)
-      }, exportPanel ? 50 : 180)
-      return
+      return new Promise((resolve) => {
+        window.setTimeout(() => {
+          const el =
+            document.getElementById('direction-sheet') ||
+            document.getElementById('system-artboard') ||
+            document.getElementById('pack-preview-artboard')
+          const r = el
+            ? printElementById(el.id, { hideWatermark: hidePackWatermark })
+            : { ok: false, error: i18nT(locale, 'ui.nothingToPrint') }
+          if (r.ok) {
+            awardAndBroadcast('export_pack', { label: 'Print / PDF' })
+            const when = new Date().toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit',
+            })
+            setLastExportNote(
+              `Print dialog · ${when} — Save as PDF if you want a file`
+            )
+            flashToast(i18nT(locale, 'ui.printDialogOpen'))
+            trackExportAction('print', true)
+          } else {
+            flashToast(r.error || i18nT(locale, 'ui.printFailed'))
+            trackExportAction('print', false)
+          }
+          clearBusy()
+          resolve(r)
+        }, exportPanel ? 50 : 180)
+      })
     }
     flashToast(i18nT(locale, 'ui.unknownExport'))
-    setExportBusy(false)
+    clearBusy()
+    return Promise.resolve({ ok: false })
   }
   runExportRef.current = runExport
 
@@ -3771,6 +3791,7 @@ function App() {
               openForceBreakConsent={() => setForceBreakConsentOpen(true)}
               timerFocusSource={timerFocusSource}
               setTimerFocusSource={setTimerFocusSource}
+              pathReturnView={activeProject?.lastView || 'project'}
               locale={locale}
             />
           </Suspense>
@@ -3781,6 +3802,7 @@ function App() {
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading calendar…</div>}>
             <CalendarView
               setActiveView={setActiveView}
+              pathReturnView={activeProject?.lastView || 'project'}
               calCursor={calCursor}
               setCalCursor={setCalCursor}
               buildMonthGrid={buildMonthGrid}

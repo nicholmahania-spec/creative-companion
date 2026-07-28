@@ -114,7 +114,7 @@ export default function ReviewView({
           </span>
         ) : (
           <span className="review-status-chip is-gaps" aria-live="polite">
-            Ready · {okCount}/{reviewChecks.length}
+            Gaps · {miss.length} left
           </span>
         )}
       </div>
