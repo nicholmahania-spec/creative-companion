@@ -256,6 +256,16 @@ function App() {
   )
   const prefs = useAppStore((s) => s.prefs) || {}
   const setPref = useCallback((...a) => useAppStore.getState().setPref(...a), [])
+  /* Claims the next invoice number at export. Bound here like every other
+     store action the shell hands down — it was passed to HoursInvoicePanel
+     without ever being defined, which is a render-time ReferenceError that
+     blanks the entire app. Unit tests and the build both stayed green
+     through it: nothing renders App in vitest, and an undefined identifier
+     in JSX is perfectly valid syntax. */
+  const takeInvoiceNumber = useCallback(
+    (...a) => useAppStore.getState().takeInvoiceNumber(...a),
+    []
+  )
   const exportAllData = useCallback(
     (...a) => useAppStore.getState().exportAllData(...a),
     []
@@ -4521,6 +4531,9 @@ function App() {
         onAddEntry={addTimeEntry}
         onRemoveEntry={removeTimeEntry}
         flashToast={flashToast}
+        prefs={prefs}
+        setPref={setPref}
+        takeInvoiceNumber={takeInvoiceNumber}
       />
       <DiscoveryBriefPanel
         open={discoveryPanelOpen}

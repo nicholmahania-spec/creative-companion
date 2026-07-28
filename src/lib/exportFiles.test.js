@@ -11,6 +11,21 @@ import {
   downloadProjectOverviewPdf,
 } from './exportFiles'
 
+/* The pack's content streams are compressed, so raw byte-matching can only
+   prove absence, not presence — parse the actual text layer instead. */
+async function brandBookText(blob) {
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  const buf = new Uint8Array(await blob.arrayBuffer())
+  const doc = await pdfjs.getDocument({ data: buf }).promise
+  let out = ''
+  for (let i = 1; i <= doc.numPages; i += 1) {
+    const page = await doc.getPage(i)
+    const content = await page.getTextContent()
+    out += content.items.map((it) => it.str).join(' ') + '\n'
+  }
+  return out
+}
+
 describe('slugifyFilename', () => {
   it('slugifies project names', () => {
     expect(slugifyFilename('Soft Signal Covers!')).toBe('soft-signal-covers')
@@ -335,6 +350,113 @@ describe('downloadBrandPackVectorPdf quality', () => {
     // Never invent placeholder contact on the business-card specimen
     expect(text).not.toMatch(/hello@brand\.example/)
     expect(text).not.toMatch(/you@example\.com/)
+  })
+
+  /* Phase 1 listed eight items and shipped five. These three were the gap:
+     16 (the plan and one CTA), 18 (writing guidelines), 19 (print and
+     finish). Each is asserted against a real generated PDF rather than
+     against the source, because "the field exists" is exactly the check that
+     passed for Promise and Proof while the page rendered nothing. */
+  it('prints the plan and the one action on Direction', async () => {
+    const pack = buildBrandPackSnapshot({
+      project: {
+        name: 'Harbor & Hearth',
+        palette: ['#1B3A2F', '#C4A574', '#E8DCC8', '#F7F3EC'],
+        detective: {
+          messagingPlan: 'Call for a quote, we visit, you get a fixed price.',
+          messagingCta: 'Book a visit.',
+        },
+      },
+      tasks: [],
+      moodItems: [],
+    })
+    expect(pack.messagingPlan).toMatch(/fixed price/)
+    expect(pack.messagingCta).toBe('Book a visit.')
+
+    const result = await downloadBrandPackVectorPdf(pack, null, {
+      returnBlobOnly: true,
+    })
+    const text = await brandBookText(result.blob)
+    expect(text).toMatch(/THE PLAN/)
+    expect(text).toMatch(/THE ONE ACTION/)
+    expect(text).toMatch(/Book a visit/)
+
+    // And the written leave-behind must not disagree with the book.
+    const md = brandPackToMarkdown(pack)
+    expect(md).toMatch(/The one action:\*\* Book a visit/)
+  })
+
+  it('prints a writing rule even for a project saved before the keys existed', async () => {
+    // No writingCase/writingCaps anywhere — the v5-migration hole.
+    const pack = buildBrandPackSnapshot({
+      project: { name: 'Legacy Co', palette: ['#111111', '#FAFAF9'] },
+      tasks: [],
+      moodItems: [],
+    })
+    expect(pack.writingCase).toBe('sentence')
+
+    const result = await downloadBrandPackVectorPdf(pack, null, {
+      returnBlobOnly: true,
+    })
+    const text = await brandBookText(result.blob)
+    expect(text).toMatch(/WRITING/)
+    expect(text).toMatch(/sentence case/i)
+    expect(text).toMatch(/ALL CAPS/)
+  })
+
+  it('honours a title-case choice instead of printing the default', async () => {
+    const pack = buildBrandPackSnapshot({
+      project: {
+        name: 'Titled Co',
+        palette: ['#111111', '#FAFAF9'],
+        writingCase: 'title',
+        writingCaps: 'never',
+      },
+      tasks: [],
+      moodItems: [],
+    })
+    const result = await downloadBrandPackVectorPdf(pack, null, {
+      returnBlobOnly: true,
+    })
+    const text = await brandBookText(result.blob)
+    expect(text).toMatch(/title case/i)
+    expect(text).toMatch(/Never set copy in ALL CAPS/)
+    expect(text).not.toMatch(/capital on the first word only/i)
+  })
+
+  it('prints print and finish specs, and omits them when unfilled', async () => {
+    const filled = buildBrandPackSnapshot({
+      project: {
+        name: 'Press Co',
+        palette: ['#111111', '#FAFAF9'],
+        printPantone: '871C on the cream',
+        printStock: '350gsm uncoated',
+        printFinish: 'Matt lamination, spot UV on the mark',
+      },
+      tasks: [],
+      moodItems: [],
+    })
+    const a = await downloadBrandPackVectorPdf(filled, null, {
+      returnBlobOnly: true,
+    })
+    const textA = await brandBookText(a.blob)
+    expect(textA).toMatch(/PANTONE MATCH/)
+    expect(textA).toMatch(/350gsm uncoated/)
+    expect(textA).toMatch(/spot UV/)
+
+    /* An empty ruled row in a deliverable reads as "we never did this" — the
+       same omit rule the Agreed brief section follows. */
+    const bare = buildBrandPackSnapshot({
+      project: { name: 'Press Co', palette: ['#111111', '#FAFAF9'] },
+      tasks: [],
+      moodItems: [],
+    })
+    const b = await downloadBrandPackVectorPdf(bare, null, {
+      returnBlobOnly: true,
+    })
+    const textB = await brandBookText(b.blob)
+    expect(textB).not.toMatch(/PANTONE MATCH/)
+    expect(textB).not.toMatch(/PAPER STOCK/)
   })
 
   it('renders the agreed-brief section with question, tip, and answer', async () => {

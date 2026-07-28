@@ -1802,6 +1802,106 @@ export default function DesignView({
                   />
                 </div>
               </details>
+              {/* Writing and print rules. Two selects rather than a blank box:
+                  the answer is a choice from a short list, and asking for
+                  prose here would get the same skip every open-ended field
+                  gets. Both already carry a defensible default, so the book
+                  prints a rule whether or not this is ever opened. */}
+              <details className="design-advanced">
+                <summary>Writing and print rules</summary>
+                <div className="field-block" style={{ marginTop: '0.65rem' }}>
+                  <label className="field-label" htmlFor="wr-case">
+                    Headings
+                  </label>
+                  <select
+                    id="wr-case"
+                    className="field-input"
+                    value={activeProject?.writingCase || 'sentence'}
+                    onChange={(e) =>
+                      updateBrandField('writingCase', e.target.value)
+                    }
+                  >
+                    <option value="sentence">
+                      Sentence case — Like this one
+                    </option>
+                    <option value="title">Title case — Like This One</option>
+                  </select>
+                </div>
+                <div className="field-block">
+                  <label className="field-label" htmlFor="wr-caps">
+                    ALL CAPS
+                  </label>
+                  <select
+                    id="wr-caps"
+                    className="field-input"
+                    value={activeProject?.writingCaps || 'sparing'}
+                    onChange={(e) =>
+                      updateBrandField('writingCaps', e.target.value)
+                    }
+                  >
+                    <option value="sparing">Short labels only</option>
+                    <option value="labels">UI labels and navigation only</option>
+                    <option value="never">Never</option>
+                  </select>
+                </div>
+                <div className="field-block">
+                  <label className="field-label" htmlFor="wr-notes">
+                    Anything else about the words
+                  </label>
+                  <textarea
+                    id="wr-notes"
+                    className="field-input"
+                    rows={2}
+                    value={activeProject?.writingNotes || ''}
+                    onChange={(e) =>
+                      updateBrandField('writingNotes', e.target.value)
+                    }
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="field-block">
+                  <label className="field-label" htmlFor="pr-pantone">
+                    Pantone match
+                  </label>
+                  <input
+                    id="pr-pantone"
+                    className="field-input"
+                    value={activeProject?.printPantone || ''}
+                    onChange={(e) =>
+                      updateBrandField('printPantone', e.target.value)
+                    }
+                    placeholder="e.g. 871C for the gold"
+                  />
+                </div>
+                <div className="field-block">
+                  <label className="field-label" htmlFor="pr-stock">
+                    Paper stock
+                  </label>
+                  <input
+                    id="pr-stock"
+                    className="field-input"
+                    value={activeProject?.printStock || ''}
+                    onChange={(e) =>
+                      updateBrandField('printStock', e.target.value)
+                    }
+                    placeholder="e.g. 350gsm uncoated"
+                  />
+                </div>
+                <div className="field-block">
+                  <label className="field-label" htmlFor="pr-finish">
+                    Finish
+                  </label>
+                  <input
+                    id="pr-finish"
+                    className="field-input"
+                    value={activeProject?.printFinish || ''}
+                    onChange={(e) =>
+                      updateBrandField('printFinish', e.target.value)
+                    }
+                    placeholder="e.g. matt lamination, spot UV"
+                  />
+                </div>
+              </details>
             </section>
 
             {/* Stationery — letterhead, business card, envelope, email signature */}

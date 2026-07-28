@@ -180,6 +180,21 @@ export function brandIdentityDefaults() {
   imageryStyle: '',
   imageryDo: '',
   imageryDont: '',
+  /* Writing guidelines — the style-guide section this book never had.
+     Two picks rather than a blank box, because every other question in this
+     app that asks for composed prose gets skipped, and "sentence case, caps
+     for short labels only" is a defensible default rather than an empty
+     assertion. Defaults are applied at read time in the pack builder too, so
+     projects saved before these keys existed still print a rule. */
+  writingCase: 'sentence',
+  writingCaps: 'sparing',
+  writingNotes: '',
+  /* Print and finish — what a printer asks for and this book could not
+     answer. CMYK is already derived per swatch; these are the things no
+     algorithm can infer. Printed only when filled. */
+  printPantone: '',
+  printStock: '',
+  printFinish: '',
   /** Design version label (v1, v2...) */
   designVersion: 'v1',
   /** Review: feedback notes from client / self */
@@ -328,6 +343,19 @@ export function blankWorkspaceState() {
       toastMode: 'quiet',
       /** Seconds non-error toasts queue before flushing together; 0 = instant (default) */
       toastBatchWindow: 0,
+      /* Invoice identity and terms. In prefs, not on the project: your
+         address and payment details are the same on every invoice you send,
+         while `hourlyRate` is negotiated per client and stays on the project.
+         An invoice with no number, no due date and no way to pay is one the
+         client has to email you about before they can pay it. */
+      invoiceFrom: '',
+      invoicePaymentMethods: '',
+      invoiceTerms: 14,
+      invoiceNotes: '',
+      invoiceTaxLabel: '',
+      invoiceTaxPercent: 0,
+      invoiceNextNumber: 1,
+      invoicePrefix: '',
     },
     // Template management
     templates: [],
@@ -880,23 +908,48 @@ const useAppStore = create(
           ),
         })),
 
-      addTimeEntry: ({ date, hours, note = '' }) =>
+      /**
+       * Add a billable line. Either hours (billed at the project rate) or a
+       * flat `amount`.
+       *
+       * This used to reject anything without `hours > 0`, so a fixed-price
+       * project could not be invoiced at all — you had to invent hours that
+       * multiplied out to the agreed number. The brief asks the client for a
+       * budget and a list of deliverables, which is project pricing; the
+       * invoice could only express hourly.
+       */
+      addTimeEntry: ({ date, hours, amount, note = '' }) =>
         set((state) => {
           const h = Number(hours)
-          if (!date || !Number.isFinite(h) || h <= 0) return state
+          const amt = Number(amount)
+          const hasHours = Number.isFinite(h) && h > 0
+          const hasAmount = Number.isFinite(amt) && amt > 0
+          if (!date || (!hasHours && !hasAmount)) return state
           return {
             projects: state.projects.map((p) => {
               if (p.id !== state.currentProjectId) return p
               const entry = {
                 id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
                 date,
-                hours: h,
                 note: String(note || '').trim(),
+                ...(hasHours ? { hours: h } : {}),
+                ...(hasAmount ? { amount: amt } : {}),
               }
               return { ...p, timeLog: [...(p.timeLog || []), entry] }
             }),
           }
         }),
+
+      /** Claim the next invoice number and advance the counter. */
+      takeInvoiceNumber: () => {
+        const { prefs } = get()
+        const n = Number(prefs?.invoiceNextNumber) || 1
+        set((state) => ({
+          prefs: { ...state.prefs, invoiceNextNumber: n + 1 },
+        }))
+        const prefix = String(prefs?.invoicePrefix || '').trim()
+        return prefix ? `${prefix}${n}` : String(n)
+      },
 
       removeTimeEntry: (id) =>
         set((state) => ({
@@ -2365,6 +2418,15 @@ const useAppStore = create(
             imageryStyle: project.imageryStyle,
             imageryDo: project.imageryDo,
             imageryDont: project.imageryDont,
+            /* House style travels with the template. A studio that sets
+               sentence case and a preferred stock once should not re-set them
+               on every project started from this template. */
+            writingCase: project.writingCase,
+            writingCaps: project.writingCaps,
+            writingNotes: project.writingNotes,
+            printPantone: project.printPantone,
+            printStock: project.printStock,
+            printFinish: project.printFinish,
             // Full detective clone (no hand-whitelist) — required fields + spectra
             detective: project.detective
               ? {

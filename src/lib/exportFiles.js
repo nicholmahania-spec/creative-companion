@@ -382,6 +382,20 @@ export function buildBrandPackSnapshot({
     messagingPromise: p.messagingPromise || d.messagingPromise || '',
     messagingProof: p.messagingProof || d.messagingProof || '',
     messagingPersonality: p.messagingPersonality || '',
+    /* StoryBrand's plan and single CTA — client-answered only; there is no
+       designer-side field for these, unlike Promise and Proof. */
+    messagingPlan: d.messagingPlan || '',
+    messagingCta: d.messagingCta || '',
+    /* Writing guidelines. The `||` fallbacks are load-bearing, not cosmetic:
+       persist `migrate` only re-merges defaults for workspaces saved before
+       v5, so a project already at v5 has no `writingCase` key at all and
+       would print no writing rule despite one being the default. */
+    writingCase: p.writingCase || 'sentence',
+    writingCaps: p.writingCaps || 'sparing',
+    writingNotes: p.writingNotes || '',
+    printPantone: p.printPantone || '',
+    printStock: p.printStock || '',
+    printFinish: p.printFinish || '',
     imageryStyle: p.imageryStyle || '',
     imageryDo: p.imageryDo || '',
     imageryDont: p.imageryDont || '',

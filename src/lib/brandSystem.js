@@ -251,6 +251,8 @@ export function appendSystemMarkdown(lines, pack) {
     pack.messagingPromise,
     pack.messagingProof,
     pack.messagingPersonality,
+    pack.messagingPlan,
+    pack.messagingCta,
   ].some((s) => String(s || '').trim())
   if (msg) {
     out.push('## Messaging pillars', '')
@@ -259,6 +261,22 @@ export function appendSystemMarkdown(lines, pack) {
     if (pack.messagingProof) out.push(`- **Proof:** ${pack.messagingProof}`)
     if (pack.messagingPersonality)
       out.push(`- **Personality:** ${pack.messagingPersonality}`)
+    /* The written leave-behind and the PDF must not disagree about what the
+       brand asks of people — the book prints these on Direction. */
+    if (pack.messagingPlan) out.push(`- **The plan:** ${pack.messagingPlan}`)
+    if (pack.messagingCta)
+      out.push(`- **The one action:** ${pack.messagingCta}`)
+    out.push('')
+  }
+
+  const print = [pack.printPantone, pack.printStock, pack.printFinish].filter(
+    (s) => String(s || '').trim()
+  )
+  if (print.length) {
+    out.push('## Print and finish', '')
+    if (pack.printPantone) out.push(`- **Pantone match:** ${pack.printPantone}`)
+    if (pack.printStock) out.push(`- **Paper stock:** ${pack.printStock}`)
+    if (pack.printFinish) out.push(`- **Finish:** ${pack.printFinish}`)
     out.push('')
   }
 
