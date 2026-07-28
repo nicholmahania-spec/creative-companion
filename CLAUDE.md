@@ -11,6 +11,36 @@ npm test        # vitest unit tests
 npm run bump    # increment version in src/lib/version.js
 ```
 
+## Build rule — NEVER BUILD STAGED OR FAKE FEATURES
+
+**Everything must be real and functioning.** Stated directly by the owner,
+2026-07-28. This outranks finishing on time, finishing at all, and looking
+finished.
+
+A feature is not built until the thing it claims to do actually happens:
+
+- **No placeholder data.** No hard-coded sample rows, no `TODO: wire this up`,
+  no arrays of invented examples standing in for real records.
+- **No mock or stub responses presented as working.** If a call needs a
+  backend, an API key, or a migration that does not exist yet, the feature is
+  BLOCKED — say so and stop. Do not ship a version that looks alive.
+- **No UI in front of nothing.** A button that does not do its thing, a status
+  that is always the same value, a chart of made-up numbers, a panel bound to
+  a store field nothing ever writes — all of these are fake features. The
+  Promise/Proof bug is the canonical example in this repo: the brand book
+  rendered those tiles for months, reading a field NOTHING ever wrote.
+- **No claiming done without running it.** Tests pass, the build is green,
+  and where the change is observable it was actually observed. If it could
+  not be verified — the app is behind the login, Docker was not running, the
+  migration is unapplied — **say so plainly in the same breath as "done"**,
+  rather than letting "done" imply it.
+- **Half a real feature beats a whole fake one.** Ship the part that genuinely
+  works and name what is missing. Scaling the work down is the owner's call,
+  so surface it rather than papering over it.
+
+If something cannot be built for real right now, the answer is to say what is
+blocking it — not to build the shape of it and move on.
+
 ## Workflow rule — never assume, always confirm before touching code
 
 **Never make a design/placement/behavior decision on your own judgment and
