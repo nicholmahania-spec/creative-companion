@@ -853,6 +853,11 @@ h3 {
   line-height: 1.3;
 }
 
+/* Desktop already has standalone Calendar/Clients icon buttons in the
+   header — this menu copy exists only for mobile, where those buttons are
+   hidden for lack of room. */
+.more-menu-item-mobile-only { display: none; }
+
 .more-menu-item:hover {
   background: color-mix(in srgb, var(--dopamine) 8%, transparent);
   color: var(--dopamine-ink);
@@ -7430,8 +7435,43 @@ select:focus {
     align-items: center;
     gap: 0.35rem;
   }
-.header-actions .more-wrap,
+/* .more-wrap holds the Tools menu — Settings, Keyboard shortcuts, Log out
+   all live inside it now. Hiding it here left mobile with zero path to
+   Settings: the hamburger opens the Projects drawer, a different thing,
+   and nothing else stood in for it. Only the timer chip stays hidden —
+   decorative status, not a way to reach anything. */
 .header-actions .timer-running-chip { display: none !important; }
+
+  /* Un-hiding Tools (above) reintroduced the header-row overflow it was
+     originally hidden to avoid — the work-clock chip's full "Working ·
+     just started" text was already crowding this row before Tools was
+     added back, and the standalone Calendar/Clients icon buttons alone cost
+     88px this row doesn't have on a phone screen. Move those two into the
+     Tools menu (their own "Go to" entries already added) rather than
+     leaving them onscreen with no room — reachable, just one tap further,
+     same as every other secondary control already routed through Tools. */
+  .header-actions .header-icon-btn { display: none !important; }
+  .more-menu-item-mobile-only { display: block; }
+
+  /* Cap and ellipsis the work-clock chip rather than removing the readout:
+     the clock stays visible (tapping it still opens the full detail), it
+     just stops claiming more width than a narrow phone header has to give. */
+  .header-actions .work-clock-chip {
+    max-width: 5.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* .autosave-chip is `position: fixed; top: 1rem; right: 1rem` — independent
+     of the header's own flex layout, so it never had to compete for space
+     there. It sat harmlessly clear of the (previously hidden) Tools button;
+     now that Tools renders on mobile too, both land in the same top-right
+     corner and the fixed chip visually covers the button underneath it —
+     a layered-elements collision, not a flow-overflow one. Drop it below
+     the 52px header instead of fighting Tools for the same corner. */
+  .autosave-chip {
+    top: 58px !important;
+  }
 
   /* Sidebar = slide-out drawer. Must share main's grid area — without a
      named area, auto-placement creates a second column (white strip). */

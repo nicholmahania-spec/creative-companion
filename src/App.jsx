@@ -3245,6 +3245,33 @@ function App() {
               {moreOpen && (
                 <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">
                   <p className="more-menu-group-label">Go to</p>
+                  {/* Mirrors the two standalone header icon buttons, which
+                      are hidden on mobile (no room in that row once Tools
+                      itself needs to fit) — without a copy here, Calendar
+                      and Clients would go the same way Settings just did:
+                      hidden with nothing standing in for them. */}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item more-menu-item-mobile-only"
+                    onClick={() => {
+                      setActiveView('calendar')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <HeaderIcon name="calendar" /> Calendar
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item more-menu-item-mobile-only"
+                    onClick={() => {
+                      setActiveView('clients')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <HeaderIcon name="people" /> Clients
+                  </button>
                   <button
                     type="button"
                     role="menuitem"
