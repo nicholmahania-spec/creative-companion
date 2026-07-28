@@ -162,3 +162,51 @@ describe('feedback log', () => {
     expect(cur().feedbackLog).toHaveLength(0)
   })
 })
+
+describe('deliberate rule-break marker', () => {
+  beforeEach(() => {
+    useAppStore.setState({
+      projects: [
+        project({
+          decisionLog: [
+            { id: 1, label: 'B', title: 'Quiet teal', why: 'calm' },
+            { id: 2, label: 'C', title: 'No grid', why: 'chaos is the point' },
+          ],
+        }),
+      ],
+      currentProjectId: P,
+    })
+  })
+
+  it('toggles on and back off', () => {
+    const { toggleDecisionRuleBreak } = useAppStore.getState()
+    toggleDecisionRuleBreak(2)
+    expect(cur().decisionLog[1].breaksRule).toBe(true)
+    toggleDecisionRuleBreak(2)
+    expect(cur().decisionLog[1].breaksRule).toBe(false)
+  })
+
+  it('touches only the entry tapped', () => {
+    useAppStore.getState().toggleDecisionRuleBreak(2)
+    expect(cur().decisionLog[0].breaksRule).toBeUndefined()
+  })
+
+  it('adds nothing to the entry but the flag', () => {
+    // The rejected design put a "which rule?" field on the capture form. The
+    // marker must never grow one — the existing `why` is the explanation.
+    useAppStore.getState().toggleDecisionRuleBreak(1)
+    expect(Object.keys(cur().decisionLog[0]).sort()).toEqual([
+      'breaksRule',
+      'id',
+      'label',
+      'title',
+      'why',
+    ])
+  })
+
+  it('ignores an id that is not there', () => {
+    const before = cur().decisionLog
+    useAppStore.getState().toggleDecisionRuleBreak(999)
+    expect(cur().decisionLog).toEqual(before)
+  })
+})

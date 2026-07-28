@@ -125,9 +125,20 @@ export const PROCESS_PHASES = JOURNEY_STEPS.map((s) => {
 })
 
 /** Specific feedback questions (Review) — better than “do you like it?” */
+/* Four, and it stays four. Seven was proposed and rejected: four chips is
+   glance-and-tap, seven is read-and-weigh, which reinstates the blank-page
+   paralysis the Prompts panel exists to defeat.
+
+   [1] replaced the old "Is anything confusing in the first three seconds?"
+   — it and [2] both probed the opening moment, and [2] adds the intent check
+   on top, so [1] was the redundant one. Its replacement covers Norman's
+   reflective level, which nothing here reached: [0] is visceral, [1] was and
+   [2] is behavioural. Phrased as a question rather than as the category name,
+   because every other chip is already the question and mixing registers makes
+   the whole row slower to scan. */
 export const REVIEW_QUESTIONS = [
   'Does this feel hopeful / safe / clear for the audience?',
-  'Is anything confusing in the first three seconds?',
+  'Does this mean anything to the people it is for, or does it just look right?',
   'What should they notice first — does the layout match that?',
   'Would you change one thing to better serve the goal?',
 ]

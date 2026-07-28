@@ -20,7 +20,7 @@
 | 4 | Touchpoints becomes real | **DONE** |
 | 5 | Contract | not started |
 | 6 | Case study export | **DONE** |
-| 7 | Craft lenses | item 27 **DONE**; 23 dropped, 25 dropped, 24 reshaped and pending |
+| 7 | Craft lenses | **DONE** — 27 and reshaped 24 built; 23 dropped, 25 swapped not added |
 
 ---
 
@@ -242,21 +242,33 @@ Pinterest board worked because a human drew a grid they already knew was
 there. If it ever resurfaces: not a toggle, but a fixed rule-of-thirds guide
 shown *only* during crop-focus, where it assists an existing decision.
 
-**Item 25 — Norman lens chips — DROPPED as an addition.** Four chips is
+**Item 25 — Norman lens chips — DROPPED as an addition; taken as a swap.** Four chips is
 glance-and-tap; seven is read-and-weigh, which reinstates the blank-page
 paralysis the Prompts panel exists to defeat. "Visceral / behavioural /
 reflective" are theory categories, not questions — every existing chip already
-*is* the question. Permissible only as a one-for-one swap holding the count at
-four, judged separately.
+*is* the question. Taken as the permitted one-for-one swap, holding the count at four:
+`REVIEW_QUESTIONS[1]` — "Is anything confusing in the first three seconds?" —
+was replaced with "Does this mean anything to the people it is for, or does it
+just look right?". [1] and [2] both probed the opening moment and [2] adds the
+intent check on top, so [1] was the redundant one; the replacement reaches
+Norman's reflective level, which nothing in the four did. Phrased as a
+question rather than the category name, because every other chip is already
+the question and mixing registers slows the whole row down to read.
 
-**Item 24 — "which rule am I breaking" — RESHAPED, not yet built.** The
+**Item 24 — "which rule am I breaking" — RESHAPED and BUILT.** The
 proposal included "if the rule field is filled, the why becomes mandatory".
 The advisor called that worse than the field itself: volunteering extra
 information silently arms a blocking gate, so the user is punished with a
 locked save for being forthcoming — the shape most likely to stop them writing
-entries at all. Its version: **a post-hoc one-tap flag on existing decision-log
-entries.** No new capture field, no validation. Capture stays frictionless and
-the case-study export reads the `why` already there.
+entries at all. Its version, now built: **a post-hoc one-tap flag on existing decision-log
+entries**, in the case-study panel — the surface the advisor named ("when
+reviewing the log or building the case study"), and the only place the log is
+listed at all. No new capture field, no validation, no accompanying text box:
+the `why` already on the entry IS the explanation. A marked decision renders
+in the export as *"(a deliberate break)"*, because the rule-breaking article's
+principle is that a convention is broken BECAUSE breaking it is the message —
+unmarked, a reader assumes it was an oversight. Tests assert the marked entry
+grows nothing but the flag, so it cannot quietly acquire the rejected field.
 
 **On the set:** four at once was itself the problem — 23, 24 and 25 each take
 a working screen and add a mode, a field or an option, three surfaces getting

@@ -96,6 +96,9 @@ export function buildCaseStudy({ project = {}, deliverableLabels = {} } = {}) {
       label: clean(e.label),
       title: clean(e.title),
       why: clean(e.why),
+      /* Marked after the fact, never asked for at capture. See
+         `toggleDecisionRuleBreak` in the store for why. */
+      breaksRule: !!e.breaksRule,
     }))
 
   const duration = durationFrom(project.workLog)
@@ -180,7 +183,13 @@ export function caseStudyMarkdown(cs) {
     out.push('## How I got there', '')
     for (const p of cs.process) {
       const head = [p.label, p.title].filter(Boolean).join(' · ')
-      out.push(p.why ? `- **${head}** — ${p.why}` : `- **${head}**`)
+      /* The rule-breaking article's actual principle: every example breaks a
+         convention BECAUSE breaking it is the message. So a marked decision
+         is named as deliberate — otherwise a reader assumes it was an
+         oversight, which is the opposite of what it was. The `why` already
+         on the entry does the explaining; nothing extra was collected. */
+      const mark = p.breaksRule ? ' *(a deliberate break)*' : ''
+      out.push(p.why ? `- **${head}**${mark} — ${p.why}` : `- **${head}**${mark}`)
     }
     out.push('')
   }

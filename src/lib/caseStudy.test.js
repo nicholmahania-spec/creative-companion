@@ -213,3 +213,43 @@ describe('caseStudyGaps', () => {
     expect(caseStudyGaps(cs).map((g) => g.id)).not.toContain('role')
   })
 })
+
+describe('deliberate rule-breaks', () => {
+  const withBreak = {
+    ...full,
+    decisionLog: [
+      { id: 1, label: 'B', title: 'Quiet teal', why: 'calm, not corporate' },
+      {
+        id: 2,
+        label: 'C',
+        title: 'No grid on the poster',
+        why: 'the chaos is the argument',
+        breaksRule: true,
+      },
+    ],
+  }
+
+  it('carries the marker through, and defaults it off', () => {
+    const cs = buildCaseStudy({ project: withBreak })
+    expect(cs.process[0].breaksRule).toBe(false)
+    expect(cs.process[1].breaksRule).toBe(true)
+  })
+
+  it('names a marked decision as deliberate, so it does not read as an oversight', () => {
+    const md = caseStudyMarkdown(buildCaseStudy({ project: withBreak }))
+    expect(md).toMatch(/No grid on the poster\*\* \*\(a deliberate break\)\*/)
+    // The unmarked one stays plain — the marker has to mean something.
+    expect(md).toMatch(/\*\*B · Quiet teal\*\* — calm, not corporate/)
+  })
+
+  it('collects no extra text for the marker — the why already explains it', () => {
+    const cs = buildCaseStudy({ project: withBreak })
+    // Nothing beyond the four fields the decision log already had.
+    expect(Object.keys(cs.process[1]).sort()).toEqual([
+      'breaksRule',
+      'label',
+      'title',
+      'why',
+    ])
+  })
+})
