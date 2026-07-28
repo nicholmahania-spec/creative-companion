@@ -36,10 +36,21 @@ constraints, and split `existingAssets` into style-guide / logo.
 *First because it fixes a live defect in a client-facing document, it's all
 data-layer, and "where used" is what Phase 4 needs.*
 
-Note: items **18** (writing guidelines — title vs sentence case, ALL CAPS) and
-**19** (print/finish specs — Pantone, stock, formats) are listed in the phase
-but are **not** mentioned in the `e39ba7e` commit message. Verify against the
-book before assuming they shipped.
+**Gap check, verified against code 2026-07-28 — Phase 1 is 5 of 8:**
+
+| item | shipped? | evidence |
+|------|----------|----------|
+| 12 — where the brand will be used | ✅ | `brandSurfaces` in `detectiveBrief.js:357` (consumed by Phase 4, not yet by the book — as designed) |
+| 13 — accessibility constraints | ✅ | `accessibilityNeeds` `:388`, printed on Handoff `brandBookPdf.js:1124` |
+| 14 — existing style guide / logo split | ✅ | `existingStyleGuide` `:370` + `existingAssets` `:379` |
+| 15 — Promise and Proof | ✅ | asked `:236`/`:244`, fallback `exportFiles.js:382-383`, tiles `brandBookPdf.js:432/438`, covered by tests |
+| 17 — print `story`, `usp`, `toneOfVoice`, `technical` | ✅ | Story page `brandBookPdf.js:380-383`, Handoff `:1123` |
+| **16 — the plan, and one consistent CTA** | ❌ | no schema field; only unrelated CSS/JSX comment hits |
+| **18 — writing guidelines (title vs sentence case, ALL CAPS)** | ❌ | zero hits in the book or `brandSystem.js` |
+| **19 — print/finish specs (Pantone, stock, formats)** | ❌ | zero hits; the only "pantone" in `src` is a glossary definition. CMYK *does* exist (`hexToCmyk`, `brandSystem.js:57`) but that is the earlier Sparrow's Promise work, not this item |
+
+So the gap is **three items, not two** — 16 was also listed in Phase 1 and also
+did not ship. None of the three are regressions; they were simply never built.
 
 ### Phase 2 — Get paid properly — DONE (`bfc1c5c`)
 
