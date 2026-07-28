@@ -1,0 +1,32 @@
+#!/bin/sh
+# Bump the version according to the commit message, then stage the result —
+# runs here (not pre-commit) because pre-commit fires before the message
+# exists; prepare-commit-msg is the first hook that can actually read it,
+# and it still runs before the commit object is created, so the bump lands
+# in the same commit rather than a trailing one.
+#
+# Convention, checked against the message:
+#   "feat!:" / "fix!:" / etc, or a "BREAKING CHANGE" footer -> major
+#   "feat:" (first line)                                    -> minor
+#   anything else (fix:, chore:, docs:, no prefix, ...)     -> patch
+#
+# Skipped for merge/squash commits ($2) so merging a branch doesn't also
+# bump — the branch's own commits already did.
+MSG_FILE="$1"
+SOURCE="$2"
+
+case "$SOURCE" in
+  merge|squash) exit 0 ;;
+esac
+
+FIRST_LINE=$(head -n1 "$MSG_FILE")
+
+if grep -qE '^[a-zA-Z]+(\([^)]*\))?!:' "$MSG_FILE" || grep -qi 'BREAKING CHANGE' "$MSG_FILE"; then
+  npm run --silent bump:major || exit 1
+elif printf '%s' "$FIRST_LINE" | grep -qiE '^feat(\([^)]*\))?:'; then
+  npm run --silent bump:minor || exit 1
+else
+  npm run --silent bump || exit 1
+fi
+
+git add package.json package-lock.json

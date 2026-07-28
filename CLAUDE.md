@@ -22,13 +22,21 @@ touching the code." This applies to every change, not just large ones.
 
 ## Git workflow rule — version bump
 
-**Do not run `npm run bump` manually.** `.githooks/pre-commit` already bumps
-the patch version and stages it on every commit — that's the only mechanism.
-Running it by hand too double-bumps (two patch numbers burned per push
-instead of one), which is exactly what happened across several commits in
-the 2026-07-27/28 session. `npm run bump` still exists as a command for
-manually forcing a minor/major bump (`npm run bump:minor` / `:major`) —
-just never call the plain patch bump yourself; commit and let the hook do it.
+**Do not run `npm run bump` (or `:minor`/`:major`) manually.**
+`.githooks/prepare-commit-msg` bumps the version automatically on every
+commit — that's the only mechanism. Running it by hand too double-bumps
+(two version numbers burned per push instead of one), which is exactly what
+happened across several commits in the 2026-07-27/28 session.
+
+The hook picks patch vs. minor vs. major from the commit message itself
+(conventional-commits style), so write the message like you mean it:
+- `feat!: ...` / `fix!: ...` / a `BREAKING CHANGE` footer → **major**
+- `feat: ...` → **minor**
+- anything else (`fix:`, `chore:`, no prefix, ...) → **patch**
+
+It lives in `prepare-commit-msg`, not `pre-commit` — that hook fires before
+the commit message exists, so it physically cannot read it. Merge/squash
+commits are skipped (the branch's own commits already bumped).
 
 ## Branch
 
