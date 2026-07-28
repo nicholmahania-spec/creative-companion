@@ -212,6 +212,26 @@ one sentence (an asymmetry nobody can explain is indistinguishable from a bug),
 and it inherits the container/typography constraints rather than being exempt
 from them.
 
+## Audit agent — `five-w-one-h-auditor`
+
+Interrogates every feature/screen/flow with six plain questions — who, what,
+where, when, why, how — rather than hunting one specific defect class the way
+every other agent here does. Use for a full-app completeness sweep: the
+orphaned feature nobody can find, the control with no stated purpose, data
+with no home, an action with no visible trigger, a design call with no reason
+on record, a failure with no recovery path.
+
+"This is undocumented" is a valid finding on its own — an undocumented
+decision is a real gap here, not a nitpick, because undocumented intent is
+what turns a correct call into an apparent regression the next time someone
+touches it without knowing why it was built that way. Stays in its own lane:
+references but doesn't redo `ux-professional`'s accessibility depth,
+`backend-security-auditor`'s RLS specifics, or
+`adhd-executive-function-advisor`'s redesign recommendations — cross-checks
+against the ADHD mandate above (task initiation, working memory, decision
+fatigue, time blindness, rejection sensitivity) as its own "why" test, same
+as every other agent here has to.
+
 ## Decided: the Research wall stays ONE wall — no lanes, no direction folders
 
 Real brand practice explores 2–3 distinct visual directions before
