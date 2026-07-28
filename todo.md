@@ -1,8 +1,72 @@
 # Creative Companion — Work Log & TODO
 
-> Last updated: 2026-07-24 (session `6792b3d7`)
-> Branch: `claude/debug-code-6u77sp` on `nicholmahania-spec/creative-companion`
-> Build: **green** (`npm run build` ✓ ~500ms) at commit `217408b`
+> Last updated: 2026-07-27 (session `89cf2f66`)
+> Branch: `main` on `nicholmahania-spec/creative-companion`
+> Build: **green**, 176 tests / 26 files passing at `b0e649e` (v1.48.245)
+
+---
+
+## Session 2026-07-27 — wide monitors, and untangling the clock from the timer
+
+### Shipped
+
+| Commit | What |
+|--------|------|
+| `15e6020` | Separated the work clock from the Pomodoro (count-up got its own interval + running condition) |
+| `7babba3` | Wide monitors: split the one max-width into `--shell-max` and `--read-max` |
+| `b1da29b` | Unlinked the work clock from the invoice — `workLog` vs `timeLog` |
+| `b0e649e` | Stopped the Timer view rendering the work clock; fixed `STAGE_VIEWS` |
+
+### Wide monitors (`7babba3`)
+
+Everything was capped at `min(1440px, 94vw)`. At 2000px that left 280px dead
+either side and huddled the header controls in the middle. Two caps now:
+
+- `--shell-max` = `min(2400px, 96vw)` — header, journey bar, **and the mood
+  canvas**. A canvas is not prose; it was rendering ~720px wide.
+- `--read-max` = `min(1440px, 94vw)` — prose and forms, unchanged.
+
+Measured after: header spans 40→1960, canvas 1742px, Define still 1440, no
+overflow at 375px.
+
+### Clock vs timer vs invoice
+
+Three separate confusions, all the same mistake — the two clocks shown
+through each other. See CLAUDE.md for the durable rules.
+
+1. **Clock ≠ Pomodoro.** The count-up ticked inside the Pomodoro's interval,
+   so the record died at 25 min and forced a break.
+2. **Clock ≠ invoice.** `logWorkedTime` wrote into `timeLog`, which the
+   invoice bills from. Now writes `workLog`. Persist v5 migration lifts
+   existing `auto: true` rows across; `liftMeasuredRows` (in
+   `src/store/workLogSeparation.js`) re-checks on **every** load, applied via
+   `setState` so the correction persists. 5 tests.
+3. **Clock ≠ Timer view.** The Timer page's readout rendered `sessionLabel`
+   (the clock's count-up), so it looked like a running timer nobody started.
+   Now shows the countdown / "not started". The clock chip opens its own
+   `WorkLogPanel` instead of navigating to the Timer.
+
+### Bug found while fixing the above
+
+`STAGE_VIEWS` in App.jsx was a hand-typed list of stage *names* — `'define'`,
+`'research'`, `'ideate'`, `'sketch'`, `'design'`, `'deliver'`. The real view
+ids are `'project'`, `'studio'`, `'spark'`, `'flow'`, `'brand'`, `'review'`,
+`'finish'`. **Only 2 of 8 strings were real**, so the work clock was silent on
+5 of the 7 stages — an afternoon in Design recorded nothing. Now derived from
+`JOURNEY_STEPS`.
+
+### Still open
+
+- **Focus Mode entry points** on Ideate / Sketch / Design / Review / Deliver —
+  only Research's was removed.
+- **Ideate page** — Nichol's framing: ideation is the broad divergent phase
+  (volume and range over quality), sketching is the rapid visual tool *within*
+  it. Test whether SparkView pushes toward many rough concepts or one good one.
+- **Helper bot** — parked; blocked on xAI key + server-side edge function.
+- **Brief PDF** in the brand book — a handover record, not a form.
+- **Pomodoro → Helper** link.
+- ~12 cosmetic Research findings (`#e7e5e4` fallback, note-input box vs
+  underline, dead hero ring).
 
 ---
 
