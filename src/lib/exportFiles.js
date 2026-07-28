@@ -1429,6 +1429,114 @@ function packCoverHex(pack) {
   )
 }
 
+/** jsPDF only embeds PNG/JPEG — SVG data URLs fail and fall back to empty circles. */
+function imageFormatFromDataUrl(url) {
+  const s = String(url || '')
+  if (/^data:image\/jpe?g/i.test(s)) return 'JPEG'
+  if (/^data:image\/png/i.test(s)) return 'PNG'
+  return null
+}
+
+/**
+ * Rasterize SVG (or remote) images to PNG data URLs for jsPDF.
+ * Passes through existing PNG/JPEG. No-op for hex colors / gradients.
+ * @returns {Promise<string>}
+ */
+async function rasterizeToPngDataUrl(src) {
+  const s = String(src || '').trim()
+  if (!s) return ''
+  if (imageFormatFromDataUrl(s)) return s
+  if (
+    /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(s) ||
+    s.startsWith('linear-gradient') ||
+    s.startsWith('rgb')
+  ) {
+    return ''
+  }
+  if (typeof document === 'undefined' || typeof Image === 'undefined') return ''
+  return new Promise((resolve) => {
+    try {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        try {
+          const w = Math.max(1, Math.min(img.naturalWidth || 512, 1024))
+          const h = Math.max(1, Math.min(img.naturalHeight || 512, 1024))
+          const c = document.createElement('canvas')
+          c.width = w
+          c.height = h
+          const ctx = c.getContext('2d')
+          if (!ctx) {
+            resolve('')
+            return
+          }
+          ctx.drawImage(img, 0, 0, w, h)
+          resolve(c.toDataURL('image/png'))
+        } catch {
+          resolve('')
+        }
+      }
+      img.onerror = () => resolve('')
+      img.src = s
+    } catch {
+      resolve('')
+    }
+  })
+}
+
+/** Prepare logo + pin visuals so addImage never receives SVG. */
+async function preparePackRasters(pack) {
+  if (!pack || typeof pack !== 'object') return pack
+  let logoImage = pack.logoImage || ''
+  if (logoImage && !imageFormatFromDataUrl(logoImage)) {
+    logoImage = (await rasterizeToPngDataUrl(logoImage)) || logoImage
+  }
+  const pins = await Promise.all(
+    (Array.isArray(pack.pins) ? pack.pins : []).map(async (p) => {
+      const visual = String(p?.visual || '')
+      if (
+        visual.startsWith('data:image') &&
+        !imageFormatFromDataUrl(visual)
+      ) {
+        const r = await rasterizeToPngDataUrl(visual)
+        return r ? { ...p, visual: r } : p
+      }
+      return p
+    })
+  )
+  return { ...pack, logoImage, pins }
+}
+
+/**
+ * Single-color mark for lockups (always correct contrast on the field).
+ * Ring + initials — independent of multi-color raster that fails on reverse.
+ */
+function drawMonogramMark(pdf, x, y, size, inkRgb, wordmark) {
+  const [r, g, b] = inkRgb || [28, 25, 23]
+  const cx = x + size / 2
+  const cy = y + size / 2
+  const rad = size * 0.36
+  pdf.setDrawColor(r, g, b)
+  pdf.setLineWidth(Math.max(2, size * 0.085))
+  pdf.circle(cx, cy, rad, 'S')
+  // Soft lower stroke (harbor)
+  pdf.setLineWidth(Math.max(1.5, size * 0.06))
+  const yArc = cy + rad * 0.55
+  pdf.line(cx - rad * 0.55, yArc, cx + rad * 0.55, yArc)
+  const letters = String(wordmark || 'B')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(Math.max(11, size * 0.32))
+  pdf.setTextColor(r, g, b)
+  pdf.text(letters || 'B', cx, cy + size * 0.11, { align: 'center' })
+}
+
 /**
  * Multi-page vector brand book PDF — cover, positioning, color, type,
  * logo lockups, usage, mood. Text + fills as PDF primitives (selectable type).
@@ -1438,7 +1546,7 @@ function packCoverHex(pack) {
  * @param {{ hideWatermark?: boolean }} [options]
  */
 export async function downloadBrandPackVectorPdf(
-  pack,
+  packIn,
   handlePromise = null,
   options = {}
 ) {
@@ -1451,6 +1559,8 @@ export async function downloadBrandPackVectorPdf(
     }
     const jsPdfMod = await jsPdfModulePromise
     const { jsPDF } = jsPdfMod
+    // Rasterize SVG logos/pins first — jsPDF cannot embed SVG data URLs
+    const pack = (await preparePackRasters(packIn)) || packIn || {}
     const hideWatermark = !!options.hideWatermark
     const margin = 48
     const pageW = 612
@@ -1598,19 +1708,25 @@ export async function downloadBrandPackVectorPdf(
       }
     }
 
-    const tryLogo = (x, yy, size, bgRgb) => {
-      if (pack?.logoImage && String(pack.logoImage).startsWith('data:image')) {
+    /**
+     * Draw logo mark at (x,y) size×size.
+     * @param {{ monochrome?: boolean }} [opts] monochrome=true forces
+     *   single-color vector mark (correct contrast on reverse/quiet fields).
+     *   Full-color raster is for cover / hero only.
+     */
+    const tryLogo = (x, yy, size, inkRgb, opts = {}) => {
+      const monochrome = !!opts.monochrome
+      const src = pack?.logoImage
+      const fmt = imageFormatFromDataUrl(src)
+      if (!monochrome && fmt && src) {
         try {
-          if (bgRgb) {
-            pdf.setFillColor(bgRgb[0], bgRgb[1], bgRgb[2])
-            pdf.roundedRect(x - 8, yy - 8, size + 16, size + 16, 4, 4, 'F')
-          }
-          pdf.addImage(pack.logoImage, 'PNG', x, yy, size, size)
+          pdf.addImage(src, fmt, x, yy, size, size)
           return true
         } catch {
-          return false
+          /* fall through */
         }
       }
+      drawMonogramMark(pdf, x, yy, size, inkRgb || [28, 25, 23], wordmark)
       return false
     }
 
@@ -1652,33 +1768,43 @@ export async function downloadBrandPackVectorPdf(
     // ═══════════════ PAGE 1 — Cover ═══════════════
     pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
     pdf.rect(0, 0, pageW, pageH, 'F')
+    // Accent rule at top
+    pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+    pdf.rect(0, 0, pageW, 6, 'F')
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(9)
-    pdf.text(pdfSafeText('BRAND BOOK · DIRECTION PACK'), margin, margin + 12)
-    y = margin + 80
-    if (tryLogo(margin, y, 64)) y += 84
+    pdf.text(pdfSafeText('BRAND BOOK · DIRECTION PACK'), margin, margin + 20)
+    y = margin + 56
+    tryLogo(margin, y, 72, fgRgb)
+    y += 92
     pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(28)
+    pdf.setFontSize(32)
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
     const titleLines = pdf.splitTextToSize(
       pdfSafeText(pack?.projectName || 'Untitled project'),
       contentW
     )
     pdf.text(titleLines, margin, y)
-    y += titleLines.length * 34 + 14
+    y += titleLines.length * 36 + 10
     pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(14)
+    pdf.setFontSize(15)
     const tagLines = pdf.splitTextToSize(pdfSafeText(tag), contentW)
     pdf.text(tagLines, margin, y)
-    y += tagLines.length * 18 + 28
+    y += tagLines.length * 20 + 12
+    // Gold hairline under tagline
+    pdf.setDrawColor(accentRgb[0], accentRgb[1], accentRgb[2])
+    pdf.setLineWidth(1)
+    pdf.line(margin, y, margin + 72, y)
+    y += 28
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(10)
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
     tocEntries.forEach((line, i) => {
       const num = String(i + 1).padStart(2, '0')
-      pdf.text(pdfSafeText(`${num}  ${line}`), margin, y)
-      y += 16
+      pdf.text(pdfSafeText(`${num}`), margin, y)
+      pdf.text(pdfSafeText(line), margin + 28, y)
+      y += 17
     })
     pdf.setFontSize(9)
     pdf.text(day, margin, pageH - margin)
@@ -1948,92 +2074,130 @@ export async function downloadBrandPackVectorPdf(
     })
 
     // ═══════════════ Logo lockups ═══════════════
-    // Never use roles.text for lockup ink on quiet — that role is often white
-    // (for dark covers). Derive contrast from the actual panel background.
-    const markOnQuietHex = bestTextOn(quietHex)
-    const markOnQuietRgb = hexToRgb(markOnQuietHex) || [28, 25, 23]
+    // Ink from panel background contrast — never roles.text (often white).
+    const markOnQuietRgb = hexToRgb(bestTextOn(quietHex)) || [28, 25, 23]
     const markOnCoverRgb = fgRgb
     const aFg = bestTextOn(accentHex)
     const aFgRgb = hexToRgb(aFg) || [255, 255, 255]
-    const lockW = (contentW - 16) / 2
-    const lockH = 110
+    const lockW = (contentW - 14) / 2
+    const lockH = 128
+    const markSize = 52
     const wmSafe = pdfSafeText(wordmark)
-    const wm1 = pdf.splitTextToSize(wmSafe, lockW - 28)
+
+    /** Horizontal lockup: mark + wordmark on a surface. */
+    const drawLockupCard = (x, yy, w, h, { label, bg, ink, border }) => {
+      pdf.setFillColor(bg[0], bg[1], bg[2])
+      if (border) {
+        pdf.setDrawColor(border[0], border[1], border[2])
+        pdf.setLineWidth(0.75)
+        pdf.roundedRect(x, yy, w, h, 6, 6, 'FD')
+      } else {
+        pdf.roundedRect(x, yy, w, h, 6, 6, 'F')
+      }
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(7)
+      pdf.setTextColor(
+        border ? 100 : Math.min(255, ink[0] + 40),
+        border ? 100 : Math.min(255, ink[1] + 40),
+        border ? 100 : Math.min(255, ink[2] + 40)
+      )
+      // Labels on dark fields need light ink
+      const labelRgb = border
+        ? [110, 110, 110]
+        : [
+            Math.round((ink[0] + bg[0]) / 2),
+            Math.round((ink[1] + bg[1]) / 2),
+            Math.round((ink[2] + bg[2]) / 2),
+          ]
+      // Prefer readable label from ink with opacity simulation
+      pdf.setTextColor(ink[0], ink[1], ink[2])
+      pdf.setFontSize(7)
+      pdf.text(String(label).toUpperCase(), x + 14, yy + 16)
+
+      const markX = x + 18
+      const markY = yy + (h - markSize) / 2 + 4
+      // Always monochrome on lockup fields so reverse/primary both read
+      tryLogo(markX, markY, markSize, ink, { monochrome: true })
+
+      const textX = markX + markSize + 14
+      const textMax = w - (textX - x) - 16
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(13)
+      pdf.setTextColor(ink[0], ink[1], ink[2])
+      const wmLines = pdf.splitTextToSize(wmSafe, Math.max(40, textMax))
+      const textY = markY + markSize / 2 + 4
+      pdf.text(wmLines.slice(0, 2), textX, textY)
+    }
 
     newPage()
     pageTitle(
       'Logo lockups',
-      'Primary, reverse, mono · clearspace · direction notes.'
+      'Primary, reverse, mono, and accent field — mark + wordmark.'
     )
-    // Primary (quiet field + dark mark)
-    ensureSpace(lockH + 30)
-    pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
-    pdf.roundedRect(margin, y, lockW, lockH, 4, 4, 'F')
-    pdf.setDrawColor(220, 220, 220)
-    pdf.roundedRect(margin, y, lockW, lockH, 4, 4, 'S')
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(7)
-    pdf.setTextColor(100, 100, 100)
-    pdf.text('PRIMARY', margin + 10, y + 14)
-    if (!tryLogo(margin + 14, y + 28, 40)) {
-      pdf.setFillColor(markOnQuietRgb[0], markOnQuietRgb[1], markOnQuietRgb[2])
-      pdf.circle(margin + 34, y + 48, 16, 'F')
-    }
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(12)
-    pdf.setTextColor(markOnQuietRgb[0], markOnQuietRgb[1], markOnQuietRgb[2])
-    pdf.text(wm1.slice(0, 2), margin + 14, y + 88)
+    ensureSpace(lockH * 2 + 40)
+    drawLockupCard(margin, y, lockW, lockH, {
+      label: 'Primary',
+      bg: quietRgb,
+      ink: markOnQuietRgb,
+      border: [220, 220, 220],
+    })
+    drawLockupCard(margin + lockW + 14, y, lockW, lockH, {
+      label: 'Reverse',
+      bg: coverRgb,
+      ink: markOnCoverRgb,
+      border: null,
+    })
+    y += lockH + 14
+    drawLockupCard(margin, y, lockW, lockH, {
+      label: 'Mono / one-color',
+      bg: [255, 255, 255],
+      ink: [28, 25, 23],
+      border: [200, 200, 200],
+    })
+    drawLockupCard(margin + lockW + 14, y, lockW, lockH, {
+      label: 'On accent',
+      bg: accentRgb,
+      ink: aFgRgb,
+      border: null,
+    })
+    y += lockH + 18
 
-    // Reverse (cover field + light mark)
-    pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
-    pdf.roundedRect(margin + lockW + 16, y, lockW, lockH, 4, 4, 'F')
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(7)
-    pdf.setTextColor(markOnCoverRgb[0], markOnCoverRgb[1], markOnCoverRgb[2])
-    pdf.text('REVERSE', margin + lockW + 26, y + 14)
-    if (!tryLogo(margin + lockW + 30, y + 28, 40)) {
-      pdf.setFillColor(markOnCoverRgb[0], markOnCoverRgb[1], markOnCoverRgb[2])
-      pdf.circle(margin + lockW + 50, y + 48, 16, 'F')
+    // Clearspace diagram
+    ensureSpace(100)
+    kicker('Clearspace')
+    {
+      const cs = 72
+      const box = 100
+      const cx = margin + 8
+      const cy = y
+      pdf.setDrawColor(200, 200, 200)
+      pdf.setLineWidth(0.5)
+      pdf.setLineDashPattern([2, 2], 0)
+      pdf.rect(cx, cy, box, box)
+      pdf.setLineDashPattern([], 0)
+      tryLogo(cx + (box - cs) / 2, cy + (box - cs) / 2, cs, markOnQuietRgb, {
+        monochrome: true,
+      })
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(8)
+      pdf.setTextColor(90, 90, 90)
+      pdf.text('X', cx + box + 10, cy + 14)
+      pdf.text(
+        pdfSafeText(
+          pack?.logoClearspace || DEFAULT_LOGO_CLEARSPACE
+        ),
+        cx + box + 10,
+        cy + 28,
+        { maxWidth: contentW - box - 20 }
+      )
+      pdf.text(
+        pdfSafeText(`Min size: ${pack?.logoMinSize || DEFAULT_LOGO_MIN_SIZE}`),
+        cx + box + 10,
+        cy + 70,
+        { maxWidth: contentW - box - 20 }
+      )
+      y += box + 16
     }
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(12)
-    pdf.setTextColor(markOnCoverRgb[0], markOnCoverRgb[1], markOnCoverRgb[2])
-    pdf.text(wm1.slice(0, 2), margin + lockW + 30, y + 88)
-    y += lockH + 16
-
-    // Mono + accent field
-    ensureSpace(lockH + 20)
-    pdf.setFillColor(250, 250, 249)
-    pdf.setDrawColor(200, 200, 200)
-    pdf.roundedRect(margin, y, lockW, lockH, 4, 4, 'FD')
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(7)
-    pdf.setTextColor(100, 100, 100)
-    pdf.text('MONO / ONE-COLOR', margin + 10, y + 14)
-    if (!tryLogo(margin + 14, y + 28, 40)) {
-      pdf.setFillColor(28, 25, 23)
-      pdf.circle(margin + 34, y + 48, 16, 'F')
-    }
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(12)
-    pdf.setTextColor(28, 25, 23)
-    pdf.text(wm1.slice(0, 2), margin + 14, y + 88)
-
-    pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
-    pdf.roundedRect(margin + lockW + 16, y, lockW, lockH, 4, 4, 'F')
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(7)
-    pdf.setTextColor(aFgRgb[0], aFgRgb[1], aFgRgb[2])
-    pdf.text('ON ACCENT', margin + lockW + 26, y + 14)
-    if (!tryLogo(margin + lockW + 30, y + 28, 40)) {
-      pdf.setFillColor(aFgRgb[0], aFgRgb[1], aFgRgb[2])
-      pdf.circle(margin + lockW + 50, y + 48, 16, 'F')
-    }
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(12)
-    pdf.setTextColor(aFgRgb[0], aFgRgb[1], aFgRgb[2])
-    pdf.text(wm1.slice(0, 2), margin + lockW + 30, y + 88)
-    y += lockH + 20
 
     kicker('Direction')
     writeWrapped(
@@ -2041,39 +2205,33 @@ export async function downloadBrandPackVectorPdf(
         'Describe the mark: shape language, no shadows, single-color OK, etc.',
       { size: 11 }
     )
-    kicker('Clearspace & size')
-    writeWrapped(
-      pack?.logoClearspace || DEFAULT_LOGO_CLEARSPACE,
-      { size: 10, color: [60, 60, 60] }
-    )
-    writeWrapped(
-      `Min size: ${pack?.logoMinSize || DEFAULT_LOGO_MIN_SIZE}`,
-      { size: 10, color: [60, 60, 60] }
-    )
     kicker("Logo don'ts")
     logoDontsList(pack).forEach((rule) => {
-      writeWrapped(`• ${rule}`, { size: 10 })
+      writeWrapped(`- ${rule}`, { size: 10 })
     })
-    // Visual don'ts strip (labels only — keeps PDF lean)
-    ensureSpace(48)
+    ensureSpace(52)
     kicker('Avoid (examples)')
-    const avoidLabels = ['Stretch', 'Recolor wild', 'Low contrast']
+    const avoidLabels = [
+      { t: 'Stretch', d: 'No skew or scale-X' },
+      { t: 'Recolor wild', d: 'Stay in role colors' },
+      { t: 'Low contrast', d: 'Mark must read clearly' },
+    ]
     const avoidW = (contentW - 16) / 3
     avoidLabels.forEach((lab, i) => {
       const x = margin + i * (avoidW + 8)
-      pdf.setFillColor(250, 245, 245)
-      pdf.setDrawColor(200, 160, 160)
-      pdf.roundedRect(x, y, avoidW, 36, 3, 3, 'FD')
+      pdf.setFillColor(252, 246, 246)
+      pdf.setDrawColor(210, 170, 170)
+      pdf.roundedRect(x, y, avoidW, 42, 4, 4, 'FD')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(8)
       pdf.setTextColor(153, 27, 27)
-      pdf.text(lab.toUpperCase(), x + 8, y + 14)
+      pdf.text(lab.t.toUpperCase(), x + 10, y + 16)
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(7)
-      pdf.setTextColor(100, 60, 60)
-      pdf.text('Not allowed', x + 8, y + 26)
+      pdf.setTextColor(120, 70, 70)
+      pdf.text(lab.d, x + 10, y + 30)
     })
-    y += 48
+    y += 54
 
     // ═══════════════ Usage (skip when empty — no lone dashes) ═══════════════
     if (hasUsage) {
@@ -2081,22 +2239,33 @@ export async function downloadBrandPackVectorPdf(
       pageTitle('Usage', "Do and don't - ship rules, not vibes.")
       const colW = (contentW - 16) / 2
       if (doT || dontT) {
-        ensureSpace(80)
+        ensureSpace(100)
+        // DO card
+        pdf.setFillColor(240, 250, 248)
+        pdf.setDrawColor(180, 220, 210)
+        pdf.roundedRect(margin, y, colW, 8, 4, 4, 'F')
         pdf.setFont('helvetica', 'bold')
         pdf.setFontSize(10)
         pdf.setTextColor(15, 118, 110)
-        pdf.text('DO', margin, y)
+        pdf.text('DO', margin + 12, y + 18)
+        // DON'T card
+        pdf.setFillColor(252, 244, 244)
+        pdf.setDrawColor(230, 190, 190)
+        pdf.roundedRect(margin + colW + 16, y, colW, 8, 4, 4, 'F')
         pdf.setTextColor(153, 27, 27)
-        pdf.text("DON'T", margin + colW + 16, y)
-        y += 14
+        pdf.text("DON'T", margin + colW + 28, y + 18)
+        y += 32
         pdf.setFont('helvetica', 'normal')
         pdf.setFontSize(11)
-        pdf.setTextColor(12, 10, 9)
-        const doLines = pdf.splitTextToSize(pdfSafeText(doT || '-'), colW)
-        const dontLines = pdf.splitTextToSize(pdfSafeText(dontT || '-'), colW)
-        pdf.text(doLines, margin, y)
-        pdf.text(dontLines, margin + colW + 16, y)
-        y += Math.max(doLines.length, dontLines.length) * 16.5 + 20
+        pdf.setTextColor(30, 28, 27)
+        const doLines = pdf.splitTextToSize(pdfSafeText(doT || '-'), colW - 8)
+        const dontLines = pdf.splitTextToSize(
+          pdfSafeText(dontT || '-'),
+          colW - 8
+        )
+        pdf.text(doLines, margin + 4, y)
+        pdf.text(dontLines, margin + colW + 20, y)
+        y += Math.max(doLines.length, dontLines.length) * 15 + 24
       }
       if (dirs.length) {
         kicker('Chosen ideate directions')
@@ -2139,14 +2308,16 @@ export async function downloadBrandPackVectorPdf(
           pdf.setDrawColor(220, 220, 220)
           pdf.setFillColor(250, 250, 249)
           pdf.roundedRect(x, y, cellW, cellH, 3, 3, 'FD')
-          if (kind === 'image' && String(pin.visual || '').startsWith('data:image')) {
+          const vis = String(pin.visual || '')
+          const fmt = imageFormatFromDataUrl(vis)
+          if (kind === 'image' && fmt) {
             try {
-              pdf.addImage(pin.visual, 'JPEG', x + 3, y + 3, cellW - 6, cellH - 6)
+              pdf.addImage(vis, fmt, x + 3, y + 3, cellW - 6, cellH - 6)
             } catch {
               /* skip */
             }
-          } else if (kind === 'color' || kind === 'gradient') {
-            const hex = normalizeHex(pin.visual) || '#D6D3D1'
+          } else if (kind === 'color' || kind === 'gradient' || /^#/i.test(vis)) {
+            const hex = normalizeHex(vis) || '#D6D3D1'
             const rgb = hexToRgb(hex) || [214, 211, 209]
             pdf.setFillColor(rgb[0], rgb[1], rgb[2])
             pdf.rect(x + 3, y + 3, cellW - 6, cellH - 6, 'F')
@@ -2181,10 +2352,7 @@ export async function downloadBrandPackVectorPdf(
     pdf.rect(margin, y, 10, cardH, 'F')
     pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
     pdf.rect(margin + cardW - 72, y, 72, cardH, 'F')
-    if (!tryLogo(margin + cardW - 56, y + 20, 40, null)) {
-      pdf.setFillColor(fgRgb[0], fgRgb[1], fgRgb[2])
-      pdf.circle(margin + cardW - 36, y + 40, 14, 'F')
-    }
+    tryLogo(margin + cardW - 56, y + 20, 40, fgRgb)
     // Ink from quiet surface contrast — never invent placeholder contact
     const cardTextHex = bestTextOn(quietHex)
     const cardTextRgb = hexToRgb(cardTextHex) || [28, 25, 23]

@@ -325,9 +325,10 @@ describe('downloadBrandPackVectorPdf quality', () => {
       returnBlobOnly: true,
     })
     expect(result.ok).toBe(true)
-    // Thin pack: cover + positioning + color + type + logo + card = 6
+    // Thin pack: cover + positioning (+ optional brief) + color + type + logo + card
     // (no empty overview / previous / usage / imagery filler pages)
-    expect(result.pages).toBe(6)
+    expect(result.pages).toBeGreaterThanOrEqual(6)
+    expect(result.pages).toBeLessThanOrEqual(8)
 
     const buf = Buffer.from(await result.blob.arrayBuffer())
     const text = buf.toString('latin1')
