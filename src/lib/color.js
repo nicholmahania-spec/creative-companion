@@ -125,36 +125,48 @@ export const TYPE_PAIRS = [
     label: 'Plus Jakarta — modern sans',
     heading: 'Plus Jakarta Sans Bold',
     body: 'Plus Jakarta Sans Regular',
+    // Already loaded app-wide via index.html — no separate fetch needed.
+    googleCss: null,
   },
   {
     id: 'fraunces-jakarta',
     label: 'Fraunces + Jakarta — soft display',
     heading: 'Fraunces SemiBold',
     body: 'Plus Jakarta Sans Regular',
+    googleCss:
+      'https://fonts.googleapis.com/css2?family=Fraunces:wght@600&display=swap',
   },
   {
     id: 'libre-source',
     label: 'Libre Baskerville + Source Sans — editorial',
     heading: 'Libre Baskerville Bold',
     body: 'Source Sans 3 Regular',
+    googleCss:
+      'https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Source+Sans+3:wght@400&display=swap',
   },
   {
     id: 'space-dm',
     label: 'Space Grotesk + DM Sans — product',
     heading: 'Space Grotesk Bold',
     body: 'DM Sans Regular',
+    googleCss:
+      'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=DM+Sans:wght@400&display=swap',
   },
   {
     id: 'playfair-lato',
     label: 'Playfair + Lato — classic brand',
     heading: 'Playfair Display Bold',
     body: 'Lato Regular',
+    googleCss:
+      'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400&display=swap',
   },
   {
     id: 'system',
     label: 'System UI — native',
     heading: 'System UI Bold',
     body: 'System UI Regular',
+    // Native stack — nothing to fetch.
+    googleCss: null,
   },
 ]
 

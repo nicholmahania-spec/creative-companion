@@ -74,6 +74,7 @@ export default function SketchView(props) {
 
   const locale = normalizeLocale(localeProp)
   const addTask = useAppStore((s) => s.addTask)
+  const updateBrandField = useAppStore((s) => s.updateBrandField)
   const captureStep = handleCapture || addQuickTaskProp
   const bumpStepFocus = () => {
     if (typeof setStepFocusKey === 'function') setStepFocusKey((k) => k + 1)
@@ -352,6 +353,23 @@ export default function SketchView(props) {
             </div>
           </details>
         )}
+
+        {/* The brand book's handoff page reads this — used to be writable
+            only in off-path Review, so the numbered path alone could never
+            produce it. One quiet field, no pressure to fill it. */}
+        <div className="field-block sketch-feedback-block">
+          <label className="field-label" htmlFor="sketch-feedback-notes">
+            Feedback so far
+          </label>
+          <textarea
+            id="sketch-feedback-notes"
+            className="field-input"
+            rows={3}
+            value={activeProject?.feedbackNotes || ''}
+            onChange={(e) => updateBrandField('feedbackNotes', e.target.value)}
+            placeholder="Change · why · keep — optional"
+          />
+        </div>
 
         <section className="capture-strip sketch-capture" aria-label="Capture">
           <div className="capture-row capture-row-compact">

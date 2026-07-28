@@ -1334,3 +1334,10 @@
   overflow: auto;
   padding: var(--space-4);
 }
+
+/* Two fields sharing one .field-block (title + why) need a gap between
+   the first input and the second label — .field-label only carries a
+   bottom margin, nothing above it. */
+.brand-direction-why-label {
+  margin-top: var(--space-2);
+}

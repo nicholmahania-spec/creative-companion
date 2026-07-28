@@ -28,6 +28,8 @@ import {
 } from '../lib/color'
 import { getProcessPhase } from '../lib/processGuide'
 import { pinFaceStyle } from '../lib/moodPins'
+import { loadTypePairFont } from '../lib/fontLoader'
+import { chosenDirection } from '../lib/decisionLog'
 import {
   normalizeLocale,
   t as i18nT,
@@ -57,6 +59,7 @@ export default function DesignView({
 }) {
   const locale = normalizeLocale(localeProp)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
+  const updateDirection = useAppStore((s) => s.updateDirection)
   const addContact = useAppStore((s) => s.addContact)
   const updateContact = useAppStore((s) => s.updateContact)
   const removeContact = useAppStore((s) => s.removeContact)
@@ -126,6 +129,16 @@ export default function DesignView({
       setCheckBgIndex(Math.max(0, projectPalette.length - 1))
     }
   }, [projectPalette.length, checkBgIndex])
+
+  // Fetch the type pair's real Google Fonts stylesheet so the artboard
+  // (and this page) render the actual face, not just its name. Runs on
+  // every visit too, since a stored pair from an earlier session never
+  // triggered a selection event in this browser tab.
+  useEffect(() => {
+    const id = typePairIdFromLabels(activeProject?.typeHeading, activeProject?.typeBody)
+    const pair = TYPE_PAIRS.find((p) => p.id === id)
+    loadTypePairFont(pair?.googleCss || null)
+  }, [activeProject?.typeHeading, activeProject?.typeBody])
 
   // Load version history when project changes
   useEffect(() => {
@@ -488,6 +501,20 @@ export default function DesignView({
     return String(v)
   }
 
+  // The one field the brand book's "Direction Decision" page depends on
+  // (directions + decisionLog) used to be writable only in off-path Ideate.
+  // Two plain fields here — never a picker, never blocking anything below —
+  // write through the same updateDirection() Ideate uses, so choosing or
+  // refining a direction from Identity logs a real decision instead of
+  // leaving the book's Proof panel blank.
+  const identityDirections = Array.isArray(activeProject?.directions)
+    ? activeProject.directions
+    : []
+  const identityChosen = chosenDirection(activeProject)
+  const identityTargetId = identityChosen?.id || identityDirections[0]?.id || 'a'
+  const identityTarget =
+    identityDirections.find((d) => d.id === identityTargetId) || {}
+
   return (
     <>
           <div className="brand-layout surface-document system-view design-studio view-enter" data-nav-dir={navDir}>
@@ -621,6 +648,41 @@ export default function DesignView({
               hidden={brandEditSection !== 'essentials'}
             >
               <div className="brand-section-label">Words</div>
+              <div className="field-block brand-direction-block">
+                <label className="field-label" htmlFor="brand-direction-title">
+                  Direction you're building
+                </label>
+                <input
+                  id="brand-direction-title"
+                  className="field-input"
+                  value={identityTarget.title || ''}
+                  placeholder="e.g. Harbor quiet"
+                  onChange={(e) =>
+                    updateDirection(identityTargetId, {
+                      title: e.target.value,
+                      chosen: true,
+                    })
+                  }
+                />
+                <label
+                  className="field-label brand-direction-why-label"
+                  htmlFor="brand-direction-why"
+                >
+                  Why
+                </label>
+                <input
+                  id="brand-direction-why"
+                  className="field-input"
+                  value={identityTarget.note || ''}
+                  placeholder="Optional — one line"
+                  onChange={(e) =>
+                    updateDirection(identityTargetId, {
+                      note: e.target.value,
+                      chosen: true,
+                    })
+                  }
+                />
+              </div>
               <div className="field-block">
                 <label className="field-label" htmlFor="brand-tagline">
                   Tagline
