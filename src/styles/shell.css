@@ -166,8 +166,17 @@
   color: var(--text-primary);
 }
 
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   font-family: var(--font-sans);
   background-color: var(--bg-canvas);
   color: var(--text-primary);
@@ -176,6 +185,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 /* Links */
 a {
@@ -197,16 +213,23 @@ a:active {
   text-decoration-color: var(--dopamine);
 }
 
-.app.deep body,
+/* .app.deep body never matched (body is not under .app) — use :has */
+body:has(.app.deep),
 .app.deep {
   background-color: var(--bg-canvas);
 }
 
 .app {
   min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  background: transparent;
+  /* Not transparent — overflow gaps were showing body/canvas as a white strip */
+  background: var(--bg-canvas);
+  overflow-x: hidden;
 }
 
 .app.view-flow,
@@ -7420,8 +7443,10 @@ select:focus {
 .header-actions .more-wrap,
 .header-actions .timer-running-chip { display: none !important; }
 
-  /* Sidebar becomes a left slide-out drawer (not a horizontal strip) */
+  /* Sidebar = slide-out drawer. Must share main's grid area — without a
+     named area, auto-placement creates a second column (white strip). */
   .app-shell > .journey-sidebar {
+    grid-area: main !important;
     position: fixed !important;
     top: 52px;
     left: 0;
@@ -7429,6 +7454,7 @@ select:focus {
     z-index: 60 !important;
     width: 240px !important;
     max-width: 82vw !important;
+    height: calc(100dvh - 52px) !important;
     height: calc(100vh - 52px) !important;
     flex-direction: column !important;
     align-items: stretch !important;
@@ -7441,8 +7467,16 @@ select:focus {
     overflow-x: hidden !important;
     overflow-y: auto !important;
     padding: 0.75rem 0 !important;
+    pointer-events: none;
   }
-  .app-shell.nav-open > .journey-sidebar { transform: translateX(0); }
+  .app-shell.nav-open > .journey-sidebar {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  .app.deep .app-shell > .journey-sidebar {
+    background: var(--bg-elevated, #252525) !important;
+    border-right-color: var(--border-subtle) !important;
+  }
   .journey-sidebar .journey-bar-list {
     flex-direction: column !important;
     width: auto !important;
@@ -8027,8 +8061,8 @@ select:focus {
   gap: var(--space-2);
   margin: 0;
   min-width: 0;
-  /* 32rem overflowed phones (~24rem); never exceed parent */
-  max-width: min(32rem, 100%);
+  flex: 1 1 100%;
+  max-width: 100%;
   font-size: var(--fs-1);
 }
 
