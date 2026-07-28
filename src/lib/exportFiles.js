@@ -1735,17 +1735,7 @@ const writeWrapped = (
       writeWrapped(decisionLine, { size: 12, role: 'heading' })
     }
     const det = pack?.detective || {}
-    if (det.goal || det.audience || det.feel) {
-      kicker('Design Detective Sheet')
-      if (det.goal) writeWrapped(`Goal: ${det.goal}`, { size: 12, role: 'heading' })
-      if (det.audience)
-        writeWrapped(`Audience: ${det.audience}`, { size: 11 })
-      if (det.feel) writeWrapped(`Feel: ${det.feel}`, { size: 11 })
-    }
-    if (pack?.brief) {
-      kicker('Positioning')
-      writeWrapped(pack.brief, { size: 12, label: pack?.typeBody })
-    }
+    // Tagline first on this page — brief chapters get their own pages below
     kicker('Tagline')
     writeWrapped(tag, { size: 14, role: 'heading', label: pack?.typeHeading })
     if (
@@ -1772,6 +1762,65 @@ const writeWrapped = (
     if (pack?.deadline) {
       kicker('Constraint / deadline')
       writeWrapped(String(pack.deadline), { size: 11 })
+    }
+
+    // ═══════════════ Agreed brief (handover record) ═══════════════
+    // Not a blank form: only filled detective fields, chaptered like Define.
+    // Empty fields are omitted so the PDF never reads as unfinished homework.
+    {
+      const formatAnswer = (field, raw) => {
+        if (Array.isArray(raw)) {
+          if (!raw.length) return ''
+          const opts = field.options || []
+          return raw
+            .map((id) => {
+              const hit = opts.find((o) => o.id === id || o.value === id)
+              return hit?.label || String(id)
+            })
+            .join(', ')
+        }
+        if (field.type === 'choice' && field.options) {
+          const hit = field.options.find(
+            (o) => o.id === raw || o.value === raw
+          )
+          if (hit) return hit.label
+        }
+        return String(raw || '').trim()
+      }
+
+      const filledChapters = DETECTIVE_CHAPTERS.map((ch) => {
+        const rows = (ch.fields || [])
+          .map((f) => {
+            const raw = det?.[f.id]
+            const answer = formatAnswer(f, raw)
+            return answer ? { label: f.label, answer } : null
+          })
+          .filter(Boolean)
+        return rows.length ? { num: ch.num, title: ch.title, rows } : null
+      }).filter(Boolean)
+
+      if (filledChapters.length) {
+        newPage()
+        pageTitle(
+          'Agreed brief',
+          'What was agreed for this project. Unanswered items are left out on purpose.'
+        )
+        filledChapters.forEach((ch) => {
+          kicker(`${ch.num} · ${ch.title}`)
+          ch.rows.forEach((row) => {
+            writeWrapped(row.label, {
+              size: 10,
+              role: 'heading',
+              color: [90, 90, 90],
+            })
+            writeWrapped(row.answer, { size: 12, label: pack?.typeBody })
+          })
+        })
+      } else if (pack?.brief?.trim()) {
+        newPage()
+        pageTitle('Agreed brief', 'Project brief summary.')
+        writeWrapped(pack.brief, { size: 12, label: pack?.typeBody })
+      }
     }
 
     // ═══════════════ PAGE 5 — Color ═══════════════

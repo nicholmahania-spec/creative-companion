@@ -2840,7 +2840,10 @@ h3 {
   min-height: 320px;
 }
 
-.mood-pin-face::after {
+/* Caption legibility only when the pin has a photo face — not a permanent
+   “hero ring” fog on every empty/solid face. */
+.mood-card:has(.mood-pin-img) .mood-pin-face::after,
+.mood-card.is-hero:has(.mood-pin-img) .mood-pin-face::after {
   content: '';
   position: absolute;
   left: 0;
@@ -14660,15 +14663,26 @@ select:focus {
   box-shadow: none;
 }
 
+/* Underline field (same language as Define) — not a boxed mini-form */
 .research-studio .mood-pin-note-input {
-  border-radius: var(--radius-sm) !important;
+  border: none !important;
+  border-bottom: 1.5px solid var(--border-strong) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-shadow: none !important;
 }
 
 .research-studio .mood-pin-note-input:focus {
-  border-color: var(--ts-focus, #606060) !important;
-  border-width: 1.5px;
+  border-bottom-color: var(--dopamine, #606060) !important;
   outline: none;
   box-shadow: none;
+}
+
+.research-studio .mood-pin-note-input.needs-why {
+  border-bottom-color: color-mix(in srgb, var(--dopamine) 45%, var(--border-strong)) !important;
+  background: transparent !important;
 }
 
 /* Focus lock — active pin note dims siblings */

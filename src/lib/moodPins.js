@@ -55,6 +55,9 @@ export function pinImageUrl(pin = {}) {
 /**
  * Inline style object for a pin face (board cards, brand thumbs, pack preview).
  */
+/** Fallback while image loads — matches --bg-muted (not stone leftover #e7e5e4). */
+const PIN_FACE_FALLBACK = '#EBEBEB'
+
 export function pinFaceStyle(pin = {}) {
   const kind = pinVisualKind(pin)
   const visual = pin?.visual || ''
@@ -65,25 +68,25 @@ export function pinFaceStyle(pin = {}) {
       backgroundSize: 'cover',
       backgroundPosition: hasFocal ? `${pin.focalX}% ${pin.focalY}%` : 'center',
       backgroundRepeat: 'no-repeat',
-      backgroundColor: '#e7e5e4',
+      backgroundColor: PIN_FACE_FALLBACK,
     }
   }
   if (kind === 'gradient') {
     return {
       backgroundImage: visual,
-      backgroundColor: '#e7e5e4',
+      backgroundColor: PIN_FACE_FALLBACK,
     }
   }
   if (kind === 'color') {
     // Hex / rgb solid — also accept full CSS background strings
     if (/gradient/i.test(visual)) {
-      return { backgroundImage: visual, backgroundColor: '#e7e5e4' }
+      return { backgroundImage: visual, backgroundColor: PIN_FACE_FALLBACK }
     }
     return {
-      backgroundColor: visual || '#e7e5e4',
+      backgroundColor: visual || PIN_FACE_FALLBACK,
     }
   }
-  return { backgroundColor: '#e7e5e4' }
+  return { backgroundColor: PIN_FACE_FALLBACK }
 }
 
 /**
