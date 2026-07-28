@@ -7520,13 +7520,6 @@ select:focus {
     background: var(--bg-elevated, #252525) !important;
     border-color: var(--border-subtle) !important;
   }
-  /* The step checklist duplicated what the persistent rail (un-hidden on
-     mobile below) now shows on every screen without opening anything —
-     two copies of "where am I" is exactly the class of drift CLAUDE.md
-     warns about. Dialog keeps the project switcher only. */
-  .journey-sidebar .journey-bar-list {
-    display: none !important;
-  }
   .journey-sidebar .journey-step {
     flex-direction: row !important;
     justify-content: flex-start !important;

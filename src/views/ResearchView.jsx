@@ -24,12 +24,6 @@ import {
 } from '../lib/moodPins'
 import { useCanvasViewport } from '../lib/useCanvasViewport'
 import { extractDominantColors, sampleColorAt } from '../lib/extractColors'
-import {
-  normalizeLocale,
-  t as i18nT,
-  pathLabel,
-  tFormat,
-} from '../lib/i18n'
 import { useModalFocus } from '../lib/useModalFocus'
 import { trackMoodPinOperation, trackBoardSubmission, trackTimerOperation } from '../lib/analytics'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
@@ -37,7 +31,6 @@ import { validateBoardUrl } from '../lib/safeBoardUrl'
 import '../styles/lazy-mood.css'
 
 export default function ResearchView({
-  locale: localeProp = 'en',
   navDir = 'none',
   deskMood = [],
   activeProjectId = null,
@@ -55,7 +48,6 @@ export default function ResearchView({
   setTimerFocusSource,
   onAddPinModeChange,
 }) {
-  const locale = normalizeLocale(localeProp)
   const addMoodPin = useAppStore((s) => s.addMoodPin)
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
   const updateMoodPinNote = useAppStore((s) => s.updateMoodPinNote)
@@ -584,7 +576,7 @@ export default function ResearchView({
             <div className="flow-top research-studio-top">
               <div className="research-top-text">
                 <h1 className="page-title">
-                  {i18nT(locale, 'path.research')}
+                  {labelForStepId('research')}
                 </h1>
                 {/* Floor, not ratio. "★ 3/6" is a number to decode that
                     produces no next action, and it reads as a scoreboard
@@ -614,7 +606,7 @@ export default function ResearchView({
                   aria-label="Start 20-minute research timer"
                   onClick={() => {
                     if (forcedBreak) {
-                      flashToast(i18nT(locale, 'ui.breakLockFirst'))
+                      flashToast('Finish break first')
                       return
                     }
                     setSessionComplete(false)
@@ -630,7 +622,7 @@ export default function ResearchView({
                     notifyAction('Focus on', 'focus_start', {
                       label: 'Research timer',
                     })
-                    flashToast(i18nT(locale, 'ui.researchTimerOn'))
+                    flashToast('Research · 20 min')
                   }}
                 >
                   ⏱
@@ -735,7 +727,7 @@ export default function ResearchView({
                           if (!added) {
                             flashToast(
                               deskMood.filter((m) => m.inPack).length >= 6
-                                ? i18nT(locale, 'ui.leaveBehindFull')
+                                ? 'Client pack is full (6 pictures max)'
                                 : 'Nothing left to star'
                             )
                           }
@@ -1020,7 +1012,7 @@ export default function ResearchView({
                         if (packIds.length > 1) {
                           useAppStore.getState().reorderPackPins(packIds)
                         }
-                        flashMicro(i18nT(locale, 'ui.refOrderUpdated'))
+                        flashMicro('Picture order updated')
                       }
                     }
                     return
@@ -1187,7 +1179,7 @@ export default function ResearchView({
                                 if (!r.ok)
                                   flashToast(
                                     r.error ||
-                                      i18nT(locale, 'ui.leaveBehindFull')
+                                      'Client pack is full (6 pictures max)'
                                   )
                                 else
                                   flashMicro(
@@ -1242,7 +1234,7 @@ export default function ResearchView({
                                             r.error || 'Could not set hero'
                                           )
                                         else {
-                                          flashMicro(i18nT(locale, 'ui.heroPinSet'))
+                                          flashMicro('Main picture set')
                                           // Track the operation
                                           trackMoodPinOperation('set_hero', { ...item, packHero: r.inPack })
                                         }
@@ -1485,7 +1477,7 @@ export default function ResearchView({
                   onClick={() => {
                     const r = toggleMoodPinInPack(boardLightbox.id)
                     if (!r.ok)
-                      flashToast(r.error || i18nT(locale, 'ui.leaveBehindFull'))
+                      flashToast(r.error || 'Client pack is full (6 pictures max)')
                     else {
                       setBoardLightbox((p) =>
                         p ? { ...p, inPack: r.inPack } : null
@@ -1506,9 +1498,7 @@ export default function ResearchView({
           className="btn btn-primary work-path-next"
           onClick={() => setActiveView?.('brand')}
         >
-          {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'design') || labelForStepId('design'),
-          })}
+          {`Next · ${labelForStepId('design')}`}
         </button>
       </div>
     </>

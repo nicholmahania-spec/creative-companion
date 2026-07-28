@@ -4,7 +4,6 @@
  */
 import { useState } from 'react'
 import { getProcessPhase } from '../lib/processGuide'
-import { pathLabel, tFormat } from '../lib/i18n'
 import useAppStore from '../store/useAppStore'
 import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-ideate.css'
@@ -19,11 +18,9 @@ export default function SparkView({
   notifyAction,
   directions = [],
   updateDirection,
-  locale = 'en',
   flashMicro,
   addTask,
   projectId,
-  i18nT = (key) => key,
   projectGoal = '',
   roughIdeas = [],
 }) {
@@ -40,7 +37,7 @@ export default function SparkView({
   const chosen = dirs.find((d) => d.chosen && String(d.title || '').trim())
   const canSend = !!chosen
   const phase = getProcessPhase('ideate')
-  const title = pathLabel(locale, 'ideate') || 'Ideate'
+  const title = 'Ideate'
   const goalLine = String(projectGoal || '').trim()
 
   // Persisted diverge dump (project.roughIdeas) — only the draft line is session-local
@@ -55,7 +52,7 @@ export default function SparkView({
       visual: projectPalette[0] || '#1A1A1E',
     })
     notifyAction?.('Pinned', 'mood_pin', { label: 'Spark pin' })
-    flashMicro?.(i18nT('ui.sparkPinnedStay') || 'Pinned to board')
+    flashMicro?.('Pinned to board')
   }
 
   const useSparkAsTitle = () => {
@@ -110,11 +107,7 @@ export default function SparkView({
     // updateDirection logs decision when chosen:true — do not log again on queue
     updateDirection?.(dir.id, { chosen: nextChosen })
     if (nextChosen) {
-      flashMicro?.(
-        tFormat(locale, 'ui.decisionLogged', {
-          label: dir.label || dir.id,
-        }) || `Chose ${dir.label}`
-      )
+      flashMicro?.(`Choice saved · ${dir.label || dir.id}`)
       if (!String(dir.note || '').trim()) {
         window.setTimeout(() => {
           document.getElementById(`dir-note-${dir.id}`)?.focus?.()
@@ -136,7 +129,7 @@ export default function SparkView({
       dueDate: '',
       why: chosen.note || '',
     })
-    flashMicro?.(i18nT('ui.queuedDraft') || `Queued ${chosen.label}`)
+    flashMicro?.('Draft added to Touchpoints')
     setActiveView('flow')
   }
 

@@ -4,11 +4,9 @@
  * while working later steps.
  */
 export default function JourneyGapStrip({
-  locale,
   pathNextGap = null,
   leaveBehindThin = false,
   activeView,
-  i18nT,
   setActiveView,
   thisStepFilled,
 }) {
@@ -33,12 +31,9 @@ export default function JourneyGapStrip({
     >
       {(showPathMarkPackThin || showPathFullPackThin) && (
         <span className="journey-leavebehind-thin" role="status">
-          {i18nT(
-            locale,
-            showPathFullPackThin
-              ? 'ui.pathFullLeaveBehindThin'
-              : 'ui.pathMarkPackThin'
-          )}
+          {showPathFullPackThin
+            ? 'Client pack still thin for handoff'
+            : 'Need tagline or ★ pins for client pack'}
         </span>
       )}
       {pathFull && (
@@ -46,9 +41,9 @@ export default function JourneyGapStrip({
           type="button"
           className="journey-gap-strip-btn is-ship"
           onClick={() => setActiveView('finish')}
-          title={i18nT(locale, 'ui.processFullDeliver')}
+          title="Steps look full · open Deliver"
         >
-          {i18nT(locale, 'ui.shipBrandBook')}
+          Download brand book PDF
         </button>
       )}
     </div>

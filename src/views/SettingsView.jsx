@@ -4,7 +4,6 @@ import {
   FOCUS_MASK_MAX_PCT,
   clampFocusMaskPct,
 } from '../lib/uiPrefs'
-import { LOCALES, normalizeLocale, t as i18nT } from '../lib/i18n'
 import '../styles/lazy-settings.css'
 
 /** Settings — short labels, Typing calm first, Advanced collapsed. */
@@ -55,7 +54,6 @@ export default function SettingsView(props) {
     openForceBreakConsent,
   } = props
   const aiStatus = helperAiStatus()
-  const locale = normalizeLocale(localeProp(props))
   const ask = (label, onConfirm) => {
     if (typeof requestConfirm === 'function') requestConfirm(label, onConfirm)
     else if (window.confirm(label)) onConfirm?.()
@@ -78,7 +76,7 @@ export default function SettingsView(props) {
         {[
           ['calm', 'Typing'],
           ['desk', 'Desk'],
-          ['data', i18nT(locale, 'ui.data') || 'Data'],
+          ['data', 'Data'],
           ['advanced', 'Advanced'],
         ].map(([id, label]) => (
           <a
@@ -173,7 +171,7 @@ export default function SettingsView(props) {
           </select>
         </div>
         <SettingsSwitch
-          label={i18nT(locale, 'ui.reduceMotion') || 'Reduce motion'}
+          label="Less motion"
           checked={reduceMotion}
           onToggle={() => setPref('reduceMotion', !reduceMotion)}
         />
@@ -182,38 +180,14 @@ export default function SettingsView(props) {
           checked={!!prefs.hideTips}
           onToggle={() => setPref('hideTips', !prefs.hideTips)}
         />
-        {/* Language picker renders only if there is a choice to make. With one
-            shipped locale a select is a control that cannot do anything —
-            a decision with a single option is a toll, not a setting. */}
-        {LOCALES.length > 1 && (
-          <div className="settings-row">
-            <strong>{i18nT(locale, 'language') || 'Language'}</strong>
-            <select
-              className="field-input settings-locale-select"
-              value={locale}
-              aria-label={i18nT(locale, 'language') || 'Language'}
-              onChange={(e) =>
-                setPref('locale', normalizeLocale(e.target.value))
-              }
-            >
-              {LOCALES.map((L) => (
-                <option key={L.id} value={L.id}>
-                  {L.native}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
         <div className="settings-row">
-          <strong>{i18nT(locale, 'ui.theme') || 'Theme'}</strong>
+          <strong>Theme</strong>
           <button
             type="button"
             className="btn btn-secondary btn-sm"
             onClick={() => toggleTheme()}
           >
-            {theme === 'warm'
-              ? i18nT(locale, 'ui.switchDark') || 'Dark'
-              : i18nT(locale, 'ui.switchLight') || 'Light'}
+            {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
           </button>
         </div>
       </section>
@@ -292,11 +266,11 @@ export default function SettingsView(props) {
                 if (result.ok) {
                   setSyncState('ok')
                   setSyncError('')
-                  flashToast(i18nT(locale, 'ui.syncedOk'))
+                  flashToast('Desk saved to the cloud')
                 } else {
                   setSyncState('error')
-                  setSyncError(result.error || i18nT(locale, 'ui.syncFail'))
-                  flashToast(result.error || i18nT(locale, 'ui.syncFail'))
+                  setSyncError(result.error || 'Could not sync right now')
+                  flashToast(result.error || 'Could not sync right now')
                 }
               }}
             >
@@ -421,22 +395,22 @@ export default function SettingsView(props) {
         </summary>
         <div className="settings-advanced-body">
           <SettingsSwitch
-            label={i18nT(locale, 'ui.helper') || 'Helper'}
+            label="Helper"
             checked={bodyDoubling}
             onToggle={() => toggleBodyDoubling()}
           />
           <SettingsSwitch
-            label={i18nT(locale, 'ui.helperQuiet') || 'Helper quiet'}
+            label="Quiet Helper"
             checked={!!prefs.helperQuiet}
             onToggle={() => setPref('helperQuiet', !prefs.helperQuiet)}
           />
           <SettingsSwitch
-            label={i18nT(locale, 'ui.timerSound') || 'Timer sound'}
+            label="Timer sound"
             checked={soundEnabled}
             onToggle={() => setPref('soundEnabled', !soundEnabled)}
           />
           <SettingsSwitch
-            label={i18nT(locale, 'ui.forceBreaksTitle') || 'Forced breaks'}
+            label="Break lock"
             checked={forceBreaksEnabled}
             onToggle={() => {
               const next = !forceBreaksEnabled
@@ -501,10 +475,6 @@ export default function SettingsView(props) {
       </details>
     </div>
   )
-}
-
-function localeProp(props) {
-  return props.locale || props.prefs?.locale || 'en'
 }
 
 function SettingsSwitch({ label, checked, onToggle }) {

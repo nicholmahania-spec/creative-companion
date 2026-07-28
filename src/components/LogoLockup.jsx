@@ -1,19 +1,16 @@
 import PathMarkMotion from './PathMarkMotion'
-import { t, normalizeLocale } from '../lib/i18n'
 
 /**
- * Product lockup — animated path mark + localized wordmark.
+ * Product lockup — animated path mark + wordmark.
  */
 export default function LogoLockup({
-  locale = 'en',
   title,
   compact = false,
   className = '',
   markOnly = false,
   reduceMotion = false,
 }) {
-  const loc = normalizeLocale(locale)
-  const wordmark = title || t(loc, 'productName')
+  const wordmark = title || 'Creative Companion'
 
   return (
     <div
@@ -25,7 +22,7 @@ export default function LogoLockup({
         <PathMarkMotion size={compact ? 20 : 22} reduceMotion={reduceMotion} />
       </span>
       {!markOnly && (
-        <span className="logo-lockup-wordmark" lang={loc}>
+        <span className="logo-lockup-wordmark" lang="en">
           {wordmark}
         </span>
       )}

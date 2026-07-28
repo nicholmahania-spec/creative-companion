@@ -12,7 +12,6 @@ import {
 } from '../lib/cloudSync'
 import { versionLabel } from '../lib/version'
 import LogoLockup from './LogoLockup'
-import { normalizeLocale } from '../lib/i18n'
 import '../styles/lazy-settings.css'
 
 // Password strength validation
@@ -61,25 +60,12 @@ const validatePasswordStrength = (password) => {
   return strength;
 };
 
-/** Read locale from persisted store (before unlock) when available */
-function guestLocale() {
-  try {
-    const raw = localStorage.getItem('creative-companion-storage')
-    if (!raw) return 'en'
-    const p = JSON.parse(raw)
-    return normalizeLocale(p?.state?.prefs?.locale || 'en')
-  } catch {
-    return 'en'
-  }
-}
-
 /**
  * Login / access gate — Tech-Studio: single centered card, no marketing column.
  */
 export default function LoginPage({ onUnlocked, cloud = false }) {
   const useCloud = cloud && isSupabaseConfigured()
   const setupDone = hasAccessSetup()
-  const locale = guestLocale()
   const [mode, setMode] = useState(
     useCloud ? 'login' : setupDone ? 'login' : 'setup'
   )

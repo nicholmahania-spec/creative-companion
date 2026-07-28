@@ -74,6 +74,7 @@ import {
   PATH_STEP_COUNT,
   PATH_VIEWS,
   labelForView,
+  labelForStepId,
   journeyIdForView,
   getNextJourney,
   toolsLabelForView,
@@ -125,14 +126,6 @@ import {
 } from './components/ClientInbox'
 import { guessRunningTodoStage } from './lib/runningTodoStages'
 import { installAutoGrow } from './lib/autoGrow'
-import {
-  normalizeLocale,
-  t as i18nT,
-  pathLabel,
-  pathPlain,
-  tFormat,
-  localeDir,
-} from './lib/i18n'
 import { useModalFocus } from './lib/useModalFocus'
 import useIsMobile from './lib/useIsMobile'
 import {
@@ -521,7 +514,6 @@ function App() {
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
   const showProgress = !!prefs.showProgress
   const hidePackWatermark = !!prefs.hidePackWatermark
-  const locale = normalizeLocale(prefs.locale || 'en')
   // toastMode read inside flashToast
   const forceBreaksEnabledRef = useRef(forceBreaksEnabled)
   forceBreaksEnabledRef.current = forceBreaksEnabled
@@ -693,9 +685,8 @@ function App() {
     [pathRows]
   )
   const pathMissingLabelsList = useMemo(
-    () =>
-      pathMissingRows.map((r) => pathLabel(locale, r.id) || r.label),
-    [pathMissingRows, locale]
+    () => pathMissingRows.map((r) => r.label),
+    [pathMissingRows]
   )
   const thisStepId = journeyIdForView(activeView)
   const thisStepFilled = useMemo(() => {
@@ -898,14 +889,14 @@ function App() {
       awardAndBroadcast('step_complete', { label: 'Step done' })
     }
     setRecentUndo({ id: doneId, title: doneTitle, at: Date.now() })
-    flashToast(i18nT(locale, 'ui.stepComplete'), { important: true })
+    flashToast('Step done', { important: true })
     setStepFocusKey((k) => k + 1)
   }
 
   const undoLastComplete = () => {
     if (!recentUndo?.id) return
     toggleTask(recentUndo.id)
-    flashToast(i18nT(locale, 'ui.undidStep'))
+    flashToast('Undid that')
     setRecentUndo(null)
     setStepFocusKey((k) => k + 1)
   }
@@ -919,13 +910,14 @@ function App() {
     (step, opts = {}) => {
       if (!step?.view) return null
       setActiveView(step.view)
-      const label = pathLabel(locale, step.id) || step.label
-      const micro = opts.micro === 'next' ? 'ui.nextGapMicro' : 'ui.openStepMicro'
-      flashMicro(tFormat(locale, micro, { label }))
+      const label = step.label
+      flashMicro(
+        opts.micro === 'next' ? `Next empty · ${label}` : `Going to ${label}`
+      )
       if (step.id) focusPathGapTarget(pathGapFocusSelector(step.id))
       return step
     },
-    [setActiveView, locale]
+    [setActiveView]
   )
 
   /** Earliest incomplete step — reuses buildPathProgressCtx (same filters as strip) */
@@ -935,10 +927,12 @@ function App() {
       buildPathProgressCtx(useAppStore.getState())
     )
     if (gap?.view) return goToProcessStep(gap, { micro: 'next' })
-    flashToast(i18nT(locale, 'ui.processLooksFull'))
+    flashToast(
+      'Steps look full — download the brand book on Deliver when you are ready'
+    )
     setActiveView('finish')
     return null
-  }, [goToProcessStep, setActiveView, locale])
+  }, [goToProcessStep, setActiveView])
 
   /** Home dashboard: switch to a different project, then land on its own next gap */
   const switchProjectAndContinue = useCallback(
@@ -1149,9 +1143,7 @@ function App() {
       playBreakChime()
       setHelperBreakCare({ open: true, minutes: breakMin })
       flashToast(
-        tFormat(locale, 'ui.workBlockDoneSoft', {
-          min: Math.round(workMin),
-        })
+        `Work block done (~${Math.round(workMin)} min). Break locks are off — stretch if you can.`
       )
       return
     }
@@ -1167,7 +1159,7 @@ function App() {
       if (!prefs.forceBreaksExplained) {
         setPref('forceBreaksExplained', true)
         setForceBreakConsentOpen(true)
-        flashToast(i18nT(locale, 'ui.forceBreaksReview'))
+        flashToast('Break lock · check Settings')
       }
       return
     }
@@ -1211,14 +1203,8 @@ function App() {
     const kitN = planItems.length
     flashToast(
       kitN > 0
-        ? tFormat(locale, 'ui.breakLockedKit', {
-            min: breakMin,
-            n: kitN,
-          })
-        : tFormat(locale, 'ui.breakLockedPlain', {
-            min: breakMin,
-            work: Math.round(workMin),
-          })
+        ? `Break locked: ${breakMin} min · ${kitN} care item(s) for this window`
+        : `Break locked: ${breakMin} min (you worked about ${Math.round(workMin)} min)`
     )
   }
 
@@ -1264,11 +1250,9 @@ function App() {
       setActiveView(resume)
       const step = JOURNEY_STEPS.find((s) => s.view === resume)
       const label = step
-        ? pathLabel(locale, step.id) || step.label
+        ? step.label
         : toolsLabelForView(resume)
-      flashMicro(
-        tFormat(locale, 'ui.backAfterBreak', { label: label || resume })
-      )
+      flashMicro(`Back to ${label || resume}`)
       // Land on the craft field, not just the route
       focusPathGapField(resume)
       preBreakViewRef.current = null
@@ -1280,8 +1264,8 @@ function App() {
     }
     flashToast(
       emergency
-        ? i18nT(locale, 'ui.breakEndedEarly')
-        : i18nT(locale, 'ui.breakDone')
+        ? 'Break ended early — try a real rest next time.'
+        : 'Break done · welcome back'
     )
   }
 
@@ -1728,7 +1712,7 @@ function App() {
       if (breakH.active.resumeView) {
         setActiveView(breakH.active.resumeView)
       }
-      flashToast(i18nT(locale, 'ui.breakResumed') || 'Break still running — desk locked')
+      flashToast('Break still running — desk locked')
       return undefined
     }
 
@@ -1766,8 +1750,7 @@ function App() {
         preBreakViewRef.current = resume
       }
       flashToast(
-        i18nT(locale, 'ui.breakFinishedAway') ||
-          'Break finished while you were away — pick up here',
+        'Break finished while you were away — pick up here',
         { important: true }
       )
     }
@@ -1853,10 +1836,6 @@ function App() {
       : 'false'
   }, [reduceMotion])
 
-  useEffect(() => {
-    document.documentElement.lang = locale
-    document.documentElement.dir = localeDir(locale)
-  }, [locale])
 
   // Directional page choreography (path order)
   useEffect(() => {
@@ -2274,7 +2253,7 @@ function App() {
         why: '',
       })
       awardAndBroadcast('task_capture', { label: 'First step' })
-      flashToast(i18nT(locale, 'ui.deskReady'))
+      flashToast('Project created — start with the goal, then head to Research')
     } else {
       // Empty real desk — no sample clients
       clearToEmpty()
@@ -2285,7 +2264,7 @@ function App() {
         )
         updateDetective('clientName', onboardName.trim())
       }
-      flashToast(i18nT(locale, 'ui.emptyDeskFirst'))
+      flashToast('Empty desk — write your first real step')
     }
     setOnboarded(true)
     localStorage.setItem('cc-onboarded', '1')
@@ -2370,9 +2349,7 @@ function App() {
       trackExportAction(kind, true)
       // XP stays in Progress HUD — success toast stays human leave-behind language
       flashToast(
-        kind === 'backup'
-          ? i18nT(locale, 'ui.backupSaved')
-          : i18nT(locale, 'ui.leaveBehindSaved'),
+        kind === 'backup' ? 'Backup saved' : 'Client pack saved',
         { important: true }
       )
     }
@@ -2403,7 +2380,7 @@ function App() {
     }
 
     if (kind === 'kit') {
-      flashToast(i18nT(locale, 'ui.kitBuilding') || 'Building brand kit…', {
+      flashToast('Building brand kit…', {
         important: true,
       })
       return (async () => {
@@ -2419,11 +2396,11 @@ function App() {
           )
           finishOk('Brand kit')
         } else if (result.cancelled) {
-          flashToast(i18nT(locale, 'ui.saveCancelled'))
+          flashToast('Save cancelled — no problem')
           trackExportAction('kit', false)
         } else {
           flashToast(
-            result.error || i18nT(locale, 'ui.downloadFailed') || 'Kit failed'
+            result.error || 'Download did not finish — try again?'
           )
           trackExportAction('kit', false)
         }
@@ -2434,7 +2411,7 @@ function App() {
     if (kind === 'pdf') {
       // Vector direction pack (text + swatches as PDF primitives)
       void preloadPdfEngine()
-      flashToast(i18nT(locale, 'ui.pdfBuilding'), { important: true })
+      flashToast('Making your brand book PDF…', { important: true })
       return (async () => {
         const result = await downloadBrandPackPdf(pack, handlePromise, {
           hideWatermark: hidePackWatermark,
@@ -2451,10 +2428,10 @@ function App() {
           )
           finishOk('Brand book PDF')
         } else if (result.cancelled) {
-          flashToast(i18nT(locale, 'ui.saveCancelled'))
+          flashToast('Save cancelled — no problem')
           trackExportAction('pdf', false)
         } else {
-          flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+          flashToast(result.error || 'Could not finish that PDF — try again?')
           trackExportAction('pdf', false)
         }
         return result
@@ -2466,7 +2443,7 @@ function App() {
       const hasSystem = document.getElementById('system-artboard')
       if (!hasSystem && !exportPanel) openExportPanel()
       void preloadPdfEngine()
-      flashToast(i18nT(locale, 'ui.pdfPreviewing'), { important: true })
+      flashToast('Making a simple preview PDF…', { important: true })
       return (async () => {
         await new Promise((r) =>
           requestAnimationFrame(() => requestAnimationFrame(r))
@@ -2493,10 +2470,10 @@ function App() {
           )
           finishOk('Preview PDF')
         } else if (result.cancelled) {
-          flashToast(i18nT(locale, 'ui.saveCancelled'))
+          flashToast('Save cancelled — no problem')
           trackExportAction('pdf-preview', false)
         } else {
-          flashToast(result.error || i18nT(locale, 'ui.pdfFailed'))
+          flashToast(result.error || 'Could not finish that PDF — try again?')
           trackExportAction('pdf-preview', false)
         }
         return result
@@ -2509,10 +2486,10 @@ function App() {
           if (result.ok) {
             finishOk('Brand HTML')
           } else if (result.cancelled) {
-            flashToast(i18nT(locale, 'ui.saveCancelled'))
+            flashToast('Save cancelled — no problem')
             trackExportAction('html', false)
           } else {
-            flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            flashToast(result.error || 'Download did not finish — try again?')
             trackExportAction('html', false)
           }
           return result
@@ -2524,8 +2501,8 @@ function App() {
         .then((result) => {
           if (result.ok) finishOk('Brand Markdown')
           else if (result.cancelled)
-            flashToast(i18nT(locale, 'ui.saveCancelled'))
-          else flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            flashToast('Save cancelled — no problem')
+          else flashToast(result.error || 'Download did not finish — try again?')
           return result
         })
         .finally(clearBusy)
@@ -2535,10 +2512,10 @@ function App() {
         .then((result) => {
           if (result.ok) finishOk('Brand JSON')
           else if (result.cancelled) {
-            flashToast(i18nT(locale, 'ui.saveCancelled'))
+            flashToast('Save cancelled — no problem')
             trackExportAction('json', false)
           } else {
-            flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+            flashToast(result.error || 'Download did not finish — try again?')
             trackExportAction('json', false)
           }
           return result
@@ -2549,7 +2526,7 @@ function App() {
       const result = downloadWorkspaceBackup(exportAllData())
       if (result.ok) finishOk('Workspace backup')
       else {
-        flashToast(result.error || i18nT(locale, 'ui.downloadFailed'))
+        flashToast(result.error || 'Download did not finish — try again?')
         trackExportAction('backup', false)
       }
       clearBusy()
@@ -2565,7 +2542,7 @@ function App() {
             document.getElementById('pack-preview-artboard')
           const r = el
             ? printElementById(el.id, { hideWatermark: hidePackWatermark })
-            : { ok: false, error: i18nT(locale, 'ui.nothingToPrint') }
+            : { ok: false, error: 'Nothing to print yet' }
           if (r.ok) {
             awardAndBroadcast('export_pack', { label: 'Print / PDF' })
             const when = new Date().toLocaleTimeString([], {
@@ -2575,10 +2552,10 @@ function App() {
             setLastExportNote(
               `Print dialog · ${when} — Save as PDF if you want a file`
             )
-            flashToast(i18nT(locale, 'ui.printDialogOpen'))
+            flashToast('Print is open — choose Save as PDF if you want a file')
             trackExportAction('print', true)
           } else {
-            flashToast(r.error || i18nT(locale, 'ui.printFailed'))
+            flashToast(r.error || 'Print did not open — try again?')
             trackExportAction('print', false)
           }
           clearBusy()
@@ -2586,7 +2563,7 @@ function App() {
         }, exportPanel ? 50 : 180)
       })
     }
-    flashToast(i18nT(locale, 'ui.unknownExport'))
+    flashToast('Not sure what to export')
     clearBusy()
     return Promise.resolve({ ok: false })
   }
@@ -2705,8 +2682,8 @@ function App() {
     })
     flashToast(
       n === 1
-        ? i18nT(locale, 'ui.microStepsOne')
-        : tFormat(locale, 'ui.microStepsN', { n })
+        ? 'One tiny step is ready — do only that one'
+        : `${n} tiny steps ready — only do #1 right now`
     )
   }
 
@@ -2744,10 +2721,10 @@ function App() {
           { label: 'Soft Signal demo' }
         )
       } else {
-        flashToast(result.error || i18nT(locale, 'ui.demoLoadFail'))
+        flashToast(result.error || 'Could not load that demo')
       }
     } catch (e) {
-      flashToast(e?.message || i18nT(locale, 'ui.softSignalFail'))
+      flashToast(e?.message || 'Could not load Soft Signal demo')
     }
   }
 
@@ -2782,7 +2759,7 @@ function App() {
           { label: 'Harbor & Hearth demo' }
         )
       } else {
-        flashToast(result.error || i18nT(locale, 'ui.demoLoadFail'))
+        flashToast(result.error || 'Could not load that demo')
       }
     } catch (e) {
       flashToast(e?.message || 'Could not load Harbor & Hearth demo')
@@ -2808,34 +2785,34 @@ function App() {
       const result = importAllData(String(reader.result || ''))
       if (result.ok) {
         setActiveView('flow')
-        flashToast(i18nT(locale, 'ui.backupRestored'))
+        flashToast('Backup restored')
       } else {
-        flashToast(result.error || i18nT(locale, 'ui.importFail'))
+        flashToast(result.error || 'Could not import that file')
       }
     }
-    reader.onerror = () => flashToast(i18nT(locale, 'ui.readFileFail'))
+    reader.onerror = () => flashToast('Could not read that file')
     reader.readAsText(file)
   }
 
   const handleDeleteProjectById = (id, name) => {
     if (!id) return
     if (projects.length <= 1) {
-      flashToast(i18nT(locale, 'ui.keepOneProject'))
+      flashToast('Keep at least one project')
       return
     }
     const wasActive = id === activeProjectId
     setDeskConfirm({
       kind: 'delete-project',
-      label: `${i18nT(locale, 'ui.deleteProjectConfirm')} (“${name}”)`,
+      label: `Delete this project and its steps & pictures? You cannot undo this. (“${name}”)`,
       confirmLabel: 'Delete',
       danger: true,
       onConfirm: () => {
         const result = deleteProject(id)
         if (result.ok) {
-          flashToast(i18nT(locale, 'ui.projectDeleted'))
+          flashToast('Project deleted')
           if (wasActive) setActiveView('project')
         } else {
-          flashToast(result.error || i18nT(locale, 'ui.deleteFail'))
+          flashToast(result.error || 'Could not delete that')
         }
         setDeskConfirm(null)
       },
@@ -2851,7 +2828,7 @@ function App() {
     if (!activeProject) return
     const active = (projects || []).filter((p) => !p.archived)
     if (active.length < 2) {
-      flashToast(i18nT(locale, 'ui.keepOneProject'))
+      flashToast('Keep at least one project')
       return
     }
     const id = activeProject.id
@@ -2862,8 +2839,8 @@ function App() {
       confirmLabel: 'Archive',
       onConfirm: () => {
         const result = archiveProject(id)
-        if (result?.ok) flashToast(i18nT(locale, 'ui.projectArchived') || 'Project archived')
-        else flashToast(result?.error || i18nT(locale, 'ui.archiveFail') || 'Could not archive')
+        if (result?.ok) flashToast('Project archived')
+        else flashToast(result?.error || 'Could not archive that')
         setDeskConfirm(null)
       },
     })
@@ -2881,13 +2858,13 @@ function App() {
       setUnlocked(false)
       setAccessName('')
       cloudSyncReady.current = false
-      flashToast(i18nT(locale, 'ui.signedOutOk'))
+      flashToast('Signed out — rest easy')
       return
     }
     closeSession()
     setUnlocked(false)
     setAccessName('')
-    flashToast(i18nT(locale, 'ui.lockedOk'))
+    flashToast('Desk locked')
   }
 
   if (!authReady) {
@@ -3021,7 +2998,7 @@ function App() {
             aria-label="Home"
             title="Home"
           >
-            <LogoLockup className="logo" locale={locale} reduceMotion={reduceMotion} />
+            <LogoLockup className="logo" reduceMotion={reduceMotion} />
           </button>
           {activeProject ? (
             <input
@@ -3149,7 +3126,7 @@ function App() {
                       if (!result.ok) {
                         setSyncState('error')
                         setSyncError(result.error || 'Couldn’t load cloud desk')
-                        flashToast(result.error || i18nT(locale, 'ui.syncFail'))
+                        flashToast(result.error || 'Could not sync right now')
                         return
                       }
                       if (result.payload && Array.isArray(result.payload.projects)) {
@@ -3157,16 +3134,16 @@ function App() {
                         const hydrated = hydrateFromPayload(result.payload)
                         if (hydrated.ok) {
                           setSyncState('ok')
-                          flashToast(i18nT(locale, 'ui.syncedOk'))
+                          flashToast('Desk saved to the cloud')
                         } else {
                           skipNextCloudPush.current = false
                           setSyncState('error')
                           setSyncError(hydrated.error || 'Couldn’t load cloud desk')
-                          flashToast(hydrated.error || i18nT(locale, 'ui.syncFail'))
+                          flashToast(hydrated.error || 'Could not sync right now')
                         }
                       } else {
                         setSyncState('ok')
-                        flashToast(i18nT(locale, 'ui.syncedOk'))
+                        flashToast('Desk saved to the cloud')
                       }
                       return
                     }
@@ -3175,16 +3152,16 @@ function App() {
                       setSyncState('ok')
                       setSyncError('')
                       applyImageUrlReplacements(result.replacements)
-                      flashToast(i18nT(locale, 'ui.syncedOk'))
+                      flashToast('Desk saved to the cloud')
                     } else {
                       setSyncState('error')
                       setSyncError(result.error || 'Couldn’t sync')
-                      flashToast(result.error || i18nT(locale, 'ui.syncFail'))
+                      flashToast(result.error || 'Could not sync right now')
                     }
                   } catch (e) {
                     setSyncState('error')
                     setSyncError(e?.message || 'Couldn’t sync')
-                    flashToast(e?.message || i18nT(locale, 'ui.syncFail'))
+                    flashToast(e?.message || 'Could not sync right now')
                   }
                 }}
               >
@@ -3240,7 +3217,7 @@ function App() {
                     for Settings and Log out, and people are conditioned to
                     hunt for an avatar for those — a bare glyph makes finding
                     them a recall problem instead of a read. */}
-                <span>{i18nT(locale, 'ui.tools')}</span>
+                <span>Tools</span>
               </button>
               {moreOpen && (
                 <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">
@@ -3281,7 +3258,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <HeaderIcon name="timer" /> {i18nT(locale, 'ui.timer')}
+                    <HeaderIcon name="timer" /> Timer
                   </button>
                   <button
                     type="button"
@@ -3402,7 +3379,7 @@ function App() {
                       setMoreOpen(false)
                     }}
                   >
-                    <span aria-hidden="true">⚙</span> {i18nT(locale, 'ui.settings')}
+                    <span aria-hidden="true">⚙</span> Settings
                   </button>
                   <button
                     type="button"
@@ -3467,7 +3444,7 @@ function App() {
           <ol className="step-rail-list">
             {JOURNEY_STEPS.map((step) => {
               const active = journeyActive === step.id
-              const label = pathLabel(locale, step.id) || step.label
+              const label = step.label
               const done =
                 !active &&
                 pathStepHasContent(step.id, {
@@ -3508,7 +3485,7 @@ function App() {
               className="btn btn-primary step-rail-cta"
               onClick={() => goToProcessStep(pathNextGap, { micro: 'next' })}
             >
-              Continue → {pathLabel(locale, pathNextGap.id) || pathNextGap.label}
+              Continue → {pathNextGap.label}
             </button>
           )}
         </nav>
@@ -3526,7 +3503,7 @@ function App() {
       )}
       <nav
         className={`journey-sidebar${journeyActive ? '' : ' is-tools'}`}
-        aria-label={i18nT(locale, 'pathAria')}
+        aria-label="Your path in Creative Companion"
         /* Parked off-canvas on mobile, its 10 buttons stayed keyboard-
            reachable — Tab from the header walked into an invisible drawer.
            inert only applies below 768px, where the drawer is closed. */
@@ -3562,7 +3539,7 @@ function App() {
                 // A named next action beats a ratio: "1/5" has to be decoded
                 // into a meaning and still doesn't say what to do.
                 const nextLabel = nextGap
-                  ? `Next: ${pathLabel(locale, nextGap.id) || nextGap.label}`
+                  ? `Next: ${nextGap.label}`
                   : 'Ready to deliver'
                 return (
                   <li key={p.id} className="journey-project-row-wrap">
@@ -3603,7 +3580,7 @@ function App() {
                             disabled={activeProjects.length < 2}
                             onClick={() => {
                               const r = archiveProject(p.id)
-                              if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
+                              if (!r.ok) flashToast(r.error || 'Could not archive that')
                               setOpenProjectMenuId(null)
                             }}
                           >
@@ -3663,8 +3640,8 @@ function App() {
           <ol className="journey-bar-list">
             {JOURNEY_STEPS.map((step, idx) => {
               const active = journeyActive === step.id
-              const label = pathLabel(locale, step.id) || step.label
-              const plain = pathPlain(locale, step.id) || step.plain
+              const label = step.label
+              const plain = step.plain
               const pathCtx = {
                 project: activeProject,
                 moodItems: deskMood,
@@ -3742,12 +3719,10 @@ function App() {
       <main className="main" id="main-content" tabIndex={-1} data-nav-dir={navDir}>
         {journeyActive && activeView !== 'review' && activeView !== 'finish' && (
           <JourneyGapStrip
-            locale={locale}
             thisStepFilled={thisStepFilled}
             pathNextGap={pathNextGap}
             leaveBehindThin={leaveBehindThin}
             activeView={activeView}
-            i18nT={i18nT}
             setActiveView={setActiveView}
           />
         )}
@@ -3816,7 +3791,7 @@ function App() {
                               : rowFull
                                 ? 'Deliver'
                                 : nextGap
-                                  ? pathLabel(locale, nextGap.id) || nextGap.label
+                                  ? nextGap.label
                                   : '—'}
                           </span>
                         </button>
@@ -3836,8 +3811,7 @@ function App() {
                     : pathFull
                       ? 'Path steps look full'
                       : selected.nextGap
-                        ? pathLabel(locale, selected.nextGap.id) ||
-                          selected.nextGap.label
+                        ? selected.nextGap.label
                         : 'All caught up'}
                 </h2>
                 {pathFull && !packReady ? (
@@ -3877,7 +3851,7 @@ function App() {
                           className={`home-md-step${r.done ? ' is-done' : ''}${
                             isCurrent ? ' is-current' : ''
                           }`}
-                          title={pathLabel(locale, r.id) || r.label}
+                          title={r.label}
                         >
                           <span className="home-md-step-dot">
                             {r.done ? '✓' : num}
@@ -3925,7 +3899,7 @@ function App() {
               <>
                 <p className="home-kicker">Next</p>
                 <h1 className="home-title">
-                  {pathLabel(locale, pathNextGap.id) || pathNextGap.label}
+                  {pathNextGap.label}
                 </h1>
                 <div className="home-cta-row">
                   <button
@@ -3974,7 +3948,6 @@ function App() {
             />}>
             <StepDependencyReminder stepId="sketch" />
             <SketchView
-              locale={locale}
               navDir={navDir}
               activeProject={activeProject}
               projectDeadline={projectDeadline}
@@ -4030,7 +4003,6 @@ function App() {
             />}>
             <StepDependencyReminder stepId="research" />
             <ResearchView
-              locale={locale}
               navDir={navDir}
               deskMood={deskMood}
               activeProjectId={activeProjectId}
@@ -4069,11 +4041,9 @@ function App() {
               roughIdeas={activeProject?.roughIdeas || []}
               decisionLog={activeProject?.decisionLog || []}
               sparksTried={sparksTried || 0}
-              locale={locale}
               flashMicro={flashMicro}
               addTask={addTask}
               projectId={activeProjectId}
-              i18nT={(key) => i18nT(locale, key)}
               projectGoal={
                 activeProject?.detective?.goal ||
                 activeProject?.brief ||
@@ -4113,7 +4083,6 @@ function App() {
               timerFocusSource={timerFocusSource}
               setTimerFocusSource={setTimerFocusSource}
               pathReturnView={activeProject?.lastView || 'project'}
-              locale={locale}
             />
           </Suspense>
 
@@ -4164,7 +4133,6 @@ function App() {
             />}>
             <StepDependencyReminder stepId="design" />
             <DesignView
-              locale={locale}
               navDir={navDir}
               activeProject={activeProject}
               deskMood={deskMood}
@@ -4184,7 +4152,6 @@ function App() {
           <Suspense fallback={<PathViewSkeleton label="Loading Review…" />}>
             <StepDependencyReminder stepId="review" />
             <ReviewView
-              locale={locale}
               navDir={navDir}
               activeProject={activeProject}
               deskMood={deskMood}
@@ -4213,7 +4180,6 @@ function App() {
             />}>
             <StepDependencyReminder stepId="deliver" />
             <DeliverView
-              locale={locale}
               navDir={navDir}
               activeProject={activeProject}
               deskMood={deskMood}
@@ -4264,7 +4230,6 @@ function App() {
               soundEnabled={soundEnabled}
               showHowItWorks={showHowItWorks}
               showProgress={showProgress}
-              locale={locale}
               queueCollapsed={queueCollapsed}
               forceBreaksEnabled={forceBreaksEnabled}
               setPref={setPref}
@@ -4315,7 +4280,6 @@ function App() {
               label={`Loading ${labelForView('project')}…`}
             />}>
             <DefineView
-              locale={locale}
               navDir={navDir}
               activeProject={activeProject}
               deskTasks={deskTasks}
@@ -4518,7 +4482,7 @@ function App() {
           setRunningTodoAddDirect(false)
         }}
         onAdd={handleAddRunningTodoItem}
-        stageLabel={pathLabel(locale, journeyIdForView(activeView) || 'define')}
+        stageLabel={labelForStepId(journeyIdForView(activeView) || 'define')}
         skipAsk={runningTodoAddDirect}
       />
       <RunningTodoPanel
@@ -4653,7 +4617,7 @@ function App() {
           aria-labelledby="force-break-consent-title"
         >
           <p id="force-break-consent-title" className="desk-confirm-body">
-            {i18nT(locale, 'ui.forceBreaksConsent')}
+            Lock desk 5–10 min after focus? Off anytime in Settings.
           </p>
           <div className="desk-confirm-actions">
             <button
@@ -4663,10 +4627,10 @@ function App() {
                 setPref('forceBreaksConsented', true)
                 setPref('forceBreaksEnabled', true)
                 setForceBreakConsentOpen(false)
-                flashToast(i18nT(locale, 'ui.forceBreaksOn'))
+                flashToast('Break lock on')
               }}
             >
-              {i18nT(locale, 'ui.enable') || 'On'}
+              On
             </button>
             <button
               type="button"
@@ -4674,7 +4638,7 @@ function App() {
               onClick={() => {
                 setPref('forceBreaksEnabled', false)
                 setForceBreakConsentOpen(false)
-                flashToast(i18nT(locale, 'ui.forceBreaksOff'))
+                flashToast('Break lock off')
               }}
             >
               Off
@@ -4701,14 +4665,14 @@ function App() {
               }`}
               onClick={() => deskConfirm.onConfirm?.()}
             >
-              {deskConfirm.confirmLabel || i18nT(locale, 'ui.continue')}
+              {deskConfirm.confirmLabel || 'Continue'}
             </button>
             <button
               type="button"
               className="btn btn-ghost btn-sm desk-confirm-cancel"
               onClick={() => setDeskConfirm(null)}
             >
-              {i18nT(locale, 'ui.cancel')}
+              Cancel
             </button>
           </div>
         </div>
@@ -4819,7 +4783,7 @@ function App() {
                 onClick={() => runExport('pdf')}
                 disabled={exportBusy}
               >
-                {i18nT(locale, 'ui.downloadVectorPdf')}
+                Brand book PDF
               </button>
               <button
                 type="button"
@@ -4911,7 +4875,7 @@ function App() {
             audience: activeProject?.detective?.audience || '',
             pathDoneCount,
             nextGapLabel: pathNextGap
-              ? pathLabel(locale, pathNextGap.id) || pathNextGap.label
+              ? pathNextGap.label
               : '',
           }}
         />

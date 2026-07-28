@@ -1,5 +1,4 @@
 /** Focus timer — off-path tool. ADHD: one instrument, short CTAs. */
-import { normalizeLocale, t as i18nT, tFormat, pathLabel } from '../lib/i18n'
 import '../styles/lazy-sketch.css'
 
 export default function InsightsView(props) {
@@ -31,10 +30,8 @@ export default function InsightsView(props) {
     setTimerFocusSource,
     /** Journey view to restore when leaving Timer (not Sketch-by-default). */
     pathReturnView = 'project',
-    locale: localeProp = 'en',
   } = props
 
-  const locale = normalizeLocale(localeProp || prefs.locale || 'en')
   const fromResearch = timerFocusSource === 'research'
 
   const go = (view) => {
@@ -131,7 +128,7 @@ export default function InsightsView(props) {
           <div className="session-done">
             <p className="session-done-line">
               {fromResearch
-                ? i18nT(locale, 'ui.timerDoneIdeate') || 'Done · Ideate next'
+                ? 'Timer finished. Ideate is under Tools — or stay on Research.'
                 : 'Done'}
             </p>
             {fromResearch && (
@@ -141,9 +138,7 @@ export default function InsightsView(props) {
                   className="btn btn-secondary"
                   onClick={() => go('spark')}
                 >
-                  {tFormat(locale, 'ui.continueNext', {
-                    label: pathLabel(locale, 'ideate') || 'Ideate',
-                  })}
+                  {'Next · Ideate'}
                 </button>
               </div>
             )}

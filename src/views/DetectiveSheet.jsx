@@ -110,8 +110,7 @@ export default function DetectiveSheet({
   const setOpenChapter = onOpenChapter ?? setOpenChapterLocal
   const [focusField, setFocusField] = useState(null)
   const isMobile = useIsMobile()
-  /** Desktop split = one continuous master scroll; mobile split = accordion */
-  const accordion = !splitMode || isMobile
+  const accordion = true
 
   const progress = useMemo(() => getDetectiveProgress(detective), [detective])
   const chapterStats = progress.chapters

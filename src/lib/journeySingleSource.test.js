@@ -25,7 +25,6 @@ const SRC = new URL('..', import.meta.url).pathname
 const ALLOWED = new Set([
   'lib/journey.js', // the declaration itself
   'lib/journeySingleSource.test.js',
-  'lib/i18n.js', // translations ARE the labels, per locale
 ])
 
 function walk(dir, out = []) {
