@@ -262,6 +262,33 @@ or just show a warning. Do not build until asked. Run through the
 work is exactly the kind of thing that can wreck task initiation if the
 user is ready to start and the client hasn't signed yet.
 
+### Font packs — real typefaces beyond the built-in pairs
+Proposal from another session (pasted here 2026-07-28, not yet evaluated
+against this codebase's actual `TYPE_PAIRS`/artboard code). Two tiers:
+
+- **A) Catalog/pairing pack (light)** — a JSON list of heading/body pairs
+  referencing Google Font family IDs + a Google Fonts CSS URL. "Download
+  into the platform" = load the JSON (bundled, URL, or upload), write
+  `typeHeading`/`typeBody`, inject the Google CSS link for the session.
+  Preview-only — the artboard shows the real face, the brand-book PDF still
+  falls back to Helvetica unless the font is embedded separately.
+- **B) Self-hosted font pack (real files)** — a zip (`pack.json` metadata +
+  `fonts/*.woff2` + `license.txt`). User uploads the zip, browser unpacks,
+  files go to IndexedDB (or Supabase Storage when signed in), registered via
+  the `FontFace` API, pack id bound to the project. Needed for offline use,
+  licensing control, and eventually true PDF font embedding (base64 into
+  jsPDF — heavier, separate step from preview).
+
+Suggested order if built: (1) richer built-in `TYPE_PAIRS` + auto-load
+Google CSS on selection when online, (2) zip upload → IndexedDB + FontFace,
+(3) brand-kit export/import of `typography.json` (+ fonts if self-hosted).
+Rules noted for the file-pack format: WOFF2 only, one file per weight
+actually used (not the whole family), OFL/license-checked, pack under
+~1-2MB so mobile Identity stays snappy. Do not build until asked — not yet
+evaluated against this app's real data model, and needs an ADHD-lens pass
+on the import UI (a zip-upload flow with a metadata file is a place decision
+fatigue can hide if it's not just "pick a pack, done").
+
 ---
 
 ## Seven-agent Project overview audit — all 5 fix batches shipped (2026-07-26)
