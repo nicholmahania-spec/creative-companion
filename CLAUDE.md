@@ -11,6 +11,36 @@ npm test        # vitest unit tests
 npm run bump    # increment version in src/lib/version.js
 ```
 
+## Build rule — NEVER BUILD STAGED OR FAKE FEATURES
+
+**Everything must be real and functioning.** Stated directly by the owner,
+2026-07-28. This outranks finishing on time, finishing at all, and looking
+finished.
+
+A feature is not built until the thing it claims to do actually happens:
+
+- **No placeholder data.** No hard-coded sample rows, no `TODO: wire this up`,
+  no arrays of invented examples standing in for real records.
+- **No mock or stub responses presented as working.** If a call needs a
+  backend, an API key, or a migration that does not exist yet, the feature is
+  BLOCKED — say so and stop. Do not ship a version that looks alive.
+- **No UI in front of nothing.** A button that does not do its thing, a status
+  that is always the same value, a chart of made-up numbers, a panel bound to
+  a store field nothing ever writes — all of these are fake features. The
+  Promise/Proof bug is the canonical example in this repo: the brand book
+  rendered those tiles for months, reading a field NOTHING ever wrote.
+- **No claiming done without running it.** Tests pass, the build is green,
+  and where the change is observable it was actually observed. If it could
+  not be verified — the app is behind the login, Docker was not running, the
+  migration is unapplied — **say so plainly in the same breath as "done"**,
+  rather than letting "done" imply it.
+- **Half a real feature beats a whole fake one.** Ship the part that genuinely
+  works and name what is missing. Scaling the work down is the owner's call,
+  so surface it rather than papering over it.
+
+If something cannot be built for real right now, the answer is to say what is
+blocking it — not to build the shape of it and move on.
+
 ## Workflow rule — never assume, always confirm before touching code
 
 **Never make a design/placement/behavior decision on your own judgment and
@@ -19,6 +49,21 @@ earlier conversation, stop and ask for explicit confirmation before editing
 code — including follow-up fixes to something just discussed. The user has
 said this directly: "never assume. always ask for confirmation before
 touching the code." This applies to every change, not just large ones.
+
+**An explicit instruction scopes this, and only for the work it names.**
+Clarified by the owner 2026-07-28: *"ask unless I give you other
+instructions."* So "build all three", "next phase", "apply it" are real
+go-aheads — carry that piece out without stopping at every step inside it.
+But the permission ends with the piece of work it named. When it is done,
+come back and ask; do not roll into the next thing on your own read of what
+follows.
+
+The failure mode this exists to stop is momentum: a session where each
+single-word approval is treated as covering everything after it, and design
+decisions that were mine to *propose* get quietly *made* instead. That
+happened across the research phases on 2026-07-28 — where the client survey
+lived, whether the case study prints hours, whether writing guidelines
+default or stay blank. All defensible, none confirmed.
 
 ## Git workflow rule — version bump (MANUAL — hooks don't work here)
 
@@ -30,6 +75,13 @@ the right command for what the commit actually is:**
 
 Then `git add package.json package-lock.json` and commit — same commit,
 not a follow-up one.
+
+**Currently suspended, by the owner's instruction (2026-07-28):** bumps are
+being held until the research-phases work is finished, then done as a single
+`npm run bump:major`. The phase commits on `feat/research-phases-1-2`,
+`feat/phase-3-scope-revisions`, `feat/phase-4-touchpoints` and
+`feat/phase-6-case-study` therefore carry no bump of their own, and that is
+deliberate — do not "fix" them.
 
 **This used to be a git hook (`.githooks/prepare-commit-msg`). It is
 disabled and must not be re-enabled without testing first.** In this repo's
