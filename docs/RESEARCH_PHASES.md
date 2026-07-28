@@ -16,7 +16,7 @@
 |-------|------|--------|
 | 1 | Make the brand book tell the truth | **DONE** — `e39ba7e` + gap-close |
 | 2 | Get paid properly (invoice) | **DONE** — `bfc1c5c`, branch `feat/payable-invoice` |
-| 3 | Scope and revisions | **DONE** except item 8 (client survey) |
+| 3 | Scope and revisions | **DONE** — migration not yet applied |
 | 4 | Touchpoints becomes real | not started |
 | 5 | Contract | not started |
 | 6 | Case study export | not started |
@@ -72,7 +72,7 @@ Items 1, 2. The 11-point invoice checklist, plus line items that can be
 **flat-price or hourly**. `addTimeEntry` rejected anything without hours, so a
 fixed-fee project could not be invoiced honestly.
 
-### Phase 3 — Scope and revisions — items 3, 4, 5, 10, 9-half DONE
+### Phase 3 — Scope and revisions — DONE (items 3, 4, 5, 8, 10, 9-half)
 
 **Shipped 2026-07-28.** `src/lib/revisions.js` holds the counting rules;
 `ScopePanel` (Define) owns the checklist; `RevisionRounds` (Review) owns the
@@ -100,15 +100,33 @@ rounds and the feedback log.
 Nothing blocks. Reaching the revision limit changes what the app *says*, never
 what it lets you do.
 
-**Still open in this phase: item 8, the client survey** — deliberately not
-bolted on, and not dropped. A survey is a thing you send a client and collect
-answers back from, which is a third instance of the "create link / copy /
-poll for a response" shape the app already runs twice (`discovery_shares`,
-`client_portals`). The ADHD review of the contract feature named that exact
-pattern as the thing to avoid — a third parallel link system triples the
-"which link was that" working-memory tax. It should almost certainly ride on
-the existing portal rather than get its own, and that is a design decision
-worth making on purpose rather than at the end of a long phase.
+**Item 8, the client survey — DONE, on the existing portal.** The owner's
+call was "trust the ADHD review", so it is not a third link system: it is
+three columns on `client_portals`, one RPC, and a block on the portal page the
+client already has bookmarked. Same id, same RLS, same 30s poll.
+
+- `src/lib/clientSurvey.js` holds three question sets — partway through /
+  after handover / quarterly. **The moment picks the questions**; there is no
+  survey builder, because a blank question list is the blank-canvas paralysis
+  every other feature here was scoped down to avoid, and a badly-worded survey
+  is worse than none.
+- Rules pinned by tests, not by hoping: 5–10 questions per set, no catch-alls
+  (`/satisfied overall|rate us|how did we do/` is asserted absent — an answer
+  to those points at no fix), unique ids, and `review_clear` present in all
+  three sets so it can be compared across moments.
+- Answers come back **grouped by theme**, which is the article's whole point
+  about reading results: one complaint is a preference, the same theme twice
+  is a process gap.
+- Status is three states naming their own next action, never a date. The
+  scale is worded, not numbered.
+
+⚠️ **The migration has not been applied.** `20260728170000_client_portal_survey.sql`
+is written but not run against the remote database, so the feature is inert
+until it is. Note it **drops and recreates** `get_client_portal` — the return
+columns change, and Postgres refuses `create or replace` in that case — so
+there is a brief window during which the public portal page cannot load.
+It was also not validated against a real Postgres: Docker was not running on
+this machine.
 
 ### Phase 4 — Touchpoints becomes real
 
@@ -168,7 +186,7 @@ parked item was not recovered.** Ask before assuming nothing is missing.
 | 5 | Feedback log: Reviewer / Issue / Decision / Status | style guide | — → **done P3** |
 | 6 | Contract: 9 sections, generated from brief | contract | — |
 | 7 | Trademark / name check before design | brand identity | — |
-| 8 | Client survey: mid-project, post, retainer | survey | — · **still open**, see Phase 3 |
+| 8 | Client survey: mid-project, post, retainer | survey | — → **done P3**, on the existing portal |
 | 9 | Onboarding stage: welcome, expectations, **one decision-maker** | onboarding | — · decision-maker **done P3**, rest open |
 | 10 | Scope checklist: deliverables, revision count as a number, formats, decision-maker, out-of-scope | PM | partial → **done P3** |
 | 11 | Portal: "what's next", contract reference, document hub, review scheduling | portal + ClickUp | partial |

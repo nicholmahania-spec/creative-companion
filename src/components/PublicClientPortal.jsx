@@ -17,7 +17,9 @@ import {
   postClientPortalMessage,
   respondToPortalStep,
   submitClientPortalForm,
+  submitClientPortalSurvey,
 } from '../lib/clientPortal'
+import { SURVEY_SCALE } from '../lib/clientSurvey'
 import '../styles/lazy-clients.css'
 import '../styles/lazy-define.css'
 
@@ -31,6 +33,8 @@ export default function PublicClientPortal({ portalId }) {
   const [formAnswers, setFormAnswers] = useState({})
   const [formSubmitting, setFormSubmitting] = useState(false)
   const [noteDrafts, setNoteDrafts] = useState({})
+  const [surveyAnswers, setSurveyAnswers] = useState({})
+  const [surveySubmitting, setSurveySubmitting] = useState(false)
   const chatEndRef = useRef(null)
 
   const load = async () => {
@@ -114,6 +118,19 @@ export default function PublicClientPortal({ portalId }) {
     setFormSubmitting(true)
     const r = await submitClientPortalForm(portalId, formAnswers)
     setFormSubmitting(false)
+    if (!r.ok) {
+      setError(clientFacingError(r.error))
+      return
+    }
+    await load()
+  }
+
+  const submitSurvey = async (e) => {
+    e.preventDefault()
+    setError('')
+    setSurveySubmitting(true)
+    const r = await submitClientPortalSurvey(portalId, surveyAnswers)
+    setSurveySubmitting(false)
     if (!r.ok) {
       setError(clientFacingError(r.error))
       return
@@ -249,6 +266,71 @@ export default function PublicClientPortal({ portalId }) {
                 </button>
               </form>
             )}
+          </div>
+        )}
+
+        {/* Survey — the same portal, below the form. Not a separate link, not
+            an email: the client already has this page bookmarked. */}
+        {portal.surveyStatus === 'sent' && portal.surveyQuestions.length > 0 && (
+          <div className="client-portal-form-block">
+            <h2 className="client-portal-subhead">A few quick questions</h2>
+            <form onSubmit={submitSurvey}>
+              <p className="public-fill-lede">
+                Honest answers help more than kind ones. Skip anything you'd
+                rather not answer.
+              </p>
+              {portal.surveyQuestions.map((q) => (
+                <div className="field-block" key={q.id}>
+                  <label className="field-label" htmlFor={`sv-${q.id}`}>
+                    {q.text}
+                  </label>
+                  {q.type === 'scale' ? (
+                    <select
+                      id={`sv-${q.id}`}
+                      className="field-input"
+                      value={surveyAnswers[q.id] || ''}
+                      onChange={(e) =>
+                        setSurveyAnswers((a) => ({ ...a, [q.id]: e.target.value }))
+                      }
+                    >
+                      <option value="">—</option>
+                      {SURVEY_SCALE.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <textarea
+                      id={`sv-${q.id}`}
+                      className="field-input"
+                      rows={2}
+                      value={surveyAnswers[q.id] || ''}
+                      onChange={(e) =>
+                        setSurveyAnswers((a) => ({ ...a, [q.id]: e.target.value }))
+                      }
+                    />
+                  )}
+                </div>
+              ))}
+              {error && <p className="public-fill-error">{error}</p>}
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={surveySubmitting}
+              >
+                {surveySubmitting ? 'Sending…' : 'Send answers'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {portal.surveyStatus === 'submitted' && (
+          <div className="client-portal-form-block">
+            <h2 className="client-portal-subhead">A few quick questions</h2>
+            <p className="public-fill-status">
+              Thanks — your answers are in.
+            </p>
           </div>
         )}
 

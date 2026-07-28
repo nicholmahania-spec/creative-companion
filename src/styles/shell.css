@@ -7886,6 +7886,33 @@ select:focus {
   margin-top: 0.85rem;
 }
 
+/* Client survey answers — studio side, grouped by theme */
+
+.survey-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.survey-theme {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.survey-answer-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+}
+.survey-answer-q {
+  color: var(--text-secondary);
+}
+.survey-answer-a {
+  font-weight: 600;
+}
+
 /* Scope panel — Define. Closed by default; a line, not a dashboard. */
 
 .scope-panel {

@@ -19,11 +19,19 @@ import {
   clientPortalUrl,
   createClientPortal,
   fetchPortalStudioView,
+  sendPortalSurvey,
   fetchStudioMessages,
   postStudioMessage,
   setPortalDetectiveAnswers,
   setPortalStepVisibility,
 } from '../lib/clientPortal'
+import {
+  SURVEY_KINDS,
+  surveyQuestions,
+  surveyLine,
+  surveyKindLabel,
+  groupAnswers,
+} from '../lib/clientSurvey'
 import '../styles/lazy-define.css'
 import '../styles/lazy-clients.css'
 
@@ -265,6 +273,7 @@ function PortalMode({
   const [loaded, setLoaded] = useState(false)
   const [busyStep, setBusyStep] = useState(null)
   const [sendingForm, setSendingForm] = useState(false)
+  const [sendingSurvey, setSendingSurvey] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)
 
   const refresh = useCallback(async () => {
@@ -336,6 +345,18 @@ function PortalMode({
       return
     }
     flashMicro?.('Form sent to client')
+    refresh()
+  }
+
+  const sendSurvey = async (kind) => {
+    setSendingSurvey(true)
+    const r = await sendPortalSurvey(portalId, kind, surveyQuestions(kind))
+    setSendingSurvey(false)
+    if (!r.ok) {
+      flashToast?.(r.error || 'Couldn’t send the survey')
+      return
+    }
+    flashMicro?.('Survey sent to client')
     refresh()
   }
 
@@ -523,6 +544,48 @@ function PortalMode({
                 Review client’s answers
               </button>
             )}
+          </div>
+
+          {/* Survey — same portal, one gesture. Picking the moment picks the
+              questions and sends them; there is no draft step and no question
+              editor, because a blank survey builder is the blank canvas every
+              other feature here was scoped down to avoid. */}
+          <p className="client-portal-subhead">{surveyLine(portal?.survey_status)}</p>
+          {portal?.survey_status === 'submitted' ? (
+            <div className="survey-answers">
+              <p className="discovery-brief-hint">
+                {surveyKindLabel(portal?.survey_kind)} — grouped by what each
+                answer is about. One complaint is a preference; the same theme
+                twice is a process gap.
+              </p>
+              {groupAnswers(portal?.survey_kind, portal?.survey_answers || {}).map(
+                (g) => (
+                  <div key={g.theme} className="survey-theme">
+                    <span className="define-field-label">{g.theme}</span>
+                    {g.items.map((it) => (
+                      <p key={it.id} className="survey-answer-row">
+                        <span className="survey-answer-q">{it.text}</span>
+                        <span className="survey-answer-a">{it.answer}</span>
+                      </p>
+                    ))}
+                  </div>
+                )
+              )}
+            </div>
+          ) : null}
+          <div className="discovery-brief-handoff-actions">
+            {SURVEY_KINDS.map((k) => (
+              <button
+                key={k.id}
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={sendingSurvey}
+                title={k.blurb}
+                onClick={() => sendSurvey(k.id)}
+              >
+                {portal?.survey_status === 'not_sent' ? k.label : `Send ${k.label.toLowerCase()}`}
+              </button>
+            ))}
           </div>
 
           <p className="client-portal-subhead">Messages</p>
