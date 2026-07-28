@@ -7473,44 +7473,59 @@ select:focus {
     top: 58px !important;
   }
 
-  /* Sidebar = slide-out drawer. Must share main's grid area — without a
-     named area, auto-placement creates a second column (white strip). */
+  /* Was a slide-out drawer from the left edge — the one popup pattern
+     CLAUDE.md's own rule rejects ("I do not like popups that come from the
+     bottom or top... I need things front and center"). A side-slide reads
+     the same to a hand on a phone. Now a centered dialog like everything
+     else in the app: fixed + flex-centered within the scrim below the
+     header, sized and shadowed like a real card, opacity/scale in rather
+     than translateX. Must still share main's grid area — without a named
+     area, auto-placement creates a second column (white strip). */
   .app-shell > .journey-sidebar {
     grid-area: main !important;
     position: fixed !important;
     top: 52px;
     left: 0;
+    right: 0;
     bottom: 0;
     z-index: 60 !important;
-    width: 240px !important;
-    max-width: 82vw !important;
-    height: calc(100dvh - 52px) !important;
-    height: calc(100vh - 52px) !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    transform: translateX(-100%);
-    transition: transform 0.22s ease;
+    justify-content: flex-start !important;
+    margin: auto !important;
+    inset: 52px 1rem auto 1rem !important;
+    max-height: min(70vh, 32rem) !important;
     background: var(--ts-panel, #F9F9F9) !important;
-    border-right: 1px solid var(--ts-border, #E7E7E7) !important;
-    border-bottom: none !important;
-    box-shadow: 2px 0 16px rgba(23, 23, 23, 0.14) !important;
+    border: 1px solid var(--ts-border, #E7E7E7) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: 0 12px 32px rgba(23, 23, 23, 0.22) !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
     padding: 0.75rem 0 !important;
+    opacity: 0;
+    transform: scale(0.97);
+    transition: opacity 0.16s ease, transform 0.16s ease;
     pointer-events: none;
   }
   .app-shell.nav-open > .journey-sidebar {
-    transform: translateX(0);
+    opacity: 1;
+    transform: scale(1);
     pointer-events: auto;
   }
   .app.deep .app-shell > .journey-sidebar {
     background: var(--bg-elevated, #252525) !important;
-    border-right-color: var(--border-subtle) !important;
+    border-color: var(--border-subtle) !important;
   }
+  /* The step checklist duplicated what the persistent rail (un-hidden on
+     mobile below) now shows on every screen without opening anything —
+     two copies of "where am I" is exactly the class of drift CLAUDE.md
+     warns about. Dialog keeps the project switcher only. */
   .journey-sidebar .journey-bar-list {
-    flex-direction: column !important;
-    width: auto !important;
-    padding: 0 0.55rem !important;
+    display: none !important;
   }
   .journey-sidebar .journey-step {
     flex-direction: row !important;
@@ -8762,9 +8777,46 @@ textarea.artboard-brief-input {
   }
 }
 
-/* Rail is desktop-only chrome — the drawer still carries the steps below. */
+/* The rail is how the whole page answers "where am I / what's next"
+   without opening anything — it used to be desktop-only, with mobile
+   falling back to the step checklist behind the drawer, invisible until
+   opened. On mobile there's no room for all five step pills (same class
+   of overflow the Tools-menu fix hit), so show only the active one. */
 @media (max-width: 767px) {
-  .step-rail { display: none; }
+  .step-rail {
+    /* Same grid this app-shell uses on mobile ('header' 'hud' 'main'
+       'footer') — with no area assigned, .step-rail auto-placed itself far
+       down the page instead of the row right after the header. `hud` sits
+       exactly there and is normally empty (GameHUD is opt-in, off by
+       default), so this is the free slot to use rather than a new one. */
+    grid-area: hud !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+  /* The desktop .step-rail-list reset (list-style/margin/padding) lives in
+     the min-width:768px block, since mobile never rendered this <ol> before
+     now — without it the UA default decimal numbering and list-item marker
+     box show through here. */
+  .step-rail-list {
+    flex-wrap: nowrap !important;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .step-rail-list li { list-style: none; }
+  .step-rail-list li:has(.step-rail-step:not(.is-active)) { display: none; }
+  .step-rail-step.is-active {
+    font-size: var(--fs-2);
+    border-bottom: none;
+    white-space: nowrap;
+  }
+  .step-rail-cta {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.7rem;
+  }
 }
 
 /* Destructive Tools entry — red is reserved for exactly this. */
