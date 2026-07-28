@@ -84,10 +84,12 @@ export default function PathStepIcon({ id, className = '' }) {
   )
 }
 
-/** Circular progress ring for N/7 path completion (uses existing accent tokens). */
+/** Circular progress ring for N-of-M progress (uses existing accent tokens).
+ *  `max` has no sensible default — it was 7, the pre-Tools path length, which
+ *  silently under-filled any ring that relied on it. Callers pass their own. */
 export function ProgressRing({
   value = 0,
-  max = 7,
+  max = 1,
   size = 36,
   stroke = 3.5,
   className = '',

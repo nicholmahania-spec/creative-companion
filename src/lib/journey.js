@@ -130,3 +130,15 @@ export function getNextJourney(view) {
   if (!step?.nextView) return null
   return JOURNEY_STEPS.find((s) => s.view === step.nextView) || null
 }
+
+/**
+ * How many stops the path has.
+ *
+ * Exported so nothing has to restate it. The completion gates and the "N/M"
+ * readouts each hard-coded 7 — the count from before Ideate and Review moved
+ * under Tools — while the rows they counted came from JOURNEY_STEPS, which
+ * has five. `doneCount` could therefore never reach the threshold: a fully
+ * finished project reported 5/7, "Path full" and "Ready" were unreachable
+ * states, and the app could only ever tell you what was still missing.
+ */
+export const PATH_STEP_COUNT = JOURNEY_STEPS.length

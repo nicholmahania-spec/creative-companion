@@ -71,6 +71,7 @@ import {
 import { awardAndBroadcast } from './lib/buddyGame'
 import {
   JOURNEY_STEPS,
+  PATH_STEP_COUNT,
   journeyIdForView,
   getNextJourney,
   toolsLabelForView,
@@ -699,7 +700,7 @@ function App() {
     if (!thisStepId) return null
     return pathStepHasContent(thisStepId, pathProgressCtx)
   }, [thisStepId, pathProgressCtx])
-  /** Leave-behind can still be thin when path N/7 looks full */
+  /** Leave-behind can still be thin when every path step looks full */
   const leaveBehindThin = useMemo(() => {
     const pack = buildBrandPackSnapshot({
       project: activeProject,
@@ -710,7 +711,7 @@ function App() {
     return !!packReadiness(pack).thin
   }, [activeProject, deskTasks, deskMood, projectPalette])
   /** Path steps full ≠ pack ready — Home must not overclaim ship readiness. */
-  const pathStepsFull = pathDoneCount >= 7
+  const pathStepsFull = pathDoneCount >= PATH_STEP_COUNT
   const brandBookReady = pathStepsFull && !leaveBehindThin
   const completedCount = doneTasks.length
 
@@ -1018,8 +1019,8 @@ function App() {
           rows,
           doneCount,
           nextGap: pathFirstGap(JOURNEY_STEPS, ctx),
-          pathFull: doneCount >= 7,
-          packReady: doneCount >= 7 && !packThin,
+          pathFull: doneCount >= PATH_STEP_COUNT,
+          packReady: doneCount >= PATH_STEP_COUNT && !packThin,
         }
       }),
     [activeProjects, moodItems, tasks, sparkIndex]
@@ -3521,7 +3522,7 @@ function App() {
               {projectsSummary.map(({ project: p, doneCount, nextGap }) => {
                 const isActive = p.id === activeProjectId
                 const menuOpen = openProjectMenuId === p.id
-                // A named next action beats a ratio: "1/7" has to be decoded
+                // A named next action beats a ratio: "1/5" has to be decoded
                 // into a meaning and still doesn't say what to do.
                 const nextLabel = nextGap
                   ? `Next: ${pathLabel(locale, nextGap.id) || nextGap.label}`
@@ -3537,7 +3538,7 @@ function App() {
                       <span className="journey-project-row-name">{p.name}</span>
                       <span className="journey-project-row-next">{nextLabel}</span>
                       <span className="journey-project-row-count">
-                        {doneCount}/7
+                        {doneCount}/{PATH_STEP_COUNT}
                       </span>
                     </button>
                     <div className="journey-project-row-menu-wrap">
@@ -3770,7 +3771,7 @@ function App() {
                           <span className="home-md-row-top">
                             <span className="home-md-row-name">{p.name}</span>
                             <span className="home-md-row-count">
-                              {doneCount}/7
+                              {doneCount}/{PATH_STEP_COUNT}
                             </span>
                           </span>
                           <span
@@ -3829,7 +3830,7 @@ function App() {
 
                 <div className="home-md-strip">
                   <p className="home-md-strip-label">
-                    {selected.doneCount}/7
+                    {selected.doneCount}/{PATH_STEP_COUNT}
                   </p>
                   <div className="home-md-steps">
                     {selected.rows.map((r, i) => {
