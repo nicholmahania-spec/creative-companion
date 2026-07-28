@@ -268,7 +268,7 @@ export async function downloadBrandPackVectorPdf(
       pdf.setFontSize(8)
       pdf.setTextColor(color[0], color[1], color[2])
       pdf.text(pdfSafeText(String(text).toUpperCase()), margin, y)
-      y += 18
+      y += 14
     }
 
     const pageHead = (title, sub) => {
@@ -277,27 +277,27 @@ export async function downloadBrandPackVectorPdf(
       pdf.rect(0, 0, pageW, 8, 'F')
       pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
       pdf.rect(0, 0, 8, pageH, 'F')
-      y = margin + 8
+      y = margin + 6
       sectionLabel('Brand system')
       pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(26)
+      pdf.setFontSize(24)
       pdf.setTextColor(20, 18, 17)
       pdf.text(pdfSafeText(title), margin, y)
-      y += 22
+      y += 18
       if (sub) {
         pdf.setFont('helvetica', 'normal')
-        pdf.setFontSize(11)
+        pdf.setFontSize(10)
         pdf.setTextColor(90, 90, 90)
         const lines = pdf.splitTextToSize(pdfSafeText(sub), contentW)
         pdf.text(lines, margin, y)
-        y += lines.length * 14 + 12
+        y += lines.length * 13 + 8
       } else {
-        y += 8
+        y += 6
       }
       pdf.setDrawColor(220, 220, 220)
       pdf.setLineWidth(0.6)
       pdf.line(margin, y, margin + contentW, y)
-      y += 20
+      y += 14
     }
 
     // ═══════════════════════════════════════════════
@@ -369,21 +369,21 @@ export async function downloadBrandPackVectorPdf(
 
     // Tagline hero
     pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
-    pdf.roundedRect(margin, y, contentW, 88, 8, 8, 'F')
+    pdf.roundedRect(margin, y, contentW, 76, 8, 8, 'F')
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
-    pdf.text('TAGLINE', margin + 20, y + 24)
+    pdf.text('TAGLINE', margin + 18, y + 22)
     pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(18)
+    pdf.setFontSize(17)
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
-    const tBig = pdf.splitTextToSize(pdfSafeText(tag), contentW - 40)
-    pdf.text(tBig.slice(0, 2), margin + 20, y + 50)
-    y += 104
+    const tBig = pdf.splitTextToSize(pdfSafeText(tag), contentW - 36)
+    pdf.text(tBig.slice(0, 2), margin + 18, y + 46)
+    y += 90
 
-    // 2×2 personality / pillars
+    // 2×2 personality / pillars — tall enough for 4 lines so voice isn't clipped
     const cellW = (contentW - 12) / 2
-    const cellH = 78
+    const cellH = 104
     const tiles = [
       {
         label: 'Promise',
@@ -414,19 +414,19 @@ export async function downloadBrandPackVectorPdf(
       const col = i % 2
       const row = Math.floor(i / 2)
       const x = margin + col * (cellW + 12)
-      const yy = y + row * (cellH + 12)
+      const yy = y + row * (cellH + 10)
       pdf.setFillColor(tile.bg[0], tile.bg[1], tile.bg[2])
       pdf.roundedRect(x, yy, cellW, cellH, 6, 6, 'F')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(8)
       pdf.setTextColor(tile.ink[0], tile.ink[1], tile.ink[2])
-      pdf.text(tile.label.toUpperCase(), x + 14, yy + 20)
+      pdf.text(tile.label.toUpperCase(), x + 14, yy + 18)
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(10)
       const bl = pdf.splitTextToSize(pdfSafeText(tile.body), cellW - 28)
-      pdf.text(bl.slice(0, 3), x + 14, yy + 38)
+      pdf.text(bl.slice(0, 4), x + 14, yy + 36)
     })
-    y += 2 * (cellH + 12) + 16
+    y += 2 * (cellH + 10) + 14
 
     // One-line decision if any
     if (decision) {
@@ -434,7 +434,7 @@ export async function downloadBrandPackVectorPdf(
       pdf.setFontSize(8)
       pdf.setTextColor(100, 100, 100)
       pdf.text('DIRECTION DECISION', margin, y)
-      y += 14
+      y += 12
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(11)
       pdf.setTextColor(30, 28, 27)
@@ -464,12 +464,17 @@ export async function downloadBrandPackVectorPdf(
       }
 
       chapters.forEach((ch) => {
-        ensureRoom(34)
+        ensureRoom(28)
         sectionLabel(`${ch.num} · ${ch.title}`)
 
         ch.rows.forEach((row) => {
+          // Compact field rhythm: question → tip → answer box, tight gaps
+          // so a full brief doesn't sprawl into half-empty pages.
+          const qLh = 13
+          const tipLh = 11
+          const ansLh = 13
           pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(11)
+          pdf.setFontSize(10)
           const qLines = pdf.splitTextToSize(pdfSafeText(row.label), contentW)
           // A dozen tips already open with "e.g." in the schema — don't
           // double it.
@@ -482,38 +487,52 @@ export async function downloadBrandPackVectorPdf(
             ? pdf.splitTextToSize(pdfSafeText(tipText), contentW)
             : []
           pdf.setFont('helvetica', 'normal')
-          pdf.setFontSize(11)
+          pdf.setFontSize(10)
           const ansLines = pdf
-            .splitTextToSize(pdfSafeText(row.answer), contentW - 24)
-            .slice(0, 6)
+            .splitTextToSize(pdfSafeText(row.answer), contentW - 20)
+            .slice(0, 5)
 
-          const boxH = ansLines.length * 14 + 16
+          // Single-line answers get a slim chip; multi-line keep readable pad
+          const boxPadY = ansLines.length <= 1 ? 7 : 9
+          const boxH = Math.max(
+            26,
+            ansLines.length * ansLh + boxPadY * 2
+          )
           const blockH =
-            qLines.length * 14 + (tipLines.length ? tipLines.length * 11 + 4 : 0) + 10 + boxH + 16
+            qLines.length * qLh +
+            (tipLines.length ? tipLines.length * tipLh + 2 : 0) +
+            3 +
+            boxH +
+            8
           ensureRoom(blockH)
 
           pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(11)
+          pdf.setFontSize(10)
           pdf.setTextColor(20, 18, 17)
           pdf.text(qLines, margin, y)
-          y += qLines.length * 14
+          y += qLines.length * qLh
 
           if (tipLines.length) {
             pdf.setFont('helvetica', 'normal')
             pdf.setFontSize(9)
             pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
             pdf.text(tipLines, margin, y)
-            y += tipLines.length * 11 + 4
+            y += tipLines.length * tipLh + 2
           }
-          y += 6
+          y += 3
 
           pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
           pdf.roundedRect(margin, y, contentW, boxH, 4, 4, 'F')
           pdf.setFont('helvetica', 'normal')
-          pdf.setFontSize(11)
+          pdf.setFontSize(10)
           pdf.setTextColor(inkOnQuiet[0], inkOnQuiet[1], inkOnQuiet[2])
-          pdf.text(ansLines, margin + 12, y + 18)
-          y += boxH + 16
+          // Vertically center single-line text; multi-line starts after pad
+          const textY =
+            ansLines.length <= 1
+              ? y + boxH / 2 + 3.5
+              : y + boxPadY + 9
+          pdf.text(ansLines, margin + 10, textY)
+          y += boxH + 8
         })
       })
     }
@@ -524,9 +543,9 @@ export async function downloadBrandPackVectorPdf(
     newPage()
     pageHead('Logo system', 'Primary lockups, reverse, mono, and clearspace.')
 
-    const lockW = (contentW - 14) / 2
-    const lockH = 120
-    const markSize = 48
+    const lockW = (contentW - 12) / 2
+    const lockH = 132
+    const markSize = 52
 
     const lockup = (x, yy, w, h, label, bg, ink, border) => {
       pdf.setFillColor(bg[0], bg[1], bg[2])
@@ -549,11 +568,11 @@ export async function downloadBrandPackVectorPdf(
     }
 
     lockup(margin, y, lockW, lockH, 'Primary', quietRgb, inkOnQuiet, [220, 220, 220])
-    lockup(margin + lockW + 14, y, lockW, lockH, 'Reverse', coverRgb, fgRgb, null)
-    y += lockH + 12
+    lockup(margin + lockW + 12, y, lockW, lockH, 'Reverse', coverRgb, fgRgb, null)
+    y += lockH + 10
     lockup(margin, y, lockW, lockH, 'Mono', [255, 255, 255], [28, 25, 23], [200, 200, 200])
-    lockup(margin + lockW + 14, y, lockW, lockH, 'On accent', accentRgb, inkOnAccent, null)
-    y += lockH + 20
+    lockup(margin + lockW + 12, y, lockW, lockH, 'On accent', accentRgb, inkOnAccent, null)
+    y += lockH + 14
 
     // Clearspace + don'ts row
     const cs = 64
@@ -582,29 +601,29 @@ export async function downloadBrandPackVectorPdf(
       margin + 112,
       y + 78
     )
-    y += 112
+    y += 100
 
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     pdf.setTextColor(100, 100, 100)
     pdf.text("DON'T", margin, y)
-    y += 12
+    y += 10
     const avoidW = (contentW - 16) / 3
     ;['Stretch', 'Recolor wild', 'Low contrast'].forEach((lab, i) => {
       const x = margin + i * (avoidW + 8)
       pdf.setFillColor(252, 246, 246)
       pdf.setDrawColor(210, 170, 170)
-      pdf.roundedRect(x, y, avoidW, 36, 4, 4, 'FD')
+      pdf.roundedRect(x, y, avoidW, 32, 4, 4, 'FD')
       // strike visual
       pdf.setDrawColor(180, 80, 80)
       pdf.setLineWidth(1.2)
-      pdf.line(x + 10, y + 18, x + avoidW - 10, y + 18)
+      pdf.line(x + 10, y + 16, x + avoidW - 10, y + 16)
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(8)
       pdf.setTextColor(153, 27, 27)
-      pdf.text(lab.toUpperCase(), x + 10, y + 16)
+      pdf.text(lab.toUpperCase(), x + 10, y + 14)
     })
-    y += 48
+    y += 40
 
     // ═══════════════════════════════════════════════
     // 5. COLOR SYSTEM — designed spread
@@ -627,7 +646,7 @@ export async function downloadBrandPackVectorPdf(
         pdf.setTextColor(labInk[0], labInk[1], labInk[2])
         pdf.text(String(hex).toUpperCase(), x + 8, y + swH - 14)
       })
-      y += swH + 24
+      y += swH + 16
     }
 
     // Role rows as full-width bars
@@ -635,11 +654,11 @@ export async function downloadBrandPackVectorPdf(
       const rgb = hexToRgb(row.hex) || [136, 136, 136]
       const ink = hexToRgb(bestTextOn(row.hex)) || [255, 255, 255]
       pdf.setFillColor(rgb[0], rgb[1], rgb[2])
-      pdf.roundedRect(margin, y, contentW, 44, 4, 4, 'F')
+      pdf.roundedRect(margin, y, contentW, 40, 4, 4, 'F')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(11)
       pdf.setTextColor(ink[0], ink[1], ink[2])
-      pdf.text(row.role.toUpperCase(), margin + 14, y + 18)
+      pdf.text(row.role.toUpperCase(), margin + 14, y + 16)
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(8)
       pdf.text(
@@ -647,24 +666,24 @@ export async function downloadBrandPackVectorPdf(
           `${row.hex}  ·  ${row.rgb || ''}  ·  ${ROLE_JOBS[row.role] || row.job || ''}`
         ),
         margin + 14,
-        y + 34
+        y + 30
       )
-      y += 52
+      y += 46
     })
 
     // AA pairs compact
     if (colorSys.passPairs?.length) {
-      y += 4
+      y += 2
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(8)
       pdf.setTextColor(100, 100, 100)
       pdf.text('AA PASS PAIRS (BODY >= 4.5:1)', margin, y)
-      y += 14
+      y += 12
       colorSys.passPairs.slice(0, 6).forEach((p) => {
         const fg = hexToRgb(p.fg) || [0, 0, 0]
         const bg = hexToRgb(p.bg) || [255, 255, 255]
         pdf.setFillColor(bg[0], bg[1], bg[2])
-        pdf.roundedRect(margin, y, 32, 16, 2, 2, 'F')
+        pdf.roundedRect(margin, y, 32, 15, 2, 2, 'F')
         pdf.setFont('helvetica', 'bold')
         pdf.setFontSize(8)
         pdf.setTextColor(fg[0], fg[1], fg[2])
@@ -677,7 +696,7 @@ export async function downloadBrandPackVectorPdf(
           margin + 40,
           y + 11
         )
-        y += 20
+        y += 18
       })
     }
 
@@ -694,56 +713,56 @@ export async function downloadBrandPackVectorPdf(
     pdf.setFontSize(8)
     pdf.setTextColor(100, 100, 100)
     pdf.text('HEADING', margin, y)
-    y += 28
+    y += 22
     pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(32)
+    pdf.setFontSize(28)
     pdf.setTextColor(20, 18, 17)
     pdf.text(pdfSafeText(pack?.typeHeading || 'Heading face'), margin, y)
-    y += 28
-    pdf.setFontSize(18)
+    y += 24
+    pdf.setFontSize(16)
     pdf.text('The quick brown fox jumps over the lazy dog.', margin, y)
-    y += 36
+    y += 28
 
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     pdf.setTextColor(100, 100, 100)
     pdf.text('BODY', margin, y)
-    y += 18
+    y += 16
     pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(14)
+    pdf.setFontSize(13)
     pdf.setTextColor(40, 40, 40)
     pdf.text(pdfSafeText(pack?.typeBody || 'Body face'), margin, y)
-    y += 20
+    y += 18
     const bodySample = pdf.splitTextToSize(
       'Body copy should stay calm and readable. Hierarchy beats decoration. Keep line length comfortable and reserve accent color for actions.',
       contentW
     )
     pdf.setFontSize(11)
     pdf.text(bodySample, margin, y)
-    y += bodySample.length * 15 + 24
+    y += bodySample.length * 14 + 18
 
     // Scale as designed rows
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     pdf.setTextColor(100, 100, 100)
     pdf.text('TYPE SCALE', margin, y)
-    y += 16
+    y += 12
     TYPE_SCALE.forEach((row) => {
       pdf.setFillColor(250, 250, 249)
-      pdf.roundedRect(margin, y, contentW, 28, 3, 3, 'F')
+      pdf.roundedRect(margin, y, contentW, 26, 3, 3, 'F')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(11)
       pdf.setTextColor(20, 18, 17)
-      pdf.text(row.label, margin + 12, y + 18)
+      pdf.text(row.label, margin + 12, y + 17)
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(9)
       pdf.setTextColor(80, 80, 80)
       pdf.text(
         pdfSafeText(`${row.size} · ${row.weight} — ${row.use}`),
         margin + 90,
-        y + 18
+        y + 17
       )
-      y += 34
+      y += 30
     })
 
     // ═══════════════════════════════════════════════
@@ -772,20 +791,20 @@ export async function downloadBrandPackVectorPdf(
           pdf.setTextColor(40, 40, 40)
           const lines = pdf.splitTextToSize(pdfSafeText(r), contentW)
           pdf.text(lines, margin, y)
-          y += lines.length * 13 + 6
+          y += lines.length * 12 + 4
         })
-        y += 10
+        y += 8
       }
       if (pins.length) {
         const cols = 3
         const gap = 10
         const cellW = (contentW - gap * (cols - 1)) / cols
-        const cellH = 110
+        const cellH = 124
         pins.slice(0, 6).forEach((pin, i) => {
           const col = i % cols
           const row = Math.floor(i / cols)
           const x = margin + col * (cellW + gap)
-          const yy = y + row * (cellH + 28)
+          const yy = y + row * (cellH + 22)
           pdf.setFillColor(245, 245, 244)
           pdf.setDrawColor(220, 220, 220)
           pdf.roundedRect(x, yy, cellW, cellH, 4, 4, 'FD')
@@ -828,12 +847,12 @@ export async function downloadBrandPackVectorPdf(
 
     // --- Business card ---
     const cardW = contentW * 0.55
-    const cardH = 108
+    const cardH = 120
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     pdf.setTextColor(100, 100, 100)
     pdf.text('BUSINESS CARD', margin, y)
-    y += 10
+    y += 8
     pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
     pdf.setDrawColor(210, 210, 210)
     pdf.roundedRect(margin, y, cardW, cardH, 6, 6, 'FD')
@@ -885,16 +904,16 @@ export async function downloadBrandPackVectorPdf(
     pdf.setFontSize(7)
     pdf.setTextColor(inkOnAccent[0], inkOnAccent[1], inkOnAccent[2])
     pdf.text('SHOP', socX + 26, y + cardH - 17)
-    y += cardH + 28
+    y += cardH + 22
 
     // --- Packaging / bag mock ---
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     pdf.setTextColor(100, 100, 100)
     pdf.text('PACKAGING', margin, y)
-    y += 10
+    y += 8
     const bagW = contentW * 0.42
-    const bagH = 160
+    const bagH = 188
     // bag body
     pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
     pdf.setDrawColor(200, 200, 200)
