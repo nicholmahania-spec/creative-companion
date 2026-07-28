@@ -14,6 +14,7 @@ import {
 } from './brandSystem'
 import { filledDetectiveChapters } from './detectiveBrief'
 import { pinVisualKind } from './moodPins'
+import { touchpointsFor, touchpointsBlurb } from './touchpoints'
 import { slugifyFilename, downloadBlob, writeToSaveHandle } from './exportFiles'
 
 // ── Shared PDF text / image helpers (WinAnsi-safe + raster only) ─────────
@@ -1004,130 +1005,314 @@ export async function downloadBrandPackVectorPdf(
     // ═══════════════════════════════════════════════
     // 8. APPLICATIONS — the heart of the book
     // ═══════════════════════════════════════════════
-    newPage()
-    pageHead(
-      'Applications',
-      'Proof of system — how the brand shows up in the world.'
+    /* This page used to draw the same four mocks for every project — card,
+       social, packaging, signage — whatever the brand was actually for. An
+       app-only brand got a carrier bag; a bakery got a social tile it had no
+       account for. Meanwhile "Where will this be used?" was asked in the
+       brief and consumed by nothing.
+
+       Each mock is now a renderer keyed by touchpoint, and `touchpointsFor`
+       decides which ones run. Every renderer draws inside the box it is
+       handed and reads nothing about page position, so the layout loop below
+       owns all the coordinates — the crisp-coordinate bug that painted the
+       Direction tiles on top of each other came from exactly the opposite
+       arrangement. */
+    const chosenTouchpoints = touchpointsFor(
+      pack?.brandSurfaces,
+      pack?.detective?.deliverablesPicked
     )
 
-    // --- Business card ---
-    const cardW = contentW * 0.55
-    const cardH = 120
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(8)
-    pdf.setTextColor(100, 100, 100)
-    pdf.text('BUSINESS CARD', margin, y)
-    y += 8
-    pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
-    pdf.setDrawColor(210, 210, 210)
-    pdf.roundedRect(margin, y, cardW, cardH, 6, 6, 'FD')
-    pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
-    pdf.rect(margin, y, 8, cardH, 'F')
-    pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
-    pdf.rect(margin + cardW - 56, y, 56, cardH, 'F')
-    tryLogo(margin + cardW - 44, y + 18, 32, fgRgb)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(12)
-    pdf.setTextColor(inkOnQuiet[0], inkOnQuiet[1], inkOnQuiet[2])
-    pdf.text(pdfSafeText(wordmark).slice(0, 26), margin + 20, y + 32)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(8)
-    pdf.text(pdfSafeText(tag).slice(0, 40), margin + 20, y + 48)
-    const contact = [
+    const contactLine = [
       String(pack?.orgEmail || '').trim(),
       String(pack?.orgWebsite || '').trim(),
     ]
       .filter(
         (v) =>
-          v &&
-          !/\.example\b|example\.com|brand\.example|you@example/i.test(v)
+          v && !/\.example\b|example\.com|brand\.example|you@example/i.test(v)
       )
       .join('  ·  ')
-    if (contact) {
-      pdf.setFontSize(7)
-      pdf.text(pdfSafeText(contact).slice(0, 48), margin + 20, y + 90)
+
+    const capText = (t, n) => pdfSafeText(String(t || '')).slice(0, n)
+
+    const TOUCHPOINT_MOCKS = {
+      businessCard: {
+        label: 'BUSINESS CARD',
+        h: 130,
+        draw: (x, yy, w, h) => {
+          pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
+          pdf.setDrawColor(210, 210, 210)
+          pdf.roundedRect(x, yy, w, h, 6, 6, 'FD')
+          pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+          pdf.rect(x, yy, 8, h, 'F')
+          pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
+          pdf.rect(x + w - 52, yy, 52, h, 'F')
+          tryLogo(x + w - 42, yy + 18, 32, fgRgb)
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(12)
+          pdf.setTextColor(inkOnQuiet[0], inkOnQuiet[1], inkOnQuiet[2])
+          pdf.text(capText(wordmark, 22), x + 20, yy + 34)
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(8)
+          pdf.text(capText(tag, 34), x + 20, yy + 50)
+          if (contactLine) {
+            pdf.setFontSize(7)
+            pdf.text(capText(contactLine, 40), x + 20, yy + h - 20)
+          }
+        },
+      },
+
+      print: {
+        label: 'PRINT',
+        h: 130,
+        draw: (x, yy, w, h) => {
+          pdf.setFillColor(255, 255, 255)
+          pdf.setDrawColor(210, 210, 210)
+          pdf.roundedRect(x, yy, w, h, 4, 4, 'FD')
+          pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
+          pdf.rect(x, yy, w, 46, 'F')
+          tryLogo(x + 14, yy + 10, 26, fgRgb, { monochrome: true })
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(11)
+          pdf.setTextColor(20, 18, 17)
+          pdf.text(capText(wordmark, 24), x + 14, yy + 70)
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(8)
+          pdf.setTextColor(70, 70, 70)
+          pdf.text(capText(tag, 40), x + 14, yy + 86)
+          pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+          pdf.rect(x + 14, yy + h - 24, w - 28, 3, 'F')
+        },
+      },
+
+      social: {
+        label: 'SOCIAL POST',
+        h: 130,
+        draw: (x, yy, w, h) => {
+          pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
+          pdf.roundedRect(x, yy, w, h, 6, 6, 'F')
+          tryLogo(x + 12, yy + 14, 28, fgRgb, { monochrome: true })
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(10)
+          pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
+          pdf.text(
+            pdf.splitTextToSize(pdfSafeText(tag), w - 24).slice(0, 2),
+            x + 12,
+            yy + 66
+          )
+          pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+          pdf.roundedRect(x + 12, yy + h - 30, 52, 16, 3, 3, 'F')
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(7)
+          pdf.setTextColor(inkOnAccent[0], inkOnAccent[1], inkOnAccent[2])
+          pdf.text('SHOP', x + 26, yy + h - 19)
+        },
+      },
+
+      website: {
+        label: 'WEBSITE',
+        h: 130,
+        draw: (x, yy, w, h) => {
+          pdf.setFillColor(255, 255, 255)
+          pdf.setDrawColor(205, 205, 205)
+          pdf.roundedRect(x, yy, w, h, 5, 5, 'FD')
+          // browser chrome
+          pdf.setFillColor(238, 238, 236)
+          pdf.rect(x + 1, yy + 1, w - 2, 16, 'F')
+          pdf.setFillColor(200, 200, 198)
+          for (let d = 0; d < 3; d += 1) {
+            pdf.circle(x + 10 + d * 9, yy + 9, 2.6, 'F')
+          }
+          // hero band
+          pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
+          pdf.rect(x + 1, yy + 17, w - 2, 62, 'F')
+          tryLogo(x + 12, yy + 26, 22, fgRgb, { monochrome: true })
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(11)
+          pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
+          pdf.text(capText(tag, 30), x + 12, yy + 68)
+          // content rows
+          pdf.setFillColor(232, 232, 230)
+          pdf.rect(x + 12, yy + 90, w - 24, 5, 'F')
+          pdf.rect(x + 12, yy + 100, (w - 24) * 0.7, 5, 'F')
+          pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+          pdf.roundedRect(x + 12, yy + h - 26, 46, 14, 3, 3, 'F')
+        },
+      },
+
+      app: {
+        label: 'APP',
+        h: 190,
+        draw: (x, yy, w, h) => {
+          const phoneW = Math.min(96, w - 24)
+          const px = x + (w - phoneW) / 2
+          pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
+          pdf.setDrawColor(190, 190, 190)
+          pdf.roundedRect(px, yy, phoneW, h, 12, 12, 'FD')
+          // notch
+          pdf.setFillColor(fgRgb[0], fgRgb[1], fgRgb[2])
+          pdf.roundedRect(px + phoneW / 2 - 14, yy + 7, 28, 5, 2, 2, 'F')
+          tryLogo(px + phoneW / 2 - 16, yy + 34, 32, fgRgb, { monochrome: true })
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(9)
+          pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
+          pdf.text(capText(wordmark, 16), px + phoneW / 2, yy + 88, {
+            align: 'center',
+          })
+          pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+          pdf.roundedRect(px + 14, yy + h - 46, phoneW - 28, 18, 4, 4, 'F')
+          pdf.setFontSize(7)
+          pdf.setTextColor(inkOnAccent[0], inkOnAccent[1], inkOnAccent[2])
+          pdf.text('GET STARTED', px + phoneW / 2, yy + h - 34, {
+            align: 'center',
+          })
+        },
+      },
+
+      email: {
+        label: 'EMAIL',
+        h: 130,
+        draw: (x, yy, w, h) => {
+          pdf.setFillColor(255, 255, 255)
+          pdf.setDrawColor(210, 210, 210)
+          pdf.roundedRect(x, yy, w, h, 4, 4, 'FD')
+          pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
+          pdf.rect(x + 1, yy + 1, w - 2, 40, 'F')
+          tryLogo(x + 12, yy + 8, 24, fgRgb, { monochrome: true })
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(9)
+          pdf.setTextColor(20, 18, 17)
+          pdf.text(capText(wordmark, 24), x + 12, yy + 60)
+          pdf.setFillColor(232, 232, 230)
+          pdf.rect(x + 12, yy + 70, w - 24, 5, 'F')
+          pdf.rect(x + 12, yy + 80, (w - 24) * 0.8, 5, 'F')
+          pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+          pdf.roundedRect(x + 12, yy + h - 32, 44, 14, 3, 3, 'F')
+          if (contactLine) {
+            pdf.setFont('helvetica', 'normal')
+            pdf.setFontSize(6)
+            pdf.setTextColor(120, 120, 120)
+            pdf.text(capText(contactLine, 44), x + 12, yy + h - 8)
+          }
+        },
+      },
+
+      packaging: {
+        label: 'PACKAGING',
+        h: 190,
+        draw: (x, yy, w, h) => {
+          const bagW = Math.min(w - 20, w * 0.86)
+          pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
+          pdf.setDrawColor(200, 200, 200)
+          pdf.roundedRect(x, yy, bagW, h, 4, 4, 'FD')
+          pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
+          pdf.rect(x, yy, bagW, 36, 'F')
+          tryLogo(x + bagW / 2 - 16, yy + 6, 24, fgRgb, { monochrome: true })
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(11)
+          pdf.setTextColor(inkOnQuiet[0], inkOnQuiet[1], inkOnQuiet[2])
+          pdf.text(capText(wordmark, 20), x + 14, yy + 70)
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(8)
+          pdf.text(capText(tag, 30), x + 14, yy + 88)
+          pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+          pdf.rect(x + 14, yy + h - 28, bagW - 28, 3, 'F')
+        },
+      },
+
+      merch: {
+        label: 'MERCH',
+        h: 190,
+        draw: (x, yy, w, h) => {
+          const toteW = Math.min(w - 24, 132)
+          const tx = x + (w - toteW) / 2
+          const bodyTop = yy + 34
+          const bodyH = h - 34
+          // handles
+          pdf.setDrawColor(inkOnQuiet[0], inkOnQuiet[1], inkOnQuiet[2])
+          pdf.setLineWidth(2)
+          pdf.line(tx + 22, bodyTop, tx + 34, yy + 6)
+          pdf.line(tx + 34, yy + 6, tx + toteW - 34, yy + 6)
+          pdf.line(tx + toteW - 34, yy + 6, tx + toteW - 22, bodyTop)
+          pdf.setLineWidth(0.2)
+          // body
+          pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
+          pdf.setDrawColor(200, 200, 200)
+          pdf.roundedRect(tx, bodyTop, toteW, bodyH, 3, 3, 'FD')
+          tryLogo(tx + toteW / 2 - 18, bodyTop + 32, 36, fgRgb, {
+            monochrome: true,
+          })
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(10)
+          pdf.setTextColor(inkOnQuiet[0], inkOnQuiet[1], inkOnQuiet[2])
+          pdf.text(capText(wordmark, 18), tx + toteW / 2, bodyTop + 92, {
+            align: 'center',
+          })
+        },
+      },
+
+      signage: {
+        label: 'SIGNAGE',
+        h: 190,
+        draw: (x, yy, w, h) => {
+          pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
+          pdf.roundedRect(x, yy, w, h, 6, 6, 'F')
+          tryLogo(x + w / 2 - 28, yy + 28, 56, fgRgb)
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(14)
+          pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
+          pdf.text(capText(wordmark, 18), x + w / 2, yy + 112, {
+            align: 'center',
+          })
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(9)
+          pdf.text(capText(tag, 26), x + w / 2, yy + 132, { align: 'center' })
+        },
+      },
     }
 
-    // --- Social tile (right of card) ---
-    const socX = margin + cardW + 16
-    const socW = contentW - cardW - 16
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(8)
-    pdf.setTextColor(100, 100, 100)
-    pdf.text('SOCIAL POST', socX, y - 10)
-    pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
-    pdf.roundedRect(socX, y, socW, cardH, 6, 6, 'F')
-    tryLogo(socX + 12, y + 14, 28, fgRgb, { monochrome: true })
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(10)
-    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
-    const socLines = pdf.splitTextToSize(pdfSafeText(tag), socW - 24)
-    pdf.text(socLines.slice(0, 2), socX + 12, y + 60)
-    pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
-    pdf.roundedRect(socX + 12, y + cardH - 28, 52, 16, 3, 3, 'F')
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(7)
-    pdf.setTextColor(inkOnAccent[0], inkOnAccent[1], inkOnAccent[2])
-    pdf.text('SHOP', socX + 26, y + cardH - 17)
-    y += cardH + 22
+    const mocks = chosenTouchpoints
+      .map((key) => ({ key, ...TOUCHPOINT_MOCKS[key] }))
+      .filter((m) => typeof m.draw === 'function')
 
-    // --- Packaging / bag mock ---
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(8)
-    pdf.setTextColor(100, 100, 100)
-    pdf.text('PACKAGING', margin, y)
-    y += 8
-    const bagW = contentW * 0.42
-    const bagH = 188
-    // bag body
-    pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
-    pdf.setDrawColor(200, 200, 200)
-    pdf.roundedRect(margin, y, bagW, bagH, 4, 4, 'FD')
-    // top fold
-    pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
-    pdf.rect(margin, y, bagW, 36, 'F')
-    tryLogo(margin + bagW / 2 - 16, y + 6, 24, fgRgb, { monochrome: true })
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(11)
-    pdf.setTextColor(inkOnQuiet[0], inkOnQuiet[1], inkOnQuiet[2])
-    pdf.text(pdfSafeText(wordmark).slice(0, 22), margin + 14, y + 70)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(8)
-    pdf.text(pdfSafeText(tag).slice(0, 32), margin + 14, y + 88)
-    pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
-    pdf.rect(margin + 14, y + bagH - 28, bagW - 28, 3, 'F')
+    if (mocks.length) {
+      newPage()
+      pageHead(
+        'Applications',
+        touchpointsBlurb(pack?.brandSurfaces, pack?.detective?.deliverablesPicked)
+      )
 
-    // --- Sign / storefront plaque ---
-    const signX = margin + bagW + 20
-    const signW = contentW - bagW - 20
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(8)
-    pdf.setTextColor(100, 100, 100)
-    pdf.text('SIGNAGE', signX, y - 10)
-    pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
-    pdf.roundedRect(signX, y, signW, bagH, 6, 6, 'F')
-    tryLogo(signX + signW / 2 - 28, y + 28, 56, fgRgb)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(14)
-    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
-    pdf.text(pdfSafeText(wordmark).slice(0, 20), signX + signW / 2, y + 110, {
-      align: 'center',
-    })
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(9)
-    pdf.text(pdfSafeText(tag).slice(0, 28), signX + signW / 2, y + 130, {
-      align: 'center',
-    })
-    y += bagH + 24
+      const colGap = 16
+      const halfW = (contentW - colGap) / 2
 
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(8)
-    pdf.setTextColor(120, 120, 120)
-    pdf.text(
-      'Mocks are direction proofs only - not production die-lines. Build finals from roles + type scale.',
-      margin,
-      y
-    )
+      for (let i = 0; i < mocks.length; i += 2) {
+        const pair = mocks.slice(i, i + 2)
+        const rowH = Math.max(...pair.map((m) => m.h))
+        // Label sits above the box, so the row needs both.
+        if (y + rowH + 26 > pageH - 70) {
+          newPage()
+          pageHead('Applications', 'Continued.')
+        }
+        const rowY = Math.round(y)
+        pair.forEach((m, col) => {
+          const x = Math.round(margin + col * (halfW + colGap))
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(8)
+          pdf.setTextColor(100, 100, 100)
+          pdf.text(m.label, x, rowY)
+          m.draw(x, rowY + 10, Math.round(halfW), m.h)
+        })
+        y = rowY + rowH + 34
+      }
+
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(8)
+      pdf.setTextColor(120, 120, 120)
+      pdf.text(
+        'Mocks are direction proofs only - not production die-lines. Build finals from roles + type scale.',
+        margin,
+        y
+      )
+    }
 
     // ═══════════════════════════════════════════════
     // 9. USAGE (if any)

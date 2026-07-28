@@ -1,0 +1,101 @@
+/**
+ * Which applications the brand book shows.
+ *
+ * The book rendered four fixed mocks — business card, social post, packaging,
+ * signage — for every project, whatever the brand was for. A brand that only
+ * ever appears in an app got a carrier bag; a bakery got a social tile it had
+ * no account for. Meanwhile "Where will this be used?" was asked in the brief
+ * (Phase 1) and consumed by nothing at all.
+ *
+ * This maps that answer onto the mocks the book knows how to draw. It is
+ * deliberately a pure lookup with no PDF knowledge — the drawing lives in
+ * brandBookPdf, the decision about *what* to draw lives here, where it can be
+ * tested without generating a document.
+ */
+
+/** Every mock the book can draw, in the order they should appear. */
+export const TOUCHPOINT_ORDER = [
+  'businessCard',
+  'print',
+  'social',
+  'website',
+  'app',
+  'email',
+  'packaging',
+  'merch',
+  'signage',
+]
+
+/**
+ * Brief surface id → the mocks it implies.
+ *
+ * `print` yields two: a business card is print, and it is the single most
+ * recognisable proof a system holds together. Dropping it because someone
+ * ticked "Print" rather than a card-shaped box would lose the best mock in
+ * the book on a technicality.
+ */
+const SURFACE_TO_TOUCHPOINTS = {
+  print: ['businessCard', 'print'],
+  social: ['social'],
+  website: ['website'],
+  app: ['app'],
+  email: ['email'],
+  packaging: ['packaging'],
+  merch: ['merch'],
+  signage: ['signage'],
+}
+
+/**
+ * What the book showed before any of this existed. Used when the client named
+ * nothing — an Applications page with no applications on it is worse than a
+ * generic one, and a book generated for an older project must not come out
+ * emptier than it did yesterday.
+ */
+export const LEGACY_TOUCHPOINTS = [
+  'businessCard',
+  'social',
+  'packaging',
+  'signage',
+]
+
+/**
+ * @param {string[]} surfaces  brief `brandSurfaces` ids
+ * @param {string[]} deliverables  brief `deliverablesPicked` ids
+ * @returns {string[]} touchpoint keys, in TOUCHPOINT_ORDER, no duplicates
+ */
+export function touchpointsFor(surfaces = [], deliverables = []) {
+  const picked = new Set()
+  for (const s of Array.isArray(surfaces) ? surfaces : []) {
+    for (const t of SURFACE_TO_TOUCHPOINTS[s] || []) picked.add(t)
+  }
+
+  /* A deliverable the client explicitly asked to be MADE counts too. Someone
+     can order business cards without thinking to tick "Print" as a place the
+     brand lives, and the book should not then refuse to show them one. */
+  const deliv = Array.isArray(deliverables) ? deliverables : []
+  if (deliv.includes('businessCard')) picked.add('businessCard')
+  if (deliv.includes('packaging')) picked.add('packaging')
+  if (deliv.includes('signage')) picked.add('signage')
+  if (deliv.includes('merch')) picked.add('merch')
+  if (deliv.includes('website')) picked.add('website')
+  if (deliv.includes('socialKit')) picked.add('social')
+  if (deliv.includes('emailSignature')) picked.add('email')
+  if (deliv.includes('printCollateral')) picked.add('print')
+
+  if (picked.size === 0) return [...LEGACY_TOUCHPOINTS]
+  return TOUCHPOINT_ORDER.filter((t) => picked.has(t))
+}
+
+/**
+ * One line for the Applications page subhead, so the client can see the page
+ * answers their own brief rather than looking like a template.
+ */
+export function touchpointsBlurb(surfaces = [], deliverables = []) {
+  const chosen = touchpointsFor(surfaces, deliverables)
+  const named =
+    (Array.isArray(surfaces) && surfaces.length) ||
+    (Array.isArray(deliverables) && deliverables.length)
+  return named
+    ? 'Proof of system — the places you said this brand lives.'
+    : 'Proof of system — how the brand shows up in the world.'
+}

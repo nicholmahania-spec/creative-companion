@@ -459,6 +459,131 @@ describe('downloadBrandPackVectorPdf quality', () => {
     expect(textB).not.toMatch(/PAPER STOCK/)
   })
 
+  /* Phase 4 — the Applications page renders what the client named. Asserted
+     against real PDFs because the failure mode is visual: the old page did
+     not error, it just showed a bakery an app screen and an app an
+     unbranded carrier bag. */
+  const packFor = (detective) =>
+    buildBrandPackSnapshot({
+      project: {
+        name: 'Harbor & Hearth',
+        tagline: 'Brew slow.',
+        palette: ['#1B3A2F', '#C4A574', '#E8DCC8', '#F7F3EC'],
+        detective,
+      },
+      tasks: [],
+      moodItems: [],
+    })
+
+  it('shows an app-only brand an app, and no carrier bag', async () => {
+    const pack = packFor({ brandSurfaces: ['app', 'website'] })
+    const r = await downloadBrandPackVectorPdf(pack, null, {
+      returnBlobOnly: true,
+    })
+    const text = await brandBookText(r.blob)
+    // \b so this cannot pass by matching the page head "Applications".
+    expect(text).toMatch(/\bAPP\b/)
+    expect(text).toMatch(/WEBSITE/)
+    expect(text).not.toMatch(/PACKAGING/)
+    expect(text).not.toMatch(/SIGNAGE/)
+  })
+
+  it('shows a packaging brand packaging, and no app screen', async () => {
+    const pack = packFor({ brandSurfaces: ['packaging', 'signage'] })
+    const text = await brandBookText(
+      (await downloadBrandPackVectorPdf(pack, null, { returnBlobOnly: true }))
+        .blob
+    )
+    expect(text).toMatch(/PACKAGING/)
+    expect(text).toMatch(/SIGNAGE/)
+    expect(text).not.toMatch(/\bAPP\b/)
+  })
+
+  it('treats print as including the business card', async () => {
+    const pack = packFor({ brandSurfaces: ['print'] })
+    const text = await brandBookText(
+      (await downloadBrandPackVectorPdf(pack, null, { returnBlobOnly: true }))
+        .blob
+    )
+    expect(text).toMatch(/BUSINESS CARD/)
+    expect(text).toMatch(/PRINT/)
+  })
+
+  it('falls back to the old four when the client named nothing', async () => {
+    // A book for an older project must not come out emptier than yesterday.
+    const pack = packFor({})
+    const text = await brandBookText(
+      (await downloadBrandPackVectorPdf(pack, null, { returnBlobOnly: true }))
+        .blob
+    )
+    expect(text).toMatch(/BUSINESS CARD/)
+    expect(text).toMatch(/SOCIAL POST/)
+    expect(text).toMatch(/PACKAGING/)
+    expect(text).toMatch(/SIGNAGE/)
+  })
+
+  it('tells the client the page answers their own brief', async () => {
+    const named = await brandBookText(
+      (
+        await downloadBrandPackVectorPdf(packFor({ brandSurfaces: ['app'] }), null, {
+          returnBlobOnly: true,
+        })
+      ).blob
+    )
+    expect(named).toMatch(/places you said this brand lives/)
+
+    const generic = await brandBookText(
+      (
+        await downloadBrandPackVectorPdf(packFor({}), null, {
+          returnBlobOnly: true,
+        })
+      ).blob
+    )
+    expect(generic).toMatch(/how the brand shows up in the world/)
+  })
+
+  it('lays out all nine mocks without dropping or doubling any', async () => {
+    /* The layout loop pages when a row will not fit. The bug class to guard
+       against is the one that hit the Direction tiles: a row offset computed
+       and then discarded, so two mocks paint on the same spot. Text
+       extraction cannot see overlap, but it can prove every label was
+       emitted exactly once and none were lost to a page break. */
+    const pack = packFor({
+      brandSurfaces: [
+        'print',
+        'social',
+        'website',
+        'app',
+        'email',
+        'packaging',
+        'merch',
+        'signage',
+      ],
+    })
+    const r = await downloadBrandPackVectorPdf(pack, null, {
+      returnBlobOnly: true,
+    })
+    const text = await brandBookText(r.blob)
+
+    const labels = [
+      'BUSINESS CARD',
+      'PRINT',
+      'SOCIAL POST',
+      'WEBSITE',
+      'APP',
+      'EMAIL',
+      'PACKAGING',
+      'MERCH',
+      'SIGNAGE',
+    ]
+    for (const label of labels) {
+      const hits = text.match(new RegExp(`\\b${label}\\b`, 'g')) || []
+      expect(hits.length, `${label} appeared ${hits.length} times`).toBe(1)
+    }
+    // Nine mocks cannot fit on one page — it must have continued.
+    expect(text).toMatch(/Continued\./)
+  })
+
   it('renders the agreed-brief section with question, tip, and answer', async () => {
     const pack = buildBrandPackSnapshot({
       project: {

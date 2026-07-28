@@ -13,6 +13,7 @@ import {
   latestDecision,
   chosenDirection,
 } from '../lib/decisionLog'
+import LayoutPatterns from '../components/LayoutPatterns'
 import { trackFeatureUsage } from '../lib/analytics'
 import '../styles/lazy-sketch.css'
 
@@ -341,6 +342,11 @@ export default function SketchView(props) {
             </div>
           </details>
         )}
+
+        {/* Closed reference, next to the drafts it informs. "What shape
+            should this be" is the question that stalls a sketch, and naming
+            the eight patterns turns it into a one-second decision. */}
+        <LayoutPatterns />
 
         {/* The brand book's handoff page reads this — used to be writable
             only in off-path Review, so the numbered path alone could never
