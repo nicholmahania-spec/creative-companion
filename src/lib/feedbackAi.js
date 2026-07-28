@@ -16,7 +16,7 @@
  *     Supabase Edge Function, etc.) that holds the provider key
  *     server-side and forwards { text } -> { tasks, ambiguous }.
  *  2. Set VITE_FEEDBACK_AI_ENDPOINT to that URL.
- *  3. Nothing else changes — ReviewFocusView already calls
+ *  3. Nothing else changes — Review (or any caller) already can call
  *     translateFeedback() and handles all three states (not
  *     configured / loading / result).
  */

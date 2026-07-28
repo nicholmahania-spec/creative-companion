@@ -6,7 +6,7 @@ import {
 } from '../lib/uiPrefs'
 import { LOCALES, normalizeLocale, t as i18nT } from '../lib/i18n'
 
-/** Settings — short labels, Focus first, Advanced collapsed. */
+/** Settings — short labels, Typing calm first, Advanced collapsed. */
 export default function SettingsView(props) {
   const {
     setActiveView,
@@ -74,7 +74,7 @@ export default function SettingsView(props) {
 
       <nav className="settings-jump" aria-label="Settings sections">
         {[
-          ['focus', 'Focus'],
+          ['calm', 'Typing'],
           ['desk', 'Desk'],
           ['data', i18nT(locale, 'ui.data') || 'Data'],
           ['advanced', 'Advanced'],
@@ -89,28 +89,23 @@ export default function SettingsView(props) {
         ))}
       </nav>
 
-      <section className="panel brand-section" id="settings-focus">
-        <div className="brand-section-label">Focus</div>
+      <section className="panel brand-section" id="settings-calm">
+        <div className="brand-section-label">Typing</div>
 
         <p className="settings-subhead">
-          Dim the sidebar and header while typing
+          Quiet the chrome while you type
         </p>
         <SettingsSwitch
-          label="Focus mode"
-          checked={!!prefs.focusMode}
-          onToggle={() => setPref('focusMode', !prefs.focusMode)}
-        />
-        <SettingsSwitch
-          label="Hide nav"
+          label="Hide nav while typing"
           checked={!!prefs.hideNavUntilBlur}
           onToggle={() => setPref('hideNavUntilBlur', !prefs.hideNavUntilBlur)}
         />
 
         <p className="settings-subhead">
-          Dim other fields while one is focused
+          Dim other fields while one is active
         </p>
         <div className="settings-row">
-          <strong>Focus ring</strong>
+          <strong>Active field ring</strong>
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -131,7 +126,7 @@ export default function SettingsView(props) {
             readout disagreed with the screen. */}
         <div className="settings-row settings-row-stack">
           <strong>
-            Focus mask · {clampFocusMaskPct(prefs.focusMaskPct)}%
+            Field dim · {clampFocusMaskPct(prefs.focusMaskPct)}%
           </strong>
           <input
             type="range"
@@ -140,14 +135,14 @@ export default function SettingsView(props) {
             step={5}
             className="settings-range"
             value={clampFocusMaskPct(prefs.focusMaskPct)}
-            aria-label="Focus mask intensity"
+            aria-label="Field dim intensity"
             onChange={(e) =>
               setPref('focusMaskPct', Number(e.target.value))
             }
           />
         </div>
         <div className="settings-row">
-          <strong>Mask blur</strong>
+          <strong>Dim blur</strong>
           <button
             type="button"
             className="btn btn-secondary btn-sm"

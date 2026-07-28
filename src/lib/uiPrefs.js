@@ -71,8 +71,6 @@ const DEFAULTS = {
     focusMaskPct: FOCUS_MASK_MIN_PCT,
     /** Soft blur on masked peripherals (px); 0 = off */
     focusMaskBlur: 2,
-    /** Dim sidebar + header while a field has focus — peripheral masking */
-    focusMode: false,
     /** 'normal' (flat 1.5px border) or 'high' (2.5px + soft outer ring) */
     focusRingStrength: 'normal',
     /** Collapse the sidebar to zero-width while a field has focus */

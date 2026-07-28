@@ -9,17 +9,6 @@ import {
 } from 'react'
 import useAppStore from './store/useAppStore'
 
-/** Deep-link safety: Define Focus beta is not shippable — land on overview. */
-function DefineFocusGate({ setActiveView }) {
-  useEffect(() => {
-    setActiveView?.('project')
-  }, [setActiveView])
-  return (
-    <div className="panel panel-hint" style={{ margin: '2rem', maxWidth: '28rem' }}>
-      Opening Project overview…
-    </div>
-  )
-}
 import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
 import { trackExportAction } from './lib/analytics'
@@ -56,14 +45,6 @@ const SparkView = lazy(() => import('./views/SparkView'))
 const ResearchView = lazy(() => import('./views/ResearchView'))
 const SketchView = lazy(() => import('./views/SketchView'))
 const DefineView = lazy(() => import('./views/DefineView'))
-// DefineFocusView is incomplete (fake path steps / dead UI) — deep links
-// bounce via DefineFocusGate rather than mounting it.
-const DeliverFocusView = lazy(() => import('./views/DeliverFocusView'))
-const ResearchFocusView = lazy(() => import('./views/ResearchFocusView'))
-const IdeateFocusView = lazy(() => import('./views/IdeateFocusView'))
-const SketchFocusView = lazy(() => import('./views/SketchFocusView'))
-const DesignFocusView = lazy(() => import('./views/DesignFocusView'))
-const ReviewFocusView = lazy(() => import('./views/ReviewFocusView'))
 const DesignView = lazy(() => import('./views/DesignView'))
 const ReviewView = lazy(() => import('./views/ReviewView'))
 const DeliverView = lazy(() => import('./views/DeliverView'))
@@ -251,9 +232,23 @@ function App() {
     return 'home'
   })
   const setActiveView = useCallback((view) => {
-    setActiveViewRaw(view)
+    // Focus Mode product removed — never land on *-focus views.
+    let next = view
+    if (typeof next === 'string' && next.endsWith('-focus')) {
+      const map = {
+        'define-focus': 'project',
+        'research-focus': 'studio',
+        'ideate-focus': 'spark',
+        'sketch-focus': 'flow',
+        'design-focus': 'brand',
+        'review-focus': 'review',
+        'deliver-focus': 'finish',
+      }
+      next = map[next] || 'home'
+    }
+    setActiveViewRaw(next)
     try {
-      if (view) localStorage.setItem('cc-active-view', String(view))
+      if (next) localStorage.setItem('cc-active-view', String(next))
     } catch {
       /* ignore */
     }
@@ -2633,123 +2628,6 @@ function App() {
     )
   }
 
-  // Focus Mode stages render full-bleed — no persistent sidebar/header
-  // chrome — so they bypass the app-shell grid entirely rather than
-  // nesting inside it. Forced-break overlay still mounts here so a
-  // running Pomodoro lock is not skipped just because chrome is off.
-  const focusBreakOverlay = forcedBreak ? (
-    <Suspense fallback={null}>
-      <ForcedBreakOverlay
-        totalSeconds={forcedBreak.totalSec}
-        leftSeconds={forcedBreak.leftSec}
-        workMinutes={forcedBreak.workMinutes}
-        breakMinutes={forcedBreak.breakMinutes}
-        planItems={forcedBreak.planItems || []}
-        completedIds={forcedBreak.completedIds || []}
-        onCompleteItem={completeBreakPlanItem}
-        onEmergencyUnlock={() => endForcedBreak(true)}
-      />
-    </Suspense>
-  ) : null
-
-  if (activeView === 'define-focus') {
-    // Define Focus beta is incomplete (fake journey steps, dead Tailwind
-    // chrome). Deep links bounce to the real Project overview rather than
-    // stranding the user in a half-built surface.
-    return (
-      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
-        {focusBreakOverlay}
-        <DefineFocusGate setActiveView={setActiveView} />
-      </div>
-    )
-  }
-
-  if (activeView === 'deliver-focus') {
-    return (
-      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
-        {focusBreakOverlay}
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
-          <DeliverFocusView
-            activeProject={activeProject}
-            buildCurrentBrandPack={buildCurrentBrandPack}
-            runExport={runExport}
-            setActiveView={setActiveView}
-          />
-        </Suspense>
-      </div>
-    )
-  }
-
-  if (activeView === 'research-focus') {
-    return (
-      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
-        {focusBreakOverlay}
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
-          <ResearchFocusView deskMood={deskMood} setActiveView={setActiveView} />
-        </Suspense>
-      </div>
-    )
-  }
-
-  if (activeView === 'ideate-focus') {
-    return (
-      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
-        {focusBreakOverlay}
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
-          <IdeateFocusView
-            directions={activeProject?.directions}
-            updateDirection={updateDirection}
-            addTask={addTask}
-            projectId={activeProjectId}
-            setActiveView={setActiveView}
-          />
-        </Suspense>
-      </div>
-    )
-  }
-
-  if (activeView === 'sketch-focus') {
-    return (
-      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
-        {focusBreakOverlay}
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
-          <SketchFocusView
-            deskTasks={deskTasks}
-            projectId={activeProjectId}
-            setActiveView={setActiveView}
-          />
-        </Suspense>
-      </div>
-    )
-  }
-
-  if (activeView === 'design-focus') {
-    return (
-      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
-        {focusBreakOverlay}
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
-          <DesignFocusView activeProject={activeProject} setActiveView={setActiveView} />
-        </Suspense>
-      </div>
-    )
-  }
-
-  if (activeView === 'review-focus') {
-    return (
-      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
-        {focusBreakOverlay}
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
-          <ReviewFocusView
-            activeProject={activeProject}
-            buildCurrentBrandPack={buildCurrentBrandPack}
-            setActiveView={setActiveView}
-            goSystemSection={goSystemSection}
-          />
-        </Suspense>
-      </div>
-    )
-  }
-
   const journeyActive = journeyIdForView(activeView)
   const journeyNext = getNextJourney(activeView)
 
@@ -2758,10 +2636,10 @@ function App() {
       className={`app app-shell ${theme} view-${activeView}${
         forcedBreak ? ' is-break-locked' : ''
       }${activeView === 'finish' ? ' is-pack-view' : ''}${
-        prefs.focusMode ? ' focus-mode-on' : ''
-      }${prefs.focusRingStrength === 'high' ? ' focus-ring-high' : ''}${
-        prefs.hideNavUntilBlur ? ' hide-nav-until-blur' : ''
-      }${prefs.hideTips ? ' hide-tips-on' : ''}${
+        prefs.focusRingStrength === 'high' ? ' focus-ring-high' : ''
+      }${prefs.hideNavUntilBlur ? ' hide-nav-until-blur' : ''}${
+        prefs.hideTips ? ' hide-tips-on' : ''
+      }${
         navOpen ? ' nav-open' : ''
       }`}
       style={{
