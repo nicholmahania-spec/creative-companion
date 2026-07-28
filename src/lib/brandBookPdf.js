@@ -280,8 +280,18 @@ export async function downloadBrandPackVectorPdf(
       pdf.rect(0, 0, 8, pageH, 'F')
       y = margin + 6
       sectionLabel('Brand system')
+      /* Extra headroom for the 24pt title.
+         `sectionLabel` advances 14pt, which suits the 10pt body it precedes
+         elsewhere. jsPDF positions text by BASELINE, and a 24pt face has
+         roughly 17pt of ascent — so a 14pt gap put the title's ascenders
+         about 3pt ABOVE the eyebrow's baseline, striking "BRAND SYSTEM"
+         through on every page of the book. 24pt of separation clears the
+         ascent with a little air, and stays local to this heading rather
+         than changing the shared helper. */
+      const TITLE_PT = 24
+      y += TITLE_PT - 14 + 4
       pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(24)
+      pdf.setFontSize(TITLE_PT)
       pdf.setTextColor(20, 18, 17)
       pdf.text(pdfSafeText(title), margin, y)
       y += 18
