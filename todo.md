@@ -248,19 +248,62 @@ before commit.
 
 ## Feature ideas — not yet scoped, not yet built
 
-### Client contract signing before work begins
-User needs a contract the client signs before any work starts. Natural home
-is the new client portal (`/c/:portalId`) — it already has the client's
-attention, no-login access, and a step-gating model, so a "sign before the
-project unlocks" gate fits the existing shape. Not designed yet — open
-questions: does the studio upload their own contract PDF or does the app
-template one; is a typed-name + timestamp signature enough or does this
-need real e-signature/audit-trail rigor (legal question, not a UI one);
-should an unsigned contract actually *block* pushing steps to the client
-or just show a warning. Do not build until asked. Run through the
-`adhd-executive-function-advisor` before design — a hard gate that blocks
-work is exactly the kind of thing that can wreck task initiation if the
-user is ready to start and the client hasn't signed yet.
+### Client contract signing before work begins — SCOPED, ready to build (2026-07-28)
+
+Decisions locked in by the owner:
+- Studio uploads their own contract PDF — app does not template/generate one.
+- Real e-signature via **Dropbox Sign** (chosen over DocuSign/SignWell — cheaper,
+  simpler API, well-trodden for small tools). Needs an owner-created Dropbox
+  Sign account + API key before any of this can be built — same precondition
+  as the Helper-bot blocker below: the key must live in a Supabase edge
+  function server-side, never in the app bundle.
+- An unsigned contract shows a **warning only, never blocks** pushing steps
+  to the client portal — matches the standing rule that a hard gate blocking
+  ready-to-start work is exactly the friction this app exists to remove.
+
+**ADHD-advisor review complete (2026-07-28), findings baked into the flow
+below — do not redesign from scratch when this gets picked up:**
+
+- **Not a third parallel link system.** This app already runs two —
+  `discovery_shares` and `client_portals` — each its own "create link / copy
+  / poll status" shape behind a modal-menu fork. A third instance for
+  contracts would triple the "which link was that" working-memory tax.
+  Instead: contract fields (`contract_file_path`,
+  `contract_signature_request_id`, `contract_status`) live as **columns on
+  `client_portals`** — same portal the client already has, one id, one
+  status surface. If no portal exists yet, uploading a contract creates one
+  (reuse `createClientPortal`).
+- **One gesture, zero follow-up choices.** Uploading the PDF does everything
+  downstream automatically: Storage upload → create portal if missing →
+  create Dropbox Sign request against the client email already in
+  `project.detective` → mark sent. No signer-details form, no "send now or
+  later?" fork, no confirmation modal.
+- **Warning lives in the permanent header chrome, not a modal or a footer**
+  — per the user's own rule ("if its at the bottom - I won't see it or use
+  it") and the "Anything to add?" lesson (a recurring nudge whose answer is
+  always "push anyway" is a toll, not a prompt). One line, same fixed spot
+  on every screen: **"Contract — not sent"** with the upload control inline.
+  Name the artifact, never the omission ("you haven't...").
+- **Status is never time-based** — "I have no concept of time and numbers
+  mean nothing" already ruled this out for the work clock; same applies
+  here. Three states only, each naming its own next action:
+  - `Contract — not sent` (+ Upload contract PDF)
+  - `Contract — with [Client] to sign` (+ Copy link, + Nudge)
+  - `Contract — signed` (+ View signed PDF)
+  No "sent 3 days ago," no countdown, no reminder schedule.
+- **Return-trip state must update itself.** Signing happens off-app in
+  Dropbox Sign's UI. Preferred: a webhook into the same edge function that
+  holds the API key, writing `contract_status`; the existing `PortalMode`
+  30s poll and `useClientInbox` give the refresh for free. Fallback if a
+  webhook is more than budgeted: reuse the existing manual "Check for
+  client's answers" pattern (`DiscoveryBrief.jsx:398`), but surface it in
+  the header line, not inside a modal.
+- **Nothing else.** No settings/toggle to suppress the warning (a second
+  decision to stop the first), no separate Contracts page or nav item, no
+  countdown/reminder-cadence UI.
+
+**Blocked on:** owner creating a Dropbox Sign account and API key. Nothing
+else stands between this plan and implementation.
 
 ### Font packs — real typefaces beyond the built-in pairs
 Proposal from another session (pasted here 2026-07-28, not yet evaluated
