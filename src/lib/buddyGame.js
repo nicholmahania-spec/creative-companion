@@ -1,3 +1,4 @@
+import { labelForStepId } from './journey'
 /**
  * Optional quiet progress meter (bands, daily targets, marks).
  * Local-only. Fires `cc-buddy-game` so HUD + Helper stay in sync.
@@ -23,7 +24,18 @@ export const BADGES = {
   pomodoro_5: { id: 'pomodoro_5', name: 'Focus ×5', desc: '5 focus blocks', icon: '🎯' },
   pomodoro_25: { id: 'pomodoro_25', name: 'Focus ×25', desc: '25 focus blocks', icon: '🧠' },
   package_sent: { id: 'package_sent', name: 'Ideas→Brand', desc: 'Package to Brand', icon: '📦' },
-  journey_finish: { id: 'journey_finish', name: 'Deliver', desc: 'Opened Deliver', icon: '🏁' },
+  journey_finish: {
+    id: 'journey_finish',
+    /* Named after the last stop, so it follows the journey instead of
+       freezing whatever that stop was called the day it was written. */
+    get name() {
+      return labelForStepId('deliver')
+    },
+    get desc() {
+      return `Opened ${labelForStepId('deliver')}`
+    },
+    icon: '🏁',
+  },
   level_5: { id: 'level_5', name: 'Band 5', desc: 'Band 5', icon: '⬆' },
   level_10: { id: 'level_10', name: 'Band 10', desc: 'Band 10', icon: '👑' },
   day_streak_3: { id: 'day_streak_3', name: '3d', desc: '3-day streak', icon: '📅' },

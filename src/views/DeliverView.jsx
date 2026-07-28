@@ -4,7 +4,7 @@
  */
 import { useState, Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
-import { JOURNEY_STEPS } from '../lib/journey'
+import { labelForStepId, JOURNEY_STEPS } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import {
   normalizeLocale,
@@ -208,7 +208,7 @@ export default function DeliverView({
                     className="btn btn-ghost btn-sm"
                     onClick={() => goSystemSection('essentials')}
                   >
-                    {i18nT(locale, 'path.design') || 'Identity'}
+                    {i18nT(locale, 'path.design') || labelForStepId('design')}
                   </button>
                 </div>
               </div>
@@ -260,7 +260,7 @@ export default function DeliverView({
                       setActiveView('studio')
                     }}
                   >
-                    {i18nT(locale, 'path.research') || 'Research'}
+                    {i18nT(locale, 'path.research') || labelForStepId('research')}
                   </button>
                 </div>
               </div>
@@ -350,7 +350,7 @@ export default function DeliverView({
                   className="btn btn-ghost btn-sm"
                   onClick={() => setActiveView('brand')}
                 >
-                  {i18nT(locale, 'path.design') || 'Identity'}
+                  {i18nT(locale, 'path.design') || labelForStepId('design')}
                 </button>
                 <button
                   type="button"

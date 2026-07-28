@@ -4,6 +4,7 @@
  * Owns palette hex drafts / role assign / contrast checker local state.
  */
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react'
+import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
 import { useFigma } from '../hooks/useFigma'
 import versionService from '../services/versionService'
@@ -2243,7 +2244,7 @@ export default function DesignView({
           onClick={() => setActiveView?.('finish')}
         >
           {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'sketch') || 'Touchpoints',
+            label: pathLabel(locale, 'sketch') || labelForStepId('sketch'),
           })}
         </button>
       </div>

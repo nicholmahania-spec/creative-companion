@@ -1,3 +1,4 @@
+import { JOURNEY_STEPS, labelForStepId } from './journey'
 /**
  * Client inbox — one merged stream of everything clients did, across every
  * project.
@@ -17,14 +18,15 @@
  * independent of the designer’s 5-stop path labels (System, Board, …).
  * Views still map for “open the right screen.”
  */
+/* Path stops derived from the journey; Ideate and Review are Tools views the
+   portal can still reference, so they keep an explicit entry. Restating the
+   five stops here is how this map came to say "Project overview". */
 const PORTAL_STEP_META = {
-  define: { label: 'Project overview', view: 'project' },
-  research: { label: 'Research', view: 'studio' },
-  ideate: { label: 'Ideate', view: 'spark' },
-  sketch: { label: 'Sketch', view: 'flow' },
-  design: { label: 'Design', view: 'brand' },
-  review: { label: 'Review', view: 'review' },
-  deliver: { label: 'Deliver', view: 'finish' },
+  ...Object.fromEntries(
+    JOURNEY_STEPS.map((s) => [s.id, { label: s.label, view: s.view }])
+  ),
+  ideate: { label: labelForStepId('ideate'), view: 'spark' },
+  review: { label: labelForStepId('review'), view: 'review' },
 }
 
 const STEP_LABEL = new Map(

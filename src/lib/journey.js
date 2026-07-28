@@ -69,31 +69,19 @@ export const JOURNEY_STEPS = [
 /** Path view ids only (for work clock, keyboard 1–5, etc.) */
 export const PATH_VIEWS = JOURNEY_STEPS.map((s) => s.view)
 
-/** Map path views to journey step id. Tools return null. */
+/**
+ * Map a path view to its journey step id. Tools return null.
+ *
+ * Derived from JOURNEY_STEPS rather than a switch listing the same pairs
+ * again. The switch that used to live here was a second copy of the
+ * view/id mapping declared above, and copies of a declared list are the
+ * dominant defect in this codebase — they fail on correct changes (a
+ * reorder) and stay silent on wrong ones (a stop that never got added).
+ */
+const VIEW_TO_ID = Object.fromEntries(JOURNEY_STEPS.map((s) => [s.view, s.id]))
+
 export function journeyIdForView(view) {
-  switch (view) {
-    case 'project':
-      return 'define'
-    case 'flow':
-      return 'sketch'
-    case 'studio':
-      return 'research'
-    case 'brand':
-      return 'design'
-    case 'finish':
-      return 'deliver'
-    case 'spark':
-    case 'review':
-    case 'home':
-    case 'insights':
-    case 'calendar':
-    case 'clients':
-    case 'settings':
-    case 'concept':
-      return null
-    default:
-      return null
-  }
+  return VIEW_TO_ID[view] ?? null
 }
 
 /** Label for off-path Tools pages */
@@ -142,3 +130,31 @@ export function getNextJourney(view) {
  * states, and the app could only ever tell you what was still missing.
  */
 export const PATH_STEP_COUNT = JOURNEY_STEPS.length
+
+/**
+ * The label to show for any view — path stop or Tools page.
+ *
+ * This is the single place a view becomes a word. Six separate modules
+ * (the Helper status line, the resume banner, the to-do stage headings,
+ * the client inbox, the badge list, the work log) each kept their own
+ * copy of this mapping, and the v1.53.6 rename updated exactly one of
+ * them. Everything else went on saying Sketch, Design, Deliver and
+ * Project overview — names the app no longer uses anywhere else.
+ */
+export function labelForView(view) {
+  const step = JOURNEY_STEPS.find((s) => s.view === view)
+  if (step) return step.label
+  return toolsLabelForView(view)
+}
+
+/**
+ * The label for a journey step id (`design` -> `Identity`), falling back to
+ * the id itself so an unknown or off-path id degrades to something readable
+ * rather than to a specific stop's name.
+ */
+export function labelForStepId(id) {
+  const step = JOURNEY_STEPS.find((s) => s.id === id)
+  if (step) return step.label
+  const TOOL_IDS = { ideate: 'Ideate', review: 'Review' }
+  return TOOL_IDS[id] || id || 'Work'
+}

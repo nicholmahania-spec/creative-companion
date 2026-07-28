@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { labelForView } from '../lib/journey'
 import {
   activityTip,
   buddyMood,
@@ -673,18 +674,12 @@ export default function BuddyMate({
   const trackingLabel = useMemo(() => {
     const a = activityLive
     const place =
-      {
-        flow: 'Sketch',
-        studio: 'Research',
-        project: 'Project overview',
-        brand: 'Design',
-        finish: 'Deliver',
-        spark: 'Ideate',
-        review: 'Review',
-        insights: 'Timer',
-        calendar: 'Deadlines',
-        settings: 'Settings',
-      }[a.view] || 'App'
+      /* Journey + Tools labels come from one place. Only 'Deadlines' is worded
+         differently here than the Tools menu's 'Calendar'. This map used to
+         restate all ten and went stale at the rename — while PROCESS_STEMS a
+         few lines below was updated, so the same component showed old and new
+         names at once. */
+      ({ calendar: 'Deadlines' }[a.view] || labelForView(a.view) || 'App')
     if (a.nextTaskTitle) {
       const t = String(a.nextTaskTitle)
       return `${place} · ${t.length > 28 ? `${t.slice(0, 28)}…` : t}`

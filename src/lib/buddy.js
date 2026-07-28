@@ -1,3 +1,4 @@
+import { labelForView } from './journey'
 /**
  * Design buddy — scripted UI/UX & graphic design coach (not a live LLM).
  * Persona: Helper (see helperPersona.js). Process: Define → Deliver.
@@ -213,18 +214,17 @@ export function idleLine() {
   return pick(IDLE)
 }
 
-const VIEW_LABELS = {
-  flow: 'Sketch',
-  studio: 'Research',
-  project: 'Project overview',
-  brand: 'Design',
-  finish: 'Deliver',
-  spark: 'Ideate',
-  review: 'Review',
+/* Path stops come from the journey; only the few labels this file words
+   differently ("the focus timer", not "Timer") are stated here. Listing the
+   stops again is how this map came to say Sketch/Design/Deliver long after
+   the app stopped using those names. */
+const VIEW_LABEL_OVERRIDES = {
   insights: 'the focus timer',
   calendar: 'Deadlines',
-  settings: 'Settings',
 }
+
+const viewLabel = (view) =>
+  VIEW_LABEL_OVERRIDES[view] || labelForView(view)
 
 function short(title, n = 48) {
   const t = String(title || '').trim()
@@ -479,7 +479,7 @@ export function coachOnTask(activity = {}) {
  */
 export function describeActivity(activity = {}) {
   const view = activity.view || 'flow'
-  const place = VIEW_LABELS[view] || 'app'
+  const place = viewLabel(view) || 'app'
   const step = short(activity.nextTaskTitle, 32)
   const project = short(activity.projectName, 20)
   const domain = DOMAIN_LABEL[classifyTask(activity)]
@@ -574,7 +574,7 @@ export function activityTip(activity = {}) {
 /** Idle check-in with design context */
 export function idleLineWithActivity(activity = {}) {
   if (Math.random() < 0.55) return activityTip(activity)
-  const place = VIEW_LABELS[activity.view] || 'desk'
+  const place = viewLabel(activity.view) || 'desk'
   return pick([
     `${place} · Coach or Break`,
     activity.nextTaskTitle

@@ -3,23 +3,26 @@
  * Absolute timestamps (endsAt) so background tabs stay honest.
  */
 
-import { journeyIdForView } from './journey'
+import {
+  journeyIdForView,
+  labelForView,
+  PATH_VIEWS as JOURNEY_PATH_VIEWS,
+} from './journey'
 import { pathGapFocusSelector } from './journeyProgress'
 
 export const DESK_SESSION_KEY = 'cc-desk-session-v1'
 
-const PATH_VIEWS = new Set([
-  'project',
-  'studio',
-  'spark',
-  'flow',
-  'brand',
-  'review',
-  'finish',
-])
+/* Derived, and deliberately NOT including 'spark'/'review'. This literal
+   listed them as path views, which stopped being true when Ideate and Review
+   moved under Tools — so a resume banner treated a Tools detour as progress
+   along the path. They stay resumable via ALL_VIEWS below; they are just not
+   path stops. */
+const PATH_VIEWS = new Set(JOURNEY_PATH_VIEWS)
 
 const ALL_VIEWS = new Set([
   ...PATH_VIEWS,
+  'spark',
+  'review',
   'insights',
   'calendar',
   'settings',
@@ -227,19 +230,16 @@ export function isPathView(view) {
   return PATH_VIEWS.has(view)
 }
 
-/** Label map for resume banner (EN fallback; UI may i18n). */
-export const VIEW_RESUME_LABELS = {
-  project: 'Project overview',
-  studio: 'Research',
-  spark: 'Ideate',
-  flow: 'Sketch',
-  brand: 'Design',
-  review: 'Review',
-  finish: 'Deliver',
-  insights: 'Insights',
-  calendar: 'Calendar',
-  settings: 'Settings',
-}
+/**
+ * Label map for the resume banner (EN fallback; UI may i18n).
+ *
+ * Built from the journey instead of restated. As a literal it kept saying
+ * "Project overview / Sketch / Design / Deliver" after the rename, so the
+ * banner welcoming you back named stops that no longer existed.
+ */
+export const VIEW_RESUME_LABELS = Object.fromEntries(
+  [...ALL_VIEWS].map((v) => [v, labelForView(v)])
+)
 
 /**
  * Focus the first matching path-gap field after a view jump.

@@ -3,6 +3,7 @@
  * Tech-Studio ADHD: one primary (Done), sticky Next, focus isolation.
  */
 import { Suspense, lazy, useState, useRef, useEffect } from 'react'
+import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
 import {
   normalizeLocale,
@@ -568,7 +569,7 @@ export default function SketchView(props) {
               (journeyNext?.id && pathLabel(locale, journeyNext.id)) ||
               journeyNext?.label ||
               pathLabel(locale, 'deliver') ||
-              'Assets',
+              labelForStepId('deliver'),
           })}
         </button>
       </div>

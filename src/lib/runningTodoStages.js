@@ -1,3 +1,5 @@
+import { JOURNEY_STEPS, labelForStepId } from './journey'
+
 /**
  * Keyword-based stage tagging for the running to-do list.
  * Guesses which of the 7 workflow stages an item belongs to from its
@@ -5,14 +7,19 @@
  * added it if nothing matches.
  */
 
+/**
+ * Path stops in journey order, plus the two Tools stages this list also tags.
+ *
+ * Rendered directly as the group headings in RunningTodo. As a literal it
+ * carried BOTH stale labels ("Project overview", "Sketch", "Design",
+ * "Deliver") and a stale order — sketch before design, the sequence from
+ * before Strategy moved ahead of Research — so the to-do list grouped work
+ * under names and in an order the rest of the app had stopped using.
+ */
 export const RUNNING_TODO_STAGES = [
-  { id: 'define', label: 'Project overview' },
-  { id: 'research', label: 'Research' },
-  { id: 'ideate', label: 'Ideate' },
-  { id: 'sketch', label: 'Sketch' },
-  { id: 'design', label: 'Design' },
-  { id: 'review', label: 'Review' },
-  { id: 'deliver', label: 'Deliver' },
+  ...JOURNEY_STEPS.map((s) => ({ id: s.id, label: s.label })),
+  { id: 'ideate', label: labelForStepId('ideate') },
+  { id: 'review', label: labelForStepId('review') },
 ]
 
 const KEYWORDS = {

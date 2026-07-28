@@ -72,6 +72,8 @@ import { awardAndBroadcast } from './lib/buddyGame'
 import {
   JOURNEY_STEPS,
   PATH_STEP_COUNT,
+  PATH_VIEWS,
+  labelForView,
   journeyIdForView,
   getNextJourney,
   toolsLabelForView,
@@ -3935,7 +3937,9 @@ function App() {
         {/* ===== WORK — one step owns the fold ===== */}
         {/* ===== SKETCH (lazy) ===== */}
         {activeView === 'flow' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading Work…" />}>
+          <Suspense fallback={<PathViewSkeleton
+              label={`Loading ${labelForView('flow')}…`}
+            />}>
             <StepDependencyReminder stepId="sketch" />
             <SketchView
               locale={locale}
@@ -3989,7 +3993,9 @@ function App() {
 
         {/* ===== RESEARCH (lazy) ===== */}
         {activeView === 'studio' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading Board…" />}>
+          <Suspense fallback={<PathViewSkeleton
+              label={`Loading ${labelForView('studio')}…`}
+            />}>
             <StepDependencyReminder stepId="research" />
             <ResearchView
               locale={locale}
@@ -4121,7 +4127,9 @@ function App() {
         {/* ===== BRAND IDENTITY TEMPLATE ===== */}
         {/* ===== DESIGN (lazy) ===== */}
         {activeView === 'brand' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading System…" />}>
+          <Suspense fallback={<PathViewSkeleton
+              label={`Loading ${labelForView('brand')}…`}
+            />}>
             <StepDependencyReminder stepId="design" />
             <DesignView
               locale={locale}
@@ -4168,7 +4176,9 @@ function App() {
 
         {/* ===== DELIVER (lazy) ===== */}
         {activeView === 'finish' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading Pack…" />}>
+          <Suspense fallback={<PathViewSkeleton
+              label={`Loading ${labelForView('finish')}…`}
+            />}>
             <StepDependencyReminder stepId="deliver" />
             <DeliverView
               locale={locale}
@@ -4269,7 +4279,9 @@ function App() {
 {/* ===== PROJECTS ===== */}
         {/* ===== DEFINE (lazy) ===== */}
         {activeView === 'project' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading Project…" />}>
+          <Suspense fallback={<PathViewSkeleton
+              label={`Loading ${labelForView('project')}…`}
+            />}>
             <DefineView
               locale={locale}
               navDir={navDir}
@@ -4333,13 +4345,11 @@ function App() {
             <h2 id="demo-tour-title" style={{ marginTop: 0 }}>
               {
                 [
-                  '1 · Define',
-                  '2 · Research',
-                  '3 · Ideate',
-                  '4 · Sketch',
-                  '5 · Design',
-                  '6 · Review',
-                  '7 · Deliver',
+                  /* Was a frozen seven-entry list naming Define/Ideate/
+                     Sketch/Design/Review/Deliver and walking through Ideate
+                     and Review as if they were path stops. A first-run tour
+                     that contradicts every other screen is worse than none. */
+                  ...JOURNEY_STEPS.map((st, i) => `${i + 1} · ${st.label}`),
                 ][demoTour.step] || 'Tour'
               }
             </h2>
@@ -4361,15 +4371,7 @@ function App() {
                 type="button"
                 className="btn btn-primary"
                 onClick={() => {
-                  const views = [
-                    'project',
-                    'studio',
-                    'spark',
-                    'flow',
-                    'brand',
-                    'review',
-                    'finish',
-                  ]
+                  const views = PATH_VIEWS
                   const s = demoTour.step
                   setActiveView(views[s])
                   if (s >= 6) setDemoTour(null)
@@ -4382,15 +4384,7 @@ function App() {
                 type="button"
                 className="btn btn-secondary btn-sm"
                 onClick={() => {
-                  const views = [
-                    'project',
-                    'studio',
-                    'spark',
-                    'flow',
-                    'brand',
-                    'review',
-                    'finish',
-                  ]
+                  const views = PATH_VIEWS
                   setActiveView(views[demoTour.step] || 'project')
                   setDemoTour(null)
                 }}
@@ -4594,7 +4588,7 @@ function App() {
             </div>
             <ul className="shortcuts-list">
               <li>
-                <kbd>1</kbd>–<kbd>7</kbd> Path
+                <kbd>1</kbd>–<kbd>{PATH_STEP_COUNT}</kbd> Path
               </li>
               <li>
                 <kbd>C</kbd> Done step

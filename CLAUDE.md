@@ -372,3 +372,32 @@ locally; remote deletion on `origin` returned HTTP 403 — this session's git
 credentials cannot delete remote refs, so that needs doing from a surface
 with actual push/admin rights to the GitHub repo. `gh-pages` is not a feature
 branch — it's the CI-published Pages deploy target — and was left alone.
+
+## The journey is declared once — derive from it, never restate it
+
+`src/lib/journey.js` owns the path: the stops, their order, their ids, their
+views, their labels, and how many there are. Everything else reads from it.
+
+Use `JOURNEY_STEPS`, `PATH_VIEWS`, `PATH_STEP_COUNT`, `labelForView(view)`,
+`labelForStepId(id)`. Never write a stop's label as a string literal, never
+retype the list of views or ids, never hard-code the number of stops.
+
+This is the dominant defect in this codebase. At the v1.53.6 rename, nine
+modules held their own copy and exactly one was updated:
+
+- three completion gates compared a five-row count against `7`, so `pathFull`
+  and `packReady` were unreachable and a finished project read 5/7
+- the first-run demo tour walked new users through a seven-step path
+- the shortcuts modal advertised keys 6 and 7, which do nothing
+- the Helper status line, the resume banner, the to-do headings, the client
+  inbox and the badge list all named stops the app had renamed
+- `WorkLogPanel`'s neutral `'Work'` fallback was swept into `'Touchpoints'`
+  by a bulk rename, so unlabelled hours would be blamed on a real stop
+
+A copy fails loudly on correct changes and stays silent on wrong ones — the
+worst of both. `journeySingleSource.test.js` greps source for restated labels;
+per-step *logic* keyed by id is fine and expected, restating the *words* is not.
+
+Tests must derive too. `processGuide.test.js` and `clientInbox.test.js` both
+froze the old order and old labels, so an intentional rename read as a
+regression and turned `main` red.

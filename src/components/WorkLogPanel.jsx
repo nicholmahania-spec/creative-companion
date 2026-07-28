@@ -17,7 +17,11 @@ const STAGE_TO_LABEL = Object.fromEntries([
 ])
 
 function stageLabel(stage) {
-  if (!stage) return 'Touchpoints'
+  /* 'Work', not a stage name. This read 'Touchpoints' because a bulk rename
+     swept the old generic default ('Work') along with the stop it renamed —
+     turning a neutral fallback into a specific stop, which would misattribute
+     unlabelled hours in the one panel meant to be a trustworthy record. */
+  if (!stage) return 'Work'
   return STAGE_TO_LABEL[stage] || stage
 }
 

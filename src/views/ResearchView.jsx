@@ -9,6 +9,7 @@ import {
   useMemo,
   useRef,
 } from 'react'
+import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/processGuide'
 import InfoReveal from '../components/InfoReveal'
@@ -1506,7 +1507,7 @@ export default function ResearchView({
           onClick={() => setActiveView?.('brand')}
         >
           {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'design') || 'Identity',
+            label: pathLabel(locale, 'design') || labelForStepId('design'),
           })}
         </button>
       </div>

@@ -5,6 +5,7 @@
  * Calm chapter nav — no XP / game HUD.
  */
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
 import { normalizeLocale, t as i18nT, tFormat, pathLabel } from '../lib/i18n'
 import { DETECTIVE_CHAPTERS, getDetectiveProgress } from '../lib/detectiveBrief'
@@ -312,7 +313,7 @@ export default function DefineView(props) {
           onClick={() => setActiveView?.('flow')}
         >
           {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'research') || 'Research',
+            label: pathLabel(locale, 'research') || labelForStepId('research'),
           })}
         </button>
       </div>

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { labelForStepId } from './journey'
 import { buildInboxRows, portalSeenSnapshot } from './clientInbox'
 
 const projects = [{ id: 7, name: 'Acme rebrand' }]
@@ -32,7 +33,10 @@ describe('buildInboxRows', () => {
       step_status: { design: { status: 'changes_requested', note: 'Try navy?' } },
     }
     const { rows } = buildInboxRows([p], [], {}, projects)
-    expect(rows[0].title).toBe('Notes from Acme on Design')
+    /* Reads the stop's name from the journey rather than restating it. As the
+       literal 'Design' this asserted a label the app had renamed, so a correct
+       rename failed here — the same stale-copy trap the source had. */
+    expect(rows[0].title).toBe(`Notes from Acme on ${labelForStepId('design')}`)
     expect(rows[0].title).not.toMatch(/reject|changes requested/i)
     // The client's actual words are on the row, not hidden behind an open.
     expect(rows[0].preview).toBe('Try navy?')
