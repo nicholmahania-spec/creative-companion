@@ -254,6 +254,8 @@ export function createBlankProject(name = 'My project', brief = '') {
     brief: brief || '',
     logoDirection: '',
     directions: blankDirections(),
+    /** Ideate diverge dump — cheap ideas before A/B/C shortlist (persisted). */
+    roughIdeas: [],
     /** Ideate → Sketch external memory: chose X because Y */
     decisionLog: [],
     palette: [...defaultProjectPalette],
@@ -615,6 +617,23 @@ const useAppStore = create(
               )
             }
             return { ...p, directions: dirs, decisionLog }
+          }),
+        })),
+
+      /**
+       * Replace Ideate rough-idea dump for the current project.
+       * Cap keeps the list from becoming a second infinite inbox.
+       * @param {string[]} ideas
+       */
+      setRoughIdeas: (ideas) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const list = (Array.isArray(ideas) ? ideas : [])
+              .map((t) => String(t || '').trim())
+              .filter(Boolean)
+              .slice(0, 30)
+            return { ...p, roughIdeas: list }
           }),
         })),
 
@@ -1232,6 +1251,9 @@ const useAppStore = create(
           }
           if (!Array.isArray(base.directions) || base.directions.length < 3) {
             base.directions = blankDirections()
+          }
+          if (!Array.isArray(base.roughIdeas)) {
+            base.roughIdeas = []
           }
           if (!base.designVersion) base.designVersion = 'v1'
           return base

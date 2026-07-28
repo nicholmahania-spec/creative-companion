@@ -81,6 +81,9 @@ export default function BuddyMate({
   showProgress = false,
   helperQuiet = false,
   onNavigate,
+  /** When true, open Break care + a calm scripted line (Pomodoro ownership). */
+  forceBreakCare = false,
+  breakMinutes = 0,
 }) {
   const breakKit = useAppStore((s) => s.breakKit)
   const addBreakKitItem = useAppStore((s) => s.addBreakKitItem)
@@ -148,6 +151,34 @@ export default function BuddyMate({
       autoMinRef.current = null
     }
   }, [])
+
+  // Pomodoro → Helper: system hands the break to the voice that already owns
+  // Break kit, instead of only a hard overlay with no coaching surface.
+  useEffect(() => {
+    if (!forceBreakCare) return undefined
+    clearAutoMin()
+    setExpanded(true)
+    setShowBreakCare(true)
+    setShowMore(false)
+    setHasUnread(true)
+    const mins = Math.max(1, Number(breakMinutes) || 5)
+    setMessages((prev) => {
+      const last = prev[prev.length - 1]
+      const text = `You've been at this a while. Take about ${mins} minutes — stretch, water, or one kit item. The work is still here when you come back.`
+      if (last?.from === 'buddy' && String(last.text).includes("You've been at this a while")) {
+        return prev
+      }
+      return [
+        ...prev,
+        {
+          id: msgId.current++,
+          from: 'buddy',
+          text,
+        },
+      ]
+    })
+    return undefined
+  }, [forceBreakCare, breakMinutes, clearAutoMin])
 
   const minimize = useCallback(() => {
     clearAutoMin()

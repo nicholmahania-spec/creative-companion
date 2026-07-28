@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { getProcessPhase } from '../lib/processGuide'
 import { pathLabel, tFormat } from '../lib/i18n'
+import useAppStore from '../store/useAppStore'
 import InfoReveal from '../components/InfoReveal'
 
 export default function SparkView({
@@ -20,7 +21,9 @@ export default function SparkView({
   projectId,
   i18nT = (key) => key,
   projectGoal = '',
+  roughIdeas = [],
 }) {
+  const setRoughIdeas = useAppStore((s) => s.setRoughIdeas)
   const dirs =
     Array.isArray(directions) && directions.length >= 3
       ? directions
@@ -36,8 +39,8 @@ export default function SparkView({
   const title = pathLabel(locale, 'ideate') || 'Ideate'
   const goalLine = String(projectGoal || '').trim()
 
-  // Session rough dump — diverge first, then promote into A/B/C
-  const [rough, setRough] = useState([])
+  // Persisted diverge dump (project.roughIdeas) — only the draft line is session-local
+  const rough = Array.isArray(roughIdeas) ? roughIdeas : []
   const [roughDraft, setRoughDraft] = useState('')
 
   const pinSparkStay = () => {
@@ -71,7 +74,7 @@ export default function SparkView({
   const addRough = () => {
     const t = roughDraft.trim()
     if (!t) return
-    setRough((r) => [...r, t])
+    setRoughIdeas([...rough, t])
     setRoughDraft('')
   }
 
@@ -84,8 +87,12 @@ export default function SparkView({
       return
     }
     updateDirection?.(empty.id, { title: text })
-    setRough((r) => r.filter((_, i) => i !== index))
+    setRoughIdeas(rough.filter((_, i) => i !== index))
     flashMicro?.(`→ ${empty.label}`)
+  }
+
+  const removeRough = (index) => {
+    setRoughIdeas(rough.filter((_, i) => i !== index))
   }
 
   const chooseDirection = (dir) => {
@@ -192,7 +199,7 @@ export default function SparkView({
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={() => setRough((r) => r.filter((_, j) => j !== i))}
+                  onClick={() => removeRough(i)}
                   aria-label="Remove"
                 >
                   ×

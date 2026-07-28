@@ -379,6 +379,11 @@ function App() {
   const [pwCurrent, setPwCurrent] = useState('')
   const [pwNext, setPwNext] = useState('')
   const [buddyWinPulse, setBuddyWinPulse] = useState(0)
+  /** Pomodoro → Helper: open Break care (scripted) without requiring Helper on all the time. */
+  const [helperBreakCare, setHelperBreakCare] = useState({
+    open: false,
+    minutes: 0,
+  })
   const moreWrapRef = useRef(null)
   const importFileRef = useRef(null)
   const cloudSyncReady = useRef(false)
@@ -954,13 +959,14 @@ function App() {
     const workMin = Math.max(1, Number(workMinutes) || POMODORO_WORK_MIN)
     const breakMin = breakMinutesForWork(workMin)
 
-    // User turned lockouts off — soft landing only
+    // User turned lockouts off — soft landing only (Helper still coaches)
     if (!forceBreaksEnabledRef.current) {
       setIsFocusRunning(false)
       setSessionComplete(true)
       setPomodoroWorkStartedAt(null)
       markBreak()
       playBreakChime()
+      setHelperBreakCare({ open: true, minutes: breakMin })
       flashToast(
         tFormat(locale, 'ui.workBlockDoneSoft', {
           min: Math.round(workMin),
@@ -976,6 +982,7 @@ function App() {
       setPomodoroWorkStartedAt(null)
       markBreak()
       playBreakChime()
+      setHelperBreakCare({ open: true, minutes: breakMin })
       if (!prefs.forceBreaksExplained) {
         setPref('forceBreaksExplained', true)
         setForceBreakConsentOpen(true)
@@ -997,6 +1004,8 @@ function App() {
     setMoreOpen(false)
     // Remember path view so unlock returns user where they were
     preBreakViewRef.current = activeView
+    // Pomodoro is Helper's job: open Break kit alongside the lock overlay
+    setHelperBreakCare({ open: true, minutes: breakMin })
     const endsAt = Date.now() + totalSec * 1000
     const fb = {
       totalSec,
@@ -1061,6 +1070,7 @@ function App() {
     const resume = fb?.resumeView || preBreakViewRef.current || null
     markBreak()
     setForcedBreak(null)
+    setHelperBreakCare({ open: false, minutes: 0 })
     clearForcedBreakSession()
     setPomodoroWorkStartedAt(Date.now())
     setFocusLeft(POMODORO_WORK_MIN * 60)
@@ -3756,6 +3766,7 @@ function App() {
               notifyAction={notifyAction}
               directions={activeProject?.directions}
               updateDirection={updateDirection}
+              roughIdeas={activeProject?.roughIdeas || []}
               decisionLog={activeProject?.decisionLog || []}
               sparksTried={sparksTried || 0}
               locale={locale}
@@ -4559,12 +4570,15 @@ function App() {
         )}
       </button>
 
-      {/* Helper — presence coach, not a freeform chatbot. Hidden for now,
-          revisit as a future feature; store/prop wiring left intact. */}
-      {false && bodyDoubling && (
+      {/* Helper — presence coach. Usually off unless opted in; also mounts
+          during a Pomodoro break so Break kit has a voice (not only a lock). */}
+      {(bodyDoubling || helperBreakCare.open || forcedBreak) && (
         <Suspense fallback={null}>
         <BuddyMate
-          onClose={() => setBodyDoubling(false)}
+          onClose={() => {
+            setBodyDoubling(false)
+            setHelperBreakCare({ open: false, minutes: 0 })
+          }}
           isFocusRunning={isFocusRunning}
           focusLeft={focusLeft}
           completedCount={completedCount}
@@ -4573,6 +4587,12 @@ function App() {
           pulseWin={buddyWinPulse}
           showProgress={showProgress}
           helperQuiet={!!prefs.helperQuiet}
+          forceBreakCare={
+            !!(helperBreakCare.open || forcedBreak)
+          }
+          breakMinutes={
+            forcedBreak?.breakMinutes || helperBreakCare.minutes || 0
+          }
           onNavigate={setActiveView}
           activity={{
             view: activeView,
