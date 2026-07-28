@@ -9,6 +9,7 @@ import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
 import { DETECTIVE_CHAPTERS, getDetectiveProgress } from '../lib/detectiveBrief'
 import DefineStartHere from '../components/DefineStartHere'
+import ScopePanel from '../components/ScopePanel'
 import '../styles/lazy-define.css'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
@@ -258,6 +259,14 @@ export default function DefineView(props) {
             </button>
           </div>
         </div>
+
+        {/* Below the milestones, above the recent-task snapshot. Scope is
+            agreed once and then referred back to, so it does not earn a place
+            in front of the anti-stall control the way milestones do. */}
+        <ScopePanel
+          activeProject={activeProject}
+          onOpenChapter={setOpenChapter}
+        />
 
         {deskTasks.length > 0 && (
           <div className="define-secondary field-block">

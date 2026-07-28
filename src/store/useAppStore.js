@@ -1,5 +1,6 @@
 import { DELIVERABLE_OPTIONS, DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
 import { liftMeasuredRows } from './workLogSeparation'
+import { revisionSummary, roundCharge } from '../lib/revisions'
 import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
@@ -197,6 +198,20 @@ export function brandIdentityDefaults() {
   printFinish: '',
   /** Design version label (v1, v2...) */
   designVersion: 'v1',
+  /* Scope — the five things the research says have to be agreed before work
+     starts. Deliverables and file formats are already asked in the brief;
+     these three had no home anywhere. `scopeOutOf` matters as much as the
+     rest: what is NOT included is the half of a scope that gets argued
+     about. */
+  scopeRevisionsIncluded: 2,
+  scopeRevisionBilling: 'perRound',
+  scopeRevisionRate: '',
+  scopeApprover: '',
+  scopeOutOf: '',
+  /** Revision rounds — [{ id, openedAt, note, closedAt, billedAmount }] */
+  revisionRounds: [],
+  /** Review: structured log — [{ id, reviewer, issue, decision, status }] */
+  feedbackLog: [],
   /** Review: feedback notes from client / self */
   feedbackNotes: '',
   /** Deliver: short handover note for client */
@@ -956,6 +971,152 @@ const useAppStore = create(
           projects: state.projects.map((p) => {
             if (p.id !== state.currentProjectId) return p
             return { ...p, timeLog: (p.timeLog || []).filter((t) => t.id !== id) }
+          }),
+        })),
+
+      /**
+       * Open a revision round. No-op if one is already open — two open rounds
+       * would make "which round am I on" unanswerable, which is the exact
+       * question this feature exists to answer.
+       */
+      startRevisionRound: (note = '') =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const rounds = Array.isArray(p.revisionRounds)
+              ? p.revisionRounds
+              : []
+            if (rounds.some((r) => r && !r.closedAt)) return p
+            return {
+              ...p,
+              revisionRounds: [
+                ...rounds,
+                {
+                  id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                  openedAt: new Date().toISOString(),
+                  note: String(note || '').trim(),
+                  closedAt: '',
+                },
+              ],
+            }
+          }),
+        })),
+
+      /**
+       * Close the open round, and optionally bill it.
+       *
+       * `bill` is opt-in and never inferred. A round going over the agreed
+       * count is a fact; charging for it is a decision, and an app that
+       * quietly added a line to an invoice would be making that decision on
+       * the studio's behalf against a client it cannot see.
+       */
+      closeRevisionRound: ({ bill = false, hours = 0 } = {}) =>
+        set((state) => {
+          const project = state.projects.find(
+            (p) => p.id === state.currentProjectId
+          )
+          if (!project) return state
+          const rounds = Array.isArray(project.revisionRounds)
+            ? project.revisionRounds
+            : []
+          const openIdx = rounds.findIndex((r) => r && !r.closedAt)
+          if (openIdx < 0) return state
+
+          const summary = revisionSummary(
+            rounds,
+            project.scopeRevisionsIncluded
+          )
+          const charge = bill
+            ? roundCharge({
+                billing: project.scopeRevisionBilling,
+                rate: project.scopeRevisionRate,
+                hours,
+                isBeyond: summary.isBeyond,
+              })
+            : null
+
+          const nextRounds = rounds.map((r, i) =>
+            i === openIdx
+              ? {
+                  ...r,
+                  closedAt: new Date().toISOString(),
+                  billedAmount: charge || 0,
+                }
+              : r
+          )
+
+          /* A billed round becomes an invoice line, not a separate ledger.
+             The invoice is the one place money is counted; a second running
+             total somewhere else is a number waiting to disagree. */
+          const nextTimeLog =
+            charge && charge > 0
+              ? [
+                  ...(project.timeLog || []),
+                  {
+                    id: `${Date.now()}-${Math.random()
+                      .toString(36)
+                      .slice(2, 7)}`,
+                    date: new Date().toISOString().slice(0, 10),
+                    note: `Revision round ${summary.number}`,
+                    amount: charge,
+                  },
+                ]
+              : project.timeLog || []
+
+          return {
+            projects: state.projects.map((p) =>
+              p.id === project.id
+                ? { ...p, revisionRounds: nextRounds, timeLog: nextTimeLog }
+                : p
+            ),
+          }
+        }),
+
+      /** Feedback log — Reviewer / Issue / Decision / Status. */
+      addFeedbackEntry: ({ reviewer = '', issue = '', decision = '', status = 'open' }) =>
+        set((state) => {
+          if (!String(issue || '').trim()) return state
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== state.currentProjectId) return p
+              return {
+                ...p,
+                feedbackLog: [
+                  ...(Array.isArray(p.feedbackLog) ? p.feedbackLog : []),
+                  {
+                    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                    reviewer: String(reviewer || '').trim(),
+                    issue: String(issue).trim(),
+                    decision: String(decision || '').trim(),
+                    status,
+                  },
+                ],
+              }
+            }),
+          }
+        }),
+
+      updateFeedbackEntry: (id, patch = {}) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              feedbackLog: (p.feedbackLog || []).map((f) =>
+                f.id === id ? { ...f, ...patch } : f
+              ),
+            }
+          }),
+        })),
+
+      removeFeedbackEntry: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              feedbackLog: (p.feedbackLog || []).filter((f) => f.id !== id),
+            }
           }),
         })),
 

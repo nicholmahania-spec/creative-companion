@@ -8,6 +8,7 @@ import { getProcessPhase, REVIEW_QUESTIONS } from '../lib/processGuide'
 import { labelForStepId } from '../lib/journey'
 import { packReadiness } from '../lib/exportFiles'
 import InfoReveal from '../components/InfoReveal'
+import RevisionRounds from '../components/RevisionRounds'
 import '../styles/lazy-review.css'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
@@ -156,6 +157,11 @@ export default function ReviewView({
               </div>
             </details>
           </section>
+
+          <RevisionRounds
+            activeProject={activeProject}
+            flashToast={flashToast}
+          />
 
           {miss.length > 0 && (
             <section className="panel brand-section review-ready-panel">
