@@ -1072,6 +1072,35 @@ const useAppStore = create(
           }
         }),
 
+      /**
+       * Mark a decision as one that broke a convention on purpose.
+       *
+       * A one-tap toggle applied AFTER the fact, never a field on the capture
+       * form. The rejected version added a "which rule are you breaking?" box
+       * to the decision form plus a rule that filling it made the `why`
+       * mandatory — which fires a decision on every entry (and most decisions
+       * break nothing), and punishes the user with a blocked save for
+       * volunteering information. Capture is the most initiation-fragile
+       * moment in the workflow; nothing gets added to it.
+       *
+       * There is no accompanying text field. The existing `why` already says
+       * what the break was — "Quiet teal — calm, not corporate" IS the
+       * statement — so this only marks which entries the case study should
+       * present as deliberate.
+       */
+      toggleDecisionRuleBreak: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              decisionLog: (p.decisionLog || []).map((d) =>
+                d.id === id ? { ...d, breaksRule: !d.breaksRule } : d
+              ),
+            }
+          }),
+        })),
+
       /** Feedback log — Reviewer / Issue / Decision / Status. */
       addFeedbackEntry: ({ reviewer = '', issue = '', decision = '', status = 'open' }) =>
         set((state) => {

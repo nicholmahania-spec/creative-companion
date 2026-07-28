@@ -16,7 +16,7 @@ const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 /** Short stems — full sentence only as title / Advanced */
 const REVIEW_PROMPTS = [
   { stem: 'Hopeful?', full: REVIEW_QUESTIONS[0] },
-  { stem: 'First 3s?', full: REVIEW_QUESTIONS[1] },
+  { stem: 'Mean anything?', full: REVIEW_QUESTIONS[1] },
   { stem: 'Notice first?', full: REVIEW_QUESTIONS[2] },
   { stem: 'One change?', full: REVIEW_QUESTIONS[3] },
 ]

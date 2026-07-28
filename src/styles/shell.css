@@ -7921,6 +7921,43 @@ select:focus {
 .case-study-gaps {
   margin-bottom: 0.5rem;
 }
+.case-study-decisions {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.case-study-decision {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0.35rem 0;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.78rem;
+  min-height: 44px;
+}
+.case-study-decision-mark {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+}
+/* Marked entries carry weight, not colour — the palette on screen is the
+   client's, and a status colour here would collide with whatever brand is
+   being worked on. */
+.case-study-decision.is-break .case-study-decision-mark,
+.case-study-decision.is-break .case-study-decision-text {
+  font-weight: 700;
+}
+.case-study-decision-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  padding-top: 0.2rem;
+}
 @media (max-width: 560px) {
   .case-study-answers li {
     grid-template-columns: 1fr;

@@ -11,6 +11,7 @@
  * study that stops early beats one with a blank heading in it.
  */
 import { useState } from 'react'
+import useAppStore from '../store/useAppStore'
 import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
 import { downloadBlob, slugifyFilename } from '../lib/exportFiles'
 import {
@@ -24,6 +25,7 @@ const LABELS = Object.fromEntries(
 )
 
 export default function CaseStudyExport({ activeProject, flashToast }) {
+  const toggleDecisionRuleBreak = useAppStore((s) => s.toggleDecisionRuleBreak)
   const [busy, setBusy] = useState(false)
   if (!activeProject) return null
 
@@ -89,6 +91,41 @@ export default function CaseStudyExport({ activeProject, flashToast }) {
           <span>{cs.outcome || '—'}</span>
         </li>
       </ul>
+
+      {/* The decisions that will be in the export, each one tappable to mark
+          as a deliberate break. Marked here rather than at capture: most
+          decisions break nothing, so a field on the capture form would fire a
+          decision on every entry for value collected rarely — and capture is
+          the moment that has to stay frictionless. Nothing new is asked for;
+          the `why` already on the entry does the explaining. */}
+      {cs.process.length > 0 && (
+        <ul className="case-study-decisions">
+          {activeProject.decisionLog
+            .filter((d) => d && (d.title || d.why))
+            .map((d) => (
+              <li key={d.id}>
+                <button
+                  type="button"
+                  className={`case-study-decision${d.breaksRule ? ' is-break' : ''}`}
+                  aria-pressed={!!d.breaksRule}
+                  onClick={() => toggleDecisionRuleBreak(d.id)}
+                >
+                  <span className="case-study-decision-mark" aria-hidden="true">
+                    {d.breaksRule ? '◆' : '◇'}
+                  </span>
+                  <span className="case-study-decision-text">
+                    {[d.label, d.title].filter(Boolean).join(' · ')}
+                    {d.why ? ` — ${d.why}` : ''}
+                  </span>
+                </button>
+              </li>
+            ))}
+          <li className="case-study-decision-hint">
+            Tap one that broke a convention on purpose — it reads as deliberate
+            in the export instead of as an oversight.
+          </li>
+        </ul>
+      )}
 
       {cs.gaps.length > 0 && (
         <p className="panel-hint case-study-gaps">
