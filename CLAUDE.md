@@ -20,23 +20,28 @@ code — including follow-up fixes to something just discussed. The user has
 said this directly: "never assume. always ask for confirmation before
 touching the code." This applies to every change, not just large ones.
 
-## Git workflow rule — version bump
+## Git workflow rule — version bump (MANUAL — hooks don't work here)
 
-**Do not run `npm run bump` (or `:minor`/`:major`) manually.**
-`.githooks/prepare-commit-msg` bumps the version automatically on every
-commit — that's the only mechanism. Running it by hand too double-bumps
-(two version numbers burned per push instead of one), which is exactly what
-happened across several commits in the 2026-07-27/28 session.
+**Bump the version yourself, in the same shell sequence as the commit, using
+the right command for what the commit actually is:**
+- `feat!: ...` / `fix!: ...` / a `BREAKING CHANGE` footer → `npm run bump:major`
+- `feat: ...` → `npm run bump:minor`
+- anything else (`fix:`, `chore:`, no prefix, ...) → `npm run bump`
 
-The hook picks patch vs. minor vs. major from the commit message itself
-(conventional-commits style), so write the message like you mean it:
-- `feat!: ...` / `fix!: ...` / a `BREAKING CHANGE` footer → **major**
-- `feat: ...` → **minor**
-- anything else (`fix:`, `chore:`, no prefix, ...) → **patch**
+Then `git add package.json package-lock.json` and commit — same commit,
+not a follow-up one.
 
-It lives in `prepare-commit-msg`, not `pre-commit` — that hook fires before
-the commit message exists, so it physically cannot read it. Merge/squash
-commits are skipped (the branch's own commits already bumped).
+**This used to be a git hook (`.githooks/prepare-commit-msg`). It is
+disabled and must not be re-enabled without testing first.** In this repo's
+actual execution environment, any hook that stages files during a commit —
+tried `pre-commit`, `prepare-commit-msg`, and `commit-msg`, all three — has
+its staged changes land in the *next* commit's tree, never the current one.
+Not standard git behavior; something about how `git commit` runs here
+snapshots the tree before hook-staged index changes take effect. The
+symptom if this recurs: `package.json`'s committed version is always one
+bump behind what the working tree shows, and the repo looks permanently
+"dirty" between commits (which is what tripped the stop-hook check that
+led to this being found and fixed, 2026-07-27/28 session).
 
 ## Branch
 

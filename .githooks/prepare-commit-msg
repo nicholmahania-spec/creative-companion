@@ -1,32 +1,15 @@
 #!/bin/sh
-# Bump the version according to the commit message, then stage the result —
-# runs here (not pre-commit) because pre-commit fires before the message
-# exists; prepare-commit-msg is the first hook that can actually read it,
-# and it still runs before the commit object is created, so the bump lands
-# in the same commit rather than a trailing one.
+# DISABLED — do not re-enable without testing first. In this repo's actual
+# execution environment, ANY hook that stages files during a commit (tried
+# pre-commit, prepare-commit-msg, and commit-msg — all three) lands its
+# staged changes in the *next* commit's tree, never the current one. That is
+# not standard git behavior; something about how `git commit` runs here
+# snapshots the tree before hook-staged index changes take effect. The
+# result was a permanent one-commit version-number lag and a perpetually
+# "dirty" working tree between commits.
 #
-# Convention, checked against the message:
-#   "feat!:" / "fix!:" / etc, or a "BREAKING CHANGE" footer -> major
-#   "feat:" (first line)                                    -> minor
-#   anything else (fix:, chore:, docs:, no prefix, ...)     -> patch
-#
-# Skipped for merge/squash commits ($2) so merging a branch doesn't also
-# bump — the branch's own commits already did.
-MSG_FILE="$1"
-SOURCE="$2"
-
-case "$SOURCE" in
-  merge|squash) exit 0 ;;
-esac
-
-FIRST_LINE=$(head -n1 "$MSG_FILE")
-
-if grep -qE '^[a-zA-Z]+(\([^)]*\))?!:' "$MSG_FILE" || grep -qi 'BREAKING CHANGE' "$MSG_FILE"; then
-  npm run --silent bump:major || exit 1
-elif printf '%s' "$FIRST_LINE" | grep -qiE '^feat(\([^)]*\))?:'; then
-  npm run --silent bump:minor || exit 1
-else
-  npm run --silent bump || exit 1
-fi
-
-git add package.json package-lock.json
+# The bump-by-commit-message logic (feat!/BREAKING -> major, feat: -> minor,
+# else -> patch) is documented in CLAUDE.md as a manual step instead: run
+# the right `npm run bump[:minor|:major]` yourself, then `git add` the two
+# files, in the same shell sequence as the commit — not via a hook.
+exit 0
