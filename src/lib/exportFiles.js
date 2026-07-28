@@ -318,6 +318,15 @@ export function buildBrandPackSnapshot({
     accessibilityNeeds: d.accessibilityNeeds || '',
     brandSurfaces: Array.isArray(d.brandSurfaces) ? d.brandSurfaces : [],
     feedbackNotes: p.feedbackNotes || '',
+    /* Scope travels with the pack because it is what the work was measured
+       against. `scopeOutOf` in particular is the half of a scope that gets
+       argued about, and it belongs in the record rather than in someone's
+       memory of a kickoff call. */
+    scopeRevisionsIncluded: Number(p.scopeRevisionsIncluded) || 0,
+    scopeApprover: p.scopeApprover || '',
+    scopeOutOf: p.scopeOutOf || '',
+    revisionRounds: Array.isArray(p.revisionRounds) ? p.revisionRounds : [],
+    feedbackLog: Array.isArray(p.feedbackLog) ? p.feedbackLog : [],
     handoffNote: p.handoffNote || '',
     learnings: p.learnings || '',
     directions: Array.isArray(p.directions)
@@ -526,6 +535,30 @@ export function brandPackToMarkdown(pack) {
   }
   if (pack.feedbackNotes) {
     lines.push('## Review notes', '', pack.feedbackNotes, '')
+  }
+  /* What was agreed, next to what was done about it. A revision count means
+     nothing on its own — it is only a claim when it sits beside the rounds
+     that were actually run. */
+  if (pack.scopeApprover || pack.scopeOutOf || pack.scopeRevisionsIncluded) {
+    lines.push('## Scope', '')
+    if (pack.scopeRevisionsIncluded)
+      lines.push(`- **Revision rounds included:** ${pack.scopeRevisionsIncluded}`)
+    if ((pack.revisionRounds || []).length) {
+      const done = pack.revisionRounds.filter((r) => r?.closedAt).length
+      lines.push(`- **Rounds run:** ${done}`)
+    }
+    if (pack.scopeApprover) lines.push(`- **Signed off by:** ${pack.scopeApprover}`)
+    if (pack.scopeOutOf) lines.push(`- **Not included:** ${pack.scopeOutOf}`)
+    lines.push('')
+  }
+  if ((pack.feedbackLog || []).length) {
+    lines.push('## Feedback log', '')
+    for (const f of pack.feedbackLog) {
+      const who = f.reviewer ? `**${f.reviewer}** — ` : ''
+      const what = f.decision ? ` → ${f.decision}` : ''
+      lines.push(`- ${who}${f.issue}${what} _(${f.status})_`)
+    }
+    lines.push('')
   }
   if (pack.logoWordmark || pack.logoDirection || pack.logoClearspace || pack.logoImage) {
     lines.push('## Logo lockups', '')

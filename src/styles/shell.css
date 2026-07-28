@@ -7886,6 +7886,199 @@ select:focus {
   margin-top: 0.85rem;
 }
 
+/* Client survey answers — studio side, grouped by theme */
+
+.survey-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.survey-theme {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.survey-answer-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+}
+.survey-answer-q {
+  color: var(--text-secondary);
+}
+.survey-answer-a {
+  font-weight: 600;
+}
+
+/* Scope panel — Define. Closed by default; a line, not a dashboard. */
+
+.scope-panel {
+  border-top: 1px solid var(--ts-border, var(--border-subtle));
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+.scope-panel-toggle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0.3rem 0;
+  cursor: pointer;
+  text-align: left;
+  /* 44px floor — the a11y pass set this for every tap target. */
+  min-height: 44px;
+}
+.scope-panel-state {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.scope-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.4rem 0 0.2rem;
+}
+.scope-row {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 12rem);
+  align-items: center;
+  gap: 0.5rem;
+}
+.scope-row-stack {
+  grid-template-columns: 1fr;
+}
+.scope-row-static {
+  grid-template-columns: 1fr auto;
+}
+.scope-row-label {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.scope-input-num {
+  max-width: 7rem;
+}
+@media (max-width: 560px) {
+  .scope-row,
+  .scope-row-static {
+    grid-template-columns: 1fr;
+  }
+  .scope-input-num {
+    max-width: none;
+  }
+}
+
+/* Revision rounds + feedback log — Review */
+
+.revision-line {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.revision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.revision-bill-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.revision-bill-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  min-height: 44px;
+}
+.revision-hours-input {
+  max-width: 6rem;
+}
+.revision-bill-amount {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.feedback-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--ts-border, var(--border-subtle));
+}
+.feedback-log-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+.feedback-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--ts-border, var(--border-subtle));
+}
+.feedback-row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.feedback-issue {
+  font-weight: 600;
+}
+.feedback-reviewer,
+.feedback-decision {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+/* Resolved and won't-do stay legible — struck-through or faded text was the
+   bug the brand book had with its own eyebrow. Weight carries the state, and
+   500 is the lightest the family actually loads. */
+.feedback-row.is-resolved .feedback-issue,
+.feedback-row.is-wontfix .feedback-issue {
+  font-weight: 500;
+}
+.feedback-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.feedback-status-select {
+  max-width: 8rem;
+  font-size: 0.75rem;
+}
+.feedback-entry {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1.6fr auto;
+  gap: 0.35rem;
+  align-items: center;
+}
+@media (max-width: 640px) {
+  .feedback-entry {
+    grid-template-columns: 1fr;
+  }
+  .feedback-status-select {
+    max-width: none;
+  }
+}
+
 /* Hours & invoice panel — reuses .running-todo-panel chrome */
 
 .hours-invoice-panel {
