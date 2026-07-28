@@ -4001,15 +4001,11 @@ function App() {
               navDir={navDir}
               activeProject={activeProject}
               deskTasks={deskTasks}
-              deskMood={deskMood}
-              projectPalette={projectPalette}
               setActiveView={setActiveView}
               updateDetective={updateDetective}
               onOpenShare={() => setOverviewSharePanelOpen(true)}
               setProjectDeadline={setProjectDeadline}
               projectDeadline={projectDeadline}
-              flashToast={flashToast}
-              flashMicro={flashMicro}
             />
           </Suspense>
         )}

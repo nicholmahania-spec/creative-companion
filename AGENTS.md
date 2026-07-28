@@ -1,16 +1,19 @@
 # Creative Companion — agent rules
 
-## Define split workspace (ADHD — do not regress)
+## Define is form-only (owner decision — do not reintroduce Refs)
 
-**Define must keep a side-by-side form + mood board.** ADHD users lose the train of thought when they tab away to look at inspiration (“tab-switching amnesia”). The mood board stays **pinned next to** the brief questions so writing and reference stay in one glance.
+**Project overview (Define) is the brief form only.** Inspiration / refs live on
+**Research**, not beside the questions. The owner removed the side-by-side Refs
+block deliberately; do **not** restore `DefineMoodCanvas` or a mood pane on
+Define without an explicit request.
 
 | Keep | Avoid |
 |------|--------|
-| ~60% questions / ~40% mood board on desktop | Single-column form that sends users to Research for refs |
-| Sticky inspiration pane while the form scrolls | Hiding the board behind a tab/modal by default |
-| Same project pins as Research (shared `moodItems`) | A disposable “demo only” board that doesn’t stick to the project |
+| Single-column brief (form-only) | Side-by-side form + mood board on Define |
+| Pins and board on Research | Re-adding “Refs” / DefineMoodCanvas to overview |
 
-Mobile may stack, but the board must remain **one scroll away on the same page**, not a separate path step.
+ADHD “tab-switching amnesia” is still a concern for Research itself (board
+primary there). It is **not** a reason to put the board back on Define.
 
 ---
 

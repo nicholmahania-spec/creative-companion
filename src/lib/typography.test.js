@@ -202,8 +202,8 @@ describe('typography guardrails', () => {
     // deletion regressed or someone pasted the rule back without re-adding
     // the JSX that would justify it. Either way, that's worth a loud failure
     // rather than a silent re-accumulation.
-    // Note: .define-split-mood / .define-mood-* are live again — AGENTS.md
-    // side-by-side Define form + mood board (restored 2026-07-28).
+    // Define is form-only again (owner): .define-split-mood must not return
+    // without an explicit request to put Refs back on overview.
     const DEAD_SELECTORS = [
       '.define-field-icon',
       '.define-icon-people',
@@ -217,6 +217,7 @@ describe('typography guardrails', () => {
       '.define-chapter-total',
       '.define-section-title',
       '.define-section-hint',
+      '.define-split-mood',
       '.resume-banner',
     ]
     for (const selector of DEAD_SELECTORS) {

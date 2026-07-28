@@ -11901,17 +11901,8 @@ body:has(.app.deep)::after {
 /* Wide tablet+: keep real split so board never leaves the glance */
 
 @media (min-width: 840px) {
-  /* ~60% form / ~40% mood board — AGENTS.md split workspace */
-  .define-split[data-define-layout='form-mood'] {
-    grid-template-columns: minmax(0, 1.5fr) minmax(14rem, 1fr);
-    gap: 1.25rem;
-  }
-
-  .define-split[data-define-layout='form-mood'] .define-split-mood {
-    position: sticky;
-    top: 4.5rem;
-    align-self: start;
-    min-width: 0;
+.define-split {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
