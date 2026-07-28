@@ -312,7 +312,7 @@ export default function DefineView(props) {
           onClick={() => setActiveView?.('flow')}
         >
           {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'sketch') || 'Work',
+            label: pathLabel(locale, 'design') || 'Identity',
           })}
         </button>
       </div>

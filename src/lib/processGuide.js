@@ -8,8 +8,22 @@ import { JOURNEY_STEPS } from './journey'
 
 /** Coaching overlay per step id (plain/prompt/checks differ from path bar plain). */
 const COACHING = {
+  research: {
+    title: 'Conducting research',
+    plain:
+      'Collect pictures, notes, and existing brand cues. Stop after about 20 minutes so you do not drown.',
+    prompt:
+      'Look at past work, similar brands, and audience cues. Save refs — not final design yet. Timer is optional.',
+    checks: [
+      'Looked at past or client materials',
+      '2–6 reference pictures on the board',
+      'Colors or words that feel right saved',
+      'Used a timer so research does not eat the day',
+      'At least one picture starred ★ for the client pack',
+    ],
+  },
   define: {
-    title: 'Define the work',
+    title: 'Clarifying strategy',
     plain:
       'Answer the basics before you design. One goal sentence. What must be in. What is nice later.',
     prompt:
@@ -20,19 +34,6 @@ const COACHING = {
       'What they should feel or do',
       'Must-have list and nice-to-have list',
       'Deadline, size, or other limits noted',
-    ],
-  },
-  research: {
-    title: 'Research & gather',
-    plain: 'Collect pictures and notes. Stop after about 20 minutes so you do not drown.',
-    prompt:
-      'Look at past work, similar brands, and audience cues. Save refs — not final design yet. Timer is optional.',
-    checks: [
-      'Looked at past or client materials',
-      '2–6 reference pictures on the board',
-      'Colors or words that feel right saved',
-      'Used a timer so research does not eat the day',
-      'At least one picture starred ★ for the client pack',
     ],
   },
   ideate: {
@@ -48,22 +49,9 @@ const COACHING = {
       'One direction chosen to sketch next',
     ],
   },
-  sketch: {
-    title: 'Sketch & draft',
-    plain: '2–3 cleaner drafts. Low detail. Each needs one line on why it fits.',
-    prompt:
-      'Only 2–3 drafts. Each has one line: why it fits the goal. About 2 hours total.',
-    checks: [
-      '2–3 options sketched (not 20 polished ones)',
-      'Each option has a one-line “why it fits”',
-      'Time-boxed (about 2 hours for drafts)',
-      'Current desk step is a draft choice, not polish',
-      'Ready to pick one direction for Design',
-    ],
-  },
   design: {
-    title: 'Design & refine',
-    plain: 'Fonts, colors, layout. Name the version before big changes.',
+    title: 'Designing identity',
+    plain: 'Logo, color, type, voice. Name the version before big changes.',
     prompt:
       'Layout, type, color, clear order. Rules over decoration. Bump version (v1 → v2).',
     checks: [
@@ -74,22 +62,37 @@ const COACHING = {
       'Version named (v1 → v2) before big changes',
     ],
   },
+  sketch: {
+    title: 'Creating touchpoints',
+    plain:
+      'Apply the system — 2–3 drafts or desk steps. Each needs one line on why it fits.',
+    prompt:
+      'Only 2–3 drafts or one current desk step. Each has one line: why it fits the goal.',
+    checks: [
+      '2–3 options sketched (not 20 polished ones)',
+      'Each option has a one-line "why it fits"',
+      'Time-boxed (about 2 hours for drafts)',
+      'Current desk step is application work, not endless polish',
+      'Ready to ship into Assets when the system holds',
+    ],
+  },
   review: {
     title: 'Review & revise',
     plain: 'Show it. Ask specific questions. Fix what helps the goal — not every opinion.',
     prompt:
-      'Show as if to a client. Ask “Does this feel hopeful?” not “Do you like it?” Write notes.',
+      'Show as if to a client. Ask "Does this feel hopeful?" not "Do you like it?" Write notes.',
     checks: [
       'Work shown as if to a client (not only yourself)',
-      'Specific questions asked (not only “do you like it?”)',
+      'Specific questions asked (not only "do you like it?")',
       'Feedback sorted: helps goal vs pure taste',
       'Notes saved for the next pass',
       'One real person looked if possible',
     ],
   },
   deliver: {
-    title: 'Deliver & look back',
-    plain: 'Send the files. Write a short client note. One paragraph: what worked? what next?',
+    title: 'Managing assets',
+    plain:
+      'Brand book PDF, tokens, handoff note. One paragraph: what worked? what next?',
     prompt:
       'Brand book PDF + short handoff note. One learnings paragraph. Then note what felt like you.',
     checks: [
@@ -97,7 +100,7 @@ const COACHING = {
       'Watermark choice intentional for the client',
       'Client pack not empty (tagline, colors, or starred pictures)',
       'Handoff note written',
-      'Learnings written: what felt like “me”? what next?',
+      'Learnings written: what felt like "me"? what next?',
     ],
   },
 }

@@ -736,11 +736,11 @@ export default function BuddyMate({
     .slice(-6)
 
   const PROCESS_STEMS = [
-    ['define', 'Pro'],
-    ['sketch', 'Work'],
-    ['research', 'Brd'],
-    ['design', 'Sys'],
-    ['deliver', 'Pack'],
+    ['research', 'Res'],
+    ['define', 'Str'],
+    ['design', 'Id'],
+    ['sketch', 'Tch'],
+    ['deliver', 'Ast'],
   ]
 
   // ——— Minimized: corner FAB ———

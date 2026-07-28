@@ -2181,7 +2181,7 @@ export default function DesignView({
           onClick={() => setActiveView?.('finish')}
         >
           {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'deliver') || 'Pack',
+            label: pathLabel(locale, 'sketch') || 'Touchpoints',
           })}
         </button>
       </div>

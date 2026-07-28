@@ -17,7 +17,7 @@ const STAGE_TO_LABEL = Object.fromEntries([
 ])
 
 function stageLabel(stage) {
-  if (!stage) return 'Work'
+  if (!stage) return 'Touchpoints'
   return STAGE_TO_LABEL[stage] || stage
 }
 

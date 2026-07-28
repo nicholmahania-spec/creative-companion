@@ -549,8 +549,8 @@ export default function SketchView(props) {
             label:
               (journeyNext?.id && pathLabel(locale, journeyNext.id)) ||
               journeyNext?.label ||
-              pathLabel(locale, 'design') ||
-              'Design',
+              pathLabel(locale, 'deliver') ||
+              'Assets',
           })}
         </button>
       </div>

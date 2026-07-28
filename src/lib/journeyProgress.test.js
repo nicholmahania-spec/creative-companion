@@ -166,9 +166,11 @@ describe('pathStepHasContent', () => {
       palette: [],
     })
     expect(missing.length).toBe(5)
-    expect(missing).toContain('Project')
-    expect(missing).toContain('Work')
-    expect(missing).toContain('Board')
+    expect(missing).toContain('Research')
+    expect(missing).toContain('Strategy')
+    expect(missing).toContain('Identity')
+    expect(missing).toContain('Touchpoints')
+    expect(missing).toContain('Assets')
     expect(missing).not.toContain('Ideate')
   })
 
@@ -188,9 +190,9 @@ describe('pathStepHasContent', () => {
       tasks: [],
       sparkIndex: 0,
     })
-    // Path order: Project → Work → Board… so next gap is Work (sketch/flow)
-    expect(gap?.id).toBe('sketch')
-    expect(gap?.view).toBe('flow')
+    // Path order: Research → Strategy → … first incomplete is Research (no pins)
+    expect(gap?.id).toBe('research')
+    expect(gap?.view).toBe('studio')
   })
 
   it('pathGapFocusSelector maps steps to fields', () => {

@@ -26,15 +26,16 @@ describe('i18n wordmark + path + catalog', () => {
     }
   })
 
-  it('localizes path labels (5-stop brief names)', () => {
-    expect(pathLabel('en', 'define')).toBe('Project')
-    expect(pathLabel('en', 'sketch')).toBe('Work')
-    expect(pathLabel('en', 'research')).toBe('Board')
-    expect(pathLabel('en', 'design')).toBe('System')
-    expect(pathLabel('en', 'deliver')).toBe('Pack')
+  it('localizes path labels (Wheeler process names)', () => {
+    expect(pathLabel('en', 'research')).toBe('Research')
+    expect(pathLabel('en', 'define')).toBe('Strategy')
+    expect(pathLabel('en', 'design')).toBe('Identity')
+    expect(pathLabel('en', 'sketch')).toBe('Touchpoints')
+    expect(pathLabel('en', 'deliver')).toBe('Assets')
     // aliases
-    expect(pathLabel('en', 'work')).toBe('Work')
-    expect(pathLabel('en', 'board')).toBe('Board')
+    expect(pathLabel('en', 'board')).toBe('Research')
+    expect(pathLabel('en', 'work')).toBe('Touchpoints')
+    expect(pathLabel('en', 'pack')).toBe('Assets')
     expect(pathLabel('es', 'work')).toBeTruthy()
     expect(pathLabel('ja', 'pack')).toBeTruthy()
     expect(pathLabel('ar', 'work')).toBeTruthy()
@@ -91,17 +92,17 @@ describe('i18n wordmark + path + catalog', () => {
     expect(en.kitHint.length).toBeLessThan(80)
     expect(en.thinPack.length).toBeLessThan(80)
     expect(en.downloadVectorPdf).toMatch(/brand book|PDF/i)
-    expect(en.openPack).toMatch(/Pack/i)
-    expect(en.openWork).toMatch(/Board/i)
-    expect(en.openSketch).toMatch(/Work/i)
+    expect(en.openPack).toMatch(/Assets/i)
+    expect(en.openWork).toMatch(/Research/i)
+    expect(en.openSketch).toMatch(/Touchpoints/i)
     expect(en.openReview).toMatch(/Review/i)
     expect(en.continueNext).toMatch(/Next|Continue/)
     expect(en.pathMarkPackThin).toMatch(/client pack|tagline|★|star/i)
     expect(en.pathMarkPackThin.length).toBeLessThan(60)
     expect(en.pathFullLeaveBehindThin.length).toBeLessThan(50)
     expect(en.backToIdeate).toMatch(/Ideate/i)
-    expect(tFormat('en', 'ui.continueNext', { label: 'Board' })).toBe(
-      'Next · Board'
+    expect(tFormat('en', 'ui.continueNext', { label: 'Research' })).toBe(
+      'Next · Research'
     )
     expect(tFormat('en', 'ui.openStepChip', { label: 'Star a pin' })).toBe(
       'Open · Star a pin'
@@ -109,11 +110,12 @@ describe('i18n wordmark + path + catalog', () => {
     expect(tFormat('en', 'ui.openStepChip', { label: 'x' })).not.toMatch(
       /Jumping/i
     )
-    expect(en.goToSystem).toMatch(/Design|System/i)
+    expect(en.goToSystem).toMatch(/Identity|Design/i)
     expect(en.emptyStepBody.length).toBeLessThan(80)
-    expect(en.howDeskWorks).toMatch(/Define|Project/)
+    expect(en.howDeskWorks).toMatch(/Research/)
+    expect(en.howDeskWorks).toMatch(/Strategy/)
+    expect(en.howDeskWorks).toMatch(/Assets/)
     expect(en.howDeskWorks).toMatch(/Ideate/)
-    expect(en.howDeskWorks).toMatch(/Deliver/)
   })
 
   it('locales override thin-pack and confirm chrome', () => {

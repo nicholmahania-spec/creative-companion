@@ -37,7 +37,8 @@ Without a key, Helper uses **built-in scripted coaching** (Recommend / Critique 
 
 ## What’s in the app
 
-**Path (5):** Project → Work → Board → System → Pack  
+**Path (5):** Research → Strategy → Identity → Touchpoints → Assets  
+(Wheeler / Logo Design Love process language; view ids unchanged)  
 
 | Area | Purpose |
 |------|---------|

@@ -201,14 +201,14 @@ export default function DeliverView({
                     className="btn btn-secondary btn-sm"
                     onClick={() => setActiveView('studio')}
                   >
-                    {i18nT(locale, 'ui.goToBoard') || 'Go to Board'}
+                    {i18nT(locale, 'ui.goToBoard') || 'Go to Research'}
                   </button>
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
                     onClick={() => goSystemSection('essentials')}
                   >
-                    {i18nT(locale, 'path.design') || 'System'}
+                    {i18nT(locale, 'path.design') || 'Identity'}
                   </button>
                 </div>
               </div>
@@ -260,7 +260,7 @@ export default function DeliverView({
                       setActiveView('studio')
                     }}
                   >
-                    {i18nT(locale, 'path.research') || 'Board'}
+                    {i18nT(locale, 'path.research') || 'Research'}
                   </button>
                 </div>
               </div>
@@ -350,7 +350,7 @@ export default function DeliverView({
                   className="btn btn-ghost btn-sm"
                   onClick={() => setActiveView('brand')}
                 >
-                  {i18nT(locale, 'path.design') || 'System'}
+                  {i18nT(locale, 'path.design') || 'Identity'}
                 </button>
                 <button
                   type="button"

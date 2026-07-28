@@ -20,35 +20,42 @@ const EN = {
   tagline: 'A calm desk for creative work (ADHD-friendly)',
   pathAria: 'Your path in Creative Companion',
   path: {
-    // 5-stop path labels (redesign brief)
-    define: 'Project',
-    sketch: 'Work',
-    research: 'Board',
-    design: 'System',
-    deliver: 'Pack',
+    // 5-stop path — Wheeler / Logo Design Love process language
+    research: 'Research',
+    define: 'Strategy',
+    design: 'Identity',
+    sketch: 'Touchpoints',
+    deliver: 'Assets',
     // Off-path Tools (still labeled when open)
     ideate: 'Ideate',
     review: 'Review',
-    // aliases
-    project: 'Project',
-    work: 'Work',
-    board: 'Board',
-    system: 'System',
-    pack: 'Pack',
+    // view-id aliases (same strings)
+    board: 'Research',
+    project: 'Strategy',
+    system: 'Identity',
+    work: 'Touchpoints',
+    pack: 'Assets',
   },
   pathPlain: {
-    define: 'What is this project? Who is it for? Write one clear goal.',
-    sketch: 'One current step. Complete it, or capture the next small job.',
-    research: 'Save pictures and notes. Mark up to 6 favorites with a star.',
-    design: 'Set fonts, colors, logo, and words. Preview as you go.',
-    deliver: 'Download the brand book. Write a short note for the client.',
+    research:
+      'Gather refs, notes, and existing brand cues. Star up to 6 for the pack.',
+    define:
+      'Positioning and brief. Who is this for? How should it feel? One clear goal.',
+    design: 'Logo, color, type, voice. Bump version before big edits.',
+    sketch:
+      'Apply the system — desk steps, drafts, and real-world applications.',
+    deliver:
+      'Brand book, PDF, tokens, handoff. Preview and download the leave-behind.',
     ideate: 'Ideate means ideas. List many. Pick your best 3 (A, B, C).',
     review: 'Show the work. Ask a clear question. Fix what helps the goal.',
-    project: 'What is this project? Who is it for? Write one clear goal.',
-    work: 'One current step. Complete it, or capture the next small job.',
-    board: 'Save pictures and notes. Mark up to 6 favorites with a star.',
-    system: 'Set fonts, colors, logo, and words. Preview as you go.',
-    pack: 'Download the brand book. Write a short note for the client.',
+    board:
+      'Gather refs, notes, and existing brand cues. Star up to 6 for the pack.',
+    project:
+      'Positioning and brief. Who is this for? How should it feel? One clear goal.',
+    system: 'Logo, color, type, voice. Bump version before big edits.',
+    work: 'Apply the system — desk steps, drafts, and real-world applications.',
+    pack:
+      'Brand book, PDF, tokens, handoff. Preview and download the leave-behind.',
   },
   language: 'Language',
   languageHint: 'App words and step names',
@@ -67,16 +74,17 @@ const EN = {
     downloadVectorPdf: 'Brand book PDF',
     printSavePdf: 'Print or save as PDF',
     previewFull: 'Full preview',
-    editSystem: 'Edit Design',
-    work: 'Work',
-    packTitle: 'Client pack',
+    editSystem: 'Edit Identity',
+    work: 'Touchpoints',
+    packTitle: 'Client assets',
     packEyebrow: 'What you hand to a client',
     packSub: 'Print or multi-page brand book PDF',
     clientHandoff: 'Send to client',
     packHint:
-      'Brand book pages: cover, words, colors, type, logo, mood. Picture PDF under More formats.',
-    thinPack: 'Thin pack — add tagline, colors, or ★ Board pins.',
-    thinPackConfirmPrint: 'Pack is thin (tagline / colors / ★ pins). Print anyway?',
+      'Brand book: cover, direction, logo, color, type, imagery, applications. Picture PDF under More formats.',
+    thinPack: 'Thin pack — add tagline, colors, or ★ Research pins.',
+    thinPackConfirmPrint:
+      'Pack is thin (tagline / colors / ★ pins). Print anyway?',
     thinPackConfirmDownload:
       'Pack is thin (tagline / colors / ★ pins). Download anyway?',
     scrollPreview: 'Scroll to see the whole preview',
@@ -90,7 +98,7 @@ const EN = {
     steps: 'steps',
     completed: 'completed',
     getStarted: 'Ready to start your first step?',
-    nextStepSuggestion: 'What’s next?',
+    nextStepSuggestion: "What's next?",
     addStep: 'Add step',
     noPinsYet: 'No pictures yet',
     emptyStepBody:
@@ -98,34 +106,36 @@ const EN = {
     emptyStepBodyDone:
       'You finished the list. Add the next small job below.',
     emptyPinsBody:
-      'Add a few pictures. Star 2–6 with ★ so they show in System and Pack.',
-    openWork: 'Go to Board',
-    openSketch: 'Go to Work',
-    openPack: 'Go to Pack',
+      'Add a few pictures. Star 2–6 with ★ so they show in Identity and Assets.',
+    openWork: 'Go to Research',
+    openSketch: 'Go to Touchpoints',
+    openPack: 'Go to Assets',
     openReview: 'Go to Review',
     openIdeate: 'Go to Ideate',
     /** Primary linear CTA — stronger than gap strip / G recovery */
     continueNext: 'Next · {label}',
     pathMarkPackThin: 'Need tagline or ★ pins for client pack',
     backToIdeate: 'Back to Ideate',
-    backToResearch: 'Back to Board',
+    backToResearch: 'Back to Research',
     timerDoneIdeate:
-      'Timer finished. Ideate is under Tools — or stay on Board.',
+      'Timer finished. Ideate is under Tools — or stay on Research.',
     anotherSpark: 'New idea prompt',
     oppositeDirection: 'Try the opposite',
     pinSpark: 'Save this prompt',
     sparkPinnedStay: 'Saved · still on Ideate',
-    queueChosenSketch: 'Send chosen idea to Work',
-    queuedDraft: 'Draft added to Work',
-    openResearchBoard: 'Open Board',
-    goToBoard: 'Go to Board',
-    hasOpenWorkStep: 'Has an open Work step',
+    queueChosenSketch: 'Send chosen idea to Touchpoints',
+    queuedDraft: 'Draft added to Touchpoints',
+    openResearchBoard: 'Open Research',
+    goToBoard: 'Go to Research',
+    hasOpenWorkStep: 'Has an open Touchpoints step',
     howDeskWorks:
-      'Seven simple steps: Define → Research → Ideate → Sketch → Design → Review → Deliver.',
+      'Five path stops: Research → Strategy → Identity → Touchpoints → Assets. Ideate and Review live under Tools.',
     projectSub:
-      'Start with the goal sheet: who it is for, how it should feel, one goal sentence. Then Research.',
-    systemSub: 'Design — fonts, colors, voice, logo, and starred pictures in a live preview.',
-    boardSub: 'Research — add pictures and notes. Star up to 6 for the client pack.',
+      'Strategy — goal sheet: who it is for, how it should feel, one goal sentence. Then Identity.',
+    systemSub:
+      'Identity — fonts, colors, voice, logo, and starred pictures in a live preview.',
+    boardSub:
+      'Research — add pictures and notes. Star up to 6 for the client pack.',
     breakCareOpen:
       'Body check: water, food, stretch, or a real break when you take one.',
     pathReadiness: 'Quick fixes for other steps',
@@ -148,7 +158,7 @@ const EN = {
     backPath: '← Steps',
     backWork: '← Sketch',
     backResearch: '← Research',
-    goToSystem: 'Go to Design',
+    goToSystem: 'Go to Identity',
     uploadImages: 'Upload pictures',
     pasteUrl: 'Paste a link',
     colorNote: 'Color or note',

@@ -2251,6 +2251,7 @@ function App() {
         project = only
       } else {
         project = createNewProject(onboardName.trim(), brief)
+        // First path stop is Research (studio); Strategy (project) is next.
       }
       // CRM identity lives in detective.clientName (not only project display name)
       updateDetective('clientName', onboardName.trim())
@@ -2288,15 +2289,15 @@ function App() {
     setShowOnboarding(false)
     // Quiet first session — Helper stays off until user opts in (Tools or Settings)
     setBodyDoubling(false)
-    // Start at Define — path step 1
-    setActiveView('project')
-    // Land on Business name (Start with these / detective), not dead #project-name
+    // Path step 1 = Research (studio); Strategy (project/brief) is next
+    setActiveView('studio')
     window.setTimeout(() => {
       const tryFocus = () => {
         const el =
+          document.querySelector('.research-empty .btn-primary') ||
+          document.querySelector('[data-research-upload]') ||
           document.getElementById('detective-clientName') ||
-          document.getElementById('detective-goal') ||
-          document.querySelector('.define-start-here .btn-primary')
+          document.getElementById('detective-goal')
         if (!el) return false
         try {
           el.focus?.({ preventScroll: false })
@@ -3508,7 +3509,7 @@ function App() {
                   notifyAction('New project', 'project_create', {
                     label: 'New project',
                   })
-                  setActiveView('project')
+                  setActiveView('studio')
                   setNavOpen(false)
                 }}
                 aria-label="New project"

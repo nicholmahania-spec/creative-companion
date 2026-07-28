@@ -1,55 +1,66 @@
 /**
- * Primary path — five stops (redesign brief).
- * Project → Work → Board → System → Pack
+ * Primary path — five stops aligned with classic brand-identity process
+ * (Wheeler / Logo Design Love):
+ *   Research → Strategy → Identity → Touchpoints → Assets
  *
- * Ideate (spark) and Review are Tools, not path siblings.
  * Step ids (define/research/sketch/design/deliver) stay stable for
- * pathStepHasContent + detective history; labels are user-facing.
+ * pathStepHasContent + detective history; labels are user-facing process language.
+ * Ideate (spark) and Review are Tools, not path siblings.
  */
 
 export const JOURNEY_STEPS = [
   {
-    id: 'define',
-    view: 'project',
-    num: '1',
-    label: 'Project',
-    plain: 'Who is this for? How should it feel? Write one clear goal.',
-    nextView: 'flow',
-    nextLabel: 'Go to Work',
-  },
-  {
-    id: 'sketch',
-    view: 'flow',
-    num: '2',
-    label: 'Work',
-    plain: 'One current step. Complete it, or capture the next small job.',
-    nextView: 'studio',
-    nextLabel: 'Go to Board',
-  },
-  {
     id: 'research',
     view: 'studio',
-    num: '3',
-    label: 'Board',
-    plain: 'Save pictures and notes. Star up to 6 for the pack.',
+    num: '1',
+    label: 'Research',
+    /** Wheeler phase name for docs / coaching */
+    process: 'Conducting research',
+    plain:
+      'Gather refs, notes, and existing brand cues. Star up to 6 for the pack.',
+    nextView: 'project',
+    nextLabel: 'Go to Strategy',
+  },
+  {
+    id: 'define',
+    view: 'project',
+    num: '2',
+    label: 'Strategy',
+    process: 'Clarifying strategy',
+    plain:
+      'Positioning and brief. Who is this for? How should it feel? One clear goal.',
     nextView: 'brand',
-    nextLabel: 'Go to System',
+    nextLabel: 'Go to Identity',
   },
   {
     id: 'design',
     view: 'brand',
+    num: '3',
+    label: 'Identity',
+    process: 'Designing identity',
+    plain: 'Logo, color, type, voice. Bump version before big edits.',
+    nextView: 'flow',
+    nextLabel: 'Go to Touchpoints',
+  },
+  {
+    id: 'sketch',
+    view: 'flow',
     num: '4',
-    label: 'System',
-    plain: 'Fonts, colors, voice, logo. Bump version before big edits.',
+    label: 'Touchpoints',
+    process: 'Creating touchpoints',
+    plain:
+      'Apply the system — desk steps, drafts, and real-world applications.',
     nextView: 'finish',
-    nextLabel: 'Go to Pack',
+    nextLabel: 'Go to Assets',
   },
   {
     id: 'deliver',
     view: 'finish',
     num: '5',
-    label: 'Pack',
-    plain: 'Preview the brand book. Download PDF. Note what you learned.',
+    label: 'Assets',
+    process: 'Managing assets',
+    plain:
+      'Brand book, PDF, tokens, handoff. Preview and download the leave-behind.',
     nextView: null,
     nextLabel: null,
   },
