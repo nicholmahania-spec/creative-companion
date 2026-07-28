@@ -18,7 +18,7 @@
 | 2 | Get paid properly (invoice) | **DONE** — `bfc1c5c`, branch `feat/payable-invoice` |
 | 3 | Scope and revisions | **DONE** — migration applied |
 | 4 | Touchpoints becomes real | **DONE** |
-| 5 | Contract | not started |
+| 5 | Contract | **partial** — Project terms built; item 7 dropped; e-sign waiting on a key |
 | 6 | Case study export | **DONE** |
 | 7 | Craft lenses | **DONE** — 27 and reshaped 24 built; 23 dropped, 25 swapped not added |
 
@@ -167,15 +167,85 @@ works rather than listing shapes to copy. No state, no progress, no prompting
 — the glossary's shape. "What shape should this be" is the question that
 stalls a sketch; naming the patterns makes it a one-second decision.
 
-### Phase 5 — Contract
+### Phase 5 — Contract — item 6 reshaped and BUILT, item 7 DROPPED
 
-Items 6, 7. Generated from what Phases 1 and 3 already captured. Needs legal
-review before it ever reaches a client — build it as the studio's template, not
-a send-button.
+Reviewed by `adhd-executive-function-advisor` twice: once on the plan, once
+on the implementation. It reshaped both halves and killed one outright.
 
-See also the separately-scoped **Dropbox Sign** e-signature flow in `todo.md`
-("Client contract signing before work begins"), which is the sending half of
-this and is blocked on an owner-created API key.
+**Item 6 — "Project terms", built.** `src/lib/projectTerms.js`, surfaced as a
+single "Copy project terms" button at the **top** of the opened `ScopePanel`
+body. The nine-section contract generator was rejected: five of the nine —
+IP, confidentiality, termination, governing law, signatures — **have the same
+answer on every project this studio will ever run**, so generating them means
+either five prompts whose answer never varies (and which carry legal weight,
+so they trigger the *should I get this right?* stall) or placeholder legal
+text needing a lawyer. Neither adds safety.
+
+The split that survives: **the app produces facts, the studio owns the
+document.** The invariant five get written once, with a lawyer, in the
+studio's own contract file.
+
+**It never emits a fee, and this was the advisor's catch, not mine.**
+`budgetRange` is the client's opening guess — asked as "What budget do you
+have in mind?", tip "A range is fine". `hourlyRate` carries this in the store
+already: *"What a client gets charged is a claim you make deliberately, so
+nothing writes here automatically."* Emitting either into a block headed for
+a contract silently converts a guess or a private rate into a stated price,
+invisibly — the number reads as correct on the clipboard and there is no cue
+to check it. `scopeRevisionRate` **is** emitted, and the distinction is exact:
+it was typed into a field labelled "Fee per extra round", so it was already a
+deliberate claim.
+
+Three rulings that shaped it:
+- **Copy-only, no preview block.** A preview is a second rendering of the
+  same facts — a new place for them to disagree. The destination is its own
+  preview: you paste into your contract and read it there.
+- **Display must equal emission.** A read-only "Delivery by" row was added so
+  nothing lands on the clipboard that is not on screen. Deliberately **not**
+  added to `scopeGaps()` — a sixth gap would raise the "still to agree" count
+  on every existing project overnight, which reads as work appearing from
+  nowhere.
+- **Silent omission when the scope is incomplete.** No toast naming what was
+  left out: it fires *after* the copy, when nothing can be done about it, so
+  it is a verdict rather than information — and its answer is always "yes,
+  copy anyway", which makes it a toll.
+
+Nothing is stored. No terms record, no version history, no last-copied
+marker — storage is what creates drift, and the stale copy is the one with
+legal force.
+
+**Item 7 — trademark check — DROPPED, and the reason is a data fact.** The
+app holds **one** name per project, entered as fact: `detective.clientName`
+(the client's existing business name), `project.name`, and `logoWordmark`,
+which is typed in Design — *after* the week of drawing the checkpoint existed
+to prevent. There is no naming step and no candidates field, so there is no
+moment where several names exist and one gets chosen. Both rescue options
+fail, and the second fails in the case that matters: pointing the line at
+`clientName` is correct for the common project and **silent on a
+rebrand-to-a-new-name**, which is the only scenario where the risk is live. A
+safety cue that speaks when there is no danger and goes quiet when there is
+trains you to believe the check happened — worse than absence.
+
+Adding a `nameCandidates` field to give the reminder a subject would be
+inventing a workflow step to justify a reminder. **If a naming step is ever
+built, item 7 comes back nearly free as one line beside the candidate list.**
+
+**The e-signature half is NOT built and should not be, yet.** Not only
+because the Dropbox Sign key does not exist: building the status UI without a
+working signing path produces a permanent `Contract — not sent` with an
+upload control that fails — a state machine locked in state one, which is the
+most demoralising possible version of it. The `client_portals` columns, the
+three status strings and the upload control all wait until the key exists,
+then land as one contiguous piece with no half-states.
+
+**The header-warning decision from the earlier scoping was overturned** by
+the advisor on re-review. Every existing header status item is *self-clearing*
+(`workRunning`, `isFocusRunning`, `syncState === 'error'`); `Contract — not
+sent` would be the first permanent-until-acted one, defaulting to the negative
+on every project including those that will never have a contract. Wording does
+not save it — permanence is the problem. It belongs **inside the Client Inbox
+chip**, which already owns client activity: zero new chrome. See `todo.md` for
+the rest of that flow, which is otherwise unchanged.
 
 ### Phase 6 — Case study export — DONE
 

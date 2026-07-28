@@ -4305,6 +4305,7 @@ function App() {
               onOpenShare={() => setOverviewSharePanelOpen(true)}
               setProjectDeadline={setProjectDeadline}
               projectDeadline={projectDeadline}
+              flashMicro={flashMicro}
             />
           </Suspense>
         )}
