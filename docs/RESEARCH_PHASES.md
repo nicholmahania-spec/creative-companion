@@ -20,7 +20,7 @@
 | 4 | Touchpoints becomes real | **DONE** |
 | 5 | Contract | not started |
 | 6 | Case study export | **DONE** |
-| 7 | Craft lenses | not started |
+| 7 | Craft lenses | item 27 **DONE**; 23 dropped, 25 dropped, 24 reshaped and pending |
 
 ---
 
@@ -211,9 +211,56 @@ is that the clock never ran. `curateCaseStudies` returns the best-told 3–6 for
 a portfolio, ranked by how much of the story the project can actually tell
 rather than by recency.
 
-### Phase 7 — Craft lenses
+### Phase 7 — Craft lenses — reviewed by the ADHD advisor, and mostly cut
 
-Items 23, 24, 25, 27. Smallest and most speculative, so last.
+All four were put to `adhd-executive-function-advisor` before any code was
+written. It rejected half, and specifically rejected a detail I had invented.
+**Verdicts, and the reasoning worth keeping:**
+
+**Item 27 — feedback discipline — BUILT.** `src/lib/feedbackDiscipline.test.js`.
+No UI, by the advisor's explicit instruction: the value is entirely in the
+guarantee being invisible and always true, and an operations-log screen would
+be a new place to look in exchange for information that should never need
+surfacing. Two layers — the real download path returning `{ok:false}` rather
+than throwing or claiming success, and a source scan proving no success
+message follows an unchecked `await`. The detector is itself tested against a
+known-bad sample, and the scan was verified to **fail when the bug is
+reintroduced into real source**, not only against a string literal.
+
+Why it ranked first despite looking like the least interesting: a false
+success is load-bearing *for this user specifically*. "PDF saved · 3:15pm"
+reads as proof precisely because it looks specific, and someone who has said
+they have no concept of time structurally cannot catch the mismatch.
+
+**Item 23 — grid overlay on board pins — DROPPED.** The pin lightbox already
+has two modes consuming the same gesture (eyedropper, crop focus). A third
+makes a click's meaning depend on state set earlier and no longer visible —
+and with the grid on and the eyedropper armed, inspecting a composition
+silently writes a colour to the palette, which is the named failure mode. It
+also leaves no artifact: whatever you notice vanishes on close. The source
+Pinterest board worked because a human drew a grid they already knew was
+there. If it ever resurfaces: not a toggle, but a fixed rule-of-thirds guide
+shown *only* during crop-focus, where it assists an existing decision.
+
+**Item 25 — Norman lens chips — DROPPED as an addition.** Four chips is
+glance-and-tap; seven is read-and-weigh, which reinstates the blank-page
+paralysis the Prompts panel exists to defeat. "Visceral / behavioural /
+reflective" are theory categories, not questions — every existing chip already
+*is* the question. Permissible only as a one-for-one swap holding the count at
+four, judged separately.
+
+**Item 24 — "which rule am I breaking" — RESHAPED, not yet built.** The
+proposal included "if the rule field is filled, the why becomes mandatory".
+The advisor called that worse than the field itself: volunteering extra
+information silently arms a blocking gate, so the user is punished with a
+locked save for being forthcoming — the shape most likely to stop them writing
+entries at all. Its version: **a post-hoc one-tap flag on existing decision-log
+entries.** No new capture field, no validation. Capture stays frictionless and
+the case-study export reads the `why` already there.
+
+**On the set:** four at once was itself the problem — 23, 24 and 25 each take
+a working screen and add a mode, a field or an option, three surfaces getting
+denser at once, none improving task initiation.
 
 ---
 
