@@ -30,9 +30,11 @@ const SYSTEM_PROMPT = HELPER_SYSTEM_PROMPT
 /** @returns {string} */
 /**
  * Prefer same-origin proxy (no browser key). Client key only for local demos.
- * Proxy: VITE_XAI_USE_PROXY=true | VITE_XAI_BASE_URL | window.__CC_XAI_BASE__
+ * Proxy: VITE_XAI_USE_PROXY | VITE_XAI_BASE_URL | window.__CC_XAI_BASE__
  * Dev Vite: /api/xai → api.x.ai with XAI_API_KEY on the machine.
- * Netlify: /api/xai/chat/completions → function with XAI_API_KEY.
+ * Netlify + Vercel: /api/xai/chat/completions → serverless proxy.
+ * Prod builds with base `/` (not GitHub Pages subpath) default to proxy;
+ * set VITE_XAI_USE_PROXY=false to force scripted-only on those hosts.
  */
 export function getHelperApiKey() {
   try {
@@ -52,9 +54,11 @@ export function getHelperApiKey() {
 export function usesHelperProxy() {
   try {
     if (typeof window !== 'undefined' && window.__CC_XAI_BASE__) return true
-    if (String(import.meta.env?.VITE_XAI_USE_PROXY || '').trim() === 'true') {
-      return true
-    }
+    const flag = String(import.meta.env?.VITE_XAI_USE_PROXY || '')
+      .trim()
+      .toLowerCase()
+    if (flag === 'false' || flag === '0' || flag === 'off') return false
+    if (flag === 'true' || flag === '1' || flag === 'on') return true
     const base = String(import.meta.env?.VITE_XAI_BASE_URL || '').trim()
     if (base) return true
     // Dev only: try Vite /api/xai proxy when no browser key (see docs/DEPLOY_AI.md)
@@ -64,6 +68,12 @@ export function usesHelperProxy() {
       !import.meta.env?.VITE_XAI_API_KEY
     ) {
       return true
+    }
+    // Production SPA at site root (Vercel/Netlify) — same-origin /api/xai.
+    // GitHub Pages uses base `/creative-companion/` and has no serverless.
+    if (import.meta.env?.PROD) {
+      const viteBase = String(import.meta.env?.BASE_URL || '/')
+      if (viteBase === '/' || viteBase === '') return true
     }
   } catch {
     /* ignore */

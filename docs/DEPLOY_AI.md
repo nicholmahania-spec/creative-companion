@@ -17,19 +17,54 @@ VITE_XAI_USE_PROXY=true
 # VITE_XAI_BASE_URL=/api/xai
 ```
 
+## Vercel (production homepage)
+
+Shared core: `server/xaiProxyCore.mjs`  
+Route: `api/xai/chat/completions.js` → `POST /api/xai/chat/completions`
+
+### Environment variables
+
+| Variable | Scope | Required | Notes |
+|----------|--------|----------|--------|
+| `XAI_API_KEY` | Server (Production / Preview) | Yes for live Helper | From [console.x.ai](https://console.x.ai) — **never** `VITE_*` |
+| `XAI_PROXY_SECRET` | Server | Yes in production | Long random string (`openssl rand -hex 32`) |
+| `VITE_XAI_PROXY_SECRET` | Build | Same value as server secret | Client sends `X-CC-Proxy-Key` (visible in JS; cost gate + Origin) |
+| `VITE_XAI_USE_PROXY` | Build | Optional | Default on for prod `base=/`; set `false` to force scripted |
+| `XAI_PROXY_ORIGINS` | Server | Optional | Comma list; defaults include `VERCEL_URL` / production URL |
+| `XAI_PROXY_REQUIRE_SECRET` | Server | Optional | `true` forces secret; `false` only for local experiments |
+
+After setting **build** vars (`VITE_*`), trigger a **redeploy**.
+
+### Smoke
+
+```bash
+# Expect 401/403 without secret
+curl -i -X POST 'https://creative-companion-ten.vercel.app/api/xai/chat/completions' \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://creative-companion-ten.vercel.app' \
+  -d '{"messages":[{"role":"user","content":"hi"}]}'
+
+# With secret (after env is set)
+curl -i -X POST 'https://creative-companion-ten.vercel.app/api/xai/chat/completions' \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: https://creative-companion-ten.vercel.app' \
+  -H 'X-CC-Proxy-Key: YOUR_PROXY_SECRET' \
+  -d '{"model":"grok-4.5","messages":[{"role":"user","content":"ping"}],"max_tokens":16}'
+```
+
 ## Netlify
 
-1. Site settings → Environment → `XAI_API_KEY` (**not** `VITE_*`)
-2. Deploy — `netlify/functions/xai-proxy.mjs` handles  
-   `/api/xai/chat/completions` (see `netlify.toml` redirect)
-3. Client uses `/api/xai` when no browser key is set
+1. Environment → `XAI_API_KEY`, `XAI_PROXY_SECRET`, `VITE_XAI_PROXY_SECRET` (same secret)  
+2. Deploy — `netlify/functions/xai-proxy.mjs` via redirect  
+   `/api/xai/chat/completions` (see `netlify.toml`)  
+3. Production builds with `base=/` use the proxy automatically  
 
 ## GitHub Pages
 
-Static only — **cannot** run the Netlify function. Options:
+Static only — **no** serverless proxy. Options:
 
-- Host the app on Netlify/Vercel with the proxy, or  
-- Set a temporary `VITE_XAI_API_KEY` for demos (key is public in the bundle)
+- Use Vercel/Netlify as the live host (recommended), or  
+- Temporary `VITE_XAI_API_KEY` for demos (key is public in the bundle)
 
 ## Runtime injection
 

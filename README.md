@@ -92,7 +92,8 @@ Configs are already in the repo (`vercel.json`, `netlify.toml`). SPA rewrites se
 2. **Add New… → Project** → import **`nicholmahania-spec/creative-companion`**.
 3. If the repo is **private**, grant Vercel access to private repos when prompted.
 4. Framework: **Vite** (auto-detected). Build: `npm run build` · Output: `dist`.
-5. Deploy. Every push to `main` redeploys.
+5. **Helper AI (optional):** set `XAI_API_KEY` + `XAI_PROXY_SECRET` (server) and the same value as `VITE_XAI_PROXY_SECRET` (build). Route: `/api/xai/chat/completions` — see **[docs/DEPLOY_AI.md](docs/DEPLOY_AI.md)**.
+6. Deploy. Every push to `main` redeploys.
 
 CLI (after `npx vercel login`):
 
