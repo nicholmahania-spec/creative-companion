@@ -45,7 +45,8 @@ led to this being found and fixed, 2026-07-27/28 session).
 
 ## Branch
 
-Active development branch: `claude/debug-code-6u77sp`
+Active development branch: `main`  
+(Stale `claude/debug-code-6u77sp` and `fix/save-button-alignment` remotes were deleted 2026-07-28.)
 
 ## Deploy — Netlify is primary; never use a relative base
 
