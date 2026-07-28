@@ -437,6 +437,7 @@ function App() {
   const [workLogPanelOpen, setWorkLogPanelOpen] = useState(false)
   const [discoveryPanelOpen, setDiscoveryPanelOpen] = useState(false)
   const [overviewSharePanelOpen, setOverviewSharePanelOpen] = useState(false)
+  const [autoOpenPortalReview, setAutoOpenPortalReview] = useState(false)
   const [clientInboxOpen, setClientInboxOpen] = useState(false)
   const [demoTour, setDemoTour] = useState(null)
   const [navDir, setNavDir] = useState('none')
@@ -809,6 +810,11 @@ function App() {
         const target = projects.find((p) => String(p.id) === String(row.projectLocalId))
         if (target && String(target.id) !== String(currentProjectId)) setCurrentProject(target.id)
       }
+      // A form-submission row's button says "Open their answers" — it used
+      // to always land on the general Portal management screen (step
+      // toggles, chat log) with the actual answers one more buried button
+      // away, which didn't match what the button promised.
+      setAutoOpenPortalReview(row?.kind === 'form')
       setOverviewSharePanelOpen(true)
     },
     [projects, currentProjectId, setCurrentProject]
@@ -4139,6 +4145,7 @@ function App() {
               setProjectDeadline={setProjectDeadline}
               activeProject={activeProject}
               upcomingDeadlines={upcomingDeadlines}
+              onOpenTaskPanel={() => setRunningTodoPanelOpen(true)}
             />
           </Suspense>
         )}
@@ -4573,6 +4580,8 @@ function App() {
         portalId={activeProject?.clientPortalId || null}
         onSetPortalId={setClientPortalId}
         onApplyAnswers={mergeDetectiveAnswers}
+        autoOpenReview={autoOpenPortalReview}
+        onAutoOpenReviewHandled={() => setAutoOpenPortalReview(false)}
         flashToast={flashToast}
         flashMicro={flashMicro}
       />

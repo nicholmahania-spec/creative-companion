@@ -361,6 +361,10 @@ export default function SketchView(props) {
         <div className="field-block sketch-feedback-block">
           <label className="field-label" htmlFor="sketch-feedback-notes">
             Feedback so far
+            {/* Same field as Review's "Notes" — named differently in each
+                place, which reads as two separate logs unless you notice
+                text from one showing up in the other. */}
+            <span className="sketch-feedback-shared-hint"> (shared with Review)</span>
           </label>
           <textarea
             id="sketch-feedback-notes"

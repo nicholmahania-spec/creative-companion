@@ -485,9 +485,17 @@ export async function downloadBrandPackVectorPdf(
             : []
           pdf.setFont('helvetica', 'normal')
           pdf.setFontSize(10)
-          const ansLines = pdf
-            .splitTextToSize(pdfSafeText(row.answer), contentW - 20)
-            .slice(0, 5)
+          // A long, thoughtfully-written answer silently cut off mid-
+          // sentence in a client-facing document is worse than one that
+          // says plainly it's been shortened.
+          const ansLinesFull = pdf.splitTextToSize(
+            pdfSafeText(row.answer),
+            contentW - 20
+          )
+          const ansTruncated = ansLinesFull.length > 5
+          const ansLines = ansTruncated
+            ? [...ansLinesFull.slice(0, 4), '… (see full answer in-app)']
+            : ansLinesFull
 
           // Single-line answers get a slim chip; multi-line keep readable pad
           const boxPadY = ansLines.length <= 1 ? 7 : 9

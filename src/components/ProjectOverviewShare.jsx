@@ -50,6 +50,8 @@ export function ProjectOverviewSharePanel({
   portalId,
   onSetPortalId,
   onApplyAnswers,
+  autoOpenReview,
+  onAutoOpenReviewHandled,
   flashToast,
   flashMicro,
 }) {
@@ -189,6 +191,8 @@ export function ProjectOverviewSharePanel({
                 onSetPortalId={onSetPortalId}
                 onReview={beginReview}
                 onBack={() => setMode('menu')}
+                autoOpenReview={autoOpenReview}
+                onAutoOpenReviewHandled={onAutoOpenReviewHandled}
                 flashToast={flashToast}
                 flashMicro={flashMicro}
               />
@@ -247,6 +251,8 @@ function PortalMode({
   onSetPortalId,
   onReview,
   onBack,
+  autoOpenReview,
+  onAutoOpenReviewHandled,
   flashToast,
   flashMicro,
 }) {
@@ -362,6 +368,23 @@ function PortalMode({
       current: project?.detective || {},
     })
   }
+
+  /** The Client Inbox's "Open their answers" button used to only land here
+   *  (step toggles, chat log) with the actual answers a second, buried
+   *  button away — the button's label promised something this screen alone
+   *  didn't deliver. Once the portal data has actually loaded, open the
+   *  review screen the same click implied. Runs once per inbox click, not
+   *  on every render — the flag is consumed and reset immediately. */
+  useEffect(() => {
+    if (!autoOpenReview || !loaded) return
+    onAutoOpenReviewHandled?.()
+    if (portal?.submitted_answers && Object.keys(portal.submitted_answers).length) {
+      reviewClientAnswers()
+    } else {
+      flashToast?.('Client hasn’t submitted the form yet')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenReview, loaded])
 
   const formStatusText =
     portal?.form_status === 'submitted'
@@ -554,6 +577,34 @@ function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
             : 'Scanned handwriting is often misread — check each line before saving. Edit anything that’s wrong, or clear a box to skip that field.'}
       </p>
       {Object.entries(answers).map(([fieldId, value]) => {
+        // Client image attachments arrive as a sibling `${id}Files` array of
+        // {name,url} — not text. A plain <textarea value={array}> renders
+        // "[object Object]" and, if the user edits that garbled box thinking
+        // it's wrong, silently overwrites the client's uploaded images with
+        // whatever string they typed. Read-only thumbnails instead: nothing
+        // to accidentally corrupt, and it shows what's actually there.
+        if (Array.isArray(value)) {
+          const baseId = fieldId.endsWith('Files') ? fieldId.slice(0, -5) : fieldId
+          return (
+            <div className="field-block" key={fieldId}>
+              <label className="field-label">{fieldLabel(baseId)} — attached</label>
+              <div className="define-attach-thumbs">
+                {value.map((f) => (
+                  <a
+                    key={f.url}
+                    href={f.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="define-attach-thumb"
+                    title={f.name || 'Attachment'}
+                  >
+                    <img src={f.url} alt={f.name || 'Attachment'} />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )
+        }
         const existing = String(current?.[fieldId] || '').trim()
         return (
           <div className="field-block" key={fieldId}>

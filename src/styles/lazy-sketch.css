@@ -671,3 +671,7 @@
   margin-bottom: var(--space-3);
 }
 .work-log-list-quiet .work-log-hours { display: none; }
+.sketch-feedback-shared-hint {
+  font-weight: 500;
+  color: var(--text-muted);
+}

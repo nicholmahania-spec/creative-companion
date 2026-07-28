@@ -1019,17 +1019,48 @@ const useAppStore = create(
        *   `currentProjectId` at apply time merged a client's answers into
        *   whichever project happened to be open when it finished.
        */
-      mergeDetectiveAnswers: (incoming, projectId) =>
+      // Used by both the portal-answers review screen and the paper-scan/OCR
+      // review screen. Client image attachments (`${id}Files` arrays) merge
+      // additively rather than overwrite — same reasoning as
+      // mergeDiscoveryAnswers below: the designer's own uploads and the
+      // client's shouldn't be able to clobber each other. Inspiration images
+      // also auto-pin onto the Research wall here, matching the /f/:shareId
+      // path — a client attaching a look-reference via /c/:portalId gets the
+      // same "the wall is where the designer actually looks" treatment
+      // instead of the image sitting invisible inside a brief chapter.
+      mergeDetectiveAnswers: (incoming, projectId) => {
+        const inspirationFiles = Array.isArray(incoming?.inspirationLinksFiles)
+          ? incoming.inspirationLinksFiles
+          : []
         set((state) => ({
           projects: state.projects.map((p) => {
             if (p.id !== (projectId ?? state.currentProjectId)) return p
             const merged = { ...(p.detective || {}) }
             Object.entries(incoming || {}).forEach(([k, v]) => {
+              if (k.endsWith('Files') && Array.isArray(v)) {
+                const existing = Array.isArray(merged[k]) ? merged[k] : []
+                const seen = new Set(existing.map((f) => f.url))
+                merged[k] = [...existing, ...v.filter((f) => !seen.has(f.url))]
+                return
+              }
               if (String(v || '').trim()) merged[k] = v
             })
             return { ...p, detective: merged }
           }),
-        })),
+        }))
+        if (inspirationFiles.length) {
+          const state = get()
+          const target = projectId ?? state.currentProjectId
+          inspirationFiles.forEach((f) => {
+            get().addMoodPin({
+              projectId: target,
+              type: 'image',
+              visual: f.url,
+              note: 'From the client’s brief',
+            })
+          })
+        }
+      },
 
       setDiscoveryShare: (shareId, status = 'pending') =>
         set((state) => ({
