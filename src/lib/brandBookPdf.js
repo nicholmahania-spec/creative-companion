@@ -500,6 +500,41 @@ export async function downloadBrandPackVectorPdf(
       y += 18  // Extra space after decision
     }
 
+    /* THE ASK — StoryBrand's plan and single call to action.
+       Promise and Proof say what the brand claims; these say what the reader
+       is meant to DO about it. Every piece of collateral designed from this
+       book should end in the CTA, so it belongs on the same page as the
+       pillars rather than buried in the brief section. */
+    const askBlocks = [
+      ['The plan', pack?.messagingPlan],
+      ['The one action', pack?.messagingCta],
+    ].filter(([, v]) => String(v || '').trim())
+
+    if (askBlocks.length) {
+      /* The tiles and an optional decision have already consumed most of the
+         page; measure before writing rather than trusting it fits. */
+      const need = askBlocks.length * 46 + 16
+      if (y + need > pageH - 60) {
+        newPage()
+        pageHead('Direction', 'What we want the reader to do.')
+      } else {
+        y += 10
+      }
+      askBlocks.forEach(([label, value]) => {
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(8)
+        pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
+        pdf.text(pdfSafeText(label.toUpperCase()), margin, y)
+        y += 13
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(11)
+        pdf.setTextColor(40, 40, 40)
+        const lines = pdf.splitTextToSize(pdfSafeText(String(value)), contentW)
+        pdf.text(lines, margin, y)
+        y += lines.length * 15 + 14
+      })
+    }
+
     // ═══════════════════════════════════════════════
     // 3. AGREED BRIEF — the record of what was agreed, not a form
     // ═══════════════════════════════════════════════
@@ -842,6 +877,51 @@ export async function downloadBrandPackVectorPdf(
       y += 30
     })
 
+    /* WRITING — the style-guide TOC's fifth section (Story, Audience, Visual,
+       Voice, Writing), and the only one this book had nothing for. Voice says
+       how the brand sounds; this says how the words are actually set. It sits
+       under Typography because capitalisation is a typographic decision that
+       whoever is setting the type needs in front of them. */
+    const CASE_RULE = {
+      sentence:
+        'Headings use sentence case — capital on the first word only, as in a sentence.',
+      title: 'Headings use title case — capital on each significant word.',
+    }
+    const CAPS_RULE = {
+      never: 'Never set copy in ALL CAPS.',
+      sparing:
+        'ALL CAPS for short labels and eyebrows only — never for a sentence or a paragraph.',
+      labels:
+        'ALL CAPS is reserved for UI labels and navigation, where the string is one or two words.',
+    }
+    const writingRules = [
+      CASE_RULE[pack?.writingCase],
+      CAPS_RULE[pack?.writingCaps],
+      String(pack?.writingNotes || '').trim(),
+    ].filter(Boolean)
+
+    if (writingRules.length) {
+      if (y + writingRules.length * 30 + 30 > pageH - 60) {
+        newPage()
+        pageHead('Writing', 'How the words are set.')
+      } else {
+        y += 14
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(8)
+        pdf.setTextColor(100, 100, 100)
+        pdf.text('WRITING', margin, y)
+        y += 14
+      }
+      writingRules.forEach((rule) => {
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(11)
+        pdf.setTextColor(40, 40, 40)
+        const lines = pdf.splitTextToSize(pdfSafeText(rule), contentW)
+        pdf.text(lines, margin, y)
+        y += lines.length * 14 + 8
+      })
+    }
+
     // ═══════════════════════════════════════════════
     // 7. IMAGERY (if any)
     // ═══════════════════════════════════════════════
@@ -1119,9 +1199,17 @@ export async function downloadBrandPackVectorPdf(
        `technical` (file types) and `accessibilityNeeds` were both collected
        and never printed — so whoever opened this book had to guess, or ask
        the client again for something they had already answered. */
+    /* Print and finish sit here rather than on the Color page because this is
+       the page someone opens when they are about to produce something. CMYK
+       is already printed per swatch; a Pantone match, a stock and a finish are
+       the three things no algorithm can derive from a hex value, and without
+       them a printer has to phone and ask. */
     const constraints = [
       ['File formats needed', pack?.technical],
       ['Accessibility', pack?.accessibilityNeeds],
+      ['Pantone match', pack?.printPantone],
+      ['Paper stock', pack?.printStock],
+      ['Finish', pack?.printFinish],
     ].filter(([, v]) => String(v || '').trim())
 
     const kit = [

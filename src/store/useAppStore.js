@@ -180,6 +180,21 @@ export function brandIdentityDefaults() {
   imageryStyle: '',
   imageryDo: '',
   imageryDont: '',
+  /* Writing guidelines — the style-guide section this book never had.
+     Two picks rather than a blank box, because every other question in this
+     app that asks for composed prose gets skipped, and "sentence case, caps
+     for short labels only" is a defensible default rather than an empty
+     assertion. Defaults are applied at read time in the pack builder too, so
+     projects saved before these keys existed still print a rule. */
+  writingCase: 'sentence',
+  writingCaps: 'sparing',
+  writingNotes: '',
+  /* Print and finish — what a printer asks for and this book could not
+     answer. CMYK is already derived per swatch; these are the things no
+     algorithm can infer. Printed only when filled. */
+  printPantone: '',
+  printStock: '',
+  printFinish: '',
   /** Design version label (v1, v2...) */
   designVersion: 'v1',
   /** Review: feedback notes from client / self */
@@ -2372,6 +2387,15 @@ const useAppStore = create(
             imageryStyle: project.imageryStyle,
             imageryDo: project.imageryDo,
             imageryDont: project.imageryDont,
+            /* House style travels with the template. A studio that sets
+               sentence case and a preferred stock once should not re-set them
+               on every project started from this template. */
+            writingCase: project.writingCase,
+            writingCaps: project.writingCaps,
+            writingNotes: project.writingNotes,
+            printPantone: project.printPantone,
+            printStock: project.printStock,
+            printFinish: project.printFinish,
             // Full detective clone (no hand-whitelist) — required fields + spectra
             detective: project.detective
               ? {

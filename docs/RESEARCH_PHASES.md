@@ -14,7 +14,7 @@
 
 | Phase | What | Status |
 |-------|------|--------|
-| 1 | Make the brand book tell the truth | **DONE** — `e39ba7e` |
+| 1 | Make the brand book tell the truth | **DONE** — `e39ba7e` + gap-close |
 | 2 | Get paid properly (invoice) | **DONE** — `bfc1c5c`, branch `feat/payable-invoice` |
 | 3 | Scope and revisions | not started |
 | 4 | Touchpoints becomes real | not started |
@@ -26,7 +26,7 @@
 
 ## The phases
 
-### Phase 1 — Make the brand book tell the truth — DONE (`e39ba7e`)
+### Phase 1 — Make the brand book tell the truth — DONE (`e39ba7e` + gap-close)
 
 Items 15, 17, 18, 19, plus brief additions 12, 13, 14, 16. Ask Promise and
 Proof; print `story`, `usp`, `toneOfVoice`, `technical`; add writing guidelines
@@ -36,7 +36,7 @@ constraints, and split `existingAssets` into style-guide / logo.
 *First because it fixes a live defect in a client-facing document, it's all
 data-layer, and "where used" is what Phase 4 needs.*
 
-**Gap check, verified against code 2026-07-28 — Phase 1 is 5 of 8:**
+**Gap check, verified against code 2026-07-28 — was 5 of 8, now 8 of 8:**
 
 | item | shipped? | evidence |
 |------|----------|----------|
@@ -45,12 +45,26 @@ data-layer, and "where used" is what Phase 4 needs.*
 | 14 — existing style guide / logo split | ✅ | `existingStyleGuide` `:370` + `existingAssets` `:379` |
 | 15 — Promise and Proof | ✅ | asked `:236`/`:244`, fallback `exportFiles.js:382-383`, tiles `brandBookPdf.js:432/438`, covered by tests |
 | 17 — print `story`, `usp`, `toneOfVoice`, `technical` | ✅ | Story page `brandBookPdf.js:380-383`, Handoff `:1123` |
-| **16 — the plan, and one consistent CTA** | ❌ | no schema field; only unrelated CSS/JSX comment hits |
-| **18 — writing guidelines (title vs sentence case, ALL CAPS)** | ❌ | zero hits in the book or `brandSystem.js` |
-| **19 — print/finish specs (Pantone, stock, formats)** | ❌ | zero hits; the only "pantone" in `src` is a glossary definition. CMYK *does* exist (`hexToCmyk`, `brandSystem.js:57`) but that is the earlier Sparrow's Promise work, not this item |
+| 16 — the plan, and one consistent CTA | ✅ *(gap-close)* | `messagingPlan`/`messagingCta` in the brief; "The ask" block on Direction; in the markdown export |
+| 18 — writing guidelines (title vs sentence case, ALL CAPS) | ✅ *(gap-close)* | `writingCase`/`writingCaps`/`writingNotes`; Writing block under Typography |
+| 19 — print/finish specs (Pantone, stock, formats) | ✅ *(gap-close)* | `printPantone`/`printStock`/`printFinish`; Handoff rows + markdown section |
 
-So the gap is **three items, not two** — 16 was also listed in Phase 1 and also
-did not ship. None of the three are regressions; they were simply never built.
+The gap was **three items, not two** — 16 was also listed in Phase 1 and also
+did not ship. None were regressions; they were simply never built. All three
+closed 2026-07-28, each asserted against a real generated PDF. **Phase 1 is
+now complete at 8 of 8.**
+
+Two notes for whoever picks this up next:
+
+- Writing guidelines **default** to sentence case + sparing caps rather than
+  printing nothing, because a book whose writing section only appears when
+  someone remembers to open a `details` panel would be nominally done and
+  practically absent. The defaults are applied at read time in the pack
+  builder, not just in `blankProject`, so projects saved before the keys
+  existed still print a rule.
+- Print specs follow the **opposite** rule — omitted entirely when unfilled,
+  because an empty ruled row in a client deliverable reads as "we never did
+  this." Same rule the Agreed brief section follows.
 
 ### Phase 2 — Get paid properly — DONE (`bfc1c5c`)
 
@@ -135,10 +149,10 @@ parked item was not recovered.** Ask before assuming nothing is missing.
 | 13 | Brief: accessibility constraints | questionnaire | ❌ → **done P1** |
 | 14 | Brief: existing style guide? existing logo? (split from `existingAssets`) | questionnaire | vague → **done P1** |
 | 15 | Brief: **Promise** and **Proof** | StoryBrand | book had the tiles, brief never asked → **done P1** |
-| 16 | Brief: the plan, and one consistent CTA | StoryBrand | ❌ |
+| 16 | Brief: the plan, and one consistent CTA | StoryBrand | ❌ → **done P1 gap-close** |
 | 17 | Brand book: print `story`, `usp`, `toneOfVoice`, `technical` | style guide | collected, never printed → **done P1** |
-| 18 | Brand book: writing guidelines (title vs sentence case, ALL CAPS) | style guide | ❌ |
-| 19 | Brand book: print/finish specs (Pantone, stock, formats) | style guide | ❌ |
+| 18 | Brand book: writing guidelines (title vs sentence case, ALL CAPS) | style guide | ❌ → **done P1 gap-close** |
+| 19 | Brand book: print/finish specs (Pantone, stock, formats) | style guide | ❌ → **done P1 gap-close** |
 | 20 | Ideal client profile + outreach angles | customer profile, personas | ❌ |
 | 21 | Service tiers / packages | pricing pages | flat checklist only — **parked** |
 

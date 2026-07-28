@@ -248,6 +248,27 @@ export const DETECTIVE_CHAPTERS = [
         required: false,
         gridSpan: 'half',
       },
+      /* StoryBrand's last two elements. Promise and Proof (above) were already
+         here; the plan and the single call to action were not, and they are
+         the two that tell a designer what every piece of collateral has to
+         end in. A brand book that never says what the reader should DO is a
+         mood board with rules. */
+      {
+        id: 'messagingPlan',
+        label: 'What steps does someone take to work with you?',
+        tip: 'e.g. quote, visit, fixed price',
+        area: true,
+        required: false,
+        gridSpan: 'half',
+      },
+      {
+        id: 'messagingCta',
+        label: 'What is the one thing you want people to do?',
+        tip: 'Just one — e.g. call us',
+        area: false,
+        required: false,
+        gridSpan: 'half',
+      },
       {
         id: 'toneOfVoice',
         label: 'If a customer described you in three words, what would they be?',
