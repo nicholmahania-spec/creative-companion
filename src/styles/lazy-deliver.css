@@ -415,6 +415,44 @@
   word-break: break-word;
 }
 
+/* No fixed-height scroll boxes — grow with content (autoGrow + field-sizing) */
+.deliver-studio .deliver-note-block {
+  margin-bottom: 1rem;
+}
+
+.deliver-studio textarea.deliver-note {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  max-height: none;
+  resize: none;
+  overflow: hidden;
+  overflow-y: hidden;
+  field-sizing: content;
+  box-sizing: border-box;
+  padding: 0.5rem 0;
+  border: none;
+  border-bottom: 1.5px solid var(--border-strong, rgba(161, 161, 161, 0.35));
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.deliver-studio textarea.deliver-note:focus {
+  outline: none;
+  border-bottom-color: var(--dopamine, #606060);
+  box-shadow: none;
+}
+
+.app.deep .deliver-studio textarea.deliver-note {
+  border-bottom-color: rgba(161, 161, 161, 0.35);
+  color: var(--text-primary);
+}
+
 @media (min-width: 861px) {
   .deliver-split {
     grid-template-columns: minmax(0, 55fr) minmax(14rem, 45fr);

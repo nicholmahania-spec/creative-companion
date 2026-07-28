@@ -138,13 +138,13 @@ export default function DeliverView({
               </button>
             </div>
 
-            <div className="field-block">
+            <div className="field-block deliver-note-block">
               <label className="field-label" htmlFor="handoff-note">
                 Handoff
               </label>
               <textarea
                 id="handoff-note"
-                className="field-input deliver-focus-field"
+                className="field-textarea deliver-focus-field deliver-note"
                 rows={2}
                 value={activeProject?.handoffNote || ''}
                 onChange={(e) =>
@@ -153,13 +153,13 @@ export default function DeliverView({
                 placeholder="What's included…"
               />
             </div>
-            <div className="field-block">
+            <div className="field-block deliver-note-block">
               <label className="field-label" htmlFor="learnings-note">
                 Learned
               </label>
               <textarea
                 id="learnings-note"
-                className="field-input deliver-focus-field"
+                className="field-textarea deliver-focus-field deliver-note"
                 rows={2}
                 value={activeProject?.learnings || ''}
                 onChange={(e) =>
