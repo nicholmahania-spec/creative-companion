@@ -2440,26 +2440,98 @@ html[data-reduce-motion='true'] *::after {
   text-decoration: line-through;
 }
 
+/* Underline note field (Define language) — not a boxed mini-form */
 .mood-pin-note-input {
   width: 100%;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  padding: 0.45rem 0.55rem;
+  border: none;
+  border-bottom: 1.5px solid var(--border-strong, #A1A1A1);
+  border-radius: 0;
+  padding: 0.45rem 0;
   font: inherit;
   font-size: 0.8rem;
   font-weight: 500;
-  background: var(--bg-canvas);
+  background: transparent;
   color: var(--text-primary);
+  box-shadow: none;
 }
 
 .mood-pin-note-input:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-bottom-color: var(--dopamine, #606060);
+  box-shadow: none;
 }
 
 .mood-pin-note-input.needs-why {
-  border-color: color-mix(in srgb, #686868 55%, var(--border-subtle));
-  background: color-mix(in srgb, #686868 6%, var(--bg-canvas));
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--dopamine, #606060) 45%,
+    var(--border-strong, #A1A1A1)
+  );
+  background: transparent;
+}
+
+.research-studio .board-note-underline {
+  border: none !important;
+  border-bottom: 1.5px solid var(--border-strong, #A1A1A1) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.research-studio .board-note-underline:focus {
+  border-bottom-color: var(--dopamine, #606060) !important;
+  outline: none;
+}
+
+.path-view-skeleton {
+  margin: 1rem;
+  max-width: 40rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.path-view-skeleton-bar,
+.path-view-skeleton-panel {
+  background: color-mix(in srgb, var(--bg-muted, #EBEBEB) 85%, transparent);
+  border-radius: var(--radius-sm, 4px);
+}
+
+.path-view-skeleton-title {
+  height: 1.5rem;
+  width: 40%;
+}
+
+.path-view-skeleton-line {
+  height: 0.75rem;
+  width: 88%;
+}
+
+.path-view-skeleton-line.is-short {
+  width: 55%;
+}
+
+.path-view-skeleton-panel {
+  height: 8rem;
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .path-view-skeleton-bar,
+  .path-view-skeleton-panel {
+    animation: path-skel-pulse 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes path-skel-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
 }
 
 .mood-card .mood-pin-media {

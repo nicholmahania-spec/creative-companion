@@ -3,6 +3,7 @@
  * Receives a props bag `p` from App so the shell can split re-renders.
  */
 import { memo, Suspense, lazy } from 'react'
+import PathViewSkeleton from '../PathViewSkeleton'
 
 import { JOURNEY_STEPS } from '../../lib/journey'
 import JourneyGapStrip from '../JourneyGapStrip'
@@ -268,7 +269,7 @@ function AppMain(p) {
       {/* ===== WORK — one step owns the fold ===== */}
       {/* ===== SKETCH (lazy) ===== */}
       {p.activeView === 'flow' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Sketch…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading Work…" />}>
           <StepDependencyReminder stepId="sketch" />
           <SketchView
             locale={p.locale}
@@ -322,7 +323,7 @@ function AppMain(p) {
 
       {/* ===== RESEARCH (lazy) ===== */}
       {p.activeView === 'studio' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Research…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading Board…" />}>
           <StepDependencyReminder stepId="research" />
           <ResearchView
             locale={p.locale}
@@ -348,7 +349,7 @@ function AppMain(p) {
 
       {/* ===== SPARK (lazy) ===== */}
       {p.activeView === 'spark' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading…" />}>
           <StepDependencyReminder stepId="ideate" />
           <SparkView
             setActiveView={p.setActiveView}
@@ -380,7 +381,7 @@ function AppMain(p) {
 
       {/* ===== FOCUS (lazy) ===== */}
       {p.activeView === 'insights' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading timer…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading timer…" />}>
           <InsightsView
             setActiveView={p.setActiveView}
             nextTask={nextTask}
@@ -415,7 +416,7 @@ function AppMain(p) {
       )}
       {/* ===== CALENDAR (lazy) ===== */}
       {p.activeView === 'calendar' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading calendar…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading calendar…" />}>
           <CalendarView
             setActiveView={p.setActiveView}
             pathReturnView={p.activeProject?.lastView || 'project'}
@@ -440,7 +441,7 @@ function AppMain(p) {
 
       {/* ===== CLIENTS (lazy) ===== */}
       {p.activeView === 'clients' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading clients…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading clients…" />}>
           <ClientsView
             projects={p.projects}
             selectProject={p.selectProject}
@@ -454,7 +455,7 @@ function AppMain(p) {
       {/* ===== BRAND IDENTITY TEMPLATE ===== */}
       {/* ===== DESIGN (lazy) ===== */}
       {p.activeView === 'brand' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Design…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading System…" />}>
           <StepDependencyReminder stepId="design" />
           <DesignView
             locale={p.locale}
@@ -474,7 +475,7 @@ function AppMain(p) {
 
       {/* ===== REVIEW (lazy) ===== */}
       {p.activeView === 'review' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Review…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading Review…" />}>
           <StepDependencyReminder stepId="review" />
           <ReviewView
             locale={p.locale}
@@ -501,7 +502,7 @@ function AppMain(p) {
 
       {/* ===== DELIVER (lazy) ===== */}
       {p.activeView === 'finish' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Deliver…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading Pack…" />}>
           <StepDependencyReminder stepId="deliver" />
           <DeliverView
             locale={p.locale}
@@ -537,7 +538,7 @@ function AppMain(p) {
 
       {/* ===== SETTINGS (lazy) ===== */}
       {p.activeView === 'settings' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading settings…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading settings…" />}>
           <SettingsView
             setActiveView={p.setActiveView}
             CLOUD={CLOUD}
@@ -601,7 +602,7 @@ function AppMain(p) {
 {/* ===== PROJECTS ===== */}
       {/* ===== DEFINE (lazy) ===== */}
       {p.activeView === 'project' && (
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Define…</div>}>
+        <Suspense fallback={<PathViewSkeleton label="Loading Project…" />}>
           <DefineView
             locale={p.locale}
             navDir={p.navDir}

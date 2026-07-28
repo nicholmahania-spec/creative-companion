@@ -1,4 +1,7 @@
-/** Ideate — diverge (rough list) then A/B/C shortlist + Spark rail. Tech-Studio ADHD. */
+/**
+ * Ideate (Tools) — diverge first: volume and range over quality.
+ * Shortlist A/B/C only after many rough ideas. Not a single “winning” concept page.
+ */
 import { useState } from 'react'
 import { getProcessPhase } from '../lib/processGuide'
 import { pathLabel, tFormat } from '../lib/i18n'
@@ -138,10 +141,20 @@ export default function SparkView({
   }
 
   const statusLine = (() => {
-    if (chosen) return `${filledDirs} of 3 titled · ${chosen.label} chosen`
-    if (filledDirs === 0) return '0 of 3 titled · rough ideas first, then shortlist'
-    if (filledDirs < 3) return `${filledDirs} of 3 titled · keep going or choose one`
-    return '3 of 3 titled · choose one to send to Sketch'
+    const roughN = rough.length
+    if (roughN < 3 && filledDirs === 0) {
+      return `Diverge first · ${roughN} rough (aim for several, not one perfect idea)`
+    }
+    if (chosen) {
+      return `${roughN} rough · ${filledDirs}/3 shortlisted · ${chosen.label} ready for Work`
+    }
+    if (filledDirs === 0) {
+      return `${roughN} rough · promote a few to A · B · C when ready`
+    }
+    if (filledDirs < 3) {
+      return `${roughN} rough · ${filledDirs}/3 shortlisted · more range still welcome`
+    }
+    return `${roughN} rough · 3 shortlisted · choose one to send to Work (optional)`
   })()
 
   return (
@@ -149,6 +162,9 @@ export default function SparkView({
       <div className="flow-top ideate-top">
         <div className="ideate-top-text">
           <h1 className="page-title">{title}</h1>
+          <p className="page-sub ideate-thesis">
+            Volume first. Messy list, then a short shortlist — not one polished concept.
+          </p>
         </div>
       </div>
       <div className="ideate-meta">
@@ -173,9 +189,9 @@ export default function SparkView({
 
       {/* Diverge first — messy dump before shortlist */}
       <section className="ideate-rough" aria-label="Rough ideas">
-        <p className="ideate-rough-label">Rough ideas</p>
+        <p className="ideate-rough-label">1 · Diverge (rough dump)</p>
         <p className="ideate-rough-hint">
-          Messy is fine. Capture many, then promote up to three into A · B · C.
+          Aim for range, not quality. Capture many lines. Promote only when you have options.
         </p>
         {rough.length > 0 ? (
           <ul className="ideate-rough-list">
@@ -225,7 +241,7 @@ export default function SparkView({
           className="panel brand-section ideate-shortlist"
           aria-label="Three directions A B C"
         >
-          <div className="brand-section-label">Shortlist · A · B · C</div>
+          <div className="brand-section-label">2 · Shortlist · A · B · C</div>
           <div className="ideate-directions is-locked-3">
             {dirs.slice(0, 3).map((d) => {
               const hasTitle = Boolean(String(d.title || '').trim())
@@ -283,7 +299,7 @@ export default function SparkView({
                         onChange={(e) =>
                           updateDirection?.(d.id, { note: e.target.value })
                         }
-                        placeholder="Optional — why this wins"
+                        placeholder="Optional — why it could work"
                       />
                     </>
                   ) : null}
@@ -329,7 +345,7 @@ export default function SparkView({
               className="btn btn-ghost"
               onClick={pinSparkStay}
             >
-              Pin to Research
+              Pin to Board
             </button>
           </div>
         </aside>
@@ -343,7 +359,7 @@ export default function SparkView({
           disabled={!canSend}
           aria-describedby="ideate-send-help"
         >
-          {canSend ? `Send · Sketch` : 'Choose A/B/C first'}
+          {canSend ? `Send · Work` : 'Keep diverging (or choose A/B/C)'}
         </button>
         <p
           id="ideate-send-help"
@@ -351,8 +367,8 @@ export default function SparkView({
           role="status"
         >
           {canSend
-            ? `Ready — ${chosen.label}: ${chosen.title}`
-            : 'Choose a titled direction first'}
+            ? `Optional handoff — ${chosen.label}: ${chosen.title}`
+            : 'No pressure to pick yet — add rough ideas above'}
         </p>
       </div>
     </div>

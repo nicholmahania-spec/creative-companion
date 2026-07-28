@@ -79,10 +79,13 @@ Not a chatbot. Local-first; optional Supabase cloud; optional live Helper via se
 
 | PR | Goal | Status |
 |----|------|--------|
-| 1 | Five-stop path + Tools | **Done** v1.51.0 |
-| 2 | Work AOF | This release |
-| 3 | System artboard-first | This release |
-| 4 | Pack AOF + thin warning | This release |
-| 5 | Helper 3 verbs (+ ops secrets optional) | This release (code) |
-| 6 | This PRD + grammar/README | This release |
-| 7–8 | Research polish / perf gate | Later |
+| 1 | Five-stop path + Tools | **Done** v1.51 |
+| 2 | Work AOF | **Done** v1.52 |
+| 3 | System artboard-first | **Done** v1.52 |
+| 4 | Pack AOF + thin warning | **Done** v1.52 |
+| 5 | Helper 3 verbs (+ ops secrets optional) | **Done** code; secrets optional |
+| 6 | This PRD + grammar/README | **Done** v1.52 |
+| 7 | Board polish + Ideate diverge framing | **Done** this release |
+| 8 | Skeletons, path prefetch, device checklist | **Done** this release |
+
+Device/perf checklist: `docs/DEVICE_CHECKLIST.md`

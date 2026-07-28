@@ -1695,6 +1695,24 @@ function App() {
     goToNextProcessGap,
   ])
 
+  // Prefetch path view chunks while idle (PR8)
+  useEffect(() => {
+    if (!unlocked || cloudHydrating) return undefined
+    const warm = () => {
+      void import('./views/DefineView')
+      void import('./views/SketchView')
+      void import('./views/ResearchView')
+      void import('./views/DesignView')
+      void import('./views/DeliverView')
+    }
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(warm, { timeout: 4500 })
+      return () => window.cancelIdleCallback?.(id)
+    }
+    const t = window.setTimeout(warm, 2200)
+    return () => window.clearTimeout(t)
+  }, [unlocked, cloudHydrating])
+
   // Hydrate forced break + focus timer after unlock (reload mid-session)
   useEffect(() => {
     if (!unlocked || !onboarded || cloudHydrating) return undefined

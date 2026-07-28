@@ -1,6 +1,6 @@
 /**
- * Research — board wall primary; ★ pack pins; sticky Next → Ideate.
- * ADHD: short chrome, goal anchor, focus lock on pin notes.
+ * Board (Research) — wall primary; ★ pack pins; sticky Next → System.
+ * ADHD: short chrome, goal anchor, note focus without sibling blur.
  */
 import {
   useState,
@@ -32,6 +32,7 @@ import {
 import { useModalFocus } from '../lib/useModalFocus'
 import { trackMoodPinOperation, trackBoardSubmission, trackTimerOperation } from '../lib/analytics'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { validateBoardUrl } from '../lib/safeBoardUrl'
 import '../styles/lazy-mood.css'
 
 export default function ResearchView({
@@ -177,8 +178,15 @@ export default function ResearchView({
   }
 
   const submitBoardUrl = async () => {
-    const url = boardUrl.trim()
-    if (!url || boardUrlBusy) return
+    const raw = boardUrl.trim()
+    if (!raw || boardUrlBusy) return
+
+    const gate = validateBoardUrl(raw)
+    if (!gate.ok) {
+      flashToast?.(gate.error, { important: true })
+      return
+    }
+    const url = gate.url
 
     // Same capture-before-await rule as uploadMoodFiles: the link-preview
     // round-trip can outlive the user's stay on this project.
@@ -208,6 +216,8 @@ export default function ResearchView({
         body: { url },
       })
       if (error || !data?.ok) {
+        // Fail soft for public images only — never invent a pin from a blocked host
+        // (gate already ran). Preview errors → still pin as image URL if it looks like one.
         addPinAndReset(asDirectImagePin())
         return
       }
@@ -228,10 +238,16 @@ export default function ResearchView({
         linkTitle: data.title || '',
         linkDescription: data.description || '',
       }
+      // Only trust preview image URLs that also pass the client gate
+      let imageVisual = ''
+      if (data.image) {
+        const imgGate = validateBoardUrl(String(data.image))
+        if (imgGate.ok) imageVisual = imgGate.url
+      }
       addPinAndReset(
-        data.image
-          ? { ...previewPin, type: 'image', visual: data.image }
-          : { ...previewPin, type: 'quote', visual: '#44403C' }
+        imageVisual
+          ? { ...previewPin, type: 'image', visual: imageVisual }
+          : { ...previewPin, type: 'quote', visual: 'var(--bg-muted, #EBEBEB)' }
       )
     } catch {
       addPinAndReset(asDirectImagePin())
@@ -767,7 +783,7 @@ export default function ResearchView({
                   <div className="capture-row">
                     <input
                       id="board-note"
-                      className="field-input"
+                      className="field-input board-note-underline"
                       value={boardNote}
                       onChange={(e) => setBoardNote(e.target.value)}
                       placeholder="Direction note"

@@ -55,8 +55,8 @@ export function pinImageUrl(pin = {}) {
 /**
  * Inline style object for a pin face (board cards, brand thumbs, pack preview).
  */
-/** Fallback while image loads — matches --bg-muted (not stone leftover #e7e5e4). */
-const PIN_FACE_FALLBACK = '#EBEBEB'
+/** Fallback while image loads — token-aligned muted (never leftover stone #e7e5e4). */
+const PIN_FACE_FALLBACK = 'var(--bg-muted, #EBEBEB)'
 
 export function pinFaceStyle(pin = {}) {
   const kind = pinVisualKind(pin)
