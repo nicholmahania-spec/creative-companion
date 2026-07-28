@@ -89,3 +89,10 @@ Not a chatbot. Local-first; optional Supabase cloud; optional live Helper via se
 | 8 | Skeletons, path prefetch, device checklist | **Done** this release |
 
 Device/perf checklist: `docs/DEVICE_CHECKLIST.md`
+
+### Chrome extraction (reverted)
+
+The `AppHeader` / `AppMain` / `AppSidebar` extraction (`236582f`) white-screened
+production (props bag / shadowing / undeclared identifiers). **Reverted to
+inlined chrome in `App.jsx`** while keeping CSS split, five-stop path, and
+later PR work. Do not re-extract without browser smoke of the signed-in shell.
