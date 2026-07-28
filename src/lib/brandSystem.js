@@ -15,10 +15,10 @@ import {
 import { formatDecisionLine, latestDecision } from './decisionLog'
 
 export const DEFAULT_LOGO_MIN_SIZE =
-  '24px digital · 0.5″ print (mark height)'
+  '24px digital · 0.5" print (mark height)'
 
 export const DEFAULT_LOGO_CLEARSPACE =
-  'Clearspace ≈ half the mark height on all sides. Prefer full-color primary; reverse on dark covers; mono for one-ink jobs.'
+  'Clearspace ~ half the mark height on all sides. Prefer full-color primary; reverse on dark covers; mono for one-ink jobs.'
 
 export const DEFAULT_LOGO_DONTS = [
   'Do not stretch, skew, or distort the mark',

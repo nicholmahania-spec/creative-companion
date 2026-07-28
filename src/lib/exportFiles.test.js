@@ -7,6 +7,8 @@ import {
   buildDirectionSheetMarkup,
   packBriefMarkdown,
   slugifyFilename,
+  downloadBrandPackVectorPdf,
+  downloadProjectOverviewPdf,
 } from './exportFiles'
 
 describe('slugifyFilename', () => {
@@ -256,6 +258,82 @@ describe('vector pack snapshot fields', () => {
     expect(md).toMatch(/Color system|CMYK|rgb/i)
     expect(md).toMatch(/Type scale/)
     expect(md).toMatch(/Imagery/)
+  })
+})
+
+describe('downloadProjectOverviewPdf quality', () => {
+  it('filled mode omits empty fields and blank mode includes AcroForm pages', async () => {
+    const sparse = {
+      name: 'My project',
+      detective: {
+        engagementType: 'extend',
+      },
+    }
+    const filled = await downloadProjectOverviewPdf(sparse, {
+      returnBlobOnly: true,
+      blank: false,
+    })
+    expect(filled.ok).toBe(true)
+    expect(filled.mode).toBe('filled')
+    // One answered field → single short page, not a 2-page dash graveyard
+    expect(filled.pages).toBe(1)
+
+    const blank = await downloadProjectOverviewPdf(sparse, {
+      returnBlobOnly: true,
+      blank: true,
+    })
+    expect(blank.ok).toBe(true)
+    expect(blank.mode).toBe('blank')
+    expect(blank.pages).toBeGreaterThanOrEqual(2)
+    expect(blank.pages).toBeLessThanOrEqual(3)
+  })
+
+  it('filled mode with no answers is a one-page note, not empty dashes', async () => {
+    const empty = await downloadProjectOverviewPdf(
+      { name: 'Empty Co', detective: {} },
+      { returnBlobOnly: true, blank: false }
+    )
+    expect(empty.ok).toBe(true)
+    expect(empty.pages).toBe(1)
+  })
+})
+
+describe('downloadBrandPackVectorPdf quality', () => {
+  it('skips empty chapters, avoids fake contact, and keeps WinAnsi-safe text', async () => {
+    const pack = buildBrandPackSnapshot({
+      project: {
+        name: 'My project',
+        tagline: '',
+        palette: ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9'],
+        colorRoles: {
+          cover: '#1C1917',
+          text: '#FFFFFF',
+          accent: '#A8A29E',
+          quiet: '#FAFAF9',
+        },
+        typeHeading: 'Plus Jakarta Sans Bold',
+        typeBody: 'Plus Jakarta Sans Regular',
+        designVersion: 'v1',
+        orgEmail: '',
+        orgWebsite: '',
+      },
+      tasks: [],
+      moodItems: [],
+    })
+
+    const result = await downloadBrandPackVectorPdf(pack, null, {
+      returnBlobOnly: true,
+    })
+    expect(result.ok).toBe(true)
+    // Thin pack: cover + positioning + color + type + logo + card = 6
+    // (no empty overview / previous / usage / imagery filler pages)
+    expect(result.pages).toBe(6)
+
+    const buf = Buffer.from(await result.blob.arrayBuffer())
+    const text = buf.toString('latin1')
+    // Never invent placeholder contact on the business-card specimen
+    expect(text).not.toMatch(/hello@brand\.example/)
+    expect(text).not.toMatch(/you@example\.com/)
   })
 })
 
