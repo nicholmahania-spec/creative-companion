@@ -155,54 +155,7 @@ export default function SketchView(props) {
         </div>
       </div>
 
-      {decisionLine ? (
-        <p className="sketch-decision-line" role="status">
-          {decisionLine}{' '}
-          <button
-            type="button"
-            className="text-link"
-            onClick={() => {
-              setActiveView?.('spark')
-              trackFeatureUsage('decision_log_edit', 'opened')
-            }}
-          >
-            Edit
-          </button>
-        </p>
-      ) : null}
-
-      {ideateDirs.length > 0 && (
-        <div className="sketch-ideate-strip" aria-label="From Ideate">
-          {ideateDirs.map((d) => (
-            <button
-              key={d.id}
-              type="button"
-              className={`sketch-dir-chip${d.chosen ? ' is-chosen' : ''}`}
-              onClick={() => queueDraft(d)}
-            >
-              {d.label}
-              {d.chosen ? ' ·' : ''} {d.title}
-            </button>
-          ))}
-          {ideateDirs.length > 1 && (
-            <details className="sketch-ideate-more">
-              <summary>All</summary>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  ideateDirs.forEach(queueDraft)
-                  trackFeatureUsage('ideate_queue_all', 'used')
-                }}
-              >
-                Queue all
-              </button>
-            </details>
-          )}
-        </div>
-      )}
-
-      {/* Fold: current step only */}
+      {/* Fold: current step owns attention (redesign brief Work AOF) */}
       <section
         className="panel step-focus-panel sketch-now"
         key={stepFocusKey}
@@ -210,13 +163,8 @@ export default function SketchView(props) {
       >
         <div className="step-focus-head">
           <div className="brand-section-label" style={{ margin: 0 }}>
-            Now
+            Current step
           </div>
-          {getProcessPhase('sketch') && (
-            <InfoReveal>
-              {getProcessPhase('sketch').checks.join(' · ')}
-            </InfoReveal>
-          )}
         </div>
         {!nextTask ? (
           <div className="empty-state empty-state-craft sketch-empty">
@@ -285,26 +233,26 @@ export default function SketchView(props) {
                 className="btn btn-primary"
                 onClick={completeCurrentStep}
               >
-                Done
+                Complete step
               </button>
+              {!nextTask.parentId && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    breakIntoSteps(nextTask.id)
+                    notifyAction?.('Split into 3', 'micro_steps', {
+                      label: 'Split step',
+                    })
+                    bumpStepFocus()
+                  }}
+                >
+                  Split if too big
+                </button>
+              )}
               <details className="step-more-details">
                 <summary>More</summary>
                 <div className="step-more-panel">
-                  {!nextTask.parentId && (
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        breakIntoSteps(nextTask.id)
-                        notifyAction?.('Split into 3', 'micro_steps', {
-                          label: 'Split step',
-                        })
-                        bumpStepFocus()
-                      }}
-                    >
-                      Split
-                    </button>
-                  )}
                   <button
                     type="button"
                     className="btn btn-ghost"
@@ -332,7 +280,7 @@ export default function SketchView(props) {
                     className="btn btn-ghost"
                     onClick={openBreakdown}
                   >
-                    Break down
+                    Break down project
                   </button>
                 </div>
               </details>
@@ -358,6 +306,53 @@ export default function SketchView(props) {
       </section>
 
       <div className="sketch-below">
+        {decisionLine ? (
+          <p className="sketch-decision-line" role="status">
+            {decisionLine}{' '}
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => {
+                setActiveView?.('spark')
+                trackFeatureUsage('decision_log_edit', 'opened')
+              }}
+            >
+              Edit
+            </button>
+          </p>
+        ) : null}
+
+        {ideateDirs.length > 0 && (
+          <details className="sketch-ideate-details">
+            <summary>From Ideate ({ideateDirs.length})</summary>
+            <div className="sketch-ideate-strip" aria-label="From Ideate">
+              {ideateDirs.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  className={`sketch-dir-chip${d.chosen ? ' is-chosen' : ''}`}
+                  onClick={() => queueDraft(d)}
+                >
+                  {d.label}
+                  {d.chosen ? ' ·' : ''} {d.title}
+                </button>
+              ))}
+              {ideateDirs.length > 1 && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => {
+                    ideateDirs.forEach(queueDraft)
+                    trackFeatureUsage('ideate_queue_all', 'used')
+                  }}
+                >
+                  Queue all
+                </button>
+              )}
+            </div>
+          </details>
+        )}
+
         <section className="capture-strip sketch-capture" aria-label="Capture">
           <div className="capture-row capture-row-compact">
             <input

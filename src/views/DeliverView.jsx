@@ -191,9 +191,27 @@ export default function DeliverView({
             )}
 
             {ready.thin && (
-              <p className="pack-thin-warning" role="status">
-                Thin · tagline / colors / ★ pins
-              </p>
+              <div className="pack-thin-warning" role="status">
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  {i18nT(locale, 'ui.thinPack')}
+                </p>
+                <div className="finish-secondary-row" style={{ margin: 0 }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setActiveView('studio')}
+                  >
+                    {i18nT(locale, 'ui.goToBoard') || 'Go to Board'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => goSystemSection('essentials')}
+                  >
+                    {i18nT(locale, 'path.design') || 'System'}
+                  </button>
+                </div>
+              </div>
             )}
 
             {thinPackPrompt && (
@@ -203,7 +221,9 @@ export default function DeliverView({
                 aria-labelledby="thin-pack-title"
               >
                 <p id="thin-pack-title" className="thin-pack-prompt-body">
-                  Thin pack — ship anyway?
+                  {thinPackPrompt === 'print'
+                    ? i18nT(locale, 'ui.thinPackConfirmPrint')
+                    : i18nT(locale, 'ui.thinPackConfirmDownload')}
                 </p>
                 <div className="thin-pack-prompt-actions">
                   <button
@@ -240,7 +260,7 @@ export default function DeliverView({
                       setActiveView('studio')
                     }}
                   >
-                    Research
+                    {i18nT(locale, 'path.research') || 'Board'}
                   </button>
                 </div>
               </div>
@@ -330,7 +350,7 @@ export default function DeliverView({
                   className="btn btn-ghost btn-sm"
                   onClick={() => setActiveView('brand')}
                 >
-                  Design
+                  {i18nT(locale, 'path.design') || 'System'}
                 </button>
                 <button
                   type="button"

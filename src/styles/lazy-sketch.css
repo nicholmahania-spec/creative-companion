@@ -1,5 +1,18 @@
 /* Auto-split from index.css — lazy-sketch.css */
 
+.sketch-ideate-details {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #727272);
+}
+.sketch-ideate-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+/* Auto-split from index.css — lazy-sketch.css */
+
 
 /* Capture — standard form control */
 

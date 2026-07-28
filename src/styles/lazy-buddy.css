@@ -1,5 +1,10 @@
 /* Auto-split from index.css — lazy-buddy.css */
 
+/* Helper primary: three verbs (Coach · Critique · Break) */
+.buddy-act-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
 
 /* desk-snapshot styles live with project folio block below */
 /* Forced Pomodoro break — blocks entire desk */

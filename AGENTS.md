@@ -1,5 +1,7 @@
 # Creative Companion — agent rules
 
+**Product requirements:** `docs/PRD.md` (five-stop path, Helper verbs, non-goals).
+
 ## Define is form-only (owner decision — do not reintroduce Refs)
 
 **Project overview (Define) is the brief form only.** Inspiration / refs live on

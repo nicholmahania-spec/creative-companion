@@ -1,11 +1,15 @@
 # Phase 11: Performance Optimization & Monitoring
 
+> **2026-07 update:** Focus Mode product and FocusShell previews are **removed**.
+> Path views are already lazy-loaded; main CSS is shell-only (~151KB). Remaining
+> items below are optional polish — not blocking the product spine (`docs/PRD.md`).
+
 ## Overview
 Phase 11 focuses on improving application performance through optimization techniques and implementing performance monitoring to ensure the application remains fast and responsive.
 
 ## Goals
 1. Optimize rendering performance for better user experience
-2. Implement lazy loading for preview components
+2. ~~FocusShell preview lazy load~~ **obsolete**
 3. Add performance monitoring and metrics collection
 4. Optimize motion configurations for reduced motion preference
 5. Bundle analysis and optimization
@@ -13,11 +17,11 @@ Phase 11 focuses on improving application performance through optimization techn
 
 ## Tasks
 
-### 1. Implement Lazy Loading for Preview Components
-- [ ] Add dynamic imports for preview components in FocusShell
-- [ ] Implement skeleton loaders for preview content
-- [ ] Add intersection observer for viewport-based loading
-- [ ] Preview components to lazy load: DefinePreview, ResearchPreview, IdeatePreview, SketchPreview, ReviewPreview, BrandPreview
+### 1. Lazy loading (status)
+- [x] Path views lazy-loaded from App / AppMain
+- [x] CSS split: shell + lazy-*.css per route
+- [ ] Skeleton loaders for heavy views (Design / Board)
+- [ ] Intersection observer for below-fold panels (optional)
 
 ### 2. Optimize Motion System
 - [ ] Review motion configurations for potential over-animation

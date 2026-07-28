@@ -37,40 +37,43 @@ Without a key, Helper uses **built-in scripted coaching** (Recommend / Critique 
 
 ## What’s in the app
 
+**Path (5):** Project → Work → Board → System → Pack  
+
 | Area | Purpose |
 |------|---------|
-| **Work** | Capture → current step → complete → queue + done list |
-| **Micro-step breakdown** | Guided ADHD wizard (5 / 8 / 12 steps) onto the desk |
-| **Help tools** | Body double, spark, focus timer, “I’m stuck” |
-| **Board** | Mood board: upload / URL / note pins with captions |
-| **Projects** | Multiple lanes, brief, project deadline |
-| **Deadlines** | Month calendar for project + step due dates |
-| **Brand identity template** | Tagline, voice, do/don’t, palette, type, logo notes |
-| **Finish exports** | One-click **PDF**, HTML, Markdown, JSON brand pack + workspace backup |
-| **Helper** | Compact design coach (scripted, or live via xAI when keyed) |
+| **Project** | Brief / detective form (form-only) |
+| **Work** | One current step → complete / capture |
+| **Board** | Mood pins; star up to 6 for the pack |
+| **System** | Live brand artboard + accordion editors |
+| **Pack** | Preview + brand book PDF download |
+| **Tools** | Ideate, Review, Timer, Calendar, Clients, Settings |
+| **Helper** | Coach · Critique · Break (scripted or live via proxy) |
+
+Product requirements: **[docs/PRD.md](docs/PRD.md)**
 
 ## Stack
 
-- React 19 + Vite 7  
+- React 19 + Vite 8  
 - Zustand (persist)  
-- Plain CSS design system  
+- Plain CSS (`src/styles/shell.css` + lazy view CSS)  
 
 ## Agent / design rules
 
 - **`AGENTS.md`** — always audit **dark mode** (`.app.deep`) on every color change  
 - **`DESIGN_GRAMMAR.md`** — full UX/color grammar (see **G4.4**)  
+- **Version bumps are manual** — `npm run bump` / `bump:minor` / `bump:major` then stage + commit (hooks are no-ops; see `CLAUDE.md`)  
 
 ## Project layout
 
 ```
 src/
   main.jsx
-  App.jsx              # UI shell + views
-  index.css            # styles
-  store/useAppStore.js # persisted state
-  lib/color.js         # palette / WCAG contrast
-  lib/microsteps.js    # project breakdown templates
-  lib/dates.js         # deadlines + calendar helpers
+  App.jsx                 # shell state + composition
+  components/layout/      # AppHeader, AppSidebar, AppMain, AppFooter
+  styles/shell.css        # always-on chrome
+  styles/lazy-*.css       # loaded with route views
+  store/useAppStore.js
+  lib/journey.js          # five-stop path
 ```
 
 ## Deploy (GitHub Pages)

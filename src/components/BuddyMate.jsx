@@ -736,13 +736,11 @@ export default function BuddyMate({
     .slice(-6)
 
   const PROCESS_STEMS = [
-    ['define', 'Def'],
-    ['research', 'Res'],
-    ['ideate', 'Ide'],
-    ['sketch', 'Sk'],
-    ['design', 'Des'],
-    ['review', 'Rev'],
-    ['deliver', 'Del'],
+    ['define', 'Pro'],
+    ['sketch', 'Work'],
+    ['research', 'Brd'],
+    ['design', 'Sys'],
+    ['deliver', 'Pack'],
   ]
 
   // ——— Minimized: corner FAB ———
@@ -913,8 +911,9 @@ export default function BuddyMate({
             ))}
           </div>
 
+          {/* Redesign brief: three verbs only — Coach · Critique · Break */}
           <div
-            className="buddy-compact-actions buddy-act-grid"
+            className="buddy-compact-actions buddy-act-grid buddy-act-three"
             aria-label="Helper actions"
           >
             <button
@@ -932,14 +931,6 @@ export default function BuddyMate({
               disabled={aiBusy}
             >
               Critique
-            </button>
-            <button
-              type="button"
-              className="buddy-act"
-              onClick={() => reply('stuck')}
-              disabled={aiBusy}
-            >
-              Stuck
             </button>
             <button
               type="button"
@@ -1122,10 +1113,18 @@ export default function BuddyMate({
                 <button
                   type="button"
                   className="buddy-quick-btn"
+                  onClick={() => reply('stuck')}
+                  disabled={aiBusy}
+                >
+                  Stuck
+                </button>
+                <button
+                  type="button"
+                  className="buddy-quick-btn"
                   onClick={() => reply('full')}
                   disabled={aiBusy}
                 >
-                  Review
+                  Full review
                 </button>
                 <button
                   type="button"

@@ -108,11 +108,12 @@ If a feature does not serve that sentence, it is chrome noise.
 
 | Rule | Spec |
 |------|------|
-| **G1.1 Primary nav** | Exactly **Flow · Studio · Project**. No pills. No second toolbar. |
-| **G1.2 Secondary** | Spark, Brand, Insights, theme, fullscreen live under **More** (or keyboard). Never a fourth primary tab without killing one. |
-| **G1.3 Capture** | Allowed only on **Flow** and **Project**. Forbidden on Studio, Spark, Brand, Insights. |
-| **G1.4 One lane** | Active project filters desk + wall + export. Lane switcher is text underline, not pill group. |
-| **G1.5 Project is a list** | Next moves = decision rows. **Ban** 2×2 feature cards / “app launcher” grids. |
+| **G1.1 Primary path** | Exactly **five** stops: **Project · Work · Board · System · Pack** (view ids `project` · `flow` · `studio` · `brand` · `finish`). No pills as primary nav. |
+| **G1.2 Secondary (Tools)** | Ideate (`spark`), Review, Timer, Calendar, Clients, Settings, Helper prefs — under **Tools**, not path siblings. |
+| **G1.3 Capture** | Allowed on **Work** (`flow`) and **Project**. Forbidden as a second chrome bar on Board/System/Pack. |
+| **G1.4 One lane** | Active project filters desk + wall + export. |
+| **G1.5 Progress/XP** | Never default path chrome; Settings opt-in only (`showProgress`). |
+| **G1.6 Source of truth** | `docs/PRD.md` + this grammar; do not reintroduce 7-stop path without an explicit owner decision. |
 
 ---
 
