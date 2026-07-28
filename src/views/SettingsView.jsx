@@ -182,23 +182,28 @@ export default function SettingsView(props) {
           checked={!!prefs.hideTips}
           onToggle={() => setPref('hideTips', !prefs.hideTips)}
         />
-        <div className="settings-row">
-          <strong>{i18nT(locale, 'language') || 'Language'}</strong>
-          <select
-            className="field-input settings-locale-select"
-            value={locale}
-            aria-label={i18nT(locale, 'language') || 'Language'}
-            onChange={(e) =>
-              setPref('locale', normalizeLocale(e.target.value))
-            }
-          >
-            {LOCALES.map((L) => (
-              <option key={L.id} value={L.id}>
-                {L.native}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Language picker renders only if there is a choice to make. With one
+            shipped locale a select is a control that cannot do anything —
+            a decision with a single option is a toll, not a setting. */}
+        {LOCALES.length > 1 && (
+          <div className="settings-row">
+            <strong>{i18nT(locale, 'language') || 'Language'}</strong>
+            <select
+              className="field-input settings-locale-select"
+              value={locale}
+              aria-label={i18nT(locale, 'language') || 'Language'}
+              onChange={(e) =>
+                setPref('locale', normalizeLocale(e.target.value))
+              }
+            >
+              {LOCALES.map((L) => (
+                <option key={L.id} value={L.id}>
+                  {L.native}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="settings-row">
           <strong>{i18nT(locale, 'ui.theme') || 'Theme'}</strong>
           <button

@@ -12,10 +12,20 @@ import {
 } from './i18n'
 
 describe('i18n wordmark + path + catalog', () => {
-  it('normalizes unknown locales to en', () => {
+  it('normalizes every unshipped locale to en', () => {
+    /* Only `en` ships. A user whose stored pref is 'es' from before the other
+       catalogues were cut must land on correct English, not on a missing
+       catalogue. */
     expect(normalizeLocale('xx')).toBe('en')
-    expect(normalizeLocale('ES')).toBe('es')
-    expect(normalizeLocale('ar')).toBe('ar')
+    expect(normalizeLocale('ES')).toBe('en')
+    expect(normalizeLocale('ar')).toBe('en')
+    expect(normalizeLocale(undefined)).toBe('en')
+  })
+
+  it('ships exactly the locales it has catalogues for', () => {
+    for (const L of LOCALES) {
+      expect(normalizeLocale(L.id)).toBe(L.id)
+    }
   })
 
   it('has product names for all locales', () => {
@@ -68,20 +78,21 @@ describe('i18n wordmark + path + catalog', () => {
     }
   })
 
-  it('marks Arabic as RTL', () => {
-    expect(localeDir('ar')).toBe('rtl')
-    expect(isRtl('ar')).toBe(true)
+  it('reports direction for shipped locales, and defaults to ltr', () => {
+    /* The RTL machinery stays — Arabic was cut as a stale catalogue, not
+       because right-to-left support was wrong. An unshipped id normalizes to
+       en and so reports ltr rather than throwing. */
+    expect(localeDir('en')).toBe('ltr')
     expect(isRtl('en')).toBe(false)
+    expect(isRtl('ar')).toBe(false)
   })
 
   it('pathFillHint and strip templates resolve', () => {
     expect(pathFillHint('en', 'research')).toMatch(/star|pin|ref/i)
-    expect(pathFillHint('es', 'research')).toMatch(/★|ref/i)
     expect(tFormat('en', 'ui.nextGapBtn', { label: 'Research' })).toBe(
       'Next empty · Research · G'
     )
     expect(t('en', 'ui.stillThin')).toMatch(/empty|thin/i)
-    expect(t('es', 'ui.stillThin')).toMatch(/delgado/i)
   })
 
   it('pack copy is honest about brand book PDF vs print', () => {
@@ -118,15 +129,21 @@ describe('i18n wordmark + path + catalog', () => {
     expect(en.howDeskWorks).toMatch(/Ideate/)
   })
 
-  it('locales override thin-pack and confirm chrome', () => {
-    for (const id of ['es', 'fr', 'de', 'pt', 'ja', 'ar']) {
-      const ui = getMessages(id).ui
+  it('every shipped locale has the thin-pack and confirm chrome', () => {
+    /* Iterates LOCALES rather than a hand-written locale list, so this keeps
+       testing whatever ships. The version that listed es/fr/de/pt/ja/ar
+       asserted Spanish and Arabic strings directly, so removing those stale
+       catalogues broke a test that was really checking the catalogues existed
+       at all. */
+    for (const L of LOCALES) {
+      const ui = getMessages(L.id).ui
       expect(ui.thinPackBanner).toBeTruthy()
       expect(ui.cancel).toBeTruthy()
       expect(ui.continuePrint || ui.continue).toBeTruthy()
-      // not English raw for cancel when locale has override
-      if (id === 'es') expect(ui.cancel).toBe('Cancelar')
-      if (id === 'ar') expect(ui.openPack).toMatch(/تسليم/)
     }
+  })
+
+  it('falls back to English for an unshipped locale', () => {
+    expect(getMessages('es').ui.cancel).toBe(getMessages('en').ui.cancel)
   })
 })
