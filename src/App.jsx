@@ -2343,6 +2343,14 @@ function App() {
     if (exportBusyRef.current) return Promise.resolve({ ok: false, busy: true })
     exportBusyRef.current = true
     setExportBusy(true)
+    /* Clear the note before the attempt, not after a failure.
+       `setLastExportNote` was called only on success, so a re-export that
+       failed left the PREVIOUS success on screen — "PDF saved · 3:15pm",
+       persistent and still looking current — while the only sign of failure
+       was a toast that dismisses itself. Miss the toast and you have been
+       told the file exists. Clearing up front covers every failure and
+       cancel branch, including ones added later. */
+    setLastExportNote('')
     const pack = buildCurrentBrandPack()
     const slug = slugifyFilename(pack.projectName, 'brand-pack')
     const finishOk = (label) => {
@@ -4581,6 +4589,7 @@ function App() {
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
+                aria-label="Close keyboard shortcuts"
                 onClick={() => setShortcutsOpen(false)}
               >
                 ×
@@ -4716,6 +4725,7 @@ function App() {
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
+                aria-label="Close export"
                 onClick={() => setExportPanel(null)}
               >
                 ×
@@ -4790,6 +4800,7 @@ function App() {
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
+                aria-label="Close export"
                 onClick={() => setExportPanel(null)}
               >
                 ×
@@ -4903,6 +4914,7 @@ function App() {
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
+                aria-label="Close step breakdown"
                 onClick={() => setShowBreakdown(false)}
               >
                 ×

@@ -25,5 +25,12 @@ export function loadTypePairFont(googleCss) {
   link.id = LINK_ID
   link.rel = 'stylesheet'
   link.href = googleCss
+  /* A blocked or offline fonts request otherwise fails in total silence: the
+     preview falls back to the UI font and looks like a chosen typeface that
+     simply resembles the UI. Logged, not surfaced — the specimen still reads,
+     and an alert about a webfont would be noise. */
+  link.onerror = () => {
+    console.debug('[fonts] could not load type-pair stylesheet:', googleCss)
+  }
   document.head.appendChild(link)
 }

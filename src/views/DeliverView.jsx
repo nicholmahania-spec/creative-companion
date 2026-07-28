@@ -345,13 +345,12 @@ export default function DeliverView({
                 >
                   Preview
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setActiveView('brand')}
-                >
-                  {i18nT(locale, 'path.design') || labelForStepId('design')}
-                </button>
+                {/* An "Identity" button used to sit here, between Preview and
+                    Raster. It exported nothing — it navigated to the Identity
+                    view — inside a row whose every other entry produces a
+                    file. Someone scanning "More formats" for a file type
+                    landed on a different page instead. The journey bar offers
+                    Identity one click away, always, so nothing is lost. */}
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"

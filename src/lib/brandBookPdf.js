@@ -250,7 +250,12 @@ export async function downloadBrandPackVectorPdf(
         pdf.setPage(i)
         pdf.setFont('helvetica', 'normal')
         pdf.setFontSize(8)
-        pdf.setTextColor(150, 150, 150)
+        /* 100, not 150. #969696 on white measures 2.96:1 — under the 4.5:1
+           floor — on a footer that carries the page numbers and the studio
+           name in a document sent to clients. 100,100,100 is 5.92:1 and is
+           already this file's dominant muted grey, so this fixes the
+           contrast and one of its several unlabelled greys at once. */
+        pdf.setTextColor(100, 100, 100)
         pdf.text(left, margin, pageH - 22)
         pdf.text(`${i} / ${total}`, pageW - margin, pageH - 22, {
           align: 'right',
