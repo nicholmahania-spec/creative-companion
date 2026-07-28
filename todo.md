@@ -6,7 +6,17 @@
 
 ---
 
-## Session 2026-07-28 — the invoice becomes payable (uncommitted)
+## The research phases — see `docs/RESEARCH_PHASES.md`
+
+44 links researched 2026-07-28 produced 28 implementable items and a 7-phase
+plan. The plan lived only in a chat that was then cleared; it was recovered
+from the session transcript and written to `docs/RESEARCH_PHASES.md`. **Phase 1
+(`e39ba7e`) and Phase 2 (`bfc1c5c`) are done. Phases 3–7 are not started.**
+Read that file before picking up any of them.
+
+---
+
+## Session 2026-07-28 — the invoice becomes payable (Phase 2)
 
 The invoice printed five things: Invoice, Date, Note, Hours, Amount. No
 invoice number, no due date, no payment method, no contact details for the
