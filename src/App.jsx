@@ -138,7 +138,7 @@ import {
   STORAGE_EXPLAIN,
 } from './lib/auth'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
-import assetService from './services/assetService'
+
 import {
   pullWorkspace,
   pushWorkspace,
@@ -1916,20 +1916,21 @@ function App() {
    * already supports from Design → Logo, just reachable without navigating
    * away first. Doing nothing keeps the existing generic cover, so this adds
    * zero required steps. */
-  const handleCoverImageDrop = async (file) => {
+  const handleCoverImageDrop = (file) => {
     if (!file || !file.type?.startsWith('image/')) return
     if (file.size > 2.5 * 1024 * 1024) {
       flashToast('Cover image must be under 2.5MB')
       return
     }
-    try {
-      const result = await assetService.uploadImage(file, 'assets', `logos/${Date.now()}-${file.name}`)
-      setLogoImage(result.url)
+    // Local data URL only — no cloud dependency, no fake “upload” path
+    const reader = new FileReader()
+    reader.onerror = () =>
+      flashToast('Could not read that image. Try another file.')
+    reader.onload = () => {
+      setLogoImage(reader.result)
       flashMicro('Cover image updated')
-    } catch (error) {
-      console.error('Error uploading cover image:', error)
-      flashToast('Failed to upload image. Please try again.')
     }
+    reader.readAsDataURL(file)
   }
 
   // Autosave pulse — skip first mount so load doesn’t flash “Saved”

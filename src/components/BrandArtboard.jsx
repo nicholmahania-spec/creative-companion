@@ -336,10 +336,10 @@ export default function BrandArtboard({
         </div>
       )}
 
-      <div className="kicker">Application mock</div>
+      <div className="kicker">Business card specimen</div>
       <div
         className="brand-card-mock"
-        aria-label="Business card proof of system"
+        aria-label="Business card specimen from your brand fields"
       >
         <div
           className="brand-card-mock-inner"
@@ -369,7 +369,22 @@ export default function BrandArtboard({
             >
               {project.tagline?.trim() || '—'}
             </p>
-            <p className="brand-card-mock-meta">hello@brand.example</p>
+            {(() => {
+              const contact = [
+                String(project.orgEmail || '').trim() ||
+                  String(project.contacts?.[0]?.email || '').trim(),
+                String(project.orgWebsite || '').trim(),
+              ]
+                .filter(Boolean)
+                .join('  ·  ')
+              return contact ? (
+                <p className="brand-card-mock-meta">{contact}</p>
+              ) : (
+                <p className="brand-card-mock-meta surface-meta">
+                  Add email/website in Stationery when ready
+                </p>
+              )
+            })()}
           </div>
           <div
             className="brand-card-mock-cover"
@@ -386,7 +401,7 @@ export default function BrandArtboard({
           </div>
         </div>
         <p className="surface-meta" style={{ marginTop: '0.45rem' }}>
-          Proof of system — not a print die-line. Roles + type + mark.
+          Specimen from your roles, type, and mark — not a print die-line.
         </p>
       </div>
 

@@ -6,7 +6,6 @@
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
 import { useFigma } from '../hooks/useFigma'
-import assetService from '../services/assetService'
 import versionService from '../services/versionService'
 import {
   DEFAULT_PALETTE,
@@ -587,12 +586,18 @@ export default function DesignView({
               className="design-advanced-tools"
               open={brandEditSection === 'figma' || brandEditSection === 'stationery'}
             >
-              <summary className="design-advanced-summary">Advanced · Figma &amp; stationery</summary>
+              <summary className="design-advanced-summary">
+                Advanced
+                {figmaIsConfigured ? ' · Figma & stationery' : ' · Stationery'}
+              </summary>
               <div className="design-advanced-tabs" role="tablist" aria-label="Advanced design tools">
-                {[
-                  ['figma', 'Figma'],
-                  ['stationery', 'Stationery'],
-                ].map(([id, label]) => (
+                {(figmaIsConfigured
+                  ? [
+                      ['figma', 'Figma'],
+                      ['stationery', 'Stationery'],
+                    ]
+                  : [['stationery', 'Stationery']]
+                ).map(([id, label]) => (
                   <button
                     key={id}
                     type="button"
@@ -1238,21 +1243,13 @@ export default function DesignView({
               </details>
             </section>
 
-            {/* Figma — optional; colors extract is real, no fake “use design” CTA */}
+            {/* Figma — only mounted when env keys exist; colors only, no fake full import */}
             <section
               className="panel brand-section"
-              hidden={brandEditSection !== 'figma'}
+              hidden={!figmaIsConfigured || brandEditSection !== 'figma'}
             >
               <div className="brand-section-label">Figma</div>
-              {!figmaIsConfigured ? (
-                <p className="panel-hint">
-                  Optional. Add Figma keys in{' '}
-                  <code className="field-input" style={{ display: 'inline', padding: '0.1rem 0.35rem' }}>
-                    .env.local
-                  </code>{' '}
-                  when you want color import. Until then, use the Color tab.
-                </p>
-              ) : !figmaInitialized ? (
+              {!figmaInitialized ? (
                 <p className="panel-hint">Connecting to Figma…</p>
               ) : !figmaAuthenticated ? (
                 <div className="field-block">
@@ -1611,34 +1608,21 @@ export default function DesignView({
                         return
                       }
 
-                      try {
-                        // Show uploading state
-                        const uploadButton = e.target.closest('label').querySelector('span')
-                        const originalText = uploadButton.textContent
-                        uploadButton.textContent = 'Uploading...'
-
-                        // Upload to storage
-                        const result = await assetService.uploadImage(file, 'assets', `logos/${Date.now()}-${file.name}`)
-
-                        // Update state with URL
-                        setLogoImage(result.url)
-
+                      // Always store as a data URL on the project — works offline,
+                      // no cloud required. Cloud storage is not assumed.
+                      const reader = new FileReader()
+                      reader.onerror = () =>
+                        flashToast('Could not read that image. Try another file.')
+                      reader.onload = () => {
+                        setLogoImage(reader.result)
                         const bump = bumpDesignVersionIfV1()
                         flashMicro(
                           bump?.bumped
                             ? `Mark image · ${bump.version}`
                             : 'Mark image added'
                         )
-
-                        // Reset button text
-                        uploadButton.textContent = originalText
-                      } catch (error) {
-                        console.error('Error uploading logo:', error)
-                        flashToast('Failed to upload image. Please try again.')
-                        // Reset button text on error
-                        const uploadButton = e.target.closest('label').querySelector('span')
-                        uploadButton.textContent = 'Upload mark image'
                       }
+                      reader.readAsDataURL(file)
                     }}
                   />
                 </label>

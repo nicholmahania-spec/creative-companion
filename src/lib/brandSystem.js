@@ -314,7 +314,7 @@ export function appendSystemMarkdown(lines, pack) {
   out.push(
     '## Application note',
     '',
-    'Use the brand kit mock (business card) as a proof of system: cover + quiet + accent + type pair + mark. Prefer roles over random swatches.',
+    'Use the business card specimen as a proof of system: cover + quiet + accent + type pair + mark. Prefer roles over random swatches.',
     ''
   )
 

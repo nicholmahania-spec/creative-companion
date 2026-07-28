@@ -348,6 +348,10 @@ export function buildBrandPackSnapshot({
     pinsStarredCount: starredCount,
     colorRoles: p.colorRoles || null,
     logoImage: p.logoImage || '',
+    orgEmail: p.orgEmail || '',
+    orgWebsite: p.orgWebsite || '',
+    orgPhone: p.orgPhone || '',
+    contacts: Array.isArray(p.contacts) ? p.contacts : [],
     logoMinSize: p.logoMinSize || '',
     logoDonts: p.logoDonts || '',
     messagingPromise: p.messagingPromise || '',
@@ -1633,7 +1637,7 @@ const writeWrapped = (
       "07  Logo lockups · don'ts",
       "08  Usage · do / don't",
       '09  Imagery · mood pins',
-      '10  Application mock · handoff',
+      '10  Business card specimen · handoff',
     ]
     toc.forEach((line) => {
       pdf.text(line, margin, y)
@@ -2160,13 +2164,13 @@ const writeWrapped = (
       }
     }
 
-    // ═══════════════ PAGE 10 — Application mock + handoff ═══════════════
+    // ═══════════════ PAGE 10 — Business card specimen + handoff ═══════════════
     newPage()
     pageTitle(
-      'Application mock',
-      'Proof of system — business card using cover, quiet, accent, type, mark.'
+      'Business card specimen',
+      'From your cover, quiet, accent, type, and mark — not a print die-line.'
     )
-    // Business card mock 3.5" × 2" at 72dpi ≈ 252 × 144 pt, scaled up
+    // Business card ~3.5" × 2" at 72dpi ≈ 252 × 144 pt, scaled up
     const cardW = contentW
     const cardH = 150
     ensureSpace(cardH + 40)
@@ -2197,10 +2201,18 @@ const writeWrapped = (
     pdf.text(cardTag.slice(0, 2), margin + 24, y + 58)
     pdf.setFontSize(8)
     pdf.setTextColor(cardTextRgb[0], cardTextRgb[1], cardTextRgb[2])
-    pdf.text('hello@brand.example  ·  brand.example', margin + 24, y + 120)
+    const cardContact = [
+      String(pack?.orgEmail || pack?.contacts?.[0]?.email || '').trim(),
+      String(pack?.orgWebsite || '').trim(),
+    ]
+      .filter(Boolean)
+      .join('  ·  ')
+    if (cardContact) {
+      pdf.text(cardContact.slice(0, 64), margin + 24, y + 120)
+    }
     y += cardH + 20
     writeWrapped(
-      'Mock is a direction proof only — not a print-ready die-line. Build final files in your design tool using roles + type scale.',
+      'Specimen only — not a print-ready die-line. Build final files in your design tool using roles + type scale.',
       { size: 9, color: [90, 90, 90] }
     )
 

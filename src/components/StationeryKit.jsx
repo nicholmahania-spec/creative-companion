@@ -82,7 +82,7 @@ export default function StationeryKit({
               className="field-input"
               value={activeProject.orgEmail || ''}
               onChange={(e) => updateBrandField('orgEmail', e.target.value)}
-              placeholder="hello@org.org"
+              placeholder="you@yourstudio.com"
             />
           </div>
           <div className="field-block">
