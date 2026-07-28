@@ -376,6 +376,57 @@ export function spectrumChoices(poles = []) {
 }
 
 /**
+ * Human-readable answer for export / overview PDF / MD.
+ * Spectrum tokens → pole labels; checklist ids → option labels;
+ * never dump raw internal tokens in client-facing files.
+ *
+ * @param {{ type?: string, options?: Array<{id?: string, value?: string, label?: string}>, poles?: string[] }} field
+ * @param {unknown} raw
+ * @returns {string}
+ */
+export function formatDetectiveAnswer(field, raw) {
+  if (raw == null) return ''
+  if (Array.isArray(raw)) {
+    if (!raw.length) return ''
+    const opts = field?.options || []
+    return raw
+      .map((id) => {
+        const hit = opts.find((o) => o.id === id || o.value === id)
+        return hit?.label || String(id)
+      })
+      .join(', ')
+  }
+  const s = String(raw).trim()
+  if (!s) return ''
+  if (field?.type === 'spectrum') {
+    const hit = spectrumChoices(field.poles || []).find((c) => c.value === s)
+    if (hit) return hit.label
+  }
+  if ((field?.type === 'choice' || field?.type === 'select') && field.options) {
+    const hit = field.options.find((o) => o.id === s || o.value === s)
+    if (hit) return hit.label
+  }
+  return s
+}
+
+/**
+ * Filled detective chapters for export (labels + human answers only).
+ * @param {Record<string, unknown>} detective
+ * @returns {Array<{ num: string, title: string, rows: Array<{ label: string, answer: string }> }>}
+ */
+export function filledDetectiveChapters(detective = {}) {
+  return DETECTIVE_CHAPTERS.map((ch) => {
+    const rows = (ch.fields || [])
+      .map((f) => {
+        const answer = formatDetectiveAnswer(f, detective?.[f.id])
+        return answer ? { label: f.label, answer } : null
+      })
+      .filter(Boolean)
+    return rows.length ? { num: ch.num, title: ch.title, rows } : null
+  }).filter(Boolean)
+}
+
+/**
  * The required fields actually still empty — not a static list of all of
  * them, which reads as wrong the moment some are filled in.
  *

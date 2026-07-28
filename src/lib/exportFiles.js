@@ -10,7 +10,11 @@
 import { pinFaceCssText, pinVisualKind } from './moodPins'
 import { toISODate } from './dates'
 import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
-import { DETECTIVE_CHAPTERS } from './detectiveBrief'
+import {
+  DETECTIVE_CHAPTERS,
+  formatDetectiveAnswer,
+  filledDetectiveChapters,
+} from './detectiveBrief'
 import { OVERVIEW_FIELD_PREFIX } from './overviewOcr'
 import {
   appendSystemMarkdown,
@@ -466,14 +470,18 @@ export function brandPackToMarkdown(pack) {
   if (pack.voice) {
     lines.push('## Voice', '', pack.voice, '')
   }
-  if (pack.detective && Object.values(pack.detective).some((v) => String(v || '').trim())) {
-    lines.push('## Design Detective Sheet', '')
-    const d = pack.detective
-    if (d.goal) lines.push(`- **Goal:** ${d.goal}`)
-    if (d.audience) lines.push(`- **Audience:** ${d.audience}`)
-    if (d.feel) lines.push(`- **Feel:** ${d.feel}`)
-    if (d.format) lines.push(`- **Format:** ${d.format}`)
-    lines.push('')
+  {
+    const chapters = filledDetectiveChapters(pack.detective || {})
+    if (chapters.length) {
+      lines.push('## Agreed brief', '')
+      chapters.forEach((ch) => {
+        lines.push(`### ${ch.num} · ${ch.title}`, '')
+        ch.rows.forEach((row) => {
+          lines.push(`- **${row.label}:** ${row.answer}`)
+        })
+        lines.push('')
+      })
+    }
   }
   if (pack.handoffNote) {
     lines.push('## Handoff note', '', pack.handoffNote, '')
@@ -1771,37 +1779,9 @@ const writeWrapped = (
     // ═══════════════ Agreed brief (handover record) ═══════════════
     // Not a blank form: only filled detective fields, chaptered like Define.
     // Empty fields are omitted so the PDF never reads as unfinished homework.
+    // Spectrum/checklist use human labels (formatDetectiveAnswer), not tokens.
     {
-      const formatAnswer = (field, raw) => {
-        if (Array.isArray(raw)) {
-          if (!raw.length) return ''
-          const opts = field.options || []
-          return raw
-            .map((id) => {
-              const hit = opts.find((o) => o.id === id || o.value === id)
-              return hit?.label || String(id)
-            })
-            .join(', ')
-        }
-        if (field.type === 'choice' && field.options) {
-          const hit = field.options.find(
-            (o) => o.id === raw || o.value === raw
-          )
-          if (hit) return hit.label
-        }
-        return String(raw || '').trim()
-      }
-
-      const filledChapters = DETECTIVE_CHAPTERS.map((ch) => {
-        const rows = (ch.fields || [])
-          .map((f) => {
-            const raw = det?.[f.id]
-            const answer = formatAnswer(f, raw)
-            return answer ? { label: f.label, answer } : null
-          })
-          .filter(Boolean)
-        return rows.length ? { num: ch.num, title: ch.title, rows } : null
-      }).filter(Boolean)
+      const filledChapters = filledDetectiveChapters(det || {})
 
       if (filledChapters.length) {
         newPage()
@@ -2739,7 +2719,9 @@ export async function downloadProjectOverviewPdf(project, options = {}) {
       pdf.line(margin, y - 6, pageW - margin, y - 6)
 
       chapter.fields.forEach((f) => {
-        const answer = blank ? '' : String(project?.detective?.[f.id] || '').trim()
+        const answer = blank
+          ? ''
+          : formatDetectiveAnswer(f, project?.detective?.[f.id])
         ensureSpace(f.area ? 60 : 34)
 
         pdf.setFont('helvetica', 'bold')

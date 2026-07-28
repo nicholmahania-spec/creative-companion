@@ -1,7 +1,8 @@
-/* Creative Companion — offline shell + asset cache (v36)
- * v35: cloud-load escape · v36: put both shell keys on navigate
+/* Creative Companion — offline shell + asset cache (v37)
+ * v36: put both shell keys on navigate
+ * v37: precache hashed JS/CSS discovered from index.html
  */
-const CACHE = 'cc-shell-v36'
+const CACHE = 'cc-shell-v37'
 const PRECACHE = [
   './',
   './index.html',
@@ -9,14 +10,45 @@ const PRECACHE = [
   './favicon.svg',
 ]
 
+/** Parse built index.html for /assets/* (or ./assets/*) script + stylesheet URLs. */
+function assetUrlsFromHtml(html, baseUrl) {
+  const found = new Set()
+  const re =
+    /(?:src|href)=["']((?:\.\.?\/|\/)?assets\/[^"']+\.(?:js|css))["']/gi
+  let m
+  while ((m = re.exec(html))) {
+    try {
+      found.add(new URL(m[1], baseUrl).href)
+    } catch {
+      /* ignore bad url */
+    }
+  }
+  return [...found]
+}
+
+async function precacheShellAndAssets() {
+  const cache = await caches.open(CACHE)
+  await cache.addAll(PRECACHE).catch(() => {})
+  try {
+    const indexUrl = new URL('./index.html', self.location.href).href
+    const res = await fetch(indexUrl, { cache: 'no-cache' })
+    if (!res.ok) return
+    const html = await res.text()
+    const assets = assetUrlsFromHtml(html, indexUrl)
+    await Promise.all(
+      assets.map((url) =>
+        cache.add(url).catch(() => {
+          /* optional asset */
+        }),
+      ),
+    )
+  } catch {
+    /* offline during install — runtime caching still fills on first visit */
+  }
+}
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches
-      .open(CACHE)
-      .then((cache) => cache.addAll(PRECACHE))
-      .then(() => self.skipWaiting())
-      .catch(() => {}),
-  )
+  event.waitUntil(precacheShellAndAssets().then(() => self.skipWaiting()))
 })
 
 self.addEventListener('activate', (event) => {
@@ -58,7 +90,9 @@ self.addEventListener('fetch', (event) => {
         .catch(() =>
           caches
             .match('./')
-            .then((r) => r || caches.match('./index.html') || caches.match(request)),
+            .then(
+              (r) => r || caches.match('./index.html') || caches.match(request),
+            ),
         ),
     )
     return

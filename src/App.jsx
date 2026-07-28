@@ -8,6 +8,7 @@ import {
   Suspense,
 } from 'react'
 import useAppStore from './store/useAppStore'
+import { projectsShellEqual } from './lib/storeSelectors'
 
 import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
@@ -149,7 +150,9 @@ const CLOUD = isSupabaseConfigured()
 
 function App() {
   // ——— Zustand (persisted studio state) ———
-  const projects = useAppStore((s) => s.projects)
+  // projects: ignore detective/discovery for equality so Define typing does
+  // not re-render this entire shell (DefineView reads detective itself).
+  const projects = useAppStore((s) => s.projects, projectsShellEqual)
   const currentProjectId = useAppStore((s) => s.currentProjectId)
   const tasks = useAppStore((s) => s.tasks)
   const moodItems = useAppStore((s) => s.moodItems)
@@ -159,48 +162,158 @@ function App() {
   const currentSpark = useAppStore((s) => s.currentSpark)
   const sparkIndex = useAppStore((s) => s.sparkIndex)
   const sparksTried = useAppStore((s) => s.sparksTried)
-  const setCurrentProject = useAppStore((s) => s.setCurrentProject)
-  const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
-  const updateDetective = useAppStore((s) => s.updateDetective)
-  const updateDirection = useAppStore((s) => s.updateDirection)
-  const setProjectPalette = useAppStore((s) => s.setProjectPalette)
-  const bumpDesignVersion = useAppStore((s) => s.bumpDesignVersion)
-  const toggleTheme = useAppStore((s) => s.toggleTheme)
-  const setBodyDoubling = useAppStore((s) => s.setBodyDoubling)
-  const toggleBodyDoubling = useAppStore((s) => s.toggleBodyDoubling)
-  const setOnboarded = useAppStore((s) => s.setOnboarded)
-  const addTask = useAppStore((s) => s.addTask)
-  const toggleTask = useAppStore((s) => s.toggleTask)
-  const updateTaskTitle = useAppStore((s) => s.updateTaskTitle)
-  const updateTaskMeta = useAppStore((s) => s.updateTaskMeta)
-  const updateTaskWhy = useAppStore((s) => s.updateTaskWhy)
-  const removeTask = useAppStore((s) => s.removeTask)
-  const breakIntoSteps = useAppStore((s) => s.breakIntoSteps)
-  const addMoodPin = useAppStore((s) => s.addMoodPin)
-  const nextSpark = useAppStore((s) => s.nextSpark)
-  const oppositeSpark = useAppStore((s) => s.oppositeSpark)
-  const createNewProject = useAppStore((s) => s.createNewProject)
-  const addMicroStepsBatch = useAppStore((s) => s.addMicroStepsBatch)
-  const setProjectDeadline = useAppStore((s) => s.setProjectDeadline)
-  const setTaskDueDate = useAppStore((s) => s.setTaskDueDate)
+  // Actions are stable — bind once via getState so we do not hold 40+ action
+  // subscriptions on the god shell.
+  const setCurrentProject = useCallback(
+    (...a) => useAppStore.getState().setCurrentProject(...a),
+    []
+  )
+  const updateProjectBrief = useCallback(
+    (...a) => useAppStore.getState().updateProjectBrief(...a),
+    []
+  )
+  const updateDetective = useCallback(
+    (...a) => useAppStore.getState().updateDetective(...a),
+    []
+  )
+  const updateDirection = useCallback(
+    (...a) => useAppStore.getState().updateDirection(...a),
+    []
+  )
+  const setProjectPalette = useCallback(
+    (...a) => useAppStore.getState().setProjectPalette(...a),
+    []
+  )
+  const bumpDesignVersion = useCallback(
+    (...a) => useAppStore.getState().bumpDesignVersion(...a),
+    []
+  )
+  const toggleTheme = useCallback(
+    (...a) => useAppStore.getState().toggleTheme(...a),
+    []
+  )
+  const setBodyDoubling = useCallback(
+    (...a) => useAppStore.getState().setBodyDoubling(...a),
+    []
+  )
+  const toggleBodyDoubling = useCallback(
+    (...a) => useAppStore.getState().toggleBodyDoubling(...a),
+    []
+  )
+  const setOnboarded = useCallback(
+    (...a) => useAppStore.getState().setOnboarded(...a),
+    []
+  )
+  const addTask = useCallback((...a) => useAppStore.getState().addTask(...a), [])
+  const toggleTask = useCallback(
+    (...a) => useAppStore.getState().toggleTask(...a),
+    []
+  )
+  const updateTaskTitle = useCallback(
+    (...a) => useAppStore.getState().updateTaskTitle(...a),
+    []
+  )
+  const updateTaskMeta = useCallback(
+    (...a) => useAppStore.getState().updateTaskMeta(...a),
+    []
+  )
+  const updateTaskWhy = useCallback(
+    (...a) => useAppStore.getState().updateTaskWhy(...a),
+    []
+  )
+  const removeTask = useCallback(
+    (...a) => useAppStore.getState().removeTask(...a),
+    []
+  )
+  const breakIntoSteps = useCallback(
+    (...a) => useAppStore.getState().breakIntoSteps(...a),
+    []
+  )
+  const addMoodPin = useCallback(
+    (...a) => useAppStore.getState().addMoodPin(...a),
+    []
+  )
+  const nextSpark = useCallback(
+    (...a) => useAppStore.getState().nextSpark(...a),
+    []
+  )
+  const oppositeSpark = useCallback(
+    (...a) => useAppStore.getState().oppositeSpark(...a),
+    []
+  )
+  const createNewProject = useCallback(
+    (...a) => useAppStore.getState().createNewProject(...a),
+    []
+  )
+  const addMicroStepsBatch = useCallback(
+    (...a) => useAppStore.getState().addMicroStepsBatch(...a),
+    []
+  )
+  const setProjectDeadline = useCallback(
+    (...a) => useAppStore.getState().setProjectDeadline(...a),
+    []
+  )
+  const setTaskDueDate = useCallback(
+    (...a) => useAppStore.getState().setTaskDueDate(...a),
+    []
+  )
   const prefs = useAppStore((s) => s.prefs) || {}
-  const setPref = useAppStore((s) => s.setPref)
-  const exportAllData = useAppStore((s) => s.exportAllData)
-  const importAllData = useAppStore((s) => s.importAllData)
-  const hydrateFromPayload = useAppStore((s) => s.hydrateFromPayload)
-  const applyImageUrlReplacements = useAppStore((s) => s.applyImageUrlReplacements)
-  const clearAllData = useAppStore((s) => s.clearAllData)
-  const clearToEmpty = useAppStore((s) => s.clearToEmpty)
-  const renameProject = useAppStore((s) => s.renameProject)
-  const setLogoImage = useAppStore((s) => s.setLogoImage)
-  const setProjectLastView = useAppStore((s) => s.setProjectLastView)
+  const setPref = useCallback((...a) => useAppStore.getState().setPref(...a), [])
+  const exportAllData = useCallback(
+    (...a) => useAppStore.getState().exportAllData(...a),
+    []
+  )
+  const importAllData = useCallback(
+    (...a) => useAppStore.getState().importAllData(...a),
+    []
+  )
+  const hydrateFromPayload = useCallback(
+    (...a) => useAppStore.getState().hydrateFromPayload(...a),
+    []
+  )
+  const applyImageUrlReplacements = useCallback(
+    (...a) => useAppStore.getState().applyImageUrlReplacements(...a),
+    []
+  )
+  const clearAllData = useCallback(
+    (...a) => useAppStore.getState().clearAllData(...a),
+    []
+  )
+  const clearToEmpty = useCallback(
+    (...a) => useAppStore.getState().clearToEmpty(...a),
+    []
+  )
+  const renameProject = useCallback(
+    (...a) => useAppStore.getState().renameProject(...a),
+    []
+  )
+  const setLogoImage = useCallback(
+    (...a) => useAppStore.getState().setLogoImage(...a),
+    []
+  )
+  const setProjectLastView = useCallback(
+    (...a) => useAppStore.getState().setProjectLastView(...a),
+    []
+  )
   const isMobileViewport = useIsMobile()
-  const deleteProject = useAppStore((s) => s.deleteProject)
-  const archiveProject = useAppStore((s) => s.archiveProject)
-  const unarchiveProject = useAppStore((s) => s.unarchiveProject)
+  const deleteProject = useCallback(
+    (...a) => useAppStore.getState().deleteProject(...a),
+    []
+  )
+  const archiveProject = useCallback(
+    (...a) => useAppStore.getState().archiveProject(...a),
+    []
+  )
+  const unarchiveProject = useCallback(
+    (...a) => useAppStore.getState().unarchiveProject(...a),
+    []
+  )
   const breakKit = useAppStore((s) => s.breakKit)
   const conceptItems = useAppStore((s) => s.conceptItems)
-  const completeBreakKitItem = useAppStore((s) => s.completeBreakKitItem)
+  const completeBreakKitItem = useCallback(
+    (...a) => useAppStore.getState().completeBreakKitItem(...a),
+    []
+  )
   const breakKitRef = useRef(breakKit)
   breakKitRef.current = breakKit
 
@@ -416,23 +529,71 @@ function App() {
   // Open items only — never "3 of 11". A denominator turns a next-action cue
   // into a progress verdict, which invites the "I'm behind" read.
   const openTodoCount = (runningTodo?.items || []).filter((it) => !it.completed).length
-  const addRunningTodoItem = useAppStore((s) => s.addRunningTodoItem)
-  const toggleRunningTodoItem = useAppStore((s) => s.toggleRunningTodoItem)
-  const removeRunningTodoItem = useAppStore((s) => s.removeRunningTodoItem)
-  const sortRunningTodo = useAppStore((s) => s.sortRunningTodo)
-  const resetRunningTodoIfNewDay = useAppStore((s) => s.resetRunningTodoIfNewDay)
-  const setHourlyRate = useAppStore((s) => s.setHourlyRate)
-  const addTimeEntry = useAppStore((s) => s.addTimeEntry)
-  const removeTimeEntry = useAppStore((s) => s.removeTimeEntry)
-  const removeWorkEntry = useAppStore((s) => s.removeWorkEntry)
-  const updateDiscoveryField = useAppStore((s) => s.updateDiscoveryField)
-  const setDiscoveryUpload = useAppStore((s) => s.setDiscoveryUpload)
-  const setDiscoveryShare = useAppStore((s) => s.setDiscoveryShare)
-  const mergeDiscoveryAnswers = useAppStore((s) => s.mergeDiscoveryAnswers)
-  const setClientPortalId = useAppStore((s) => s.setClientPortalId)
-  const mergeDetectiveAnswers = useAppStore((s) => s.mergeDetectiveAnswers)
+  const addRunningTodoItem = useCallback(
+    (...a) => useAppStore.getState().addRunningTodoItem(...a),
+    []
+  )
+  const toggleRunningTodoItem = useCallback(
+    (...a) => useAppStore.getState().toggleRunningTodoItem(...a),
+    []
+  )
+  const removeRunningTodoItem = useCallback(
+    (...a) => useAppStore.getState().removeRunningTodoItem(...a),
+    []
+  )
+  const sortRunningTodo = useCallback(
+    (...a) => useAppStore.getState().sortRunningTodo(...a),
+    []
+  )
+  const resetRunningTodoIfNewDay = useCallback(
+    (...a) => useAppStore.getState().resetRunningTodoIfNewDay(...a),
+    []
+  )
+  const setHourlyRate = useCallback(
+    (...a) => useAppStore.getState().setHourlyRate(...a),
+    []
+  )
+  const addTimeEntry = useCallback(
+    (...a) => useAppStore.getState().addTimeEntry(...a),
+    []
+  )
+  const removeTimeEntry = useCallback(
+    (...a) => useAppStore.getState().removeTimeEntry(...a),
+    []
+  )
+  const removeWorkEntry = useCallback(
+    (...a) => useAppStore.getState().removeWorkEntry(...a),
+    []
+  )
+  const updateDiscoveryField = useCallback(
+    (...a) => useAppStore.getState().updateDiscoveryField(...a),
+    []
+  )
+  const setDiscoveryUpload = useCallback(
+    (...a) => useAppStore.getState().setDiscoveryUpload(...a),
+    []
+  )
+  const setDiscoveryShare = useCallback(
+    (...a) => useAppStore.getState().setDiscoveryShare(...a),
+    []
+  )
+  const mergeDiscoveryAnswers = useCallback(
+    (...a) => useAppStore.getState().mergeDiscoveryAnswers(...a),
+    []
+  )
+  const setClientPortalId = useCallback(
+    (...a) => useAppStore.getState().setClientPortalId(...a),
+    []
+  )
+  const mergeDetectiveAnswers = useCallback(
+    (...a) => useAppStore.getState().mergeDetectiveAnswers(...a),
+    []
+  )
   const portalSeen = useAppStore((s) => s.portalSeen)
-  const markPortalSeen = useAppStore((s) => s.markPortalSeen)
+  const markPortalSeen = useCallback(
+    (...a) => useAppStore.getState().markPortalSeen(...a),
+    []
+  )
 
   // Textareas grow to fit their content instead of carrying a resize grip.
   // No-ops entirely in browsers with native `field-sizing` (the CSS handles
@@ -446,7 +607,10 @@ function App() {
      it rather than leaving one window bright against everything else.
      `themeSource: 'user'` stops both, so an explicit choice is never
      overruled. */
-  const applyDeviceTheme = useAppStore((s) => s.applyDeviceTheme)
+  const applyDeviceTheme = useCallback(
+    (...a) => useAppStore.getState().applyDeviceTheme(...a),
+    []
+  )
   useEffect(() => {
     applyDeviceTheme?.()
     if (typeof window === 'undefined' || !window.matchMedia) return undefined
@@ -1136,7 +1300,10 @@ function App() {
    *  resume, so what gets logged is worked time, never wall-clock time. */
   const workSegmentStartRef = useRef(null)
 
-  const logWorkedTime = useAppStore((s) => s.logWorkedTime)
+  const logWorkedTime = useCallback(
+    (...a) => useAppStore.getState().logWorkedTime(...a),
+    []
+  )
 
   /* ── The work clock is INDEPENDENT of the Pomodoro ──────────────────────
      They used to be one clock: `isFocusRunning` drove both, so the record of

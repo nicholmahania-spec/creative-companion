@@ -17,23 +17,58 @@ export default function DefineView(props) {
   const {
     locale: localeProp = 'en',
     navDir = 'none',
-    activeProject = null,
+    activeProject: activeProjectProp = null,
     deskTasks = [],
-    updateDetective,
+    updateDetective: updateDetectiveProp,
     onOpenShare,
     setActiveView,
-    setProjectDeadline,
-    projectDeadline = '',
+    setProjectDeadline: setProjectDeadlineProp,
+    projectDeadline: projectDeadlineProp = '',
   } = props
 
   const locale = normalizeLocale(localeProp)
 
-  const addMilestone = useAppStore((s) => s.addMilestone)
-  const updateMilestone = useAppStore((s) => s.updateMilestone)
-  const removeMilestone = useAppStore((s) => s.removeMilestone)
-  const setDefineOpenChapter = useAppStore((s) => s.setDefineOpenChapter)
+  // Own the live project row so App shell can skip detective equality and not
+  // re-render the whole tree on every Define keystroke.
+  const projectId = useAppStore(
+    (s) => activeProjectProp?.id || s.currentProjectId
+  )
+  const activeProject = useAppStore((s) => {
+    const id = activeProjectProp?.id || s.currentProjectId
+    return (s.projects || []).find((p) => p.id === id) || activeProjectProp || null
+  })
+  const updateDetective = useCallback(
+    (...a) =>
+      (updateDetectiveProp || useAppStore.getState().updateDetective)(...a),
+    [updateDetectiveProp]
+  )
+  const setProjectDeadline = useCallback(
+    (...a) =>
+      (setProjectDeadlineProp || useAppStore.getState().setProjectDeadline)(
+        ...a
+      ),
+    [setProjectDeadlineProp]
+  )
+  const projectDeadline =
+    projectDeadlineProp || activeProject?.deadline || ''
 
-  const projectId = activeProject?.id
+  const addMilestone = useCallback(
+    (...a) => useAppStore.getState().addMilestone(...a),
+    []
+  )
+  const updateMilestone = useCallback(
+    (...a) => useAppStore.getState().updateMilestone(...a),
+    []
+  )
+  const removeMilestone = useCallback(
+    (...a) => useAppStore.getState().removeMilestone(...a),
+    []
+  )
+  const setDefineOpenChapter = useCallback(
+    (...a) => useAppStore.getState().setDefineOpenChapter(...a),
+    []
+  )
+
   const storedOpenChapter = activeProject?.defineOpenChapter
 
   /** Unset for a project → open the first chapter that still needs a
