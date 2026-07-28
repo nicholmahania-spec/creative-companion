@@ -328,6 +328,19 @@ export function blankWorkspaceState() {
       toastMode: 'quiet',
       /** Seconds non-error toasts queue before flushing together; 0 = instant (default) */
       toastBatchWindow: 0,
+      /* Invoice identity and terms. In prefs, not on the project: your
+         address and payment details are the same on every invoice you send,
+         while `hourlyRate` is negotiated per client and stays on the project.
+         An invoice with no number, no due date and no way to pay is one the
+         client has to email you about before they can pay it. */
+      invoiceFrom: '',
+      invoicePaymentMethods: '',
+      invoiceTerms: 14,
+      invoiceNotes: '',
+      invoiceTaxLabel: '',
+      invoiceTaxPercent: 0,
+      invoiceNextNumber: 1,
+      invoicePrefix: '',
     },
     // Template management
     templates: [],
@@ -880,23 +893,48 @@ const useAppStore = create(
           ),
         })),
 
-      addTimeEntry: ({ date, hours, note = '' }) =>
+      /**
+       * Add a billable line. Either hours (billed at the project rate) or a
+       * flat `amount`.
+       *
+       * This used to reject anything without `hours > 0`, so a fixed-price
+       * project could not be invoiced at all — you had to invent hours that
+       * multiplied out to the agreed number. The brief asks the client for a
+       * budget and a list of deliverables, which is project pricing; the
+       * invoice could only express hourly.
+       */
+      addTimeEntry: ({ date, hours, amount, note = '' }) =>
         set((state) => {
           const h = Number(hours)
-          if (!date || !Number.isFinite(h) || h <= 0) return state
+          const amt = Number(amount)
+          const hasHours = Number.isFinite(h) && h > 0
+          const hasAmount = Number.isFinite(amt) && amt > 0
+          if (!date || (!hasHours && !hasAmount)) return state
           return {
             projects: state.projects.map((p) => {
               if (p.id !== state.currentProjectId) return p
               const entry = {
                 id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
                 date,
-                hours: h,
                 note: String(note || '').trim(),
+                ...(hasHours ? { hours: h } : {}),
+                ...(hasAmount ? { amount: amt } : {}),
               }
               return { ...p, timeLog: [...(p.timeLog || []), entry] }
             }),
           }
         }),
+
+      /** Claim the next invoice number and advance the counter. */
+      takeInvoiceNumber: () => {
+        const { prefs } = get()
+        const n = Number(prefs?.invoiceNextNumber) || 1
+        set((state) => ({
+          prefs: { ...state.prefs, invoiceNextNumber: n + 1 },
+        }))
+        const prefix = String(prefs?.invoicePrefix || '').trim()
+        return prefix ? `${prefix}${n}` : String(n)
+      },
 
       removeTimeEntry: (id) =>
         set((state) => ({

@@ -7942,6 +7942,12 @@ select:focus {
   gap: 0.35rem;
 }
 
+/* Date + hours + fixed amount. The 2-col default squashes the date input
+   below its own text once a third field shares the row. */
+.hours-entry-row-3 {
+  grid-template-columns: 1.4fr 0.8fr 0.8fr;
+}
+
 .hours-invoice-totals {
   display: flex;
   justify-content: space-between;
@@ -7949,6 +7955,23 @@ select:focus {
   font-weight: 700;
   padding: 0.4rem 0;
   border-top: 1px solid var(--ts-border, var(--border-subtle));
+}
+
+.hours-invoice-due {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.hours-invoice-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--ts-border, var(--border-subtle));
+}
+.hours-invoice-settings .field-label {
+  margin-top: 0.2rem;
 }
 .discovery-brief-menu .btn {
   width: 100%;

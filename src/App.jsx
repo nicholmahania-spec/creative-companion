@@ -4514,6 +4514,9 @@ function App() {
         onAddEntry={addTimeEntry}
         onRemoveEntry={removeTimeEntry}
         flashToast={flashToast}
+        prefs={prefs}
+        setPref={setPref}
+        takeInvoiceNumber={takeInvoiceNumber}
       />
       <DiscoveryBriefPanel
         open={discoveryPanelOpen}

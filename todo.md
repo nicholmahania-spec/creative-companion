@@ -1,10 +1,51 @@
 # Creative Companion — Work Log & TODO
 
-> Last updated: 2026-07-27 (session `89cf2f66`)
+> Last updated: 2026-07-28
 > Branch: `main` on `nicholmahania-spec/creative-companion`
-> Build: **green**, 176 tests / 26 files passing at `b0e649e` (v1.48.245)
+> Build: **green**, 227 tests / 36 files passing at `835476b` + working tree
 
 ---
+
+## Session 2026-07-28 — the invoice becomes payable (uncommitted)
+
+The invoice printed five things: Invoice, Date, Note, Hours, Amount. No
+invoice number, no due date, no payment method, no contact details for the
+person being paid — a client who wanted to pay had to email and ask, and an
+unnumbered invoice is unreconcilable at either end come tax time. It also
+could only express hours, so a fixed-price project had to be invented into
+hours that multiplied out to the agreed number.
+
+**Now:** `src/lib/invoice.js` exports `lineAmount` / `invoiceTotals` /
+`dueDateFrom` (one answer to "what is owed", shared by the panel and the PDF
+so they can never disagree). Lines are hourly *or* flat `amount`; a flat line
+prints `—` / `Fixed` rather than a misleading "1 x total". Header carries
+invoice no. + issued + due; FROM / BILL TO blocks; optional tax row; HOW TO
+PAY and NOTES tails. Studio identity lives in `prefs`
+(`invoiceFrom`, `invoicePaymentMethods`, `invoiceTerms`, `invoiceNotes`,
+`invoiceTaxLabel`, `invoiceTaxPercent`, `invoiceNextNumber`, `invoicePrefix`)
+— the same on every invoice — while `hourlyRate` stays on the project because
+it is negotiated per client. `takeInvoiceNumber()` claims a number at export,
+not on panel open, so the sequence has no gaps.
+
+**Finished this session** (the above was mid-flight in the working tree):
+- Dropped an unused `lineAmount` import from `HoursInvoice.jsx`.
+- Added the three missing styles — `.hours-invoice-due`,
+  `.hours-invoice-settings`, and `.hours-entry-row-3` (the entry row is a
+  2-col grid; a third input squashed the date field below its own text).
+- `invoiceTerms` falls back to 14 in the panel: `migrate` only re-merges pref
+  defaults for workspaces saved *before* v5, so a workspace already at v5 has
+  no key and would silently lose its due date.
+- Reworded "Due X on today's date" → "Due X if sent today".
+- New `src/lib/invoice.test.js` — 14 tests. Arithmetic (mixed hourly/fixed,
+  tax on subtotal not per line, no NaN on empty), terms (month rollover, no
+  mutation of the issued date, empty on missing terms), and three that
+  generate a **real PDF and read its text layer back with pdfjs** to assert
+  the number/due/payment/contact all print, both line shapes render, totals
+  come out at $1440 / $1728, and the tax row is absent entirely at 0%.
+
+**Not verified live.** The Hours & invoice panel sits behind the Supabase
+login, so the running app could not be driven to it. Everything above is
+verified by build, full suite, and real generated PDFs.
 
 ## Session 2026-07-27 — wide monitors, and untangling the clock from the timer
 
