@@ -1,0 +1,2 @@
+-- Baseline: applied on remote before local migration tracking.
+-- Version 20260725234437. No-op locally; do not re-run on production.
