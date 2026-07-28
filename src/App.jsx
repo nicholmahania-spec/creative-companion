@@ -2559,10 +2559,27 @@ function App() {
 
   // Focus Mode stages render full-bleed — no persistent sidebar/header
   // chrome — so they bypass the app-shell grid entirely rather than
-  // nesting inside it.
+  // nesting inside it. Forced-break overlay still mounts here so a
+  // running Pomodoro lock is not skipped just because chrome is off.
+  const focusBreakOverlay = forcedBreak ? (
+    <Suspense fallback={null}>
+      <ForcedBreakOverlay
+        totalSeconds={forcedBreak.totalSec}
+        leftSeconds={forcedBreak.leftSec}
+        workMinutes={forcedBreak.workMinutes}
+        breakMinutes={forcedBreak.breakMinutes}
+        planItems={forcedBreak.planItems || []}
+        completedIds={forcedBreak.completedIds || []}
+        onCompleteItem={completeBreakPlanItem}
+        onEmergencyUnlock={() => endForcedBreak(true)}
+      />
+    </Suspense>
+  ) : null
+
   if (activeView === 'define-focus') {
     return (
-      <div className={`app ${theme}`}>
+      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
+        {focusBreakOverlay}
         <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
           <DefineFocusView
             activeProject={activeProject}
@@ -2576,7 +2593,8 @@ function App() {
 
   if (activeView === 'deliver-focus') {
     return (
-      <div className={`app ${theme}`}>
+      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
+        {focusBreakOverlay}
         <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
           <DeliverFocusView
             activeProject={activeProject}
@@ -2591,7 +2609,8 @@ function App() {
 
   if (activeView === 'research-focus') {
     return (
-      <div className={`app ${theme}`}>
+      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
+        {focusBreakOverlay}
         <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
           <ResearchFocusView deskMood={deskMood} setActiveView={setActiveView} />
         </Suspense>
@@ -2601,7 +2620,8 @@ function App() {
 
   if (activeView === 'ideate-focus') {
     return (
-      <div className={`app ${theme}`}>
+      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
+        {focusBreakOverlay}
         <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
           <IdeateFocusView
             directions={activeProject?.directions}
@@ -2617,7 +2637,8 @@ function App() {
 
   if (activeView === 'sketch-focus') {
     return (
-      <div className={`app ${theme}`}>
+      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
+        {focusBreakOverlay}
         <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
           <SketchFocusView
             deskTasks={deskTasks}
@@ -2631,7 +2652,8 @@ function App() {
 
   if (activeView === 'design-focus') {
     return (
-      <div className={`app ${theme}`}>
+      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
+        {focusBreakOverlay}
         <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
           <DesignFocusView activeProject={activeProject} setActiveView={setActiveView} />
         </Suspense>
@@ -2641,7 +2663,8 @@ function App() {
 
   if (activeView === 'review-focus') {
     return (
-      <div className={`app ${theme}`}>
+      <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
+        {focusBreakOverlay}
         <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
           <ReviewFocusView
             activeProject={activeProject}

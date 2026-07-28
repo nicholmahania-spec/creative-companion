@@ -1,28 +1,20 @@
 /**
- * 03 // Ideate — Focus Mode (Tactile Minimalist rework, opt-in preview).
+ * 03 // Ideate — Focus Mode (opt-in).
  *
- * The blueprint's original spec for this stage was a typography
- * archetype grid + font-pairing showdown — but in this app, type
- * selection is a Design-step decision (DesignView writes
- * typeHeading/typeBody), not an Ideate one. Ideate's real job here is
- * narrowing the three A/B/C directions SparkView already manages, so
- * this stage keeps the blueprint's *interaction pattern* (one prompt
- * at a time, then a fast head-to-head elimination) applied to the
- * data that's actually Ideate's: directions, not fonts.
+ * Phase A: fill each direction's title one at a time (skips ones already
+ * titled). Phase B: head-to-head elimination — Left/Right arrow or tap —
+ * down to one chosen direction, written via the same updateDirection /
+ * addTask path SparkView's "Send · Sketch" uses.
  *
- * Phase A: fill in each direction's title one at a time (skips ones
- * already titled). Phase B: head-to-head elimination between titled
- * directions — Left/Right arrow or tap picks a winner each round —
- * down to a single chosen direction, written via the same
- * updateDirection/logDecision/addTask calls SparkView's "queue"
- * button uses, so Sketch sees the exact same result either way.
+ * No free-text intent gate (ADHD initiation tax). Single FocusShell.
+ * All hooks run before any conditional return (Rules of Hooks).
  */
-import { useEffect, useState, Suspense, lazy } from 'react'
+import { useEffect, useState, useCallback, useRef, Suspense, lazy } from 'react'
 import FocusShell from '../components/focus/FocusShell'
 import FocusCard from '../components/focus/FocusCard'
-import useAppStore from '../store/useAppStore'
-import { decisionFromDirection } from '../lib/decisionLog'
+
 const IdeatePreview = lazy(() => import('../components/IdeatePreview'))
+// Note: decision logging happens inside updateDirection when chosen:true
 
 function blankDirs() {
   return [
@@ -39,156 +31,75 @@ export default function IdeateFocusView({
   projectId,
   setActiveView,
 }) {
-  const logDecision = useAppStore((s) => s.logDecision)
-  const dirs = Array.isArray(directions) && directions.length >= 3 ? directions : blankDirs()
+  const dirs =
+    Array.isArray(directions) && directions.length >= 3
+      ? directions
+      : blankDirs()
 
-  // Intent setting state (phase 4)
-  const [intent, setIntent] = useState('')
-  const [intentSet, setIntentSet] = useState(false)
-
-  const untitled = dirs.filter((d) => !String(d.title || '').trim())
   const [titleDraft, setTitleDraft] = useState('')
-  const [bracket, setBracket] = useState(null) // [dirA, dirB] currently facing off, or null
-  // Contenders still alive in the bracket — shrinks by one (the loser)
-  // each round. Deriving "who's left" from the full titled list instead
-  // would forget earlier eliminations and re-match a beaten direction.
+  const [bracket, setBracket] = useState(null) // [dirA, dirB] or null
   const [contenders, setContenders] = useState(null)
   const [winner, setWinner] = useState(null)
   const [queued, setQueued] = useState(false)
+  /** Once true, we already seeded the bracket from titled dirs this session. */
+  const bracketSeededRef = useRef(false)
 
-  // If intent not set, show intent input first (phase 4)
-  if (!intentSet) {
-    return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={0} stepCount={2}>
-        <FocusShell
-          stepLabel="03 // Ideate"
-          stepIndex={0}
-          stepCount={2}
-          showPreviewDrawer={true}
-          drawerContent={
-            <Suspense fallback={
-              <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
-                <div className="space-y-4">
-                  <div className="h-4 w-32 bg-border rounded"></div>
-                  <div className="h-4 w-24 bg-border rounded"></div>
-                  <div className="h-4 w-40 bg-border rounded"></div>
-                </div>
-              </div>
-            }>
-              <IdeatePreview
-                directions={dirs}
-              />
-            </Suspense>
-          }
-        >
-          <div className="focus-card">
-            <p id="ideate-intent-prompt" className="focus-prompt">What do you want to accomplish in your ideation session?</p>
-            <input
-              id="ideate-intent-input"
-              className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              placeholder="e.g., Explore three different brand directions for the project"
-              autoFocus
-              aria-labelledby="ideate-intent-prompt"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && intent.trim()) {
-                  setIntentSet(true)
-                }
-              }}
-            />
-            <div className="flex justify-end mt-4">
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={!intent.trim()}
-                onClick={() => {
-                  if (intent.trim()) {
-                    setIntentSet(true)
-                  }
-                }}
-              >
-                Start Ideating
-              </button>
-            </div>
-          </div>
-        </FocusShell>
-      </FocusShell>
-    )
-  }
+  const untitled = dirs.filter((d) => !String(d.title || '').trim())
+  const titled = dirs.filter((d) => String(d.title || '').trim())
 
-  const pick = (chosenDir) => {
-    if (!contenders || contenders.length === 0) {
-      setWinner(chosenDir)
-      setBracket(null)
-      setContenders(null)
-    } else {
+  const exitFocus = useCallback(() => setActiveView?.('spark'), [setActiveView])
+
+  const pick = useCallback(
+    (chosenDir) => {
+      if (!contenders || contenders.length === 0) {
+        setWinner(chosenDir)
+        setBracket(null)
+        setContenders(null)
+        return
+      }
       setBracket([chosenDir, contenders[0]])
       setContenders(contenders.slice(1))
-    }
-  }
+    },
+    [contenders]
+  )
 
+  // Seed bracket when all titles are filled and we have not started elimination.
   useEffect(() => {
-    if (!intentSet) return
+    if (winner || queued || bracket) return
+    if (untitled.length > 0) {
+      bracketSeededRef.current = false
+      return
+    }
+    if (bracketSeededRef.current) return
+    if (titled.length === 0) return
+
+    bracketSeededRef.current = true
+    if (titled.length === 1) {
+      setWinner(titled[0])
+      setBracket(null)
+      setContenders(null)
+      return
+    }
+    setContenders(titled.slice(2))
+    setBracket([titled[0], titled[1]])
+  }, [untitled.length, titled, winner, queued, bracket])
+
+  // Arrow keys during head-to-head
+  useEffect(() => {
+    if (!bracket) return undefined
     const onKey = (e) => {
-      if (!bracket) return
+      if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return
       if (e.key === 'ArrowLeft') pick(bracket[0])
       else if (e.key === 'ArrowRight') pick(bracket[1])
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [intentSet, bracket])
+  }, [bracket, pick])
 
-  // If intent not set, show intent input first (phase 4)
-  if (!intentSet) {
-    return (
-      <FocusShell
-        stepLabel="03 // Ideate"
-        stepIndex={0}
-        stepCount={2}
-        showPreviewDrawer={true}
-        onExit={exitFocus}
-        drawerContent={<IdeatePreview directions={dirs} />}
-      >
-        <div className="focus-card">
-          <p className="focus-prompt">What do you want to accomplish in your ideation session?</p>
-          <input
-            className="focus-input-inline"
-            style={{ display: 'block', width: '100%' }}
-            value={intent}
-            onChange={(e) => setIntent(e.target.value)}
-            placeholder="e.g., Explore three different brand directions for the project"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && intent.trim()) {
-                setIntentSet(true)
-              }
-            }}
-          />
-          <div className="focus-actions">
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={!intent.trim()}
-              onClick={() => {
-                if (intent.trim()) {
-                  setIntentSet(true)
-                }
-              }}
-            >
-              Start Ideating
-            </button>
-          </div>
-        </div>
-      </FocusShell>
-    )
-  }
-
-  const queueWinner = () => {
+  const queueWinner = useCallback(() => {
     if (!winner || queued) return
+    // Store updateDirection already logs decision when chosen:true
     updateDirection?.(winner.id, { chosen: true })
-    logDecision?.(decisionFromDirection(winner))
     addTask?.({
       id: Date.now() + Math.random(),
       title: `Draft ${winner.label}: ${winner.title}`,
@@ -200,17 +111,51 @@ export default function IdeateFocusView({
       dueDate: '',
     })
     setQueued(true)
-  }
+  }, [winner, queued, updateDirection, addTask, projectId])
 
-  const exitFocus = () => setActiveView?.('spark')
+  const commitTitle = useCallback(
+    (dir) => {
+      const text = titleDraft.trim()
+      if (!dir || !text) return
+      updateDirection?.(dir.id, { title: text })
+      setTitleDraft('')
+    },
+    [titleDraft, updateDirection]
+  )
 
-  if (queued) {
+  const preview = (
+    <Suspense
+      fallback={
+        <div className="focus-hint" style={{ padding: '1rem' }}>
+          Loading…
+        </div>
+      }
+    >
+      <IdeatePreview directions={dirs} />
+    </Suspense>
+  )
+
+  // ── Queued ────────────────────────────────────────────
+  if (queued && winner) {
     return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={1} stepCount={1} onExit={exitFocus}>
+      <FocusShell
+        stepLabel="03 // Ideate"
+        stepIndex={1}
+        stepCount={1}
+        onExit={exitFocus}
+        showPreviewDrawer
+        drawerContent={preview}
+      >
         <div className="focus-card" style={{ textAlign: 'center' }}>
           <p className="focus-prompt">Direction {winner.label} queued</p>
-          <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>{winner.title}</p>
-          <button type="button" className="btn btn-primary" onClick={() => setActiveView?.('flow')}>
+          <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>
+            {winner.title}
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setActiveView?.('flow')}
+          >
             Next · Sketch
           </button>
         </div>
@@ -218,12 +163,22 @@ export default function IdeateFocusView({
     )
   }
 
+  // ── Winner confirm ────────────────────────────────────
   if (winner) {
     return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={1} stepCount={1} onExit={exitFocus}>
+      <FocusShell
+        stepLabel="03 // Ideate"
+        stepIndex={1}
+        stepCount={1}
+        onExit={exitFocus}
+        showPreviewDrawer
+        drawerContent={preview}
+      >
         <div className="focus-card" style={{ textAlign: 'center' }}>
           <p className="focus-prompt">Winner: {winner.label}</p>
-          <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>{winner.title}</p>
+          <p className="focus-hint" style={{ marginBottom: '1.5rem' }}>
+            {winner.title}
+          </p>
           <button type="button" className="btn btn-primary" onClick={queueWinner}>
             Queue this direction
           </button>
@@ -232,36 +187,36 @@ export default function IdeateFocusView({
     )
   }
 
+  // ── Bracket ───────────────────────────────────────────
   if (bracket) {
     return (
-      <FocusShell stepLabel="03 // Ideate" stepIndex={2} stepCount={3} onExit={exitFocus}>
+      <FocusShell
+        stepLabel="03 // Ideate"
+        stepIndex={2}
+        stepCount={3}
+        onExit={exitFocus}
+        showPreviewDrawer
+        drawerContent={preview}
+      >
         <div style={{ width: '100%', maxWidth: '40rem' }}>
           <p className="focus-prompt" style={{ textAlign: 'center' }}>
             Which direction wins?
           </p>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div className="focus-vs">
             {bracket.map((d, i) => (
               <button
                 key={d.id}
                 type="button"
+                className="focus-vs-card"
                 onClick={() => pick(d)}
-                style={{
-                  flex: 1,
-                  textAlign: 'left',
-                  padding: '1.5rem',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-subtle)',
-                  background: 'var(--bg-elevated)',
-                  color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                  minHeight: '10rem',
-                }}
               >
-                <span className="focus-hint">{i === 0 ? '← Left arrow' : 'Right arrow →'}</span>
-                <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.15rem', margin: '0.5rem 0' }}>
+                <span className="focus-hint">
+                  {i === 0 ? '← Left arrow' : 'Right arrow →'}
+                </span>
+                <p className="focus-vs-title">
                   {d.label}: {d.title}
                 </p>
-                {d.note && <p className="focus-hint">{d.note}</p>}
+                {d.note ? <p className="focus-hint">{d.note}</p> : null}
               </button>
             ))}
           </div>
@@ -270,14 +225,57 @@ export default function IdeateFocusView({
     )
   }
 
+  // ── Empty: no dirs at all ─────────────────────────────
+  if (titled.length === 0 && untitled.length === 0) {
+    return (
+      <FocusShell stepLabel="03 // Ideate" stepIndex={0} stepCount={1} onExit={exitFocus}>
+        <div className="focus-card">
+          <p className="focus-prompt">No directions yet</p>
+          <p className="focus-hint">Add A · B · C titles on the main Ideate page first.</p>
+          <div className="focus-actions">
+            <button type="button" className="btn btn-secondary" onClick={exitFocus}>
+              Back to Ideate
+            </button>
+          </div>
+        </div>
+      </FocusShell>
+    )
+  }
+
+  // ── Phase A: title next empty direction ───────────────
   const current = untitled[0]
+  if (!current) {
+    // Titles full but bracket not seeded yet (effect will run next paint)
+    return (
+      <FocusShell
+        stepLabel="03 // Ideate"
+        stepIndex={titled.length}
+        stepCount={Math.max(dirs.length, 1)}
+        onExit={exitFocus}
+        showPreviewDrawer
+        drawerContent={preview}
+      >
+        <div className="focus-card">
+          <p className="focus-prompt">Preparing shortlist…</p>
+        </div>
+      </FocusShell>
+    )
+  }
+
   const totalDirs = dirs.length
   const stepIdx = totalDirs - untitled.length
 
   return (
-    <FocusShell stepLabel="03 // Ideate" stepIndex={stepIdx} stepCount={totalDirs} onExit={exitFocus}>
-      <FocusCard cardKey={current?.id}>
-        <p className="focus-prompt">Direction {current?.label} — one line:</p>
+    <FocusShell
+      stepLabel="03 // Ideate"
+      stepIndex={stepIdx}
+      stepCount={totalDirs}
+      onExit={exitFocus}
+      showPreviewDrawer
+      drawerContent={preview}
+    >
+      <FocusCard cardKey={current.id}>
+        <p className="focus-prompt">Direction {current.label} — one line:</p>
         <input
           className="focus-input-inline"
           style={{ display: 'block', width: '100%' }}
@@ -286,10 +284,7 @@ export default function IdeateFocusView({
           placeholder="e.g. Bold and playful"
           autoFocus
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && titleDraft.trim()) {
-              updateDirection?.(current.id, { title: titleDraft.trim() })
-              setTitleDraft('')
-            }
+            if (e.key === 'Enter' && titleDraft.trim()) commitTitle(current)
           }}
         />
         <div className="focus-actions">
@@ -297,10 +292,7 @@ export default function IdeateFocusView({
             type="button"
             className="btn btn-primary"
             disabled={!titleDraft.trim()}
-            onClick={() => {
-              updateDirection?.(current.id, { title: titleDraft.trim() })
-              setTitleDraft('')
-            }}
+            onClick={() => commitTitle(current)}
           >
             Next
           </button>

@@ -1,4 +1,4 @@
-import { PDFLib } from 'pdf-lib'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
 /**
  * PDF form parsing utilities
@@ -18,7 +18,7 @@ export async function extractPdfFormData(pdfFile) {
       : pdfFile
 
     // Load the PDF document
-    const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes)
+    const pdfDoc = await PDFDocument.load(pdfBytes)
 
     // Get form fields
     const form = pdfDoc.getForm()
@@ -68,15 +68,15 @@ export async function extractPdfFormData(pdfFile) {
  * @param {object} formData - The data to pre-fill in the form
  * @param {object} schema - The form schema defining field types
  * @param {string} title - Title for the PDF
- * @returns {Promise<PDFLib.PDFDocument>} The PDF document
+ * @returns {Promise<import('pdf-lib').PDFDocument>} The PDF document
  */
 export async function createFillablePdfForm(formData, schema = {}, title = 'Form') {
   try {
     // Create a new PDF document
-    const pdfDoc = await PDFLib.PDFDocument.create()
+    const pdfDoc = await PDFDocument.create()
     const page = pdfDoc.addPage([600, 800]) // Letter size-ish
-
-    const { PDFTextField, PDFCheckbox, PDFRadioButton, PDFOptionList } = PDFLib
+    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
     const form = pdfDoc.getForm()
 
@@ -87,14 +87,15 @@ export async function createFillablePdfForm(formData, schema = {}, title = 'Form
     let startY = 750
     const fieldWidth = 400
     const fieldHeight = 25
+    let activePage = page
 
     // Add title
-    page.drawText(title, {
+    activePage.drawText(title, {
       x: startX,
       y: startY,
       size: 20,
-      font: await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold),
-      color: PDFLib.rgb(0.11, 0.07, 0.09) // Dark gray from your palette
+      font: helveticaBold,
+      color: rgb(0.11, 0.07, 0.09) // Dark gray from your palette
     })
 
     startY -= 40
@@ -105,24 +106,22 @@ export async function createFillablePdfForm(formData, schema = {}, title = 'Form
 
     for (const fieldName of fieldsToShow) {
       const value = formData[fieldName]
-      const label = schema.shape[fieldName]?._def?.description ||
+      const label = schema.shape?.[fieldName]?._def?.description ||
                     fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
 
-      // Check if we need a new column or page
+      // Check if we need a new page
       if (startY < 100) {
-        // Add new page
-        const newPage = pdfDoc.addPage([600, 800])
-        form.copyPage(newPage, pdfDoc.getPageCount() - 1) // Copy form to new page
+        activePage = pdfDoc.addPage([600, 800])
         startY = 750
       }
 
       // Draw label
-      page.drawText(`${label}:`, {
+      activePage.drawText(`${label}:`, {
         x: startX,
         y: startY,
         size: fontSize,
-        font: await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica),
-        color: PDFLib.rgb(0.04, 0.07, 0.13) // Dark blue-gray
+        font: helvetica,
+        color: rgb(0.04, 0.07, 0.13) // Dark blue-gray
       })
 
       const fieldX = startX + 150
@@ -130,43 +129,18 @@ export async function createFillablePdfForm(formData, schema = {}, title = 'Form
 
       let field
       // Determine field type based on schema
-      const fieldDef = schema.shape[fieldName]
+      const fieldDef = schema.shape?.[fieldName]
 
-      if (fieldDef && fieldDef._def.typeName === 'string') {
-        // Check if it's email, url, etc.
-        const checks = fieldDef._def.checks || []
-        if (checks.some(c => c.constructor.name === 'Email')) {
-          // Email field - still a text field
-          field = form.createTextField(fieldName)
-        } else if (checks.some(c => c.constructor.name === 'Url')) {
-          // URL field - still a text field
-          field = form.createTextField(fieldName)
-        } else {
-          // Regular text field
-          field = form.createTextField(fieldName)
-        }
-        field.setText(value || '')
-        field.addToPage(page, { x: fieldX, y: fieldY, width: fieldWidth, height: fieldHeight })
-      } else if (fieldDef && fieldDef._def.typeName === 'boolean') {
+      if (fieldDef && fieldDef._def?.typeName === 'boolean') {
         // Checkbox field
         field = form.createCheckbox(fieldName)
-        field.check()
-        field.addToPage(page, { x: fieldX, y: fieldY + 5, size: 15 })
-      } else if (fieldDef && fieldDef._def.typeName === 'number') {
-        // Number field - still a text field
-        field = form.createTextField(fieldName)
-        field.setText(value?.toString() || '')
-        field.addToPage(page, { x: fieldX, y: fieldY, width: fieldWidth, height: fieldHeight })
-      } else if (fieldDef && fieldDef._def.typeName === 'date') {
-        // Date field - still a text field
-        field = form.createTextField(fieldName)
-        field.setText(value || '')
-        field.addToPage(page, { x: fieldX, y: fieldY, width: fieldWidth, height: fieldHeight })
+        if (value) field.check()
+        field.addToPage(activePage, { x: fieldX, y: fieldY + 5, size: 15 })
       } else {
-        // Default to text field for unknown types
+        // Default to text field for string/number/date/unknown
         field = form.createTextField(fieldName)
-        field.setText(value?.toString() || '')
-        field.addToPage(page, { x: fieldX, y: fieldY, width: fieldWidth, height: fieldHeight })
+        field.setText(value != null ? String(value) : '')
+        field.addToPage(activePage, { x: fieldX, y: fieldY, width: fieldWidth, height: fieldHeight })
       }
 
       startY -= lineHeight
@@ -185,7 +159,7 @@ export async function createFillablePdfForm(formData, schema = {}, title = 'Form
  * @param {object} schema - The form schema defining field types
  * @param {string} title - Title for the PDF
  * @param {Promise|null} handlePromise - From captureSaveHandle()
- * @returns {Promise<{ ok: boolean, blob: Blob, error?: string }>}
+ * @returns {Promise<{ ok: boolean, blob?: Blob, error?: string }>}
  */
 export async function downloadFillablePdfForm(
   formData,
@@ -200,6 +174,7 @@ export async function downloadFillablePdfForm(
     const blob = new Blob([pdfBytes], { type: 'application/pdf' })
 
     if (handlePromise) {
+      const { writeToSaveHandle } = await import('./exportFiles')
       const written = await writeToSaveHandle(handlePromise, blob)
       if (written.ok) {
         return { ok: true, blob, ...written }

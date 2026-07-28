@@ -15936,6 +15936,92 @@ select:focus {
   position: relative;
 }
 
+/* Centered preview overlay (not bottom-sheet — matches modal policy) */
+.focus-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.focus-drawer {
+  position: fixed;
+  z-index: 50;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(22rem, 92vw);
+  max-height: min(70vh, 32rem);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.focus-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  flex: 0 0 auto;
+}
+
+.focus-drawer-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.focus-drawer-body {
+  padding: 1rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.focus-vs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  .focus-vs {
+    grid-template-columns: 1fr;
+  }
+}
+
+.focus-vs-card {
+  text-align: left;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  min-height: 10rem;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.focus-vs-card:hover,
+.focus-vs-card:focus-visible {
+  border-color: var(--text-primary);
+  box-shadow: inset 3px 0 0 var(--text-primary);
+  outline: none;
+}
+
+.focus-vs-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin: 0.5rem 0;
+}
+
 .focus-card {
   width: 100%;
   max-width: 34rem;
