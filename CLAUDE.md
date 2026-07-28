@@ -377,11 +377,29 @@ blank page when a client already sent reference images; existing-asset files
 (old logo, etc.) stay in the brief only — they're the old identity, not new
 inspiration. Failed uploads stay on-screen with an in-place retry rather than
 a toast, per the ADHD advisor's review (object permanence + rejection
-sensitivity for a stranger uploading from a phone). **Known gap, not fixed:**
-the client-portal form-submit path (`/c/:portalId`) still has no pull-back
-mechanism into the project at all — pre-existing, not introduced this
-session, but worth closing if the portal's own form-fill is meant to feed the
-brief the same way `/f/:shareId` does via `mergeDiscoveryAnswers`.
+sensitivity for a stranger uploading from a phone).
+
+**Correction (2026-07-28, `five-w-one-h-auditor` first run): the line above
+about `/c/:portalId` having no pull-back was already stale by the time it was
+written.** The mechanism exists — `submit_client_portal_form` (RPC) plus
+`reviewClientAnswers`/`mergeDetectiveAnswers`
+(`ProjectOverviewShare.jsx:353-364`) do pull a client's portal-submitted
+answers back into the project, gated by an explicit review step. What the
+audit found is real bugs *in* that mechanism, not its absence:
+- **Silent data loss**: `ReviewAnswers` has no branch for the array-shaped
+  `${fieldId}Files` attachment fields — it renders them into a plain
+  `<textarea value={...}>`, which corrupts them to `[object Object]` text,
+  and saving from that screen can silently overwrite the client's uploaded
+  images with no way back.
+- The `/c/:portalId` merge path never auto-pins client images onto the
+  Research wall the way `/f/:shareId`'s `mergeDiscoveryAnswers` does, for no
+  documented reason — same component, same data shape, different behavior.
+- The Client Inbox's "Open their answers" button doesn't open the answers —
+  it opens the general Portal management screen, and the user still has to
+  find and click a second, buried "Review client's answers" button to reach
+  what the first one promised.
+
+None of these are fixed yet as of this note.
 
 **Branch audit.** `claude/debug-code-6u77sp` and `fix/save-button-alignment`
 were stale WIP branches from earlier sessions (Jul 24–25), both superseded by
