@@ -2178,10 +2178,10 @@ export default function DesignView({
         <button
           type="button"
           className="btn btn-primary work-path-next"
-          onClick={() => setActiveView?.('review')}
+          onClick={() => setActiveView?.('finish')}
         >
           {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'review') || 'Review',
+            label: pathLabel(locale, 'deliver') || 'Pack',
           })}
         </button>
       </div>

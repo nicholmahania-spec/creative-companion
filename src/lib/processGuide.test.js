@@ -7,15 +7,13 @@ import {
 } from './processGuide'
 import { JOURNEY_STEPS, journeyIdForView } from './journey'
 
-describe('processGuide — 7 design steps', () => {
-  it('has exactly seven phases in order', () => {
+describe('processGuide — 5 path steps + Tools coaching', () => {
+  it('has five path phases matching journey order', () => {
     expect(PROCESS_PHASES.map((p) => p.id)).toEqual([
       'define',
-      'research',
-      'ideate',
       'sketch',
+      'research',
       'design',
-      'review',
       'deliver',
     ])
   })
@@ -29,19 +27,23 @@ describe('processGuide — 7 design steps', () => {
     )
   })
 
-  it('resolves each phase', () => {
-    expect(getProcessPhase('define').short).toBe('Project overview')
+  it('resolves each path phase', () => {
+    expect(getProcessPhase('define').short).toMatch(/Project/i)
     expect(getProcessPhase('deliver').view).toBe('finish')
   })
 
-  it('maps views to process phases', () => {
+  it('maps path views to process phases', () => {
     expect(processPhaseForView('project')?.id).toBe('define')
-    expect(processPhaseForView('studio')?.id).toBe('research')
-    expect(processPhaseForView('spark')?.id).toBe('ideate')
     expect(processPhaseForView('flow')?.id).toBe('sketch')
+    expect(processPhaseForView('studio')?.id).toBe('research')
     expect(processPhaseForView('brand')?.id).toBe('design')
-    expect(processPhaseForView('review')?.id).toBe('review')
     expect(processPhaseForView('finish')?.id).toBe('deliver')
+  })
+
+  it('still coaches Ideate and Review as Tools views', () => {
+    expect(processPhaseForView('spark')?.id).toBe('ideate')
+    expect(processPhaseForView('review')?.id).toBe('review')
+    expect(getProcessPhase('ideate')?.prompt).toMatch(/messy|idea/i)
   })
 
   it('has review questions that avoid “do you like it?”', () => {
@@ -57,24 +59,22 @@ describe('processGuide — 7 design steps', () => {
   })
 })
 
-describe('journey — aligned to 7 process steps', () => {
-  it('has seven path stops', () => {
-    expect(JOURNEY_STEPS).toHaveLength(7)
+describe('journey — five path stops', () => {
+  it('has five path stops', () => {
+    expect(JOURNEY_STEPS).toHaveLength(5)
     expect(JOURNEY_STEPS.map((s) => s.id)).toEqual([
       'define',
-      'research',
-      'ideate',
       'sketch',
+      'research',
       'design',
-      'review',
       'deliver',
     ])
   })
 
-  it('maps views correctly', () => {
+  it('maps path views; Ideate/Review are off-path', () => {
     expect(journeyIdForView('project')).toBe('define')
-    expect(journeyIdForView('spark')).toBe('ideate')
-    expect(journeyIdForView('review')).toBe('review')
+    expect(journeyIdForView('spark')).toBe(null)
+    expect(journeyIdForView('review')).toBe(null)
     expect(journeyIdForView('insights')).toBeNull()
   })
 })

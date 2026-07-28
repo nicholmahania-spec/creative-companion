@@ -206,7 +206,7 @@ function intentUserPrompt(intent, activity = {}, extra = {}) {
   if (activity.audience)
     lines.push(`Audience: ${String(activity.audience).slice(0, 80)}`)
   if (activity.pathDoneCount != null)
-    lines.push(`Process fill: ${activity.pathDoneCount}/7 steps have content`)
+    lines.push(`Process fill: ${activity.pathDoneCount}/5 steps have content`)
   if (activity.nextGapLabel)
     lines.push(`Next process gap: ${activity.nextGapLabel}`)
   if (extra.deskLabel) lines.push(`Desk time: ${extra.deskLabel}`)

@@ -267,6 +267,44 @@ function AppHeader(p) {
                 >
                   <HeaderIcon name="timer" /> {i18nT(p.locale, 'ui.timer')}
                 </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="more-menu-item"
+                  onClick={() => {
+                    p.setActiveView('spark')
+                    p.setMoreOpen(false)
+                  }}
+                >
+                  <span aria-hidden="true">✦</span>{' '}
+                  {i18nT(p.locale, 'ui.openIdeate')?.replace(/^Go to /, '') ||
+                    'Ideate'}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="more-menu-item"
+                  onClick={() => {
+                    p.setActiveView('review')
+                    p.setMoreOpen(false)
+                  }}
+                >
+                  <span aria-hidden="true">◎</span>{' '}
+                  {i18nT(p.locale, 'ui.openReview')?.replace(/^Go to /, '') ||
+                    'Review'}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="more-menu-item"
+                  onClick={() => {
+                    p.setActiveView('calendar')
+                    p.setMoreOpen(false)
+                  }}
+                >
+                  <HeaderIcon name="calendar" />{' '}
+                  {i18nT(p.locale, 'ui.calendar')}
+                </button>
                 <p className="more-menu-group-label">This project</p>
                 <button
                   type="button"

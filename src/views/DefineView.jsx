@@ -309,10 +309,10 @@ export default function DefineView(props) {
         <button
           type="button"
           className="btn btn-primary work-path-next"
-          onClick={() => setActiveView?.('studio')}
+          onClick={() => setActiveView?.('flow')}
         >
           {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'research') || 'Research',
+            label: pathLabel(locale, 'sketch') || 'Work',
           })}
         </button>
       </div>

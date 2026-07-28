@@ -153,11 +153,11 @@ describe('pathStepHasContent', () => {
       sparkIndex: 3,
       palette: ['#111', '#222'],
     })
-    expect(rows).toHaveLength(7)
+    expect(rows).toHaveLength(5)
     expect(rows.every((r) => r.done)).toBe(true)
   })
 
-  it('pathMissingLabels lists empty steps', () => {
+  it('pathMissingLabels lists empty path steps', () => {
     const missing = pathMissingLabels(JOURNEY_STEPS, {
       project: { name: 'Only name' },
       moodItems: [],
@@ -165,13 +165,14 @@ describe('pathStepHasContent', () => {
       sparkIndex: 0,
       palette: [],
     })
-    expect(missing.length).toBeGreaterThan(3)
-    expect(missing).toContain('Project overview')
-    expect(missing).toContain('Research')
-    expect(missing).toContain('Ideate')
+    expect(missing.length).toBe(5)
+    expect(missing).toContain('Project')
+    expect(missing).toContain('Work')
+    expect(missing).toContain('Board')
+    expect(missing).not.toContain('Ideate')
   })
 
-  it('pathFirstGap returns earliest incomplete step', () => {
+  it('pathFirstGap returns earliest incomplete path step', () => {
     const gap = pathFirstGap(JOURNEY_STEPS, {
       project: {
         name: 'Co',
@@ -187,8 +188,9 @@ describe('pathStepHasContent', () => {
       tasks: [],
       sparkIndex: 0,
     })
-    expect(gap?.id).toBe('research')
-    expect(gap?.view).toBe('studio')
+    // Path order: Project → Work → Board… so next gap is Work (sketch/flow)
+    expect(gap?.id).toBe('sketch')
+    expect(gap?.view).toBe('flow')
   })
 
   it('pathGapFocusSelector maps steps to fields', () => {

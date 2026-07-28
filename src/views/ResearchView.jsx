@@ -128,7 +128,7 @@ export default function ResearchView({
       }
       if (e.metaKey || e.ctrlKey || e.altKey) return
       const k = e.key.toLowerCase()
-      if (k === 'g' || k === 'c' || k === 'n' || k === 'u' || /^[1-7]$/.test(e.key)) {
+      if (k === 'g' || k === 'c' || k === 'n' || k === 'u' || /^[1-5]$/.test(e.key)) {
         e.preventDefault()
         e.stopPropagation()
       }
@@ -1478,10 +1478,10 @@ export default function ResearchView({
         <button
           type="button"
           className="btn btn-primary work-path-next"
-          onClick={() => setActiveView?.('spark')}
+          onClick={() => setActiveView?.('brand')}
         >
           {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'ideate') || 'Ideate',
+            label: pathLabel(locale, 'design') || 'System',
           })}
         </button>
       </div>

@@ -1,7 +1,10 @@
 /**
- * Primary path — 7 design-process steps. Nothing more, nothing less.
- * Define → Research → Ideate → Sketch → Design → Review → Deliver
- * Tools (Timer, Calendar, Settings) stay off-path.
+ * Primary path — five stops (redesign brief).
+ * Project → Work → Board → System → Pack
+ *
+ * Ideate (spark) and Review are Tools, not path siblings.
+ * Step ids (define/research/sketch/design/deliver) stay stable for
+ * pathStepHasContent + detective history; labels are user-facing.
  */
 
 export const JOURNEY_STEPS = [
@@ -9,84 +12,75 @@ export const JOURNEY_STEPS = [
     id: 'define',
     view: 'project',
     num: '1',
-    label: 'Project overview',
+    label: 'Project',
     plain: 'Who is this for? How should it feel? Write one clear goal.',
-    nextView: 'studio',
-    nextLabel: 'Go to Research',
-  },
-  {
-    id: 'research',
-    view: 'studio',
-    num: '2',
-    label: 'Research',
-    plain: 'Save pictures and notes. Star up to 6. Use a timer so you stop.',
-    nextView: 'spark',
-    nextLabel: 'Go to Ideate',
-  },
-  {
-    id: 'ideate',
-    view: 'spark',
-    num: '3',
-    label: 'Ideate',
-    plain: 'Many rough ideas first. Keep your best three (A, B, C).',
     nextView: 'flow',
-    nextLabel: 'Go to Sketch',
+    nextLabel: 'Go to Work',
   },
   {
     id: 'sketch',
     view: 'flow',
-    num: '4',
-    label: 'Sketch',
-    plain: '2–3 rough drafts. Write why each fits. Stay under about 2 hours.',
+    num: '2',
+    label: 'Work',
+    plain: 'One current step. Complete it, or capture the next small job.',
+    nextView: 'studio',
+    nextLabel: 'Go to Board',
+  },
+  {
+    id: 'research',
+    view: 'studio',
+    num: '3',
+    label: 'Board',
+    plain: 'Save pictures and notes. Star up to 6 for the pack.',
     nextView: 'brand',
-    nextLabel: 'Go to Design',
+    nextLabel: 'Go to System',
   },
   {
     id: 'design',
     view: 'brand',
-    num: '5',
-    label: 'Design',
-    plain: 'Fonts, colors, voice, logo. Change the version number before big edits.',
-    nextView: 'review',
-    nextLabel: 'Go to Review',
-  },
-  {
-    id: 'review',
-    view: 'review',
-    num: '6',
-    label: 'Review',
-    plain: 'Show the work. Ask a clear question. Fix what helps the goal.',
+    num: '4',
+    label: 'System',
+    plain: 'Fonts, colors, voice, logo. Bump version before big edits.',
     nextView: 'finish',
-    nextLabel: 'Go to Deliver',
+    nextLabel: 'Go to Pack',
   },
   {
     id: 'deliver',
     view: 'finish',
-    num: '7',
-    label: 'Deliver',
-    plain: 'Download the brand book. Write a short client note. Note what you learned.',
+    num: '5',
+    label: 'Pack',
+    plain: 'Preview the brand book. Download PDF. Note what you learned.',
     nextView: null,
     nextLabel: null,
   },
 ]
+
+/** Path view ids only (for work clock, keyboard 1–5, etc.) */
+export const PATH_VIEWS = JOURNEY_STEPS.map((s) => s.view)
 
 /** Map path views to journey step id. Tools return null. */
 export function journeyIdForView(view) {
   switch (view) {
     case 'project':
       return 'define'
-    case 'studio':
-      return 'research'
-    case 'spark':
-      return 'ideate'
     case 'flow':
       return 'sketch'
+    case 'studio':
+      return 'research'
     case 'brand':
       return 'design'
-    case 'review':
-      return 'review'
     case 'finish':
       return 'deliver'
+    // Off-path Tools (not path siblings)
+    case 'spark':
+    case 'review':
+    case 'home':
+    case 'insights':
+    case 'calendar':
+    case 'clients':
+    case 'settings':
+    case 'concept':
+      return null
     default:
       return null
   }
@@ -97,6 +91,10 @@ export function toolsLabelForView(view) {
   switch (view) {
     case 'home':
       return 'Home'
+    case 'spark':
+      return 'Ideate'
+    case 'review':
+      return 'Review'
     case 'insights':
       return 'Timer'
     case 'calendar':

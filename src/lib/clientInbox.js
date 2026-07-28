@@ -12,10 +12,27 @@
  * No counts and no timestamps leave this module: unread is a boolean per row,
  * and recency is expressed only as sort order plus the new/seen split.
  */
-import { JOURNEY_STEPS } from './journey'
+/**
+ * Client-facing step names stay process language (Design, Research, …),
+ * independent of the designer’s 5-stop path labels (System, Board, …).
+ * Views still map for “open the right screen.”
+ */
+const PORTAL_STEP_META = {
+  define: { label: 'Project overview', view: 'project' },
+  research: { label: 'Research', view: 'studio' },
+  ideate: { label: 'Ideate', view: 'spark' },
+  sketch: { label: 'Sketch', view: 'flow' },
+  design: { label: 'Design', view: 'brand' },
+  review: { label: 'Review', view: 'review' },
+  deliver: { label: 'Deliver', view: 'finish' },
+}
 
-const STEP_LABEL = new Map(JOURNEY_STEPS.map((s) => [s.id, s.label]))
-const STEP_VIEW = new Map(JOURNEY_STEPS.map((s) => [s.id, s.view]))
+const STEP_LABEL = new Map(
+  Object.entries(PORTAL_STEP_META).map(([id, m]) => [id, m.label])
+)
+const STEP_VIEW = new Map(
+  Object.entries(PORTAL_STEP_META).map(([id, m]) => [id, m.view])
+)
 
 /** First line of a body, trimmed to something that fits one row. */
 function firstLine(text, max = 140) {

@@ -129,11 +129,35 @@ export const REVIEW_QUESTIONS = [
   'Would you change one thing to better serve the goal?',
 ]
 
+/**
+ * Coaching for a step id. Path phases come from JOURNEY_STEPS;
+ * Ideate/Review stay available as Tools coaching overlays.
+ */
 export function getProcessPhase(id) {
-  return PROCESS_PHASES.find((p) => p.id === id) || null
+  const onPath = PROCESS_PHASES.find((p) => p.id === id)
+  if (onPath) return onPath
+  const c = COACHING[id]
+  if (!c) return null
+  const view =
+    id === 'ideate' ? 'spark' : id === 'review' ? 'review' : null
+  return {
+    id,
+    view,
+    num: '',
+    short: c.title,
+    label: c.title,
+    title: c.title,
+    plain: c.plain,
+    prompt: c.prompt,
+    checks: c.checks || [],
+  }
 }
 
-/** Process phase for current path view */
+/** Process phase for path view, or Tools coaching for spark/review */
 export function processPhaseForView(view) {
-  return PROCESS_PHASES.find((p) => p.view === view) || null
+  const onPath = PROCESS_PHASES.find((p) => p.view === view)
+  if (onPath) return onPath
+  if (view === 'spark') return getProcessPhase('ideate')
+  if (view === 'review') return getProcessPhase('review')
+  return null
 }

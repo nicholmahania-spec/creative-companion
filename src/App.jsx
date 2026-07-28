@@ -1603,7 +1603,7 @@ function App() {
     initialSelector: '.reset-row',
   })
 
-  // Flow keys (when not typing): 1–7 path · C complete · N capture · U undo · ? help
+  // Flow keys (when not typing): 1–5 path · C complete · N capture · U undo · ? help
   useEffect(() => {
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return
@@ -1643,14 +1643,14 @@ function App() {
         return
       }
       const k = e.key.toLowerCase()
-      // C — complete current Sketch step
+      // C — complete current Work step
       if (k === 'c') {
         if (!nextTask) return
         e.preventDefault()
         completeCurrentStep()
         return
       }
-      // N — jump Sketch + focus capture
+      // N — jump Work + focus capture
       if (k === 'n') {
         e.preventDefault()
         setActiveView('flow')
@@ -1673,7 +1673,7 @@ function App() {
         return
       }
       const n = Number(e.key)
-      if (n < 1 || n > 7) return
+      if (n < 1 || n > JOURNEY_STEPS.length) return
       const step = JOURNEY_STEPS[n - 1]
       if (!step?.view) return
       e.preventDefault()
