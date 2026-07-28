@@ -273,21 +273,23 @@ begin
 end;
 $$;
 
+-- Atomic double-submit guard (same shape as submit_discovery_share).
+-- Do NOT SELECT then UPDATE — concurrent submits race. See migration
+-- 20260728023723_fix_submit_portal_form_race.sql.
 create or replace function public.submit_client_portal_form(portal_id_in uuid, submitted jsonb)
 returns boolean
 language plpgsql security definer set search_path to 'public'
 as $$
 declare
-  current_status text;
+  updated_count int;
 begin
-  select form_status into current_status from public.client_portals where id = portal_id_in;
-  if current_status is null or current_status = 'submitted' then
-    return false;
-  end if;
   update public.client_portals
   set submitted_answers = submitted, form_status = 'submitted', updated_at = now()
-  where id = portal_id_in;
-  return true;
+  where id = portal_id_in
+    and form_status is not null
+    and form_status not in ('submitted', 'not_sent');
+  get diagnostics updated_count = row_count;
+  return updated_count > 0;
 end;
 $$;
 
@@ -460,27 +462,27 @@ begin
 end;
 $$;
 
+-- Atomic double-submit guard — copy submit_discovery_share shape.
+-- WHERE form_status gates the write; row_count is the return. No SELECT-then-UPDATE.
 create or replace function public.submit_client_portal_form(portal_id_in uuid, submitted jsonb)
 returns boolean
 language plpgsql security definer set search_path = public, pg_temp
 as $$
 declare
-  current_status text;
+  updated_count int;
 begin
   if pg_column_size(coalesce(submitted, '{}'::jsonb)) > 200000 then
     return false;
   end if;
-  select form_status into current_status from public.client_portals where id = portal_id_in;
-  if current_status is null or current_status = 'submitted' then
-    return false;
-  end if;
-  if current_status = 'not_sent' then
-    return false;
-  end if;
   update public.client_portals
-  set submitted_answers = submitted, form_status = 'submitted', updated_at = now()
-  where id = portal_id_in;
-  return true;
+  set submitted_answers = submitted,
+      form_status = 'submitted',
+      updated_at = now()
+  where id = portal_id_in
+    and form_status is not null
+    and form_status not in ('submitted', 'not_sent');
+  get diagnostics updated_count = row_count;
+  return updated_count > 0;
 end;
 $$;
 
