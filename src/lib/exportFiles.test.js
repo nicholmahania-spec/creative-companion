@@ -336,6 +336,59 @@ describe('downloadBrandPackVectorPdf quality', () => {
     expect(text).not.toMatch(/hello@brand\.example/)
     expect(text).not.toMatch(/you@example\.com/)
   })
+
+  it('renders the agreed-brief section with question, tip, and answer', async () => {
+    const pack = buildBrandPackSnapshot({
+      project: {
+        name: 'Harbor & Hearth',
+        tagline: 'Brew slow. Bring home.',
+        palette: ['#1B3A2F', '#C4A574', '#E8DCC8', '#F7F3EC'],
+        colorRoles: {
+          cover: '#1B3A2F',
+          text: '#1B3A2F',
+          accent: '#C4A574',
+          quiet: '#F7F3EC',
+        },
+        typeHeading: 'Plus Jakarta Sans Bold',
+        typeBody: 'Plus Jakarta Sans Regular',
+        designVersion: 'v1',
+        detective: {
+          clientName: 'Harbor & Hearth Co.',
+          goal: 'Look like a neighborhood staple, not a trend cafe.',
+        },
+      },
+      tasks: [],
+      moodItems: [],
+    })
+
+    const result = await downloadBrandPackVectorPdf(pack, null, {
+      returnBlobOnly: true,
+    })
+    expect(result.ok).toBe(true)
+
+    // The pack's content streams are compressed (jsPDF `compress: true`), so
+    // raw byte-matching can only prove absence, not presence — parse the
+    // actual text layer instead.
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+    const buf = new Uint8Array(await result.blob.arrayBuffer())
+    const doc = await pdfjs.getDocument({ data: buf }).promise
+    let fullText = ''
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i)
+      const content = await page.getTextContent()
+      fullText += content.items.map((it) => it.str).join(' ') + '\n'
+    }
+
+    expect(fullText).toMatch(/Agreed brief/)
+    // The field label (question) and its worked-example tip both render —
+    // a question is never asked bare, per the reference-brief pattern.
+    expect(fullText).toMatch(/Business name/)
+    expect(fullText).toMatch(/Trading name is fine/)
+    // The answer itself renders in its own box, not just echoed as the tip.
+    expect(fullText).toMatch(/Harbor & Hearth Co\./)
+    // Handoff points at the section instead of duplicating it.
+    expect(fullText).toMatch(/Full agreed brief/)
+  })
 })
 
 describe('packBriefMarkdown', () => {

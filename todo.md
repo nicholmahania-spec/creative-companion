@@ -490,7 +490,22 @@ unrelated jobs: one silently keeping a record, the other interrupting you.
   (xlsx/csv download) or written to a connected service. On demand is simpler
   and needs no new credentials.
 
-## Brief PDF in the brand book — reference designs (2026-07-27)
+## Brief PDF in the brand book — DONE (2026-07-28)
+
+Shipped as its own "Agreed brief" section in `downloadBrandPackVectorPdf`
+(`src/lib/brandBookPdf.js`), placed right after Strategy and before Logo
+system. Every filled field renders bold question, its `tip` as an "e.g."
+example line beneath in the accent colour, then the real answer in its own
+shaded box — the common pattern from both reference briefs below. The old
+capped-at-8 inline echo in Handoff was replaced with a one-line page pointer
+("Full agreed brief — page N") instead of duplicating content that would
+drift from the real section. Verified via a real generated PDF (pdfjs-dist
+text extraction, not byte-matching) in `exportFiles.test.js`, and caught a
+real bug this way: a dozen schema tips already start with "e.g." and the
+renderer was doubling it ("e.g. e.g. Sarah Whitton, Owner") — fixed before
+shipping.
+
+### Original brief (kept for reference)
 
 Owner supplied two reference briefs for how the completed design brief should
 look when downloaded as part of the brand guide book. Deferred; recorded so

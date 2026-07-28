@@ -411,15 +411,18 @@ export function formatDetectiveAnswer(field, raw) {
 
 /**
  * Filled detective chapters for export (labels + human answers only).
+ * `tip` carries the field's worked example — the Agreed Brief PDF section
+ * renders it as the example line beneath the question, per the "a question
+ * is never asked bare" pattern (see todo.md's brief-PDF reference notes).
  * @param {Record<string, unknown>} detective
- * @returns {Array<{ num: string, title: string, rows: Array<{ label: string, answer: string }> }>}
+ * @returns {Array<{ num: string, title: string, rows: Array<{ label: string, answer: string, tip: string }> }>}
  */
 export function filledDetectiveChapters(detective = {}) {
   return DETECTIVE_CHAPTERS.map((ch) => {
     const rows = (ch.fields || [])
       .map((f) => {
         const answer = formatDetectiveAnswer(f, detective?.[f.id])
-        return answer ? { label: f.label, answer } : null
+        return answer ? { label: f.label, answer, tip: f.tip || '' } : null
       })
       .filter(Boolean)
     return rows.length ? { num: ch.num, title: ch.title, rows } : null

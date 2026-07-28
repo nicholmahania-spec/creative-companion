@@ -1,7 +1,7 @@
 /**
  * Application-first brand book (vector PDF).
- * Designed like a leave-behind system deck: cover world → logo → color → type
- * → imagery → applications — not a form dump.
+ * Designed like a leave-behind system deck: cover world → strategy → agreed
+ * brief → logo → color → type → imagery → applications — not a form dump.
  */
 import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
 import {
@@ -443,7 +443,83 @@ export async function downloadBrandPackVectorPdf(
     }
 
     // ═══════════════════════════════════════════════
-    // 3. LOGO SYSTEM
+    // 3. AGREED BRIEF — the record of what was agreed, not a form
+    // ═══════════════════════════════════════════════
+    // Pattern from two studio reference briefs (see todo.md): a question is
+    // never asked bare. Every answer keeps its worked example (the field's
+    // `tip`) directly beneath the question, and the answer itself sits in a
+    // visually distinct box rather than running on as plain text — the same
+    // distinction the on-screen form already makes between label and input.
+    let briefStartPage = 0
+    if (chapters.length) {
+      newPage()
+      briefStartPage = pageIndex + 1
+      pageHead('Agreed brief', 'The answers that shaped this system.')
+
+      const ensureRoom = (need) => {
+        if (y + need > pageH - 60) {
+          newPage()
+          pageHead('Agreed brief', 'The answers that shaped this system.')
+        }
+      }
+
+      chapters.forEach((ch) => {
+        ensureRoom(34)
+        sectionLabel(`${ch.num} · ${ch.title}`)
+
+        ch.rows.forEach((row) => {
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(11)
+          const qLines = pdf.splitTextToSize(pdfSafeText(row.label), contentW)
+          // A dozen tips already open with "e.g." in the schema — don't
+          // double it.
+          const tipText = row.tip
+            ? /^e\.g\.?\s/i.test(row.tip)
+              ? row.tip
+              : `e.g. ${row.tip}`
+            : ''
+          const tipLines = tipText
+            ? pdf.splitTextToSize(pdfSafeText(tipText), contentW)
+            : []
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(11)
+          const ansLines = pdf
+            .splitTextToSize(pdfSafeText(row.answer), contentW - 24)
+            .slice(0, 6)
+
+          const boxH = ansLines.length * 14 + 16
+          const blockH =
+            qLines.length * 14 + (tipLines.length ? tipLines.length * 11 + 4 : 0) + 10 + boxH + 16
+          ensureRoom(blockH)
+
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(11)
+          pdf.setTextColor(20, 18, 17)
+          pdf.text(qLines, margin, y)
+          y += qLines.length * 14
+
+          if (tipLines.length) {
+            pdf.setFont('helvetica', 'normal')
+            pdf.setFontSize(9)
+            pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
+            pdf.text(tipLines, margin, y)
+            y += tipLines.length * 11 + 4
+          }
+          y += 6
+
+          pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
+          pdf.roundedRect(margin, y, contentW, boxH, 4, 4, 'F')
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(11)
+          pdf.setTextColor(inkOnQuiet[0], inkOnQuiet[1], inkOnQuiet[2])
+          pdf.text(ansLines, margin + 12, y + 18)
+          y += boxH + 16
+        })
+      })
+    }
+
+    // ═══════════════════════════════════════════════
+    // 4. LOGO SYSTEM
     // ═══════════════════════════════════════════════
     newPage()
     pageHead('Logo system', 'Primary lockups, reverse, mono, and clearspace.')
@@ -531,7 +607,7 @@ export async function downloadBrandPackVectorPdf(
     y += 48
 
     // ═══════════════════════════════════════════════
-    // 4. COLOR SYSTEM — designed spread
+    // 5. COLOR SYSTEM — designed spread
     // ═══════════════════════════════════════════════
     newPage()
     pageHead('Color system', 'Roles first. Use them as jobs, not decoration.')
@@ -606,7 +682,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     // ═══════════════════════════════════════════════
-    // 5. TYPE — specimen spread
+    // 6. TYPE — specimen spread
     // ═══════════════════════════════════════════════
     newPage()
     pageHead(
@@ -671,7 +747,7 @@ export async function downloadBrandPackVectorPdf(
     })
 
     // ═══════════════════════════════════════════════
-    // 6. IMAGERY (if any)
+    // 7. IMAGERY (if any)
     // ═══════════════════════════════════════════════
     if (
       pins.length ||
@@ -742,7 +818,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     // ═══════════════════════════════════════════════
-    // 7. APPLICATIONS — the heart of the book
+    // 8. APPLICATIONS — the heart of the book
     // ═══════════════════════════════════════════════
     newPage()
     pageHead(
@@ -870,7 +946,7 @@ export async function downloadBrandPackVectorPdf(
     )
 
     // ═══════════════════════════════════════════════
-    // 8. USAGE (if any)
+    // 9. USAGE (if any)
     // ═══════════════════════════════════════════════
     if (doT || dontT) {
       newPage()
@@ -918,7 +994,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     // ═══════════════════════════════════════════════
-    // 9. HANDOFF (compact)
+    // 10. HANDOFF (compact)
     // ═══════════════════════════════════════════════
     newPage()
     pageHead('Handoff', 'What to take into your design tool next.')
@@ -959,39 +1035,23 @@ export async function downloadBrandPackVectorPdf(
       )
     }
 
-    // Brief appendix only if dense answers (max 1 page worth of highlights)
-    if (chapters.length) {
+    // The full agreed-brief answers already have their own section (with
+    // each answer's worked example) — a second, capped-at-8 echo here would
+    // be exactly the kind of duplicate copy that drifts as the first one is
+    // edited. A page pointer costs the reader nothing to skip.
+    if (briefStartPage) {
       y += 40
-      if (y > pageH - 200) {
+      if (y > pageH - 60) {
         newPage()
-        pageHead('Brief highlights', 'Agreed answers that drove the system.')
-      } else {
-        pdf.setFont('helvetica', 'bold')
-        pdf.setFontSize(8)
-        pdf.setTextColor(100, 100, 100)
-        pdf.text('BRIEF HIGHLIGHTS', margin, y)
-        y += 16
       }
-      let shown = 0
-      for (const ch of chapters) {
-        for (const row of ch.rows) {
-          if (shown >= 8) break
-          pdf.setFont('helvetica', 'bold')
-          pdf.setFontSize(9)
-          pdf.setTextColor(90, 90, 90)
-          pdf.text(pdfSafeText(row.label), margin, y)
-          y += 12
-          pdf.setFont('helvetica', 'normal')
-          pdf.setFontSize(10)
-          pdf.setTextColor(30, 28, 27)
-          const ans = pdf.splitTextToSize(pdfSafeText(row.answer), contentW)
-          pdf.text(ans.slice(0, 2), margin, y)
-          y += ans.slice(0, 2).length * 13 + 10
-          shown++
-          if (y > pageH - 60) break
-        }
-        if (shown >= 8 || y > pageH - 60) break
-      }
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(10)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text(
+        pdfSafeText(`Full agreed brief — page ${briefStartPage}`),
+        margin,
+        y
+      )
     }
 
     footerAll()
