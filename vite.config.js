@@ -87,15 +87,23 @@ export default defineConfig({
     __APP_BUILD_DATE__: JSON.stringify(meta.date),
   },
   build: {
-    rollupOptions: {
+    /* `rolldownOptions`, NOT `rollupOptions`. Vite 8 builds with Rolldown, and
+       a `build.rollupOptions.output.manualChunks` block here was silently
+       ignored — the whole app shipped as ONE 3.3MB chunk (1MB gzipped)
+       despite a dozen React.lazy() boundaries and eleven split CSS files.
+       Everything that had been split was being re-merged, and nothing failed
+       loudly enough to notice. */
+    rolldownOptions: {
       output: {
-        manualChunks: (id) => {
-          if (id.includes('react')) {
-            return 'react';
-          }
-          if (id.includes('@supabase/supabase-js')) {
-            return 'supabase';
-          }
+        codeSplitting: true,
+        /* Rolldown's replacement for manualChunks. Vendor code changes on a
+           different schedule from app code, so keeping it in its own chunk
+           means a normal app deploy doesn't invalidate it in anyone's cache. */
+        advancedChunks: {
+          groups: [
+            { name: 'react', test: /node_modules[/\\](react|react-dom|scheduler)[/\\]/ },
+            { name: 'supabase', test: /node_modules[/\\]@supabase[/\\]/ },
+          ],
         },
       },
     },
