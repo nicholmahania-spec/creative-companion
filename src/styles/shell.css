@@ -8090,6 +8090,11 @@ select:focus {
   gap: 0.5rem;
   padding: 0.4rem 0 0.2rem;
 }
+/* Top of the body, next to the gap count — not the bottom. The owner's rule
+   is "if it's at the bottom I won't see it or use it". */
+.scope-terms-copy {
+  align-self: flex-start;
+}
 .scope-row {
   display: grid;
   grid-template-columns: 1fr minmax(0, 12rem);

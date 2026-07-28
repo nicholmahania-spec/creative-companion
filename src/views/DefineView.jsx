@@ -25,6 +25,7 @@ export default function DefineView(props) {
     setActiveView,
     setProjectDeadline: setProjectDeadlineProp,
     projectDeadline: projectDeadlineProp = '',
+    flashMicro,
   } = props
 
   // Own the live project row so App shell can skip detective equality and not
@@ -266,6 +267,7 @@ export default function DefineView(props) {
         <ScopePanel
           activeProject={activeProject}
           onOpenChapter={setOpenChapter}
+          flashMicro={flashMicro}
         />
 
         {deskTasks.length > 0 && (

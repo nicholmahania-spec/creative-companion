@@ -15,8 +15,9 @@
 import { useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { scopeGaps, REVISION_BILLING } from '../lib/revisions'
+import { projectTermsText, hasProjectTerms } from '../lib/projectTerms'
 
-export default function ScopePanel({ activeProject, onOpenChapter }) {
+export default function ScopePanel({ activeProject, onOpenChapter, flashMicro }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const [open, setOpen] = useState(false)
   if (!activeProject) return null
@@ -44,6 +45,31 @@ export default function ScopePanel({ activeProject, onOpenChapter }) {
 
       {open ? (
         <div className="scope-panel-body">
+          {/* At the top of the body, under the state line — the owner's own
+              rule is "if it's at the bottom I won't see it or use it". It
+              also sits next to the gap count on purpose: the count is what
+              tells you, BEFORE you copy, that parts are missing. There is no
+              toast afterwards naming what was left out — that fires when
+              nothing can be done about it, which makes it a verdict rather
+              than information, and its answer is always "yes, copy anyway". */}
+          {hasProjectTerms(activeProject) ? (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm scope-terms-copy"
+              onClick={async () => {
+                const text = projectTermsText(activeProject)
+                try {
+                  await navigator.clipboard.writeText(text)
+                  flashMicro?.('Project terms copied')
+                } catch {
+                  flashMicro?.('Couldn’t copy — check clipboard permissions')
+                }
+              }}
+            >
+              Copy project terms
+            </button>
+          ) : null}
+
           {/* The two the brief already owns. Shown, not duplicated — a second
               input for the same answer is a second place for it to be wrong. */}
           <div className="scope-row scope-row-static">
@@ -58,6 +84,23 @@ export default function ScopePanel({ activeProject, onOpenChapter }) {
                 : String(d.deliverables || '').trim()
                   ? 'Written in the brief'
                   : 'Not agreed — open the brief'}
+            </button>
+          </div>
+
+          {/* Read-only, and shown only so that what the panel DISPLAYS equals
+              what the copy button EMITS. Deliberately NOT added to
+              scopeGaps(): a sixth gap would raise the "still to agree" count
+              on every existing project overnight, which reads as work
+              appearing from nowhere. */}
+          <div className="scope-row scope-row-static">
+            <span className="scope-row-label">Delivery by</span>
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => onOpenChapter?.('overview')}
+            >
+              {String(d.projectDeadline || activeProject.deadline || '').trim() ||
+                'No date set'}
             </button>
           </div>
 
