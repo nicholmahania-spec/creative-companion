@@ -90,6 +90,37 @@ export async function setPortalDetectiveAnswers(portalId, detectiveAnswers) {
   return { ok: true }
 }
 
+/**
+ * Studio side: send the survey for a moment.
+ *
+ * One gesture. Picking the moment picks the questions, sets the status and
+ * puts it in the portal the client already has — no draft step, no question
+ * editor, and no separate link to copy and then lose.
+ */
+export async function sendPortalSurvey(portalId, kind, questions) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  const { error } = await supabase
+    .from('client_portals')
+    .update({
+      survey_kind: kind,
+      survey_questions: questions || [],
+      survey_status: 'sent',
+      /* Clear the previous answers along with the questions they answered.
+         A new survey showing the last round's replies is worse than empty. */
+      survey_answers: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', portalId)
+  if (error) {
+    // Log the driver's message, show the human one.
+    console.warn('Couldn’t send the survey', error)
+    return { ok: false, error: 'Couldn’t send the survey' }
+  }
+  return { ok: true }
+}
+
 /** Studio side: read the current portal + step statuses (owner-only, direct table read). */
 export async function fetchPortalStudioView(portalId) {
   if (!isSupabaseConfigured() || !supabase) {
@@ -226,6 +257,11 @@ export async function fetchClientPortal(portalId) {
     stepStatus: row.step_status || {},
     formStatus: row.form_status,
     submittedAnswers: row.submitted_answers || null,
+    surveyKind: row.survey_kind || '',
+    surveyStatus: row.survey_status || 'not_sent',
+    surveyQuestions: Array.isArray(row.survey_questions)
+      ? row.survey_questions
+      : [],
   }
 }
 
@@ -302,5 +338,24 @@ export async function submitClientPortalForm(portalId, answers) {
     return { ok: false, error: 'Couldn’t submit the form' }
   }
   if (!data) return { ok: false, error: 'This form was already submitted' }
+  return { ok: true }
+}
+
+/** Client side: submit the survey (single-use, no auth). */
+export async function submitClientPortalSurvey(portalId, answers) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  const { data, error } = await supabase.rpc('submit_client_portal_survey', {
+    portal_id_in: portalId,
+    submitted: answers || {},
+  })
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t send your answers', error)
+    return { ok: false, error: 'Couldn’t send your answers' }
+  }
+  if (!data) return { ok: false, error: 'This survey was already answered' }
   return { ok: true }
 }
