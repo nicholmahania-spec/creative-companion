@@ -8829,3 +8829,72 @@ textarea.artboard-brief-input {
   color: var(--text-secondary);
 }
 .ideate-rough-add .field-input { flex: 1; }
+
+/* ============================================================
+   Error boundary — the screen shown when the app has crashed
+   ============================================================
+   ErrorBoundary.jsx is written in Tailwind (`p-6 bg-red-50 border-l-4
+   border-red-500 text-red-700`) and this project has no Tailwind, so it had
+   no styling whatsoever: unpadded black-on-white text against the raw page.
+   The one screen whose entire job is to stay composed when everything else
+   has failed was the least finished screen in the app.
+
+   Styled from its own `.error-boundary` root so the component needs no
+   edit — a crash screen should be the last thing a refactor can break. */
+.error-boundary {
+  max-width: 46rem;
+  margin: var(--space-5) auto;
+  padding: var(--space-5);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-hairline);
+  border-left: 4px solid var(--danger, #B3261E);
+  border-radius: var(--radius);
+}
+
+.error-boundary h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-4);
+}
+
+.error-boundary h3,
+.error-boundary h4 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-2);
+}
+
+.error-boundary p {
+  margin: 0 0 var(--space-2);
+  max-width: 62ch;
+  color: var(--text-secondary);
+}
+
+/* Details block: monospace, scrollable, visibly secondary to the message. */
+.error-boundary pre {
+  max-height: 15rem;
+  overflow: auto;
+  padding: var(--space-3);
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius);
+  font-size: var(--fs-1);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.error-boundary button {
+  margin-top: var(--space-4);
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  background: var(--text-primary);
+  color: var(--bg-card);
+  border: none;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  cursor: pointer;
+}
+
+.error-boundary button:focus-visible {
+  outline: 2px solid var(--dopamine);
+  outline-offset: 2px;
+}

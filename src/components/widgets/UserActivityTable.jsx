@@ -70,6 +70,9 @@ export function UserActivityTable() {
 }
 
 function formatActivityType(action: string): string {
+  /* Same guard as dashboard/ActivityTable: the rows are unvalidated Supabase
+     output, and a null `action` crashed the render. */
+  if (typeof action !== 'string' || !action) return 'Activity'
   // Convert snake_case to Title Case
   return action
     .split('_')

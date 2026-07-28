@@ -1268,3 +1268,69 @@
   font-size: 0.8125rem;
   font-weight: 600;
 }
+/* ============================================================
+   Design-view modals — History, Templates, Diff
+   ============================================================
+   These three were written with Tailwind utility classes (`fixed inset-0
+   z-50 bg-black bg-opacity-50`, `bg-white rounded-lg shadow-xl`). This
+   project has no Tailwind — not in package.json, no config — so every one
+   of those names resolved to nothing:
+
+     position   static   (not fixed)
+     z-index    auto     (not 50)
+     background transparent
+
+   The panel was therefore laid out inline, in normal document flow. On a
+   1000px-tall viewport it rendered at y=1155 — 155px below the fold, with
+   the page silently growing 524px. Pressing "History" looked like it did
+   nothing at all. The feature was built, wired, and unreachable.
+
+   Real rules, project tokens. Named so the markup reads as a dialog rather
+   than as a stack of utilities that only work somewhere else. */
+.dv-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.dv-modal-panel {
+  width: 100%;
+  max-width: 56rem;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+}
+
+.dv-modal-panel.is-narrow {
+  max-width: 40rem;
+}
+
+.dv-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.dv-modal-head h2 {
+  margin: 0;
+  font-size: var(--fs-3);
+}
+
+.dv-modal-body {
+  overflow: auto;
+  padding: var(--space-4);
+}

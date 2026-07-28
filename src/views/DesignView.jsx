@@ -1782,10 +1782,10 @@ export default function DesignView({
 
           {/* Version History Modal */}
           {showVersionHistory && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="dv-modal-overlay">
+              <div className="dv-modal-panel">
                 <div className="flex flex-col h-full">
-                  <div className="border-b px-6 py-4 flex justify-between items-center">
+                  <div className="dv-modal-head">
                     <h2 className="text-xl font-semibold">Version History</h2>
                     <button
                       onClick={() => setShowVersionHistory(false)}
@@ -1995,10 +1995,10 @@ export default function DesignView({
 
           {/* Template Library Modal */}
           {showTemplateModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div className="dv-modal-overlay">
+              <div className="dv-modal-panel is-narrow">
                 <div className="flex flex-col h-full">
-                  <div className="border-b px-6 py-4 flex justify-between items-center">
+                  <div className="dv-modal-head">
                     <h2 className="text-xl font-semibold">Template Library</h2>
                     <button
                       onClick={() => setShowTemplateModal(false)}
@@ -2086,10 +2086,10 @@ export default function DesignView({
 
           {/* Save as Template Modal */}
           {showSaveAsTemplateModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="dv-modal-overlay">
+              <div className="dv-modal-panel is-narrow dv-modal-body">
                 <div className="flex flex-col h-full">
-                  <div className="border-b px-6 py-4 flex justify-between items-center">
+                  <div className="dv-modal-head">
                     <h2 className="text-xl font-semibold">
                       {selectedTemplate ? 'Update Template' : 'Save as Template'}
                     </h2>

@@ -70,6 +70,12 @@ export function ActivityTable() {
 }
 
 function formatActivityType(action) {
+  /* Guarded because the rows come straight from `supabase.from('user_activity')
+     .select('*')` with no validation — a row whose `action` is null (a manual
+     insert, a column default, an activity type written by an older client)
+     threw here and took the whole table down with it. One unreadable row
+     should read as unknown, not blank the view. */
+  if (typeof action !== 'string' || !action) return 'Activity'
   // Convert snake_case to Title Case
   return action
     .split('_')

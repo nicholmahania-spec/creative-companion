@@ -257,7 +257,16 @@ export default function ResearchView({
   }
 
   const submitBoardNote = () => {
-    const note = boardNote.trim() || 'Direction note'
+    /* An empty note used to fall back to 'Direction note' — which is also this
+       field's placeholder, so pressing Add on an empty box produced a real pin
+       that looked exactly like the hint text. Nothing distinguished it from a
+       note you meant to write, and it counted toward the board either way.
+       Say nothing, add nothing. */
+    const note = boardNote.trim()
+    if (!note) {
+      flashToast?.('Write a note first')
+      return
+    }
     const pin = {
       type: 'quote',
       note,

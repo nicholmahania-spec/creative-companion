@@ -143,6 +143,13 @@
   /* 44px tall hit area on a 14px dot — the row is the target, not the dot,
      the same way the deliverables checklist rows work. */
   min-height: 44px;
+  /* ...but `flex: 1 1 0` with no floor let each step collapse to the dot's
+     own 14px whenever the row was narrow, measured at 14x44 with 22px
+     centre-to-centre. That fails WCAG 2.5.8 twice over: under the 24x24
+     minimum, AND too tightly packed for the spacing exception to rescue it
+     (adjacent 24px circles would overlap). The height was already handled;
+     only the width was left to the row's mercy. */
+  min-width: 24px;
   cursor: pointer;
 }
 

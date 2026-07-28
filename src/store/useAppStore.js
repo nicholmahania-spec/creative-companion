@@ -1216,6 +1216,15 @@ const useAppStore = create(
           sparksTried: s.sparksTried ?? 0,
           onboarded: s.onboarded,
           currentSpark: s.currentSpark,
+          /* These are persisted by `partialize` but were missing here, so a
+             cloud push or a JSON backup captured a workspace WITHOUT them and
+             the matching pull/import wrote that back — silently destroying
+             every saved template. Anything in `partialize` has to be in the
+             payload too, or the round-trip is lossy by construction. */
+          templates: s.templates || [],
+          currentTemplateId: s.currentTemplateId ?? null,
+          portalSeen: s.portalSeen || {},
+          themeSource: s.themeSource,
         }
       },
 
@@ -1294,6 +1303,20 @@ const useAppStore = create(
             sparkPrompts[0],
           onboarded: data.onboarded !== false,
           bodyDoubling: false,
+          /* Restored defensively: a payload written by an older build has no
+             these keys at all, and reading `undefined` back into the store
+             would wipe what the user has locally. Absent means "keep what we
+             have", not "the user deleted them". */
+          ...(Array.isArray(data.templates) ? { templates: data.templates } : {}),
+          ...(data.currentTemplateId !== undefined
+            ? { currentTemplateId: data.currentTemplateId }
+            : {}),
+          ...(data.portalSeen && typeof data.portalSeen === 'object'
+            ? { portalSeen: data.portalSeen }
+            : {}),
+          ...(data.themeSource === 'auto' || data.themeSource === 'user'
+            ? { themeSource: data.themeSource }
+            : {}),
         })
         return { ok: true }
       },
