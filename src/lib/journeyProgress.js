@@ -212,7 +212,7 @@ export function pathGapFocusSelector(stepId) {
     case 'sketch':
       return '#desk-capture, #step-why, #current-step'
     case 'design':
-      return '#brand-brief, #design-version, .system-acc-tab'
+      return '#brand-tagline, #brand-brief, .system-acc-tab'
     case 'review':
       return '#feedback-notes'
     case 'deliver':
@@ -229,8 +229,8 @@ export const PATH_FILL_HINTS = {
   ideate: 'Title a direction, dump a rough idea, or pin a spark',
   sketch: 'Write one step you can finish',
   design: 'Tagline, voice, logo, or your own colors',
-  review: 'Feedback notes or a starred picture',
-  deliver: 'Client note, learnings, or pack pieces',
+  review: 'Feedback notes, or a tagline plus a starred picture',
+  deliver: 'Client note or learnings (check brand words if listed)',
   default: 'Add a little content',
 }
 

@@ -544,6 +544,9 @@ function App() {
     })
     return !!packReadiness(pack).thin
   }, [activeProject, deskTasks, deskMood, projectPalette])
+  /** Path steps full ≠ pack ready — Home must not overclaim ship readiness. */
+  const pathStepsFull = pathDoneCount >= 7
+  const brandBookReady = pathStepsFull && !leaveBehindThin
   const completedCount = doneTasks.length
 
   const projectDeadline = activeProject?.deadline || ''
@@ -822,21 +825,36 @@ function App() {
   const projectsSummary = useMemo(
     () =>
       activeProjects.map((p) => {
+        const mood = (moodItems || []).filter((m) =>
+          sameProjectId(m.projectId, p.id)
+        )
+        const pTasks = (tasks || []).filter((t) =>
+          sameProjectId(t.projectId, p.id)
+        )
+        const palette = p.palette?.length > 0 ? p.palette : DEFAULT_PALETTE
         const ctx = {
           project: p,
-          moodItems: (moodItems || []).filter((m) =>
-            sameProjectId(m.projectId, p.id)
-          ),
-          tasks: (tasks || []).filter((t) => sameProjectId(t.projectId, p.id)),
+          moodItems: mood,
+          tasks: pTasks,
           sparkIndex,
-          palette: p.palette?.length > 0 ? p.palette : DEFAULT_PALETTE,
+          palette,
         }
         const rows = pathProgressSummary(JOURNEY_STEPS, ctx)
+        const pack = buildBrandPackSnapshot({
+          project: p,
+          tasks: pTasks,
+          moodItems: mood,
+          palette,
+        })
+        const packThin = !!packReadiness(pack).thin
+        const doneCount = rows.filter((r) => r.done).length
         return {
           project: p,
           rows,
-          doneCount: rows.filter((r) => r.done).length,
+          doneCount,
           nextGap: pathFirstGap(JOURNEY_STEPS, ctx),
+          pathFull: doneCount >= 7,
+          packReady: doneCount >= 7 && !packThin,
         }
       }),
     [activeProjects, moodItems, tasks, sparkIndex]
@@ -1154,14 +1172,18 @@ function App() {
    *  change, and leaving — anywhere the clock stops for any reason.
    *  Tags the path page you were on — never sticky `timerFocusSource`
    *  (that is Timer return UX only) and never off-path tools views. */
+  /** Project id for the open stretch — bank under this when switching projects. */
+  const workProjectRef = useRef(activeProjectId)
+
   const bankWorkSegment = useCallback(
-    (endedAt = Date.now(), stageOverride) => {
+    (endedAt = Date.now(), stageOverride, projectOverride) => {
       const started = workSegmentStartRef.current
       workSegmentStartRef.current = null
       if (!started) return
       const stage = stageOverride ?? workStageRef.current ?? activeView
       if (!STAGE_VIEWS.includes(String(stage || ''))) return
-      logWorkedTime?.(activeProjectId, stage, endedAt - started)
+      const projectId = projectOverride ?? workProjectRef.current ?? activeProjectId
+      logWorkedTime?.(projectId, stage, endedAt - started)
     },
     [logWorkedTime, activeProjectId, activeView, STAGE_VIEWS]
   )
@@ -1172,11 +1194,12 @@ function App() {
       if (!workSegmentStartRef.current) {
         workSegmentStartRef.current = Date.now()
         workStageRef.current = activeView
+        workProjectRef.current = activeProjectId
       }
     } else {
       bankWorkSegment()
     }
-  }, [workRunning, bankWorkSegment, activeView])
+  }, [workRunning, bankWorkSegment, activeView, activeProjectId])
 
   /** Split the bank when the user moves to another path stage while working. */
   useEffect(() => {
@@ -1188,6 +1211,25 @@ function App() {
     }
     workStageRef.current = activeView
   }, [activeView, workRunning, bankWorkSegment])
+
+  /** Split the bank when the active project changes mid-stretch. */
+  useEffect(() => {
+    if (!workRunning) {
+      workProjectRef.current = activeProjectId
+      return
+    }
+    const prev = workProjectRef.current
+    if (
+      prev != null &&
+      activeProjectId != null &&
+      String(prev) !== String(activeProjectId) &&
+      workSegmentStartRef.current
+    ) {
+      bankWorkSegment(Date.now(), workStageRef.current, prev)
+      workSegmentStartRef.current = Date.now()
+    }
+    workProjectRef.current = activeProjectId
+  }, [activeProjectId, workRunning, bankWorkSegment])
 
   /** One second per second, for as long as you are working. Its own interval,
    *  not the Pomodoro's — that one dies at zero and takes the record with it. */
@@ -1232,18 +1274,34 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workRunning, bankWorkSegment])
 
-  /* Closing the tab mid-session would otherwise lose the stretch entirely. */
+  /* Bank on hide so a closed tab does not lose the stretch; restart on
+     return so hours keep recording after the user comes back. */
   useEffect(() => {
-    const onHide = () => {
-      if (document.visibilityState === 'hidden') bankWorkSegment()
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') {
+        bankWorkSegment()
+        return
+      }
+      if (
+        document.visibilityState === 'visible' &&
+        STAGE_VIEWS.includes(String(activeView || '')) &&
+        !workIdle &&
+        !forcedBreak &&
+        !workSegmentStartRef.current
+      ) {
+        workSegmentStartRef.current = Date.now()
+        workStageRef.current = activeView
+        workProjectRef.current = activeProjectId
+      }
     }
-    window.addEventListener('visibilitychange', onHide)
-    window.addEventListener('pagehide', onHide)
+    const onPageHide = () => bankWorkSegment()
+    window.addEventListener('visibilitychange', onVis)
+    window.addEventListener('pagehide', onPageHide)
     return () => {
-      window.removeEventListener('visibilitychange', onHide)
-      window.removeEventListener('pagehide', onHide)
+      window.removeEventListener('visibilitychange', onVis)
+      window.removeEventListener('pagehide', onPageHide)
     }
-  }, [bankWorkSegment])
+  }, [bankWorkSegment, activeView, activeProjectId, workIdle, forcedBreak, STAGE_VIEWS])
 
   // Focus countdown — when a Pomodoro ends, force a break
   useEffect(() => {
@@ -1508,7 +1566,7 @@ function App() {
       setTimerFocusSource(focusH.source || null)
     }
 
-    // Break finished while tab was closed → soft resume banner mode
+    // Break finished while tab was closed → land on resume step + say so
     if (breakH?.expired) {
       clearForcedBreakSession()
       markBreak()
@@ -1517,6 +1575,11 @@ function App() {
         setActiveView(resume)
         preBreakViewRef.current = resume
       }
+      flashToast(
+        i18nT(locale, 'ui.breakFinishedAway') ||
+          'Break finished while you were away — pick up here',
+        { important: true }
+      )
     }
     return undefined
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1871,15 +1934,34 @@ function App() {
 
   // Autosave pulse — skip first mount so load doesn’t flash “Saved”
   const savePulseReady = useRef(false)
+  const storageBlockedRef = useRef(false)
   useEffect(() => {
     if (!savePulseReady.current) {
       savePulseReady.current = true
       return
     }
+    if (storageBlockedRef.current) return
     setSavePulse(true)
     const t = window.setTimeout(() => setSavePulse(false), 1400)
     return () => window.clearTimeout(t)
   }, [tasks, moodItems, breakKit, activeProjectId, projects, theme, prefs])
+
+  /** Browser storage full/failed — honest signal (store already dispatches). */
+  useEffect(() => {
+    const onStorageError = (ev) => {
+      storageBlockedRef.current = true
+      setSavePulse(false)
+      const quota = !!ev?.detail?.quota
+      flashToast(
+        quota
+          ? 'Browser storage is full — changes are not saving. Remove mood images or download a backup from Settings.'
+          : 'Could not save to this browser — changes may be lost until storage works again.',
+        { important: true }
+      )
+    }
+    window.addEventListener('cc-storage-error', onStorageError)
+    return () => window.removeEventListener('cc-storage-error', onStorageError)
+  }, [])
 
   /** Capture a task. `navigate: false` keeps the user on the current view —
    * used by Define's inline capture, where jumping to Flow mid-brief threw
@@ -3388,8 +3470,8 @@ function App() {
         {/* ===== HOME (multi-project) — master/detail, not a card grid ===== */}
         {activeView === 'home' && activeProjects.length > 1 && (() => {
           const sorted = [...projectsSummary].sort((a, b) => {
-            const aDone = a.doneCount >= 7
-            const bDone = b.doneCount >= 7
+            const aDone = a.pathFull
+            const bDone = b.pathFull
             if (aDone !== bDone) return aDone ? 1 : -1
             return 0
           })
@@ -3397,7 +3479,8 @@ function App() {
             sorted.find((s) => s.project.id === homeSelectedProjectId) ||
             sorted[0]
           if (!selected) return null
-          const done = selected.doneCount >= 7
+          const pathFull = !!selected.pathFull
+          const packReady = !!selected.packReady
           return (
             <section className="home-view home-md home-studio">
               <nav className="home-md-list" aria-label="Your projects">
@@ -3420,8 +3503,7 @@ function App() {
                   </button>
                 </div>
                 <ul className="home-md-rows">
-                  {sorted.map(({ project: p, doneCount, nextGap }) => {
-                    const rowDone = doneCount >= 7
+                  {sorted.map(({ project: p, doneCount, nextGap, pathFull: rowFull, packReady: rowPack }) => {
                     const isActive = p.id === selected.project.id
                     return (
                       <li key={p.id}>
@@ -3437,13 +3519,15 @@ function App() {
                             </span>
                           </span>
                           <span
-                            className={`home-md-row-next${rowDone ? ' is-done' : ''}`}
+                            className={`home-md-row-next${rowFull ? ' is-done' : ''}`}
                           >
-                            {rowDone
-                              ? 'Deliver'
-                              : nextGap
-                                ? pathLabel(locale, nextGap.id) || nextGap.label
-                                : '—'}
+                            {rowPack
+                              ? 'Ship'
+                              : rowFull
+                                ? 'Deliver'
+                                : nextGap
+                                  ? pathLabel(locale, nextGap.id) || nextGap.label
+                                  : '—'}
                           </span>
                         </button>
                       </li>
@@ -3454,22 +3538,24 @@ function App() {
 
               <div className="home-md-detail">
                 <p className="home-kicker">
-                  {done ? 'Done' : 'Next'}
+                  {packReady ? 'Ready' : pathFull ? 'Path full' : 'Next'}
                 </p>
                 <h2 className="home-title">
-                  {done
+                  {packReady
                     ? 'Brand book ready'
-                    : selected.nextGap
-                      ? pathLabel(locale, selected.nextGap.id) ||
-                        selected.nextGap.label
-                      : 'All caught up'}
+                    : pathFull
+                      ? 'Path steps look full'
+                      : selected.nextGap
+                        ? pathLabel(locale, selected.nextGap.id) ||
+                          selected.nextGap.label
+                        : 'All caught up'}
                 </h2>
                 <div className="home-cta-row">
                   <button
                     type="button"
                     className="btn btn-primary home-cta"
                     onClick={() => {
-                      if (done) {
+                      if (pathFull) {
                         setCurrentProject(selected.project.id)
                         setActiveView('finish')
                         return
@@ -3477,7 +3563,7 @@ function App() {
                       switchProjectAndContinue(selected.project.id)
                     }}
                   >
-                    {done ? 'Open Deliver' : 'Continue'}
+                    {pathFull ? 'Open Deliver' : 'Continue'}
                   </button>
                 </div>
 
@@ -3515,9 +3601,23 @@ function App() {
             <p className="home-eyebrow">
               {activeProject?.name || 'Project'}
             </p>
-            {pathDoneCount >= 7 ? (
+            {brandBookReady ? (
               <>
                 <h1 className="home-title">Brand book ready</h1>
+                <button
+                  type="button"
+                  className="btn btn-primary home-cta"
+                  onClick={() => setActiveView('finish')}
+                >
+                  Open Deliver
+                </button>
+              </>
+            ) : pathStepsFull ? (
+              <>
+                <h1 className="home-title">Path steps look full</h1>
+                <p className="home-kicker" style={{ marginTop: '0.5rem' }}>
+                  Pack still thin — open Deliver to fill gaps or ship anyway
+                </p>
                 <button
                   type="button"
                   className="btn btn-primary home-cta"

@@ -1,3 +1,4 @@
+/** Maps to live desk CSS classes in index.css (no Tailwind / no btn-outline). */
 export default function Button({
   children,
   variant = 'primary',
@@ -6,17 +7,14 @@ export default function Button({
   onClick,
   ...props
 }) {
-  // Base classes
-  const baseCls = 'btn';
-  const variantCls = variant === 'primary' ? 'btn-primary' : 'btn-outline';
-  const sizeMap = {
-    sm: 'btn-sm',
-    md: 'btn-md',
-    lg: 'btn-lg',
-    icon: 'btn-icon',
-    soft: 'btn-sm', // treat soft as small
-  };
-  const sizeCls = sizeMap[size] || 'btn-md';
+  const baseCls = 'btn'
+  let variantCls = 'btn-secondary'
+  if (variant === 'primary') variantCls = 'btn-primary'
+  else if (variant === 'ghost') variantCls = 'btn-ghost'
+  else if (variant === 'outline' || variant === 'secondary')
+    variantCls = 'btn-secondary'
+
+  const sizeCls = size === 'sm' || size === 'soft' ? 'btn-sm' : ''
 
   return (
     <button
@@ -27,5 +25,5 @@ export default function Button({
     >
       {children}
     </button>
-  );
+  )
 }

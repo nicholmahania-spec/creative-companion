@@ -281,7 +281,7 @@ export default function SketchView(props) {
             <div className="step-focus-actions">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-primary"
                 onClick={completeCurrentStep}
               >
                 Done

@@ -2265,6 +2265,19 @@ h3 {
   background: var(--bg-muted);
 }
 
+/* Alias used by older ui kit / FormBuilder — same as secondary */
+.btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.btn-outline:hover {
+  border-color: var(--text-primary);
+  background: var(--bg-muted);
+}
+
 /* Capture — standard form control */
 
 .capture-row {
@@ -9074,14 +9087,17 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   align-items: center;
 }
 
+/* Centered dialog (same rule as .export-overlay) — not a bottom sheet */
 .desk-confirm-banner {
   position: fixed;
   left: 50%;
-  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
   z-index: 170;
   width: min(92vw, 26rem);
   margin: 0;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
 }
 
 .app.deep .thin-pack-prompt,

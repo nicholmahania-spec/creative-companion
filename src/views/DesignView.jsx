@@ -563,10 +563,8 @@ export default function DesignView({
                 ['essentials', 'Words'],
                 ['colors', 'Color'],
                 ['type', 'Type'],
-                ['figma', 'Figma'],
                 ['logo', 'Logo'],
                 ['pins', 'Pack'],
-                ['stationery', 'Stationery'],
               ].map(([id, label]) => (
                 <button
                   key={id}
@@ -582,6 +580,34 @@ export default function DesignView({
                 </button>
               ))}
             </div>
+            <p className="panel-hint design-min-hint" style={{ margin: '0 0 0.75rem' }}>
+              Tagline, colors, or logo is enough for the path · more tools under Advanced
+            </p>
+            <details
+              className="design-advanced-tools"
+              open={brandEditSection === 'figma' || brandEditSection === 'stationery'}
+            >
+              <summary className="design-advanced-summary">Advanced · Figma &amp; stationery</summary>
+              <div className="design-advanced-tabs" role="tablist" aria-label="Advanced design tools">
+                {[
+                  ['figma', 'Figma'],
+                  ['stationery', 'Stationery'],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={brandEditSection === id}
+                    className={`system-acc-tab${
+                      brandEditSection === id ? ' is-active' : ''
+                    }`}
+                    onClick={() => setBrandEditSection(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </details>
 
             {/* 01 Essentials */}
             <section
@@ -1212,186 +1238,134 @@ export default function DesignView({
               </details>
             </section>
 
-            {/* Figma */}
+            {/* Figma — optional; colors extract is real, no fake “use design” CTA */}
             <section
               className="panel brand-section"
               hidden={brandEditSection !== 'figma'}
             >
-              <div className="brand-section-label">Figma Integration</div>
-              {(!figmaIsConfigured) && (
-                <div className="p-4 bg-yellow-50 border-l-4 border-yellow-500">
-                  <h3 className="font-semibold mb-2">Figma Not Configured</h3>
-                  <p className="mb-2">
-                    To use Figma integration, please add your Figma Client ID and Client Secret to your
-                    <code className="bg-gray-200 px-1 py-0.5 rounded">.env.local</code> file:
+              <div className="brand-section-label">Figma</div>
+              {!figmaIsConfigured ? (
+                <p className="panel-hint">
+                  Optional. Add Figma keys in{' '}
+                  <code className="field-input" style={{ display: 'inline', padding: '0.1rem 0.35rem' }}>
+                    .env.local
+                  </code>{' '}
+                  when you want color import. Until then, use the Color tab.
+                </p>
+              ) : !figmaInitialized ? (
+                <p className="panel-hint">Connecting to Figma…</p>
+              ) : !figmaAuthenticated ? (
+                <div className="field-block">
+                  <p className="panel-hint" style={{ marginBottom: '0.75rem' }}>
+                    Pull colors from a Figma file into your palette. No full-file artboard import.
                   </p>
-                  <pre className="mb-3 p-3 bg-gray-100 rounded overflow-auto text-xs">
-VITE_FIGMA_CLIENT_ID=your_client_id_here
-VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
-                  </pre>
-                  <p className="text-sm text-gray-500">
-                    Get these values from{' '}
-                    <a href="https://www.figma.com/settings" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
-                      Figma Settings → Personal Access Tokens
-                    </a>
-                  </p>
-                </div>
-              )}
-              {figmaIsConfigured && !figmaInitialized && (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                  <p className="mt-2">Initializing Figma integration...</p>
-                </div>
-              )}
-              {figmaIsConfigured && figmaInitialized && !figmaAuthenticated && (
-                <>
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-bold">Connect to Figma</h3>
-                    <p className="text-gray-600">
-                      Connect your Figma account to import designs, extract colors, and sync assets directly into your Creative Companion projects.
-                    </p>
-                    <button
-                      onClick={figmaLogin}
-                      disabled={figmaLoading}
-                      className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {figmaLoading ? (
-                        <>
-                          <div className="animate-spin h-4 w-4 border-b-2 border-white"></div>
-                          Connecting...
-                        </>
-                      ) : (
-                        'Connect to Figma'
-                      )}
-                    </button>
-                    {figmaError && (
-                      <div className="mt-3 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
-                        {figmaError}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-              {figmaIsConfigured && figmaInitialized && figmaAuthenticated && (
-                <>
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      {figmaUser?.name?.[0]?.toUpperCase() || '?'}
-                    </div>
-                    <div>
-                      <h3 className="font-medium">{figmaUser?.name || 'Connected'}</h3>
-                      <p className="text-sm text-gray-500">@{figmaUser?.handle || 'figma_user'}</p>
-                    </div>
-                  </div>
-
                   <button
-                    onClick={figmaLogout}
-                    className="w-full mb-4 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={figmaLogin}
+                    disabled={figmaLoading}
                   >
-                    Disconnect from Figma
+                    {figmaLoading ? 'Connecting…' : 'Connect to Figma'}
                   </button>
-
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-3">Import Design from Figma</h3>
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!figmaFileKey.trim()) return;
-                        importFigmaDesign();
-                      }} className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Figma File URL or ID:</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                  value={figmaFileKey}
-                  onChange={(e) => setFigmaFileKey(e.target.value)}
-                  placeholder="https://www.figma.com/file/FILE_ID/FILE-NAME or just FILE_ID"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            />
-                            {importingDesign && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                              </div>
-                            )}
-                          </div>
-                          <p className="mt-1 text-xs text-gray-500">
-                            You can paste either the full Figma URL or just the file ID (the alphanumeric code in the URL)
-                          </p>
-                        </div>
-
-                        <button
-                          type="submit"
-                          disabled={!figmaFileKey.trim() || importingDesign}
-                          className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {importingDesign ? 'Importing...' : 'Import Design'}
-                        </button>
-                      </form>
-                    </div>
-
-                    {importedColors.length > 0 && (
-                      <div className="mt-4 p-4 bg-indigo-50 border-l-4 border-indigo-500">
-                        <h3 className="font-semibold mb-3">Colors Extracted</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {importedColors.map((color, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded text-xs font-medium"
-                              style={{ backgroundColor: color, color: bestTextOn(color) }}
-                            >
-                              {color}
-                            </span>
-                          ))}
-                        </div>
-                        <button
-                          onClick={() => {
-                            // Add the first few colors to the palette
-                            const colorsToAdd = importedColors.slice(0, Math.min(8 - projectPalette.length, importedColors.length));
-                            colorsToAdd.forEach((color, index) => {
-                              const paletteIndex = projectPalette.length + index;
-                              if (paletteIndex < 8) {
-                                updatePaletteColor(paletteIndex, color);
-                              }
-                            });
-                            setImportedColors([]);
-                            setImportedDesign(null);
-                            setFigmaFileKey('');
-                          }}
-                          className="mt-3 w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-                        >
-                          Add Colors to Palette
-                        </button>
-                      </div>
-                    )}
-
-                    {importedDesign && (
-                      <div className="mt-4 p-4 bg-green-50 border-l-4 border-green-500">
-                        <h3 className="font-semibold mb-3">Design Imported</h3>
-                        <div className="space-y-3">
-                          <div>
-                            <span className="font-medium">File:</span> {importedDesign.file?.name}
-                          </div>
-                          <div>
-                            <span className="font-medium">Imported at:</span> {new Date(importedDesign.metadata?.importedAt || Date.now()).toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="mt-3">
-                          <button
-                            onClick={() => {
-                              // This would typically trigger a more complex import process
-                              // For now, we'll just show a message
-                              alert('Design import functionality would be implemented here in a full version');
+                  {figmaError ? (
+                    <p className="panel-hint" role="alert" style={{ marginTop: '0.5rem' }}>
+                      {figmaError}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="field-block">
+                  <p className="panel-hint" style={{ marginBottom: '0.5rem' }}>
+                    {figmaUser?.name || 'Connected'}
+                    {figmaUser?.handle ? ` · @${figmaUser.handle}` : ''}
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={figmaLogout}
+                    style={{ marginBottom: '0.75rem' }}
+                  >
+                    Disconnect
+                  </button>
+                  <label className="field-label" htmlFor="figma-file-key">
+                    Figma file URL or ID
+                  </label>
+                  <input
+                    id="figma-file-key"
+                    type="text"
+                    className="field-input"
+                    value={figmaFileKey}
+                    onChange={(e) => setFigmaFileKey(e.target.value)}
+                    placeholder="figma.com/file/… or FILE_ID"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ marginTop: '0.5rem' }}
+                    disabled={!figmaFileKey.trim() || importingDesign}
+                    onClick={() => {
+                      if (!figmaFileKey.trim()) return
+                      importFigmaDesign()
+                    }}
+                  >
+                    {importingDesign ? 'Extracting colors…' : 'Extract colors'}
+                  </button>
+                  {importedColors.length > 0 ? (
+                    <div style={{ marginTop: '1rem' }}>
+                      <p className="field-label">Colors found</p>
+                      <div className="flex flex-wrap gap-2" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                        {importedColors.map((color, index) => (
+                          <span
+                            key={`${color}-${index}`}
+                            className="palette-pass-chip"
+                            style={{
+                              backgroundColor: color,
+                              color: bestTextOn(color),
+                              display: 'inline-flex',
+                              minWidth: '2rem',
+                              minHeight: '2rem',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.65rem',
+                              padding: '0.2rem',
                             }}
-                            className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                            title={color}
                           >
-                            Use Imported Design
-                          </button>
-                        </div>
+                            {String(color).slice(0, 7)}
+                          </span>
+                        ))}
                       </div>
-                    )}
-                  </div>
-                </>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        style={{ marginTop: '0.75rem' }}
+                        onClick={() => {
+                          const colorsToAdd = importedColors.slice(
+                            0,
+                            Math.min(8 - projectPalette.length, importedColors.length)
+                          )
+                          colorsToAdd.forEach((color, index) => {
+                            const paletteIndex = projectPalette.length + index
+                            if (paletteIndex < 8) {
+                              updatePaletteColor(paletteIndex, color)
+                            }
+                          })
+                          setImportedColors([])
+                          setImportedDesign(null)
+                          setFigmaFileKey('')
+                          flashMicro?.('Colors added to palette')
+                        }}
+                      >
+                        Add colors to palette
+                      </button>
+                    </div>
+                  ) : null}
+                  {importedDesign?.file?.name && importedColors.length === 0 ? (
+                    <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
+                      Loaded {importedDesign.file.name} — no colors extracted. Try another file or add colors by hand.
+                    </p>
+                  ) : null}
+                </div>
               )}
             </section>
 

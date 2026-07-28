@@ -305,7 +305,7 @@ export default function SparkView({
             <button
               type="button"
               onClick={useSparkAsTitle}
-              className="btn btn-primary"
+              className="btn btn-secondary"
             >
               Use as next empty title
             </button>
@@ -342,11 +342,7 @@ export default function SparkView({
           disabled={!canSend}
           aria-describedby="ideate-send-help"
         >
-          {canSend
-            ? `Send · Sketch`
-            : tFormat(locale, 'ui.continueNext', {
-                label: pathLabel(locale, 'sketch') || 'Sketch',
-              })}
+          {canSend ? `Send · Sketch` : 'Choose A/B/C first'}
         </button>
         <p
           id="ideate-send-help"
