@@ -384,24 +384,6 @@ export function spectrumChoices(poles = []) {
  * @param {unknown} raw
  * @returns {string}
  */
-/**
- * Map a 0–100 (or 0–1) spectrum slider value onto the five worded tokens.
- * Legacy projects stored numbers; the UI now stores tokens. Both must export
- * as human labels — never raw "42".
- */
-export function spectrumTokenFromNumeric(raw) {
-  const n = Number(raw)
-  if (!Number.isFinite(n)) return null
-  // 0–1 float → 0–100
-  const pct = n > 0 && n <= 1 ? n * 100 : n
-  if (pct < 0 || pct > 100) return null
-  if (pct <= 15) return 'a'
-  if (pct <= 35) return 'mostly-a'
-  if (pct <= 65) return 'balanced'
-  if (pct <= 85) return 'mostly-b'
-  return 'b'
-}
-
 export function formatDetectiveAnswer(field, raw) {
   if (raw == null) return ''
   if (Array.isArray(raw)) {
@@ -417,15 +399,8 @@ export function formatDetectiveAnswer(field, raw) {
   const s = String(raw).trim()
   if (!s) return ''
   if (field?.type === 'spectrum') {
-    const choices = spectrumChoices(field.poles || [])
-    const hit = choices.find((c) => c.value === s)
+    const hit = spectrumChoices(field.poles || []).find((c) => c.value === s)
     if (hit) return hit.label
-    // Legacy numeric sliders (0–100 or 0–1)
-    const token = spectrumTokenFromNumeric(raw)
-    if (token) {
-      const mapped = choices.find((c) => c.value === token)
-      if (mapped) return mapped.label
-    }
   }
   if ((field?.type === 'choice' || field?.type === 'select') && field.options) {
     const hit = field.options.find((o) => o.id === s || o.value === s)
@@ -436,75 +411,22 @@ export function formatDetectiveAnswer(field, raw) {
 
 /**
  * Filled detective chapters for export (labels + human answers only).
- * Never includes tips/placeholders — those are form chrome, not content.
+ * `tip` carries the field's worked example — the Agreed Brief PDF section
+ * renders it as the example line beneath the question, per the "a question
+ * is never asked bare" pattern (see todo.md's brief-PDF reference notes).
  * @param {Record<string, unknown>} detective
- * @returns {Array<{ num: string, title: string, rows: Array<{ id: string, label: string, answer: string }> }>}
+ * @returns {Array<{ num: string, title: string, rows: Array<{ label: string, answer: string, tip: string }> }>}
  */
 export function filledDetectiveChapters(detective = {}) {
   return DETECTIVE_CHAPTERS.map((ch) => {
     const rows = (ch.fields || [])
       .map((f) => {
         const answer = formatDetectiveAnswer(f, detective?.[f.id])
-        return answer ? { id: f.id, label: f.label, answer } : null
+        return answer ? { label: f.label, answer, tip: f.tip || '' } : null
       })
       .filter(Boolean)
     return rows.length ? { num: ch.num, title: ch.title, rows } : null
   }).filter(Boolean)
-}
-
-/** Fields worth a leave-behind highlight — strategy signal, not admin contact. */
-const BRIEF_HIGHLIGHT_IDS = [
-  'goal',
-  'audience',
-  'feel',
-  'brandWords',
-  'brandAsPerson',
-  'usp',
-  'toneOfVoice',
-  'competitors',
-  'audiencePains',
-  'inspirationLinks',
-  'avoid',
-  'spectrumModernTraditional',
-  'spectrumPlayfulProfessional',
-  'spectrumHighEndAffordable',
-  'spectrumBoldMinimalist',
-]
-
-/**
- * Compact strategy highlights for the brand book (not a form dump).
- * @param {Record<string, unknown>} detective
- * @param {number} [limit=6]
- * @returns {Array<{ label: string, answer: string }>}
- */
-export function briefHighlightsForPack(detective = {}, limit = 6) {
-  const all = filledDetectiveChapters(detective).flatMap((ch) => ch.rows)
-  const byId = new Map(all.map((r) => [r.id, r]))
-  const picked = []
-  for (const id of BRIEF_HIGHLIGHT_IDS) {
-    const row = byId.get(id)
-    if (row) picked.push({ label: row.label, answer: row.answer })
-    if (picked.length >= limit) break
-  }
-  // If strategy fields empty, fall back to non-contact filled rows
-  if (!picked.length) {
-    const skip = new Set([
-      'clientName',
-      'primaryContact',
-      'clientEmail',
-      'clientPhone',
-      'budgetRange',
-      'projectDeadline',
-      'engagementType',
-      'decisionMakers',
-    ])
-    for (const row of all) {
-      if (skip.has(row.id)) continue
-      picked.push({ label: row.label, answer: row.answer })
-      if (picked.length >= limit) break
-    }
-  }
-  return picked
 }
 
 /**

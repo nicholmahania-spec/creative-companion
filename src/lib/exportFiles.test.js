@@ -325,95 +325,19 @@ describe('downloadBrandPackVectorPdf quality', () => {
       returnBlobOnly: true,
     })
     expect(result.ok).toBe(true)
-    // Thin pack: cover + direction + logo + color + type + apps + handoff
-    // (no multi-page form dump of the detective brief)
+    // Thin pack: cover + positioning (+ optional brief) + color + type + logo + card
+    // (no empty overview / previous / usage / imagery filler pages)
     expect(result.pages).toBeGreaterThanOrEqual(6)
-    expect(result.pages).toBeLessThanOrEqual(9)
+    expect(result.pages).toBeLessThanOrEqual(8)
 
     const buf = Buffer.from(await result.blob.arrayBuffer())
     const text = buf.toString('latin1')
     // Never invent placeholder contact on the business-card specimen
     expect(text).not.toMatch(/hello@brand\.example/)
     expect(text).not.toMatch(/you@example\.com/)
-    // Never dump the questionnaire chrome as content
-    expect(text).not.toMatch(/The answers that shaped this system/)
-    expect(text).not.toMatch(/e\.g\. Trading name is fine/)
   })
 
-  it('Harbor-style pack stays application-first with human spectrum labels', async () => {
-    // Tiny 1×1 PNG so Node can embed without a DOM canvas
-    const tinyPng =
-      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
-    const pack = buildBrandPackSnapshot({
-      project: {
-        name: 'Harbor & Hearth Co.',
-        tagline: 'Brew slow. Bring home.',
-        palette: ['#1B3A2F', '#C4A574', '#E8DCC8', '#F7F3EC'],
-        colorRoles: {
-          cover: '#1B3A2F',
-          text: '#1B3A2F',
-          accent: '#C4A574',
-          quiet: '#F7F3EC',
-        },
-        typeHeading: 'Fraunces SemiBold',
-        typeBody: 'Source Serif 4 Regular',
-        voice: 'Warm, plain, unhurried.',
-        doUse: 'Deep green + soft gold',
-        dontUse: 'Neon gradients',
-        logoWordmark: 'Harbor & Hearth',
-        logoImage: tinyPng,
-        detective: {
-          clientName: 'Harbor & Hearth Co.',
-          clientEmail: 'maya@harborandhearth.example',
-          goal: 'Look like a neighborhood staple',
-          audience: 'Adults who cook at home',
-          spectrumModernTraditional: 42,
-          spectrumPlayfulProfessional: 55,
-          spectrumHighEndAffordable: 48,
-          spectrumBoldMinimalist: 68,
-        },
-        imageryStyle: 'Morning window light',
-      },
-      tasks: [],
-      moodItems: [
-        {
-          id: 1,
-          type: 'image',
-          note: 'Morning counter',
-          visual: tinyPng,
-          inPack: true,
-          packHero: true,
-        },
-        {
-          id: 2,
-          type: 'color',
-          note: 'Cover green field',
-          visual: '#1B3A2F',
-          inPack: true,
-        },
-      ],
-    })
-
-    const result = await downloadBrandPackVectorPdf(pack, null, {
-      returnBlobOnly: true,
-    })
-    expect(result.ok).toBe(true)
-    // Application deck + optional usage/imagery — never a 14p form dump
-    expect(result.pages).toBeLessThanOrEqual(11)
-    expect(result.pages).toBeGreaterThanOrEqual(7)
-
-    const buf = Buffer.from(await result.blob.arrayBuffer())
-    const text = buf.toString('latin1')
-    expect(text).not.toMatch(/The answers that shaped/)
-    expect(text).not.toMatch(/e\.g\. Trading name/)
-    // Spectrum numbers must not appear as answers
-    expect(text).not.toMatch(/\n\s*42\s*\n/)
-    expect(text).not.toMatch(/\n\s*68\s*\n/)
-    // Contact tip chrome never ships
-    expect(text).not.toMatch(/Full agreed brief/)
-  })
-
-  it('ships strategy highlights — not a tip-filled questionnaire dump', async () => {
+  it('renders the agreed-brief section with question, tip, and answer', async () => {
     const pack = buildBrandPackSnapshot({
       project: {
         name: 'Harbor & Hearth',
@@ -430,9 +354,7 @@ describe('downloadBrandPackVectorPdf quality', () => {
         designVersion: 'v1',
         detective: {
           clientName: 'Harbor & Hearth Co.',
-          clientEmail: 'maya@harborandhearth.example',
           goal: 'Look like a neighborhood staple, not a trend cafe.',
-          audience: 'Adults who cook at home',
         },
       },
       tasks: [],
@@ -443,10 +365,10 @@ describe('downloadBrandPackVectorPdf quality', () => {
       returnBlobOnly: true,
     })
     expect(result.ok).toBe(true)
-    // Application deck stays lean — no multi-page form dump
-    expect(result.pages).toBeLessThanOrEqual(10)
 
-    // Content streams are compressed — parse the text layer for presence
+    // The pack's content streams are compressed (jsPDF `compress: true`), so
+    // raw byte-matching can only prove absence, not presence — parse the
+    // actual text layer instead.
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
     const buf = new Uint8Array(await result.blob.arrayBuffer())
     const doc = await pdfjs.getDocument({ data: buf }).promise
@@ -457,14 +379,15 @@ describe('downloadBrandPackVectorPdf quality', () => {
       fullText += content.items.map((it) => it.str).join(' ') + '\n'
     }
 
-    // Strategy signal ships
-    expect(fullText).toMatch(/neighborhood staple/)
-    // Form chrome does not
-    expect(fullText).not.toMatch(/The answers that shaped this system/)
-    expect(fullText).not.toMatch(/Trading name is fine/)
-    expect(fullText).not.toMatch(/Full agreed brief/)
-    // Contact admin fields stay out of the leave-behind highlights
-    expect(fullText).not.toMatch(/maya@harborandhearth\.example/)
+    expect(fullText).toMatch(/Agreed brief/)
+    // The field label (question) and its worked-example tip both render —
+    // a question is never asked bare, per the reference-brief pattern.
+    expect(fullText).toMatch(/Business name/)
+    expect(fullText).toMatch(/Trading name is fine/)
+    // The answer itself renders in its own box, not just echoed as the tip.
+    expect(fullText).toMatch(/Harbor & Hearth Co\./)
+    // Handoff points at the section instead of duplicating it.
+    expect(fullText).toMatch(/Full agreed brief/)
   })
 })
 

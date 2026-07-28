@@ -4,8 +4,7 @@
  */
 import zlib from 'node:zlib'
 import { writeFileSync, readFileSync } from 'node:fs'
-// PDF generation needs Vitest's resolver (extensionless imports). Workspace
-// assets always write; PDF is best-effort when the app graph loads.
+import { buildBrandPackSnapshot, downloadBrandPackVectorPdf } from '../src/lib/exportFiles.js'
 
 function crc32(buf) {
   let c = ~0
@@ -73,68 +72,20 @@ const gold = hex('#C4A574')
 const green = hex('#1B3A2F')
 const linen = hex('#F7F3EC')
 
-/** Tiny 5×7 glyph bitmaps for H and ampersand-like mark */
-function glyphOn(ch, gx, gy) {
-  // gx,gy in 0..4 / 0..6
-  const H = [
-    '1...1',
-    '1...1',
-    '1...1',
-    '11111',
-    '1...1',
-    '1...1',
-    '1...1',
-  ]
-  const AMP = [
-    '.11..',
-    '1..1.',
-    '1.1..',
-    '.1...',
-    '1.1.1',
-    '1..1.',
-    '.11.1',
-  ]
-  const rows = ch === 'H' ? H : AMP
-  if (gy < 0 || gy >= rows.length || gx < 0 || gx >= 5) return false
-  return rows[gy][gx] === '1'
-}
-
-// Solid mark: cream disc + deep green ring + gold arc + H& initials.
-// Opaque so it reads on cover green, cream lockups, and gold fields.
+// Transparent mark: cream ring + gold arc (reads on cream, green, gold fields)
 const logo = pngRGBA(256, 256, (x, y) => {
   const cx = 128
-  const cy = 124
+  const cy = 120
   const dx = x - cx
   const dy = y - cy
   const dist = Math.hypot(dx, dy)
-  if (dist > 86) return [0, 0, 0, 0]
-  // Outer cream ring
-  if (dist > 78) return [...cream, 255]
-  // Deep green body
-  if (dist > 62) return [...green, 255]
-  // Gold lower arc (harbor line)
-  const arcCy = cy + 26
-  const ad = Math.hypot(x - cx, (y - arcCy) * 1.05)
-  if (y > cy + 10 && Math.abs(ad - 46) < 5.5 && Math.abs(x - cx) < 48) {
+  if (Math.abs(dist - 52) < 6.5) return [...cream, 255]
+  const arcCy = cy + 28
+  const ad = Math.hypot(x - cx, (y - arcCy) * 1.15)
+  if (y > cy + 8 && Math.abs(ad - 58) < 5.5 && Math.abs(x - cx) < 58) {
     return [...gold, 255]
   }
-  // Cream letter plate
-  let ink = cream
-  // Draw H (left) and & (right) in deep green
-  const cell = 7
-  // H origin
-  const h0x = cx - 38
-  const h0y = cy - 28
-  const gxH = Math.floor((x - h0x) / cell)
-  const gyH = Math.floor((y - h0y) / cell)
-  if (glyphOn('H', gxH, gyH)) ink = green
-  // & origin
-  const a0x = cx + 4
-  const a0y = cy - 28
-  const gxA = Math.floor((x - a0x) / cell)
-  const gyA = Math.floor((y - a0y) / cell)
-  if (glyphOn('&', gxA, gyA)) ink = green
-  return [...ink, 255]
+  return [0, 0, 0, 0]
 })
 
 function pinPhoto(bgA, bgB, accent) {
@@ -213,25 +164,6 @@ const ws = JSON.parse(
   )
 )
 ws.projects[0].logoImage = logo
-// Legacy numeric spectrums → worded tokens (never export raw 42/55/…)
-const mapSpectrum = (n) => {
-  if (typeof n !== 'number') return n
-  if (n <= 15) return 'a'
-  if (n <= 35) return 'mostly-a'
-  if (n <= 65) return 'balanced'
-  if (n <= 85) return 'mostly-b'
-  return 'b'
-}
-const det = ws.projects[0].detective || {}
-for (const k of [
-  'spectrumModernTraditional',
-  'spectrumPlayfulProfessional',
-  'spectrumHighEndAffordable',
-  'spectrumBoldMinimalist',
-]) {
-  if (typeof det[k] === 'number') det[k] = mapSpectrum(det[k])
-}
-ws.projects[0].detective = det
 ws.moodItems = pinDefs.map((p) => ({
   id: p.id,
   projectId: 9101,
@@ -249,29 +181,18 @@ const outPath = new URL(
 writeFileSync(outPath, JSON.stringify(ws, null, 2))
 console.log('wrote workspace', outPath.pathname)
 
-// Optional PDF: only when import graph resolves (e.g. vitest, or after build).
-try {
-  const { buildBrandPackSnapshot, downloadBrandPackVectorPdf } = await import(
-    '../src/lib/exportFiles.js'
-  )
-  const project = ws.projects[0]
-  const pack = buildBrandPackSnapshot({
-    project,
-    tasks: ws.tasks,
-    moodItems: ws.moodItems,
-  })
-  const r = await downloadBrandPackVectorPdf(pack, null, { returnBlobOnly: true })
-  if (!r.ok) {
-    console.warn('PDF skipped:', r.error || r)
-  } else {
-    const buf = Buffer.from(await r.blob.arrayBuffer())
-    const dest = '/Users/macadmin/Downloads/harbor-hearth-brand-book.pdf'
-    writeFileSync(dest, buf)
-    console.log('pages', r.pages, 'bytes', buf.length, '→', dest)
-  }
-} catch (e) {
-  console.log(
-    'Workspace written. PDF export needs the app (npm test / browser) —',
-    e?.message || e
-  )
+const project = ws.projects[0]
+const pack = buildBrandPackSnapshot({
+  project,
+  tasks: ws.tasks,
+  moodItems: ws.moodItems,
+})
+const r = await downloadBrandPackVectorPdf(pack, null, { returnBlobOnly: true })
+if (!r.ok) {
+  console.error(r)
+  process.exit(1)
 }
+const buf = Buffer.from(await r.blob.arrayBuffer())
+const dest = '/Users/macadmin/Downloads/harbor-hearth-brand-book.pdf'
+writeFileSync(dest, buf)
+console.log('pages', r.pages, 'bytes', buf.length, '→', dest)
