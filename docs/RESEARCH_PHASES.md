@@ -19,7 +19,7 @@
 | 3 | Scope and revisions | **DONE** — migration applied |
 | 4 | Touchpoints becomes real | **DONE** |
 | 5 | Contract | not started |
-| 6 | Case study export | not started |
+| 6 | Case study export | **DONE** |
 | 7 | Craft lenses | not started |
 
 ---
@@ -177,14 +177,39 @@ See also the separately-scoped **Dropbox Sign** e-signature flow in `todo.md`
 ("Client contract signing before work begins"), which is the sending half of
 this and is blocked on an owner-created API key.
 
-### Phase 6 — Case study export
+### Phase 6 — Case study export — DONE
 
 Item 28 — *"the strongest thing in all 44 links."* The portfolio article says
-curate 3–6 case studies and always share your process, answering five
-questions. The app already holds every answer: purpose from `goal`, how from
-`decisionLog`, **how long from `workLog`** (the private work clock), outcome
-from the pack. Nobody else can generate this because nobody else recorded the
-hours.
+curate 3–6 case studies and **always share your process**, answering five
+questions. The app already holds every answer, which is the whole argument for
+building it here rather than writing case studies from memory months later:
+
+| question | source |
+|---|---|
+| Why it existed | the brief's `goal` |
+| What you made | `deliverablesPicked` |
+| How you got there | `decisionLog` — the real "we chose B because…" record |
+| How long it took | `workLog`, the private work clock |
+| How it turned out | `learnings` / `handoffNote` |
+
+`src/lib/caseStudy.js` assembles it, `CaseStudyExport` sits closed on Deliver
+— after the Learned field, since that feeds the outcome section and offering
+the export above it would ask for the story before its last line was written.
+Exports markdown, because the destination is someone else's site or deck.
+
+**It never publishes an hour count, and that is deliberate.** `workLog` was
+split from `timeLog` specifically so a measured minute could not become a
+claim made to another person; a case study is read by prospective clients, so
+a total in one turns the private record into exactly that claim and hands the
+reader a number to divide the fee by. It reports a **span** ("2 weeks, across
+3 working days") and **relative shares** ("design — 80%") instead. Both are
+asserted, including `not.toMatch(/\bhours\b/)` on the rendered markdown.
+
+Every section is omitted when it cannot be filled, and the panel names what
+will be missing before you export — including saying plainly when the reason
+is that the clock never ran. `curateCaseStudies` returns the best-told 3–6 for
+a portfolio, ranked by how much of the story the project can actually tell
+rather than by recency.
 
 ### Phase 7 — Craft lenses
 

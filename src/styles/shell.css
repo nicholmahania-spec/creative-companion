@@ -7886,6 +7886,48 @@ select:focus {
   margin-top: 0.85rem;
 }
 
+/* Case study export — Deliver */
+
+.deliver-case-study {
+  margin: 0.6rem 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--ts-border, var(--border-subtle));
+}
+.deliver-case-study > summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.case-study-answers {
+  list-style: none;
+  margin: 0.4rem 0 0.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.case-study-answers li {
+  display: grid;
+  grid-template-columns: 9.5rem 1fr;
+  gap: 0.5rem;
+  font-size: 0.79rem;
+}
+.case-study-q {
+  color: var(--text-secondary);
+}
+.case-study-gaps {
+  margin-bottom: 0.5rem;
+}
+@media (max-width: 560px) {
+  .case-study-answers li {
+    grid-template-columns: 1fr;
+    gap: 0.05rem;
+  }
+}
+
 /* Layout patterns — closed reference in Sketch */
 
 .layout-scan-row {
