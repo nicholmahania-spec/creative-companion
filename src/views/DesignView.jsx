@@ -90,41 +90,6 @@ export default function DesignView({
   const [selectedVersion, setSelectedVersion] = useState(null)
   const [diffResult, setDiffResult] = useState(null)
   const [loadingDiff, setLoadingDiff] = useState(false)
-  // Share dialog state
-  const [showShareDialog, setShowShareDialog] = useState(false)
-  const [permission, setPermission] = useState('view')
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviting, setInviting] = useState(false)
-  const [invitedEmail, setInvitedEmail] = useState('')
-  const [emailError, setEmailError] = useState('')
-  const [sharing, setSharing] = useState(false)
-
-  const handleShare = async () => {
-    setSharing(true)
-    try {
-      await new Promise(r => setTimeout(r, 500))
-      flashToast?.('Design shared successfully')
-      setShowShareDialog(false)
-    } finally {
-      setSharing(false)
-    }
-  }
-
-  const inviteViaEmail = async () => {
-    if (!inviteEmail || !/\S+@\S+\.\S+/.test(inviteEmail)) {
-      setEmailError('Please enter a valid email address')
-      return
-    }
-    setEmailError('')
-    setInviting(true)
-    try {
-      await new Promise(r => setTimeout(r, 500))
-      setInvitedEmail(inviteEmail)
-      setInviteEmail('')
-    } finally {
-      setInviting(false)
-    }
-  }
 
   // Template management state
   const [templates, setTemplates] = useState([])
@@ -531,13 +496,6 @@ export default function DesignView({
                 <h1 className="page-title">
                   {i18nT(locale, 'path.design')}
                 </h1>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setActiveView('design-focus')}
-                >
-                  Try Focus Mode (beta)
-                </button>
                 <p className="page-sub">
                   {activeProject?.name || 'Project'}
                   {' · ★'}
@@ -583,16 +541,6 @@ export default function DesignView({
                     }}
                   >
                     History
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    title="Share design"
-                    onClick={() => {
-                      setShowShareDialog(true)
-                    }}
-                  >
-                    Share
                   </button>
                   <button
                     type="button"
@@ -2071,118 +2019,6 @@ VITE_FIGMA_CLIENT_SECRET=your_client_secret_here
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Share Dialog */}
-          {showShareDialog && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-              <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <h2 className="text-xl font-bold text-color-primary">Share Design</h2>
-                    <p className="text-color-muted">
-                      Share your design with teammates or clients to collaborate or review.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="bg-gray-50 rounded-lg p-4 border">
-                      <div className="flex items-center space-x-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
-                        <div>
-                          <p className="font-medium text-color-primary shareable-link" id="shareable-link">
-                            https://designcompanion.com/projects/{activeProject?.id || '123abc'}
-                          </p>
-                          <button
-                            onClick={() => {
-                              const el = document.getElementById('shareable-link')
-                              navigator.clipboard?.writeText(el?.textContent?.trim() || '')
-                            }}
-                            className="ml-auto text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            Copy Link
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <p className="font-medium text-color-primary">Permission Settings</p>
-                    <div className="space-y-2">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="permission"
-                          value="view"
-                          checked={permission === 'view'}
-                          onChange={(e) => setPermission(e.target.value)}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-2">View only</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="permission"
-                          value="edit"
-                          checked={permission === 'edit'}
-                          onChange={(e) => setPermission(e.target.value)}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-2">Can edit</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {emailError && (
-                    <p className="text-sm text-red-600">{emailError}</p>
-                  )}
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="email"
-                      placeholder="Enter email address"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                    </input>
-                    <button
-                      onClick={inviteViaEmail}
-                      disabled={!inviteEmail || inviting}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {inviting ? 'Inviting...' : 'Invite'}
-                    </button>
-                  </div>
-
-                  {invitedEmail && (
-                    <p className="text-sm text-green-600 mt-2">
-                      Invitation sent to {invitedEmail}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => setShowShareDialog(false)}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-                  >
-                    Close
-                  </button>
-                  <button
-                    onClick={handleShare}
-                    disabled={sharing}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {sharing ? 'Sharing...' : 'Share Design'}
-                  </button>
                 </div>
               </div>
             </div>

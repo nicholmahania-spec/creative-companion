@@ -72,10 +72,10 @@ export function pathStepHasContent(stepId, ctx = {}) {
       return mood.length >= 2
     }
     case 'ideate': {
-      // Honest fill: a direction needs both a title AND a why, not either —
-      // matches the "no judging without a reason" copy on this step.
-      const hasDirection = (project.directions || []).some(
-        (d) => String(d.title || '').trim() && String(d.note || '').trim()
+      // Align with Send · Sketch (title + choose) and the UI: why is optional.
+      // Rough list, a titled direction, or a spark pin all count as real work.
+      const hasDirection = (project.directions || []).some((d) =>
+        String(d.title || '').trim()
       )
       const hasSparkPin = mood.some(
         (m) =>
@@ -83,14 +83,15 @@ export function pathStepHasContent(stepId, ctx = {}) {
           m.fromSpark === true ||
           (m.type === 'quote' && m.fromSpark)
       )
-      return !!(hasDirection || hasSparkPin)
+      const hasRough = (project.roughIdeas || []).some((r) =>
+        String(typeof r === 'string' ? r : r?.text || r?.title || '').trim()
+      )
+      return !!(hasDirection || hasSparkPin || hasRough)
     }
     case 'sketch': {
-      if (!tasks.length) return false
-      // "Each draft needs one short why" is the step's own stated rule —
-      // any still-active (not completed) task must have it filled.
-      const active = tasks.filter((t) => !t.completed)
-      return active.every((t) => String(t.why || '').trim())
+      // Align with "Write one step" fill hint — one task is enough.
+      // Why stays a helpful field, not a silent N/7 gate.
+      return tasks.length >= 1
     }
     case 'design': {
       // Craft signals only — stock default palette alone does not count
@@ -225,7 +226,7 @@ export function pathGapFocusSelector(stepId) {
 export const PATH_FILL_HINTS = {
   define: 'Business name, goal, who it’s for, and what you need made',
   research: 'Star a picture ★ or add 2+ refs',
-  ideate: 'A/B/C title or save an idea note',
+  ideate: 'Title a direction, dump a rough idea, or pin a spark',
   sketch: 'Write one step you can finish',
   design: 'Tagline, voice, logo, or your own colors',
   review: 'Feedback notes or a starred picture',

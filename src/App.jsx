@@ -1150,26 +1150,49 @@ function App() {
   const workRunning =
     STAGE_VIEWS.includes(String(activeView || '')) && !workIdle && !forcedBreak
 
-  /** Bank the stretch that just ended. Called on idle, on stopping, and on
-   *  leaving — anywhere the clock stops for any reason. */
+  /** Last path stage while the work clock was running (view id). */
+  const workStageRef = useRef(
+    STAGE_VIEWS.includes(String(activeView || '')) ? activeView : null
+  )
+
+  /** Bank the stretch that just ended. Called on idle, on stopping, stage
+   *  change, and leaving — anywhere the clock stops for any reason.
+   *  Tags the path page you were on — never sticky `timerFocusSource`
+   *  (that is Timer return UX only) and never off-path tools views. */
   const bankWorkSegment = useCallback(
-    (endedAt = Date.now()) => {
+    (endedAt = Date.now(), stageOverride) => {
       const started = workSegmentStartRef.current
       workSegmentStartRef.current = null
       if (!started) return
-      logWorkedTime?.(activeProjectId, timerFocusSource || activeView, endedAt - started)
+      const stage = stageOverride ?? workStageRef.current ?? activeView
+      if (!STAGE_VIEWS.includes(String(stage || ''))) return
+      logWorkedTime?.(activeProjectId, stage, endedAt - started)
     },
-    [logWorkedTime, activeProjectId, timerFocusSource, activeView]
+    [logWorkedTime, activeProjectId, activeView, STAGE_VIEWS]
   )
 
   /** Open a stretch when the clock starts, bank it when it stops. */
   useEffect(() => {
     if (workRunning) {
-      if (!workSegmentStartRef.current) workSegmentStartRef.current = Date.now()
+      if (!workSegmentStartRef.current) {
+        workSegmentStartRef.current = Date.now()
+        workStageRef.current = activeView
+      }
     } else {
       bankWorkSegment()
     }
-  }, [workRunning, bankWorkSegment])
+  }, [workRunning, bankWorkSegment, activeView])
+
+  /** Split the bank when the user moves to another path stage while working. */
+  useEffect(() => {
+    if (!workRunning) return
+    const prev = workStageRef.current
+    if (prev && prev !== activeView && workSegmentStartRef.current) {
+      bankWorkSegment(Date.now(), prev)
+      workSegmentStartRef.current = Date.now()
+    }
+    workStageRef.current = activeView
+  }, [activeView, workRunning, bankWorkSegment])
 
   /** One second per second, for as long as you are working. Its own interval,
    *  not the Pomodoro's — that one dies at zero and takes the record with it. */

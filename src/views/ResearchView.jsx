@@ -271,10 +271,9 @@ export default function ResearchView({
    * The timer is a tool for time blindness and stays a deliberate act — the
    * ⏱ button, pressed on purpose. Only the source is claimed here, so the
    * clock knows which stage to bill. */
-  useEffect(() => {
-    setTimerFocusSource?.('research')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  /* Research ⏱ button sets source deliberately. Do not claim 'research' on
+     every mount — sticky source used to mis-tag work-log hours on other stages.
+     Work clock banks activeView only (App.jsx). */
 
   /* Only offer "Take photo" where a camera actually exists. `capture` is
      ignored by desktop browsers, which would silently turn the button into a

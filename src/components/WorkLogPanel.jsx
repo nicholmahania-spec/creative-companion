@@ -10,13 +10,15 @@
 import { useMemo, useState } from 'react'
 import { JOURNEY_STEPS } from '../lib/journey'
 
-const VIEW_TO_LABEL = Object.fromEntries(
-  JOURNEY_STEPS.map((s) => [s.view, s.label])
-)
+/** Labels for both journey view ids (`studio`) and step ids (`research`). */
+const STAGE_TO_LABEL = Object.fromEntries([
+  ...JOURNEY_STEPS.map((s) => [s.view, s.label]),
+  ...JOURNEY_STEPS.map((s) => [s.id, s.label]),
+])
 
 function stageLabel(stage) {
   if (!stage) return 'Work'
-  return VIEW_TO_LABEL[stage] || stage
+  return STAGE_TO_LABEL[stage] || stage
 }
 
 export function WorkLogPanel({ open, onClose, workLog = [], onRemoveEntry }) {

@@ -149,13 +149,6 @@ export default function SparkView({
         <div className="ideate-top-text">
           <h1 className="page-title">{title}</h1>
         </div>
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm"
-          onClick={() => setActiveView('ideate-focus')}
-        >
-          Focus mode
-        </button>
       </div>
       <div className="ideate-meta">
         <p className="ideate-progress" role="status">

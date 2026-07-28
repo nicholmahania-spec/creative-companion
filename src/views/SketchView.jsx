@@ -141,16 +141,6 @@ export default function SketchView(props) {
           <h1 className="page-title work-page-title">
             {i18nT(locale, 'path.sketch')}
           </h1>
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => {
-              setActiveView('sketch-focus')
-              trackFeatureUsage('sketch_focus_mode', 'opened')
-            }}
-          >
-            Try Focus Mode (beta)
-          </button>
           <p className="work-context-line">
             <strong>{activeProject?.name || 'Project'}</strong>
             {projectDeadline ? ` · ${formatShortDate(projectDeadline)}` : ''}

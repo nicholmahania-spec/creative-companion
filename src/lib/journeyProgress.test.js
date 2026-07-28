@@ -57,12 +57,22 @@ describe('pathStepHasContent', () => {
     ).toBe(true)
   })
 
-  it('ideate needs direction title or spark pin — not bare sparkIndex', () => {
+  it('ideate needs titled direction, rough idea, or spark pin — not bare sparkIndex', () => {
     expect(pathStepHasContent('ideate', { sparkIndex: 0 })).toBe(false)
     expect(pathStepHasContent('ideate', { sparkIndex: 5 })).toBe(false)
     expect(
       pathStepHasContent('ideate', {
-        project: { directions: [{ title: 'Quiet', note: 'Fits the goal' }] },
+        project: { directions: [{ title: 'Quiet' }] },
+      })
+    ).toBe(true)
+    expect(
+      pathStepHasContent('ideate', {
+        project: { directions: [{ title: '', note: 'why only' }] },
+      })
+    ).toBe(false)
+    expect(
+      pathStepHasContent('ideate', {
+        project: { roughIdeas: ['messy dump'] },
       })
     ).toBe(true)
     expect(
@@ -73,6 +83,20 @@ describe('pathStepHasContent', () => {
     expect(
       pathStepHasContent('ideate', {
         moodItems: [{ type: 'spark', note: 'A spark', fromSpark: true }],
+      })
+    ).toBe(true)
+  })
+
+  it('sketch needs any task — why is optional for path done', () => {
+    expect(pathStepHasContent('sketch', { tasks: [] })).toBe(false)
+    expect(
+      pathStepHasContent('sketch', {
+        tasks: [{ id: 1, title: 'Draft logo', why: '' }],
+      })
+    ).toBe(true)
+    expect(
+      pathStepHasContent('sketch', {
+        tasks: [{ id: 1, title: 'Done', completed: true, why: '' }],
       })
     ).toBe(true)
   })
@@ -125,7 +149,7 @@ describe('pathStepHasContent', () => {
         directions: [{ id: 'a', title: 'Quiet', note: 'Fits the goal' }],
       },
       moodItems: [{ id: 1, inPack: true, type: 'quote', note: 'ref' }],
-      tasks: [{ id: 1, why: 'Fits the goal' }],
+      tasks: [{ id: 1, title: 'Draft', why: 'Fits the goal' }],
       sparkIndex: 3,
       palette: ['#111', '#222'],
     })
