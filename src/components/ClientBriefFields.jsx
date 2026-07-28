@@ -48,7 +48,6 @@ export default function ClientBriefFields({ answers = {}, onChange, idPrefix, ta
               <label className="field-label" htmlFor={fieldId}>
                 {f.label}
               </label>
-              {f.tip && <p className="discovery-brief-hint">{f.tip}</p>}
               {f.type === 'choice' ? (
                 /* Same row treatment as the checklist so "pick one" and
                    "pick many" don't read as two different systems. */
@@ -135,6 +134,7 @@ export default function ClientBriefFields({ answers = {}, onChange, idPrefix, ta
                   onChange={(e) => onChange(f.id, e.target.value)}
                 />
               )}
+              {f.tip && <p className="discovery-brief-hint">{f.tip}</p>}
               {f.attach && targetId && (
                 <BriefAttach
                   targetId={targetId}

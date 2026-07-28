@@ -285,9 +285,13 @@ export async function downloadBrandPackVectorPdf(
          elsewhere. jsPDF positions text by BASELINE, and a 24pt face has
          roughly 17pt of ascent — so a 14pt gap put the title's ascenders
          about 3pt ABOVE the eyebrow's baseline, striking "BRAND SYSTEM"
-         through on every page of the book. 24pt of separation clears the
-         ascent with a little air, and stays local to this heading rather
-         than changing the shared helper. */
+         through on every page of the book.
+
+         Found twice independently, and fixed here at +14 rather than the
+         +10 of the other attempt: derived from the ascent rather than
+         eyeballed, so it survives a change to TITLE_PT. Stays local to this
+         heading rather than changing the shared helper, which is correct at
+         14pt for the 10pt body it precedes elsewhere. */
       const TITLE_PT = 24
       y += TITLE_PT - 14 + 4
       pdf.setFont('helvetica', 'bold')
@@ -386,11 +390,11 @@ export async function downloadBrandPackVectorPdf(
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
     const tBig = pdf.splitTextToSize(pdfSafeText(tag), contentW - 36)
     pdf.text(tBig.slice(0, 2), margin + 18, y + 46)
-    y += 90
+    y += 70  // Reduced from 90 to 70 to reduce top-heaviness
 
     // 2×2 personality / pillars — tall enough for 4 lines so voice isn't clipped
     const cellW = (contentW - 12) / 2
-    const cellH = 104
+    const cellH = 88  // Reduced from 104 to 88 to reduce empty space under short copy
     const tiles = [
       {
         label: 'Promise',
@@ -422,31 +426,41 @@ export async function downloadBrandPackVectorPdf(
       const row = Math.floor(i / 2)
       const x = margin + col * (cellW + 12)
       const yy = y + row * (cellH + 10)
+      // Ensure integer coordinates for crisp rendering
+      const crispX = Math.round(x)
+      const crispY = Math.round(y)
+      const crispCellW = Math.round(cellW)
+      const crispCellH = Math.round(cellH)
+
       pdf.setFillColor(tile.bg[0], tile.bg[1], tile.bg[2])
-      pdf.roundedRect(x, yy, cellW, cellH, 6, 6, 'F')
+      pdf.roundedRect(crispX, crispY, crispCellW, crispCellH, 6, 6, 'F')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(8)
       pdf.setTextColor(tile.ink[0], tile.ink[1], tile.ink[2])
-      pdf.text(tile.label.toUpperCase(), x + 14, yy + 18)
+      pdf.text(tile.label.toUpperCase(), crispX + 14, crispY + 18)
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(10)
-      const bl = pdf.splitTextToSize(pdfSafeText(tile.body), cellW - 28)
-      pdf.text(bl.slice(0, 4), x + 14, yy + 36)
+      const bl = pdf.splitTextToSize(pdfSafeText(tile.body), crispCellW - 28)
+      if (bl.length > 0) {
+        pdf.text(bl.slice(0, 4), crispX + 14, crispY + 32)  // Adjusted from yy + 30 to yy + 32 for better vertical centering
+      }
     })
-    y += 2 * (cellH + 10) + 14
+    y += 2 * (cellH + 10) + 8  // Reduced from +14 to +8
 
     // One-line decision if any
     if (decision) {
+      y += 10
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(8)
       pdf.setTextColor(100, 100, 100)
       pdf.text('DIRECTION DECISION', margin, y)
       y += 12
-      pdf.setFont('helvetica', 'normal')
+      pdf.setFont('helvetica', 'italic')  // Italic for emphasis
       pdf.setFontSize(11)
       pdf.setTextColor(30, 28, 27)
-      const dl = pdf.splitTextToSize(pdfSafeText(decision), contentW)
+      const dl = pdf.splitTextToSize(pdfSafeText('« ' + decision + ' »'), contentW)  // Add quotes
       pdf.text(dl.slice(0, 3), margin, y)
+      y += 18  // Extra space after decision
     }
 
     // ═══════════════════════════════════════════════
@@ -471,12 +485,12 @@ export async function downloadBrandPackVectorPdf(
       }
 
       chapters.forEach((ch) => {
-        ensureRoom(28)
+        ensureRoom(36) // Increased from 28 to provide more space after section header
         sectionLabel(`${ch.num} · ${ch.title}`)
+        y += 6 // Additional space after section header (similar to page 2 fix)
 
         ch.rows.forEach((row) => {
-          // Compact field rhythm: question → tip → answer box, tight gaps
-          // so a full brief doesn't sprawl into half-empty pages.
+          // Improved field rhythm with better spacing for readability
           const qLh = 13
           const tipLh = 11
           const ansLh = 13
@@ -507,38 +521,52 @@ export async function downloadBrandPackVectorPdf(
           )
           const blockH =
             qLines.length * qLh +
-            (tipLines.length ? tipLines.length * tipLh + 2 : 0) +
-            3 +
+            (tipLines.length ? tipLines.length * tipLh + 4 : 0) + // Increased from +2 to +4 for better question-tip separation
+            4 + // Increased from 3 to 4 for better tip-to-box spacing
             boxH +
             8
           ensureRoom(blockH)
 
+          // Use crisp coordinates for better rendering
+          const crispMargin = Math.round(margin)
+          const crispContentW = Math.round(contentW)
+          const crispBoxH = Math.round(boxH)
+          /* Rounded AT EACH DRAW, not captured once.
+             `const crispY = Math.round(y)` here snapshotted the cursor before
+             anything was written, and the question, the tip and the answer
+             box were then all drawn at that one value while `y` advanced
+             underneath them — so every field printed its question on top of
+             its own tip. Only fields with no tip (the spectrum) escaped it.
+             A rounding helper has to read the cursor when it is used. */
+          const crisp = () => Math.round(y)
+
           pdf.setFont('helvetica', 'bold')
           pdf.setFontSize(10)
           pdf.setTextColor(20, 18, 17)
-          pdf.text(qLines, margin, y)
+          pdf.text(qLines, crispMargin, crisp())
           y += qLines.length * qLh
+          y += 4 // Added space between question and tip (was 0)
 
           if (tipLines.length) {
             pdf.setFont('helvetica', 'normal')
             pdf.setFontSize(9)
             pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
-            pdf.text(tipLines, margin, y)
-            y += tipLines.length * tipLh + 2
+            pdf.text(tipLines, crispMargin, crisp())
+            y += tipLines.length * tipLh + 4 // Increased from +2 to +4 for better spacing
           }
-          y += 3
+          y += 4 // Increased from 3 to 4 for better gap before box
 
           pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
-          pdf.roundedRect(margin, y, contentW, boxH, 4, 4, 'F')
+          pdf.roundedRect(crispMargin, crisp(), crispContentW, crispBoxH, 4, 4, 'F')
           pdf.setFont('helvetica', 'normal')
           pdf.setFontSize(10)
           pdf.setTextColor(inkOnQuiet[0], inkOnQuiet[1], inkOnQuiet[2])
           // Vertically center single-line text; multi-line starts after pad
           const textY =
             ansLines.length <= 1
-              ? y + boxH / 2 + 3.5
-              : y + boxPadY + 9
-          pdf.text(ansLines, margin + 10, textY)
+              ? crisp() + crispBoxH / 2 + 3.5
+              : crisp() + boxPadY + 9
+          pdf.text(ansLines, crispMargin + 10, textY)
           y += boxH + 8
         })
       })

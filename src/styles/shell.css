@@ -367,20 +367,20 @@ h3 {
 
 .field-label {
   display: block;
-  margin: 0 0 0.4rem;
+  margin-bottom: var(--space-2);
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .field-block {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-4);
 }
 
 .field-textarea {
   display: block;
   width: 100%;
-  padding: 0.65rem 0;
+  padding: 0.55rem 0.1rem;
   border: none;
   border-bottom: 1.5px solid var(--border-strong);
   border-radius: 0;
