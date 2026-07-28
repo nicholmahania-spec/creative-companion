@@ -17,7 +17,7 @@
 | 1 | Make the brand book tell the truth | **DONE** — `e39ba7e` + gap-close |
 | 2 | Get paid properly (invoice) | **DONE** — `bfc1c5c`, branch `feat/payable-invoice` |
 | 3 | Scope and revisions | **DONE** — migration applied |
-| 4 | Touchpoints becomes real | not started |
+| 4 | Touchpoints becomes real | **DONE** |
 | 5 | Contract | not started |
 | 6 | Case study export | not started |
 | 7 | Craft lenses | not started |
@@ -131,11 +131,41 @@ Note it **dropped and recreated** `get_client_portal` — the return columns
 changed and Postgres refuses `create or replace` in that case — so there was a
 brief window during which the public portal page could not load.
 
-### Phase 4 — Touchpoints becomes real
+### Phase 4 — Touchpoints becomes real — DONE
 
-Items 22, 26. The book renders the applications the client actually named, not
-five fixed ones. Touchpoints currently receives no client input at all — Phase
-1's "where will this be used?" checklist is what feeds it.
+**Item 22 — the Applications page answers the brief.** It drew the same four
+mocks for every project — card, social, packaging, signage — whatever the
+brand was for. An app-only brand got a carrier bag; a bakery got a social tile
+it had no account for. Meanwhile Phase 1's "Where will this be used?" was
+collected and consumed by nothing.
+
+`src/lib/touchpoints.js` maps brief answers onto mocks; `brandBookPdf` holds
+nine renderers (business card, print, social, website, app, email, packaging,
+merch, signage) and a layout loop that owns every coordinate — the renderers
+draw inside the box they are handed and read nothing about page position,
+which is the opposite of the arrangement that produced the Direction-tile
+overlap bug.
+
+Three rules worth keeping:
+- **`print` implies the business card.** A card is print, and dropping the
+  most recognisable mock in the book because someone ticked "Print" rather
+  than a card-shaped box would be a technicality.
+- **A deliverable counts too.** You can order business cards without thinking
+  to tick "Print" as a place the brand lives.
+- **Naming nothing falls back to the old four.** A book generated for an older
+  project must not come out emptier than it did the day before.
+
+Asserted against real PDFs: an app brand gets no packaging, a packaging brand
+gets no app screen, and with all nine chosen each label appears **exactly
+once** across the continued pages — text extraction cannot see overlap, but it
+can prove nothing was dropped or drawn twice.
+
+**Item 26 — layout pattern reference.** `src/lib/layoutPatterns.js` plus a
+closed `<details>` in Sketch. Eight patterns, each with a structure, a when,
+and a caveat, and the F/Z scan patterns above them explaining *why* a layout
+works rather than listing shapes to copy. No state, no progress, no prompting
+— the glossary's shape. "What shape should this be" is the question that
+stalls a sketch; naming the patterns makes it a one-second decision.
 
 ### Phase 5 — Contract
 
