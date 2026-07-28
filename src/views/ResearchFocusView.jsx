@@ -28,11 +28,7 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
   /** Inline, because this view has no toast channel of its own. */
   const [notice, setNotice] = useState('')
 
-  // Intent setting state
-  const [intent, setIntent] = useState('')
-  const [intentSet, setIntentSet] = useState(false)
-
-  // UI state for preview drawer
+  // No intent gate — start curating immediately (ADHD initiation).
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -100,6 +96,16 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
   useEffect(() => {
     const onKey = (e) => {
       if (!current) return
+      // Never treat Backspace in a text field as "toss pin"
+      const tag = e.target?.tagName
+      if (
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        e.target?.isContentEditable
+      ) {
+        return
+      }
       if (e.key === 'ArrowRight') commit('keep')
       else if (e.key === 'Backspace') commit('toss')
     }
@@ -125,68 +131,6 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
   }
 
   const exitFocus = () => setActiveView?.('studio')
-
-  // If intent not set, show intent input first
-  if (!intentSet) {
-    return (
-      <FocusShell
-        stepLabel="02 // Research"
-        stepIndex={0}
-        stepCount={2}
-        showPreviewDrawer={true}
-        onExit={exitFocus}
-        drawerContent={
-          <Suspense fallback={
-            <p className="research-preview-note">Loading board…</p>
-          }>
-            <ResearchPreview
-              deskMood={deskMood}
-              sessionIds={sessionIds}
-              reviewedIds={reviewedIds}
-              reviewedCount={reviewedCount}
-              loading={loading}
-              error={error}
-            />
-          </Suspense>
-        }
-      >
-        <div className="focus-card">
-          <p id="research-intent-prompt" className="focus-prompt">What do you want to accomplish in your research session?</p>
-          {/* `focus-input-inline` is the only real class here; the rest were
-              Tailwind against a project with no Tailwind, so the field had no
-              border, no padding and no focus ring. */}
-          <input
-            id="research-intent-input"
-            className="focus-input-inline field-input"
-            value={intent}
-            onChange={(e) => setIntent(e.target.value)}
-            placeholder="Optional — e.g. find 3 palettes"
-            autoFocus
-            aria-labelledby="research-intent-prompt"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') setIntentSet(true)
-            }}
-          />
-          {/* Not a gate. This was required to proceed, and the answer was
-              then never read again — a sentence you had to compose before
-              you could look at your own pictures, thrown away the moment it
-              let you in. Naming a session's purpose can help, so it stays;
-              being unable to start without it is the part that had to go.
-              If it is filled in, it now rides along as an anchor during the
-              review rather than being discarded. */}
-          <div className="focus-actions">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIntentSet(true)}
-            >
-              {intent.trim() ? 'Start' : 'Skip and start'}
-            </Button>
-          </div>
-        </div>
-      </FocusShell>
-    )
-  }
 
   if (deskMood.length === 0) {
     return (
@@ -327,14 +271,6 @@ export default function ResearchFocusView({ deskMood = [], setActiveView }) {
             </p>
           )}
         </div>
-
-        {/* The intent, if one was given — visible while you decide rather
-            than collected and dropped. */}
-        {intent.trim() && (
-          <p className="focus-hint" style={{ marginTop: '0.75rem' }}>
-            Looking for: {intent.trim()}
-          </p>
-        )}
 
         {/* What is LEFT, not a ratio. "3 of 12 reviewed" is two numbers to
             subtract before it means anything; the sidebar and the chapter

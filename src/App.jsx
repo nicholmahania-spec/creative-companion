@@ -8,6 +8,18 @@ import {
   Suspense,
 } from 'react'
 import useAppStore from './store/useAppStore'
+
+/** Deep-link safety: Define Focus beta is not shippable — land on overview. */
+function DefineFocusGate({ setActiveView }) {
+  useEffect(() => {
+    setActiveView?.('project')
+  }, [setActiveView])
+  return (
+    <div className="panel panel-hint" style={{ margin: '2rem', maxWidth: '28rem' }}>
+      Opening Project overview…
+    </div>
+  )
+}
 import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
 import { trackExportAction } from './lib/analytics'
@@ -44,7 +56,8 @@ const SparkView = lazy(() => import('./views/SparkView'))
 const ResearchView = lazy(() => import('./views/ResearchView'))
 const SketchView = lazy(() => import('./views/SketchView'))
 const DefineView = lazy(() => import('./views/DefineView'))
-const DefineFocusView = lazy(() => import('./views/DefineFocusView'))
+// DefineFocusView is incomplete (fake path steps / dead UI) — deep links
+// bounce via DefineFocusGate rather than mounting it.
 const DeliverFocusView = lazy(() => import('./views/DeliverFocusView'))
 const ResearchFocusView = lazy(() => import('./views/ResearchFocusView'))
 const IdeateFocusView = lazy(() => import('./views/IdeateFocusView'))
@@ -2607,16 +2620,13 @@ function App() {
   ) : null
 
   if (activeView === 'define-focus') {
+    // Define Focus beta is incomplete (fake journey steps, dead Tailwind
+    // chrome). Deep links bounce to the real Project overview rather than
+    // stranding the user in a half-built surface.
     return (
       <div className={`app ${theme}${forcedBreak ? ' is-break-locked' : ''}`}>
         {focusBreakOverlay}
-        <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
-          <DefineFocusView
-            activeProject={activeProject}
-            updateDetective={updateDetective}
-            setActiveView={setActiveView}
-          />
-        </Suspense>
+        <DefineFocusGate setActiveView={setActiveView} />
       </div>
     )
   }

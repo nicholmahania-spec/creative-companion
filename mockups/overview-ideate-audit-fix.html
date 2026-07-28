@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mockup — Project overview + Ideate (audit fixes)</title>
+  <style>
+    :root {
+      --bg-canvas: #F5F5F5;
+      --bg-elevated: #FFFFFF;
+      --bg-muted: #EBEBEB;
+      --text-primary: #1A1A1A;
+      --text-secondary: rgba(26, 26, 26, 0.68);
+      --text-muted: #6B6B73;
+      --border-subtle: #E7E7E7;
+      --border-strong: #D3D3D3;
+      --dopamine: #606060;
+      --on-dopamine: #FFFFFF;
+      --positive: #15803D;
+      --danger: #B91C1C;
+      --focus-ring: 0 0 0 3px rgba(96, 96, 96, 0.22);
+      --radius: 4px;
+      --font: "Inter", system-ui, -apple-system, sans-serif;
+      --font-display: "Inter", system-ui, sans-serif;
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.5rem;
+      --space-6: 2rem;
+      --col: 56rem;
+      --callout: #1E3A8A;
+      --callout-bg: #EEF2FF;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg-canvas);
+      color: var(--text-primary);
+      line-height: 1.45;
+      min-height: 100vh;
+    }
+
+    /* ── chrome ───────────────────────────────────────── */
+    .mock-chrome {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: var(--space-3) var(--space-5);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mock-chrome h1 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .mock-chrome .sub {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin: 0.15rem 0 0;
+    }
+    .tabs {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .tabs button {
+      border: 1px solid var(--border-strong);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 40px;
+    }
+    .tabs button[aria-selected="true"] {
+      background: var(--text-primary);
+      color: var(--on-dopamine);
+      border-color: var(--text-primary);
+    }
+    .tabs button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+    .legend {
+      max-width: var(--col);
+      margin: 0 auto;
+      padding: var(--space-4) var(--space-5) 0;
+    }
+    .legend details {
+      background: var(--callout-bg);
+      border: 1px solid #C7D2FE;
+      border-radius: var(--radius);
+      padding: var(--space-3) var(--space-4);
+      color: #1e293b;
+    }
+    .legend summary {
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .legend ul {
+      margin: 0.6rem 0 0;
+      padding-left: 1.15rem;
+      font-size: 0.82rem;
+      columns: 2;
+      gap: 1.5rem;
+    }
+    @media (max-width: 720px) {
+      .legend ul { columns: 1; }
+    }
+    .legend li { margin-bottom: 0.35rem; break-inside: avoid; }
+    .fix-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--text-primary);
+      color: #fff;
+      padding: 0.1rem 0.35rem;
+      border-radius: 2px;
+      margin-right: 0.25rem;
+      vertical-align: 0.05em;
+    }
+
+    .screen {
+      display: none;
+      max-width: var(--col);
+      margin: 0 auto;
+      padding: var(--space-5);
+      padding-bottom: 5rem;
+    }
+    .screen.is-active { display: block; }
+
+    /* callout pins */
+    .pin {
+      position: relative;
+    }
+    .pin::after {
+      content: attr(data-fix);
+      position: absolute;
+      z-index: 5;
+      top: -0.55rem;
+      right: -0.35rem;
+      max-width: 11rem;
+      background: var(--callout);
+      color: #fff;
+      font-size: 0.62rem;
+      font-weight: 600;
+      line-height: 1.25;
+      padding: 0.28rem 0.4rem;
+      border-radius: 3px;
+      pointer-events: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+    body.hide-pins .pin::after { display: none; }
+
+    /* ── shared UI ────────────────────────────────────── */
+    .page-title {
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+    .btn {
+      border: 1px solid var(--border-strong);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 40px;
+      font-family: inherit;
+    }
+    .btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    .btn-primary {
+      background: var(--text-primary);
+      color: var(--on-dopamine);
+      border-color: var(--text-primary);
+    }
+    .btn-primary:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: var(--bg-muted);
+      border-color: var(--border-strong);
+    }
+    .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+      color: var(--text-secondary);
+    }
+    .btn-sm { min-height: 36px; padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+    .field-input {
+      width: 100%;
+      border: none;
+      border-bottom: 1.5px solid var(--border-strong);
+      background: transparent;
+      padding: 0.45rem 0;
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--text-primary);
+    }
+    .field-input:focus {
+      outline: none;
+      border-bottom-color: var(--dopamine);
+    }
+    .field-input::placeholder { color: var(--text-muted); }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      border: 0;
+    }
+
+    /* ══ PROJECT OVERVIEW ═══════════════════════════════ */
+    .define-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+    .define-header .title-block { flex: 1 1 12rem; }
+    .define-header .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .deadline-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.65rem 1rem;
+      margin-bottom: var(--space-4);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .deadline-row label { font-weight: 600; color: var(--text-secondary); }
+    .deadline-row input[type="date"] {
+      border: none;
+      border-bottom: 1.5px solid var(--border-strong);
+      background: transparent;
+      font: inherit;
+      color: var(--text-primary);
+      padding: 0.25rem 0;
+    }
+    /* FIX: quieter relative deadline (was fs-3/700 competing with Start here) */
+    .deadline-relative {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .autosave-note {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* FIX: Start-here sticky + primary ownership */
+    .start-here {
+      position: sticky;
+      top: 4.25rem;
+      z-index: 10;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--text-primary);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+      box-shadow: 0 1px 0 var(--border-subtle);
+    }
+    .start-here-title {
+      margin: 0 0 var(--space-3);
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .start-here-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .start-here.is-done {
+      border-left-color: var(--positive);
+      background: #F0FDF4;
+    }
+    .start-here.is-done .start-here-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .start-here-next {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: var(--space-3);
+    }
+
+    /* FIX: milestones collapsed by default */
+    .milestones-details {
+      margin-bottom: var(--space-4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      background: var(--bg-elevated);
+      padding: 0;
+    }
+    .milestones-details > summary {
+      cursor: pointer;
+      padding: var(--space-3) var(--space-4);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .milestones-details > summary::-webkit-details-marker { display: none; }
+    .milestones-details > summary::after {
+      content: "▸";
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+    .milestones-details[open] > summary::after { content: "▾"; }
+    .milestones-body {
+      padding: 0 var(--space-4) var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .milestone-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .milestone-row input[type="date"] { max-width: 9.5rem; }
+
+    /* desk snapshot collapsed */
+    .desk-snap details {
+      margin-bottom: var(--space-4);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .desk-snap summary { cursor: pointer; font-weight: 600; }
+
+    .workbook {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      display: grid;
+      grid-template-columns: 11rem 1fr;
+      min-height: 22rem;
+    }
+    @media (max-width: 800px) {
+      .workbook { grid-template-columns: 1fr; }
+      .chapter-rail { display: none; }
+    }
+    .chapter-rail {
+      border-right: 1px solid var(--border-subtle);
+      padding: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .chapter-tab {
+      text-align: left;
+      border: none;
+      background: transparent;
+      padding: 0.55rem 0.65rem;
+      border-radius: var(--radius);
+      font: inherit;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-left: 2px solid transparent;
+    }
+    .chapter-tab.is-active {
+      color: var(--text-primary);
+      font-weight: 700;
+      border-left-color: var(--text-primary);
+      background: var(--bg-muted);
+    }
+    .chapter-tab .need {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+    .chapter-tab.is-optional .need { font-style: italic; }
+    .chapter-body { padding: var(--space-5); }
+    .chapter-body h2 {
+      margin: 0 0 var(--space-4);
+      font-size: 1.15rem;
+    }
+    .field-block { margin-bottom: var(--space-5); }
+    .field-label {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.35rem;
+    }
+    /* FIX: aria-required without visual shame asterisks — AT only + subtle */
+    .field-label .req-hint {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .field-tip {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+    .checklist {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem 1rem;
+    }
+    @media (max-width: 560px) { .checklist { grid-template-columns: 1fr; } }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.875rem;
+      padding: 0.35rem 0;
+    }
+
+    /* ══ IDEATE ═════════════════════════════════════════ */
+    .ideate-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+    /* FIX: progress at body scale, readable */
+    .ideate-status {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin: 0 0 var(--space-2);
+    }
+    .ideate-goal {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0 0 var(--space-4);
+    }
+
+    /* FIX: diverge first — rough dump */
+    .rough-zone {
+      background: var(--bg-elevated);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+    .rough-zone h2 {
+      margin: 0 0 0.25rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+    .rough-zone .hint {
+      margin: 0 0 var(--space-3);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .rough-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: var(--space-3);
+      min-height: 2rem;
+    }
+    .rough-chip {
+      background: var(--bg-muted);
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .rough-chip button {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 0;
+      line-height: 1;
+    }
+    .rough-add {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .rough-add input { flex: 1; }
+
+    .ideate-layout {
+      display: grid;
+      grid-template-columns: 1.65fr 1fr;
+      gap: var(--space-4);
+      align-items: start;
+    }
+    @media (max-width: 800px) {
+      .ideate-layout { grid-template-columns: 1fr; }
+      .spark-tray { order: 2; }
+    }
+
+    .shortlist {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      padding: var(--space-4);
+    }
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin: 0 0 var(--space-3);
+    }
+    .section-label.primary-label {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+    }
+
+    .dirs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.65rem;
+    }
+    @media (max-width: 640px) {
+      .dirs { grid-template-columns: 1fr; }
+    }
+    /* FIX: dim siblings less (0.62 not 0.25) so comparison survives */
+    .dirs:has(.dir-card:focus-within) .dir-card:not(:focus-within) {
+      opacity: 0.62;
+    }
+    .dir-card {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      background: var(--bg-elevated);
+      transition: opacity 0.15s ease, border-color 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    /* FIX: chosen = left rule + weight (Define language) */
+    .dir-card.is-chosen {
+      border-color: var(--border-strong);
+      box-shadow: inset 3px 0 0 var(--text-primary);
+      background: #FAFAFA;
+    }
+    .dir-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dir-letter {
+      font-weight: 800;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+    }
+    .dir-card.is-chosen .dir-letter { font-weight: 900; }
+    .dir-card .field-input {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    /* FIX: why hidden until chosen */
+    .why-wrap { display: none; }
+    .dir-card.is-chosen .why-wrap { display: block; }
+    .why-wrap textarea {
+      width: 100%;
+      border: none;
+      border-bottom: 1.5px solid var(--border-strong);
+      background: transparent;
+      font: inherit;
+      font-size: 0.85rem;
+      resize: vertical;
+      min-height: 2.5rem;
+      color: var(--text-secondary);
+    }
+    .why-wrap textarea:focus {
+      outline: none;
+      border-bottom-color: var(--dopamine);
+    }
+
+    /* FIX: demoted spark tray */
+    .spark-tray {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      padding: var(--space-3);
+    }
+    .spark-tray .section-label {
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .spark-card {
+      padding: var(--space-3) 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: var(--space-3);
+      min-height: 3.5rem;
+    }
+    .spark-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .spark-actions .btn {
+      min-height: 44px; /* touch floor */
+      flex: 1 1 auto;
+      font-size: 0.8rem;
+    }
+    .spark-actions .btn-use {
+      flex: 1 1 100%;
+      order: -1;
+    }
+
+    /* FIX: primary Send when ready */
+    .send-row {
+      margin-top: var(--space-5);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.4rem;
+    }
+    .send-help {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .send-help.is-ready {
+      color: var(--positive);
+      font-weight: 600;
+    }
+
+    /* ══ FOCUS MODE (fixed) ═════════════════════════════ */
+    .focus-shell {
+      max-width: 34rem;
+      margin: 2rem auto;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      padding: var(--space-5);
+      min-height: 22rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .focus-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-5);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .focus-exit {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 40px;
+      padding: 0 0.5rem;
+    }
+    .focus-prompt {
+      font-family: var(--font-display);
+      font-size: clamp(1.25rem, 3vw, 1.6rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 var(--space-4);
+      line-height: 1.25;
+    }
+    .focus-hint {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0 0 var(--space-4);
+    }
+    .focus-actions {
+      margin-top: auto;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding-top: var(--space-5);
+    }
+    .focus-vs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 520px) {
+      .focus-vs { grid-template-columns: 1fr; }
+    }
+    /* FIX: class-based vs cards, no inline styles */
+    .focus-vs-card {
+      text-align: left;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      min-height: 10rem;
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+    }
+    .focus-vs-card:hover,
+    .focus-vs-card:focus-visible {
+      border-color: var(--text-primary);
+      box-shadow: inset 3px 0 0 var(--text-primary);
+      outline: none;
+    }
+    .focus-vs-card .arrow {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    .focus-vs-card .title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin: 0 0 0.35rem;
+    }
+    .focus-preview {
+      margin-top: var(--space-4);
+      padding-top: var(--space-3);
+      border-top: 1px solid var(--border-subtle);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .focus-preview strong { color: var(--text-secondary); font-weight: 600; }
+    .focus-center { text-align: center; }
+
+    .toggle-pins {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="mock-chrome">
+    <div>
+      <h1>Audit fix mockup · Project overview + Ideate</h1>
+      <p class="sub">Interactive · addresses ADHD / UX / UI / layout / code findings · not production code</p>
+    </div>
+    <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+      <label class="toggle-pins">
+        <input type="checkbox" id="pinToggle" checked /> Show fix callouts
+      </label>
+      <nav class="tabs" role="tablist" aria-label="Mock screens">
+        <button type="button" role="tab" aria-selected="true" data-tab="define">1 · Project overview</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="ideate">3 · Ideate</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="focus">Ideate Focus (fixed)</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="legend">
+    <details open>
+      <summary>What this mockup changes (from agent audit)</summary>
+      <ul>
+        <li><span class="fix-tag">Define</span> Start-here sticky + sole primary ramp</li>
+        <li><span class="fix-tag">Define</span> Milestones collapsed (cheap task demoted)</li>
+        <li><span class="fix-tag">Define</span> Desk snapshot one-line expand</li>
+        <li><span class="fix-tag">Define</span> Share demoted to ghost until required ready</li>
+        <li><span class="fix-tag">Define</span> Quieter deadline relative type</li>
+        <li><span class="fix-tag">Define</span> aria-describedby only when relative exists</li>
+        <li><span class="fix-tag">Define</span> Done state → next path CTA</li>
+        <li><span class="fix-tag">Define</span> Optional chapters say “optional” not “none needed”</li>
+        <li><span class="fix-tag">Ideate</span> Rough list before A/B/C (diverge first)</li>
+        <li><span class="fix-tag">Ideate</span> “Why” only after Choose</li>
+        <li><span class="fix-tag">Ideate</span> Spark → “Use as next empty title”</li>
+        <li><span class="fix-tag">Ideate</span> Demoted spark tray</li>
+        <li><span class="fix-tag">Ideate</span> Send is primary when ready + visible helper</li>
+        <li><span class="fix-tag">Ideate</span> Chosen = left rule; dim 0.62 not 0.25</li>
+        <li><span class="fix-tag">Focus</span> Single shell, onExit, no intent tax</li>
+        <li><span class="fix-tag">Focus</span> Bracket actually seeds after titles</li>
+        <li><span class="fix-tag">Focus</span> Preview is notes not scoreboard</li>
+      </ul>
+    </details>
+  </div>
+
+  <!-- ══════════ DEFINE ══════════ -->
+  <section class="screen is-active" id="screen-define" role="tabpanel" aria-label="Project overview mockup">
+    <div class="define-header">
+      <div class="title-block">
+        <h1 class="page-title">Project overview</h1>
+      </div>
+      <div class="header-actions pin" data-fix="Share ghost until brief ready — no outbound competition">
+        <button type="button" class="btn btn-ghost btn-sm" id="shareBtn" disabled title="Answer the needed fields first">Share / export</button>
+      </div>
+    </div>
+
+    <div class="deadline-row pin" data-fix="Relative deadline quieter; aria-describedby only when set">
+      <label for="deadline">Deadline</label>
+      <input id="deadline" type="date" value="2026-08-15" aria-describedby="deadline-rel" />
+      <span id="deadline-rel" class="deadline-relative">Due in a few weeks</span>
+      <span class="autosave-note">Saves as you type</span>
+    </div>
+
+    <div class="start-here pin" id="startHere" data-fix="Sticky anti-stall · only primary chips above the form">
+      <p class="start-here-title" id="startHereTitle">Start with these 3</p>
+      <div class="start-here-list" id="startHereList">
+        <button type="button" class="btn btn-primary" data-field="client">Client name</button>
+        <button type="button" class="btn btn-primary" data-field="goal">One-sentence goal</button>
+        <button type="button" class="btn btn-primary" data-field="deliverables">Deliverables</button>
+      </div>
+      <div class="start-here-next" id="startHereNext" hidden>
+        <button type="button" class="btn btn-primary" id="goResearch">Continue → Research</button>
+        <button type="button" class="btn btn-ghost btn-sm">Open optional detail</button>
+      </div>
+    </div>
+
+    <details class="milestones-details pin" data-fix="Collapsed by default — cheap task can't intercept">
+      <summary>
+        <span>Milestones · 1</span>
+      </summary>
+      <div class="milestones-body">
+        <div class="milestone-row">
+          <input class="field-input" value="Mood board review" aria-label="Milestone name" />
+          <input class="field-input" type="date" value="2026-08-01" aria-label="Milestone date" />
+          <button type="button" class="btn btn-ghost btn-sm" aria-label="Remove milestone">✕</button>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm">+ Add</button>
+      </div>
+    </details>
+
+    <div class="desk-snap pin" data-fix="Desk is one line, not a title list">
+      <details>
+        <summary>Desk · 2 open</summary>
+        <ul>
+          <li>Send kickoff note</li>
+          <li>Gather old logo files</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="workbook">
+      <nav class="chapter-rail" aria-label="Brief chapters">
+        <button type="button" class="chapter-tab is-active">01 Client <span class="need">2 needed</span></button>
+        <button type="button" class="chapter-tab">02 Goal <span class="need">1 needed</span></button>
+        <button type="button" class="chapter-tab">03 Scope <span class="need">1 needed</span></button>
+        <button type="button" class="chapter-tab is-optional pin" data-fix="Optional chapters say optional">04 Look <span class="need">optional</span></button>
+        <button type="button" class="chapter-tab is-optional">05 Constraints <span class="need">optional</span></button>
+      </nav>
+      <div class="chapter-body">
+        <h2>01 · Client</h2>
+        <div class="field-block" id="field-client">
+          <div class="field-label">
+            Client name
+            <span class="req-hint" id="req-client">(needed)</span>
+          </div>
+          <input
+            class="field-input"
+            id="input-client"
+            aria-required="true"
+            aria-describedby="req-client tip-client"
+            placeholder="Who is this for?"
+          />
+          <p class="field-tip" id="tip-client">The name that appears on the brief and exports.</p>
+        </div>
+        <div class="field-block">
+          <div class="field-label">Primary contact</div>
+          <input class="field-input" placeholder="Optional" />
+        </div>
+        <div class="field-block" id="field-goal">
+          <div class="field-label">
+            One-sentence goal
+            <span class="req-hint">(needed)</span>
+          </div>
+          <input class="field-input" id="input-goal" aria-required="true" placeholder="What success looks like in one line" />
+        </div>
+        <div class="field-block" id="field-deliverables">
+          <div class="field-label">
+            Deliverables
+            <span class="req-hint">(needed)</span>
+          </div>
+          <p class="field-tip" style="margin-bottom:0.5rem">Common identity set is on — uncheck anything you don’t need.</p>
+          <div class="checklist pin" data-fix="Defaults ticked — confirm, don’t choose 15 from zero">
+            <label class="check-row"><input type="checkbox" checked /> Logo</label>
+            <label class="check-row"><input type="checkbox" checked /> Colour palette</label>
+            <label class="check-row"><input type="checkbox" checked /> Typography</label>
+            <label class="check-row"><input type="checkbox" checked /> Guidelines</label>
+            <label class="check-row"><input type="checkbox" /> Business card</label>
+            <label class="check-row"><input type="checkbox" /> Social kit</label>
+            <label class="check-row"><input type="checkbox" /> Packaging <em style="color:var(--text-muted);font-size:0.75rem"> · quoted</em></label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ IDEATE ══════════ -->
+  <section class="screen" id="screen-ideate" role="tabpanel" aria-label="Ideate mockup" hidden>
+    <div class="ideate-top">
+      <h1 class="page-title">Ideate</h1>
+      <button type="button" class="btn btn-ghost btn-sm" id="openFocus">Focus mode</button>
+    </div>
+
+    <p class="ideate-status pin" id="ideateStatus" data-fix="Status at body scale: titled count + choose prompt">0 of 3 titled · name rough ideas below, then shortlist</p>
+    <p class="ideate-goal">Goal: A calm brand system for a small climate nonprofit…</p>
+
+    <div class="rough-zone pin" data-fix="Diverge first — messy dump before A/B/C">
+      <h2>Rough ideas</h2>
+      <p class="hint">Messy is fine. Capture many. Promote 3 into A · B · C when ready.</p>
+      <div class="rough-chips" id="roughChips"></div>
+      <div class="rough-add">
+        <label class="sr-only" for="roughInput">Add rough idea</label>
+        <input class="field-input" id="roughInput" placeholder="e.g. Quiet type, bold photo crop…" />
+        <button type="button" class="btn btn-secondary" id="roughAdd">Add</button>
+      </div>
+    </div>
+
+    <div class="ideate-layout">
+      <section class="shortlist" aria-label="Three directions A B C">
+        <p class="section-label primary-label">Shortlist · A · B · C</p>
+        <div class="dirs" id="dirs">
+          <!-- cards built in JS -->
+        </div>
+      </section>
+
+      <aside class="spark-tray pin" aria-label="Prompt" data-fix="Demoted tray · Use-as-title is primary">
+        <p class="section-label">Prompt</p>
+        <div class="spark-card" id="sparkText">What if the brand felt like a deep breath, not a siren?</div>
+        <div class="spark-actions">
+          <button type="button" class="btn btn-primary btn-use" id="useSpark">Use as next empty title</button>
+          <button type="button" class="btn btn-ghost" id="newSpark">New</button>
+          <button type="button" class="btn btn-ghost" id="oppSpark">Opposite</button>
+          <button type="button" class="btn btn-ghost" id="pinSpark">Pin to Research</button>
+        </div>
+      </aside>
+    </div>
+
+    <div class="send-row pin" data-fix="Primary when canSend · helper always visible">
+      <button type="button" class="btn btn-primary" id="sendSketch" disabled>Send · Sketch</button>
+      <p class="send-help" id="sendHelp" role="status">Choose a titled direction first</p>
+    </div>
+  </section>
+
+  <!-- ══════════ FOCUS (fixed flow) ══════════ -->
+  <section class="screen" id="screen-focus" role="tabpanel" aria-label="Ideate Focus fixed mockup" hidden>
+    <div class="focus-shell pin" data-fix="One shell · exit always · no intent essay · bracket seeds">
+      <div class="focus-bar">
+        <span id="focusStep">03 // Ideate · 1 of 3</span>
+        <button type="button" class="focus-exit" id="focusExit">Exit</button>
+      </div>
+      <div id="focusBody"></div>
+      <div class="focus-preview" id="focusPreview">
+        <strong>Directions</strong> — sticky notes, not a scoreboard
+      </div>
+    </div>
+  </section>
+
+  <script>
+    /* ── tabs ─────────────────────────────────────────── */
+    const tabs = document.querySelectorAll('.tabs [role="tab"]');
+    const screens = {
+      define: document.getElementById('screen-define'),
+      ideate: document.getElementById('screen-ideate'),
+      focus: document.getElementById('screen-focus'),
+    };
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const id = tab.dataset.tab;
+        tabs.forEach((t) => t.setAttribute('aria-selected', t === tab ? 'true' : 'false'));
+        Object.entries(screens).forEach(([key, el]) => {
+          const on = key === id;
+          el.classList.toggle('is-active', on);
+          el.hidden = !on;
+        });
+        if (id === 'focus') renderFocus();
+      });
+    });
+
+    document.getElementById('pinToggle').addEventListener('change', (e) => {
+      document.body.classList.toggle('hide-pins', !e.target.checked);
+    });
+
+    /* ── Define interactions ──────────────────────────── */
+    const startHere = document.getElementById('startHere');
+    const startHereTitle = document.getElementById('startHereTitle');
+    const startHereList = document.getElementById('startHereList');
+    const startHereNext = document.getElementById('startHereNext');
+    const shareBtn = document.getElementById('shareBtn');
+    const filled = new Set();
+
+    function markField(id) {
+      filled.add(id);
+      const btn = startHereList.querySelector(`[data-field="${id}"]`);
+      if (btn) btn.remove();
+      if (filled.size >= 3) {
+        startHere.classList.add('is-done');
+        startHereTitle.textContent = 'Everything needed is answered — the rest is optional detail.';
+        startHereList.hidden = true;
+        startHereNext.hidden = false;
+        shareBtn.disabled = false;
+        shareBtn.title = '';
+        shareBtn.classList.remove('btn-ghost');
+        shareBtn.classList.add('btn-secondary');
+      } else {
+        startHereTitle.textContent =
+          filled.size === 2 ? 'Start with this one' : `Start with these ${3 - filled.size}`;
+      }
+    }
+
+    startHereList.querySelectorAll('[data-field]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.field;
+        const el = document.getElementById('field-' + id) || document.getElementById('input-' + id);
+        el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        const input = document.getElementById('input-' + id) || el?.querySelector('input, textarea');
+        // mock hardened jump: double rAF
+        requestAnimationFrame(() => requestAnimationFrame(() => input?.focus()));
+      });
+    });
+
+    ['input-client', 'input-goal'].forEach((id) => {
+      const el = document.getElementById(id);
+      el?.addEventListener('change', () => {
+        if (el.value.trim()) markField(id.replace('input-', ''));
+      });
+      el?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && el.value.trim()) markField(id.replace('input-', ''));
+      });
+    });
+    // deliverables: any checkbox change counts as filled once user engages
+    document.querySelector('#field-deliverables')?.addEventListener('change', () => markField('deliverables'));
+
+    /* ── Ideate state ─────────────────────────────────── */
+    const sparks = [
+      'What if the brand felt like a deep breath, not a siren?',
+      'Handwritten notes meet precise grids.',
+      'Opposite: loud colour, zero decoration.',
+      'A system that works in black-and-white first.',
+    ];
+    let sparkIdx = 0;
+    const dirs = [
+      { id: 'a', label: 'A', title: '', note: '', chosen: false },
+      { id: 'b', label: 'B', title: '', note: '', chosen: false },
+      { id: 'c', label: 'C', title: '', note: '', chosen: false },
+    ];
+    const rough = ['Soft signal, not alarm', 'Field notes aesthetic'];
+
+    function renderRough() {
+      const box = document.getElementById('roughChips');
+      box.innerHTML = rough
+        .map(
+          (t, i) =>
+            `<span class="rough-chip">${escapeHtml(t)}
+              <button type="button" data-promote="${i}" title="Promote to next empty A/B/C">↑ shortlist</button>
+              <button type="button" data-rm="${i}" aria-label="Remove">×</button>
+            </span>`
+        )
+        .join('');
+      box.querySelectorAll('[data-rm]').forEach((b) =>
+        b.addEventListener('click', () => {
+          rough.splice(+b.dataset.rm, 1);
+          renderRough();
+        })
+      );
+      box.querySelectorAll('[data-promote]').forEach((b) =>
+        b.addEventListener('click', () => {
+          const text = rough[+b.dataset.promote];
+          const empty = dirs.find((d) => !d.title.trim());
+          if (!empty) return alert('A · B · C are full — choose or clear one.');
+          empty.title = text;
+          rough.splice(+b.dataset.promote, 1);
+          renderRough();
+          renderDirs();
+        })
+      );
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function renderDirs() {
+      const root = document.getElementById('dirs');
+      root.innerHTML = dirs
+        .map((d) => {
+          const has = Boolean(d.title.trim());
+          return `
+          <div class="dir-card${d.chosen ? ' is-chosen' : ''}${has ? ' has-title' : ''}" data-id="${d.id}">
+            <div class="dir-head">
+              <span class="dir-letter">${d.label}</span>
+              <button type="button" class="btn btn-ghost btn-sm choose-btn"
+                ${!has && !d.chosen ? 'disabled' : ''}
+                aria-pressed="${d.chosen}"
+                data-choose="${d.id}">
+                ${d.chosen ? 'Chosen' : 'Choose'}
+              </button>
+            </div>
+            <label class="sr-only" for="title-${d.id}">Direction ${d.label} title</label>
+            <input class="field-input" id="title-${d.id}" data-title="${d.id}"
+              value="${escapeHtml(d.title)}" placeholder="${d.label} title" />
+            <div class="why-wrap">
+              <label class="sr-only" for="note-${d.id}">Why this direction</label>
+              <textarea id="note-${d.id}" data-note="${d.id}" placeholder="Optional — why this wins" rows="2">${escapeHtml(d.note)}</textarea>
+            </div>
+          </div>`;
+        })
+        .join('');
+
+      root.querySelectorAll('[data-title]').forEach((inp) => {
+        inp.addEventListener('input', () => {
+          const d = dirs.find((x) => x.id === inp.dataset.title);
+          d.title = inp.value;
+          updateIdeateStatus();
+          // re-enable choose without full re-render of focus
+          const card = inp.closest('.dir-card');
+          const btn = card.querySelector('.choose-btn');
+          const has = Boolean(inp.value.trim());
+          btn.disabled = !has && !d.chosen;
+          if (!has && d.chosen) {
+            d.chosen = false;
+            card.classList.remove('is-chosen');
+            btn.textContent = 'Choose';
+            btn.setAttribute('aria-pressed', 'false');
+          }
+          updateSend();
+        });
+      });
+      root.querySelectorAll('[data-note]').forEach((ta) => {
+        ta.addEventListener('input', () => {
+          dirs.find((x) => x.id === ta.dataset.note).note = ta.value;
+        });
+      });
+      root.querySelectorAll('[data-choose]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.choose;
+          dirs.forEach((d) => {
+            d.chosen = d.id === id ? !d.chosen : false;
+          });
+          renderDirs();
+          updateSend();
+          const chosen = dirs.find((d) => d.chosen);
+          if (chosen && !chosen.note.trim()) {
+            requestAnimationFrame(() => document.getElementById('note-' + chosen.id)?.focus());
+          }
+        });
+      });
+      updateIdeateStatus();
+      updateSend();
+    }
+
+    function updateIdeateStatus() {
+      const n = dirs.filter((d) => d.title.trim()).length;
+      const c = dirs.find((d) => d.chosen);
+      const el = document.getElementById('ideateStatus');
+      if (c) el.textContent = `${n} of 3 titled · ${c.label} chosen`;
+      else if (n === 0) el.textContent = '0 of 3 titled · name rough ideas below, then shortlist';
+      else if (n < 3) el.textContent = `${n} of 3 titled · keep going or choose one`;
+      else el.textContent = '3 of 3 titled · choose one to send to Sketch';
+    }
+
+    function updateSend() {
+      const chosen = dirs.find((d) => d.chosen && d.title.trim());
+      const btn = document.getElementById('sendSketch');
+      const help = document.getElementById('sendHelp');
+      btn.disabled = !chosen;
+      if (chosen) {
+        help.textContent = `Ready — ${chosen.label}: ${chosen.title}`;
+        help.classList.add('is-ready');
+        help.id = 'sendHelp';
+        btn.setAttribute('aria-describedby', 'sendHelp');
+      } else {
+        help.textContent = 'Choose a titled direction first';
+        help.classList.remove('is-ready');
+        btn.setAttribute('aria-describedby', 'sendHelp');
+      }
+    }
+
+    document.getElementById('roughAdd').addEventListener('click', () => {
+      const inp = document.getElementById('roughInput');
+      if (!inp.value.trim()) return;
+      rough.push(inp.value.trim());
+      inp.value = '';
+      renderRough();
+      inp.focus();
+    });
+    document.getElementById('roughInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('roughAdd').click();
+    });
+
+    document.getElementById('useSpark').addEventListener('click', () => {
+      const empty = dirs.find((d) => !d.title.trim());
+      if (!empty) return;
+      empty.title = document.getElementById('sparkText').textContent.trim();
+      renderDirs();
+      document.getElementById('title-' + empty.id)?.focus();
+    });
+    document.getElementById('newSpark').addEventListener('click', () => {
+      sparkIdx = (sparkIdx + 1) % sparks.length;
+      document.getElementById('sparkText').textContent = sparks[sparkIdx];
+    });
+    document.getElementById('oppSpark').addEventListener('click', () => {
+      sparkIdx = (sparkIdx + 2) % sparks.length;
+      document.getElementById('sparkText').textContent = 'Opposite: ' + sparks[sparkIdx];
+    });
+    document.getElementById('pinSpark').addEventListener('click', () => {
+      const b = document.getElementById('pinSpark');
+      b.textContent = 'Pinned';
+      setTimeout(() => (b.textContent = 'Pin to Research'), 1200);
+    });
+    document.getElementById('sendSketch').addEventListener('click', () => {
+      const c = dirs.find((d) => d.chosen);
+      alert(`Would queue “Draft ${c.label}: ${c.title}” and go to Sketch.\n(Single decision log — not double-logged.)`);
+    });
+    document.getElementById('openFocus').addEventListener('click', () => {
+      document.querySelector('[data-tab="focus"]').click();
+    });
+    document.getElementById('focusExit').addEventListener('click', () => {
+      document.querySelector('[data-tab="ideate"]').click();
+    });
+
+    /* ── Focus mode state machine (FIXED) ─────────────── */
+    // No intent gate. Single shell. Bracket seeds when titles done.
+    let focusPhase = 'title'; // title | bracket | winner | queued
+    let titleDraft = '';
+    let bracket = null;
+    let contenders = null;
+    let winner = null;
+
+    function titledDirs() {
+      return dirs.filter((d) => d.title.trim());
+    }
+    function untitledDirs() {
+      return dirs.filter((d) => !d.title.trim());
+    }
+
+    function seedBracketIfReady() {
+      const t = titledDirs();
+      if (t.length === 0) {
+        focusPhase = 'empty';
+        return;
+      }
+      if (t.length === 1) {
+        winner = t[0];
+        focusPhase = 'winner';
+        return;
+      }
+      contenders = t.slice(2);
+      bracket = [t[0], t[1]];
+      focusPhase = 'bracket';
+    }
+
+    function renderFocus() {
+      // Sync: if spark already has 3 titles, skip straight toward bracket
+      const body = document.getElementById('focusBody');
+      const step = document.getElementById('focusStep');
+      const prev = document.getElementById('focusPreview');
+      prev.innerHTML =
+        '<strong>Directions</strong> — ' +
+        dirs
+          .map((d) => (d.title.trim() ? `<span>${d.label}: ${escapeHtml(d.title)}</span>` : `<span style="opacity:.5">${d.label}: …</span>`))
+          .join(' · ');
+
+      if (focusPhase === 'title') {
+        const u = untitledDirs();
+        if (u.length === 0) {
+          seedBracketIfReady();
+          return renderFocus();
+        }
+        const current = u[0];
+        const done = dirs.length - u.length;
+        step.textContent = `03 // Ideate · title ${done + 1} of ${dirs.length}`;
+        body.innerHTML = `
+          <p class="focus-prompt">Direction ${current.label} — one line:</p>
+          <p class="focus-hint">No session essay. Just name it.</p>
+          <label class="sr-only" for="focusTitle">Title</label>
+          <input class="field-input" id="focusTitle" value="${escapeHtml(titleDraft)}" placeholder="e.g. Bold and playful" autofocus />
+          <div class="focus-actions">
+            <button type="button" class="btn btn-primary" id="focusNext" ${titleDraft.trim() ? '' : 'disabled'}>Next</button>
+          </div>`;
+        const inp = document.getElementById('focusTitle');
+        const next = document.getElementById('focusNext');
+        inp.focus();
+        inp.addEventListener('input', () => {
+          titleDraft = inp.value;
+          next.disabled = !titleDraft.trim();
+        });
+        const commit = () => {
+          if (!titleDraft.trim()) return;
+          current.title = titleDraft.trim();
+          titleDraft = '';
+          renderDirs();
+          if (untitledDirs().length === 0) seedBracketIfReady();
+          renderFocus();
+        };
+        next.addEventListener('click', commit);
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') commit();
+        });
+        return;
+      }
+
+      if (focusPhase === 'bracket' && bracket) {
+        step.textContent = `03 // Ideate · which wins?`;
+        body.innerHTML = `
+          <p class="focus-prompt" style="text-align:center">Which direction wins?</p>
+          <div class="focus-vs">
+            ${bracket
+              .map(
+                (d, i) => `
+              <button type="button" class="focus-vs-card" data-pick="${d.id}">
+                <span class="arrow">${i === 0 ? '← Left arrow' : 'Right arrow →'}</span>
+                <p class="title">${d.label}: ${escapeHtml(d.title)}</p>
+                ${d.note ? `<p class="focus-hint">${escapeHtml(d.note)}</p>` : ''}
+              </button>`
+              )
+              .join('')}
+          </div>`;
+        const pick = (id) => {
+          const chosen = bracket.find((d) => d.id === id);
+          if (!contenders || contenders.length === 0) {
+            winner = chosen;
+            bracket = null;
+            focusPhase = 'winner';
+          } else {
+            bracket = [chosen, contenders[0]];
+            contenders = contenders.slice(1);
+          }
+          renderFocus();
+        };
+        body.querySelectorAll('[data-pick]').forEach((b) =>
+          b.addEventListener('click', () => pick(b.dataset.pick))
+        );
+        const onKey = (e) => {
+          if (e.key === 'ArrowLeft') pick(bracket[0].id);
+          if (e.key === 'ArrowRight') pick(bracket[1].id);
+        };
+        window.addEventListener('keydown', onKey, { once: true });
+        return;
+      }
+
+      if (focusPhase === 'winner' && winner) {
+        step.textContent = '03 // Ideate · confirm';
+        body.innerHTML = `
+          <div class="focus-center">
+            <p class="focus-prompt">Winner: ${winner.label}</p>
+            <p class="focus-hint">${escapeHtml(winner.title)}</p>
+            <div class="focus-actions" style="justify-content:center">
+              <button type="button" class="btn btn-primary" id="queueWin">Queue this direction</button>
+            </div>
+          </div>`;
+        document.getElementById('queueWin').addEventListener('click', () => {
+          dirs.forEach((d) => (d.chosen = d.id === winner.id));
+          // single log site in real app
+          focusPhase = 'queued';
+          renderDirs();
+          renderFocus();
+        });
+        return;
+      }
+
+      if (focusPhase === 'queued' && winner) {
+        step.textContent = '03 // Ideate · done';
+        body.innerHTML = `
+          <div class="focus-center">
+            <p class="focus-prompt">Direction ${winner.label} queued</p>
+            <p class="focus-hint">${escapeHtml(winner.title)}</p>
+            <div class="focus-actions" style="justify-content:center">
+              <button type="button" class="btn btn-primary" id="toSketch">Next · Sketch</button>
+            </div>
+          </div>`;
+        document.getElementById('toSketch').addEventListener('click', () => {
+          alert('Would navigate to Sketch (flow).');
+        });
+        return;
+      }
+
+      body.innerHTML = `<p class="focus-prompt">Add a title in Ideate first</p>
+        <div class="focus-actions"><button type="button" class="btn btn-secondary" id="backIdeate">Back to Ideate</button></div>`;
+      document.getElementById('backIdeate')?.addEventListener('click', () =>
+        document.querySelector('[data-tab="ideate"]').click()
+      );
+    }
+
+    // init
+    renderRough();
+    renderDirs();
+  </script>
+</body>
+</html>
