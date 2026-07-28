@@ -267,6 +267,9 @@
   max-width: none;
   margin-inline: 0;
   padding-bottom: 1rem;
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 .deliver-top {
@@ -276,11 +279,14 @@
   justify-content: space-between;
   gap: 0.65rem 1rem;
   margin-bottom: 0.75rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .deliver-top-text {
   min-width: 0;
   flex: 1 1 12rem;
+  max-width: 100%;
 }
 
 .deliver-studio .page-title {
@@ -295,11 +301,14 @@
   font-size: 0.78rem;
   line-height: 1.35;
   color: var(--ts-mute, #A1A1A1);
-  max-width: 42rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .deliver-status-chip {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  max-width: 100%;
   border-radius: var(--radius);
   border: 1px solid var(--ts-border, #E7E7E7);
   background: var(--ts-panel, #FFFFFF);
@@ -308,24 +317,80 @@
   font-weight: 600;
   color: var(--ts-ink, #171717);
   box-shadow: none;
+  white-space: nowrap;
 }
 
 .deliver-status-chip.is-ready {
   border-color: var(--ts-ink, #171717);
 }
 
+/*
+ * Mobile-first stack. Desktop two-column only from 861px.
+ * Must live in this file — lazy-deliver loads after shell and was
+ * undoing shell's max-width:860 stack rule.
+ */
 .deliver-split {
   display: grid;
-  grid-template-columns: minmax(0, 55fr) minmax(14rem, 45fr);
-  gap: 1rem 1.15rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .deliver-edit-column {
   min-width: 0;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.deliver-preview-panel {
+  position: static;
+  max-height: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-panel, #FFFFFF);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.deliver-pack-preview,
+.deliver-pack-preview .brand-artboard {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.deliver-ship-panel .field-input,
+.deliver-ship-panel textarea {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (min-width: 861px) {
+  .deliver-split {
+    grid-template-columns: minmax(0, 55fr) minmax(14rem, 45fr);
+    gap: 1rem 1.15rem;
+  }
+
+  .deliver-preview-panel {
+    position: sticky;
+    top: 4.5rem;
+    max-height: calc(100vh - 5.5rem);
+    overflow: auto;
+  }
+
+  .deliver-goal-anchor {
+    max-width: 42rem;
+  }
 }
 
 .deliver-ship-panel {

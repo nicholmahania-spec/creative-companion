@@ -6681,16 +6681,7 @@ select:focus {
   box-shadow: none !important;
 }
 
-@media (max-width: 860px) {
-.deliver-split {
-    grid-template-columns: 1fr;
-  }
-
-.deliver-preview-panel {
-    position: static;
-    max-height: none;
-  }
-}
+/* deliver-split / deliver-preview-panel: see lazy-deliver.css (mobile-first) */
 
 /* ============================================================
    Shortcuts + export + consent densify
