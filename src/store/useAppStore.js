@@ -328,8 +328,6 @@ export function blankWorkspaceState() {
       toastMode: 'quiet',
       /** Seconds non-error toasts queue before flushing together; 0 = instant (default) */
       toastBatchWindow: 0,
-      /** Product UI locale for wordmark + path labels */
-      locale: 'en',
     },
     // Template management
     templates: [],

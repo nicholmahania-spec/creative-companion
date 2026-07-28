@@ -5,12 +5,6 @@
 import { Suspense, lazy, useState, useRef, useEffect } from 'react'
 import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
-import {
-  normalizeLocale,
-  t as i18nT,
-  tFormat,
-  pathLabel,
-} from '../lib/i18n'
 import { getProcessPhase } from '../lib/processGuide'
 import { formatShortDate, urgencyLabel } from '../lib/dates'
 import InfoReveal from '../components/InfoReveal'
@@ -26,7 +20,6 @@ const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
 
 export default function SketchView(props) {
   const {
-    locale: localeProp = 'en',
     navDir = 'none',
     activeProject = null,
     projectDeadline = '',
@@ -73,7 +66,6 @@ export default function SketchView(props) {
     setDeskConfirm,
   } = props
 
-  const locale = normalizeLocale(localeProp)
   const addTask = useAppStore((s) => s.addTask)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const captureStep = handleCapture || addQuickTaskProp
@@ -112,10 +104,7 @@ export default function SketchView(props) {
         activeProject?.id || useAppStore.getState().currentProjectId,
       dueDate: '',
     })
-    flashToast?.(
-      tFormat(locale, 'ui.queuedDraftLabel', { label: d.label }) ||
-        `Queued ${d.label}`
-    )
+    flashToast?.(`Draft added · ${d.label}`)
   }
 
   const confirmRemove = (id, label) => {
@@ -125,7 +114,7 @@ export default function SketchView(props) {
         label,
         onConfirm: () => {
           removeTask(id)
-          flashToast?.(i18nT(locale, 'ui.stepRemoved'))
+          flashToast?.('Step removed')
           setDeskConfirm(null)
         },
       })
@@ -142,7 +131,7 @@ export default function SketchView(props) {
       <div className="flow-top flow-top-compact sketch-studio-top">
         <div>
           <h1 className="page-title work-page-title">
-            {i18nT(locale, 'path.sketch')}
+            {labelForStepId('sketch')}
           </h1>
           <p className="work-context-line">
             <strong>{activeProject?.name || 'Project'}</strong>
@@ -175,17 +164,15 @@ export default function SketchView(props) {
             </Suspense>
             <p className="empty-state-title">
               {doneTasks.length === 0
-                ? i18nT(locale, 'ui.noStepYet')
-                : `${i18nT(locale, 'ui.queueClear')} (${doneTasks.length} ${
-                    doneTasks.length === 1
-                      ? i18nT(locale, 'ui.step')
-                      : i18nT(locale, 'ui.steps')
-                  } ${i18nT(locale, 'ui.completed')})`}
+                ? 'No step yet'
+                : `All done here (${doneTasks.length} ${
+                    doneTasks.length === 1 ? 'step' : 'steps'
+                  } completed)`}
             </p>
             <p className="empty-state-subtitle">
               {doneTasks.length === 0
-                ? i18nT(locale, 'ui.getStarted')
-                : i18nT(locale, 'ui.nextStepSuggestion')}
+                ? 'Ready to start your first step?'
+                : "What's next?"}
             </p>
             <div className="step-focus-actions step-focus-actions-empty">
               <button
@@ -195,7 +182,7 @@ export default function SketchView(props) {
                   document.getElementById('desk-capture')?.focus()
                 }
               >
-                {i18nT(locale, 'ui.addStep')}
+                Add step
               </button>
             </div>
           </div>
@@ -457,7 +444,8 @@ export default function SketchView(props) {
               </button>
             </div>
             <p className="product-card-title" style={{ marginBottom: 0 }}>
-              {i18nT(locale, 'ui.howDeskWorks')}
+              Five path stops: Strategy → Research → Identity → Touchpoints →
+              Assets. Ideate and Review live under Tools.
             </p>
           </section>
         )}
@@ -564,13 +552,7 @@ export default function SketchView(props) {
             setActiveView?.(journeyNext?.view || 'brand')
           }
         >
-          {tFormat(locale, 'ui.continueNext', {
-            label:
-              (journeyNext?.id && pathLabel(locale, journeyNext.id)) ||
-              journeyNext?.label ||
-              pathLabel(locale, 'deliver') ||
-              labelForStepId('deliver'),
-          })}
+          {`Next · ${journeyNext?.label || labelForStepId('deliver')}`}
         </button>
       </div>
     </div>

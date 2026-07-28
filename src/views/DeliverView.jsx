@@ -6,10 +6,6 @@ import { useState, Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
-import {
-  normalizeLocale,
-  t as i18nT,
-} from '../lib/i18n'
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
@@ -18,7 +14,6 @@ import '../styles/lazy-deliver.css'
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
 export default function DeliverView({
-  locale: localeProp = 'en',
   navDir = 'none',
   activeProject = null,
   deskMood = [],
@@ -39,7 +34,6 @@ export default function DeliverView({
   CLOUD = false,
   lastExportNote = '',
 }) {
-  const locale = normalizeLocale(localeProp)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   /** @type {null | 'print' | 'pdf' | 'kit'} */
   const [thinPackPrompt, setThinPackPrompt] = useState(null)
@@ -95,7 +89,7 @@ export default function DeliverView({
     >
       <div className="flow-top deliver-top">
         <div className="deliver-top-text">
-          <h1 className="page-title">{i18nT(locale, 'path.deliver')}</h1>
+          <h1 className="page-title">{labelForStepId('deliver')}</h1>
           {(goal || brandWords) && (
             <p
               className="deliver-goal-anchor"
@@ -134,7 +128,7 @@ export default function DeliverView({
                 className="btn btn-primary work-path-next"
                 onClick={() => runPack('pdf')}
               >
-                {i18nT(locale, 'ui.downloadVectorPdf')}
+                Brand book PDF
               </button>
             </div>
 
@@ -193,7 +187,7 @@ export default function DeliverView({
             {ready.thin && (
               <div className="pack-thin-warning" role="status">
                 <p style={{ margin: '0 0 0.5rem' }}>
-                  {i18nT(locale, 'ui.thinPack')}
+                  Thin pack — add tagline, colors, or ★ Research pins.
                 </p>
                 <div className="finish-secondary-row" style={{ margin: 0 }}>
                   <button
@@ -201,14 +195,14 @@ export default function DeliverView({
                     className="btn btn-secondary btn-sm"
                     onClick={() => setActiveView('studio')}
                   >
-                    {i18nT(locale, 'ui.goToBoard') || 'Go to Research'}
+                    Go to Research
                   </button>
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
                     onClick={() => goSystemSection('essentials')}
                   >
-                    {i18nT(locale, 'path.design') || labelForStepId('design')}
+                    {labelForStepId('design')}
                   </button>
                 </div>
               </div>
@@ -222,8 +216,8 @@ export default function DeliverView({
               >
                 <p id="thin-pack-title" className="thin-pack-prompt-body">
                   {thinPackPrompt === 'print'
-                    ? i18nT(locale, 'ui.thinPackConfirmPrint')
-                    : i18nT(locale, 'ui.thinPackConfirmDownload')}
+                    ? 'Pack is thin (tagline / colors / ★ pins). Print anyway?'
+                    : 'Pack is thin (tagline / colors / ★ pins). Download anyway?'}
                 </p>
                 <div className="thin-pack-prompt-actions">
                   <button
@@ -242,15 +236,15 @@ export default function DeliverView({
                     }}
                   >
                     {thinPackPrompt === 'print'
-                      ? i18nT(locale, 'ui.continuePrint')
-                      : i18nT(locale, 'ui.continueDownload')}
+                      ? 'Print anyway'
+                      : 'Download anyway'}
                   </button>
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
                     onClick={() => setThinPackPrompt(null)}
                   >
-                    {i18nT(locale, 'ui.cancel')}
+                    Cancel
                   </button>
                   <button
                     type="button"
@@ -260,7 +254,7 @@ export default function DeliverView({
                       setActiveView('studio')
                     }}
                   >
-                    {i18nT(locale, 'path.research') || labelForStepId('research')}
+                    {labelForStepId('research')}
                   </button>
                 </div>
               </div>
@@ -330,9 +324,9 @@ export default function DeliverView({
                     try {
                       const md = packBriefMarkdown(buildCurrentBrandPack())
                       await navigator.clipboard.writeText(md)
-                      flashToast(i18nT(locale, 'ui.leaveBehindBriefCopied'))
+                      flashToast('Client brief copied')
                     } catch {
-                      flashToast(i18nT(locale, 'ui.leaveBehindBriefCopyFail'))
+                      flashToast('Could not copy — try Download instead')
                     }
                   }}
                 >

@@ -7,7 +7,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
-import { normalizeLocale, t as i18nT, tFormat, pathLabel } from '../lib/i18n'
 import { DETECTIVE_CHAPTERS, getDetectiveProgress } from '../lib/detectiveBrief'
 import DefineStartHere from '../components/DefineStartHere'
 import '../styles/lazy-define.css'
@@ -17,7 +16,6 @@ const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 
 export default function DefineView(props) {
   const {
-    locale: localeProp = 'en',
     navDir = 'none',
     activeProject: activeProjectProp = null,
     deskTasks = [],
@@ -27,8 +25,6 @@ export default function DefineView(props) {
     setProjectDeadline: setProjectDeadlineProp,
     projectDeadline: projectDeadlineProp = '',
   } = props
-
-  const locale = normalizeLocale(localeProp)
 
   // Own the live project row so App shell can skip detective equality and not
   // re-render the whole tree on every Define keystroke.
@@ -164,7 +160,7 @@ export default function DefineView(props) {
       <div className="brand-template-top">
         <div className="define-title-row">
           <h1 className="page-title">
-            {i18nT(locale, 'path.define')}
+            {labelForStepId('define')}
           </h1>
           {/* Replaces the old "Save" button, which called a @deprecated action
               (the brief already autosaves on every keystroke) and toasted a raw
@@ -312,9 +308,7 @@ export default function DefineView(props) {
           className="btn btn-primary work-path-next"
           onClick={() => setActiveView?.('flow')}
         >
-          {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'research') || labelForStepId('research'),
-          })}
+          {`Next · ${labelForStepId('research')}`}
         </button>
       </div>
     </div>

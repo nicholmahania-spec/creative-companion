@@ -31,12 +31,6 @@ import { getProcessPhase } from '../lib/processGuide'
 import { pinFaceStyle } from '../lib/moodPins'
 import { loadTypePairFont } from '../lib/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
-import {
-  normalizeLocale,
-  t as i18nT,
-  tFormat,
-  pathLabel,
-} from '../lib/i18n'
 import InfoReveal from '../components/InfoReveal'
 import { trackTemplateAction } from '../lib/analytics'
 import '../styles/lazy-design.css'
@@ -45,7 +39,6 @@ const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 const StationeryKit = lazy(() => import('../components/StationeryKit'))
 
 export default function DesignView({
-  locale: localeProp = 'en',
   navDir = 'none',
   activeProject = null,
   deskMood = [],
@@ -58,7 +51,6 @@ export default function DesignView({
   brandEditSectionProp,
   setBrandEditSectionProp,
 }) {
-  const locale = normalizeLocale(localeProp)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const updateDirection = useAppStore((s) => s.updateDirection)
   const addContact = useAppStore((s) => s.addContact)
@@ -526,7 +518,7 @@ export default function DesignView({
             <div className="brand-template-top">
               <div>
                 <h1 className="page-title">
-                  {i18nT(locale, 'path.design')}
+                  {labelForStepId('design')}
                 </h1>
                 <p className="page-sub">
                   {activeProject?.name || 'Project'}
@@ -552,11 +544,7 @@ export default function DesignView({
                     onClick={async () => {
                       const r = bumpDesignVersion()
                       if (r?.ok)
-                        flashMicro(
-                          tFormat(locale, 'ui.versionBumped', {
-                            version: r.version,
-                          })
-                        )
+                        flashMicro(`Version ${r.version}`)
                       // Refresh version history after bumping
                       await loadVersionHistory()
                     }}
@@ -1606,7 +1594,7 @@ export default function DesignView({
               </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-min-size">
-                  {i18nT(locale, 'ui.logoMinSize') || 'Min size'}
+                  Smallest logo size
                 </label>
                 <input
                   id="logo-min-size"
@@ -1620,7 +1608,7 @@ export default function DesignView({
               </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-donts">
-                  {i18nT(locale, 'ui.logoDonts') || 'Logo don’ts'}
+                  Logo mistakes to avoid
                 </label>
                 <textarea
                   id="logo-donts"
@@ -1639,10 +1627,10 @@ export default function DesignView({
                 <div
                   className="logo-variant-row"
                   role="group"
-                  aria-label={i18nT(locale, 'ui.logoVariants') || 'Variants'}
+                  aria-label="Logo versions"
                 >
                   <p className="field-label" style={{ marginBottom: '0.4rem' }}>
-                    {i18nT(locale, 'ui.logoVariants') || 'Variants'}
+                    Logo versions
                   </p>
                   <div className="logo-variant-grid">
                     <div className="logo-variant-card is-primary">
@@ -1672,7 +1660,7 @@ export default function DesignView({
                       e.target.value = ''
                       if (!file) return
                       if (file.size > 2.5 * 1024 * 1024) {
-                        flashToast(i18nT(locale, 'ui.markTooBig'))
+                        flashToast('Logo image must be under 2.5MB')
                         return
                       }
 
@@ -1710,7 +1698,7 @@ export default function DesignView({
                     className="btn btn-ghost"
                     onClick={() => {
                       setLogoImage('')
-                      flashMicro(i18nT(locale, 'ui.markRemoved'))
+                      flashMicro('Logo image removed')
                     }}
                   >
                     Remove mark
@@ -1757,7 +1745,7 @@ export default function DesignView({
                 <summary>Imagery guidelines</summary>
                 <div className="field-block" style={{ marginTop: '0.65rem' }}>
                   <label className="field-label" htmlFor="img-style">
-                    {i18nT(locale, 'ui.imageryStyle') || 'Style'}
+                    Look of photos / drawings
                   </label>
                   <textarea
                     id="img-style"
@@ -1772,7 +1760,7 @@ export default function DesignView({
                 </div>
                 <div className="field-block">
                   <label className="field-label" htmlFor="img-do">
-                    {i18nT(locale, 'ui.imageryDo') || 'Do'}
+                    Pictures we want
                   </label>
                   <textarea
                     id="img-do"
@@ -1787,7 +1775,7 @@ export default function DesignView({
                 </div>
                 <div className="field-block">
                   <label className="field-label" htmlFor="img-dont">
-                    {i18nT(locale, 'ui.imageryDont') || "Don't"}
+                    Pictures to avoid
                   </label>
                   <textarea
                     id="img-dont"
@@ -2247,9 +2235,7 @@ export default function DesignView({
           className="btn btn-primary work-path-next"
           onClick={() => setActiveView?.('finish')}
         >
-          {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'sketch') || labelForStepId('sketch'),
-          })}
+          {`Next · ${labelForStepId('sketch')}`}
         </button>
       </div>
     </>

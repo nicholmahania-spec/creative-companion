@@ -5,12 +5,7 @@
 import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase, REVIEW_QUESTIONS } from '../lib/processGuide'
-import {
-  normalizeLocale,
-  t as i18nT,
-  tFormat,
-  pathLabel,
-} from '../lib/i18n'
+import { labelForStepId } from '../lib/journey'
 import { packReadiness } from '../lib/exportFiles'
 import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-review.css'
@@ -29,7 +24,6 @@ const REVIEW_PROMPTS = [
 const REVIEW_GAP_SKIP = new Set(['handoff', 'learnings'])
 
 export default function ReviewView({
-  locale: localeProp = 'en',
   navDir = 'none',
   activeProject = null,
   deskMood = [],
@@ -41,7 +35,6 @@ export default function ReviewView({
   flashToast,
   flashMicro,
 }) {
-  const locale = normalizeLocale(localeProp)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const packSnap = buildCurrentBrandPack()
   const ready = packReadiness(packSnap)
@@ -90,7 +83,7 @@ export default function ReviewView({
     >
       <div className="flow-top review-top">
         <div className="review-top-text">
-          <h1 className="page-title">{i18nT(locale, 'path.review')}</h1>
+          <h1 className="page-title">Review</h1>
           {(goal || brandWords) && (
             <p className="review-meta-info" role="status">
               {goal ? `Goal: ${goal.slice(0, 30)}${goal.length > 30 ? '...' : ''}` : ''}
@@ -212,9 +205,7 @@ export default function ReviewView({
           className="btn btn-primary work-path-next"
           onClick={() => setActiveView?.('finish')}
         >
-          {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'deliver') || 'Deliver',
-          })}
+          {`Next · ${labelForStepId('deliver')}`}
         </button>
       </div>
     </div>
