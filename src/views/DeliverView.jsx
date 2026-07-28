@@ -126,6 +126,17 @@ export default function DeliverView({
           <section className="panel brand-section deliver-ship-panel">
             <div className="brand-section-label">Ship</div>
 
+            {/* Primary ship CTA — ADHD: one obvious download on the fold */}
+            <div className="path-continue-row deliver-primary-ship">
+              <button
+                type="button"
+                className="btn btn-primary work-path-next"
+                onClick={() => runPack('pdf')}
+              >
+                {i18nT(locale, 'ui.downloadVectorPdf')}
+              </button>
+            </div>
+
             <div className="field-block">
               <label className="field-label" htmlFor="handoff-note">
                 Handoff

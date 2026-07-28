@@ -8,6 +8,7 @@ import {
   normalizeLocale,
   t as i18nT,
   tFormat,
+  pathLabel,
 } from '../lib/i18n'
 import { getProcessPhase } from '../lib/processGuide'
 import { formatShortDate, urgencyLabel } from '../lib/dates'
@@ -37,6 +38,7 @@ export default function SketchView(props) {
     showHowItWorks = false,
     hideHowItWorks,
     openBreakdown,
+    journeyNext = null,
     setActiveView,
     flashToast,
     flashMicro,
@@ -549,6 +551,23 @@ export default function SketchView(props) {
         )}
       </div>
 
+      <div className="path-continue-row">
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() =>
+            setActiveView?.(journeyNext?.view || 'brand')
+          }
+        >
+          {tFormat(locale, 'ui.continueNext', {
+            label:
+              (journeyNext?.id && pathLabel(locale, journeyNext.id)) ||
+              journeyNext?.label ||
+              pathLabel(locale, 'design') ||
+              'Design',
+          })}
+        </button>
+      </div>
     </div>
   )
 }

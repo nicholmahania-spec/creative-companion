@@ -212,6 +212,17 @@ export default function ReviewView({
         </section>
       </div>
 
+      <div className="path-continue-row">
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() => setActiveView?.('finish')}
+        >
+          {tFormat(locale, 'ui.continueNext', {
+            label: pathLabel(locale, 'deliver') || 'Deliver',
+          })}
+        </button>
+      </div>
     </div>
   )
 }

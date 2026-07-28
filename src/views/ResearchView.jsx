@@ -1474,6 +1474,17 @@ export default function ResearchView({
           </div>
         )}
 
+      <div className="path-continue-row">
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() => setActiveView?.('spark')}
+        >
+          {tFormat(locale, 'ui.continueNext', {
+            label: pathLabel(locale, 'ideate') || 'Ideate',
+          })}
+        </button>
+      </div>
     </>
   )
 }

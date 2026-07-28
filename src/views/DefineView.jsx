@@ -11,7 +11,7 @@
  */
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
-import { normalizeLocale, t as i18nT } from '../lib/i18n'
+import { normalizeLocale, t as i18nT, tFormat, pathLabel } from '../lib/i18n'
 import { DETECTIVE_CHAPTERS, getDetectiveProgress } from '../lib/detectiveBrief'
 import DefineStartHere from '../components/DefineStartHere'
 
@@ -26,6 +26,7 @@ export default function DefineView(props) {
     deskTasks = [],
     updateDetective,
     onOpenShare,
+    setActiveView,
     setProjectDeadline,
     projectDeadline = '',
   } = props
@@ -271,6 +272,18 @@ export default function DefineView(props) {
             />
           </Suspense>
         </div>
+      </div>
+
+      <div className="path-continue-row">
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() => setActiveView?.('studio')}
+        >
+          {tFormat(locale, 'ui.continueNext', {
+            label: pathLabel(locale, 'research') || 'Research',
+          })}
+        </button>
       </div>
     </div>
   )
