@@ -1,12 +1,7 @@
-/** Ideate — A/B/C stage (primary) + Spark rail (secondary). Tech-Studio ADHD. */
+/** Ideate — diverge (rough list) then A/B/C shortlist + Spark rail. Tech-Studio ADHD. */
+import { useState } from 'react'
 import { getProcessPhase } from '../lib/processGuide'
 import { pathLabel, tFormat } from '../lib/i18n'
-import {
-  formatDecisionLine,
-  latestDecision,
-  decisionFromDirection,
-} from '../lib/decisionLog'
-import useAppStore from '../store/useAppStore'
 import InfoReveal from '../components/InfoReveal'
 
 export default function SparkView({
@@ -25,9 +20,7 @@ export default function SparkView({
   projectId,
   i18nT = (key) => key,
   projectGoal = '',
-  decisionLog = [],
 }) {
-  const logDecision = useAppStore((s) => s.logDecision)
   const dirs =
     Array.isArray(directions) && directions.length >= 3
       ? directions
@@ -43,6 +36,10 @@ export default function SparkView({
   const title = pathLabel(locale, 'ideate') || 'Ideate'
   const goalLine = String(projectGoal || '').trim()
 
+  // Session rough dump — diverge first, then promote into A/B/C
+  const [rough, setRough] = useState([])
+  const [roughDraft, setRoughDraft] = useState('')
+
   const pinSparkStay = () => {
     addMoodPin({
       type: 'spark',
@@ -51,7 +48,44 @@ export default function SparkView({
       visual: projectPalette[0] || '#1A1A1E',
     })
     notifyAction?.('Pinned', 'mood_pin', { label: 'Spark pin' })
-    flashMicro?.(i18nT('ui.sparkPinnedStay') || 'Pinned · Research')
+    flashMicro?.(i18nT('ui.sparkPinnedStay') || 'Pinned to board')
+  }
+
+  const useSparkAsTitle = () => {
+    const text = String(currentSpark || '')
+      .split(/[—.–]/)[0]
+      .trim()
+    if (!text) return
+    const empty = dirs.find((d) => !String(d.title || '').trim())
+    if (!empty) {
+      flashMicro?.('A · B · C are full')
+      return
+    }
+    updateDirection?.(empty.id, { title: text })
+    flashMicro?.(`→ ${empty.label}`)
+    window.setTimeout(() => {
+      document.getElementById(`dir-title-${empty.id}`)?.focus?.()
+    }, 40)
+  }
+
+  const addRough = () => {
+    const t = roughDraft.trim()
+    if (!t) return
+    setRough((r) => [...r, t])
+    setRoughDraft('')
+  }
+
+  const promoteRough = (index) => {
+    const text = rough[index]
+    if (!text) return
+    const empty = dirs.find((d) => !String(d.title || '').trim())
+    if (!empty) {
+      flashMicro?.('A · B · C are full')
+      return
+    }
+    updateDirection?.(empty.id, { title: text })
+    setRough((r) => r.filter((_, i) => i !== index))
+    flashMicro?.(`→ ${empty.label}`)
   }
 
   const chooseDirection = (dir) => {
@@ -62,6 +96,7 @@ export default function SparkView({
       return
     }
     const nextChosen = !dir.chosen
+    // updateDirection logs decision when chosen:true — do not log again on queue
     updateDirection?.(dir.id, { chosen: nextChosen })
     if (nextChosen) {
       flashMicro?.(
@@ -79,7 +114,6 @@ export default function SparkView({
 
   const queueChosen = () => {
     if (!chosen) return
-    logDecision?.(decisionFromDirection(chosen))
     addTask?.({
       id: Date.now() + Math.random(),
       title: `Draft ${chosen.label}: ${chosen.title}`,
@@ -89,10 +123,18 @@ export default function SparkView({
       seeded: false,
       projectId: projectId || null,
       dueDate: '',
+      why: chosen.note || '',
     })
     flashMicro?.(i18nT('ui.queuedDraft') || `Queued ${chosen.label}`)
     setActiveView('flow')
   }
+
+  const statusLine = (() => {
+    if (chosen) return `${filledDirs} of 3 titled · ${chosen.label} chosen`
+    if (filledDirs === 0) return '0 of 3 titled · rough ideas first, then shortlist'
+    if (filledDirs < 3) return `${filledDirs} of 3 titled · keep going or choose one`
+    return '3 of 3 titled · choose one to send to Sketch'
+  })()
 
   return (
     <div className="spark-view ideate-studio">
@@ -105,13 +147,12 @@ export default function SparkView({
           className="btn btn-ghost btn-sm"
           onClick={() => setActiveView('ideate-focus')}
         >
-          Try Focus Mode (beta)
+          Focus mode
         </button>
       </div>
       <div className="ideate-meta">
         <p className="ideate-progress" role="status">
-          <strong>{filledDirs}/3</strong>
-          {chosen ? ` · ${chosen.label}` : ''}
+          {statusLine}
         </p>
         {phase ? (
           <p className="ideate-phase" role="status">
@@ -129,12 +170,61 @@ export default function SparkView({
         ) : null}
       </div>
 
+      {/* Diverge first — messy dump before shortlist */}
+      <section className="ideate-rough" aria-label="Rough ideas">
+        <p className="ideate-rough-label">Rough ideas</p>
+        <p className="ideate-rough-hint">
+          Messy is fine. Capture many, then promote up to three into A · B · C.
+        </p>
+        {rough.length > 0 ? (
+          <ul className="ideate-rough-list">
+            {rough.map((t, i) => (
+              <li key={`${t}-${i}`} className="ideate-rough-chip">
+                <span>{t}</span>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => promoteRough(i)}
+                  title="Promote to next empty A/B/C"
+                >
+                  ↑ shortlist
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setRough((r) => r.filter((_, j) => j !== i))}
+                  aria-label="Remove"
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="ideate-rough-add">
+          <label className="sr-only" htmlFor="rough-idea-input">
+            Add rough idea
+          </label>
+          <input
+            id="rough-idea-input"
+            className="field-input"
+            value={roughDraft}
+            onChange={(e) => setRoughDraft(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addRough()}
+            placeholder="e.g. Quiet type, bold photo crop…"
+          />
+          <button type="button" className="btn btn-secondary" onClick={addRough}>
+            Add
+          </button>
+        </div>
+      </section>
+
       <div className="ideate-layout">
         <section
           className="panel brand-section ideate-shortlist"
           aria-label="Three directions A B C"
         >
-          <div className="brand-section-label">A · B · C</div>
+          <div className="brand-section-label">Shortlist · A · B · C</div>
           <div className="ideate-directions is-locked-3">
             {dirs.slice(0, 3).map((d) => {
               const hasTitle = Boolean(String(d.title || '').trim())
@@ -178,32 +268,32 @@ export default function SparkView({
                     }
                     placeholder={`${d.label} title`}
                   />
-                  <label className="sr-only" htmlFor={`dir-note-${d.id}`}>
-                    Direction {d.label} why
-                  </label>
-                  <textarea
-                    id={`dir-note-${d.id}`}
-                    className="field-input"
-                    rows={2}
-                    value={d.note || ''}
-                    onChange={(e) =>
-                      updateDirection?.(d.id, { note: e.target.value })
-                    }
-                    placeholder="Why this wins"
-                  />
+                  {/* Why only after choose — name first, defend second */}
+                  {d.chosen ? (
+                    <>
+                      <label className="sr-only" htmlFor={`dir-note-${d.id}`}>
+                        Direction {d.label} why
+                      </label>
+                      <textarea
+                        id={`dir-note-${d.id}`}
+                        className="field-input"
+                        rows={2}
+                        value={d.note || ''}
+                        onChange={(e) =>
+                          updateDirection?.(d.id, { note: e.target.value })
+                        }
+                        placeholder="Optional — why this wins"
+                      />
+                    </>
+                  ) : null}
                 </div>
               )
             })}
           </div>
         </section>
 
-        <aside className="panel brand-section ideate-spark-tray" aria-label="Spark">
-          <div className="brand-section-label">
-            Spark
-            {currentSpark ? (
-              <InfoReveal>{currentSpark}</InfoReveal>
-            ) : null}
-          </div>
+        <aside className="ideate-spark-tray" aria-label="Prompt">
+          <div className="brand-section-label">Prompt</div>
           <div className="spark-card spark-card-stem" title={currentSpark || ''}>
             <p>
               {String(currentSpark || '')
@@ -214,8 +304,15 @@ export default function SparkView({
           <div className="spark-actions">
             <button
               type="button"
+              onClick={useSparkAsTitle}
+              className="btn btn-primary"
+            >
+              Use as next empty title
+            </button>
+            <button
+              type="button"
               onClick={nextSpark}
-              className="btn btn-secondary"
+              className="btn btn-ghost"
             >
               New
             </button>
@@ -231,7 +328,7 @@ export default function SparkView({
               className="btn btn-ghost"
               onClick={pinSparkStay}
             >
-              Pin
+              Pin to Research
             </button>
           </div>
         </aside>
@@ -240,10 +337,10 @@ export default function SparkView({
       <div className="path-continue-row ideate-send-row">
         <button
           type="button"
-          className="btn btn-secondary work-path-next"
+          className={`btn work-path-next${canSend ? ' btn-primary' : ' btn-secondary'}`}
           onClick={queueChosen}
           disabled={!canSend}
-          title={canSend ? undefined : 'Choose a titled direction first'}
+          aria-describedby="ideate-send-help"
         >
           {canSend
             ? `Send · Sketch`
@@ -251,6 +348,15 @@ export default function SparkView({
                 label: pathLabel(locale, 'sketch') || 'Sketch',
               })}
         </button>
+        <p
+          id="ideate-send-help"
+          className={`ideate-send-help${canSend ? ' is-ready' : ''}`}
+          role="status"
+        >
+          {canSend
+            ? `Ready — ${chosen.label}: ${chosen.title}`
+            : 'Choose a titled direction first'}
+        </p>
       </div>
     </div>
   )

@@ -19,11 +19,7 @@ const BRACKET_PAIRS = TYPE_PAIRS.slice(0, 4)
 export default function DesignFocusView({ activeProject, setActiveView }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
 
-  // Intent setting state
-  const [intent, setIntent] = useState('')
-  const [intentSet, setIntentSet] = useState(false)
-
-  // Original DesignView state (moved inside intentSet conditional)
+  // No free-text intent gate (ADHD: invent-before-work tax). Start on tagline.
   const [taglineDone, setTaglineDone] = useState(!!activeProject?.tagline)
   const [taglineDraft, setTaglineDraft] = useState(activeProject?.tagline || '')
   const [bracket, setBracket] = useState([BRACKET_PAIRS[0], BRACKET_PAIRS[1]])
@@ -47,7 +43,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
 
   // Hooks must run every render (before any conditional return)
   useEffect(() => {
-    if (!intentSet || !taglineDone) return undefined
+    if (!taglineDone) return undefined
     const onKey = (e) => {
       if (!bracket) return
       if (e.key === 'ArrowLeft') pick(bracket[0])
@@ -56,7 +52,7 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bracket, taglineDone, intentSet])
+  }, [bracket, taglineDone])
 
   const applyWinner = () => {
     if (!winner) return
@@ -67,52 +63,6 @@ export default function DesignFocusView({ activeProject, setActiveView }) {
 
   const exitFocus = () => setActiveView?.('brand')
 
-  // If intent not set, show intent input first
-  if (!intentSet) {
-    return (
-      <FocusShell
-        stepLabel="05 // Design"
-        stepIndex={0}
-        stepCount={3}
-        showPreviewDrawer={false}
-        onExit={exitFocus}
-      >
-        <div className="focus-card">
-          <p id="design-intent-prompt" className="focus-prompt">What do you want to accomplish in your design session?</p>
-          <input
-            id="design-intent-input"
-            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-            value={intent}
-            onChange={(e) => setIntent(e.target.value)}
-            placeholder="e.g., Choose heading and body fonts that feel trustworthy"
-            autoFocus
-            aria-labelledby="design-intent-prompt"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && intent.trim()) {
-                setIntentSet(true)
-              }
-            }}
-          />
-          <div className="flex justify-end mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (intent.trim()) {
-                  setIntentSet(true)
-                }
-              }}
-              disabled={!intent.trim()}
-            >
-              Start Designing
-            </Button>
-          </div>
-        </div>
-      </FocusShell>
-    )
-  }
-
-  // Main DesignView logic (only shown after intent is set)
   if (!taglineDone) {
     return (
       <FocusShell

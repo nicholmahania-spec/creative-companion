@@ -18043,3 +18043,70 @@ textarea.artboard-brief-input {
   color: var(--text-secondary);
   align-self: center;
 }
+
+
+/* Ideate diverge → shortlist */
+.ideate-rough {
+  margin: 0 0 var(--space-5);
+  padding: var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+}
+.ideate-rough-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.ideate-rough-hint {
+  margin: 0 0 var(--space-3);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.ideate-rough-list {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.ideate-rough-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+}
+.ideate-rough-add {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.ideate-rough-add .field-input { flex: 1; }
+.ideate-send-help {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.ideate-send-help.is-ready {
+  color: var(--positive, #15803d);
+  font-weight: 600;
+}
+.ideate-spark-tray {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  background: transparent;
+}
+.ideate-progress {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}

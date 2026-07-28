@@ -29,11 +29,7 @@ export default function DeliverFocusView({
   runExport,
   setActiveView,
 }) {
-  // Intent setting state
-  const [intent, setIntent] = useState('')
-  const [intentSet, setIntentSet] = useState(false)
-
-  // Original DeliverView state (moved inside intentSet conditional)
+  // No free-text intent gate — start on format selection.
   const [selected, setSelected] = useState(
     () => new Set(FORMATS.filter((f) => f.default).map((f) => f.id))
   )
@@ -85,52 +81,6 @@ export default function DeliverFocusView({
 
   const exitFocus = () => setActiveView?.('finish')
 
-  // If intent not set, show intent input first
-  if (!intentSet) {
-    return (
-      <FocusShell
-        stepLabel="07 // Deliver"
-        stepIndex={0}
-        stepCount={3}
-        showPreviewDrawer={false}
-        onExit={exitFocus}
-      >
-        <div className="focus-card">
-          <p id="deliver-intent-prompt" className="focus-prompt">What do you want to accomplish in your delivery session?</p>
-          <input
-            id="deliver-intent-input"
-            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-            value={intent}
-            onChange={(e) => setIntent(e.target.value)}
-            placeholder="e.g., Generate final brand assets and prepare for client handoff"
-            autoFocus
-            aria-labelledby="deliver-intent-prompt"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && intent.trim()) {
-                setIntentSet(true)
-              }
-            }}
-          />
-          <div className="flex justify-end mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (intent.trim()) {
-                  setIntentSet(true)
-                }
-              }}
-              disabled={!intent.trim()}
-            >
-              Start Delivery
-            </Button>
-          </div>
-        </div>
-      </FocusShell>
-    )
-  }
-
-  // Main DeliverView logic (only shown after intent is set)
   if (shipped) {
     return (
       <FocusShell stepLabel="07 // Deliver" stepIndex={3} stepCount={3} onExit={exitFocus}>

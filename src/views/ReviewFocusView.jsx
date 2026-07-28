@@ -22,11 +22,7 @@ export default function ReviewFocusView({
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
 
-  // Intent setting state
-  const [intent, setIntent] = useState('')
-  const [intentSet, setIntentSet] = useState(false)
-
-  // Original ReviewView state (moved inside intentSet conditional)
+  // No free-text intent gate — start on notes / gaps.
   const noteLines = String(activeProject?.feedbackNotes || '')
     .split('\n')
     .map((l) => l.trim())
@@ -88,85 +84,6 @@ export default function ReviewFocusView({
   const currentNote = noteLines[0]
 
   const exitFocus = () => setActiveView?.('review')
-
-  // If intent not set, show intent input first
-  if (!intentSet) {
-    return (
-      <FocusShell
-        stepLabel="06 // Review"
-        stepIndex={0}
-        stepCount={3}
-        showPreviewDrawer={true}
-        onExit={exitFocus}
-      >
-        <div className="focus-card">
-          <p id="review-intent-prompt" className="focus-prompt">What do you want to accomplish in your review session?</p>
-          <input
-            id="review-intent-input"
-            className="focus-input-inline w-full border border-border rounded-md px-3 py-2 text-base focus-ring focus-ring-accent focus-ring-offset-0"
-            value={intent}
-            onChange={(e) => setIntent(e.target.value)}
-            placeholder="e.g., Address all client feedback and prepare for delivery"
-            autoFocus
-            aria-labelledby="review-intent-prompt"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && intent.trim()) {
-                setIntentSet(true)
-              }
-            }}
-          />
-          <div className="flex justify-end mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (intent.trim()) {
-                  setIntentSet(true)
-                }
-              }}
-              disabled={!intent.trim()}
-            >
-              Start Reviewing
-            </Button>
-          </div>
-        </div>
-
-        {/* Preview drawer moved outside FocusShell to avoid nesting */}
-        <div style={{ position: 'fixed', top: 0, right: 0, height: '100%', width: '300px', maxWidth: '90vw' }}>
-          <Suspense fallback={
-            <div className="animate-pulse bg-muted/50 rounded p-4 h-full flex items-center justify-center">
-              <div className="space-y-4">
-                <div className="h-4 w-32 bg-border rounded"></div>
-                <div className="h-4 w-24 bg-border rounded"></div>
-                <div className="h-4 w-40 bg-border rounded"></div>
-              </div>
-            </div>
-          }>
-            <ReviewPreview
-              activeProject={activeProject}
-              buildCurrentBrandPack={buildCurrentBrandPack}
-              clearedNotes={clearedNotes}
-              noteLines={noteLines}
-              skippedGaps={skippedGaps}
-              translating={translating}
-              translation={translation}
-              aiReady={aiReady}
-              runTranslate={runTranslate}
-              packSnap={packSnap}
-              ready={ready}
-              goSystemSection={goSystemSection}
-              setSkippedGaps={setSkippedGaps}
-              setTranslating={setTranslating}
-              setTranslation={setTranslation}
-              updateBrandField={updateBrandField}
-              setClearedNotes={setClearedNotes}
-              setStrike={setStrike}
-            />
-          </Suspense>
-        </div>
-      </FocusShell>
-    )
-  }
 
   if (currentNote) {
     return (
