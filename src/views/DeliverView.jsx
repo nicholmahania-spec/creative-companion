@@ -4,6 +4,7 @@
  */
 import { useState, Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
+import CaseStudyExport from '../components/CaseStudyExport'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
@@ -162,6 +163,14 @@ export default function DeliverView({
                 placeholder="What worked · next"
               />
             </div>
+
+            {/* After the notes it reads from — Learned feeds the outcome
+                section, so offering the export above it would ask for the
+                story before the last line of it was written. */}
+            <CaseStudyExport
+              activeProject={activeProject}
+              flashToast={flashToast}
+            />
 
             {gaps.length > 0 && (
               <div className="deliver-gaps">
