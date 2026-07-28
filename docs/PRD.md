@@ -15,13 +15,14 @@ Not a chatbot. Local-first; optional Supabase cloud; optional live Helper via se
 
 ## 2. Primary path (exactly five)
 
-Process language follows classic brand identity process (Wheeler / Logo Design Love).  
+Process language follows classic brand identity process (Wheeler / Logo Design Love),  
+ordered **brief-first** (ADHD): know the project before gathering refs.  
 Step **ids** stay stable (`define` / `research` / …); labels are user-facing.
 
 | # | Label | View id | Step id | Job |
 |---|--------|---------|---------|-----|
-| 1 | **Research** | `studio` | `research` | Pins; star up to 6 for pack |
-| 2 | **Strategy** | `project` | `define` | Brief / detective form (form-only — no mood board) |
+| 1 | **Strategy** | `project` | `define` | Brief / detective form (form-only — no mood board) |
+| 2 | **Research** | `studio` | `research` | Pins; star up to 6 for pack |
 | 3 | **Identity** | `brand` | `design` | Live artboard + accordion editors |
 | 4 | **Touchpoints** | `flow` | `sketch` | One current step; drafts / applications desk |
 | 5 | **Assets** | `finish` | `deliver` | Preview + one primary Download PDF |
@@ -34,7 +35,7 @@ Step **ids** stay stable (`define` / `research` / …); labels are user-facing.
 
 ## 3. Success criteria (spine)
 
-- [ ] New user: star one Research pin → complete Strategy brief → set tagline on Identity → one Touchpoints step → download Assets PDF without hunting Tools.
+- [ ] New user: complete Strategy brief → star one Research pin → set tagline on Identity → one Touchpoints step → download Assets PDF without hunting Tools.
 - [ ] Touchpoints: current step owns first fold (Complete step primary; Split if too big secondary).
 - [ ] Identity: artboard readable first (left on wide; first on mobile).
 - [ ] Assets: one primary PDF download; thin pack warns with links to Research/Identity.

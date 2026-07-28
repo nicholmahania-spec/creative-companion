@@ -1,34 +1,34 @@
 /**
- * Primary path — five stops aligned with classic brand-identity process
- * (Wheeler / Logo Design Love):
- *   Research → Strategy → Identity → Touchpoints → Assets
+ * Primary path — five stops using brand-identity process language
+ * (Wheeler / Logo Design Love), ordered for ADHD: brief first, then research.
+ *
+ *   Strategy → Research → Identity → Touchpoints → Assets
  *
  * Step ids (define/research/sketch/design/deliver) stay stable for
- * pathStepHasContent + detective history; labels are user-facing process language.
+ * pathStepHasContent + detective history; labels are user-facing.
  * Ideate (spark) and Review are Tools, not path siblings.
  */
 
 export const JOURNEY_STEPS = [
   {
-    id: 'research',
-    view: 'studio',
-    num: '1',
-    label: 'Research',
-    /** Wheeler phase name for docs / coaching */
-    process: 'Conducting research',
-    plain:
-      'Gather refs, notes, and existing brand cues. Star up to 6 for the pack.',
-    nextView: 'project',
-    nextLabel: 'Go to Strategy',
-  },
-  {
     id: 'define',
     view: 'project',
-    num: '2',
+    num: '1',
     label: 'Strategy',
     process: 'Clarifying strategy',
     plain:
       'Positioning and brief. Who is this for? How should it feel? One clear goal.',
+    nextView: 'studio',
+    nextLabel: 'Go to Research',
+  },
+  {
+    id: 'research',
+    view: 'studio',
+    num: '2',
+    label: 'Research',
+    process: 'Conducting research',
+    plain:
+      'Gather refs, notes, and existing brand cues. Star up to 6 for the pack.',
     nextView: 'brand',
     nextLabel: 'Go to Identity',
   },
@@ -82,7 +82,6 @@ export function journeyIdForView(view) {
       return 'design'
     case 'finish':
       return 'deliver'
-    // Off-path Tools (not path siblings)
     case 'spark':
     case 'review':
     case 'home':

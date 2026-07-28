@@ -11,28 +11,28 @@ describe('JOURNEY_STEPS five-stop path', () => {
   it('has exactly five path steps', () => {
     expect(JOURNEY_STEPS).toHaveLength(5)
     expect(PATH_VIEWS).toEqual([
-      'studio',
       'project',
+      'studio',
       'brand',
       'flow',
       'finish',
     ])
   })
 
-  it('orders Research → Strategy → Identity → Touchpoints → Assets', () => {
+  it('orders Strategy → Research → Identity → Touchpoints → Assets', () => {
     expect(JOURNEY_STEPS.map((s) => s.label)).toEqual([
-      'Research',
       'Strategy',
+      'Research',
       'Identity',
       'Touchpoints',
       'Assets',
     ])
   })
 
-  it('carries Wheeler process phase names', () => {
+  it('carries process phase names (brief first, then research)', () => {
     expect(JOURNEY_STEPS.map((s) => s.process)).toEqual([
-      'Conducting research',
       'Clarifying strategy',
+      'Conducting research',
       'Designing identity',
       'Creating touchpoints',
       'Managing assets',
@@ -40,7 +40,7 @@ describe('JOURNEY_STEPS five-stop path', () => {
   })
 
   it('chains nextView without Ideate or Review', () => {
-    let v = 'studio'
+    let v = 'project'
     const views = [v]
     for (let i = 0; i < 10; i += 1) {
       const next = getNextJourney(v)
@@ -49,8 +49,8 @@ describe('JOURNEY_STEPS five-stop path', () => {
       views.push(v)
     }
     expect(views).toEqual([
-      'studio',
       'project',
+      'studio',
       'brand',
       'flow',
       'finish',

@@ -129,13 +129,13 @@ const EN = {
     goToBoard: 'Go to Research',
     hasOpenWorkStep: 'Has an open Touchpoints step',
     howDeskWorks:
-      'Five path stops: Research → Strategy → Identity → Touchpoints → Assets. Ideate and Review live under Tools.',
+      'Five path stops: Strategy → Research → Identity → Touchpoints → Assets. Ideate and Review live under Tools.',
     projectSub:
-      'Strategy — goal sheet: who it is for, how it should feel, one goal sentence. Then Identity.',
+      'Strategy — goal sheet first: who it is for, how it should feel, one goal sentence. Then Research.',
     systemSub:
       'Identity — fonts, colors, voice, logo, and starred pictures in a live preview.',
     boardSub:
-      'Research — add pictures and notes. Star up to 6 for the client pack.',
+      'Research — add pictures and notes after the brief. Star up to 6 for the client pack.',
     breakCareOpen:
       'Body check: water, food, stretch, or a real break when you take one.',
     pathReadiness: 'Quick fixes for other steps',

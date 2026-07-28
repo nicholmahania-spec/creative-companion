@@ -1506,7 +1506,7 @@ export default function ResearchView({
           onClick={() => setActiveView?.('brand')}
         >
           {tFormat(locale, 'ui.continueNext', {
-            label: pathLabel(locale, 'define') || 'Strategy',
+            label: pathLabel(locale, 'design') || 'Identity',
           })}
         </button>
       </div>

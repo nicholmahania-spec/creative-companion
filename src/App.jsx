@@ -2289,15 +2289,14 @@ function App() {
     setShowOnboarding(false)
     // Quiet first session — Helper stays off until user opts in (Tools or Settings)
     setBodyDoubling(false)
-    // Path step 1 = Research (studio); Strategy (project/brief) is next
-    setActiveView('studio')
+    // Path step 1 = Strategy (project brief); Research is next
+    setActiveView('project')
     window.setTimeout(() => {
       const tryFocus = () => {
         const el =
-          document.querySelector('.research-empty .btn-primary') ||
-          document.querySelector('[data-research-upload]') ||
           document.getElementById('detective-clientName') ||
-          document.getElementById('detective-goal')
+          document.getElementById('detective-goal') ||
+          document.querySelector('.define-start-here .btn-primary')
         if (!el) return false
         try {
           el.focus?.({ preventScroll: false })
@@ -3509,7 +3508,7 @@ function App() {
                   notifyAction('New project', 'project_create', {
                     label: 'New project',
                   })
-                  setActiveView('studio')
+                  setActiveView('project')
                   setNavOpen(false)
                 }}
                 aria-label="New project"

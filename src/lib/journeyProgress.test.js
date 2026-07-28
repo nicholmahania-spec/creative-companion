@@ -190,7 +190,7 @@ describe('pathStepHasContent', () => {
       tasks: [],
       sparkIndex: 0,
     })
-    // Path order: Research → Strategy → … first incomplete is Research (no pins)
+    // Path order: Strategy → Research → … Strategy is filled, next gap is Research
     expect(gap?.id).toBe('research')
     expect(gap?.view).toBe('studio')
   })
