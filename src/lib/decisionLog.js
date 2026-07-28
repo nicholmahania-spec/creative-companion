@@ -40,6 +40,21 @@ export function appendDecision(log = [], entry = {}, { max = 20 } = {}) {
   const prev = Array.isArray(log) ? log.filter(Boolean) : []
   let next = prev
   if (row.kind === 'direction' && row.directionId) {
+    /* Carry the ORIGINAL timestamp forward when refining a decision already
+       logged. The store re-appends on every keystroke while the title or why
+       of the chosen direction is being edited, so a fresh Date.now() each
+       time made "decided at" mean "last typed at" — and this log exists to
+       tell you when you committed, which is the one thing editing the wording
+       does not change. An explicit `entry.at` still wins. */
+    const existing = prev.find(
+      (d) =>
+        d.kind === 'direction' &&
+        String(d.directionId) === String(row.directionId)
+    )
+    if (existing && !Number(entry.at)) {
+      row.at = Number(existing.at) || row.at
+      if (entry.id == null && existing.id != null) row.id = existing.id
+    }
     next = prev.filter(
       (d) =>
         !(

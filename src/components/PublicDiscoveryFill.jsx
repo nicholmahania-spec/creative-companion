@@ -4,6 +4,7 @@
  * whole authenticated app shell) — see the /f/:id check in App.jsx.
  */
 import { useEffect, useState } from 'react'
+import { clientFacingError } from '../lib/clientFacingError'
 import { DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
 import ClientBriefFields from './ClientBriefFields'
 import { fetchDiscoveryShare, submitDiscoveryShare } from '../lib/discoveryShare'
@@ -29,7 +30,7 @@ export default function PublicDiscoveryFill({ shareId }) {
     fetchDiscoveryShare(shareId).then((r) => {
       if (cancelled) return
       if (!r.ok) {
-        setError(r.error)
+        setError(clientFacingError(r.error))
         setLoadState('notfound')
         return
       }
@@ -81,7 +82,7 @@ export default function PublicDiscoveryFill({ shareId }) {
     const r = await submitDiscoveryShare(shareId, answers)
     setSubmitting(false)
     if (!r.ok) {
-      setError(r.error)
+      setError(clientFacingError(r.error))
       return
     }
     try {

@@ -858,23 +858,13 @@ h3 {
   color: var(--dopamine-ink);
 }
 
-.more-menu button:not(.more-menu-item) {
-  text-align: left;
-  border: none;
-  background: transparent;
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  padding: 0.55rem 0.75rem;
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-
-.more-menu button:not(.more-menu-item):hover {
-  background: var(--accent-glow);
-  color: var(--accent-primary);
-}
+/* `.more-menu button:not(.more-menu-item)` lived here with its own hover
+   rule — a second, competing box model for the same menu (0.875rem/500 and
+   0.55rem padding against .more-menu-item's 0.8125rem/600 and 0.45rem).
+   It matched nothing: every one of the menu's 14 buttons carries
+   .more-menu-item, measured in the running app. Removed rather than
+   reconciled — a rule that styles no element is a decision waiting to be
+   applied by accident. */
 
 .toolbar .btn-ghost.is-active {
   background: var(--accent-glow);

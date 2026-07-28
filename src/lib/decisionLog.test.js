@@ -91,3 +91,50 @@ describe('latestDecision', () => {
     expect(latestDecision(log).title).toBe('n2')
   })
 })
+
+describe('refining a decision keeps when it was made', () => {
+  it('preserves the original timestamp while the wording changes', () => {
+    /* The store re-appends on every keystroke in the chosen direction's title
+       or why. Without this, "decided at" tracked the last edit instead of the
+       decision — the one thing rewording does not change. */
+    const first = appendDecision([], {
+      kind: 'direction',
+      directionId: 'a',
+      title: 'Harbour',
+      why: 'coastal',
+      at: 1000,
+    })
+    expect(first).toHaveLength(1)
+
+    const refined = appendDecision(first, {
+      kind: 'direction',
+      directionId: 'a',
+      title: 'Harbour & Hearth',
+      why: 'coastal, warm',
+    })
+    expect(refined).toHaveLength(1)
+    expect(refined[0].title).toBe('Harbour & Hearth')
+    expect(refined[0].at).toBe(1000)
+  })
+
+  it('still honours an explicit timestamp', () => {
+    const first = appendDecision([], {
+      kind: 'direction', directionId: 'a', title: 'A', at: 1000,
+    })
+    const moved = appendDecision(first, {
+      kind: 'direction', directionId: 'a', title: 'A', at: 5000,
+    })
+    expect(moved[0].at).toBe(5000)
+  })
+
+  it('a different direction starts its own clock', () => {
+    const first = appendDecision([], {
+      kind: 'direction', directionId: 'a', title: 'A', at: 1000,
+    })
+    const other = appendDecision(first, {
+      kind: 'direction', directionId: 'b', title: 'B',
+    })
+    expect(other[0].directionId).toBe('b')
+    expect(other[0].at).not.toBe(1000)
+  })
+})

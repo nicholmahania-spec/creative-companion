@@ -125,7 +125,7 @@ export default defineConfig({
       'Content-Security-Policy': [
         "default-src 'self'",
         "img-src 'self' data: https:",
-        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://api.x.ai",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com data:",
         "connect-src 'self' ws://localhost:* http://localhost:* https://*.supabase.co https://api.x.ai https://fonts.googleapis.com https://fonts.gstatic.com",

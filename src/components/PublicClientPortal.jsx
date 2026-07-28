@@ -8,6 +8,7 @@
  * overview form to fill out and submit themselves.
  */
 import { useEffect, useRef, useState } from 'react'
+import { clientFacingError } from '../lib/clientFacingError'
 import { JOURNEY_STEPS } from '../lib/journey'
 import ClientBriefFields from './ClientBriefFields'
 import {
@@ -35,7 +36,7 @@ export default function PublicClientPortal({ portalId }) {
   const load = async () => {
     const r = await fetchClientPortal(portalId)
     if (!r.ok) {
-      setError(r.error)
+      setError(clientFacingError(r.error))
       setLoadState('notfound')
       return
     }
@@ -80,7 +81,7 @@ export default function PublicClientPortal({ portalId }) {
     const r = await postClientPortalMessage(portalId, body)
     setSending(false)
     if (!r.ok) {
-      setError(r.error)
+      setError(clientFacingError(r.error))
       return
     }
     setChatInput('')
@@ -100,7 +101,7 @@ export default function PublicClientPortal({ portalId }) {
     const r = await respondToPortalStep(portalId, stepId, status, note)
     if (!r.ok) {
       setPendingStepId(null)
-      setError(r.error)
+      setError(clientFacingError(r.error))
       return
     }
     await load()
@@ -114,7 +115,7 @@ export default function PublicClientPortal({ portalId }) {
     const r = await submitClientPortalForm(portalId, formAnswers)
     setFormSubmitting(false)
     if (!r.ok) {
-      setError(r.error)
+      setError(clientFacingError(r.error))
       return
     }
     await load()
