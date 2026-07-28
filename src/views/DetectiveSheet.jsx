@@ -18,6 +18,7 @@ import {
   startPerformanceTimer,
   endPerformanceTimer
 } from '../lib/analytics'
+import '../styles/lazy-define.css'
 
 export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 

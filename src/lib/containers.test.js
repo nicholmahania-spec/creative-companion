@@ -13,12 +13,16 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, join } from 'node:path'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const css = readFileSync(resolve(here, '../index.css'), 'utf8')
+const stylesDir = resolve(here, '../styles')
+const css = readdirSync(stylesDir)
+  .filter((f) => f.endsWith('.css'))
+  .map((f) => readFileSync(join(stylesDir, f), 'utf8'))
+  .join('\n')
 
 const radii = [...css.matchAll(/border-radius:\s*([^;]+?)(?:\s*!important)?;/g)].map(
   (m) => m[1].trim(),

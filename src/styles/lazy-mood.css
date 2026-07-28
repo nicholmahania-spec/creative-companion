@@ -1,0 +1,1192 @@
+/* Auto-split from index.css — lazy-mood.css */
+
+
+.research-studio .research-studio-top {
+  align-items: flex-start;
+}
+
+.research-studio-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  justify-content: flex-end;
+}
+
+.research-wall {
+  /* Wall owns the fold — less card chrome around the masonry */
+  padding: 0.85rem 1rem 1rem;
+}
+
+.mood-board {
+  min-height: 44vh;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 1rem 0.95rem;
+  align-items: start;
+}
+
+/* CSS multi-column masonry — uneven pin heights, denser wall, less grid fatigue */
+
+.mood-board.has-pins.is-masonry {
+  display: block;
+  columns: 3 11.5rem;
+  column-gap: 0.85rem;
+  min-height: 48vh;
+}
+
+.mood-board.has-pins.is-masonry .mood-card {
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 0.85rem;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+
+.mood-board.has-pins.is-masonry .mood-card.is-hero {
+  /* Hero leads the flow without forcing a rigid 2×2 grid hole */
+  grid-column: unset;
+  grid-row: unset;
+}
+
+.mood-board.has-pins.is-masonry .mood-pin-img {
+  width: 100%;
+  height: auto;
+  max-height: 22rem;
+  object-fit: cover;
+  display: block;
+  vertical-align: middle;
+}
+
+.mood-board.has-pins.is-masonry .mood-card.is-hero .mood-pin-media,
+.mood-board.has-pins.is-masonry .mood-card.is-hero .mood-pin-face {
+  min-height: 11rem;
+}
+
+.mood-board.has-pins.is-masonry .mood-pin-face {
+  min-height: 8.5rem;
+}
+
+.mood-board.has-pins.is-masonry .empty-state {
+  column-span: all;
+}
+
+.mood-board.has-pins:not(.is-masonry) .mood-card.is-hero {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.mood-board.single-pin {
+  display: grid;
+  columns: unset;
+  grid-template-columns: minmax(280px, 1fr) minmax(200px, 0.55fr);
+  gap: 1.25rem;
+  min-height: 48vh;
+}
+
+.mood-board.single-pin.is-masonry {
+  display: grid;
+  columns: unset;
+}
+
+.mood-board.single-pin .mood-card.is-hero {
+  grid-column: 1;
+  grid-row: 1;
+  max-width: none;
+  display: block;
+  margin: 0;
+}
+
+.mood-board.single-pin .mood-board-foot {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+  margin-top: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  border-top: none;
+  padding-top: 0;
+  gap: 0.35rem;
+}
+
+.mood-card {
+  background: var(--bg-canvas);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  cursor: grab;
+  box-shadow: var(--shadow-1);
+  transition: transform var(--transition), box-shadow var(--transition);
+  margin: 0;
+}
+
+.mood-card:hover {
+  transform: translateY(-2px);
+}
+
+.mood-card.is-hero:hover {
+  transform: translateY(-3px) rotate(-0.35deg);
+  box-shadow: var(--shadow-hover);
+}
+
+.mood-card:active {
+  cursor: grabbing;
+}
+
+.mood-pin-face {
+  min-height: 160px;
+  /* Do not stretch over tools row — height:100% made face steal star clicks */
+  height: auto;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-end;
+  padding: 1.35rem 1.25rem;
+  color: #FAFAFA;
+  position: relative;
+  z-index: 0;
+}
+
+.mood-card.is-hero .mood-pin-face {
+  min-height: 320px;
+}
+
+/* Caption legibility only when the pin has a photo face — not a permanent
+   “hero ring” fog on every empty/solid face. */
+.mood-card:has(.mood-pin-img) .mood-pin-face::after,
+.mood-card.is-hero:has(.mood-pin-img) .mood-pin-face::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+  background: color-mix(in srgb, #0A0A0A 48%, transparent);
+  pointer-events: none;
+}
+
+.mood-pin-caption {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  max-width: 28ch;
+  text-shadow: none;
+}
+
+.mood-card.is-hero .mood-pin-caption {
+  font-size: 1.05rem;
+  max-width: 32ch;
+}
+
+.mood-pin-note {
+  margin: 0.45rem 0 0;
+  padding: 0 0.1rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.mood-empty {
+  grid-column: 1 / -1;
+  text-align: left;
+  min-height: 28vh;
+  padding: 2rem 1.5rem;
+  color: var(--text-secondary);
+  background: var(--bg-warm);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-1);
+}
+
+.mood-empty strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.1rem;
+}
+
+/* Mood board tools */
+
+.mood-pin-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.55rem 0.55rem 0.6rem;
+  background: var(--bg-warm);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.mood-pin-remove {
+  align-self: flex-start;
+  font-size: 0.75rem !important;
+  padding: 0.25rem 0.45rem !important;
+}
+
+.brand-mood-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.55rem;
+}
+
+.brand-mood-thumb {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-muted);
+  background-size: cover;
+  background-position: center;
+}
+
+.direction-pin-visual {
+  height: 72px;
+}
+
+.direction-pin-note {
+  padding: 0.4rem 0.5rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mood-pin-star {
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  padding: 0.28rem 0.55rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mood-pin-star.is-on {
+  background: rgba(26, 26, 26, 0.1);
+  border-color: rgba(26, 26, 26, 0.22);
+  color: var(--text-primary);
+}
+
+.mood-pin-order {
+  font-size: 0.68rem !important;
+  padding: 0.2rem 0.35rem !important;
+  min-width: 0;
+}
+
+.mood-pin-order.is-on,
+.mood-pin-star.is-hero {
+  font-weight: 700;
+}
+
+.mood-pin-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+/* Board pack bar + drag */
+
+.mood-card.is-pack-pin {
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.mood-card.is-pack-hero {
+  box-shadow: 0 0 0 2px var(--text-primary);
+}
+
+.mood-card.is-dragging {
+  opacity: 0.55;
+}
+
+.mood-card[draggable='true'] {
+  cursor: grab;
+}
+
+/* Board: tools always hit-testable (star must work without hover gymnastics) */
+
+.mood-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.mood-card .mood-pin-tools {
+  position: relative;
+  z-index: 2;
+  max-height: none;
+  opacity: 1;
+  overflow: visible;
+  padding-top: 0.45rem;
+  padding-bottom: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  pointer-events: auto;
+}
+
+.mood-pin-tools-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mood-pin-swatches {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.4rem 0.55rem 0.1rem;
+}
+
+.mood-pin-swatch {
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.mood-pin-swatch:hover {
+  transform: scale(1.15);
+}
+
+.mood-pin-star {
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+/* ── Mood canvas ─────────────────────────────────────────────────────────
+   The board is a free canvas: pan, zoom, drag, resize, layer. Pins are
+   absolutely positioned in stage coordinates and the stage is transformed as
+   a whole, so zooming is one composited transform rather than a relayout of
+   every card.
+
+   Aspect ratio is deliberately NOT constrained here. The old wall forced
+   every pin to 4/3 with !important, which meant a tall type specimen and a
+   wide screenshot arrived as the same rectangle — on a mood board the shape
+   of a reference IS part of what you are comparing, so the canvas lets each
+   pin keep its own. */
+/* The canvas has to look like a surface. It had no background and no edge,
+   so in dark mode it was the same near-black as the page — you could not see
+   where the board started, where it ended, or that panning had done anything.
+   A recessed fill plus a border draws the boundary; the dot grid is the part
+   that makes movement legible, since on an empty or sparse board there is
+   otherwise nothing to move against. The grid is drawn on the viewport and
+   offset by the pan, so it translates with the content but never scales into
+   either a moiré or a handful of giant blobs. */
+.mood-canvas-viewport {
+  position: relative;
+  overflow: hidden;
+  min-height: 60vh;
+  border: 1px solid var(--field-line);
+  border-radius: var(--radius);
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--border-strong) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+  background-position: var(--canvas-pan-x, 0) var(--canvas-pan-y, 0);
+  /* pan-y, not none. The Upload / Take photo / URL / Note toolbar sits BELOW
+     the board, so `none` turned a 60vh-tall element into a scroll trap: on a
+     phone, one-finger drag anywhere over the board refused to scroll the
+     page, leaving every control for adding a pin unreachable behind it.
+     Vertical page scroll is preserved; horizontal is still ours for panning. */
+  touch-action: pan-y;
+  cursor: grab;
+  overscroll-behavior: contain;
+}
+
+.mood-canvas-viewport:active {
+  cursor: grabbing;
+}
+
+/* Confirms the drop while the files are still in the air. */
+.mood-canvas-viewport.is-drop-active {
+  border-color: var(--text-primary);
+  background-color: var(--bg-elevated);
+}
+
+.mood-canvas-stage {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.mood-canvas-stage.has-pins {
+  display: block;
+  columns: auto;
+}
+
+.mood-card.is-canvas-pin {
+  position: absolute;
+  margin: 0;
+  break-inside: auto;
+  cursor: grab;
+  /* Only the geometry animates on selection — never position, which would
+     fight the pointer during a drag. */
+  transition: box-shadow var(--transition);
+}
+
+.mood-card.is-canvas-pin:active {
+  cursor: grabbing;
+}
+
+/* Hover feedback that fits a draggable. The masonry rule lifted the card 2px
+   on hover, which on an absolutely-positioned pin meant it jumped the moment
+   the cursor arrived and stayed 2px off the grab point for the whole drag. */
+.mood-card.is-canvas-pin:hover {
+  transform: none;
+  border-color: var(--field-line);
+}
+
+/* The canvas sizes pins by width; images take their natural height so the
+   reference keeps its proportions. */
+.mood-card.is-canvas-pin .mood-pin-media,
+.mood-card.is-canvas-pin .mood-pin-face {
+  aspect-ratio: auto;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+}
+
+.mood-card.is-canvas-pin .mood-pin-img {
+  position: static;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Counter-scaled so the grip is a constant size on screen. Inside the stage
+   transform a 16px handle becomes ~5px at a typical Fit-all and ~2px at the
+   0.15 zoom floor — unusable exactly when a crowded board makes you most
+   likely to want it. 24px authored, to clear the target minimum. */
+.mood-card-resize {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--text-primary);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  touch-action: none;
+}
+
+/* Each corner anchors to its own edge and counter-scales about that corner,
+   so all four stay a constant 24px on screen at any zoom and none of them
+   drift off the pin as it resizes. */
+.mood-card-resize.is-nw {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+  transform: scale(calc(1 / var(--canvas-scale, 1))) translate(-35%, -35%);
+  transform-origin: 0 0;
+}
+
+.mood-card-resize.is-ne {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+  transform: scale(calc(1 / var(--canvas-scale, 1))) translate(35%, -35%);
+  transform-origin: 100% 0;
+}
+
+.mood-card-resize.is-sw {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+  transform: scale(calc(1 / var(--canvas-scale, 1))) translate(-35%, 35%);
+  transform-origin: 0 100%;
+}
+
+.mood-card-resize.is-se {
+  bottom: 0;
+  right: 0;
+  cursor: nwse-resize;
+  transform: scale(calc(1 / var(--canvas-scale, 1))) translate(35%, 35%);
+  transform-origin: 100% 100%;
+}
+
+.mood-card-resize:hover,
+.mood-card-resize:active {
+  background: var(--bg-muted);
+}
+
+/* ── Focus Mode board summary ────────────────────────────────────────────
+   Was 100% Tailwind classes against a project with no Tailwind, so none of
+   it resolved: unstyled text, and a progress bar with no height. */
+.research-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.research-preview-title {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 700;
+}
+
+.research-preview-status {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--text-primary);
+}
+
+.research-preview-note {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.research-preview-error {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--danger);
+}
+
+.research-preview-subhead {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
+/* A bar, not a percentage. It is a shape that grows — readable at a glance
+   without resolving a number. */
+.research-preview-bar {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+  overflow: hidden;
+}
+
+.research-preview-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--text-primary);
+  transition: width var(--transition);
+}
+
+.research-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+}
+
+.research-preview-thumb {
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+  border: 1px solid var(--field-line);
+}
+
+.research-preview-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.research-preview-thumb-note {
+  padding: var(--space-1);
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Link preview footer on a pinned URL. Quiet — it identifies the reference,
+   it does not compete with the image above it. */
+.mood-pin-link {
+  padding: var(--space-2) var(--space-3) 0;
+}
+
+.mood-pin-link-desc {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  /* Two lines is enough to tell one reference from another; the full text is
+     a click away on the link itself. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mood-pin-link-host {
+  display: inline-block;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  text-decoration: none;
+  /* 44px row so the link is a real target on touch, without inflating the
+     visible text. */
+  padding: var(--space-2) 0;
+}
+
+.mood-pin-link-host:hover,
+.mood-pin-link-host:focus-visible {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.mood-canvas-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.mood-canvas-zoom,
+.mood-canvas-layer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mood-canvas-zoom-level {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 4.5ch;
+  text-align: center;
+}
+
+/* States how the surface works, in the one place you look when it isn't
+   behaving — none of pan, zoom or drag announced itself before. */
+/* ── Shortlist strip ─────────────────────────────────────────────────────
+   The ★ pack, made visible. A horizontal row rather than a grid: the set is
+   capped at six, so one glance should take in all of it and how much room is
+   left — a wrapping grid would make a shortlist of three look like the start
+   of a wall. */
+.research-shortlist {
+  margin-top: var(--space-5);
+}
+
+.research-shortlist-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.research-shortlist-title {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 700;
+}
+
+/* Room left, not "3/6" — the ratio pattern this project has removed three
+   times now. */
+.research-shortlist-count {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.research-shortlist-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.research-shortlist-item {
+  position: relative;
+}
+
+.research-shortlist-face {
+  display: block;
+  width: 92px;
+  height: 92px;
+  padding: 0;
+  border: 1px solid var(--field-line);
+  border-radius: var(--radius);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+}
+
+.research-shortlist-face:hover,
+.research-shortlist-face:focus-visible {
+  border-color: var(--text-primary);
+}
+
+/* 24px, the target-size minimum — this removes something, so it should not
+   be the smallest thing on the row. */
+.research-shortlist-drop {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--field-line);
+  border-radius: var(--radius-pill);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: var(--fs-1);
+  cursor: pointer;
+}
+
+.research-shortlist-drop:hover {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+/* Rubber band. Lives inside the stage so it shares the pins' coordinate
+   space — the rectangle you draw is the rectangle that tests for hits. */
+.mood-marquee {
+  position: absolute;
+  z-index: 9999;
+  pointer-events: none;
+  border: 1px solid var(--text-primary);
+  background: color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+
+.mood-canvas-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+/* Board gallery craft */
+
+.mood-board.has-pins {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.65rem;
+  align-items: start;
+}
+
+.mood-card .mood-pin-media,
+.mood-card .mood-pin-face {
+  aspect-ratio: 4 / 3;
+  height: auto !important;
+  min-height: 0 !important;
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.mood-card.is-hero .mood-pin-media,
+.mood-card.is-hero .mood-pin-face {
+  aspect-ratio: 16 / 10;
+}
+
+.mood-card {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-1);
+}
+
+.mood-card.is-pack-pin {
+  outline: 2px solid var(--accent-growth);
+  outline-offset: 0;
+}
+
+.mood-pin-media-btn {
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 0;
+  cursor: zoom-in;
+  font: inherit;
+}
+
+.board-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(10, 10, 10, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.board-lightbox-card {
+  width: min(36rem, 100%);
+  max-height: min(90vh, 48rem);
+  overflow: auto;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 0.85rem 0.85rem 1rem;
+  box-shadow: var(--shadow-3);
+  position: relative;
+}
+
+.board-lightbox-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+}
+
+.board-lightbox-visual {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  border-radius: var(--radius);
+  background-size: cover;
+  background-position: center;
+  background-color: var(--bg-muted);
+}
+
+.board-lightbox-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.board-lightbox-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.board-lightbox-eyedrop {
+  cursor: crosshair;
+}
+
+.board-lightbox-eyedrop.is-focal-mode {
+  cursor: cell;
+  outline: 2px dashed var(--border-subtle);
+  outline-offset: 2px;
+}
+
+.board-lightbox-eyedrop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0.2rem 0 0;
+}
+
+.board-lightbox-eyedrop-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* v0.2.60 pin lazy images + onboard polish */
+
+.mood-pin-media-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.mood-pin-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.board-lightbox-img {
+  display: block;
+  object-fit: contain;
+  background: var(--bg-muted);
+  max-height: min(70vh, 32rem);
+}
+
+/* Mood board cards: flat */
+
+.mood-card {
+  box-shadow: none;
+  transition: border-color var(--transition), outline-color var(--transition);
+}
+
+.mood-card:hover {
+  box-shadow: none;
+  border-color: var(--border-strong);
+}
+
+/* ——— Helper mood tints (expression without multi-PNG) ——— */
+
+.buddy-fab .helper-character-lottie.is-mood-happy,
+.buddy-fab .helper-character-fallback.is-mood-happy {
+  filter: saturate(1.06) brightness(1.02);
+}
+
+.buddy-fab .helper-character-lottie.is-mood-think,
+.buddy-fab .helper-character-fallback.is-mood-think {
+  filter: saturate(0.9) hue-rotate(-6deg);
+}
+
+.buddy-fab .helper-character-lottie.is-mood-rest,
+.buddy-fab .helper-character-fallback.is-mood-rest {
+  filter: saturate(0.85) brightness(0.98);
+}
+
+.board-upload-btn {
+  cursor: pointer;
+  margin: 0;
+}
+
+.mood-pin-tools-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.mood-pin-more {
+  position: relative;
+  margin-left: auto;
+}
+
+.mood-pin-more-sum {
+  list-style: none;
+  cursor: pointer;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.mood-pin-more-sum::-webkit-details-marker {
+  display: none;
+}
+
+.mood-pin-more-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.25rem);
+  z-index: 8;
+  min-width: 10rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-2);
+}
+
+/* Mood canvas */
+
+.define-mood {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  max-height: calc(100vh - 6.5rem);
+  padding: 1.2rem 1.15rem 1.15rem;
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.ideate-studio .ideate-shortlist {
+  margin: 0;
+  background: var(--ts-panel, #FFFFFF);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+
+/* Research toolbar densify */
+
+.research-studio .page-sub {
+  font-size: var(--fs-1);
+  color: #A1A1A1;
+}
+
+/* Ideate — decision strip quieter */
+
+/* Hide tips mode — instructional chrome off by default */
+
+/* Keep functional page-subs that are status counts, not lectures */
+
+.hide-tips-on .research-studio .page-sub,
+.hide-tips-on .design-studio .page-sub {
+  display: block !important;
+}
+
+/* ============================================================
+   Research ADHD — board stage, short chrome, pin focus lock
+   ============================================================ */
+
+.research-studio-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.research-top-text {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.research-status {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ts-ink, #171717);
+}
+
+.research-goal-anchor {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--ts-mute, #A1A1A1);
+  max-width: 40rem;
+}
+
+.research-timer-btn {
+  border-radius: var(--radius-sm) !important;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.research-studio .research-wall {
+  border-radius: var(--radius);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-panel, #FFFFFF);
+  box-shadow: none;
+  margin-bottom: 0.75rem;
+}
+
+/* Centred in the canvas, not stacked at the top of it. The message sits in
+   normal flow as a sibling of the absolutely-positioned stage, so a
+   min-height alone only ever pinned it to the top edge of a 60vh surface
+   with the rest of the board empty beneath it. Filling the viewport and
+   centring both axes puts it where the eye lands.
+
+   pointer-events: none so it never intercepts the surface it is describing —
+   the canvas underneath stays pannable and droppable straight through the
+   text, which matters now that dropping is the canvas's only way in. There
+   is nothing interactive left inside it to lose. */
+.research-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-6);
+  pointer-events: none;
+}
+
+/* Measure, not a pixel guess. 32rem rendered ~73 characters per line at this
+   font size — the very top of the comfortable range, and centred text should
+   sit well below it: every line starts at a different x, so the eye has to
+   re-find the beginning on each return sweep, and long lines make that miss.
+   `ch` ties the limit to the font, so it holds if the type scale changes.
+   Line-height is opened up for the same reason — centred, unjustified copy
+   needs more air between lines to track. */
+.research-empty .empty-state-subtitle {
+  /* 38ch measures ~52 actual characters: `ch` is the width of "0", which is
+     wider than average lowercase, so the unit overshoots the real count by
+     roughly a third. */
+  max-width: 38ch;
+  line-height: 1.55;
+  text-wrap: balance;
+}
+
+.research-empty .empty-state-title {
+  margin-bottom: var(--space-2);
+}
+
+.research-studio .board-add-compact {
+  border-radius: var(--radius);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-panel, #FFFFFF);
+  box-shadow: none;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.research-studio .board-upload-btn,
+.research-studio .research-add-toggle {
+  border-radius: var(--radius-sm) !important;
+  min-height: 40px;
+  box-shadow: none !important;
+}
+
+.research-add-toggle.is-on {
+  border-color: var(--ts-focus, #606060) !important;
+  outline: 1.5px solid var(--ts-focus, #606060);
+  outline-offset: 0;
+}
+
+.research-advanced {
+  margin-left: auto;
+}
+
+.research-advanced > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ts-mute, #A1A1A1);
+  list-style: none;
+}
+
+.research-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+
+.research-studio .mood-pin-star {
+  border-radius: var(--radius-sm) !important;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.45rem;
+  font-size: 1rem;
+  box-shadow: none;
+}
+
+.research-continue {
+  justify-content: flex-end;
+}
+
+.research-studio .mood-card {
+  border-radius: var(--radius);
+  box-shadow: none;
+  border: 1px solid var(--ts-border, #E7E7E7);
+}

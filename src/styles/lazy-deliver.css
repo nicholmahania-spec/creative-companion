@@ -1,0 +1,473 @@
+/* Auto-split from index.css — lazy-deliver.css */
+
+
+.export-identity-cover {
+  border-radius: var(--radius-sm);
+  padding: 1.35rem 1.25rem 1.15rem;
+  margin-bottom: 1.15rem;
+}
+
+.export-do-dont {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.export-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(18, 18, 18, 0.48);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.export-panel {
+  width: min(440px, 100%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 1.6rem 1.55rem;
+  box-shadow: var(--shadow-3);
+}
+
+.export-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.export-panel-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1.35rem;
+  justify-content: flex-end;
+}
+
+.pack-ready-list {
+  list-style: none;
+  margin: 0 0 0.65rem;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.pack-ready-list .is-ok {
+  color: var(--text-primary);
+}
+
+.pack-ready-list .is-miss {
+  color: var(--text-muted);
+}
+
+.pack-thin-warning {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius);
+  background: rgba(116, 116, 116, 0.08);
+  border: 1px solid rgba(116, 116, 116, 0.2);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.pack-ready-fix {
+  font: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.pack-ready-fix:hover {
+  color: var(--text-primary);
+}
+
+.export-cover-drop-hint {
+  margin: 0.4rem 0.25rem 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.export-open-work {
+  margin-top: 0.75rem;
+  padding: 0 0.25rem 0.5rem;
+}
+
+/* No hover gate. The note is the only record of WHY a picture is on the
+   board — the image itself carries none of that — so hiding it until the
+   cursor happens to be on top means the reasoning is gone on every return
+   visit, and gone permanently on touch, where there is no hover at all.
+   The user's own standing note applies literally here: hidden content is
+   invisible, not one click away. It also made `.needs-why` dead styling: a
+   prompt to fill in a field you cannot see. */
+
+/* Pack as presentation surface */
+
+.pack-view .finish-hero-panel.pack-hero {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.export-more-formats {
+  margin-top: 0.75rem;
+  width: 100%;
+}
+
+.export-more-formats summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Pack export confirm */
+
+.pack-export-confirm {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-growth);
+}
+
+.pack-watermark-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  z-index: var(--z-overlay);
+}
+
+/* ——— v1.1 Pack presentation ——— */
+
+.pack-view {
+  max-width: 56rem;
+  margin-inline: auto;
+  padding-bottom: 2.5rem;
+}
+
+.pack-view .finish-hero-panel.pack-hero {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.deliver-words-check {
+  margin: 0.65rem 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+}
+
+.deliver-word-check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 0.2rem 0;
+  cursor: pointer;
+}
+
+.pack-view .pack-ready-list {
+  font-size: 0.88rem;
+  opacity: 0.92;
+}
+
+.pack-thin-illu .empty-illu-svg {
+  width: 7.5rem;
+}
+
+/* ——— v1.11 inline confirms (no window.confirm) ——— */
+
+.thin-pack-prompt,
+.desk-confirm-banner {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(26, 26, 26, 0.16);
+  background: #FAFAFA;
+  box-shadow: var(--shadow-1);
+}
+
+.thin-pack-prompt-actions,
+.desk-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.pack-more-row {
+  margin-top: 0.45rem;
+}
+
+.board-pack-bulk {
+  margin-left: auto;
+}
+
+.board-pack-bulk summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.board-pack-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+/* Deliver — one primary + split menu */
+
+.pack-split-main {
+  flex: 1 1 auto;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm) !important;
+  min-height: 2.85rem;
+  justify-content: center;
+}
+
+.pack-watermark-toggle {
+  font-size: 0.78rem;
+  color: var(--ts-mute);
+}
+
+/* ============================================================
+   Deliver ADHD — notes 55% left · sticky preview 45% right
+   ============================================================ */
+
+.deliver-studio.pack-view {
+  max-width: none;
+  margin-inline: 0;
+  padding-bottom: 1rem;
+}
+
+.deliver-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.deliver-top-text {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.deliver-studio .page-title {
+  font-family: inherit;
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.deliver-goal-anchor {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--ts-mute, #A1A1A1);
+  max-width: 42rem;
+}
+
+.deliver-status-chip {
+  flex: 0 0 auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-panel, #FFFFFF);
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ts-ink, #171717);
+  box-shadow: none;
+}
+
+.deliver-status-chip.is-ready {
+  border-color: var(--ts-ink, #171717);
+}
+
+.deliver-split {
+  display: grid;
+  grid-template-columns: minmax(0, 55fr) minmax(14rem, 45fr);
+  gap: 1rem 1.15rem;
+  align-items: start;
+}
+
+.deliver-edit-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.deliver-ship-panel {
+  margin: 0;
+  border-radius: var(--radius);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-panel, #FFFFFF);
+  box-shadow: none;
+}
+
+.deliver-advanced {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--ts-border, #E7E7E7);
+  padding-top: 0.45rem;
+}
+
+.deliver-advanced > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ts-mute, #A1A1A1);
+  list-style: none;
+}
+
+.deliver-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+
+.deliver-advanced > summary::before {
+  content: '▸ ';
+  font-size: 0.7rem;
+}
+
+.deliver-advanced[open] > summary::before {
+  content: '▾ ';
+}
+
+.deliver-leave {
+  border: 1px solid var(--ts-border, #E7E7E7);
+  border-radius: var(--radius);
+  background: var(--ts-panel, #FFFFFF);
+  padding: 0.55rem 0.75rem;
+  margin: 0;
+  border-top: 1px solid var(--ts-border, #E7E7E7);
+}
+
+.deliver-gap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.deliver-gap-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-panel, #FFFFFF);
+  color: var(--ts-ink, #1A1A1A);
+  padding: 0.5rem 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  min-height: 40px;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.deliver-gap-btn:hover,
+.deliver-gap-btn:focus-visible {
+  border-color: var(--ts-focus, #606060);
+  outline: 1.5px solid var(--ts-focus, #606060);
+  outline-offset: 0;
+}
+
+.deliver-studio .deliver-words-check {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.deliver-studio .deliver-word-check-row {
+  border-radius: var(--radius);
+}
+
+.deliver-studio:has(.deliver-focus-field:focus) .deliver-focus-field:focus {
+  border-color: var(--ts-focus, #606060) !important;
+  border-width: 1.5px;
+  outline: none;
+  box-shadow: none;
+}
+
+.deliver-studio:has(.deliver-focus-field:focus) .deliver-goal-anchor,
+.deliver-studio:has(.deliver-focus-field:focus) .page-title {
+  opacity: 1;
+  filter: none;
+}
+
+.deliver-continue {
+  margin-top: 1rem;
+}
+
+.export-studio {
+  border-radius: var(--radius-sm) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--ts-border, #E7E7E7);
+  max-width: min(36rem, 96vw);
+}
+
+.export-studio .export-panel-header h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.export-studio .export-panel-actions {
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem 0.65rem;
+}
+
+.export-studio .export-open-work {
+  margin-top: 0.45rem;
+  padding: 0 0.25rem 0.35rem;
+}
+
+.export-studio .export-open-work .kicker {
+  font-size: 0.7rem;
+  color: #A1A1A1;
+}
+
+.export-studio .export-more-formats > summary {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ts-mute, #A1A1A1);
+  cursor: pointer;
+}
+
+.pack-thin-warning {
+  font-size: 0.78rem;
+  margin: 0.35rem 0 0;
+}

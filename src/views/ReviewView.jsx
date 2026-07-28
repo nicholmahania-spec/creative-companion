@@ -13,6 +13,7 @@ import {
 } from '../lib/i18n'
 import { packReadiness } from '../lib/exportFiles'
 import InfoReveal from '../components/InfoReveal'
+import '../styles/lazy-review.css'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 

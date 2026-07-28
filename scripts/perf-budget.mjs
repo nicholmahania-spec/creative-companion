@@ -19,13 +19,11 @@ const assetsDir = join(root, 'dist', 'assets')
  */
 const MAIN_JS_RAW_MAX = 440 * 1024
 /**
- * Main CSS raw max.
- * 220 KB (v1.48.65) densify · 226 KB (v1.48.93) Focus Mode product CSS ·
- * Focus product removed; dead .focus-shell purged (v1.50.3). Residual desk
- * chrome still ~255–265 KB raw until a real CSS split — budget tracks that
- * honestly instead of failing CI forever.
+ * Main CSS raw max — shell only after lazy view CSS split (v1.50.4).
+ * View styles load with route chunks (lazy-*.css); main index-*.css is shell.
+ * Target ≤200 KB; currently ~151 KB.
  */
-const MAIN_CSS_RAW_MAX = 270 * 1024
+const MAIN_CSS_RAW_MAX = 200 * 1024
 /** Main JS gzipped advisory max (warn only if over, still fail on raw) */
 const MAIN_JS_GZIP_WARN = 140 * 1024
 

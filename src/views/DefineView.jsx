@@ -9,6 +9,7 @@ import useAppStore from '../store/useAppStore'
 import { normalizeLocale, t as i18nT, tFormat, pathLabel } from '../lib/i18n'
 import { DETECTIVE_CHAPTERS, getDetectiveProgress } from '../lib/detectiveBrief'
 import DefineStartHere from '../components/DefineStartHere'
+import '../styles/lazy-define.css'
 
 const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 

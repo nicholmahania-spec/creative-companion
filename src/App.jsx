@@ -9,6 +9,10 @@ import {
 } from 'react'
 import useAppStore from './store/useAppStore'
 import { projectsShellEqual } from './lib/storeSelectors'
+import AppHeader from './components/layout/AppHeader'
+import AppSidebar from './components/layout/AppSidebar'
+import AppMain from './components/layout/AppMain'
+import AppFooter from './components/layout/AppFooter'
 
 import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
@@ -2934,411 +2938,34 @@ function App() {
       </a>
       <PullToRefresh reduceMotion={reduceMotion} />
       <HighlightExplain />
-      <header className="header header-redesign">
-        <div className="header-content header-content-simple">
-          <button
-            type="button"
-            className="header-menu-toggle"
-            aria-label={navOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={navOpen}
-            onClick={() => setNavOpen((v) => !v)}
-          >
-            <span aria-hidden="true">{navOpen ? '✕' : '☰'}</span>
-          </button>
-          <button
-            type="button"
-            className="brand-block brand-block-link"
-            onClick={() => setActiveView('home')}
-            aria-label="Home"
-            title="Home"
-          >
-            <LogoLockup className="logo" locale={locale} reduceMotion={reduceMotion} />
-          </button>
-          {activeProject ? (
-            <input
-              className="header-mobile-title header-name-input"
-              value={projectNameDraft}
-              onChange={(e) => setProjectNameDraft(e.target.value)}
-              onBlur={commitHeaderProjectRename}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  commitHeaderProjectRename()
-                  e.currentTarget.blur()
-                }
-              }}
-              aria-label="Project name"
-            />
-          ) : (
-            <span className="header-mobile-title" aria-hidden="true">
-              Creative Companion
-            </span>
-          )}
-          <div className="header-actions">
-            {/* Labelled, not a 5th identical glyph. This is the highest-
-                frequency control in the app; as an icon among icons it would
-                cost a five-way scan on every open, resolved only by hovering
-                for a tooltip. The count is ambient evidence the list has
-                something in it — otherwise the list doesn't exist between
-                opens and re-checking it depends on remembering to. No badge
-                at zero: a "0" reads as a scoreboard of nothing done. */}
-            <button
-              type="button"
-              className="header-todo-pill"
-              onClick={() => setRunningTodoPanelOpen(true)}
-              aria-label={
-                openTodoCount
-                  ? `To-do list, ${openTodoCount} open`
-                  : 'To-do list, nothing open'
-              }
-            >
-              <HeaderIcon name="list" />
-              <span>To-do</span>
-              {openTodoCount > 0 && (
-                <span className="header-todo-count" aria-hidden="true">
-                  {openTodoCount}
-                </span>
-              )}
-            </button>
-            {/* Same chip, same place, on every screen — whether or not this
-                project has a client link yet. One target to learn, and the
-                only entry point to client activity. */}
-            <ClientInboxChip
-              hasUnread={clientInbox.hasUnread}
-              onOpen={() => setClientInboxOpen(true)}
-            />
-            {activeProject && (
-              <input
-                className="header-name-input header-name-input-desktop"
-                value={projectNameDraft}
-                onChange={(e) => setProjectNameDraft(e.target.value)}
-                onBlur={commitHeaderProjectRename}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    commitHeaderProjectRename()
-                    e.currentTarget.blur()
-                  }
-                }}
-                aria-label="Project name"
-              />
-            )}
-            {/* No project <select> here: it duplicated the rename input's text
-                ("Test Project" twice, a which-one-do-I-use fork) while hiding
-                every other project behind a dropdown. The sidebar list is the
-                switcher — always visible, one click, with progress counts. */}
-            {(workRunning || isFocusRunning || (CLOUD && syncState === 'error')) && (
-            <div className="header-status-slot">
-            {workRunning && (
-              <button
-                type="button"
-                className="work-clock-chip"
-                /* Opens the clock's OWN record. This opened the Timer view,
-                   which undid the separation at the last step: you clicked a
-                   readout of hours already worked and landed on a countdown,
-                   which reads as the clock having started something. */
-                onClick={() => setWorkLogPanelOpen(true)}
-                title="Clocked work time — runs by itself while you work"
-              >
-                {/* The CLOCK: hours at work, kept automatically. Counts up,
-                    in minutes not mm:ss — a seconds digit changing every
-                    second is motion in the corner of the eye all day, and it
-                    is finer than any decision it informs. No icon: this is
-                    not a control, it is a readout. */}
-                Working · {sessionLabel}
-              </button>
-            )}
-            {/* The TIMER: separate chip, separate job, and only here because
-                you switched it on. The clock records; the timer is the thing
-                you reach for when time blindness needs help. They were one
-                control, which made choosing the timer indistinguishable from
-                simply being at work — and made stopping the timer look like
-                clocking off. ⏱ marks it as the chosen tool. */}
-            {isFocusRunning && (
-              <button
-                type="button"
-                className="focus-timer-chip"
-                onClick={() => setActiveView('insights')}
-                title="Focus timer you started — separate from clocked hours"
-              >
-                ⏱ {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
-              </button>
-            )}
-            {CLOUD && syncState === 'error' && (
-              <button
-                type="button"
-                className="sync-error-chip"
-                title={syncError || 'Cloud save failed'}
-                onClick={async () => {
-                  setSyncState('syncing')
-                  setSyncError('')
-                  try {
-                    // A failed *pull* (resume) must retry the pull, not push
-                    // local over the cloud copy it never actually loaded.
-                    if (syncErrorSource === 'pull') {
-                      const result = await pullWorkspace()
-                      if (!result.ok) {
-                        setSyncState('error')
-                        setSyncError(result.error || 'Couldn’t load cloud desk')
-                        flashToast(result.error || i18nT(locale, 'ui.syncFail'))
-                        return
-                      }
-                      if (result.payload && Array.isArray(result.payload.projects)) {
-                        skipNextCloudPush.current = true
-                        const hydrated = hydrateFromPayload(result.payload)
-                        if (hydrated.ok) {
-                          setSyncState('ok')
-                          flashToast(i18nT(locale, 'ui.syncedOk'))
-                        } else {
-                          skipNextCloudPush.current = false
-                          setSyncState('error')
-                          setSyncError(hydrated.error || 'Couldn’t load cloud desk')
-                          flashToast(hydrated.error || i18nT(locale, 'ui.syncFail'))
-                        }
-                      } else {
-                        setSyncState('ok')
-                        flashToast(i18nT(locale, 'ui.syncedOk'))
-                      }
-                      return
-                    }
-                    const result = await pushWorkspace(exportAllData())
-                    if (result.ok) {
-                      setSyncState('ok')
-                      setSyncError('')
-                      applyImageUrlReplacements(result.replacements)
-                      flashToast(i18nT(locale, 'ui.syncedOk'))
-                    } else {
-                      setSyncState('error')
-                      setSyncError(result.error || 'Couldn’t sync')
-                      flashToast(result.error || i18nT(locale, 'ui.syncFail'))
-                    }
-                  } catch (e) {
-                    setSyncState('error')
-                    setSyncError(e?.message || 'Couldn’t sync')
-                    flashToast(e?.message || i18nT(locale, 'ui.syncFail'))
-                  }
-                }}
-              >
-                <span className="sync-error-chip-full">
-                  {syncErrorSource === 'pull' ? 'Retry load' : 'Retry save'}
-                </span>
-                <span className="sync-error-chip-short">Retry</span>
-              </button>
-            )}
-            </div>
-            )}
-
-            <button
-              type="button"
-              className="header-icon-btn"
-              onClick={() => setActiveView('calendar')}
-              title="Calendar"
-              aria-label="Calendar"
-            >
-              <HeaderIcon name="calendar" />
-            </button>
-
-            <button
-              type="button"
-              className="header-icon-btn"
-              onClick={() => setActiveView('clients')}
-              title="Clients"
-              aria-label="Clients"
-            >
-              <HeaderIcon name="people" />
-            </button>
-
-            {/* Print moved into the Tools menu. It's genuinely low-frequency,
-                and the header was about to gain a wider control — leaving the
-                icon row to grow is how the to-do button ended up colliding
-                with page content in the first place. */}
-
-            <div className="more-wrap" ref={moreWrapRef}>
-              <button
-                type="button"
-                className="header-tools-btn"
-                aria-expanded={moreOpen}
-                aria-haspopup="menu"
-                // Set only while the menu exists: it is conditionally
-                // rendered below, so a static aria-controls pointed at a
-                // missing id whenever the menu was closed.
-                aria-controls={moreOpen ? 'tools-menu' : undefined}
-                id="tools-menu-button"
-                onClick={() => setMoreOpen(!moreOpen)}
-              >
-                <HeaderIcon name="tools" />
-                {/* Labelled in text, not icon-only. This menu is now the home
-                    for Settings and Log out, and people are conditioned to
-                    hunt for an avatar for those — a bare glyph makes finding
-                    them a recall problem instead of a read. */}
-                <span>{i18nT(locale, 'ui.tools')}</span>
-              </button>
-              {moreOpen && (
-                <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">
-                  <p className="more-menu-group-label">Go to</p>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('insights')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <HeaderIcon name="timer" /> {i18nT(locale, 'ui.timer')}
-                  </button>
-                  <p className="more-menu-group-label">This project</p>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      openExportPanel()
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">⬇</span> Export
-                  </button>
-                  {/* The to-do list now has one door: the labelled pill in the
-                      header. Two live triggers means two things to check and
-                      an ambiguous "are these the same list?". */}
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      const r = printCurrentPage()
-                      if (!r.ok) flashToast(r.error || 'Print failed')
-                    }}
-                  >
-                    <HeaderIcon name="print" /> Print / Save as PDF
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setHoursPanelOpen(true)
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">$</span> Hours &amp; invoice
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setDiscoveryPanelOpen(true)
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">?</span> Discovery brief
-                  </button>
-                  {/* Archive/Delete moved here from the sidebar's hover-only
-                      "⋯", which was invisible on touch and at a glance —
-                      destructive actions need one learnable home. */}
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      handleArchiveProject()
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">□</span> Archive project
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item is-danger"
-                    onClick={() => {
-                      handleDeleteProject()
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">×</span> Delete project
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setOverviewSharePanelOpen(true)
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">↗</span> Share project overview
-                  </button>
-                  {/* "Account", not "App" — that's the word you go looking
-                      for when you want Settings or Log out. */}
-                  <p className="more-menu-group-label">Account</p>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('settings')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">⚙</span> {i18nT(locale, 'ui.settings')}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      setShortcutsOpen(true)
-                    }}
-                  >
-                    <span aria-hidden="true">⌨</span> Keyboard shortcuts
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      toggleTheme()
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">◐</span>{' '}
-                    {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item more-menu-danger"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      handleSignOut()
-                    }}
-                  >
-                    <span aria-hidden="true">→</span>{' '}
-                    {CLOUD ? 'Log out' : 'Log out / lock'}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Absence of an error is not the same reassurance as "saved" —
-                you can't tell "no error" from "nothing is happening". Not a
-                button: it answers the question at a glance and costs no
-                decision. Errors keep their own retry chip above. */}
-            {CLOUD && syncState !== 'error' && (
-              <span className="header-saved" aria-live="polite">
-                <span className="header-saved-dot" aria-hidden="true" />
-                {syncState === 'syncing' ? 'Saving…' : 'Saved'}
-              </span>
-            )}
-
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        p={{
+          locale,
+          reduceMotion,
+          navOpen,
+          setNavOpen,
+          setActiveView,
+          activeProject,
+          projectNameDraft,
+          setProjectNameDraft,
+          commitHeaderProjectRename,
+          openTodoCount,
+          setRunningTodoPanelOpen,
+          clientInbox,
+          setClientInboxOpen,
+          savedFlash,
+          syncState,
+          CLOUD,
+          journeyActive,
+          pathNextGap,
+          goToProcessStep,
+          deskMood,
+          deskTasks,
+          projectPalette,
+          sparkIndex,
+          i18nT,
+        }}
+      />
 
       {/* Step rail — desktop only (CSS-hidden below 768px, where the drawer
           still carries the step list). Answers "where am I" by position, and
@@ -3406,829 +3033,125 @@ function App() {
           </Suspense>
         </>
       )}
-      <nav
-        className={`journey-sidebar${journeyActive ? '' : ' is-tools'}`}
-        aria-label={i18nT(locale, 'pathAria')}
-        /* Parked off-canvas on mobile, its 10 buttons stayed keyboard-
-           reachable — Tab from the header walked into an invisible drawer.
-           inert only applies below 768px, where the drawer is closed. */
-        /* `true`, not '': React treats an empty string as false for boolean
-           attributes, so the drawer was never actually inert and the bug
-           this comment describes was still live. */
-        inert={isMobileViewport && !navOpen ? true : undefined}
-      >
-          <div className="journey-projects-section" aria-label="Your projects">
-            <div className="journey-projects-head">
-              <span className="journey-projects-heading">Projects</span>
-              <button
-                type="button"
-                className="journey-projects-add"
-                onClick={() => {
-                  createNewProject()
-                  notifyAction('New project', 'project_create', {
-                    label: 'New project',
-                  })
-                  setActiveView('project')
-                  setNavOpen(false)
-                }}
-                aria-label="New project"
-                title="New project"
-              >
-                +
-              </button>
-            </div>
-            <ul className="journey-projects-list">
-              {projectsSummary.map(({ project: p, doneCount, nextGap }) => {
-                const isActive = p.id === activeProjectId
-                const menuOpen = openProjectMenuId === p.id
-                // A named next action beats a ratio: "1/7" has to be decoded
-                // into a meaning and still doesn't say what to do.
-                const nextLabel = nextGap
-                  ? `Next: ${pathLabel(locale, nextGap.id) || nextGap.label}`
-                  : 'Ready to deliver'
-                return (
-                  <li key={p.id} className="journey-project-row-wrap">
-                    <button
-                      type="button"
-                      className={`journey-project-row${isActive ? ' is-active' : ''}`}
-                      onClick={() => openProjectWhereLeftOff(p.id)}
-                      aria-current={isActive ? 'true' : undefined}
-                    >
-                      <span className="journey-project-row-name">{p.name}</span>
-                      <span className="journey-project-row-next">{nextLabel}</span>
-                      <span className="journey-project-row-count">
-                        {doneCount}/7
-                      </span>
-                    </button>
-                    <div className="journey-project-row-menu-wrap">
-                      <button
-                        type="button"
-                        className="journey-project-row-menu-btn"
-                        aria-haspopup="menu"
-                        aria-expanded={menuOpen}
-                        aria-label={`Project actions for “${p.name}”`}
-                        title="Project actions"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setOpenProjectMenuId(menuOpen ? null : p.id)
-                        }}
-                      >
-                        ⋯
-                      </button>
-                      {menuOpen && (
-                        <div
-                          className="journey-project-row-menu"
-                          role="menu"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="project-menu-item"
-                            disabled={activeProjects.length < 2}
-                            onClick={() => {
-                              const r = archiveProject(p.id)
-                              if (!r.ok) flashToast(r.error || i18nT(locale, 'ui.archiveFail'))
-                              setOpenProjectMenuId(null)
-                            }}
-                          >
-                            Archive project
-                          </button>
-                          {activeProjects.length < 2 && (
-                            <p className="project-menu-note">
-                              Needs a second active project to switch to.
-                            </p>
-                          )}
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="project-menu-item project-menu-danger"
-                            disabled={projects.length <= 1}
-                            onClick={() => {
-                              setOpenProjectMenuId(null)
-                              handleDeleteProjectById(p.id, p.name)
-                            }}
-                          >
-                            Delete project
-                          </button>
-                          {projects.length <= 1 && (
-                            <p className="project-menu-note">
-                              This is your only project.
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-            {archivedProjects.length > 0 && (
-              <select
-                className="journey-projects-restore"
-                value={restoreSelect}
-                onChange={(e) => {
-                  const id = e.target.value
-                  if (!id) return
-                  unarchiveProject(Number(id) || id)
-                  selectProject(Number(id) || id)
-                  setRestoreSelect('')
-                }}
-                aria-label="Restore archived project"
-              >
-                <option value="">Restore archived…</option>
-                {archivedProjects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-          <ol className="journey-bar-list">
-            {JOURNEY_STEPS.map((step, idx) => {
-              const active = journeyActive === step.id
-              const label = pathLabel(locale, step.id) || step.label
-              const plain = pathPlain(locale, step.id) || step.plain
-              const pathCtx = {
-                project: activeProject,
-                moodItems: deskMood,
-                tasks: deskTasks,
-                sparkIndex,
-                palette: projectPalette,
-              }
-              const hasContent = pathStepHasContent(step.id, pathCtx)
-              const prevLit =
-                idx > 0 &&
-                pathStepHasContent(JOURNEY_STEPS[idx - 1].id, pathCtx)
-              return (
-                <li
-                  key={step.id}
-                  className={`journey-bar-item${active ? ' is-active' : ''}${
-                    hasContent && !active ? ' is-done' : ''
-                  }`}
-                >
-                  {idx > 0 && (
-                    <span
-                      className={`journey-flow-link${prevLit ? ' is-lit' : ''}`}
-                      aria-hidden="true"
-                    />
-                  )}
-                  <button
-                    type="button"
-                    className={`journey-step${active ? ' is-active' : ''}${
-                      hasContent && !active ? ' is-done' : ''
-                    }`}
-                    onClick={() => {
-                      setActiveView(step.view)
-                      setNavOpen(false)
-                      // Empty steps: land focus on a useful field
-                      if (!hasContent) {
-                        focusPathGapTarget(pathGapFocusSelector(step.id))
-                      }
-                    }}
-                    aria-current={active ? 'step' : undefined}
-                    aria-label={`Step ${step.num}: ${label}. ${plain}${
-                      hasContent ? ' Has content.' : ''
-                    } Press ${step.num} to open.`}
-                    title={`${plain} · key ${step.num}`}
-                  >
-                    <span className="journey-node" aria-hidden="true">
-                      {hasContent && !active ? (
-                        <span className="journey-check">✓</span>
-                      ) : (
-                        <PathStepIcon id={step.id} />
-                      )}
-                    </span>
-                    <span className="journey-num" aria-hidden="true">
-                      {hasContent && !active ? '✓' : String(step.num).padStart(2, '0')}
-                    </span>
-                    <span className="journey-label">{label}</span>
-                  </button>
-                </li>
-              )
-            })}
-          </ol>
-          {!journeyActive && (
-            <span className="journey-tools-pill" role="status" aria-live="polite">
-              Tools · {toolsLabelForView(activeView)}
-            </span>
-          )}
-      </nav>
-
-      <button
-        type="button"
-        className="nav-backdrop"
-        aria-label="Close menu"
-        tabIndex={navOpen ? 0 : -1}
-        onClick={() => setNavOpen(false)}
+      <AppSidebar
+        p={{
+          journeyActive,
+          isMobileViewport,
+          navOpen,
+          setNavOpen,
+          locale,
+          i18nT,
+          activeProjects,
+          archivedProjects,
+          activeProjectId,
+          setCurrentProject,
+          createNewProject,
+          notifyAction,
+          setActiveView,
+          renameProject,
+          archiveProject,
+          unarchiveProject,
+          handleDeleteProjectById,
+          projects,
+          deskMood,
+          deskTasks,
+          projectPalette,
+          sparkIndex,
+          activeProject,
+          pathNextGap,
+          goToProcessStep,
+          pathLabel,
+          toolsLabelForView,
+          activeView,
+        }}
       />
 
-      <main className="main" id="main-content" tabIndex={-1} data-nav-dir={navDir}>
-        {journeyActive && activeView !== 'review' && activeView !== 'finish' && (
-          <JourneyGapStrip
-            locale={locale}
-            thisStepFilled={thisStepFilled}
-            pathNextGap={pathNextGap}
-            leaveBehindThin={leaveBehindThin}
-            activeView={activeView}
-            i18nT={i18nT}
-            setActiveView={setActiveView}
-          />
-        )}
-        {journeyActive && (
-          <BeforeAfterChip
-            project={activeProject}
-            onOpen={() => setBeforeAfterOpen(true)}
-          />
-        )}
-        {/* ===== HOME (multi-project) — master/detail, not a card grid ===== */}
-        {activeView === 'home' && activeProjects.length > 1 && (() => {
-          const sorted = [...projectsSummary].sort((a, b) => {
-            const aDone = a.pathFull
-            const bDone = b.pathFull
-            if (aDone !== bDone) return aDone ? 1 : -1
-            return 0
-          })
-          const selected =
-            sorted.find((s) => s.project.id === homeSelectedProjectId) ||
-            sorted[0]
-          if (!selected) return null
-          const pathFull = !!selected.pathFull
-          const packReady = !!selected.packReady
-          return (
-            <section className="home-view home-md home-studio">
-              <nav className="home-md-list" aria-label="Your projects">
-                <div className="home-md-list-head">
-                  <h1 className="home-title" style={{ margin: 0 }}>
-                    Projects
-                  </h1>
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm home-new-project"
-                    onClick={() => {
-                      createNewProject()
-                      notifyAction('New project', 'project_create', {
-                        label: 'New project',
-                      })
-                      setActiveView('project')
-                    }}
-                  >
-                    + New project
-                  </button>
-                </div>
-                <ul className="home-md-rows">
-                  {sorted.map(({ project: p, doneCount, nextGap, pathFull: rowFull, packReady: rowPack }) => {
-                    const isActive = p.id === selected.project.id
-                    return (
-                      <li key={p.id}>
-                        <button
-                          type="button"
-                          className={`home-md-row${isActive ? ' is-active' : ''}`}
-                          onClick={() => setHomeSelectedProjectId(p.id)}
-                        >
-                          <span className="home-md-row-top">
-                            <span className="home-md-row-name">{p.name}</span>
-                            <span className="home-md-row-count">
-                              {doneCount}/7
-                            </span>
-                          </span>
-                          <span
-                            className={`home-md-row-next${rowFull ? ' is-done' : ''}`}
-                          >
-                            {rowPack
-                              ? 'Ship'
-                              : rowFull
-                                ? 'Deliver'
-                                : nextGap
-                                  ? pathLabel(locale, nextGap.id) || nextGap.label
-                                  : '—'}
-                          </span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </nav>
+      <AppMain
+        p={{
+          activeView,
+          setActiveView,
+          locale,
+          navDir,
+          activeProject,
+          deskTasks,
+          deskMood,
+          projectPalette,
+          sparkIndex,
+          journeyActive,
+          thisStepFilled,
+          pathNextGap,
+          leaveBehindThin,
+          i18nT,
+          setBeforeAfterOpen,
+          projectsSummary,
+          projects,
+          activeProjects,
+          setCurrentProject,
+          createNewProject,
+          notifyAction,
+          pack,
+          exportBusy,
+          setExportBusy,
+          brandEditSection,
+          setBrandEditSection,
+          goSystemSection,
+          updateDetective,
+          setProjectDeadline,
+          projectDeadline,
+          updateProjectBrief,
+          addTask,
+          toggleTask,
+          updateTaskTitle,
+          updateTaskMeta,
+          updateTaskWhy,
+          removeTask,
+          breakIntoSteps,
+          addMoodPin,
+          nextSpark,
+          oppositeSpark,
+          currentSpark,
+          sparksTried,
+          addMicroStepsBatch,
+          setProjectPalette,
+          bumpDesignVersion,
+          updateDirection,
+          setLogoImage,
+          conceptItems,
+          calCursor,
+          setCalCursor,
+          calendarEvents,
+          CLOUD,
+          accessName,
+          syncState,
+          prefs,
+          setPref,
+          theme,
+          toggleTheme,
+          bodyDoubling,
+          setBodyDoubling,
+          exportAllData,
+          importAllData,
+          clearAllData,
+          clearToEmpty,
+          hydrateFromPayload,
+          APP_BUILD,
+          APP_BUILD_DATE,
+          STORAGE_EXPLAIN,
+          setOverviewSharePanelOpen,
+          flashToast,
+          goToProcessStep,
+          setForceBreakConsentOpen,
+          setDeskConfirm,
+        }}
+      />
 
-              <div className="home-md-detail">
-                <p className="home-kicker">
-                  {packReady ? 'Ready' : pathFull ? 'Path full' : 'Next'}
-                </p>
-                <h2 className="home-title">
-                  {packReady
-                    ? 'Brand book ready'
-                    : pathFull
-                      ? 'Path steps look full'
-                      : selected.nextGap
-                        ? pathLabel(locale, selected.nextGap.id) ||
-                          selected.nextGap.label
-                        : 'All caught up'}
-                </h2>
-                {pathFull && !packReady ? (
-                  <p className="home-kicker" style={{ marginTop: '0.35rem' }}>
-                    Pack still thin — open Deliver to fill gaps or ship anyway
-                  </p>
-                ) : null}
-                <div className="home-cta-row">
-                  <button
-                    type="button"
-                    className="btn btn-primary home-cta"
-                    onClick={() => {
-                      if (pathFull) {
-                        setCurrentProject(selected.project.id)
-                        setActiveView('finish')
-                        return
-                      }
-                      switchProjectAndContinue(selected.project.id)
-                    }}
-                  >
-                    {pathFull ? 'Open Deliver' : 'Continue'}
-                  </button>
-                </div>
-
-                <div className="home-md-strip">
-                  <p className="home-md-strip-label">
-                    {selected.doneCount}/7
-                  </p>
-                  <div className="home-md-steps">
-                    {selected.rows.map((r, i) => {
-                      const num = i + 1
-                      const isCurrent =
-                        selected.nextGap && r.id === selected.nextGap.id
-                      return (
-                        <div
-                          key={r.id}
-                          className={`home-md-step${r.done ? ' is-done' : ''}${
-                            isCurrent ? ' is-current' : ''
-                          }`}
-                          title={pathLabel(locale, r.id) || r.label}
-                        >
-                          <span className="home-md-step-dot">
-                            {r.done ? '✓' : num}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            </section>
-          )
-        })()}
-        {activeView === 'home' && activeProjects.length <= 1 && (
-          <section className="home-view home-studio">
-            <p className="home-eyebrow">
-              {activeProject?.name || 'Project'}
-            </p>
-            {brandBookReady ? (
-              <>
-                <h1 className="home-title">Brand book ready</h1>
-                <button
-                  type="button"
-                  className="btn btn-primary home-cta"
-                  onClick={() => setActiveView('finish')}
-                >
-                  Open Deliver
-                </button>
-              </>
-            ) : pathStepsFull ? (
-              <>
-                <h1 className="home-title">Path steps look full</h1>
-                <p className="home-kicker" style={{ marginTop: '0.5rem' }}>
-                  Pack still thin — open Deliver to fill gaps or ship anyway
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-primary home-cta"
-                  onClick={() => setActiveView('finish')}
-                >
-                  Open Deliver
-                </button>
-              </>
-            ) : pathNextGap ? (
-              <>
-                <p className="home-kicker">Next</p>
-                <h1 className="home-title">
-                  {pathLabel(locale, pathNextGap.id) || pathNextGap.label}
-                </h1>
-                <div className="home-cta-row">
-                  <button
-                    type="button"
-                    className="btn btn-primary home-cta"
-                    onClick={() => goToNextProcessGap()}
-                  >
-                    Continue
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h1 className="home-title">All caught up</h1>
-                <button
-                  type="button"
-                  className="btn btn-primary home-cta"
-                  onClick={() => setActiveView('finish')}
-                >
-                  Open Deliver
-                </button>
-              </>
-            )}
-            <div className="home-cta-row home-new-project-row">
-              <button
-                type="button"
-                className="btn btn-secondary home-new-project"
-                onClick={() => {
-                  createNewProject()
-                  notifyAction('New project', 'project_create', {
-                    label: 'New project',
-                  })
-                  setActiveView('project')
-                }}
-              >
-                + New project
-              </button>
-            </div>
-          </section>
-        )}
-        {/* ===== WORK — one step owns the fold ===== */}
-        {/* ===== SKETCH (lazy) ===== */}
-        {activeView === 'flow' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Sketch…</div>}>
-            <StepDependencyReminder stepId="sketch" />
-            <SketchView
-              locale={locale}
-              navDir={navDir}
-              activeProject={activeProject}
-              projectDeadline={projectDeadline}
-              completedCount={completedCount}
-              deskTasks={deskTasks}
-              doneTasks={doneTasks}
-              queueTasks={queueTasks}
-              nextTask={nextTask}
-              stepFocusKey={stepFocusKey}
-              setStepFocusKey={setStepFocusKey}
-              showHowItWorks={showHowItWorks}
-              hideHowItWorks={hideHowItWorks}
-              openBreakdown={openBreakdown}
-              journeyNext={journeyNext}
-              setActiveView={setActiveView}
-              flashToast={flashToast}
-              flashMicro={flashMicro}
-              notifyAction={notifyAction}
-              quickInput={quickInput}
-              setQuickInput={setQuickInput}
-              captureEnergy={captureEnergy}
-              setCaptureEnergy={setCaptureEnergy}
-              captureDue={captureDue}
-              setCaptureDue={setCaptureDue}
-              captureOptionsOpen={captureOptionsOpen}
-              setCaptureOptionsOpen={setCaptureOptionsOpen}
-              handleCapture={addQuickTask}
-              queueCollapsed={queueCollapsed}
-              queueOpen={queueOpen}
-              setQueueOpen={setQueueOpen}
-              doneOpen={doneOpen}
-              setDoneOpen={setDoneOpen}
-              toggleTask={toggleTask}
-              updateTaskTitle={updateTaskTitle}
-              updateTaskMeta={updateTaskMeta}
-              updateTaskWhy={updateTaskWhy}
-              removeTask={removeTask}
-              breakIntoSteps={breakIntoSteps}
-              setTaskDueDate={setTaskDueDate}
-              stepDueOpen={stepDueOpen}
-              setStepDueOpen={setStepDueOpen}
-              completeCurrentStep={completeCurrentStep}
-              startVoice={startVoice}
-              setDeskConfirm={setDeskConfirm}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== RESEARCH (lazy) ===== */}
-        {activeView === 'studio' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Research…</div>}>
-            <StepDependencyReminder stepId="research" />
-            <ResearchView
-              locale={locale}
-              navDir={navDir}
-              deskMood={deskMood}
-              activeProjectId={activeProjectId}
-              brandWords={activeProject?.detective?.brandWords || ''}
-              projectPalette={projectPalette}
-              forcedBreak={forcedBreak}
-              setActiveView={setActiveView}
-              flashToast={flashToast}
-              flashMicro={flashMicro}
-              notifyAction={notifyAction}
-              setSessionComplete={setSessionComplete}
-              setFocusLeft={setFocusLeft}
-              setPomodoroWorkStartedAt={setPomodoroWorkStartedAt}
-              setIsFocusRunning={setIsFocusRunning}
-              setTimerFocusSource={setTimerFocusSource}
-              onAddPinModeChange={setResearchAddOpen}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== SPARK (lazy) ===== */}
-        {activeView === 'spark' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
-            <StepDependencyReminder stepId="ideate" />
-            <SparkView
-              setActiveView={setActiveView}
-              nextTask={nextTask}
-              currentSpark={currentSpark}
-              nextSpark={nextSpark}
-              oppositeSpark={oppositeSpark}
-              addMoodPin={addMoodPin}
-              projectPalette={projectPalette}
-              notifyAction={notifyAction}
-              directions={activeProject?.directions}
-              updateDirection={updateDirection}
-              roughIdeas={activeProject?.roughIdeas || []}
-              decisionLog={activeProject?.decisionLog || []}
-              sparksTried={sparksTried || 0}
-              locale={locale}
-              flashMicro={flashMicro}
-              addTask={addTask}
-              projectId={activeProjectId}
-              i18nT={(key) => i18nT(locale, key)}
-              projectGoal={
-                activeProject?.detective?.goal ||
-                activeProject?.brief ||
-                ''
-              }
-            />
-          </Suspense>
-        )}
-
-        {/* ===== FOCUS (lazy) ===== */}
-        {activeView === 'insights' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading timer…</div>}>
-            <InsightsView
-              setActiveView={setActiveView}
-              nextTask={nextTask}
-              focusMinutes={focusMinutes}
-              focusSeconds={focusSeconds}
-              sessionLabel={sessionLabel}
-              forcedBreak={forcedBreak}
-              startOrPauseFocus={startOrPauseFocus}
-              resetFocus={resetFocus}
-              isFocusRunning={isFocusRunning}
-              focusLeft={focusLeft}
-              POMODORO_WORK_MIN={POMODORO_WORK_MIN}
-              forceBreaksEnabled={forceBreaksEnabled}
-              setPref={setPref}
-              bodyDoubling={bodyDoubling}
-              toggleBodyDoubling={toggleBodyDoubling}
-              flashToast={flashToast}
-              endForcedBreak={endForcedBreak}
-              sessionComplete={sessionComplete}
-              toggleTask={toggleTask}
-              completedCount={completedCount}
-              deskTasks={deskTasks}
-              prefs={prefs}
-              openForceBreakConsent={() => setForceBreakConsentOpen(true)}
-              timerFocusSource={timerFocusSource}
-              setTimerFocusSource={setTimerFocusSource}
-              pathReturnView={activeProject?.lastView || 'project'}
-              locale={locale}
-            />
-          </Suspense>
-
-        )}
-        {/* ===== CALENDAR (lazy) ===== */}
-        {activeView === 'calendar' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading calendar…</div>}>
-            <CalendarView
-              setActiveView={setActiveView}
-              pathReturnView={activeProject?.lastView || 'project'}
-              calCursor={calCursor}
-              setCalCursor={setCalCursor}
-              buildMonthGrid={buildMonthGrid}
-              formatMonthYear={formatMonthYear}
-              formatShortDate={formatShortDate}
-              urgencyLabel={urgencyLabel}
-              deadlineUrgency={deadlineUrgency}
-              daysUntil={daysUntil}
-              toISODate={toISODate}
-              calendarEvents={calendarEvents}
-              selectProject={selectProject}
-              projectDeadline={projectDeadline}
-              setProjectDeadline={setProjectDeadline}
-              activeProject={activeProject}
-              upcomingDeadlines={upcomingDeadlines}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== CLIENTS (lazy) ===== */}
-        {activeView === 'clients' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading clients…</div>}>
-            <ClientsView
-              projects={projects}
-              selectProject={selectProject}
-              setActiveView={setActiveView}
-            />
-          </Suspense>
-        )}
-
-        {/* Concept pipeline removed from UI — Research + Design path only */}
-
-        {/* ===== BRAND IDENTITY TEMPLATE ===== */}
-        {/* ===== DESIGN (lazy) ===== */}
-        {activeView === 'brand' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Design…</div>}>
-            <StepDependencyReminder stepId="design" />
-            <DesignView
-              locale={locale}
-              navDir={navDir}
-              activeProject={activeProject}
-              deskMood={deskMood}
-              projectPalette={projectPalette}
-              hidePackWatermark={hidePackWatermark}
-              setActiveView={setActiveView}
-              flashToast={flashToast}
-              flashMicro={flashMicro}
-              brandEditSection={brandEditSection}
-              setBrandEditSection={setBrandEditSection}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== REVIEW (lazy) ===== */}
-        {activeView === 'review' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Review…</div>}>
-            <StepDependencyReminder stepId="review" />
-            <ReviewView
-              locale={locale}
-              navDir={navDir}
-              activeProject={activeProject}
-              deskMood={deskMood}
-              projectPalette={projectPalette}
-              pathRows={pathRows}
-              pathDoneCount={pathDoneCount}
-              pathMissingLabelsList={pathMissingLabelsList}
-              pathNextGap={pathNextGap}
-              hidePackWatermark={hidePackWatermark}
-              setActiveView={setActiveView}
-              goToProcessStep={goToProcessStep}
-              goSystemSection={goSystemSection}
-              buildCurrentBrandPack={buildCurrentBrandPack}
-              flashToast={flashToast}
-              flashMicro={flashMicro}
-              toggleBodyDoubling={toggleBodyDoubling}
-              bodyDoubling={bodyDoubling}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== DELIVER (lazy) ===== */}
-        {activeView === 'finish' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Deliver…</div>}>
-            <StepDependencyReminder stepId="deliver" />
-            <DeliverView
-              locale={locale}
-              navDir={navDir}
-              activeProject={activeProject}
-              deskMood={deskMood}
-              deskTasks={deskTasks}
-              completedCount={completedCount}
-              projectPalette={projectPalette}
-              pathRows={pathRows}
-              pathDoneCount={pathDoneCount}
-              pathMissingLabelsList={pathMissingLabelsList}
-              pathNextGap={pathNextGap}
-              leaveBehindThin={leaveBehindThin}
-              hidePackWatermark={hidePackWatermark}
-              setActiveView={setActiveView}
-              goToProcessStep={goToProcessStep}
-              goSystemSection={goSystemSection}
-              buildCurrentBrandPack={buildCurrentBrandPack}
-              setPref={setPref}
-              runExport={runExport}
-              openExportPanel={openExportPanel}
-              flashToast={flashToast}
-              handleSignOut={handleSignOut}
-              downloadDataBackup={downloadDataBackup}
-              createNewProject={createNewProject}
-              notifyAction={notifyAction}
-              CLOUD={CLOUD}
-              lastExportNote={lastExportNote}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== SETTINGS (lazy) ===== */}
-        {activeView === 'settings' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading settings…</div>}>
-            <SettingsView
-              setActiveView={setActiveView}
-              CLOUD={CLOUD}
-              accessName={accessName}
-              syncState={syncState}
-              syncError={syncError}
-              pushWorkspace={pushWorkspace}
-              exportAllData={exportAllData}
-              setSyncState={setSyncState}
-              setSyncError={setSyncError}
-              handleSignOut={handleSignOut}
-              theme={theme}
-              toggleTheme={toggleTheme}
-              reduceMotion={reduceMotion}
-              soundEnabled={soundEnabled}
-              showHowItWorks={showHowItWorks}
-              showProgress={showProgress}
-              locale={locale}
-              queueCollapsed={queueCollapsed}
-              forceBreaksEnabled={forceBreaksEnabled}
-              setPref={setPref}
-              bodyDoubling={bodyDoubling}
-              toggleBodyDoubling={toggleBodyDoubling}
-              flashToast={flashToast}
-              forcedBreak={forcedBreak}
-              endForcedBreak={endForcedBreak}
-              prefs={prefs}
-              pwCurrent={pwCurrent}
-              setPwCurrent={setPwCurrent}
-              pwNext={pwNext}
-              setPwNext={setPwNext}
-              changeAccessPassword={changeAccessPassword}
-              downloadDataBackup={downloadDataBackup}
-              handleImportBackup={handleImportBackup}
-              importFileRef={importFileRef}
-              clearToEmpty={clearToEmpty}
-              clearAllData={clearAllData}
-              setShowOnboarding={setShowOnboarding}
-              loadSoftSignalDemo={loadSoftSignalDemo}
-              versionLabel={versionLabel}
-              APP_BUILD={APP_BUILD}
-              APP_BUILD_DATE={APP_BUILD_DATE}
-              STORAGE_EXPLAIN={STORAGE_EXPLAIN}
-              notifyAction={notifyAction}
-              createNewProject={createNewProject}
-              requestConfirm={(label, onConfirm) =>
-                setDeskConfirm({
-                  kind: 'settings',
-                  label,
-                  onConfirm: () => {
-                    onConfirm?.()
-                    setDeskConfirm(null)
-                  },
-                })
-              }
-              openForceBreakConsent={() => setForceBreakConsentOpen(true)}
-            />
-          </Suspense>
-        )}
-
-{/* ===== PROJECTS ===== */}
-        {/* ===== DEFINE (lazy) ===== */}
-        {activeView === 'project' && (
-          <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Define…</div>}>
-            <DefineView
-              locale={locale}
-              navDir={navDir}
-              activeProject={activeProject}
-              deskTasks={deskTasks}
-              setActiveView={setActiveView}
-              updateDetective={updateDetective}
-              onOpenShare={() => setOverviewSharePanelOpen(true)}
-              setProjectDeadline={setProjectDeadline}
-              projectDeadline={projectDeadline}
-            />
-          </Suspense>
-        )}
-
-      </main>
-
-      <footer className="app-footer" role="contentinfo">
-        <span className="app-footer-brand">Creative Companion</span>
-        <span className="app-footer-sep" aria-hidden="true">
-          ·
-        </span>
-        <span
-          className="app-footer-version"
-          title={`Build ${APP_BUILD}${APP_BUILD_DATE ? ` · ${APP_BUILD_DATE}` : ''}`}
-        >
-          {versionLabel()}
-        </span>
-        <span className="app-footer-sep" aria-hidden="true">
-          ·
-        </span>
-        <span className="app-footer-meta">
-          {accessName ? `${accessName} · ` : ''}
-          {CLOUD
-            ? syncState === 'syncing'
-              ? 'Syncing…'
-              : syncState === 'error'
-                ? 'Sync error'
-                : 'Cloud'
-            : 'Local-only'}
-        </span>
-      </footer>
+      <AppFooter
+        APP_BUILD={APP_BUILD}
+        APP_BUILD_DATE={APP_BUILD_DATE}
+        accessName={accessName}
+        CLOUD={CLOUD}
+        syncState={syncState}
+      />
 
 
       {demoTour && (

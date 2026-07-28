@@ -1,0 +1,844 @@
+/* Auto-split from index.css — lazy-settings.css */
+
+
+.account-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 9.5rem;
+  min-height: 2.5rem;
+  padding: 0.28rem 0.55rem 0.28rem 0.28rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: none;
+  transition: border-color var(--transition);
+}
+
+.account-chip:hover,
+.account-chip.is-open,
+.account-chip.is-active {
+  border-color: rgba(26, 26, 26, 0.35);
+  box-shadow: var(--shadow-1), 0 0 0 3px var(--accent-glow);
+}
+
+.account-chip-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: var(--radius);
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.account-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 0.15rem;
+}
+
+.settings-danger-zone {
+  margin-top: 1.15rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(185, 28, 28, 0.28);
+  background: rgba(185, 28, 28, 0.04);
+}
+
+.settings-danger-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #b91c1c;
+}
+
+.onboard-panel {
+  max-width: 480px;
+}
+
+.onboard-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.85rem;
+}
+
+.settings-danger {
+  color: #b91c1c !important;
+}
+
+/* Settings view */
+
+.settings-view {
+  animation: flowIn 0.45s ease-out;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.settings-row:first-of-type {
+  padding-top: 0.15rem;
+}
+
+.settings-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.settings-row strong {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.settings-row span {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+/* ——— Login / access gate (public site) ——— */
+
+.login-shell {
+  min-height: 100vh;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem 2rem;
+}
+
+/* Login pack specimen (sells the artifact) */
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem 1.5rem;
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-3);
+}
+
+.login-password-row {
+  position: relative;
+}
+
+.login-show-pw {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0.2rem;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+}
+
+.login-forgot {
+  align-self: flex-start;
+  margin: -0.25rem 0 0.35rem;
+  font-size: 0.8125rem;
+}
+
+.login-reset {
+  align-self: flex-start;
+  margin: -0.25rem 0 0.35rem;
+  font-size: 0.8125rem;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.login-lede {
+  margin: 0 0 1.15rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.login-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.35rem;
+}
+
+.login-error {
+  margin: 0 0 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: rgba(185, 28, 28, 0.08);
+  color: #b91c1c;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.login-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+}
+
+.login-mode-tab {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.login-mode-tab.is-active {
+  background: var(--bg-elevated);
+  color: var(--accent-deep);
+  box-shadow: var(--shadow-1);
+}
+
+.login-info {
+  margin: 0 0 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: rgba(106, 106, 106, 0.1);
+  color: var(--accent-growth);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Onboarding — single primary path */
+
+.onboard-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.onboard-primary {
+  z-index: var(--z-toast);
+  justify-content: center;
+}
+
+.onboard-demo {
+  text-align: center;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.settings-advanced {
+  margin-bottom: 0.85rem;
+  font-size: 0.82rem;
+}
+
+.settings-advanced summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.onboard-overlay .onboard-panel {
+  width: min(34rem, 100%);
+  max-width: 36rem;
+}
+
+.onboard-title {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.settings-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin: 0 0 1rem;
+  position: sticky;
+  /* Sit just below the app's own sticky header instead of at top:0, where it
+     used to overlap the header and then cover whatever section an anchor
+     link jumped to. */
+  top: 3rem;
+  z-index: 5;
+  padding: 0.45rem 0;
+  background: color-mix(in srgb, var(--bg-canvas) 92%, transparent);
+  backdrop-filter: none;
+}
+
+#settings-focus,
+#settings-desk,
+#settings-data,
+#settings-advanced {
+  scroll-margin-top: 6.5rem;
+}
+
+.settings-jump-link {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  color: var(--text-secondary);
+  padding: 0.28rem 0.55rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+}
+
+.settings-jump-link:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.settings-jump-link {
+  transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.settings-jump-link:hover {
+  border-color: rgba(86, 86, 86, 0.35);
+  color: var(--accent-growth);
+}
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin-bottom: 0.35rem;
+}
+
+.login-brand .login-tag {
+  margin: 0;
+}
+
+/* Login mobile path (always visible under tagline) */
+
+.onboard-brief-details {
+  margin: 0.35rem 0 0.65rem;
+}
+
+.onboard-brief-details summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+}
+
+.account-chip-avatar {
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  box-shadow: none;
+}
+
+/* Login solo card */
+
+.login-page-studio {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--ts-canvas, #F5F5F5);
+  padding: 1.5rem;
+}
+
+.login-card-solo {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 1.5rem !important;
+  background: var(--ts-panel, #FFFFFF) !important;
+  border: 1px solid var(--ts-border, #E7E7E7) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: none !important;
+}
+
+.login-h1 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ts-ink, #1A1A1A);
+  letter-spacing: -0.02em;
+}
+
+.login-lede-short {
+  margin: 0 0 1rem !important;
+  font-size: 0.9rem !important;
+  color: var(--ts-mute, #A1A1A1) !important;
+  font-weight: 500;
+}
+
+.login-submit {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 0.5rem;
+}
+
+.login-forgot {
+  display: block;
+  margin: 0.75rem auto 0;
+  text-align: center;
+  font-size: 0.8125rem;
+}
+
+.login-reset {
+  display: block;
+  margin: 0.75rem auto 0;
+  text-align: center;
+  font-size: 0.8125rem;
+}
+
+.login-version {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: #A1A1A1;
+}
+
+/* Login solo densify */
+
+.login-page-studio {
+  background: var(--ts-canvas) !important;
+}
+
+.login-card-solo {
+  width: min(360px, calc(100% - 2rem));
+  border-radius: var(--ts-radius) !important;
+  border: 1px solid var(--ts-border) !important;
+  box-shadow: none !important;
+  background: var(--ts-panel) !important;
+}
+
+.login-h1 {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: var(--ts-ink) !important;
+}
+
+.login-lede-short {
+  font-size: 0.8125rem !important;
+  color: var(--ts-mute) !important;
+}
+
+/* Settings rows */
+
+.settings-row {
+  min-height: 56px;
+  align-items: center;
+}
+
+.settings-row strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.settings-row span {
+  font-size: 0.75rem;
+  color: var(--ts-mute);
+}
+.settings-range {
+  width: 100%;
+  max-width: 12rem;
+  accent-color: #606060;
+}
+.settings-row-stack {
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: 0.35rem !important;
+}
+
+.settings-subhead {
+  margin: 0.85rem 0 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.settings-subhead:first-of-type {
+  margin-top: 0.25rem;
+}
+
+/* ============================================================
+   Global residual — onboard, demo, HUD, helper, resume
+   ============================================================ */
+
+.onboard-studio .onboard-panel {
+  width: min(22rem, 100%);
+  border-radius: var(--radius);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-panel, #FFFFFF);
+  box-shadow: none !important;
+  padding: 1.15rem;
+}
+
+.onboard-studio .onboard-title {
+  margin: 0 0 0.85rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.onboard-studio .onboard-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 0.65rem;
+}
+
+.onboard-studio .onboard-brief-details {
+  margin: 0.35rem 0 0.75rem;
+  border-top: 1px solid var(--ts-border, #E7E7E7);
+  padding-top: 0.45rem;
+}
+
+.onboard-studio .onboard-brief-details > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ts-mute, #A1A1A1);
+  list-style: none;
+}
+
+.onboard-studio .onboard-brief-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.onboard-studio .onboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  justify-content: flex-end;
+}
+
+.onboard-studio .onboard-primary {
+  border-radius: var(--radius-sm) !important;
+  min-height: 44px;
+  box-shadow: none !important;
+}
+
+/* ============================================================
+   Login + shell + Calendar + Timer ADHD densify
+   ============================================================ */
+
+.login-page-studio {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: var(--ts-canvas, #F5F5F5);
+}
+
+.login-card-solo {
+  width: min(22rem, 100%);
+  border-radius: var(--radius);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-panel, #FFFFFF);
+  box-shadow: none !important;
+  padding: 1.25rem 1.15rem;
+}
+
+.login-page-studio .login-h1 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.15rem;
+  letter-spacing: -0.02em;
+}
+
+.login-page-studio .login-lede {
+  margin: 0 0 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  /* Meaningful subtitle text — use the AA-passing secondary ink rather
+     than the muted #A1A1A1 (which fails contrast on the white card). */
+  color: var(--text-secondary);
+}
+
+.login-mode-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.login-mode-tab {
+  flex: 1;
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-panel, #FFFFFF);
+  min-height: 36px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+.login-mode-tab.is-active {
+  border-color: var(--ts-focus, #606060);
+  outline: 1.5px solid var(--ts-focus, #606060);
+  outline-offset: 0;
+}
+
+.login-page-studio .login-submit {
+  border-radius: var(--radius-sm) !important;
+  box-shadow: none !important;
+  min-height: 40px;
+}
+
+.login-page-studio .login-submit {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.login-page-studio .login-show-pw {
+  border-radius: var(--radius-sm) !important;
+  min-height: 36px;
+}
+
+.login-page-studio .login-version {
+  margin: 0.85rem 0 0;
+  font-size: 0.7rem;
+  color: var(--ts-mute, #A1A1A1);
+  text-align: center;
+}
+
+/* ============================================================
+   Settings ADHD — short rows, 4px, no lecture spans
+   ============================================================ */
+
+.settings-studio {
+  max-width: 36rem;
+}
+
+.settings-studio .settings-back {
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+}
+
+.settings-studio .settings-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.85rem;
+  position: sticky;
+  top: 3rem;
+  z-index: 5;
+  padding: 0.35rem 0;
+  background: var(--ts-canvas, #F5F5F5);
+}
+
+.settings-studio .settings-jump-link {
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-panel, #FFFFFF);
+  padding: 0.35rem 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--ts-ink, #171717);
+  box-shadow: none !important;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.settings-studio .settings-row {
+  padding: 0.55rem 0;
+  gap: 0.75rem;
+}
+
+.settings-studio .settings-row strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.settings-studio .settings-meta,
+.settings-studio .settings-meta-inline {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ts-mute, #A1A1A1);
+}
+
+.settings-studio .settings-meta-inline {
+  margin: 0;
+}
+
+.settings-studio .settings-actions {
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.settings-studio .pref-switch {
+  border-radius: var(--radius-sm) !important;
+  width: 2.5rem;
+  height: 1.4rem;
+  box-shadow: none !important;
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-canvas, #F5F5F5);
+}
+
+.settings-studio .pref-switch-knob {
+  border-radius: var(--radius) !important;
+  width: 1.05rem;
+  height: 1.05rem;
+  top: 0.12rem;
+  left: 0.12rem;
+  box-shadow: none !important;
+}
+
+.settings-studio .pref-switch.is-on {
+  background: var(--ts-focus, #606060);
+  border-color: var(--ts-focus, #606060);
+}
+
+.settings-studio .pref-switch.is-on .pref-switch-knob {
+  transform: translateX(1.05rem);
+}
+
+.settings-studio .settings-advanced-sum {
+  cursor: pointer;
+  list-style: none;
+}
+
+.settings-studio .settings-advanced-sum::-webkit-details-marker {
+  display: none;
+}
+
+.settings-studio .settings-advanced-sum::before {
+  content: '▸ ';
+  font-size: 0.7rem;
+}
+
+.settings-studio .settings-advanced[open] > .settings-advanced-sum::before {
+  content: '▾ ';
+}
+
+.settings-studio .settings-nested {
+  margin: 0.5rem 0;
+  border-top: 1px solid var(--ts-border, #E7E7E7);
+  padding-top: 0.45rem;
+}
+
+.settings-studio .settings-nested > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ts-mute, #A1A1A1);
+  list-style: none;
+}
+
+.settings-studio .settings-nested > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-studio .settings-danger-zone {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--ts-border, #E7E7E7);
+}
+
+.settings-studio .settings-danger-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ts-mute, #A1A1A1);
+  margin: 0 0 0.4rem;
+}
+
+.settings-studio .settings-pw-block {
+  margin: 0.65rem 0;
+}
+
+.settings-studio .helper-ai-badge {
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.45rem;
+}
+
+.settings-advanced-sum {
+  cursor: pointer;
+  list-style: none;
+}
+
+.settings-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+
+.onboard-gate-hint {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.login-setup-explain {
+  max-width: 32ch;
+  margin: 0.35rem auto 0;
+  color: var(--text-secondary);
+}
+
+.login-pw-hint {
+  margin: 0.3rem 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}

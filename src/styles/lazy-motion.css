@@ -1,0 +1,431 @@
+/* Auto-split from index.css — lazy-motion.css */
+
+
+@keyframes gameHudBurst {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.9);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes flowIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes buddyHopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes buddyHopInCenter {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes buddyFabPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+/* ——— Little Helper character (design bot from concept art) ——— */
+
+/* Moods */
+
+/* Natural idle: soft breath + tiny float */
+
+@keyframes buddyBreathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2.5px) scale(1.012);
+  }
+}
+
+/* Happy: gentle lift, not a shake */
+
+@keyframes buddyHappy {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-4px) scale(1.02);
+  }
+  55% {
+    transform: translateY(-1.5px) scale(1.01);
+  }
+}
+
+/* Attention: slow glance lean — no frantic wiggle */
+
+@keyframes buddyGlance {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-1.5px) rotate(-1.4deg);
+  }
+  70% {
+    transform: translateY(-1px) rotate(1.1deg);
+  }
+}
+
+/* Focus: almost still micro-breath */
+
+@keyframes buddyStill {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-1px) scale(1.004);
+  }
+}
+
+@keyframes buddyPing {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes buddyHeartDrift {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(-5px) scale(1.05);
+    opacity: 0.95;
+  }
+}
+
+@keyframes buddyPencil {
+  0%,
+  100% {
+    transform: rotate(18deg) translateY(0);
+  }
+  50% {
+    transform: rotate(20deg) translateY(0.5px);
+  }
+}
+
+/* Keep old names as aliases so nothing breaks */
+
+@keyframes buddyBob {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2.5px) scale(1.012);
+  }
+}
+
+@keyframes buddyWiggle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-1.5px) rotate(-1.4deg);
+  }
+  70% {
+    transform: translateY(-1px) rotate(1.1deg);
+  }
+}
+
+@keyframes buddyPulse {
+  0%,
+  100% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--dopamine) 35%, transparent);
+  }
+}
+
+/* finish-export-grid removed — Finish uses a short primary stack + details */
+
+@keyframes chipIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gentleBreath {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes softPulse {
+  0%, 100% { box-shadow: var(--highlight-inset), 0 12px 36px rgba(116, 116, 116, 0.16); }
+  50% { box-shadow: var(--highlight-inset), 0 16px 44px rgba(116, 116, 116, 0.28); }
+}
+
+@keyframes viewEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes viewEnterForward {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes viewEnterBack {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes viewEnterFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes journeyPulse {
+  0% { transform: scale(0.88); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes strikeThrough {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes defineChapterIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ——— Brief progress strip (flat) ——— */
+
+@keyframes defineNodeBurst {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes defineBurstRing {
+  0% {
+    opacity: 1;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+
+/* Desktop: board is beside form — no need for “below” anchor */
+
+/* ============================================================
+   De-gamify Define + path chrome — calm desk, not a HUD
+   ============================================================ */
+
+/* Hide legacy dopamine timeline styles if any remain in cache */
+
+/* .define-chapter-nav* removed — the markup was replaced by .define-chapter-rail
+   and no JSX has referenced these classes since. Four competing definitions of
+   .define-chapter-frame across the override layers, all ending in
+   `display: none`, were the single worst example of the layering problem on
+   this page. */
+
+/* Continue CTA: solid desk button, not a pulsing power-up */
+
+
+
+
+
+
+
+/* Kill pulse / burst keyframes if still referenced */
+
+@keyframes defineFabPulse {
+  from, to { opacity: 1; }
+}
+
+@keyframes defineNodeBurst {
+  from, to { transform: none; }
+}
+
+@keyframes defineBurstRing {
+  from, to { opacity: 0; }
+}
+
+/* Animation keyframes for subtle effects */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes shine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Animated utilities */
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 3s ease-in-out infinite;
+}
+
+.animate-shine {
+  background-size: 200% 100%;
+  animation: shine 2s linear infinite;
+}
+
+/* Entrance animations */
+.animate-fade-in {
+  animation: fade-in var(--duration-normal) var(--ease-out);
+}
+
+.animate-slide-up {
+  animation: slide-up var(--duration-normal) var(--ease-out);
+}
+
+.animate-scale-in {
+  animation: scale-in var(--duration-fast) var(--ease-out);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Exit animations */
+.animate-fade-out {
+  animation: fade-out var(--duration-fast) var(--ease-in);
+}
+
+.animate-slide-down {
+  animation: slide-down var(--duration-fast) var(--ease-in);
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slide-down {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(8px); }
+}
+
+/* Reduced motion overrides - applied via JS */
+[data-motion-reduced="true"] .animate-pulse-subtle,
+[data-motion-reduced="true"] .animate-float-slow,
+[data-motion-reduced="true"] .animate-shine,
+[data-motion-reduced="true"] .animate-fade-in,
+[data-motion-reduced="true"] .animate-slide-up,
+[data-motion-reduced="true"] .animate-scale-in,
+[data-motion-reduced="true"] .animate-fade-out,
+[data-motion-reduced="true"] .animate-slide-down {
+  animation: none !important;
+  transition: none !important;
+}
+
+[data-motion-reduced="true"] .hover\:scale-102:hover,
+[data-motion-reduced="true"] .hover\:scale-104:hover,
+[data-motion-reduced="true"] .focus-visible\:scale-102:focus-visible,
+[data-motion-reduced="true"] .focus-visible\:scale-104:focus-visible,
+[data-motion-reduced="true"] .active\:scale-95:active,
+[data-motion-reduced="true"] .active\:scale-90:active {
+  transform: none !important;
+}
+
+[data-motion-reduced="true"] .hover\:shadow-md:hover,
+[data-motion-reduced="true"] .hover\:shadow-lg:hover,
+[data-motion-reduced="true"] .hover\:opacity-90:hover,
+[data-motion-reduced="true"] .hover\:opacity-80:hover,
+[data-motion-reduced="true"] .focus-visible\:opacity-95:focus-visible,
+[data-motion-reduced="true"] .hover\:blur-sm:hover,
+[data-motion-reduced="true"] .focus-visible\:blur-sm:focus-visible {
+  opacity: 1 !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+@keyframes pullRefreshSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -17,12 +17,20 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, join } from 'node:path'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const css = readFileSync(resolve(here, '../index.css'), 'utf8')
+/** Shell + lazy view CSS (index.css only @imports shell after the split). */
+function loadAllCss() {
+  const stylesDir = resolve(here, '../styles')
+  const files = readdirSync(stylesDir).filter((f) => f.endsWith('.css'))
+  return files
+    .map((f) => readFileSync(join(stylesDir, f), 'utf8'))
+    .join('\n')
+}
+const css = loadAllCss()
 const html = readFileSync(resolve(here, '../../index.html'), 'utf8')
 
 /** Relative luminance per WCAG 2.x. */

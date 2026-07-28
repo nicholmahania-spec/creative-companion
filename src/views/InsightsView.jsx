@@ -1,5 +1,6 @@
 /** Focus timer — off-path tool. ADHD: one instrument, short CTAs. */
 import { normalizeLocale, t as i18nT, tFormat, pathLabel } from '../lib/i18n'
+import '../styles/lazy-sketch.css'
 
 export default function InsightsView(props) {
   const {

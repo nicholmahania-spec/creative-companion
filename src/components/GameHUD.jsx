@@ -9,6 +9,7 @@ import {
   xpProgress,
 } from '../lib/buddyGame'
 import { ProgressRing } from './PathStepIcon'
+import '../styles/lazy-buddy.css'
 
 /**
  * Optional quiet progress strip (Settings → Progress strip).

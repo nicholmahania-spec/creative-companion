@@ -36,6 +36,7 @@ import {
 } from '../lib/i18n'
 import InfoReveal from '../components/InfoReveal'
 import { trackTemplateAction } from '../lib/analytics'
+import '../styles/lazy-design.css'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 const StationeryKit = lazy(() => import('../components/StationeryKit'))

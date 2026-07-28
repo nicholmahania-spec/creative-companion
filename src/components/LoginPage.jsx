@@ -13,6 +13,7 @@ import {
 import { versionLabel } from '../lib/version'
 import LogoLockup from './LogoLockup'
 import { normalizeLocale } from '../lib/i18n'
+import '../styles/lazy-settings.css'
 
 // Password strength validation
 const validatePasswordStrength = (password) => {

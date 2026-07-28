@@ -45,6 +45,8 @@ import {
 } from '../lib/helperAi'
 import useAppStore from '../store/useAppStore'
 import HelperCharacterLottie from './HelperCharacterLottie'
+import '../styles/lazy-buddy.css'
+import '../styles/lazy-motion.css'
 
 const BUDDY_BASE = `${import.meta.env.BASE_URL}buddy/`
 /** Photoreal full-body Helper — Lottie asset + static fallback */

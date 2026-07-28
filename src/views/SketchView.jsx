@@ -19,6 +19,7 @@ import {
   chosenDirection,
 } from '../lib/decisionLog'
 import { trackFeatureUsage } from '../lib/analytics'
+import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
 

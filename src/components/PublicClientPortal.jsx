@@ -17,6 +17,8 @@ import {
   respondToPortalStep,
   submitClientPortalForm,
 } from '../lib/clientPortal'
+import '../styles/lazy-clients.css'
+import '../styles/lazy-define.css'
 
 export default function PublicClientPortal({ portalId }) {
   const [loadState, setLoadState] = useState('loading') // loading | ready | notfound

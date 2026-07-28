@@ -13,6 +13,7 @@ import {
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
+import '../styles/lazy-deliver.css'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 

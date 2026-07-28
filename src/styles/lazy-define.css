@@ -1,0 +1,1198 @@
+/* Auto-split from index.css — lazy-define.css */
+
+
+.detective-milestone-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+/* Reduced motion */
+
+/* ============================================================
+   Define · Sleek Dark Studio Brief Builder
+   Chapters · micro-icons · hyper-focus · tip bubbles · FAB
+   ============================================================ */
+
+.define-studio {
+  --define-canvas: var(--bg-canvas);
+  --define-card: var(--bg-elevated);
+  --define-card-lift: var(--bg-muted);
+  --define-ink: var(--text-primary);
+  --define-muted: var(--text-secondary);
+  --define-dim: var(--text-muted);
+  --define-border: var(--border-subtle);
+  --define-ch-1: var(--dopamine);
+  --define-ch-2: var(--dopamine);
+  --define-ch-3: var(--dopamine);
+  --define-glow: transparent;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding-bottom: 6.5rem;
+}
+
+/* Project essentials card */
+
+.define-field-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.45rem;
+}
+
+.define-field-label {
+  font-family: var(--font-display);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Glyph, not a badge. This was a 1.35rem filled circle pushed to the far
+   right by margin-left:auto, so on a filled-in sheet ~20 of them formed two
+   columns of accent dots — the heaviest repeated texture on the page, all of
+   it marking work already DONE, competing with the two controls that say
+   what is LEFT ("Start with these 3" and the rail's "N needed"). A filled
+   shape reads as an object at a glance; a small glyph on the label's own
+   baseline reads as punctuation and dissolves into the text.
+
+   The tick itself stays: it fires the moment a field fills, and that
+   immediate per-field confirmation is the only "you did that" on the sheet.
+   Dropping the mark entirely would have cost a real feedback signal to solve
+   a problem removing the fill already solves.
+
+   Colour must be a text token now that there is no background behind it —
+   --accent-growth (#A0A0A0) measures 2.4:1 as bare text on the light
+   canvas. */
+.define-field-check {
+  /* No margin-left: auto — the label row is a flex row with its own 0.55rem
+     gap, which is what now sets the tick beside the label. */
+  margin-left: 0;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.define-field-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.brief-spectrum-scale {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.brief-spectrum-pole {
+  /* Shared minimum track, so all four scales get an identical dot ladder.
+     With flex:0 0 auto each pole sized to its own word, so "Bold/Minimal"
+     and "High-end/Affordable" produced different pitches — measured 23px of
+     drift on the fifth dot between two scales sitting one above the other.
+     That is the "nothing lines up" failure the rail rewrite exists to kill,
+     arriving again through the newest control. min-width, not a fixed
+     basis: this component is shared with the client routes, so a longer
+     pole from a future field should widen rather than wrap. */
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  /* The poles name the axis; they are not the answer, so they stay quieter
+     than the dots the user is actually choosing between. */
+  white-space: nowrap;
+}
+
+.brief-spectrum-pole:last-of-type {
+  text-align: right;
+}
+
+/* The chosen point, in words. Quiet — it confirms, it does not compete with
+   the question above it. */
+.brief-spectrum-answer {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
+.brief-spectrum-clear-hint {
+  color: var(--text-muted);
+}
+
+/* Standing assurance, not an event. Quiet, fixed, always true. */
+.define-autosave-note {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+/* Mobile-only per-chapter remaining count — the rail's job when there is
+   no rail. Pushed to the row's end so all five align. */
+.define-chapter-head-need {
+  margin-left: auto;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.brief-spectrum-step {
+  flex: 1 1 0;
+  display: grid;
+  place-items: center;
+  /* 44px tall hit area on a 14px dot — the row is the target, not the dot,
+     the same way the deliverables checklist rows work. */
+  min-height: 44px;
+  cursor: pointer;
+}
+
+/* No local focus ring. This was the only focus indicator on the page not
+   using --dopamine, and worse, it drew the ring in --text-primary — the same
+   ink the checked dot is filled with. Arrow-keying a radio group checks as
+   it moves, so a focused-and-checked dot became a dark dot inside a
+   concentric dark ring: focus and selection rendered identically on the one
+   control where they always change together. The global :focus-visible rule
+   handles this correctly. */
+
+/* The tick sits beside the group rather than in a label row, since a
+   spectrum has no single label line to hang it on. */
+.define-spectrum-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.define-spectrum-row .brief-spectrum {
+  flex: 1 1 auto;
+}
+
+/* Workbook */
+
+.define-workbook {
+  position: relative;
+  margin: 0 0 1.5rem;
+  padding: 1.5rem 1.35rem 1.25rem;
+  border-radius: var(--radius);
+  background: var(--define-card);
+  border: 1px solid var(--define-border);
+  box-shadow: none;
+  color: var(--define-ink);
+}
+
+.define-workbook-loading {
+  text-align: center;
+  color: var(--define-muted);
+  font-weight: 600;
+}
+
+.define-workbook-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin-bottom: 1.35rem;
+}
+
+.define-workbook-title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 2.8vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: var(--define-ink);
+}
+
+.define-workbook-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.define-progress-ring {
+  --p: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at center, var(--define-card) 58%, transparent 59%),
+    conic-gradient(
+      var(--dopamine, var(--define-ch-1)) calc(var(--p) * 1%),
+      var(--border-subtle) 0
+    );
+  box-shadow: none;
+}
+
+.define-progress-num {
+  font-family: var(--font-display);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--define-ink);
+}
+
+/* Chapter rail — fluid timeline tabs */
+
+/* No box. The tabs are the only shapes in this band, so the active one is what
+   the eye lands on instead of competing with an outline drawn around nothing.
+   Grouping comes from alignment and from the gap below being larger than the
+   gap between tabs. */
+/* One per row, not a 3-column grid. Five items in three columns leaves a
+   ragged 3 + 2 with dead space beside the last two — the "nothing lines up"
+   complaint in its most literal form. A single column gives every tab the
+   same left edge and the same right edge, and reads as the ordered list it
+   actually is. */
+.define-chapter-rail {
+  display: grid;
+  /* One column, as the comment above has always specified. This was
+     repeat(5, 1fr): each ~172px track left ~112px for the count line after
+     .define-chapter-tab-count's padding-left, so some tabs wrapped to two
+     lines and some didn't — five tabs of unequal height with no shared
+     baseline, which is the exact "nothing lines up" failure predicted four
+     lines up. One column also restores the premise of the .is-active 2px
+     inset left rule, which reads as a position marker in a vertical stack
+     and as a divider between tabs in a horizontal one. */
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin-bottom: var(--space-6);
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+/* A row, not a card: number · title · count, with the count pushed right so
+   all five counts sit on one edge and can be compared without reading across. */
+.define-chapter-tab {
+  display: flex;
+  flex-direction: row;
+  /* min-width 0: grid items default to min-content width, so the count text
+   * overflowed the 1fr track and painted over the next tab. wrap: the
+   * count/"needed" line drops under the label instead of colliding. */
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  /* No outline, no fill. Five identical rectangles told you nothing about
+     which chapter you were in; a fill on the active one and plain text for the
+     rest says it at a glance and draws four fewer shapes. */
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--define-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.28s ease,
+    transform 0.2s var(--ease-spring, ease);
+}
+
+.define-chapter-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-muted);
+}
+
+/* Marked the same way the chapter itself is — a left rule plus full-strength
+   ink. A solid dark fill worked as a signal but became the heaviest thing on
+   the page, outranking "Start with these", which is the one control that has
+   to win. One visual language for "you are here", used twice. */
+.define-chapter-tab.is-active {
+  color: var(--text-primary);
+  font-weight: 700;
+  /* No background here: hover uses the same fill, so with the mouse in the
+     rail two tabs read as "current" at once. Position is the left rule and
+     ink weight; the fill belongs to hover alone. */
+  background: none;
+  box-shadow: inset 2px 0 0 var(--text-primary);
+  transform: none;
+}
+
+.define-chapter-tab.is-active .define-chapter-tab-num,
+.define-chapter-tab.is-active .define-chapter-tab-count {
+  color: inherit;
+  background: none;
+  opacity: 0.75;
+}
+
+/* Completion reads off the count text ("7/7 · needed ones done"), so the
+   number doesn't need a filled chip to say it a second time. */
+.define-chapter-tab.is-complete .define-chapter-tab-count {
+  opacity: 1;
+  font-weight: 500;
+}
+
+/* Plain text, not a chip. The number is a label, and a rounded box around two
+   characters is one of the 135 rules that round an invisible container. */
+.define-chapter-tab-num {
+  flex: 0 0 auto;
+  min-width: 1.5rem;
+  font-family: var(--font-display);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  background: none;
+  padding: 0;
+  /* The chapter numbers are the page's wayfinding device — at 0.6 opacity
+   * they composited to 2.5:1, the faintest marks on the screen. */
+  color: var(--text-secondary);
+}
+
+/* min-width: 0 is load-bearing, not defensive. A flex item's default
+   min-width is auto, so "Project Overview & Administration" refuses to
+   shrink below its longest word and shoves the count off the right edge at
+   phone widths — the count is the whole point of the row. */
+.define-chapter-tab-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* "Deliverables" needs ~95px of glyph in a 78px track at 768 and simply
+     painted outside its box — no scrollbar, because overflow stayed visible
+     all the way up. Wrap instead of spilling. */
+  overflow-wrap: anywhere;
+  font-family: var(--font-display);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* flex-shrink: 0 for the same reason the label shrinks — whichever of the two
+   gives way, it must not be the count. */
+.define-chapter-tab-count {
+  flex: 1 1 100%;
+  margin-left: 0;
+  /* Align under the label (num is 1.5rem + the tab's column gap). */
+  padding-left: calc(1.5rem + var(--space-3));
+  white-space: normal;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  /* Solid token, no opacity: stacking opacity on --text-secondary (itself
+   * rgba) composited to ~3.4:1, under the 4.5:1 floor by a route the
+   * typography test can't see. */
+  color: var(--text-secondary);
+}
+
+/* Deliberately quieter than the x/y count: it's reassurance, not a target. */
+.define-chapter-tab-need {
+  font-weight: 500;
+  font-variant-numeric: normal;
+  color: var(--text-muted);
+}
+
+/* The 560px block that used to live here restacked the rail to one column and
+   turned the tabs into rows. That is now the layout at every width, so the
+   override said nothing the base rule didn't. */
+
+/* Open chapter card */
+
+/* Quiet by default. Five equally-surfaced cards stacked down the page is the
+   same undifferentiated wall as no hierarchy at all — surface only means
+   "work here" if exactly one thing has it. `.is-current` (below) gets the
+   surface; the rest are separated by space, not by a box. */
+/* No card. Chapters are separated by space and by the weight of their titles,
+   not by a rectangle each. */
+.define-chapter {
+  border-radius: var(--radius-none);
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  padding: 0 0 0 var(--space-5);
+  box-shadow: none;
+  animation: defineChapterIn 0.35s var(--ease-out, ease);
+}
+
+/* The single exception to "no borders on this page". Space can group, but it
+   can't say *which* of five equally-spaced chapters you're in — and this is
+   where a Start-with-these jump lands, so arriving somewhere unmarked breaks
+   the jump. One hairline, doing a job whitespace genuinely can't do. */
+.define-chapter.is-current {
+  border-left-color: var(--text-primary);
+}
+
+.define-chapter-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.define-chapter-badge {
+  font-family: var(--font-display);
+  font-size: var(--fs-3);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--define-ch-1);
+  text-shadow: none;
+}
+
+/* Carries the section break now that the card doesn't. */
+.define-chapter-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-4);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--define-ink);
+}
+
+/* A tick, not a badge. It was a bordered, filled, rounded box around a single
+   check character. */
+.define-chapter-done-chip {
+  /* Beside the title, not pushed to the far edge. This is the same
+     margin-left:auto that was removed from .define-field-check for the same
+     reason: up to five ticks stacking on the content column's right edge,
+     marking finished work, tens of centimetres from the titles they refer
+     to. Half of that fix had been applied; this is the other half. */
+  margin-left: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius-none);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* No max-width of its own — the page column (--define-col) sets the width for
+   every block, which is the only way they end up sharing a right edge. */
+.define-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3) var(--space-4);
+  align-items: start;
+}
+
+.define-fields[hidden] {
+  display: none;
+}
+
+.define-field[data-span="full"] {
+  grid-column: 1 / -1;
+}
+
+.define-milestones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+/* Floating next CTA */
+
+
+
+
+
+
+
+
+/* Secondary / admin — recedes */
+
+.define-secondary {
+  margin-top: 1.25rem;
+  opacity: 0.72;
+  transition: opacity 0.2s ease;
+}
+
+.define-secondary:hover {
+  opacity: 1;
+}
+
+/* One content column for the whole page.
+   This was `max-width: none`, so every block below it picked its own width:
+   the Start-with-these buttons ended at one x, the chapter tabs at another,
+   the field grid at a third. Nothing shared a right edge, which is what
+   "nothing lines up" actually was — not the individual boxes. Left-aligned
+   rather than centred so the left edge never moves as content changes. */
+.define-dashboard {
+  max-width: var(--define-col);
+  margin-inline: 0;
+  padding-bottom: var(--space-6);
+}
+
+.define-dashboard-head {
+  margin-bottom: 1rem;
+}
+
+/* ——— Dashboard action header ——— */
+
+
+
+
+
+
+
+
+.define-progress-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  padding: 0 0.85rem;
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  min-width: 3.75rem;
+}
+
+.define-progress-chip-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  background: color-mix(in srgb, var(--dopamine) 20%, transparent);
+  transition: width 0.4s ease;
+  pointer-events: none;
+}
+
+.define-progress-chip-label {
+  position: relative;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+/* ——— Split workspace (ADHD: board pinned beside questions) ———
+ * Side-by-side prevents tab-switching amnesia: refs stay in view while typing.
+ * Do not default to form-only; keep board on the same page even when stacked.
+ */
+
+.define-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.15rem;
+  align-items: start;
+}
+
+.define-split-form {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+
+.define-workbook.is-split {
+  margin-bottom: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.define-workbook.is-split .define-chapter {
+  margin-bottom: var(--space-7);
+}
+
+/* Narrow: stack, but board stays on this page (order: form then board).
+ * Compact sticky mini-rail of the board title keeps awareness of pins below.
+ */
+
+@media (max-width: 839px) {
+.define-split {
+    grid-template-columns: 1fr;
+  }
+
+
+.define-split-form {
+    order: 1;
+  }
+
+.define-mood {
+    max-height: none;
+  }
+}
+
+/* Soften studio eyebrow glow */
+
+.define-chapter-badge {
+  text-shadow: none !important;
+}
+
+/* Hyper-focus: siblings dim when a field group is focused */
+
+/* Define mood board never dims (context anchor) */
+
+
+/* Define residual densify — chapter tabs + sticky path */
+
+
+/* Was re-boxing the tick this layer up; see the base rule. */
+.define-studio .define-chapter-done-chip {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+/* .is-dimmed removed: the JS-driven dim compared against openChapter, which
+ * desktop master-scroll doesn't update on focus — so it blurred chapters the
+ * user wasn't even in, and its pointer-events: none made every field-to-field
+ * move cost two clicks. The :focus-within mask below is the one dim that
+ * remains, and it's self-consistent by construction. */
+.define-studio .define-field.is-focused {
+  opacity: 1 !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Hyper-focus mask uses prefs vars set on .app-shell */
+/* Trigger is .define-chapters (the whole sheet); target is the CHAPTER, not
+   the field. Two separate decisions, both load-bearing:
+
+   The trigger was .define-fields (one chapter). At >=768px every chapter
+   renders at once, so that dimmed the other fields in the chapter you were
+   typing in while leaving the four chapters you were NOT in at full
+   strength — the subject became the faintest region on screen.
+
+   The target is a chapter because the fields beside the one you are typing
+   in are working-memory scaffolding: writing "primary contact" while "client
+   name" and "email" sit greyed out forces a re-read or a defocus, which is
+   the tax the mask exists to remove. Chapter granularity keeps that context
+   bright, recedes only the regions you are not in, and cuts ~22 whole-page
+   opacity transitions per pass down to 4 that land on meaningful
+   boundaries. It marks a place, not a cursor — which is what recovering
+   from an interruption actually needs. */
+/* Below 768px the four non-current chapters render as collapsed headers, so
+   dimming the chapter dims the entire accordion navigation — the only way to
+   move between chapters at that width, since the rail is not rendered. Keep
+   the toggles at full strength; the mask still recedes the content. */
+.define-chapters:focus-within .define-chapter:not(:focus-within) .define-chapter-toggle {
+  opacity: 1 !important;
+}
+
+/* Remove the outer card so Define matches the open layout of other views */
+.define-workbook.is-split {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ── Chapter rail in the right gutter (wide screens only) ────────────────
+   At >=768px this page is a master scroll of ~22 fields across 5 chapters,
+   and the rail — the only per-chapter "N needed" readout — scrolled out of
+   view after the first screenful. Rebuilding "which chapter am I in, how
+   much is left" from memory, repeatedly, is a working-memory tax on
+   information the page already knows. Sticking it in the gutter turns that
+   reconstruction back into a glance, and costs no content width: the
+   dashboard is a fixed 56rem column with margin-inline:0, so the space to
+   its right was already empty.
+
+   Breakpoint is measured, not guessed. The gutter is
+   viewport - 200px sidebar - 56rem content: 156px at 1280 (too narrow for
+   this rail) and 476px at 1600. 1400 is the first common width where the
+   260px track plus a --space-6 gap fits with room to spare. Below it the
+   rail simply stays in flow where it is.
+
+   The rail does NOT move in the DOM — it is placed by grid, so tab order
+   and screen-reader sequence are unchanged. Only .define-workbook dissolves
+   (in split mode it is already stripped to zero styling by the rule above);
+   .define-split-form keeps its box because it carries role="region", and
+   display:contents on a landmark risks dropping it from the a11y tree. */
+@media (min-width: 1400px) {
+  .define-dashboard {
+    max-width: calc(var(--define-col) + var(--space-6) + 260px);
+  }
+  /* The header band stays on the content column; the gutter holds the rail
+     and nothing else, permanently. */
+  .define-dashboard > .brand-template-top {
+    max-width: var(--define-col);
+  }
+  .define-workbook.is-split {
+    display: contents;
+  }
+  .define-split-form {
+    display: grid;
+    grid-template-columns: minmax(0, var(--define-col)) 260px;
+    /* One content row. "Start with these" used to sit here as a second row;
+       it now renders up in the header band, above the milestone list. */
+    grid-template-rows: 1fr;
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  .define-split-form .define-chapters {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .define-split-form .define-chapter-rail {
+    grid-column: 2;
+    /* Spans the content row so the sticky box has the full column height to
+       travel in. No max-height and no overflow: five rows fit in any
+       viewport tall enough to warrant this, and a clipped or
+       separately-scrolling rail is worse than no rail. */
+    grid-row: 1 / -1;
+    align-self: start;
+    position: sticky;
+    top: var(--space-6);
+    margin-bottom: 0;
+  }
+}
+
+/* Split view previously gave every chapter a panel card. It now inherits the
+   base treatment — quiet, with `.is-current` carrying the surface — so this
+   layer only owns rhythm. */
+.define-workbook.is-split .define-chapter {
+  margin-top: 0 !important;
+  margin-bottom: var(--space-7) !important;
+}
+.define-workbook.is-split .define-chapter:last-child {
+  margin-bottom: 0 !important;
+}
+.define-workbook.is-split .define-chapter-title {
+  font-size: var(--fs-4) !important;
+  color: var(--text-primary) !important;
+  letter-spacing: -0.02em !important;
+}
+/* Weight carries "you are here", not just the 2px rule. In split mode all
+   five chapters render at once and every title was identical — 700 at
+   --fs-4 — so the only position marker was a hairline at the far left,
+   which is easy to miss on a long scroll and vanishes at a glance. Ink
+   weight reads before edges do. The current chapter keeps the rule above;
+   the rest step back one level without becoming hard to read. */
+.define-workbook.is-split .define-chapter:not(.is-current) .define-chapter-title {
+  font-weight: 600 !important;
+  color: var(--text-secondary) !important;
+}
+.define-workbook.is-split .define-chapter-badge {
+  color: var(--text-muted) !important;
+  font-weight: 500 !important;
+}
+
+/* Mobile accordion chapter header (tap to expand) */
+.define-chapter-toggle {
+  display: flex;
+  /* nowrap + shrinkable title: the check/caret were wrapping onto their own
+   * stray line under long chapter titles at phone widths. */
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.85rem 0.25rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.define-chapter-toggle .define-chapter-title {
+  flex: 1 1 auto;
+  margin: 0;
+}
+.define-chapter-caret {
+  flex: 0 0 auto;
+  /* Theme token: #A1A1A1 was 2.4:1, and this caret is the only expand cue
+   * on mobile chapter headers (3:1 non-text floor). */
+  color: var(--text-secondary);
+  font-size: var(--fs-2);
+}
+
+/* Now only wraps the read-only desk-snapshot list, relocated into the header
+   band (item 4) as ambient evidence of in-flight work, not a boxed tool — no
+   background, no border. Whitespace + the shared define-field-label treatment
+   carry it instead. */
+.define-secondary {
+  opacity: 1;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-none);
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+
+
+
+.define-deadline-inline {
+  display: flex;
+  flex-wrap: wrap; /* nowrap overflowed to 450px at 360vw once a date was set */
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.define-deadline-inline label {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Milestones relocated into the header band (item 10): compact, ambient,
+   directly under the deadline row — not a repeater buried inside a chapter. */
+.define-milestones-compact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  /* Full row of the header band — wedged beside the title it fought the
+   * deadline for space on both desktop and mobile. */
+  flex: 1 1 100%;
+}
+
+.brand-template-top .define-secondary {
+  flex: 1 1 100%;
+}
+
+.define-milestones-compact .define-milestones-list {
+  gap: var(--space-2);
+  /* Flex column stretches children — "+ Add" was spanning the full content
+     width and reading as a drop zone rather than a small action. */
+  align-items: flex-start;
+}
+
+.define-milestones-compact .detective-milestone-row {
+  align-self: stretch;
+}
+
+.detective-milestone-row.is-pending-removal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}
+
+.define-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* Plain-language deadline. Read-only signal beside the date input, not a
+   second control — an ISO date carries no felt urgency. */
+.define-deadline-relative {
+  font-size: var(--fs-3);
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* "Start with these" — the required-and-empty fields, named and jumped to
+   directly, so arriving on the page never means reading all 35 labels. */
+/* Loudest thing on the page, deliberately. This block is the only element that
+   answers "what do I do right now" without a decision — it collapses pick a
+   chapter → scan for an empty field → pick one into a single click. The failure
+   mode this page has is not finding chapter 3, it's opening it and not
+   starting, so the anti-stall control gets the accent and everything else
+   stays quiet. */
+/* The jump chips are filled primary buttons — a real box, not whitespace
+   doing the work. That's deliberate now: this is the one control on the
+   page allowed to look like a call to action, so it should read as one. */
+.define-start-here {
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+/* It now renders inside the header band, which is a wrapping flex row. Take
+   a full row of it — wedged beside the title it would fight the deadline for
+   width, the same problem the milestone and secondary rows below already
+   solve this way. The larger interval beneath it marks the break between
+   "what to do now" and the reference chrome that follows. */
+.brand-template-top .define-start-here {
+  flex: 1 1 100%;
+  /* The band orders its rows explicitly — title 0, deadline 2, milestones 4.
+     Without a value here this defaulted to 0 and rendered above the
+     deadline: visually second while still third in the DOM, so focus order
+     and reading order disagreed. 3 puts it after the deadline and before the
+     milestones, matching the DOM. */
+  order: 3;
+  margin: var(--space-2) 0 var(--space-5);
+}
+
+.define-start-here-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-5);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.define-start-here-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.define-start-here.is-done .define-start-here-title {
+  margin: 0;
+  /* Read once, then it's just reassurance — it shouldn't stay the loudest
+     thing on the page, competing with the page title. */
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .define-title-row {
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .define-title-row .page-title {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .define-title-row .btn {
+    flex: 0 0 auto;
+  }
+}
+
+/* Desktop: title-row shrink-wraps, so Save sits right next to the title
+   instead of on the right where Deadline already lives. Unwrap the row
+   and push Save to the far right, after Deadline. */
+@media (min-width: 641px) {
+  .define-dashboard .brand-template-top {
+    justify-content: flex-start;
+  }
+
+  .define-dashboard .define-title-row {
+    display: contents;
+  }
+
+  .define-dashboard .define-deadline-inline {
+    order: 2;
+    margin-left: auto;
+  }
+
+  /* .btn, not .btn-primary: the button changed class when Save became
+   * Share/export, which silently broke the ordering this block exists for. */
+  .define-dashboard .define-title-row .btn {
+    order: 3;
+    margin-left: 0.75rem;
+  }
+
+  .define-dashboard .define-milestones-compact,
+  .define-dashboard .brand-template-top .define-secondary {
+    order: 4;
+  }
+}
+
+.overview-share-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.overview-share-step {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 44px;
+  padding: 0 0.15rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* Badge aligns right, matching .client-portal-step-head's label+badge pairing
+   instead of butting against the label text. */
+.overview-share-step .client-portal-step-badge {
+  margin-left: auto;
+}
+
+.overview-share-notes {
+  margin-bottom: 0.75rem;
+}
+
+.overview-share-panel {
+  width: min(560px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+/* Portal mode scrolls well past 85vh — the title and the only close control
+   must not scroll away with it. */
+.overview-share-title {
+  margin: 0;
+}
+
+.overview-share-close {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.overview-share-panel .export-panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding-bottom: 0.5rem;
+  background: var(--bg-card);
+}
+
+/* One spacing system for all three modes; previously each mode inherited
+   whatever margins its children happened to carry. */
+.overview-share-portal,
+.overview-share-paper,
+.overview-share-review {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: stretch;
+}
+
+.overview-share-portal .discovery-brief-back,
+.overview-share-paper .discovery-brief-back,
+.overview-share-review .discovery-brief-back {
+  align-self: flex-start;
+  width: auto;
+}
+
+/* Status + refresh live at the top of portal mode. Bottom placement is a
+   documented blind spot for this user, not a minor layout preference. */
+.overview-share-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.overview-share-status .discovery-brief-hint {
+  margin: 0;
+}
+
+/* Fields the scan did not pick up — shown so the user can see what is
+   missing rather than having to remember the full field list. */
+.overview-share-missed {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.overview-share-missed ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+/* Determinate visual progress — the percentage alone does not register. */
+.overview-share-progress {
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+  overflow: hidden;
+  margin: 0.35rem 0 0;
+}
+
+.overview-share-progress-fill {
+  height: 100%;
+  background: var(--dopamine);
+  transition: width var(--transition);
+}
+
+.define-chapter-toggle .define-chapter-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ============================================================
+   Deliverables checklist — the whole scope, visible at once
+   ============================================================ */
+.define-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-2);
+}
+
+.define-checklist-group {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.define-checklist-legend {
+  padding: 0 0 var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.define-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  /* 44px row: this is the most-tapped control on the page for a client. */
+  min-height: 2.75rem;
+  padding: var(--space-1) 0;
+  font-size: var(--fs-2);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.define-check-row.is-on {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.define-check-row:hover {
+  color: var(--text-primary);
+}
+
+/* Single-choice rows share the checklist's row treatment — same control
+   language, so "pick one" and "pick many" don't look like separate systems. */
+.define-choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.brief-attach-row,
+.define-attach-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.brief-attach-thumb,
+.define-attach-thumb {
+  position: relative;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-muted);
+  flex-shrink: 0;
+}
+
+.brief-attach-thumb img,
+.define-attach-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.define-attach-note {
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  align-self: center;
+}

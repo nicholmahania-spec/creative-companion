@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react'
 import { DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
 import ClientBriefFields from './ClientBriefFields'
 import { fetchDiscoveryShare, submitDiscoveryShare } from '../lib/discoveryShare'
+import '../styles/lazy-define.css'
+import '../styles/lazy-clients.css'
 
 export default function PublicDiscoveryFill({ shareId }) {
   const [loadState, setLoadState] = useState('loading') // loading | ready | notfound | submitted

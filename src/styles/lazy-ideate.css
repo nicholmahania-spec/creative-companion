@@ -1,0 +1,491 @@
+/* Auto-split from index.css — lazy-ideate.css */
+
+
+.flow-view,
+.studio-view,
+.project-view,
+.spark-view,
+.insights-layout,
+.brand-layout {
+  animation: flowIn 0.35s var(--ease-out);
+}
+
+/* (surface-meta / energy-pill / view-kicker defined once above) */
+
+/* Spark — provocation is layout, not a feature tile */
+
+.spark-view {
+  animation: flowIn 0.45s ease-out;
+}
+
+.spark-card {
+  background: var(--bg-warm);
+  color: var(--text-primary);
+  padding: 1.15rem 1.15rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-1);
+  width: 100%;
+  max-width: 36rem;
+}
+
+.spark-card p {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.spark-actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.direction-sheet {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 1.75rem 1.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.direction-sheet .kicker {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-secondary);
+  margin: 1.15rem 0 0.4rem;
+}
+
+.direction-sheet .kicker:first-child {
+  margin-top: 0;
+}
+
+.direction-title {
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0.15rem 0 0.5rem;
+  line-height: 1.15;
+}
+
+.direction-brief {
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.direction-palette {
+  display: flex;
+  height: 52px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 0.5rem 0 0.35rem;
+}
+
+.direction-palette > div {
+  flex: 1;
+}
+
+.direction-hex {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.direction-hex-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  gap: 0.4rem;
+  margin: 0.5rem 0 0.35rem;
+}
+
+.direction-hex-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+}
+
+.direction-hex-chip i {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.direction-hex-chip span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.direction-hex-chip code {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.direction-hex-chip .direction-hex-rgb,
+.direction-hex-chip .direction-hex-cmyk {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.direction-type {
+  margin: 0.35rem 0 0;
+}
+
+.direction-pins {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+  margin-top: 0.5rem;
+}
+
+.direction-pin {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.direction-tasks {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.direction-foot {
+  margin-top: 1.5rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.brand-artboard.hide-watermark .direction-foot {
+  display: none;
+}
+
+.direction-pin.is-hero-pin {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 1px;
+}
+
+/* Artboard role assignment + project meter */
+
+.direction-palette.is-clickable {
+  gap: 0;
+}
+
+/* Ideate A/B/C direction cards */
+
+.ideate-directions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+}
+
+.ideate-dir-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-muted);
+}
+
+.ideate-dir-card.is-chosen {
+  border-color: var(--accent-growth, #565656);
+  box-shadow: 0 0 0 1px var(--accent-growth, #565656);
+}
+
+.ideate-dir-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ideate-dir-letter {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.sketch-ideate-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+  align-items: center;
+}
+
+.sketch-ideate-more summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #A1A1A1;
+}
+
+.sketch-studio:has(.sketch-now:focus-within) .sketch-below,
+.sketch-studio:has(.sketch-now:focus-within) .sketch-ideate-strip {
+  opacity: 0.25;
+  pointer-events: none;
+  filter: none;
+  transition: opacity 0.15s ease;
+}
+
+.ideate-progress {
+  font-size: 0.9rem;
+}
+
+.brand-artboard .direction-title {
+  font-size: clamp(1.65rem, 3vw, 2.1rem) !important;
+  letter-spacing: -0.04em;
+  line-height: 1.12;
+}
+
+.brand-artboard.direction-sheet {
+  padding: 1.25rem 1.35rem 1.5rem !important;
+}
+
+.brand-artboard .direction-pins {
+  gap: 0.55rem;
+}
+
+
+/* ============================================================
+   Page rewrites: Ideate 3-col · Deliver split
+   ============================================================ */
+
+/* Ideate — 65% A·B·C stage + 35% Spark rail (Tech-Studio ADHD) */
+
+.ideate-studio .ideate-top {
+  margin-bottom: 0.75rem;
+}
+
+.ideate-progress {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #A1A1A1;
+}
+
+.ideate-goal-anchor {
+  margin: 0.35rem 0 0;
+  max-width: 40rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #A1A1A1;
+  line-height: 1.35;
+}
+
+.ideate-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 65fr) minmax(12rem, 35fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.ideate-directions.is-locked-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.ideate-directions.is-locked-3 .ideate-dir-card {
+  min-height: 100%;
+  background: var(--ts-panel, #FFFFFF);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  border-radius: var(--radius);
+  padding: 0.65rem;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.ideate-directions.is-locked-3 .ideate-dir-card.is-chosen {
+  border-color: #606060;
+  border-width: 1.5px;
+}
+
+.ideate-directions.is-locked-3 .ideate-dir-card.has-title:not(.is-chosen) {
+  border-color: #D3D3D3;
+}
+
+.ideate-dir-letter {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.25rem;
+  border-radius: var(--radius-sm) !important;
+  background: var(--ts-canvas, #F5F5F5);
+  color: var(--ts-ink, #1A1A1A);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.ideate-directions:focus-within .ideate-dir-card:not(:focus-within) {
+  opacity: 0.25 !important;
+  filter: none !important;
+}
+
+.ideate-directions:focus-within .ideate-dir-card:focus-within {
+  opacity: 1 !important;
+  border-color: #606060 !important;
+  box-shadow: none !important;
+}
+
+.ideate-spark-tray {
+  margin: 0;
+  position: sticky;
+  top: 4.5rem;
+  background: var(--ts-panel, #FFFFFF);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+
+.ideate-spark-tray .spark-card {
+  border-radius: var(--radius);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  background: var(--ts-canvas, #F5F5F5);
+  max-height: 8rem;
+  overflow: hidden;
+}
+
+.ideate-spark-tray .spark-card p {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--ts-ink, #1A1A1A);
+}
+
+.ideate-spark-tray .spark-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+@media (max-width: 900px) {
+.ideate-layout {
+    grid-template-columns: 1fr;
+  }
+
+.ideate-spark-tray {
+    position: relative;
+    top: auto;
+    order: 2;
+  }
+
+.ideate-shortlist {
+    order: 1;
+  }
+
+.ideate-directions.is-locked-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.spark-card-stem p {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0;
+  color: var(--ts-ink, #1A1A1A);
+}
+.ideate-spark-tray .brand-section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+
+/* Ideate diverge → shortlist */
+.ideate-rough {
+  margin: 0 0 var(--space-5);
+  padding: var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+}
+.ideate-rough-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.ideate-rough-hint {
+  margin: 0 0 var(--space-3);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.ideate-rough-list {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.ideate-rough-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+}
+.ideate-rough-add {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.ideate-send-help {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.ideate-send-help.is-ready {
+  color: var(--positive, #15803d);
+  font-weight: 600;
+}
+.ideate-spark-tray {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  background: transparent;
+}
+.ideate-progress {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}

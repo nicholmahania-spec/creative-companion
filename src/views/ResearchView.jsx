@@ -32,6 +32,7 @@ import {
 import { useModalFocus } from '../lib/useModalFocus'
 import { trackMoodPinOperation, trackBoardSubmission, trackTimerOperation } from '../lib/analytics'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import '../styles/lazy-mood.css'
 
 export default function ResearchView({
   locale: localeProp = 'en',

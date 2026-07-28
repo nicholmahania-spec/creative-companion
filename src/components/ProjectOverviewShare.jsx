@@ -24,6 +24,8 @@ import {
   setPortalDetectiveAnswers,
   setPortalStepVisibility,
 } from '../lib/clientPortal'
+import '../styles/lazy-define.css'
+import '../styles/lazy-clients.css'
 
 const ALL_FIELDS = DETECTIVE_CHAPTERS.flatMap((c) => c.fields)
 const fieldLabel = (id) => ALL_FIELDS.find((f) => f.id === id)?.label || id

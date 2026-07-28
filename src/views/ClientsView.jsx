@@ -11,6 +11,7 @@ import {
   clientMonogram,
   monogramTone,
 } from '../lib/clientDirectory'
+import '../styles/lazy-clients.css'
 
 export default function ClientsView({ projects = [], selectProject, setActiveView }) {
   const [query, setQuery] = useState('')

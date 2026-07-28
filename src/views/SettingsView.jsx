@@ -5,6 +5,7 @@ import {
   clampFocusMaskPct,
 } from '../lib/uiPrefs'
 import { LOCALES, normalizeLocale, t as i18nT } from '../lib/i18n'
+import '../styles/lazy-settings.css'
 
 /** Settings — short labels, Typing calm first, Advanced collapsed. */
 export default function SettingsView(props) {

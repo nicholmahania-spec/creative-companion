@@ -4,6 +4,7 @@ import { getProcessPhase } from '../lib/processGuide'
 import { pathLabel, tFormat } from '../lib/i18n'
 import useAppStore from '../store/useAppStore'
 import InfoReveal from '../components/InfoReveal'
+import '../styles/lazy-ideate.css'
 
 export default function SparkView({
   setActiveView,

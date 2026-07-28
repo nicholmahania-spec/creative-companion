@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import '../styles/lazy-clients.css'
 
 /** Deadlines — month grid + project due. ADHD: short chrome, no legend essay. */
 export default function CalendarView(props) {
