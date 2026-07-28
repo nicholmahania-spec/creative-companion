@@ -246,7 +246,8 @@ export async function downloadBrandPackVectorPdf(
       const left = hideWatermark
         ? pdfSafeText(projectName).slice(0, 40)
         : pdfSafeText(`Creative Companion · ${projectName}`).slice(0, 48)
-      for (let i = 1; i <= total; i++) {
+      // Page 1 is a clean cover — no TOC, no page chrome footer
+      for (let i = 2; i <= total; i++) {
         pdf.setPage(i)
         pdf.setFont('helvetica', 'normal')
         pdf.setFontSize(8)
@@ -301,62 +302,58 @@ export async function downloadBrandPackVectorPdf(
     }
 
     // ═══════════════════════════════════════════════
-    // 1. COVER — full brand world
+    // 1. COVER — full brand world (clean, centered)
     // ═══════════════════════════════════════════════
     pdf.setFillColor(coverRgb[0], coverRgb[1], coverRgb[2])
     pdf.rect(0, 0, pageW, pageH, 'F')
     pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
     pdf.rect(0, 0, pageW, 10, 'F')
-    // Quiet block bottom third for TOC feel without prose dump
-    pdf.setFillColor(
-      Math.min(255, coverRgb[0] + 12),
-      Math.min(255, coverRgb[1] + 12),
-      Math.min(255, coverRgb[2] + 12)
-    )
-    pdf.rect(0, pageH - 160, pageW, 160, 'F')
+
+    // Centered stack: label → logo → name → tagline → rule
+    const cx = pageW / 2
+    const markSizeCover = 88
+    // Vertically center the brand block in the upper two-thirds
+    let cy = pageH * 0.22
 
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(9)
-    pdf.text('VISUAL IDENTITY SYSTEM', margin + 8, margin + 36)
+    pdf.text('VISUAL IDENTITY SYSTEM', cx, cy, { align: 'center' })
 
-    tryLogo(margin + 8, margin + 70, 88, fgRgb)
+    cy += 32
+    tryLogo(cx - markSizeCover / 2, cy, markSizeCover, fgRgb, {
+      monochrome: true,
+    })
+    cy += markSizeCover + 40
+
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(36)
-    const titleLines = pdf.splitTextToSize(pdfSafeText(projectName), contentW - 16)
-    pdf.text(titleLines, margin + 8, margin + 200)
-    let cy = margin + 200 + titleLines.length * 40
+    const titleLines = pdf.splitTextToSize(
+      pdfSafeText(projectName),
+      contentW - 24
+    )
+    pdf.text(titleLines, cx, cy, { align: 'center' })
+    cy += titleLines.length * 40 + 16
+
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(16)
-    const tagLines = pdf.splitTextToSize(pdfSafeText(tag), contentW - 16)
-    pdf.text(tagLines, margin + 8, cy)
-    cy += tagLines.length * 22 + 16
-    pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
-    pdf.rect(margin + 8, cy, 56, 3, 'F')
+    const tagLines = pdf.splitTextToSize(pdfSafeText(tag), contentW - 24)
+    pdf.text(tagLines, cx, cy, { align: 'center' })
+    cy += tagLines.length * 22 + 20
 
-    // Bottom strip labels
+    // Centered gold rule
+    const ruleW = 56
+    pdf.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2])
+    pdf.rect(cx - ruleW / 2, cy, ruleW, 3, 'F')
+
+    // Quiet meta — centered, single line
     pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(9)
-    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
-    const toc = [
-      'Logo',
-      'Color',
-      'Type',
-      pins.length ? 'Imagery' : null,
-      'Applications',
-      doT || dontT ? 'Usage' : null,
-    ].filter(Boolean)
-    toc.forEach((t, i) => {
-      pdf.text(pdfSafeText(t), margin + 8 + i * 90, pageH - 100)
-    })
     pdf.setFontSize(8)
-    pdf.text(day, margin + 8, pageH - 40)
-    pdf.text(
-      pdfSafeText(hideWatermark ? projectName : 'Creative Companion'),
-      pageW - margin,
-      pageH - 40,
-      { align: 'right' }
-    )
+    pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
+    const meta = hideWatermark
+      ? day
+      : `${day}  ·  Creative Companion`
+    pdf.text(meta, cx, pageH - 40, { align: 'center' })
 
     // ═══════════════════════════════════════════════
     // 2. STRATEGY STRIP — one page, designed tiles
