@@ -3664,7 +3664,7 @@ function App() {
         {/* ===== SKETCH (lazy) ===== */}
         {activeView === 'flow' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Sketch…</div>}>
-            <StepDependencyReminder stepId="sketch" setActiveView={setActiveView} />
+            <StepDependencyReminder stepId="sketch" />
             <SketchView
               locale={locale}
               navDir={navDir}
@@ -3718,7 +3718,7 @@ function App() {
         {/* ===== RESEARCH (lazy) ===== */}
         {activeView === 'studio' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Research…</div>}>
-            <StepDependencyReminder stepId="research" setActiveView={setActiveView} />
+            <StepDependencyReminder stepId="research" />
             <ResearchView
               locale={locale}
               navDir={navDir}
@@ -3744,7 +3744,7 @@ function App() {
         {/* ===== SPARK (lazy) ===== */}
         {activeView === 'spark' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading…</div>}>
-            <StepDependencyReminder stepId="ideate" setActiveView={setActiveView} />
+            <StepDependencyReminder stepId="ideate" />
             <SparkView
               setActiveView={setActiveView}
               nextTask={nextTask}
@@ -3849,7 +3849,7 @@ function App() {
         {/* ===== DESIGN (lazy) ===== */}
         {activeView === 'brand' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Design…</div>}>
-            <StepDependencyReminder stepId="design" setActiveView={setActiveView} />
+            <StepDependencyReminder stepId="design" />
             <DesignView
               locale={locale}
               navDir={navDir}
@@ -3869,7 +3869,7 @@ function App() {
         {/* ===== REVIEW (lazy) ===== */}
         {activeView === 'review' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Review…</div>}>
-            <StepDependencyReminder stepId="review" setActiveView={setActiveView} />
+            <StepDependencyReminder stepId="review" />
             <ReviewView
               locale={locale}
               navDir={navDir}
@@ -3896,7 +3896,7 @@ function App() {
         {/* ===== DELIVER (lazy) ===== */}
         {activeView === 'finish' && (
           <Suspense fallback={<div className="panel panel-hint" style={{ margin: '1rem' }}>Loading Deliver…</div>}>
-            <StepDependencyReminder stepId="deliver" setActiveView={setActiveView} />
+            <StepDependencyReminder stepId="deliver" />
             <DeliverView
               locale={locale}
               navDir={navDir}

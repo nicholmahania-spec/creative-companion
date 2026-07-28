@@ -16332,28 +16332,6 @@ select:focus {
   text-overflow: ellipsis;
 }
 
-.step-context-missing {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  margin: 0;
-  padding-top: 0.35rem;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  border-top: 1px solid var(--border-subtle);
-}
-
-.step-context-strip.is-missing-only {
-  border-left: 2px solid var(--border-strong);
-}
-
-.step-context-missing-actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
 
 .project-menu-item {
   display: block;
