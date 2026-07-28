@@ -1914,9 +1914,7 @@ function App() {
 
   const finishOnboarding = (mode) => {
     if (mode === 'custom' && onboardName.trim()) {
-      const brief =
-        onboardBrief.trim() ||
-        'Audience + outcome + constraint — fill as you go.'
+      const brief = onboardBrief.trim() // optional; do not invent placeholder brief
       // First run: the workspace already holds one untouched blank project —
       // rename it instead of appending a stray empty "My project" lane.
       const st = useAppStore.getState()
@@ -1929,11 +1927,13 @@ function App() {
       let project
       if (untouchedBlank) {
         renameProject(only.id, onboardName.trim())
-        updateProjectBrief(brief)
+        if (brief) updateProjectBrief(brief)
         project = only
       } else {
         project = createNewProject(onboardName.trim(), brief)
       }
+      // CRM identity lives in detective.clientName (not only project display name)
+      updateDetective('clientName', onboardName.trim())
       awardAndBroadcast('project_create', { label: onboardName.trim() })
       const stepTitle =
         onboardFirstStep.trim() ||
@@ -1947,6 +1947,7 @@ function App() {
         seeded: false,
         projectId: project?.id || useAppStore.getState().currentProjectId,
         dueDate: '',
+        why: '',
       })
       awardAndBroadcast('task_capture', { label: 'First step' })
       flashToast(i18nT(locale, 'ui.deskReady'))
@@ -1958,6 +1959,7 @@ function App() {
           useAppStore.getState().currentProjectId,
           onboardName.trim()
         )
+        updateDetective('clientName', onboardName.trim())
       }
       flashToast(i18nT(locale, 'ui.emptyDeskFirst'))
     }
@@ -1968,17 +1970,25 @@ function App() {
     setBodyDoubling(false)
     // Start at Define — path step 1
     setActiveView('project')
-    // Land attention on name / brief (define the work first)
+    // Land on Business name (Start with these / detective), not dead #project-name
     window.setTimeout(() => {
-      const el =
-        document.getElementById('project-name') ||
-        document.getElementById('project-brief') ||
-        document.getElementById('desk-capture')
-      try {
-        el?.focus?.({ preventScroll: false })
-        el?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
-      } catch {
-        /* ignore */
+      const tryFocus = () => {
+        const el =
+          document.getElementById('detective-clientName') ||
+          document.getElementById('detective-goal') ||
+          document.querySelector('.define-start-here .btn-primary')
+        if (!el) return false
+        try {
+          el.focus?.({ preventScroll: false })
+          el.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+        } catch {
+          /* ignore */
+        }
+        return true
+      }
+      // DetectiveSheet is lazy; retry once after paint if first pass misses
+      if (!tryFocus()) {
+        window.setTimeout(tryFocus, 120)
       }
     }, 80)
   }

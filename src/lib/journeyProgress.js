@@ -1,3 +1,5 @@
+import { getDetectiveProgress } from './detectiveBrief'
+
 /**
  * Stock blank-project palette (matches useAppStore.defaultProjectPalette).
  * Alone, it must not mark Design “done.”
@@ -55,19 +57,10 @@ export function pathStepHasContent(stepId, ctx = {}) {
 
   switch (stepId) {
     case 'define': {
-      // Default blank name "My project" alone is not fill — but any real brief signal is
-      const named =
-        project.name &&
-        String(project.name).trim() &&
-        String(project.name).trim() !== 'My project' &&
-        String(project.name).trim() !== 'Untitled project'
-      return !!(
-        named ||
-        project.brief?.trim() ||
-        project.detective?.goal?.trim() ||
-        project.detective?.audience?.trim() ||
-        project.detective?.brandWords?.trim()
-      )
+      // Honest fill: path "done" matches detective required core (Start with
+      // these), not project display name or a placeholder brief alone —
+      // naming a project on onboard must not skip the real brief.
+      return !!getDetectiveProgress(project.detective || {}).requiredReady
     }
     case 'research': {
       // Once anything is starred, every starred pin needs its "why" filled —
@@ -210,7 +203,7 @@ export function pathFirstGap(steps, ctx) {
 export function pathGapFocusSelector(stepId) {
   switch (stepId) {
     case 'define':
-      return '#detective-goal, #project-name, #project-brief'
+      return '#detective-clientName, #detective-goal, #detective-audience'
     case 'research':
       return '.board-upload-btn, .studio-view .btn-primary, #board-note'
     case 'ideate':
@@ -230,7 +223,7 @@ export function pathGapFocusSelector(stepId) {
 
 /** English fill hints — single source; i18n pathFillHint falls back here. */
 export const PATH_FILL_HINTS = {
-  define: 'Project name, goal, or who it is for',
+  define: 'Business name, goal, who it’s for, and what you need made',
   research: 'Star a picture ★ or add 2+ refs',
   ideate: 'A/B/C title or save an idea note',
   sketch: 'Write one step you can finish',

@@ -13,11 +13,29 @@ import {
 import { JOURNEY_STEPS } from './journey'
 
 describe('pathStepHasContent', () => {
-  it('define needs name, brief, or detective', () => {
+  it('define needs detective required core — not display name alone', () => {
     expect(pathStepHasContent('define', { project: {} })).toBe(false)
     expect(
       pathStepHasContent('define', {
+        project: { name: 'Acme Studio' },
+      })
+    ).toBe(false)
+    expect(
+      pathStepHasContent('define', {
         project: { detective: { goal: 'Help families' } },
+      })
+    ).toBe(false)
+    expect(
+      pathStepHasContent('define', {
+        project: {
+          detective: {
+            clientName: 'Acme',
+            engagementType: 'new',
+            goal: 'Help families',
+            audience: 'Parents',
+            deliverablesPicked: ['logoPrimary'],
+          },
+        },
       })
     ).toBe(true)
   })
@@ -92,7 +110,13 @@ describe('pathStepHasContent', () => {
     const rows = pathProgressSummary(JOURNEY_STEPS, {
       project: {
         name: 'Co',
-        detective: { goal: 'G', audience: 'A' },
+        detective: {
+          clientName: 'Co',
+          engagementType: 'new',
+          goal: 'G',
+          audience: 'A',
+          deliverablesPicked: ['logoPrimary'],
+        },
         tagline: 'T',
         designVersion: 'v2',
         feedbackNotes: 'ok',
@@ -118,6 +142,7 @@ describe('pathStepHasContent', () => {
       palette: [],
     })
     expect(missing.length).toBeGreaterThan(3)
+    expect(missing).toContain('Project overview')
     expect(missing).toContain('Research')
     expect(missing).toContain('Ideate')
   })
@@ -126,7 +151,13 @@ describe('pathStepHasContent', () => {
     const gap = pathFirstGap(JOURNEY_STEPS, {
       project: {
         name: 'Co',
-        detective: { goal: 'G', audience: 'A' },
+        detective: {
+          clientName: 'Co',
+          engagementType: 'new',
+          goal: 'G',
+          audience: 'A',
+          deliverablesPicked: ['logoPrimary'],
+        },
       },
       moodItems: [],
       tasks: [],
@@ -137,12 +168,13 @@ describe('pathStepHasContent', () => {
   })
 
   it('pathGapFocusSelector maps steps to fields', () => {
-    expect(pathGapFocusSelector('define')).toMatch(/detective/)
+    expect(pathGapFocusSelector('define')).toMatch(/clientName/)
     expect(pathGapFocusSelector('review')).toMatch(/feedback/)
     expect(pathGapFocusSelector('deliver')).toMatch(/handoff/)
   })
 
   it('pathStepFillHint returns short how-to for each step', () => {
+    expect(pathStepFillHint('define')).toMatch(/business name|goal/i)
     expect(pathStepFillHint('research')).toMatch(/star|pin|ref/i)
     expect(pathStepFillHint('sketch')).toMatch(/step/i)
     expect(pathStepFillHint('design')).toMatch(/tagline|color|palette|logo|voice/i)
