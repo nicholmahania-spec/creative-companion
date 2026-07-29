@@ -7,6 +7,7 @@ import {
   MAX_COLORS,
   MIN_COLORS,
 } from '../lib/bookBuilder'
+import { paginatedBookPages } from '../lib/bookContent'
 import { labelFor, parseLabel, familyByName } from '../lib/fontCatalog'
 import { loadBrandFamilies } from '../lib/fontLoader'
 import '../styles/brand-book-builder.css'
@@ -28,6 +29,7 @@ import '../styles/brand-book-builder.css'
 
 const HEADLINE_FONTS = ["Fraunces", "Playfair Display", "Space Grotesk", "Bricolage Grotesque"];
 const BODY_FONTS = ["Inter", "Source Serif 4", "IBM Plex Mono"];
+const BUILTIN_PAGE_LABELS = { cover: "Front cover", colors: "Color palette", type: "Typography", back: "Back cover" };
 const PAGE_SIZES = { letter: { w: 8.5, h: 11, label: "Letter (8.5 × 11 in)" }, a4: { w: 8.27, h: 11.69, label: "A4 (210 × 297 mm)" } };
 
 /* ------------------------------------------------------------- helpers */
@@ -114,13 +116,17 @@ function FrontCover({ kit, style }) {
   );
 }
 
-function ColorsPage({ kit, style }) {
+/* pageIndex is passed in rather than fixed: with content pages between the
+   cover and the back, a hard-coded 0/1 would repeat page numbers and put the
+   alternating margins on the wrong side. Defaults keep the old behaviour if
+   this page is ever rendered on its own. */
+function ColorsPage({ kit, style, pageIndex = 0 }) {
   const { colors, bg, dark, grid, running, swatchCols } = kit;
   return (
     <div className="bbb-page bbb-page--colors" data-dark={dark || undefined} style={{ background: bg, ...style }}>
       <span className="bbb-page-label">Color page</span>
       <GridOverlay {...grid} />
-      <RunningHeader {...running} pageIndex={0} />
+      <RunningHeader {...running} pageIndex={pageIndex} />
       <p className="bbb-ph-title">Color palette</p>
       <div className="bbb-swatch-grid" style={{ gridTemplateColumns: `repeat(${swatchCols}, 1fr)` }}>
         {colors.slice(0, 6).map((c) => {
@@ -134,27 +140,75 @@ function ColorsPage({ kit, style }) {
           );
         })}
       </div>
-      <RunningFooter {...running} pageIndex={0} />
-      <PageNum {...running} pageIndex={0} />
+      <RunningFooter {...running} pageIndex={pageIndex} />
+      <PageNum {...running} pageIndex={pageIndex} />
     </div>
   );
 }
 
-function TypePage({ kit, style }) {
+function TypePage({ kit, style, pageIndex = 1 }) {
   const { headlineHex, subheadHex, bodyHex, hStack, bStack, headlineSize, headlineWeight, subheadSize, subheadWeight, bodySize, bodyWeight, bg, dark, grid, running } = kit;
   return (
     <div className="bbb-page bbb-page--type" data-dark={dark || undefined} style={{ background: bg, ...style }}>
       <span className="bbb-page-label">Type page</span>
       <GridOverlay {...grid} />
-      <RunningHeader {...running} pageIndex={1} />
+      <RunningHeader {...running} pageIndex={pageIndex} />
       <p className="bbb-ph-title">Typography</p>
       <p className="bbb-type-headline" style={{ fontFamily: hStack, fontWeight: headlineWeight, fontSize: `${headlineSize}pt`, color: headlineHex }}>Headline / H1</p>
       <p className="bbb-type-sub" style={{ fontFamily: hStack, fontWeight: subheadWeight, fontSize: `${subheadSize}pt`, color: subheadHex }}>Subhead &mdash; secondary emphasis</p>
       <p className="bbb-type-body" style={{ fontFamily: bStack, fontWeight: bodyWeight, fontSize: `${bodySize}pt`, color: bodyHex || undefined }}>
         Body text sits here. This paragraph exists to show line length, leading, and color at actual reading size, the way it will appear throughout the guide.
       </p>
-      <RunningFooter {...running} pageIndex={1} />
-      <PageNum {...running} pageIndex={1} />
+      <RunningFooter {...running} pageIndex={pageIndex} />
+      <PageNum {...running} pageIndex={pageIndex} />
+    </div>
+  );
+}
+
+/* One renderer for every content page. The pages differ by what the project
+   holds, not by layout, so a component each would be eight copies of the same
+   thing drifting apart — the defect this codebase already knows well. Type
+   and colour come from the same `kit` the cover and type pages read, so a
+   font or ink change moves the whole book at once. */
+function ContentPage({ kit, page, pageIndex, style }) {
+  const { headlineHex, subheadHex, bodyHex, hStack, bStack, subheadSize, subheadWeight, bodySize, bodyWeight, headlineWeight, bg, dark, grid, running } = kit;
+  const bodyStyle = { fontFamily: bStack, fontWeight: bodyWeight, fontSize: `${bodySize}pt`, color: bodyHex || undefined };
+  return (
+    <div className={`bbb-page bbb-page--content bbb-page--${page.id}`} data-dark={dark || undefined} style={{ background: bg, ...style }}>
+      <span className="bbb-page-label">{page.label}</span>
+      <GridOverlay {...grid} />
+      <RunningHeader {...running} pageIndex={pageIndex} />
+      <p className="bbb-ph-title" style={{ fontFamily: hStack, fontWeight: headlineWeight, color: headlineHex }}>{page.label}</p>
+      <p className="bbb-ph-sub" style={{ fontFamily: bStack, fontWeight: bodyWeight, color: subheadHex }}>{page.sub}</p>
+      <div className="bbb-content-body">
+        {page.blocks.map((b, i) => {
+          if (b.kind === "prose") return <p key={i} className="bbb-content-prose" style={bodyStyle}>{b.text}</p>;
+          if (b.kind === "list") return (
+            <ul key={i} className="bbb-content-list" style={bodyStyle}>
+              {b.items.map((it, j) => <li key={j}>{it}</li>)}
+            </ul>
+          );
+          if (b.kind === "group") return (
+            <div key={i} className="bbb-content-group">
+              <p className="bbb-content-group-title" style={{ fontFamily: hStack, fontWeight: subheadWeight, fontSize: `${subheadSize}pt`, color: subheadHex }}>{b.title}</p>
+              {b.rows.map((r, j) => (
+                <div key={j} className="bbb-content-field">
+                  <p className="bbb-content-label" style={{ fontFamily: bStack, color: subheadHex }}>{r.label}</p>
+                  <p className="bbb-content-text" style={bodyStyle}>{r.text}</p>
+                </div>
+              ))}
+            </div>
+          );
+          return (
+            <div key={i} className="bbb-content-field">
+              <p className="bbb-content-label" style={{ fontFamily: bStack, color: subheadHex }}>{b.label}</p>
+              <p className="bbb-content-text" style={bodyStyle}>{b.text}</p>
+            </div>
+          );
+        })}
+      </div>
+      <RunningFooter {...running} pageIndex={pageIndex} />
+      <PageNum {...running} pageIndex={pageIndex} />
     </div>
   );
 }
@@ -379,6 +433,8 @@ export default function BrandBookBuilderView() {
     running: runningProps,
   };
 
+  const { pages: contentPages, omitted: omittedPages } = paginatedBookPages(activeProject);
+
   const bgFor = (pageId) => {
     const hex = resolveBg(colors, pageBg[pageId]);
     return { bg: hex, dark: !isLight(hex) };
@@ -395,6 +451,9 @@ export default function BrandBookBuilderView() {
       .bbb-page{box-shadow:none;page-break-after:always;break-after:page;
         width:${(dims.w + bleedIn * 2).toFixed(3)}in;height:${(dims.h + bleedIn * 2).toFixed(3)}in;
         padding:${marginIn.toFixed(3)}in}
+      /* Same reason as the on-screen rule: a content page that runs long
+         flows onto the next sheet rather than having its tail cut off. */
+      .bbb-page--content{height:auto;min-height:${(dims.h + bleedIn * 2).toFixed(3)}in}
     }
   `;
 
@@ -417,10 +476,26 @@ export default function BrandBookBuilderView() {
     }
   };
 
+  /* Order mirrors the section order in brandBookPdf.js so the book on screen
+     and the exported PDF read the same. Content pages appear only when the
+     project holds their text; `colors` and `type` are always drawn because
+     the builder itself supplies their content. Content pages share the type
+     page's background rather than adding a control of their own — a
+     per-page background picker for eight more pages is eight more decisions
+     to make the same answer to. */
+  const bookOrder = ["story", "direction", "brief", "logo", "colors", "type", "writing", "applications", "usage", "handoff"];
+  const inner = [];
+  bookOrder.forEach((id) => {
+    if (id === "colors") { inner.push((i) => <ColorsPage key="colors" pageIndex={i} kit={{ ...kit, ...bgFor("pageColors") }} style={gridMarginVar} />); return; }
+    if (id === "type") { inner.push((i) => <TypePage key="type" pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />); return; }
+    contentPages
+      .filter((pg) => pg.sectionId === id)
+      .forEach((pg) => inner.push((i) => <ContentPage key={pg.id} page={pg} pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />));
+  });
+
   const pageElements = [
     <FrontCover key="cover" kit={{ ...kit, ...bgFor("pageCover") }} style={gridMarginVar} />,
-    <ColorsPage key="colors" kit={{ ...kit, ...bgFor("pageColors") }} style={gridMarginVar} />,
-    <TypePage key="type" kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />,
+    ...inner.map((render, i) => render(i)),
     <BackCover key="back" kit={{ ...kit, ...bgFor("pageBack") }} style={gridMarginVar} />,
   ];
 
@@ -612,6 +687,48 @@ export default function BrandBookBuilderView() {
             <input id="bbb-bleedToggle" type="checkbox" checked={printSettings.bleed} onChange={(e) => setPrintSettings((p) => ({ ...p, bleed: e.target.checked }))} />
             <label htmlFor="bbb-bleedToggle">Include 0.125in bleed</label>
           </div>
+        </Section>
+
+        {/* Content pages appear because the project holds their text, so the
+            book's length changes as the work does. Left implicit that reads
+            as pages going missing, so the count and the reason are stated
+            here — and each waiting page names the one answer that would add
+            it, which is a next action rather than a scolding. Open by
+            default: a collapsed label is a memory test, and this is the one
+            place that explains why the book is the length it is. */}
+        <Section title={`Pages · ${pageElements.length}`} defaultOpen>
+          {/* A section that spans seven pages listed itself seven times, so
+              finding anything meant reading past the repeats. Runs collapse
+              to one row with a count — same information, one line to read. */}
+          <ul className="bbb-pagelist">
+            {pageElements
+              .map((el) => (el.props.page ? el.props.page.label : BUILTIN_PAGE_LABELS[el.key]))
+              .reduce((acc, label) => {
+                const last = acc[acc.length - 1];
+                if (last && last.label === label) last.n += 1;
+                else acc.push({ label, n: 1 });
+                return acc;
+              }, [])
+              .map((row, i) => (
+                <li key={`${row.label}-${i}`} className="bbb-pagelist__in">
+                  <span>{row.label}</span>
+                  {row.n > 1 && <span className="bbb-pagelist__needs">{row.n} pages</span>}
+                </li>
+              ))}
+          </ul>
+          {omittedPages.length > 0 && (
+            <>
+              <p className="bbb-pagelist__head">Not in the book yet</p>
+              <ul className="bbb-pagelist">
+                {omittedPages.map((o) => (
+                  <li key={o.id} className="bbb-pagelist__out">
+                    <span>{o.label}</span>
+                    <span className="bbb-pagelist__needs">needs {o.needs}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </Section>
 
         <div className="bbb-section bbb-section--actions">

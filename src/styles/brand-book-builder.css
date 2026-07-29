@@ -356,3 +356,90 @@
   .bbb-canvas { padding: var(--space-md, 20px) var(--space-sm, 12px); gap: var(--space-lg, 24px); }
   .bbb-page { width: min(320px, calc(100vw - 56px)); }
 }
+
+/* ---------------------------------------------------- content pages
+   Added for the book's text sections (Story, Direction, Agreed brief,
+   Logo system, Writing, Applications, Usage, Handoff). These reuse the
+   page/label/running-element chrome above; only the body flow is new.
+   Colour and family always come from inline style off the same `kit` the
+   cover and type pages read, so nothing here re-states a brand value. */
+
+.bbb-ph-sub {
+  margin: -0.35rem 0 1.1rem;
+  font-size: 8.5pt;
+  letter-spacing: 0.01em;
+}
+.bbb-content-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  overflow: hidden;
+}
+.bbb-content-prose,
+.bbb-content-text {
+  margin: 0;
+  /* Same reason the app caps prose: an uncapped measure on a Letter page
+     runs past the point where the eye finds the next line. */
+  max-width: 65ch;
+  white-space: pre-wrap;
+}
+.bbb-content-field { margin: 0; }
+.bbb-content-label {
+  margin: 0 0 0.15rem;
+  font-size: 7.5pt;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.bbb-content-group { margin: 0 0 0.35rem; }
+.bbb-content-group-title { margin: 0 0 0.4rem; }
+.bbb-content-group .bbb-content-field + .bbb-content-field { margin-top: 0.45rem; }
+.bbb-content-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  max-width: 65ch;
+}
+.bbb-content-list li { margin-bottom: 0.2rem; }
+
+/* ------------------------------------------------------- page list */
+
+.bbb-pagelist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.bbb-pagelist__head {
+  margin: 0.7rem 0 0.3rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+.bbb-pagelist__in,
+.bbb-pagelist__out {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+/* Waiting pages read as quieter, not as errors — an unwritten answer is
+   work not done yet, not a mistake, and red here would say otherwise. */
+.bbb-pagelist__out { opacity: 0.62; }
+.bbb-pagelist__needs { text-align: right; font-style: italic; }
+
+/* Pagination decides where a section *should* break; this makes sure a wrong
+   guess can never destroy anything. .bbb-page is a fixed aspect-ratio box
+   with overflow:hidden, so an underestimated page silently ate the end of an
+   answer. Content pages keep the page's proportions as a MINIMUM and grow
+   instead of clipping — a slightly tall page is a visible, fixable problem;
+   a missing paragraph is not. Covers, colour and type pages are unchanged:
+   their content is generated to fit. */
+.bbb-page--content {
+  aspect-ratio: auto;
+  min-height: calc(min(320px, 100vw - 80px) * 11 / 8.5);
+  overflow: visible;
+}
