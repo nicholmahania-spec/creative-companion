@@ -983,9 +983,11 @@ export async function downloadBrandKitZip(
       }
     }
 
-    // Vector brand book PDF into zip
+    // Vector brand book PDF into zip — same page setup as the standalone
+    // download, or the two copies of "the brand book" would differ.
     const pdfResult = await downloadBrandPackVectorPdf(pack, null, {
       hideWatermark: !!options.hideWatermark,
+      book: options.book,
       returnBlobOnly: true,
     })
     if (pdfResult?.blob) {

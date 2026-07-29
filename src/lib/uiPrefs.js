@@ -79,6 +79,10 @@ const DEFAULTS = {
     hideTips: true,
     /** Pack / PDF: hide Creative Companion footer watermark */
     hidePackWatermark: false,
+    /** Brand book page setup — see lib/brandBookSetup.js for the options */
+    bookPageSize: 'letter',
+    bookEdgeSpace: 'standard',
+    bookPrintShop: false,
     /** Toasts: quiet (default) hides micro successes; all shows pin/role/helper chatter.
      *  Errors and exports always show.
      */

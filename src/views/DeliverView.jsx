@@ -10,9 +10,39 @@ import { getProcessPhase } from '../lib/processGuide'
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
+import {
+  BOOK_PAGE_SIZES,
+  BOOK_EDGE_SPACE,
+  bookSetupSummary,
+} from '../lib/brandBookSetup'
 import '../styles/lazy-deliver.css'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
+
+/**
+ * A row of named stops. Options come from brandBookSetup so the labels here
+ * and the geometry the PDF applies are the same declaration.
+ */
+function SetupChoice({ label, options, value, onChange }) {
+  return (
+    <div className="book-setup-row">
+      <span className="book-setup-label">{label}</span>
+      <div className="book-setup-stops" role="group" aria-label={label}>
+        {options.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            className={`book-setup-stop${value === o.id ? ' is-on' : ''}`}
+            aria-pressed={value === o.id}
+            onClick={() => onChange(o.id)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function DeliverView({
   navDir = 'none',
@@ -20,6 +50,7 @@ export default function DeliverView({
   deskMood = [],
   projectPalette = [],
   hidePackWatermark = false,
+  bookSetup = { pageSize: 'letter', edgeSpace: 'standard', printShop: false },
   setActiveView,
   goToProcessStep,
   goSystemSection,
@@ -130,6 +161,38 @@ export default function DeliverView({
               >
                 Brand book PDF
               </button>
+            </div>
+
+            {/* Page setup sits against the button it changes, not behind a
+                toggle and not at the foot of the page — a setting stored away
+                from its action has to be remembered as a separate errand, and
+                that retrieval step is where starting dies. Three named stops
+                rather than number fields: an open number invites tuning with
+                no end state. Current setup is printed underneath because
+                these prefs are sticky across projects, so it has to be
+                readable months later rather than recalled. */}
+            <div className="book-setup" role="group" aria-label="Page setup">
+              <SetupChoice
+                label="Page size"
+                options={BOOK_PAGE_SIZES}
+                value={bookSetup.pageSize}
+                onChange={(v) => setPref('bookPageSize', v)}
+              />
+              <SetupChoice
+                label="Edge space"
+                options={BOOK_EDGE_SPACE}
+                value={bookSetup.edgeSpace}
+                onChange={(v) => setPref('bookEdgeSpace', v)}
+              />
+              <label className="book-setup-shop">
+                <input
+                  type="checkbox"
+                  checked={bookSetup.printShop}
+                  onChange={(e) => setPref('bookPrintShop', e.target.checked)}
+                />
+                <span>Going to a print shop</span>
+              </label>
+              <p className="book-setup-state">{bookSetupSummary(bookSetup)}</p>
             </div>
 
             <div className="field-block deliver-note-block">

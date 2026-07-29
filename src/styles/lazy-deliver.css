@@ -210,6 +210,77 @@
   width: 7.5rem;
 }
 
+/* ——— Brand book page setup ———
+   Sits directly under the download button it changes. Deliberately flat: no
+   border and no fill, so it reads as a qualifier on the primary action rather
+   than as a competing card. Hierarchy from spacing and type weight, not from
+   another box. */
+
+.book-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+.book-setup-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.book-setup-label {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  min-width: 5.5rem;
+}
+
+.book-setup-stops {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.book-setup-stop {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft, rgba(26, 26, 26, 0.16));
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-1);
+  cursor: pointer;
+}
+
+.book-setup-stop:hover {
+  color: var(--text-primary);
+}
+
+.book-setup-stop.is-on {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-elevated, #FFFFFF);
+  font-weight: 600;
+}
+
+.book-setup-shop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* The setup as a readable sentence — visible state beats remembered state
+   for a preference that persists across projects. */
+.book-setup-state {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
 /* ——— v1.11 inline confirms (no window.confirm) ——— */
 
 .desk-confirm-banner {

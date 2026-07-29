@@ -16,6 +16,7 @@ import { filledDetectiveChapters } from './detectiveBrief'
 import { pinVisualKind } from './moodPins'
 import { touchpointsFor, touchpointsBlurb } from './touchpoints'
 import { slugifyFilename, downloadBlob, writeToSaveHandle } from './exportFiles'
+import { resolveBookSetup } from './brandBookSetup'
 
 // ── Shared PDF text / image helpers (WinAnsi-safe + raster only) ─────────
 
@@ -177,11 +178,19 @@ export async function downloadBrandPackVectorPdf(
     const pack = (await preparePackRasters(packIn)) || packIn || {}
     const hideWatermark = !!options.hideWatermark
 
-    const pageW = 612
-    const pageH = 792
-    const margin = 40
+    /* Page geometry comes from the shared setup rather than being written out
+       here, so the three controls on Deliver and this generator can never
+       disagree about what they mean. Everything downstream already derives
+       from pageW / pageH / margin / contentW — these four lines were the only
+       place the letter-sized sheet was hard-coded. */
+    const setup = resolveBookSetup(options.book)
+    const { pageW, pageH, margin, bleed } = setup
     const contentW = pageW - margin * 2
-    const pdf = new jsPDF({ unit: 'pt', format: 'letter', compress: true })
+    const pdf = new jsPDF({
+      unit: 'pt',
+      format: [pageW, pageH],
+      compress: true,
+    })
 
     const colors = (pack?.palette || [])
       .map((c) => normalizeHex(c) || c)
@@ -261,6 +270,40 @@ export async function downloadBrandPackVectorPdf(
         pdf.text(left, margin, pageH - 22)
         pdf.text(`${i} / ${total}`, pageW - margin, pageH - 22, {
           align: 'right',
+        })
+      }
+    }
+
+    /**
+     * Trim marks at the four corners of every page, drawn in the bleed area.
+     *
+     * Only when the user said this is going to a print shop. Without them the
+     * bleed allowance is invisible and unusable — the printer has no line to
+     * cut to, so the setting would enlarge the sheet and change nothing the
+     * user or the printer could act on. That would be a control that lies.
+     *
+     * Each mark runs from the sheet edge to the trim line and stops there, so
+     * nothing is drawn over the artwork itself.
+     */
+    const cropMarksAll = () => {
+      if (!setup.cropMarks) return
+      const total = pdf.getNumberOfPages()
+      const b = bleed
+      for (let i = 1; i <= total; i++) {
+        pdf.setPage(i)
+        pdf.setDrawColor(0, 0, 0)
+        pdf.setLineWidth(0.5)
+        const xs = [b, pageW - b]
+        const ys = [b, pageH - b]
+        xs.forEach((x) => {
+          ys.forEach((yy) => {
+            const towardLeft = x === b
+            const towardTop = yy === b
+            // horizontal arm, out through the bleed to the sheet edge
+            pdf.line(towardLeft ? 0 : pageW, yy, x, yy)
+            // vertical arm
+            pdf.line(x, towardTop ? 0 : pageH, x, yy)
+          })
         })
       }
     }
@@ -1585,6 +1628,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     footerAll()
+    cropMarksAll()
 
     const slug = slugifyFilename(pack?.projectName, 'brand-pack')
     const name = `${slug}-brand-book.pdf`
