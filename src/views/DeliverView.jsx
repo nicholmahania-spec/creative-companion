@@ -76,6 +76,15 @@ export default function DeliverView({
   const gaps = ready.checks.filter((c) => !c.ok)
   const okCount = ready.checks.filter((c) => c.ok).length
 
+  /* What the thin notice names. Derived from the same checks that decide
+     `thin` in the first place — handoff and learnings are ship polish and
+     don't count toward it, so they don't belong in a line explaining it.
+     Lower-cased because the labels are written as headings but read here
+     mid-sentence. */
+  const thinOpenLabels = ready.checks
+    .filter((c) => !['handoff', 'learnings'].includes(c.id) && !c.ok)
+    .map((c) => String(c.label).toLowerCase())
+
   const goal = activeProject?.detective?.goal
     ? String(activeProject.detective.goal)
     : ''
@@ -260,8 +269,19 @@ export default function DeliverView({
 
             {ready.thin && (
               <div className="pack-thin-warning" role="status">
+                {/* "Thin pack" was a verdict on the work, delivered at the
+                    moment of shipping — the point in the flow where that
+                    lands hardest — and it carried no instruction. This states
+                    status instead. Nothing here blocks the export; the
+                    download always runs.
+
+                    The list is read off the failing checks rather than typed
+                    out. The old copy named "tagline, colors, ★ Research pins"
+                    as a fixed trio, but `palette` passes on the default swatches,
+                    so colours are almost never actually open — the line asserted
+                    something the app's own readiness check disagreed with. */}
                 <p style={{ margin: '0 0 0.5rem' }}>
-                  Thin pack — add tagline, colors, or ★ Research pins.
+                  Still open: {thinOpenLabels.join(', ')}
                 </p>
                 <div className="finish-secondary-row" style={{ margin: 0 }}>
                   <button
@@ -296,7 +316,12 @@ export default function DeliverView({
                   setPref('hidePackWatermark', e.target.checked)
                 }
               />
-              <span>Hide watermark</span>
+              {/* Names what it actually removes. "Watermark" was an internal
+                  term for the string "Creative Companion" in the footers and
+                  the cover meta line — the app's own name, never the user's
+                  studio name — so the label was a recall test with nothing on
+                  screen to answer it. Same polarity as before: checked hides. */}
+              <span>Hide Creative Companion credit</span>
             </label>
 
             {brandWordList.length > 0 && (
