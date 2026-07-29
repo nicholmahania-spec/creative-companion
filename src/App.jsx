@@ -42,6 +42,9 @@ const ActivityTable = lazy(() => import('./components/dashboard/ActivityTable'))
 const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const ClientsView = lazy(() => import('./views/ClientsView'))
+const BrandBookBuilderView = lazy(
+  () => import('./views/BrandBookBuilderView')
+)
 const SettingsView = lazy(() => import('./views/SettingsView'))
 const SparkView = lazy(() => import('./views/SparkView'))
 const ResearchView = lazy(() => import('./views/ResearchView'))
@@ -341,6 +344,10 @@ function App() {
         'insights',
         'calendar',
         'settings',
+        'book',
+        /* 'clients' is deliberately absent upstream — noted, not fixed here:
+           refreshing on Clients drops you to Home, and the same id is missing
+           from sessionResume's ALL_VIEWS. Separate one-line fix. */
       ])
       // Legacy concept pipeline removed — never blank main
       if (raw === 'concept') return 'flow'
@@ -3277,6 +3284,17 @@ function App() {
                     role="menuitem"
                     className="more-menu-item"
                     onClick={() => {
+                      setActiveView('book')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <HeaderIcon name="print" /> {toolsLabelForView('book')}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
                       setActiveView('insights')
                       setMoreOpen(false)
                     }}
@@ -4144,6 +4162,15 @@ function App() {
               selectProject={selectProject}
               setActiveView={setActiveView}
             />
+          </Suspense>
+        )}
+
+        {/* ===== BRAND BOOK BUILDER (lazy) ===== */}
+        {activeView === 'book' && (
+          <Suspense
+            fallback={<PathViewSkeleton label="Loading brand book…" />}
+          >
+            <BrandBookBuilderView />
           </Suspense>
         )}
 

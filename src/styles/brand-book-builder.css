@@ -1,0 +1,353 @@
+/*
+  BrandBookBuilder.css
+  Plain CSS, no utility classes. Layout is flex/grid only.
+
+  Tokens this file expects from the host project (fallback values are
+  provided inline so the component still renders correctly before you've
+  mapped these, but you should replace the fallbacks with real values
+  from your existing token set):
+
+    --space-xs   (fallback 4px)
+    --space-sm   (fallback 8px)
+    --space-md   (fallback 16px)
+    --space-lg   (fallback 24px)
+    --space-xl   (fallback 32px)
+    --radius     (fallback 8px)
+    --fs-xs      (fallback 11px)
+    --fs-sm      (fallback 13px)
+    --fs-md      (fallback 15px)
+    --fs-lg      (fallback 18px)
+    --fs-xl      (fallback 24px)
+
+  Everything else (page-brand colors, swatch fills, etc.) is intentionally
+  set inline via React style props, since those are user-editable brand
+  kit values, not design-system tokens.
+*/
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap");
+
+/* local-first: prefers a real, locally-installed font (e.g. activated via
+   Adobe Fonts) over the webfont copy, with zero extra configuration */
+@font-face { font-family: "Fraunces Local"; src: local("Fraunces"); }
+@font-face { font-family: "Playfair Display Local"; src: local("Playfair Display"); }
+@font-face { font-family: "Space Grotesk Local"; src: local("Space Grotesk"); }
+@font-face { font-family: "Bricolage Grotesque Local"; src: local("Bricolage Grotesque"); }
+@font-face { font-family: "Inter Local"; src: local("Inter"); }
+@font-face { font-family: "Source Serif 4 Local"; src: local("Source Serif 4"), local("Source Serif Pro"); }
+@font-face { font-family: "IBM Plex Mono Local"; src: local("IBM Plex Mono"); }
+
+.bbb-root {
+  display: flex;
+  min-height: 100vh;
+  font-family: "Inter Local", "Inter", sans-serif;
+  background: #efece4;
+}
+
+/* ------------------------------------------------------------- panel */
+
+.bbb-panel {
+  width: 320px;
+  flex-shrink: 0;
+  background: #1f1e1c;
+  color: #eeece5;
+  padding: var(--space-lg, 24px) var(--space-lg, 24px);
+  overflow-y: auto;
+}
+
+.bbb-panel__title {
+  font-size: var(--fs-sm, 13px);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a7a49a;
+  margin: 0 0 var(--space-lg, 20px);
+}
+
+.bbb-section {
+  border-bottom: 0.5px solid #3a3936;
+  margin-bottom: var(--space-xs, 4px);
+}
+.bbb-section:last-of-type { border-bottom: none; }
+.bbb-section--actions {
+  padding-top: var(--space-md, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 8px);
+}
+
+.bbb-section__summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md, 14px) 0;
+}
+.bbb-section__summary::-webkit-details-marker { display: none; }
+.bbb-section__title {
+  font-size: var(--fs-xs, 12px);
+  font-weight: 500;
+  color: #a7a49a;
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+.bbb-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 10px);
+  padding-bottom: var(--space-md, 16px);
+}
+
+.bbb-field { display: flex; flex-direction: column; gap: var(--space-xs, 4px); }
+.bbb-field-row { display: flex; gap: var(--space-sm, 8px); }
+.bbb-field-row .bbb-field { flex: 1; }
+.bbb-field--checkbox { flex-direction: row; align-items: center; gap: var(--space-sm, 8px); }
+.bbb-field--checkbox label { margin: 0; }
+
+.bbb-field label {
+  font-size: var(--fs-xs, 11px);
+  color: #a7a49a;
+}
+.bbb-field input[type="text"],
+.bbb-field select {
+  width: 100%;
+  background: #2a2926;
+  border: 0.5px solid #3a3936;
+  color: #eeece5;
+  border-radius: var(--radius, 6px);
+  padding: var(--space-xs, 7px) var(--space-sm, 8px);
+  font-size: var(--fs-sm, 13px);
+  font-family: inherit;
+}
+
+.bbb-hint {
+  font-size: var(--fs-xs, 11px);
+  color: #a7a49a;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.bbb-btn {
+  width: 100%;
+  padding: var(--space-sm, 9px);
+  border-radius: var(--radius, 6px);
+  border: 0.5px solid #3a3936;
+  background: #2a2926;
+  color: #eeece5;
+  font-size: var(--fs-sm, 13px);
+  cursor: pointer;
+  font-family: inherit;
+}
+.bbb-btn:hover { background: #3a3936; }
+.bbb-btn--primary {
+  background: #c77b4b;
+  border-color: #c77b4b;
+  color: #1f1108;
+  font-weight: 500;
+}
+.bbb-btn--primary:hover { opacity: 0.9; }
+
+.bbb-color-list { display: flex; flex-direction: column; gap: var(--space-sm, 8px); }
+.bbb-color-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 8px);
+  background: #2a2926;
+  border: 0.5px solid #3a3936;
+  border-radius: var(--radius, 6px);
+  padding: var(--space-xs, 6px) var(--space-sm, 8px);
+}
+.bbb-color-row input[type="color"] {
+  width: 26px; height: 26px; border: none; border-radius: var(--radius, 5px); padding: 0; background: none; cursor: pointer;
+}
+.bbb-color-row input[type="text"] {
+  flex: 1; background: transparent; border: none; color: #eeece5; font-size: var(--fs-xs, 12px);
+}
+.bbb-color-row__hex { font-size: var(--fs-xs, 11px); color: #a7a49a; font-family: ui-monospace, monospace; }
+.bbb-color-row button { background: none; border: none; color: #a7a49a; cursor: pointer; font-size: var(--fs-md, 14px); padding: var(--space-xs, 2px) var(--space-xs, 4px); }
+.bbb-color-row button:hover { color: #eeece5; }
+
+/* ------------------------------------------------------------ canvas */
+
+.bbb-canvas {
+  flex: 1;
+  padding: var(--space-xl, 40px);
+  display: flex;
+  gap: var(--space-xl, 32px);
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+
+.bbb-page {
+  width: min(320px, calc(100vw - 80px));
+  aspect-ratio: 8.5 / 11;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-md, 9%);
+}
+.bbb-page-label {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  font-size: var(--fs-xs, 11px);
+  color: #7a7768;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.bbb-page--cover { display: flex; flex-direction: column; justify-content: flex-end; }
+.bbb-cover-name { line-height: 1.05; margin: 0 0 var(--space-sm, 10px); word-break: break-word; }
+.bbb-cover-tagline { font-size: var(--fs-xs, 12px); margin: 0; color: #4a4840; }
+.bbb-cover-rule { height: 3px; width: 22%; margin-bottom: var(--space-md, 16px); }
+.bbb-page[data-dark] .bbb-cover-tagline { color: #d9d6cc; }
+
+.bbb-ph-title {
+  font-size: var(--fs-xs, 11px);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a8676;
+  margin: 0 0 var(--space-md, 14px);
+}
+.bbb-page[data-dark] .bbb-ph-title { color: #c9c6ba; }
+
+.bbb-swatch-grid { display: grid; gap: var(--space-sm, 5%); }
+.bbb-swatch { aspect-ratio: 1 / 0.8; border-radius: var(--radius, 3px); position: relative; }
+.bbb-swatch__label { position: absolute; bottom: var(--space-xs, 6px); left: var(--space-sm, 8px); font-size: var(--fs-xs, 10px); font-family: ui-monospace, monospace; }
+
+.bbb-type-headline { line-height: 1.1; margin: 0 0 var(--space-sm, 10px); }
+.bbb-type-sub { margin: 0 0 var(--space-md, 14px); }
+.bbb-type-body { line-height: 1.6; margin: 0 0 var(--space-xs, 6px); }
+.bbb-page[data-dark] .bbb-type-body { color: #d9d6cc; }
+
+.bbb-page--back { display: flex; align-items: center; justify-content: center; }
+.bbb-back-mark { font-size: var(--fs-lg, 14px); text-align: center; letter-spacing: 0.03em; }
+
+.bbb-running-header, .bbb-running-footer, .bbb-page-num {
+  position: absolute;
+  font-size: var(--fs-xs, 9px);
+  letter-spacing: 0.03em;
+  color: #8a8676;
+}
+.bbb-running-header { top: 4%; left: var(--space-md, 9%); right: var(--space-md, 9%); text-transform: uppercase; }
+.bbb-running-footer { bottom: 4%; left: var(--space-md, 9%); right: var(--space-md, 9%); }
+.bbb-page-num { bottom: 4%; font-family: ui-monospace, monospace; }
+.bbb-page[data-dark] .bbb-running-header,
+.bbb-page[data-dark] .bbb-running-footer,
+.bbb-page[data-dark] .bbb-page-num { color: #c9c6ba; }
+
+.bbb-grid-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  box-sizing: border-box;
+  padding: var(--space-md, 9%);
+  pointer-events: none;
+}
+.bbb-grid-overlay--show { display: grid; }
+.bbb-gcol {
+  background: rgba(60, 110, 255, 0.05);
+  border-right: 0.5px dashed rgba(60, 110, 255, 0.4);
+  border-bottom: 0.5px dashed rgba(60, 110, 255, 0.4);
+}
+
+/* ----------------------------------------------------------- flipbook */
+
+.bbb-flip-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 19, 17, 0.82);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-lg, 20px);
+}
+.bbb-flip-overlay--show { display: flex; }
+.bbb-flip-close {
+  position: absolute;
+  top: var(--space-lg, 20px);
+  right: var(--space-lg, 24px);
+  background: none;
+  border: none;
+  color: #eeece5;
+  font-size: var(--fs-xl, 28px);
+  cursor: pointer;
+  line-height: 1;
+  padding: var(--space-sm, 8px);
+}
+.bbb-flip-stage {
+  position: relative;
+  perspective: 2200px;
+  width: min(380px, calc(100vw - 48px));
+  aspect-ratio: 8.5 / 11;
+}
+.bbb-flip-page {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.65s cubic-bezier(0.45, 0, 0.2, 1);
+  transform-origin: left center;
+  transform-style: preserve-3d;
+}
+.bbb-flip-page .bbb-page {
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+.bbb-flip-page .bbb-page-label { display: none; }
+
+.bbb-flip-controls { display: flex; align-items: center; gap: var(--space-lg, 20px); color: #eeece5; font-size: var(--fs-sm, 13px); }
+.bbb-flip-controls button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 0.5px solid rgba(255, 255, 255, 0.25);
+  color: #eeece5;
+  border-radius: var(--radius, 6px);
+  padding: var(--space-sm, 8px) var(--space-md, 16px);
+  cursor: pointer;
+  font-size: var(--fs-sm, 13px);
+  font-family: inherit;
+}
+.bbb-flip-controls button:disabled { opacity: 0.35; cursor: default; }
+.bbb-flip-controls button:not(:disabled):hover { background: rgba(255, 255, 255, 0.16); }
+
+/* ------------------------------------------------------------ layout */
+
+/* ----------------------------------------------------------- printing
+   `window.print()` prints the whole document, and the print rules generated
+   by the component only know about this file's own panel — the app's header,
+   nav, status pill, running-todo panel and any open overlay would all print
+   alongside the book. This scopes the page to the canvas, mirroring the
+   `cc-printing-pack` approach already used for the direction sheet
+   (shell.css) rather than adding another override layer. */
+
+@media print {
+  body.cc-printing-book * {
+    visibility: hidden !important;
+  }
+
+  body.cc-printing-book .bbb-canvas,
+  body.cc-printing-book .bbb-canvas * {
+    visibility: visible !important;
+  }
+
+  body.cc-printing-book .bbb-canvas {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .bbb-root { flex-direction: column; min-height: auto; }
+  .bbb-panel { width: 100%; }
+  .bbb-canvas { padding: var(--space-lg, 28px) var(--space-md, 16px); }
+}
+@media (max-width: 480px) {
+  .bbb-panel { padding: var(--space-md, 18px) var(--space-md, 16px); }
+  .bbb-canvas { padding: var(--space-md, 20px) var(--space-sm, 12px); gap: var(--space-lg, 24px); }
+  .bbb-page { width: min(320px, calc(100vw - 56px)); }
+}
