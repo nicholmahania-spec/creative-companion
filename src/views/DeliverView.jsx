@@ -17,7 +17,9 @@ import {
 } from '../lib/brandBookSetup'
 import '../styles/lazy-deliver.css'
 
-const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
+const BrandBookPreview = lazy(
+  () => import('../components/BrandBookPreview')
+)
 
 /**
  * A row of named stops. Options come from brandBookSetup so the labels here
@@ -47,8 +49,9 @@ function SetupChoice({ label, options, value, onChange }) {
 export default function DeliverView({
   navDir = 'none',
   activeProject = null,
-  deskMood = [],
-  projectPalette = [],
+  /* deskMood / projectPalette are gone: they fed the artboard preview this
+     view no longer renders. The preview builds from the pack snapshot, which
+     already carries the pins and palette. */
   hidePackWatermark = false,
   bookSetup = { pageSize: 'letter', edgeSpace: 'standard', printShop: false },
   setActiveView,
@@ -423,14 +426,16 @@ export default function DeliverView({
           aria-label="Pack preview"
         >
           <div className="design-rail-label">Preview</div>
-          <div className="pack-preview-thumb pack-preview-artboard deliver-pack-preview">
+          {/* The actual book, page by page — this renders the real PDF, so it
+              cannot drift from what downloads. It replaced a single-sheet
+              artboard that showed something different from the file entirely:
+              you saw one sheet and got a multi-page book, with nothing in the
+              app able to tell you that. */}
+          <div className="deliver-pack-preview">
             <Suspense fallback={<div className="panel-hint">Loading…</div>}>
-              <BrandArtboard
-                id="pack-preview-artboard"
-                project={activeProject || {}}
-                palette={projectPalette}
-                pins={deskMood.filter((m) => m.inPack)}
-                editable={false}
+              <BrandBookPreview
+                pack={packSnap}
+                book={bookSetup}
                 hideWatermark={hidePackWatermark}
               />
             </Suspense>

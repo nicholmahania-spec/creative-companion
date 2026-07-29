@@ -4206,10 +4206,8 @@ function App() {
             <DeliverView
               navDir={navDir}
               activeProject={activeProject}
-              deskMood={deskMood}
               deskTasks={deskTasks}
               completedCount={completedCount}
-              projectPalette={projectPalette}
               pathRows={pathRows}
               pathDoneCount={pathDoneCount}
               pathMissingLabelsList={pathMissingLabelsList}

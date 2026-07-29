@@ -229,6 +229,14 @@ export async function downloadBrandPackVectorPdf(
     let pageIndex = 0
     let y = margin
 
+    /* The book's own page list, recorded as it is drawn.
+       The preview shows a label beside each page and must never hold its own
+       copy of the section names: which pages exist depends on what the client
+       filled in — a thin pack is 7 pages, a full one 16+ — so a hand-written
+       list would be wrong for almost every project, and wrong silently. This
+       is the same rule the journey follows: derive, never restate. */
+    const pageTitles = []
+
     const newPage = () => {
       pdf.addPage()
       pageIndex += 1
@@ -317,6 +325,17 @@ export async function downloadBrandPackVectorPdf(
     }
 
     const pageHead = (title, sub) => {
+      /* Record which section this page belongs to. A section that runs long
+         calls pageHead again with the same title, so the repeat is marked
+         rather than listed twice — the reader scanning the preview wants to
+         see "Usage" once and know it continues. */
+      const idx = pdf.getNumberOfPages() - 1
+      const base = String(title)
+      const prev = pageTitles[idx - 1]
+      pageTitles[idx] =
+        prev && prev.replace(/ \(cont\.\)$/, '') === base
+          ? `${base} (cont.)`
+          : base
       y = margin
       pdf.setFillColor(quietRgb[0], quietRgb[1], quietRgb[2])
       pdf.rect(0, 0, pageW, 8, 'F')
@@ -433,6 +452,7 @@ export async function downloadBrandPackVectorPdf(
     pdf.setTextColor(fgRgb[0], fgRgb[1], fgRgb[2])
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(9)
+    pageTitles[0] = 'Cover'
     pdf.text('VISUAL IDENTITY SYSTEM', cx, cy, { align: 'center' })
 
     cy += 32
@@ -1648,6 +1668,13 @@ export async function downloadBrandPackVectorPdf(
         method: 'blob',
         mode: 'vector',
         pages: pdf.getNumberOfPages(),
+        /* Filled in so the caller never has to guess a page's name. Any page
+           the generator somehow didn't label still gets an entry, so the list
+           always lines up 1:1 with the pages in the file. */
+        pageTitles: Array.from(
+          { length: pdf.getNumberOfPages() },
+          (_, i) => pageTitles[i] || `Page ${i + 1}`
+        ),
       }
     }
 

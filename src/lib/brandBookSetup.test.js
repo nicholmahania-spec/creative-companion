@@ -124,6 +124,53 @@ describe('each control changes the generated PDF', () => {
     )
   }, 90000)
 
+  it('reports a page list that matches the file, page for page', async () => {
+    /* The preview labels each page from this list. It must come back from the
+       generator rather than being written out in the component: which pages
+       exist depends on what the client filled in — a thin pack is 7 pages, a
+       full one 16+ — so a hand-written list would be wrong for nearly every
+       project, and wrong without saying so. */
+    const thin = buildBrandPackSnapshot({
+      project: { name: 'Setup Co.' },
+      tasks: [],
+      moodItems: [],
+    })
+    const rich = buildBrandPackSnapshot({
+      project: {
+        name: 'Setup Co.',
+        tagline: 'A tagline.',
+        doUse: 'Keep it calm.',
+        dontUse: 'No stretching.',
+        imageryStyle: 'Warm, unposed.',
+        detective: { story: 'It started in a kitchen.', goal: 'Grow' },
+      },
+      tasks: [],
+      moodItems: [],
+    })
+
+    for (const pack of [thin, rich]) {
+      const res = await downloadBrandPackVectorPdf(pack, null, {
+        returnBlobOnly: true,
+      })
+      expect(res.pageTitles).toHaveLength(res.pages)
+      expect(res.pageTitles[0]).toBe('Cover')
+      expect(res.pageTitles.every((t) => typeof t === 'string' && t)).toBe(true)
+    }
+
+    // The richer pack genuinely adds sections, so the two lists differ —
+    // proving the list tracks content rather than being a fixed sequence.
+    const a = await downloadBrandPackVectorPdf(thin, null, {
+      returnBlobOnly: true,
+    })
+    const b = await downloadBrandPackVectorPdf(rich, null, {
+      returnBlobOnly: true,
+    })
+    expect(b.pageTitles.length).toBeGreaterThan(a.pageTitles.length)
+    expect(b.pageTitles).toContain('Story')
+    expect(b.pageTitles).toContain('Usage')
+    expect(a.pageTitles).not.toContain('Story')
+  }, 90000)
+
   it('declares every option the UI offers', () => {
     // The picker renders straight from these lists; an id here that the
     // resolver cannot map would be a control offering an impossible choice.

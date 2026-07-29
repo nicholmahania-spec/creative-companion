@@ -210,6 +210,72 @@
   width: 7.5rem;
 }
 
+/* ——— Brand book preview (renders the real PDF, page by page) ———
+   A single scrolling column, not a grid: a column keeps the reading order of
+   the document itself, so the eye never has to choose where to go next. */
+
+.book-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.book-preview-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* The sheet carries a border because it is standing in for paper — this is
+   one of the few places a box is doing real work rather than decorating. */
+.book-preview-sheet {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid rgba(26, 26, 26, 0.14);
+  background: #FFFFFF;
+}
+
+.book-preview-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.book-preview-num {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.book-preview-count {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+/* Rebuilding after an edit dims very slightly rather than blanking or
+   spinning — the old pages stay readable so the panel never disappears
+   mid-thought, and nothing jumps when the new ones land. */
+.book-preview.is-refreshing {
+  opacity: 0.72;
+  transition: opacity 0.18s ease;
+}
+
+.book-preview-msg {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.book-preview-msg-detail {
+  margin: var(--space-1) 0 0;
+  opacity: 0.8;
+}
+
 /* ——— Brand book page setup ———
    Sits directly under the download button it changes. Deliberately flat: no
    border and no fill, so it reads as a qualifier on the primary action rather
