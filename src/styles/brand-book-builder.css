@@ -159,6 +159,11 @@
 }
 .bbb-color-row input[type="color"] {
   width: 26px; height: 26px; border: none; border-radius: var(--radius, 5px); padding: 0; background: none; cursor: pointer;
+  /* The row is a flex line and the name field takes `flex: 1`, so without
+     this the swatch is the item that gives way — it compressed to a sliver
+     once the hex label was beside it, leaving a colour picker too thin to
+     aim at. */
+  flex-shrink: 0;
 }
 .bbb-color-row input[type="text"] {
   flex: 1; background: transparent; border: none; color: #eeece5; font-size: var(--fs-xs, 12px);

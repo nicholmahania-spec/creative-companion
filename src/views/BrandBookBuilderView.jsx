@@ -431,7 +431,10 @@ export default function BrandBookBuilderView() {
       <div className="bbb-panel">
         <h1 className="bbb-panel__title">Brand kit &mdash; source of truth</h1>
 
-        <Section title="Identity" defaultOpen>
+        {/* Named for what's inside rather than "Identity": the app's third
+            path stop is already called that, and with sections collapsed by
+            default the heading is the only clue to what a section holds. */}
+        <Section title="Name &amp; tagline" defaultOpen>
           <div className="bbb-field">
             <label htmlFor="bbb-brandName">Brand name</label>
             <input id="bbb-brandName" type="text" value={brandName} onChange={(e) => setBrandName(e.target.value)} />
