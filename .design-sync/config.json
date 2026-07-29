@@ -1,0 +1,22 @@
+{
+  "projectId": "2229775a-99fc-4146-9ed2-3fb68c1d7f3c",
+  "shape": "package",
+  "pkg": "creative-companion-react",
+  "globalName": "CreativeCompanion",
+  "srcDir": "src",
+  "cssEntry": "src/styles/shell.css",
+  "extraFonts": [".design-sync/webfonts.css"],
+  "guidelinesGlob": ["DESIGN_GRAMMAR.md"],
+  "readmeHeader": ".design-sync/conventions.md",
+  "buildCmd": "(no library build — this is a private Vite app; pass --entry ./.design-sync/ds-entry.js)",
+  "dtsPropsFor": {
+    "Button": "children?: React.ReactNode; /** Visual weight. 'outline' is an alias of 'secondary' — both render .btn-secondary. */ variant?: 'primary' | 'secondary' | 'ghost' | 'outline'; /** 'sm' and 'soft' both render .btn-sm; 'md' adds no size class. */ size?: 'md' | 'sm' | 'soft'; /** Appended after the .btn/.btn-* classes, so it wins on conflicts. */ className?: string; onClick?: React.MouseEventHandler<HTMLButtonElement>; /** Any other button attribute is spread onto the underlying <button>. Note the element defaults to type=\"button\"; pass type=\"submit\" to override. */ [key: string]: unknown;"
+  },
+  "componentSrcMap": {
+    "Button": "src/components/ui/Button.jsx",
+    "Badge": null,
+    "Card": null,
+    "Textarea": null,
+    "ButtonGroup": null
+  }
+}
