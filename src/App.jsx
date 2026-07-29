@@ -1624,8 +1624,7 @@ function App() {
         demoTour ||
         deskConfirm ||
         forceBreakConsentOpen ||
-        document.querySelector('.board-lightbox-overlay') ||
-        document.querySelector('.thin-pack-prompt')
+        document.querySelector('.board-lightbox-overlay')
       ) {
         return
       }

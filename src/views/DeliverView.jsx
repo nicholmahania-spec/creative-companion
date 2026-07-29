@@ -2,7 +2,7 @@
  * Deliver — handoff + ship left (55%), sticky pack preview right (45%).
  * ADHD: one primary Download, gaps compact, advanced formats/leave.
  */
-import { useState, Suspense, lazy } from 'react'
+import { Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
 import CaseStudyExport from '../components/CaseStudyExport'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey'
@@ -36,8 +36,6 @@ export default function DeliverView({
   lastExportNote = '',
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
-  /** @type {null | 'print' | 'pdf' | 'kit'} */
-  const [thinPackPrompt, setThinPackPrompt] = useState(null)
 
   const packSnap = buildCurrentBrandPack()
   const ready = packReadiness(packSnap)
@@ -69,13 +67,14 @@ export default function DeliverView({
     else if (c.view) setActiveView(c.view)
   }
 
-  const runPack = (kind) => {
-    if (ready.thin) {
-      setThinPackPrompt(kind === 'print' ? 'print' : kind)
-      return
-    }
-    runExport(kind)
-  }
+  /* `runPack` used to sit here and intercept every export when the pack was
+     thin, to ask "download anyway?". The page already shows that warning
+     before the click, under the same `ready.thin` condition — so the user was
+     told, decided to proceed, and was told again, with the answer being
+     "anyway" every time. A prompt whose answer never changes is a toll, and
+     as a gate at the moment of shipping it read as a verdict on the work.
+     Nothing here is irreversible; it downloads a file. Export buttons call
+     `runExport` directly now. */
 
   const brandWordList = String(activeProject?.detective?.brandWords || '')
     .split(',')
@@ -127,7 +126,7 @@ export default function DeliverView({
               <button
                 type="button"
                 className="btn btn-primary work-path-next"
-                onClick={() => runPack('pdf')}
+                onClick={() => runExport('pdf')}
               >
                 Brand book PDF
               </button>
@@ -217,58 +216,6 @@ export default function DeliverView({
               </div>
             )}
 
-            {thinPackPrompt && (
-              <div
-                className="thin-pack-prompt"
-                role="alertdialog"
-                aria-labelledby="thin-pack-title"
-              >
-                <p id="thin-pack-title" className="thin-pack-prompt-body">
-                  {thinPackPrompt === 'print'
-                    ? 'Pack is thin (tagline / colors / ★ pins). Print anyway?'
-                    : 'Pack is thin (tagline / colors / ★ pins). Download anyway?'}
-                </p>
-                <div className="thin-pack-prompt-actions">
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => {
-                      const kind = thinPackPrompt
-                      setThinPackPrompt(null)
-                      runExport(
-                        kind === 'print'
-                          ? 'print'
-                          : kind === 'kit'
-                            ? 'kit'
-                            : 'pdf'
-                      )
-                    }}
-                  >
-                    {thinPackPrompt === 'print'
-                      ? 'Print anyway'
-                      : 'Download anyway'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setThinPackPrompt(null)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => {
-                      setThinPackPrompt(null)
-                      setActiveView('studio')
-                    }}
-                  >
-                    {labelForStepId('research')}
-                  </button>
-                </div>
-              </div>
-            )}
-
             {lastExportNote ? (
               <p className="pack-export-confirm" role="status">
                 {lastExportNote}
@@ -315,14 +262,14 @@ export default function DeliverView({
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={() => runPack('print')}
+                  onClick={() => runExport('print')}
                 >
                   Print
                 </button>
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={() => runPack('kit')}
+                  onClick={() => runExport('kit')}
                 >
                   Kit zip
                 </button>

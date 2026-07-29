@@ -44,13 +44,9 @@ test.describe('Brand book PDF', () => {
 
     await downloadBtn.click()
 
-    // Thin leave-behind confirm — continue download
-    const thin = page.locator('.thin-pack-prompt')
-    if (await thin.isVisible().catch(() => false)) {
-      await page
-        .getByRole('button', { name: /Download anyway|Descargar igual/i })
-        .click()
-    }
+    /* No confirm step: the thin-pack "download anyway?" prompt was removed.
+       The page already warns before the click, so the second ask was a toll
+       whose answer was always the same. Download now starts on one click. */
 
     const download = await downloadPromise
     if (download) {
