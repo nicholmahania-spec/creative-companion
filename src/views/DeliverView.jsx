@@ -76,14 +76,6 @@ export default function DeliverView({
   const gaps = ready.checks.filter((c) => !c.ok)
   const okCount = ready.checks.filter((c) => c.ok).length
 
-  /* What the thin notice names. Derived from the same checks that decide
-     `thin` in the first place — handoff and learnings are ship polish and
-     don't count toward it, so they don't belong in a line explaining it.
-     Lower-cased because the labels are written as headings but read here
-     mid-sentence. */
-  const thinOpenLabels = ready.checks
-    .filter((c) => !['handoff', 'learnings'].includes(c.id) && !c.ok)
-    .map((c) => String(c.label).toLowerCase())
 
   const goal = activeProject?.detective?.goal
     ? String(activeProject.detective.goal)
@@ -267,40 +259,17 @@ export default function DeliverView({
               </div>
             )}
 
-            {ready.thin && (
-              <div className="pack-thin-warning" role="status">
-                {/* "Thin pack" was a verdict on the work, delivered at the
-                    moment of shipping — the point in the flow where that
-                    lands hardest — and it carried no instruction. This states
-                    status instead. Nothing here blocks the export; the
-                    download always runs.
+            {/* The thin-pack notice used to sit here. It listed the failing
+                checks and offered two section jumps — but "Fix" directly
+                above already renders every failing check as its own button,
+                and `thin` can only be true when that list is non-empty. So a
+                thin pack showed the same items twice, with two competing sets
+                of buttons and no way to tell which one to act on.
 
-                    The list is read off the failing checks rather than typed
-                    out. The old copy named "tagline, colors, ★ Research pins"
-                    as a fixed trio, but `palette` passes on the default swatches,
-                    so colours are almost never actually open — the line asserted
-                    something the app's own readiness check disagreed with. */}
-                <p style={{ margin: '0 0 0.5rem' }}>
-                  Still open: {thinOpenLabels.join(', ')}
-                </p>
-                <div className="finish-secondary-row" style={{ margin: 0 }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => setActiveView('studio')}
-                  >
-                    Go to Research
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => goSystemSection('essentials')}
-                  >
-                    {labelForStepId('design')}
-                  </button>
-                </div>
-              </div>
-            )}
+                Two UIs over one fact is a decision where there should be
+                none. Fix is the more precise of the two: per-item labels that
+                jump to the exact field, rather than a coarse jump to the
+                section it lives in. */}
 
             {lastExportNote ? (
               <p className="pack-export-confirm" role="status">

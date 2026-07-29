@@ -70,18 +70,6 @@
   color: var(--text-muted);
 }
 
-.pack-thin-warning {
-  margin: 0 0 0.75rem;
-  padding: 0.55rem 0.7rem;
-  border-radius: var(--radius);
-  background: rgba(116, 116, 116, 0.08);
-  border: 1px solid rgba(116, 116, 116, 0.2);
-  color: var(--text-primary);
-  font-size: 0.82rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
 .pack-ready-fix {
   font: inherit;
   font-size: inherit;
@@ -751,7 +739,3 @@
   cursor: pointer;
 }
 
-.pack-thin-warning {
-  font-size: 0.78rem;
-  margin: 0.35rem 0 0;
-}
