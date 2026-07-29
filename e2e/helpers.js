@@ -1,4 +1,5 @@
 import { JOURNEY_STEPS } from '../src/lib/journey.js'
+import { DETECTIVE_CHAPTERS } from '../src/lib/detectiveBrief.js'
 
 /**
  * Shared Playwright unlock + onboard for local desk gate.
@@ -153,4 +154,50 @@ export async function openTool(page, name) {
     .first()
     .click()
   await page.waitForTimeout(300)
+}
+
+/**
+ * Reveal a brief field by opening the chapter that owns it.
+ *
+ * The Define sheet is an accordion: only one chapter is open at a time, and
+ * chapter 01 is the one open on arrival. `#detective-goal` lives in a later
+ * chapter, so two specs asserted it was visible the moment they landed and
+ * timed out waiting — the field renders, it is just inside a closed chapter.
+ * Not a rename; a different failure that the rename was masking.
+ *
+ * The chapter is looked up from DETECTIVE_CHAPTERS rather than named, so
+ * moving a field between chapters does not break the caller.
+ */
+export async function openBriefFieldChapter(page, fieldId) {
+  const chapter = DETECTIVE_CHAPTERS.find((ch) =>
+    (ch.fields || []).some((f) => f.id === fieldId)
+  )
+  if (!chapter) throw new Error(`No brief chapter holds field "${fieldId}"`)
+  const toggle = page.locator(
+    `[data-chapter="${chapter.id}"] .define-chapter-toggle`
+  )
+  if ((await toggle.count()) && (await toggle.getAttribute('aria-expanded')) !== 'true') {
+    await toggle.click()
+    await page.waitForTimeout(250)
+  }
+  return page.locator(`#detective-${fieldId}`)
+}
+
+/**
+ * Jump to a path stop by its keyboard shortcut.
+ *
+ * The step rail only renders on path views, so once a spec has opened a Tool
+ * (Ideate, Review) the rail is gone and `stepByIdIn` has nothing to click.
+ * Keys 1-N are bound app-wide and are how the app itself expects you to get
+ * back. Uses the step's own `num`, so the binding follows the path.
+ */
+export async function goToStepByKey(page, id) {
+  const step = JOURNEY_STEPS.find((s) => s.id === id)
+  if (!step) throw new Error(`No journey step with id "${id}"`)
+  /* Blur first. With focus still in a text field the digit is typed into it
+     and the shortcut never fires — the app is right to ignore it there, and
+     it looks exactly like a navigation that silently did nothing. */
+  await page.evaluate(() => document.activeElement?.blur?.())
+  await page.keyboard.press(step.num)
+  await page.waitForTimeout(500)
 }

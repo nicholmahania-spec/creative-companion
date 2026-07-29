@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import {
   headingForStep,
+  openBriefFieldChapter,
   openTool,
   pathNav,
   skipIfCloud,
@@ -72,10 +73,10 @@ test.describe('Soft Signal demo', () => {
 
     await stepByIdIn(path, 'define').click()
     await expect(headingForStep(page, 'define').first()).toBeVisible()
-    await expect(page.locator('#detective-goal')).toBeVisible({
-      timeout: 8000,
-    })
-    const goal = await page.locator('#detective-goal').inputValue()
+    // `goal` sits in a later chapter, and the sheet opens on chapter 01.
+    const goalField = await openBriefFieldChapter(page, 'goal')
+    await expect(goalField).toBeVisible({ timeout: 8000 })
+    const goal = await goalField.inputValue()
     expect(goal.length).toBeGreaterThan(10)
 
     // Demo seeds leave-behind ★ pins
