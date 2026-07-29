@@ -525,6 +525,12 @@ function App() {
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
   const showProgress = !!prefs.showProgress
   const hidePackWatermark = !!prefs.hidePackWatermark
+  /** Brand book page setup — sticky prefs, honoured by the vector generator */
+  const bookSetup = {
+    pageSize: prefs.bookPageSize,
+    edgeSpace: prefs.bookEdgeSpace,
+    printShop: !!prefs.bookPrintShop,
+  }
   // toastMode read inside flashToast
   const forceBreaksEnabledRef = useRef(forceBreaksEnabled)
   forceBreaksEnabledRef.current = forceBreaksEnabled
@@ -1624,8 +1630,7 @@ function App() {
         demoTour ||
         deskConfirm ||
         forceBreakConsentOpen ||
-        document.querySelector('.board-lightbox-overlay') ||
-        document.querySelector('.thin-pack-prompt')
+        document.querySelector('.board-lightbox-overlay')
       ) {
         return
       }
@@ -2402,6 +2407,7 @@ function App() {
       return (async () => {
         const result = await downloadBrandKitZip(pack, handlePromise, {
           hideWatermark: hidePackWatermark,
+          book: bookSetup,
         })
         if (result.ok) {
           setLastExportNote(
@@ -2432,6 +2438,7 @@ function App() {
         const result = await downloadBrandPackPdf(pack, handlePromise, {
           hideWatermark: hidePackWatermark,
           mode: 'vector',
+          book: bookSetup,
         })
         if (result.ok) {
           setLastExportNote(
@@ -4199,16 +4206,15 @@ function App() {
             <DeliverView
               navDir={navDir}
               activeProject={activeProject}
-              deskMood={deskMood}
               deskTasks={deskTasks}
               completedCount={completedCount}
-              projectPalette={projectPalette}
               pathRows={pathRows}
               pathDoneCount={pathDoneCount}
               pathMissingLabelsList={pathMissingLabelsList}
               pathNextGap={pathNextGap}
               leaveBehindThin={leaveBehindThin}
               hidePackWatermark={hidePackWatermark}
+              bookSetup={bookSetup}
               setActiveView={setActiveView}
               goToProcessStep={goToProcessStep}
               goSystemSection={goSystemSection}

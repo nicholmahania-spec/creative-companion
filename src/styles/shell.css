@@ -4669,7 +4669,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   stroke: #FAFAFA;
 }
 
-.thin-pack-prompt-body,
 .desk-confirm-body {
   margin: 0 0 0.55rem;
   z-index: var(--z-toast);
@@ -4691,7 +4690,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
 }
 
-.app.deep .thin-pack-prompt,
 .app.deep .desk-confirm-banner {
   background: var(--bg-elevated);
   border-color: rgba(255, 255, 255, 0.12);

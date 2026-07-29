@@ -351,6 +351,14 @@ export function blankWorkspaceState() {
       hideTips: true,
       /** Pack / PDF: hide Creative Companion footer watermark */
       hidePackWatermark: false,
+      /* Brand book page setup. Sticky across projects rather than per-project:
+         a studio's paper size and print habits don't change per client, and
+         re-deciding them on every project is a recurring toll. Shown as text
+         beside the download button so the state is read, not remembered.
+         Values are declared in lib/brandBookSetup.js. */
+      bookPageSize: 'letter',
+      bookEdgeSpace: 'standard',
+      bookPrintShop: false,
       /**
        * Toasts: quiet (default) hides micro successes; all shows pin/role/helper chatter.
        * Errors and exports always show.

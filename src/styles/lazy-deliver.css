@@ -210,9 +210,145 @@
   width: 7.5rem;
 }
 
+/* ——— Brand book preview (renders the real PDF, page by page) ———
+   A single scrolling column, not a grid: a column keeps the reading order of
+   the document itself, so the eye never has to choose where to go next. */
+
+.book-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.book-preview-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* The sheet carries a border because it is standing in for paper — this is
+   one of the few places a box is doing real work rather than decorating. */
+.book-preview-sheet {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid rgba(26, 26, 26, 0.14);
+  background: #FFFFFF;
+}
+
+.book-preview-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.book-preview-num {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.book-preview-count {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+/* Rebuilding after an edit dims very slightly rather than blanking or
+   spinning — the old pages stay readable so the panel never disappears
+   mid-thought, and nothing jumps when the new ones land. */
+.book-preview.is-refreshing {
+  opacity: 0.72;
+  transition: opacity 0.18s ease;
+}
+
+.book-preview-msg {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.book-preview-msg-detail {
+  margin: var(--space-1) 0 0;
+  opacity: 0.8;
+}
+
+/* ——— Brand book page setup ———
+   Sits directly under the download button it changes. Deliberately flat: no
+   border and no fill, so it reads as a qualifier on the primary action rather
+   than as a competing card. Hierarchy from spacing and type weight, not from
+   another box. */
+
+.book-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+.book-setup-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.book-setup-label {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  min-width: 5.5rem;
+}
+
+.book-setup-stops {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.book-setup-stop {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft, rgba(26, 26, 26, 0.16));
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-1);
+  cursor: pointer;
+}
+
+.book-setup-stop:hover {
+  color: var(--text-primary);
+}
+
+.book-setup-stop.is-on {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-elevated, #FFFFFF);
+  font-weight: 600;
+}
+
+.book-setup-shop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* The setup as a readable sentence — visible state beats remembered state
+   for a preference that persists across projects. */
+.book-setup-state {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
 /* ——— v1.11 inline confirms (no window.confirm) ——— */
 
-.thin-pack-prompt,
 .desk-confirm-banner {
   margin: 0.5rem 0 0.75rem;
   padding: 0.75rem 0.85rem;
@@ -222,7 +358,6 @@
   box-shadow: var(--shadow-1);
 }
 
-.thin-pack-prompt-actions,
 .desk-confirm-actions {
   display: flex;
   flex-wrap: wrap;

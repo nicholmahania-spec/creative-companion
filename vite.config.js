@@ -128,7 +128,13 @@ export default defineConfig({
         "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com data:",
-        "worker-src blob:",
+        /* Matches the deployed policy in netlify.toml and vercel.json, which
+           both allow 'self'. Dev was stricter, so pdf.js — which loads its
+           worker as a same-origin module — was refused here and worked in
+           production: the one direction of divergence that can't be caught by
+           testing locally, because local is the strict side. It silently broke
+           the brand book preview and the overview PDF OCR in dev only. */
+        "worker-src 'self' blob:",
         "connect-src 'self' ws://localhost:* http://localhost:* https://*.supabase.co https://api.x.ai https://fonts.googleapis.com https://fonts.gstatic.com",
         "frame-ancestors 'none'",
         "base-uri 'self'",

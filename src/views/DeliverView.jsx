@@ -2,7 +2,7 @@
  * Deliver — handoff + ship left (55%), sticky pack preview right (45%).
  * ADHD: one primary Download, gaps compact, advanced formats/leave.
  */
-import { useState, Suspense, lazy } from 'react'
+import { Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
 import CaseStudyExport from '../components/CaseStudyExport'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey'
@@ -10,16 +10,50 @@ import { getProcessPhase } from '../lib/processGuide'
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
+import {
+  BOOK_PAGE_SIZES,
+  BOOK_EDGE_SPACE,
+  bookSetupSummary,
+} from '../lib/brandBookSetup'
 import '../styles/lazy-deliver.css'
 
-const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
+const BrandBookPreview = lazy(
+  () => import('../components/BrandBookPreview')
+)
+
+/**
+ * A row of named stops. Options come from brandBookSetup so the labels here
+ * and the geometry the PDF applies are the same declaration.
+ */
+function SetupChoice({ label, options, value, onChange }) {
+  return (
+    <div className="book-setup-row">
+      <span className="book-setup-label">{label}</span>
+      <div className="book-setup-stops" role="group" aria-label={label}>
+        {options.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            className={`book-setup-stop${value === o.id ? ' is-on' : ''}`}
+            aria-pressed={value === o.id}
+            onClick={() => onChange(o.id)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function DeliverView({
   navDir = 'none',
   activeProject = null,
-  deskMood = [],
-  projectPalette = [],
+  /* deskMood / projectPalette are gone: they fed the artboard preview this
+     view no longer renders. The preview builds from the pack snapshot, which
+     already carries the pins and palette. */
   hidePackWatermark = false,
+  bookSetup = { pageSize: 'letter', edgeSpace: 'standard', printShop: false },
   setActiveView,
   goToProcessStep,
   goSystemSection,
@@ -36,8 +70,6 @@ export default function DeliverView({
   lastExportNote = '',
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
-  /** @type {null | 'print' | 'pdf' | 'kit'} */
-  const [thinPackPrompt, setThinPackPrompt] = useState(null)
 
   const packSnap = buildCurrentBrandPack()
   const ready = packReadiness(packSnap)
@@ -69,13 +101,14 @@ export default function DeliverView({
     else if (c.view) setActiveView(c.view)
   }
 
-  const runPack = (kind) => {
-    if (ready.thin) {
-      setThinPackPrompt(kind === 'print' ? 'print' : kind)
-      return
-    }
-    runExport(kind)
-  }
+  /* `runPack` used to sit here and intercept every export when the pack was
+     thin, to ask "download anyway?". The page already shows that warning
+     before the click, under the same `ready.thin` condition — so the user was
+     told, decided to proceed, and was told again, with the answer being
+     "anyway" every time. A prompt whose answer never changes is a toll, and
+     as a gate at the moment of shipping it read as a verdict on the work.
+     Nothing here is irreversible; it downloads a file. Export buttons call
+     `runExport` directly now. */
 
   const brandWordList = String(activeProject?.detective?.brandWords || '')
     .split(',')
@@ -127,10 +160,42 @@ export default function DeliverView({
               <button
                 type="button"
                 className="btn btn-primary work-path-next"
-                onClick={() => runPack('pdf')}
+                onClick={() => runExport('pdf')}
               >
                 Brand book PDF
               </button>
+            </div>
+
+            {/* Page setup sits against the button it changes, not behind a
+                toggle and not at the foot of the page — a setting stored away
+                from its action has to be remembered as a separate errand, and
+                that retrieval step is where starting dies. Three named stops
+                rather than number fields: an open number invites tuning with
+                no end state. Current setup is printed underneath because
+                these prefs are sticky across projects, so it has to be
+                readable months later rather than recalled. */}
+            <div className="book-setup" role="group" aria-label="Page setup">
+              <SetupChoice
+                label="Page size"
+                options={BOOK_PAGE_SIZES}
+                value={bookSetup.pageSize}
+                onChange={(v) => setPref('bookPageSize', v)}
+              />
+              <SetupChoice
+                label="Edge space"
+                options={BOOK_EDGE_SPACE}
+                value={bookSetup.edgeSpace}
+                onChange={(v) => setPref('bookEdgeSpace', v)}
+              />
+              <label className="book-setup-shop">
+                <input
+                  type="checkbox"
+                  checked={bookSetup.printShop}
+                  onChange={(e) => setPref('bookPrintShop', e.target.checked)}
+                />
+                <span>Going to a print shop</span>
+              </label>
+              <p className="book-setup-state">{bookSetupSummary(bookSetup)}</p>
             </div>
 
             <div className="field-block deliver-note-block">
@@ -217,58 +282,6 @@ export default function DeliverView({
               </div>
             )}
 
-            {thinPackPrompt && (
-              <div
-                className="thin-pack-prompt"
-                role="alertdialog"
-                aria-labelledby="thin-pack-title"
-              >
-                <p id="thin-pack-title" className="thin-pack-prompt-body">
-                  {thinPackPrompt === 'print'
-                    ? 'Pack is thin (tagline / colors / ★ pins). Print anyway?'
-                    : 'Pack is thin (tagline / colors / ★ pins). Download anyway?'}
-                </p>
-                <div className="thin-pack-prompt-actions">
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => {
-                      const kind = thinPackPrompt
-                      setThinPackPrompt(null)
-                      runExport(
-                        kind === 'print'
-                          ? 'print'
-                          : kind === 'kit'
-                            ? 'kit'
-                            : 'pdf'
-                      )
-                    }}
-                  >
-                    {thinPackPrompt === 'print'
-                      ? 'Print anyway'
-                      : 'Download anyway'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setThinPackPrompt(null)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => {
-                      setThinPackPrompt(null)
-                      setActiveView('studio')
-                    }}
-                  >
-                    {labelForStepId('research')}
-                  </button>
-                </div>
-              </div>
-            )}
-
             {lastExportNote ? (
               <p className="pack-export-confirm" role="status">
                 {lastExportNote}
@@ -315,14 +328,14 @@ export default function DeliverView({
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={() => runPack('print')}
+                  onClick={() => runExport('print')}
                 >
                   Print
                 </button>
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={() => runPack('kit')}
+                  onClick={() => runExport('kit')}
                 >
                   Kit zip
                 </button>
@@ -413,14 +426,16 @@ export default function DeliverView({
           aria-label="Pack preview"
         >
           <div className="design-rail-label">Preview</div>
-          <div className="pack-preview-thumb pack-preview-artboard deliver-pack-preview">
+          {/* The actual book, page by page — this renders the real PDF, so it
+              cannot drift from what downloads. It replaced a single-sheet
+              artboard that showed something different from the file entirely:
+              you saw one sheet and got a multi-page book, with nothing in the
+              app able to tell you that. */}
+          <div className="deliver-pack-preview">
             <Suspense fallback={<div className="panel-hint">Loading…</div>}>
-              <BrandArtboard
-                id="pack-preview-artboard"
-                project={activeProject || {}}
-                palette={projectPalette}
-                pins={deskMood.filter((m) => m.inPack)}
-                editable={false}
+              <BrandBookPreview
+                pack={packSnap}
+                book={bookSetup}
                 hideWatermark={hidePackWatermark}
               />
             </Suspense>
