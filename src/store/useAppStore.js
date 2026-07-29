@@ -157,6 +157,16 @@ export function brandIdentityDefaults() {
   orgWebsite: '',
   /** Business-card contacts: [{ id, name, title, phone, email }] */
   contacts: [],
+  /* Brand Book Builder settings. null = never opened; read through
+     bookBuilderFor() in lib/bookBuilder.js, which fills every key at read
+     time — so projects saved before this existed need no migration. */
+  bookBuilder: null,
+  /* Names for the palette's colours, index-parallel to `palette`. Holds only
+     { id, name } — the hex lives in `palette` and nowhere else, so the two
+     arrays can't disagree about a colour's value. Ids are persisted because
+     page backgrounds and type colours reference a colour BY id; using array
+     indices would silently re-point them whenever a colour was removed. */
+  paletteTokens: [],
   /** Optional overrides; null/empty keys fall back to mapPaletteRoles(palette) */
   colorRoles: null,
   /** Why each assigned color role fits the Define brand words */
@@ -758,6 +768,53 @@ const useAppStore = create(
               : p
           ),
         })),
+
+      /**
+       * Merge a patch into the active project's Brand Book Builder settings.
+       * Section-level merge — `{ grid: {...} }` replaces only `grid`.
+       */
+      setBookBuilder: (patch) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId
+              ? {
+                  ...p,
+                  bookBuilder: { ...(p.bookBuilder || {}), ...(patch || {}) },
+                }
+              : p
+          ),
+        })),
+
+      /**
+       * The single writer for named colour rows — writes `palette` and
+       * `paletteTokens` in one `set`, with the same cap, so they can never be
+       * written apart or end up different lengths.
+       *
+       * Do not reach for `setProjectPalette` from a surface that shows names:
+       * it writes hex only, which is exactly the desync this exists to stop.
+       * Honours the same >= 2 floor as `removePaletteColor`.
+       *
+       * @param {{id: string, name: string, hex: string}[]} rows
+       */
+      setPaletteTokens: (rows) =>
+        set((state) => {
+          const next = (rows || []).filter((r) => r && r.hex).slice(0, 8)
+          if (next.length < 2) return {}
+          return {
+            projects: state.projects.map((p) =>
+              p.id === state.currentProjectId
+                ? {
+                    ...p,
+                    palette: next.map((r) => r.hex),
+                    paletteTokens: next.map((r) => ({
+                      id: r.id,
+                      name: r.name,
+                    })),
+                  }
+                : p
+            ),
+          }
+        }),
 
       updatePaletteColor: (index, hex) =>
         set((state) => ({

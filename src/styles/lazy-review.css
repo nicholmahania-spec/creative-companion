@@ -235,8 +235,7 @@
 .deliver-studio:has(.deliver-focus-field:focus) .deliver-advanced,
 .deliver-studio:has(.deliver-focus-field:focus) .deliver-preview-panel,
 .deliver-studio:has(.deliver-focus-field:focus) .deliver-status-chip,
-.deliver-studio:has(.deliver-focus-field:focus) .pack-watermark-toggle,
-.deliver-studio:has(.deliver-focus-field:focus) .pack-thin-warning {
+.deliver-studio:has(.deliver-focus-field:focus) .pack-watermark-toggle {
   opacity: 0.25;
   filter: blur(2px);
   pointer-events: none;

@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, pathNav, skipIfCloud } from './helpers.js'
+import {
+  labelForStep,
+  pathNav,
+  skipIfCloud,
+  stepByIdIn,
+  unlockAndOnboard,
+} from './helpers.js'
 
 /**
  * Brand book PDF download is wired (download event or export confirmation UI).
@@ -13,9 +19,9 @@ test.describe('Brand book PDF', () => {
     skipIfCloud(test, gate)
 
     const path = await pathNav(page)
-    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: 'Deliver' })
+      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
 
     await expect(page.getByText(/Pack · \d+\/\d+/i).first()).toBeVisible()
@@ -27,9 +33,9 @@ test.describe('Brand book PDF', () => {
 
     // Back to Deliver for PDF
     const path2 = await pathNav(page)
-    await path2.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await stepByIdIn(path2, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: 'Deliver' })
+      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
 
     const downloadBtn = page.getByRole('button', {

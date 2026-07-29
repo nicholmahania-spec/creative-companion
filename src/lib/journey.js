@@ -99,6 +99,8 @@ export function toolsLabelForView(view) {
       return 'Calendar'
     case 'clients':
       return 'Clients'
+    case 'book':
+      return 'Brand book'
     case 'settings':
       return 'Settings'
     case 'concept':

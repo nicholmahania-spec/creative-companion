@@ -76,6 +76,7 @@ export default function DeliverView({
   const gaps = ready.checks.filter((c) => !c.ok)
   const okCount = ready.checks.filter((c) => c.ok).length
 
+
   const goal = activeProject?.detective?.goal
     ? String(activeProject.detective.goal)
     : ''
@@ -258,29 +259,17 @@ export default function DeliverView({
               </div>
             )}
 
-            {ready.thin && (
-              <div className="pack-thin-warning" role="status">
-                <p style={{ margin: '0 0 0.5rem' }}>
-                  Thin pack — add tagline, colors, or ★ Research pins.
-                </p>
-                <div className="finish-secondary-row" style={{ margin: 0 }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => setActiveView('studio')}
-                  >
-                    Go to Research
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => goSystemSection('essentials')}
-                  >
-                    {labelForStepId('design')}
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* The thin-pack notice used to sit here. It listed the failing
+                checks and offered two section jumps — but "Fix" directly
+                above already renders every failing check as its own button,
+                and `thin` can only be true when that list is non-empty. So a
+                thin pack showed the same items twice, with two competing sets
+                of buttons and no way to tell which one to act on.
+
+                Two UIs over one fact is a decision where there should be
+                none. Fix is the more precise of the two: per-item labels that
+                jump to the exact field, rather than a coarse jump to the
+                section it lives in. */}
 
             {lastExportNote ? (
               <p className="pack-export-confirm" role="status">
@@ -296,7 +285,12 @@ export default function DeliverView({
                   setPref('hidePackWatermark', e.target.checked)
                 }
               />
-              <span>Hide watermark</span>
+              {/* Names what it actually removes. "Watermark" was an internal
+                  term for the string "Creative Companion" in the footers and
+                  the cover meta line — the app's own name, never the user's
+                  studio name — so the label was a recall test with nothing on
+                  screen to answer it. Same polarity as before: checked hides. */}
+              <span>Hide Creative Companion credit</span>
             </label>
 
             {brandWordList.length > 0 && (

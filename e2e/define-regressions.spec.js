@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, skipIfCloud } from './helpers.js'
+import {
+  skipIfCloud,
+  stepByIdIn,
+  unlockAndOnboard,
+} from './helpers.js'
 
 /**
  * Regression guards for defects that actually shipped on the Define page.
@@ -56,7 +60,7 @@ async function contrastOf(page, selector) {
 }
 
 async function openDefine(page) {
-  const step = page.getByRole('button', { name: /Step 1: Define/i })
+  const step = stepByIdIn(page, 'define')
   if (await step.count()) {
     await step.first().click()
     await page.waitForTimeout(600)

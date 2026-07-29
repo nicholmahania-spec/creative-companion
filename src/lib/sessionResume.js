@@ -26,6 +26,7 @@ const ALL_VIEWS = new Set([
   'insights',
   'calendar',
   'settings',
+  'book',
 ])
 
 /**
