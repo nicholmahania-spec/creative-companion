@@ -4669,7 +4669,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   stroke: #FAFAFA;
 }
 
-.thin-pack-prompt-body,
 .desk-confirm-body {
   margin: 0 0 0.55rem;
   z-index: var(--z-toast);
@@ -4691,7 +4690,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
 }
 
-.app.deep .thin-pack-prompt,
 .app.deep .desk-confirm-banner {
   background: var(--bg-elevated);
   border-color: rgba(255, 255, 255, 0.12);
@@ -7453,13 +7451,18 @@ select:focus {
   .header-actions .header-icon-btn { display: none !important; }
   .more-menu-item-mobile-only { display: block; }
 
-  /* Cap and ellipsis the work-clock chip rather than removing the readout:
-     the clock stays visible (tapping it still opens the full detail), it
-     just stops claiming more width than a narrow phone header has to give. */
+  /* Keep the readout, drop its detail. The cap alone spent 5.5rem rendering
+     "Workin…" — the session detail was already ellipsised away, so the width
+     bought nothing, and the project name (the only flex item in this header)
+     was the one paying for it, collapsing to about two characters. Hiding the
+     detail lets the word finish and hands the rest back to the name. Tapping
+     the chip still opens the full record. */
+  .work-clock-chip-detail { display: none; }
   .header-actions .work-clock-chip {
-    max-width: 5.5rem;
+    flex: 0 0 auto;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* .autosave-chip is `position: fixed; top: 1rem; right: 1rem` — independent
@@ -8555,7 +8558,12 @@ select:focus {
 .header-status-slot {
   display: flex;
   align-items: center;
-  min-width: 110px;
+  /* No min-width. A reserved 110px would stop the header jumping when a
+     status appears — but this slot is conditionally rendered, so it arrives
+     and leaves as a whole either way and there is no jump to hold space
+     against. The reservation only ever took width from the project name,
+     which is the sole flex item here and so pays for everything else; on a
+     390px phone that left it 34px, about two characters. */
 }
 
 .define-deadline-inline input[type="date"] {
@@ -9161,17 +9169,59 @@ textarea.artboard-brief-input {
      now — without it the UA default decimal numbering and list-item marker
      box show through here. */
   .step-rail-list {
+    display: flex;
+    align-items: center;
     flex-wrap: nowrap !important;
+    gap: var(--space-1);
     list-style: none;
     margin: 0;
     padding: 0;
+    min-width: 0;
   }
-  .step-rail-list li { list-style: none; }
-  .step-rail-list li:has(.step-rail-step:not(.is-active)) { display: none; }
+  .step-rail-list li { list-style: none; display: flex; }
+  /* The .step-rail-step reset lives in the min-width:768px block as well, so
+     mobile never received it — the active step rendered as a raw UA <button>,
+     a bordered grey box floating under the header that read as a stray
+     element rather than as "you are here". */
+  .step-rail-step {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  /* Steps other than the current one become dots instead of disappearing.
+     Five pills genuinely don't fit, but five dots do, and the active label
+     sitting at its own position in the row says where you are spatially —
+     no number to interpret, no tap to find out. A filled dot means that step
+     holds real content (the same `is-done` the desktop rail computes), so
+     the row reports actual progress rather than how far along you clicked. */
+  .step-rail-list li:has(.step-rail-step:not(.is-active)) .step-rail-step {
+    display: grid;
+    place-items: center;
+    /* Dot is small; the tap target stays a full 24px square. */
+    width: var(--space-5);
+    height: var(--space-5);
+    font-size: 0;
+  }
+  .step-rail-list li:has(.step-rail-step:not(.is-active)) .step-rail-step::before {
+    content: '';
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    border: 1px solid var(--text-muted);
+  }
+  .step-rail-list li:has(.step-rail-step.is-done) .step-rail-step::before {
+    background: var(--text-muted);
+  }
   .step-rail-step.is-active {
     font-size: var(--fs-2);
+    font-weight: 700;
+    color: var(--text-primary);
     border-bottom: none;
     white-space: nowrap;
+    padding: 0 var(--space-1);
   }
   .step-rail-cta {
     font-size: 0.8rem;

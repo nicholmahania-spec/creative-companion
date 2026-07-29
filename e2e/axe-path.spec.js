@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { unlockAndOnboard, pathNav, skipIfCloud } from './helpers.js'
+import { unlockAndOnboard, pathNav, skipIfCloud, stepByIdIn, JOURNEY_STEPS } from './helpers.js'
 
 /**
  * axe-core serious/critical on primary path views after local unlock.
@@ -45,18 +45,11 @@ test.describe('axe path', () => {
     const path = await pathNav(page)
     await expect(path).toBeVisible()
 
-    const steps = [
-      [/Step 1: Define/i, 'Define'],
-      [/Step 2: Research/i, 'Research'],
-      [/Step 3: Ideate/i, 'Ideate'],
-      [/Step 4: Sketch/i, 'Sketch'],
-      [/Step 5: Design/i, 'Design'],
-      [/Step 6: Review/i, 'Review'],
-      [/Step 7: Deliver/i, 'Deliver'],
-    ]
-
-    for (const [nav, label] of steps) {
-      await path.getByRole('button', { name: nav }).click()
+    /* Derived from JOURNEY_STEPS: the frozen seven named Ideate and Review,
+       which are Tools now rather than path stops. */
+    for (const step of JOURNEY_STEPS) {
+      const label = step.label
+      await stepByIdIn(path, step.id).click()
       await page.waitForTimeout(350)
       await expectNoCriticalAxe(page, label)
     }

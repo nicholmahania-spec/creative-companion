@@ -1158,7 +1158,20 @@ export default function ResearchView({
                             </a>
                           </div>
                         )}
-                        <div className="mood-pin-tools">
+                        {/* The pin container starts a drag on pointerdown, and
+                            pointerdown on these tools bubbled straight into it:
+                            the drag captured the pointer and the click that
+                            would have fired never did, so ★ (and the rest of
+                            the row) did nothing to a real mouse. The link
+                            above already guards itself this way — the tools
+                            row was simply missed. Caught because an e2e star
+                            click did nothing while dispatchEvent('click')
+                            worked, which is the signature of a swallowed
+                            pointer sequence rather than a broken handler. */}
+                        <div
+                          className="mood-pin-tools"
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
                           <div className="mood-pin-tools-row">
                             <button
                               type="button"

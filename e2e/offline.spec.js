@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, pathNav, skipIfCloud } from './helpers.js'
+import {
+  headingForStep,
+  labelForStep,
+  pathNav,
+  skipIfCloud,
+  stepByIdIn,
+  unlockAndOnboard,
+} from './helpers.js'
 
 /**
  * Offline desk (honest scope):
@@ -19,32 +26,32 @@ test.describe('Offline desk', () => {
     await expect(path).toBeVisible()
 
     // Warm lazy path chunks while online so offline SPA hops still work
-    await path.getByRole('button', { name: /Step 2: Research/i }).click()
-    await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
-    await path.getByRole('button', { name: /Step 4: Sketch/i }).click()
+    await stepByIdIn(path, 'research').click()
+    await expect(headingForStep(page, 'research').first()).toBeVisible()
+    await stepByIdIn(path, 'sketch').click()
     await expect(
       page.locator('#current-step, #desk-capture, .step-focus-panel').first()
     ).toBeVisible({ timeout: 10000 })
-    await path.getByRole('button', { name: /Step 1: Define/i }).click()
-    await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
-    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await stepByIdIn(path, 'define').click()
+    await expect(headingForStep(page, 'define').first()).toBeVisible()
+    await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: 'Deliver' })
+      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
 
     await context.setOffline(true)
 
-    await path.getByRole('button', { name: /Step 4: Sketch/i }).click()
+    await stepByIdIn(path, 'sketch').click()
     await expect(
       page.locator('#current-step, #desk-capture, .step-focus-panel').first()
     ).toBeVisible({ timeout: 8000 })
 
-    await path.getByRole('button', { name: /Step 1: Define/i }).click()
-    await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
+    await stepByIdIn(path, 'define').click()
+    await expect(headingForStep(page, 'define').first()).toBeVisible()
 
-    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: 'Deliver' })
+      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
     ).toBeVisible()
     await expect(
       page.getByRole('button', {

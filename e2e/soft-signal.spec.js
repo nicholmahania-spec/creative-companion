@@ -1,5 +1,13 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, pathNav, skipIfCloud } from './helpers.js'
+import {
+  headingForStep,
+  openBriefFieldChapter,
+  openTool,
+  pathNav,
+  skipIfCloud,
+  stepByIdIn,
+  unlockAndOnboard,
+} from './helpers.js'
 
 /**
  * Soft Signal demo replaces workspace and seeds 7-step process fields.
@@ -58,25 +66,22 @@ test.describe('Soft Signal demo', () => {
     }
 
     const path = await pathNav(page)
-    // Soft Signal seeds content — progress pill should show > 0
-    const pill = page.locator('.journey-progress-pill')
-    await expect(pill).toBeVisible()
-    const pillText = await pill.innerText()
-    const n = Number(String(pillText).split('/')[0])
-    expect(n).toBeGreaterThanOrEqual(3)
+    /* The N/7 progress pill this asserted was removed deliberately in
+       c52ddff. Soft Signal seeding is proved below by the seeded field
+       values themselves, which is the stronger check anyway — the pill only
+       ever counted them. */
 
-    await path.getByRole('button', { name: /Step 1: Define/i }).click()
-    await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
-    await expect(page.locator('#detective-goal')).toBeVisible({
-      timeout: 8000,
-    })
-    const goal = await page.locator('#detective-goal').inputValue()
+    await stepByIdIn(path, 'define').click()
+    await expect(headingForStep(page, 'define').first()).toBeVisible()
+    // `goal` sits in a later chapter, and the sheet opens on chapter 01.
+    const goalField = await openBriefFieldChapter(page, 'goal')
+    await expect(goalField).toBeVisible({ timeout: 8000 })
+    const goal = await goalField.inputValue()
     expect(goal.length).toBeGreaterThan(10)
 
-    // Design keeps the N/7 pill; demo seeds leave-behind ★ pins
-    await path.getByRole('button', { name: /Step 5: Design/i }).click()
-    await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible()
-    await expect(page.locator('.journey-progress-pill')).toBeVisible()
+    // Demo seeds leave-behind ★ pins
+    await stepByIdIn(path, 'design').click()
+    await expect(headingForStep(page, 'design').first()).toBeVisible()
     await expect(page.getByText(/★\s*[1-9]\/6/).first()).toBeVisible({
       timeout: 5000,
     })
@@ -91,13 +96,15 @@ test.describe('Soft Signal demo', () => {
       timeout: 5000,
     })
 
-    await path.getByRole('button', { name: /Step 2: Research/i }).click()
-    await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
+    await stepByIdIn(path, 'research').click()
+    await expect(headingForStep(page, 'research').first()).toBeVisible()
     await expect(
       page.locator('.mood-board.has-pins, .mood-card').first()
     ).toBeVisible({ timeout: 8000 })
 
-    await path.getByRole('button', { name: /Step 3: Ideate/i }).click()
+    /* Ideate is a Tool now, not stop 3 — reached through the Tools menu so
+       this keeps testing the screen instead of dropping it. */
+    await openTool(page, /^Ideate$/i)
     await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()
     await expect(page.locator('#dir-title-a')).toHaveValue(/.+/, {
       timeout: 5000,
