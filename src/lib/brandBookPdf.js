@@ -316,6 +316,63 @@ export async function downloadBrandPackVectorPdf(
       y += 14
     }
 
+    /* The bottom of the writable area. Below this sits the footer band that
+       `footerAll` draws at pageH - 22. */
+    const floorY = () => pageH - 60
+
+    /**
+     * The book's one pagination mechanism.
+     *
+     * Most sections used to write straight down the page with no room check
+     * at all, so a long answer in Story, Imagery, Usage or Handoff ran off the
+     * bottom edge and simply never appeared in the file the client was sent.
+     * Silently dropping something the user typed, from the deliverable, is the
+     * worst failure this document has — worse than an ugly page break, because
+     * nothing on screen or in the file says it happened.
+     *
+     * Callers declare the height they are about to consume; if it will not fit,
+     * the section continues on a fresh page under its own heading so the reader
+     * never loses the thread. One helper rather than a copy per section: a
+     * fifth copy is how four of them came to be missing in the first place.
+     *
+     * @returns {boolean} true if it broke to a new page
+     */
+    const ensureRoomFor = (need, title, sub = 'Continued.') => {
+      if (y + need <= floorY()) return false
+      newPage()
+      if (title) pageHead(title, sub)
+      return true
+    }
+
+    /**
+     * Draw pre-wrapped lines, breaking across pages when they don't fit.
+     *
+     * `lineH` is the caller's own cursor advance rather than jsPDF's internal
+     * leading, which is smaller. Reserving the larger of the two means a chunk
+     * always occupies less room than was claimed for it, so a block can never
+     * spill past the floor — and output is byte-identical to before whenever
+     * the block did fit, which is the common case.
+     */
+    const writeFlowingLines = (lines, lineH, title, sub = 'Continued.') => {
+      let i = 0
+      while (i < lines.length) {
+        const room = Math.floor((floorY() - y) / lineH)
+        if (room < 1) {
+          newPage()
+          if (title) pageHead(title, sub)
+          continue
+        }
+        const chunk = lines.slice(i, i + room)
+        pdf.text(chunk, margin, y)
+        y += chunk.length * lineH
+        i += chunk.length
+        if (i < lines.length) {
+          newPage()
+          if (title) pageHead(title, sub)
+        }
+      }
+    }
+
     // ═══════════════════════════════════════════════
     // 1. COVER — full brand world (clean, centered)
     // ═══════════════════════════════════════════════
@@ -388,6 +445,13 @@ export async function downloadBrandPackVectorPdf(
       newPage()
       pageHead('Story', 'Why this brand exists, in their own words.')
       storyBlocks.forEach(([label, value]) => {
+        /* Wrap at the body face before measuring — splitTextToSize wraps to
+           whatever size is currently set, and the label above it is 8pt. */
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(11)
+        const lines = pdf.splitTextToSize(pdfSafeText(String(value)), contentW)
+        // Keep the label with at least its first line rather than stranding it.
+        ensureRoomFor(14 + 15, 'Story')
         pdf.setFont('helvetica', 'bold')
         pdf.setFontSize(8)
         pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
@@ -396,9 +460,8 @@ export async function downloadBrandPackVectorPdf(
         pdf.setFont('helvetica', 'normal')
         pdf.setFontSize(11)
         pdf.setTextColor(40, 40, 40)
-        const lines = pdf.splitTextToSize(pdfSafeText(String(value)), contentW)
-        pdf.text(lines, margin, y)
-        y += lines.length * 15 + 18
+        writeFlowingLines(lines, 15, 'Story')
+        y += 18
       })
     }
 
@@ -550,12 +613,17 @@ export async function downloadBrandPackVectorPdf(
       briefStartPage = pageIndex + 1
       pageHead('Agreed brief', 'The answers that shaped this system.')
 
-      const ensureRoom = (need) => {
-        if (y + need > pageH - 60) {
-          newPage()
-          pageHead('Agreed brief', 'The answers that shaped this system.')
-        }
-      }
+      /* Delegates to the shared helper so the book has exactly one pagination
+         mechanism. This section was the only one that ever had a room check;
+         four others went without, which is precisely the failure a private
+         copy invites. Keeps its own full sub-heading on continuation pages
+         rather than "Continued." — unchanged from before. */
+      const ensureRoom = (need) =>
+        ensureRoomFor(
+          need,
+          'Agreed brief',
+          'The answers that shaped this system.'
+        )
 
       chapters.forEach((ch) => {
         ensureRoom(36) // Increased from 28 to provide more space after section header
@@ -956,8 +1024,8 @@ export async function downloadBrandPackVectorPdf(
           pdf.setFontSize(10)
           pdf.setTextColor(40, 40, 40)
           const lines = pdf.splitTextToSize(pdfSafeText(r), contentW)
-          pdf.text(lines, margin, y)
-          y += lines.length * 12 + 4
+          writeFlowingLines(lines, 12, 'Imagery')
+          y += 4
         })
         y += 8
       }
@@ -966,7 +1034,13 @@ export async function downloadBrandPackVectorPdf(
         const gap = 10
         const cellW = (contentW - gap * (cols - 1)) / cols
         const cellH = 124
-        pins.slice(0, 6).forEach((pin, i) => {
+        const shown = pins.slice(0, 6)
+        /* The grid draws at absolute offsets from y, so it cannot flow — if
+           the rules above pushed the cursor down, move the whole grid to a
+           fresh page rather than letting the second row fall off the edge. */
+        const gridH = Math.ceil(shown.length / cols) * (cellH + 22)
+        ensureRoomFor(gridH, 'Imagery')
+        shown.forEach((pin, i) => {
           const col = i % cols
           const row = Math.floor(i / cols)
           const x = margin + col * (cellW + gap)
@@ -999,6 +1073,9 @@ export async function downloadBrandPackVectorPdf(
             yy + cellH + 11
           )
         })
+        // The grid drew at offsets from y without moving it; leave the cursor
+        // below the grid so anything added after this can't land on top of it.
+        y += gridH
       }
     }
 
@@ -1327,49 +1404,84 @@ export async function downloadBrandPackVectorPdf(
       const lineH = 14
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(11)
-      const doLines = doT
-        ? pdf.splitTextToSize(pdfSafeText(doT), colW - 28)
-        : []
-      const dontLines = dontT
+      let doLines = doT ? pdf.splitTextToSize(pdfSafeText(doT), colW - 28) : []
+      let dontLines = dontT
         ? pdf.splitTextToSize(pdfSafeText(dontT), colW - 28)
         : []
-      // Size cards to the text — fixed 200pt boxes left a half-page of empty tint
-      const bodyLines = Math.max(doLines.length, dontLines.length, 2)
-      const boxH = headH + bodyPad + bodyLines * lineH + bodyPad
 
-      // DO
-      pdf.setFillColor(236, 250, 246)
-      pdf.roundedRect(margin, y, colW, boxH, 8, 8, 'F')
-      pdf.setFillColor(15, 118, 110)
-      pdf.roundedRect(margin, y, colW, headH, 8, 8, 'F')
-      pdf.rect(margin, y + 14, colW, 14, 'F')
-      pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(11)
-      pdf.setTextColor(255, 255, 255)
-      pdf.text('DO', margin + 16, y + 19)
-      pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(11)
-      pdf.setTextColor(20, 18, 17)
-      if (doLines.length) {
-        pdf.text(doLines, margin + 14, y + headH + bodyPad + 2)
-      }
+      /* The cards are sized from their own line count, so a long rule list
+         grew the box straight off the bottom of the page and the rest of the
+         text went with it. Draw as many lines as the page can hold, then carry
+         the remainder onto a continuation spread — the two columns stay
+         side by side so DO and DON'T are always read against each other. */
+      let firstSpread = true
+      while (firstSpread || doLines.length || dontLines.length) {
+        const maxBody = Math.max(
+          1,
+          Math.floor((floorY() - y - headH - bodyPad * 2) / lineH)
+        )
+        const doChunk = doLines.slice(0, maxBody)
+        const dontChunk = dontLines.slice(0, maxBody)
+        doLines = doLines.slice(doChunk.length)
+        dontLines = dontLines.slice(dontChunk.length)
 
-      // DON'T
-      const dx = margin + colW + 16
-      pdf.setFillColor(254, 242, 242)
-      pdf.roundedRect(dx, y, colW, boxH, 8, 8, 'F')
-      pdf.setFillColor(185, 28, 28)
-      pdf.roundedRect(dx, y, colW, headH, 8, 8, 'F')
-      pdf.rect(dx, y + 14, colW, 14, 'F')
-      pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(11)
-      pdf.setTextColor(255, 255, 255)
-      pdf.text("DON'T", dx + 16, y + 19)
-      pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(11)
-      pdf.setTextColor(20, 18, 17)
-      if (dontLines.length) {
-        pdf.text(dontLines, dx + 14, y + headH + bodyPad + 2)
+        /* On the first spread both cards are drawn even if one side is empty —
+           DO and DON'T are read as a pair, and a missing half would look like
+           a rendering fault. On a continuation page the pair has already been
+           established, so a column that has run out draws nothing rather than
+           an empty tinted box with a heading and no content. */
+        const showDo = firstSpread || doChunk.length > 0
+        const showDont = firstSpread || dontChunk.length > 0
+
+        // Size cards to the text — fixed 200pt boxes left a half-page of empty tint
+        const bodyLines = Math.max(doChunk.length, dontChunk.length, 2)
+        const boxH = headH + bodyPad + bodyLines * lineH + bodyPad
+
+        // DO
+        if (showDo) {
+          pdf.setFillColor(236, 250, 246)
+          pdf.roundedRect(margin, y, colW, boxH, 8, 8, 'F')
+          pdf.setFillColor(15, 118, 110)
+          pdf.roundedRect(margin, y, colW, headH, 8, 8, 'F')
+          pdf.rect(margin, y + 14, colW, 14, 'F')
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(11)
+          pdf.setTextColor(255, 255, 255)
+          pdf.text('DO', margin + 16, y + 19)
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(11)
+          pdf.setTextColor(20, 18, 17)
+          if (doChunk.length) {
+            pdf.text(doChunk, margin + 14, y + headH + bodyPad + 2)
+          }
+        }
+
+        // DON'T
+        const dx = margin + colW + 16
+        if (showDont) {
+          pdf.setFillColor(254, 242, 242)
+          pdf.roundedRect(dx, y, colW, boxH, 8, 8, 'F')
+          pdf.setFillColor(185, 28, 28)
+          pdf.roundedRect(dx, y, colW, headH, 8, 8, 'F')
+          pdf.rect(dx, y + 14, colW, 14, 'F')
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(11)
+          pdf.setTextColor(255, 255, 255)
+          pdf.text("DON'T", dx + 16, y + 19)
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(11)
+          pdf.setTextColor(20, 18, 17)
+          if (dontChunk.length) {
+            pdf.text(dontChunk, dx + 14, y + headH + bodyPad + 2)
+          }
+        }
+
+        y += boxH
+        firstSpread = false
+        if (doLines.length || dontLines.length) {
+          newPage()
+          pageHead('Usage', 'Continued.')
+        }
       }
     }
 
@@ -1417,6 +1529,11 @@ export async function downloadBrandPackVectorPdf(
     y += 140
 
     constraints.forEach(([label, value]) => {
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(11)
+      const lines = pdf.splitTextToSize(pdfSafeText(String(value)), contentW)
+      // Keep each constraint's label with at least its first line of answer.
+      ensureRoomFor(13 + 15, 'Handoff')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(8)
       pdf.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2])
@@ -1425,12 +1542,18 @@ export async function downloadBrandPackVectorPdf(
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(11)
       pdf.setTextColor(40, 40, 40)
-      const lines = pdf.splitTextToSize(pdfSafeText(String(value)), contentW)
-      pdf.text(lines, margin, y)
-      y += lines.length * 15 + 16
+      writeFlowingLines(lines, 15, 'Handoff')
+      y += 16
     })
 
     if (pack?.handoffNote?.trim()) {
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(11)
+      const noteLines = pdf.splitTextToSize(
+        pdfSafeText(pack.handoffNote),
+        contentW
+      )
+      ensureRoomFor(14 + 15, 'Handoff')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(8)
       pdf.setTextColor(100, 100, 100)
@@ -1439,11 +1562,7 @@ export async function downloadBrandPackVectorPdf(
       pdf.setFont('helvetica', 'normal')
       pdf.setFontSize(11)
       pdf.setTextColor(40, 40, 40)
-      pdf.text(
-        pdf.splitTextToSize(pdfSafeText(pack.handoffNote), contentW),
-        margin,
-        y
-      )
+      writeFlowingLines(noteLines, 15, 'Handoff')
     }
 
     // The full agreed-brief answers already have their own section (with
