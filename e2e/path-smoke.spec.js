@@ -1,12 +1,25 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, pathNav, skipIfCloud } from './helpers.js'
+import {
+  unlockAndOnboard,
+  pathNav,
+  skipIfCloud,
+  stepByIdIn,
+  headingForStep,
+  JOURNEY_STEPS,
+} from './helpers.js'
 
 /**
- * Path smoke: unlock → walk process; gap chrome = N/7 pill always, quiet
- * G strip only while ON the earliest empty step (never shouts elsewhere).
+ * Path smoke: unlock → walk every stop in JOURNEY_STEPS; the quiet G strip
+ * shows only while ON the earliest empty step (never shouts elsewhere).
+ *
+ * The N/7 progress pill this used to assert was deliberately removed in
+ * c52ddff ("Remove progress pill from bottom of left sidebar"); the spec
+ * kept waiting 5s for an element with no renderer and 19 orphaned CSS
+ * rules. Those assertions are gone rather than re-pointed — there is no
+ * replacement element, and inventing one to assert would be worse.
  */
 test.describe('Creative Companion path smoke', () => {
-  test('walk 7-step design process after local unlock', async ({ page }) => {
+  test('walk the whole design process after local unlock', async ({ page }) => {
     const gate = await unlockAndOnboard(page, {
       name: 'E2E Pack Project',
       step: 'E2E first draft step',
@@ -15,52 +28,58 @@ test.describe('Creative Companion path smoke', () => {
 
     const path = await pathNav(page)
     await expect(path).toBeVisible()
-    // Single next-gap chrome: N/7 pill (strip appears only on the gap step)
-    await expect(page.locator('.journey-progress-pill')).toBeVisible()
-    await expect(page.locator('.journey-progress-pill')).toContainText(/\/7/)
     // Still-thin list + step-fill chip intentionally removed (pill checkmarks own that signal)
     await expect(page.locator('.journey-still-thin')).toHaveCount(0)
     await expect(page.locator('.step-fill-chip')).toHaveCount(0)
 
-    await path.getByRole('button', { name: /Step 1: Define/i }).click()
-    await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
-    // Named project fills Define, so the quiet strip stays off this step
-    await expect(page.locator('.journey-gap-strip')).toHaveCount(0)
-    // No per-step Gap · G after chrome collapse
-    await expect(page.getByRole('button', { name: /^Gap · G$/i })).toHaveCount(0)
+    /* The property being tested is "the quiet strip shows on the earliest
+       empty step and nowhere else". Which step that IS depends on what the
+       stops now ask for, and it moved when the path was renamed — this used
+       to hard-code Research, and asserting a specific stop tests the fixture
+       rather than the rule. Walk the path and count instead. */
+    const onGap = []
+    for (const step of JOURNEY_STEPS) {
+      await stepByIdIn(path, step.id).click()
+      await expect(headingForStep(page, step.id).first()).toBeVisible()
+      if (await page.locator('.journey-gap-strip.is-on-gap').count()) {
+        onGap.push(step.id)
+      }
+      // No per-step Gap · G after chrome collapse, on any stop
+      await expect(
+        page.getByRole('button', { name: /^Gap · G$/i })
+      ).toHaveCount(0)
+    }
+    expect(onGap).toHaveLength(1)
 
-    await path.getByRole('button', { name: /Step 2: Research/i }).click()
-    await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
-    // Research is the earliest gap → quiet G strip shows here only
+    /* The strip's quiet single-letter "G" button is gone: JourneyGapStrip
+       now renders one button, `is-ship`, and only once the path is full.
+       Asserted its absence rather than re-pointing at the ship button —
+       they are different controls doing different jobs, and pretending
+       otherwise would make this test pass while checking nothing. */
+    await stepByIdIn(path, onGap[0]).click()
     await expect(page.locator('.journey-gap-strip.is-on-gap')).toBeVisible()
-    await expect(page.locator('.journey-gap-strip-btn.is-quiet')).toBeVisible()
-    await expect(page.locator('.journey-gap-strip-btn.is-quiet')).toHaveText('G')
+    await expect(page.locator('.journey-gap-strip-btn.is-quiet')).toHaveCount(0)
+
+    await stepByIdIn(path, 'research').click()
+    await expect(headingForStep(page, 'research').first()).toBeVisible()
     // Empty board: upload affordance, no second still-thin lecture
     await expect(page.getByText(/0 pins|Upload images/i).first()).toBeVisible()
     await expect(page.locator('.research-still-thin')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: /^Gap · G$/i })).toHaveCount(0)
 
-    // Quiet G jumps to (stays on) the earliest gap
-    await page.locator('.journey-gap-strip-btn').click()
-    await expect(page.locator('h1.page-title').first()).toBeVisible({
-      timeout: 8000,
-    })
-
-    for (const step of [
-      [/Step 3: Ideate/i, 'Ideate'],
-      [/Step 4: Sketch/i, 'Sketch'],
-      [/Step 5: Design/i, 'Design'],
-      [/Step 6: Review/i, 'Review'],
-    ]) {
-      await path.getByRole('button', { name: step[0] }).click()
-      await expect(page.getByRole('heading', { name: step[1] })).toBeVisible()
-      // Pill stays; the strip never shouts while working later steps
-      await expect(page.locator('.journey-progress-pill')).toBeVisible()
+    /* The middle stops, whichever they are — Ideate and Review used to sit
+       here and are Tools now, so this walks what JOURNEY_STEPS declares
+       rather than a list that has to be edited on every rename. */
+    for (const step of JOURNEY_STEPS.slice(2, -1)) {
+      await stepByIdIn(path, step.id).click()
+      await expect(headingForStep(page, step.id).first()).toBeVisible()
+      // The strip never shouts while working later steps
+      await expect(page.locator('.journey-gap-strip.is-on-gap')).toHaveCount(0)
     }
 
-    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    const last = JOURNEY_STEPS[JOURNEY_STEPS.length - 1]
+    await stepByIdIn(path, last.id).click()
     await expect(
-      page.locator('h1.page-title', { hasText: 'Deliver' })
+      page.locator('h1.page-title', { hasText: last.label })
     ).toBeVisible({ timeout: 10000 })
     await expect(page.getByText(/Pack · \d+\/\d+/i).first()).toBeVisible()
     await expect(
@@ -72,8 +91,10 @@ test.describe('Creative Companion path smoke', () => {
       page.getByRole('button', { name: 'Print', exact: true })
     ).toBeVisible()
 
-    await page.keyboard.press('4')
-    await expect(page.getByRole('heading', { name: 'Sketch' })).toBeVisible({
+    // Keyboard 1-5 maps to the path in order, so key N is JOURNEY_STEPS[N-1].
+    const fourth = JOURNEY_STEPS[3]
+    await page.keyboard.press(fourth.num)
+    await expect(headingForStep(page, fourth.id).first()).toBeVisible({
       timeout: 8000,
     })
   })

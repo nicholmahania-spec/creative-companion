@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, pathNav } from './helpers.js'
+import {
+  headingForStep,
+  labelForStep,
+  openTool,
+  pathNav,
+  stepByIdIn,
+  unlockAndOnboard,
+} from './helpers.js'
 
 /**
  * Full process artifacts: detective → research pin → ideate → sketch why →
@@ -17,8 +24,8 @@ test.describe('Process walk (artifacts)', () => {
     await expect(path).toBeVisible()
 
     // 1 Define — detective sheet (chaptered): fill required Goal/Who/Words
-    await path.getByRole('button', { name: /Step 1: Define/i }).click()
-    await expect(page.getByRole('heading', { name: 'Define' })).toBeVisible()
+    await stepByIdIn(path, 'define').click()
+    await expect(headingForStep(page, 'define').first()).toBeVisible()
     await expect(page.locator('#detective-goal')).toBeVisible({ timeout: 8000 })
     await page.locator('#detective-goal').fill(
       'Make a calm cover system families can recognize in three seconds.'
@@ -36,7 +43,7 @@ test.describe('Process walk (artifacts)', () => {
     await page.getByRole('button', { name: /Next · Research/i }).click()
 
     // 2 Research — note pin + star for leave-behind
-    await expect(page.getByRole('heading', { name: 'Research' })).toBeVisible()
+    await expect(headingForStep(page, 'research').first()).toBeVisible()
     // Research is now the earliest gap → quiet G strip
     await expect(page.locator('.journey-gap-strip.is-on-gap')).toBeVisible()
     await expect(page.locator('.journey-gap-strip-btn.is-quiet')).toHaveText('G')
@@ -52,7 +59,9 @@ test.describe('Process walk (artifacts)', () => {
     await expect(star).toHaveAttribute('aria-pressed', 'true')
 
     // 3 Ideate — A/B titles + why, choose the winner
-    await path.getByRole('button', { name: /Step 3: Ideate/i }).click()
+    /* Ideate is a Tool now, not stop 3 — reached through the Tools menu so
+       this keeps testing the screen instead of dropping it. */
+    await openTool(page, /^Ideate$/i)
     await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()
     await page.getByRole('button', { name: /^Opposite$/i }).click()
     await page.locator('#dir-title-a').fill('Quiet editorial')
@@ -67,16 +76,16 @@ test.describe('Process walk (artifacts)', () => {
       .click()
 
     // 4 Sketch — why field
-    await path.getByRole('button', { name: /Step 4: Sketch/i }).click()
-    await expect(page.getByRole('heading', { name: 'Sketch' })).toBeVisible()
+    await stepByIdIn(path, 'sketch').click()
+    await expect(headingForStep(page, 'sketch').first()).toBeVisible()
     const why = page.locator('#step-why')
     if (await why.count()) {
       await why.fill('Quiet hierarchy matches the detective goal')
     }
 
     // 5 Design — tagline (craft) + version bump
-    await path.getByRole('button', { name: /Step 5: Design/i }).click()
-    await expect(page.getByRole('heading', { name: 'Design' })).toBeVisible()
+    await stepByIdIn(path, 'design').click()
+    await expect(headingForStep(page, 'design').first()).toBeVisible()
     await page.locator('#brand-tagline').fill('Calm direction you can hand over')
     await page.getByRole('button', { name: 'v1', exact: true }).click()
     await expect(
@@ -84,7 +93,8 @@ test.describe('Process walk (artifacts)', () => {
     ).toBeVisible({ timeout: 5000 })
 
     // 6 Review — pack readiness + feedback notes
-    await path.getByRole('button', { name: /Step 6: Review/i }).click()
+    // Review is a Tool now, not stop 6.
+    await openTool(page, /^Review$/i)
     await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible()
     await expect(page.getByText(/Ready · \d+\/\d+/i).first()).toBeVisible()
     await page
@@ -92,9 +102,9 @@ test.describe('Process walk (artifacts)', () => {
       .fill('Hierarchy clear. Keep guest line quieter.')
 
     // 7 Deliver — handoff + learnings + brand book CTA
-    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: 'Deliver' })
+      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
     await page
       .locator('#handoff-note')

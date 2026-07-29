@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, pathNav, skipIfCloud } from './helpers.js'
+import {
+  unlockAndOnboard,
+  pathNav,
+  skipIfCloud,
+  stepByIdIn,
+  headingForStep,
+  JOURNEY_STEPS,
+} from './helpers.js'
 
 /**
  * Lightweight path a11y checks (no axe dependency):
@@ -20,16 +27,11 @@ test.describe('Path accessibility', () => {
 
     const path = await pathNav(page)
     await expect(path).toBeVisible()
-    for (const label of [
-      /Step 1: Define/i,
-      /Step 2: Research/i,
-      /Step 3: Ideate/i,
-      /Step 4: Sketch/i,
-      /Step 5: Design/i,
-      /Step 6: Review/i,
-      /Step 7: Deliver/i,
-    ]) {
-      await expect(path.getByRole('button', { name: label })).toBeVisible()
+    /* Walked from JOURNEY_STEPS rather than a frozen list of seven. The
+       old copy named Define/Ideate/Sketch/Design/Review, none of which are
+       path stops now, so this failed while the app was correct. */
+    for (const step of JOURNEY_STEPS) {
+      await expect(stepByIdIn(path, step.id)).toBeVisible()
     }
 
     await expect(page.locator('a.skip-link')).toHaveAttribute(
@@ -51,23 +53,12 @@ test.describe('Path accessibility', () => {
     })
     skipIfCloud(test, gate)
     const path = await pathNav(page)
-    const steps = [
-      [/Step 1: Define/i, 'Define'],
-      [/Step 2: Research/i, 'Research'],
-      [/Step 3: Ideate/i, 'Ideate'],
-      [/Step 4: Sketch/i, 'Sketch'],
-      [/Step 5: Design/i, 'Design'],
-      [/Step 6: Review/i, 'Review'],
-      [/Step 7: Deliver/i, 'Deliver'],
-    ]
-    for (const [nav, heading] of steps) {
-      await path.getByRole('button', { name: nav }).click()
+    for (const step of JOURNEY_STEPS) {
+      await stepByIdIn(path, step.id).click()
       await page.waitForTimeout(200)
-      if (heading) {
-        await expect(
-          page.getByRole('heading', { name: heading }).first()
-        ).toBeVisible({ timeout: 8000 })
-      }
+      await expect(headingForStep(page, step.id).first()).toBeVisible({
+        timeout: 8000,
+      })
     }
   })
 })

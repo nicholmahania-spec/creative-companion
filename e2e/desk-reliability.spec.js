@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, pathNav, skipIfCloud } from './helpers.js'
+import {
+  labelForStep,
+  pathNav,
+  skipIfCloud,
+  stepByIdIn,
+  unlockAndOnboard,
+} from './helpers.js'
 
 /**
  * Desk reliability: local unlock → path → Deliver exports · Esc overlays.
@@ -16,9 +22,9 @@ test.describe('Desk reliability', () => {
 
     const path = await pathNav(page)
     await expect(path).toBeVisible()
-    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: 'Deliver' })
+      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
     await expect(
       page.getByRole('button', { name: /Brand book PDF/i })
@@ -47,9 +53,9 @@ test.describe('Desk reliability', () => {
     const gate = await unlockAndOnboard(page, { name: 'E2E Reliability' })
     skipIfCloud(test, gate)
     const path = await pathNav(page)
-    await path.getByRole('button', { name: /Step 7: Deliver/i }).click()
+    await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: 'Deliver' })
+      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
     await page
       .locator('.deliver-advanced summary', { hasText: 'More formats' })
