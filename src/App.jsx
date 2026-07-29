@@ -3121,7 +3121,12 @@ function App() {
                     second is motion in the corner of the eye all day, and it
                     is finer than any decision it informs. No icon: this is
                     not a control, it is a readout. */}
-                Working · {sessionLabel}
+                Working
+                {/* Split out so a narrow header can drop the detail and keep
+                    the readout whole. Capping the chip and letting it ellipsis
+                    spent the same width to render "Workin…" — the detail was
+                    already lost, and the project name was paying for it. */}
+                <span className="work-clock-chip-detail"> · {sessionLabel}</span>
               </button>
             )}
             {/* The TIMER: separate chip, separate job, and only here because
