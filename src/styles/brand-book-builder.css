@@ -458,3 +458,124 @@
   min-height: calc(min(320px, 100vw - 80px) * 11 / 8.5);
   overflow: visible;
 }
+
+/* ---------------------------------------------------------------- logo page
+
+   Mirrors the Logo section brandBookPdf.js draws, so the lockups the client
+   receives can be checked before they are sent. The book had pages for Colour
+   and Type but none for Logo, which made it the one page in the deliverable
+   with no on-screen counterpart.
+
+   Proportions follow the PDF: a 2x2 lockup grid over a hairline ground, then
+   a square construction box with the artwork inset and its spec beside it. */
+
+.bbb-lockup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 2px;
+  margin-bottom: var(--space-sm, 10px);
+}
+
+.bbb-lockup {
+  aspect-ratio: 1 / 0.34;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bbb-lockup__mark {
+  /* The PDF shrinks the lockup until it fits its cell. The screen cell is far
+     narrower, so the type is set small enough that a real brand name is read
+     rather than clipped to an ellipsis — a lockup you cannot read is not a
+     preview of anything. */
+  font-size: 0.4375rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  max-width: 92%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bbb-logo-spec {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 10px);
+  margin-bottom: var(--space-sm, 10px);
+}
+
+.bbb-logo-construct {
+  position: relative;
+  width: 26%;
+  aspect-ratio: 1 / 1;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(0, 0, 0, 0.45);
+}
+.bbb-page[data-dark] .bbb-logo-construct { border-color: rgba(255, 255, 255, 0.4); }
+
+.bbb-logo-construct__art {
+  max-width: 62%;
+  max-height: 62%;
+  object-fit: contain;
+}
+
+.bbb-logo-construct__mono {
+  font-size: var(--fs-md, 15px);
+}
+
+/* The inner clearspace rule, drawn as the PDF draws it. */
+.bbb-logo-construct__inset {
+  position: absolute;
+  inset: 18%;
+  border: 1px dashed rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+.bbb-page[data-dark] .bbb-logo-construct__inset { border-color: rgba(255, 255, 255, 0.22); }
+
+.bbb-logo-spec__text {
+  margin: 0;
+  font-size: var(--fs-xs, 10px);
+  line-height: 1.6;
+  color: #6f6b5e;
+}
+.bbb-page[data-dark] .bbb-logo-spec__text { color: #c9c6ba; }
+
+.bbb-logo-donts__label {
+  display: block;
+  font-size: var(--fs-xs, 9px);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8a8676;
+  margin-bottom: var(--space-xs, 5px);
+}
+.bbb-page[data-dark] .bbb-logo-donts__label { color: #c9c6ba; }
+
+/* `.bbb-page` is overflow:hidden, so anything past the bottom edge vanishes
+   with nothing on screen to say it did — the same failure paginateBlocks
+   exists to stop. The list is capped in height and scrolls rather than being
+   silently cut, and the PDF applies the same floor when it draws its pills. */
+.bbb-logo-donts__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs, 4px);
+  max-height: 22%;
+  overflow: hidden;
+}
+
+.bbb-logo-dont {
+  font-size: 0.4375rem;
+  line-height: 1.35;
+  padding: 2px 6px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-pill, 999px);
+  color: #6f6b5e;
+}
+.bbb-page[data-dark] .bbb-logo-dont {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #d9d6cc;
+}

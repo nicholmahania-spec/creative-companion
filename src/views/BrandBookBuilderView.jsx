@@ -11,6 +11,7 @@ import { paginatedBookPages } from '../lib/bookContent'
 import { currentBrandPack } from '../lib/currentPack'
 import { bookSectionIds } from '../lib/bookDocument'
 import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/fontCatalog'
+import { monogramFor, logoDontsList, DEFAULT_LOGO_CLEARSPACE, DEFAULT_LOGO_MIN_SIZE } from '../lib/brandSystem'
 import { loadBrandFamilies } from '../lib/fontLoader'
 import '../styles/brand-book-builder.css'
 
@@ -178,6 +179,75 @@ function TypePage({ kit, style, pageIndex = 1 }) {
       <p className="bbb-type-body" style={{ fontFamily: bStack, fontWeight: bodyWeight, fontSize: `${bodySize}pt`, color: bodyHex || undefined }}>
         Body text sits here. This paragraph exists to show line length, leading, and color at actual reading size, the way it will appear throughout the guide.
       </p>
+      <RunningFooter {...running} pageIndex={pageIndex} />
+      <PageNum {...running} pageIndex={pageIndex} />
+    </div>
+  );
+}
+
+/* The logo page, drawn the way the PDF draws it.
+   Until this existed, the book on screen had pages for Colour and Type but
+   none for Logo — so the lockups the client receives were the one page you
+   could not check before sending. It mirrors the PDF's Logo section: the
+   wordmark set on four grounds, the construction box around the real artwork
+   (or the monogram when there is none), the clearspace/min-size spec, and the
+   project's own don't list. `monogramFor` is shared with the PDF rather than
+   reimplemented, so the two cannot letter the monogram differently. */
+function LogoPage({ kit, style, pageIndex = 0 }) {
+  const { name, colors, accent, hStack, bStack, headlineWeight, bg, dark, grid, running, logo } = kit;
+  const wordmark = logo.wordmark || name;
+  const mono = monogramFor(wordmark);
+
+  /* The same four grounds the PDF uses: paper, ink, accent, black. Drawn from
+     the project's palette so the page moves when the palette does. */
+  const inkHex = colors[0]?.hex || "#1a1a1a";
+  const grounds = ["#ffffff", inkHex, accent || colors[1]?.hex || inkHex, "#000000"];
+
+  return (
+    <div className="bbb-page bbb-page--logo" data-dark={dark || undefined} style={{ background: bg, ...style }}>
+      <span className="bbb-page-label">Logo page</span>
+      <GridOverlay {...grid} />
+      <RunningHeader {...running} pageIndex={pageIndex} />
+      <p className="bbb-ph-title" style={{ fontFamily: hStack, fontWeight: headlineWeight }}>Logo</p>
+
+      <div className="bbb-lockup-grid">
+        {grounds.map((ground, i) => (
+          <div key={i} className="bbb-lockup" style={{ background: ground }}>
+            <span
+              className="bbb-lockup__mark"
+              style={{ fontFamily: hStack, fontWeight: headlineWeight, color: isLight(ground) ? "#1a1a1a" : "#f4f1ea" }}
+            >
+              {mono} {wordmark}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="bbb-logo-spec">
+        <div className="bbb-logo-construct">
+          {logo.image ? (
+            <img src={logo.image} alt="" className="bbb-logo-construct__art" />
+          ) : (
+            <span className="bbb-logo-construct__mono" style={{ fontFamily: hStack, fontWeight: headlineWeight }}>{mono}</span>
+          )}
+          <span className="bbb-logo-construct__inset" aria-hidden="true" />
+        </div>
+        <p className="bbb-logo-spec__text" style={{ fontFamily: bStack }}>
+          {[logo.clearspace, logo.minSize].filter(Boolean).join(" ")}
+        </p>
+      </div>
+
+      {logo.donts.length > 0 && (
+        <div className="bbb-logo-donts">
+          <span className="bbb-logo-donts__label" style={{ fontFamily: bStack }}>Don&rsquo;t</span>
+          <div className="bbb-logo-donts__pills">
+            {logo.donts.map((t) => (
+              <span key={t} className="bbb-logo-dont" style={{ fontFamily: bStack }}>{t}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <RunningFooter {...running} pageIndex={pageIndex} />
       <PageNum {...running} pageIndex={pageIndex} />
     </div>
@@ -447,13 +517,6 @@ export default function BrandBookBuilderView() {
     showFooter: running.showFooter, footerText: (running.footerText.trim() || tagline), footerAlign: running.footerAlign,
     showPageNumbers: running.showPageNumbers, alternate: running.alternate, bStack };
 
-  const kit = {
-    name: brandName, tagline, headlineHex, subheadHex, bodyHex, accent, colors, swatchCols,
-    hStack, bStack, headlineSize, headlineWeight, subheadSize, subheadWeight, bodySize, bodyWeight,
-    grid: { columns: grid.columns, rows: grid.rows, gutter: grid.gutter, show: grid.show },
-    running: runningProps,
-  };
-
   /* The book on screen is built from the same pack the PDF is exported from,
      not from the raw project. Reading the project directly was half of why the
      two could disagree about what the project contained. */
@@ -462,6 +525,25 @@ export default function BrandBookBuilderView() {
     projectId: currentProjectId,
     moodItems,
   });
+
+  /* Read from the pack, so the page on screen is set from exactly what the
+     PDF will be given — not from a second reading of the project. */
+  const logoKit = {
+    wordmark: (pack.logoWordmark || '').trim(),
+    image: pack.logoImage || '',
+    clearspace: (pack.logoClearspace || '').trim() || DEFAULT_LOGO_CLEARSPACE,
+    minSize: (pack.logoMinSize || '').trim() || DEFAULT_LOGO_MIN_SIZE,
+    donts: logoDontsList(pack),
+  };
+
+  const kit = {
+    logo: logoKit,
+    name: brandName, tagline, headlineHex, subheadHex, bodyHex, accent, colors, swatchCols,
+    hStack, bStack, headlineSize, headlineWeight, subheadSize, subheadWeight, bodySize, bodyWeight,
+    grid: { columns: grid.columns, rows: grid.rows, gutter: grid.gutter, show: grid.show },
+    running: runningProps,
+  };
+
   const { pages: contentPages, omitted: omittedPages } = paginatedBookPages(pack);
 
   const bgFor = (pageId) => {
@@ -528,6 +610,10 @@ export default function BrandBookBuilderView() {
   bookSectionIds(pack).forEach((id) => {
     if (id === "color") { inner.push((i) => <ColorsPage key="colors" pageIndex={i} kit={{ ...kit, ...bgFor("pageColors") }} style={gridMarginVar} />); return; }
     if (id === "type") { inner.push((i) => <TypePage key="type" pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />); return; }
+    /* Logo draws its lockups first, then any notes the project holds — the
+       visual page is what the client receives, the notes are the detail
+       behind it. */
+    if (id === "logo") inner.push((i) => <LogoPage key="logo" pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />);
     pagesFor(id).forEach(pushContent);
   });
 

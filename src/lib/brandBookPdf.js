@@ -48,6 +48,7 @@ import {
   DEFAULT_LOGO_CLEARSPACE,
   DEFAULT_LOGO_MIN_SIZE,
   TYPE_SCALE,
+  monogramFor,
 } from './brandSystem'
 import { filledDetectiveChapters } from './detectiveBrief'
 import { touchpointsFor, touchpointsBlurb, touchpointLabel } from './touchpoints'
@@ -188,25 +189,6 @@ async function preparePackRasters(pack) {
  * artwork it is shown at real size in the clearspace construction box on the
  * Logo page, which is the page that exists to show it.
  */
-function monogramFor(wordmark) {
-  const words = String(wordmark || '')
-    .replace(/[^A-Za-z0-9& ]/g, ' ')
-    .split(/\s+/)
-    .filter(Boolean)
-  const letters = words
-    .filter((w) => w !== '&')
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
-  if (!letters) return 'B'
-  /* "Harbor & Hearth" reads as "H&" rather than "HH" when an ampersand joined
-     the words - that is how the brand writes itself. */
-  return words.includes('&') && letters.length === 2
-    ? `${letters[0]}&`
-    : letters
-}
-
 const clean = (v) => String(v ?? '').trim()
 const has = (v) => !!clean(v)
 
@@ -874,6 +856,20 @@ export async function downloadBrandPackVectorPdf(
     const drawLogoSection = (s) => {
       dividerPage(s.num, s.divider, true)
       contentPage(`${s.num} — ${s.name}`, s.page)
+
+      /* The direction the logo was drawn to, in the designer's own words.
+         It sits above the lockups because it is the reason they look the way
+         they do — the reader should have it before the evidence, not after.
+
+         It was written on the Design page and printed nowhere: the only field
+         the book rendered on screen that never reached the client's PDF. A
+         field with an editor and no destination is the same defect as a panel
+         bound to a field nothing writes, just pointing the other way. */
+      const direction = clean(pack?.logoDirection)
+      if (direction) {
+        para(direction, margin, y, contentW, { size: px(14), lh: 1.55, rgb: MUTE_CREAM })
+        y += paraH(direction, contentW, px(14), 1.55) + px(18)
+      }
 
       // 2x2 lockups on four fields, 2px gutters over a hairline ground
       const gap = px(2)

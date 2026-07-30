@@ -354,3 +354,29 @@ export function logoVariantHints() {
 export function pairPassesAa(fg, bg, target = 4.5) {
   return contrastRatio(fg, bg) >= target
 }
+
+/**
+ * The monogram the lockup is set with — first letters of the first two words.
+ *
+ * Lived privately in brandBookPdf.js, which meant the on-screen book could not
+ * draw the same lockup the client receives. It belongs beside the other logo
+ * helpers, where both surfaces can reach it.
+ */
+export function monogramFor(wordmark) {
+  const words = String(wordmark || '')
+    .replace(/[^A-Za-z0-9& ]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+  const letters = words
+    .filter((w) => w !== '&')
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+  if (!letters) return 'B'
+  /* "Harbor & Hearth" reads as "H&" rather than "HH" when an ampersand joined
+     the words - that is how the brand writes itself. */
+  return words.includes('&') && letters.length === 2
+    ? `${letters[0]}&`
+    : letters
+}
