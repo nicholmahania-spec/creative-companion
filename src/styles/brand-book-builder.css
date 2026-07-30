@@ -268,6 +268,13 @@
   pointer-events: none;
 }
 .bbb-grid-overlay--show { display: grid; }
+
+/* The grid is a working aid, not part of the book. It is already hidden when
+   printing; the flipbook is the same kind of surface — it is what the book
+   looks like, shown back to you — so a measuring guide drawn over it is
+   answering a question nobody asked at that moment. Scoped by specificity
+   rather than `!important`, which the `--show` class does not use either. */
+.bbb-flip-overlay .bbb-grid-overlay { display: none; }
 .bbb-gcol {
   background: rgba(60, 110, 255, 0.05);
   border-right: 0.5px dashed rgba(60, 110, 255, 0.4);
