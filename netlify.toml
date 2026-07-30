@@ -5,7 +5,7 @@
   functions = "netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "24"
+  NODE_VERSION = "26"
 
 # Helper AI proxy (set XAI_API_KEY in Netlify env — not VITE_*)
 [[redirects]]
