@@ -76,12 +76,22 @@ the right command for what the commit actually is:**
 Then `git add package.json package-lock.json` and commit — same commit,
 not a follow-up one.
 
-**Currently suspended, by the owner's instruction (2026-07-28):** bumps are
-being held until the research-phases work is finished, then done as a single
-`npm run bump:major`. The phase commits on `feat/research-phases-1-2`,
-`feat/phase-3-scope-revisions`, `feat/phase-4-touchpoints` and
-`feat/phase-6-case-study` therefore carry no bump of their own, and that is
-deliberate — do not "fix" them.
+**The suspension is over (2026-07-30).** Bumps were held from 2026-07-28 while
+the research-phases work landed, and the held bumps were then released as the
+single `npm run bump:major` that note anticipated: **2.5.1 → 3.0.0**. Normal
+per-commit bumping resumes from here — use the table above.
+
+The commits that ran during the hold carry no bump of their own, and that is
+deliberate — do not "fix" them. That covers the phase commits on
+`feat/research-phases-1-2`, `feat/phase-3-scope-revisions`,
+`feat/phase-4-touchpoints` and `feat/phase-6-case-study`, and the 2026-07-30
+button-states, Node-version and regression-test commits.
+
+Worth knowing why this surfaced: with bumps held, the version label in the UI
+is frozen, so it stops being a signal of whether what you are looking at is
+current. Four merges shipped to production on 2026-07-30 while the footer
+still read `v2.5.1`, which reads as "nothing deployed" when in fact
+everything had.
 
 **This used to be a git hook (`.githooks/prepare-commit-msg`). It is
 disabled and must not be re-enabled without testing first.** In this repo's
