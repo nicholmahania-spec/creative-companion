@@ -340,10 +340,15 @@ describe('downloadBrandPackVectorPdf quality', () => {
       returnBlobOnly: true,
     })
     expect(result.ok).toBe(true)
-    // Thin pack: cover + positioning (+ optional brief) + color + type + logo + card
-    // (no empty overview / previous / usage / imagery filler pages)
-    expect(result.pages).toBeGreaterThanOrEqual(6)
-    expect(result.pages).toBeLessThanOrEqual(8)
+    /* Thin pack: cover, then a divider + content page each for logo, color,
+       type and applications, then the closing and the writing rules the app
+       supplies defaults for. No foundations pages, no imagery, no brief —
+       nothing is drawn for content that isn't there. The floor is higher than
+       it was because each numbered section now opens on its own divider,
+       which is the design; what the range guards is that empty sections still
+       cost nothing. */
+    expect(result.pages).toBeGreaterThanOrEqual(9)
+    expect(result.pages).toBeLessThanOrEqual(12)
 
     const buf = Buffer.from(await result.blob.arrayBuffer())
     const text = buf.toString('latin1')
@@ -599,6 +604,10 @@ describe('downloadBrandPackVectorPdf quality', () => {
         typeHeading: 'Plus Jakarta Sans Bold',
         typeBody: 'Plus Jakarta Sans Regular',
         designVersion: 'v1',
+        /* A handoff note so the book actually has a Handoff page: the
+           cross-reference below is a property OF that page, and the book no
+           longer draws one for a project with nothing to hand off. */
+        handoffNote: 'Ship the lockups and the token file.',
         detective: {
           clientName: 'Harbor & Hearth Co.',
           goal: 'Look like a neighborhood staple, not a trend cafe.',

@@ -25,13 +25,19 @@ export const BOOK_PAGE_SIZES = [
 /**
  * Three named stops rather than a number field. A numeric margin invites
  * tuning with no end state — the kind of open loop that eats an afternoon
- * instead of sending the book. `standard` is 40pt, the value the book has
- * always used, so the default output is unchanged.
+ * instead of sending the book.
+ *
+ * `standard` is 48pt because that is what the book is designed at: the layout
+ * specifies 64px of page padding at 96dpi, which is 48pt. It was 40pt while
+ * the book was drawn to no particular spec, and leaving it there would have
+ * meant the default export never matched its own design — every proportion on
+ * the page measured against an edge 8pt closer than the one it was drawn for.
+ * The other two stops move with it so all three stay visibly distinct.
  */
 export const BOOK_EDGE_SPACE = [
-  { id: 'roomy', label: 'Roomy', margin: 56 },
-  { id: 'standard', label: 'Standard', margin: 40 },
-  { id: 'tight', label: 'Tight', margin: 28 },
+  { id: 'roomy', label: 'Roomy', margin: 60 },
+  { id: 'standard', label: 'Standard', margin: 48 },
+  { id: 'tight', label: 'Tight', margin: 36 },
 ]
 
 export const DEFAULT_BOOK_SETUP = {

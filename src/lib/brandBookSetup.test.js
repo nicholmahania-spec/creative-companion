@@ -38,11 +38,14 @@ async function pageBoxes(setup) {
 }
 
 describe('resolveBookSetup', () => {
-  it('defaults to the geometry the book has always used', () => {
+  /* 48pt is the design's own page padding — 64px at 96dpi. The default has to
+     equal it, or the book everyone gets is the one proportion the layout was
+     never drawn for. */
+  it('defaults to the geometry the book is designed at', () => {
     const r = resolveBookSetup(DEFAULT_BOOK_SETUP)
     expect(r.pageW).toBe(612)
     expect(r.pageH).toBe(792)
-    expect(r.margin).toBe(40)
+    expect(r.margin).toBe(48)
     expect(r.bleed).toBe(0)
     expect(r.cropMarks).toBe(false)
   })
@@ -50,7 +53,7 @@ describe('resolveBookSetup', () => {
   it('falls back to the default for an unknown id rather than throwing', () => {
     const r = resolveBookSetup({ pageSize: 'tabloid', edgeSpace: 'huge' })
     expect(r.pageW).toBe(612)
-    expect(r.margin).toBe(40)
+    expect(r.margin).toBe(48)
   })
 
   it('keeps edge space measured from the trim line when bleeding', () => {
@@ -114,13 +117,13 @@ describe('each control changes the generated PDF', () => {
       return Math.round(Math.min(...xs))
     }
 
-    expect(await leftEdge({ edgeSpace: 'roomy' })).toBe(56)
-    expect(await leftEdge({ edgeSpace: 'standard' })).toBe(40)
-    expect(await leftEdge({ edgeSpace: 'tight' })).toBe(28)
-    // With bleed the sheet grows, so content sits 40pt from the trim line —
-    // which is BLEED_PT further in from the sheet edge, not 40 from the sheet.
+    expect(await leftEdge({ edgeSpace: 'roomy' })).toBe(60)
+    expect(await leftEdge({ edgeSpace: 'standard' })).toBe(48)
+    expect(await leftEdge({ edgeSpace: 'tight' })).toBe(36)
+    // With bleed the sheet grows, so content sits 48pt from the trim line —
+    // which is BLEED_PT further in from the sheet edge, not 48 from the sheet.
     expect(await leftEdge({ edgeSpace: 'standard', printShop: true })).toBe(
-      40 + BLEED_PT
+      48 + BLEED_PT
     )
   }, 90000)
 
@@ -166,9 +169,9 @@ describe('each control changes the generated PDF', () => {
       returnBlobOnly: true,
     })
     expect(b.pageTitles.length).toBeGreaterThan(a.pageTitles.length)
-    expect(b.pageTitles).toContain('Story')
+    expect(b.pageTitles).toContain('Our Story')
     expect(b.pageTitles).toContain('Usage')
-    expect(a.pageTitles).not.toContain('Story')
+    expect(a.pageTitles).not.toContain('Our Story')
   }, 90000)
 
   it('declares every option the UI offers', () => {
