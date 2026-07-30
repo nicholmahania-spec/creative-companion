@@ -857,6 +857,20 @@ export async function downloadBrandPackVectorPdf(
       dividerPage(s.num, s.divider, true)
       contentPage(`${s.num} — ${s.name}`, s.page)
 
+      /* The direction the logo was drawn to, in the designer's own words.
+         It sits above the lockups because it is the reason they look the way
+         they do — the reader should have it before the evidence, not after.
+
+         It was written on the Design page and printed nowhere: the only field
+         the book rendered on screen that never reached the client's PDF. A
+         field with an editor and no destination is the same defect as a panel
+         bound to a field nothing writes, just pointing the other way. */
+      const direction = clean(pack?.logoDirection)
+      if (direction) {
+        para(direction, margin, y, contentW, { size: px(14), lh: 1.55, rgb: MUTE_CREAM })
+        y += paraH(direction, contentW, px(14), 1.55) + px(18)
+      }
+
       // 2x2 lockups on four fields, 2px gutters over a hairline ground
       const gap = px(2)
       const cellW = (contentW - gap) / 2
