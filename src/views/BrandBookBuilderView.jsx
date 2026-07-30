@@ -8,7 +8,7 @@ import {
   MIN_COLORS,
 } from '../lib/bookBuilder'
 import { paginatedBookPages } from '../lib/bookContent'
-import { labelFor, parseLabel, familyByName } from '../lib/fontCatalog'
+import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/fontCatalog'
 import { loadBrandFamilies } from '../lib/fontLoader'
 import '../styles/brand-book-builder.css'
 
@@ -27,12 +27,29 @@ import '../styles/brand-book-builder.css'
 
 /* ---------------------------------------------------------- constants */
 
-const HEADLINE_FONTS = ["Fraunces", "Playfair Display", "Space Grotesk", "Bricolage Grotesque"];
-const BODY_FONTS = ["Inter", "Source Serif 4", "IBM Plex Mono"];
+/* Headline and body both offer the whole registry — see FONT_GROUPS in
+   fontCatalog.js. The two hardcoded lists that used to live here named seven
+   of the thirteen families and nothing kept them in step with the registry. */
 const BUILTIN_PAGE_LABELS = { cover: "Front cover", colors: "Color palette", type: "Typography", back: "Back cover" };
 const PAGE_SIZES = { letter: { w: 8.5, h: 11, label: "Letter (8.5 × 11 in)" }, a4: { w: 8.27, h: 11.69, label: "A4 (210 × 297 mm)" } };
 
 /* ------------------------------------------------------------- helpers */
+
+/* One picker for both headline and body, so the two can never drift apart
+   the way the old pair of literals did. */
+function FontSelect({ id, value, onChange }) {
+  return (
+    <select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
+      {FONT_GROUPS.map((g) => (
+        <optgroup key={g.id} label={g.label}>
+          {g.families.map((f) => (
+            <option key={f.id} value={f.name}>{f.name}</option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
+  );
+}
 
 function isLight(hex) {
   const r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
@@ -523,9 +540,7 @@ export default function BrandBookBuilderView() {
         <Section title="Type scale">
           <div className="bbb-field">
             <label htmlFor="bbb-headlineFont">Headline font</label>
-            <select id="bbb-headlineFont" value={headlineFont} onChange={(e) => setHeadlineFont(e.target.value)}>
-              {HEADLINE_FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
-            </select>
+            <FontSelect id="bbb-headlineFont" value={headlineFont} onChange={setHeadlineFont} />
           </div>
           <div className="bbb-field-row">
             <div className="bbb-field">
@@ -555,9 +570,7 @@ export default function BrandBookBuilderView() {
           </div>
           <div className="bbb-field">
             <label htmlFor="bbb-bodyFont">Body font</label>
-            <select id="bbb-bodyFont" value={bodyFont} onChange={(e) => setBodyFont(e.target.value)}>
-              {BODY_FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
-            </select>
+            <FontSelect id="bbb-bodyFont" value={bodyFont} onChange={setBodyFont} />
           </div>
           <div className="bbb-field-row">
             <div className="bbb-field">

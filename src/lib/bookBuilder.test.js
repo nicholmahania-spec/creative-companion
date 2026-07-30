@@ -7,6 +7,7 @@ import {
 } from './bookBuilder'
 import {
   FONT_FAMILIES,
+  FONT_GROUPS,
   WEIGHT_LABELS,
   labelFor,
   parseLabel,
@@ -108,16 +109,25 @@ describe('font labels round-trip', () => {
   })
 
   it('resolves every family the builder offers', () => {
-    const offered = [
-      'Fraunces',
-      'Playfair Display',
-      'Space Grotesk',
-      'Bricolage Grotesque',
-      'Inter',
-      'Source Serif 4',
-      'IBM Plex Mono',
-    ]
-    offered.forEach((name) => expect(familyByName(name)).toBeTruthy())
+    /* Derived, not restated. This used to be a literal list of the seven
+       names the builder's two hardcoded arrays held, so it passed happily
+       while the registry and the dropdowns drifted apart. */
+    FONT_GROUPS.forEach((group) => {
+      group.families.forEach((f) => {
+        expect(familyByName(f.name)).toBeTruthy()
+      })
+    })
+  })
+
+  it('offers every registry family in exactly one group', () => {
+    /* A family with a missing or misspelled category would vanish from both
+       dropdowns while still looking present in FONT_FAMILIES — loadable but
+       unpickable, which is how the old literals failed. */
+    const grouped = FONT_GROUPS.flatMap((g) => g.families.map((f) => f.id))
+    expect(grouped.slice().sort()).toEqual(
+      FONT_FAMILIES.map((f) => f.id).sort()
+    )
+    expect(new Set(grouped).size).toBe(grouped.length)
   })
 })
 
