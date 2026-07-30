@@ -65,7 +65,11 @@ export function bookInputs(packIn) {
        the Story question wrote its story there and must not now get a blank
        page. */
     story: clean(pack.story) || clean(d.story) || clean(pack.brief),
-    voice: clean(pack.voice) || clean(pack.toneOfVoice),
+    /* The hoisted copy wins, but a project answered before
+       buildBrandPackSnapshot hoisted toneOfVoice still has it only on the
+       detective — and the page's own text reads both, so the condition must
+       too, or the page is judged absent and then rendered with content. */
+    voice: clean(pack.voice) || clean(pack.toneOfVoice) || clean(d.toneOfVoice),
     decision: clean(decisionLineFromPack(pack)),
   }
 }
@@ -121,7 +125,11 @@ export const SECTION_PAGES = [
     name: 'Logo',
     divider: ['Logo', 'System'],
     page: 'Lockups & Construction',
-    needs: null,
+    /* Unconditional — the PDF always draws lockups from the wordmark — but it
+       still names what it is waiting for, because the prose beside those
+       lockups is optional and an empty Logo page that says nothing about why
+       is the silent-gap failure this list exists to prevent. */
+    needs: 'the logo notes on Identity',
     exists: () => true,
   },
   {

@@ -1,20 +1,26 @@
 import { filledDetectiveChapters } from './detectiveBrief'
+import { bookPlan } from './bookDocument'
+import { touchpointLabel } from './touchpoints'
 
 /**
- * The brand book's content pages, built only from answers that exist.
+ * The brand book's content, page by page, built only from answers that exist.
  *
- * The page list is derived, never declared: a page appears because the
- * project holds the text it would print, and is absent otherwise. That is
- * the whole point — a Story page with invented prose, or a Usage page of
- * sample do/don'ts, is the Promise/Proof bug again (a tile bound to a field
- * nothing ever wrote). Rather than drop the missing ones silently, the
- * omitted list says which pages exist and what each one is waiting for, so
- * absence is visible in the builder instead of being something the user has
- * to notice.
+ * The page list is not declared here — it comes from `bookDocument.js`, the
+ * same plan the PDF draws. This file answers only the second question: given
+ * that a page exists, what text goes on it. Splitting it that way is the whole
+ * point. The page list used to be stated here *and* in brandBookPdf.js, the
+ * two drifted, and the book on screen ended up showing different pages in a
+ * different order from the one the client received.
  *
- * Field sources mirror `buildPack` in exportFiles.js and the sections in
- * brandBookPdf.js, so the on-screen book and the exported PDF are reading
- * the same answers rather than two drifting copies.
+ * A page still appears only because the project holds the text it would print.
+ * A Story page over invented prose, or a Usage page of sample do/don'ts, is the
+ * Promise/Proof bug again — a surface bound to a field nothing ever wrote. The
+ * `omitted` list says which pages are missing and what each is waiting for, so
+ * absence is visible in the builder rather than something the user has to
+ * notice.
+ *
+ * The input is the pack, not the raw project, because the pack is what gets
+ * delivered — reading round it would put a second field mapping back in.
  */
 
 const clean = (v) => String(v ?? '').trim()
@@ -26,83 +32,123 @@ function fields(pairs) {
     .map(([label, text]) => ({ kind: 'field', label, text: clean(text) }))
 }
 
-export const BOOK_SECTIONS = [
-  { id: 'story', label: 'Story', sub: 'Why this brand exists, in their own words.', needs: 'the Story answer, or the brief' },
-  { id: 'direction', label: 'Direction', sub: 'What we want the reader to do.', needs: 'a saved direction, or what makes it different' },
-  { id: 'brief', label: 'Agreed brief', sub: 'The answers that shaped this system.', needs: 'answers in the brief' },
-  { id: 'logo', label: 'Logo system', sub: 'Direction, wordmark, and clearspace.', needs: 'the logo notes on Identity' },
-  { id: 'writing', label: 'Writing', sub: 'How the words are set.', needs: 'tone of voice, or the voice note' },
-  { id: 'applications', label: 'Applications', sub: 'Where this brand shows up.', needs: 'the surfaces picked in the brief' },
-  { id: 'usage', label: 'Usage', sub: "Do and don't.", needs: 'the do / don’t notes' },
-  { id: 'handoff', label: 'Handoff', sub: 'What to take into your design tool next.', needs: 'the handoff note, or what you learned' },
-]
+/**
+ * The text for one page id.
+ *
+ * Ids are the plan's ids, so this switch and the PDF's drawing code answer for
+ * the same pages. Colour and Typography are absent on purpose: the builder
+ * draws those from its own controls and the PDF from the palette and scale, so
+ * neither has prose for this to supply.
+ */
+function blocksFor(id, x) {
+  const { pack: p, d } = x
 
-function blocksFor(id, p, d) {
   switch (id) {
-    case 'story': {
-      /* The brief is the fallback the PDF uses too — an older project wrote
-         its story there before the question existed. */
-      const text = clean(d.story) || clean(p.brief)
-      return text ? [{ kind: 'prose', text }] : []
-    }
-    case 'direction': {
-      const all = Array.isArray(p.directions) ? p.directions : []
-      const picked = all.filter((x) => x?.chosen)
-      /* Chosen wins, but before anything is chosen the routes on the table
-         are still the direction — showing them beats an empty page. */
-      /* Same filter the PDF applies: a route needs a title or a note to be
-         content. `label` is only its slot name ("A", "B") — carrying a row on
-         that alone would print an empty direction under a bare letter. */
-      const rows = (picked.length ? picked : all)
-        .filter((x) => clean(x?.title) || clean(x?.note))
-        .map((x) => ({
-          kind: 'field',
-          label: clean(x?.title) || clean(x?.label) || 'Direction',
-          text: clean(x?.note),
-        }))
-      return [...rows, ...fields([['What makes it different', d.usp]])]
-    }
-    case 'brief': {
-      const chapters = filledDetectiveChapters(d)
-      return chapters.map((ch) => ({
-        kind: 'group',
-        title: `${ch.num} · ${ch.title}`,
-        rows: ch.rows.map((r) => ({ label: r.label, text: r.answer })),
-      }))
-    }
+    case 'voice':
+      return fields([
+        ['Tagline', p.tagline],
+        ['Promise', p.messagingPromise],
+        ['Proof', p.messagingProof],
+        ['Personality', p.messagingPersonality],
+        ['Tone of voice', d.toneOfVoice || p.toneOfVoice],
+        ['Voice', p.voice],
+        ['The decision', x.decision],
+      ])
+
+    case 'story':
+      return [
+        ...(x.story ? [{ kind: 'prose', text: x.story }] : []),
+        ...fields([
+          ['What makes it different', p.usp],
+          ['Brand words', d.brandWords],
+          ['The goal', d.goal],
+        ]),
+      ]
+
+    case 'audience':
+      return fields([
+        ['Who it is for', d.audience],
+        ['How it should feel', d.feel],
+        ['What they struggle with', d.audiencePains],
+        ['If the brand were a person', d.brandAsPerson],
+      ])
+
     case 'logo':
       return fields([
         ['Direction', p.logoDirection],
         ['Wordmark', p.logoWordmark],
         ['Clearspace', p.logoClearspace],
       ])
-    case 'writing':
+
+    case 'imagery':
       return fields([
-        ['Tone of voice', d.toneOfVoice],
-        ['Voice', p.voice],
+        ['Style', p.imageryStyle],
+        ['Do', p.imageryDo],
+        ["Don't", p.imageryDont],
       ])
-    case 'applications': {
-      const items = (Array.isArray(d.brandSurfaces) ? d.brandSurfaces : [])
-        .map(clean)
-        .filter(Boolean)
+
+    case 'apps': {
+      /* The mocks the book will actually draw, named the way the PDF names
+         them — so the page on screen lists what the reader will see, rather
+         than the raw brief answer that only implies it. */
+      const items = x.touchpoints.map(touchpointLabel).filter(Boolean)
       return items.length ? [{ kind: 'list', items }] : []
     }
+
+    /* ---- appendix ----------------------------------------------------
+       The fifteen-page design has no page for these, but they are things the
+       user wrote for this client, and a deliverable that silently stops
+       including them is the same failure as a page that clips its own text.
+       They travel at the back of the book, exactly as the PDF prints them. */
+
     case 'usage':
       return fields([
         ['Do', p.doUse],
         ["Don't", p.dontUse],
       ])
+
+    case 'brief':
+      return filledDetectiveChapters(d).map((ch) => ({
+        kind: 'group',
+        title: `${ch.num} · ${ch.title}`,
+        rows: ch.rows.map((r) => ({ label: r.label, text: r.answer })),
+      }))
+
     case 'handoff':
       return fields([
         ['Handoff note', p.handoffNote],
         ['What we learned', p.learnings],
-        ['Technical notes', d.technical],
-        ['Accessibility', d.accessibilityNeeds],
+        ['Technical notes', d.technical || p.technical],
+        ['Accessibility', d.accessibilityNeeds || p.accessibilityNeeds],
       ])
+
     default:
       return []
   }
 }
+
+/**
+ * The appendix pages, in the order the PDF prints them.
+ *
+ * Declared here rather than in bookDocument.js because the appendix is not
+ * part of the numbered design — no divider, no number, no entry in the
+ * contents. It is still one list, read by both surfaces.
+ */
+export const APPENDIX_PAGES = [
+  { id: 'usage', label: 'Usage', sub: "Do and don't.", needs: 'the do / don’t notes' },
+  {
+    id: 'brief',
+    label: 'Agreed brief',
+    sub: 'The answers that shaped this system.',
+    needs: 'answers in the brief',
+  },
+  {
+    id: 'handoff',
+    label: 'Handoff',
+    sub: 'What to take into your design tool next.',
+    needs: 'the handoff note, or what you learned',
+  },
+]
 
 /* ------------------------------------------------------------ pagination
 
@@ -193,9 +239,40 @@ export function paginateBlocks(blocks, budget = LINES_PER_PAGE) {
   return pages.length ? pages : [[]]
 }
 
+/**
+ * The book's prose pages for one pack, in plan order.
+ *
+ * Foundations first, then the numbered sections, then the appendix — the same
+ * sequence the PDF draws. Colour and Typography carry no prose, so they are
+ * absent here and supplied by the builder's own page components; the plan is
+ * still what decides whether they exist at all.
+ */
+export function bookContentPages(packIn) {
+  const plan = bookPlan(packIn)
+  const x = plan.inputs
+  const pages = []
+  const omitted = [...plan.omitted]
+
+  const take = (meta) => {
+    const blocks = blocksFor(meta.id, x)
+    if (blocks.length) pages.push({ ...meta, blocks })
+    else if (meta.needs) omitted.push({ id: meta.id, label: meta.label, needs: meta.needs })
+  }
+
+  plan.foundations.forEach((f) =>
+    take({ id: f.id, label: f.title, sub: f.sub, needs: f.needs, kind: 'foundation' })
+  )
+  plan.sections.forEach((s) =>
+    take({ id: s.id, label: s.name, sub: s.page, num: s.num, needs: s.needs, kind: 'section' })
+  )
+  APPENDIX_PAGES.forEach((a) => take({ ...a, kind: 'appendix' }))
+
+  return { pages, omitted }
+}
+
 /** The section list expanded into the actual printed pages. */
-export function paginatedBookPages(project) {
-  const { pages, omitted } = bookContentPages(project)
+export function paginatedBookPages(packIn) {
+  const { pages, omitted } = bookContentPages(packIn)
   const out = []
   pages.forEach((pg) => {
     const chunks = paginateBlocks(pg.blocks)
@@ -213,17 +290,4 @@ export function paginatedBookPages(project) {
     })
   })
   return { pages: out, omitted }
-}
-
-export function bookContentPages(project) {
-  const p = project || {}
-  const d = p.detective || {}
-  const pages = []
-  const omitted = []
-  BOOK_SECTIONS.forEach((s) => {
-    const blocks = blocksFor(s.id, p, d)
-    if (blocks.length) pages.push({ ...s, blocks })
-    else omitted.push({ id: s.id, label: s.label, needs: s.needs })
-  })
-  return { pages, omitted }
 }

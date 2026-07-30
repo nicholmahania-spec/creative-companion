@@ -50,7 +50,7 @@ import {
   TYPE_SCALE,
 } from './brandSystem'
 import { filledDetectiveChapters } from './detectiveBrief'
-import { touchpointsFor, touchpointsBlurb } from './touchpoints'
+import { touchpointsFor, touchpointsBlurb, touchpointLabel } from './touchpoints'
 import { slugifyFilename, downloadBlob, writeToSaveHandle } from './exportFiles'
 import { resolveBookSetup } from './brandBookSetup'
 import { bookPlan } from './bookDocument'
@@ -1148,18 +1148,6 @@ export async function downloadBrandPackVectorPdf(
     }
 
     /** What each mock is called and what field it sits on. */
-    const TOUCHPOINT_LABEL = {
-      businessCard: 'Business Card',
-      print: 'Print',
-      social: 'Social Post',
-      website: 'Website',
-      app: 'App',
-      email: 'Email',
-      packaging: 'Packaging',
-      merch: 'Merch',
-      signage: 'Signage',
-    }
-
     const drawAppsSection = (s) => {
       dividerPage(s.num, s.divider, true)
       const blurb = clean(touchpointsBlurb(surfaces, d.deliverablesPicked))
@@ -1186,7 +1174,7 @@ export async function downloadBrandPackVectorPdf(
           const cx = margin + (j % 2) * (cellW + gap)
           const cy = y + Math.floor(j / 2) * (cellH + gap)
           box(cx, cy, cellW, cellH, bg)
-          kicker(TOUCHPOINT_LABEL[t] || t, cx + px(20), cy + px(20) + KICKER_PT * 0.82, kick)
+          kicker(touchpointLabel(t), cx + px(20), cy + px(20) + KICKER_PT * 0.82, kick)
           /* A card carries contact details, so the card mock does too — but
              only real ones. Inventing "hello@brand.example" would put a dead
              address in front of a client on the one page that looks most like
