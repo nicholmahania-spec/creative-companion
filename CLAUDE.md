@@ -283,6 +283,54 @@ solution actually helps ADHD.** A problem or fix stated without its "why" is
 incomplete — restate it with the reasoning included, don't just list bare
 findings.
 
+## Icon rule — an icon leads, a word follows
+
+Owner's direction (2026-07-30): *"choose icons over text where appropriate.
+Some icons are universal — everyone knows a gear is settings, a wrench is
+tools, an arrow is back or forward or next or previous."* Reviewed by
+`adhd-executive-function-advisor` and applied as below.
+
+**Icon-only is permitted for six patterns. The list is closed.** Anything not
+on it gets a visible text label beside its icon.
+
+1. `×` — close/dismiss what is currently on screen
+2. `☰` / `✕` — the nav toggle
+3. `←` `→` `‹` `›` — back / forward / next / previous, when the thing being
+   paged through is visibly named
+4. Magnifier — search
+5. `⋯` overflow — **only** inside a row that already displays that row's name
+6. `+` add — **only** beside the visible name/heading of the list it adds to
+
+**Two overrides beat the list.** Destructive or outbound actions (remove, end,
+archive, revoke, delete, send to a client) always carry a word. So does any
+icon that is the *only* route to a thing.
+
+**Universality is not the test — frequency is.** A gear is universally
+decodable, but Settings is visited a handful of times ever, so the meaning is
+re-derived from scratch on each encounter rather than recognised. That is a
+working-memory and interruption-recovery cost, and it is why `⚙ Settings` and
+`🔧 Tools` keep their labels. The Tools menu is the model to copy, not the
+backlog to clear — **do not strip labels from anything already labelled.**
+
+**`title` is never the carrier of meaning.** It does not exist on touch and
+does not fire on keyboard focus. A control whose name lives only in `title` is
+an unlabelled control; that is what Calendar, Clients and the to-do button
+were before this rule, and what the two clock chips were distinguished by.
+
+Accessibility floor, regardless: `aria-hidden="true"` on decorative glyphs; an
+accessible name that *begins with* the visible text (prefer no `aria-label` at
+all when a visible label exists, or voice control breaks); 44x44px hit targets;
+3:1 contrast on any glyph carrying meaning; never encode state in glyph or
+colour alone.
+
+**Do not add** a "show labels" setting (bills a second decision to undo the
+first), tooltips as a remedy, an icon legend, hover-to-reveal labels, or a
+first-run tour explaining the icons. If a glyph needs teaching, it needed a
+label.
+
+Edge cases: *would the user, returning after two weeks away, know what this
+does without clicking it?* Ties go to the label.
+
 ## Design agent — `editorial-layout-director`
 
 For composition, not correctness. Reach for it when a screen passes every

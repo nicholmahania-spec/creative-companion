@@ -3142,7 +3142,14 @@ function App() {
                 onClick={() => setActiveView('insights')}
                 title="Focus timer you started — separate from clocked hours"
               >
-                ⏱ {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
+                {/* Named on screen, like the clock chip beside it says
+                    "Working". The two sat side by side as bare readouts whose
+                    only distinction lived in hover text — and to someone for
+                    whom numbers do not register, two adjacent numbers with no
+                    names are the same thing twice. The word is what keeps the
+                    deliberate clock/timer separation visible instead of
+                    something the user has to remember. */}
+                ⏱ Focus · {focusMinutes}:{String(focusSeconds).padStart(2, '0')}
               </button>
             )}
             {CLOUD && syncState === 'error' && (
@@ -3209,24 +3216,30 @@ function App() {
             </div>
             )}
 
+            {/* Labelled, not icon-only. `title` does not exist on touch and
+                does not fire on keyboard focus, so on the surface where most
+                quick re-entry happens the meaning was simply absent — the
+                same "I have no idea what this is" failure as a collapsed
+                panel, turned sideways. The icon still leads, so the row is
+                scanned by shape; the word is what makes a cold return after
+                two weeks survivable. No aria-label: the visible text is the
+                accessible name, which keeps voice control working. */}
             <button
               type="button"
-              className="header-icon-btn"
+              className="header-icon-btn header-icon-btn--labelled"
               onClick={() => setActiveView('calendar')}
-              title="Calendar"
-              aria-label="Calendar"
             >
               <HeaderIcon name="calendar" />
+              <span className="header-icon-btn__label">Calendar</span>
             </button>
 
             <button
               type="button"
-              className="header-icon-btn"
+              className="header-icon-btn header-icon-btn--labelled"
               onClick={() => setActiveView('clients')}
-              title="Clients"
-              aria-label="Clients"
             >
               <HeaderIcon name="people" />
+              <span className="header-icon-btn__label">Clients</span>
             </button>
 
             {/* Print moved into the Tools menu. It's genuinely low-frequency,
@@ -4880,6 +4893,13 @@ function App() {
         }
       >
         <HeaderIcon name="list" />
+        {/* Named on screen, not only in the tooltip. A bare list glyph is an
+            invented private code — there is no universal icon for "your
+            running to-do" — and this is the one control the user is meant to
+            reach for without hunting. The count still rides alongside when
+            there is something in it, so a glance answers both "what is this"
+            and "is there anything waiting" without opening it. */}
+        <span className="todo-fab__label">To-do</span>
         {openTodoCount > 0 && (
           <span className="todo-fab-count" aria-hidden="true">
             {openTodoCount}
