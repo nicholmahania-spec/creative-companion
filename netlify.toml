@@ -5,7 +5,13 @@
   functions = "netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "26"
+  # Stays at 24 deliberately. Node 26 is proven green on GitHub Actions (unit,
+  # e2e, verify-project) but nothing exercises Netlify's build image on a pull
+  # request, so raising this is only ever verified in production — and Vercel
+  # rejected 26 outright ("invalid or discontinued Node.js Version"), so the
+  # failure mode is real, not hypothetical. Netlify is the primary deploy
+  # target; confirm it offers 26 before bumping this.
+  NODE_VERSION = "24"
 
 # Helper AI proxy (set XAI_API_KEY in Netlify env — not VITE_*)
 [[redirects]]
