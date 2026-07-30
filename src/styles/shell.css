@@ -1567,13 +1567,21 @@ h3 {
     box-shadow var(--transition);
 }
 
-/* Tech Studio: flat feedback — border + surface shift, no shadow/scale */
-.btn:hover {
+/* Tech Studio: flat feedback — border + surface shift, no shadow/scale
+ *
+ * Guarded at the base rule, which is where the disabled leak actually was.
+ * Primary is shielded from this rule by the `!important` fills in the
+ * blueprint-lock layer and secondary by `background: transparent !important`,
+ * so both looked correctly inert — but ghost has no such shield, so a
+ * disabled ghost button picked up this `--bg-muted` fill and lit up under the
+ * cursor. Fixing it here rather than per-variant means any future variant
+ * inherits the guard instead of re-introducing the same leak. */
+.btn:hover:not(:disabled):not([aria-disabled='true']) {
   border-color: var(--border-strong);
   background: var(--bg-muted);
 }
 
-.btn:active {
+.btn:active:not(:disabled):not([aria-disabled='true']) {
   background: var(--bg-muted);
   border-color: var(--border-strong);
 }
@@ -1643,7 +1651,13 @@ h3 {
   border-radius: var(--radius-sm);
 }
 
-.btn-ghost:hover {
+/* Guarded like the other two variants. Ghost was the one that got missed:
+   primary's hover is guarded in the blueprint-lock layer and secondary's
+   `--bg-muted` fill is outranked there by `background: transparent !important`,
+   but nothing outranks this rule, so a disabled ghost button still lit up
+   under the cursor. Guarding the base rule rather than adding an override,
+   since this is the rule that actually wins. */
+.btn-ghost:hover:not(:disabled):not([aria-disabled='true']) {
   background: var(--bg-muted);
   color: var(--text-primary);
   box-shadow: none;
