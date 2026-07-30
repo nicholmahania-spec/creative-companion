@@ -53,6 +53,7 @@ import { filledDetectiveChapters } from './detectiveBrief'
 import { touchpointsFor, touchpointsBlurb } from './touchpoints'
 import { slugifyFilename, downloadBlob, writeToSaveHandle } from './exportFiles'
 import { resolveBookSetup } from './brandBookSetup'
+import { bookPlan } from './bookDocument'
 import { registerBookFonts, FACE, FALLBACK_FACE } from './bookFonts'
 
 // ── Shared PDF text / image helpers (WinAnsi-safe + raster only) ─────────
@@ -590,58 +591,20 @@ export async function downloadBrandPackVectorPdf(
     const personality = clean(pack?.messagingPersonality)
     const voice = clean(pack?.voice) || clean(pack?.toneOfVoice)
 
-    const foundations = [
-      {
-        id: 'voice',
-        title: 'Brand Voice',
-        sub: 'Who we are for, how we sound, and the promise we keep.',
-        ok: has(tagline) || has(promise) || has(proof) || has(personality) || has(voice) || has(decision),
-      },
-      {
-        id: 'story',
-        title: 'Our Story',
-        /* `brief` is the fallback the book has always used: a project older
-           than the Story question wrote its story there and must not now get
-           a blank page. */
-        ok: has(story) || has(pack?.usp) || has(d.brandWords) || has(d.goal),
-      },
-      {
-        id: 'audience',
-        title: 'Our Audience',
-        ok: has(d.audience) || has(d.feel) || has(d.audiencePains) || has(d.brandWords) || has(d.brandAsPerson),
-      },
-    ].filter((f) => f.ok)
+    /* The plan is read from bookDocument.js, not written out here. It used to
+       live in this file as a private array while the on-screen book kept its
+       own list, and the two drifted into naming different pages in different
+       orders. Deriving means a page can only be added, renumbered or removed
+       in one place. */
+    const plan = bookPlan(pack)
+    const foundations = plan.foundations
 
-    const sections = [
-      { id: 'logo', short: 'Logo', name: 'Logo', divider: ['Logo', 'System'], page: 'Lockups & Construction', ok: true },
-      { id: 'color', short: 'Color', name: 'Color Palette', divider: ['Color', 'Palette'], page: 'Roles & Usage', ok: colors.length > 0 },
-      { id: 'type', short: 'Type', name: 'Typography', divider: ['Typography'], page: 'Type Family & Scale', ok: true },
-      {
-        id: 'imagery',
-        short: 'Imagery',
-        name: 'Photography & Imagery',
-        divider: ['Photography', '& Imagery'],
-        page: 'Style Rules & Mood Board',
-        ok: has(pack?.imageryDo) || has(pack?.imageryDont) || has(pack?.imageryStyle) || pins.length > 0,
-      },
-      {
-        id: 'apps',
-        short: 'Applications',
-        name: 'Brand in Use',
-        divider: ['Brand', 'in Use'],
-        page: 'Applications',
-        ok: touchpoints.length > 0,
-      },
-    ].filter((s) => s.ok)
+    const sections = plan.sections
 
     /* Section numbers run 01 for Foundations then one per drawn section, so a
        book missing Imagery numbers Applications 05 rather than leaving a gap
        where a section the reader never saw would have been. */
-    let n = 0
-    const foundationsNum = foundations.length ? String(++n).padStart(2, '0') : ''
-    sections.forEach((s) => {
-      s.num = String(++n).padStart(2, '0')
-    })
+    const foundationsNum = plan.foundationsNum
 
     /* The appendix carries what the fifteen-page design has no page for. It is
        here rather than dropped because `doUse` / `dontUse`, the agreed brief
