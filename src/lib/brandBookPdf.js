@@ -48,6 +48,7 @@ import {
   DEFAULT_LOGO_CLEARSPACE,
   DEFAULT_LOGO_MIN_SIZE,
   TYPE_SCALE,
+  monogramFor,
 } from './brandSystem'
 import { filledDetectiveChapters } from './detectiveBrief'
 import { touchpointsFor, touchpointsBlurb, touchpointLabel } from './touchpoints'
@@ -188,25 +189,6 @@ async function preparePackRasters(pack) {
  * artwork it is shown at real size in the clearspace construction box on the
  * Logo page, which is the page that exists to show it.
  */
-function monogramFor(wordmark) {
-  const words = String(wordmark || '')
-    .replace(/[^A-Za-z0-9& ]/g, ' ')
-    .split(/\s+/)
-    .filter(Boolean)
-  const letters = words
-    .filter((w) => w !== '&')
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
-  if (!letters) return 'B'
-  /* "Harbor & Hearth" reads as "H&" rather than "HH" when an ampersand joined
-     the words - that is how the brand writes itself. */
-  return words.includes('&') && letters.length === 2
-    ? `${letters[0]}&`
-    : letters
-}
-
 const clean = (v) => String(v ?? '').trim()
 const has = (v) => !!clean(v)
 
