@@ -3,6 +3,7 @@ export default function Button({
   children,
   variant = 'primary',
   size = 'md',
+  icon = null,
   className = '',
   onClick,
   ...props
@@ -23,6 +24,7 @@ export default function Button({
       onClick={onClick}
       {...props}
     >
+      {icon}
       {children}
     </button>
   )

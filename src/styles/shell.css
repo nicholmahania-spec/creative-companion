@@ -6465,7 +6465,11 @@ body:has(.app.deep)::after {
   font-family: inherit !important;
 }
 
-.btn-primary:hover {
+/* Guarded so a disabled primary stops repainting on hover. The background
+   here is dead anyway — the themed `--ts-focus` rule further down wins — but
+   filter/transform/box-shadow still land, and without the guard they would be
+   the one thing a disabled button still reacted to. */
+.btn-primary:hover:not(:disabled):not([aria-disabled='true']) {
   background: #0F0F0F !important;
   filter: none !important;
   transform: none !important;
@@ -6584,8 +6588,8 @@ body,
   font-weight: 600;
 }
 
-.btn-primary:hover,
-.path-continue-row .btn-primary:hover {
+.btn-primary:hover:not(:disabled):not([aria-disabled='true']),
+.path-continue-row .btn-primary:hover:not(:disabled):not([aria-disabled='true']) {
   background: var(--ts-focus) !important;
   border-color: var(--ts-focus) !important;
 }
@@ -6602,6 +6606,63 @@ body,
 .btn-ghost {
   border-radius: var(--ts-radius) !important;
   border-color: var(--ts-border) !important;
+}
+
+/* Press states — every variant answers the finger.
+ *
+ * There was no working `:active` on any variant. The base rules
+ * (`.btn:active`, `.btn-primary:active`) are plain declarations, and the fills
+ * above are `!important`, so an important declaration beat them regardless of
+ * order: pressing a button repainted nothing. Primary was the worst of it —
+ * its base `:active` asked for `--dopamine`, which is what `--ts-focus`
+ * already paints on hover, so even had it applied, press and hover would have
+ * been the same colour.
+ *
+ * Each variant now steps once past its hover rather than sideways:
+ *   primary    fill --ts-ink → hover --ts-focus → press --dopamine-deep
+ *   secondary  transparent   → hover --bg-muted → press --border-strong
+ *   ghost      transparent   → hover --bg-muted → press --border-strong
+ *
+ * Secondary's hover fill is restored here for the same cascade reason: its
+ * base rule asks for `--bg-muted`, but `.btn-secondary`'s
+ * `background: transparent !important` above outranked it, so secondary alone
+ * answered a hover with nothing but a border-colour shift.
+ *
+ * Themed tokens only. `--dopamine-deep` is #4F4F4F light / #656565 dark, so
+ * the press reads against both canvases (AGENTS.md dark-mode audit); a literal
+ * here would invert in `.app.deep`, which is the bug the `--ts-canvas` label
+ * comment above documents.
+ */
+.btn-primary:active:not(:disabled):not([aria-disabled='true']),
+.path-continue-row .btn-primary:active:not(:disabled):not([aria-disabled='true']) {
+  background: var(--dopamine-deep) !important;
+  border-color: var(--dopamine-deep) !important;
+}
+
+.btn-secondary:hover:not(:disabled):not([aria-disabled='true']) {
+  background: var(--bg-muted) !important;
+  border-color: var(--ts-ink) !important;
+}
+
+.btn-secondary:active:not(:disabled):not([aria-disabled='true']) {
+  background: var(--border-strong) !important;
+  border-color: var(--ts-ink) !important;
+}
+
+.btn-ghost:active:not(:disabled):not([aria-disabled='true']) {
+  background: var(--border-strong) !important;
+  color: var(--ts-ink) !important;
+}
+
+/* One disabled treatment for every variant. `.btn:disabled` said 0.5 and
+ * `.btn-primary:disabled` said 0.45 — close enough to look like a rendering
+ * artefact rather than a decision. `cursor: not-allowed` is kept rather than
+ * `pointer-events: none`, so the control can still say it is unavailable —
+ * the reason the base rule was added in the first place. */
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
 }
 
 /* Sticky step primary */
