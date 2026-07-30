@@ -33,6 +33,82 @@ function fields(pairs) {
 }
 
 /**
+ * Every editable field the book prints, per page, declared once.
+ *
+ * `blocksFor` derives the printed blocks from this, and the builder derives
+ * its editing panel from it too. That is the point: a field added here appears
+ * on the page AND becomes editable, in one edit. The alternative — a page
+ * renderer with its own field list and an editor with another — is the same
+ * two-copies defect that let the book and the PDF drift apart in the first
+ * place, and it fails the worse way round: an editor for a field the book
+ * never prints, or a printed field you cannot edit.
+ *
+ * `scope` says where the answer actually lives, which is not guessable from
+ * the name. Most are project-level; Story, USP and tone of voice live on the
+ * detective (the brief), and `buildBrandPackSnapshot` hoists them. Writing to
+ * the wrong one silently does nothing, because the read prefers the other.
+ *
+ * A field with no entry here is derived, not answered — the decision line, the
+ * applications list and the agreed brief are computed from elsewhere, so they
+ * print but cannot be typed into. Offering an edit box that quietly recomputes
+ * over your typing would be a control that does not do its thing.
+ */
+export const PAGE_FIELDS = {
+  voice: [
+    /* Prints on the page, but the builder already has a Tagline input at the
+       top of its panel — a second box for one answer is two places to change
+       one thing and one more decision on screen. */
+    { label: 'Tagline', scope: 'project', field: 'tagline', editedElsewhere: true },
+    { label: 'Promise', scope: 'project', field: 'messagingPromise' },
+    { label: 'Proof', scope: 'project', field: 'messagingProof' },
+    { label: 'Personality', scope: 'project', field: 'messagingPersonality' },
+    { label: 'Tone of voice', scope: 'detective', field: 'toneOfVoice' },
+    { label: 'Voice', scope: 'project', field: 'voice' },
+  ],
+  story: [
+    { label: 'What makes it different', scope: 'detective', field: 'usp' },
+    { label: 'Brand words', scope: 'detective', field: 'brandWords' },
+    { label: 'The goal', scope: 'detective', field: 'goal' },
+  ],
+  audience: [
+    { label: 'Who it is for', scope: 'detective', field: 'audience' },
+    { label: 'How it should feel', scope: 'detective', field: 'feel' },
+    { label: 'What they struggle with', scope: 'detective', field: 'audiencePains' },
+    { label: 'If the brand were a person', scope: 'detective', field: 'brandAsPerson' },
+  ],
+  logo: [
+    { label: 'Direction', scope: 'project', field: 'logoDirection' },
+    { label: 'Wordmark', scope: 'project', field: 'logoWordmark' },
+    { label: 'Clearspace', scope: 'project', field: 'logoClearspace' },
+  ],
+  imagery: [
+    { label: 'Style', scope: 'project', field: 'imageryStyle' },
+    { label: 'Do', scope: 'project', field: 'imageryDo' },
+    { label: "Don't", scope: 'project', field: 'imageryDont' },
+  ],
+  usage: [
+    { label: 'Do', scope: 'project', field: 'doUse' },
+    { label: "Don't", scope: 'project', field: 'dontUse' },
+  ],
+  handoff: [
+    { label: 'Handoff note', scope: 'project', field: 'handoffNote' },
+    { label: 'What we learned', scope: 'project', field: 'learnings' },
+    { label: 'Technical notes', scope: 'detective', field: 'technical' },
+    { label: 'Accessibility', scope: 'detective', field: 'accessibilityNeeds' },
+  ],
+}
+
+/** What a field currently reads, following the same fallbacks the book does. */
+export function readField({ scope, field }, x) {
+  const { pack: p, d } = x
+  if (scope === 'detective') return clean(d[field] ?? p[field])
+  /* Project-first, detective as the older home — the same order
+     buildBrandPackSnapshot resolves them in, so the editor shows what will
+     actually print rather than a stale copy underneath it. */
+  return clean(p[field] ?? d[field])
+}
+
+/**
  * The text for one page id.
  *
  * Ids are the plan's ids, so this switch and the PDF's drawing code answer for
@@ -43,87 +119,41 @@ function fields(pairs) {
 function blocksFor(id, x) {
   const { pack: p, d } = x
 
+  /* Declared fields first, in declaration order, so the page and the editor
+     cannot disagree about what is on it. */
+  const declared = (PAGE_FIELDS[id] || [])
+    .map((f) => ({ label: f.label, text: readField(f, x) }))
+    .filter((r) => r.text)
+    .map((r) => ({ kind: 'field', label: r.label, text: r.text }))
+
   switch (id) {
     case 'voice':
-      return fields([
-        ['Tagline', p.tagline],
-        ['Promise', p.messagingPromise],
-        ['Proof', p.messagingProof],
-        ['Personality', p.messagingPersonality],
-        ['Tone of voice', d.toneOfVoice || p.toneOfVoice],
-        ['Voice', p.voice],
-        ['The decision', x.decision],
-      ])
+      /* The decision line is computed from the chosen direction, so it prints
+         but is not typed — see the note on PAGE_FIELDS. */
+      return [...declared, ...fields([['The decision', x.decision]])]
 
     case 'story':
-      return [
-        ...(x.story ? [{ kind: 'prose', text: x.story }] : []),
-        ...fields([
-          ['What makes it different', p.usp],
-          ['Brand words', d.brandWords],
-          ['The goal', d.goal],
-        ]),
-      ]
-
-    case 'audience':
-      return fields([
-        ['Who it is for', d.audience],
-        ['How it should feel', d.feel],
-        ['What they struggle with', d.audiencePains],
-        ['If the brand were a person', d.brandAsPerson],
-      ])
-
-    case 'logo':
-      return fields([
-        ['Direction', p.logoDirection],
-        ['Wordmark', p.logoWordmark],
-        ['Clearspace', p.logoClearspace],
-      ])
-
-    case 'imagery':
-      return fields([
-        ['Style', p.imageryStyle],
-        ['Do', p.imageryDo],
-        ["Don't", p.imageryDont],
-      ])
+      return [...(x.story ? [{ kind: 'prose', text: x.story }] : []), ...declared]
 
     case 'apps': {
       /* The mocks the book will actually draw, named the way the PDF names
          them — so the page on screen lists what the reader will see, rather
-         than the raw brief answer that only implies it. */
+         than the raw brief answer that only implies it. Derived, not typed. */
       const items = x.touchpoints.map(touchpointLabel).filter(Boolean)
       return items.length ? [{ kind: 'list', items }] : []
     }
 
-    /* ---- appendix ----------------------------------------------------
-       The fifteen-page design has no page for these, but they are things the
-       user wrote for this client, and a deliverable that silently stops
-       including them is the same failure as a page that clips its own text.
-       They travel at the back of the book, exactly as the PDF prints them. */
-
-    case 'usage':
-      return fields([
-        ['Do', p.doUse],
-        ["Don't", p.dontUse],
-      ])
-
     case 'brief':
+      /* Composed from the brief's own answers, which have their own editor.
+         A second editor for the same text is two places to change one thing. */
       return filledDetectiveChapters(d).map((ch) => ({
         kind: 'group',
         title: `${ch.num} · ${ch.title}`,
         rows: ch.rows.map((r) => ({ label: r.label, text: r.answer })),
       }))
 
-    case 'handoff':
-      return fields([
-        ['Handoff note', p.handoffNote],
-        ['What we learned', p.learnings],
-        ['Technical notes', d.technical || p.technical],
-        ['Accessibility', d.accessibilityNeeds || p.accessibilityNeeds],
-      ])
-
     default:
-      return []
+      return declared
   }
 }
 
