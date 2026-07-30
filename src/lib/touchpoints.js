@@ -27,6 +27,29 @@ export const TOUCHPOINT_ORDER = [
 ]
 
 /**
+ * What each mock is called when it is named to a reader.
+ *
+ * Lived privately inside brandBookPdf.js, which meant the on-screen book had
+ * no way to name the same mocks and had to list the raw brief answer instead —
+ * so the two surfaces described the Applications page differently. The labels
+ * belong with the order they label.
+ */
+export const TOUCHPOINT_LABEL = {
+  businessCard: 'Business Card',
+  print: 'Print',
+  social: 'Social Post',
+  website: 'Website',
+  app: 'App',
+  email: 'Email',
+  packaging: 'Packaging',
+  merch: 'Merch',
+  signage: 'Signage',
+}
+
+/** A mock's reader-facing name, falling back to its id. */
+export const touchpointLabel = (id) => TOUCHPOINT_LABEL[id] || id
+
+/**
  * Brief surface id → the mocks it implies.
  *
  * `print` yields two: a business card is print, and it is the single most

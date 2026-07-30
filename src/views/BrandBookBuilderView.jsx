@@ -8,6 +8,8 @@ import {
   MIN_COLORS,
 } from '../lib/bookBuilder'
 import { paginatedBookPages } from '../lib/bookContent'
+import { currentBrandPack } from '../lib/currentPack'
+import { bookSectionIds } from '../lib/bookDocument'
 import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/fontCatalog'
 import { loadBrandFamilies } from '../lib/fontLoader'
 import '../styles/brand-book-builder.css'
@@ -323,6 +325,8 @@ export default function BrandBookBuilderView() {
   const activeProject = useAppStore((s) =>
     s.projects.find((p) => p.id === s.currentProjectId)
   )
+  const currentProjectId = useAppStore((s) => s.currentProjectId)
+  const moodItems = useAppStore((s) => s.moodItems)
   const setBookBuilder = useAppStore((s) => s.setBookBuilder)
   const setPaletteTokens = useAppStore((s) => s.setPaletteTokens)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
@@ -450,7 +454,15 @@ export default function BrandBookBuilderView() {
     running: runningProps,
   };
 
-  const { pages: contentPages, omitted: omittedPages } = paginatedBookPages(activeProject);
+  /* The book on screen is built from the same pack the PDF is exported from,
+     not from the raw project. Reading the project directly was half of why the
+     two could disagree about what the project contained. */
+  const pack = currentBrandPack({
+    project: activeProject,
+    projectId: currentProjectId,
+    moodItems,
+  });
+  const { pages: contentPages, omitted: omittedPages } = paginatedBookPages(pack);
 
   const bgFor = (pageId) => {
     const hex = resolveBg(colors, pageBg[pageId]);
@@ -493,22 +505,33 @@ export default function BrandBookBuilderView() {
     }
   };
 
-  /* Order mirrors the section order in brandBookPdf.js so the book on screen
-     and the exported PDF read the same. Content pages appear only when the
-     project holds their text; `colors` and `type` are always drawn because
-     the builder itself supplies their content. Content pages share the type
-     page's background rather than adding a control of their own — a
-     per-page background picker for eight more pages is eight more decisions
-     to make the same answer to. */
-  const bookOrder = ["story", "direction", "brief", "logo", "colors", "type", "writing", "applications", "usage", "handoff"];
+  /* The order is READ from the plan, never written out here. It used to be a
+     literal list, and when the PDF was rebuilt to the Harbor & Hearth layout
+     this copy kept printing the old book — different pages, different order —
+     while a comment above it claimed the two matched. `bookSectionIds` gives
+     the numbered sections; foundations come before them and the appendix
+     after, exactly as the PDF prints them.
+
+     `color` and `type` render from the builder's own controls rather than
+     from prose, so they are drawn here directly. Content pages share the type
+     page's background rather than adding a control of their own — a per-page
+     background picker is one more decision to make the same answer to. */
+  const pagesFor = (id) =>
+    contentPages.filter((pg) => pg.sectionId === id);
+
   const inner = [];
-  bookOrder.forEach((id) => {
-    if (id === "colors") { inner.push((i) => <ColorsPage key="colors" pageIndex={i} kit={{ ...kit, ...bgFor("pageColors") }} style={gridMarginVar} />); return; }
+  const pushContent = (pg) =>
+    inner.push((i) => <ContentPage key={pg.id} page={pg} pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />);
+
+  contentPages.filter((pg) => pg.kind === "foundation").forEach(pushContent);
+
+  bookSectionIds(pack).forEach((id) => {
+    if (id === "color") { inner.push((i) => <ColorsPage key="colors" pageIndex={i} kit={{ ...kit, ...bgFor("pageColors") }} style={gridMarginVar} />); return; }
     if (id === "type") { inner.push((i) => <TypePage key="type" pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />); return; }
-    contentPages
-      .filter((pg) => pg.sectionId === id)
-      .forEach((pg) => inner.push((i) => <ContentPage key={pg.id} page={pg} pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />));
+    pagesFor(id).forEach(pushContent);
   });
+
+  contentPages.filter((pg) => pg.kind === "appendix").forEach(pushContent);
 
   const pageElements = [
     <FrontCover key="cover" kit={{ ...kit, ...bgFor("pageCover") }} style={gridMarginVar} />,
