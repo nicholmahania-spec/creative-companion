@@ -119,6 +119,37 @@ survive both root and subpath deploys. SPA fallback: `netlify.toml` +
 `public/_redirects` for Netlify, `dist/404.html` (copied in the workflow)
 for Pages.
 
+## Node version — 26 in CI, 24 on the deploy targets, and that is deliberate
+
+The Node version is pinned in five places and they do **not** all say the same
+thing. Making them agree is what breaks the deploys, so the split is the fix,
+not a leftover:
+
+| Where | Version | Why |
+| --- | --- | --- |
+| `.github/workflows/ci.yml`, `main.yml`, `deploy-pages.yml` | 26 | verified green — unit, e2e and verify-project all pass on 26 |
+| `netlify.toml` (`NODE_VERSION`) | 24 | Netlify's build image is never exercised on a PR, so 26 there is only ever tested in production |
+| `package.json` (`engines.node`) | `>=24` | Vercel caps at 24.x and rejects anything higher outright |
+
+**Do not raise `engines.node` to 26.** Vercel reads it from `package.json` and
+fails the build before it starts:
+
+```
+Found invalid or discontinued Node.js Version: ">=26".
+Please set "engines": { "node": "24.x" } in your package.json
+```
+
+`">=24"` is still true — the app does need at least 24, and 26 satisfies it —
+so CI runs 26 while Vercel resolves the range to the newest major it offers.
+
+**Do not raise `netlify.toml` to 26 without checking first.** There is no
+Netlify check on pull requests, so nothing catches an unsupported build image
+until it has already failed a production deploy — and Netlify is the primary
+target. Vercel proved this failure mode is real rather than theoretical.
+
+Both were tried together on 2026-07-30; Vercel rejected the `engines` bump
+immediately, and Netlify was held back rather than gambled on.
+
 ## Key files
 
 - `todo.md` — prioritized remaining work list
