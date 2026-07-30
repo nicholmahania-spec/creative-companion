@@ -24,7 +24,22 @@
   kit values, not design-system tokens.
 */
 
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap");
+/* No @import of a remote font stylesheet here, deliberately.
+
+   This file is the CSS chunk for the lazily-imported BrandBookBuilderView.
+   A remote @import at the top of it has to resolve before the chunk's
+   stylesheet finishes loading, and Vite's preload helper rejects the whole
+   dynamic import when it doesn't — so with fonts.googleapis.com unreachable
+   the view never mounted at all: "Loading brand book…" forever, no error, no
+   way out. Offline is a supported state (this is a PWA), which made a font
+   request a single point of failure for the entire screen.
+
+   Nothing is lost by removing it. fontStack() is only ever called with the
+   selected headline and body families, and loadBrandFamilies() (fontLoader.js)
+   already fetches exactly those two at runtime — via a <link> whose onerror
+   is handled, so a failure degrades to the fallback face instead of killing
+   the view. The list here also named a fixed seven families and had already
+   gone stale against the registry. */
 
 /* local-first: prefers a real, locally-installed font (e.g. activated via
    Adobe Fonts) over the webfont copy, with zero extra configuration */
