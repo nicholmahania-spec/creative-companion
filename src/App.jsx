@@ -38,7 +38,6 @@ const BuddyMate = lazy(() => import('./components/BuddyMate'))
 const ForcedBreakOverlay = lazy(() => import('./components/ForcedBreakOverlay'))
 const BrandArtboard = lazy(() => import('./components/BrandArtboard'))
 const GameHUD = lazy(() => import('./components/GameHUD'))
-const ActivityTable = lazy(() => import('./components/dashboard/ActivityTable'))
 const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const ClientsView = lazy(() => import('./views/ClientsView'))
@@ -422,7 +421,6 @@ function App() {
   forcedBreakRef.current = forcedBreak
   /** View to restore after forced break ends */
   const preBreakViewRef = useRef(null)
-  const [showCreativeReset, setShowCreativeReset] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardName, setOnboardName] = useState('')
   const [onboardBrief, setOnboardBrief] = useState('')
@@ -1115,7 +1113,6 @@ function App() {
         return
       }
       setMoreOpen(false)
-      setShowCreativeReset(false)
       // Ask Helper to tuck if expanded
       window.dispatchEvent(new CustomEvent('cc-helper-minimize'))
     }
@@ -1593,10 +1590,6 @@ function App() {
     () => document.querySelector('.demo-tour-overlay'),
     []
   )
-  const getCreativeResetRoot = useCallback(
-    () => document.querySelector('.reset-panel')?.closest('.export-overlay') || null,
-    []
-  )
   useModalFocus(!!exportPanel && !showBreakdown, getExportRoot, {
     initialSelector: '.export-panel-header button, button',
   })
@@ -1616,9 +1609,6 @@ function App() {
   })
   useModalFocus(!!demoTour, getDemoTourRoot, {
     initialSelector: 'button',
-  })
-  useModalFocus(!!showCreativeReset, getCreativeResetRoot, {
-    initialSelector: '.reset-row',
   })
 
   // Flow keys (when not typing): 1–7 path · C complete · N capture · U undo · ? help
@@ -2612,53 +2602,6 @@ function App() {
   }
   runExportRef.current = runExport
 
-  const creativeResetItems = [
-    {
-      label: 'Break into micro-steps',
-      action: () => {
-        setShowCreativeReset(false)
-        openBreakdown()
-      },
-    },
-    {
-      label: 'Current Sketch step',
-      action: () => {
-        setActiveView('flow')
-        setShowCreativeReset(false)
-      },
-    },
-    {
-      label: 'Split step ×3',
-      action: () => {
-        if (nextTask && !nextTask.parentId) breakIntoSteps(nextTask.id)
-        setActiveView('flow')
-        setShowCreativeReset(false)
-      },
-    },
-    {
-      label: 'Spark',
-      action: () => {
-        setActiveView('spark')
-        setShowCreativeReset(false)
-      },
-    },
-    {
-      label: '2-min timer',
-      action: () => {
-        resetFocus(2)
-        setActiveView('insights')
-        setShowCreativeReset(false)
-      },
-    },
-    {
-      label: 'Research board',
-      action: () => {
-        setActiveView('studio')
-        setShowCreativeReset(false)
-      },
-    },
-  ]
-
   const startVoice = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition
@@ -2682,7 +2625,6 @@ function App() {
     setBreakdownAdded(0)
     setShowBreakdown(true)
     setMoreOpen(false)
-    setShowCreativeReset(false)
   }
 
   const buildBreakdownPreview = () => {
@@ -3575,15 +3517,31 @@ function App() {
         </nav>
       )}
 
+      {/* The Activity table used to render here beside the HUD. It could not
+          show a true row in any configuration: without Supabase the hook
+          returned three invented ones — a "Website Redesign" project, a
+          "Create logo concepts" task, timestamps faked at one, two and three
+          hours ago — and with Supabase it queried `user_activity`, a table
+          that appears in no migration and that nothing in this app has ever
+          written to. So the two possible states were fabricated history or an
+          error about a missing table.
+
+          It is the Promise/Proof bug at full size, and it had been defended
+          rather than questioned: `formatActivityType` carried a careful
+          null-guard against malformed rows arriving from a table that has
+          never existed. Its markup was Tailwind-classed too, in a repo with no
+          Tailwind, so the columns it did draw were unstyled.
+
+          Deleted rather than emptied. A panel kept alive on an honest empty
+          state is still UI in front of nothing, and the build rule is that a
+          feature needing a backend that does not exist is blocked — not
+          shipped as its own shape. If activity is wanted later, the honest
+          source is already on hand: workLog, tasks and projects hold real
+          history that no table needs to be invented for. */}
       {showProgress && (
-        <>
-          <Suspense fallback={null}>
-            <GameHUD />
-          </Suspense>
-          <Suspense fallback={<PathViewSkeleton label="Loading activity…" />}>
-            <ActivityTable />
-          </Suspense>
-        </>
+        <Suspense fallback={null}>
+          <GameHUD />
+        </Suspense>
       )}
       <nav
         className={`journey-sidebar${journeyActive ? '' : ' is-tools'}`}
@@ -5252,47 +5210,6 @@ function App() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {showCreativeReset && (
-        <div
-          className="export-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Stuck? Pick one move"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowCreativeReset(false)
-          }}
-        >
-          <div className="export-panel reset-panel reset-studio">
-            <h3 className="reset-title">Stuck · pick one</h3>
-            <div className="reset-list">
-              {creativeResetItems.map((item, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={item.action}
-                  className="reset-row"
-                >
-                  <span className="reset-num" aria-hidden="true">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span className="reset-label">{item.label}</span>
-                  <span className="reset-arrow" aria-hidden="true">
-                    →
-                  </span>
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowCreativeReset(false)}
-              className="text-link reset-dismiss"
-            >
-              Never mind
-            </button>
           </div>
         </div>
       )}
