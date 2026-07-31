@@ -8,7 +8,13 @@
  */
 
 import { pinFaceCssText, pinVisualKind } from './moodPins'
-import { resolvedPageBackgrounds } from './bookBuilder'
+import {
+  resolvedGrid,
+  resolvedPageBackgrounds,
+  resolvedRunning,
+  resolvedTypeColors,
+  resolvedTypeScale,
+} from './bookBuilder'
 import { toISODate } from './dates'
 import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
 import {
@@ -297,6 +303,14 @@ export function buildBrandPackSnapshot({
        and the delivered PDF did not, which is a control that looks like it
        styles the deliverable and does not. */
     bookPageBg: resolvedPageBackgrounds(p),
+    /* The rest of the Builder, resolved the same way and for the same
+       reason. Type size (as a ratio, so the book keeps its own hierarchy),
+       type colour, grid guides and running elements all drew on screen and
+       were dropped on export. */
+    bookTypeScale: resolvedTypeScale(p),
+    bookTypeColor: resolvedTypeColors(p),
+    bookGrid: resolvedGrid(p),
+    bookRunning: resolvedRunning(p),
     exportedAt: new Date().toISOString(),
     app: 'Creative Companion',
     projectName: p.name || 'Untitled project',
