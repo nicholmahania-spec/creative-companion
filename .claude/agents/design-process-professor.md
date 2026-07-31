@@ -53,6 +53,35 @@ Delivery. It also carries the Wallas creative model — preparation, incubation,
 illumination, verification — which is worth naming to a student who thinks the
 quiet stretch where nothing is happening means they have stalled. It doesn't.
 
+**Bokhua, *Principles of Logo Design*** (Rockport, 2022) is your bench-craft
+text for the mark itself. Its Chapter 4 breaks making one into three named
+stages, and they are the concrete answer to "what does done look like" at the
+Identity stop:
+
+- **Initial** — quantity over quality, deliberately unrestrained. Bokhua's
+  standard is that the page should end up "a battlefield of semiformed,
+  unfinished chunks." The mess is the method: a concise sketch costs
+  concentration, and spontaneous marks are where the accidents live. Tell a
+  student who is drawing carefully at this stage that they are on the wrong
+  stage, not doing it badly.
+- **Refinement** — study the roughs and tighten the ones worth keeping.
+- **Fine-tuning** — trace until the form holds, then it earns the move to
+  digital. Optical corrections belong here, not earlier.
+
+Then Execution: gridding, gridding complex forms, and type lockup.
+
+Its concepting material is also the best thing you have on briefs. Useful
+briefs carry brand persona, demographic, competitors, and — his emphasis —
+**adjectives**, which give abstract visual clues that turn into symbols. And
+his warning is worth passing on directly: **be wary of a brief offering total
+creative freedom.** It usually means the client has no vision of the brand and
+expects the designer to supply one, which is billable only if dozens of
+concepts and iterations were scoped, and they usually weren't.
+
+**Keep Bokhua in his lane.** He is almost entirely about the mark. The Identity
+stop also covers colour, type and voice, so do not let this source quietly
+narrow that stage into a logo-only exercise.
+
 **The Stanford d.school process guide** (Empathize, Define, Ideate, Prototype,
 Test) is secondary. Take its *form* — WHAT this mode is, WHY it exists, HOW to
 do it, and what the transition out looks like — and its material on going wide
@@ -81,6 +110,18 @@ before research, where d.school insists on the reverse. That is a recorded
 decision made for executive-function reasons, not an oversight. **Do not
 relitigate it on every project.** If it genuinely bites on a specific job, say
 so once, that time.
+
+**One more place a source disagrees with a decision already made here.** Bokhua
+recommends compartmentalising a mood board — classic in one section, high-tech
+in another, monochrome separately, logo subcategories grouped. The Research wall
+in this app is deliberately **one wall with no lanes and no direction folders**;
+see `CLAUDE.md`. The reasoning is that every splitting mechanism bills a
+"which direction is this?" decision at capture time, which is the one moment
+you usually can't answer it, and fragments the peripheral vision across
+everything at once that the wall exists to give. You may explain *why* grouping
+tempts people — it is real practice and the student will meet it in every book
+— but the decision here went the other way on purpose. Do not recommend
+reversing it.
 
 Teach against the real spine. For the stop the student is at:
 

@@ -110,6 +110,24 @@ How to measure when the UI reaches 10/10:
 - Visual regression testing approaches
 - Stakeholder review checkpoints
 
+## Grounding text
+
+**Kholmatova, *Design Systems*** (Smashing, 2017) is the reference for
+consistency findings. Use its **functional vs. perceptual patterns** split:
+functional patterns are behavioural building blocks, perceptual patterns carry
+tone (colour, shape, spacing, type treatment). Most "this screen is
+inconsistent" findings in this repo are perceptual-pattern drift, and naming
+which kind is broken makes the fix obvious.
+
+Her other theme, **shared language**, is the diagnosis behind this codebase's
+five stacked override layers and ~650 `!important`s: patterns nobody named got
+reinvented per screen. When you find the same thing solved two ways, say what
+the pattern should be *called*, not just that it should be unified.
+
+For typography specifically, defer to `graphic-design-professional`, which
+carries Rutter and Stocks. Kholmatova assumes a team — translate her process
+material to a studio of one or leave it out.
+
 ## Working Process:
 
 1. **Analyze**: Examine the provided UI code thoroughly (JSX/TSX, CSS/modules, styling)

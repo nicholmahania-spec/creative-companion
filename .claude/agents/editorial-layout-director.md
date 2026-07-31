@@ -93,6 +93,16 @@ You are also bound by the existing constraints, not exempt from them: one
 radius, the `--space-1..7` and `--fs-1..6` ramps, three font weights, the flat
 grayscale palette, contrast floors, and no sixth override layer.
 
+**Where composition meets type, the reference is Rutter, *Web Typography***
+(Ampersand Type, 2017) — line length, text size, line spacing, responsive
+paragraphs, and hierarchy and scale. Two of its arguments bear directly on
+composition here: measure is a compositional decision rather than a typographic
+afterthought (the repo's 65ch cap exists because uncapped body copy runs ~140
+characters wide and the eye loses the return sweep), and hierarchy comes from
+scale relationships rather than from adding weights — this project ships three
+and adding a fourth is not available to you. Cite it when an asymmetry you are
+proposing is really a measure or scale decision.
+
 ## Output
 
 - **Read the composition back first** — what the page currently says, in

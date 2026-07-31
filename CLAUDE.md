@@ -183,6 +183,15 @@ specifically.)
 
 ## Typography rules — enforced by `src/lib/typography.test.js`
 
+Sources, added 2026-07-31, so these rules stop reading as bare assertion:
+**Rutter, *Web Typography*** (Ampersand Type, 2017) for practice — line length,
+text size, line spacing, responsive paragraphs, hierarchy and scale, all
+written against real CSS — and **Stocks, *Universal Principles of Typography***
+for the fundamentals underneath it (type anatomy, metrics, the em square,
+x-height). The 65ch measure cap and the `--fs-1..6` ramp are arguments Rutter
+makes at length. `graphic-design-professional` and `editorial-layout-director`
+both carry these references.
+
 These are not preferences. Each one encodes a bug that shipped and was
 invisible in review. `npm test` fails if any is broken, and each guardrail
 has been verified to actually fail when the bug is reintroduced.
@@ -223,6 +232,17 @@ has been verified to actually fail when the bug is reintroduced.
   something with no border and no background — rounding an invisible box.
   Prefer whitespace and type weight for hierarchy; add a border only when
   space genuinely can't do the job.
+
+Source for this section, added 2026-07-31: **Kholmatova, *Design Systems***
+(Smashing, 2017). Its **functional vs. perceptual patterns** split is the useful
+frame — functional patterns are behavioural building blocks, perceptual ones
+carry tone (colour, shape, spacing, type treatment). The 426-rules-seven-shapes
+problem is perceptual-pattern drift, and the 135 rules rounding a box with no
+border and no background are perceptual decisions made without a system to make
+them in. Her second theme, **shared language**, is the actual cause of the
+override layers below: patterns nobody named got reinvented per screen. Carried
+by `ui-professional` and `graphic-design-professional`. Note she assumes a team;
+her process material needs translating to a studio of one.
 
 Known and not yet fixed: **five stacked override layers** (`grep -n "lock"`
 around lines 9961, 10037, 12015, 12858, 13388, 14494) totalling ~4.5k lines
@@ -389,13 +409,27 @@ wins and the process point gets reworked, not deleted.
 
 Grounded in **Slade-Brooking, *Creating a Brand Identity: A Guide for
 Designers*** (Laurence King, 2016) as primary — brand identity from the
-designer's side, written for students — with the Stanford d.school process
-guide secondary, for its WHAT/WHY/HOW form and its go-wide-before-narrow
-material. Two standing translations: the book's thirteen stages are
-agency-shaped (senior creatives briefing juniors, a client handler presenting)
-and must be taught as intent rather than staffing, because this is a studio of
-one; and d.school is product/service innovation, so its vocabulary does not get
-imported wholesale.
+designer's side, written for students — plus **Bokhua, *Principles of Logo
+Design*** (Rockport, 2022) for the bench craft of making a mark, with the
+Stanford d.school process guide secondary for its WHAT/WHY/HOW form and its
+go-wide-before-narrow material.
+
+Bokhua supplies the concrete answer to "what does done look like" at the
+Identity stop: three named sketching stages — **initial** (quantity over
+quality; the page is supposed to end up a mess, and a student drawing carefully
+here is on the wrong stage rather than doing it badly), **refinement**,
+**fine-tuning** — then execution, gridding and type lockup. His concepting
+material is also the best brief guidance in any of the sources, including the
+warning that a brief offering total creative freedom usually means the client
+has no vision and expects the designer to supply one, unbilled.
+
+Three standing translations. Slade-Brooking's thirteen stages are agency-shaped
+(senior creatives briefing juniors, a client handler presenting) and get taught
+as intent rather than staffing, because this is a studio of one. d.school is
+product/service innovation, so its vocabulary is not imported wholesale. And
+Bokhua is almost entirely about the mark — the Identity stop also covers colour,
+type and voice, so he must not be allowed to narrow that stage into a logo-only
+exercise.
 
 **It notices skipped steps and never gates on them.** Preconditions are banned
 as phrasings, not just as policy — "before you can X you need Y", "this stage
@@ -419,7 +453,10 @@ yet built.
 **Also known and deliberate:** the app briefs before it researches, where
 d.school insists on the reverse. That order is an executive-function decision
 recorded in `journey.js`. The professor may raise it once on a job where it
-genuinely bites; it does not relitigate it every project.
+genuinely bites; it does not relitigate it every project. Same treatment for
+Bokhua's mood-board advice, which conflicts with the one-wall Research decision
+below — the professor may explain why grouping tempts people, and may not
+recommend reversing the decision.
 
 ## QC agent — `quality-control-critic`
 
@@ -431,6 +468,14 @@ that stops at the edge of the happy path — and it defers the specialist slices
 to the agents that own them rather than becoming a seventh opinion on the same
 CSS. The build rule is its sharpest tool: a fake feature is a QC failure of the
 first order.
+
+Mode B carries a **named craft checklist for marks**, from Bokhua Chapter 3, so
+"the craft needs tightening" stops being an acceptable finding: overshoot
+(rounded forms read small and must extend past the limit), same-sized look (a
+white mark reads larger than the same black mark, so the light version needs
+shrinking and the guidelines need to say so), the bone effect, visibility and
+graphic devices on photographic backgrounds, and balance — stability, square
+rather than long proportions, even distribution.
 
 **Mode B critiques the actual creative work,** and it must see the artifact.
 Confident feedback on work it never opened is the same failure as false praise,
@@ -512,6 +557,14 @@ ask, and there is no client to present routes to, so the taxonomy would be
 pure overhead on the user's own thinking. It also fragments the one thing the
 wall must keep: peripheral vision across everything at once. Split three ways
 and you get three walls too small to compare.
+
+**A source disagrees, and the decision stands.** Bokhua (*Principles of Logo
+Design*, Ch. 4) recommends compartmentalising a mood board — classic in one
+section, high-tech in another, monochrome separately, logo subcategories
+grouped. That is real practice and it will come up in every book on the subject,
+which is exactly why it is written down here: the decision below was made
+knowing it, not in ignorance of it. `design-process-professor` may explain why
+grouping tempts people and may not recommend reversing this.
 
 The lighter mechanism already exists — the ★ pack IS a committed direction,
 and the per-pin note is where the reasoning lives. If a second direction is

@@ -64,7 +64,8 @@ What you check:
   to the brief? Decoration without an argument is the most common failure and
   the hardest to see from inside.
 - **Craft** — spacing, optical alignment, type detail, curve quality, file
-  hygiene. What a design director spots in four seconds.
+  hygiene. What a design director spots in four seconds. For marks specifically,
+  work the checklist below rather than saying "the craft needs tightening."
 - **Range and robustness** — does the mark survive one colour, small sizes, dark
   backgrounds, an unflattering crop? Does the system extend, or is it one hero
   lockup and nothing else?
@@ -74,6 +75,38 @@ What you check:
 - **Client-readiness** — would this survive being opened in front of the client,
   or does it need narration to make sense? Anything that only works when
   narrated is not finished.
+
+### Craft checklist for marks
+
+From Bokhua, *Principles of Logo Design* (Rockport, 2022), Chapter 3. These are
+named, checkable things — use them instead of a general impression, and name the
+one you're invoking so the fix is obvious.
+
+- **Overshoot.** Rounded forms (C, S, O, circular elements) read smaller than
+  straight or angular ones at the same measured height, so they must extend
+  slightly past the limit to look correct. Optical, not measured — a mark that
+  is mathematically aligned and looks wrong is usually this.
+- **Same-sized look.** A white mark on dark reads *larger* than the same black
+  mark on light — the irradiation effect. The light version needs shrinking
+  (outline, expand, subtract) or the two versions won't look like one logo. If
+  a pack ships both without this adjustment, that's a finding, and the
+  correction belongs in the guidelines so the client applies it.
+- **Bone effect.** Where two circles meet a straight side, the sides appear to
+  pinch inward. Common in O-like forms. Needs correcting by eye.
+- **Visibility and graphic device.** A mark built for light backgrounds usually
+  fails inverted, and colour inversion changes meaning (a white swan inverts to
+  a black swan). On photos and patterns, visibility needs a graphic device — an
+  outline or a containing shape, circular for circular marks, otherwise a basic
+  geometric form.
+- **Balance.** Stability (not tilting; a heavier base grounds it), proportion
+  (aim square rather than long or wide — squarer marks lock up with type better
+  and are easier to place), even distribution (elements clustered on one side
+  with air on the other reads as dissonance), and consistent weight across parts.
+- **Type lockup and grid.** Does the mark actually sit with its wordmark, and is
+  the construction gridded or improvised? Improvised is visible at large sizes.
+
+Apply what's relevant. A wordmark doesn't need the bone-effect check; don't run
+the list for its own sake.
 
 ### Mode B delivery — on top of the shared rules below
 
