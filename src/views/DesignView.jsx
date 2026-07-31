@@ -1525,6 +1525,12 @@ export default function DesignView({
                         return
                       }
 
+                      /* Capture the project NOW, not when the read finishes.
+                         The downscale below is async and on a large image the
+                         gap is long enough to switch projects in — the same
+                         capture-before-await rule setProjectPalette follows a
+                         few hundred lines up. */
+                      const ownerProjectId = activeProject?.id
                       // Local data URL + downscale (same pipeline as mood pins)
                       const reader = new FileReader()
                       reader.onerror = () =>
@@ -1538,9 +1544,9 @@ export default function DesignView({
                             reader.result,
                             file.type
                           )
-                          setLogoImage(scaled)
+                          setLogoImage(scaled, ownerProjectId)
                         } catch {
-                          setLogoImage(reader.result)
+                          setLogoImage(reader.result, ownerProjectId)
                         }
                         const bump = bumpDesignVersionIfV1()
                         flashMicro(

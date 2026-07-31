@@ -18,7 +18,8 @@ export function HoursInvoicePanel({
   flashToast,
   prefs = {},
   setPref,
-  takeInvoiceNumber,
+  peekInvoiceNumber,
+  commitInvoiceNumber,
 }) {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [hours, setHours] = useState('')
@@ -67,10 +68,13 @@ export function HoursInvoicePanel({
     if (!timeLog.length) return
     setBusy(true)
     try {
-      /* Claimed once, at export. Numbering on open would burn a number
-         every time the panel was looked at, and gaps in an invoice sequence
-         are exactly what an accountant asks about. */
-      const invoiceNumber = takeInvoiceNumber ? takeInvoiceNumber() : ''
+      /* Read the number, but do not consume it until the PDF exists.
+         Numbering on open would burn one every time the panel was looked at,
+         and gaps in an invoice sequence are exactly what an accountant asks
+         about — but claiming it before the export could also fail burned one
+         on every cancelled save dialog, which is the same hole one step
+         later. */
+      const invoiceNumber = peekInvoiceNumber ? peekInvoiceNumber() : ''
       const r = await downloadInvoicePdf({
         orgName,
         billTo,
@@ -84,8 +88,12 @@ export function HoursInvoicePanel({
         taxLabel: prefs.invoiceTaxLabel,
         taxPercent: prefs.invoiceTaxPercent,
       })
-      if (r?.ok) flashToast?.('Invoice downloaded')
-      else flashToast?.(r?.error || 'Could not export invoice')
+      if (r?.ok) {
+        commitInvoiceNumber?.()
+        flashToast?.('Invoice downloaded')
+      } else {
+        flashToast?.(r?.error || 'Could not export invoice')
+      }
     } finally {
       setBusy(false)
     }

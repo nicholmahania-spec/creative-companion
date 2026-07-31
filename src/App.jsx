@@ -257,14 +257,23 @@ function App() {
   )
   const prefs = useAppStore((s) => s.prefs) || {}
   const setPref = useCallback((...a) => useAppStore.getState().setPref(...a), [])
-  /* Claims the next invoice number at export. Bound here like every other
-     store action the shell hands down — it was passed to HoursInvoicePanel
-     without ever being defined, which is a render-time ReferenceError that
-     blanks the entire app. Unit tests and the build both stayed green
-     through it: nothing renders App in vitest, and an undefined identifier
-     in JSX is perfectly valid syntax. */
-  const takeInvoiceNumber = useCallback(
-    (...a) => useAppStore.getState().takeInvoiceNumber(...a),
+  /* Invoice numbering, split in two: read it to print on the PDF, consume it
+     only once the PDF exists.
+
+     BOTH must be bound here, like every other store action the shell hands
+     down. The single-function version was once passed to HoursInvoicePanel
+     without ever being defined — a render-time ReferenceError that blanks the
+     entire app, which unit tests and the build both stayed green through,
+     because nothing renders App in vitest and an undefined identifier in JSX
+     is perfectly valid syntax. Splitting one prop into two is exactly the edit
+     that reintroduces it; invoiceNumbering.test.js now checks that anything
+     passed to the panel is actually defined here. */
+  const peekInvoiceNumber = useCallback(
+    (...a) => useAppStore.getState().peekInvoiceNumber(...a),
+    []
+  )
+  const commitInvoiceNumber = useCallback(
+    (...a) => useAppStore.getState().commitInvoiceNumber(...a),
     []
   )
   const exportAllData = useCallback(
@@ -2097,6 +2106,9 @@ function App() {
       flashToast('Cover image must be under 2.5MB')
       return
     }
+    /* Capture the project before the async read, so a project switch during
+       the downscale cannot land this image on the wrong one. */
+    const ownerProjectId = activeProject?.id
     // Local data URL, downscaled like mood pins — protects localStorage quota
     const reader = new FileReader()
     reader.onerror = () =>
@@ -2105,10 +2117,10 @@ function App() {
       try {
         const { downscaleDataUrl } = await import('./lib/moodPins')
         const scaled = await downscaleDataUrl(reader.result, file.type)
-        setLogoImage(scaled)
+        setLogoImage(scaled, ownerProjectId)
         flashMicro('Cover image updated')
       } catch {
-        setLogoImage(reader.result)
+        setLogoImage(reader.result, ownerProjectId)
         flashMicro('Cover image updated')
       }
     }
@@ -4508,7 +4520,8 @@ function App() {
         flashToast={flashToast}
         prefs={prefs}
         setPref={setPref}
-        takeInvoiceNumber={takeInvoiceNumber}
+        peekInvoiceNumber={peekInvoiceNumber}
+        commitInvoiceNumber={commitInvoiceNumber}
       />
       <DiscoveryBriefPanel
         open={discoveryPanelOpen}

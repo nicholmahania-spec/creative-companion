@@ -1015,15 +1015,31 @@ const useAppStore = create(
         }),
 
       /** Claim the next invoice number and advance the counter. */
-      takeInvoiceNumber: () => {
+      /**
+       * The number this invoice WOULD get. Does not consume it.
+       *
+       * Split out of takeInvoiceNumber, which incremented before the PDF
+       * existed — so a cancelled save dialog, a failed PDF engine import, or
+       * an out-of-memory on a long log burned the number anyway, and each
+       * retry burned another. Cancelling twice put the sequence three ahead.
+       * That is exactly the gap the original comment said numbering-on-export
+       * was there to prevent; it just moved the hole rather than closing it.
+       */
+      peekInvoiceNumber: () => {
         const { prefs } = get()
         const n = Number(prefs?.invoiceNextNumber) || 1
-        set((state) => ({
-          prefs: { ...state.prefs, invoiceNextNumber: n + 1 },
-        }))
         const prefix = String(prefs?.invoicePrefix || '').trim()
         return prefix ? `${prefix}${n}` : String(n)
       },
+
+      /** Consume it — call only once the PDF has actually been produced. */
+      commitInvoiceNumber: () =>
+        set((state) => ({
+          prefs: {
+            ...state.prefs,
+            invoiceNextNumber: (Number(state.prefs?.invoiceNextNumber) || 1) + 1,
+          },
+        })),
 
       removeTimeEntry: (id) =>
         set((state) => ({
@@ -2241,10 +2257,22 @@ const useAppStore = create(
         return { ok: true }
       },
 
-      setLogoImage: (dataUrl) =>
+      /**
+       * @param {string} dataUrl
+       * @param {string|number} [projectId] the project this image belongs to
+       *
+       * Takes an explicit project for the same reason setProjectPalette does.
+       * Both callers read the file and downscale it before writing, and on a
+       * large image that gap is long enough to switch projects in — after
+       * which this wrote the mark to whatever was current when the promise
+       * resolved, not the project the file was chosen for. No error, no toast:
+       * the wrong project quietly gains someone else's logo and the right one
+       * looks like the upload never happened.
+       */
+      setLogoImage: (dataUrl, projectId) =>
         set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === state.currentProjectId
+            p.id === (projectId ?? state.currentProjectId)
               ? { ...p, logoImage: dataUrl || '' }
               : p
           ),

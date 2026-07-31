@@ -82,4 +82,30 @@ describe('project-scoped writes', () => {
     expect(get(A).detective.goal).toBeUndefined()
     expect(useAppStore.getState().projects).toHaveLength(2)
   })
+  it('writes an uploaded mark to the project the file was chosen for', () => {
+    /* Both upload handlers read the file and downscale it before writing.
+       On a large image that gap is long enough to switch projects in — after
+       which the mark landed on whatever was current when the promise
+       resolved. No error and no toast: the wrong project quietly gains
+       someone else's logo, and the right one looks like the upload never
+       happened. setProjectPalette, 1,490 lines above it in the same file,
+       already took an explicit project for exactly this reason. */
+    const { setLogoImage } = useAppStore.getState()
+
+    // Upload starts on A, user switches to B while it downscales.
+    useAppStore.setState({ currentProjectId: B })
+    setLogoImage('data:image/png;base64,AAAA', A)
+
+    expect(get(A).logoImage).toBe('data:image/png;base64,AAAA')
+    expect(get(B).logoImage).toBeFalsy()
+  })
+
+  it('still writes to the current project when no owner is given', () => {
+    /* The plain click path — removing a mark, or any caller with no async
+       gap — must keep working unchanged. */
+    const { setLogoImage } = useAppStore.getState()
+    setLogoImage('data:image/png;base64,BBBB')
+    expect(get(A).logoImage).toBe('data:image/png;base64,BBBB')
+    expect(get(B).logoImage).toBeFalsy()
+  })
 })
