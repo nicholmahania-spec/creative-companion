@@ -21,6 +21,7 @@ export default function SettingsView(props) {
     handleSignOut,
     theme,
     toggleTheme,
+    openShortcuts,
     reduceMotion,
     soundEnabled,
     showHowItWorks,
@@ -190,6 +191,22 @@ export default function SettingsView(props) {
             {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
           </button>
         </div>
+        {/* Moved off the Tools menu, which was clipping its own bottom four
+            rows. This was the only one of those four with no home on this page
+            already — theme is directly above and Sign out is further down. The
+            `?` key still opens the same panel. */}
+        {openShortcuts && (
+          <div className="settings-row">
+            <strong>Keyboard shortcuts</strong>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => openShortcuts()}
+            >
+              Show
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="panel brand-section" id="settings-desk">
