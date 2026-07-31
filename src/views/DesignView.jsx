@@ -522,8 +522,23 @@ export default function DesignView({
                 </h1>
                 <p className="page-sub">
                   {activeProject?.name || 'Project'}
-                  {' · ★'}
-                  {deskMood.filter((m) => m.inPack).length}/6
+                  {/* Floor, not ratio — the same call ResearchView records at
+                      its own heading, and the one the project sidebar and the
+                      Define chapter rail already made. "★ 3/6" is a number to
+                      decode that produces no next action, and it reads as a
+                      scoreboard three-fifths empty. Say what is still open,
+                      or say it is done. */}
+                  {(() => {
+                    const inPack = deskMood.filter((m) => m.inPack).length
+                    if (!inPack) return null
+                    return (
+                      <span>
+                        {inPack >= 6
+                          ? ' · ★ pack full'
+                          : ` · ★ ${inPack} in pack · room for ${6 - inPack}`}
+                      </span>
+                    )
+                  })()}
                   {activeProject?.detective?.goal && (
                     <span> · Goal: {String(activeProject.detective.goal).slice(0, 20)}{String(activeProject.detective.goal).length > 20 ? '…' : ''}</span>
                   )}
