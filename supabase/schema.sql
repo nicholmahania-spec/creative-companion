@@ -330,9 +330,17 @@ grant execute on function public.is_client_upload_target(text) to anon, authenti
 --       bucket_id = 'client-uploads'
 --       and public.is_client_upload_target((storage.foldername(name))[1])
 --     );
---   create policy "public_read_client_uploads" on storage.objects
---     for select to anon, authenticated
---     using (bucket_id = 'client-uploads');
+-- Do NOT add a broad SELECT policy here. `client-uploads` is a public bucket,
+-- so object URLs are served through /storage/v1/object/public/... without
+-- consulting RLS — a `using (bucket_id = 'client-uploads')` policy adds no
+-- read capability the app needs, and does add the *list* capability, because
+-- POST /storage/v1/object/list/<bucket> runs storage.search() as SECURITY
+-- INVOKER. Folder names here are the share/portal UUIDs, which are the only
+-- credential protecting /f/:shareId and /c/:portalId, so listing the bucket
+-- handed out a directory of every live client link. That policy existed and
+-- was removed in 20260731120000_close_storage_bucket_listing.sql — see that
+-- migration for the full reasoning and for why workspace-images was
+-- owner-scoped rather than dropped.
 
 -- ── Hardened RPCs (search_path, grants, portal honesty) ──
 
