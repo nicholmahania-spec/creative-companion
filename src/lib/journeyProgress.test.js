@@ -87,18 +87,40 @@ describe('pathStepHasContent', () => {
     ).toBe(true)
   })
 
-  it('sketch needs any task — why is optional for path done', () => {
-    expect(pathStepHasContent('sketch', { tasks: [] })).toBe(false)
+  /* Touchpoints asks WHERE the brand appears, and renders the application
+     mocks chosen by the brief. The gate used to be `tasks.length >= 1`,
+     written when this stop meant something else and left behind by the
+     rename — and since onboarding creates exactly one task, every brand-new
+     project opened with this stage already ticked done. */
+  it('sketch is not done just because a task exists', () => {
     expect(
       pathStepHasContent('sketch', {
+        project: {},
         tasks: [{ id: 1, title: 'Draft logo', why: '' }],
       })
-    ).toBe(true)
+    ).toBe(false)
+  })
+
+  it('sketch is done once the brief says where the brand is used', () => {
+    expect(pathStepHasContent('sketch', { project: {} })).toBe(false)
     expect(
       pathStepHasContent('sketch', {
-        tasks: [{ id: 1, title: 'Done', completed: true, why: '' }],
+        project: { detective: { brandSurfaces: ['website', 'social'] } },
       })
     ).toBe(true)
+    // A deliverable the client asked to be MADE counts too — someone can
+    // order business cards without ticking "Print" as a place it lives.
+    expect(
+      pathStepHasContent('sketch', {
+        project: { detective: { deliverablesPicked: ['businessCard'] } },
+      })
+    ).toBe(true)
+    // Empty arrays are not an answer.
+    expect(
+      pathStepHasContent('sketch', {
+        project: { detective: { brandSurfaces: [], deliverablesPicked: [] } },
+      })
+    ).toBe(false)
   })
 
   it('design ignores stock default palette alone', () => {
