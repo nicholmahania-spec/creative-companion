@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { bookContentPages, paginateBlocks, APPENDIX_PAGES } from './bookContent'
-import { bookPlan } from './bookDocument'
+import { bookContentPages, paginateBlocks, APPENDIX_PAGES, PAGE_FIELDS } from './bookContent'
+import { bookPlan, FOUNDATION_PAGES, SECTION_PAGES } from './bookDocument'
 
 /**
  * The book's length is derived from what the project holds. These tests are
@@ -209,5 +209,45 @@ describe('paginateBlocks', () => {
 
   it('gives an empty section one empty page rather than none', () => {
     expect(paginateBlocks([])).toEqual([[]])
+  })
+})
+
+describe('every editable field has a page, and every page an editor', () => {
+  it('declares fields only for pages the book actually has', () => {
+    /* A field declared for a page that does not exist is an input whose text
+       is never printed — an editor for nothing. */
+    const known = new Set([
+      ...FOUNDATION_PAGES.map((p) => p.id),
+      ...SECTION_PAGES.map((p) => p.id),
+      ...APPENDIX_PAGES.map((p) => p.id),
+    ])
+    Object.keys(PAGE_FIELDS).forEach((id) => {
+      expect(known.has(id), `PAGE_FIELDS declares "${id}", which is not a page`).toBe(true)
+    })
+  })
+
+  it('names a real store field and a real home for each', () => {
+    /* Which store an answer lives in is not guessable from its name, and
+       writing to the wrong one silently does nothing because the read prefers
+       the other — so the scope has to be stated, not inferred. */
+    Object.entries(PAGE_FIELDS).forEach(([id, rows]) => {
+      rows.forEach((f) => {
+        expect(f.field, `${id} field missing a name`).toBeTruthy()
+        expect(['project', 'detective']).toContain(f.scope)
+        expect(f.label, `${id}.${f.field} missing a label`).toBeTruthy()
+      })
+    })
+  })
+
+  it('prints what was typed, for both stores', () => {
+    /* The two homes resolve differently; this is the round trip that proves a
+       typed answer reaches the page rather than falling into the wrong one. */
+    const fromProject = bookContentPages({ logoDirection: 'A quiet monogram.' })
+    expect(fromProject.pages.find((p) => p.id === 'logo')).toBeTruthy()
+
+    const fromBrief = bookContentPages({ detective: { audience: 'Homeowners who cook.' } })
+    const audience = fromBrief.pages.find((p) => p.id === 'audience')
+    expect(audience).toBeTruthy()
+    expect(textOf(audience)).toContain('Homeowners who cook')
   })
 })
