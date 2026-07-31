@@ -427,6 +427,11 @@ function App() {
   const [onboardName, setOnboardName] = useState('')
   const [onboardBrief, setOnboardBrief] = useState('')
   const [onboardFirstStep, setOnboardFirstStep] = useState('')
+  /* Set only once Start has actually been pressed with an empty name. The
+     hint used to render from the moment the dialog opened, so the first thing
+     the app ever said was what you had failed to do — before you had been
+     given a chance to do it. */
+  const [onboardNudge, setOnboardNudge] = useState(false)
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [exportBusy, setExportBusy] = useState(false)
@@ -2242,9 +2247,29 @@ function App() {
     }
   }
 
-  const finishOnboarding = (mode) => {
-    if (mode === 'custom' && onboardName.trim()) {
-      const brief = onboardBrief.trim() // optional; do not invent placeholder brief
+  /**
+   * First run. Everything typed into the dialog is kept, and nothing that was
+   * not typed is invented.
+   *
+   * This used to take a `mode`, because there were two buttons. The second one
+   * ("Empty desk") ran `clearToEmpty()` and dropped the brief and the first
+   * step on the floor without saying so — you wrote two things, pressed a
+   * button that did not say "discard", and they were gone with nothing to undo
+   * from. On the app's very first screen, that teaches the one lesson it must
+   * never teach: that typing here is not safe.
+   *
+   * With that fixed the two paths differed only in what the app made up for
+   * you, so the second button was removed rather than repaired. The starter
+   * task went with it: seeding "Write one design step you can finish in about
+   * 25 minutes" into someone's list when they left the box blank is a task
+   * they did not ask for, sitting in the one place that is supposed to hold
+   * only real work.
+   */
+  const finishOnboarding = () => {
+    const name = onboardName.trim()
+    const brief = onboardBrief.trim() // optional; do not invent placeholder brief
+    const firstStep = onboardFirstStep.trim()
+    if (name) {
       // First run: the workspace already holds one untouched blank project —
       // rename it instead of appending a stray empty "My project" lane.
       const st = useAppStore.getState()
@@ -2256,43 +2281,31 @@ function App() {
         !(st.tasks || []).length
       let project
       if (untouchedBlank) {
-        renameProject(only.id, onboardName.trim())
+        renameProject(only.id, name)
         if (brief) updateProjectBrief(brief)
         project = only
       } else {
-        project = createNewProject(onboardName.trim(), brief)
+        project = createNewProject(name, brief)
         // First path stop is Research (studio); Strategy (project) is next.
       }
       // CRM identity lives in detective.clientName (not only project display name)
-      updateDetective('clientName', onboardName.trim())
-      awardAndBroadcast('project_create', { label: onboardName.trim() })
-      const stepTitle =
-        onboardFirstStep.trim() ||
-        'Write one design step you can finish in about 25 minutes'
-      addTask({
-        id: Date.now() + 1,
-        title: stepTitle,
-        energy: 'med',
-        meta: 'First step · do this now',
-        completed: false,
-        seeded: false,
-        projectId: project?.id || useAppStore.getState().currentProjectId,
-        dueDate: '',
-        why: '',
-      })
-      awardAndBroadcast('task_capture', { label: 'First step' })
-      flashToast('Project created — start with the goal, then head to Research')
-    } else {
-      // Empty real desk — no sample clients
-      clearToEmpty()
-      if (onboardName.trim()) {
-        renameProject(
-          useAppStore.getState().currentProjectId,
-          onboardName.trim()
-        )
-        updateDetective('clientName', onboardName.trim())
+      updateDetective('clientName', name)
+      awardAndBroadcast('project_create', { label: name })
+      if (firstStep) {
+        addTask({
+          id: Date.now() + 1,
+          title: firstStep,
+          energy: 'med',
+          meta: 'First step · do this now',
+          completed: false,
+          seeded: false,
+          projectId: project?.id || useAppStore.getState().currentProjectId,
+          dueDate: '',
+          why: '',
+        })
+        awardAndBroadcast('task_capture', { label: 'First step' })
       }
-      flashToast('Empty desk — write your first real step')
+      flashToast('Project created — start with the goal, then head to Research')
     }
     setOnboarded(true)
     localStorage.setItem('cc-onboarded', '1')
@@ -3247,6 +3260,24 @@ function App() {
                 icon row to grow is how the to-do button ended up colliding
                 with page content in the first place. */}
 
+            {/* A destination, not a dropdown. Settings, the theme switch and
+                Log out are all already on this page, so opening a menu here
+                would only ask "which of the two menus holds this?" before
+                every use and give theme and Log out two homes at once.
+
+                Labelled, because the gear is the textbook case the icon rule
+                calls out: universally decodable, but visited rarely enough
+                that the meaning gets re-derived on each encounter instead of
+                recognised. Frequency is the test, not universality. */}
+            <button
+              type="button"
+              className="header-icon-btn header-icon-btn--labelled"
+              onClick={() => setActiveView('settings')}
+            >
+              <span aria-hidden="true">⚙</span>
+              <span className="header-icon-btn__label">Settings</span>
+            </button>
+
             <div className="more-wrap" ref={moreWrapRef}>
               <button
                 type="button"
@@ -3261,10 +3292,18 @@ function App() {
                 onClick={() => setMoreOpen(!moreOpen)}
               >
                 <HeaderIcon name="tools" />
-                {/* Labelled in text, not icon-only. This menu is now the home
-                    for Settings and Log out, and people are conditioned to
-                    hunt for an avatar for those — a bare glyph makes finding
-                    them a recall problem instead of a read. */}
+                {/* Labelled in text, not icon-only — a wrench is decodable but
+                    this is not a control you use often enough to recognise, so
+                    a bare glyph makes finding things a recall problem instead
+                    of a read.
+
+                    This comment used to say the menu was "now the home for
+                    Settings and Log out". It is not, as of the header split:
+                    those live on the Settings page, which the button beside
+                    this one goes straight to. Noted because the previous
+                    direction of travel was the opposite — a separate account
+                    menu was folded IN here once, and `.account-menu` is still
+                    sitting in shell.css with no JSX using it. */}
                 <span>Tools</span>
               </button>
               {moreOpen && (
@@ -3296,6 +3335,24 @@ function App() {
                     }}
                   >
                     <HeaderIcon name="people" /> Clients
+                  </button>
+                  {/* Mobile hides `.header-actions .header-icon-btn` outright
+                      for want of room, and the ⚙ Settings button is one of
+                      those. Without this row, taking the Account group out of
+                      this menu would leave a phone with no route to Settings,
+                      the theme switch or Log out at all — the exact defect
+                      being fixed, moved to a smaller screen. Mobile-only, so
+                      it is never a second door on desktop. */}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item more-menu-item-mobile-only"
+                    onClick={() => {
+                      setActiveView('settings')
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">⚙</span> Settings
                   </button>
                   <button
                     type="button"
@@ -3341,21 +3398,11 @@ function App() {
                   >
                     <span aria-hidden="true">◎</span> Review
                   </button>
+                  {/* Ordered by how often each is reached, not by category
+                      tidiness — an unsorted list is read in full every time,
+                      which is a cost paid on every open. Destructive last,
+                      which it already was. */}
                   <p className="more-menu-group-label">This project</p>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      openExportPanel()
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">⬇</span> Export
-                  </button>
-                  {/* The to-do list now has one door: the labelled pill in the
-                      header. Two live triggers means two things to check and
-                      an ambiguous "are these the same list?". */}
                   <button
                     type="button"
                     role="menuitem"
@@ -3367,6 +3414,31 @@ function App() {
                     }}
                   >
                     <HeaderIcon name="print" /> Print / Save as PDF
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setOverviewSharePanelOpen(true)
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">↗</span> Share project overview
+                  </button>
+                  {/* The to-do list now has one door: the labelled pill in the
+                      header. Two live triggers means two things to check and
+                      an ambiguous "are these the same list?". */}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="more-menu-item"
+                    onClick={() => {
+                      openExportPanel()
+                      setMoreOpen(false)
+                    }}
+                  >
+                    <span aria-hidden="true">⬇</span> Export
                   </button>
                   <button
                     type="button"
@@ -3415,66 +3487,19 @@ function App() {
                   >
                     <span aria-hidden="true">×</span> Delete project
                   </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setOverviewSharePanelOpen(true)
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">↗</span> Share project overview
-                  </button>
-                  {/* "Account", not "App" — that's the word you go looking
-                      for when you want Settings or Log out. */}
-                  <p className="more-menu-group-label">Account</p>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('settings')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">⚙</span> Settings
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      setShortcutsOpen(true)
-                    }}
-                  >
-                    <span aria-hidden="true">⌨</span> Keyboard shortcuts
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      toggleTheme()
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">◐</span>{' '}
-                    {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item more-menu-danger"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      handleSignOut()
-                    }}
-                  >
-                    <span aria-hidden="true">→</span>{' '}
-                    {CLOUD ? 'Log out' : 'Log out / lock'}
-                  </button>
+                  {/* The Account group used to end this menu — Settings,
+                      Keyboard shortcuts, theme, Log out. It was 589px of
+                      content in a 420px box, so all four sat below the visible
+                      bottom of a menu that gives no sign it scrolls: hidden,
+                      not "one scroll away".
+
+                      They are gone rather than moved into a second dropdown.
+                      Three of the four were already on the Settings page
+                      (theme and Sign out live there, and Shortcuts is added
+                      there now), so a second menu would have meant two homes
+                      for the same controls plus a "which menu is it in?" sort
+                      on every use. The ⚙ Settings button in the header goes
+                      straight to that page instead. */}
                 </div>
               )}
             </div>
@@ -3776,6 +3801,24 @@ function App() {
       />
 
       <main className="main" id="main-content" tabIndex={-1} data-nav-dir={navDir}>
+        {/* Inner crash net — wraps only the view, so a screen that throws
+            leaves the header, the Tools menu and the project nav standing and
+            the answer is "go somewhere else" rather than "the app is gone".
+            main.jsx holds the outer one for anything that gets past this.
+
+            Keyed on the view so navigating away remounts it and clears the
+            error. Without the key the boundary stays broken after you leave,
+            which is a worse trap than a white page because it looks
+            deliberate. The escape hatch points somewhere OTHER than the screen
+            that just failed — offering "back to the project" while the project
+            view is the thing crashing is a button that re-runs the crash. */}
+        <ErrorBoundary
+          key={activeView}
+          leaveLabel={
+            activeView === 'project' ? 'Back to your projects' : 'Back to the project'
+          }
+          onLeave={() => setActiveView(activeView === 'project' ? 'home' : 'project')}
+        >
         {journeyActive && activeView !== 'review' && activeView !== 'finish' && (
           <JourneyGapStrip
             thisStepFilled={thisStepFilled}
@@ -4294,6 +4337,7 @@ function App() {
               handleSignOut={handleSignOut}
               theme={theme}
               toggleTheme={toggleTheme}
+              openShortcuts={() => setShortcutsOpen(true)}
               reduceMotion={reduceMotion}
               soundEnabled={soundEnabled}
               showHowItWorks={showHowItWorks}
@@ -4360,6 +4404,7 @@ function App() {
             />
           </Suspense>
         )}
+        </ErrorBoundary>
 
       </main>
 
@@ -4516,25 +4561,44 @@ function App() {
                 />
               </label>
             </details>
+            {/* One button.
+
+                There were two — "Start the brief" and "Empty desk" — and they
+                were never opposites of the same thing: one named a
+                destination, the other named a state, so choosing meant first
+                constructing the comparison yourself, on the very first screen
+                of the app. What actually separated them was that "Empty desk"
+                silently threw away the brief and the first step you had just
+                typed. With that fixed, an empty Brief and an empty First step
+                already ARE the empty desk, and the second button had nothing
+                left to mean.
+
+                Not disabled. This dialog deliberately cannot be dismissed with
+                Escape, so a single disabled button is a locked room — and a
+                dead primary is a first interaction that refuses you. It always
+                fires; a click with no name focuses the name box and says so,
+                which is guidance after the attempt rather than a gate before
+                it. */}
             <div className="onboard-actions">
               <button
                 type="button"
                 className="btn btn-primary onboard-primary"
-                disabled={!onboardName.trim()}
-                onClick={() => finishOnboarding('custom')}
+                onClick={() => {
+                  if (!onboardName.trim()) {
+                    setOnboardNudge(true)
+                    document.getElementById('onboard-name')?.focus()
+                    return
+                  }
+                  finishOnboarding()
+                }}
               >
-                Start the brief
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm onboard-demo"
-                onClick={() => finishOnboarding('empty')}
-              >
-                Empty desk
+                Start
               </button>
             </div>
-            {!onboardName.trim() && (
-              <p className="onboard-gate-hint">Add a name to start.</p>
+            {onboardNudge && !onboardName.trim() && (
+              <p className="onboard-gate-hint">
+                Add a name first — usually the client’s.
+              </p>
             )}
           </div>
         </div>

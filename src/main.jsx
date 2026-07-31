@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import PublicDiscoveryFill from './components/PublicDiscoveryFill.jsx'
 import PublicClientPortal from './components/PublicClientPortal.jsx'
+import ErrorBoundary from './components/error/ErrorBoundary.jsx'
 import { routePath } from './lib/appPaths'
 import './index.css'
 import { versionLabel, APP_BUILD_DATE } from './lib/version'
@@ -51,15 +52,23 @@ if (typeof window !== 'undefined') {
   });
 }
 
+/* Outermost crash net. Wraps all three roots, not just the app: a render
+   error on /f/ or /c/ is a stranger looking at a blank white page with no idea
+   whether their answers went anywhere, which is the worst version of this
+   failure and the one with no way to ask for help. App.jsx mounts a second,
+   inner one around the active view so an ordinary screen crash keeps the
+   header and nav alive; this one only catches what gets past that. */
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {publicFormMatch ? (
-      <PublicDiscoveryFill shareId={publicFormMatch[1]} />
-    ) : publicPortalMatch ? (
-      <PublicClientPortal portalId={publicPortalMatch[1]} />
-    ) : (
-      <App />
-    )}
+    <ErrorBoundary>
+      {publicFormMatch ? (
+        <PublicDiscoveryFill shareId={publicFormMatch[1]} />
+      ) : publicPortalMatch ? (
+        <PublicClientPortal portalId={publicPortalMatch[1]} />
+      ) : (
+        <App />
+      )}
+    </ErrorBoundary>
   </StrictMode>,
 )
 
