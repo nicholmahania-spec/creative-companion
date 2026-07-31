@@ -2424,7 +2424,18 @@ h3 {
   bottom: 1.35rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 160;
+  /* Above every dialog layer (.export-overlay 200, .running-todo-panel 201,
+     the floating control at 250) and below the skip link at 10001.
+
+     It was 160, which is UNDER .export-overlay's 200 and its full-viewport
+     rgba(18,18,18,0.48) backdrop — so every toast raised from inside an open
+     dialog was painted beneath that dialog and could not be seen. Export
+     failures, send failures, scan failures and "Cloud sync isn't configured"
+     on Create client dashboard all fired correctly and all looked like
+     nothing happening. A beta tester pressed that button twice and reported
+     no toast, no error, nothing in the console; the toast was there the whole
+     time, behind the panel. */
+  z-index: 300;
   max-width: min(92vw, 28rem);
   padding: 0.55rem 1rem;
   border-radius: var(--radius);
@@ -3162,7 +3173,6 @@ html[data-reduce-motion='true'] *::after {
    * position — here that meant an arbitrary implicit grid cell, overlapping
    * header chrome. */
   right: 1rem;
-  z-index: var(--z-overlay);
   z-index: 150;
   background: var(--text-primary);
   color: var(--bg-canvas);
@@ -3749,7 +3759,6 @@ body.cc-printing-page button {
 
 .type-specimen-h {
   margin: 0 0 0.25rem;
-  z-index: var(--z-toast);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.15;
@@ -4744,7 +4753,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .desk-confirm-body {
   margin: 0 0 0.55rem;
-  z-index: var(--z-toast);
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);

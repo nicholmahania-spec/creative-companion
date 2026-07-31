@@ -114,7 +114,6 @@
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  z-index: var(--z-overlay);
 }
 
 /* ——— v1.1 Pack presentation ——— */

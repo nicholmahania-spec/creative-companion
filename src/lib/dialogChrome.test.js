@@ -63,6 +63,45 @@ describe('shared dialog chrome', () => {
     expect(block).toMatch(/justify-content:\s*center/)
   })
 
+  /**
+   * A message about a failure must not be painted underneath the thing that
+   * failed.
+   *
+   * .action-toast sat at z-index 160, under .export-overlay's 200 and its
+   * full-viewport rgba(18,18,18,0.48) backdrop. Every toast raised from inside
+   * an open dialog — export failures, send failures, scan failures, "Cloud
+   * sync isn't configured" on Create client dashboard — fired correctly and
+   * was invisible. A beta tester pressed that button twice and reported
+   * nothing happening, with nothing in the console. The toast was there the
+   * whole time, behind the panel.
+   */
+  it('stacks the toast above every dialog layer', () => {
+    const toast = /\.action-toast\s*\{([^}]*)\}/.exec(shell)?.[1] || ''
+    const toastZ = Number(/z-index:\s*(\d+)/.exec(toast)?.[1])
+    expect(Number.isFinite(toastZ)).toBe(true)
+
+    const overlay = baseOverlayBlock()
+    const overlayZ = Number(/z-index:\s*(\d+)/.exec(overlay)?.[1])
+    expect(Number.isFinite(overlayZ)).toBe(true)
+
+    expect(toastZ).toBeGreaterThan(overlayZ)
+
+    /* Not just the overlay: any panel that can sit on top of it counts too,
+       or the toast disappears behind whichever one is highest. */
+    const allZ = [...shell.matchAll(/z-index:\s*(\d+)/g)]
+      .map((m) => Number(m[1]))
+      .filter((n) => n >= overlayZ && n < 9000)
+    expect(Math.max(...allZ)).toBe(toastZ)
+  })
+
+  /* A z-index referencing a token nobody defines is dropped by the parser, so
+     the element silently has no stacking at all. Five such declarations
+     existed, on a heading, a paragraph, a badge, a button and a label row —
+     the residue of a bulk edit rather than a design. */
+  it('never stacks against an undefined token', () => {
+    expect(shell).not.toMatch(/z-index:\s*var\(--z-/)
+  })
+
   it('does not leave the base rules in a lazily-imported stylesheet', () => {
     expect(hasBaseRule(lazyDeliver, '.export-overlay')).toBe(false)
     expect(hasBaseRule(lazyDeliver, '.export-panel')).toBe(false)

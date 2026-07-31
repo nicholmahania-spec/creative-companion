@@ -280,6 +280,12 @@ function PortalMode({
   flashMicro,
 }) {
   const [creating, setCreating] = useState(false)
+  /* Kept beside the button as well as toasted. A toast is a glance you can
+     miss — the owner's own note is that anything at the bottom of the screen
+     does not get seen — and this one was invisible outright until the toast
+     was lifted above the dialog backdrop. The reason a client link could not
+     be made belongs next to the control that could not make it. */
+  const [createError, setCreateError] = useState('')
   const [portal, setPortal] = useState(null)
   const [messages, setMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
@@ -316,6 +322,7 @@ function PortalMode({
   }, [portalId, refresh])
 
   const handleCreate = async () => {
+    setCreateError('')
     setCreating(true)
     const r = await createClientPortal({
       projectLocalId: project?.id,
@@ -324,7 +331,9 @@ function PortalMode({
     })
     setCreating(false)
     if (!r.ok) {
-      flashToast?.(r.error || 'Couldn’t create the dashboard')
+      const message = r.error || 'Couldn’t create the dashboard'
+      setCreateError(message)
+      flashToast?.(message)
       return
     }
     onSetPortalId?.(r.portalId)
@@ -449,6 +458,11 @@ function PortalMode({
           >
             {creating ? 'Creating…' : 'Create client dashboard'}
           </button>
+          {createError && (
+            <p className="discovery-brief-hint" role="alert">
+              {createError}
+            </p>
+          )}
         </>
       ) : !loaded ? (
         <p className="discovery-brief-hint">Loading the dashboard…</p>
