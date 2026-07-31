@@ -82,6 +82,7 @@ import {
 } from './lib/journey'
 import {
   pathStepHasContent,
+  pathStepMeetsCondition,
   pathProgressSummary,
   pathFirstGap,
   pathGapFocusSelector,
@@ -723,6 +724,29 @@ function App() {
     [pathMissingRows]
   )
   const thisStepId = journeyIdForView(activeView)
+  const markPathReached = useCallback(
+    (...a) => useAppStore.getState().markPathReached(...a),
+    []
+  )
+
+  /* Record a stop the moment its live condition is first met.
+
+     Completion is latched rather than recomputed (see pathStepHasContent), so
+     something has to write the latch. This is the one place that knows both
+     the live conditions and the active project, and markPathReached only ever
+     adds — a no-op write returns early so this cannot churn the persist layer
+     or the cloud push on every render. */
+  useEffect(() => {
+    const projectId = activeProject?.id
+    if (!projectId) return
+    const newly = JOURNEY_STEPS.filter(
+      (step) =>
+        !activeProject?.pathReached?.[step.id] &&
+        pathStepMeetsCondition(step.id, pathProgressCtx)
+    ).map((step) => step.id)
+    if (newly.length) markPathReached(newly, projectId)
+  }, [activeProject, pathProgressCtx, markPathReached])
+
   const thisStepFilled = useMemo(() => {
     if (!thisStepId) return null
     return pathStepHasContent(thisStepId, pathProgressCtx)

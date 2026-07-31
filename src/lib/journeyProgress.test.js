@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   pathStepHasContent,
+  pathStepMeetsCondition,
   pathProgressSummary,
   pathMissingLabels,
   pathFirstGap,
@@ -257,5 +258,71 @@ describe('pathStepHasContent', () => {
     expect(ctx.moodItems).toHaveLength(1)
     expect(ctx.tasks).toHaveLength(1)
     expect(pathStepHasContent('research', ctx)).toBe(true)
+  })
+})
+
+describe('completion latches', () => {
+  /**
+   * Two conditions could go from true back to false through ordinary work,
+   * and the tick vanished from the sidebar, the step rail and the home dots
+   * at once, with no message and no local cause to attach it to.
+   */
+  it('research does not un-tick when you star another pin', () => {
+    const withNote = [{ id: 1, inPack: true, note: 'why this one' }]
+    const ctx = { project: { id: 'p' }, moodItems: withNote }
+    expect(pathStepMeetsCondition('research', ctx)).toBe(true)
+
+    // Star a second pin — the live condition now fails...
+    const plusBare = [...withNote, { id: 2, inPack: true, note: '' }]
+    expect(
+      pathStepMeetsCondition('research', { project: { id: 'p' }, moodItems: plusBare })
+    ).toBe(false)
+
+    // ...but once latched, the tick holds.
+    expect(
+      pathStepHasContent('research', {
+        project: { id: 'p', pathReached: { research: true } },
+        moodItems: plusBare,
+      })
+    ).toBe(true)
+  })
+
+  /* The sharpest case: brandWords is a client-visible brief field that
+     mergeDetectiveAnswers overwrites, and deliverWordsChecked was keyed by the
+     word's own text. So a client re-submitting their brief could un-complete
+     the designer's final stop, weeks later, from a different screen. */
+  it('assets does not un-tick when the client edits their brand words', () => {
+    const done = {
+      id: 'p',
+      handoffNote: 'files sent',
+      detective: { brandWords: 'honest, solid' },
+      deliverWordsChecked: { honest: true, solid: true },
+    }
+    expect(pathStepMeetsCondition('deliver', { project: done })).toBe(true)
+
+    // The client re-submits with a reworded answer; the old keys no longer match.
+    const afterClientEdit = {
+      ...done,
+      detective: { brandWords: 'honest, solid, warm' },
+    }
+    expect(pathStepMeetsCondition('deliver', { project: afterClientEdit })).toBe(
+      false
+    )
+    expect(
+      pathStepHasContent('deliver', {
+        project: { ...afterClientEdit, pathReached: { deliver: true } },
+      })
+    ).toBe(true)
+  })
+
+  /* The latch must not invent progress that never happened — it only holds
+     what was genuinely reached. */
+  it('does not tick a stop that was never met', () => {
+    expect(
+      pathStepHasContent('research', {
+        project: { id: 'p', pathReached: { deliver: true } },
+        moodItems: [],
+      })
+    ).toBe(false)
   })
 })

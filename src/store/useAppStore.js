@@ -143,7 +143,7 @@ export function composeBriefFromDetective(detective) {
 /**
  * Default brand identity template fields on each project.
  * Factory so every project gets fresh nested objects (detective,
- * colorRoleWhy, deliverWordsChecked) — never shared refs.
+ * colorRoleWhy, deliverWordsChecked, pathReached) — never shared refs.
  */
 export function brandIdentityDefaults() {
   return {
@@ -174,6 +174,9 @@ export function brandIdentityDefaults() {
   colorRoles: null,
   /** Why each assigned color role fits the Define brand words */
   colorRoleWhy: { cover: '', text: '', accent: '', quiet: '' },
+  /* Stops this project has ever completed. A record, not a live verdict —
+     see pathStepHasContent for why completion must not be able to regress. */
+  pathReached: {},
   /** Why the chosen type pair fits the Define brand words */
   typeWhy: '',
   /** data URL mark for pack cover */
@@ -767,6 +770,39 @@ const useAppStore = create(
        * Merge a patch into the active project's Brand Book Builder settings.
        * Section-level merge — `{ grid: {...} }` replaces only `grid`.
        */
+      /**
+       * Record that stops have been reached. Only ever adds.
+       *
+       * There is deliberately no way to clear a single stop: the whole point
+       * is that ordinary work — starring another pin, a client re-submitting
+       * their brief — must not be able to take a tick away. Starting over is
+       * a new project.
+       *
+       * @param {string[]} stepIds
+       * @param {string|number} [projectId] the project the work happened on
+       */
+      markPathReached: (stepIds, projectId) =>
+        set((state) => {
+          const ids = (stepIds || []).filter(Boolean)
+          if (!ids.length) return {}
+          const target = projectId ?? state.currentProjectId
+          let changed = false
+          const projects = state.projects.map((p) => {
+            if (p.id !== target) return p
+            const reached = { ...(p.pathReached || {}) }
+            for (const id of ids) {
+              if (!reached[id]) {
+                reached[id] = true
+                changed = true
+              }
+            }
+            return changed ? { ...p, pathReached: reached } : p
+          })
+          // No-op writes would churn the persist layer and the cloud push on
+          // every render pass that recomputes progress.
+          return changed ? { projects } : {}
+        }),
+
       setBookBuilder: (patch) =>
         set((state) => ({
           projects: state.projects.map((p) =>

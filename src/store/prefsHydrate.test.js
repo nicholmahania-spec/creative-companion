@@ -58,6 +58,7 @@ describe('prefs defaults survive hydration from older payloads', () => {
     const b = brandIdentityDefaults()
     expect(a.detective).not.toBe(b.detective)
     expect(a.colorRoleWhy).not.toBe(b.colorRoleWhy)
+    expect(a.pathReached).not.toBe(b.pathReached)
     expect(a.deliverWordsChecked).not.toBe(b.deliverWordsChecked)
   })
 })

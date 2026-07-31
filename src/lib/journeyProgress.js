@@ -49,7 +49,43 @@ function hasJustifiedColorRoles(project = {}) {
  *   palette?: array,
  * }} ctx
  */
+/**
+ * Has this stop been completed — ever?
+ *
+ * Two of these conditions could go from true back to false through ordinary
+ * work, and the tick vanished from the sidebar, the step rail and the home
+ * dots at once, silently and non-locally:
+ *
+ *  - research required EVERY starred pin to have a note. Star a second pin
+ *    and Research un-ticked until you wrote it. Doing more of the thing the
+ *    stop measures took the mark away.
+ *  - deliver required every comma-separated brandWords entry to be checked
+ *    off, keyed by the word's own text — and brandWords is a client-visible
+ *    brief field that mergeDetectiveAnswers overwrites. So a CLIENT
+ *    re-submitting their brief could un-complete the designer's final stop,
+ *    weeks later, from a different screen.
+ *
+ * Progress that can be taken away by continuing to work reads as punishment
+ * for engaging, and with no visible cause the likely reading is "I broke
+ * something" or "it lost my work" — neither of which has an action attached.
+ * So completion latches: once met, `project.pathReached[stepId]` holds it.
+ * Whatever is still outstanding is stated additively on the page itself, not
+ * expressed as the loss of a mark.
+ */
 export function pathStepHasContent(stepId, ctx = {}) {
+  if (ctx?.project?.pathReached?.[stepId]) return true
+  return pathStepMeetsCondition(stepId, ctx)
+}
+
+/**
+ * The LIVE condition for a stop — true when its content is there right now.
+ *
+ * Kept separate from pathStepHasContent because a live condition can go from
+ * true back to false through ordinary work, and the tick must not. Use this
+ * only to decide when a stop has newly been reached; use pathStepHasContent
+ * for anything the user sees.
+ */
+export function pathStepMeetsCondition(stepId, ctx = {}) {
   const project = ctx.project || {}
   const mood = ctx.moodItems || []
   const tasks = ctx.tasks || []
