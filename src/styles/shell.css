@@ -4396,36 +4396,6 @@ body.cc-printing-page button {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Demo tour */
-
-.demo-tour-panel {
-  width: min(26rem, 100%);
-  max-width: 28rem;
-}
-
-.demo-tour-overlay .view-lede {
-  margin-bottom: 1rem;
-}
-
-.demo-tour-dots {
-  display: flex;
-  gap: 0.35rem;
-  margin: 0 0 0.85rem;
-}
-
-.demo-tour-dots span {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 50%;
-  background: var(--bg-muted);
-  border: 1px solid var(--border-subtle);
-}
-
-.demo-tour-dots span.is-on {
-  background: var(--accent-growth);
-  border-color: var(--accent-growth);
-}
-
 /* ——— Beautify v1.3.0 ——— */
 
 .btn-primary {
@@ -7003,25 +6973,6 @@ select:focus {
   border-radius: 0 !important;
   min-height: 40px;
   box-shadow: none !important;
-}
-
-.demo-tour-studio {
-  border-radius: var(--radius-sm) !important;
-  box-shadow: none !important;
-  border: 1px solid var(--ts-border, #E7E7E7);
-}
-
-.demo-tour-studio .demo-tour-lede {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--ts-mute, #A1A1A1);
-  margin: 0.35rem 0 0.85rem;
-}
-
-.demo-tour-studio .demo-tour-dots span {
-  border-radius: var(--radius);
-  width: 0.45rem;
-  height: 0.45rem;
 }
 
 .buddy-studio .buddy-kit-input,

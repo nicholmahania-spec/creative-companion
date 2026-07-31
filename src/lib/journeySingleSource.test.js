@@ -97,4 +97,42 @@ describe('journey is single-source', () => {
   it('PATH_STEP_COUNT tracks the declaration', () => {
     expect(PATH_STEP_COUNT).toBe(JOURNEY_STEPS.length)
   })
+
+  /**
+   * The forward button must take its destination from the same place it takes
+   * its label.
+   *
+   * DefineView rendered `Next · Research` and navigated to 'flow', which is
+   * Touchpoints — following it skipped Research entirely, so the wall was empty
+   * at Identity and the mark got drawn against memory. DesignView rendered
+   * `Next · Touchpoints` and navigated to 'finish', skipping Touchpoints, so
+   * the book was assembled with no applications in it. Both read correctly in
+   * review: the label was derived, and only the destination was a literal.
+   *
+   * This is the restated-copy defect in its most expensive form, because the
+   * label and the destination were two copies of one fact and only one of them
+   * was updated. A hardcoded view id inside a path-continue button is therefore
+   * banned outright — deriving both halves from getNextJourney makes them
+   * structurally incapable of disagreeing.
+   */
+  /* Review is a Tool, not a path stop — getNextJourney('review') is null, so
+     there is no next stop to derive and its literal is the honest answer. The
+     exemption is listed rather than pattern-matched so that adding a stop to
+     the path cannot silently widen it. */
+  const NOT_PATH_STOPS = new Set(['views/ReviewView.jsx'])
+
+  it('no path-continue button hardcodes where it goes', () => {
+    const offenders = []
+    for (const f of files) {
+      if (!/views\/.+\.jsx$/.test(f.rel)) continue
+      if (NOT_PATH_STOPS.has(f.rel)) continue
+      const src = readFileSync(f.path, 'utf8')
+      const idx = src.indexOf('path-continue-row')
+      if (idx === -1) continue
+      const block = src.slice(idx, idx + 700)
+      const literal = /setActiveView\?\.\(\s*'[a-z]+'\s*\)/.exec(block)
+      if (literal) offenders.push(`${f.rel}: ${literal[0]}`)
+    }
+    expect(offenders).toEqual([])
+  })
 })

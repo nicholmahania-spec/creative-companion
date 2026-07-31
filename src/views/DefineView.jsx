@@ -18,6 +18,7 @@ const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
 export default function DefineView(props) {
   const {
     navDir = 'none',
+    journeyNext = null,
     activeProject: activeProjectProp = null,
     deskTasks = [],
     updateDetective: updateDetectiveProp,
@@ -317,9 +318,9 @@ export default function DefineView(props) {
         <button
           type="button"
           className="btn btn-primary work-path-next"
-          onClick={() => setActiveView?.('flow')}
+          onClick={() => setActiveView?.(journeyNext?.view || 'studio')}
         >
-          {`Next · ${labelForStepId('research')}`}
+          {`Next · ${journeyNext?.label || labelForStepId('research')}`}
         </button>
       </div>
     </div>

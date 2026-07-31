@@ -32,6 +32,7 @@ import '../styles/lazy-mood.css'
 
 export default function ResearchView({
   navDir = 'none',
+  journeyNext = null,
   deskMood = [],
   activeProjectId = null,
   brandWords = '',
@@ -1513,9 +1514,9 @@ export default function ResearchView({
         <button
           type="button"
           className="btn btn-primary work-path-next"
-          onClick={() => setActiveView?.('brand')}
+          onClick={() => setActiveView?.(journeyNext?.view || 'brand')}
         >
-          {`Next · ${labelForStepId('design')}`}
+          {`Next · ${journeyNext?.label || labelForStepId('design')}`}
         </button>
       </div>
     </>

@@ -452,7 +452,6 @@ function App() {
   const [overviewSharePanelOpen, setOverviewSharePanelOpen] = useState(false)
   const [autoOpenPortalReview, setAutoOpenPortalReview] = useState(false)
   const [clientInboxOpen, setClientInboxOpen] = useState(false)
-  const [demoTour, setDemoTour] = useState(null)
   const [navDir, setNavDir] = useState('none')
   const prevJourneyIdx = useRef(0)
   const [savePulse, setSavePulse] = useState(false)
@@ -1083,11 +1082,6 @@ function App() {
         setShortcutsOpen(false)
         return
       }
-      if (demoTour) {
-        e.preventDefault()
-        setDemoTour(null)
-        return
-      }
       if (deskConfirm) {
         e.preventDefault()
         setDeskConfirm(null)
@@ -1120,7 +1114,6 @@ function App() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [
     shortcutsOpen,
-    demoTour,
     deskConfirm,
     forceBreakConsentOpen,
     exportPanel,
@@ -1586,10 +1579,6 @@ function App() {
     () => document.querySelector('.shortcuts-overlay'),
     []
   )
-  const getDemoTourRoot = useCallback(
-    () => document.querySelector('.demo-tour-overlay'),
-    []
-  )
   useModalFocus(!!exportPanel && !showBreakdown, getExportRoot, {
     initialSelector: '.export-panel-header button, button',
   })
@@ -1605,9 +1594,6 @@ function App() {
   })
   // Shortcuts panel: trap Tab and restore focus to the opener on close.
   useModalFocus(shortcutsOpen, getShortcutsRoot, {
-    initialSelector: 'button',
-  })
-  useModalFocus(!!demoTour, getDemoTourRoot, {
     initialSelector: 'button',
   })
 
@@ -1629,7 +1615,6 @@ function App() {
         exportPanel ||
         showBreakdown ||
         showOnboarding ||
-        demoTour ||
         deskConfirm ||
         forceBreakConsentOpen ||
         document.querySelector('.board-lightbox-overlay')
@@ -1692,7 +1677,6 @@ function App() {
     exportPanel,
     showBreakdown,
     showOnboarding,
-    demoTour,
     deskConfirm,
     forceBreakConsentOpen,
     shortcutsOpen,
@@ -2699,9 +2683,8 @@ function App() {
       if (result.ok) {
         setBodyDoubling(true)
         setActiveView('project')
-        setDemoTour({ step: 0 })
         notifyAction(
-          'Soft Signal demo loaded · short tour open',
+          'Soft Signal demo loaded',
           'project_create',
           { label: 'Soft Signal demo' }
         )
@@ -2737,7 +2720,6 @@ function App() {
       if (result.ok) {
         setBodyDoubling(true)
         setActiveView('finish')
-        setDemoTour(null)
         notifyAction(
           'Harbor & Hearth demo loaded · open Pack for full brand book',
           'project_create',
@@ -4064,6 +4046,7 @@ function App() {
             <StepDependencyReminder stepId="research" />
             <ResearchView
               navDir={navDir}
+              journeyNext={journeyNext}
               deskMood={deskMood}
               activeProjectId={activeProjectId}
               brandWords={activeProject?.detective?.brandWords || ''}
@@ -4204,6 +4187,7 @@ function App() {
             <StepDependencyReminder stepId="design" />
             <DesignView
               navDir={navDir}
+              journeyNext={journeyNext}
               activeProject={activeProject}
               deskMood={deskMood}
               projectPalette={projectPalette}
@@ -4351,6 +4335,7 @@ function App() {
             />}>
             <DefineView
               navDir={navDir}
+              journeyNext={journeyNext}
               activeProject={activeProject}
               deskTasks={deskTasks}
               setActiveView={setActiveView}
@@ -4393,83 +4378,6 @@ function App() {
       </footer>
 
 
-      {demoTour && (
-        <div
-          className="export-overlay demo-tour-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="demo-tour-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setDemoTour(null)
-          }}
-        >
-          <div className="export-panel demo-tour-panel demo-tour-studio">
-            <p className="onboard-eyebrow">Demo</p>
-            <div className="demo-tour-dots" aria-hidden="true">
-              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-                <span key={i} className={i <= demoTour.step ? 'is-on' : ''} />
-              ))}
-            </div>
-            <h2 id="demo-tour-title" style={{ marginTop: 0 }}>
-              {
-                [
-                  /* Was a frozen seven-entry list naming Define/Ideate/
-                     Sketch/Design/Review/Deliver and walking through Ideate
-                     and Review as if they were path stops. A first-run tour
-                     that contradicts every other screen is worse than none. */
-                  ...JOURNEY_STEPS.map((st, i) => `${i + 1} · ${st.label}`),
-                ][demoTour.step] || 'Tour'
-              }
-            </h2>
-            <p className="view-lede demo-tour-lede">
-              {
-                [
-                  'Goal · who · feel',
-                  'Pins · ★ up to 6',
-                  'Sparks · shortlist',
-                  'Drafts + why',
-                  'Artboard · version',
-                  'Notes · gaps',
-                  'PDF · handoff',
-                ][demoTour.step]
-              }
-            </p>
-            <div className="onboard-actions" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  const views = PATH_VIEWS
-                  const s = demoTour.step
-                  setActiveView(views[s])
-                  if (s >= 6) setDemoTour(null)
-                  else setDemoTour({ step: s + 1 })
-                }}
-              >
-                {demoTour.step >= 6 ? 'Deliver' : 'Next'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => {
-                  const views = PATH_VIEWS
-                  setActiveView(views[demoTour.step] || 'project')
-                  setDemoTour(null)
-                }}
-              >
-                Stay
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setDemoTour(null)}
-              >
-                Skip
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showOnboarding && (
         <div

@@ -40,6 +40,7 @@ const StationeryKit = lazy(() => import('../components/StationeryKit'))
 
 export default function DesignView({
   navDir = 'none',
+  journeyNext = null,
   activeProject = null,
   deskMood = [],
   projectPalette = [],
@@ -2381,9 +2382,9 @@ export default function DesignView({
         <button
           type="button"
           className="btn btn-primary work-path-next"
-          onClick={() => setActiveView?.('finish')}
+          onClick={() => setActiveView?.(journeyNext?.view || 'flow')}
         >
-          {`Next · ${labelForStepId('sketch')}`}
+          {`Next · ${journeyNext?.label || labelForStepId('sketch')}`}
         </button>
       </div>
     </>
