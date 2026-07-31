@@ -3,6 +3,7 @@ import useAppStore from '../store/useAppStore'
 import {
   bookBuilderFor,
   readPaletteTokens,
+  resolvePageBg,
   mintTokenId,
   MAX_COLORS,
   MIN_COLORS,
@@ -66,11 +67,10 @@ function resolveTypeColor(colors, key, fallback) {
   const token = colors.find((c) => String(c.id) === String(key));
   return token ? token.hex : fallback;
 }
-function resolveBg(colors, key) {
-  if (key === "white") return "#ffffff";
-  const token = colors.find((c) => String(c.id) === String(key));
-  return token ? token.hex : "#ffffff";
-}
+/* Resolution lives in bookBuilder.js so the screen and the PDF cannot answer
+   differently — the whole reason the page-background control was screen-only
+   is that this view resolved it privately and nothing else could. */
+const resolveBg = (colors, key) => resolvePageBg(colors, key);
 
 /* ------------------------------------------------------------ Section */
 

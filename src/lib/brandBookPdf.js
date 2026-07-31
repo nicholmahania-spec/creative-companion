@@ -234,7 +234,22 @@ export async function downloadBrandPackVectorPdf(
 
     const inkHex = normalizeHex(roles.text) || packCoverHex(pack)
     const goldHex = normalizeHex(roles.accent) || colors[1] || inkHex
-    const creamHex = normalizeHex(roles.quiet) || colors[colors.length - 1] || '#FAFAF9'
+    /* The book's paper. The builder has always had a page-background control
+       and it never reached here — the book on screen repainted and the file
+       the client received did not, so the control looked like it styled the
+       deliverable and did not. The chosen colour wins; the palette-derived
+       quiet tone stays as the fallback for a project that never picked one.
+
+       Everything cream-derived follows from this one value — the content
+       sheet, its hairlines and tints, and the text colours computed by
+       `textOn`, which falls back to a readable colour whenever the preferred
+       ink would not clear 4.5:1. So a dark paper repaints the page and its
+       type together rather than leaving unreadable text behind. */
+    const creamHex =
+      normalizeHex(pack?.bookPageBg?.pageType) ||
+      normalizeHex(roles.quiet) ||
+      colors[colors.length - 1] ||
+      '#FAFAF9'
     /* The fourth colour the design calls "tan": the palette member that is
        none of the three roles. Where a project has only three colours it is
        mixed from the two it does have rather than invented. */

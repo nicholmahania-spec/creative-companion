@@ -8,6 +8,7 @@
  */
 
 import { pinFaceCssText, pinVisualKind } from './moodPins'
+import { resolvedPageBackgrounds } from './bookBuilder'
 import { toISODate } from './dates'
 import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
 import {
@@ -291,6 +292,11 @@ export function buildBrandPackSnapshot({
 
   const d = p.detective || {}
   return {
+    /* The builder's page backgrounds, resolved to hex. Without this the whole
+       page-background control was screen-only: the book on screen repainted
+       and the delivered PDF did not, which is a control that looks like it
+       styles the deliverable and does not. */
+    bookPageBg: resolvedPageBackgrounds(p),
     exportedAt: new Date().toISOString(),
     app: 'Creative Companion',
     projectName: p.name || 'Untitled project',
