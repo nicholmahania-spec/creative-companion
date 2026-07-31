@@ -67,11 +67,11 @@ test.describe('Desk reliability', () => {
       .click()
     await page.getByRole('button', { name: 'Preview', exact: true }).click()
     await expect(
-      page.getByRole('dialog', { name: /Brand direction pack/i })
+      page.getByRole('dialog', { name: /^Export$/i })
     ).toBeVisible({ timeout: 8000 })
     await page.keyboard.press('Escape')
     await expect(
-      page.getByRole('dialog', { name: /Brand direction pack/i })
+      page.getByRole('dialog', { name: /^Export$/i })
     ).toHaveCount(0)
   })
 })
