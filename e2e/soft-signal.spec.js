@@ -80,9 +80,12 @@ test.describe('Soft Signal demo', () => {
     // Demo seeds leave-behind ★ pins
     await stepByIdIn(path, 'design').click()
     await expect(headingForStep(page, 'design').first()).toBeVisible()
-    await expect(page.getByText(/★\s*[1-9]\/6/).first()).toBeVisible({
-      timeout: 5000,
-    })
+    /* Floor, not ratio — Design states the pack count the way Research does
+       ("★ 3 in pack · room for 3" / "★ pack full"). The old assertion froze
+       the "★ N/6" scoreboard that packCountPhrasing.test.js now forbids. */
+    await expect(
+      page.getByText(/★\s*\d+ in pack|★\s*pack full/).first()
+    ).toBeVisible({ timeout: 5000 })
     // Brand book fields seeded — messaging + imagery live in collapsed
     // sub-accordions, so assert seeded values, not visibility
     await page.getByRole('tab', { name: /^Words$/i }).click()

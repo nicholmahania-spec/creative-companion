@@ -591,6 +591,47 @@ export default function ResearchView({
                       : `★ ${starred} in pack · room for ${6 - starred}`
                     : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
                 </p>
+                {/* One button, never two, and only when it does something.
+                    Showing both leaves one inert in most states, which is a
+                    choice plus a dead end. The pack state already decides
+                    which is useful, so the app answers instead of asking.
+
+                    Nothing stands here on a fresh project: this is a capture
+                    page, and the next action must always be "put another
+                    picture on the wall". Bulk actions belong in the scan path
+                    only once the wall is worth acting on in bulk. */}
+                {starred >= 6 ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm research-pack-bulk"
+                    onClick={() => {
+                      deskMood
+                        .filter((m) => m.inPack)
+                        .forEach((p) => toggleMoodPinInPack(p.id))
+                      flashToast('Pack cleared — pin notes are kept')
+                    }}
+                  >
+                    Unstar all
+                  </button>
+                ) : deskMood.some((m) => !m.inPack) ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm research-pack-bulk"
+                    onClick={() => {
+                      const open = deskMood.filter((m) => !m.inPack)
+                      let added = 0
+                      for (const p of open) {
+                        if (deskMood.filter((m) => m.inPack).length + added >= 6)
+                          break
+                        const r = toggleMoodPinInPack(p.id)
+                        if (r.ok && r.inPack) added++
+                      }
+                      if (!added) flashToast('Client pack is full (6 pictures max)')
+                    }}
+                  >
+                    Star the rest
+                  </button>
+                ) : null}
                 {words ? (
                   <p className="research-goal-anchor" title={words}>
                     Words · {words.slice(0, 64)}
@@ -705,50 +746,13 @@ export default function ResearchView({
                 >
                   Note
                 </button>
-                {deskMood.length > 0 && (
-                  <details className="board-pack-bulk research-advanced">
-                    <summary>Pack tools</summary>
-                    <div className="board-pack-bulk-actions">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => {
-                          const open = deskMood.filter((m) => !m.inPack)
-                          let added = 0
-                          for (const p of open) {
-                            if (
-                              deskMood.filter((m) => m.inPack).length + added >=
-                              6
-                            )
-                              break
-                            const r = toggleMoodPinInPack(p.id)
-                            if (r.ok && r.inPack) added++
-                          }
-                          if (!added) {
-                            flashToast(
-                              deskMood.filter((m) => m.inPack).length >= 6
-                                ? 'Client pack is full (6 pictures max)'
-                                : 'Nothing left to star'
-                            )
-                          }
-                        }}
-                      >
-                        Fill pack
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => {
-                          deskMood
-                            .filter((m) => m.inPack)
-                            .forEach((p) => toggleMoodPinInPack(p.id))
-                        }}
-                      >
-                        Empty pack
-                      </button>
-                    </div>
-                  </details>
-                )}
+                {/* The bulk pack actions used to live here, inside a closed
+                    <details> labelled "Pack tools" — a word that does not say
+                    what is under it, on a page you return to after days away.
+                    The owner's own verdict on that pattern: "they are hidden
+                    and my first thought was 'I have no idea what this is.'"
+                    They now sit beside the pack status in the heading, where
+                    the count they act on already is. */}
               </div>
               {boardAddMode === 'url' && (
                 <div className="board-inline-form">
