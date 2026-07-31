@@ -1,6 +1,6 @@
 /**
  * Client portal — a no-login dashboard link for a project's client.
- * Studio side chooses which of the 7 journey steps are "pushed" (visible)
+ * Studio side chooses which of the journey steps are "pushed" (visible)
  * to the client; the client can view what's pushed, approve or request
  * changes per step, chat with the studio, and fill in the Project overview
  * form themselves if asked to.
