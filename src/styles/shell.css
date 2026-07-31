@@ -2039,87 +2039,6 @@ h3 {
   background: var(--bg-elevated);
 }
 
-/* Creative Reset */
-
-.reset-panel {
-  width: min(400px, 100%);
-  padding: 1.5rem 1.5rem 1.25rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-subtle);
-}
-
-.reset-title {
-  margin: 0 0 0.35rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-.reset-list {
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--border-hairline);
-  margin-bottom: 1rem;
-}
-
-.reset-row {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  width: 100%;
-  text-align: left;
-  padding: 0.95rem 0.15rem;
-  border: none;
-  border-bottom: 1px solid var(--border-hairline);
-  background: none;
-  font: inherit;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: padding-left var(--transition), background var(--transition);
-}
-
-.reset-row:hover {
-  padding-left: 0.35rem;
-  background: var(--bg-muted);
-}
-
-.reset-row:hover .reset-label {
-  color: var(--accent-primary);
-}
-
-.reset-num {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-  width: 1.4rem;
-  flex-shrink: 0;
-}
-
-.reset-label {
-  flex: 1;
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.reset-arrow {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  opacity: 0.7;
-}
-
-.reset-row:hover .reset-arrow {
-  color: var(--accent-primary);
-  opacity: 1;
-}
-
-.reset-dismiss {
-  margin-top: 0.25rem;
-  display: inline-block;
-}
-
 /* Insights — uneven layout, not 3 equal cards */
 
 .insights-layout {
@@ -7061,30 +6980,6 @@ select:focus {
 .forced-break-studio .btn {
   border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
-}
-
-.reset-studio {
-  border-radius: var(--radius-sm) !important;
-  border: 1px solid var(--ts-border, #E7E7E7);
-  box-shadow: none !important;
-}
-
-.reset-studio .reset-lede {
-  display: none;
-}
-
-.reset-studio .reset-row {
-  border-radius: var(--radius-sm) !important;
-  border: 1px solid var(--ts-border, #E7E7E7);
-  box-shadow: none !important;
-  min-height: 44px;
-}
-
-.reset-studio .reset-row:focus-visible,
-.reset-studio .reset-row:hover {
-  border-color: var(--ts-focus, #606060);
-  outline: 1.5px solid var(--ts-focus, #606060);
-  outline-offset: 0;
 }
 
 .onboard-studio .onboard-input {
