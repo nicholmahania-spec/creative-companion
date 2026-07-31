@@ -21,7 +21,6 @@
  */
 import { useCallback, useMemo } from 'react'
 import { getRequiredEmpty, START_HERE_CAP } from '../lib/detectiveBrief'
-import { trackChapterNavigation } from '../lib/analytics'
 
 /** Smooth scrolling is a vestibular trigger for some users; honor the OS pref. */
 const prefersReducedMotion = () =>
@@ -41,7 +40,6 @@ export default function DefineStartHere({ detective, onOpenChapter }) {
     (fieldId, chapterId) => {
       if (chapterId) {
         onOpenChapter?.(chapterId)
-        trackChapterNavigation(chapterId, 'open')
       }
       requestAnimationFrame(() => {
         const el =

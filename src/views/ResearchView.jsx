@@ -25,7 +25,6 @@ import {
 import { useCanvasViewport } from '../lib/useCanvasViewport'
 import { extractDominantColors, sampleColorAt } from '../lib/extractColors'
 import { useModalFocus } from '../lib/useModalFocus'
-import { trackMoodPinOperation, trackBoardSubmission, trackTimerOperation } from '../lib/analytics'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { validateBoardUrl } from '../lib/safeBoardUrl'
 import '../styles/lazy-mood.css'
@@ -154,7 +153,6 @@ export default function ResearchView({
       }
       pins.forEach((pin) => {
         addMoodPin({ ...pin, projectId: ownerProjectId ?? pin.projectId })
-        trackMoodPinOperation('add', pin)
       })
       if (skipped.length) {
         flashToast?.(
@@ -188,8 +186,6 @@ export default function ResearchView({
 
     const addPinAndReset = (pin) => {
       addMoodPin({ ...pin, projectId: ownerProjectId ?? pin.projectId })
-      trackBoardSubmission('url')
-      trackMoodPinOperation('add', pin)
       setBoardUrl('')
       setBoardAddMode(null)
       notifyAction?.('Pin added', 'mood_pin', { label: 'URL pin' })
@@ -269,8 +265,6 @@ export default function ResearchView({
         'linear-gradient(135deg, #1C1917, #0F766E)',
     }
     addMoodPin(pin)
-    trackBoardSubmission('note')
-    trackMoodPinOperation('add', pin)
     setBoardNote('')
     setBoardAddMode(null)
     notifyAction?.('Pin added', 'mood_pin', { label: 'Note pin' })
@@ -1204,10 +1198,6 @@ export default function ResearchView({
                                     r.inPack ? '★ pack' : '☆ pack'
                                   )
                                 // Track the operation
-                                trackMoodPinOperation(
-                                  r.inPack ? 'toggle_pack_on' : 'toggle_pack_off',
-                                  { ...item, inPack: r.inPack }
-                                )
                               }}
                             >
                               {item.inPack ? '★' : '☆'}
@@ -1228,7 +1218,6 @@ export default function ResearchView({
                                       onClick={() => {
                                     movePackPin(item.id, 'up')
                                     // Track the operation
-                                    trackMoodPinOperation('move_pack_up', item)
                                   }}
                                     >
                                       ↑
@@ -1254,7 +1243,6 @@ export default function ResearchView({
                                         else {
                                           flashMicro('Main picture set')
                                           // Track the operation
-                                          trackMoodPinOperation('set_hero', { ...item, packHero: r.inPack })
                                         }
                                       }}
                                     >
@@ -1268,7 +1256,6 @@ export default function ResearchView({
                                   onClick={() => {
                               removeMoodPin(item.id)
                               // Track mood pin removal
-                              trackMoodPinOperation('remove', { ...item })
                             }}
                                 >
                                   Remove
@@ -1285,7 +1272,6 @@ export default function ResearchView({
                             value={item.note || ''}
                             onChange={(e) => {
                               updateMoodPinNote(item.id, e.target.value)
-                              trackMoodPinOperation('update_note', { ...item, note: e.target.value })
                             }}
                             placeholder={
                               item.inPack ? 'Why ★' : 'Caption…'

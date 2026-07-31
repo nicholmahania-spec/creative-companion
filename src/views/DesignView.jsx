@@ -31,7 +31,6 @@ import { pinFaceStyle } from '../lib/moodPins'
 import { loadTypePairFont } from '../lib/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
 import InfoReveal from '../components/InfoReveal'
-import { trackTemplateAction } from '../lib/analytics'
 import '../styles/lazy-design.css'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
@@ -198,7 +197,6 @@ export default function DesignView({
           t.name === name.trim() &&
           t.description === description.trim()
         ) || updatedTemplates[updatedTemplates.length - 1]; // fallback to last one
-        trackTemplateAction('save', newTemplate)
         return true
       } else {
         flashToast?.(`Failed to save template: ${result.error}`)
@@ -222,7 +220,6 @@ export default function DesignView({
         flashMicro?.('Template applied successfully')
         // Track template apply action
         const appliedTemplate = store.getTemplateById(templateId)
-        trackTemplateAction('apply', appliedTemplate)
         return true
       } else {
         flashToast?.(`Failed to apply template: ${result.error}`)
@@ -246,7 +243,6 @@ export default function DesignView({
         await loadTemplates()
         flashMicro?.('Template deleted')
         // Track template delete action
-        trackTemplateAction('delete', templateToDelete)
         return true
       } else {
         flashToast?.(`Failed to delete template: ${result.error}`)
@@ -269,10 +265,6 @@ export default function DesignView({
       if (result.ok) {
         await loadTemplates()
         // Track template update action
-        trackTemplateAction('update', {
-          ...templateBeforeUpdate,
-          ...updates
-        })
         return true
       } else {
         flashToast?.(`Failed to update template: ${result.error}`)

@@ -13,7 +13,6 @@ import PathViewSkeleton from './components/PathViewSkeleton'
 
 import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
-import { trackExportAction } from './lib/analytics'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
   BREAKDOWN_DEPTHS,
@@ -2361,7 +2360,6 @@ function App() {
         )
       }
       // Track export action
-      trackExportAction(kind, true)
       // XP stays in Progress HUD — success toast stays human leave-behind language
       flashToast(
         kind === 'backup' ? 'Backup saved' : 'Client pack saved',
@@ -2413,12 +2411,10 @@ function App() {
           finishOk('Everything (zip)')
         } else if (result.cancelled) {
           flashToast('Save cancelled — no problem')
-          trackExportAction('kit', false)
         } else {
           flashToast(
             result.error || 'Download did not finish — try again?'
           )
-          trackExportAction('kit', false)
         }
         return result
       })().finally(clearBusy)
@@ -2446,10 +2442,8 @@ function App() {
           finishOk('Brand book PDF')
         } else if (result.cancelled) {
           flashToast('Save cancelled — no problem')
-          trackExportAction('pdf', false)
         } else {
           flashToast(result.error || 'Could not finish that PDF — try again?')
-          trackExportAction('pdf', false)
         }
         return result
       })().finally(clearBusy)
@@ -2488,10 +2482,8 @@ function App() {
           finishOk('Preview PDF')
         } else if (result.cancelled) {
           flashToast('Save cancelled — no problem')
-          trackExportAction('pdf-preview', false)
         } else {
           flashToast(result.error || 'Could not finish that PDF — try again?')
-          trackExportAction('pdf-preview', false)
         }
         return result
       })().finally(clearBusy)
@@ -2504,10 +2496,8 @@ function App() {
             finishOk('Brand HTML')
           } else if (result.cancelled) {
             flashToast('Save cancelled — no problem')
-            trackExportAction('html', false)
           } else {
             flashToast(result.error || 'Download did not finish — try again?')
-            trackExportAction('html', false)
           }
           return result
         })
@@ -2530,10 +2520,8 @@ function App() {
           if (result.ok) finishOk('Brand JSON')
           else if (result.cancelled) {
             flashToast('Save cancelled — no problem')
-            trackExportAction('json', false)
           } else {
             flashToast(result.error || 'Download did not finish — try again?')
-            trackExportAction('json', false)
           }
           return result
         })
@@ -2544,7 +2532,6 @@ function App() {
       if (result.ok) finishOk('Workspace backup')
       else {
         flashToast(result.error || 'Download did not finish — try again?')
-        trackExportAction('backup', false)
       }
       clearBusy()
       return Promise.resolve(result)
@@ -2570,10 +2557,8 @@ function App() {
               `Print dialog · ${when} — Save as PDF if you want a file`
             )
             flashToast('Print is open — choose Save as PDF if you want a file')
-            trackExportAction('print', true)
           } else {
             flashToast(r.error || 'Print did not open — try again?')
-            trackExportAction('print', false)
           }
           clearBusy()
           resolve(r)

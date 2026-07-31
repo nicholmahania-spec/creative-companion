@@ -7,8 +7,6 @@ import ErrorBoundary from './components/error/ErrorBoundary.jsx'
 import { routePath } from './lib/appPaths'
 import './index.css'
 import { versionLabel, APP_BUILD_DATE } from './lib/version'
-import { initPerformanceMonitoring } from './lib/performance'
-import { initAnalytics } from './lib/analytics'
 
 /** Public client-fill link (/f/:shareId) — no auth, no app shell. Checked
  *  before anything else boots so a client never needs an account.
@@ -31,27 +29,6 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     console.error('Failed to initialize Sentry', err)
   })
 }
-// Initialize analytics
-initAnalytics({
-  enabled: import.meta.env.PROD || import.meta.env.DEV === false // Enable in production and preview
-});
-
-// Initialize performance monitoring
-if (typeof window !== 'undefined') {
-  initPerformanceMonitoring({
-    onPerfEntry: (entry) => {
-      // Send to analytics or logging service in production
-      if (import.meta.env.PROD) {
-        // Could send to analytics endpoint here
-        console.debug('Performance:', entry);
-      } else {
-        console.info('Performance:', entry);
-      }
-    },
-    debug: import.meta.env.DEV
-  });
-}
-
 /* Outermost crash net. Wraps all three roots, not just the app: a render
    error on /f/ or /c/ is a stranger looking at a blank white page with no idea
    whether their answers went anywhere, which is the worst version of this

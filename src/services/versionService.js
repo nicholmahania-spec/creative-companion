@@ -1,7 +1,6 @@
 // Version Service for managing project versions and diffing capabilities
 import useAppStore from '../store/useAppStore'
 import { buildColorSystem } from '../lib/brandSystem'
-import { trackVersionAction } from '../lib/analytics'
 
 /**
  * Version Service
@@ -96,7 +95,6 @@ class VersionService {
     }
 
     // Track version creation
-    trackVersionAction('create', versionData)
 
     return versionData
   }
@@ -388,7 +386,6 @@ class VersionService {
       }
 
       // Track version restoration
-      trackVersionAction('restore', version)
 
       // Get current state
       const store = useAppStore.getState()

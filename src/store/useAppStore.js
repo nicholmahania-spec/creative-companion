@@ -15,7 +15,6 @@ import {
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/breakKit'
 import versionService from '../services/versionService'
-import { trackVersionAction } from '../lib/analytics'
 
 /**
  * Every field id the Define sheet knows about.
@@ -1513,13 +1512,7 @@ const useAppStore = create(
           ),
         })
         // Fire-and-forget version snapshot — must not block the synchronous return
-        versionService.autoVersion('version bump').then((versionId) => {
-          if (versionId) {
-            versionService.getVersionById(versionId).then((version) => {
-              if (version) trackVersionAction('create', version)
-            })
-          }
-        }).catch(() => {})
+        versionService.autoVersion('version bump').catch(() => {})
         return { ok: true, version: next }
       },
 
@@ -1537,13 +1530,7 @@ const useAppStore = create(
         }
         const result = {...get().bumpDesignVersion(), bumped: true}
         // Fire-and-forget version snapshot — must not block the synchronous return
-        versionService.autoVersion('initial version bump').then((versionId) => {
-          if (versionId) {
-            versionService.getVersionById(versionId).then((version) => {
-              if (version) trackVersionAction('create', version)
-            })
-          }
-        }).catch(() => {})
+        versionService.autoVersion('initial version bump').catch(() => {})
         return {...result, version: result.version}
       },
 
@@ -2684,14 +2671,7 @@ const useAppStore = create(
         }))
 
         // Create a version when applying template
-        const versionId = await versionService.autoVersion('template-applied')
-        // Track version creation
-        if (versionId) {
-          const version = await versionService.getVersionById(versionId)
-          if (version) {
-            trackVersionAction('create', version)
-          }
-        }
+        await versionService.autoVersion('template-applied')
 
         return { ok: true }
       },
