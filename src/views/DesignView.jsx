@@ -818,6 +818,26 @@ export default function DesignView({
                   colorRoles: activeProject?.colorRoles || {},
                   colorRoleWhy: activeProject?.colorRoleWhy || {},
                 })
+                /* Nothing picked yet is not a failing grade. The score used
+                   to open at 20% in red on an untouched project — a mark
+                   against you for not having started, which is the exact
+                   shape of feedback this app exists to remove. Until there
+                   is something to measure it reads as a dash. */
+                if (health.score === null) {
+                  return (
+                    <div className="palette-health">
+                      <div className="palette-health-head">
+                        <span className="field-label" style={{ margin: 0 }}>
+                          Palette health
+                        </span>
+                        <span className="palette-health-score is-idle">—</span>
+                      </div>
+                      <p className="panel-hint" style={{ margin: 0 }}>
+                        Add a color to see this.
+                      </p>
+                    </div>
+                  )
+                }
                 return (
                   <div className="palette-health">
                     <div className="palette-health-head">

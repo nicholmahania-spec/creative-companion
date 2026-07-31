@@ -366,11 +366,41 @@ export async function downloadBrandPackVectorPdf(
 
     // ── drawing primitives ──
 
+    /* The Builder's type controls, applied at the one place all type passes
+       through. Every size below is a design literal chosen per element — a
+       cover title and a section title are both "display" and deliberately
+       differ — so the user's size arrives as a RATIO and scales the design's
+       proportions rather than flattening them to one number.
+
+       `label` is left alone on purpose: kickers, footers and page numbers are
+       furniture, not the book's voice, and scaling them with the body copy
+       makes a long footer wrap into the margin.
+
+       A chosen type colour overrides the per-call colour; "auto" resolves to
+       null upstream and leaves the existing palette-derived behaviour intact,
+       including `textOn`'s fallback that keeps type readable on a dark page. */
+    const running = pack?.bookRunning || {}
+    const bookGrid = pack?.bookGrid || {}
+    const typeScale = pack?.bookTypeScale || {}
+    const typeColor = pack?.bookTypeColor || {}
+    const FACE_ROLE = {
+      display: 'headline',
+      heading: 'subhead',
+      body: 'body',
+      bodyStrong: 'body',
+      bodyItalic: 'body',
+    }
     const setFace = (face, size, rgb) => {
       const [family, style] = faces[face]
       pdf.setFont(family, style)
-      pdf.setFontSize(size)
-      if (rgb) pdf.setTextColor(rgb[0], rgb[1], rgb[2])
+      const role = FACE_ROLE[face]
+      const ratio = role ? Number(typeScale[role]) : null
+      pdf.setFontSize(
+        Number.isFinite(ratio) && ratio > 0 ? size * ratio : size
+      )
+      const chosen = role ? hexToRgb(typeColor[role]) : null
+      const use = chosen || rgb
+      if (use) pdf.setTextColor(use[0], use[1], use[2])
     }
     const box = (x, yy, w, h, rgb) => {
       pdf.setFillColor(rgb[0], rgb[1], rgb[2])
@@ -490,6 +520,18 @@ export async function downloadBrandPackVectorPdf(
       const left = hideWatermark
         ? projectName
         : `${projectName} · Creative Companion`
+      /* The Builder's "Running elements" govern this footer rather than
+         drawing a second one beside it. Its own footer text replaces the
+         left-hand line when set; the Creative Companion attribution still
+         follows unless the watermark is off, because that is a licence
+         matter and not a styling choice. */
+      const leftText =
+        running.showFooter && running.footerText
+          ? hideWatermark
+            ? running.footerText
+            : `${running.footerText} · Creative Companion`
+          : left
+
       sheetFoots.forEach(({ page, dark }) => {
         if (page === 0) return
         pdf.setPage(page + 1)
@@ -497,14 +539,93 @@ export async function downloadBrandPackVectorPdf(
         setFace('label', FOOT, dark ? FOOT_INK : FOOT_CREAM)
         const baseY = pageH - bleed - px(28)
         pdf.setCharSpace(FOOT * 0.04)
-        pdf.text(pdfSafeText(left).slice(0, 52), margin, baseY)
-        pdf.text(
-          `${String(page + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`,
-          pageW - margin,
-          baseY,
-          { align: 'right' }
-        )
+        const foot = pdfSafeText(leftText).slice(0, 52)
+        if (running.footerAlign === 'center') {
+          pdf.text(foot, pageW / 2, baseY, { align: 'center' })
+        } else if (running.footerAlign === 'right' && !running.showPageNumbers) {
+          pdf.text(foot, pageW - margin, baseY, { align: 'right' })
+        } else {
+          pdf.text(foot, margin, baseY)
+        }
+        /* Page numbers are a control now, not a given. Off means the pair of
+           numbers goes away entirely rather than printing an empty slot. */
+        if (running.showPageNumbers) {
+          pdf.text(
+            `${String(page + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`,
+            pageW - margin,
+            baseY,
+            { align: 'right' }
+          )
+        }
         pdf.setCharSpace(0)
+      })
+    }
+
+    /**
+     * The running header, on interior pages only — covers stay clean, which is
+     * what the Builder's own hint promises on screen.
+     *
+     * `alternate` mirrors the alignment on facing pages, the way a bound book
+     * runs its heads outward. It is a no-op on a centred header.
+     */
+    const runningHeaderAll = () => {
+      if (!running.show || !running.text) return
+      sheetFoots.forEach(({ page, dark }) => {
+        if (page === 0) return
+        pdf.setPage(page + 1)
+        const H = px(10)
+        setFace('label', H, dark ? FOOT_INK : FOOT_CREAM)
+        const yy = bleed + px(26)
+        let align = running.align
+        if (running.alternate && align !== 'center' && page % 2 === 0) {
+          align = align === 'left' ? 'right' : 'left'
+        }
+        const text = pdfSafeText(running.text).slice(0, 60)
+        pdf.setCharSpace(H * 0.06)
+        if (align === 'center') pdf.text(text, pageW / 2, yy, { align: 'center' })
+        else if (align === 'right')
+          pdf.text(text, pageW - margin, yy, { align: 'right' })
+        else pdf.text(text, margin, yy)
+        pdf.setCharSpace(0)
+      })
+    }
+
+    /**
+     * Grid guides, on interior pages, drawn last so they sit over the content
+     * the way guides do in a layout app.
+     *
+     * These are a working aid rather than part of the artwork — a book sent to
+     * a client with guides printed on it is a mistake, so this only ever draws
+     * when the Builder's "Show grid guides" is explicitly on. Hairline and
+     * heavily tinted, so a proof stays readable underneath.
+     */
+    const gridGuidesAll = () => {
+      if (!bookGrid.show) return
+      const cols = bookGrid.columns || 12
+      const rows = bookGrid.rows || 1
+      sheetFoots.forEach(({ page, dark }) => {
+        if (page === 0) return
+        pdf.setPage(page + 1)
+        const base = dark ? [255, 255, 255] : [0, 0, 0]
+        pdf.setDrawColor(base[0], base[1], base[2])
+        pdf.setLineWidth(0.25)
+        const gx = (bookGrid.margin / 100) * pageW
+        const gy = (bookGrid.margin / 100) * pageH
+        const boxW = pageW - gx * 2
+        const boxH = pageH - gy * 2
+        const gut = (bookGrid.gutter / 100) * boxW
+        const colW = cols > 0 ? (boxW - gut * (cols - 1)) / cols : boxW
+        for (let c = 0; c < cols; c++) {
+          const x = gx + c * (colW + gut)
+          pdf.rect(x, gy, colW, boxH, 'S')
+        }
+        if (rows > 1) {
+          const rowH = (boxH - gut * (rows - 1)) / rows
+          for (let r = 0; r < rows; r++) {
+            const yy = gy + r * (rowH + gut)
+            pdf.rect(gx, yy, boxW, rowH, 'S')
+          }
+        }
       })
     }
 
@@ -1372,6 +1493,8 @@ export async function downloadBrandPackVectorPdf(
     })
 
     footerAll()
+    runningHeaderAll()
+    gridGuidesAll()
     cropMarksAll()
 
     const slug = slugifyFilename(pack?.projectName, 'brand-pack')

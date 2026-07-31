@@ -89,9 +89,27 @@ export function pathStepHasContent(stepId, ctx = {}) {
       return !!(hasDirection || hasSparkPin || hasRough)
     }
     case 'sketch': {
-      // Align with "Write one step" fill hint — one task is enough.
-      // Why stays a helpful field, not a silent N/7 gate.
-      return tasks.length >= 1
+      /* Touchpoints is about WHERE the brand appears — it renders the
+         application mocks chosen by the brief's `brandSurfaces` (see
+         lib/touchpoints.js). It used to be `tasks.length >= 1`, which was
+         written when this stop meant something else and survived the rename.
+         Onboarding asks for a first step, which creates exactly one task, so
+         every brand-new project opened with Touchpoints already ticked done.
+
+         A stage that reports done before any work exists is worse than one
+         that reports nothing: it removes the thing the rail is for, which is
+         knowing where you actually are without reconstructing it. And a tick
+         you did not earn makes every other tick worth less.
+
+         `touchpointsFor` is not used here on purpose — it falls back to a
+         legacy set when nothing is picked, so its length can never be zero.
+         The honest question is whether anyone answered. */
+      const surfaces = project.detective?.brandSurfaces
+      const deliverables = project.detective?.deliverablesPicked
+      return (
+        (Array.isArray(surfaces) && surfaces.length > 0) ||
+        (Array.isArray(deliverables) && deliverables.length > 0)
+      )
     }
     case 'design': {
       // Craft signals only — stock default palette alone does not count

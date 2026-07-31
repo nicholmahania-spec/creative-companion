@@ -140,3 +140,109 @@ export function resolvedPageBackgrounds(project) {
   })
   return out
 }
+
+/* ─────────────────── the rest of the Builder, resolved ───────────────────
+
+   Same reasoning as `resolvedPageBackgrounds` above, applied to the four
+   control groups that were still screen-only: type size, type colour, grid
+   and running elements. Each one drew on the book on screen and was ignored
+   by the exported PDF, so the panel looked like it styled the deliverable
+   and did not. Resolving here rather than in the view means the screen and
+   the generator cannot answer differently, and the pack carries finished
+   answers instead of token ids the generator would have to learn to read.
+
+   Font family and weight are deliberately absent: the Builder's pickers
+   already write through to `project.typeHeading` / `typeBody`, which the
+   book prints on its Type page. They were wired all along.                */
+
+/** The sizes the book is designed at, in pt — the denominator for a ratio. */
+export const BOOK_TYPE_BASE = { headline: 32, subhead: 16, body: 10.5 }
+
+const num = (v, fallback) => {
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? n : fallback
+}
+
+/**
+ * Type size as a RATIO per role, not an absolute.
+ *
+ * The generator sets a different size at each call site — a cover title and a
+ * section title are both "headline" and are deliberately not the same size.
+ * Handing it one absolute number would flatten that hierarchy into a slab.
+ * A ratio scales the design's own proportions, so asking for bigger headlines
+ * makes every headline bigger *relative to the others*, which is what the
+ * control appears to promise.
+ *
+ * Clamped: past roughly half or double, the layout's line breaks and column
+ * fits stop holding and the book starts overflowing its own pages.
+ */
+export function resolvedTypeScale(project) {
+  const t = bookBuilderFor(project).type || {}
+  const ratio = (value, base) =>
+    Math.min(2, Math.max(0.5, num(value, base) / base))
+  return {
+    headline: ratio(t.headlineSize, BOOK_TYPE_BASE.headline),
+    subhead: ratio(t.subheadSize, BOOK_TYPE_BASE.subhead),
+    body: ratio(t.bodySize, BOOK_TYPE_BASE.body),
+  }
+}
+
+/**
+ * Type colours as hex, or null where the user left it on "auto".
+ *
+ * null is meaningful and must survive to the generator: "auto" means the book
+ * keeps deriving the colour from the palette roles and, on a dark page, from
+ * what stays readable on it. Resolving auto to a fixed hex here would freeze
+ * that and leave unreadable type on a repainted page.
+ */
+export function resolvedTypeColors(project) {
+  const tokens = readPaletteTokens(project)
+  const tc = bookBuilderFor(project).typeColor || {}
+  const one = (key) => {
+    if (!key || key === 'auto') return null
+    const token = tokens.find((t) => String(t.id) === String(key))
+    return token ? token.hex : null
+  }
+  return {
+    headline: one(tc.headline),
+    subhead: one(tc.subhead),
+    body: one(tc.body),
+  }
+}
+
+/** Grid guides, as numbers the generator can draw without re-parsing. */
+export function resolvedGrid(project) {
+  const g = bookBuilderFor(project).grid || {}
+  return {
+    show: !!g.show,
+    columns: Math.min(24, Math.max(1, Math.round(num(g.columns, 12)))),
+    rows: Math.min(24, Math.max(1, Math.round(num(g.rows, 1)))),
+    // Percentages of the content box, as the Builder labels them.
+    gutter: Math.min(20, Math.max(0, num(g.gutter, 3))),
+    margin: Math.min(30, Math.max(0, num(g.margin, 9))),
+  }
+}
+
+/**
+ * Running header, footer and page numbers.
+ *
+ * `text` falls back to the project's own name rather than being left blank —
+ * the Builder's field says "Defaults to brand name" on screen, and a control
+ * that states its own default has to honour it in the file too.
+ */
+export function resolvedRunning(project) {
+  const r = bookBuilderFor(project).running || {}
+  const name = String(project?.name || '').trim()
+  return {
+    show: !!r.show,
+    text: String(r.text || '').trim() || name,
+    align: ['left', 'center', 'right'].includes(r.align) ? r.align : 'left',
+    showFooter: !!r.showFooter,
+    footerText: String(r.footerText || '').trim(),
+    footerAlign: ['left', 'center', 'right'].includes(r.footerAlign)
+      ? r.footerAlign
+      : 'left',
+    showPageNumbers: !!r.showPageNumbers,
+    alternate: !!r.alternate,
+  }
+}

@@ -34,10 +34,18 @@ const prefersReducedMotion = () =>
  *  ticking one never turns into a surprise on the invoice. */
 function ChecklistField({ field, selected, onToggle }) {
   const picked = Array.isArray(selected) ? selected : []
+  /* Only render a group that has something in it. "Where will this be used?"
+     draws from BRAND_SURFACE_OPTIONS, where nothing is marked `extra`, so an
+     unconditional split rendered a "Quoted separately" legend above zero
+     checkboxes — a heading that can never reflect a tick because it has no
+     rows. On the client-facing routes that reads as "some of this costs
+     extra" on a question about where the brand appears. Same reasoning
+     already written down in projectTerms.js: an empty heading in something
+     headed for a contract reads as a term agreed to be nothing. */
   const groups = [
     { key: 'included', label: 'Included', items: field.options.filter((o) => !o.extra) },
     { key: 'extra', label: 'Quoted separately', items: field.options.filter((o) => o.extra) },
-  ]
+  ].filter((g) => g.items.length > 0)
   return (
     <div className="define-checklist">
       {groups.map((g) => (

@@ -88,7 +88,13 @@ export default function ClientBriefFields({ answers = {}, onChange, idPrefix, ta
                       label: 'Quoted separately',
                       items: f.options.filter((o) => o.extra),
                     },
-                  ].map((g) => (
+                    /* Drop an empty group rather than draw its heading. This
+                       is the client's own form: a bare "Quoted separately"
+                       legend with no rows under it reads as a price warning
+                       about a question that has no extras. */
+                  ]
+                    .filter((g) => g.items.length > 0)
+                    .map((g) => (
                     <fieldset key={g.key} className="define-checklist-group">
                       <legend className="define-checklist-legend">{g.label}</legend>
                       {g.items.map((o) => {
