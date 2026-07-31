@@ -589,7 +589,7 @@ describe('downloadBrandPackVectorPdf quality', () => {
     expect(text).toMatch(/Continued\./)
   })
 
-  it('renders the agreed-brief section with question, tip, and answer', async () => {
+  it('renders the agreed-brief section with the question and answer, and no form hints', async () => {
     const pack = buildBrandPackSnapshot({
       project: {
         name: 'Harbor & Hearth',
@@ -636,12 +636,22 @@ describe('downloadBrandPackVectorPdf quality', () => {
     }
 
     expect(fullText).toMatch(/Agreed brief/)
-    // The field label (question) and its worked-example tip both render —
-    // a question is never asked bare, per the reference-brief pattern.
+    // The question and the client's answer render.
     expect(fullText).toMatch(/Business name/)
-    expect(fullText).toMatch(/Trading name is fine/)
-    // The answer itself renders in its own box, not just echoed as the tip.
     expect(fullText).toMatch(/Harbor & Hearth Co\./)
+
+    /* The form's worked-example tips must NOT render. They are the grey
+       examples that sit under the fields to help the designer answer, and they
+       were being printed in italics above the client's own words — so every
+       book carried "e.g. Sarah Whitton, Owner" and "e.g. you@studio.com" in
+       its appendix, a fictional person and a stranger's address in the
+       client's document. This assertion is inverted from what it used to
+       claim, deliberately: the old contract was that a question is never asked
+       bare, and the cost of that was leaking the app's scaffolding into the
+       deliverable. */
+    expect(fullText).not.toMatch(/Trading name is fine/)
+    expect(fullText).not.toMatch(/e\.g\. Sarah Whitton/)
+    expect(fullText).not.toMatch(/you@studio\.com/)
     // Handoff points at the section instead of duplicating it.
     expect(fullText).toMatch(/Full agreed brief/)
   })

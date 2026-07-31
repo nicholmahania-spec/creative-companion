@@ -61,10 +61,12 @@ export function bookInputs(packIn) {
     pins,
     touchpoints,
     tagline: clean(pack.tagline),
-    /* `brief` is the fallback the book has always used: a project older than
-       the Story question wrote its story there and must not now get a blank
-       page. */
-    story: clean(pack.story) || clean(d.story) || clean(pack.brief),
+    /* No `brief` fallback. `brief` is auto-composed from the answers on every
+       keystroke, so it is the run-on summary rather than prose anyone wrote —
+       printing it as Our Story put a wall of "Goal: … Story: … Words: …" in
+       the client's book. A project with no story now gets no Story page, which
+       is the rule everywhere else in this file. */
+    story: clean(pack.story) || clean(d.story),
     /* The hoisted copy wins, but a project answered before
        buildBrandPackSnapshot hoisted toneOfVoice still has it only on the
        detective — and the page's own text reads both, so the condition must
@@ -83,8 +85,12 @@ export const FOUNDATION_PAGES = [
     id: 'voice',
     title: 'Brand Voice',
     sub: 'Who we are for, how we sound, and the promise we keep.',
-    needs: 'a tagline, promise, proof, personality or tone of voice',
+    needs: 'a positioning line, tagline, promise, proof, personality or tone of voice',
     exists: (x) =>
+      /* Positioning belongs here too, or the page is judged absent and then
+         asked to print a field it holds — the same mismatch tone-of-voice had.
+         Any field a page prints must be able to bring that page into being. */
+      has(x.pack.positioning) ||
       has(x.tagline) ||
       has(x.pack.messagingPromise) ||
       has(x.pack.messagingProof) ||
@@ -96,7 +102,7 @@ export const FOUNDATION_PAGES = [
     id: 'story',
     title: 'Our Story',
     sub: 'Why this brand exists, in their own words.',
-    needs: 'the Story answer, what makes it different, or the brief',
+    needs: 'the Story answer, or what makes it different',
     exists: (x) => has(x.story) || has(x.pack.usp) || has(x.d.brandWords) || has(x.d.goal),
   },
   {

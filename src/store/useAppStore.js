@@ -360,7 +360,12 @@ export function blankWorkspaceState() {
       /** Hide process tips / InfoReveal and instructional page-subs (Tech-Studio) */
       hideTips: true,
       /** Pack / PDF: hide Creative Companion footer watermark */
-      hidePackWatermark: false,
+      /* Client work goes out clean unless the designer chooses otherwise.
+         This defaulted to false, so the tool's own credit was printed on a
+         paying freelancer's deliverable unless they noticed a checkbox and
+         turned it off — the default put someone else's name on work they were
+         being paid for. The control stays; only the default flips. */
+      hidePackWatermark: true,
       /* Brand book page setup. Sticky across projects rather than per-project:
          a studio's paper size and print habits don't change per client, and
          re-deciding them on every project is a recurring toll. Shown as text

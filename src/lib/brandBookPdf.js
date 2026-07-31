@@ -326,7 +326,12 @@ export async function downloadBrandPackVectorPdf(
     const chapters = filledDetectiveChapters(d)
     /* The hoisted copies win: `buildBrandPackSnapshot` fills these even when
        `pack.detective` is null, so reading only through `d` loses them. */
-    const story = clean(pack?.story) || clean(d.story) || clean(pack?.brief)
+    /* No `brief` fallback. `brief` is auto-composed from the answers on every
+       keystroke, so it is the run-on summary rather than prose anyone wrote —
+       printing it as Our Story put a wall of "Goal: … Story: … Words: …" in
+       the client's book. A project with no story now gets no Story page, which
+       is the rule everywhere else in this file. */
+    const story = clean(pack?.story) || clean(d.story)
     const surfaces = pack?.brandSurfaces?.length ? pack.brandSurfaces : d.brandSurfaces
     const touchpoints = touchpointsFor(surfaces, d.deliverablesPicked)
     const contactLine = [clean(pack?.orgEmail), clean(pack?.orgWebsite)]
@@ -676,10 +681,40 @@ export async function downloadBrandPackVectorPdf(
       setFace('display', TITLE)
       /* The design caps the title at 9ch so a company name breaks into the
          two or three big lines the cover is built around. `ch` is the width
-         of a zero, so it is measured rather than guessed at. */
-      const titleLines = wrap(projectName, pdf.getTextWidth('0') * 9)
+         of a zero, so it is measured rather than guessed at.
+
+         But `splitTextToSize` hard-breaks any single word wider than the cap,
+         and letters are wider than a zero — so "Aurora Bakehouse" came out as
+         "Aurora Bak / ehouse" on the cover of the client's book. Verified:
+         Harbor & Hearth, Fernbrook Ferments and Sparrow all broke correctly at
+         their spaces; only a long single word failed.
+
+         So the type shrinks to fit the widest word instead of the word being
+         cut. A cover set a few points smaller is a design choice; a client's
+         name sliced in half is a defect, and it is the first thing they see. */
+      let TITLE_FIT = TITLE
+      const longestWord = String(projectName || '')
+        .split(/\s+/)
+        .reduce((a, b) => (b.length > a.length ? b : a), '')
+
+      /* The cap is measured ONCE, at the design's own size, and then held
+         fixed. Measuring it inside the loop was the first attempt and it could
+         never converge: `getTextWidth` scales with the current font size, so
+         shrinking the type shrank the cap by exactly the same ratio and the
+         word was always still too wide. The line length the design wants is an
+         absolute width on the page, not a ratio to whatever size the type
+         happens to be. */
+      setFace('display', TITLE)
+      const capW = pdf.getTextWidth('0') * 9
+
+      setFace('display', TITLE_FIT)
+      while (TITLE_FIT > px(26) && pdf.getTextWidth(pdfSafeText(longestWord)) > capW) {
+        TITLE_FIT -= px(2)
+        setFace('display', TITLE_FIT)
+      }
+      const titleLines = wrap(projectName, capW)
       const blockH =
-        MARK + px(32) + titleLines.length * TITLE * 0.95 + (tagline ? px(22) + px(20) * 1.4 : 0)
+        MARK + px(32) + titleLines.length * TITLE_FIT * 0.95 + (tagline ? px(22) + px(20) * 1.4 : 0)
       const bandTop = top + px(13) + px(40)
       let by = Math.max(bandTop, bandTop + (navY - px(24) - bandTop - blockH) / 2)
 
@@ -690,11 +725,11 @@ export async function downloadBrandPackVectorPdf(
       })
       by += MARK + px(32)
 
-      setFace('display', TITLE, ON_INK)
+      setFace('display', TITLE_FIT, ON_INK)
       titleLines.forEach((l, i) => {
-        pdf.text(pdfSafeText(l), margin, by + TITLE * 0.78 + i * TITLE * 0.95)
+        pdf.text(pdfSafeText(l), margin, by + TITLE_FIT * 0.78 + i * TITLE_FIT * 0.95)
       })
-      by += titleLines.length * TITLE * 0.95
+      by += titleLines.length * TITLE_FIT * 0.95
 
       if (tagline) {
         by += px(22)
@@ -729,6 +764,12 @@ export async function downloadBrandPackVectorPdf(
       const rightX = margin + colW + px(48)
 
       const leftRows = [
+        /* The designer's own positioning line, first, because it is the one
+           sentence the rest of the page qualifies. Before this the book had no
+           positioning at all: the Story page fell back to the auto-composed
+           brief — "Client: X Goal: Y Story: Z" run together — and printed that
+           under a heading promising the client's story. */
+        ['Positioning', clean(pack?.positioning), 'bodyItalic', px(19)],
         ['Tagline', tagline, 'bodyItalic', px(19)],
         ['Promise', promise, 'body', px(15)],
         ['Proof', proof, 'body', px(15)],
@@ -1281,7 +1322,14 @@ export async function downloadBrandPackVectorPdf(
               r.label,
               r.answer,
               cont,
-              r.tip && !/^e\.g\.?\s/i.test(r.tip) ? `e.g. ${r.tip}` : r.tip,
+              /* No tip. These are the grey examples that sit under the form
+                 fields to help the designer answer — "e.g. Sarah Whitton,
+                 Owner", "e.g. you@studio.com". They were printed in italics
+                 above the client's real answer, so every book carried a
+                 fictional person's name and a stranger's email address in its
+                 appendix. A hint is scaffolding for filling the form in; it is
+                 not part of what the client agreed to. */
+              '',
               true
             )
           )
