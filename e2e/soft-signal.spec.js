@@ -22,12 +22,10 @@ test.describe('Soft Signal demo', () => {
     })
     skipIfCloud(test, gate)
 
-    // Settings is on Tools (and account) — prefer Tools for discoverability
-    await page.getByRole('button', { name: 'Tools' }).click()
-    await page
-      .locator('#tools-menu, .more-menu')
-      .getByRole('menuitem', { name: /Settings/i })
-      .click()
+    /* Settings is its own header button now, not a row in the Tools menu. It
+       used to sit at the bottom of that menu, below a 420px cap on 589px of
+       content — present in the DOM, off the screen. */
+    await page.getByRole('button', { name: /^Settings$/ }).first().click()
     await expect(page.getByRole('heading', { name: /Settings/i })).toBeVisible({
       timeout: 8000,
     })

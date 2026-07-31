@@ -145,8 +145,19 @@ export default function InsightsView(props) {
           </div>
         )}
 
+        {/* "Break lock" is a coined name, so two weeks later it is recall
+            rather than reading. The line states the mechanical consequence and
+            nothing else — no "stops you skipping breaks", which blames the
+            reader for a setting they are being asked to opt into, and makes
+            turning it back off feel like an admission. The consent dialog
+            already carries the detail, at the moment it matters. */}
         <div className="settings-row insights-break-row">
-          <strong>Break lock</strong>
+          <span className="insights-break-copy">
+            <strong>Break lock</strong>
+            <span className="insights-break-hint">
+              When the timer ends, the screen locks until you take the break.
+            </span>
+          </span>
           <button
             type="button"
             role="switch"

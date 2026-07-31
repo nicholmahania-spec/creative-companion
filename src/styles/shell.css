@@ -827,8 +827,20 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 0;
-  max-height: min(70vh, 420px);
+  /* Sized to hold the whole menu. The old cap was 420px against 589px of
+     content, so the last four rows — Settings, Shortcuts, theme, Log out —
+     sat below the visible bottom of a box that gives no sign it scrolls.
+     Removing that group got the content to ~434px, which the old cap still
+     clipped by 16px, landing the cut squarely on "Delete project".
+
+     `scrollbar-width: thin` rather than the default `auto` on the overlay:
+     on the viewports where this genuinely does still overflow (a phone in
+     landscape), a visible scrollbar is the only thing telling you there is
+     more. `.more-menu` is `box-shadow: none !important` further down, so
+     there is no depth cue left to do that job. */
+  max-height: min(80vh, 560px);
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .app.deep .more-menu {
@@ -2321,10 +2333,28 @@ h3 {
 
 /* Preference switches (Settings) */
 
+/* The switch has no content of its own — the knob is absolutely positioned and
+   the state text is `.sr-only` — so without an explicit width it collapses to
+   0px and the control is invisible and unclickable. That is what happened to
+   Break lock on the Timer screen: the word rendered, the switch did not, and
+   the setting could not be reached at all. Settings' own switches were fine
+   only because `.settings-studio .pref-switch` sets its own width, which hid
+   the base defect rather than fixing it.
+
+   The width is the track the knob travels: 0.18rem inset + 1.2rem knob +
+   1.15rem of travel + 0.18rem inset. Change any of those three and this has
+   to move with them, so they are named here rather than left as a magic
+   number. */
 .pref-switch {
+  --pref-switch-inset: 0.18rem;
+  --pref-switch-knob: 1.2rem;
+  --pref-switch-travel: 1.15rem;
   position: relative;
   flex-shrink: 0;
-  box-shadow: 0 0 0 1px var(--border-strong);
+  width: calc(
+    var(--pref-switch-inset) * 2 + var(--pref-switch-knob) +
+      var(--pref-switch-travel)
+  );
   height: 1.55rem;
   padding: 0;
   border: none;
@@ -2335,12 +2365,31 @@ h3 {
   transition: background var(--transition);
 }
 
+/* 44x44 hit target without growing the painted switch — the accessibility
+   floor in CLAUDE.md's icon rule, which the 24.8px-tall track misses on its
+   own.
+
+   Excluded inside `.settings-studio`, where switches sit in a dense stack of
+   rows: a 44px box on a 22px switch reaches ~11px into the rows above and
+   below, and covering a neighbouring control is the same class of bug as the
+   zero-width switch this rule exists to fix. Those rows get their target from
+   their own row height instead. */
+.pref-switch:not(.settings-studio .pref-switch)::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+
 .pref-switch-knob {
   position: absolute;
-  top: 0.18rem;
-  left: 0.18rem;
-  width: 1.2rem;
-  height: 1.2rem;
+  top: var(--pref-switch-inset, 0.18rem);
+  left: var(--pref-switch-inset, 0.18rem);
+  width: var(--pref-switch-knob, 1.2rem);
+  height: var(--pref-switch-knob, 1.2rem);
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 3px rgba(18, 18, 18, 0.2);
@@ -2353,11 +2402,57 @@ h3 {
 }
 
 .pref-switch.is-on .pref-switch-knob {
-  transform: translateX(1.15rem);
+  transform: translateX(var(--pref-switch-travel, 1.15rem));
 }
 
 .app.deep .pref-switch-knob {
   background: #F4F4F4;
+}
+
+/* Crash fallback (ErrorBoundary).
+
+   Written against `:root` tokens only. The outer boundary renders above the
+   `.app` element in main.jsx, so anything scoped to `.app` would not reach it
+   — and a fallback that renders unstyled is most of the way back to the blank
+   page it exists to replace. Centred, per the overlay rule: never a sheet
+   sliding in from an edge. */
+
+.crash-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: var(--space-6);
+}
+
+/* `width`, not `max-width` alone. As a flex item with no width the panel
+   shrinks to its content's minimum and the message wraps to a ~136px column of
+   two-word lines — measured. 42ch keeps it inside the prose cap. */
+.crash-panel {
+  width: min(42ch, 100%);
+  text-align: center;
+}
+
+.crash-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-4);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.crash-body {
+  margin: 0 0 var(--space-5);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.crash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
 }
 
 .btn-sm {
@@ -7123,10 +7218,33 @@ select:focus {
   justify-content: center;
 }
 
+/* Laid out here rather than leaning on `.settings-row`, which is declared in
+   lazy-settings.css — a chunk this screen never imports. Timer only ever
+   inherited that layout on a session where Settings had already been visited,
+   which is not a contract, it is a coincidence. */
 .insights-studio .insights-break-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
   margin-top: 0.85rem;
   border-top: 1px solid var(--ts-border, #E7E7E7);
   padding-top: 0.65rem;
+  text-align: left;
+}
+
+.insights-break-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 65ch;
+}
+
+.insights-break-hint {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-muted);
 }
 
 .insights-studio .session-done-line {
@@ -7508,11 +7626,16 @@ select:focus {
     align-items: center;
     gap: 0.35rem;
   }
-/* .more-wrap holds the Tools menu — Settings, Keyboard shortcuts, Log out
-   all live inside it now. Hiding it here left mobile with zero path to
-   Settings: the hamburger opens the Projects drawer, a different thing,
+/* .more-wrap holds the Tools menu. Hiding it here left mobile with zero path
+   to Settings: the hamburger opens the Projects drawer, a different thing,
    and nothing else stood in for it. Only the timer chip stays hidden —
-   decorative status, not a way to reach anything. */
+   decorative status, not a way to reach anything.
+
+   Settings, Keyboard shortcuts and Log out no longer live in this menu on
+   desktop (they are on the Settings page, reached by the ⚙ Settings button in
+   the header). That button is a `.header-icon-btn`, which the rule below hides
+   on mobile — so the menu carries a `.more-menu-item-mobile-only` Settings row
+   instead. One door per screen size, never two at once. */
 .header-actions .timer-running-chip { display: none !important; }
 
   /* Un-hiding Tools (above) reintroduced the header-row overflow it was
