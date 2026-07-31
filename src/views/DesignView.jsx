@@ -6,7 +6,6 @@
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react'
 import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
-import { useFigma } from '../hooks/useFigma'
 import versionService from '../services/versionService'
 import {
   DEFAULT_PALETTE,
@@ -97,26 +96,6 @@ export default function DesignView({
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [loadingTemplates, setLoadingTemplates] = useState(false)
 
-  // Figma integration
-  const {
-    isInitialized: figmaInitialized,
-    isAuthenticated: figmaAuthenticated,
-    user: figmaUser,
-    error: figmaError,
-    isLoading: figmaLoading,
-    login: figmaLogin,
-    handleCallback: figmaHandleCallback,
-    logout: figmaLogout,
-    getFile: figmaGetFile,
-    importDesign: figmaImportDesign,
-    isConfigured: figmaIsConfigured,
-    hasSession: figmaHasSession,
-  } = useFigma()
-
-  const [figmaFileKey, setFigmaFileKey] = useState('')
-  const [importedColors, setImportedColors] = useState([])
-  const [importedDesign, setImportedDesign] = useState(null)
-  const [importingDesign, setImportingDesign] = useState(false)
 
   useEffect(() => {
     if (checkBgIndex >= projectPalette.length) {
@@ -446,35 +425,6 @@ export default function DesignView({
     )
   }
 
-  // Figma import function
-  const importFigmaDesign = async () => {
-    if (!figmaFileKey.trim()) return
-
-    setImportingDesign(true)
-    try {
-      // Extract just the file ID if a full URL was provided
-      const fileId = figmaFileKey.trim().split('/').pop().split('?')[0]
-
-      const result = await figmaImportDesign(fileId, { extractColors: true })
-
-      if (result && result.colors) {
-        setImportedColors(result.colors)
-        setImportedDesign(result)
-
-        // Show a toast notification
-        flashToast?.(`Imported ${result.colors.length} colors from Figma file: ${result.file?.name}`);
-
-        // Set state to show the template modal
-        setShowTemplateModal(true);
-      }
-    } catch (err) {
-      // Error is handled by the hook
-      console.error('Failed to import Figma design:', err)
-    } finally {
-      setImportingDesign(false)
-    }
-  }
-
   const fixPairFg = (fg, bg, index) => {
     const fix = nudgeHexForContrast(fg, bg, 4.5)
     if (!fix || !fix.changed) {
@@ -621,20 +571,13 @@ export default function DesignView({
             </p>
             <details
               className="design-advanced-tools"
-              open={brandEditSection === 'figma' || brandEditSection === 'stationery'}
+              open={brandEditSection === 'stationery'}
             >
               <summary className="design-advanced-summary">
-                Advanced
-                {figmaIsConfigured ? ' · Figma & stationery' : ' · Stationery'}
+                Advanced · Stationery
               </summary>
               <div className="design-advanced-tabs" role="tablist" aria-label="Advanced design tools">
-                {(figmaIsConfigured
-                  ? [
-                      ['figma', 'Figma'],
-                      ['stationery', 'Stationery'],
-                    ]
-                  : [['stationery', 'Stationery']]
-                ).map(([id, label]) => (
+                {[['stationery', 'Stationery']].map(([id, label]) => (
                   <button
                     key={id}
                     type="button"
@@ -1341,129 +1284,6 @@ export default function DesignView({
                   </div>
                 </div>
               </details>
-            </section>
-
-            {/* Figma — only mounted when env keys exist; colors only, no fake full import */}
-            <section
-              className="panel brand-section"
-              hidden={!figmaIsConfigured || brandEditSection !== 'figma'}
-            >
-              <div className="brand-section-label">Figma</div>
-              {!figmaInitialized ? (
-                <p className="panel-hint">Connecting to Figma…</p>
-              ) : !figmaAuthenticated ? (
-                <div className="field-block">
-                  <p className="panel-hint" style={{ marginBottom: '0.75rem' }}>
-                    Pull colors from a Figma file into your palette. No full-file artboard import.
-                  </p>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={figmaLogin}
-                    disabled={figmaLoading}
-                  >
-                    {figmaLoading ? 'Connecting…' : 'Connect to Figma'}
-                  </button>
-                  {figmaError ? (
-                    <p className="panel-hint" role="alert" style={{ marginTop: '0.5rem' }}>
-                      {figmaError}
-                    </p>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="field-block">
-                  <p className="panel-hint" style={{ marginBottom: '0.5rem' }}>
-                    {figmaUser?.name || 'Connected'}
-                    {figmaUser?.handle ? ` · @${figmaUser.handle}` : ''}
-                  </p>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={figmaLogout}
-                    style={{ marginBottom: '0.75rem' }}
-                  >
-                    Disconnect
-                  </button>
-                  <label className="field-label" htmlFor="figma-file-key">
-                    Figma file URL or ID
-                  </label>
-                  <input
-                    id="figma-file-key"
-                    type="text"
-                    className="field-input"
-                    value={figmaFileKey}
-                    onChange={(e) => setFigmaFileKey(e.target.value)}
-                    placeholder="figma.com/file/… or FILE_ID"
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    style={{ marginTop: '0.5rem' }}
-                    disabled={!figmaFileKey.trim() || importingDesign}
-                    onClick={() => {
-                      if (!figmaFileKey.trim()) return
-                      importFigmaDesign()
-                    }}
-                  >
-                    {importingDesign ? 'Extracting colors…' : 'Extract colors'}
-                  </button>
-                  {importedColors.length > 0 ? (
-                    <div style={{ marginTop: '1rem' }}>
-                      <p className="field-label">Colors found</p>
-                      <div className="flex flex-wrap gap-2" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                        {importedColors.map((color, index) => (
-                          <span
-                            key={`${color}-${index}`}
-                            className="palette-pass-chip"
-                            style={{
-                              backgroundColor: color,
-                              color: bestTextOn(color),
-                              display: 'inline-flex',
-                              minWidth: '2rem',
-                              minHeight: '2rem',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.65rem',
-                              padding: '0.2rem',
-                            }}
-                            title={color}
-                          >
-                            {String(color).slice(0, 7)}
-                          </span>
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        style={{ marginTop: '0.75rem' }}
-                        onClick={() => {
-                          const colorsToAdd = importedColors.slice(
-                            0,
-                            Math.min(8 - projectPalette.length, importedColors.length)
-                          )
-                          colorsToAdd.forEach((color, index) => {
-                            const paletteIndex = projectPalette.length + index
-                            if (paletteIndex < 8) {
-                              updatePaletteColor(paletteIndex, color)
-                            }
-                          })
-                          setImportedColors([])
-                          setImportedDesign(null)
-                          setFigmaFileKey('')
-                          flashMicro?.('Colors added to palette')
-                        }}
-                      >
-                        Add colors to palette
-                      </button>
-                    </div>
-                  ) : null}
-                  {importedDesign?.file?.name && importedColors.length === 0 ? (
-                    <p className="panel-hint" style={{ marginTop: '0.75rem' }}>
-                      Loaded {importedDesign.file.name} — no colors extracted. Try another file or add colors by hand.
-                    </p>
-                  ) : null}
-                </div>
-              )}
             </section>
 
             {/* 04 Type */}
