@@ -1,4 +1,8 @@
-import { DELIVERABLE_OPTIONS, DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
+import {
+  DELIVERABLE_OPTIONS,
+  DETECTIVE_CHAPTERS,
+  isWrongShapeForField,
+} from '../lib/detectiveBrief'
 import { liftMeasuredRows } from './workLogSeparation'
 import { revisionSummary, roundCharge } from '../lib/revisions'
 import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
@@ -1354,6 +1358,16 @@ const useAppStore = create(
                 merged[k] = [...existing, ...v.filter((f) => !seen.has(f.url))]
                 return
               }
+              /* Refuse a shape the schema does not declare. The paper/OCR
+                 route hands back plain text for every field, and a string
+                 written into a checklist/choice/spectrum slot is invisible
+                 everywhere downstream — unchecked boxes for a value that is
+                 present, a spectrum with no position, and a client brand book
+                 that prints stock applications because touchpointsFor() fell
+                 back to LEGACY_TOUCHPOINTS. Nothing throws, so nothing tells
+                 you. Review coerces these before they get here; this is the
+                 backstop for any path that does not. */
+              if (isWrongShapeForField(k, v)) return
               if (String(v || '').trim()) merged[k] = v
             })
             return { ...p, detective: merged }
@@ -1414,6 +1428,16 @@ const useAppStore = create(
             if (p.id !== target) return p
             const merged = { ...(p.discoveryAnswers || {}) }
             Object.entries(clientAnswers || {}).forEach(([k, v]) => {
+              /* Refuse a shape the schema does not declare. The paper/OCR
+                 route hands back plain text for every field, and a string
+                 written into a checklist/choice/spectrum slot is invisible
+                 everywhere downstream — unchecked boxes for a value that is
+                 present, a spectrum with no position, and a client brand book
+                 that prints stock applications because touchpointsFor() fell
+                 back to LEGACY_TOUCHPOINTS. Nothing throws, so nothing tells
+                 you. Review coerces these before they get here; this is the
+                 backstop for any path that does not. */
+              if (isWrongShapeForField(k, v)) return
               if (String(v || '').trim()) merged[k] = v
             })
             const detective = { ...(p.detective || {}) }

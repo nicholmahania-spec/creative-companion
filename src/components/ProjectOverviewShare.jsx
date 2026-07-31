@@ -12,7 +12,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { JOURNEY_STEPS } from '../lib/journey'
-import { DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
+import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../lib/detectiveBrief'
 import { downloadProjectOverviewPdf } from '../lib/exportFiles'
 import { ocrOverviewForm, ocrOverviewPdf, readOverviewPdfForm } from '../lib/overviewOcr'
 import {
@@ -72,7 +72,22 @@ export function ProjectOverviewSharePanel({
      discard one — so by the time Apply is pressed the active project may be
      a different one entirely. */
   const beginReview = useCallback(
-    (d) => setDraft({ ...d, ownerProjectId: d?.ownerProjectId ?? project?.id }),
+    (d) => {
+      /* Scanned and PDF-form answers arrive as plain text for EVERY field,
+         because the blank form has no checkbox, radio or scale to offer. Put
+         them into the shape their field declares before anything is rendered
+         or saved — a raw string in a checklist field is invisible everywhere
+         downstream and silently changes what the client's brand book prints.
+         Whatever cannot be matched is carried alongside as text so the review
+         screen can show it rather than dropping the client's words. */
+      const { answers, unmatched } = coerceScannedAnswers(d?.answers || {})
+      setDraft({
+        ...d,
+        answers,
+        unmatched,
+        ownerProjectId: d?.ownerProjectId ?? project?.id,
+      })
+    },
     [project?.id]
   )
   const panelRef = useRef(null)
@@ -624,7 +639,7 @@ function PortalMode({
 /** Shared review step for anything that would otherwise write to the project
  *  behind the user's back — OCR guesses and client submissions alike. */
 function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
-  const { answers, current = {}, source } = draft
+  const { answers, current = {}, source, unmatched = {} } = draft
   const missed = ALL_FIELDS.filter((f) => !(f.id in answers))
 
   return (
@@ -688,6 +703,12 @@ function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
           return (
             <div className="field-block" key={fieldId}>
               <label className="field-label">{fieldLabel(fieldId)}</label>
+              {unmatched[fieldId] && (
+                <p className="discovery-brief-hint">
+                  Couldn’t match to an option: “{unmatched[fieldId]}” — tick
+                  what it meant.
+                </p>
+              )}
               <div className="define-checklist">
                 {[
                   {
