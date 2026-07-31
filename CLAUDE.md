@@ -262,16 +262,19 @@ note used to carry (9961, 10037, 12015, …) pointed into the old single
 `index.css` and now point at nothing — measure, don't trust a number written
 before the split. As of 2026-07-31, verified:
 
-```sh
-# where the override weight actually sits
-find src -name "*.css" | xargs grep -c "!important"
-```
-
-**672 `!important`s across 11 files**, concentrated in
-`src/styles/shell.css` (470) — the rest are double figures or fewer. The
+**663 `!important` declarations across 12 files**, concentrated in
+`src/styles/shell.css` (463) — the rest are double figures or fewer. The
 `lock` layers moved with the split rather than being resolved.
 
-Do not add another. If a style needs overriding, fix the base rule.
+Count declarations, not occurrences: a plain `grep -c "!important"` returns
+672 because nine of those are the phrase inside comments, several of them
+comments warning about the practice. `importantRatchet.test.js` strips
+comments and holds the per-file numbers.
+
+Do not add another — the ratchet now fails the build if you do, and it will
+not let you raise the budget. If a style needs overriding, fix the base rule.
+When you remove some, lower the budget in the same commit; the test fails on
+unclaimed slack so the room cannot silently refill.
 `shell.css` is where this bites: 13 separate `.journey-bar-list` rules is
 what let a `width: max-content !important` written for one breakpoint clip
 three of five journey stages at another.
