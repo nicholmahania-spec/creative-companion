@@ -117,7 +117,10 @@ export function HoursInvoicePanel({
             step="0.01"
             value={hourlyRate || ''}
             onChange={(e) => onSetRate(e.target.value)}
-            placeholder="18.46"
+            /* No specimen rate. "18.46" is precise enough to read as a real
+               figure someone chose — an invented number in the one field
+               that decides what a client is billed. The label already says
+               what goes here. */
           />
         </div>
 
