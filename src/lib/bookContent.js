@@ -59,6 +59,7 @@ export const PAGE_FIELDS = {
        top of its panel — a second box for one answer is two places to change
        one thing and one more decision on screen. */
     { label: 'Tagline', scope: 'project', field: 'tagline', editedElsewhere: true },
+    { label: 'Positioning', scope: 'project', field: 'positioning' },
     { label: 'Promise', scope: 'project', field: 'messagingPromise' },
     { label: 'Proof', scope: 'project', field: 'messagingProof' },
     { label: 'Personality', scope: 'project', field: 'messagingPersonality' },

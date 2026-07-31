@@ -317,6 +317,12 @@ export function buildBrandPackSnapshot({
 
        `story`, `usp`, `toneOfVoice` and `technical` were asked and then never
        printed anywhere at all. */
+    /* The designer's own positioning line. Before this the book printed the
+       auto-composed brief instead — "Client: X Goal: Y Story: Z Words: …" run
+       together with no punctuation — under a heading promising a positioning
+       statement. That summary is a working artefact, not a sentence anyone
+       wrote to be read. */
+    positioning: p.positioning || '',
     story: d.story || '',
     usp: d.usp || '',
     toneOfVoice: d.toneOfVoice || '',

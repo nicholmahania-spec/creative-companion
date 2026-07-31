@@ -81,9 +81,20 @@ describe('bookContentPages', () => {
     expect(textOf(pageNamed(r, 'story'))).toContain('Born in a shed.')
   })
 
-  it('falls back to the brief for Story, the way the PDF does', () => {
-    const r = bookContentPages({ brief: 'An older project wrote it here.' })
-    expect(textOf(pageNamed(r, 'story'))).toContain('older project')
+  it('never prints the auto-composed brief as Our Story', () => {
+    /* `brief` is rebuilt from the answers on every keystroke, so it is the
+       run-on summary — "Client: X Goal: Y Story: Z Words: …" — not prose
+       anyone wrote to be read. It used to be the Story page's fallback, which
+       put that wall of text in the client's book under a heading promising
+       their story. Inverted from what this test used to assert, deliberately.
+
+       The designer's own positioning line is the replacement, and it prints on
+       Brand Voice where it was actually written. */
+    const r = bookContentPages({ brief: 'Client: Aurora Goal: Look established Story: A stall' })
+    expect(pageNamed(r, 'story')).toBeUndefined()
+
+    const withPositioning = bookContentPages({ positioning: 'For home bakers who want a real loaf.' })
+    expect(textOf(pageNamed(withPositioning, 'voice'))).toContain('home bakers')
   })
 
   it('treats whitespace-only answers as absent', () => {
