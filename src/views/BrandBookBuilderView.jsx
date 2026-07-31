@@ -7,9 +7,9 @@ import {
   MAX_COLORS,
   MIN_COLORS,
 } from '../lib/bookBuilder'
-import { paginatedBookPages } from '../lib/bookContent'
+import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES } from '../lib/bookContent'
 import { currentBrandPack } from '../lib/currentPack'
-import { bookSectionIds } from '../lib/bookDocument'
+import { bookSectionIds, bookPlan, FOUNDATION_PAGES, SECTION_PAGES } from '../lib/bookDocument'
 import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/fontCatalog'
 import { monogramFor, logoDontsList, DEFAULT_LOGO_CLEARSPACE, DEFAULT_LOGO_MIN_SIZE } from '../lib/brandSystem'
 import { loadBrandFamilies } from '../lib/fontLoader'
@@ -82,6 +82,45 @@ function Section({ title, defaultOpen, children }) {
       </summary>
       <div className="bbb-section__body">{children}</div>
     </details>
+  );
+}
+
+/* The book's own words, editable from the book.
+   The panel above this edits how the book LOOKS — fonts, palette, page
+   backgrounds. Its words lived in other views entirely, so writing the book
+   meant leaving it. These fields write to exactly the answers the PDF is
+   built from, so an edit here changes the page beside it and the file the
+   client receives, with nothing to sync.
+
+   Rows are derived from PAGE_FIELDS rather than listed again here — the same
+   declaration the page prints from — so a field cannot end up printable and
+   uneditable, or editable and never printed.
+
+   Empty fields are shown, not hidden. A page that is missing because you have
+   not answered for it yet is exactly the thing you need to see in order to
+   answer; hiding the input until content exists is the chicken-and-egg version
+   of the collapsed-panel problem. */
+function BookTextFields({ pageId, x, onChange }) {
+  const rows = (PAGE_FIELDS[pageId] || []).filter((f) => !f.editedElsewhere);
+  if (!rows.length) return null;
+  return (
+    <>
+      {rows.map((f) => {
+        const id = `bbb-txt-${pageId}-${f.field}`;
+        return (
+          <div className="bbb-field" key={f.field}>
+            <label htmlFor={id}>{f.label}</label>
+            <textarea
+              id={id}
+              className="bbb-textarea"
+              rows={2}
+              value={readField(f, x)}
+              onChange={(e) => onChange(f, e.target.value)}
+            />
+          </div>
+        );
+      })}
+    </>
   );
 }
 
@@ -400,6 +439,7 @@ export default function BrandBookBuilderView() {
   const setBookBuilder = useAppStore((s) => s.setBookBuilder)
   const setPaletteTokens = useAppStore((s) => s.setPaletteTokens)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
+  const updateDetective = useAppStore((s) => s.updateDetective)
   const renameProject = useAppStore((s) => s.renameProject)
 
   const project = activeProject || {}
@@ -536,6 +576,18 @@ export default function BrandBookBuilderView() {
     donts: logoDontsList(pack),
   };
 
+  /* The same resolved inputs the page prints from, so the editor shows what
+     will actually appear rather than a copy of it. */
+  const bookX = bookPlan(pack).inputs;
+
+  /* One writer for both homes. Which store a book answer lives in is not
+     guessable from its name — Story, USP and tone of voice are on the brief,
+     the rest are on the project — and writing to the wrong one silently does
+     nothing, because the read prefers the other. PAGE_FIELDS carries the
+     answer so no call site has to know. */
+  const writeBookField = (f, value) =>
+    f.scope === 'detective' ? updateDetective(f.field, value) : updateBrandField(f.field, value);
+
   const kit = {
     logo: logoKit,
     name: brandName, tagline, headlineHex, subheadHex, bodyHex, accent, colors, swatchCols,
@@ -645,6 +697,31 @@ export default function BrandBookBuilderView() {
             <input id="bbb-tagline" type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} />
           </div>
         </Section>
+
+        {/* The book's words, one section per page it prints on, in the order
+            the book runs. Derived from the plan and from PAGE_FIELDS rather
+            than listed here, so a page added to the book brings its inputs
+            with it instead of being editable nowhere.
+
+            Only pages that hold typed answers appear — Colour and Typography
+            are drawn from the controls below, and the agreed brief and
+            applications list are composed from elsewhere, so none of them has
+            words to type here. */}
+        {/* Derived from the DECLARED pages, not the ones that currently exist.
+            Deriving from the live plan looked right and was the chicken-and-egg
+            version of the same bug: a page appears only once it holds an
+            answer, so Brand Voice, Our Audience and Imagery had no inputs
+            until they had content, and no way to be given any. The section for
+            an unanswered page is exactly the one you need. */}
+        {[...FOUNDATION_PAGES, ...SECTION_PAGES, ...APPENDIX_PAGES].map((pg) => {
+          const rows = (PAGE_FIELDS[pg.id] || []).filter((f) => !f.editedElsewhere);
+          if (!rows.length) return null;
+          return (
+            <Section key={pg.id} title={pg.title || pg.name || pg.label}>
+              <BookTextFields pageId={pg.id} x={bookX} onChange={writeBookField} />
+            </Section>
+          );
+        })}
 
         <Section title="Type scale">
           <div className="bbb-field">
