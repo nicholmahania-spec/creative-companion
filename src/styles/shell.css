@@ -125,6 +125,22 @@
   --space-6: 2rem;
   --space-7: 3rem;
 
+  /* ---- Interaction floor ----------------------------------------------
+     44px is the accessible hit-target minimum already stated in the icon
+     rule. It is not a spacing step and must not be snapped to the ramp —
+     it is a physical finger size, not a rhythm. */
+  --tap-min: 44px;
+
+  /* Mobile header height. Was written as the literal 52px in three places
+     (the drawer's `top`, its `inset`, and the nav backdrop), so growing the
+     header chips to --tap-min silently slid the drawer over the hamburger
+     that opens it. One token, so the three move together.
+
+     Measured, not derived: the header's own padding differs per breakpoint,
+     so any calc() would be right at one width and wrong at another.
+     `headerDrawerOffset.spec.js` fails if this drifts from the real height. */
+  --header-h: 61px;
+
   /* ---- Type ramp -------------------------------------------------------
      66 distinct font sizes existed, down to 0.4rem (6.4px). Six steps is
      enough for any screen in this app; --fs-1 is the floor and nothing
@@ -662,6 +678,9 @@ h3 {
 .work-clock-chip,
 .focus-timer-chip,
 .sync-error-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
   font: inherit;
@@ -4103,11 +4122,13 @@ body.cc-printing-page button {
     scrollbar-width: thin;
   }
 
-.journey-bar-list {
-    flex-wrap: nowrap;
-    width: auto;
-  }
-
+/* Wrap, don't clip. Below 767px this list is the drawer's contents and the
+   drawer is the only surface that names all five stages — the step rail
+   collapses the inactive four to unlabelled dots. `nowrap` here made the
+   list 655px wide inside a 390px card with no scrollable ancestor, so
+   stages 3-5 were unreachable in the panel opened to see them. Wrapping to
+   two rows shows all five at once; a scroll strip would need the user to
+   guess a swipe exists, which is the same invisibility in another form. */
 .journey-bar-item {
     flex: 0 0 auto;
     min-width: 4.25rem;
@@ -4288,11 +4309,7 @@ body.cc-printing-page button {
 }
 
 @media (max-width: 640px) {
-.journey-bar-list {
-    width: auto;
-    flex-wrap: nowrap;
-  }
-
+/* See the note at the 720px block — wrap rather than clip. */
 .journey-bar-item {
     flex: 0 0 auto;
     min-width: 3.75rem;
@@ -7474,8 +7491,8 @@ select:focus {
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: var(--tap-min);
+    height: var(--tap-min);
     flex: 0 0 auto;
     border: 1px solid var(--ts-border, #E7E7E7);
     border-radius: var(--radius);
@@ -7580,7 +7597,7 @@ select:focus {
   .app-shell > .journey-sidebar {
     grid-area: main !important;
     position: fixed !important;
-    top: 52px;
+    top: var(--header-h);
     left: 0;
     right: 0;
     bottom: 0;
@@ -7593,7 +7610,7 @@ select:focus {
     align-items: stretch !important;
     justify-content: flex-start !important;
     margin: auto !important;
-    inset: 52px 1rem auto 1rem !important;
+    inset: var(--header-h) 1rem auto 1rem !important;
     max-height: min(70vh, 32rem) !important;
     background: var(--ts-panel, #F9F9F9) !important;
     border: 1px solid var(--ts-border, #E7E7E7) !important;
@@ -7611,6 +7628,24 @@ select:focus {
     opacity: 1;
     transform: scale(1);
     pointer-events: auto;
+  }
+  /* The list inside this drawer must wrap to the card's width. The 860px
+     block sets `width: max-content !important` on the same selector — right
+     for the 768-860px horizontal strip it was written for, wrong here: the
+     drawer is a fixed 358px card with `overflow-x: hidden`, so max-content
+     made the list 652px and left 3 of the 5 stages clipped with nothing to
+     scroll. This drawer is the only surface on mobile that names all five
+     (the rail collapses the inactive four to unlabelled dots), so a stage
+     that does not render here cannot be found at all. */
+  .app-shell > .journey-sidebar .journey-bar-list {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .app-shell > .journey-sidebar .journey-bar-item {
+    flex: 1 1 auto !important;
+    min-width: 6rem;
   }
   .app.deep .app-shell > .journey-sidebar {
     background: var(--bg-elevated, #252525) !important;
@@ -7637,7 +7672,7 @@ select:focus {
   .app-shell.nav-open > .nav-backdrop {
     display: block;
     position: fixed;
-    top: 52px;
+    top: var(--header-h);
     left: 0;
     right: 0;
     bottom: 0;
@@ -7738,8 +7773,9 @@ select:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.6rem;
+  width: var(--tap-min);
   height: 100%;
+  min-height: var(--tap-min);
   border: none;
   border-radius: var(--radius);
   background: transparent;
@@ -8432,6 +8468,7 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: var(--tap-min);
   gap: 0.5rem;
   width: 100%;
   flex: 1 1 auto;
@@ -8946,7 +8983,7 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  min-height: 36px;
+  min-height: var(--tap-min);
   padding: 0 0.7rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
@@ -8981,7 +9018,7 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  min-height: 36px;
+  min-height: var(--tap-min);
   padding: 0 0.65rem;
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
@@ -9206,7 +9243,11 @@ textarea.artboard-brief-input {
   .step-rail-step {
     border: none;
     background: none;
+    /* Padding, not font-size — the type ramp is test-enforced. */
     padding: 2px 0;
+    min-height: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
     font: inherit;
     font-size: var(--fs-2);
     font-weight: 500;

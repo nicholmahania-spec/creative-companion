@@ -355,7 +355,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  min-height: 36px;
+  /* Sibling of .header-todo-pill — same 44px hit-target floor. */
+  min-height: var(--tap-min);
   padding: 0 0.7rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
