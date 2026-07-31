@@ -110,3 +110,33 @@ export function readPaletteTokens(project) {
 export const MAX_COLORS = 8
 /** The floor `removePaletteColor` enforces, for the same reason. */
 export const MIN_COLORS = 2
+
+/**
+ * The page backgrounds the book actually paints, resolved to hex.
+ *
+ * The builder stored these as token ids and resolved them privately inside the
+ * view, so the exported PDF never saw them: every page-background control was
+ * screen-only, and the file the client received ignored all of them. Resolving
+ * here means one implementation, and the pack can carry the answers to the
+ * generator rather than the generator re-deriving them from token ids it would
+ * have to learn to read.
+ *
+ * `white` is the builder's own default rather than a token, so it resolves to
+ * paper regardless of the palette — a project with no palette still has pages.
+ */
+export function resolvePageBg(tokens, key) {
+  if (!key || key === 'white') return '#ffffff'
+  const token = (tokens || []).find((t) => String(t.id) === String(key))
+  return token ? token.hex : '#ffffff'
+}
+
+/** Every page background for a project, as hex, keyed the way the book is. */
+export function resolvedPageBackgrounds(project) {
+  const bb = bookBuilderFor(project)
+  const tokens = readPaletteTokens(project)
+  const out = {}
+  Object.keys(bb.pageBg || {}).forEach((k) => {
+    out[k] = resolvePageBg(tokens, bb.pageBg[k])
+  })
+  return out
+}
