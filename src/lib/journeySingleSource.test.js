@@ -135,4 +135,40 @@ describe('journey is single-source', () => {
     }
     expect(offenders).toEqual([])
   })
+  /**
+   * Retired stop names must not survive as literals anywhere.
+   *
+   * The existing greps above catch a CURRENT label being restated. They
+   * structurally cannot catch a STALE one — nothing in the declaration matches
+   * "Deliver" once the stop is called Assets — so four "Open Deliver" buttons,
+   * a gap-strip tooltip and a "Send · Work" button all shipped and passed CI
+   * while the sidebar, the step rail, the page heading and the shortcuts modal
+   * all said something else. Two names for one destination makes the user hold
+   * a private synonym table the app never confirms, and that table is exactly
+   * what does not survive two weeks away.
+   *
+   * Phrases, not bare words, so that 'deliver' as a step id, DeliverView as a
+   * filename and labelForStepId('deliver') stay legal.
+   */
+  const RETIRED_PHRASES = [
+    'Open Deliver',
+    'open Deliver',
+    'Send · Work',
+    /* NOT 'Project overview'. It is still the live name of the client-facing
+       form ("Project overview form"), so the phrase cannot tell a legitimate
+       artifact name from a stale stop name. ClientsView called it a *step* and
+       was fixed by hand; a denylist that flags the form would be deleted the
+       first time it cried wolf. */
+  ]
+
+  it('no retired stop name survives as a literal', () => {
+    const offenders = []
+    for (const f of files) {
+      if (!/\.jsx$/.test(f.rel)) continue
+      for (const phrase of RETIRED_PHRASES) {
+        if (f.text.includes(phrase)) offenders.push(`${f.rel}: ${phrase}`)
+      }
+    }
+    expect(offenders).toEqual([])
+  })
 })

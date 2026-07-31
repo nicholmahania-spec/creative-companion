@@ -495,7 +495,7 @@ function App() {
   const [showHydratingEscape, setShowHydratingEscape] = useState(false)
   /** Which project's detail shows on the multi-project Home — separate from
    * currentProjectId so browsing the list doesn't switch the active project
-   * until the user actually clicks Continue / Open Deliver. */
+   * until the user actually clicks Continue / the final-stop CTA. */
   const [homeSelectedProjectId, setHomeSelectedProjectId] = useState(null)
   const [syncState, setSyncState] = useState('idle') // idle | syncing | ok | error
   const [syncError, setSyncError] = useState('')
@@ -3484,7 +3484,7 @@ function App() {
             })}
           </ol>
           {/* Only when it actually goes somewhere. When the next gap IS the
-              current page, "Continue → Project overview" points at the screen
+              current page, "Continue → <first stop>" points at the screen
               you're already on — a control that does nothing is worse than no
               control. "Start with these" is the call to action on that page. */}
           {pathNextGap && pathNextGap.view !== activeView && (
@@ -3831,7 +3831,7 @@ function App() {
                             {rowPack
                               ? 'Ship'
                               : rowFull
-                                ? 'Deliver'
+                                ? labelForStepId('deliver')
                                 : nextGap
                                   ? nextGap.label
                                   : '—'}
@@ -3858,7 +3858,7 @@ function App() {
                 </h2>
                 {pathFull && !packReady ? (
                   <p className="home-kicker" style={{ marginTop: '0.35rem' }}>
-                    Pack still thin — open Deliver to fill gaps or ship anyway
+                    {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
                   </p>
                 ) : null}
                 <div className="home-cta-row">
@@ -3874,7 +3874,7 @@ function App() {
                       switchProjectAndContinue(selected.project.id)
                     }}
                   >
-                    {pathFull ? 'Open Deliver' : 'Continue'}
+                    {pathFull ? `Open ${labelForStepId('deliver')}` : 'Continue'}
                   </button>
                 </div>
 
@@ -3920,21 +3920,21 @@ function App() {
                   className="btn btn-primary home-cta"
                   onClick={() => setActiveView('finish')}
                 >
-                  Open Deliver
+                  {`Open ${labelForStepId('deliver')}`}
                 </button>
               </>
             ) : pathStepsFull ? (
               <>
                 <h1 className="home-title">Path steps look full</h1>
                 <p className="home-kicker" style={{ marginTop: '0.5rem' }}>
-                  Pack still thin — open Deliver to fill gaps or ship anyway
+                  {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
                 </p>
                 <button
                   type="button"
                   className="btn btn-primary home-cta"
                   onClick={() => setActiveView('finish')}
                 >
-                  Open Deliver
+                  {`Open ${labelForStepId('deliver')}`}
                 </button>
               </>
             ) : pathNextGap ? (
@@ -3961,7 +3961,7 @@ function App() {
                   className="btn btn-primary home-cta"
                   onClick={() => setActiveView('finish')}
                 >
-                  Open Deliver
+                  {`Open ${labelForStepId('deliver')}`}
                 </button>
               </>
             )}

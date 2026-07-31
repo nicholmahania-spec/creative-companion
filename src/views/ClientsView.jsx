@@ -5,6 +5,7 @@
  * does not persist — always opens back to Polaroid view.
  */
 import { useMemo, useState } from 'react'
+import { labelForStepId } from '../lib/journey'
 import {
   buildClientGroups,
   filterAndSortClients,
@@ -75,7 +76,7 @@ export default function ClientsView({ projects = [], selectProject, setActiveVie
       {visible.length === 0 ? (
         <p className="clients-empty">
           {clients.length === 0
-            ? 'No clients yet — add a client name on a project’s Project overview step.'
+            ? `No clients yet — add a client name on a project’s ${labelForStepId('define')} step.`
             : 'No matches.'}
         </p>
       ) : view === 'polaroid' ? (

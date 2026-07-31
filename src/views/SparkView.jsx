@@ -3,6 +3,7 @@
  * Shortlist A/B/C only after many rough ideas. Not a single “winning” concept page.
  */
 import { useState } from 'react'
+import { labelForStepId } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import useAppStore from '../store/useAppStore'
 import InfoReveal from '../components/InfoReveal'
@@ -352,7 +353,9 @@ export default function SparkView({
           disabled={!canSend}
           aria-describedby="ideate-send-help"
         >
-          {canSend ? `Send · Work` : 'Keep diverging (or choose A/B/C)'}
+          {canSend
+            ? `Send · ${labelForStepId('sketch')}`
+            : 'Keep diverging (or choose A/B/C)'}
         </button>
         <p
           id="ideate-send-help"
