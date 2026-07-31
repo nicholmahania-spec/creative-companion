@@ -2028,6 +2028,56 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run on user change only
   }, [CLOUD, unlocked, cloudUser?.id])
 
+  /* One push at a time, and only the newest result counts.
+
+     The debounce above clears the TIMER, but once it fires the upsert runs for
+     up to 25 seconds while the user keeps typing — long enough for the next
+     debounce to fire a second push underneath the first. Completion order is
+     not guaranteed, and pushWorkspace writes a whole row (onConflict:
+     'user_id'), so an older snapshot resolving last overwrote everything newer.
+     Last-response-wins, on exactly the flaky-mobile case this code was built
+     for. The manual retry button raced the same way.
+
+     So: if a push is running, note that another is wanted and coalesce the
+     burst into one trailing push rather than stacking calls. Each attempt
+     carries a generation, and a reply from a superseded generation is dropped
+     — it must not overwrite state or drag the sync indicator backwards. */
+  const pushInFlightRef = useRef(false)
+  const pushQueuedRef = useRef(false)
+  const pushGenRef = useRef(0)
+
+  const runCloudPush = useCallback(async () => {
+    if (pushInFlightRef.current) {
+      pushQueuedRef.current = true
+      return { ok: true, coalesced: true }
+    }
+    pushInFlightRef.current = true
+    let last = { ok: true }
+    try {
+      do {
+        pushQueuedRef.current = false
+        const gen = (pushGenRef.current += 1)
+        setSyncState('syncing')
+        const result = await pushWorkspace(exportAllData())
+        last = result
+        // A newer push started while this one was in the air — its result is
+        // the truth, so say nothing about this one.
+        if (gen !== pushGenRef.current) continue
+        if (result.ok) {
+          setSyncState('ok')
+          setSyncError('')
+          applyImageUrlReplacements(result.replacements)
+        } else {
+          setSyncState('error')
+          setSyncError(result.error || 'Couldn’t sync')
+        }
+      } while (pushQueuedRef.current)
+    } finally {
+      pushInFlightRef.current = false
+    }
+    return last
+  }, [exportAllData, applyImageUrlReplacements])
+
   // Debounced push to Supabase when desk changes (local always saved via zustand)
   useEffect(() => {
     if (!CLOUD || !unlocked || !cloudUser || !cloudSyncReady.current) return
@@ -2037,21 +2087,12 @@ function App() {
     }
     if (cloudHydrating) return
     // Don't flip to "syncing" until the debounce fires — avoids flicker on every keystroke
-    const t = window.setTimeout(async () => {
-      setSyncState('syncing')
-      const payload = exportAllData()
-      const result = await pushWorkspace(payload)
-      if (result.ok) {
-        setSyncState('ok')
-        setSyncError('')
-        applyImageUrlReplacements(result.replacements)
-      } else {
-        setSyncState('error')
-        setSyncError(result.error || 'Couldn’t sync')
-      }
+    const t = window.setTimeout(() => {
+      void runCloudPush()
     }, 1600)
     return () => window.clearTimeout(t)
   }, [
+    runCloudPush,
     CLOUD,
     unlocked,
     cloudUser?.id,
@@ -3123,11 +3164,10 @@ function App() {
                       }
                       return
                     }
-                    const result = await pushWorkspace(exportAllData())
+                    // Same coalescing path as the auto-push, so pressing
+                    // retry cannot race the save already in flight.
+                    const result = await runCloudPush()
                     if (result.ok) {
-                      setSyncState('ok')
-                      setSyncError('')
-                      applyImageUrlReplacements(result.replacements)
                       flashToast('Desk saved to the cloud')
                     } else {
                       setSyncState('error')
@@ -4269,7 +4309,7 @@ function App() {
               accessName={accessName}
               syncState={syncState}
               syncError={syncError}
-              pushWorkspace={pushWorkspace}
+              runCloudPush={runCloudPush}
               exportAllData={exportAllData}
               setSyncState={setSyncState}
               setSyncError={setSyncError}

@@ -14,7 +14,7 @@ export default function SettingsView(props) {
     accessName,
     syncState,
     syncError,
-    pushWorkspace,
+    runCloudPush,
     exportAllData,
     setSyncState,
     setSyncError,
@@ -278,15 +278,16 @@ export default function SettingsView(props) {
               className="btn btn-secondary btn-sm"
               disabled={syncState === 'syncing'}
               onClick={async () => {
-                setSyncState('syncing')
-                const result = await pushWorkspace(exportAllData())
+                /* Same coalescing path as the auto-push and the retry button.
+                   Pressing Sync while a save is already in flight used to
+                   start a second one, and whichever replied last won — with a
+                   whole-row upsert, that means the older snapshot could
+                   overwrite the newer. It also owns the sync state, so this
+                   handler no longer sets it. */
+                const result = await runCloudPush()
                 if (result.ok) {
-                  setSyncState('ok')
-                  setSyncError('')
                   flashToast('Desk saved to the cloud')
                 } else {
-                  setSyncState('error')
-                  setSyncError(result.error || 'Could not sync right now')
                   flashToast(result.error || 'Could not sync right now')
                 }
               }}
