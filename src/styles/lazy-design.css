@@ -314,6 +314,11 @@
   color: #b91c1c;
 }
 
+/* Not measured yet — deliberately not the red. Nothing has gone wrong. */
+.palette-health-score.is-idle {
+  color: var(--text-muted);
+}
+
 .palette-health-bar {
   margin-top: 0.4rem;
   height: 6px;

@@ -454,21 +454,6 @@ export function suggestRoleAaFixes(palette = [], roles = null) {
     }
   }
 
-  // text on cover (hero type) — AA large ≥ 3:1
-  {
-    const r = contrastRatio(merged.text, merged.cover)
-    if (r < 3) {
-      const coverL = relativeLuminance(merged.cover)
-      const want = coverL > 0.4 ? '#0C0A09' : '#FAFAF9'
-      if (contrastRatio(want, merged.cover) >= 3) {
-        apply('text', want, 'text on cover → readable')
-      } else {
-        const fix = nudgeHexForContrast(merged.text, merged.cover, 3)
-        if (fix?.changed) apply('text', fix.hex, 'text on cover → AA large')
-      }
-    }
-  }
-
   // accent on quiet (UI / links) ≥ 3:1
   {
     const r = contrastRatio(merged.accent, merged.quiet)
@@ -478,19 +463,58 @@ export function suggestRoleAaFixes(palette = [], roles = null) {
     }
   }
 
-  // cover dark enough for light text
+  /* Cover last, and the cover moves — not the ink.
+   *
+   * These passes used to run in a line, each free to overwrite the last: the
+   * cover pass reassigned `text` to a light hex so hero type would read, and
+   * that same reassignment then failed text-on-quiet against a mid-tone
+   * background the earlier pass had already settled. The button reported
+   * three fixes and left two pairs failing on the very meter it feeds — a
+   * fix that doesn't fix is worse than no button, because it spends the
+   * user's trust as well as their click.
+   *
+   * Text and accent are the brand's ink and are settled above against the
+   * body surface. The cover is one surface, free to move along its own hue,
+   * so it is the thing that gives — searched across lightness for a value
+   * that clears BOTH marks at once, keeping hue and saturation so the brand
+   * still looks like itself.
+   */
   {
-    const textL = relativeLuminance(merged.text)
-    if (textL > 0.6 && contrastRatio(merged.text, merged.cover) < 3) {
+    const needsWork =
+      contrastRatio(merged.text, merged.cover) < 3 ||
+      contrastRatio(merged.accent, merged.cover) < 3
+    if (needsWork) {
       const cH = hexToHsl(merged.cover)
       if (cH) {
-        for (const l of [0.12, 0.08, 0.05, 0.18]) {
+        let best = null
+        // Dark first, then light: a dark cover is the usual brand choice and
+        // is what the layout is drawn for.
+        for (const l of [
+          0.12, 0.08, 0.05, 0.18, 0.24, 0.92, 0.96, 0.88, 0.99,
+        ]) {
           const cand = hslToHex(cH.h, cH.s, l)
-          if (contrastRatio(merged.text, cand) >= 3) {
-            apply('cover', cand, 'cover darkened for light text')
+          const tr = contrastRatio(merged.text, cand)
+          const ar = contrastRatio(merged.accent, cand)
+          if (tr >= 3 && ar >= 3) {
+            best = cand
             break
           }
         }
+        // No single lightness satisfies both — desaturate and retry rather
+        // than leaving a pair failing.
+        if (!best) {
+          for (const l of [0.1, 0.06, 0.95, 0.98]) {
+            const cand = hslToHex(cH.h, Math.min(cH.s, 0.15), l)
+            if (
+              contrastRatio(merged.text, cand) >= 3 &&
+              contrastRatio(merged.accent, cand) >= 3
+            ) {
+              best = cand
+              break
+            }
+          }
+        }
+        if (best) apply('cover', best, 'cover moved to clear text and accent')
       }
     }
   }
@@ -674,6 +698,18 @@ export function checkPaletteHarmony(palette = []) {
     .filter((c) => c.hsl && c.hsl.s >= 0.15)
   const hues = chromatic.map((c) => c.hsl.h)
 
+  // An empty palette is not a neutral one. Saying "mostly neutrals" about
+  // nothing is a claim with no colors behind it, and it made a brand-new
+  // project read as though a decision had already been assessed.
+  if (!(palette || []).length) {
+    return {
+      type: 'empty',
+      ok: null,
+      note: 'No colors yet.',
+      hues,
+    }
+  }
+
   if (hues.length <= 1) {
     return {
       type: 'neutral',
@@ -732,34 +768,122 @@ export function checkPaletteHarmony(palette = []) {
  * is a rollup, not a new source of truth.
  * @param {{ palette: string[], colorRoles: object, colorRoleWhy: object }} args
  */
+export const HEALTH_ROLE_KEYS = ['cover', 'text', 'accent', 'quiet']
+
+/**
+ * The color pairs a reader actually sees, with the ratio each one owes.
+ *
+ * The score used to compare EVERY palette color against the quiet
+ * background. Most palette colors are never text on that surface, so a
+ * perfectly good palette scored badly — and because every added color
+ * brought another almost-certainly-failing pair, the number fell as the
+ * work got better. That is the defect: a measurement that punished use.
+ *
+ * Only pairs where both roles are assigned are returned; an unassigned role
+ * is unanswered, not failed.
+ *
+ * @returns {Array<{id:string,fg:string,bg:string,need:number,ratio:number,ok:boolean}>}
+ */
+export function roleContrastPairs(colorRoles = {}) {
+  const r = {}
+  for (const k of HEALTH_ROLE_KEYS) r[k] = normalizeHex(colorRoles[k])
+
+  // 4.5 for body copy, 3.0 for large/UI marks — the AA thresholds, applied
+  // to the job each role actually does rather than to every combination.
+  const wanted = [
+    { id: 'text-on-quiet', fg: r.text, bg: r.quiet, need: 4.5 },
+    // Cover type is hero-sized, so AA large (3:1) is the honest bar — and it
+    // is the bar `suggestRoleAaFixes` already aims at. Scoring against 4.5
+    // here would mean the Fix button could never clear the meter it feeds.
+    { id: 'text-on-cover', fg: r.text, bg: r.cover, need: 3 },
+    { id: 'accent-on-quiet', fg: r.accent, bg: r.quiet, need: 3 },
+    { id: 'accent-on-cover', fg: r.accent, bg: r.cover, need: 3 },
+  ]
+
+  return wanted
+    .filter((p) => p.fg && p.bg && p.fg !== p.bg)
+    .map((p) => {
+      const ratio = contrastRatio(p.fg, p.bg)
+      return { ...p, ratio, ok: ratio >= p.need }
+    })
+}
+
+/**
+ * One combined 0–100 signal for the Colors tab: role justification +
+ * contrast on the pairs that matter + hue harmony.
+ *
+ * Two rules this must not break, both of which it used to:
+ *
+ * 1. **More work never lowers the score.** `justified / assigned` meant one
+ *    justified role scored 100% and four justified roles scored 87%. The
+ *    denominator is now the fixed set of roles, so every answer adds.
+ * 2. **A blank project has no score, rather than a bad one.** An untouched
+ *    palette scored 20% in red — a failure grade for not having started,
+ *    which is the shape of feedback this app exists to avoid. `score` is
+ *    now `null` until there is something to measure; render it as "—",
+ *    never as 0%.
+ *
+ * @param {{ palette: string[], colorRoles: object, colorRoleWhy: object }} args
+ */
 export function paletteHealthScore({
   palette = [],
   colorRoles = {},
   colorRoleWhy = {},
 } = {}) {
-  const roleKeys = ['cover', 'text', 'accent', 'quiet']
-  const assigned = roleKeys.filter((k) => String(colorRoles[k] || '').trim())
-  const justified = assigned.filter((k) => String(colorRoleWhy[k] || '').trim())
-  const roleScore = assigned.length ? justified.length / assigned.length : 0
-
-  const bg = normalizeHex(colorRoles.quiet) || '#FFFFFF'
-  const pairs = buildPairChecks(palette, bg)
-  const contrastScore = pairs.length
-    ? pairs.filter((p) => p.grade?.aaNormal || p.grade?.aaLarge).length /
-      pairs.length
-    : 0
-
-  const harmony = checkPaletteHarmony(palette)
-  const harmonyScore = harmony.ok ? 1 : 0.4
-
-  const score = Math.round(
-    (roleScore * 0.4 + contrastScore * 0.4 + harmonyScore * 0.2) * 100
+  const assigned = HEALTH_ROLE_KEYS.filter((k) =>
+    String(colorRoles[k] || '').trim()
   )
+  const justified = assigned.filter((k) => String(colorRoleWhy[k] || '').trim())
+
+  const started = (palette || []).length > 0 || assigned.length > 0
+  const harmony = checkPaletteHarmony(palette)
+  const pairs = roleContrastPairs(colorRoles)
+
+  if (!started) {
+    return {
+      score: null,
+      started: false,
+      roleScore: 0,
+      contrastScore: 0,
+      harmony,
+      pairs,
+      assignedCount: 0,
+      justifiedCount: 0,
+    }
+  }
+
+  // Fixed denominator: answering a fourth role can only ever add.
+  const roleScore = justified.length / HEALTH_ROLE_KEYS.length
+
+  // Unmeasurable is not failing. With no assigned pairs yet the contrast
+  // term is withheld and the remaining terms are re-weighted, so the score
+  // reports what is actually known instead of scoring silence as zero.
+  const contrastScore = pairs.length
+    ? pairs.filter((p) => p.ok).length / pairs.length
+    : null
+
+  const harmonyScore = harmony.ok === null ? null : harmony.ok ? 1 : 0.4
+
+  const terms = [
+    { value: roleScore, weight: 0.4 },
+    { value: contrastScore, weight: 0.4 },
+    { value: harmonyScore, weight: 0.2 },
+  ].filter((t) => t.value !== null)
+
+  const totalWeight = terms.reduce((s, t) => s + t.weight, 0)
+  const score = totalWeight
+    ? Math.round(
+        (terms.reduce((s, t) => s + t.value * t.weight, 0) / totalWeight) * 100
+      )
+    : null
+
   return {
     score,
+    started: true,
     roleScore,
-    contrastScore,
+    contrastScore: contrastScore ?? 0,
     harmony,
+    pairs,
     assignedCount: assigned.length,
     justifiedCount: justified.length,
   }
