@@ -183,6 +183,15 @@ specifically.)
 
 ## Typography rules — enforced by `src/lib/typography.test.js`
 
+Sources, added 2026-07-31, so these rules stop reading as bare assertion:
+**Rutter, *Web Typography*** (Ampersand Type, 2017) for practice — line length,
+text size, line spacing, responsive paragraphs, hierarchy and scale, all
+written against real CSS — and **Stocks, *Universal Principles of Typography***
+for the fundamentals underneath it (type anatomy, metrics, the em square,
+x-height). The 65ch measure cap and the `--fs-1..6` ramp are arguments Rutter
+makes at length. `graphic-design-professional` and `editorial-layout-director`
+both carry these references.
+
 These are not preferences. Each one encodes a bug that shipped and was
 invisible in review. `npm test` fails if any is broken, and each guardrail
 has been verified to actually fail when the bug is reintroduced.
@@ -223,6 +232,17 @@ has been verified to actually fail when the bug is reintroduced.
   something with no border and no background — rounding an invisible box.
   Prefer whitespace and type weight for hierarchy; add a border only when
   space genuinely can't do the job.
+
+Source for this section, added 2026-07-31: **Kholmatova, *Design Systems***
+(Smashing, 2017). Its **functional vs. perceptual patterns** split is the useful
+frame — functional patterns are behavioural building blocks, perceptual ones
+carry tone (colour, shape, spacing, type treatment). The 426-rules-seven-shapes
+problem is perceptual-pattern drift, and the 135 rules rounding a box with no
+border and no background are perceptual decisions made without a system to make
+them in. Her second theme, **shared language**, is the actual cause of the
+override layers below: patterns nobody named got reinvented per screen. Carried
+by `ui-professional` and `graphic-design-professional`. Note she assumes a team;
+her process material needs translating to a studio of one.
 
 Known and not yet fixed: **five stacked override layers** (`grep -n "lock"`
 around lines 9961, 10037, 12015, 12858, 13388, 14494) totalling ~4.5k lines
@@ -373,6 +393,157 @@ against the ADHD mandate above (task initiation, working memory, decision
 fatigue, time blindness, rejection sensitivity) as its own "why" test, same
 as every other agent here has to.
 
+## Teaching agent — `design-process-professor` (never runs alone)
+
+Teaches the brand identity design process itself — what each stop is for, what
+"done" looks like there, and what a thin stage costs later. It coaches the
+practitioner, not the codebase: `graphic-design-professional` grades the app's
+own visuals, this one grades how the work is being done.
+
+**It is always invoked together with `adhd-executive-function-advisor` on the
+same question, and the two outputs are reconciled before they reach the user —
+one answer, one next move.** Handing over two agents' recommendations and
+asking which to follow is itself a decision billed at the worst moment, which
+is the friction the pairing exists to remove. When they conflict the advisor
+wins and the process point gets reworked, not deleted.
+
+Grounded in **Slade-Brooking, *Creating a Brand Identity: A Guide for
+Designers*** (Laurence King, 2016) as primary — brand identity from the
+designer's side, written for students — plus **Bokhua, *Principles of Logo
+Design*** (Rockport, 2022) for the bench craft of making a mark, with the
+Stanford d.school process guide secondary for its WHAT/WHY/HOW form and its
+go-wide-before-narrow material.
+
+Bokhua supplies the concrete answer to "what does done look like" at the
+Identity stop: three named sketching stages — **initial** (quantity over
+quality; the page is supposed to end up a mess, and a student drawing carefully
+here is on the wrong stage rather than doing it badly), **refinement**,
+**fine-tuning** — then execution, gridding and type lockup. His concepting
+material is also the best brief guidance in any of the sources, including the
+warning that a brief offering total creative freedom usually means the client
+has no vision and expects the designer to supply one, unbilled.
+
+Three standing translations. Slade-Brooking's thirteen stages are agency-shaped
+(senior creatives briefing juniors, a client handler presenting) and get taught
+as intent rather than staffing, because this is a studio of one. d.school is
+product/service innovation, so its vocabulary is not imported wholesale. And
+Bokhua is almost entirely about the mark — the Identity stop also covers colour,
+type and voice, so he must not be allowed to narrow that stage into a logo-only
+exercise.
+
+**It notices skipped steps and never gates on them.** Preconditions are banned
+as phrasings, not just as policy — "before you can X you need Y", "this stage
+isn't really done until". It speaks only about the current stop, references at
+most one earlier one, and names exactly one gap, because a survey of unfinished
+stages is a backlog and a backlog turns "I'm working" into "I'm behind."
+Actions are sized by their finished output ("one sentence", "three words on a
+page"), never by duration — clock time and numbers don't register for this user,
+so a time estimate isn't a size cue.
+
+Currency claims require `WebSearch` and a citation. "I don't have a current read
+on this" is an acceptable answer; an invented trend is not, because it gets
+acted on in front of a client.
+
+**Known gap it will keep finding, correctly:** the journey has no Analysis stop.
+Slade-Brooking gives it a full chapter — USP, competitor and market analysis,
+visual analysis boards — and `journey.js` goes from Research straight to
+Identity. Confirmed 2026-07-31 as a real hole, not deliberate compression. Not
+yet built.
+
+**Also known and deliberate:** the app briefs before it researches, where
+d.school insists on the reverse. That order is an executive-function decision
+recorded in `journey.js`. The professor may raise it once on a job where it
+genuinely bites; it does not relitigate it every project. Same treatment for
+Bokhua's mood-board advice, which conflicts with the one-wall Research decision
+below — the professor may explain why grouping tempts people, and may not
+recommend reversing the decision.
+
+## QC agent — `quality-control-critic`
+
+Two modes, inferred from what it's handed rather than asked about: **Mode A**
+is the platform (an image or PDF is Mode B; code or a running screen is Mode A).
+Mode A is a whole-product last pass — the inconsistency across screens that are
+each individually fine, the feature that works but feels unfinished, the polish
+that stops at the edge of the happy path — and it defers the specialist slices
+to the agents that own them rather than becoming a seventh opinion on the same
+CSS. The build rule is its sharpest tool: a fake feature is a QC failure of the
+first order.
+
+Mode B carries a **named craft checklist for marks**, from Bokhua Chapter 3, so
+"the craft needs tightening" stops being an acceptable finding: overshoot
+(rounded forms read small and must extend past the limit), same-sized look (a
+white mark reads larger than the same black mark, so the light version needs
+shrinking and the guidelines need to say so), the bone effect, visibility and
+graphic devices on photographic backgrounds, and balance — stability, square
+rather than long proportions, even distribution.
+
+**Mode B critiques the actual creative work,** and it must see the artifact.
+Confident feedback on work it never opened is the same failure as false praise,
+because it gets acted on either way. When it can't see the file it does not
+grade and does not stop dead either — one line that it needs eyes on it, *one*
+low-effort route to send it (a phone photo is enough), and what it will check
+the moment it has it.
+
+The bar is not softened — false praise is what lets weak work reach a client,
+where the rejection lands later with money attached. What is constrained is the
+delivery, because the failure mode here is a review that is entirely correct and
+still ends the day's work:
+
+- Blocking capped at three, **two in Mode B**; Polish capped at three and stated
+  as optional. Twelve notes split across two headings is still twelve notes, and
+  a pile is a sorting task performed at the moment initiation is hardest.
+- **The verdict carries its own size** — "not yet, 2 things, both in the type",
+  never a bare "don't ship it". An unbounded verdict gets filled in with
+  everything.
+- **In Mode B it may never say don't-ship without naming the smallest honest
+  version that could go out today.** A dated deliverable left with no route is
+  the worst output this agent can produce — worse than missing the defect.
+- **The work is the subject of every sentence; the person never is.** No
+  skill-level words, no "you" as the subject of a failure, no whole-artifact
+  verdicts. Not politeness: a note attached to the person has no edit that fixes
+  it, so it converts a review into a sentence and the session ends instead of
+  the work improving.
+
+Do not add a gentle-mode toggle, a numeric score, or an encouraging closing
+paragraph — the first bills a decision at the worst moment, the second attaches
+a grade to the person, and the third marks the findings as news needing a
+cushion.
+
+## Test personas — `new-client-persona` + `cold-start-beta-tester`
+
+A pair, meant to be run together: the client states an ask, the designer tries
+to deliver it through the app, and what the app is missing falls out of the
+attempt. These are not advisors and their output is not a redesign — they report
+what happened and hand the fixing to the agents that own it.
+
+`new-client-persona` is a founder with **nothing** — no mark, no assets, no
+vocabulary. Each run takes exactly one scope (full identity / logo only / brand
+guide only / printables only / naming plus identity / rebrand-in-waiting),
+because a logo-only client walking all five journey stops is the sharpest test
+the app has. It is deliberately a *bad* briefer — feelings not specifications,
+self-contradiction, no design vocabulary — since a clean well-structured brief
+tests nothing. It speaks in-character and out-of-character with hard labels
+between them, and it never reads the repo.
+
+`cold-start-beta-tester` is a competent designer using the app for the first
+time who drives **only the running app** — never the source. If it can't find a
+feature in the interface, that *is* the finding; going to look in `src/` and
+then reporting the feature as present is the one thing it must not do. Its lane
+is what's **missing** rather than what's broken, and it is barred from proposing
+UI.
+
+**Stated limitation, so nobody over-trusts it:** project instructions may be
+injected into a subagent's context by the harness regardless of what it chooses
+to read, so the zero-knowledge condition cannot be mechanically guaranteed. The
+mitigation is a required contamination note in every report — anything it knew
+that it didn't learn from the screen. A contaminated run that says so is useful;
+one that doesn't is worse than no test.
+
+**Everything the client persona generates is synthetic and must carry a
+`DEMO — ` prefix.** A generated brief is indistinguishable from a real one once
+it is in the store, and placeholder data masquerading as real records is the
+exact failure the build rule exists to stop.
+
 ## Decided: the Research wall stays ONE wall — no lanes, no direction folders
 
 Real brand practice explores 2–3 distinct visual directions before
@@ -386,6 +557,14 @@ ask, and there is no client to present routes to, so the taxonomy would be
 pure overhead on the user's own thinking. It also fragments the one thing the
 wall must keep: peripheral vision across everything at once. Split three ways
 and you get three walls too small to compare.
+
+**A source disagrees, and the decision stands.** Bokhua (*Principles of Logo
+Design*, Ch. 4) recommends compartmentalising a mood board — classic in one
+section, high-tech in another, monochrome separately, logo subcategories
+grouped. That is real practice and it will come up in every book on the subject,
+which is exactly why it is written down here: the decision below was made
+knowing it, not in ignorance of it. `design-process-professor` may explain why
+grouping tempts people and may not recommend reversing this.
 
 The lighter mechanism already exists — the ★ pack IS a committed direction,
 and the per-pin note is where the reasoning lives. If a second direction is
