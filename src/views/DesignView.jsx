@@ -1030,7 +1030,7 @@ export default function DesignView({
                     disabled={!pinCount || extractingPins}
                     title={
                       starredPinCount
-                        ? `Sample ★ leave-behind pins (${starredPinCount})`
+                        ? `Sample ★ pack pins (${starredPinCount})`
                         : pinCount
                           ? `Sample all Research pins (${pinCount})`
                           : 'Add pins on Research first'

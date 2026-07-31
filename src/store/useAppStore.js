@@ -2170,7 +2170,7 @@ const useAppStore = create(
       setPackHeroPin: (id) => {
         const state = get()
         const pin = (state.moodItems || []).find((m) => m.id === id)
-        if (!pin?.inPack) return { ok: false, error: 'Star pin for pack first' }
+        if (!pin?.inPack) return { ok: false, error: 'Add pin to pack first' }
         set({
           moodItems: state.moodItems.map((m) => ({
             ...m,

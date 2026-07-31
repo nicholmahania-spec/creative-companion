@@ -2431,12 +2431,12 @@ function App() {
         })
         if (result.ok) {
           setLastExportNote(
-            `Brand kit zip · ${new Date().toLocaleTimeString([], {
+            `Everything (zip) · ${new Date().toLocaleTimeString([], {
               hour: 'numeric',
               minute: '2-digit',
             })}`
           )
-          finishOk('Brand kit')
+          finishOk('Everything (zip)')
         } else if (result.cancelled) {
           flashToast('Save cancelled — no problem')
           trackExportAction('kit', false)
@@ -4838,7 +4838,7 @@ function App() {
           className="export-overlay no-print-hide"
           role="dialog"
           aria-modal="true"
-          aria-label="Brand direction pack"
+          aria-labelledby="export-panel-title"
           onClick={(e) => {
             if (e.target === e.currentTarget) setExportPanel(null)
           }}
@@ -4846,7 +4846,9 @@ function App() {
           <div className="export-panel portfolio-export export-studio">
             <div className="export-panel-header no-print">
               <div>
-                <h3 style={{ margin: 0 }}>Export</h3>
+                <h3 id="export-panel-title" style={{ margin: 0 }}>
+                  Export
+                </h3>
               </div>
               <button
                 type="button"
