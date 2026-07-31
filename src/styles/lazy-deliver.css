@@ -357,23 +357,6 @@
   margin-top: 0.45rem;
 }
 
-.board-pack-bulk {
-  margin-left: auto;
-}
-
-.board-pack-bulk summary {
-  cursor: pointer;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.board-pack-bulk-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.4rem;
-}
-
 /* Deliver — one primary + split menu */
 
 .pack-split-main {

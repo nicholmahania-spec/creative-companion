@@ -1069,6 +1069,12 @@
   color: var(--ts-ink, #171717);
 }
 
+/* Sits with the pack count it acts on. Only ever one, and only when it
+   does something — see the note at its render site. */
+.research-pack-bulk {
+  margin-top: var(--space-2);
+}
+
 .research-goal-anchor {
   margin: 0.3rem 0 0;
   font-size: 0.78rem;
