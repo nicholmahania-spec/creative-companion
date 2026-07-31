@@ -298,23 +298,44 @@ $$;
 -- Anon INSERT only into folders named after an existing share or portal id.
 -- ─────────────────────────────────────────────────────────────────────────
 
-create or replace function public.is_client_upload_target(folder_id text)
+-- Kept in step with 20260731130000_bound_client_uploads.sql. The parameter is
+-- `folder`, not `folder_id` — this file said `folder_id` while live said
+-- `folder`, which is the kind of drift that makes schema.sql untrustworthy as
+-- a record.
+create or replace function public.is_client_upload_target(folder text)
 returns boolean
 language plpgsql
+stable
 security definer
 set search_path = public, pg_temp
 as $$
+declare
+  target uuid;
+  existing integer;
 begin
   -- Reject non-UUID folder names before cast (clean false, not 500)
-  if folder_id is null
-     or folder_id !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+  if folder is null
+     or folder !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
     return false;
   end if;
-  return exists (
-    select 1 from public.discovery_shares where id = folder_id::uuid
-  ) or exists (
-    select 1 from public.client_portals where id = folder_id::uuid
-  );
+  target := folder::uuid;
+
+  if not (
+    exists (select 1 from public.discovery_shares s where s.id = target)
+    or exists (select 1 from public.client_portals p where p.id = target)
+  ) then
+    return false;
+  end if;
+
+  -- Per-folder ceiling: existence alone authorized unbounded writes forever,
+  -- since no link ever expires. storage is not on the search_path, so the
+  -- table and helper are schema-qualified.
+  select count(*) into existing
+  from storage.objects o
+  where o.bucket_id = 'client-uploads'
+    and (storage.foldername(o.name))[1] = folder;
+
+  return existing < 25;
 end;
 $$;
 
