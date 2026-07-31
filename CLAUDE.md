@@ -164,7 +164,20 @@ immediately, and Netlify was held back rather than gambled on.
 
 - `todo.md` — prioritized remaining work list
 - `insights.md` — architecture, design tokens, CSS gotchas, critical constraints
-- `src/index.css` — full CSS design system (~15k lines); LightningCSS strict — never leave orphaned declarations outside a rule block
+- **CSS is split, and `src/index.css` is no longer where it lives.** That file
+  is now two lines — a single `@import './styles/shell.css'`. The design
+  system is ~19.7k lines across `src/styles/*.css` plus `src/theme/theme.css`:
+  - `src/styles/shell.css` (~9.5k) — the always-on shell: tokens, header,
+    journey bar, sidebar/drawer, buttons, overlays. Start here.
+  - `src/styles/lazy-*.css` — per-view, imported by the route component
+    (`lazy-design`, `lazy-mood`, `lazy-define`, `lazy-deliver`, …).
+  - `src/styles/brand-book-builder.css`, `src/theme/theme.css`.
+
+  Grepping `src/index.css` for a rule returns nothing and reads as "this
+  style does not exist" — that misfire cost four wrong conclusions in one
+  session. Search `src/styles/` instead.
+
+  LightningCSS strict — never leave orphaned declarations outside a rule block.
 - `src/App.jsx` — central orchestration / prop-drilling hub
 - `src/store/useAppStore.js` — Zustand store
 
@@ -175,7 +188,7 @@ Command palette, confirmations, etc.) must render centered on screen, same
 as desktop. Never slide up from the bottom or drop down from the top —
 the user has said this explicitly: "I do not like popups that come from the
 bottom or top. I need things front and center." All shared overlay chrome
-lives in `.export-overlay`/`.export-panel` in `src/index.css` — keep
+lives in `.export-overlay`/`.export-panel` in `src/styles/shell.css` — keep
 `align-items: center` at every breakpoint. (Persistent side panels that are
 genuinely drawers for browsing a list, like the running to-do panel, are a
 different pattern and not covered by this rule — this is about dialogs/popups
@@ -244,10 +257,24 @@ override layers below: patterns nobody named got reinvented per screen. Carried
 by `ui-professional` and `graphic-design-professional`. Note she assumes a team;
 her process material needs translating to a studio of one.
 
-Known and not yet fixed: **five stacked override layers** (`grep -n "lock"`
-around lines 9961, 10037, 12015, 12858, 13388, 14494) totalling ~4.5k lines
-and ~650 `!important`s. Do not add a sixth. If a style needs overriding,
-fix the base rule.
+Known and not yet fixed: **stacked override layers**. The line numbers this
+note used to carry (9961, 10037, 12015, …) pointed into the old single
+`index.css` and now point at nothing — measure, don't trust a number written
+before the split. As of 2026-07-31, verified:
+
+```sh
+# where the override weight actually sits
+find src -name "*.css" | xargs grep -c "!important"
+```
+
+**672 `!important`s across 11 files**, concentrated in
+`src/styles/shell.css` (470) — the rest are double figures or fewer. The
+`lock` layers moved with the split rather than being resolved.
+
+Do not add another. If a style needs overriding, fix the base rule.
+`shell.css` is where this bites: 13 separate `.journey-bar-list` rules is
+what let a `width: max-content !important` written for one breakpoint clip
+three of five journey stages at another.
 
 ## What this actually is — a customer/project management system
 
@@ -719,7 +746,24 @@ audit found is real bugs *in* that mechanism, not its absence:
   find and click a second, buried "Review client's answers" button to reach
   what the first one promised.
 
-None of these are fixed yet as of this note.
+**All three are fixed as of 2026-07-31** — verified in the code, not assumed:
+
+- `ReviewAnswers` has an `Array.isArray(value)` branch rendering attachments
+  as read-only thumbnails (`ProjectOverviewShare.jsx`), so there is nothing
+  left to accidentally type over.
+- Both merge paths auto-pin client images — `mergeDetectiveAnswers` and
+  `mergeDiscoveryAnswers` each carry the "From the client's brief" note.
+- "Open their answers" opens the review screen, via a one-shot flag consumed
+  once the portal data has loaded.
+
+Left here rather than deleted because the *shape* of the failure is the
+lesson: two surfaces built from one data shape drifted apart, and the second
+one was missed. That is why the "Quoted separately" fix on 2026-07-31 was
+applied to `DetectiveSheet.jsx` and `ClientBriefFields.jsx` together.
+
+A note that says "not fixed" long after something is fixed costs a real
+re-investigation every time someone reads it. If you fix an item above, say
+so here in the same commit.
 
 **Branch audit.** `claude/debug-code-6u77sp` and `fix/save-button-alignment`
 were stale WIP branches from earlier sessions (Jul 24–25), both superseded by
