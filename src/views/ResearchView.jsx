@@ -588,7 +588,7 @@ export default function ResearchView({
                   {starred > 0
                     ? starred >= 6
                       ? '★ pack full'
-                      : `★ ${starred} starred · room for ${6 - starred}`
+                      : `★ ${starred} in pack · room for ${6 - starred}`
                     : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
                 </p>
                 {words ? (
@@ -733,7 +733,7 @@ export default function ResearchView({
                           }
                         }}
                       >
-                        Star next
+                        Fill pack
                       </button>
                       <button
                         type="button"
@@ -744,7 +744,7 @@ export default function ResearchView({
                             .forEach((p) => toggleMoodPinInPack(p.id))
                         }}
                       >
-                        Clear ★
+                        Empty pack
                       </button>
                     </div>
                   </details>
@@ -860,7 +860,7 @@ export default function ResearchView({
                         className="btn btn-secondary btn-sm"
                         onClick={() => starSelected()}
                       >
-                        ★ Shortlist
+                        ★ In pack
                         {selectedPinIds.size > 1 ? ` ${selectedPinIds.size}` : ''}
                       </button>
                       <button

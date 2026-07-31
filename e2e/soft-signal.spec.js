@@ -83,7 +83,7 @@ test.describe('Soft Signal demo', () => {
     await expect(page.getByText(/★\s*[1-9]\/6/).first()).toBeVisible({
       timeout: 5000,
     })
-    // Brand kit fields seeded — messaging + imagery live in collapsed
+    // Brand book fields seeded — messaging + imagery live in collapsed
     // sub-accordions, so assert seeded values, not visibility
     await page.getByRole('tab', { name: /^Words$/i }).click()
     await expect(page.locator('#msg-promise')).toHaveValue(/.{10,}/, {

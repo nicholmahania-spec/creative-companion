@@ -81,7 +81,7 @@ test.describe('Creative Companion path smoke', () => {
     await expect(
       page.locator('h1.page-title', { hasText: last.label })
     ).toBeVisible({ timeout: 10000 })
-    await expect(page.getByText(/Pack · \d+\/\d+/i).first()).toBeVisible()
+    await expect(page.getByText(/Ready · \d+\/\d+/i).first()).toBeVisible()
     await expect(
       page.getByRole('button', { name: /Brand book PDF/i })
     ).toBeVisible()

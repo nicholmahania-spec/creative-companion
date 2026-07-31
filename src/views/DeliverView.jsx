@@ -145,9 +145,7 @@ export default function DeliverView({
           className={`deliver-status-chip${gaps.length ? ' is-gaps' : ' is-ready'}`}
           aria-live="polite"
         >
-          {gaps.length
-            ? `Pack · ${okCount}/${ready.checks.length}`
-            : `Pack · ${okCount}/${ready.checks.length} ready`}
+          {`Ready · ${okCount}/${ready.checks.length}`}
         </span>
       </div>
 
@@ -331,7 +329,7 @@ export default function DeliverView({
                   className="btn btn-ghost btn-sm"
                   onClick={() => runExport('kit')}
                 >
-                  Kit zip
+                  Everything (zip)
                 </button>
                 <button
                   type="button"
@@ -340,13 +338,13 @@ export default function DeliverView({
                     try {
                       const md = packBriefMarkdown(buildCurrentBrandPack())
                       await navigator.clipboard.writeText(md)
-                      flashToast('Client brief copied')
+                      flashToast('Brand summary copied')
                     } catch {
                       flashToast('Could not copy — try Download instead')
                     }
                   }}
                 >
-                  Copy brief
+                  Copy summary
                 </button>
                 <button
                   type="button"

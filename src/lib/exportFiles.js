@@ -514,8 +514,9 @@ export function brandPackToMarkdown(pack) {
   const lines = [
     `# ${pack.projectName}`,
     '',
-    `> ${pack.tagline || 'Tagline TBD'}`,
-    '',
+    // No tagline yet means no tagline line — never a placeholder. This is a
+    // document the client reads, and invented copy reads as a real answer.
+    ...(pack.tagline?.trim() ? [`> ${pack.tagline.trim()}`, ''] : []),
     `_Exported ${new Date(pack.exportedAt).toLocaleString()} · Creative Companion_`,
     '',
     '## Positioning',
@@ -639,12 +640,12 @@ export function brandPackToMarkdown(pack) {
  */
 export function packBriefMarkdown(pack = {}) {
   const name = pack.projectName || 'Untitled project'
-  const tag = (pack.tagline && String(pack.tagline).trim()) || 'Tagline TBD'
+  const tag = pack.tagline && String(pack.tagline).trim()
   const lines = [
     `# ${name}`,
     '',
-    `**${tag}**`,
-    '',
+    // Omit rather than invent — see brandPackToMarkdown.
+    ...(tag ? [`**${tag}**`, ''] : []),
   ]
   if (pack.brief?.trim()) {
     lines.push(String(pack.brief).trim(), '')
@@ -842,7 +843,7 @@ export function brandPackToHtml(pack) {
       <div class="export-identity-cover">
         <div class="kicker">Direction sheet</div>
         <h1 class="direction-title">${esc(pack.projectName)}</h1>
-        <p class="direction-brief">${esc(pack.tagline || 'Tagline TBD')}</p>
+        ${pack.tagline?.trim() ? `<p class="direction-brief">${esc(pack.tagline.trim())}</p>` : ''}
       </div>
       <div class="kicker">Positioning</div>
       <p class="direction-brief">${esc(pack.brief || 'No brief yet.')}</p>
@@ -1014,7 +1015,7 @@ export async function downloadBrandKitZip(
     }
     return downloadBlobReliable(zipBlob, zipName, null)
   } catch (e) {
-    return { ok: false, error: e?.message || 'Brand kit zip failed' }
+    return { ok: false, error: e?.message || 'Zip export failed' }
   }
 }
 
@@ -1135,7 +1136,7 @@ export function buildDirectionSheetMarkup(pack) {
     <div class="export-identity-cover" style="background:${esc(cover)};color:${coverFg}">
       <div class="kicker" style="color:inherit;opacity:0.85">Direction sheet</div>
       <h1 class="direction-title" style="color:inherit">${esc(p.projectName || 'Untitled project')}</h1>
-      <p class="direction-brief" style="color:inherit;opacity:0.92">${esc(p.tagline || 'Tagline TBD')}</p>
+      ${p.tagline?.trim() ? `<p class="direction-brief" style="color:inherit;opacity:0.92">${esc(p.tagline.trim())}</p>` : ''}
     </div>
     <div class="kicker">Positioning</div>
     <p class="direction-brief">${esc(p.brief || 'No brief yet.')}</p>

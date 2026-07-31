@@ -682,7 +682,7 @@ export default function BrandBookBuilderView() {
       <style>{printCss}</style>
 
       <div className="bbb-panel">
-        <h1 className="bbb-panel__title">Brand kit &mdash; source of truth</h1>
+        <h1 className="bbb-panel__title">Brand book &mdash; source of truth</h1>
 
         {/* Named for what's inside rather than "Identity": the app's third
             path stop is already called that, and with sections collapsed by
