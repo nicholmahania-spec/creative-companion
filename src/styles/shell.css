@@ -3855,6 +3855,64 @@ body.cc-printing-page button {
   }
 }
 
+/* ── Shared dialog chrome ──────────────────────────────────────────────
+   Every overlay in the app uses .export-overlay/.export-panel: Discovery
+   brief, Client inbox, Before/After, Overview share, Shortcuts, Onboarding,
+   the export panel, the running-to-do prompt, confirmations.
+
+   These four rules lived in lazy-deliver.css, which is imported by
+   DeliverView — a React.lazy chunk. Until the user visited Deliver, every
+   dialog in the app rendered with NO position, NO backdrop and NO z-index:
+   an ordinary block in normal document flow, with the page behind it fully
+   visible and clickable. That is not a modal, and on a cold cache it covered
+   the whole first-run sequence.
+
+   It also silently broke the "modals always centre" rule at every breakpoint,
+   since align-items came from the same missing rule. CLAUDE.md said this
+   chrome lived in shell.css; it did not, which is why nobody caught it. Now
+   it does.
+
+   Placed immediately above the max-width:640px block below, which overrides
+   .export-overlay's padding — base must precede the override at equal
+   specificity or the small-screen fix is dead. */
+.export-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(18, 18, 18, 0.48);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.export-panel {
+  width: min(440px, 100%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 1.6rem 1.55rem;
+  box-shadow: var(--shadow-3);
+}
+
+.export-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.export-panel-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1.35rem;
+  justify-content: flex-end;
+}
+
 @media (max-width: 640px) {
 .buddy-shell.buddy-float.is-compact-dock {
     bottom: max(4.5rem, calc(env(safe-area-inset-bottom, 0px) + 3.5rem));

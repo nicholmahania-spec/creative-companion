@@ -4413,20 +4413,28 @@ function App() {
                 autoComplete="off"
               />
             </label>
-            <details className="onboard-brief-details">
-              <summary>Brief</summary>
-              <label className="onboard-label" htmlFor="onboard-brief">
-                <span className="sr-only">Brief</span>
-                <textarea
-                  id="onboard-brief"
-                  value={onboardBrief}
-                  onChange={(e) => setOnboardBrief(e.target.value)}
-                  placeholder="What’s the job? One line is plenty"
-                  rows={2}
-                  className="onboard-input"
-                />
-              </label>
-            </details>
+            {/* Visible, not behind a <details>.
+                This was a collapsed <summary>Brief</summary> whose only label
+                was sr-only, so on the app's very first screen the user saw the
+                bare word "Brief" over empty space with no way to tell what was
+                inside. The owner's words on exactly this pattern: "they are
+                hidden and my first thought was 'I have no idea what this is.'
+                It's a cognitive load issue and invisible." A closed <details>
+                with a bare label is a memory test, not a control.
+                The field stays optional — showing it bills no decision that
+                cannot be skipped, and catching the job in one line while it is
+                still in your head is the point. */}
+            <label className="onboard-label" htmlFor="onboard-brief">
+              <span>Brief (optional)</span>
+              <textarea
+                id="onboard-brief"
+                value={onboardBrief}
+                onChange={(e) => setOnboardBrief(e.target.value)}
+                placeholder="What’s the job? One line is plenty"
+                rows={2}
+                className="onboard-input"
+              />
+            </label>
             {/* One button.
 
                 There were two — "Start the brief" and "Empty desk" — and they
