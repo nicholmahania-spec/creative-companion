@@ -144,7 +144,7 @@ export function composeBriefFromDetective(detective) {
 /**
  * Default brand identity template fields on each project.
  * Factory so every project gets fresh nested objects (detective,
- * conceptPackage, colorRoleWhy, deliverWordsChecked) — never shared refs.
+ * colorRoleWhy, deliverWordsChecked) — never shared refs.
  */
 export function brandIdentityDefaults() {
   return {
@@ -236,16 +236,6 @@ export function brandIdentityDefaults() {
   deliverWordsChecked: {},
   /** Define: Design Detective Sheet */
   detective: blankDetective(),
-  conceptPackage: {
-    audience: '',
-    outcome: '',
-    concept: '',
-    voice: '',
-    visualDirection: '',
-    doUse: '',
-    dontUse: '',
-    notes: '',
-  },
   }
 }
 
@@ -339,7 +329,6 @@ export function blankWorkspaceState() {
     prefs: {
       soundEnabled: true,
       reduceMotion: false,
-      bodyDoubleSilent: false,
       forceBreaksEnabled: true,
       forceBreaksConsented: false,
       queueCollapsed: true,
@@ -401,7 +390,6 @@ export function blankWorkspaceState() {
     },
     // Template management
     templates: [],
-    currentTemplateId: null,
   }
 }
 
@@ -413,7 +401,6 @@ export const seedMoodItems = []
 const initial = {
   ...blankWorkspaceState(),
   templates: [],
-  currentTemplateId: null,
 }
 
 
@@ -451,7 +438,6 @@ export const PERSISTED_KEYS = [
   'prefs',
   'portalSeen',
   'templates',
-  'currentTemplateId',
 ]
 
 const PERSIST_DEFAULTS = {
@@ -1591,7 +1577,6 @@ const useAppStore = create(
           prefs: {
             soundEnabled: true,
             reduceMotion: false,
-            bodyDoubleSilent: false,
             forceBreaksEnabled: true,
             queueCollapsed: true,
             showHowItWorks: false,
@@ -1657,7 +1642,6 @@ const useAppStore = create(
              every saved template. Anything in `partialize` has to be in the
              payload too, or the round-trip is lossy by construction. */
           templates: s.templates || [],
-          currentTemplateId: s.currentTemplateId ?? null,
           portalSeen: s.portalSeen || {},
           themeSource: s.themeSource,
         }
@@ -1743,9 +1727,6 @@ const useAppStore = create(
              would wipe what the user has locally. Absent means "keep what we
              have", not "the user deleted them". */
           ...(Array.isArray(data.templates) ? { templates: data.templates } : {}),
-          ...(data.currentTemplateId !== undefined
-            ? { currentTemplateId: data.currentTemplateId }
-            : {}),
           ...(data.portalSeen && typeof data.portalSeen === 'object'
             ? { portalSeen: data.portalSeen }
             : {}),
@@ -2345,87 +2326,6 @@ const useAppStore = create(
           ),
         })),
 
-      updateConceptPackageField: (field, value) =>
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== state.currentProjectId) return p
-            const pack = {
-              audience: '',
-              outcome: '',
-              concept: '',
-              voice: '',
-              visualDirection: '',
-              doUse: '',
-              dontUse: '',
-              notes: '',
-              ...(p.conceptPackage || {}),
-              [field]: value,
-            }
-            return { ...p, conceptPackage: pack }
-          }),
-        })),
-
-      /**
-       * Apply concept package + locked notes into Brand identity fields.
-       * Returns patch summary for toast/UI.
-       */
-      applyConceptPackageToBrand: () => {
-        const { projects, currentProjectId, conceptItems } = get()
-        const project = projects.find((p) => p.id === currentProjectId)
-        if (!project) return { ok: false, error: 'No project' }
-
-        const draft = {
-          audience: '',
-          outcome: '',
-          concept: '',
-          voice: '',
-          visualDirection: '',
-          doUse: '',
-          dontUse: '',
-          notes: '',
-          ...(project.conceptPackage || {}),
-        }
-        const locked = (conceptItems || []).filter(
-          (c) =>
-            c.projectId === currentProjectId &&
-            (c.stage === 'locked' || c.stage === 'develop')
-        )
-
-        const briefParts = []
-        if (draft.audience?.trim())
-          briefParts.push(`Audience: ${draft.audience.trim()}`)
-        if (draft.outcome?.trim())
-          briefParts.push(`Outcome: ${draft.outcome.trim()}`)
-        if (draft.notes?.trim()) briefParts.push(draft.notes.trim())
-        const lockedLines = locked
-          .map((c) => c.note || c.title)
-          .filter(Boolean)
-          .slice(0, 10)
-        if (lockedLines.length) {
-          briefParts.push(`Concept plan: ${lockedLines.join(' · ')}`)
-        }
-
-        const nextBrief =
-          briefParts.join('\n\n') || project.brief || ''
-
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== currentProjectId) return p
-            return {
-              ...p,
-              brief: nextBrief,
-              tagline: draft.concept?.trim() || p.tagline || '',
-              voice: draft.voice?.trim() || p.voice || '',
-              logoDirection:
-                draft.visualDirection?.trim() || p.logoDirection || '',
-              doUse: draft.doUse?.trim() || p.doUse || '',
-              dontUse: draft.dontUse?.trim() || p.dontUse || '',
-            }
-          }),
-        }))
-        return { ok: true }
-      },
-
       nextSpark: () =>
         set((state) => {
           const next = (state.sparkIndex + 1) % sparkPrompts.length
@@ -2718,16 +2618,6 @@ const useAppStore = create(
                   ...JSON.parse(JSON.stringify(project.detective)),
                 }
               : null,
-            conceptPackage: project.conceptPackage ? {
-              audience: project.conceptPackage.audience,
-              outcome: project.conceptPackage.outcome,
-              concept: project.conceptPackage.concept,
-              voice: project.conceptPackage.voice,
-              visualDirection: project.conceptPackage.visualDirection,
-              doUse: project.conceptPackage.doUse,
-              dontUse: project.conceptPackage.dontUse,
-              notes: project.conceptPackage.notes
-            } : null,
             directions: project.directions ? [...project.directions].map(d => ({ ...d })) : [],
             tasks: project.tasks ? [...project.tasks].map(t => ({ ...t })) : [],
             moodItems: project.moodItems ? [...project.moodItems].map(m => ({ ...m })) : []
@@ -2805,11 +2695,6 @@ const useAppStore = create(
 
         return { ok: true }
       },
-
-      setCurrentTemplateId: (templateId) => {
-        set({ currentTemplateId: templateId })
-        return { ok: true }
-      }
     }
   )
 )

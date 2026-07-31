@@ -5,7 +5,6 @@ import {
   pathMissingLabels,
   pathFirstGap,
   pathGapFocusSelector,
-  pathStepFillHint,
   buildPathProgressCtx,
   isStockProjectPalette,
   STOCK_PROJECT_PALETTE,
@@ -223,13 +222,6 @@ describe('pathStepHasContent', () => {
     expect(pathGapFocusSelector('deliver')).toMatch(/handoff/)
   })
 
-  it('pathStepFillHint returns short how-to for each step', () => {
-    expect(pathStepFillHint('define')).toMatch(/business name|goal/i)
-    expect(pathStepFillHint('research')).toMatch(/star|pin|ref/i)
-    expect(pathStepFillHint('sketch')).toMatch(/step/i)
-    expect(pathStepFillHint('design')).toMatch(/tagline|color|palette|logo|voice/i)
-    expect(pathStepFillHint('unknown')).toMatch(/content/i)
-  })
 
   it('buildPathProgressCtx scopes mood/tasks to active project', () => {
     const ctx = buildPathProgressCtx({

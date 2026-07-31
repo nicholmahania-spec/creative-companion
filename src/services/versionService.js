@@ -73,10 +73,6 @@ class VersionService {
             })()
           : null,
 
-        conceptPackage: project.conceptPackage
-          ? { ...project.conceptPackage }
-          : null,
-
         directions: project.directions
           ? project.directions.map((d) => ({ ...d }))
           : [],

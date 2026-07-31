@@ -5,7 +5,6 @@ import {
   tickForcedBreak,
   serializeFocus,
   hydrateFocus,
-  buildResumeBanner,
   isPathView,
 } from './sessionResume'
 
@@ -79,37 +78,6 @@ describe('focus hydrate', () => {
   })
 })
 
-describe('buildResumeBanner', () => {
-  it('includes decision line and path view', () => {
-    const b = buildResumeBanner({
-      session: { activeView: 'spark', forcedBreak: null, focus: null },
-      projectName: 'Soft Signal',
-      nextStepTitle: 'Draft logo mark',
-      decisionLine: 'Chose B: Quiet teal — because calm clinic',
-    })
-    expect(b.view).toBe('spark')
-    expect(b.viewLabel).toBe('Ideate')
-    expect(b.decisionLine).toMatch(/Chose B/)
-    expect(b.mode).toBe('reload')
-  })
-
-  it('mode break-done when break expired', () => {
-    const now = Date.now()
-    const b = buildResumeBanner({
-      session: {
-        activeView: 'flow',
-        forcedBreak: {
-          endsAt: now - 1000,
-          resumeView: 'flow',
-          totalSec: 300,
-        },
-      },
-      projectName: 'X',
-    })
-    expect(b.afterBreak).toBe(true)
-    expect(b.mode).toBe('break-done')
-  })
-})
 
 describe('isPathView', () => {
   it('knows path vs tools', () => {

@@ -241,25 +241,6 @@ export function pathGapFocusSelector(stepId) {
 }
 
 /** English fill hints — single source; i18n pathFillHint falls back here. */
-export const PATH_FILL_HINTS = {
-  define: 'Business name, goal, who it’s for, and what you need made',
-  research: 'Star a picture ★ or add 2+ refs',
-  ideate: 'Title a direction, dump a rough idea, or pin a spark',
-  sketch: 'Write one step you can finish',
-  design: 'Tagline, voice, logo, or your own colors',
-  review: 'Feedback notes, or a tagline plus a starred picture',
-  deliver: 'Client note or learnings (check brand words if listed)',
-  default: 'Add a little content',
-}
-
-/**
- * Short “how to fill this step” line (EN). Prefer pathFillHint(locale, id) in UI.
- * @param {string} stepId
- * @returns {string}
- */
-export function pathStepFillHint(stepId) {
-  return PATH_FILL_HINTS[stepId] || PATH_FILL_HINTS.default
-}
 
 /**
  * Focus first matching selector after a short delay (post-nav).
