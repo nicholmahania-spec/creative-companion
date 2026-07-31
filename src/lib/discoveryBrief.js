@@ -24,7 +24,7 @@ export const DISCOVERY_SECTIONS = [
       {
         id: 'story',
         label: 'The story',
-        prompt: "What is your company's official name, and is there a story behind it? How did the business start and what is its core mission?",
+        prompt: 'How did the business start, and why?',
         type: 'textarea',
       },
       {
@@ -47,8 +47,8 @@ export const DISCOVERY_SECTIONS = [
       },
       {
         id: 'usp',
-        label: 'Unique Selling Proposition (USP)',
-        prompt: 'What makes this brand different from competitors? Why should someone choose you over a competitor?',
+        label: 'What makes you different?',
+        prompt: 'Why would someone pick you over someone else doing the same thing?',
         type: 'textarea',
       },
       {
@@ -70,7 +70,7 @@ export const DISCOVERY_SECTIONS = [
       },
       {
         id: 'audiencePains',
-        label: "Audience's biggest frustrations or desires",
+        label: 'What frustrates your customers most?',
         type: 'textarea',
       },
       {
@@ -80,8 +80,8 @@ export const DISCOVERY_SECTIONS = [
       },
       {
         id: 'competitors',
-        label: 'Competitors',
-        prompt: 'List 2–3 direct competitors, their market position, and what you like/dislike about their branding.',
+        label: 'Who else does what you do?',
+        prompt: 'Two or three names, and what you like or don’t like about how they look.',
         type: 'textarea',
       },
     ],
@@ -128,8 +128,8 @@ export const DISCOVERY_SECTIONS = [
       },
       {
         id: 'fileFormats',
-        label: 'Required file formats',
-        prompt: 'Vector .AI/.EPS, raster .PNG/.JPG, brand guidelines…',
+        label: 'File formats you need',
+        prompt: 'Only if you already know — otherwise leave this blank.',
         type: 'text',
       },
       { id: 'launchDate', label: 'Ideal launch date', type: 'text' },
