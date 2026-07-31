@@ -646,8 +646,16 @@ function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
         // it's wrong, silently overwrites the client's uploaded images with
         // whatever string they typed. Read-only thumbnails instead: nothing
         // to accidentally corrupt, and it shows what's actually there.
-        if (Array.isArray(value)) {
-          const baseId = fieldId.endsWith('Files') ? fieldId.slice(0, -5) : fieldId
+        /* Attachments ONLY. This used to test Array.isArray(value), which is
+           true of the checklist fields too — deliverablesPicked and
+           brandSurfaces are arrays of option ids, not {name,url} pairs. They
+           fell in here and rendered as <a href={undefined}><img
+           src={undefined}>: a row of broken images labelled "What do you need
+           made? — attached", read-only. That is the answer that decides what
+           you are being paid for, on the screen whose whole promise is that
+           you see every line before it is saved. */
+        if (fieldId.endsWith('Files') && Array.isArray(value)) {
+          const baseId = fieldId.slice(0, -5)
           return (
             <div className="field-block" key={fieldId}>
               <label className="field-label">{fieldLabel(baseId)} — attached</label>
@@ -668,6 +676,66 @@ function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
             </div>
           )
         }
+        /* Real checkboxes, from the schema's own options, so the value stays
+           an array of valid ids and nothing here can corrupt it by typing.
+           Grouped the same way the client saw it — an extra is priced
+           differently, and that distinction has to survive the round trip. */
+        const field = ALL_FIELDS.find((f) => f.id === fieldId)
+        if (field?.type === 'checklist') {
+          const picked = Array.isArray(value) ? value : []
+          const setPicked = (next) =>
+            onChange({ ...draft, answers: { ...answers, [fieldId]: next } })
+          return (
+            <div className="field-block" key={fieldId}>
+              <label className="field-label">{fieldLabel(fieldId)}</label>
+              <div className="define-checklist">
+                {[
+                  {
+                    key: 'included',
+                    label: 'Included',
+                    items: (field.options || []).filter((o) => !o.extra),
+                  },
+                  {
+                    key: 'extra',
+                    label: 'Quoted separately',
+                    items: (field.options || []).filter((o) => o.extra),
+                  },
+                ]
+                  .filter((g) => g.items.length > 0)
+                  .map((g) => (
+                    <fieldset key={g.key} className="define-checklist-group">
+                      <legend className="define-checklist-legend">
+                        {g.label}
+                      </legend>
+                      {g.items.map((o) => {
+                        const on = picked.includes(o.id)
+                        return (
+                          <label
+                            key={o.id}
+                            className={`define-check-row${on ? ' is-on' : ''}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={() =>
+                                setPicked(
+                                  on
+                                    ? picked.filter((x) => x !== o.id)
+                                    : [...picked, o.id]
+                                )
+                              }
+                            />
+                            <span>{o.label}</span>
+                          </label>
+                        )
+                      })}
+                    </fieldset>
+                  ))}
+              </div>
+            </div>
+          )
+        }
+
         const existing = String(current?.[fieldId] || '').trim()
         return (
           <div className="field-block" key={fieldId}>
