@@ -659,7 +659,9 @@ function PortalMode({
               messages.map((m) => (
                 <div key={m.id} className={`client-portal-chat-msg is-${m.sender}`}>
                   <span className="client-portal-chat-sender">
-                    {m.sender === 'studio' ? 'You' : 'Client'}
+                    {m.sender === 'studio'
+                      ? 'You'
+                      : project?.detective?.clientName || 'Client'}
                   </span>
                   <p>{m.body}</p>
                 </div>

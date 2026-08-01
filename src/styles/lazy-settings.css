@@ -808,6 +808,45 @@
   margin: 0.65rem 0;
 }
 
+/* ============================================================
+   Settings — 2026 title block + section micro-heads (skin only)
+   ============================================================ */
+
+.settings-view.settings-studio .page-title {
+  font-size: var(--fs-6);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--text-primary);
+}
+
+.settings-intro {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.settings-view.settings-studio {
+  max-width: 48rem;
+}
+
+.settings-view.settings-studio .panel.brand-section {
+  max-width: 48rem;
+  margin-bottom: var(--space-6);
+}
+
+.settings-view.settings-studio .brand-section-label {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 1.1rem;
+}
+
 .settings-studio .helper-ai-badge {
   border-radius: var(--radius);
   font-size: 0.75rem;
