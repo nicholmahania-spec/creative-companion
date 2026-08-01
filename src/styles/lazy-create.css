@@ -1,0 +1,180 @@
+/* New-project intake — 2026 design handoff. One screen, one Start. Type on the
+   --fs ramp, spacing on --space-*, one radius. */
+
+.create-body {
+  max-width: 45rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-6);
+}
+
+.create-title {
+  margin: 0;
+  font-size: var(--fs-6);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.create-lede {
+  margin: var(--space-2) 0 var(--space-6);
+  max-width: 60ch;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.create-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.create-field-narrow {
+  max-width: 20rem;
+}
+
+/* Micro eyebrow, shared by field labels and section legends. */
+.create-label,
+.create-legend,
+.create-deliverable-legend {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.create-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-primary);
+  outline: none;
+}
+.create-input:focus {
+  border-color: var(--text-primary);
+}
+
+.create-section {
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  border: 0;
+}
+.create-section .create-legend {
+  display: block;
+  margin-bottom: var(--space-3);
+  padding: 0;
+}
+
+.create-radios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.create-radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.create-radio.is-on {
+  border-color: var(--text-primary);
+  background: var(--bg-muted);
+  font-weight: 600;
+}
+.create-radio-dot {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border-strong);
+}
+.create-radio.is-on .create-radio-dot {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+  box-shadow: inset 0 0 0 2px var(--bg-card);
+}
+
+.create-hint {
+  margin: 0 0 var(--space-3);
+  max-width: 62ch;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
+.create-deliverables {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-5);
+}
+.create-deliverable-legend {
+  margin-bottom: var(--space-2);
+}
+.create-checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.create-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.create-check.is-on {
+  border-color: var(--text-primary);
+  background: var(--bg-muted);
+  font-weight: 600;
+}
+.create-check-box {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border-strong);
+  font-size: var(--fs-1);
+  line-height: 1;
+  color: var(--bg-card);
+}
+.create-check.is-on .create-check-box {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+}
+
+.create-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: 2px solid var(--text-primary);
+}
