@@ -3412,7 +3412,15 @@ function App() {
           {pathNextGap && pathNextGap.view !== activeView && (
             <button
               type="button"
-              className="btn btn-primary step-rail-cta"
+              /* is-earned: the gradient ring fires ONLY when the stop you are
+                 on is complete — a reward you caused, not standing chrome
+                 (advisor: rarity is the mechanism; a permanent chromatic
+                 accent habituates in days and taxes attention forever).
+                 Static always, one per screen, never on destructive or
+                 client-facing controls. */
+              className={`btn btn-primary step-rail-cta${
+                journeyActive && thisStepFilled ? ' is-earned' : ''
+              }`}
               onClick={() => goToProcessStep(pathNextGap, { micro: 'next' })}
             >
               Continue → {pathNextGap.label}

@@ -6410,8 +6410,10 @@ body:has(.app.deep)::after {
 
 /* Themed pair, not hard-coded literals. #1A1A1A/#FFFFFF assumed a
    permanently dark button; --ts-ink inverts with the theme and --ts-canvas
-   is its paired inverse, so the fill/label relationship holds in both. */
-.btn-primary {
+   is its paired inverse, so the fill/label relationship holds in both.
+   .is-earned exempt — the earned ring (end of file) owns background/border
+   there; narrow the lock, never out-shout it. */
+.btn-primary:not(.is-earned) {
   background: var(--ts-ink) !important;
   color: var(--ts-canvas) !important;
   border: none !important;
@@ -6540,9 +6542,12 @@ body,
    "Start with these 3" buttons on Define were unreadable in dark mode.
    --ts-canvas is #F5F5F5 light / #151515 dark, so this reads 15.9:1 and
    16.6:1 respectively. */
-.btn-primary,
-.path-continue-row .btn-primary,
-.work-path-next.btn-primary {
+/* .is-earned is exempt: the earned gradient ring (end of file) must own
+   background/border there, and the ratchet forbids out-shouting a lock —
+   narrow the base rule instead. */
+.btn-primary:not(.is-earned),
+.path-continue-row .btn-primary:not(.is-earned),
+.work-path-next.btn-primary:not(.is-earned) {
   background: var(--ts-ink) !important;
   color: var(--ts-canvas) !important;
   border: 1px solid var(--ts-ink) !important;
@@ -6552,8 +6557,8 @@ body,
   font-weight: 600;
 }
 
-.btn-primary:hover:not(:disabled):not([aria-disabled='true']),
-.path-continue-row .btn-primary:hover:not(:disabled):not([aria-disabled='true']) {
+.btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned),
+.path-continue-row .btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned) {
   background: var(--ts-focus) !important;
   border-color: var(--ts-focus) !important;
 }
@@ -9553,3 +9558,28 @@ textarea.artboard-brief-input {
   font-weight: 500;
   white-space: nowrap;
 }
+
+/* The earned ring — the app's one chromatic reward (owner's "dopamine
+   hit" buttons, translated). Fires ONLY when the current stop's needed
+   work is done; static always (a looping glow is an attention magnet in
+   peripheral vision and habituates while the tax stays); one per screen;
+   never on destructive, outbound, or client-facing controls; never on an
+   error/empty/locked state. The gradient lives in the BORDER via
+   padding-box/border-box layering, so the keyboard focus ring (an OUTER
+   outline) stays a geometrically separate layer and is never ambiguous
+   with the decoration. */
+.step-rail-cta.is-earned {
+  border: 3px solid transparent;
+  background:
+    linear-gradient(var(--text-primary), var(--text-primary)) padding-box,
+    linear-gradient(135deg, #af40ff, #5b42f3 50%, #00ddeb) border-box;
+  /* The exempted lock rule supplied these — keep them identical here so
+     the earned state changes nothing but the ring. */
+  color: var(--ts-canvas);
+  border-radius: var(--ts-radius);
+  box-shadow: none;
+  min-height: 40px;
+  font-weight: 600;
+  font-family: inherit;
+}
+
