@@ -155,7 +155,7 @@
 
 .palette-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 0.5rem 0.65rem;
   padding: 0.5rem 0.6rem;
@@ -1130,15 +1130,6 @@
   box-shadow: none;
 }
 
-.design-section-tabs {
-  margin-bottom: 0.75rem;
-}
-
-.system-accordion-nav.design-section-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
 
 .design-studio .role-pick-chip {
   border-radius: var(--radius);
@@ -1267,12 +1258,6 @@
 
 
 
-.design-section-tabs .system-acc-tab {
-  border-radius: var(--radius-sm) !important;
-  min-height: 36px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
 /* ============================================================
    Design-view modals — History, Templates, Diff
    ============================================================
@@ -1564,4 +1549,137 @@
   color: var(--text-secondary);
   text-transform: none;
   letter-spacing: normal;
+}
+
+/* ============================================================
+   Identity editor — FLAT column, 2026 rebuild
+   (adhd-executive-function-advisor ruling). Six sections always mounted,
+   numbered 01-06; the rail below is a scroll INDEX, not a tab switcher —
+   its highlight follows scroll position and clicking only moves the page.
+   Numbered heads mirror the brief's chapter pattern
+   (.define-chapter-head/.define-chapter-rule in lazy-define.css).
+   ============================================================ */
+
+.design-section-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: var(--space-2) 0;
+  background: var(--bg-canvas);
+}
+
+.design-section-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-canvas);
+  color: var(--text-secondary);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.design-section-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-muted);
+}
+
+.design-section-tab.is-active {
+  color: var(--text-primary);
+  font-weight: 700;
+  border-color: var(--text-primary);
+}
+
+.design-section-tab-num {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+/* Numbered section head — number + title + hairline rule to the column
+   edge, same visual language as .define-chapter-head. */
+.design-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.design-section-badge {
+  font-family: var(--font-display);
+  font-size: var(--fs-3);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--text-muted);
+}
+
+.design-section-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-4);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.design-section-rule {
+  flex: 1;
+  align-self: center;
+  height: 1px;
+  min-width: var(--space-6);
+  background: var(--border-subtle);
+}
+
+/* Deep link from Review/Deliver readiness: brief focus ring on the section
+   the user was pointed at, not a switch that hides its five siblings. */
+.brand-section.is-deep-link-focus {
+  outline: 2px solid var(--dopamine);
+  outline-offset: var(--space-2);
+  border-radius: var(--radius);
+}
+
+/* Clearspace + min-size stay two separate fields, adjacent on one row
+   rather than each claiming a full-width block. */
+.brand-two-up {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-4);
+}
+
+@media (max-width: 560px) {
+  .brand-two-up {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Micro field labels: uppercase, wide tracking, muted — matches the
+   brief's field language. Inputs sit on canvas with a hairline border that
+   solidifies to full ink on focus. Scoped to the edit column only. */
+.design-edit-column .field-label {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.design-edit-column .field-input,
+.design-edit-column .field-textarea {
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+.design-edit-column .field-input:focus,
+.design-edit-column .field-textarea:focus {
+  border-color: var(--text-primary);
 }

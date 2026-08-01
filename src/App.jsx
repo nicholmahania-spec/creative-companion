@@ -4287,8 +4287,11 @@ function App() {
               setActiveView={setActiveView}
               flashToast={flashToast}
               flashMicro={flashMicro}
-              brandEditSection={brandEditSection}
-              setBrandEditSection={setBrandEditSection}
+              /* Prop names must match DesignView's destructure — they
+                 didn't (brandEditSection vs brandEditSectionProp), so the
+                 deep-link jump from Review/Deliver was silently inert. */
+              brandEditSectionProp={brandEditSection}
+              setBrandEditSectionProp={setBrandEditSection}
             />
           </Suspense>
         )}
