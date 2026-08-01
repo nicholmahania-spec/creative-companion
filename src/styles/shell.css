@@ -6602,8 +6602,13 @@ body,
  * here would invert in `.app.deep`, which is the bug the `--ts-canvas` label
  * comment above documents.
  */
-.btn-primary:active:not(:disabled):not([aria-disabled='true']),
-.path-continue-row .btn-primary:active:not(:disabled):not([aria-disabled='true']) {
+/* :not(.is-earned) here matches the hover lock above — the hover exemption
+   raised that selector's specificity, and without the same bump here a press
+   painted the hover colour (press ≡ hover is the exact bug
+   button-states.spec.js guards). The earned button keeps its ring on press;
+   the interior press feedback comes from the base :active rules. */
+.btn-primary:active:not(:disabled):not([aria-disabled='true']):not(.is-earned),
+.path-continue-row .btn-primary:active:not(:disabled):not([aria-disabled='true']):not(.is-earned) {
   background: var(--dopamine-deep) !important;
   border-color: var(--dopamine-deep) !important;
 }
