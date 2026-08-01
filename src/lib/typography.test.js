@@ -96,7 +96,7 @@ describe('typography guardrails', () => {
   })
 
   it('only asks for weights the loaded family actually ships', () => {
-    // Plus Jakarta Sans is requested at 500;600;700;800 in index.html.
+    // Plus Jakarta Sans is requested at 500;600;700 in index.html.
     const requested = new Set(
       [...css.matchAll(/font-weight:\s*(\d{3})/g)].map((m) => Number(m[1])),
     )
