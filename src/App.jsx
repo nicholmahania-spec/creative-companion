@@ -328,7 +328,6 @@ function App() {
     []
   )
   const breakKit = useAppStore((s) => s.breakKit)
-  const conceptItems = useAppStore((s) => s.conceptItems)
   const completeBreakKitItem = useCallback(
     (...a) => useAppStore.getState().completeBreakKitItem(...a),
     []
@@ -2173,7 +2172,6 @@ function App() {
     projects,
     tasks,
     moodItems,
-    conceptItems,
     breakKit,
     sparkIndex,
     sparksTried,

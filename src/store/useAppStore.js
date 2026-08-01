@@ -335,7 +335,6 @@ export function blankWorkspaceState() {
     currentProjectId: project.id,
     tasks: [],
     moodItems: [],
-    conceptItems: [],
     breakKit: [],
     theme: deviceTheme(),
     /* 'auto' until the user actually toggles. Without this there is no way
@@ -446,7 +445,6 @@ export const PERSISTED_KEYS = [
   'currentProjectId',
   'tasks',
   'moodItems',
-  'conceptItems',
   'breakKit',
   'theme',
   /* Must persist alongside `theme`, or an explicit choice survives only until
@@ -464,7 +462,6 @@ export const PERSISTED_KEYS = [
 ]
 
 const PERSIST_DEFAULTS = {
-  conceptItems: [],
   breakKit: [],
   oppositeIndex: 0,
   sparksTried: 0,
@@ -546,7 +543,6 @@ const useAppStore = create(
       currentProjectId: initial.currentProjectId,
       tasks: [],
       moodItems: [],
-      conceptItems: [],
       breakKit: [],
       theme: deviceTheme(),
       themeSource: 'auto',
@@ -1745,7 +1741,6 @@ const useAppStore = create(
           currentProjectId: s.currentProjectId,
           tasks: s.tasks,
           moodItems: s.moodItems,
-          conceptItems: s.conceptItems || [],
           breakKit: s.breakKit || [],
           forms: s.forms || [],
           theme: s.theme,
@@ -1822,7 +1817,6 @@ const useAppStore = create(
           currentProjectId,
           tasks: data.tasks,
           moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
-          conceptItems: Array.isArray(data.conceptItems) ? data.conceptItems : [],
           breakKit: Array.isArray(data.breakKit) ? data.breakKit : [],
           forms: Array.isArray(data.forms) ? data.forms : [],
           theme: data.theme === 'deep' ? 'deep' : 'warm',
@@ -1887,8 +1881,7 @@ const useAppStore = create(
 
       /** Delete a project and its tasks/pins. Keeps at least one project. */
       deleteProject: (id) => {
-        const { projects, tasks, moodItems, conceptItems, currentProjectId } =
-          get()
+        const { projects, tasks, moodItems, currentProjectId } = get()
         if (projects.length <= 1) {
           return { ok: false, error: 'Keep at least one project' }
         }
@@ -1908,7 +1901,6 @@ const useAppStore = create(
           currentProjectId: nextId,
           tasks: tasks.filter((t) => t.projectId !== id),
           moodItems: moodItems.filter((m) => m.projectId !== id),
-          conceptItems: (conceptItems || []).filter((c) => c.projectId !== id),
         })
         return { ok: true }
       },
@@ -2401,62 +2393,6 @@ const useAppStore = create(
 
       setMoodItems: (moodItems) => set({ moodItems }),
 
-      // ——— Concept pipeline (sketches → develop → iterate → lock → package) ———
-
-      addConceptItem: (item) =>
-        set((state) => ({
-          conceptItems: [
-            {
-              id: item.id || Date.now() + Math.random(),
-              projectId: item.projectId ?? state.currentProjectId,
-              stage: item.stage || 'sketch',
-              visual: item.visual || '',
-              title: item.title || '',
-              note: item.note || '',
-              stepId: item.stepId || null,
-              parentId: item.parentId || null,
-              createdAt: item.createdAt || new Date().toISOString(),
-            },
-            ...(state.conceptItems || []),
-          ],
-        })),
-
-      updateConceptItem: (id, patch) =>
-        set((state) => ({
-          conceptItems: (state.conceptItems || []).map((c) =>
-            c.id === id ? { ...c, ...patch } : c
-          ),
-        })),
-
-      removeConceptItem: (id) =>
-        set((state) => ({
-          conceptItems: (state.conceptItems || []).filter(
-            (c) => c.id !== id && c.parentId !== id
-          ),
-        })),
-
-      /** Move sketch into develop lane */
-      selectSketchToDevelop: (id) =>
-        set((state) => ({
-          conceptItems: (state.conceptItems || []).map((c) =>
-            c.id === id ? { ...c, stage: 'develop' } : c
-          ),
-        })),
-
-      /** Lock idea into concept plan */
-      lockConceptItem: (id, planNote = '') =>
-        set((state) => ({
-          conceptItems: (state.conceptItems || []).map((c) =>
-            c.id === id
-              ? {
-                  ...c,
-                  stage: 'locked',
-                  note: planNote?.trim() ? planNote.trim() : c.note,
-                }
-              : c
-          ),
-        })),
-
       nextSpark: () =>
         set((state) => {
           const next = (state.sparkIndex + 1) % sparkPrompts.length
@@ -2702,9 +2638,6 @@ const useAppStore = create(
           prefs: { ...blank.prefs, ...(persisted.prefs || {}) },
           tasks: Array.isArray(persisted.tasks) ? persisted.tasks : [],
           moodItems,
-          conceptItems: Array.isArray(persisted.conceptItems)
-            ? persisted.conceptItems
-            : [],
           breakKit: Array.isArray(persisted.breakKit)
             ? persisted.breakKit
             : [],
@@ -2759,7 +2692,6 @@ const useAppStore = create(
             if (next !== cur) useAppStore.setState({ projects: next })
           })
           if (!Array.isArray(state.moodItems)) state.moodItems = []
-          if (!Array.isArray(state.conceptItems)) state.conceptItems = []
           if (!Array.isArray(state.breakKit)) state.breakKit = []
           // Normalize boardOrder for pins that predate board drag
           if (state.moodItems?.length) {
