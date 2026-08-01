@@ -1,8 +1,43 @@
 # Creative Companion — Work Log & TODO
 
-> Last updated: 2026-07-28
+> Last updated: 2026-08-01
 > Branch: `main` on `nicholmahania-spec/creative-companion`
-> Build: **green**, 227 tests / 36 files passing at `835476b` + working tree
+> Build: **green**, 578 tests / 76 files passing at `4198cd2`, v3.6.1
+
+---
+
+## OPEN WORK — read this section, the rest is a log
+
+Everything below this section is a record of what was done, kept for the
+reasoning. It is not a list of what is left. These are:
+
+- **Focus Mode entry points** — missing on Ideate / Sketch / Design / Review /
+  Deliver. Only Research's was removed.
+- **Ideate page** — untested whether SparkView actually pushes toward many
+  rough concepts rather than one good one. Ideation is the divergent phase;
+  sketching is a tool inside it.
+- **Brief PDF in the brand book** — a handover record, not a form.
+- **Pomodoro → Helper** link.
+- **~12 cosmetic Research findings** — `#e7e5e4` fallback, note-input box vs
+  underline, dead hero ring.
+- **Research phases 3–7** — not started. Spec in `docs/RESEARCH_PHASES.md`;
+  read it before picking any of them up.
+- **Client contract signing** — scoped and ready to build (see below).
+- **Font packs** — real typefaces beyond the built-in pairs (see below).
+- **Gap 1, logo-only path** — specced 2026-08-01, not built.
+- **Mobile drawer vs bottom sheet** — shipped as a full-width drawer; revisit
+  once tried on an actual phone.
+- **`conceptPackage`** — eight store fields, snapshotted by `versionService`
+  and carried in exports, that no UI writes or reads. Removing it changes the
+  persisted shape and the export contract, so it wants its own pass.
+- **CSS override layers** — 663 `!important` declarations, 463 in
+  `shell.css`. `importantRatchet.test.js` stops the count rising; reducing it
+  needs small measured batches (`scripts/css-snapshot.mjs`), because stripping
+  the journey family wholesale moves 336 computed styles.
+- **Netlify is dead** — last deploy errored 2026-07-19 and
+  `creativecompanion.netlify.app` 404s. Production is Vercel. CLAUDE.md still
+  calls Netlify the primary target, which sent a whole session chasing the
+  wrong host.
 
 ---
 
@@ -113,7 +148,8 @@ ids are `'project'`, `'studio'`, `'spark'`, `'flow'`, `'brand'`, `'review'`,
 - **Ideate page** — Nichol's framing: ideation is the broad divergent phase
   (volume and range over quality), sketching is the rapid visual tool *within*
   it. Test whether SparkView pushes toward many rough concepts or one good one.
-- **Helper bot** — parked; blocked on xAI key + server-side edge function.
+- **Helper bot** — no longer blocked (2026-08-01): the key and the proxy both
+  exist. See "Helper bot doing side tasks" below.
 - **Brief PDF** in the brand book — a handover record, not a form.
 - **Pomodoro → Helper** link.
 - ~12 cosmetic Research findings (`#e7e5e4` fallback, note-input box vs
@@ -564,19 +600,33 @@ listener + popover), mounted globally in `App.jsx`.
 
 ---
 
-## Next session starting point
+## Next session starting point — REMOVED 2026-08-01
 
-1. Start with **ReviewFocusView.jsx** nested FocusShell fix (HIGH #1) — it's the natural continuation of the UX agent's work
-2. Remove **console.log / alert** calls from Preview components (HIGH #2) — quick wins
-3. Address MEDIUM items in order (DefineView controlled select, cloudSync timer, App.jsx a11y)
-4. After all fixes: run `npm run bump` to increment the version
+This section listed four items and every one of them was already resolved,
+several by the 2026-07-25 sweep recorded further up this same file. Following
+it sent you to fix `ReviewFocusView.jsx` nesting that does not exist and to
+strip `console.log` calls that are not there.
 
+Deleted rather than rewritten. A "start here" pointer that outlives its work
+is worse than none: it is confident, specific, and wrong, and it costs a real
+investigation before anyone doubts it. The live list is **OPEN WORK** at the
+top of this file.
 
 ---
 
-## PARKED — Helper bot doing side tasks (2026-07-27)
+## Helper bot doing side tasks — UNPARKED 2026-08-01
 
-Scope agreed, deliberately deferred. Recorded so it does not need re-deriving.
+**The blocker is gone.** This was parked on "xAI key + server-side edge
+function". Both now exist: `server/xaiProxyCore.mjs` is deployed on Vercel
+behind real Supabase session auth (an anonymous POST to
+`/api/xai/chat/completions` returns 401 "Sign in required"), and `XAI_API_KEY`
+was set in Vercel production on 2026-08-01 with a deploy after it.
+
+Not verified end to end from outside: the proxy checks auth *before* the API
+key, so an unauthenticated probe returns 401 whether the key works or not.
+Signing in and sending one message is the only real test.
+
+Scope below was agreed and is recorded so it does not need re-deriving.
 
 **What was decided:** Helper should take on side tasks on demand — you ask,
 it works, you get a result in a few seconds. Not background/queued. All three
