@@ -42,11 +42,15 @@
 }
 
 .define-field-label {
+  /* 2026 dressing: the handoff's uppercase micro "eyebrow" label — the
+     quiet label over a boxed field is what makes the answers read as the
+     content and the questions as structure. */
   font-family: var(--font-display);
-  font-size: var(--fs-2);
-  font-weight: 600;
-  letter-spacing: 0;
-  color: var(--text-secondary);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -927,6 +931,13 @@
   color: var(--text-primary);
 }
 
+.define-title-rule {
+  flex: 1 1 100%;
+  height: 2px;
+  margin: var(--space-4) 0 var(--space-5);
+  background: var(--text-primary);
+}
+
 .define-title-row {
   display: flex;
   align-items: flex-start;
@@ -1048,9 +1059,20 @@
     margin-left: 0.75rem;
   }
 
+  /* The title rule sits after the whole head cluster and before the
+     needed-line/StartHere/milestones — order 3.5 in the band's sequence. */
+  .define-dashboard .define-title-rule {
+    order: 4;
+  }
+
+  .define-dashboard .define-needed-line,
+  .define-dashboard .define-start-here {
+    order: 5;
+  }
+
   .define-dashboard .define-milestones-compact,
   .define-dashboard .brand-template-top .define-secondary {
-    order: 4;
+    order: 6;
   }
 }
 

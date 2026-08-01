@@ -199,6 +199,11 @@ export default function DefineView(props) {
             Share / export
           </button>
         </div>
+        {/* 2026 dressing: the 2px baseline under the title/deadline/share
+            cluster. Its own full-width element because this band is an
+            ordered flex (define-title-row is display:contents on desktop) —
+            a border on any one child can't underline the whole row. */}
+        <div className="define-title-rule" aria-hidden="true" />
         {/* The date input moved into the brief itself ("Is there a date this
             needs to be done by?"). What stays here is read-only: an ISO date
             carries no felt urgency, and this phrase is the only thing on the

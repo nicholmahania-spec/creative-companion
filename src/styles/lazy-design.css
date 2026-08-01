@@ -59,6 +59,15 @@
   margin-bottom: 1.15rem;
 }
 
+/* 2026 dressing: the hard 2px baseline under the editor's head, same as
+   every other screen's title band. Scoped to the editor — the brief's
+   band contains milestones/StartHere and draws its own rule element
+   instead. */
+.design-studio > .brand-template-top {
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--text-primary);
+}
+
 .brand-template-top .page-title {
   margin-bottom: 0.25rem;
 }
