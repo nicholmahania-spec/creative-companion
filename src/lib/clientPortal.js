@@ -51,6 +51,28 @@ export async function createClientPortal({ projectLocalId, clientName, detective
   return { ok: true, portalId: data.id }
 }
 
+/**
+ * Studio side: revoke a client portal link (audit #19). Owner-scoped RLS
+ * update sets revoked_at; every anon RPC then treats the link as not-found,
+ * so a leaked/forwarded link is killed without deleting the row (the client's
+ * answers, chat and approvals survive). Reversible by clearing revoked_at.
+ */
+export async function revokeClientPortal(portalId) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  const now = new Date().toISOString()
+  const { error } = await supabase
+    .from('client_portals')
+    .update({ revoked_at: now, updated_at: now })
+    .eq('id', portalId)
+  if (error) {
+    console.warn('Couldn’t revoke the portal', error)
+    return { ok: false, error: 'Couldn’t revoke the link' }
+  }
+  return { ok: true }
+}
+
 /** Studio side: update which steps are pushed (visible) to the client. */
 export async function setPortalStepVisibility(portalId, stepVisibility) {
   if (!isSupabaseConfigured() || !supabase) {

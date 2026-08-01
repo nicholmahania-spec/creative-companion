@@ -1282,14 +1282,6 @@ h3 {
   color: var(--text-primary);
 }
 
-.home-md-row-count {
-  flex-shrink: 0;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-
 .home-md-row-next {
   display: block;
   margin-top: 0.2rem;
@@ -1330,15 +1322,6 @@ h3 {
   margin-top: auto;
   padding-top: 1.35rem;
   border-top: 1px solid var(--border-subtle);
-}
-
-.home-md-strip-label {
-  margin: 0 0 0.8rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--text-muted);
 }
 
 .home-md-steps {
@@ -7812,6 +7795,22 @@ select:focus {
   gap: 0.1rem;
   max-height: 9.5rem;
   overflow-y: auto;
+}
+
+/* Client grouping heading, shown only when ≥2 named clients collide (#4).
+   A quiet label, not a boxed section — the projects under it are the thing to
+   click, the heading only disambiguates repeat clients. */
+.journey-projects-group-head,
+.home-md-group-head {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: var(--space-1) var(--space-1) 0;
+}
+
+.journey-projects-group-head:not(:first-child),
+.home-md-group-head:not(:first-child) {
+  margin-top: var(--space-2);
 }
 
 .journey-project-row-wrap {
