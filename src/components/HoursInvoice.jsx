@@ -3,8 +3,9 @@
  * note) against an hourly rate, with a simple itemized invoice export.
  * Business-ops utility, separate from the creative workflow.
  */
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { downloadInvoicePdf, invoiceTotals, dueDateFrom } from '../lib/invoice'
+import { useModalFocus } from '../lib/useModalFocus'
 
 export function HoursInvoicePanel({
   open,
@@ -28,6 +29,23 @@ export function HoursInvoicePanel({
   const [billTo, setBillTo] = useState('')
   const [busy, setBusy] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  /* Focus trap, focus restore and Escape.
+
+     This declared aria-modal="true" while implementing none of it — which is
+     the worst available combination, not a missing nicety: assistive tech is
+     told the rest of the page is unavailable while Tab walks straight out into
+     it. Focus also never entered the dialog on open and was never returned to
+     the opener on close.
+
+     useModalFocus is the same hook ProjectOverviewShare and ClientInbox
+     already use; passing onClose is what wires Escape, so one call covers all
+     three. */
+  const getRoot = useCallback(() => document.querySelector('.hours-invoice-panel'), [])
+  useModalFocus(open, getRoot, {
+    initialSelector: '.running-todo-panel-head button, button',
+    onClose,
+  })
+
 
   if (!open) return null
 

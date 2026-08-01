@@ -2492,6 +2492,7 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .done-undo {
+  position: relative;
   border: none;
   background: rgba(106, 106, 106, 0.12);
   color: var(--accent-growth);
@@ -2502,6 +2503,20 @@ html[data-reduce-motion='true'] *::after {
   cursor: pointer;
   flex-shrink: 0;
 }
+
+/* Same 44px touch-floor expansion as .brief-attach-remove: the visual stays,
+   the hit area reaches the project's stated minimum. --tap-min was defined
+   and unused. */
+.done-undo::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--tap-min);
+  height: var(--tap-min);
+}
+
 
 .done-undo:hover {
   background: rgba(106, 106, 106, 0.22);
@@ -7751,6 +7766,7 @@ select:focus {
 }
 
 .journey-projects-add {
+  position: relative;
   display: inline-grid;
   place-items: center;
   /* 24px, the WCAG 2.2 target-size minimum (2.5.8). Was 20x20. */
@@ -7765,6 +7781,20 @@ select:focus {
   line-height: 1;
   cursor: pointer;
 }
+
+/* Same 44px touch-floor expansion as .brief-attach-remove: the visual stays,
+   the hit area reaches the project's stated minimum. --tap-min was defined
+   and unused. */
+.journey-projects-add::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--tap-min);
+  height: var(--tap-min);
+}
+
 .journey-projects-add:hover {
   /* #606060 darkened toward a light background — correct in light, the
      wrong direction in dark (≈2.3:1). --text-primary moves toward full
@@ -9491,6 +9521,29 @@ textarea.artboard-brief-input {
   font-size: var(--fs-2);
   line-height: 1;
   cursor: pointer;
+}
+
+/* Expand the TOUCH area to the 44px floor without changing how the badge
+   looks.
+
+   The button was 1.25rem square — 20px — and it is on the PUBLIC client form:
+   a stranger, on a phone, deleting a photo they just uploaded. It was the
+   smallest target in the app, on the surface with the least margin for error
+   and no support channel.
+
+   A transparent pseudo-element centred on the button is used rather than
+   growing the button itself, because the badge is absolutely positioned in
+   the corner of a thumbnail — resizing it would move the visual, and
+   repainting it behind a pseudo-element risks it vanishing under an
+   ancestor's background. This changes only what a finger can hit. */
+.brief-attach-remove::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--tap-min);
+  height: var(--tap-min);
 }
 
 .brief-attach-add {

@@ -358,7 +358,7 @@ export default function PublicClientPortal({ portalId }) {
                 {/* Beside the button that caused it. This used to render only
                     at the very bottom of the page, several screens below the
                     submit, so a failed submit looked like nothing happened. */}
-                {error && <p className="public-fill-error">{error}</p>}
+                {error && <p className="public-fill-error" role="alert">{error}</p>}
                 <button type="submit" className="btn btn-primary" disabled={formSubmitting}>
                   {formSubmitting ? 'Submitting…' : 'Submit'}
                 </button>
@@ -411,7 +411,7 @@ export default function PublicClientPortal({ portalId }) {
                   )}
                 </div>
               ))}
-              {error && <p className="public-fill-error">{error}</p>}
+              {error && <p className="public-fill-error" role="alert">{error}</p>}
               <button
                 type="submit"
                 className="btn btn-primary"
@@ -479,7 +479,7 @@ export default function PublicClientPortal({ portalId }) {
           </button>
         </div>
 
-        {error && <p className="public-fill-error">{error}</p>}
+        {error && <p className="public-fill-error" role="alert">{error}</p>}
       </div>
     </div>
   )
