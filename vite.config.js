@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 const root = dirname(fileURLToPath(import.meta.url))
 
@@ -74,7 +75,23 @@ const base =
   process.env.GITHUB_PAGES === 'true' ? '/creative-companion/' : '/'
 
 export default defineConfig({
-  plugins: [react()],
+  /* `npm run analyze` sets ANALYZE=1. rollup-plugin-visualizer was in
+     devDependencies and wired to nothing, so the script looked like a working
+     analysis tool and silently produced no report — which is worse than not
+     having it, because it gets trusted. */
+  plugins: [
+    react(),
+    ...(process.env.ANALYZE
+      ? [
+          visualizer({
+            filename: 'dist/bundle-report.html',
+            gzipSize: true,
+            brotliSize: true,
+            template: 'treemap',
+          }),
+        ]
+      : []),
+  ],
   base,
   resolve: {
     alias: {

@@ -27,6 +27,21 @@ const MAIN_CSS_RAW_MAX = 200 * 1024
 /** Main JS gzipped advisory max (warn only if over, still fail on raw) */
 const MAIN_JS_GZIP_WARN = 140 * 1024
 
+/**
+ * Everything the browser is told to fetch before the app can run — the main
+ * chunk plus every <link rel="modulepreload"> in dist/index.html.
+ *
+ * The budget above measures index-*.js alone, so a library becoming eager was
+ * invisible to it. That is not hypothetical: lottie-web (300 KB raw) was
+ * pulled onto the login screen by a hardcoded prop, and the gate stayed green
+ * because the bytes were in their own chunk. Measuring the entry set closes
+ * the gap the single-chunk budget left open.
+ *
+ * Seeded above today's measured total with room to breathe, not at it — this
+ * is a ceiling to catch a regression, not a ratchet.
+ */
+const EAGER_JS_RAW_MAX = 900 * 1024
+
 function pickMain(files, re) {
   return files.filter((f) => re.test(f)).sort((a, b) => {
     // Prefer the largest matching "index-" entry as main
@@ -44,6 +59,17 @@ try {
     process.exit(1)
   }
 
+  /* The entry set: the main chunk plus everything index.html preloads. */
+  const html = readFileSync(join(root, 'dist', 'index.html'), 'utf8')
+  const preloaded = [...html.matchAll(/modulepreload"[^>]*href="[^"]*\/assets\/([^"]+)"/g)]
+    .map((m) => m[1])
+    .filter((f) => f.endsWith('.js'))
+  const eagerFiles = [...new Set([mainJs, ...preloaded])]
+  const eagerRaw = eagerFiles.reduce(
+    (sum, f) => sum + statSync(join(assetsDir, f)).size,
+    0
+  )
+
   const jsPath = join(assetsDir, mainJs)
   const jsRaw = statSync(jsPath).size
   const jsGzip = gzipSync(readFileSync(jsPath)).length
@@ -53,6 +79,20 @@ try {
   console.log(`  gzip ${(jsGzip / 1024).toFixed(1)} KB (warn > ${MAIN_JS_GZIP_WARN / 1024} KB)`)
 
   let failed = false
+  console.log(
+    `perf-budget: eager entry set (${eagerFiles.length} files) ` +
+      `raw ${(eagerRaw / 1024).toFixed(1)} KB (max ${EAGER_JS_RAW_MAX / 1024} KB)`
+  )
+  if (eagerRaw > EAGER_JS_RAW_MAX) {
+    console.error(
+      'FAIL: eager entry set over budget — something became non-lazy.\n' +
+        eagerFiles
+          .map((f) => `  ${(statSync(join(assetsDir, f)).size / 1024).toFixed(1)} KB  ${f}`)
+          .join('\n')
+    )
+    process.exitCode = 1
+  }
+
   if (jsRaw > MAIN_JS_RAW_MAX) {
     console.error(`FAIL: main JS raw over budget`)
     failed = true

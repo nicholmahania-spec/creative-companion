@@ -144,11 +144,17 @@ const MAX_OCR_PAGES = 4
 export async function ocrOverviewPdf(file, onProgress) {
   if (!file) return { ok: false, error: 'No file provided' }
   try {
-    const pdfjs = await import('pdfjs-dist')
+    /* The legacy build, matching BrandBookPreview. pdf.js 5.7's modern
+       bundle calls Map.prototype.getOrInsertComputed, which only exists in
+       browsers from around mid-2025 — on anything older this died with
+       "getOrInsertComputed is not a function". Using the modern entry here
+       also meant pdf.js was bundled TWICE, ~127 KB gzip of duplicate parser,
+       because two subpaths of one package cannot be deduped. */
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
     // Vite resolves this to a hashed asset URL; without it pdf.js tries to
     // fetch a worker path that doesn't exist in the built bundle.
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.min.mjs',
+      'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
       import.meta.url
     ).toString()
 
