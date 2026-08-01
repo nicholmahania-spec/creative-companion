@@ -1,9 +1,16 @@
 /**
- * Client directory — Polaroid-style cards (visual recall: the user recognizes
- * clients by the brand logo, not by reading a name), with search and sort.
- * No card/list view toggle: a presentation preference the user re-decides on
- * every visit is pure decision-fatigue overhead — neither view does more work
- * than the other, so we commit to the recognizable one. (#18)
+ * Client directory — card grid (visual recall: the user recognizes clients by
+ * the brand logo/monogram, not by reading a name), with search and a sort
+ * segmented control.
+ *
+ * Reskinned to the 2026 design handoff: 2px title underline, square monogram
+ * tiles, Call/Email pills, underlined project links, segmented sort.
+ *
+ * NO card/list view toggle, deliberately. The handoff redrew one, but the
+ * adhd-executive-function-advisor reconciled it against #18 and ruled it out:
+ * a view preference re-decided every visit is decision-fatigue overhead with
+ * no task payoff (a List view does no work Cards don't at a studio-of-one's
+ * client counts). Match the design's look, drop its toggle. (#18)
  */
 import { useMemo, useState } from 'react'
 import { labelForStepId } from '../lib/journey'
@@ -14,6 +21,11 @@ import {
   monogramTone,
 } from '../lib/clientDirectory'
 import '../styles/lazy-clients.css'
+
+const SORT_MODES = [
+  { id: 'recent', label: 'Most recent' },
+  { id: 'alpha', label: 'A–Z' },
+]
 
 export default function ClientsView({ projects = [], selectProject, setActiveView }) {
   const [query, setQuery] = useState('')
@@ -33,25 +45,33 @@ export default function ClientsView({ projects = [], selectProject, setActiveVie
   return (
     <div className="clients-view view-enter">
       <div className="clients-view-head">
-        <h1 className="page-title">Clients</h1>
+        <h1 className="clients-view-title">Clients</h1>
         <div className="clients-view-controls">
           <input
             type="search"
-            className="field-input clients-search"
+            className="clients-search"
             placeholder="Search clients or projects"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             aria-label="Search clients"
           />
-          <select
-            className="clients-sort-select"
-            value={sortMode}
-            onChange={(e) => setSortMode(e.target.value)}
+          <div
+            className="clients-sort"
+            role="group"
             aria-label="Sort clients"
           >
-            <option value="recent">Most recent</option>
-            <option value="alpha">A–Z</option>
-          </select>
+            {SORT_MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className={`clients-sort-btn${sortMode === m.id ? ' is-active' : ''}`}
+                aria-pressed={sortMode === m.id}
+                onClick={() => setSortMode(m.id)}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -87,33 +107,35 @@ function ClientCard({ client, onOpen }) {
   return (
     <div className="client-card">
       <ClientPhoto client={client} />
-      <div className="client-card-body">
-        <p className="client-card-name">{client.name}</p>
-        {!client.logoImage && (
-          <p className="client-card-hint">Add a logo to use it here</p>
+      <p className="client-card-name">{client.name}</p>
+      {!client.logoImage && (
+        <p className="client-card-hint">Add a logo to use it here</p>
+      )}
+      <div className="client-card-actions">
+        {client.phone && (
+          <a className="client-card-pill" href={`tel:${client.phone}`}>
+            Call
+          </a>
         )}
-        <div className="client-card-actions">
-          {client.phone && (
-            <a className="btn btn-ghost btn-sm" href={`tel:${client.phone}`}>
-              Call
-            </a>
-          )}
-          {client.email && (
-            <a className="btn btn-ghost btn-sm" href={`mailto:${client.email}`}>
-              Email
-            </a>
-          )}
-        </div>
-        <ul className="client-card-projects">
-          {client.projects.map((p) => (
-            <li key={p.id}>
-              <button type="button" className="text-link" onClick={() => onOpen(p)}>
-                {p.name}
-              </button>
-            </li>
-          ))}
-        </ul>
+        {client.email && (
+          <a className="client-card-pill" href={`mailto:${client.email}`}>
+            Email
+          </a>
+        )}
       </div>
+      <ul className="client-card-projects">
+        {client.projects.map((p) => (
+          <li key={p.id}>
+            <button
+              type="button"
+              className="client-card-project"
+              onClick={() => onOpen(p)}
+            >
+              {p.name}
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
