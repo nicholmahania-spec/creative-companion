@@ -86,13 +86,13 @@ test.describe('Soft Signal demo', () => {
     await expect(
       page.getByText(/★\s*\d+ in pack|★\s*pack full/).first()
     ).toBeVisible({ timeout: 5000 })
-    // Brand book fields seeded — messaging + imagery live in collapsed
-    // sub-accordions, so assert seeded values, not visibility
-    await page.getByRole('tab', { name: /^Words$/i }).click()
+    /* Brand book fields seeded. The editor is a flat column now — every
+       section is always mounted, so there are no tabs to click first;
+       messaging + imagery still live in collapsed sub-accordions, so
+       assert seeded values, not visibility. */
     await expect(page.locator('#msg-promise')).toHaveValue(/.{10,}/, {
       timeout: 5000,
     })
-    await page.getByRole('tab', { name: /^Pack$/i }).click()
     await expect(page.locator('#img-style')).toHaveValue(/.{5,}/, {
       timeout: 5000,
     })

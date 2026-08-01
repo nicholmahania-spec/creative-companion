@@ -113,9 +113,11 @@ test.describe('Process walk (artifacts)', () => {
     await stepByIdIn(path, 'design').click()
     await expect(headingForStep(page, 'design').first()).toBeVisible()
     await page.locator('#brand-tagline').fill('Calm direction you can hand over')
-    await page.getByRole('button', { name: 'v1', exact: true }).click()
+    /* The bump button carries its action in visible text now ("Bump · v1"),
+       not just the version readout. */
+    await page.getByRole('button', { name: /^Bump · v1$/ }).click()
     await expect(
-      page.getByRole('button', { name: /^v[2-9]$/ })
+      page.getByRole('button', { name: /^Bump · v[2-9]$/ })
     ).toBeVisible({ timeout: 5000 })
 
     // 6 Review — pack readiness + feedback notes
