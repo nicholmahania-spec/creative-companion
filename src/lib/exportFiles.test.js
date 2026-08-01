@@ -338,15 +338,15 @@ describe('downloadBrandPackVectorPdf quality', () => {
       returnBlobOnly: true,
     })
     expect(result.ok).toBe(true)
-    /* Thin pack: cover, then a divider + content page each for logo, color,
-       type and applications, then the closing and the writing rules the app
-       supplies defaults for. No foundations pages, no imagery, no brief —
-       nothing is drawn for content that isn't there. The floor is higher than
-       it was because each numbered section now opens on its own divider,
-       which is the design; what the range guards is that empty sections still
-       cost nothing. */
-    expect(result.pages).toBeGreaterThanOrEqual(9)
-    expect(result.pages).toBeLessThanOrEqual(12)
+    /* Thin pack: cover, then one page each for logo, color and type (each
+       opening with a header band, not a separate divider page), then the
+       closing and the writing rules the app supplies defaults for. No
+       foundations, no imagery, no applications, no brief — nothing is drawn
+       for content that isn't there. The floor dropped when section dividers
+       became header bands (five full pages reclaimed on a full book); what the
+       range still guards is that empty sections cost nothing. */
+    expect(result.pages).toBeGreaterThanOrEqual(5)
+    expect(result.pages).toBeLessThanOrEqual(9)
 
     const buf = Buffer.from(await result.blob.arrayBuffer())
     const text = buf.toString('latin1')
