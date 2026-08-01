@@ -100,7 +100,7 @@ test.describe('Soft Signal demo', () => {
     await stepByIdIn(path, 'research').click()
     await expect(headingForStep(page, 'research').first()).toBeVisible()
     await expect(
-      page.locator('.mood-board.has-pins, .mood-card').first()
+      page.locator('.research-grid .research-pin-card').first()
     ).toBeVisible({ timeout: 8000 })
 
     /* Ideate is a Tool now, not stop 3 — reached through the Tools menu so

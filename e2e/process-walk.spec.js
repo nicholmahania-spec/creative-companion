@@ -72,7 +72,7 @@ test.describe('Process walk (artifacts)', () => {
     await page.locator('#board-note').fill('Calm indigo field — safe energy')
     await page.getByRole('button', { name: 'Add', exact: true }).click()
     await page.waitForTimeout(300)
-    const star = page.locator('button.mood-pin-star').first()
+    const star = page.locator('button.research-pin-star').first()
     await expect(star).toBeVisible({ timeout: 5000 })
     // Real hit target (no force) — pin tools must not be covered by face
     await star.click()
