@@ -1,0 +1,230 @@
+/* Project desk — the 2026 handoff's hub. Two panels split by a hairline
+   seam, the design's own device: a 1px gap over a border-subtle background,
+   so the split reads as structure without drawing two boxes. Tokens only,
+   no !important. */
+
+.desk-view {
+  max-width: 1160px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.desk-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
+  border-bottom: 2px solid var(--text-primary);
+}
+
+.desk-title {
+  margin: 0;
+}
+
+.desk-head-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.desk-due {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.desk-client-chip {
+  min-height: var(--tap-min);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  font: inherit;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.desk-client-chip:hover {
+  border-color: var(--text-primary);
+}
+
+.desk-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+@media (min-width: 900px) {
+  .desk-grid {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+  }
+}
+
+.desk-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.desk-eyebrow {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.desk-artboard-foot {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Where you left off. A landmark, so it keeps its slot even when the list
+   below it changes. */
+.desk-resume {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.desk-resume:hover {
+  border-color: var(--text-primary);
+}
+
+.desk-resume-sub {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* The one highlighted thing on the screen. Bordered in full ink because it
+   is the single next action — everything else here is information. */
+.desk-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--text-primary);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+
+.desk-card-tag {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.desk-card-title {
+  margin: 0;
+  max-width: 62ch;
+  font-size: var(--fs-3);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.desk-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.desk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.desk-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-1) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.desk-row-open,
+.desk-row-task {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.desk-row-open {
+  cursor: pointer;
+}
+
+.desk-row-open:hover {
+  color: var(--text-muted);
+}
+
+.desk-row-tag {
+  flex: none;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.desk-row-check {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  cursor: pointer;
+}
+
+.desk-row-check:hover {
+  border-color: var(--text-primary);
+}
+
+.desk-row.is-done .desk-row-task {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Greyed, never struck — a declined step is not failed work. */
+.desk-row.is-skipped .desk-row-open {
+  color: var(--text-muted);
+}
+
+.desk-done {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}

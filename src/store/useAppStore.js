@@ -2434,6 +2434,28 @@ const useAppStore = create(
          scope in progressItemInScope, so blank means "everything", not
          "nothing". Reviewed by adhd-executive-function-advisor: this must never
          block starting, so every field here is optional at the store level. */
+      /* Desk: mark a journey stop "not needed" for THIS project, reversibly.
+         Not a permanent skip (an irreversible action bills an "am I sure?"
+         at the moment the desk exists to remove a decision) and not a
+         hide-once (a row that returns tomorrow re-bills the same decision
+         forever — the "prompt whose answer is always the same" failure).
+         The row moves to the finished area labelled "Not needed" and one
+         click puts it back. No new field on old projects: absent reads as
+         an empty list. */
+      toggleStepNotNeeded: (projectId, stepId) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== projectId) return p
+            const cur = Array.isArray(p.stepsNotNeeded) ? p.stepsNotNeeded : []
+            return {
+              ...p,
+              stepsNotNeeded: cur.includes(stepId)
+                ? cur.filter((id) => id !== stepId)
+                : [...cur, stepId],
+            }
+          }),
+        })),
+
       createProjectFromIntake: (intake = {}) => {
         const clientName = String(intake.clientName || '').trim()
         const detective = {
