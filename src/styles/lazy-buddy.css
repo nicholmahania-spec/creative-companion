@@ -1742,3 +1742,86 @@
   border-radius: var(--radius-sm) !important;
   overflow: hidden;
 }
+
+/* Marks a reply that came from the offline script rather than the model.
+   Muted and inline, not a banner: the reply underneath is still usable, and
+   the Helper is the surface you reach for when things are already going
+   badly. --text-muted clears 4.5:1 on every surface this sits on. */
+.buddy-msg-offline {
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* The Helper's question box. Full width and directly under the thread it
+   feeds, not tucked beside the action buttons — it is the primary way to
+   use the Helper now, and the buttons are the shortcuts. */
+.buddy-ask {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.buddy-ask-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-2);
+}
+
+.buddy-ask-input:disabled {
+  opacity: 0.6;
+}
+
+.buddy-ask-send {
+  flex: 0 0 auto;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--text-primary);
+  border-radius: var(--radius);
+  background: var(--text-primary);
+  color: var(--bg-elevated);
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.buddy-ask-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Proposed changes. Stacked under the reply that suggested them, each one a
+   full-width press — the Helper has changed nothing until one is pressed. */
+.buddy-proposals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.buddy-proposal {
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-1);
+  text-align: left;
+  cursor: pointer;
+}
+
+.buddy-proposal:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

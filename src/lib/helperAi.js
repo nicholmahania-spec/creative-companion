@@ -21,6 +21,7 @@ import {
   twoDirectionsTip,
 } from './buddy'
 import { HELPER_SYSTEM_PROMPT } from './helperPersona'
+import { actionCatalogueForPrompt, parseProposals } from './helperActions'
 import { supabase } from './supabase'
 
 const DEFAULT_MODEL = 'grok-4.5'
@@ -245,6 +246,15 @@ function intentUserPrompt(intent, activity = {}, extra = {}) {
 export async function callXaiChat({
   system = SYSTEM_PROMPT,
   user,
+  /**
+   * Prior turns, oldest first: `[{ role: 'user'|'assistant', content }]`.
+   *
+   * Without these every message is the model's first: "make it shorter" has
+   * nothing to shorten, and "no, the other one" has no other one. That is
+   * not a conversation, it is a series of unrelated answers, and it is why
+   * the Helper could only ever be driven by canned prompts.
+   */
+  history = [],
   model = DEFAULT_MODEL,
   temperature = 0.45,
   maxTokens = 160,
@@ -284,6 +294,18 @@ export async function callXaiChat({
       max_tokens: maxTokens,
       messages: [
         { role: 'system', content: system },
+        /* Trimmed to the last 8 turns. The whole thread would grow the
+           request without bound — cost and latency rising on every reply,
+           on a control whose whole promise is "a result in a few seconds". */
+        ...(Array.isArray(history) ? history : [])
+          .filter(
+            (m) =>
+              m &&
+              (m.role === 'user' || m.role === 'assistant') &&
+              String(m.content || '').trim()
+          )
+          .slice(-8)
+          .map((m) => ({ role: m.role, content: String(m.content).trim() })),
         { role: 'user', content: user },
       ],
     }),
@@ -304,6 +326,63 @@ export async function callXaiChat({
   const cleaned = String(text).trim()
   if (!cleaned) throw new Error('Empty AI response')
   return cleaned
+}
+
+/**
+ * A free-text question, with the thread so far.
+ *
+ * The Helper had ~12 canned intents behind buttons and no way to type. You
+ * could press "I'm stuck" but not say what you were stuck on, and nothing
+ * you pressed was aware of anything you had pressed before — so it could
+ * answer, but it could not be asked.
+ *
+ * Deliberately text-only: it returns words and touches nothing. Letting it
+ * add a task or edit a brief needs a permission model, and "it changed my
+ * brief without asking" is a worse failure than "it did not help". That is
+ * a separate decision, not an implementation detail of this one.
+ *
+ * Returns the same `{ text, source, error }` shape as `coachWithHelper`, so
+ * a scripted fallback stays distinguishable from a real answer.
+ *
+ * @param {string} question
+ * @param {Array<{role:'user'|'assistant',content:string}>} history
+ * @param {object} activity
+ */
+export async function askHelper(question, history = [], activity = {}) {
+  const q = String(question || '').trim()
+  if (!q) return { text: '', source: 'scripted' }
+
+  if (!isHelperAiConfigured()) {
+    return {
+      text: "I can't answer questions without a connection — the buttons below still work offline.",
+      source: 'scripted',
+    }
+  }
+
+  try {
+    /* The activity line gives the model the same situational context the
+       canned intents get, so a bare "what now?" is answerable. */
+    const ctx = describeActivity(activity)
+    const user = ctx ? `${q}\n\n(Context: ${ctx})` : q
+    /* The catalogue rides in the system prompt rather than as provider
+       tool-calling: it is testable without a live API, it works the same on
+       any OpenAI-compatible endpoint, and — the reason that matters — the
+       model returns a *proposal*, never a call. Nothing can execute. */
+    const raw = await callXaiChat({
+      system: `${HELPER_SYSTEM_PROMPT}\n\n${actionCatalogueForPrompt()}`,
+      user,
+      history,
+      maxTokens: 320,
+    })
+    const { text, proposals } = parseProposals(raw)
+    return { text, proposals, source: 'ai' }
+  } catch (e) {
+    return {
+      text: activityTip(activity),
+      source: 'scripted',
+      error: e?.message || 'AI unavailable',
+    }
+  }
 }
 
 /**

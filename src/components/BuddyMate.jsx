@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { labelForView } from '../lib/journey'
+import { applyProposal } from '../lib/helperActions'
 import {
   activityTip,
   buddyMood,
@@ -40,6 +41,7 @@ import {
   kindMeta,
 } from '../lib/breakKit'
 import {
+  askHelper,
   coachWithHelper,
   isHelperAiConfigured,
   helperAiStatus,
@@ -72,6 +74,22 @@ const PROCESS_VIEW = {
   deliver: 'finish',
 }
 
+/**
+ * Says the words came from the offline script, not the model.
+ *
+ * Stated as a fact about the reply, not as an error about you: the Helper
+ * is the surface you reach for when things are already going badly, and a
+ * red failure banner there is the shame-coded error CLAUDE.md rules out.
+ * It also does not offer a retry — the reply underneath is still usable, and
+ * a button whose outcome you cannot predict is a decision billed at the worst
+ * possible moment. The console carries the actual reason.
+ */
+function OfflineNote() {
+  return (
+    <span className="buddy-msg-offline"> · offline tip</span>
+  )
+}
+
 export default function BuddyMate({
   onClose,
   isFocusRunning = false,
@@ -92,6 +110,14 @@ export default function BuddyMate({
   const addBreakKitItem = useAppStore((s) => s.addBreakKitItem)
   const removeBreakKitItem = useAppStore((s) => s.removeBreakKitItem)
   const completeBreakKitItem = useAppStore((s) => s.completeBreakKitItem)
+  /* The only store writes the Helper can reach, and only ever behind a press
+     — see lib/helperActions.js for what is excluded and why. */
+  const addTask = useAppStore((s) => s.addTask)
+  const breakIntoSteps = useAppStore((s) => s.breakIntoSteps)
+  const storeTasks = useAppStore((s) => s.tasks)
+  const currentProjectId = useAppStore((s) => s.currentProjectId)
+  /** Which proposals have been pressed, so a button cannot fire twice. */
+  const [appliedIds, setAppliedIds] = useState({})
   const activityLive = useMemo(
     () => ({
       ...activity,
@@ -112,6 +138,15 @@ export default function BuddyMate({
       text: `${greetingLine()} · ${formatClock()}`,
     },
   ])
+  /* Mirrors `messages` so `askQuestion` can read the thread without listing
+     it as a dependency — otherwise the callback is rebuilt on every reply,
+     and an in-flight request is orphaned mid-answer. */
+  const messagesRef = useRef(messages)
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+  /** What the user is typing. The Helper had no input before this. */
+  const [askText, setAskText] = useState('')
   // Start minimized so work forms stay free
   const [expanded, setExpanded] = useState(false)
   const [showMore, setShowMore] = useState(false)
@@ -239,7 +274,16 @@ export default function BuddyMate({
   const isThinkingText = (t) => t === '…' || t === 'One sec…'
 
   const pushBuddy = useCallback(
-    (text, { move = true, expand = false, replaceThinking = false } = {}) => {
+    (
+      text,
+      {
+        move = true,
+        expand = false,
+        replaceThinking = false,
+        offline = false,
+        proposals = null,
+      } = {}
+    ) => {
       if (!text) return
       if (move) repark(expand)
       else if (expand) {
@@ -256,7 +300,7 @@ export default function BuddyMate({
           if (last?.from === 'buddy' && isThinkingText(last.text)) {
             return [
               ...m.slice(0, -1),
-              { ...last, text },
+              { ...last, text, offline, proposals },
             ].slice(-14)
           }
         }
@@ -265,7 +309,7 @@ export default function BuddyMate({
           (x) => !(x.from === 'buddy' && isThinkingText(x.text))
         )
         const id = msgId.current++
-        return [...base.slice(-13), { id, from: 'buddy', text }]
+        return [...base.slice(-13), { id, from: 'buddy', text, offline, proposals }]
       })
     },
     [repark, scheduleAutoMinimize, expanded]
@@ -569,23 +613,120 @@ export default function BuddyMate({
       try {
         const result = await coachWithHelper(intent, a, extra)
         if (req !== aiReqRef.current) return
+        /* `coachWithHelper` already reports whether the words came from the
+           model or from the scripted fallback, and this dropped that on the
+           floor — so a dead API key, a 503, or an expired session produced a
+           plausible canned sentence that was indistinguishable from a real
+           reply. The Helper looked like it was working while never reaching
+           the model at all, which is the one failure you cannot debug from
+           the outside because it never looks like a failure.
+
+           `source === 'scripted'` WITH an error means the model was expected
+           and did not answer. Without an error it is ordinary offline mode,
+           which is honest already and needs no badge. */
         pushBuddy(result.text, {
           move: false,
           expand: true,
           replaceThinking: true,
+          offline: result.source === 'scripted' && !!result.error,
         })
-      } catch {
+        if (result.source === 'scripted' && result.error) {
+          console.warn('Helper AI unavailable, using scripted reply:', result.error)
+        }
+      } catch (e) {
         if (req !== aiReqRef.current) return
+        console.warn('Helper AI threw, using scripted reply:', e)
         pushBuddy(activityTip(a), {
           move: false,
           expand: true,
           replaceThinking: true,
+          offline: true,
         })
       } finally {
         if (req === aiReqRef.current) setAiBusy(false)
       }
     },
     [pushBuddy, pushYou]
+  )
+
+  /**
+   * A typed question. The Helper had no input at all before this — twelve
+   * canned intents and no way to say what you were actually stuck on.
+   *
+   * `messages` is the visible thread, so the history sent to the model is
+   * exactly what is on screen. Deriving it from anything else would let the
+   * two drift, and a coach answering a conversation you cannot see is worse
+   * than one with no memory.
+   */
+  const askQuestion = useCallback(async () => {
+    const q = askText.trim()
+    if (!q || aiBusy) return
+    setAskText('')
+    pushYou(q)
+    const a = activityRef.current
+    const req = ++aiReqRef.current
+    setAiBusy(true)
+    pushBuddy(isHelperAiConfigured() ? '…' : 'One sec…', {
+      move: false,
+      expand: true,
+    })
+    const history = messagesRef.current
+      .filter((m) => !isThinkingText(m.text))
+      .map((m) => ({
+        role: m.from === 'you' ? 'user' : 'assistant',
+        content: m.text,
+      }))
+    try {
+      const result = await askHelper(q, history, a)
+      if (req !== aiReqRef.current) return
+      if (result.source === 'scripted' && result.error) {
+        console.warn('Helper AI unavailable, using scripted reply:', result.error)
+      }
+      pushBuddy(result.text, {
+        move: false,
+        expand: true,
+        replaceThinking: true,
+        offline: result.source === 'scripted' && !!result.error,
+        proposals: result.proposals?.length ? result.proposals : null,
+      })
+    } catch (e) {
+      if (req !== aiReqRef.current) return
+      console.warn('Helper AI threw, using scripted reply:', e)
+      pushBuddy(activityTip(a), {
+        move: false,
+        expand: true,
+        replaceThinking: true,
+        offline: true,
+      })
+    } finally {
+      if (req === aiReqRef.current) setAiBusy(false)
+    }
+  }, [askText, aiBusy, pushBuddy, pushYou])
+
+  /**
+   * Run one proposal, because the user pressed it.
+   *
+   * Nothing calls this except a click. The model can only ever put a button
+   * on screen; whether it does anything is the user's decision, every time.
+   */
+  const runProposal = useCallback(
+    (msgId, index, proposal) => {
+      const key = `${msgId}:${index}`
+      if (appliedIds[key]) return
+      const openTask = (storeTasks || []).find((t) => !t.completed)
+      const res = applyProposal(proposal, {
+        addTask,
+        breakIntoSteps,
+        nextTaskId: openTask?.id,
+        projectId: currentProjectId,
+      })
+      setAppliedIds((m) => ({ ...m, [key]: res.ok ? 'done' : 'failed' }))
+      /* Say what happened either way. A button that reports nothing leaves
+         you checking the list to find out whether it worked, which is the
+         cost this was supposed to remove. */
+      pushBuddy(res.note, { move: false, expand: true })
+    },
+    [appliedIds, storeTasks, addTask, breakIntoSteps, currentProjectId, pushBuddy]
   )
 
   const reply = (key) => {
@@ -894,7 +1035,10 @@ export default function BuddyMate({
 
           <div className="buddy-compact-chat" ref={listRef}>
             {recentMsgs.length === 0 && latestBuddy && (
-              <div className="buddy-msg buddy-msg-buddy">{latestBuddy.text}</div>
+              <div className="buddy-msg buddy-msg-buddy">
+                {latestBuddy.text}
+                {latestBuddy.offline && <OfflineNote />}
+              </div>
             )}
             {recentMsgs.map((m) => (
               <div
@@ -902,9 +1046,68 @@ export default function BuddyMate({
                 className={`buddy-msg buddy-msg-${m.from}`}
               >
                 {m.text}
+                {m.offline && <OfflineNote />}
+                {m.proposals?.length > 0 && (
+                  <div className="buddy-proposals">
+                    {/* Proposed, not done. The wording is deliberate: the
+                        Helper has changed nothing at this point, and a label
+                        implying otherwise would make the press feel like a
+                        confirmation of something already true. */}
+                    {m.proposals.map((p, i) => {
+                      const state = appliedIds[`${m.id}:${i}`]
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          className="buddy-proposal"
+                          disabled={!!state}
+                          onClick={() => runProposal(m.id, i, p)}
+                        >
+                          {state === 'done' ? '✓ ' : state === 'failed' ? '· ' : '+ '}
+                          {p.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
+
+          {/* The thing that was missing. Twelve canned intents and nowhere to
+              say what you were actually stuck on — so the Helper could answer
+              but could not be asked.
+
+              Enter sends; the button is there because Enter-to-send is a
+              convention you have to already know, and this is the surface you
+              reach for when you are least able to guess at one. Disabled while
+              a reply is in flight so a second question cannot orphan the
+              first, which would leave you watching a "…" that answers
+              something you no longer asked. */}
+          <form
+            className="buddy-ask"
+            onSubmit={(e) => {
+              e.preventDefault()
+              void askQuestion()
+            }}
+          >
+            <input
+              className="buddy-ask-input"
+              value={askText}
+              onChange={(e) => setAskText(e.target.value)}
+              placeholder="Ask anything"
+              aria-label="Ask the Helper"
+              maxLength={500}
+              disabled={aiBusy}
+            />
+            <button
+              type="submit"
+              className="buddy-ask-send"
+              disabled={aiBusy || !askText.trim()}
+            >
+              Ask
+            </button>
+          </form>
 
           {/* Redesign brief: three verbs only — Coach · Critique · Break */}
           <div
