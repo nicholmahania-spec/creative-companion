@@ -45,6 +45,7 @@ const GameHUD = lazy(() => import('./components/GameHUD'))
 const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const ClientsView = lazy(() => import('./views/ClientsView'))
+const NewProjectIntake = lazy(() => import('./views/NewProjectIntake'))
 const BrandBookBuilderView = lazy(
   () => import('./views/BrandBookBuilderView')
 )
@@ -3715,11 +3716,9 @@ function App() {
                 type="button"
                 className="journey-projects-add"
                 onClick={() => {
-                  createNewProject()
-                  notifyAction('New project', 'project_create', {
-                    label: 'New project',
-                  })
-                  setActiveView('project')
+                  // Opens the new-project intake (name + 3 quick answers)
+                  // instead of creating a blank project instantly.
+                  setActiveView('create')
                   setNavOpen(false)
                 }}
                 aria-label="New project"
@@ -3974,13 +3973,7 @@ function App() {
                   <button
                     type="button"
                     className="btn btn-primary btn-sm home-new-project"
-                    onClick={() => {
-                      createNewProject()
-                      notifyAction('New project', 'project_create', {
-                        label: 'New project',
-                      })
-                      setActiveView('project')
-                    }}
+                    onClick={() => setActiveView('create')}
                   >
                     + New project
                   </button>
@@ -4149,13 +4142,7 @@ function App() {
               <button
                 type="button"
                 className="btn btn-secondary home-new-project"
-                onClick={() => {
-                  createNewProject()
-                  notifyAction('New project', 'project_create', {
-                    label: 'New project',
-                  })
-                  setActiveView('project')
-                }}
+                onClick={() => setActiveView('create')}
               >
                 + New project
               </button>
@@ -4343,6 +4330,16 @@ function App() {
               projects={projects}
               selectProject={selectProject}
               setActiveView={setActiveView}
+            />
+          </Suspense>
+        )}
+
+        {activeView === 'create' && (
+          <Suspense fallback={<PathViewSkeleton label="Loading…" />}>
+            <NewProjectIntake
+              setActiveView={setActiveView}
+              flashToast={flashToast}
+              onCancel={() => setActiveView('home')}
             />
           </Suspense>
         )}

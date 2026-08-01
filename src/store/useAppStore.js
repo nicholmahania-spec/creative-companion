@@ -2433,6 +2433,34 @@ const useAppStore = create(
         return project
       },
 
+      /* New-project intake: create a project with the three quick answers
+         seeded into Chapter 01 of the brief. Only the client name is
+         load-bearing (it's the project's identity and what keeps the list
+         navigable); engagementType defaults to 'new', and an empty
+         deliverablesPicked deliberately stays [] — that is full brand-package
+         scope in progressItemInScope, so blank means "everything", not
+         "nothing". Reviewed by adhd-executive-function-advisor: this must never
+         block starting, so every field here is optional at the store level. */
+      createProjectFromIntake: (intake = {}) => {
+        const clientName = String(intake.clientName || '').trim()
+        const detective = {
+          ...blankDetective(),
+          clientName,
+          engagementType: intake.engagementType || 'new',
+          deliverablesPicked: Array.isArray(intake.deliverablesPicked)
+            ? intake.deliverablesPicked
+            : [],
+        }
+        if (intake.projectDeadline) {
+          detective.projectDeadline = intake.projectDeadline
+        }
+        const project = createBlankProject(clientName || 'My project', '')
+        project.detective = detective
+        project.brief = composeBriefFromDetective(detective)
+        get().addProject(project)
+        return project
+      },
+
       // selectors helpers used via get in components
       getActiveProject: () => {
         const { projects, currentProjectId } = get()
