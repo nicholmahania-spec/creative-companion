@@ -79,6 +79,25 @@ export function deadlineUrgency(iso) {
   return 'later'
 }
 
+/**
+ * Worded relative deadline — "Due this week", never "14d left". The number
+ * variants below predate the time-blindness rule; this is the phrasing new
+ * surfaces should reach for (DefineView's title chip and the client record
+ * rows both speak it, so the two surfaces can't drift apart).
+ */
+export function relativeDeadlineLabel(iso) {
+  const n = daysUntil(iso)
+  if (n == null) return ''
+  if (n < -1) return 'Overdue'
+  if (n === -1) return 'Was due yesterday'
+  if (n === 0) return 'Due today'
+  if (n === 1) return 'Due tomorrow'
+  if (n <= 6) return 'Due this week'
+  if (n <= 13) return 'Due next week'
+  if (n <= 31) return 'Due in a few weeks'
+  return 'Due later on'
+}
+
 export function urgencyLabel(iso) {
   const n = daysUntil(iso)
   if (n == null) return ''

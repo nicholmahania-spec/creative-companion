@@ -75,6 +75,24 @@ export function bookBuilderFor(project) {
   SECTIONS.forEach((key) => {
     out[key] = { ...blank[key], ...(saved[key] || {}) }
   })
+
+  /* grid.edge resolves here, read-time only, same pattern as everything else
+     in this file — never a migration. A project that explicitly chose a
+     named stop gets grid.margin recomputed from it (so the physical edge
+     survives a Letter/A4 switch); a project that never chose one — including
+     every project saved before this existed — keeps exactly the grid.margin
+     it already had. `saved.grid.edge` (not the merged `out.grid.edge`) is
+     the check, so a stop can never be inferred onto an old project by the
+     blank defaults it was merged against. */
+  const chosenEdge = saved.grid && saved.grid.edge
+  if (chosenEdge && EDGE_STOPS[chosenEdge]) {
+    out.grid.edge = chosenEdge
+    const pct = marginPercentForEdge(chosenEdge, out.print.pageSize)
+    if (pct != null) out.grid.margin = pct
+  } else {
+    delete out.grid.edge
+  }
+
   return out
 }
 
@@ -110,6 +128,55 @@ export function readPaletteTokens(project) {
 export const MAX_COLORS = 8
 /** The floor `removePaletteColor` enforces, for the same reason. */
 export const MIN_COLORS = 2
+
+/**
+ * Named edge-space stops — "named stops, not number fields."
+ *
+ * `grid.margin` stays the percent-of-page-width value every consumer
+ * (the screen, the print CSS, `brandBookPdf.js`) already reads. These stops
+ * are a read-time convenience layered on top: pick "Standard" and the
+ * percent is derived from a physical distance instead of typed by hand, and
+ * switching Letter/A4 keeps the same physical edge rather than the same
+ * percent (which would be a different physical margin on each sheet).
+ */
+export const EDGE_STOPS = {
+  roomy: { label: 'Roomy', mm: 20, in: 0.78 },
+  standard: { label: 'Standard', mm: 14, in: 0.55 },
+  tight: { label: 'Tight', mm: 10, in: 0.39 },
+}
+
+/** Display order for the chip row. */
+export const EDGE_ORDER = ['roomy', 'standard', 'tight']
+
+/** Physical sheet widths, inches. Local on purpose — a constant, not state. */
+const EDGE_PAGE_WIDTH_IN = { letter: 8.5, a4: 8.27 }
+
+/** An edge stop's distance, converted to the percent `grid.margin` expects. */
+export function marginPercentForEdge(edgeId, pageSize) {
+  const stop = EDGE_STOPS[edgeId]
+  if (!stop) return null
+  const width = EDGE_PAGE_WIDTH_IN[pageSize] || EDGE_PAGE_WIDTH_IN.letter
+  return Math.round(((stop.in / width) * 100) * 10) / 10
+}
+
+/**
+ * Display-only: which stop a legacy numeric margin reads closest to, so the
+ * chip row can show a sensible highlight for a project that has a margin but
+ * never explicitly chose a stop. Never written back — see `bookBuilderFor`.
+ */
+export function nearestEdgeStop(marginPercent, pageSize) {
+  let best = EDGE_ORDER[0]
+  let bestDiff = Infinity
+  EDGE_ORDER.forEach((id) => {
+    const pct = marginPercentForEdge(id, pageSize)
+    const diff = Math.abs(pct - marginPercent)
+    if (diff < bestDiff) {
+      bestDiff = diff
+      best = id
+    }
+  })
+  return best
+}
 
 /**
  * The page backgrounds the book actually paints, resolved to hex.

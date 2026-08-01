@@ -198,10 +198,21 @@
 .client-photo-monogram.tone-5 { background: #2E2E2E; }
 
 .client-card-name {
+  display: block;
   margin: 0 0 var(--space-1);
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  font: inherit;
   font-size: var(--fs-3);
   font-weight: 700;
   color: var(--text-primary);
+  cursor: pointer;
+}
+
+.client-card-name:hover {
+  color: var(--text-muted);
 }
 
 .client-card-hint {
@@ -254,30 +265,192 @@
   color: var(--text-muted);
 }
 
+/* Client record — one client, their contacts, their projects. */
+.client-record {
+  max-width: 51rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.client-record-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  padding-bottom: var(--space-5);
+  border-bottom: 2px solid var(--text-primary);
+}
+
+.client-record-tile {
+  width: 72px;
+  height: 72px;
+  flex: none;
+  border-radius: var(--radius);
+  font-size: var(--fs-5);
+}
+
+.client-record-id {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-record-name {
+  margin: 0;
+  font-size: var(--fs-6);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.client-record-subline {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.client-record-contacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+
+.client-record-new {
+  flex: none;
+}
+
+.client-record-section {
+  margin: var(--space-6) 0 var(--space-3);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.client-record-projects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.client-record-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.client-record-open {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: var(--space-3) 2px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.client-record-open:hover {
+  background: var(--bg-card);
+}
+
+.client-record-project-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.client-record-project-stage,
+.client-record-project-due {
+  flex: none;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.client-record-rename {
+  flex: none;
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.client-record-rename:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.client-record-rename-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--text-primary);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-2);
+  font: inherit;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text-primary);
+  outline: none;
+}
+
 /* ── Client portal (public dashboard) + Share project overview panel ── */
 
 .client-portal-card {
   max-width: 720px;
 }
 
+/* 2026 handoff: page title reuses the same title treatment as the Client
+   directory/record screens (fs-6, tight tracking, hard rule underneath) so
+   the public portal reads as the same design language, not a separate
+   surface. Scoped to this card only — the shared .public-fill-title base
+   (used by /f/:shareId too) is untouched. */
+.client-portal-card .public-fill-title {
+  font-size: var(--fs-6);
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
+  border-bottom: 2px solid var(--text-primary);
+}
+
+/* Uppercase micro section head — identical values to .client-record-section,
+   reused rather than reinvented (same ramp, same tracking, same muted
+   color). */
 .client-portal-subhead {
-  font-size: 1rem;
+  margin: var(--space-6) 0 var(--space-3);
+  font-size: var(--fs-1);
   font-weight: 700;
-  margin: 1.5rem 0 0.6rem;
-  color: var(--text-primary);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .client-portal-steps {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin: 1rem 0;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
 }
 
 .client-portal-step {
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
-  padding: 0.85rem 0.9rem;
+  padding: var(--space-3) var(--space-4);
 }
 
 .client-portal-step-head {
@@ -291,11 +464,13 @@
   font-weight: 600;
 }
 
+/* Same pill shape as .client-card-pill (1px border, one radius, fs-1, 600)
+   so the badge reads as part of the same system as the client directory. */
 .client-portal-step-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.15rem 0.45rem;
-  border-radius: var(--radius-sm);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
   white-space: nowrap;
@@ -316,6 +491,21 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* Project overview form / survey — a card, same shape as a step, so the
+   page reads as one row-of-cards system rather than a stack of ad-hoc
+   sections. */
+.client-portal-form-block {
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.client-portal-chat-block {
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .client-portal-chat-log {

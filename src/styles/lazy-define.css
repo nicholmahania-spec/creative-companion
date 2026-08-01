@@ -451,6 +451,36 @@
   color: var(--define-ink);
 }
 
+/* The design's section rule — a hairline that runs from the title to the
+   column edge, making each numbered head read as a break without a box. */
+.define-chapter-rule {
+  flex: 1;
+  align-self: center;
+  height: 1px;
+  min-width: var(--space-6);
+  background: var(--border-subtle);
+}
+
+/* Worded "Needed" micro-badge on the five required fields — the whole
+   anti-overwhelm mechanism of the flat page: only badged fields are
+   load-bearing, everything else reads as optional. */
+.define-field-needed {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* "N things needed before Research" — required count only, with a named
+   endpoint. Never a percentage, never X-of-40. */
+.define-needed-line {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
 /* A tick, not a badge. It was a bordered, filled, rounded box around a single
    check character. */
 .define-chapter-done-chip {
@@ -673,13 +703,8 @@
    opacity transitions per pass down to 4 that land on meaningful
    boundaries. It marks a place, not a cursor — which is what recovering
    from an interruption actually needs. */
-/* Below 768px the four non-current chapters render as collapsed headers, so
-   dimming the chapter dims the entire accordion navigation — the only way to
-   move between chapters at that width, since the rail is not rendered. Keep
-   the toggles at full strength; the mask still recedes the content. */
-.define-chapters:focus-within .define-chapter:not(:focus-within) .define-chapter-toggle {
-  opacity: 1 !important;
-}
+/* (The accordion's collapsed-header dim exception lived here — gone with
+   the accordion itself; there are no toggles left to protect.) */
 
 /* Remove the outer card so Define matches the open layout of other views */
 .define-workbook.is-split {

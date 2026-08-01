@@ -36,6 +36,22 @@ import '../styles/lazy-design.css'
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 const StationeryKit = lazy(() => import('../components/StationeryKit'))
 
+/** Smooth scrolling is a vestibular trigger for some users; honor the OS pref. */
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+/* The flat column's order, numbered 01-06. One source read by both the
+   rail and the section heads — never restate this list. */
+const DESIGN_SECTIONS = [
+  { id: 'logo', num: '01', title: 'The mark' },
+  { id: 'essentials', num: '02', title: 'What it says' },
+  { id: 'colors', num: '03', title: 'Colour' },
+  { id: 'type', num: '04', title: 'Type' },
+  { id: 'pins', num: '05', title: 'Pack' },
+  { id: 'stationery', num: '06', title: 'Stationery' },
+]
+
 export default function DesignView({
   navDir = 'none',
   journeyNext = null,
@@ -66,16 +82,22 @@ export default function DesignView({
   const setLogoDirection = useAppStore((s) => s.setLogoDirection)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
 
-  const [brandEditSectionLocal, setBrandEditSectionLocal] =
-    useState('essentials')
-  const brandEditSection =
-    brandEditSectionProp != null ? brandEditSectionProp : brandEditSectionLocal
-  const setBrandEditSection =
-    setBrandEditSectionProp || setBrandEditSectionLocal
+  /* FLAT column, not tabs (adhd-executive-function-advisor ruling, 2026
+     design handoff). All six sections are always mounted; the rail below is
+     a scroll INDEX whose highlight follows scroll position
+     (IntersectionObserver — same pattern as DetectiveSheet's chapter rail),
+     never a switcher that hides siblings. brandEditSectionLocal is that
+     highlight, not a visibility gate. */
+  const [brandEditSectionLocal, setBrandEditSectionLocal] = useState('logo')
+  const brandEditSection = brandEditSectionLocal
+  const setBrandEditSection = setBrandEditSectionLocal
+  /* A deep link (e.g. Review/Deliver readiness "fix palette roles") scrolls
+     to the section and puts a brief focus ring on its head — it no longer
+     hides the other five. */
+  const [deepLinkFocus, setDeepLinkFocus] = useState(null)
   const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
   const [checkBgIndex, setCheckBgIndex] = useState(0)
   const [hexDrafts, setHexDrafts] = useState({})
-  const [tintOpenIndex, setTintOpenIndex] = useState(null)
   const [extractingPins, setExtractingPins] = useState(false)
   const [showPassPairs, setShowPassPairs] = useState(false)
   // Version history state
@@ -298,17 +320,51 @@ export default function DesignView({
     }
   }
 
-  // Honor parent jump (e.g. readiness “fix palette roles”)
+  // Honor parent jump (e.g. readiness “fix palette roles”): scroll to the
+  // section and ring its head briefly. Everything stays mounted and visible
+  // — this never hides the other five sections.
   useEffect(() => {
     if (!brandEditSectionProp) return
-    // Map legacy section ids into the 6-tab Tech-Studio set
     const map = {
       messaging: 'essentials',
       voice: 'essentials',
       imagery: 'pins',
     }
-    setBrandEditSectionLocal(map[brandEditSectionProp] || brandEditSectionProp)
+    const target = map[brandEditSectionProp] || brandEditSectionProp
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`design-section-content-${target}`)
+        ?.scrollIntoView({
+          block: 'start',
+          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+        })
+    })
+    setDeepLinkFocus(target)
+    const t = setTimeout(() => setDeepLinkFocus(null), 2200)
+    return () => clearTimeout(t)
   }, [brandEditSectionProp])
+
+  // Rail highlight follows scroll position, same pattern as DetectiveSheet's
+  // chapter rail — a scroll index is only honest if it's always current.
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return undefined
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            const id = e.target.dataset.section
+            if (id) setBrandEditSectionLocal(id)
+          }
+        }
+      },
+      { rootMargin: '-20% 0px -70% 0px' }
+    )
+    for (const s of DESIGN_SECTIONS) {
+      const el = document.getElementById(`design-section-content-${s.id}`)
+      if (el) io.observe(el)
+    }
+    return () => io.disconnect()
+  }, [])
 
   const paletteRoles = useMemo(
     () => mapPaletteRoles(projectPalette),
@@ -388,7 +444,6 @@ export default function DesignView({
       }
       setProjectPalette(result.colors, ownerProjectId)
       setHexDrafts({})
-      setTintOpenIndex(null)
       const src = result.sources
       const bits = []
       if (src.color) bits.push(`${src.color} color`)
@@ -503,7 +558,7 @@ export default function DesignView({
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
-                    title={`Version ${activeProject?.designVersion || 'v1'} — bump`}
+                    title="Bump the design version"
                     onClick={async () => {
                       const r = bumpDesignVersion()
                       if (r?.ok)
@@ -512,7 +567,7 @@ export default function DesignView({
                       await loadVersionHistory()
                     }}
                   >
-                    {activeProject?.designVersion || 'v1'}
+                    Bump · {activeProject?.designVersion || 'v1'}
                   </button>
                   <button
                     type="button"
@@ -541,62 +596,241 @@ export default function DesignView({
             </div>
 
             <div className="design-edit-column">
-            <div className="system-accordion-nav design-section-tabs" role="tablist">
-              {[
-                ['essentials', 'Words'],
-                ['colors', 'Color'],
-                ['type', 'Type'],
-                ['logo', 'Logo'],
-                ['pins', 'Pack'],
-              ].map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={brandEditSection === id}
-                  className={`system-acc-tab${
-                    brandEditSection === id ? ' is-active' : ''
-                  }`}
-                  onClick={() => setBrandEditSection(id)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <p className="panel-hint design-min-hint" style={{ margin: '0 0 0.75rem' }}>
-              Tagline, colors, or logo is enough for the path · more tools under Advanced
-            </p>
-            <details
-              className="design-advanced-tools"
-              open={brandEditSection === 'stationery'}
-            >
-              <summary className="design-advanced-summary">
-                Advanced · Stationery
-              </summary>
-              <div className="design-advanced-tabs" role="tablist" aria-label="Advanced design tools">
-                {[['stationery', 'Stationery']].map(([id, label]) => (
+            {/* Scroll INDEX, not a switcher — every section below is always
+                mounted. Clicking moves the page; the highlight follows scroll
+                (IntersectionObserver), so it never goes stale. Six rows,
+                never five plus an "Advanced" fork — Stationery is an
+                ordinary stop, not a hidden extra. */}
+            <nav className="design-section-rail" aria-label="Identity sections">
+              {DESIGN_SECTIONS.map((s) => {
+                const active = brandEditSection === s.id
+                return (
                   <button
-                    key={id}
+                    key={s.id}
                     type="button"
-                    role="tab"
-                    aria-selected={brandEditSection === id}
-                    className={`system-acc-tab${
-                      brandEditSection === id ? ' is-active' : ''
-                    }`}
-                    onClick={() => setBrandEditSection(id)}
+                    className={`design-section-tab${active ? ' is-active' : ''}`}
+                    aria-current={active ? 'step' : undefined}
+                    aria-controls={`design-section-content-${s.id}`}
+                    onClick={() => {
+                      setBrandEditSection(s.id)
+                      requestAnimationFrame(() => {
+                        document
+                          .getElementById(`design-section-content-${s.id}`)
+                          ?.scrollIntoView({
+                            block: 'start',
+                            behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+                          })
+                      })
+                    }}
                   >
-                    {label}
+                    <span className="design-section-tab-num" aria-hidden="true">
+                      {s.num}
+                    </span>
+                    <span className="design-section-tab-label">{s.title}</span>
                   </button>
-                ))}
-              </div>
-            </details>
+                )
+              })}
+            </nav>
+            <p className="panel-hint design-min-hint" style={{ margin: '0 0 0.75rem' }}>
+              Tagline, colors, or logo is enough for the path.
+            </p>
 
-            {/* 01 Essentials */}
+            {/* Logo section — physically first in the column (01 The mark),
+                moved here from its old spot after Type so DOM order matches
+                the ruling's numbering. */}
             <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'essentials'}
+              id="design-section-content-logo"
+              data-section="logo"
+              className={`panel brand-section${
+                deepLinkFocus === 'logo' ? ' is-deep-link-focus' : ''
+              }`}
             >
-              <div className="brand-section-label">Words</div>
+              <header className="design-section-head">
+                <span className="design-section-badge">01</span>
+                <h2 className="design-section-title">The mark</h2>
+                <span className="design-section-rule" aria-hidden="true" />
+              </header>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="logo-wordmark">
+                  Wordmark
+                </label>
+                <input
+                  id="logo-wordmark"
+                  className="field-input"
+                  value={activeProject?.logoWordmark || ''}
+                  onChange={(e) =>
+                    updateBrandField('logoWordmark', e.target.value)
+                  }
+                  placeholder={
+                    activeProject?.name
+                      ? `Defaults to “${activeProject.name}”`
+                      : 'Brand wordmark'
+                  }
+                />
+              </div>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="logo-custom">
+                  Logo direction
+                </label>
+                <input
+                  id="logo-custom"
+                  className="field-input"
+                  value={activeProject?.logoDirection || ''}
+                  onChange={(e) => setLogoDirection(e.target.value)}
+                  placeholder="Mark rules"
+                />
+              </div>
+              <div className="brand-two-up">
+                <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                  <label className="field-label" htmlFor="logo-clearspace">
+                    Clearspace
+                  </label>
+                  <textarea
+                    id="logo-clearspace"
+                    className="field-input"
+                    rows={2}
+                    value={activeProject?.logoClearspace || ''}
+                    onChange={(e) =>
+                      updateBrandField('logoClearspace', e.target.value)
+                    }
+                    placeholder="Clearspace"
+                  />
+                </div>
+                <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                  <label className="field-label" htmlFor="logo-min-size">
+                    Smallest logo size
+                  </label>
+                  <input
+                    id="logo-min-size"
+                    className="field-input"
+                    value={activeProject?.logoMinSize || ''}
+                    onChange={(e) =>
+                      updateBrandField('logoMinSize', e.target.value)
+                    }
+                    placeholder="Min size"
+                  />
+                </div>
+              </div>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="logo-donts">
+                  Logo mistakes to avoid
+                </label>
+                <textarea
+                  id="logo-donts"
+                  className="field-input"
+                  rows={3}
+                  value={activeProject?.logoDonts || ''}
+                  onChange={(e) =>
+                    updateBrandField('logoDonts', e.target.value)
+                  }
+                  placeholder={
+                    'One rule per line (defaults used if empty):\nDo not stretch or distort\nDo not recolor outside palette roles\nDo not place on low-contrast photos'
+                  }
+                />
+              </div>
+              {activeProject?.logoImage ? (
+                <div
+                  className="logo-variant-row"
+                  role="group"
+                  aria-label="Logo versions"
+                >
+                  <p className="field-label" style={{ marginBottom: '0.4rem' }}>
+                    Logo versions
+                  </p>
+                  <div className="logo-variant-grid">
+                    <div className="logo-variant-card is-primary">
+                      <span className="logo-variant-label">Primary</span>
+                      <img src={activeProject.logoImage} alt="" />
+                    </div>
+                    <div className="logo-variant-card is-reverse">
+                      <span className="logo-variant-label">Reverse</span>
+                      <img src={activeProject.logoImage} alt="" />
+                    </div>
+                    <div className="logo-variant-card is-mono">
+                      <span className="logo-variant-label">Mono</span>
+                      <img src={activeProject.logoImage} alt="" />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+              <div className="finish-secondary-row" style={{ marginTop: '0.85rem' }}>
+                <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+                  {activeProject?.logoImage ? 'Replace mark image' : 'Upload mark image'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml,image/*"
+                    className="sr-only"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      e.target.value = ''
+                      if (!file) return
+                      if (file.size > 2.5 * 1024 * 1024) {
+                        flashToast('Logo image must be under 2.5MB')
+                        return
+                      }
+
+                      /* Capture the project NOW, not when the read finishes.
+                         The downscale below is async and on a large image the
+                         gap is long enough to switch projects in — the same
+                         capture-before-await rule setProjectPalette follows a
+                         few hundred lines up. */
+                      const ownerProjectId = activeProject?.id
+                      // Local data URL + downscale (same pipeline as mood pins)
+                      const reader = new FileReader()
+                      reader.onerror = () =>
+                        flashToast('Could not read that image. Try another file.')
+                      reader.onload = async () => {
+                        try {
+                          const { downscaleDataUrl } = await import(
+                            '../lib/moodPins'
+                          )
+                          const scaled = await downscaleDataUrl(
+                            reader.result,
+                            file.type
+                          )
+                          setLogoImage(scaled, ownerProjectId)
+                        } catch {
+                          setLogoImage(reader.result, ownerProjectId)
+                        }
+                        const bump = bumpDesignVersionIfV1()
+                        flashMicro(
+                          bump?.bumped
+                            ? `Mark image · ${bump.version}`
+                            : 'Mark image added'
+                        )
+                      }
+                      reader.readAsDataURL(file)
+                    }}
+                  />
+                </label>
+                {activeProject?.logoImage ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      setLogoImage('')
+                      flashMicro('Logo image removed')
+                    }}
+                  >
+                    Remove mark
+                  </button>
+                ) : null}
+              </div>
+            </section>
+
+            {/* 02 What it says */}
+            <section
+              id="design-section-content-essentials"
+              data-section="essentials"
+              className={`panel brand-section${
+                deepLinkFocus === 'essentials' ? ' is-deep-link-focus' : ''
+              }`}
+            >
+              <header className="design-section-head">
+                <span className="design-section-badge">02</span>
+                <h2 className="design-section-title">What it says</h2>
+                <span className="design-section-rule" aria-hidden="true" />
+              </header>
               <div className="field-block brand-direction-block">
                 <label className="field-label" htmlFor="brand-direction-title">
                   Direction you're building
@@ -762,12 +996,19 @@ export default function DesignView({
               </details>
             </section>
 
-            {/* Color */}
+            {/* 03 Colour */}
             <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'colors'}
+              id="design-section-content-colors"
+              data-section="colors"
+              className={`panel brand-section${
+                deepLinkFocus === 'colors' ? ' is-deep-link-focus' : ''
+              }`}
             >
-              <div className="brand-section-label">Color</div>
+              <header className="design-section-head">
+                <span className="design-section-badge">03</span>
+                <h2 className="design-section-title">Colour</h2>
+                <span className="design-section-rule" aria-hidden="true" />
+              </header>
               {(() => {
                 const health = paletteHealthScore({
                   palette: projectPalette,
@@ -849,7 +1090,6 @@ export default function DesignView({
                     const display =
                       hexDrafts[index] != null ? hexDrafts[index] : hex
                     const tints = tintsAndShades(hex, { steps: 2 })
-                    const tintsOpen = tintOpenIndex === index
                     return (
                       <li key={index} className="palette-row-block">
                         <div className="palette-row">
@@ -906,17 +1146,6 @@ export default function DesignView({
                           </span>
                           <button
                             type="button"
-                            className="btn btn-ghost btn-sm"
-                            aria-expanded={tintsOpen}
-                            title="Tints and shades"
-                            onClick={() =>
-                              setTintOpenIndex(tintsOpen ? null : index)
-                            }
-                          >
-                            Tints
-                          </button>
-                          <button
-                            type="button"
                             className="btn btn-ghost palette-remove"
                             disabled={projectPalette.length <= 2}
                             onClick={() => removePaletteColor(index)}
@@ -925,7 +1154,7 @@ export default function DesignView({
                             Remove
                           </button>
                         </div>
-                        {tintsOpen && tints.length > 0 && (
+                        {tints.length > 0 && (
                           <div
                             className="palette-tints-row"
                             role="group"
@@ -1025,7 +1254,6 @@ export default function DesignView({
                     onClick={() => {
                       setProjectPalette([...DEFAULT_PALETTE])
                       setHexDrafts({})
-                      setTintOpenIndex(null)
                     }}
                   >
                     Reset default
@@ -1285,10 +1513,17 @@ export default function DesignView({
 
             {/* 04 Type */}
             <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'type'}
+              id="design-section-content-type"
+              data-section="type"
+              className={`panel brand-section${
+                deepLinkFocus === 'type' ? ' is-deep-link-focus' : ''
+              }`}
             >
-              <div className="brand-section-label">Type</div>
+              <header className="design-section-head">
+                <span className="design-section-badge">04</span>
+                <h2 className="design-section-title">Type</h2>
+                <span className="design-section-rule" aria-hidden="true" />
+              </header>
               <div className="field-block" style={{ marginBottom: '1rem' }}>
                 <label className="field-label" htmlFor="type-pair">
                   Type pair
@@ -1407,184 +1642,19 @@ export default function DesignView({
               </div>
             </section>
 
-            {/* Logo */}
+            {/* 05 Pack — starred pins + imagery advanced */}
             <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'logo'}
+              id="design-section-content-pins"
+              data-section="pins"
+              className={`panel brand-section${
+                deepLinkFocus === 'pins' ? ' is-deep-link-focus' : ''
+              }`}
             >
-              <div className="brand-section-label">Logo</div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-wordmark">
-                  Wordmark
-                </label>
-                <input
-                  id="logo-wordmark"
-                  className="field-input"
-                  value={activeProject?.logoWordmark || ''}
-                  onChange={(e) =>
-                    updateBrandField('logoWordmark', e.target.value)
-                  }
-                  placeholder={
-                    activeProject?.name
-                      ? `Defaults to “${activeProject.name}”`
-                      : 'Brand wordmark'
-                  }
-                />
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-custom">
-                  Logo direction
-                </label>
-                <input
-                  id="logo-custom"
-                  className="field-input"
-                  value={activeProject?.logoDirection || ''}
-                  onChange={(e) => setLogoDirection(e.target.value)}
-                  placeholder="Mark rules"
-                />
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-clearspace">
-                  Clearspace
-                </label>
-                <textarea
-                  id="logo-clearspace"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.logoClearspace || ''}
-                  onChange={(e) =>
-                    updateBrandField('logoClearspace', e.target.value)
-                  }
-                  placeholder="Clearspace"
-                />
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-min-size">
-                  Smallest logo size
-                </label>
-                <input
-                  id="logo-min-size"
-                  className="field-input"
-                  value={activeProject?.logoMinSize || ''}
-                  onChange={(e) =>
-                    updateBrandField('logoMinSize', e.target.value)
-                  }
-                  placeholder="Min size"
-                />
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-donts">
-                  Logo mistakes to avoid
-                </label>
-                <textarea
-                  id="logo-donts"
-                  className="field-input"
-                  rows={3}
-                  value={activeProject?.logoDonts || ''}
-                  onChange={(e) =>
-                    updateBrandField('logoDonts', e.target.value)
-                  }
-                  placeholder={
-                    'One rule per line (defaults used if empty):\nDo not stretch or distort\nDo not recolor outside palette roles\nDo not place on low-contrast photos'
-                  }
-                />
-              </div>
-              {activeProject?.logoImage ? (
-                <div
-                  className="logo-variant-row"
-                  role="group"
-                  aria-label="Logo versions"
-                >
-                  <p className="field-label" style={{ marginBottom: '0.4rem' }}>
-                    Logo versions
-                  </p>
-                  <div className="logo-variant-grid">
-                    <div className="logo-variant-card is-primary">
-                      <span className="logo-variant-label">Primary</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                    <div className="logo-variant-card is-reverse">
-                      <span className="logo-variant-label">Reverse</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                    <div className="logo-variant-card is-mono">
-                      <span className="logo-variant-label">Mono</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-              <div className="finish-secondary-row" style={{ marginTop: '0.85rem' }}>
-                <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
-                  {activeProject?.logoImage ? 'Replace mark image' : 'Upload mark image'}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml,image/*"
-                    className="sr-only"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0]
-                      e.target.value = ''
-                      if (!file) return
-                      if (file.size > 2.5 * 1024 * 1024) {
-                        flashToast('Logo image must be under 2.5MB')
-                        return
-                      }
-
-                      /* Capture the project NOW, not when the read finishes.
-                         The downscale below is async and on a large image the
-                         gap is long enough to switch projects in — the same
-                         capture-before-await rule setProjectPalette follows a
-                         few hundred lines up. */
-                      const ownerProjectId = activeProject?.id
-                      // Local data URL + downscale (same pipeline as mood pins)
-                      const reader = new FileReader()
-                      reader.onerror = () =>
-                        flashToast('Could not read that image. Try another file.')
-                      reader.onload = async () => {
-                        try {
-                          const { downscaleDataUrl } = await import(
-                            '../lib/moodPins'
-                          )
-                          const scaled = await downscaleDataUrl(
-                            reader.result,
-                            file.type
-                          )
-                          setLogoImage(scaled, ownerProjectId)
-                        } catch {
-                          setLogoImage(reader.result, ownerProjectId)
-                        }
-                        const bump = bumpDesignVersionIfV1()
-                        flashMicro(
-                          bump?.bumped
-                            ? `Mark image · ${bump.version}`
-                            : 'Mark image added'
-                        )
-                      }
-                      reader.readAsDataURL(file)
-                    }}
-                  />
-                </label>
-                {activeProject?.logoImage ? (
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => {
-                      setLogoImage('')
-                      flashMicro('Logo image removed')
-                    }}
-                  >
-                    Remove mark
-                  </button>
-                ) : null}
-              </div>
-            </section>
-
-            {/* Pack — starred pins + imagery advanced */}
-            <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'pins'}
-            >
-              <div className="brand-section-label">Pack</div>
+              <header className="design-section-head">
+                <span className="design-section-badge">05</span>
+                <h2 className="design-section-title">Pack</h2>
+                <span className="design-section-rule" aria-hidden="true" />
+              </header>
               {(() => {
                 const packPins = deskMood.filter((m) => m.inPack)
                 if (packPins.length === 0) {
@@ -1763,12 +1833,20 @@ export default function DesignView({
               </details>
             </section>
 
-            {/* Stationery — letterhead, business card, envelope, email signature */}
+            {/* 06 Stationery — an ordinary section now, not an "Advanced"
+                fork; letterhead, business card, envelope, email signature */}
             <section
-              className="panel brand-section"
-              hidden={brandEditSection !== 'stationery'}
+              id="design-section-content-stationery"
+              data-section="stationery"
+              className={`panel brand-section${
+                deepLinkFocus === 'stationery' ? ' is-deep-link-focus' : ''
+              }`}
             >
-              <div className="brand-section-label">Stationery</div>
+              <header className="design-section-head">
+                <span className="design-section-badge">06</span>
+                <h2 className="design-section-title">Stationery</h2>
+                <span className="design-section-rule" aria-hidden="true" />
+              </header>
               <Suspense fallback={<div className="panel-hint">Loading…</div>}>
                 <StationeryKit
                   activeProject={activeProject}

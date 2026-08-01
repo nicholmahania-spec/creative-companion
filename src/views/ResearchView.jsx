@@ -2,27 +2,12 @@
  * Board (Research) — wall primary; ★ pack pins; sticky Next → System.
  * ADHD: short chrome, goal anchor, note focus without sibling blur.
  */
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/processGuide'
 import InfoReveal from '../components/InfoReveal'
-import {
-  pinFaceStyle,
-  pinImageUrl,
-  readImageFilesAsPins,
-  pinGeometry,
-  boardBounds,
-  PIN_MIN_W,
-  PIN_MAX_W,
-} from '../lib/moodPins'
-import { useCanvasViewport } from '../lib/useCanvasViewport'
+import { pinFaceStyle, pinImageUrl, readImageFilesAsPins } from '../lib/moodPins'
 import { extractDominantColors, sampleColorAt } from '../lib/extractColors'
 import { useModalFocus } from '../lib/useModalFocus'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
@@ -55,11 +40,7 @@ export default function ResearchView({
   const movePackPin = useAppStore((s) => s.movePackPin)
   const setMoodPinFocal = useAppStore((s) => s.setMoodPinFocal)
   const setPackHeroPin = useAppStore((s) => s.setPackHeroPin)
-  const reorderBoardPins = useAppStore((s) => s.reorderBoardPins)
   const addPaletteColor = useAppStore((s) => s.addPaletteColor)
-  const setMoodPinLayout = useAppStore((s) => s.setMoodPinLayout)
-  const bringMoodPinToFront = useAppStore((s) => s.bringMoodPinToFront)
-  const sendMoodPinToBack = useAppStore((s) => s.sendMoodPinToBack)
   const [pinSwatches, setPinSwatches] = useState({})
 
   const [boardUrl, setBoardUrl] = useState('')
@@ -73,8 +54,8 @@ export default function ResearchView({
     onAddPinModeChange?.(Boolean(boardAddMode))
     return () => onAddPinModeChange?.(false)
   }, [boardAddMode, onAddPinModeChange])
-  const [boardDragId, setBoardDragId] = useState(null)
-  /** Dragging files over the canvas — without feedback, "drop pictures here"
+
+  /** Dragging files over the grid — without feedback, "drop pictures here"
    *  is a claim the surface never confirms until after you let go. */
   const [boardDropActive, setBoardDropActive] = useState(false)
   const [boardLightbox, setBoardLightbox] = useState(null)
@@ -300,271 +281,6 @@ export default function ResearchView({
     return supportsCapture && hasTouch
   }, [])
 
-  /* ── Canvas ─────────────────────────────────────────────────────────────
-     The board is a free canvas rather than a grid. Pins that have never been
-     moved are auto-placed from their board order, so a new pin never asks
-     "where does this go?" and an existing board opens already arranged —
-     positioning is available, never required. */
-  const viewportRef = useRef(null)
-  const { scale, tx, ty, zoomBy, zoomTo, fitAll, startPan, onWheel, toStage } =
-    useCanvasViewport(viewportRef)
-  /* A SET, not one id. Narrowing a board means acting on several pins at
-     once — starring the four that belong together, pushing a cluster behind
-     the rest — and doing that one pin at a time is the friction that makes
-     people not bother. */
-  const [selectedPinIds, setSelectedPinIds] = useState(() => new Set())
-  const selectedPinId = selectedPinIds.size === 1 ? [...selectedPinIds][0] : null
-  const selectPin = (id, additive) =>
-    setSelectedPinIds((prev) => {
-      if (!additive) return new Set([id])
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  const clearSelection = () => setSelectedPinIds(new Set())
-
-  /** Rubber-band rectangle in stage coords while shift-dragging empty canvas. */
-  const [marquee, setMarquee] = useState(null)
-  const marqueeRef = useRef(null)
-
-  /** Shortlist everything selected, stopping cleanly at the cap rather than
-   *  silently dropping the overflow — the store refuses past 6 and returns
-   *  {ok:false}, which callers used to discard. */
-  const starSelected = () => {
-    const ids = [...selectedPinIds].filter((id) => {
-      const pin = deskMood.find((m) => m.id === id)
-      return pin && !pin.inPack
-    })
-    if (!ids.length) {
-      flashToast?.('Already shortlisted')
-      return
-    }
-    let added = 0
-    let refused = 0
-    ids.forEach((id) => {
-      const r = toggleMoodPinInPack?.(id)
-      if (r && r.ok === false) refused++
-      else added++
-    })
-    if (refused) {
-      flashToast?.(
-        added
-          ? `Shortlisted ${added} · ${refused} over the 6 limit`
-          : 'Shortlist is full — unstar one to swap'
-      )
-    } else if (added) {
-      flashToast?.(`Shortlisted ${added}`)
-    }
-  }
-  const dragRef = useRef(null)
-  const didInitialFit = useRef(false)
-
-  const bounds = useMemo(() => boardBounds(deskMood), [deskMood])
-
-  // Frame the whole board on first open, so nobody lands on empty canvas with
-  // their pins somewhere off-screen.
-  useEffect(() => {
-    if (didInitialFit.current || !deskMood.length) return
-    didInitialFit.current = true
-    const id = requestAnimationFrame(() => fitAll(bounds))
-    return () => cancelAnimationFrame(id)
-  }, [deskMood.length, bounds, fitAll])
-
-  const beginPinDrag = (e, item, index) => {
-    if (e.button != null && e.button !== 0) return
-    const start = toStage(e.clientX, e.clientY)
-
-    /* Cmd/Ctrl toggles this pin in the selection. A plain press on a pin that
-       is ALREADY selected keeps the whole group, so dragging a multi-selection
-       does not collapse to the one pin you happened to grab — otherwise every
-       group move would silently become a single move. */
-    const additive = e.metaKey || e.ctrlKey
-    const alreadyIn = selectedPinIds.has(item.id)
-    if (additive || !alreadyIn) selectPin(item.id, additive)
-
-    // Freeze the group's starting geometry so each pin moves by the same
-    // delta. Read now, because the selection state update is async.
-    const groupIds =
-      !additive && alreadyIn ? [...selectedPinIds] : [item.id]
-    const group = groupIds
-      .map((id) => {
-        const idx = deskMood.findIndex((m) => m.id === id)
-        if (idx < 0) return null
-        const gg = pinGeometry(deskMood[idx], idx)
-        return { id, x: gg.x, y: gg.y }
-      })
-      .filter(Boolean)
-
-    dragRef.current = {
-      id: item.id,
-      mode: 'move',
-      group,
-      startX: start.x,
-      startY: start.y,
-      // Screen-space origin for the movement threshold below.
-      startClientX: e.clientX,
-      startClientY: e.clientY,
-      armed: false,
-    }
-    bringMoodPinToFront?.(item.id)
-    e.stopPropagation()
-    e.preventDefault()
-  }
-
-  /* Any corner, not just the bottom-right. Which corner you reach for is
-     decided by where the pin already is and where you want it to end up —
-     forcing every resize through one corner means half of them have to be
-     followed by a move to put the pin back. The corners anchored on the
-     opposite edge (anything with n or w) also shift x/y as the size changes,
-     so the corner you are NOT holding stays put — otherwise "resize" silently
-     becomes "resize and slide", which is the thing that makes a board feel
-     like it is fighting you. */
-  const beginPinResize = (e, item, index, corner) => {
-    const g = pinGeometry(item, index)
-    const start = toStage(e.clientX, e.clientY)
-    // Height is derived from the image's own ratio, so read it off the DOM
-    // rather than assuming — the 4:3 clamp is gone and pins differ.
-    const el = e.currentTarget.closest('.mood-card')
-    const originH = el ? el.getBoundingClientRect().height / scale : g.w
-    dragRef.current = {
-      id: item.id,
-      mode: 'resize',
-      corner,
-      originW: g.w,
-      originH,
-      originX: g.x,
-      originY: g.y,
-      startX: start.x,
-    }
-    selectPin(item.id, false)
-    bringMoodPinToFront?.(item.id)
-    e.stopPropagation()
-    e.preventDefault()
-  }
-
-  /* Marquee: track the rectangle, then select every pin that INTERSECTS it —
-     not only those fully enclosed. Requiring full containment means a large
-     reference you clearly dragged across gets skipped, which reads as the
-     selection being broken rather than strict. */
-  useEffect(() => {
-    if (!marquee) return undefined
-    const onMove = (e) => {
-      const start = marqueeRef.current
-      if (!start) return
-      const p = toStage(e.clientX, e.clientY)
-      setMarquee({
-        x: Math.min(start.x, p.x),
-        y: Math.min(start.y, p.y),
-        w: Math.abs(p.x - start.x),
-        h: Math.abs(p.y - start.y),
-      })
-    }
-    const onUp = () => {
-      const m = marquee
-      marqueeRef.current = null
-      setMarquee(null)
-      if (!m || (m.w < 4 && m.h < 4)) return
-      const hit = deskMood.filter((pin, i) => {
-        const g = pinGeometry(pin, i)
-        const h = g.w * 0.95
-        return (
-          g.x < m.x + m.w && g.x + g.w > m.x && g.y < m.y + m.h && g.y + h > m.y
-        )
-      })
-      if (hit.length) setSelectedPinIds(new Set(hit.map((p) => p.id)))
-    }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-    }
-  }, [marquee, deskMood, toStage])
-
-  useEffect(() => {
-    const onMove = (e) => {
-      const d = dragRef.current
-      if (!d) return
-      const p = toStage(e.clientX, e.clientY)
-      if (d.mode === 'move') {
-        /* Don't move until the pointer has actually travelled. Dragging
-           began on the first pixel of pointer-down, so simply clicking a pin
-           to select it — or pressing one to reach its star — shifted it a few
-           px, and a board you cannot touch without disturbing is a board you
-           stop touching. 4px is below deliberate movement and above hand
-           tremor and trackpad noise. */
-        if (!d.armed) {
-          const travelled = Math.hypot(
-            e.clientX - d.startClientX,
-            e.clientY - d.startClientY
-          )
-          if (travelled < 4) return
-          d.armed = true
-        }
-        const dx = p.x - d.startX
-        const dy = p.y - d.startY
-        // Move the whole selection by the same delta, so a group keeps its
-        // arrangement instead of collapsing onto the pin being dragged.
-        d.group.forEach((g) => {
-          setMoodPinLayout?.(g.id, {
-            x: Math.round(g.x + dx),
-            y: Math.round(g.y + dy),
-          })
-        })
-      } else {
-        // West-side corners grow as the pointer moves LEFT.
-        const grows = d.corner === 'nw' || d.corner === 'sw' ? -1 : 1
-        const w = Math.round(
-          Math.min(PIN_MAX_W, Math.max(PIN_MIN_W, d.originW + grows * (p.x - d.startX)))
-        )
-        const patch = { w }
-        // Keep the opposite corner pinned: shift x/y by whatever the size
-        // actually changed by (after clamping, so hitting the min or max
-        // stops the pin dead rather than letting it drift).
-        const dw = w - d.originW
-        const dh = d.originW > 0 ? dw * (d.originH / d.originW) : 0
-        if (d.corner === 'nw' || d.corner === 'sw') patch.x = Math.round(d.originX - dw)
-        if (d.corner === 'nw' || d.corner === 'ne') patch.y = Math.round(d.originY - dh)
-        setMoodPinLayout?.(d.id, patch)
-      }
-    }
-    const onUp = () => {
-      dragRef.current = null
-    }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-    }
-  }, [toStage, setMoodPinLayout])
-
-  /* Arrow keys nudge the selected pin. The pointer path is a mouse-only
-     capability otherwise, and dragging is the whole interaction here. */
-  useEffect(() => {
-    if (!selectedPinIds.size) return undefined
-    const onKey = (e) => {
-      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return
-      const tag = document.activeElement?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return
-      const step = e.shiftKey ? 40 : 8
-      e.preventDefault()
-      // Every selected pin moves together, keeping their relative positions.
-      selectedPinIds.forEach((id) => {
-        const idx = deskMood.findIndex((m) => m.id === id)
-        if (idx < 0) return
-        const g = pinGeometry(deskMood[idx], idx)
-        setMoodPinLayout?.(id, {
-          x: g.x + (e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0),
-          y: g.y + (e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0),
-        })
-      })
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [selectedPinIds, deskMood, setMoodPinLayout])
-
   return (
     <>
           <div className="studio-view surface-wall view-enter research-studio" data-nav-dir={navDir}>
@@ -669,11 +385,7 @@ export default function ResearchView({
               </div>
             </div>
 
-            {/* The canvas is the stage. Fit all is deliberately always
-                visible and never behind a menu — it is the guarantee that a
-                pin dragged out of view can always be found again, which is
-                what makes a free canvas safe here at all. */}
-            {/* Above the board, and never gated on pin count. This strip used
+            {/* Above the grid, and never gated on pin count. This strip used
                 to sit BELOW a 60vh canvas, so on a fresh board the only
                 visible way in was one button inside the empty state: URL and
                 Note were off-screen (258px of scrolling on a phone) and
@@ -804,108 +516,17 @@ export default function ResearchView({
               )}
             </section>
             <section className="panel brand-section board-wall-panel research-wall">
-              {deskMood.length > 0 && (
-                <div className="mood-canvas-bar">
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => fitAll(bounds)}
-                  >
-                    Fit all
-                  </button>
-                  {/* Bigger steps and a reset. 1.2x per click meant crossing
-                      a useful zoom range took a dozen presses on two small
-                      ghost buttons, and there was no way back to 1:1 short of
-                      counting clicks — the percentage was a read-only label
-                      sitting between them, which is exactly where you would
-                      expect to click to reset it. */}
-                  <div className="mood-canvas-zoom">
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => zoomBy(1 / 1.4)}
-                      aria-label="Zoom out"
-                    >
-                      −
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm mood-canvas-zoom-level"
-                      onClick={() => zoomTo(1)}
-                      title="Reset to 100%"
-                    >
-                      {Math.round(scale * 100)}%
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => zoomBy(1.4)}
-                      aria-label="Zoom in"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <p className="mood-canvas-hint">
-                    Drag a pin to move · drag the board to pan · ⌘/Ctrl-click or
-                    Shift-drag to select several · ⌘/Ctrl + scroll to zoom
-                  </p>
-                  {selectedPinIds.size > 0 && (
-                    <div className="mood-canvas-layer">
-                      {/* Narrowing in one gesture. Starring a shortlist one
-                          pin at a time is the friction that stops people
-                          doing it at all. */}
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => starSelected()}
-                      >
-                        ★ In pack
-                        {selectedPinIds.size > 1 ? ` ${selectedPinIds.size}` : ''}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() =>
-                          selectedPinIds.forEach((id) => bringMoodPinToFront?.(id))
-                        }
-                      >
-                        Bring to front
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() =>
-                          selectedPinIds.forEach((id) => sendMoodPinToBack?.(id))
-                        }
-                      >
-                        Send to back
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={clearSelection}
-                      >
-                        Deselect
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Newest first, always — deskMood already arrives sorted this
+                  way (App.jsx sorts by boardOrder, and a fresh pin is filed
+                  at boardOrder 0). Starring never reorders the wall: the ★
+                  pack has its own order (packOrder), kept in the shortlist
+                  strip below. */}
+              <p className="research-grid-hint">
+                Newest first. Drop an image anywhere below, or use Upload, URL
+                or Note above.
+              </p>
               <div
-                ref={viewportRef}
-                className={`mood-canvas-viewport${deskMood.length ? ' has-pins' : ''}${
-                  boardDropActive ? ' is-drop-active' : ''
-                }`}
-                // Pan offset for the dot grid, so the surface moves with the
-                // board and panning is visible even on an empty canvas.
-                style={{ '--canvas-pan-x': `${tx}px`, '--canvas-pan-y': `${ty}px` }}
-                onWheel={onWheel}
-                /* Drop target is the whole canvas, not the stage. It used to
-                   be on the stage only, which worked by accident — the stage
-                   is absolutely positioned over the viewport, so it happened
-                   to catch drops aimed at the empty state. With the Upload
-                   button gone from the canvas, dropping is the canvas's only
-                   way in, and it should not depend on stacking order. */
+                className={`research-grid-wrap${boardDropActive ? ' is-drop-active' : ''}`}
                 onDragOver={(e) => {
                   e.preventDefault()
                   if (e.dataTransfer?.types?.includes('Files')) setBoardDropActive(true)
@@ -916,104 +537,8 @@ export default function ResearchView({
                 onDrop={(e) => {
                   e.preventDefault()
                   setBoardDropActive(false)
-                  if (e.dataTransfer.files?.length) uploadMoodFiles(e.dataTransfer.files)
-                }}
-                onPointerDown={(e) => {
-                  const onEmpty =
-                    e.target === e.currentTarget ||
-                    e.target.classList.contains('mood-canvas-stage')
-                  if (!onEmpty) return
-                  /* Shift+drag draws a marquee; a plain drag still pans.
-                     Figma has it the other way round, but pan-on-drag is what
-                     this board already taught and what its hint line says, and
-                     silently reassigning the primary gesture is worse than
-                     putting the newer one on a modifier. */
-                  if (e.shiftKey) {
-                    const p = toStage(e.clientX, e.clientY)
-                    marqueeRef.current = { x: p.x, y: p.y }
-                    setMarquee({ x: p.x, y: p.y, w: 0, h: 0 })
-                    e.preventDefault()
-                    return
-                  }
-                  clearSelection()
-                  startPan(e)
-                }}
-              >
-              {/* Outside the transform, deliberately. Rendered as a stage
-                  child it inherited pan and zoom — so on an empty board a
-                  single trackpad gesture could push the only explanation of
-                  what this page is for, and its only Upload button, off
-                  screen for good. Fit all is hidden at zero pins, so there
-                  was no way back. The one surface that must never move is
-                  the one telling you how to start. */}
-              {deskMood.length === 0 && (
-                <div className="empty-state empty-state-craft research-empty">
-                  <p className="empty-state-title">Your mood board is empty</p>
-                  {/* The three routes in, named. I had cut this down to
-                      "Drop pictures here, or upload" while moving the empty
-                      state out of the canvas transform, which removed the
-                      only place the page explained itself — what starring is
-                      for, that URLs work, and that this is a board you
-                      arrange rather than a list. */}
-                  {/* No Upload button here. Upload now sits in the toolbar
-                      above the board with URL and Note, so a second one on
-                      the canvas was the same action offered twice, three
-                      inches apart — and it made the canvas look like a
-                      dropzone widget rather than the work surface it is. The
-                      canvas keeps the drop target; the button lives with its
-                      siblings. */}
-                  <p className="empty-state-subtitle">
-                    Drop pictures anywhere here, or use Upload, URL or Note
-                    above. Drag pins to arrange them; star up to 6 to carry
-                    into your brand direction.
-                  </p>
-                </div>
-              )}
-              <div
-                className={`mood-board mood-canvas-stage${deskMood.length ? ' has-pins' : ''}`}
-                style={{
-                  transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
-                  transformOrigin: '0 0',
-                  // Exposed so chrome can counter-scale — see .mood-card-resize
-                  // and .is-selected in the canvas CSS block.
-                  '--canvas-scale': scale,
-                }}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault()
                   if (e.dataTransfer.files?.length) {
                     uploadMoodFiles(e.dataTransfer.files)
-                    return
-                  }
-                  const pinId = e.dataTransfer.getData('text/cc-pin-id')
-                  if (pinId) {
-                    const target = e.target.closest('[data-pin-id]')
-                    const targetId = target?.getAttribute('data-pin-id')
-                    if (targetId && targetId !== pinId) {
-                      const ids = deskMood.map((m) => m.id)
-                      const from = ids.findIndex(
-                        (id) => String(id) === String(pinId)
-                      )
-                      const to = ids.findIndex(
-                        (id) => String(id) === String(targetId)
-                      )
-                      if (from >= 0 && to >= 0) {
-                        const next = [...ids]
-                        const [moved] = next.splice(from, 1)
-                        next.splice(to, 0, moved)
-                        reorderBoardPins(next, activeProjectId)
-                        // Keep pack order aligned when both are starred
-                        const packIds = next.filter((id) =>
-                          deskMood.find(
-                            (m) => String(m.id) === String(id) && m.inPack
-                          )
-                        )
-                        if (packIds.length > 1) {
-                          useAppStore.getState().reorderPackPins(packIds)
-                        }
-                        flashMicro('Picture order updated')
-                      }
-                    }
                     return
                   }
                   const data =
@@ -1031,159 +556,83 @@ export default function ResearchView({
                   }
                 }}
               >
-                {marquee && (
-                  <div
-                    className="mood-marquee"
-                    style={{
-                      left: `${marquee.x}px`,
-                      top: `${marquee.y}px`,
-                      width: `${marquee.w}px`,
-                      height: `${marquee.h}px`,
-                    }}
-                  />
-                )}
-                {deskMood.length === 0 ? null : (
-                  deskMood.map((item, index) => {
-                    const face = pinFaceStyle(item)
-                    const isImageFace = Boolean(face.backgroundImage?.includes('url('))
-                    const isQuote =
-                      !isImageFace ||
-                      item.type === 'quote' ||
-                      item.type === 'spark' ||
-                      item.type === 'color' ||
-                      item.type === 'note'
-                    const geo = pinGeometry(item, index)
-                    return (
-                      <article
-                        key={item.id || index}
-                        data-pin-id={item.id}
-                        onPointerDown={(e) => beginPinDrag(e, item, index)}
-                        style={{
-                          left: `${geo.x}px`,
-                          top: `${geo.y}px`,
-                          width: `${geo.w}px`,
-                          zIndex: geo.z,
-                        }}
-                        className={`mood-card is-canvas-pin${
-                          isQuote && !isImageFace ? ' is-quote' : ''
-                        }${item.inPack ? ' is-pack-pin' : ''}${
-                          selectedPinIds.has(item.id) ? ' is-selected' : ''
-                        }${item.packHero ? ' is-pack-hero' : ''}`}
-                      >
-                        {isImageFace ? (
-                          <>
-                          <button
-                            type="button"
-                            className="mood-pin-media mood-pin-media-btn"
-                            style={
-                              pinImageUrl(item)
-                                ? { backgroundColor: 'var(--bg-muted)' }
-                                : face
-                            }
-                            aria-label={`View pin${item.note ? `: ${item.note}` : ''}`}
-                            onClick={() => setBoardLightbox(item)}
-                          >
-                            {pinImageUrl(item) ? (
-                              <img
-                                className="mood-pin-img"
-                                src={pinImageUrl(item)}
-                                alt=""
-                                loading="lazy"
-                                decoding="async"
-                                draggable={false}
-                                onLoad={(e) => {
-                                  if (pinSwatches[item.id]) return
-                                  const colors = extractDominantColors(e.currentTarget, 4)
-                                  if (colors.length) {
-                                    setPinSwatches((prev) => ({ ...prev, [item.id]: colors }))
-                                  }
-                                }}
-                              />
-                            ) : null}
-                          </button>
-                          {pinSwatches[item.id]?.length ? (
-                            <div className="mood-pin-swatches" aria-label="Suggested colors from this image">
-                              {pinSwatches[item.id].map((hex) => (
-                                <button
-                                  key={hex}
-                                  type="button"
-                                  className="mood-pin-swatch"
-                                  style={{ backgroundColor: hex }}
-                                  title={`Add ${hex} to palette`}
-                                  aria-label={`Add ${hex} to palette`}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    if ((projectPalette?.length || 0) >= 8) {
-                                      flashToast('Palette is full (max 8)')
-                                      return
+                {deskMood.length === 0 ? (
+                  <div className="empty-state empty-state-craft research-empty">
+                    <p className="empty-state-subtitle">
+                      Nothing on the wall yet. Add an image, a colour, a link
+                      or a note — anything the client sent lands here too.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="research-grid">
+                    {deskMood.map((item) => {
+                      const imageUrl = pinImageUrl(item)
+                      const isImage = Boolean(imageUrl)
+                      const isColor = !isImage && item.type === 'color'
+                      const isLink = !isImage && !isColor && Boolean(item.link)
+                      const face = pinFaceStyle(item)
+                      const starTitle = item.inPack
+                        ? 'Remove from pack'
+                        : 'Add to pack (max 6)'
+                      return (
+                        <article
+                          key={item.id}
+                          className={`research-pin-card${
+                            item.inPack ? ' is-starred' : ''
+                          }${item.packHero ? ' is-pack-hero' : ''}`}
+                        >
+                          <div className="research-pin-face">
+                            {isImage ? (
+                              <button
+                                type="button"
+                                className="research-pin-face-btn"
+                                aria-label={`View pin${item.note ? `: ${item.note}` : ''}`}
+                                onClick={() => setBoardLightbox(item)}
+                              >
+                                <img
+                                  className="research-pin-img"
+                                  src={imageUrl}
+                                  alt=""
+                                  loading="lazy"
+                                  decoding="async"
+                                  draggable={false}
+                                  onLoad={(e) => {
+                                    if (pinSwatches[item.id]) return
+                                    const colors = extractDominantColors(e.currentTarget, 4)
+                                    if (colors.length) {
+                                      setPinSwatches((prev) => ({ ...prev, [item.id]: colors }))
                                     }
-                                    addPaletteColor(hex)
-                                    flashMicro(`+ ${hex} to palette`)
                                   }}
                                 />
-                              ))}
-                            </div>
-                          ) : null}
-                          </>
-                        ) : (
-                          <div
-                            className="mood-pin-face"
-                            style={face}
-                          >
-                            <p className="mood-pin-caption">
-                              {item.linkTitle || item.note || 'Note'}
-                            </p>
-                          </div>
-                        )}
-                        {/* A pinned link should say what it is. Without this a
-                            reference from the web was an unlabelled image or a
-                            grey rectangle, and you could not tell a competitor's
-                            site from a stock photo without opening it. */}
-                        {item.link && (
-                          <div className="mood-pin-link">
-                            {item.linkDescription && (
-                              <p className="mood-pin-link-desc">
-                                {item.linkDescription}
-                              </p>
+                              </button>
+                            ) : isColor ? (
+                              <div className="research-pin-face-color" style={face}>
+                                <span className="research-pin-hex-label">
+                                  {item.visual}
+                                </span>
+                              </div>
+                            ) : isLink ? (
+                              <div className="research-pin-face-link" style={face}>
+                                {item.linkHost ? (
+                                  <p className="research-pin-eyebrow">{item.linkHost}</p>
+                                ) : null}
+                                <p className="research-pin-link-text">
+                                  {item.linkTitle || item.note || item.link}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="research-pin-face-note" style={face}>
+                                <p className="research-pin-note-text">
+                                  {item.note || 'Note'}
+                                </p>
+                              </div>
                             )}
-                            <a
-                              className="mood-pin-link-host"
-                              href={item.link}
-                              target="_blank"
-                              rel="noreferrer noopener"
-                              onPointerDown={(e) => e.stopPropagation()}
-                            >
-                              {item.linkHost || 'Open link'} ↗
-                            </a>
-                          </div>
-                        )}
-                        {/* The pin container starts a drag on pointerdown, and
-                            pointerdown on these tools bubbled straight into it:
-                            the drag captured the pointer and the click that
-                            would have fired never did, so ★ (and the rest of
-                            the row) did nothing to a real mouse. The link
-                            above already guards itself this way — the tools
-                            row was simply missed. Caught because an e2e star
-                            click did nothing while dispatchEvent('click')
-                            worked, which is the signature of a swallowed
-                            pointer sequence rather than a broken handler. */}
-                        <div
-                          className="mood-pin-tools"
-                          onPointerDown={(e) => e.stopPropagation()}
-                        >
-                          <div className="mood-pin-tools-row">
                             <button
                               type="button"
-                              className={`mood-pin-star${item.inPack ? ' is-on' : ''}${item.packHero ? ' is-hero' : ''}`}
-                              title={
-                                item.inPack
-                                  ? 'Remove from pack'
-                                  : 'Add to pack (max 6)'
-                              }
+                              className={`research-pin-star${item.inPack ? ' is-on' : ''}`}
+                              title={starTitle}
                               aria-label={
-                                item.inPack
-                                  ? 'In pack — remove'
-                                  : 'Add to pack'
+                                item.inPack ? 'In pack — remove' : 'Add to pack'
                               }
                               aria-pressed={!!item.inPack}
                               onClick={() => {
@@ -1194,112 +643,165 @@ export default function ResearchView({
                                       'Client pack is full (6 pictures max)'
                                   )
                                 else
-                                  flashMicro(
-                                    r.inPack ? '★ pack' : '☆ pack'
-                                  )
-                                // Track the operation
+                                  flashMicro(r.inPack ? '★ pack' : '☆ pack')
                               }}
                             >
                               {item.inPack ? '★' : '☆'}
                             </button>
-                            <details className="mood-pin-more">
-                              <summary
-                                className="mood-pin-more-sum"
-                                aria-label="More pin actions"
-                              >
-                                ⋯
-                              </summary>
-                              <div className="mood-pin-more-menu">
-                                {item.inPack && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      className="btn btn-ghost mood-pin-order"
-                                      onClick={() => {
-                                    movePackPin(item.id, 'up')
-                                    // Track the operation
-                                  }}
-                                    >
-                                      ↑
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="btn btn-ghost mood-pin-order"
-                                      onClick={() =>
-                                        movePackPin(item.id, 'down')
-                                      }
-                                    >
-                                      ↓
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className={`btn btn-ghost mood-pin-order${item.packHero ? ' is-on' : ''}`}
-                                      onClick={() => {
-                                        const r = setPackHeroPin(item.id)
-                                        if (!r.ok)
-                                          flashToast(
-                                            r.error || 'Could not set hero'
-                                          )
-                                        else {
-                                          flashMicro('Main picture set')
-                                          // Track the operation
-                                        }
-                                      }}
-                                    >
-                                      Hero
-                                    </button>
-                                  </>
-                                )}
-                                <button
-                                  type="button"
-                                  className="btn btn-ghost mood-pin-remove"
-                                  onClick={() => {
-                              removeMoodPin(item.id)
-                              // Track mood pin removal
-                            }}
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            </details>
                           </div>
-                          <input
-                            className={`mood-pin-note-input${
-                              item.inPack && !item.note?.trim()
-                                ? ' needs-why'
-                                : ''
-                            }`}
-                            value={item.note || ''}
-                            onChange={(e) => {
-                              updateMoodPinNote(item.id, e.target.value)
-                            }}
-                            placeholder={
-                              item.inPack ? 'Why ★' : 'Caption…'
-                            }
-                            aria-label={
-                              item.inPack ? 'Why this pin fits' : 'Pin note'
-                            }
-                          />
-                        </div>
-                        {/* Resize grip. Only on the selected pin, so a board
-                            at rest shows none of them — the handle is a tool,
-                            not decoration on every card. */}
-                        {selectedPinIds.has(item.id) &&
-                          ['nw', 'ne', 'sw', 'se'].map((corner) => (
-                            <span
-                              key={corner}
-                              className={`mood-card-resize is-${corner}`}
-                              role="presentation"
-                              onPointerDown={(e) =>
-                                beginPinResize(e, item, index, corner)
-                              }
-                            />
-                          ))}
-                      </article>
-                    )
-                  })
+
+                          <div className="research-pin-body">
+                            {isImage && pinSwatches[item.id]?.length ? (
+                              <div
+                                className="research-pin-swatches"
+                                aria-label="Suggested colors from this image"
+                              >
+                                {pinSwatches[item.id].map((hex) => (
+                                  <button
+                                    key={hex}
+                                    type="button"
+                                    className="research-pin-swatch"
+                                    style={{ backgroundColor: hex }}
+                                    title={`Add ${hex} to palette`}
+                                    aria-label={`Add ${hex} to palette`}
+                                    onClick={() => {
+                                      if ((projectPalette?.length || 0) >= 8) {
+                                        flashToast('Palette is full (max 8)')
+                                        return
+                                      }
+                                      addPaletteColor(hex)
+                                      flashMicro(`+ ${hex} to palette`)
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            ) : null}
+
+                            {isColor && (
+                              <div className="research-pin-color-row">
+                                <input
+                                  type="color"
+                                  className="research-pin-color-input"
+                                  value={/^#([0-9a-f]{3}){1,2}$/i.test(item.visual) ? item.visual : '#000000'}
+                                  disabled
+                                  aria-label="Pin color (read-only — no color editor yet)"
+                                />
+                                <input
+                                  type="text"
+                                  className="field-input research-pin-hex-input"
+                                  value={item.visual || ''}
+                                  readOnly
+                                  aria-label="Pin hex value (read-only — no color editor yet)"
+                                />
+                              </div>
+                            )}
+
+                            {isLink && (
+                              <input
+                                type="text"
+                                className="field-input research-pin-url-input"
+                                value={item.link || ''}
+                                readOnly
+                                aria-label="Pin link (read-only)"
+                              />
+                            )}
+
+                            {/* A pinned link should say what it is, even on an
+                                image pin whose preview resolved a photo — without
+                                this a reference from the web was an unlabelled
+                                image and you could not tell a competitor's site
+                                from a stock photo without opening it. */}
+                            {isImage && item.link && (
+                              <div className="research-pin-link-foot">
+                                {item.linkDescription && (
+                                  <p className="research-pin-link-desc">
+                                    {item.linkDescription}
+                                  </p>
+                                )}
+                                <a
+                                  className="research-pin-link-host"
+                                  href={item.link}
+                                  target="_blank"
+                                  rel="noreferrer noopener"
+                                >
+                                  {item.linkHost || 'Open link'} ↗
+                                </a>
+                              </div>
+                            )}
+
+                            <div className="research-pin-tools-row">
+                              <details className="mood-pin-more">
+                                <summary
+                                  className="mood-pin-more-sum"
+                                  aria-label="More pin actions"
+                                >
+                                  ⋯
+                                </summary>
+                                <div className="mood-pin-more-menu">
+                                  {item.inPack && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        className="btn btn-ghost mood-pin-order"
+                                        onClick={() => movePackPin(item.id, 'up')}
+                                      >
+                                        ↑
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn btn-ghost mood-pin-order"
+                                        onClick={() => movePackPin(item.id, 'down')}
+                                      >
+                                        ↓
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className={`btn btn-ghost mood-pin-order${item.packHero ? ' is-on' : ''}`}
+                                        onClick={() => {
+                                          const r = setPackHeroPin(item.id)
+                                          if (!r.ok)
+                                            flashToast(r.error || 'Could not set hero')
+                                          else flashMicro('Main picture set')
+                                        }}
+                                      >
+                                        Hero
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </details>
+                            </div>
+                            <div className="research-pin-note-row">
+                              <input
+                                className={`mood-pin-note-input research-pin-note-input${
+                                  item.inPack && !item.note?.trim()
+                                    ? ' needs-why'
+                                    : ''
+                                }`}
+                                value={item.note || ''}
+                                onChange={(e) => {
+                                  updateMoodPinNote(item.id, e.target.value)
+                                }}
+                                placeholder={item.inPack ? 'Why ★' : 'note'}
+                                aria-label={
+                                  item.inPack ? 'Why this pin fits' : 'Pin note'
+                                }
+                              />
+                              <button
+                                type="button"
+                                className="research-pin-remove"
+                                aria-label="Remove reference"
+                                onClick={() => removeMoodPin(item.id)}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
                 )}
-              </div>
               </div>
             </section>
 

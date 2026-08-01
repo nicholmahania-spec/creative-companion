@@ -1,10 +1,8 @@
 /**
- * Project overview — export / send / import panel. Three paths:
- *   1. Export a formatted PDF of the filled-in overview.
- *   2. Send a client dashboard link (they see pushed steps, approve or
- *      request changes, chat, and fill the overview form themselves).
- *   3. Print a blank PDF, have the client fill it by hand, scan it back
- *      in — OCR proposes answers, you review before anything saves.
+ * Project overview — the client-link panel. One body, no mode menu (the
+ * old four-way MenuMode was a fork billed on every open): the portal link,
+ * per-stop visibility toggles, the overview form, the survey, and — as
+ * plain rows at the bottom — the PDF export and the print/scan paper path.
  *
  * Nothing here writes to the project without an explicit review step, and
  * an in-progress review survives the panel being closed — losing a
@@ -96,10 +94,13 @@ export function ProjectOverviewSharePanel({
 
   useEffect(() => {
     if (!open) return
-    // A draft outranks the menu: reopening returns you to where you were.
+    // A draft outranks everything: reopening returns you to where you were.
     if (draft) setMode(draft.source === 'portal' ? 'portal' : 'paper')
-    // Existing state answers "which of the three?" — don't ask again.
-    else setMode(portalId ? 'portal' : 'menu')
+    // No menu anymore (advisor ruling): the panel opens straight to the
+    // portal body. The old MenuMode was a four-way fork billed on every
+    // visit, two of whose labels went to the same place; without a portal
+    // the body is one create action, which asks nothing.
+    else setMode('portal')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
@@ -198,23 +199,13 @@ export function ProjectOverviewSharePanel({
           />
         ) : (
           <>
-            {mode === 'menu' && (
-              <MenuMode
-                project={project}
-                portalId={portalId}
-                onPick={setMode}
-                flashToast={flashToast}
-                flashMicro={flashMicro}
-              />
-            )}
-
             {mode === 'portal' && (
               <PortalMode
                 project={project}
                 portalId={portalId}
                 onSetPortalId={onSetPortalId}
                 onReview={beginReview}
-                onBack={() => setMode('menu')}
+                onPaper={() => setMode('paper')}
                 autoOpenReview={autoOpenReview}
                 onAutoOpenReviewHandled={onAutoOpenReviewHandled}
                 flashToast={flashToast}
@@ -226,7 +217,7 @@ export function ProjectOverviewSharePanel({
               <PaperMode
                 project={project}
                 onReview={beginReview}
-                onBack={() => setMode('menu')}
+                onBack={() => setMode('portal')}
                 flashToast={flashToast}
               />
             )}
@@ -237,50 +228,31 @@ export function ProjectOverviewSharePanel({
   )
 }
 
-function MenuMode({ project, portalId, onPick, flashToast, flashMicro }) {
-  const [exporting, setExporting] = useState(false)
-
-  return (
-    <div className="discovery-brief-menu">
-      <button
-        type="button"
-        className="btn btn-primary"
-        disabled={exporting}
-        onClick={async () => {
-          setExporting(true)
-          const r = await downloadProjectOverviewPdf(project, { blank: false })
-          setExporting(false)
-          if (!r.ok) flashToast?.(r.error || 'Couldn’t export the PDF')
-          else flashMicro?.('Overview PDF downloaded')
-        }}
-      >
-        {exporting ? 'Making the PDF…' : 'Download a PDF of this page'}
-      </button>
-      <button type="button" className="btn btn-secondary" onClick={() => onPick('portal')}>
-        {portalId ? 'Open the client dashboard' : 'Send the client a dashboard link'}
-      </button>
-      <button type="button" className="btn btn-secondary" onClick={() => onPick('paper')}>
-        Print a blank form for a client
-      </button>
-      <button type="button" className="btn btn-secondary" onClick={() => onPick('paper')}>
-        Scan a filled-in paper form back in
-      </button>
-    </div>
-  )
-}
+/* MenuMode is gone (advisor ruling): it was a four-way fork billed on every
+   open, two of whose labels went to the same place. The PDF download and the
+   paper path live as plain rows at the bottom of PortalMode now — zero
+   decisions when unused, one click when needed. */
 
 function PortalMode({
   project,
   portalId,
   onSetPortalId,
   onReview,
-  onBack,
+  onPaper,
   autoOpenReview,
   onAutoOpenReviewHandled,
   flashToast,
   flashMicro,
 }) {
   const [creating, setCreating] = useState(false)
+  const [exportingPdf, setExportingPdf] = useState(false)
+  const downloadOverviewPdf = async () => {
+    setExportingPdf(true)
+    const r = await downloadProjectOverviewPdf(project, { blank: false })
+    setExportingPdf(false)
+    if (!r.ok) flashToast?.(r.error || 'Couldn’t export the PDF')
+    else flashMicro?.('Overview PDF downloaded')
+  }
   /* Kept beside the button as well as toasted. A toast is a glance you can
      miss — the owner's own note is that anything at the bottom of the screen
      does not get seen — and this one was invisible outright until the toast
@@ -464,10 +436,6 @@ function PortalMode({
 
   return (
     <div className="overview-share-portal">
-      <button type="button" className="btn btn-ghost btn-sm discovery-brief-back" onClick={onBack}>
-        ← Back
-      </button>
-
       {!portalId ? (
         <>
           <p className="discovery-brief-hint">
@@ -577,7 +545,16 @@ function PortalMode({
             </>
           )}
 
-          <p className="client-portal-subhead">What the client can see</p>
+          {/* OFF must read as timing, never as loss — an unchecked box next
+              to a stop full of real work can land as "deleted" (rejection
+              sensitivity + object permanence), so the line says where the
+              work IS and the helper frames off as not-yet-worth-showing. */}
+          <p className="client-portal-subhead">
+            What the client can see (everything else stays private to you)
+          </p>
+          <p className="discovery-brief-hint">
+            Turn a stop on when there is something on it worth looking at.
+          </p>
           <div className="overview-share-steps">
             {JOURNEY_STEPS.map((step) => {
               const on = !!portal?.step_visibility?.[step.id]
@@ -682,7 +659,9 @@ function PortalMode({
               messages.map((m) => (
                 <div key={m.id} className={`client-portal-chat-msg is-${m.sender}`}>
                   <span className="client-portal-chat-sender">
-                    {m.sender === 'studio' ? 'You' : 'Client'}
+                    {m.sender === 'studio'
+                      ? 'You'
+                      : project?.detective?.clientName || 'Client'}
                   </span>
                   <p>{m.body}</p>
                 </div>
@@ -703,6 +682,25 @@ function PortalMode({
           </form>
         </>
       )}
+
+      {/* The rare paths, as plain rows at the bottom — not a mode picker.
+          A rare path that costs a choice on the common path is the worst
+          trade this panel can make; as rows they cost zero decisions when
+          unused and one click when needed. */}
+      <p className="client-portal-subhead">On paper</p>
+      <div className="discovery-brief-handoff-actions">
+        <button
+          type="button"
+          className="btn btn-secondary"
+          disabled={exportingPdf}
+          onClick={downloadOverviewPdf}
+        >
+          {exportingPdf ? 'Making the PDF…' : 'Download a PDF of this page'}
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={onPaper}>
+          Print a blank brief / scan one back in
+        </button>
+      </div>
     </div>
   )
 }

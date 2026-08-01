@@ -42,11 +42,11 @@ const BUDGET = {
   'src/styles/shell.css': 442,
   'src/styles/lazy-buddy.css': 55,
   'src/styles/lazy-settings.css': 36,
-  'src/styles/lazy-design.css': 22,
+  'src/styles/lazy-design.css': 21,
   'src/styles/lazy-sketch.css': 21,
-  'src/styles/lazy-define.css': 19,
+  'src/styles/lazy-define.css': 18,
   'src/styles/lazy-deliver.css': 18,
-  'src/styles/lazy-mood.css': 12,
+  'src/styles/lazy-mood.css': 7,
   'src/styles/lazy-ideate.css': 8,
   // All six are inside `prefers-reduced-motion` — an accessibility override
   // that has to beat whatever animation it is switching off. These are the

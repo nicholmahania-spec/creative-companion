@@ -343,74 +343,90 @@ export default function BrandArtboard({
         </div>
       )}
 
-      <div className="kicker">Business card specimen</div>
-      <div
-        className="brand-card-mock"
-        aria-label="Business card specimen from your brand fields"
-      >
-        <div
-          className="brand-card-mock-inner"
-          style={{
-            background: roles.quiet || '#FAFAF9',
-            color: roles.text || '#1C1917',
-            borderColor: roles.accent || '#0F766E',
-          }}
-        >
-          <div
-            className="brand-card-mock-accent"
-            style={{ background: roles.accent || '#0F766E' }}
-            aria-hidden
-          />
-          <div className="brand-card-mock-body">
-            <strong
-              style={{
-                fontFamily: fontFamilyFromLabel(typeH),
-                fontSize: '1.05rem',
-              }}
+      {/* Business card specimen — only when there is a real contact to put
+          on it. Render nothing (no placeholder card, no "add a contact"
+          hint) with no contacts: an unfilled artifact on screen reads as an
+          accusation, and absence is neutral. */}
+      {(() => {
+        const usableContact = (project.contacts || []).find((c) =>
+          [c?.name, c?.email, c?.phone].some((v) => String(v || '').trim())
+        )
+        if (!usableContact) return null
+        const contactLine = [usableContact.phone, usableContact.email]
+          .map((v) => String(v || '').trim())
+          .filter(Boolean)
+          .join('  ·  ')
+        return (
+          <>
+            <div className="kicker">Business card specimen</div>
+            <div
+              className="brand-card-mock"
+              aria-label="Business card specimen from your brand fields"
             >
-              {project.logoWordmark?.trim() || project.name || 'Brand'}
-            </strong>
-            <p
-              className="brand-card-mock-tag"
-              style={{ fontFamily: fontFamilyFromLabel(typeB) }}
-            >
-              {project.tagline?.trim() || '—'}
-            </p>
-            {(() => {
-              const contact = [
-                String(project.orgEmail || '').trim() ||
-                  String(project.contacts?.[0]?.email || '').trim(),
-                String(project.orgWebsite || '').trim(),
-              ]
-                .filter(Boolean)
-                .join('  ·  ')
-              return contact ? (
-                <p className="brand-card-mock-meta">{contact}</p>
-              ) : (
-                <p className="brand-card-mock-meta surface-meta">
-                  Add email/website in Stationery when ready
-                </p>
-              )
-            })()}
-          </div>
-          <div
-            className="brand-card-mock-cover"
-            style={{
-              background: roles.cover || '#1C1917',
-              color: coverFg,
-            }}
-          >
-            {project.logoImage ? (
-              <img src={project.logoImage} alt="" />
-            ) : (
-              <span aria-hidden>●</span>
-            )}
-          </div>
-        </div>
-        <p className="surface-meta" style={{ marginTop: '0.45rem' }}>
-          Specimen from your roles, type, and mark — not a print die-line.
-        </p>
-      </div>
+              <div
+                className="brand-card-mock-inner"
+                style={{
+                  background: roles.quiet || '#FAFAF9',
+                  color: roles.text || '#1C1917',
+                  borderColor: roles.accent || '#0F766E',
+                }}
+              >
+                <div
+                  className="brand-card-mock-accent"
+                  style={{ background: roles.accent || '#0F766E' }}
+                  aria-hidden
+                />
+                <div className="brand-card-mock-body">
+                  <strong
+                    style={{
+                      fontFamily: fontFamilyFromLabel(typeH),
+                      fontSize: '1.05rem',
+                    }}
+                  >
+                    {usableContact.name?.trim() ||
+                      project.logoWordmark?.trim() ||
+                      project.name ||
+                      'Brand'}
+                  </strong>
+                  <p
+                    className="brand-card-mock-tag"
+                    style={{ fontFamily: fontFamilyFromLabel(typeB) }}
+                  >
+                    {usableContact.title?.trim() ||
+                      project.tagline?.trim() ||
+                      '—'}
+                  </p>
+                  {contactLine ? (
+                    <p className="brand-card-mock-meta">{contactLine}</p>
+                  ) : null}
+                </div>
+                <div
+                  className="brand-card-mock-cover"
+                  style={{
+                    background: roles.cover || '#1C1917',
+                    color: coverFg,
+                  }}
+                >
+                  {project.logoImage ? (
+                    <img src={project.logoImage} alt="" />
+                  ) : (
+                    <span aria-hidden>
+                      {(project.logoWordmark || project.name || '?')
+                        .trim()
+                        .charAt(0)
+                        .toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <p className="surface-meta" style={{ marginTop: '0.45rem' }}>
+                Specimen from your roles, type, and mark — not a print
+                die-line.
+              </p>
+            </div>
+          </>
+        )
+      })()}
 
       {(project.messagingPromise ||
         project.messagingProof ||

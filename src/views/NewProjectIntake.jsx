@@ -30,8 +30,13 @@ const DELIVERABLE_GROUPS = [
   { key: 'extra', legend: 'Quoted separately', items: DELIVERABLE_OPTIONS.filter((o) => o.extra) },
 ]
 
-export default function NewProjectIntake({ setActiveView, flashToast }) {
-  const [clientName, setClientName] = useState('')
+export default function NewProjectIntake({
+  setActiveView,
+  flashToast,
+  initialClientName = '',
+  onDone,
+}) {
+  const [clientName, setClientName] = useState(initialClientName)
   const [engagement, setEngagement] = useState('new')
   const [picked, setPicked] = useState([]) // empty = full brand package
   const [deadline, setDeadline] = useState('')
@@ -41,9 +46,14 @@ export default function NewProjectIntake({ setActiveView, flashToast }) {
      created, so leaving is safe) — but then the await must not yank the
      user to the brief after they chose to go elsewhere. */
   const mounted = useRef(true)
-  useEffect(() => () => {
-    mounted.current = false
-  }, [])
+  useEffect(
+    () => () => {
+      mounted.current = false
+      onDone?.()
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount only
+    []
+  )
 
   const togglePick = (id) =>
     setPicked((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))

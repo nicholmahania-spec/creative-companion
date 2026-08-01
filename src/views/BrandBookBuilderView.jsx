@@ -7,6 +7,9 @@ import {
   mintTokenId,
   MAX_COLORS,
   MIN_COLORS,
+  EDGE_STOPS,
+  EDGE_ORDER,
+  nearestEdgeStop,
 } from '../lib/bookBuilder'
 import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES } from '../lib/bookContent'
 import { currentBrandPack } from '../lib/currentPack'
@@ -75,14 +78,61 @@ const resolveBg = (colors, key) => resolvePageBg(colors, key);
 
 /* ------------------------------------------------------------ Section */
 
-function Section({ title, defaultOpen, children }) {
+/* Always-open — the <details> collapse is gone. A closed panel with only a
+   label is a memory test, not a control ("they are hidden and my first
+   thought was 'I have no idea what this is'" — CLAUDE.md), so every section
+   renders its heading and its body at once. */
+function Section({ title, children }) {
   return (
-    <details className="bbb-section" open={defaultOpen || undefined}>
-      <summary className="bbb-section__summary">
-        <h2 className="bbb-section__title">{title}</h2>
-      </summary>
+    <div className="bbb-section">
+      <h2 className="bbb-section__title">{title}</h2>
       <div className="bbb-section__body">{children}</div>
-    </details>
+    </div>
+  );
+}
+
+/* Chip row for a small, closed choice set — Sheet, Edge space. One aria-pressed
+   button per option, reusing the app's chip visual language (border-subtle /
+   radius / bg-muted+text-primary when selected — see .bbb-chip in
+   brand-book-builder.css). */
+function ChipRow({ label, options, value, onChange }) {
+  return (
+    <div className="bbb-field">
+      <p className="bbb-microhead">{label}</p>
+      <div className="bbb-chip-row" role="group" aria-label={label}>
+        {options.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            className="bbb-chip"
+            aria-pressed={value === o.id}
+            onClick={() => onChange(o.id)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* Pill toggle for "Going to a print shop" — same print.bleed field the old
+   checkbox wrote, new control. */
+function PillToggle({ id, label, checked, onChange }) {
+  return (
+    <div className="bbb-field bbb-field--checkbox">
+      <label htmlFor={id}>{label}</label>
+      <button
+        id={id}
+        type="button"
+        className="bbb-pill-toggle"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+      >
+        <span className="bbb-pill-knob" aria-hidden="true" />
+      </button>
+    </div>
   );
 }
 
@@ -163,10 +213,10 @@ function GridOverlay({ columns, rows, gutter, show }) {
    so the exact same component renders identically in the normal grid
    and inside the flipbook -- no duplicated logic, no cloned markup. */
 
-function FrontCover({ kit, style }) {
+function FrontCover({ kit, style, id }) {
   const { name, tagline, headlineHex, accent, bodyHex, hStack, bStack, headlineSize, headlineWeight, bodyWeight, bg, dark, grid } = kit;
   return (
-    <div className="bbb-page bbb-page--cover" data-dark={dark || undefined} style={{ background: bg, ...style }}>
+    <div id={id} className="bbb-page bbb-page--cover" data-dark={dark || undefined} style={{ background: bg, ...style }}>
       <span className="bbb-page-label">Front cover</span>
       <GridOverlay {...grid} />
       <div className="bbb-cover-rule" style={{ background: accent }} />
@@ -180,10 +230,10 @@ function FrontCover({ kit, style }) {
    cover and the back, a hard-coded 0/1 would repeat page numbers and put the
    alternating margins on the wrong side. Defaults keep the old behaviour if
    this page is ever rendered on its own. */
-function ColorsPage({ kit, style, pageIndex = 0 }) {
+function ColorsPage({ kit, style, pageIndex = 0, id }) {
   const { colors, bg, dark, grid, running, swatchCols } = kit;
   return (
-    <div className="bbb-page bbb-page--colors" data-dark={dark || undefined} style={{ background: bg, ...style }}>
+    <div id={id} className="bbb-page bbb-page--colors" data-dark={dark || undefined} style={{ background: bg, ...style }}>
       <span className="bbb-page-label">Color page</span>
       <GridOverlay {...grid} />
       <RunningHeader {...running} pageIndex={pageIndex} />
@@ -206,10 +256,10 @@ function ColorsPage({ kit, style, pageIndex = 0 }) {
   );
 }
 
-function TypePage({ kit, style, pageIndex = 1 }) {
+function TypePage({ kit, style, pageIndex = 1, id }) {
   const { headlineHex, subheadHex, bodyHex, hStack, bStack, headlineSize, headlineWeight, subheadSize, subheadWeight, bodySize, bodyWeight, bg, dark, grid, running } = kit;
   return (
-    <div className="bbb-page bbb-page--type" data-dark={dark || undefined} style={{ background: bg, ...style }}>
+    <div id={id} className="bbb-page bbb-page--type" data-dark={dark || undefined} style={{ background: bg, ...style }}>
       <span className="bbb-page-label">Type page</span>
       <GridOverlay {...grid} />
       <RunningHeader {...running} pageIndex={pageIndex} />
@@ -233,7 +283,7 @@ function TypePage({ kit, style, pageIndex = 1 }) {
    (or the monogram when there is none), the clearspace/min-size spec, and the
    project's own don't list. `monogramFor` is shared with the PDF rather than
    reimplemented, so the two cannot letter the monogram differently. */
-function LogoPage({ kit, style, pageIndex = 0 }) {
+function LogoPage({ kit, style, pageIndex = 0, id }) {
   const { name, colors, accent, hStack, bStack, headlineWeight, bg, dark, grid, running, logo } = kit;
   const wordmark = logo.wordmark || name;
   const mono = monogramFor(wordmark);
@@ -244,7 +294,7 @@ function LogoPage({ kit, style, pageIndex = 0 }) {
   const grounds = ["#ffffff", inkHex, accent || colors[1]?.hex || inkHex, "#000000"];
 
   return (
-    <div className="bbb-page bbb-page--logo" data-dark={dark || undefined} style={{ background: bg, ...style }}>
+    <div id={id} className="bbb-page bbb-page--logo" data-dark={dark || undefined} style={{ background: bg, ...style }}>
       <span className="bbb-page-label">Logo page</span>
       <GridOverlay {...grid} />
       <RunningHeader {...running} pageIndex={pageIndex} />
@@ -265,6 +315,8 @@ function LogoPage({ kit, style, pageIndex = 0 }) {
 
       <div className="bbb-logo-spec">
         <div className="bbb-logo-construct">
+          {/* Deferred: multiple image wells (alternate lockups/marks) — not
+              built. One logo image only, same as before. */}
           {logo.image ? (
             <img src={logo.image} alt="" className="bbb-logo-construct__art" />
           ) : (
@@ -299,11 +351,11 @@ function LogoPage({ kit, style, pageIndex = 0 }) {
    thing drifting apart — the defect this codebase already knows well. Type
    and colour come from the same `kit` the cover and type pages read, so a
    font or ink change moves the whole book at once. */
-function ContentPage({ kit, page, pageIndex, style }) {
+function ContentPage({ kit, page, pageIndex, style, id }) {
   const { headlineHex, subheadHex, bodyHex, hStack, bStack, subheadSize, subheadWeight, bodySize, bodyWeight, headlineWeight, bg, dark, grid, running } = kit;
   const bodyStyle = { fontFamily: bStack, fontWeight: bodyWeight, fontSize: `${bodySize}pt`, color: bodyHex || undefined };
   return (
-    <div className={`bbb-page bbb-page--content bbb-page--${page.id}`} data-dark={dark || undefined} style={{ background: bg, ...style }}>
+    <div id={id} className={`bbb-page bbb-page--content bbb-page--${page.id}`} data-dark={dark || undefined} style={{ background: bg, ...style }}>
       <span className="bbb-page-label">{page.label}</span>
       <GridOverlay {...grid} />
       <RunningHeader {...running} pageIndex={pageIndex} />
@@ -342,10 +394,10 @@ function ContentPage({ kit, page, pageIndex, style }) {
   );
 }
 
-function BackCover({ kit, style }) {
+function BackCover({ kit, style, id }) {
   const { name, headlineHex, hStack, headlineWeight, bg, dark, grid } = kit;
   return (
-    <div className="bbb-page bbb-page--back" data-dark={dark || undefined} style={{ background: bg, ...style }}>
+    <div id={id} className="bbb-page bbb-page--back" data-dark={dark || undefined} style={{ background: bg, ...style }}>
       <span className="bbb-page-label">Back cover</span>
       <GridOverlay {...grid} />
       <p className="bbb-back-mark" style={{ fontFamily: hStack, fontWeight: headlineWeight, color: headlineHex }}>{name}</p>
@@ -382,12 +434,17 @@ function PageNum({ showPageNumbers, alternate, pageIndex }) {
 
 /* ------------------------------------------------------------ Flipbook */
 
+/* Flip overlay reskin: the top-right × is gone — Close is a labelled button
+   in the same control row as Back/Next, so the whole "how do I move / how do
+   I leave" decision lives in one place instead of two. Pages are the SAME
+   elements the canvas renders (cloned only to re-key their anchor id, so the
+   canvas and the overlay never carry the same id twice at once) — never a
+   duplicated page component. */
 function Flipbook({ open, onClose, pages, index, setIndex }) {
   if (!open) return null;
   const total = pages.length;
   return (
     <div className="bbb-flip-overlay bbb-flip-overlay--show">
-      <button className="bbb-flip-close" type="button" aria-label="Close preview" onClick={onClose}>&times;</button>
       <div className="bbb-flip-stage">
         {pages.map((PageEl, i) => (
           <div
@@ -395,14 +452,17 @@ function Flipbook({ open, onClose, pages, index, setIndex }) {
             className="bbb-flip-page"
             style={{ zIndex: i < index ? i : total - i, transform: i < index ? "rotateY(-178deg)" : "rotateY(0deg)" }}
           >
-            {PageEl}
+            {React.cloneElement(PageEl, {
+              id: PageEl.props.id ? `flip-${PageEl.props.id}` : undefined,
+            })}
           </div>
         ))}
       </div>
       <div className="bbb-flip-controls">
-        <button type="button" disabled={index === 0} onClick={() => setIndex((i) => Math.max(0, i - 1))}>&larr; Prev</button>
-        <span>{index + 1} / {total}</span>
+        <button type="button" disabled={index === 0} onClick={() => setIndex((i) => Math.max(0, i - 1))}>&larr; Back</button>
+        <span className="bbb-flip-controls__count">{index + 1} of {total}</span>
         <button type="button" disabled={index === total - 1} onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}>Next &rarr;</button>
+        <button type="button" className="bbb-flip-close-btn" onClick={onClose}>Close</button>
       </div>
     </div>
   );
@@ -556,6 +616,17 @@ export default function BrandBookBuilderView() {
   const bleedIn = printSettings.bleed ? 0.125 : 0;
   const marginIn = (grid.margin / 100) * dims.w;
 
+  /* The active Edge chip: an explicit choice if one was ever made, else the
+     stop the current margin reads closest to — display-only, never written
+     back (see bookBuilderFor's no-migration read of grid.edge). */
+  const activeEdge = grid.edge || nearestEdgeStop(grid.margin, printSettings.pageSize);
+
+  /* The top-bar setup line, stated from the real settings — never a fixed
+     string. e.g. "A4 · Standard edge · print-shop bleed on". */
+  const setupSummary = `${dims.label.split(' (')[0]} · ${EDGE_STOPS[activeEdge].label} edge · ${
+    printSettings.bleed ? 'print-shop bleed on' : 'no bleed'
+  }`;
+
   const runningProps = { show: running.show, text: (running.text.trim() || brandName), align: running.align,
     showFooter: running.showFooter, footerText: (running.footerText.trim() || tagline), footerAlign: running.footerAlign,
     showPageNumbers: running.showPageNumbers, alternate: running.alternate, bStack };
@@ -599,6 +670,8 @@ export default function BrandBookBuilderView() {
     running: runningProps,
   };
 
+  /* Deferred: overflow ("spilled") detection — a page that runs past its
+     sheet is not flagged in this view. Not built. */
   const { pages: contentPages, omitted: omittedPages } = paginatedBookPages(pack);
 
   const bgFor = (pageId) => {
@@ -672,6 +745,8 @@ export default function BrandBookBuilderView() {
      from prose, so they are drawn here directly. Content pages share the type
      page's background rather than adding a control of their own — a per-page
      background picker is one more decision to make the same answer to. */
+  /* Deferred: per-page lock toggles and ↑/↓ reorder — not built. The order
+     below is entirely plan-derived; there is no per-page control yet. */
   const pagesFor = (id) =>
     contentPages.filter((pg) => pg.sectionId === id);
 
@@ -693,23 +768,50 @@ export default function BrandBookBuilderView() {
 
   contentPages.filter((pg) => pg.kind === "appendix").forEach(pushContent);
 
+  /* Anchor ids for the page rail (in this book -> jump the canvas to that
+     page). One id per position in `pageElements`, assigned after the fact
+     rather than threaded through every push above, so the numbering can
+     never drift from what actually renders. */
+  const innerElements = inner.map((render, i) => render(i));
   const pageElements = [
-    <FrontCover key="cover" kit={{ ...kit, ...bgFor("pageCover") }} style={gridMarginVar} />,
-    ...inner.map((render, i) => render(i)),
-    <BackCover key="back" kit={{ ...kit, ...bgFor("pageBack") }} style={gridMarginVar} />,
+    <FrontCover key="cover" id="bbb-anchor-0" kit={{ ...kit, ...bgFor("pageCover") }} style={gridMarginVar} />,
+    ...innerElements.map((el, i) => React.cloneElement(el, { id: `bbb-anchor-${i + 1}` })),
+    <BackCover key="back" id={`bbb-anchor-${innerElements.length + 1}`} kit={{ ...kit, ...bgFor("pageBack") }} style={gridMarginVar} />,
   ];
 
   return (
     <div className="bbb-root">
       <style>{printCss}</style>
 
+      {/* In-view chrome, not the app header (which already carries back
+          navigation). Left: nothing. Center-left: the real setup, stated as
+          a sentence rather than left to be inferred from control positions.
+          Right: the two actions that used to sit at the bottom of the
+          panel, a full scroll away — "Flip through it" opens the existing
+          flipbook, "Print / save as PDF" is the existing export. */}
+      <div className="bbb-topbar">
+        <span className="bbb-topbar__summary">{setupSummary}</span>
+        <div className="bbb-topbar__actions">
+          <button type="button" className="bbb-btn" onClick={() => { setFlipIndex(0); setFlipOpen(true); }}>
+            Flip through it
+          </button>
+          <button type="button" className="bbb-btn bbb-btn--primary" onClick={handleExport} disabled={exporting}>
+            {exporting ? 'Making the PDF…' : 'Print / save as PDF'}
+          </button>
+          {exportNote && (
+            <span className="bbb-topbar__note" aria-live="polite">{exportNote}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="bbb-body">
       <div className="bbb-panel">
         <h1 className="bbb-panel__title">Brand book &mdash; source of truth</h1>
 
         {/* Named for what's inside rather than "Identity": the app's third
-            path stop is already called that, and with sections collapsed by
-            default the heading is the only clue to what a section holds. */}
-        <Section title="Name &amp; tagline" defaultOpen>
+            path stop is already called that, and the heading is the only
+            clue to what a section holds. */}
+        <Section title="Name &amp; tagline">
           <div className="bbb-field">
             <label htmlFor="bbb-brandName">Brand name</label>
             <input id="bbb-brandName" type="text" value={brandName} onChange={(e) => setBrandName(e.target.value)} />
@@ -718,6 +820,31 @@ export default function BrandBookBuilderView() {
             <label htmlFor="bbb-tagline">Tagline</label>
             <input id="bbb-tagline" type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} />
           </div>
+        </Section>
+
+        {/* Sheet / Edge space / print-shop bleed — the three controls the
+            top-bar summary states as a sentence. Named stops replace the old
+            free-typed margin percent ("named stops, not number fields"). */}
+        <Section title="Setup">
+          <ChipRow
+            label="Sheet"
+            value={printSettings.pageSize}
+            onChange={(v) => setPrintSettings((p) => ({ ...p, pageSize: v }))}
+            options={Object.entries(PAGE_SIZES).map(([id, v]) => ({ id, label: v.label.split(' (')[0] }))}
+          />
+          <ChipRow
+            label="Edge space"
+            value={activeEdge}
+            onChange={(v) => setGrid((g) => ({ ...g, edge: v }))}
+            options={EDGE_ORDER.map((id) => ({ id, label: EDGE_STOPS[id].label }))}
+          />
+          <PillToggle
+            id="bbb-printShop"
+            label="Going to a print shop"
+            checked={printSettings.bleed}
+            onChange={(v) => setPrintSettings((p) => ({ ...p, bleed: v }))}
+          />
+          <p className="bbb-hint">Print shop adds a 0.125in bleed so a trimmed edge keeps full colour.</p>
         </Section>
 
         {/* The book's words, one section per page it prints on, in the order
@@ -745,7 +872,31 @@ export default function BrandBookBuilderView() {
           );
         })}
 
-        <Section title="Type scale">
+        <Section title="Colors">
+          <div className="bbb-color-list">
+            {colors.map((c, i) => (
+              <ColorRow
+                key={c.id}
+                color={c}
+                onChange={(next) => updateColor(i, next)}
+                onRemove={() => removeColor(i)}
+                canRemove={colors.length > MIN_COLORS}
+              />
+            ))}
+          </div>
+          <button type="button" className="bbb-btn" onClick={addColor} disabled={colors.length >= MAX_COLORS}>+ add color token</button>
+          {colors.length >= MAX_COLORS && (
+            <p className="bbb-hint">{MAX_COLORS} is the maximum &mdash; remove one to add another.</p>
+          )}
+          {/* Deferred: Style presets (Style chips) — not built. Colours are
+              set one token at a time, no starting-point palettes. */}
+        </Section>
+
+        {/* Fine-tuning, grouped under one section rather than five — each
+            still gets its own micro-head, but nothing here is a decision
+            you need on arrival the way Setup and Colors are. */}
+        <Section title="Advanced">
+          <p className="bbb-microhead">Type scale</p>
           <div className="bbb-field">
             <label htmlFor="bbb-headlineFont">Headline font</label>
             <FontSelect id="bbb-headlineFont" value={headlineFont} onChange={setHeadlineFont} />
@@ -793,27 +944,8 @@ export default function BrandBookBuilderView() {
             </div>
           </div>
           <p className="bbb-hint">Sizes shown in points, same unit InDesign uses. If the real font is installed locally (e.g. via Adobe Fonts), it&apos;s used automatically over the web-font copy.</p>
-        </Section>
 
-        <Section title="Colors" defaultOpen>
-          <div className="bbb-color-list">
-            {colors.map((c, i) => (
-              <ColorRow
-                key={c.id}
-                color={c}
-                onChange={(next) => updateColor(i, next)}
-                onRemove={() => removeColor(i)}
-                canRemove={colors.length > MIN_COLORS}
-              />
-            ))}
-          </div>
-          <button type="button" className="bbb-btn" onClick={addColor} disabled={colors.length >= MAX_COLORS}>+ add color token</button>
-          {colors.length >= MAX_COLORS && (
-            <p className="bbb-hint">{MAX_COLORS} is the maximum &mdash; remove one to add another.</p>
-          )}
-        </Section>
-
-        <Section title="Type color">
+          <p className="bbb-microhead">Type color</p>
           <TokenSelect id="bbb-colorHeadline" label="Headline" value={typeColor.headline} colors={colors}
             noneValue="auto" noneLabel="Auto" onChange={(v) => setTypeColor((t) => ({ ...t, headline: v }))} />
           <TokenSelect id="bbb-colorSubhead" label="Subhead" value={typeColor.subhead} colors={colors}
@@ -821,9 +953,8 @@ export default function BrandBookBuilderView() {
           <TokenSelect id="bbb-colorBody" label="Body" value={typeColor.body} colors={colors}
             noneValue="auto" noneLabel="Auto" onChange={(v) => setTypeColor((t) => ({ ...t, body: v }))} />
           <p className="bbb-hint">&quot;Auto&quot; tracks sensible defaults (headline &rarr; primary, subhead &rarr; accent, body &rarr; adapts to light/dark pages). Pick a token to lock it instead.</p>
-        </Section>
 
-        <Section title="Page backgrounds">
+          <p className="bbb-microhead">Page backgrounds</p>
           <TokenSelect id="bbb-bgCover" label="Front cover" value={pageBg.pageCover} colors={colors}
             noneValue="white" noneLabel="White" onChange={(v) => setPageBg((p) => ({ ...p, pageCover: v }))} />
           <TokenSelect id="bbb-bgColors" label="Color page" value={pageBg.pageColors} colors={colors}
@@ -833,9 +964,8 @@ export default function BrandBookBuilderView() {
           <TokenSelect id="bbb-bgBack" label="Back cover" value={pageBg.pageBack} colors={colors}
             noneValue="white" noneLabel="White" onChange={(v) => setPageBg((p) => ({ ...p, pageBack: v }))} />
           <p className="bbb-hint">Backgrounds reference a color token, same as everything else &mdash; rename or delete that token and the page follows.</p>
-        </Section>
 
-        <Section title="Grid">
+          <p className="bbb-microhead">Grid guides</p>
           <div className="bbb-field">
             <label htmlFor="bbb-gridColumns">Columns</label>
             <input id="bbb-gridColumns" type="text" inputMode="numeric" value={grid.columns} onChange={(e) => setGrid((g) => ({ ...g, columns: Number(e.target.value) || 1 }))} />
@@ -848,18 +978,13 @@ export default function BrandBookBuilderView() {
             <label htmlFor="bbb-gridGutter">Gutter (%)</label>
             <input id="bbb-gridGutter" type="text" inputMode="decimal" value={grid.gutter} onChange={(e) => setGrid((g) => ({ ...g, gutter: Number(e.target.value) || 0 }))} />
           </div>
-          <div className="bbb-field">
-            <label htmlFor="bbb-gridMargin">Margin (%)</label>
-            <input id="bbb-gridMargin" type="text" inputMode="decimal" value={grid.margin} onChange={(e) => setGrid((g) => ({ ...g, margin: Number(e.target.value) || 0 }))} />
-          </div>
           <div className="bbb-field bbb-field--checkbox">
             <input id="bbb-showGrid" type="checkbox" checked={grid.show} onChange={(e) => setGrid((g) => ({ ...g, show: e.target.checked }))} />
             <label htmlFor="bbb-showGrid">Show grid guides</label>
           </div>
-          <p className="bbb-hint">Rows and columns share one gutter value. The color page&apos;s swatch columns derive from this column count.</p>
-        </Section>
+          <p className="bbb-hint">Rows and columns share one gutter value; the edge itself is set by Edge space, above. The color page&apos;s swatch columns derive from this column count.</p>
 
-        <Section title="Running elements">
+          <p className="bbb-microhead">Running elements</p>
           <div className="bbb-field bbb-field--checkbox">
             <input id="bbb-showHeader" type="checkbox" checked={running.show} onChange={(e) => setRunning((r) => ({ ...r, show: e.target.checked }))} />
             <label htmlFor="bbb-showHeader">Show header</label>
@@ -897,19 +1022,6 @@ export default function BrandBookBuilderView() {
           <p className="bbb-hint">These sit on interior pages only &mdash; covers stay clean.</p>
         </Section>
 
-        <Section title="Print setup">
-          <div className="bbb-field">
-            <label htmlFor="bbb-pageSize">Page size</label>
-            <select id="bbb-pageSize" value={printSettings.pageSize} onChange={(e) => setPrintSettings((p) => ({ ...p, pageSize: e.target.value }))}>
-              {Object.entries(PAGE_SIZES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-            </select>
-          </div>
-          <div className="bbb-field bbb-field--checkbox">
-            <input id="bbb-bleedToggle" type="checkbox" checked={printSettings.bleed} onChange={(e) => setPrintSettings((p) => ({ ...p, bleed: e.target.checked }))} />
-            <label htmlFor="bbb-bleedToggle">Include 0.125in bleed</label>
-          </div>
-        </Section>
-
         {/* The book's spine — its sections by name, so a glance says "yes,
             that's a brand book" rather than a raw page number.
             Deliberately NOT "Pages · N": that count was the on-screen preview
@@ -920,14 +1032,28 @@ export default function BrandBookBuilderView() {
             continuation pages collapses to a single named entry — the Agreed
             brief is one line, "record", not the thing that dominates the
             felt length. Open by default: a collapsed label is a memory test. */}
-        <Section title="In this book" defaultOpen>
+        {/* The book's spine, now with each in-book entry an anchor that
+            scrolls the canvas to that page — per-page lock and ↑/↓ reorder
+            would attach to this same row and are deferred, not built. */}
+        <Section title="In this book">
           <ul className="bbb-pagelist">
             {pageElements
-              .map((el) => (el.props.page ? el.props.page.label : BUILTIN_PAGE_LABELS[el.key]))
-              .filter((label, i, arr) => label && label !== arr[i - 1])
-              .map((label, i) => (
-                <li key={`${label}-${i}`} className="bbb-pagelist__in">
-                  <span>{label}</span>
+              .map((el) => ({
+                id: el.props.id,
+                label: el.props.page ? el.props.page.label : BUILTIN_PAGE_LABELS[el.key],
+              }))
+              .filter((m, i, arr) => m.label && m.label !== arr[i - 1]?.label)
+              .map((m) => (
+                <li key={m.id} className="bbb-pagelist__in">
+                  <a
+                    href={`#${m.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById(m.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                  >
+                    {m.label}
+                  </a>
                 </li>
               ))}
           </ul>
@@ -945,20 +1071,11 @@ export default function BrandBookBuilderView() {
             </>
           )}
         </Section>
-
-        <div className="bbb-section bbb-section--actions">
-          <button type="button" className="bbb-btn bbb-btn--primary" onClick={handleExport} disabled={exporting}>
-            {exporting ? 'Making the PDF…' : 'Export to PDF'}
-          </button>
-          <button type="button" className="bbb-btn" onClick={() => { setFlipIndex(0); setFlipOpen(true); }}>Preview as flipbook</button>
-          {exportNote && (
-            <p className="bbb-export-note" aria-live="polite">{exportNote}</p>
-          )}
-        </div>
       </div>
 
       <div className="bbb-canvas">
         {pageElements}
+      </div>
       </div>
 
       <Flipbook open={flipOpen} onClose={() => setFlipOpen(false)} pages={pageElements} index={flipIndex} setIndex={setFlipIndex} />

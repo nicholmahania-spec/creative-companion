@@ -7,7 +7,8 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
-import { DETECTIVE_CHAPTERS, getDetectiveProgress } from '../lib/detectiveBrief'
+import { getRequiredEmpty } from '../lib/detectiveBrief'
+import { relativeDeadlineLabel } from '../lib/dates'
 import DefineStartHere from '../components/DefineStartHere'
 import ScopePanel from '../components/ScopePanel'
 import '../styles/lazy-define.css'
@@ -65,28 +66,20 @@ export default function DefineView(props) {
     (...a) => useAppStore.getState().removeMilestone(...a),
     []
   )
-  const setDefineOpenChapter = useCallback(
-    (...a) => useAppStore.getState().setDefineOpenChapter(...a),
-    []
-  )
+  /* No open-chapter state anymore — the brief is flat (advisor ruling; see
+     DetectiveSheet). The stored defineOpenChapter, its resolver, and the
+     first-incomplete fallback all served the accordion and are deleted with
+     it. "Opening" a chapter now just means scrolling to it. */
+  const scrollToChapter = useCallback((chapterId) => {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    document
+      .getElementById(`define-chapter-content-${chapterId}`)
+      ?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' })
+  }, [])
 
-  const storedOpenChapter = activeProject?.defineOpenChapter
-
-  /** Unset for a project → open the first chapter that still needs a
-   * required answer, or the first chapter overall once everything required
-   * is filled. Once the user taps a chapter, the store field takes over. */
-  const openChapter = useMemo(() => {
-    if (storedOpenChapter) return storedOpenChapter
-    const progress = getDetectiveProgress(activeProject?.detective)
-    const firstIncomplete = progress.chapters.find((c) => !c.requiredDone)
-    return firstIncomplete ? firstIncomplete.id : DETECTIVE_CHAPTERS[0].id
-  }, [storedOpenChapter, activeProject?.detective])
-
-  const setOpenChapter = useCallback(
-    (chapterId) => {
-      if (projectId) setDefineOpenChapter(projectId, chapterId)
-    },
-    [projectId, setDefineOpenChapter]
+  const requiredLeft = useMemo(
+    () => getRequiredEmpty(activeProject?.detective, projectDeadline).length,
+    [activeProject?.detective, projectDeadline]
   )
 
   const milestones = activeProject?.detective?.milestones || []
@@ -138,22 +131,12 @@ export default function DefineView(props) {
 
   /** Plain-language deadline beside the date input. A read-only signal, not
    * a second control — an ISO date carries no felt urgency. */
-  const deadlineRelative = useMemo(() => {
-    if (!projectDeadline) return ''
-    const due = new Date(`${projectDeadline}T00:00:00`)
-    if (Number.isNaN(due.getTime())) return ''
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const days = Math.round((due - today) / 86400000)
-    if (days < -1) return 'Overdue'
-    if (days === -1) return 'Was due yesterday'
-    if (days === 0) return 'Due today'
-    if (days === 1) return 'Due tomorrow'
-    if (days <= 6) return 'Due this week'
-    if (days <= 13) return 'Due next week'
-    if (days <= 31) return 'Due in a few weeks'
-    return 'Due later on'
-  }, [projectDeadline])
+  /* Shared phrasing (lib/dates) — the client record rows speak the same
+     words, so the two surfaces can't drift apart. */
+  const deadlineRelative = useMemo(
+    () => relativeDeadlineLabel(projectDeadline),
+    [projectDeadline]
+  )
 
   /* Project rename lives here now — the top nav (and its rename input) is
      gone, and this is the screen where the project IS the subject, so the
@@ -228,15 +211,24 @@ export default function DefineView(props) {
           </div>
         )}
 
+        {/* Counts REQUIRED fields only, and names the endpoint. "X of 40"
+            over mostly-optional fields is fabricated debt — a finished brief
+            would read 5/40 forever. Silent once the needed ones are done;
+            the ✓s on the fields say the rest. */}
+        {requiredLeft > 0 && (
+          <p className="define-needed-line">
+            {requiredLeft === 1
+              ? `1 thing needed before ${labelForStepId('research')}`
+              : `${requiredLeft} things needed before ${labelForStepId('research')}`}
+          </p>
+        )}
+
         {/* Above the milestone list, not below it: the milestone rows are a
             quicker, more satisfying task than answering a brief question, and
             sitting them in front of the only anti-stall control on the page
             let the cheap task intercept the intended one. Its position is
             also fixed now — it used to slide down as milestones were added. */}
-        <DefineStartHere
-          detective={activeProject?.detective}
-          onOpenChapter={setOpenChapter}
-        />
+        <DefineStartHere detective={activeProject?.detective} />
 
         <div className="define-milestones-compact">
           <span className="define-field-label">Milestones</span>
@@ -306,7 +298,7 @@ export default function DefineView(props) {
             in front of the anti-stall control the way milestones do. */}
         <ScopePanel
           activeProject={activeProject}
-          onOpenChapter={setOpenChapter}
+          onOpenChapter={scrollToChapter}
           flashMicro={flashMicro}
         />
 
@@ -343,8 +335,6 @@ export default function DefineView(props) {
               detective={activeProject?.detective}
               updateDetective={updateDetective}
               splitMode
-              openChapter={openChapter}
-              onOpenChapter={setOpenChapter}
               showStartHere={false}
               projectDeadline={projectDeadline}
               setProjectDeadline={setProjectDeadline}

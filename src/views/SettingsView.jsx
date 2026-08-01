@@ -66,6 +66,13 @@ export default function SettingsView(props) {
           return (to where you were on the path, not a hardcoded stop). */}
       <div className="flow-top">
         <h1 className="page-title">Settings</h1>
+        {/* "Nothing folded away" would be false here — Advanced (and Storage
+            inside it) is a <details> a user has to open. This line only
+            claims what's actually true of this page. */}
+        <p className="settings-intro">
+          These apply across every project. Advanced options are tucked
+          under one panel below — everything else here is already open.
+        </p>
       </div>
 
       <nav className="settings-jump" aria-label="Settings sections">

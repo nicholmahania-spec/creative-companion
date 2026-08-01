@@ -45,6 +45,7 @@ const GameHUD = lazy(() => import('./components/GameHUD'))
 const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const ClientsView = lazy(() => import('./views/ClientsView'))
+const ClientRecordView = lazy(() => import('./views/ClientRecordView'))
 const NewProjectIntake = lazy(() => import('./views/NewProjectIntake'))
 const BrandBookBuilderView = lazy(
   () => import('./views/BrandBookBuilderView')
@@ -498,6 +499,10 @@ function App() {
   const toastTimeoutId = useRef(null)
   const [stepFocusKey, setStepFocusKey] = useState(0)
   const [stepDueOpen, setStepDueOpen] = useState(false)
+  /** Which client the record view ('clientRecord') is showing. */
+  const [clientRecordName, setClientRecordName] = useState('')
+  /** Client name the intake pre-fills when opened from a client record. */
+  const [intakeClientName, setIntakeClientName] = useState('')
   const [unlocked, setUnlocked] = useState(() =>
     CLOUD ? false : isSessionOpen()
   )
@@ -3069,6 +3074,8 @@ function App() {
       target = 'studio'
     } else if (activeView === 'clients' || activeView === 'create') {
       target = 'home'
+    } else if (activeView === 'clientRecord') {
+      target = 'clients'
     } else {
       target = pathFallback
     }
@@ -3793,6 +3800,52 @@ function App() {
             onOpen={() => setBeforeAfterOpen(true)}
           />
         )}
+        {/* Client-state chip — the one piece of the handoff's desk that
+            survived the advisor's review (the desk itself was rejected: it
+            duplicated the situation report the journey bar, the chip above
+            and Home already give, and cost a hop at task initiation). A
+            client acting on their portal was a SILENT state change — this
+            makes it a persistent on-screen trace. Renders only when
+            something actually arrived (a chip that always shows a state
+            would be a scoreboard); named states, never counts; click goes
+            to the destination the label promises. */}
+        {journeyActive &&
+          CLOUD &&
+          activeProject &&
+          (() => {
+            const arrived = (clientInbox.rows || []).filter(
+              (r) => r.unread && sameProjectId(r.projectLocalId, activeProject.id)
+            )
+            if (!arrived.length) return null
+            const top = arrived.find((r) => r.kind === 'form') || arrived[0]
+            const label =
+              top.kind === 'form'
+                ? 'They replied — review answers'
+                : top.kind === 'approval'
+                  ? `Approved: ${top.stepLabel}`
+                  : top.kind === 'notes'
+                    ? `Notes from the client on ${top.stepLabel}`
+                    : 'New message from the client'
+            return (
+              <button
+                type="button"
+                className="client-state-chip"
+                onClick={() => {
+                  if (top.kind === 'form') {
+                    // Straight to the review screen — the destination the
+                    // label promises, via the same one-shot flag the inbox
+                    // uses (the "Open their answers" lesson).
+                    setAutoOpenPortalReview(true)
+                    setOverviewSharePanelOpen(true)
+                  } else {
+                    setClientInboxOpen(true)
+                  }
+                }}
+              >
+                {label}
+              </button>
+            )
+          })()}
         {/* ===== HOME (multi-project) — master/detail, not a card grid ===== */}
         {activeView === 'home' && activeProjects.length > 1 && (() => {
           // Same ordering + grouping as the sidebar (#17), flattened for the
@@ -4167,6 +4220,27 @@ function App() {
               projects={projects}
               selectProject={selectProject}
               setActiveView={setActiveView}
+              openClientRecord={(name) => {
+                setClientRecordName(name)
+                setActiveView('clientRecord')
+              }}
+            />
+          </Suspense>
+        )}
+
+        {activeView === 'clientRecord' && (
+          <Suspense fallback={<PathViewSkeleton label="Loading client…" />}>
+            <ClientRecordView
+              clientName={clientRecordName}
+              projects={projects}
+              projectsSummary={projectsSummary}
+              listRowNext={listRowNext}
+              openProject={openProjectWhereLeftOff}
+              onNewProject={(name) => {
+                setIntakeClientName(name)
+                setActiveView('create')
+              }}
+              flashMicro={flashMicro}
             />
           </Suspense>
         )}
@@ -4176,6 +4250,11 @@ function App() {
             <NewProjectIntake
               setActiveView={setActiveView}
               flashToast={flashToast}
+              /* Pre-filled when opened from a client record ("New project
+                 for {client}") — cleared on unmount so the next fresh
+                 intake doesn't inherit a stale name. */
+              initialClientName={intakeClientName}
+              onDone={() => setIntakeClientName('')}
             />
           </Suspense>
         )}
@@ -4208,8 +4287,11 @@ function App() {
               setActiveView={setActiveView}
               flashToast={flashToast}
               flashMicro={flashMicro}
-              brandEditSection={brandEditSection}
-              setBrandEditSection={setBrandEditSection}
+              /* Prop names must match DesignView's destructure — they
+                 didn't (brandEditSection vs brandEditSectionProp), so the
+                 deep-link jump from Review/Deliver was silently inert. */
+              brandEditSectionProp={brandEditSection}
+              setBrandEditSectionProp={setBrandEditSection}
             />
           </Suspense>
         )}
