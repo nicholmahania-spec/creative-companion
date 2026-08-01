@@ -27,7 +27,12 @@ const SORT_MODES = [
   { id: 'alpha', label: 'A–Z' },
 ]
 
-export default function ClientsView({ projects = [], selectProject, setActiveView }) {
+export default function ClientsView({
+  projects = [],
+  selectProject,
+  setActiveView,
+  openClientRecord,
+}) {
   const [query, setQuery] = useState('')
   const [sortMode, setSortMode] = useState('recent')
 
@@ -84,7 +89,12 @@ export default function ClientsView({ projects = [], selectProject, setActiveVie
       ) : (
         <div className="clients-grid">
           {visible.map((c) => (
-            <ClientCard key={c.name} client={c} onOpen={openProject} />
+            <ClientCard
+              key={c.name}
+              client={c}
+              onOpen={openProject}
+              onOpenRecord={openClientRecord}
+            />
           ))}
         </div>
       )}
@@ -103,11 +113,19 @@ function ClientPhoto({ client }) {
   )
 }
 
-function ClientCard({ client, onOpen }) {
+function ClientCard({ client, onOpen, onOpenRecord }) {
   return (
     <div className="client-card">
       <ClientPhoto client={client} />
-      <p className="client-card-name">{client.name}</p>
+      {/* The name opens the client's record (design) — the card's projects
+          list below still deep-links straight into each project. */}
+      <button
+        type="button"
+        className="client-card-name"
+        onClick={() => onOpenRecord?.(client.name)}
+      >
+        {client.name}
+      </button>
       {!client.logoImage && (
         <p className="client-card-hint">Add a logo to use it here</p>
       )}

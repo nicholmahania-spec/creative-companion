@@ -45,6 +45,7 @@ const GameHUD = lazy(() => import('./components/GameHUD'))
 const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const ClientsView = lazy(() => import('./views/ClientsView'))
+const ClientRecordView = lazy(() => import('./views/ClientRecordView'))
 const NewProjectIntake = lazy(() => import('./views/NewProjectIntake'))
 const BrandBookBuilderView = lazy(
   () => import('./views/BrandBookBuilderView')
@@ -498,6 +499,10 @@ function App() {
   const toastTimeoutId = useRef(null)
   const [stepFocusKey, setStepFocusKey] = useState(0)
   const [stepDueOpen, setStepDueOpen] = useState(false)
+  /** Which client the record view ('clientRecord') is showing. */
+  const [clientRecordName, setClientRecordName] = useState('')
+  /** Client name the intake pre-fills when opened from a client record. */
+  const [intakeClientName, setIntakeClientName] = useState('')
   const [unlocked, setUnlocked] = useState(() =>
     CLOUD ? false : isSessionOpen()
   )
@@ -3069,6 +3074,8 @@ function App() {
       target = 'studio'
     } else if (activeView === 'clients' || activeView === 'create') {
       target = 'home'
+    } else if (activeView === 'clientRecord') {
+      target = 'clients'
     } else {
       target = pathFallback
     }
@@ -4167,6 +4174,27 @@ function App() {
               projects={projects}
               selectProject={selectProject}
               setActiveView={setActiveView}
+              openClientRecord={(name) => {
+                setClientRecordName(name)
+                setActiveView('clientRecord')
+              }}
+            />
+          </Suspense>
+        )}
+
+        {activeView === 'clientRecord' && (
+          <Suspense fallback={<PathViewSkeleton label="Loading client…" />}>
+            <ClientRecordView
+              clientName={clientRecordName}
+              projects={projects}
+              projectsSummary={projectsSummary}
+              listRowNext={listRowNext}
+              openProject={openProjectWhereLeftOff}
+              onNewProject={(name) => {
+                setIntakeClientName(name)
+                setActiveView('create')
+              }}
+              flashMicro={flashMicro}
             />
           </Suspense>
         )}
@@ -4176,6 +4204,11 @@ function App() {
             <NewProjectIntake
               setActiveView={setActiveView}
               flashToast={flashToast}
+              /* Pre-filled when opened from a client record ("New project
+                 for {client}") — cleared on unmount so the next fresh
+                 intake doesn't inherit a stale name. */
+              initialClientName={intakeClientName}
+              onDone={() => setIntakeClientName('')}
             />
           </Suspense>
         )}

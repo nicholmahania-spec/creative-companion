@@ -8,6 +8,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
 import { getRequiredEmpty } from '../lib/detectiveBrief'
+import { relativeDeadlineLabel } from '../lib/dates'
 import DefineStartHere from '../components/DefineStartHere'
 import ScopePanel from '../components/ScopePanel'
 import '../styles/lazy-define.css'
@@ -130,22 +131,12 @@ export default function DefineView(props) {
 
   /** Plain-language deadline beside the date input. A read-only signal, not
    * a second control — an ISO date carries no felt urgency. */
-  const deadlineRelative = useMemo(() => {
-    if (!projectDeadline) return ''
-    const due = new Date(`${projectDeadline}T00:00:00`)
-    if (Number.isNaN(due.getTime())) return ''
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const days = Math.round((due - today) / 86400000)
-    if (days < -1) return 'Overdue'
-    if (days === -1) return 'Was due yesterday'
-    if (days === 0) return 'Due today'
-    if (days === 1) return 'Due tomorrow'
-    if (days <= 6) return 'Due this week'
-    if (days <= 13) return 'Due next week'
-    if (days <= 31) return 'Due in a few weeks'
-    return 'Due later on'
-  }, [projectDeadline])
+  /* Shared phrasing (lib/dates) — the client record rows speak the same
+     words, so the two surfaces can't drift apart. */
+  const deadlineRelative = useMemo(
+    () => relativeDeadlineLabel(projectDeadline),
+    [projectDeadline]
+  )
 
   /* Project rename lives here now — the top nav (and its rename input) is
      gone, and this is the screen where the project IS the subject, so the
