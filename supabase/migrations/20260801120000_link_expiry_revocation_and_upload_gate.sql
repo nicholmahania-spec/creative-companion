@@ -202,6 +202,39 @@ grant execute on function public.respond_client_portal_step(uuid, text, text, te
 
 -- ===== #19: writes — a revoked/expired link cannot submit either =====
 
+-- The discovery-share WRITE path. Without this, revocation is a half-measure:
+-- reads 404 and uploads refuse, but a forwarded /f/ link could still
+-- submit_discovery_share() to overwrite answers and flip status to submitted,
+-- and that payload flows back into the project on review. Liveness gate added
+-- alongside the existing status='pending' single-use guard.
+create or replace function public.submit_discovery_share(share_id uuid, submitted_answers jsonb)
+returns boolean
+language plpgsql
+security definer
+set search_path to 'public', 'pg_temp'
+as $function$
+declare
+  updated_count int;
+begin
+  if pg_column_size(coalesce(submitted_answers, '{}'::jsonb)) > 200000 then
+    return false;
+  end if;
+  update public.discovery_shares
+  set answers = submitted_answers,
+      status = 'submitted',
+      submitted_at = now()
+  where id = share_id
+    and status = 'pending'
+    and revoked_at is null
+    and (expires_at is null or expires_at > now());
+  get diagnostics updated_count = row_count;
+  return updated_count > 0;
+end;
+$function$;
+
+revoke all on function public.submit_discovery_share(uuid, jsonb) from public;
+grant execute on function public.submit_discovery_share(uuid, jsonb) to anon, authenticated;
+
 create or replace function public.submit_client_portal_form(portal_id_in uuid, submitted jsonb)
 returns boolean
 language plpgsql
@@ -296,6 +329,12 @@ $function$;
 -- accepting window (form 'pending'/'sent') so a client attaching a photo mid-
 -- fill is never rejected; the per-folder ceiling and mime allow-list are
 -- unchanged.
+--
+-- Only form_status is consulted, not survey_status: the client portal survey
+-- (survey_questions) renders text/choice questions and has no attachment/file
+-- field, so uploads only ever originate from the detective-brief form path.
+-- If surveys ever gain file fields, add an `or exists(... survey_status =
+-- 'sent' ...)` arm here.
 create or replace function public.is_client_upload_target(folder text)
 returns boolean
 language plpgsql
