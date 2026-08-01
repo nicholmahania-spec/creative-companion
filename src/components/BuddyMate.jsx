@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { labelForView } from '../lib/journey'
+import { applyProposal } from '../lib/helperActions'
 import {
   activityTip,
   buddyMood,
@@ -109,6 +110,14 @@ export default function BuddyMate({
   const addBreakKitItem = useAppStore((s) => s.addBreakKitItem)
   const removeBreakKitItem = useAppStore((s) => s.removeBreakKitItem)
   const completeBreakKitItem = useAppStore((s) => s.completeBreakKitItem)
+  /* The only store writes the Helper can reach, and only ever behind a press
+     — see lib/helperActions.js for what is excluded and why. */
+  const addTask = useAppStore((s) => s.addTask)
+  const breakIntoSteps = useAppStore((s) => s.breakIntoSteps)
+  const storeTasks = useAppStore((s) => s.tasks)
+  const currentProjectId = useAppStore((s) => s.currentProjectId)
+  /** Which proposals have been pressed, so a button cannot fire twice. */
+  const [appliedIds, setAppliedIds] = useState({})
   const activityLive = useMemo(
     () => ({
       ...activity,
@@ -267,7 +276,13 @@ export default function BuddyMate({
   const pushBuddy = useCallback(
     (
       text,
-      { move = true, expand = false, replaceThinking = false, offline = false } = {}
+      {
+        move = true,
+        expand = false,
+        replaceThinking = false,
+        offline = false,
+        proposals = null,
+      } = {}
     ) => {
       if (!text) return
       if (move) repark(expand)
@@ -285,7 +300,7 @@ export default function BuddyMate({
           if (last?.from === 'buddy' && isThinkingText(last.text)) {
             return [
               ...m.slice(0, -1),
-              { ...last, text, offline },
+              { ...last, text, offline, proposals },
             ].slice(-14)
           }
         }
@@ -294,7 +309,7 @@ export default function BuddyMate({
           (x) => !(x.from === 'buddy' && isThinkingText(x.text))
         )
         const id = msgId.current++
-        return [...base.slice(-13), { id, from: 'buddy', text, offline }]
+        return [...base.slice(-13), { id, from: 'buddy', text, offline, proposals }]
       })
     },
     [repark, scheduleAutoMinimize, expanded]
@@ -672,6 +687,7 @@ export default function BuddyMate({
         expand: true,
         replaceThinking: true,
         offline: result.source === 'scripted' && !!result.error,
+        proposals: result.proposals?.length ? result.proposals : null,
       })
     } catch (e) {
       if (req !== aiReqRef.current) return
@@ -686,6 +702,32 @@ export default function BuddyMate({
       if (req === aiReqRef.current) setAiBusy(false)
     }
   }, [askText, aiBusy, pushBuddy, pushYou])
+
+  /**
+   * Run one proposal, because the user pressed it.
+   *
+   * Nothing calls this except a click. The model can only ever put a button
+   * on screen; whether it does anything is the user's decision, every time.
+   */
+  const runProposal = useCallback(
+    (msgId, index, proposal) => {
+      const key = `${msgId}:${index}`
+      if (appliedIds[key]) return
+      const openTask = (storeTasks || []).find((t) => !t.completed)
+      const res = applyProposal(proposal, {
+        addTask,
+        breakIntoSteps,
+        nextTaskId: openTask?.id,
+        projectId: currentProjectId,
+      })
+      setAppliedIds((m) => ({ ...m, [key]: res.ok ? 'done' : 'failed' }))
+      /* Say what happened either way. A button that reports nothing leaves
+         you checking the list to find out whether it worked, which is the
+         cost this was supposed to remove. */
+      pushBuddy(res.note, { move: false, expand: true })
+    },
+    [appliedIds, storeTasks, addTask, breakIntoSteps, currentProjectId, pushBuddy]
+  )
 
   const reply = (key) => {
     const a = activityRef.current
@@ -1005,6 +1047,29 @@ export default function BuddyMate({
               >
                 {m.text}
                 {m.offline && <OfflineNote />}
+                {m.proposals?.length > 0 && (
+                  <div className="buddy-proposals">
+                    {/* Proposed, not done. The wording is deliberate: the
+                        Helper has changed nothing at this point, and a label
+                        implying otherwise would make the press feel like a
+                        confirmation of something already true. */}
+                    {m.proposals.map((p, i) => {
+                      const state = appliedIds[`${m.id}:${i}`]
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          className="buddy-proposal"
+                          disabled={!!state}
+                          onClick={() => runProposal(m.id, i, p)}
+                        >
+                          {state === 'done' ? '✓ ' : state === 'failed' ? '· ' : '+ '}
+                          {p.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>

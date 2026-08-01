@@ -21,6 +21,7 @@ import {
   twoDirectionsTip,
 } from './buddy'
 import { HELPER_SYSTEM_PROMPT } from './helperPersona'
+import { actionCatalogueForPrompt, parseProposals } from './helperActions'
 import { supabase } from './supabase'
 
 const DEFAULT_MODEL = 'grok-4.5'
@@ -363,8 +364,18 @@ export async function askHelper(question, history = [], activity = {}) {
        canned intents get, so a bare "what now?" is answerable. */
     const ctx = describeActivity(activity)
     const user = ctx ? `${q}\n\n(Context: ${ctx})` : q
-    const text = await callXaiChat({ user, history, maxTokens: 320 })
-    return { text, source: 'ai' }
+    /* The catalogue rides in the system prompt rather than as provider
+       tool-calling: it is testable without a live API, it works the same on
+       any OpenAI-compatible endpoint, and — the reason that matters — the
+       model returns a *proposal*, never a call. Nothing can execute. */
+    const raw = await callXaiChat({
+      system: `${HELPER_SYSTEM_PROMPT}\n\n${actionCatalogueForPrompt()}`,
+      user,
+      history,
+      maxTokens: 320,
+    })
+    const { text, proposals } = parseProposals(raw)
+    return { text, proposals, source: 'ai' }
   } catch (e) {
     return {
       text: activityTip(activity),
