@@ -6,9 +6,14 @@ import {
   useCallback,
   lazy,
   Suspense,
+  Fragment,
 } from 'react'
 import useAppStore from './store/useAppStore'
 import { projectsShellEqual } from './lib/storeSelectors'
+import {
+  groupProjectsByClient,
+  showClientHeadings as showClientHeadingsFor,
+} from './lib/projectGrouping'
 import PathViewSkeleton from './components/PathViewSkeleton'
 
 import { DEFAULT_PALETTE } from './lib/color'
@@ -1083,6 +1088,36 @@ function App() {
         }
       }),
     [activeProjects, moodItems, tasks, sparkIndex]
+  )
+
+  /* One ordering + client grouping for BOTH the sidebar and Home, so a
+     project sits in the same place on every surface (#17) and repeat clients
+     cluster (#4). Reviewed by adhd-executive-function-advisor:
+     - order is deterministic (in-progress first, completed sunk, store index
+       as a stable final tiebreaker) so a row only moves on a deliberate act —
+       a new project or a completion — never on a re-render or on merely
+       opening a project;
+     - client headings show ONLY when ≥2 named clients actually collide; a
+       single-client or no-client studio renders a flat list with no heading
+       tax;
+     - unclienten projects (blank detective.clientName) sit UNLABELED at the
+       top, where fresh or abandoned work is easiest to return to — never
+       under a "No client" label, which reads as a deficiency. */
+  const projectGroups = useMemo(
+    () => groupProjectsByClient(projectsSummary, activeProjects),
+    [projectsSummary, activeProjects]
+  )
+
+  const showClientHeadings = showClientHeadingsFor(projectGroups)
+
+  /* One phrasing for a project's next action, shared by the sidebar and the
+     Home list so the two surfaces speak the identical phrase (advisor: memory
+     transfers between surfaces instead of resetting). Two states only, no
+     numeric ratio to decode. */
+  const listRowNext = useCallback(
+    (summary) =>
+      summary.nextGap ? `Next: ${summary.nextGap.label}` : 'Ready to ship',
+    []
   )
 
   const projectPills = (
@@ -3694,14 +3729,21 @@ function App() {
               </button>
             </div>
             <ul className="journey-projects-list">
-              {projectsSummary.map(({ project: p, doneCount, nextGap }) => {
+              {projectGroups.map((group) => (
+                <Fragment key={group.key}>
+                  {showClientHeadings && group.clientName && (
+                    <li className="journey-projects-group-head" role="presentation">
+                      {group.clientName}
+                    </li>
+                  )}
+                  {group.projects.map((summary) => {
+                const p = summary.project
                 const isActive = p.id === activeProjectId
                 const menuOpen = openProjectMenuId === p.id
                 // A named next action beats a ratio: "1/5" has to be decoded
-                // into a meaning and still doesn't say what to do.
-                const nextLabel = nextGap
-                  ? `Next: ${nextGap.label}`
-                  : 'Ready to deliver'
+                // into a meaning and still doesn't say what to do. Shared with
+                // Home via listRowNext so both surfaces speak the same phrase.
+                const nextLabel = listRowNext(summary)
                 return (
                   <li key={p.id} className="journey-project-row-wrap">
                     <button
@@ -3774,7 +3816,9 @@ function App() {
                     </div>
                   </li>
                 )
-              })}
+                  })}
+                </Fragment>
+              ))}
             </ul>
             {archivedProjects.length > 0 && (
               <select
@@ -3913,15 +3957,12 @@ function App() {
         )}
         {/* ===== HOME (multi-project) — master/detail, not a card grid ===== */}
         {activeView === 'home' && activeProjects.length > 1 && (() => {
-          const sorted = [...projectsSummary].sort((a, b) => {
-            const aDone = a.pathFull
-            const bDone = b.pathFull
-            if (aDone !== bDone) return aDone ? 1 : -1
-            return 0
-          })
+          // Same ordering + grouping as the sidebar (#17), flattened for the
+          // selected-row lookup.
+          const orderedFlat = projectGroups.flatMap((g) => g.projects)
           const selected =
-            sorted.find((s) => s.project.id === homeSelectedProjectId) ||
-            sorted[0]
+            orderedFlat.find((s) => s.project.id === homeSelectedProjectId) ||
+            orderedFlat[0]
           if (!selected) return null
           const pathFull = !!selected.pathFull
           const packReady = !!selected.packReady
@@ -3947,36 +3988,41 @@ function App() {
                   </button>
                 </div>
                 <ul className="home-md-rows">
-                  {sorted.map(({ project: p, doneCount, nextGap, pathFull: rowFull, packReady: rowPack }) => {
-                    const isActive = p.id === selected.project.id
-                    return (
-                      <li key={p.id}>
-                        <button
-                          type="button"
-                          className={`home-md-row${isActive ? ' is-active' : ''}`}
-                          onClick={() => setHomeSelectedProjectId(p.id)}
+                  {projectGroups.map((group) => (
+                    <Fragment key={group.key}>
+                      {showClientHeadings && group.clientName && (
+                        <li
+                          className="home-md-group-head"
+                          role="presentation"
                         >
-                          <span className="home-md-row-top">
-                            <span className="home-md-row-name">{p.name}</span>
-                            <span className="home-md-row-count">
-                              {doneCount}/{PATH_STEP_COUNT}
-                            </span>
-                          </span>
-                          <span
-                            className={`home-md-row-next${rowFull ? ' is-done' : ''}`}
-                          >
-                            {rowPack
-                              ? 'Ship'
-                              : rowFull
-                                ? labelForStepId('deliver')
-                                : nextGap
-                                  ? nextGap.label
-                                  : '—'}
-                          </span>
-                        </button>
-                      </li>
-                    )
-                  })}
+                          {group.clientName}
+                        </li>
+                      )}
+                      {group.projects.map((summary) => {
+                        const p = summary.project
+                        const rowFull = !!summary.pathFull
+                        const isActive = p.id === selected.project.id
+                        return (
+                          <li key={p.id}>
+                            <button
+                              type="button"
+                              className={`home-md-row${isActive ? ' is-active' : ''}`}
+                              onClick={() => setHomeSelectedProjectId(p.id)}
+                            >
+                              <span className="home-md-row-top">
+                                <span className="home-md-row-name">{p.name}</span>
+                              </span>
+                              <span
+                                className={`home-md-row-next${rowFull ? ' is-done' : ''}`}
+                              >
+                                {listRowNext(summary)}
+                              </span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </Fragment>
+                  ))}
                 </ul>
               </nav>
 
@@ -4016,9 +4062,8 @@ function App() {
                 </div>
 
                 <div className="home-md-strip">
-                  <p className="home-md-strip-label">
-                    {selected.doneCount}/{PATH_STEP_COUNT}
-                  </p>
+                  {/* The filled-dot strip is the sole ambient completeness
+                      cue — no numeric ratio to decode (#3). */}
                   <div className="home-md-steps">
                     {selected.rows.map((r, i) => {
                       const num = i + 1
