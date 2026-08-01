@@ -17,7 +17,13 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { JOURNEY_STEPS, PATH_STEP_COUNT, labelForView, labelForStepId } from './journey'
+import {
+  JOURNEY_STEPS,
+  PATH_STEP_COUNT,
+  labelForView,
+  labelForStepId,
+  toolsLabelForView,
+} from './journey'
 
 const SRC = new URL('..', import.meta.url).pathname
 
@@ -168,6 +174,34 @@ describe('journey is single-source', () => {
       for (const phrase of RETIRED_PHRASES) {
         if (f.text.includes(phrase)) offenders.push(`${f.rel}: ${phrase}`)
       }
+    }
+    expect(offenders).toEqual([])
+  })
+  /**
+   * Tools labels are declared too, and were outside every guard.
+   *
+   * toolsLabelForView() in journey.js is the declaration for the off-path
+   * pages — Calendar, Clients, Settings, Timer, Ideate, Review, Brand book.
+   * The test above only greps for JOURNEY_STEPS labels, so a header button
+   * spelling "Calendar" by hand passed CI while the function that names that
+   * page sat one import away. Rename a Tools page and the header would keep
+   * the old word with a green build, which is the same failure the path
+   * labels had — just in the half nothing was watching.
+   */
+  it('no module writes a Tools label as a string literal', () => {
+    const toolViews = [
+      'home', 'spark', 'review', 'insights',
+      'calendar', 'clients', 'book', 'settings',
+    ]
+    const labels = [...new Set(toolViews.map((v) => toolsLabelForView(v)))]
+    const offenders = []
+    for (const { rel, text } of files) {
+      if (!/\.jsx$/.test(rel)) continue
+      const c = code(text)
+      const hits = labels.filter(
+        (l) => c.includes(`>${l}</span>`) || c.includes(`>${l}</button>`)
+      )
+      if (hits.length) offenders.push(`${rel}: ${hits.join(', ')}`)
     }
     expect(offenders).toEqual([])
   })

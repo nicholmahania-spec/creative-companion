@@ -3228,7 +3228,7 @@ function App() {
               onClick={() => setActiveView('calendar')}
             >
               <HeaderIcon name="calendar" />
-              <span className="header-icon-btn__label">Calendar</span>
+              <span className="header-icon-btn__label">{toolsLabelForView('calendar')}</span>
             </button>
 
             <button
@@ -3237,7 +3237,7 @@ function App() {
               onClick={() => setActiveView('clients')}
             >
               <HeaderIcon name="people" />
-              <span className="header-icon-btn__label">Clients</span>
+              <span className="header-icon-btn__label">{toolsLabelForView('clients')}</span>
             </button>
 
             {/* Print moved into the Tools menu. It's genuinely low-frequency,
@@ -3260,7 +3260,7 @@ function App() {
               onClick={() => setActiveView('settings')}
             >
               <span aria-hidden="true">⚙</span>
-              <span className="header-icon-btn__label">Settings</span>
+              <span className="header-icon-btn__label">{toolsLabelForView('settings')}</span>
             </button>
 
             <div className="more-wrap" ref={moreWrapRef}>

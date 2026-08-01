@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
 import { buildBrandPackSnapshot, downloadBrandPackVectorPdf } from './exportFiles'
 
 /**
@@ -60,5 +61,98 @@ describe('the logo direction reaches the client', () => {
        60-second PDF render. */
     const src = readFileSync(new URL('./brandBookPdf.js', import.meta.url), 'utf8')
     expect(src).toMatch(/logoDirection/)
+  })
+})
+
+/**
+ * The general form of the same rule, which the docstring above always claimed
+ * and only ever enforced for one field.
+ *
+ * "Every field the book shows you must reach the book the client receives" was
+ * written after logoDirection was found with an editor, an on-screen render
+ * and no printing. The two guards below it check exactly that one field. Any
+ * other field could acquire an editor and print nowhere, and did: typeWhy asks
+ * "Why these fonts" on the Identity page and reaches no artifact of any kind —
+ * three references in the whole repo, all of them the input itself.
+ *
+ * So this checks the set rather than the instance: every field with an editor
+ * must appear in something a client receives. Exemptions are listed with their
+ * reason, because an unexplained exemption is how the original single-field
+ * version of this rule stayed single-field.
+ */
+const SRC_ROOT = new URL('..', import.meta.url).pathname
+
+function allSource() {
+  const out = []
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, e.name)
+      if (e.isDirectory()) walk(full)
+      else if (/\.jsx?$/.test(e.name) && !/\.test\./.test(e.name)) out.push(full)
+    }
+  }
+  walk(SRC_ROOT)
+  return out
+}
+
+/** Things a client actually receives. */
+const CLIENT_ARTIFACTS = [
+  'lib/brandBookPdf.js',
+  'lib/exportFiles.js',
+  'lib/projectTerms.js',
+  'lib/brandSystem.js',
+  'lib/caseStudy.js',
+  'components/StationeryKit.jsx',
+]
+
+const EXEMPT = {
+  /* Drives the Identity completion gate (journeyProgress.js) and the palette
+     health read. Internal rationale — deliberately not printed. */
+  colorRoleWhy: 'feeds a completion gate, not a deliverable',
+  /* Drives the Assets completion gate. Checklist state, not content. */
+  deliverWordsChecked: 'feeds a completion gate, not a deliverable',
+  /* OPEN DECISION, not a design choice. "Why these fonts" is typed on the
+     Identity page and printed nowhere; the book has a type page that prints
+     the face names and could carry the reason. Recorded here rather than
+     dropped so the debt is visible in the guard that would otherwise hide it. */
+  typeWhy: 'unresolved: print it on the book type page, or remove the field',
+}
+
+describe('every editable brand field reaches something the client gets', () => {
+  const sources = allSource().map((p) => readFileSync(p, 'utf8'))
+  const writable = [
+    ...new Set(
+      sources
+        .join('\n')
+        .match(/updateBrandField\??\.?\(?\s*\(?\s*'[a-zA-Z0-9_]+'/g)
+        ?.map((m) => m.match(/'([a-zA-Z0-9_]+)'/)[1]) || []
+    ),
+  ]
+
+  const artifactText = CLIENT_ARTIFACTS.map((rel) =>
+    readFileSync(new URL(`../${rel}`, import.meta.url).pathname, 'utf8')
+  ).join('\n')
+
+  it('finds the editable fields it is meant to check', () => {
+    expect(writable.length).toBeGreaterThan(20)
+  })
+
+  it('prints every field it lets you write', () => {
+    const unreached = writable.filter(
+      (f) => !EXEMPT[f] && !new RegExp(`\\b${f}\\b`).test(artifactText)
+    )
+    expect(
+      unreached,
+      'These have an editor but reach no client artifact. Print them, remove\n' +
+        'them, or add them to EXEMPT with the reason:\n  ' +
+        unreached.join('\n  ')
+    ).toEqual([])
+  })
+
+  /* An exemption for a field that no longer exists is stale documentation
+     pretending to be a decision. */
+  it('has no exemption for a field that is gone', () => {
+    const stale = Object.keys(EXEMPT).filter((f) => !writable.includes(f))
+    expect(stale).toEqual([])
   })
 })

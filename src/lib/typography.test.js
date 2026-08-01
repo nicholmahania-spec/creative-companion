@@ -72,7 +72,17 @@ const AA_FLOOR = 4.5
 
 describe('typography guardrails', () => {
   it('sizes type in rem, never px', () => {
-    const offenders = [...css.matchAll(/font-size:\s*[\d.]+px/g)].map((m) => m[0])
+    /* Matches px anywhere in the value, not only straight after the colon.
+       The original regex required the number to follow the colon, so
+       `font-size: var(--fs-xs, 9px)` sailed past it — and 21 declarations in
+       brand-book-builder.css did exactly that. They referenced --fs-xs/sm/md/
+       lg/xl, a t-shirt vocabulary defined nowhere in the repo, so the fallback
+       WAS the rendered size: --fs-xs alone appeared with 9px, 10px, 11px and
+       12px. One name, four sizes, none of them respecting the reader's
+       browser setting, which is the whole point of the rule. */
+    const offenders = [...css.matchAll(/font-size:[^;}]*\d+px/g)].map(
+      (m) => m[0]
+    )
     expect(offenders).toEqual([])
   })
 
