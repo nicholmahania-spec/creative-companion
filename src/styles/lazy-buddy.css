@@ -1742,3 +1742,14 @@
   border-radius: var(--radius-sm) !important;
   overflow: hidden;
 }
+
+/* Marks a reply that came from the offline script rather than the model.
+   Muted and inline, not a banner: the reply underneath is still usable, and
+   the Helper is the surface you reach for when things are already going
+   badly. --text-muted clears 4.5:1 on every surface this sits on. */
+.buddy-msg-offline {
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+  font-style: italic;
+  white-space: nowrap;
+}

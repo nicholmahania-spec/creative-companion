@@ -72,6 +72,22 @@ const PROCESS_VIEW = {
   deliver: 'finish',
 }
 
+/**
+ * Says the words came from the offline script, not the model.
+ *
+ * Stated as a fact about the reply, not as an error about you: the Helper
+ * is the surface you reach for when things are already going badly, and a
+ * red failure banner there is the shame-coded error CLAUDE.md rules out.
+ * It also does not offer a retry — the reply underneath is still usable, and
+ * a button whose outcome you cannot predict is a decision billed at the worst
+ * possible moment. The console carries the actual reason.
+ */
+function OfflineNote() {
+  return (
+    <span className="buddy-msg-offline"> · offline tip</span>
+  )
+}
+
 export default function BuddyMate({
   onClose,
   isFocusRunning = false,
@@ -239,7 +255,10 @@ export default function BuddyMate({
   const isThinkingText = (t) => t === '…' || t === 'One sec…'
 
   const pushBuddy = useCallback(
-    (text, { move = true, expand = false, replaceThinking = false } = {}) => {
+    (
+      text,
+      { move = true, expand = false, replaceThinking = false, offline = false } = {}
+    ) => {
       if (!text) return
       if (move) repark(expand)
       else if (expand) {
@@ -256,7 +275,7 @@ export default function BuddyMate({
           if (last?.from === 'buddy' && isThinkingText(last.text)) {
             return [
               ...m.slice(0, -1),
-              { ...last, text },
+              { ...last, text, offline },
             ].slice(-14)
           }
         }
@@ -265,7 +284,7 @@ export default function BuddyMate({
           (x) => !(x.from === 'buddy' && isThinkingText(x.text))
         )
         const id = msgId.current++
-        return [...base.slice(-13), { id, from: 'buddy', text }]
+        return [...base.slice(-13), { id, from: 'buddy', text, offline }]
       })
     },
     [repark, scheduleAutoMinimize, expanded]
@@ -569,17 +588,34 @@ export default function BuddyMate({
       try {
         const result = await coachWithHelper(intent, a, extra)
         if (req !== aiReqRef.current) return
+        /* `coachWithHelper` already reports whether the words came from the
+           model or from the scripted fallback, and this dropped that on the
+           floor — so a dead API key, a 503, or an expired session produced a
+           plausible canned sentence that was indistinguishable from a real
+           reply. The Helper looked like it was working while never reaching
+           the model at all, which is the one failure you cannot debug from
+           the outside because it never looks like a failure.
+
+           `source === 'scripted'` WITH an error means the model was expected
+           and did not answer. Without an error it is ordinary offline mode,
+           which is honest already and needs no badge. */
         pushBuddy(result.text, {
           move: false,
           expand: true,
           replaceThinking: true,
+          offline: result.source === 'scripted' && !!result.error,
         })
-      } catch {
+        if (result.source === 'scripted' && result.error) {
+          console.warn('Helper AI unavailable, using scripted reply:', result.error)
+        }
+      } catch (e) {
         if (req !== aiReqRef.current) return
+        console.warn('Helper AI threw, using scripted reply:', e)
         pushBuddy(activityTip(a), {
           move: false,
           expand: true,
           replaceThinking: true,
+          offline: true,
         })
       } finally {
         if (req === aiReqRef.current) setAiBusy(false)
@@ -894,7 +930,10 @@ export default function BuddyMate({
 
           <div className="buddy-compact-chat" ref={listRef}>
             {recentMsgs.length === 0 && latestBuddy && (
-              <div className="buddy-msg buddy-msg-buddy">{latestBuddy.text}</div>
+              <div className="buddy-msg buddy-msg-buddy">
+                {latestBuddy.text}
+                {latestBuddy.offline && <OfflineNote />}
+              </div>
             )}
             {recentMsgs.map((m) => (
               <div
@@ -902,6 +941,7 @@ export default function BuddyMate({
                 className={`buddy-msg buddy-msg-${m.from}`}
               >
                 {m.text}
+                {m.offline && <OfflineNote />}
               </div>
             ))}
           </div>
