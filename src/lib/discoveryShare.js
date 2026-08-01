@@ -51,6 +51,27 @@ export async function createDiscoveryShare({ projectLocalId, clientName, answers
 }
 
 /**
+ * Studio side: revoke a discovery-share link (audit #19). Owner-scoped RLS
+ * update sets revoked_at; get_discovery_share() and the upload gate then treat
+ * the link as not-found, killing a leaked/forwarded link without deleting the
+ * client's answers. Reversible by clearing revoked_at.
+ */
+export async function revokeDiscoveryShare(shareId) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  const { error } = await supabase
+    .from('discovery_shares')
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('id', shareId)
+  if (error) {
+    console.warn('Couldn’t revoke the share', error)
+    return { ok: false, error: 'Couldn’t revoke the link' }
+  }
+  return { ok: true }
+}
+
+/**
  * Fetch a share by id — usable by anyone with the link (no auth),
  * via the get_discovery_share() RPC.
  */

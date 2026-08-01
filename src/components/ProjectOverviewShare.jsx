@@ -18,6 +18,7 @@ import { ocrOverviewForm, ocrOverviewPdf, readOverviewPdfForm } from '../lib/ove
 import {
   clientPortalUrl,
   createClientPortal,
+  revokeClientPortal,
   fetchPortalStudioView,
   sendPortalSurvey,
   fetchStudioMessages,
@@ -296,6 +297,11 @@ function PortalMode({
   const [sendingForm, setSendingForm] = useState(false)
   const [sendingSurvey, setSendingSurvey] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)
+  // Two-tap confirm for revoke — a destructive, outbound action (it kills a
+  // link the client is holding), so it carries a word and asks once, inline,
+  // rather than firing on a single tap. No modal (keeps it in place).
+  const [revokeArmed, setRevokeArmed] = useState(false)
+  const [revoking, setRevoking] = useState(false)
 
   const refresh = useCallback(async () => {
     if (!portalId) return
@@ -343,6 +349,24 @@ function PortalMode({
         ? 'Client dashboard created and link copied'
         : 'Client dashboard created — use Copy to grab the link'
     )
+  }
+
+  const handleRevoke = async () => {
+    if (!revokeArmed) {
+      setRevokeArmed(true)
+      return
+    }
+    setRevoking(true)
+    const r = await revokeClientPortal(portalId)
+    setRevoking(false)
+    setRevokeArmed(false)
+    if (r.ok) {
+      // The client's answers/chat/approvals are kept — only the link dies.
+      setPortal((p) => (p ? { ...p, revoked_at: new Date().toISOString() } : p))
+      flashToast?.('Link revoked — the old link no longer opens')
+    } else {
+      flashToast?.(r.error || 'Couldn’t revoke the link')
+    }
   }
 
   const toggleStep = async (stepId, stepLabel) => {
@@ -490,35 +514,68 @@ function PortalMode({
             </button>
           </div>
 
-          <div className="discovery-brief-share-row">
-            <input
-              className="field-input"
-              readOnly
-              aria-label="Client dashboard link"
-              value={clientPortalUrl(portalId)}
-              onFocus={(e) => e.target.select()}
-            />
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={async () => {
-                const copied = await copyText(clientPortalUrl(portalId))
-                flashToast?.(copied ? 'Link copied' : 'Couldn’t copy — select the link and copy it')
-              }}
-            >
-              Copy
-            </button>
-          </div>
-          <a
-            className="btn btn-secondary"
-            href={`mailto:?subject=${encodeURIComponent(
-              `Your project dashboard${project?.name ? ` — ${project.name}` : ''}`
-            )}&body=${encodeURIComponent(
-              `Hi — here's your project dashboard. You can see progress, approve work, leave notes, and message me here:\n\n${clientPortalUrl(portalId)}`
-            )}`}
-          >
-            Email link to client
-          </a>
+          {portal?.revoked_at ? (
+            <div className="discovery-brief-share-row">
+              <p className="client-portal-revoked-note">
+                Link revoked — the old link no longer opens. The client’s
+                answers, messages and approvals are kept. Send a new dashboard
+                link if you need to share again.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="discovery-brief-share-row">
+                <input
+                  className="field-input"
+                  readOnly
+                  aria-label="Client dashboard link"
+                  value={clientPortalUrl(portalId)}
+                  onFocus={(e) => e.target.select()}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={async () => {
+                    const copied = await copyText(clientPortalUrl(portalId))
+                    flashToast?.(copied ? 'Link copied' : 'Couldn’t copy — select the link and copy it')
+                  }}
+                >
+                  Copy
+                </button>
+              </div>
+              <a
+                className="btn btn-secondary"
+                href={`mailto:?subject=${encodeURIComponent(
+                  `Your project dashboard${project?.name ? ` — ${project.name}` : ''}`
+                )}&body=${encodeURIComponent(
+                  `Hi — here's your project dashboard. You can see progress, approve work, leave notes, and message me here:\n\n${clientPortalUrl(portalId)}`
+                )}`}
+              >
+                Email link to client
+              </a>
+              <div className="client-portal-revoke-row">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm client-portal-revoke-btn"
+                  onClick={handleRevoke}
+                  onBlur={() => setRevokeArmed(false)}
+                  disabled={revoking}
+                >
+                  {revoking
+                    ? 'Revoking…'
+                    : revokeArmed
+                      ? 'Tap again to revoke'
+                      : 'Revoke link'}
+                </button>
+                {revokeArmed && !revoking ? (
+                  <span className="client-portal-revoke-hint">
+                    Kills this link for anyone holding it. The client’s answers
+                    are kept.
+                  </span>
+                ) : null}
+              </div>
+            </>
+          )}
 
           <p className="client-portal-subhead">What the client can see</p>
           <div className="overview-share-steps">
