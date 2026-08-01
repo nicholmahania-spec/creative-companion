@@ -1380,26 +1380,26 @@ export default function DesignView({
                   </div>
                 </div>
               </div>
-              <details className="design-advanced">
-                <summary>Why this pair</summary>
-                <div className="field-block" style={{ marginTop: '0.65rem' }}>
-                  <label className="field-label" htmlFor="type-why">
-                    Why
-                    {activeProject?.detective?.brandWords?.trim()
-                      ? ` · ${activeProject.detective.brandWords.trim().slice(0, 32)}`
-                      : ''}
-                  </label>
-                  <input
-                    id="type-why"
-                    className="field-input"
-                    value={activeProject?.typeWhy || ''}
-                    onChange={(e) =>
-                      updateBrandField('typeWhy', e.target.value)
-                    }
-                    placeholder="Why these fonts"
-                  />
-                </div>
-              </details>
+              {/* Optional, but visible — not tucked in a collapsible. This
+                  reaches the brand book's type page, and a field worth
+                  printing is not a field worth hiding at capture (the
+                  "collapsed content is invisible" rule). Blank prints nothing
+                  in the book; there is no toggle and no "include?" step. */}
+              <div className="field-block" style={{ marginTop: '0.9rem' }}>
+                <label className="field-label" htmlFor="type-why">
+                  Why these faces
+                  {activeProject?.detective?.brandWords?.trim()
+                    ? ` · ${activeProject.detective.brandWords.trim().slice(0, 32)}`
+                    : ''}
+                </label>
+                <input
+                  id="type-why"
+                  className="field-input"
+                  value={activeProject?.typeWhy || ''}
+                  onChange={(e) => updateBrandField('typeWhy', e.target.value)}
+                  placeholder="Optional — the reason for this pairing (prints in the brand book)"
+                />
+              </div>
             </section>
 
             {/* Logo */}

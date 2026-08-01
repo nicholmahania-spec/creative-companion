@@ -369,6 +369,9 @@ export function buildBrandPackSnapshot({
       : [],
     typeHeading: p.typeHeading || 'Plus Jakarta Sans Bold',
     typeBody: p.typeBody || 'Plus Jakarta Sans Regular',
+    /* The pairing rationale. Reaches the book's type page; omitted there when
+       blank. Empty string not a default face name — this is free text. */
+    typeWhy: p.typeWhy || '',
     doUse: p.doUse || '',
     dontUse: p.dontUse || '',
     deadline: p.deadline || '',

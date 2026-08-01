@@ -1235,6 +1235,20 @@ export async function downloadBrandPackVectorPdf(
       )
       y += px(26)
 
+      /* The designer's reason for this pairing, when they gave one. Typed on
+         the Identity page and, before this, printed nowhere — a write-only
+         field. Omitted entirely when blank (same rule as the imagery
+         rationale) so an unused note never leaves an empty heading behind. */
+      if (has(pack?.typeWhy)) {
+        kicker('Why these faces', margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+        y += KICKER_PT * 0.82 + px(10)
+        y += para(pack.typeWhy, margin, y, contentW * 0.72, {
+          size: px(15),
+          lh: 1.5,
+        })
+        y += px(22)
+      }
+
       const labelW = px(110)
       TYPE_SCALE.forEach((row) => {
         const rowH = px(46)
