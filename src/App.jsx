@@ -3970,9 +3970,7 @@ function App() {
             <section className="home-view home-md home-studio">
               <nav className="home-md-list" aria-label="Your projects">
                 <div className="home-md-list-head">
-                  <h1 className="home-title" style={{ margin: 0 }}>
-                    Projects
-                  </h1>
+                  <h1 className="home-md-list-title">Projects</h1>
                   <button
                     type="button"
                     className="btn btn-primary btn-sm home-new-project"
