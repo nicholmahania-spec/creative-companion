@@ -1806,211 +1806,201 @@ export default function DesignView({
           {showVersionHistory && (
             <div className="dv-modal-overlay">
               <div className="dv-modal-panel">
-                <div className="flex flex-col h-full">
-                  <div className="dv-modal-head">
-                    <h2 className="text-xl font-semibold">Version History</h2>
-                    <button
-                      onClick={() => setShowVersionHistory(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-6">
-                    {loadingVersions ? (
-                      <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                        <p>Loading version history...</p>
-                      </div>
-                    ) : versionHistory.length === 0 ? (
-                      <div className="text-center py-8 text-color-muted">
-                        <p>No versions found for this project.</p>
-                        <p className="mt-2">Create a version by making changes and bumping the design version.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {versionHistory.map((version) => (
-                          <div
-                            key={version.id}
-                            className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                            onClick={() => {
-                              setSelectedVersion(version)
-                              setDiffResult(null)
-                              // Load diff between selected version and current state
-                              loadVersionDiff(version.id)
-                            }}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <h3 className="font-medium">{version.versionLabel || 'Unnamed'}</h3>
-                                <p className="text-sm text-color-muted">
-                                  {new Date(version.timestamp).toLocaleString()}
-                                </p>
-                              </div>
-                              <div className="text-right space-x-2">
-                                {version.changeSummary?.severity && (
-                                  <span
-                                    className={`px-2 py-1 text-xs rounded-full ${
-                                      version.changeSummary.severity === 'major'
-                                        ? 'bg-red-100 text-red-800'
-                                        : version.changeSummary.severity === 'minor'
-                                          ? 'bg-orange-100 text-orange-800'
-                                          : 'bg-green-100 text-green-800'
-                                    }`}
-                                  >
-                                    {version.changeSummary.severity}
-                                  </span>
-                                )}
-                                {version.changeSummary?.changeCount && (
-                                  <span className="text-xs text-color-muted">
-                                    {version.changeSummary.changeCount} changes
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            {version.changeSummary?.summary && (
-                              <p className="mt-2 text-sm text-color-muted">
-                                {version.changeSummary.summary}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {(selectedVersion || diffResult) && (
-                    <div className="border-t pt-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-lg font-semibold">
-                          {selectedVersion ? 'Comparing Versions' : 'Diff Details'}
-                        </h3>
-                        <button
+                <div className="dv-modal-head">
+                  <h2>Version History</h2>
+                  <button
+                    onClick={() => setShowVersionHistory(false)}
+                    className="btn btn-sm btn-ghost"
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="dv-modal-scroll">
+                  {loadingVersions ? (
+                    <div className="dv-tpl-empty">
+                      <p>Loading version history…</p>
+                    </div>
+                  ) : versionHistory.length === 0 ? (
+                    <div className="dv-tpl-empty">
+                      <p>No versions found for this project.</p>
+                      <p>Create a version by making changes and bumping the design version.</p>
+                    </div>
+                  ) : (
+                    <div className="dv-tpl-list">
+                      {versionHistory.map((version) => (
+                        <div
+                          key={version.id}
+                          className="dv-tpl-card"
                           onClick={() => {
-                            setSelectedVersion(null)
+                            setSelectedVersion(version)
                             setDiffResult(null)
+                            // Load diff between selected version and current state
+                            loadVersionDiff(version.id)
                           }}
-                          className="text-gray-500 hover:text-gray-700"
                         >
-                          ×
-                        </button>
-                      </div>
-                      <div className="space-y-6">
-                        {/* Version info */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="font-medium">Current Version</h4>
-                            <p className="text-sm text-color-muted">
-                              {activeProject?.designVersion || 'v1'} •{" "}
-                              {new Date().toLocaleString()}
-                            </p>
-                          </div>
-                          <div>
-                            <h4 className="font-medium">Selected Version</h4>
-                            <p className="text-sm text-color-muted">
-                              {selectedVersion?.versionLabel || 'Unnamed'} •{" "}
-                              {selectedVersion?.timestamp ? new Date(selectedVersion.timestamp).toLocaleString() : '—'}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Diff results or loading */}
-                        {loadingDiff ? (
-                          <div className="text-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                            <p>Generating diff...</p>
-                          </div>
-                        ) : diffResult ? (
-                          <div>
-                            {diffResult.error ? (
-                              <div className="bg-red-50 border-l-4 border-red-500 p-4">
-                                <p className="text-red-700">{diffResult.error}</p>
-                              </div>
-                            ) : (
-                              <>
-                                <div className="flex items-center mb-4">
-                                  <span className={`px-3 py-1 text-xs rounded-full ${
-                                    diffResult.severity === 'major'
-                                      ? 'bg-red-100 text-red-800'
-                                      : diffResult.severity === 'minor'
-                                        ? 'bg-orange-100 text-orange-800'
-                                        : diffResult.changeCount > 10
-                                          ? 'bg-red-100 text-red-800'
-                                          : diffResult.changeCount > 5
-                                            ? 'bg-orange-100 text-orange-800'
-                                            : 'bg-green-100 text-green-800'
+                          <div className="dv-tpl-row">
+                            <div>
+                              <h3 className="dv-tpl-name">{version.versionLabel || 'Unnamed'}</h3>
+                              <p className="dv-tpl-meta">
+                                {new Date(version.timestamp).toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="dv-tpl-actions">
+                              {version.changeSummary?.severity && (
+                                <span
+                                  className={`dv-ver-badge ${
+                                    version.changeSummary.severity === 'major'
+                                      ? 'is-major'
+                                      : version.changeSummary.severity === 'minor'
+                                        ? 'is-minor'
+                                        : 'is-patch'
                                   }`}
-                                  >
-                                    {diffResult.severity || 'patch'}
-                                  </span>
-                                  <span className="ml-4 font-medium">
-                                    {diffResult.changeCount} changes
-                                  </span>
-                                </div>
-                                <p className="text-sm text-color-muted mb-4">
-                                  {diffResult.summary}
-                                </p>
-
-                                {/* Changes breakdown */}
-                                <div className="space-y-4">
-                                  {diffResult.modified.length > 0 && (
-                                    <div>
-                                      <h4 className="font-medium mb-2">Modified ({diffResult.modified.length})</h4>
-                                      <div className="space-y-2">
-                                        {diffResult.modified.map((change) => (
-                                          <div key={change.field} className="text-sm">
-                                            <span className="font-medium">{change.field}:</span>
-                                            {" "}
-                                            <span className="text-color-muted">{fmtDiffVal(change.oldValue)}</span>
-                                            <span className="ml-2 text-red-600">→</span>
-                                            <span className="ml-2 text-green-600">{fmtDiffVal(change.newValue)}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {diffResult.added.length > 0 && (
-                                    <div>
-                                      <h4 className="font-medium mb-2">Added ({diffResult.added.length})</h4>
-                                      <div className="space-y-2">
-                                        {diffResult.added.map((change) => (
-                                          <div key={change.field} className="text-sm">
-                                            <span className="font-medium">{change.field}:</span>
-                                            {" "}
-                                            <span className="text-green-600">{fmtDiffVal(change.value)}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {diffResult.removed.length > 0 && (
-                                    <div>
-                                      <h4 className="font-medium mb-2">Removed ({diffResult.removed.length})</h4>
-                                      <div className="space-y-2">
-                                        {diffResult.removed.map((change) => (
-                                          <div key={change.field} className="text-sm">
-                                            <span className="font-medium">{change.field}:</span>
-                                            {" "}
-                                            <span className="text-red-600">{fmtDiffVal(change.value)}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </>
-                            )}
+                                >
+                                  {version.changeSummary.severity}
+                                </span>
+                              )}
+                              {version.changeSummary?.changeCount && (
+                                <span className="dv-ver-count">
+                                  {version.changeSummary.changeCount} changes
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        ) : (
-                          <div className="text-center py-8">
-                            <p className="text-color-muted">
-                              Select a version from the history to see the diff
+                          {version.changeSummary?.summary && (
+                            <p className="dv-tpl-desc">
+                              {version.changeSummary.summary}
                             </p>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
+                {(selectedVersion || diffResult) && (
+                  <div className="dv-diff-panel">
+                    <div className="dv-diff-head">
+                      <h3>
+                        {selectedVersion ? 'Comparing Versions' : 'Diff Details'}
+                      </h3>
+                      <button
+                        onClick={() => {
+                          setSelectedVersion(null)
+                          setDiffResult(null)
+                        }}
+                        className="btn btn-sm btn-ghost"
+                        aria-label="Close diff"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    {/* Version info */}
+                    <div className="dv-diff-grid">
+                      <div>
+                        <h4>Current Version</h4>
+                        <p className="dv-diff-meta">
+                          {activeProject?.designVersion || 'v1'} •{" "}
+                          {new Date().toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <h4>Selected Version</h4>
+                        <p className="dv-diff-meta">
+                          {selectedVersion?.versionLabel || 'Unnamed'} •{" "}
+                          {selectedVersion?.timestamp ? new Date(selectedVersion.timestamp).toLocaleString() : '—'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Diff results or loading */}
+                    {loadingDiff ? (
+                      <div className="dv-tpl-empty">
+                        <p>Generating diff…</p>
+                      </div>
+                    ) : diffResult ? (
+                      <div>
+                        {diffResult.error ? (
+                          <div className="dv-diff-error">
+                            <p>{diffResult.error}</p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="dv-diff-summaryrow">
+                              <span className={`dv-ver-badge ${
+                                diffResult.severity === 'major'
+                                  ? 'is-major'
+                                  : diffResult.severity === 'minor'
+                                    ? 'is-minor'
+                                    : diffResult.changeCount > 10
+                                      ? 'is-major'
+                                      : diffResult.changeCount > 5
+                                        ? 'is-minor'
+                                        : 'is-patch'
+                              }`}
+                              >
+                                {diffResult.severity || 'patch'}
+                              </span>
+                              <span className="dv-diff-field">
+                                {diffResult.changeCount} changes
+                              </span>
+                            </div>
+                            <p className="dv-diff-summary">
+                              {diffResult.summary}
+                            </p>
+
+                            {/* Changes breakdown */}
+                            <div>
+                              {diffResult.modified.length > 0 && (
+                                <div className="dv-diff-section">
+                                  <h4>Modified ({diffResult.modified.length})</h4>
+                                  {diffResult.modified.map((change) => (
+                                    <div key={change.field} className="dv-diff-row">
+                                      <span className="dv-diff-field">{change.field}:</span>
+                                      {" "}
+                                      <span className="dv-diff-old">{fmtDiffVal(change.oldValue)}</span>
+                                      <span className="dv-diff-arrow">→</span>
+                                      <span className="dv-diff-added">{fmtDiffVal(change.newValue)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {diffResult.added.length > 0 && (
+                                <div className="dv-diff-section">
+                                  <h4>Added ({diffResult.added.length})</h4>
+                                  {diffResult.added.map((change) => (
+                                    <div key={change.field} className="dv-diff-row">
+                                      <span className="dv-diff-field">{change.field}:</span>
+                                      {" "}
+                                      <span className="dv-diff-added">{fmtDiffVal(change.value)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {diffResult.removed.length > 0 && (
+                                <div className="dv-diff-section">
+                                  <h4>Removed ({diffResult.removed.length})</h4>
+                                  {diffResult.removed.map((change) => (
+                                    <div key={change.field} className="dv-diff-row">
+                                      <span className="dv-diff-field">{change.field}:</span>
+                                      {" "}
+                                      <span className="dv-diff-removed">{fmtDiffVal(change.value)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="dv-tpl-empty">
+                        <p>
+                          Select a version from the history to see the diff
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2107,89 +2097,91 @@ export default function DesignView({
           {/* Save as Template Modal */}
           {showSaveAsTemplateModal && (
             <div className="dv-modal-overlay">
-              <div className="dv-modal-panel is-narrow dv-modal-body">
-                <div className="flex flex-col h-full">
-                  <div className="dv-modal-head">
-                    <h2 className="text-xl font-semibold">
-                      {selectedTemplate ? 'Update Template' : 'Save as Template'}
-                    </h2>
+              <div className="dv-modal-panel is-narrow">
+                <div className="dv-modal-head">
+                  <h2>
+                    {selectedTemplate ? 'Update Template' : 'Save as Template'}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowSaveAsTemplateModal(false)
+                      setTemplateName('')
+                      setTemplateDescription('')
+                      setSelectedTemplate(null)
+                    }}
+                    className="btn btn-sm btn-ghost"
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                </div>
+                <form
+                  className="dv-form"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    if (selectedTemplate) {
+                      // Update existing template
+                      updateTemplate(selectedTemplate.id, {
+                        name: templateName,
+                        description: templateDescription
+                      }).then(() => {
+                        loadTemplates()
+                        setShowSaveAsTemplateModal(false)
+                        setTemplateName('')
+                        setTemplateDescription('')
+                        setSelectedTemplate(null)
+                        flashMicro?.('Template updated')
+                      })
+                    } else {
+                      // Save new template
+                      saveAsTemplate(templateName, templateDescription)
+                    }
+                  }}
+                >
+                  <div className="field-block">
+                    <label className="field-label" htmlFor="dv-tpl-name">Template Name</label>
+                    <input
+                      id="dv-tpl-name"
+                      type="text"
+                      value={templateName}
+                      onChange={(e) => setTemplateName(e.target.value)}
+                      placeholder="Enter template name"
+                      className="field-input"
+                    />
+                  </div>
+                  <div className="field-block">
+                    <label className="field-label" htmlFor="dv-tpl-desc">Description (optional)</label>
+                    <textarea
+                      id="dv-tpl-desc"
+                      value={templateDescription}
+                      onChange={(e) => setTemplateDescription(e.target.value)}
+                      placeholder="Describe when to use this template"
+                      rows={3}
+                      className="field-textarea"
+                    />
+                  </div>
+                  <div className="dv-form-actions">
                     <button
+                      type="button"
                       onClick={() => {
                         setShowSaveAsTemplateModal(false)
                         setTemplateName('')
                         setTemplateDescription('')
                         setSelectedTemplate(null)
                       }}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="btn btn-ghost"
                     >
-                      ×
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!templateName.trim()}
+                      className="btn btn-primary"
+                    >
+                      {selectedTemplate ? 'Update Template' : 'Save Template'}
                     </button>
                   </div>
-                  <div className="flex-1 p-6">
-                    <form onSubmit={(e) => {
-                      e.preventDefault()
-                      if (selectedTemplate) {
-                        // Update existing template
-                        updateTemplate(selectedTemplate.id, {
-                          name: templateName,
-                          description: templateDescription
-                        }).then(() => {
-                          loadTemplates()
-                          setShowSaveAsTemplateModal(false)
-                          setTemplateName('')
-                          setTemplateDescription('')
-                          setSelectedTemplate(null)
-                          flashMicro?.('Template updated')
-                        })
-                      } else {
-                        // Save new template
-                        saveAsTemplate(templateName, templateDescription)
-                      }
-                    }} className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium mb-2">Template Name</label>
-                        <input
-                          type="text"
-                          value={templateName}
-                          onChange={(e) => setTemplateName(e.target.value)}
-                          placeholder="Enter template name"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium mb-2">Description (optional)</label>
-                        <textarea
-                          value={templateDescription}
-                          onChange={(e) => setTemplateDescription(e.target.value)}
-                          placeholder="Describe when to use this template"
-                          rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div className="flex justify-end pt-4 border-t border-gray-200">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowSaveAsTemplateModal(false)
-                            setTemplateName('')
-                            setTemplateDescription('')
-                            setSelectedTemplate(null)
-                          }}
-                          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={!templateName.trim()}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                        >
-                          {selectedTemplate ? 'Update Template' : 'Save Template'}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
+                </form>
               </div>
             </div>
           )}

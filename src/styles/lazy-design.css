@@ -1409,6 +1409,147 @@
   flex-shrink: 0;
 }
 
+/* Version History modal — same story as the template list: replaces phantom
+   Tailwind utilities (bg-red-100, text-green-600, grid-cols-2, space-y-*, …).
+   Reuses .dv-tpl-* for the version rows; adds severity badges and the diff
+   detail panel below. Severity colours come from the theme's semantic tokens,
+   never invented hex. */
+.dv-ver-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.dv-ver-badge.is-major {
+  color: var(--danger);
+}
+
+.dv-ver-badge.is-minor {
+  color: var(--warning);
+}
+
+.dv-ver-badge.is-patch {
+  color: var(--positive);
+}
+
+.dv-ver-count {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.dv-diff-panel {
+  padding: var(--space-4);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.dv-diff-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.dv-diff-head h3 {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+}
+
+.dv-diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.dv-diff-grid h4 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-2);
+  font-weight: 600;
+}
+
+.dv-diff-meta {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.dv-diff-error {
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--danger);
+  color: var(--danger);
+}
+
+.dv-diff-summaryrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.dv-diff-summary {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.dv-diff-section {
+  margin-bottom: var(--space-4);
+}
+
+.dv-diff-section h4 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-2);
+  font-weight: 600;
+}
+
+.dv-diff-row {
+  font-size: var(--fs-2);
+  margin-bottom: var(--space-1);
+}
+
+.dv-diff-row .dv-diff-field {
+  font-weight: 600;
+}
+
+.dv-diff-old {
+  color: var(--text-muted);
+}
+
+.dv-diff-arrow {
+  margin: 0 var(--space-1);
+  color: var(--danger);
+}
+
+.dv-diff-added {
+  color: var(--positive);
+}
+
+.dv-diff-removed {
+  color: var(--danger);
+}
+
+/* Save-as-Template modal form. Replaces phantom input/button utilities
+   (w-full, border-gray-300, bg-blue-600, …) with the app's real field/button
+   primitives. */
+.dv-form {
+  padding: var(--space-4);
+}
+
+.dv-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-hairline);
+}
+
 /* Two fields sharing one .field-block (title + why) need a gap between
    the first input and the second label — .field-label only carries a
    bottom margin, nothing above it. */
