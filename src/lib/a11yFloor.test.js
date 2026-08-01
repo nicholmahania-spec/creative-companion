@@ -106,3 +106,51 @@ describe('client-facing failures reach a screen reader', () => {
     expect(src).toMatch(/htmlFor=\{singleControl \? fieldId : undefined\}/)
   })
 })
+
+describe('single-key shortcuts are focus-scoped (WCAG 2.1.4)', () => {
+  it('the flow-key handler goes quiet when focus is on another control', () => {
+    const src = read('App.jsx')
+    // The gate: fire only in the workspace resting state (in #main-content or
+    // the document body), never while focus sits on another control.
+    expect(src).toMatch(/getElementById\('main-content'\)/)
+    expect(src).toMatch(/const inWorkspace =/)
+    expect(src).toMatch(/if \(!inWorkspace\) return/)
+  })
+})
+
+describe('the running to-do panel is a drawer, not a false modal', () => {
+  const src = read('components/RunningTodo.jsx')
+
+  it('the browsing panel is a complementary landmark, not aria-modal', () => {
+    // The <aside> panel had role="dialog" + aria-modal="true" with no focus
+    // trap — a lie to assistive tech (page announced inert; Tab walks out).
+    // CLAUDE.md calls it a drawer; it must read as one.
+    expect(src).toMatch(/className="running-todo-panel"/)
+    expect(src).toMatch(/role="complementary"/)
+    // The one true modal in the file — the centered "Anything to add?" prompt —
+    // keeps aria-modal; the drawer must not reintroduce it.
+    const modals = src.match(/aria-modal="true"/g) || []
+    expect(modals.length, 'only the add-prompt is a modal').toBe(1)
+  })
+
+  it('opening the drawer moves focus in and restores it on close', () => {
+    // Object permanence / interruption recovery: land on the list you opened,
+    // return to the trigger when it closes. No trap — tabbing out is expected.
+    expect(src).toMatch(/const panelRef =/)
+    expect(src).toMatch(/panelRef\.current\?\.focus\?\.\(\)/)
+    expect(src).toMatch(/restoreRef\.current\?\.focus\?\.\(\)/)
+  })
+})
+
+describe('the progress HUD carries meaning off `title`', () => {
+  const src = read('components/GameHUD.jsx')
+
+  it('the summary is a real accessible name, not a title', () => {
+    // `title` is dead on touch and keyboard. The whole summary lives on the
+    // button's aria-label; the chips are decorative and hidden from AT.
+    expect(src).toMatch(/aria-label=\{hudLabel\}/)
+    expect(src).not.toMatch(/\btitle=/)
+    // Meaningful badge emoji announce their name as images.
+    expect(src).toMatch(/role="img"\s*\n?\s*aria-label=\{b\.name\}/)
+  })
+})
