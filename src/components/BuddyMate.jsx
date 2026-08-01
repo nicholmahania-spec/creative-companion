@@ -40,6 +40,7 @@ import {
   kindMeta,
 } from '../lib/breakKit'
 import {
+  askHelper,
   coachWithHelper,
   isHelperAiConfigured,
   helperAiStatus,
@@ -128,6 +129,15 @@ export default function BuddyMate({
       text: `${greetingLine()} · ${formatClock()}`,
     },
   ])
+  /* Mirrors `messages` so `askQuestion` can read the thread without listing
+     it as a dependency — otherwise the callback is rebuilt on every reply,
+     and an in-flight request is orphaned mid-answer. */
+  const messagesRef = useRef(messages)
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+  /** What the user is typing. The Helper had no input before this. */
+  const [askText, setAskText] = useState('')
   // Start minimized so work forms stay free
   const [expanded, setExpanded] = useState(false)
   const [showMore, setShowMore] = useState(false)
@@ -624,6 +634,59 @@ export default function BuddyMate({
     [pushBuddy, pushYou]
   )
 
+  /**
+   * A typed question. The Helper had no input at all before this — twelve
+   * canned intents and no way to say what you were actually stuck on.
+   *
+   * `messages` is the visible thread, so the history sent to the model is
+   * exactly what is on screen. Deriving it from anything else would let the
+   * two drift, and a coach answering a conversation you cannot see is worse
+   * than one with no memory.
+   */
+  const askQuestion = useCallback(async () => {
+    const q = askText.trim()
+    if (!q || aiBusy) return
+    setAskText('')
+    pushYou(q)
+    const a = activityRef.current
+    const req = ++aiReqRef.current
+    setAiBusy(true)
+    pushBuddy(isHelperAiConfigured() ? '…' : 'One sec…', {
+      move: false,
+      expand: true,
+    })
+    const history = messagesRef.current
+      .filter((m) => !isThinkingText(m.text))
+      .map((m) => ({
+        role: m.from === 'you' ? 'user' : 'assistant',
+        content: m.text,
+      }))
+    try {
+      const result = await askHelper(q, history, a)
+      if (req !== aiReqRef.current) return
+      if (result.source === 'scripted' && result.error) {
+        console.warn('Helper AI unavailable, using scripted reply:', result.error)
+      }
+      pushBuddy(result.text, {
+        move: false,
+        expand: true,
+        replaceThinking: true,
+        offline: result.source === 'scripted' && !!result.error,
+      })
+    } catch (e) {
+      if (req !== aiReqRef.current) return
+      console.warn('Helper AI threw, using scripted reply:', e)
+      pushBuddy(activityTip(a), {
+        move: false,
+        expand: true,
+        replaceThinking: true,
+        offline: true,
+      })
+    } finally {
+      if (req === aiReqRef.current) setAiBusy(false)
+    }
+  }, [askText, aiBusy, pushBuddy, pushYou])
+
   const reply = (key) => {
     const a = activityRef.current
     if (key === 'stuck') {
@@ -945,6 +1008,41 @@ export default function BuddyMate({
               </div>
             ))}
           </div>
+
+          {/* The thing that was missing. Twelve canned intents and nowhere to
+              say what you were actually stuck on — so the Helper could answer
+              but could not be asked.
+
+              Enter sends; the button is there because Enter-to-send is a
+              convention you have to already know, and this is the surface you
+              reach for when you are least able to guess at one. Disabled while
+              a reply is in flight so a second question cannot orphan the
+              first, which would leave you watching a "…" that answers
+              something you no longer asked. */}
+          <form
+            className="buddy-ask"
+            onSubmit={(e) => {
+              e.preventDefault()
+              void askQuestion()
+            }}
+          >
+            <input
+              className="buddy-ask-input"
+              value={askText}
+              onChange={(e) => setAskText(e.target.value)}
+              placeholder="Ask anything"
+              aria-label="Ask the Helper"
+              maxLength={500}
+              disabled={aiBusy}
+            />
+            <button
+              type="submit"
+              className="buddy-ask-send"
+              disabled={aiBusy || !askText.trim()}
+            >
+              Ask
+            </button>
+          </form>
 
           {/* Redesign brief: three verbs only — Coach · Critique · Break */}
           <div

@@ -245,6 +245,15 @@ function intentUserPrompt(intent, activity = {}, extra = {}) {
 export async function callXaiChat({
   system = SYSTEM_PROMPT,
   user,
+  /**
+   * Prior turns, oldest first: `[{ role: 'user'|'assistant', content }]`.
+   *
+   * Without these every message is the model's first: "make it shorter" has
+   * nothing to shorten, and "no, the other one" has no other one. That is
+   * not a conversation, it is a series of unrelated answers, and it is why
+   * the Helper could only ever be driven by canned prompts.
+   */
+  history = [],
   model = DEFAULT_MODEL,
   temperature = 0.45,
   maxTokens = 160,
@@ -284,6 +293,18 @@ export async function callXaiChat({
       max_tokens: maxTokens,
       messages: [
         { role: 'system', content: system },
+        /* Trimmed to the last 8 turns. The whole thread would grow the
+           request without bound — cost and latency rising on every reply,
+           on a control whose whole promise is "a result in a few seconds". */
+        ...(Array.isArray(history) ? history : [])
+          .filter(
+            (m) =>
+              m &&
+              (m.role === 'user' || m.role === 'assistant') &&
+              String(m.content || '').trim()
+          )
+          .slice(-8)
+          .map((m) => ({ role: m.role, content: String(m.content).trim() })),
         { role: 'user', content: user },
       ],
     }),
@@ -304,6 +325,53 @@ export async function callXaiChat({
   const cleaned = String(text).trim()
   if (!cleaned) throw new Error('Empty AI response')
   return cleaned
+}
+
+/**
+ * A free-text question, with the thread so far.
+ *
+ * The Helper had ~12 canned intents behind buttons and no way to type. You
+ * could press "I'm stuck" but not say what you were stuck on, and nothing
+ * you pressed was aware of anything you had pressed before — so it could
+ * answer, but it could not be asked.
+ *
+ * Deliberately text-only: it returns words and touches nothing. Letting it
+ * add a task or edit a brief needs a permission model, and "it changed my
+ * brief without asking" is a worse failure than "it did not help". That is
+ * a separate decision, not an implementation detail of this one.
+ *
+ * Returns the same `{ text, source, error }` shape as `coachWithHelper`, so
+ * a scripted fallback stays distinguishable from a real answer.
+ *
+ * @param {string} question
+ * @param {Array<{role:'user'|'assistant',content:string}>} history
+ * @param {object} activity
+ */
+export async function askHelper(question, history = [], activity = {}) {
+  const q = String(question || '').trim()
+  if (!q) return { text: '', source: 'scripted' }
+
+  if (!isHelperAiConfigured()) {
+    return {
+      text: "I can't answer questions without a connection — the buttons below still work offline.",
+      source: 'scripted',
+    }
+  }
+
+  try {
+    /* The activity line gives the model the same situational context the
+       canned intents get, so a bare "what now?" is answerable. */
+    const ctx = describeActivity(activity)
+    const user = ctx ? `${q}\n\n(Context: ${ctx})` : q
+    const text = await callXaiChat({ user, history, maxTokens: 320 })
+    return { text, source: 'ai' }
+  } catch (e) {
+    return {
+      text: activityTip(activity),
+      source: 'scripted',
+      error: e?.message || 'AI unavailable',
+    }
+  }
 }
 
 /**
