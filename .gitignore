@@ -39,3 +39,8 @@ ds-bundle/
 .ds-sync/
 ds-bundle/
 .netlify
+
+# Design-system sync tool + generated bundle (regenerable, kept off main)
+.ds-sync/
+ds-bundle/
+.netlify
