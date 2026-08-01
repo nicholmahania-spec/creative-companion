@@ -3077,6 +3077,10 @@ function App() {
       go: () => {
         if (activeView === 'insights') setTimerFocusSource(null)
         setActiveView(target)
+        // The header stays tappable above the open mobile drawer (z-70 vs
+        // 60), so back must close it like every other navigating control —
+        // else the destination loads underneath a still-open drawer.
+        setNavOpen(false)
       },
     }
   })()

@@ -7582,7 +7582,8 @@ select:focus {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 2.25rem;
+  /* 44px floor — same accessibility floor as every other tap target. */
+  min-height: var(--tap-min);
   padding: var(--space-1) var(--space-2);
   border: none;
   border-radius: var(--radius);
@@ -7597,6 +7598,22 @@ select:focus {
 
 .journey-goto-row:hover {
   background: var(--bg-muted);
+}
+
+/* In the mobile drawer the band goes two-up: rows keep the 44px floor, but
+   five full-width rows pushed the fifth journey stage under the drawer's
+   scroll fold — and below-the-fold is hidden here, not "one scroll away". */
+@media (max-width: 767px) {
+  .journey-goto-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--space-2);
+    row-gap: 0;
+  }
+
+  .journey-goto-heading {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Sidebar "Projects" — its own section above the step path, listing

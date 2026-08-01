@@ -14,7 +14,7 @@
  *    "Start project" opens the brief; "Send them the brief" is a quiet
  *    secondary, not a blocking choice.
  */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
 import { createDiscoveryShare, discoveryShareUrl } from '../lib/discoveryShare'
@@ -36,6 +36,14 @@ export default function NewProjectIntake({ setActiveView, flashToast }) {
   const [picked, setPicked] = useState([]) // empty = full brand package
   const [deadline, setDeadline] = useState('')
   const [busy, setBusy] = useState(false)
+
+  /* The header back stays live during sendBrief (the project is already
+     created, so leaving is safe) — but then the await must not yank the
+     user to the brief after they chose to go elsewhere. */
+  const mounted = useRef(true)
+  useEffect(() => () => {
+    mounted.current = false
+  }, [])
 
   const togglePick = (id) =>
     setPicked((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
@@ -76,6 +84,7 @@ export default function NewProjectIntake({ setActiveView, flashToast }) {
     } else {
       flashToast?.(r.error || 'Project created — open the brief to send a link')
     }
+    if (!mounted.current) return
     setBusy(false)
     setActiveView('project')
   }
