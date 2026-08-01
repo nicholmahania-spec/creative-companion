@@ -28,8 +28,6 @@ export default function InsightsView(props) {
     openForceBreakConsent,
     timerFocusSource = null,
     setTimerFocusSource,
-    /** Journey view to restore when leaving Timer (not Sketch-by-default). */
-    pathReturnView = 'project',
   } = props
 
   const fromResearch = timerFocusSource === 'research'
@@ -38,9 +36,6 @@ export default function InsightsView(props) {
     setTimerFocusSource?.(null)
     setActiveView(view)
   }
-
-  const backToPath = () =>
-    go(fromResearch ? 'studio' : pathReturnView || 'project')
 
   const toggleForceBreaks = () => {
     const next = !forceBreaksEnabled
@@ -61,13 +56,8 @@ export default function InsightsView(props) {
 
   return (
     <div className="insights-layout insights-studio">
-      <button
-        type="button"
-        className="back-link"
-        onClick={backToPath}
-      >
-        ← Path
-      </button>
+      {/* No local back link — the app header's back affordance carries the
+          return (and preserves the started-from-Research path). */}
       <div className="flow-top">
         <h1 className="page-title">Timer</h1>
         {nextTask && (

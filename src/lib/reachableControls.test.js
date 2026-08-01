@@ -86,31 +86,32 @@ describe('a crash shows a screen, not a white page', () => {
   })
 })
 
-describe('Settings has exactly one door per screen size', () => {
+describe('Settings has exactly one door, in the sidebar Go to band', () => {
   const app = read('App.jsx')
 
-  it('reaches Settings from the header on desktop', () => {
-    /* The Tools menu clipped its own bottom four rows, Settings among them.
-       The replacement is a header button, not a second dropdown.
+  it('reaches Settings from the Go to band', () => {
+    /* History, so the next rewrite keeps the invariant rather than the
+       markup: Settings' door has moved twice — out of a Tools menu that
+       clipped its own bottom rows, onto a header button (desktop) plus a
+       mobile-only Tools-menu mirror, and now into the sidebar's Go to band,
+       which the ☰ drawer reaches on mobile. ONE door, the same door, at
+       every width — the two-door split existed only because the old header
+       row had no room on phones.
 
-       Matches the label being DERIVED, not spelled. This asserted the literal
-       word "Settings" until the Tools labels were moved onto
-       toolsLabelForView() — at which point a correct change turned this red,
-       which is the exact failure mode the single-source rule exists to
-       prevent, just pointed at a test. Tests have to derive too. */
+       Matches the label being DERIVED, not spelled. This asserted the
+       literal word "Settings" once, and a correct change turned it red —
+       tests have to derive too. */
     expect(app).toMatch(
-      /header-icon-btn[\s\S]{0,200}setActiveView\('settings'\)[\s\S]{0,260}toolsLabelForView\('settings'\)/
+      /journey-goto-row[\s\S]{0,300}setActiveView\('settings'\)[\s\S]{0,260}toolsLabelForView\('settings'\)/
     )
   })
 
-  it('reaches Settings from the Tools menu on mobile', () => {
-    /* `.header-actions .header-icon-btn` is display:none on mobile, so the
-       header button above does not exist there. Without this row a phone would
-       have no route to Settings, the theme switch or Log out at all — the same
-       defect, moved to a smaller screen. */
-    expect(app).toMatch(
-      /more-menu-item-mobile-only[\s\S]{0,200}setActiveView\('settings'\)/
-    )
+  it('has no second door left behind', () => {
+    /* The old desktop header button and the mobile-only Tools-menu mirror
+       must stay gone — two doors to one place is a which-one fork, and a
+       header-icon-btn would be invisible on phones anyway. */
+    expect(app).not.toMatch(/header-icon-btn/)
+    expect(app).not.toMatch(/more-menu-item-mobile-only/)
   })
 
   it('keeps theme and sign-out on the Settings page, not in two places', () => {

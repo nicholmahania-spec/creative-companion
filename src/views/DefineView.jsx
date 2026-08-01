@@ -155,12 +155,51 @@ export default function DefineView(props) {
     return 'Due later on'
   }, [projectDeadline])
 
+  /* Project rename lives here now — the top nav (and its rename input) is
+     gone, and this is the screen where the project IS the subject, so the
+     name is edited where it is read. Same semantics the header input had:
+     Enter or blur commits, an emptied field reverts rather than saving "".
+     The client stays the identity (detective.clientName wins in exports and
+     the portal); this is the working label that tells two projects for one
+     client apart. */
+  const [nameDraft, setNameDraft] = useState(activeProject?.name || '')
+  useEffect(() => {
+    setNameDraft(activeProject?.name || '')
+  }, [activeProject?.id, activeProject?.name])
+  const commitRename = () => {
+    if (!activeProject) return
+    const next = String(nameDraft || '').trim()
+    if (!next) {
+      setNameDraft(activeProject.name || '')
+      return
+    }
+    if (next === activeProject.name) return
+    useAppStore.getState().renameProject(activeProject.id, next)
+    flashMicro?.('Name saved')
+  }
+
   return (
     <div
       className="brand-layout surface-document define-studio define-dashboard view-enter"
       data-nav-dir={navDir}
     >
       <div className="brand-template-top">
+        {activeProject && (
+          <input
+            className="define-project-name"
+            value={nameDraft}
+            onChange={(e) => setNameDraft(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                commitRename()
+                e.currentTarget.blur()
+              }
+            }}
+            aria-label="Project name"
+          />
+        )}
         <div className="define-title-row">
           <h1 className="page-title">
             {labelForStepId('define')}
