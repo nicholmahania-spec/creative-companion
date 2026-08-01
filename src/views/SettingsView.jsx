@@ -62,13 +62,8 @@ export default function SettingsView(props) {
 
   return (
     <div className="settings-view settings-studio">
-      <button
-        type="button"
-        className="back-link settings-back"
-        onClick={() => setActiveView('project')}
-      >
-        ← Path
-      </button>
+      {/* No local back link — the app header's back affordance carries the
+          return (to where you were on the path, not a hardcoded stop). */}
       <div className="flow-top">
         <h1 className="page-title">Settings</h1>
       </div>

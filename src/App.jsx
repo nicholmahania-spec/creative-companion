@@ -84,6 +84,7 @@ import {
   labelForStepId,
   journeyIdForView,
   getNextJourney,
+  getPrevJourney,
   toolsLabelForView,
 } from './lib/journey'
 import {
@@ -497,7 +498,6 @@ function App() {
   const toastTimeoutId = useRef(null)
   const [stepFocusKey, setStepFocusKey] = useState(0)
   const [stepDueOpen, setStepDueOpen] = useState(false)
-  const [projectNameDraft, setProjectNameDraft] = useState('')
   const [unlocked, setUnlocked] = useState(() =>
     CLOUD ? false : isSessionOpen()
   )
@@ -524,7 +524,6 @@ function App() {
     open: false,
     minutes: 0,
   })
-  const moreWrapRef = useRef(null)
   const importFileRef = useRef(null)
   const cloudSyncReady = useRef(false)
   const skipNextCloudPush = useRef(false)
@@ -1189,16 +1188,9 @@ function App() {
     showOnboarding,
   ])
 
-  // Click outside closes More menu
-  useEffect(() => {
-    if (!moreOpen) return undefined
-    const onPointer = (e) => {
-      const wrap = document.querySelector('.more-wrap')
-      if (wrap && !wrap.contains(e.target)) setMoreOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointer)
-    return () => document.removeEventListener('pointerdown', onPointer)
-  }, [moreOpen])
+  /* No outside-click closer for the Tools menu anymore: it opens as a
+     centered overlay whose backdrop click and Esc are the close paths —
+     same as every other dialog here. */
 
   const playBreakChime = () => {
     if (!soundEnabled) return
@@ -1983,26 +1975,18 @@ function App() {
     // dialog state at nav time, which is all it needs.
   }, [activeView])
 
-  // Close More / Account / sidebar project menus on outside click / Escape
+  // Close sidebar project ⋯ menus on outside click / Escape. (The Tools
+  // menu is a centered overlay now — its backdrop and the global Esc chain
+  // close it, like every other dialog.)
   useEffect(() => {
-    if (!moreOpen && !openProjectMenuId) return
+    if (!openProjectMenuId) return
     const onPointer = (e) => {
-      if (
-        moreOpen &&
-        moreWrapRef.current &&
-        !moreWrapRef.current.contains(e.target)
-      ) {
-        setMoreOpen(false)
-      }
-      if (openProjectMenuId && !e.target.closest('.journey-project-row-menu-wrap')) {
+      if (!e.target.closest('.journey-project-row-menu-wrap')) {
         setOpenProjectMenuId(null)
       }
     }
     const onKey = (e) => {
-      if (e.key === 'Escape') {
-        setMoreOpen(false)
-        setOpenProjectMenuId(null)
-      }
+      if (e.key === 'Escape') setOpenProjectMenuId(null)
     }
     document.addEventListener('pointerdown', onPointer)
     document.addEventListener('keydown', onKey)
@@ -2010,7 +1994,7 @@ function App() {
       document.removeEventListener('pointerdown', onPointer)
       document.removeEventListener('keydown', onKey)
     }
-  }, [moreOpen, openProjectMenuId])
+  }, [openProjectMenuId])
 
   // Surface sync errors as action toast (not only footer)
   useEffect(() => {
@@ -2224,22 +2208,9 @@ function App() {
     if (unlocked && !cloudHydrating && !onboarded) setShowOnboarding(true)
   }, [unlocked, onboarded, cloudHydrating])
 
-  // Keep rename field in sync with active project
-  useEffect(() => {
-    setProjectNameDraft(activeProject?.name || '')
-  }, [activeProject?.id, activeProject?.name])
-
-  const commitHeaderProjectRename = () => {
-    if (!activeProject) return
-    const next = String(projectNameDraft || '').trim()
-    if (!next) {
-      setProjectNameDraft(activeProject.name || '')
-      return
-    }
-    if (next === activeProject.name) return
-    renameProject(activeProject.id, next)
-    flashMicro('Name saved')
-  }
+  /* The header rename input and its draft state are gone — rename lives on
+     the project screen's title now (DefineView), where the name is visible
+     in place rather than in chrome. */
 
   const [coverDropActive, setCoverDropActive] = useState(false)
 
@@ -3075,6 +3046,45 @@ function App() {
   const journeyActive = journeyIdForView(activeView)
   const journeyNext = getNextJourney(activeView)
 
+  /* Header back affordance — one stable header whose contents adapt per view
+     (2026 design handoff). Derivation, not a per-view lookup table:
+     - Home is the root: no back at all (a dead ‹ is worse than none).
+     - Journey stops walk back one stop (order from JOURNEY_STEPS — never a
+       hand-written prev chain); the first stop returns Home.
+     - Tools views return to where you were on the path (lastView — only ever
+       a journey view), falling back to Home when no project exists yet, so a
+       fresh account is never sent to a project screen with no project.
+     - Timer keeps its "started from Research" return path and clears the
+       flag on the way out, same as the in-view chip it replaces.
+     Labels always come from labelForView() — journeySingleSource guards. */
+  const headerBack = (() => {
+    if (activeView === 'home') return null
+    const pathFallback = activeProject
+      ? activeProject.lastView || 'project'
+      : 'home'
+    let target
+    if (journeyActive) {
+      target = getPrevJourney(activeView)?.view || 'home'
+    } else if (activeView === 'insights' && timerFocusSource === 'research') {
+      target = 'studio'
+    } else if (activeView === 'clients' || activeView === 'create') {
+      target = 'home'
+    } else {
+      target = pathFallback
+    }
+    return {
+      label: labelForView(target),
+      go: () => {
+        if (activeView === 'insights') setTimerFocusSource(null)
+        setActiveView(target)
+        // The header stays tappable above the open mobile drawer (z-70 vs
+        // 60), so back must close it like every other navigating control —
+        // else the destination loads underneath a still-open drawer.
+        setNavOpen(false)
+      },
+    }
+  })()
+
   return (
     <div
       className={`app app-shell ${theme} view-${activeView}${
@@ -3132,34 +3142,48 @@ function App() {
           >
             <span aria-hidden="true">{navOpen ? '✕' : '☰'}</span>
           </button>
-          <button
-            type="button"
-            className="brand-block brand-block-link"
-            onClick={() => setActiveView('home')}
-            aria-label="Home"
-            title="Home"
-          >
-            <LogoLockup className="logo" reduceMotion={reduceMotion} />
-          </button>
-          {activeProject ? (
-            <input
-              className="header-mobile-title header-name-input"
-              value={projectNameDraft}
-              onChange={(e) => setProjectNameDraft(e.target.value)}
-              onBlur={commitHeaderProjectRename}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  commitHeaderProjectRename()
-                  e.currentTarget.blur()
-                }
-              }}
-              aria-label="Project name"
-            />
+          {/* Back affordance (2026 design chrome). On Home there is no back —
+              the wordmark stands where it would be, as a mark, not a button
+              (a control that navigates to the screen it is on is a dead
+              click). Everywhere else: ‹ plus the destination's name, derived
+              in headerBack above. The old header project-rename inputs are
+              gone from here — rename lives on the project screen's title now
+              (owner's call), where the name is visible in place. */}
+          {headerBack ? (
+            <button
+              type="button"
+              className="header-back"
+              onClick={headerBack.go}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+              {headerBack.label}
+            </button>
           ) : (
-            <span className="header-mobile-title" aria-hidden="true">
-              Creative Companion
-            </span>
+            <div className="brand-block">
+              <LogoLockup className="logo" reduceMotion={reduceMotion} />
+            </div>
+          )}
+          {/* Which project am I in — read-only context, all widths. The old
+              mobile title carried this answer (as an input); with rename
+              moved to the project screen this span keeps the answer ambient
+              on the path, where losing your place mid-interruption is the
+              actual risk. Hidden on Tools pages: the back label already
+              names the return point and the work there isn't project-scoped
+              in the same way. */}
+          {journeyActive && activeProject && (
+            <span className="header-context">{activeProject.name}</span>
           )}
           <div className="header-actions">
             {/* Labelled, not a 5th identical glyph. This is the highest-
@@ -3194,26 +3218,12 @@ function App() {
               hasUnread={clientInbox.hasUnread}
               onOpen={() => setClientInboxOpen(true)}
             />
-            {activeProject && (
-              <input
-                className="header-name-input header-name-input-desktop"
-                value={projectNameDraft}
-                onChange={(e) => setProjectNameDraft(e.target.value)}
-                onBlur={commitHeaderProjectRename}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    commitHeaderProjectRename()
-                    e.currentTarget.blur()
-                  }
-                }}
-                aria-label="Project name"
-              />
-            )}
-            {/* No project <select> here: it duplicated the rename input's text
-                ("Test Project" twice, a which-one-do-I-use fork) while hiding
-                every other project behind a dropdown. The sidebar list is the
-                switcher — always visible, one click, with progress counts. */}
+            {/* No project name input or <select> here anymore. The rename
+                input moved to the project screen's title (visible in place);
+                a <select> would hide every other project behind a dropdown.
+                The sidebar list is the switcher — always visible, one click,
+                with progress counts — and .header-context answers "which
+                project am I in". */}
             {(workRunning || isFocusRunning || (CLOUD && syncState === 'error')) && (
             <div className="header-status-slot">
             {workRunning && (
@@ -3326,280 +3336,12 @@ function App() {
             </div>
             )}
 
-            {/* Labelled, not icon-only. `title` does not exist on touch and
-                does not fire on keyboard focus, so on the surface where most
-                quick re-entry happens the meaning was simply absent — the
-                same "I have no idea what this is" failure as a collapsed
-                panel, turned sideways. The icon still leads, so the row is
-                scanned by shape; the word is what makes a cold return after
-                two weeks survivable. No aria-label: the visible text is the
-                accessible name, which keeps voice control working. */}
-            <button
-              type="button"
-              className="header-icon-btn header-icon-btn--labelled"
-              onClick={() => setActiveView('calendar')}
-            >
-              <HeaderIcon name="calendar" />
-              <span className="header-icon-btn__label">{toolsLabelForView('calendar')}</span>
-            </button>
-
-            <button
-              type="button"
-              className="header-icon-btn header-icon-btn--labelled"
-              onClick={() => setActiveView('clients')}
-            >
-              <HeaderIcon name="people" />
-              <span className="header-icon-btn__label">{toolsLabelForView('clients')}</span>
-            </button>
-
-            {/* Print moved into the Tools menu. It's genuinely low-frequency,
-                and the header was about to gain a wider control — leaving the
-                icon row to grow is how the to-do button ended up colliding
-                with page content in the first place. */}
-
-            {/* A destination, not a dropdown. Settings, the theme switch and
-                Log out are all already on this page, so opening a menu here
-                would only ask "which of the two menus holds this?" before
-                every use and give theme and Log out two homes at once.
-
-                Labelled, because the gear is the textbook case the icon rule
-                calls out: universally decodable, but visited rarely enough
-                that the meaning gets re-derived on each encounter instead of
-                recognised. Frequency is the test, not universality. */}
-            <button
-              type="button"
-              className="header-icon-btn header-icon-btn--labelled"
-              onClick={() => setActiveView('settings')}
-            >
-              <span aria-hidden="true">⚙</span>
-              <span className="header-icon-btn__label">{toolsLabelForView('settings')}</span>
-            </button>
-
-            <div className="more-wrap" ref={moreWrapRef}>
-              <button
-                type="button"
-                className="header-tools-btn"
-                aria-expanded={moreOpen}
-                aria-haspopup="menu"
-                // Set only while the menu exists: it is conditionally
-                // rendered below, so a static aria-controls pointed at a
-                // missing id whenever the menu was closed.
-                aria-controls={moreOpen ? 'tools-menu' : undefined}
-                id="tools-menu-button"
-                onClick={() => setMoreOpen(!moreOpen)}
-              >
-                <HeaderIcon name="tools" />
-                {/* Labelled in text, not icon-only — a wrench is decodable but
-                    this is not a control you use often enough to recognise, so
-                    a bare glyph makes finding things a recall problem instead
-                    of a read.
-
-                    This comment used to say the menu was "now the home for
-                    Settings and Log out". It is not, as of the header split:
-                    those live on the Settings page, which the button beside
-                    this one goes straight to. Noted because the previous
-                    direction of travel was the opposite — a separate account
-                    menu was folded IN here once, and `.account-menu` is still
-                    sitting in shell.css with no JSX using it. */}
-                <span>Tools</span>
-              </button>
-              {moreOpen && (
-                <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-button">
-                  <p className="more-menu-group-label">Go to</p>
-                  {/* Mirrors the two standalone header icon buttons, which
-                      are hidden on mobile (no room in that row once Tools
-                      itself needs to fit) — without a copy here, Calendar
-                      and Clients would go the same way Settings just did:
-                      hidden with nothing standing in for them. */}
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item more-menu-item-mobile-only"
-                    onClick={() => {
-                      setActiveView('calendar')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <HeaderIcon name="calendar" /> Calendar
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item more-menu-item-mobile-only"
-                    onClick={() => {
-                      setActiveView('clients')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <HeaderIcon name="people" /> Clients
-                  </button>
-                  {/* Mobile hides `.header-actions .header-icon-btn` outright
-                      for want of room, and the ⚙ Settings button is one of
-                      those. Without this row, taking the Account group out of
-                      this menu would leave a phone with no route to Settings,
-                      the theme switch or Log out at all — the exact defect
-                      being fixed, moved to a smaller screen. Mobile-only, so
-                      it is never a second door on desktop. */}
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item more-menu-item-mobile-only"
-                    onClick={() => {
-                      setActiveView('settings')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">⚙</span> Settings
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('book')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <HeaderIcon name="print" /> {toolsLabelForView('book')}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('insights')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <HeaderIcon name="timer" /> Timer
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('spark')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">✦</span> Ideate
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setActiveView('review')
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">◎</span> Review
-                  </button>
-                  {/* Ordered by how often each is reached, not by category
-                      tidiness — an unsorted list is read in full every time,
-                      which is a cost paid on every open. Destructive last,
-                      which it already was. */}
-                  <p className="more-menu-group-label">This project</p>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      const r = printCurrentPage()
-                      if (!r.ok) flashToast(r.error || 'Print failed')
-                    }}
-                  >
-                    <HeaderIcon name="print" /> Print / Save as PDF
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setOverviewSharePanelOpen(true)
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">↗</span> Share project overview
-                  </button>
-                  {/* The to-do list now has one door: the labelled pill in the
-                      header. Two live triggers means two things to check and
-                      an ambiguous "are these the same list?". */}
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      openExportPanel()
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">⬇</span> Export
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setHoursPanelOpen(true)
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">$</span> Hours &amp; invoice
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      setDiscoveryPanelOpen(true)
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">?</span> Discovery brief
-                  </button>
-                  {/* Archive/Delete moved here from the sidebar's hover-only
-                      "⋯", which was invisible on touch and at a glance —
-                      destructive actions need one learnable home. */}
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item"
-                    onClick={() => {
-                      handleArchiveProject()
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">□</span> Archive project
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="more-menu-item is-danger"
-                    onClick={() => {
-                      handleDeleteProject()
-                      setMoreOpen(false)
-                    }}
-                  >
-                    <span aria-hidden="true">×</span> Delete project
-                  </button>
-                  {/* The Account group used to end this menu — Settings,
-                      Keyboard shortcuts, theme, Log out. It was 589px of
-                      content in a 420px box, so all four sat below the visible
-                      bottom of a menu that gives no sign it scrolls: hidden,
-                      not "one scroll away".
-
-                      They are gone rather than moved into a second dropdown.
-                      Three of the four were already on the Settings page
-                      (theme and Sign out live there, and Shortcuts is added
-                      there now), so a second menu would have meant two homes
-                      for the same controls plus a "which menu is it in?" sort
-                      on every use. The ⚙ Settings button in the header goes
-                      straight to that page instead. */}
-                </div>
-              )}
-            </div>
+            {/* Calendar / Clients / Settings / Tools left this row for the
+                sidebar's "Go to" band (2026 design chrome — the top nav is
+                gone). They are low-frequency destinations; what stays here
+                is the always-needed chrome — To-do pill, client inbox, the
+                status chips and the Saved dot — because a count or an error
+                only does its job while it is visible without an action. */}
 
             {/* Absence of an error is not the same reassurance as "saved" —
                 you can't tell "no error" from "nothing is happening". Not a
@@ -3709,6 +3451,103 @@ function App() {
            this comment describes was still live. */
         inert={isMobileViewport && !navOpen ? true : undefined}
       >
+          {/* "Go to" band — the global destinations that used to live in the
+              top nav (removed, 2026 design chrome). Fixed short band ABOVE
+              the variable-length project list, because anything below a list
+              that grows is below-the-fold, and for this user below-the-fold
+              is the same as gone. Low-frequency destinations only: the
+              always-needed chrome (To-do, inbox, status) stays on the
+              header, where a count is visible without opening anything.
+
+              Labelled, not icon-only. `title` does not exist on touch and
+              does not fire on keyboard focus; these are visited rarely
+              enough that a bare glyph is re-derived from scratch on each
+              encounter instead of recognised. The icon still leads, so the
+              rows scan by shape; the word is what makes a cold return after
+              two weeks survivable. No aria-label: the visible text is the
+              accessible name, which keeps voice control working.
+
+              Settings is a destination, not a dropdown — theme and Log out
+              live on that page, so a menu here would just ask "which of the
+              two menus holds this?" before every use. */}
+          <div className="journey-goto-section" aria-label="Go to">
+            <span className="journey-goto-heading">Go to</span>
+            <button
+              type="button"
+              className="journey-goto-row"
+              onClick={() => {
+                setActiveView('home')
+                setNavOpen(false)
+              }}
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 11.5 12 4l8 7.5" />
+                <path d="M6 10v9h12v-9" />
+              </svg>
+              {toolsLabelForView('home')}
+            </button>
+            <button
+              type="button"
+              className="journey-goto-row"
+              onClick={() => {
+                setActiveView('calendar')
+                setNavOpen(false)
+              }}
+            >
+              <HeaderIcon name="calendar" />
+              {toolsLabelForView('calendar')}
+            </button>
+            <button
+              type="button"
+              className="journey-goto-row"
+              onClick={() => {
+                setActiveView('clients')
+                setNavOpen(false)
+              }}
+            >
+              <HeaderIcon name="people" />
+              {toolsLabelForView('clients')}
+            </button>
+            <button
+              type="button"
+              className="journey-goto-row"
+              onClick={() => {
+                setActiveView('settings')
+                setNavOpen(false)
+              }}
+            >
+              <span aria-hidden="true">⚙</span>
+              {toolsLabelForView('settings')}
+            </button>
+            <button
+              type="button"
+              className="journey-goto-row"
+              aria-expanded={moreOpen}
+              aria-haspopup="menu"
+              // Set only while the menu exists (it renders conditionally) —
+              // a static aria-controls would point at a missing id when
+              // closed.
+              aria-controls={moreOpen ? 'tools-menu' : undefined}
+              id="tools-menu-button"
+              onClick={() => {
+                setMoreOpen(true)
+                setNavOpen(false)
+              }}
+            >
+              <HeaderIcon name="tools" />
+              Tools
+            </button>
+          </div>
           <div className="journey-projects-section" aria-label="Your projects">
             <div className="journey-projects-head">
               <span className="journey-projects-heading">Projects</span>
@@ -4292,7 +4131,6 @@ function App() {
               openForceBreakConsent={() => setForceBreakConsentOpen(true)}
               timerFocusSource={timerFocusSource}
               setTimerFocusSource={setTimerFocusSource}
-              pathReturnView={activeProject?.lastView || 'project'}
             />
           </Suspense>
 
@@ -4302,7 +4140,6 @@ function App() {
           <Suspense fallback={<PathViewSkeleton label="Loading calendar…" />}>
             <CalendarView
               setActiveView={setActiveView}
-              pathReturnView={activeProject?.lastView || 'project'}
               calCursor={calCursor}
               setCalCursor={setCalCursor}
               buildMonthGrid={buildMonthGrid}
@@ -4339,7 +4176,6 @@ function App() {
             <NewProjectIntake
               setActiveView={setActiveView}
               flashToast={flashToast}
-              onCancel={() => setActiveView('home')}
             />
           </Suspense>
         )}
@@ -4748,6 +4584,176 @@ function App() {
         onClose={() => setBeforeAfterOpen(false)}
         project={activeProject}
       />
+
+      {/* Tools — a centered overlay, not a header dropdown (the header nav
+          is gone; the trigger lives in the sidebar's Go to band). Centered
+          per the standing rule: dialogs render front and center, never
+          anchored/bottom/top. Backdrop click and the global Esc chain
+          close it. Same items, same order as the old menu:
+          ordered by how often each is reached, not by category tidiness —
+          an unsorted list is read in full every time. Destructive last.
+          The three mobile-only Go-to mirrors (Calendar/Clients/Settings)
+          are retired: those rows live in the sidebar band at every width
+          now, and two doors to one place is a which-one fork.
+
+          The Account group (Settings/theme/Log out) stays gone — those
+          live on the Settings page, one home each. The to-do list keeps
+          its one door: the labelled pill in the header. */}
+      {moreOpen && (
+        <div
+          className="export-overlay tools-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tools-menu-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setMoreOpen(false)
+          }}
+        >
+          <div className="export-panel tools-panel">
+            <div className="export-panel-header">
+              <h3 id="tools-menu-title" style={{ margin: 0 }}>
+                Tools
+              </h3>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                aria-label="Close tools"
+                onClick={() => setMoreOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-title">
+              <p className="more-menu-group-label">Go to</p>
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item"
+                onClick={() => {
+                  setActiveView('book')
+                  setMoreOpen(false)
+                }}
+              >
+                <HeaderIcon name="print" /> {toolsLabelForView('book')}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item"
+                onClick={() => {
+                  setActiveView('insights')
+                  setMoreOpen(false)
+                }}
+              >
+                <HeaderIcon name="timer" /> Timer
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item"
+                onClick={() => {
+                  setActiveView('spark')
+                  setMoreOpen(false)
+                }}
+              >
+                <span aria-hidden="true">✦</span> Ideate
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item"
+                onClick={() => {
+                  setActiveView('review')
+                  setMoreOpen(false)
+                }}
+              >
+                <span aria-hidden="true">◎</span> Review
+              </button>
+              <p className="more-menu-group-label">This project</p>
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item"
+                onClick={() => {
+                  setMoreOpen(false)
+                  const r = printCurrentPage()
+                  if (!r.ok) flashToast(r.error || 'Print failed')
+                }}
+              >
+                <HeaderIcon name="print" /> Print / Save as PDF
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item"
+                onClick={() => {
+                  setOverviewSharePanelOpen(true)
+                  setMoreOpen(false)
+                }}
+              >
+                <span aria-hidden="true">↗</span> Share project overview
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item"
+                onClick={() => {
+                  openExportPanel()
+                  setMoreOpen(false)
+                }}
+              >
+                <span aria-hidden="true">⬇</span> Export
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item"
+                onClick={() => {
+                  setHoursPanelOpen(true)
+                  setMoreOpen(false)
+                }}
+              >
+                <span aria-hidden="true">$</span> Hours &amp; invoice
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item"
+                onClick={() => {
+                  setDiscoveryPanelOpen(true)
+                  setMoreOpen(false)
+                }}
+              >
+                <span aria-hidden="true">?</span> Discovery brief
+              </button>
+              {/* Archive/Delete: destructive actions keep one learnable
+                  home, worded, last. */}
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item"
+                onClick={() => {
+                  handleArchiveProject()
+                  setMoreOpen(false)
+                }}
+              >
+                <span aria-hidden="true">□</span> Archive project
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="more-menu-item is-danger"
+                onClick={() => {
+                  handleDeleteProject()
+                  setMoreOpen(false)
+                }}
+              >
+                <span aria-hidden="true">×</span> Delete project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {shortcutsOpen && (
         <div

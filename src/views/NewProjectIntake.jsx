@@ -14,7 +14,7 @@
  *    "Start project" opens the brief; "Send them the brief" is a quiet
  *    secondary, not a blocking choice.
  */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
 import { createDiscoveryShare, discoveryShareUrl } from '../lib/discoveryShare'
@@ -30,12 +30,20 @@ const DELIVERABLE_GROUPS = [
   { key: 'extra', legend: 'Quoted separately', items: DELIVERABLE_OPTIONS.filter((o) => o.extra) },
 ]
 
-export default function NewProjectIntake({ setActiveView, onCancel, flashToast }) {
+export default function NewProjectIntake({ setActiveView, flashToast }) {
   const [clientName, setClientName] = useState('')
   const [engagement, setEngagement] = useState('new')
   const [picked, setPicked] = useState([]) // empty = full brand package
   const [deadline, setDeadline] = useState('')
   const [busy, setBusy] = useState(false)
+
+  /* The header back stays live during sendBrief (the project is already
+     created, so leaving is safe) — but then the await must not yank the
+     user to the brief after they chose to go elsewhere. */
+  const mounted = useRef(true)
+  useEffect(() => () => {
+    mounted.current = false
+  }, [])
 
   const togglePick = (id) =>
     setPicked((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
@@ -76,25 +84,16 @@ export default function NewProjectIntake({ setActiveView, onCancel, flashToast }
     } else {
       flashToast?.(r.error || 'Project created — open the brief to send a link')
     }
+    if (!mounted.current) return
     setBusy(false)
     setActiveView('project')
   }
 
   return (
     <div className="create-view view-enter">
-      <header className="create-header">
-        <button
-          type="button"
-          className="create-back"
-          onClick={onCancel}
-          disabled={busy}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          Back
-        </button>
-      </header>
+      {/* No local header — the app header's back affordance carries the
+          cancel/return (the project is created synchronously on Start/Send,
+          so backing out mid-busy leaves a real project, never a torn one). */}
       <div className="create-body">
         <h1 className="create-title">New project</h1>
         <p className="create-lede">

@@ -122,6 +122,18 @@ export function getNextJourney(view) {
 }
 
 /**
+ * The stop before this view on the path, or null on the first stop and on
+ * Tools views. Derived from array order, not a `prevView` field — a second
+ * hand-written chain would be one more copy to forget when a stop moves.
+ * Used by the header's back affordance.
+ */
+export function getPrevJourney(view) {
+  const idx = JOURNEY_STEPS.findIndex((s) => s.view === view)
+  if (idx <= 0) return null
+  return JOURNEY_STEPS[idx - 1]
+}
+
+/**
  * How many stops the path has.
  *
  * Exported so nothing has to restate it. The completion gates and the "N/M"

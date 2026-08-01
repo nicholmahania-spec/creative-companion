@@ -872,6 +872,36 @@
   color: var(--text-muted);
 }
 
+/* Project rename, in place — the name is edited where it is read (the top
+   nav and its rename input are gone). Reads as text until focused: no box
+   until the moment it is being edited. */
+.define-project-name {
+  display: block;
+  /* No max-width: in the ordered flex band a capped basis leaves room and
+     the title climbs up beside it — full row keeps every band row intact. */
+  width: 100%;
+  margin: 0 0 var(--space-1);
+  padding: var(--space-1) 0;
+  border: none;
+  border-bottom: 1px solid transparent;
+  border-radius: var(--radius-none);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text-secondary);
+  outline: none;
+}
+
+.define-project-name:hover {
+  border-bottom-color: var(--border-subtle);
+}
+
+.define-project-name:focus {
+  border-bottom-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
 .define-title-row {
   display: flex;
   align-items: flex-start;
@@ -967,6 +997,14 @@
 @media (min-width: 641px) {
   .define-dashboard .brand-template-top {
     justify-content: flex-start;
+  }
+
+  /* The rename input takes its own full first row — the band's children are
+     laid out by `order`, and without these two properties the input (order
+     0, 24rem) shares a row with the title and scrambles the whole band. */
+  .define-dashboard .define-project-name {
+    flex: 1 1 100%;
+    order: -1;
   }
 
   .define-dashboard .define-title-row {

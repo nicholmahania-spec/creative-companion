@@ -20,8 +20,6 @@ export default function CalendarView(props) {
     activeProject,
     upcomingDeadlines: upcomingProp,
     onOpenTaskPanel,
-    /** Journey view to restore when leaving Calendar. */
-    pathReturnView = 'project',
   } = props
 
   const [pendingDeadline, setPendingDeadline] = useState(null)
@@ -41,14 +39,8 @@ export default function CalendarView(props) {
 
   return (
     <div className="calendar-view calendar-studio">
-      <button
-        type="button"
-        className="back-link"
-        onClick={() => setActiveView(pathReturnView || 'project')}
-      >
-        ← Path
-      </button>
-
+      {/* No local back link — the app header's back affordance carries the
+          return. */}
       <div className="flow-top">
         <h1 className="page-title">Deadlines</h1>
       </div>
