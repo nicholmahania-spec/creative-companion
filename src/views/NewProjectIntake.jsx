@@ -82,6 +82,19 @@ export default function NewProjectIntake({ setActiveView, onCancel, flashToast }
 
   return (
     <div className="create-view view-enter">
+      <header className="create-header">
+        <button
+          type="button"
+          className="create-back"
+          onClick={onCancel}
+          disabled={busy}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Back
+        </button>
+      </header>
       <div className="create-body">
         <h1 className="create-title">New project</h1>
         <p className="create-lede">
@@ -189,16 +202,6 @@ export default function NewProjectIntake({ setActiveView, onCancel, flashToast }
           >
             {busy ? 'Creating…' : 'Send them the brief to fill in'}
           </button>
-          {onCancel && (
-            <button
-              type="button"
-              className="btn btn-ghost create-cancel"
-              onClick={onCancel}
-              disabled={busy}
-            >
-              Cancel
-            </button>
-          )}
         </div>
       </div>
     </div>

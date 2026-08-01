@@ -1,6 +1,33 @@
 /* New-project intake — 2026 design handoff. One screen, one Start. Type on the
    --fs ramp, spacing on --space-*, one radius. */
 
+/* Per-screen header from the design handoff — a thin back/cancel bar above
+   the intake. Sits under the app's global top nav (kept), not replacing it. */
+.create-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 52px;
+  padding: 0 var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+}
+.create-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.create-back:hover {
+  color: var(--text-primary);
+}
+
 .create-body {
   max-width: 45rem;
   width: 100%;
