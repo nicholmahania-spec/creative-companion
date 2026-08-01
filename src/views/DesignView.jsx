@@ -2019,88 +2019,86 @@ export default function DesignView({
           {showTemplateModal && (
             <div className="dv-modal-overlay">
               <div className="dv-modal-panel is-narrow">
-                <div className="flex flex-col h-full">
-                  <div className="dv-modal-head">
-                    <h2 className="text-xl font-semibold">Template Library</h2>
-                    <button
-                      onClick={() => setShowTemplateModal(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-6">
-                    {loadingTemplates ? (
-                      <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                        <p>Loading templates...</p>
-                      </div>
-                    ) : templates.length === 0 ? (
-                      <div className="text-center py-8 text-color-muted">
-                        <p>No templates saved yet.</p>
-                        <p className="mt-2">Create templates from your designs to reuse them later.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {templates.map((template) => (
-                          <div
-                            key={template.id}
-                            className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                            onClick={() => {
-                              setSelectedTemplate(template)
-                            }}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <h3 className="font-medium">{template.name}</h3>
-                                {template.description && (
-                                  <p className="text-sm text-color-muted">
-                                    {template.description}
-                                  </p>
-                                )}
-                                <p className="text-xs text-color-muted">
-                                  Created: {new Date(template.createdAt).toLocaleString()}
+                <div className="dv-modal-head">
+                  <h2>Template Library</h2>
+                  <button
+                    onClick={() => setShowTemplateModal(false)}
+                    className="btn btn-sm btn-ghost"
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="dv-modal-scroll">
+                  {loadingTemplates ? (
+                    <div className="dv-tpl-empty">
+                      <p>Loading templates…</p>
+                    </div>
+                  ) : templates.length === 0 ? (
+                    <div className="dv-tpl-empty">
+                      <p>No templates saved yet.</p>
+                      <p>Create templates from your designs to reuse them later.</p>
+                    </div>
+                  ) : (
+                    <div className="dv-tpl-list">
+                      {templates.map((template) => (
+                        <div
+                          key={template.id}
+                          className="dv-tpl-card"
+                          onClick={() => {
+                            setSelectedTemplate(template)
+                          }}
+                        >
+                          <div className="dv-tpl-row">
+                            <div>
+                              <h3 className="dv-tpl-name">{template.name}</h3>
+                              {template.description && (
+                                <p className="dv-tpl-desc">
+                                  {template.description}
                                 </p>
-                              </div>
-                              <div className="text-right space-x-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    applyTemplate(template.id)
-                                    setShowTemplateModal(false)
-                                  }}
-                                  className="btn btn-sm btn-primary"
-                                >
-                                  Apply
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setShowSaveAsTemplateModal(true)
-                                    // Pre-fill the form with template data for updating
-                                    setTemplateName(template.name)
-                                    setTemplateDescription(template.description || '')
-                                  }}
-                                  className="btn btn-sm btn-ghost"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    deleteTemplate(template.id)
-                                  }}
-                                  className="btn btn-sm btn-ghost text-red-500 hover:text-red-700"
-                                >
-                                  Delete
-                                </button>
-                              </div>
+                              )}
+                              <p className="dv-tpl-meta">
+                                Created: {new Date(template.createdAt).toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="dv-tpl-actions">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  applyTemplate(template.id)
+                                  setShowTemplateModal(false)
+                                }}
+                                className="btn btn-sm btn-primary"
+                              >
+                                Apply
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setShowSaveAsTemplateModal(true)
+                                  // Pre-fill the form with template data for updating
+                                  setTemplateName(template.name)
+                                  setTemplateDescription(template.description || '')
+                                }}
+                                className="btn btn-sm btn-ghost"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  deleteTemplate(template.id)
+                                }}
+                                className="btn btn-sm btn-ghost"
+                              >
+                                Delete
+                              </button>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

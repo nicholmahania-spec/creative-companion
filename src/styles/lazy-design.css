@@ -1340,6 +1340,75 @@
   padding: var(--space-4);
 }
 
+/* Template Library modal — real design-system styling. Replaces phantom
+   Tailwind utility classes (text-color-muted, text-sm, space-x-2, rounded-lg,
+   …) that were never defined in this non-Tailwind repo, so the list rendered
+   with browser defaults. The same phantom classes still sit on the Version
+   History and Save-as-Template modals nearby — separate follow-up. */
+.dv-modal-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.dv-tpl-empty {
+  text-align: center;
+  padding: var(--space-6) 0;
+  color: var(--text-muted);
+}
+
+.dv-tpl-empty p + p {
+  margin-top: var(--space-2);
+}
+
+.dv-tpl-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dv-tpl-card {
+  padding: var(--space-4);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.dv-tpl-card:hover {
+  background: var(--bg-subtle, var(--bg-card));
+}
+
+.dv-tpl-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.dv-tpl-name {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+}
+
+.dv-tpl-desc {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.dv-tpl-meta {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.dv-tpl-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
 /* Two fields sharing one .field-block (title + why) need a gap between
    the first input and the second label — .field-label only carries a
    bottom margin, nothing above it. */
