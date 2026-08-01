@@ -11,6 +11,37 @@
 Everything below this section is a record of what was done, kept for the
 reasoning. It is not a list of what is left. These are:
 
+- **The Helper answers, but has nothing to say.** Its prompt gives it a
+  voice, the journey, and a list of prohibitions — almost no substance about
+  brand practice. Raising the word ceiling (2026-08-01) lets a thin answer be
+  longer; it does not make it deeper. This is the real remainder of the
+  owner's verdict, "it has no skills". The books already cited in CLAUDE.md
+  (Slade-Brooking, Bokhua, Kholmatova, Rutter) are the obvious source.
+- **Widening what the Helper may do.** It can propose `add_task` and
+  `split_task`, and nothing else, on purpose — the brief and anything
+  destructive are excluded because they overwrite a client record with no
+  undo. `helperActions.test.js` fails if that list grows, so widening it is a
+  deliberate act. Worth revisiting only with a permission model, not by
+  adding an action.
+- **Three live copies of this app, and only one works.**
+  - Vercel `creative-companion-ten.vercel.app` — production. The Helper works
+    here and nowhere else.
+  - GitHub Pages `nicholmahania-spec.github.io/creative-companion/` — builds
+    from main, looks identical, and structurally CANNOT run the Helper: it is
+    static hosting with no serverless functions. Cost most of an evening on
+    2026-08-01, twice, because nothing on screen says which copy you are on.
+  - Netlify `creativecompanion.netlify.app` — last deploy errored 2026-07-19,
+    404s. CLAUDE.md still calls it "the primary deploy target".
+  Pick one, retire the others, or at minimum make each say which it is.
+- **The Pages Helper blames your connection.** It says "I can't answer
+  questions without a connection" when the truth is that copy has no backend.
+  Misleading in the one place the app is supposed to be honest.
+- **Never `vercel deploy --prod` from the CLI on this project.** It uploads
+  the local working directory and overrides the Git build — its metadata even
+  records `githubCommitMessage: "initial commit"`, `gitDirty: 1`. On
+  2026-08-01 this silently shipped a pre-merge bundle to production three
+  times, removing the Helper's input each time and making a fixed bug look
+  unfixed. Let GitHub drive deploys; merging to main is the deploy.
 - **Focus Mode entry points** — missing on Ideate / Sketch / Design / Review /
   Deliver. Only Research's was removed.
 - **Ideate page** — untested whether SparkView actually pushes toward many
