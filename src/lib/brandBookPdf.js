@@ -1440,7 +1440,7 @@ export async function downloadBrandPackVectorPdf(
       const cont = () => contentPage(kick, a.title, 'Continued.')
 
       if (a.id === 'brief') {
-        contentPage(kick, a.title, 'The answers that shaped this system.')
+        contentPage(kick, a.title, 'The record of what was agreed.')
         briefStartPage = pageIndex + 1
         chapters.forEach((ch) => {
           if (y + px(60) > floorY()) cont()

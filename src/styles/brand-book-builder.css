@@ -142,6 +142,15 @@
   margin: 0;
 }
 
+/* The one place a real page number appears — the true count of the file just
+   made, not the preview-card count that used to sit in the panel header. */
+.bbb-export-note {
+  font-size: 0.75rem;
+  color: #a7a49a;
+  line-height: 1.5;
+  margin: 0;
+}
+
 .bbb-btn {
   width: 100%;
   padding: var(--space-sm, 9px);
@@ -343,30 +352,10 @@
 
 /* ------------------------------------------------------------ layout */
 
-/* ----------------------------------------------------------- printing
-   `window.print()` prints the whole document, and the print rules generated
-   by the component only know about this file's own panel — the app's header,
-   nav, status pill, running-todo panel and any open overlay would all print
-   alongside the book. This scopes the page to the canvas, mirroring the
-   `cc-printing-pack` approach already used for the direction sheet
-   (shell.css) rather than adding another override layer. */
-
-@media print {
-  body.cc-printing-book * {
-    visibility: hidden !important;
-  }
-
-  body.cc-printing-book .bbb-canvas,
-  body.cc-printing-book .bbb-canvas * {
-    visibility: visible !important;
-  }
-
-  body.cc-printing-book .bbb-canvas {
-    position: absolute;
-    inset: 0;
-    margin: 0;
-  }
-}
+/* The book no longer prints via window.print() — the "Export to PDF" button
+   generates the vector book directly (see BrandBookBuilderView.handleExport),
+   so the old `body.cc-printing-book` print-scoping rules were dead and are
+   gone. The component's own @media print block still tidies a manual Ctrl+P. */
 
 @media (max-width: 860px) {
   .bbb-root { flex-direction: column; min-height: auto; }

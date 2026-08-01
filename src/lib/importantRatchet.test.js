@@ -52,7 +52,7 @@ const BUDGET = {
   // that has to beat whatever animation it is switching off. These are the
   // legitimate use and are not a reduction target.
   'src/styles/lazy-motion.css': 6,
-  'src/styles/brand-book-builder.css': 2,
+  'src/styles/brand-book-builder.css': 0,
   'src/styles/lazy-review.css': 1,
 }
 

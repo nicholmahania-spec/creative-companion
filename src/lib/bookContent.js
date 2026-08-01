@@ -170,7 +170,7 @@ export const APPENDIX_PAGES = [
   {
     id: 'brief',
     label: 'Agreed brief',
-    sub: 'The answers that shaped this system.',
+    sub: 'The record of what was agreed.',
     needs: 'answers in the brief',
   },
   {
