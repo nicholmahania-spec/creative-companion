@@ -489,26 +489,48 @@ export async function downloadBrandPackVectorPdf(
     }
 
     /**
-     * A full-bleed section divider.
-     * Ink and gold alternate down the book so two numbered sections never sit
-     * on the same field back to back.
+     * Open a numbered section with a full-bleed header band, then its content —
+     * on ONE sheet.
+     *
+     * This replaced a full-bleed divider PAGE. The divider spread was mostly
+     * empty and every section spent one on it, so a short book carried five
+     * near-blank pages before any content — and book length is the first thing
+     * a client feels. The band keeps what the divider was actually for: the
+     * ink/gold alternation (so two sections never share a field back to back)
+     * and the "NN / Section" landmark that tells a reader who put the document
+     * down last week where they are. What it drops is the empty page under it.
+     * The band carries the section identity, so the content title sits below
+     * it with no separate kicker.
      */
-    const dividerPage = (num, titleLines, dark) => {
-      const bg = dark ? INK : GOLD
-      const fg = dark ? ON_INK : ON_GOLD
-      const accent = dark ? GOLD : INK
-      startSheet(bg, titleLines.join(' '))
-      sheetFoots.push({ page: pageIndex, dark })
-      const H1 = px(52)
-      const blockH = titleLines.length * H1 + px(15) + px(14)
-      let yy = pageH - bleed - px(64) - blockH + px(15)
-      setFace('display', px(15), accent)
-      pdf.text(pdfSafeText(`${num} /`), margin, yy)
-      yy += px(14) + H1 * 0.78
-      setFace('display', H1, fg)
-      titleLines.forEach((l, i) => {
-        pdf.text(pdfSafeText(l), margin, yy + i * H1)
-      })
+    const sectionOpen = (num, titleLines, dark, title, sub = '') => {
+      startSheet(CREAM, title)
+      sheetFoots.push({ page: pageIndex, dark: false })
+      const bandBg = dark ? INK : GOLD
+      const bandFg = dark ? ON_INK : ON_GOLD
+      const bandAccent = dark ? GOLD : INK
+      const bandH = px(104)
+      // Full-bleed to the top edge, including the bleed area.
+      box(0, 0, pageW, bandH + bleed, bandBg)
+      let by = bleed + px(34)
+      setFace('display', px(14), bandAccent)
+      pdf.text(pdfSafeText(`${num} /`), margin, by)
+      const BT = px(30)
+      by += px(16) + BT * 0.78
+      setFace('display', BT, bandFg)
+      pdf.text(pdfSafeText(titleLines.join(' ')), margin, by)
+      // Content starts below the band.
+      y = bandH + bleed + px(30)
+      const H1 = px(30)
+      setFace('heading', H1, ON_CREAM)
+      pdf.text(pdfSafeText(title), margin, y + H1 * 0.78)
+      y += H1 * 0.78 + px(6)
+      box(margin, y + px(8), px(56), px(3), GOLD)
+      y += px(8) + px(3)
+      if (sub) {
+        y += px(20)
+        y += para(sub, margin, y, contentW * 0.72, { size: px(15), rgb: MUTE_CREAM })
+      }
+      y += px(24)
     }
 
     /**
@@ -1031,8 +1053,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     const drawLogoSection = (s) => {
-      dividerPage(s.num, s.divider, true)
-      contentPage(`${s.num} — ${s.name}`, s.page)
+      sectionOpen(s.num, s.divider, true, s.page)
 
       /* The direction the logo was drawn to, in the designer's own words.
          It sits above the lockups because it is the reason they look the way
@@ -1127,8 +1148,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     const drawColorSection = (s) => {
-      dividerPage(s.num, s.divider, false)
-      contentPage(`${s.num} — ${s.name}`, s.page)
+      sectionOpen(s.num, s.divider, false, s.page)
 
       // Swatch row — the palette, named and specified
       const cols = Math.min(4, Math.max(1, colors.length))
@@ -1204,8 +1224,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     const drawTypeSection = (s) => {
-      dividerPage(s.num, s.divider, true)
-      contentPage(`${s.num} — ${s.name}`, s.page)
+      sectionOpen(s.num, s.divider, true, s.page)
 
       const headingName = clean(pack?.typeHeading) || 'Heading face'
       const bodyName = clean(pack?.typeBody) || 'Body face'
@@ -1235,6 +1254,20 @@ export async function downloadBrandPackVectorPdf(
       )
       y += px(26)
 
+      /* The designer's reason for this pairing, when they gave one. Typed on
+         the Identity page and, before this, printed nowhere — a write-only
+         field. Omitted entirely when blank (same rule as the imagery
+         rationale) so an unused note never leaves an empty heading behind. */
+      if (has(pack?.typeWhy)) {
+        kicker('Why these faces', margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+        y += KICKER_PT * 0.82 + px(10)
+        y += para(pack.typeWhy, margin, y, contentW * 0.72, {
+          size: px(15),
+          lh: 1.5,
+        })
+        y += px(22)
+      }
+
       const labelW = px(110)
       TYPE_SCALE.forEach((row) => {
         const rowH = px(46)
@@ -1256,8 +1289,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     const drawImagerySection = (s) => {
-      dividerPage(s.num, s.divider, false)
-      contentPage(`${s.num} — ${s.name}`, s.page)
+      sectionOpen(s.num, s.divider, false, s.page)
       const cont = () => contentPage(`${s.num} — ${s.name}`, s.page, 'Continued.')
 
       ;[
@@ -1322,9 +1354,8 @@ export async function downloadBrandPackVectorPdf(
 
     /** What each mock is called and what field it sits on. */
     const drawAppsSection = (s) => {
-      dividerPage(s.num, s.divider, true)
       const blurb = clean(touchpointsBlurb(surfaces, d.deliverablesPicked))
-      contentPage(`${s.num} — ${s.name}`, s.page, blurb)
+      sectionOpen(s.num, s.divider, true, s.page, blurb)
 
       const gap = px(2)
       const cellW = (contentW - gap) / 2
@@ -1426,7 +1457,7 @@ export async function downloadBrandPackVectorPdf(
       const cont = () => contentPage(kick, a.title, 'Continued.')
 
       if (a.id === 'brief') {
-        contentPage(kick, a.title, 'The answers that shaped this system.')
+        contentPage(kick, a.title, 'The record of what was agreed.')
         briefStartPage = pageIndex + 1
         chapters.forEach((ch) => {
           if (y + px(60) > floorY()) cont()

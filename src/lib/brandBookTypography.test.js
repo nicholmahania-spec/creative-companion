@@ -110,3 +110,47 @@ describe('the brand book is actually set in its own typefaces', () => {
     expect(text).not.toMatch(/\b[A-Z](?: [A-Z]){4,}\b/)
   }, 60000)
 })
+
+/**
+ * The pairing rationale (typeWhy) must reach the type page it explains.
+ *
+ * It was a write-only field for its whole life — an editor on the Identity
+ * page whose value reached no artifact of any kind, the canonical "UI in front
+ * of nothing" the build rule bans. Resolved 2026-08-01 by printing it. This is
+ * the observed proof, not the source-grep: the book is generated and the
+ * reason is read back out of its text layer, and — the half that actually
+ * mattered — a blank one leaves nothing behind, so an unused note never prints
+ * an empty "Why these faces" heading into a client's deliverable.
+ */
+async function bookText(project) {
+  const pack = buildBrandPackSnapshot({ project, tasks: [], moodItems: [] })
+  const res = await downloadBrandPackVectorPdf(pack, null, {
+    returnBlobOnly: true,
+  })
+  expect(res.ok).toBe(true)
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  const data = new Uint8Array(await res.blob.arrayBuffer())
+  const doc = await pdfjs.getDocument({ data }).promise
+  let text = ''
+  for (let i = 1; i <= doc.numPages; i += 1) {
+    const page = await doc.getPage(i)
+    text += `${(await page.getTextContent()).items.map((it) => it.str).join(' ')}\n`
+  }
+  return text.replace(/\s+/g, ' ')
+}
+
+describe('the type-pairing rationale reaches the book', () => {
+  const RATIONALE =
+    'Grotesque headline for authority; humanist body to keep it warm.'
+
+  it('prints the reason on the type page when one was given', async () => {
+    const text = await bookText({ ...PROJECT, typeWhy: RATIONALE })
+    expect(text).toMatch(/Why these faces/i)
+    expect(text).toContain(RATIONALE)
+  }, 60000)
+
+  it('omits it entirely when blank — no empty heading in the deliverable', async () => {
+    const text = await bookText({ ...PROJECT, typeWhy: '' })
+    expect(text).not.toMatch(/Why these faces/i)
+  }, 60000)
+})

@@ -3,7 +3,6 @@ import {
   BADGES,
   DAILY_XP_GOAL,
   dailyGoalProgress,
-  gameSummaryLine,
   questStatus,
   refreshGameDay,
   xpProgress,
@@ -55,6 +54,21 @@ export default function GameHUD({ compact = false }) {
   )
   const questsDone = quests.filter((q) => q.done).length
 
+  /* The whole meaning, in words, on the button's real accessible name — not in
+     `title` (dead on touch and keyboard) and not spelled onto each chip (which
+     would turn a glanceable strip into five labels to read). The chips stay as
+     an ambient sighted glance and are hidden from assistive tech, which hears
+     this one coherent summary instead of orphan tokens like "3d" and "2/3". */
+  const hudLabel = [
+    `Progress: band ${xp.level}`,
+    `${game.dayStreak || 0}-day streak`,
+    (game.combo || 0) > 1 ? `combo times ${game.combo}` : null,
+    `today ${daily.xp} of ${DAILY_XP_GOAL}${daily.done ? ', goal met' : ''}`,
+    `${questsDone} of ${quests.length} quests done`,
+  ]
+    .filter(Boolean)
+    .join(', ')
+
   return (
     <div
       className={`game-hud game-hud-studio${open ? ' is-open' : ''}${
@@ -66,7 +80,7 @@ export default function GameHUD({ compact = false }) {
         className="game-hud-bar"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        title={gameSummaryLine(game)}
+        aria-label={hudLabel}
       >
         <ProgressRing
           value={xp.into}
@@ -74,6 +88,7 @@ export default function GameHUD({ compact = false }) {
           size={28}
           stroke={3}
           className="game-hud-xp-ring"
+          aria-hidden="true"
         >
           <span className="game-hud-level">{xp.level}</span>
         </ProgressRing>
@@ -83,21 +98,21 @@ export default function GameHUD({ compact = false }) {
             style={{ width: `${xp.percent}%` }}
           />
         </span>
-        <span className="game-hud-chip" title="Streak">
+        <span className="game-hud-chip" aria-hidden="true">
           {game.dayStreak || 0}d
         </span>
         {(game.combo || 0) > 1 && (
-          <span className="game-hud-chip is-combo" title="Combo">
+          <span className="game-hud-chip is-combo" aria-hidden="true">
             ×{game.combo}
           </span>
         )}
         <span
           className={`game-hud-chip is-daily${daily.done ? ' is-done' : ''}`}
-          title={`Today ${daily.xp}/${DAILY_XP_GOAL}`}
+          aria-hidden="true"
         >
           {daily.xp}/{DAILY_XP_GOAL}
         </span>
-        <span className="game-hud-chip is-quests" title="Quests">
+        <span className="game-hud-chip is-quests" aria-hidden="true">
           {questsDone}/{quests.length}
         </span>
         <span className="game-hud-chevron" aria-hidden="true">
@@ -161,7 +176,8 @@ export default function GameHUD({ compact = false }) {
                 <span
                   key={b.id}
                   className="game-hud-badge"
-                  title={b.name}
+                  role="img"
+                  aria-label={b.name}
                 >
                   {b.icon}
                 </span>

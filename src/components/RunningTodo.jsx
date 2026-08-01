@@ -3,7 +3,7 @@
  * Stays flat/unsorted until Sort groups it by the 7 workflow stages;
  * after that, new items land pre-tagged into their stage automatically.
  */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { RUNNING_TODO_STAGES } from '../lib/runningTodoStages'
 import { useModalFocus } from '../lib/useModalFocus'
 
@@ -147,6 +147,26 @@ export function RunningTodoPanel({
   onSort,
   onOpenAdd,
 }) {
+  /* A browsing drawer, not a modal — CLAUDE.md says so, and it has no focus
+     trap. So it must NOT claim aria-modal (that tells assistive tech the page
+     is inert while Tab walks right out). What it DOES owe a keyboard/AT user:
+     focus lands on the list it just summoned (object permanence), and returns
+     to the trigger on close (interruption recovery). No trap — tabbing out to
+     the workspace is the normal motion for a drawer. */
+  const panelRef = useRef(null)
+  const restoreRef = useRef(null)
+  useEffect(() => {
+    if (!open) return undefined
+    restoreRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null
+    panelRef.current?.focus?.()
+    return () => {
+      restoreRef.current?.focus?.()
+    }
+  }, [open])
+
   if (!open) return null
   const items = runningTodo?.items || []
   const sorted = !!runningTodo?.sorted
@@ -162,9 +182,10 @@ export function RunningTodoPanel({
     <>
       <div className="running-todo-backdrop" onClick={onClose} aria-hidden="true" />
       <aside
+        ref={panelRef}
+        tabIndex={-1}
         className="running-todo-panel"
-        role="dialog"
-        aria-modal="true"
+        role="complementary"
         aria-label="Running to-do list"
       >
         <div className="running-todo-panel-head">

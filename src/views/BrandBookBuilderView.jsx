@@ -10,6 +10,7 @@ import {
 } from '../lib/bookBuilder'
 import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES } from '../lib/bookContent'
 import { currentBrandPack } from '../lib/currentPack'
+import { downloadBrandPackVectorPdf } from '../lib/exportFiles'
 import { bookSectionIds, bookPlan, FOUNDATION_PAGES, SECTION_PAGES } from '../lib/bookDocument'
 import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/fontCatalog'
 import { monogramFor, logoDontsList, DEFAULT_LOGO_CLEARSPACE, DEFAULT_LOGO_MIN_SIZE } from '../lib/brandSystem'
@@ -528,6 +529,8 @@ export default function BrandBookBuilderView() {
 
   const [flipOpen, setFlipOpen] = useState(false);
   const [flipIndex, setFlipIndex] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const [exportNote, setExportNote] = useState('');
 
   const updateColor = (idx, next) =>
     setPaletteTokens(colors.map((c, i) => (i === idx ? next : c)))
@@ -620,24 +623,43 @@ export default function BrandBookBuilderView() {
     }
   `;
 
-  /* `window.print()` prints the whole document, and the owner's printCss only
-     knows about their own panel — the app header, nav, status pill and any
-     open panel would all print with the book. `cc-printing-book` scopes it,
-     mirroring how printElementById already handles this for the pack.
-     The title is restored afterwards; otherwise the tab keeps the export
-     name for the rest of the session. */
+  /* One book. This used to window.print() the on-screen preview cards — but
+     those cards are budgeted to ~9 lines each for a ~320px thumbnail, so
+     printing one full sheet per card produced a sparse ~54-page book, a
+     different and worse artifact than Deliver's "Brand book PDF". Both now go
+     through the same vector generator, so there is exactly one brand book and
+     the page count the client receives is the one the export reports. The
+     builder's own page-size / bleed controls still drive it, mapped to the
+     book setup the generator resolves. */
   const handleExport = async () => {
-    const prevTitle = document.title
-    document.title = `${brandName} brand guide`;
-    document.body.classList.add('cc-printing-book')
-    if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    try {
-      window.print();
-    } finally {
-      document.body.classList.remove('cc-printing-book')
-      document.title = prevTitle
+    if (exporting) return
+    setExporting(true)
+    setExportNote('')
+    const book = {
+      pageSize: printSettings.pageSize,
+      edgeSpace: 'standard',
+      printShop: !!printSettings.bleed,
     }
-  };
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready
+      const res = await downloadBrandPackVectorPdf(pack, null, { book })
+      if (res.ok) {
+        // The true count of the deliverable, named at the one moment it
+        // answers a real question — how big is the file I just made.
+        setExportNote(
+          res.pages ? `Saved · ${res.pages}-page PDF` : 'Saved · brand book PDF'
+        )
+      } else if (res.cancelled) {
+        setExportNote('Save cancelled — no problem')
+      } else {
+        setExportNote(res.error || 'Export didn’t finish — try again?')
+      }
+    } catch (e) {
+      setExportNote(e?.message || 'Export didn’t finish — try again?')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   /* The order is READ from the plan, never written out here. It used to be a
      literal list, and when the PDF was rebuilt to the Harbor & Hearth layout
@@ -888,30 +910,24 @@ export default function BrandBookBuilderView() {
           </div>
         </Section>
 
-        {/* Content pages appear because the project holds their text, so the
-            book's length changes as the work does. Left implicit that reads
-            as pages going missing, so the count and the reason are stated
-            here — and each waiting page names the one answer that would add
-            it, which is a next action rather than a scolding. Open by
-            default: a collapsed label is a memory test, and this is the one
-            place that explains why the book is the length it is. */}
-        <Section title={`Pages · ${pageElements.length}`} defaultOpen>
-          {/* A section that spans seven pages listed itself seven times, so
-              finding anything meant reading past the repeats. Runs collapse
-              to one row with a count — same information, one line to read. */}
+        {/* The book's spine — its sections by name, so a glance says "yes,
+            that's a brand book" rather than a raw page number.
+            Deliberately NOT "Pages · N": that count was the on-screen preview
+            cards (each ~9 lines), which roughly doubled the real exported PDF —
+            a number that meant nothing to a time-blind reader except a false
+            "this is bloated" alarm. The true page count now appears once, on
+            the export itself, where it answers a real question. A run of
+            continuation pages collapses to a single named entry — the Agreed
+            brief is one line, "record", not the thing that dominates the
+            felt length. Open by default: a collapsed label is a memory test. */}
+        <Section title="In this book" defaultOpen>
           <ul className="bbb-pagelist">
             {pageElements
               .map((el) => (el.props.page ? el.props.page.label : BUILTIN_PAGE_LABELS[el.key]))
-              .reduce((acc, label) => {
-                const last = acc[acc.length - 1];
-                if (last && last.label === label) last.n += 1;
-                else acc.push({ label, n: 1 });
-                return acc;
-              }, [])
-              .map((row, i) => (
-                <li key={`${row.label}-${i}`} className="bbb-pagelist__in">
-                  <span>{row.label}</span>
-                  {row.n > 1 && <span className="bbb-pagelist__needs">{row.n} pages</span>}
+              .filter((label, i, arr) => label && label !== arr[i - 1])
+              .map((label, i) => (
+                <li key={`${label}-${i}`} className="bbb-pagelist__in">
+                  <span>{label}</span>
                 </li>
               ))}
           </ul>
@@ -931,8 +947,13 @@ export default function BrandBookBuilderView() {
         </Section>
 
         <div className="bbb-section bbb-section--actions">
-          <button type="button" className="bbb-btn bbb-btn--primary" onClick={handleExport}>Export to PDF</button>
+          <button type="button" className="bbb-btn bbb-btn--primary" onClick={handleExport} disabled={exporting}>
+            {exporting ? 'Making the PDF…' : 'Export to PDF'}
+          </button>
           <button type="button" className="bbb-btn" onClick={() => { setFlipIndex(0); setFlipOpen(true); }}>Preview as flipbook</button>
+          {exportNote && (
+            <p className="bbb-export-note" aria-live="polite">{exportNote}</p>
+          )}
         </div>
       </div>
 
