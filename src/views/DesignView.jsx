@@ -28,7 +28,7 @@ import {
 } from '../lib/color'
 import { getProcessPhase } from '../lib/processGuide'
 import { pinFaceStyle } from '../lib/moodPins'
-import { loadTypePairFont } from '../lib/fontLoader'
+import { loadTypePairFont, loadBrandFamilies } from '../lib/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
 import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-design.css'
@@ -110,6 +110,11 @@ export default function DesignView({
     const id = typePairIdFromLabels(activeProject?.typeHeading, activeProject?.typeBody)
     const pair = TYPE_PAIRS.find((p) => p.id === id)
     loadTypePairFont(pair?.googleCss || null)
+    // index.html no longer ships the display families statically, so also
+    // fetch whatever the heading/body labels actually name — this covers
+    // custom labels that don't map to a known pair, which would otherwise
+    // render in the UI fallback.
+    loadBrandFamilies([activeProject?.typeHeading, activeProject?.typeBody])
   }, [activeProject?.typeHeading, activeProject?.typeBody])
 
   // Load version history when project changes
