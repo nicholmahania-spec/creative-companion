@@ -1856,3 +1856,102 @@ export async function downloadProjectOverviewPdf(project, options = {}) {
     }
   }
 }
+
+/**
+ * The contents of a logo-only handoff, as plain data — no browser, no canvas,
+ * so it is fully testable and ships only what genuinely exists.
+ *
+ * A logo-only client needs the mark and a note, not a book about a brand that
+ * does not exist. This returns the real uploaded mark (exactly as its data URL
+ * holds it, same extraction the brand kit already uses) plus a README that is
+ * honest about what is and is not in the pack — including, when the source is
+ * raster, that it is raster and not vector, so the recipient is not told they
+ * have something they do not.
+ *
+ * Deliberately does NOT fabricate mono/reverse files. Those exist on screen as
+ * real CSS previews, but writing them as separate deliverables would need
+ * canvas rendering this can't test or verify — and a pack of files the app
+ * can't honestly produce is the exact thing the build rule forbids. Naming
+ * them as "usually also supplied" in the README is honest; shipping fakes is
+ * not.
+ *
+ * @param {object} pack  a brand pack snapshot
+ * @returns {{ files: Array<{name:string, content:string, base64:boolean}>, hasMark: boolean }}
+ */
+export function markPackFiles(pack = {}) {
+  const files = []
+  const name = pack.projectName || 'Logo'
+  let hasMark = false
+  let markLine = 'No mark has been uploaded yet — add one on the Identity page.'
+
+  const src = String(pack.logoImage || '')
+  const m = src.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/)
+  if (m) {
+    const mime = m[1]
+    const ext = mime.includes('png')
+      ? 'png'
+      : mime.includes('jpeg') || mime.includes('jpg')
+        ? 'jpg'
+        : mime.includes('svg')
+          ? 'svg'
+          : mime.includes('webp')
+            ? 'webp'
+            : 'png'
+    files.push({ name: `logo.${ext}`, content: m[2], base64: true })
+    hasMark = true
+    const isVector = ext === 'svg'
+    markLine = isVector
+      ? 'logo.svg — vector, scales to any size.'
+      : `logo.${ext} — raster (not vector). Fine for screen and known print sizes; ask for a redraw if you need it at billboard scale.`
+  }
+
+  const readme = [
+    `${name} — logo files`,
+    '',
+    'In this pack:',
+    `- ${markLine}`,
+    '',
+    'A full logo handoff usually also includes a one-colour version and a',
+    'reverse (light-on-dark) version. Those are shown as previews in the app;',
+    'ask if you need them supplied as separate files.',
+  ].join('\n')
+
+  files.push({ name: 'README.txt', content: readme, base64: false })
+  return { files, hasMark }
+}
+
+/**
+ * Download the logo-only handoff: the real mark plus an honest README, zipped.
+ *
+ * The thin browser layer over markPackFiles() — that function decides the
+ * contents (pure, tested); this one only zips and saves them, the same JSZip +
+ * downloadBlobReliable path the brand kit uses. No canvas, nothing fabricated.
+ *
+ * @param {object} pack
+ * @param {Promise|null} handlePromise  a pre-captured File System Access handle
+ * @returns {Promise<{ok: boolean, error?: string}>}
+ */
+export async function downloadMarkPack(pack, handlePromise = null) {
+  try {
+    const { files, hasMark } = markPackFiles(pack)
+    const JSZip = (await import('jszip')).default
+    const zip = new JSZip()
+    const slug = slugifyFilename(pack.projectName, 'logo')
+    const folder = zip.folder(slug) || zip
+    for (const f of files) {
+      folder.file(f.name, f.content, f.base64 ? { base64: true } : undefined)
+    }
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const zipName = `${slug}-logo-files.zip`
+    if (handlePromise) {
+      const written = await writeToSaveHandle(handlePromise, blob)
+      if (written.ok || written.cancelled) {
+        return { ...written, method: 'file-picker', hasMark }
+      }
+    }
+    const r = await downloadBlobReliable(blob, zipName, null)
+    return { ...r, hasMark }
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Logo pack export failed' }
+  }
+}

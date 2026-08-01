@@ -761,3 +761,25 @@ export function progressItemInScope(itemId, deliverablesPicked) {
   if (!needs) return true // logo + process items — always in scope
   return needs.some((d) => picked.includes(d))
 }
+
+/** The pure-mark deliverables — a job wanting only these gets the mark files,
+ *  not the 21-page book. */
+const MARK_ONLY_DELIVERABLES = ['logoPrimary', 'logoVariations']
+
+/**
+ * True when the brief asks for the mark and nothing that needs the book.
+ *
+ * Conservative on purpose: only an unambiguous logo-only pick (logoPrimary
+ * and/or logoVariations, nothing else) routes to the mark pack. Add colours,
+ * type, guidelines or any application and it is a fuller job that still gets
+ * the book — so no existing project's export changes, only the case the
+ * cold-start tester actually hit.
+ *
+ * @param {string[]} deliverablesPicked
+ * @returns {boolean}
+ */
+export function isLogoOnlyScope(deliverablesPicked) {
+  const picked = Array.isArray(deliverablesPicked) ? deliverablesPicked : []
+  if (!picked.length) return false
+  return picked.every((d) => MARK_ONLY_DELIVERABLES.includes(d))
+}

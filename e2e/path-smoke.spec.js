@@ -81,7 +81,11 @@ test.describe('Creative Companion path smoke', () => {
     await expect(
       page.locator('h1.page-title', { hasText: last.label })
     ).toBeVisible({ timeout: 10000 })
-    await expect(page.getByText(/Ready · \d+\/\d+/i).first()).toBeVisible()
+    // The Deliver chip names the state, not a fraction ("Ready · 4/8" was a
+    // number on a job whose scope made half the checks irrelevant).
+    await expect(
+      page.getByText(/Ready to ship|Still to add/i).first()
+    ).toBeVisible()
     await expect(
       page.getByRole('button', { name: /Brand book PDF/i })
     ).toBeVisible()

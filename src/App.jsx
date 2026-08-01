@@ -102,6 +102,7 @@ import {
   downloadBrandPackPdf,
   downloadBrandPackPdfRaster,
   downloadBrandKitZip,
+  downloadMarkPack,
   downloadWorkspaceBackup,
   packReadiness,
   preloadPdfEngine,
@@ -2451,6 +2452,8 @@ function App() {
         ? `${slug}-brand-direction.pdf`
         : kind === 'kit'
           ? `${slug}-brand-kit.zip`
+          : kind === 'mark'
+            ? `${slug}-logo-files.zip`
           : kind === 'html'
             ? `${slug}-brand-direction.html`
             : kind === 'md'
@@ -2492,6 +2495,33 @@ function App() {
           flashToast(
             result.error || 'Download did not finish — try again?'
           )
+        }
+        return result
+      })().finally(clearBusy)
+    }
+
+    if (kind === 'mark') {
+      // Logo-only handoff: the real mark + an honest README, zipped. No book.
+      flashToast('Zipping the logo files…', { important: true })
+      return (async () => {
+        const result = await downloadMarkPack(pack, handlePromise)
+        if (result.ok) {
+          setLastExportNote(
+            `Logo files (zip) · ${new Date().toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit',
+            })}`
+          )
+          finishOk('Logo files (zip)')
+          if (result.hasMark === false) {
+            // The pack still saved (README explains the gap) — but say plainly
+            // that no mark was in it, rather than letting "saved" imply one was.
+            flashToast('Saved — but no logo image was in it yet')
+          }
+        } else if (result.cancelled) {
+          flashToast('Save cancelled — no problem')
+        } else {
+          flashToast(result.error || 'Download did not finish — try again?')
         }
         return result
       })().finally(clearBusy)

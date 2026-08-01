@@ -8,6 +8,7 @@ import CaseStudyExport from '../components/CaseStudyExport'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
+import { isLogoOnlyScope } from '../lib/detectiveBrief'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
 import {
@@ -80,6 +81,13 @@ export default function DeliverView({
      additions. */
   const coreGaps = gaps.filter((c) => !['handoff', 'learnings'].includes(c.id))
   const okCount = ready.checks.filter((c) => c.ok).length
+
+  /* A logo-only job ships the mark, not a 21-page book about a brand that
+     doesn't exist. The cold-start tester delivered a logo and the only finish
+     button produced the wrong artifact, so the project couldn't close in-app.
+     When the brief scopes to the mark alone, the primary CTA becomes the logo
+     files; the book stays reachable under More for anyone who still wants it. */
+  const logoOnly = isLogoOnlyScope(activeProject?.detective?.deliverablesPicked)
 
 
   const goal = activeProject?.detective?.goal
@@ -170,9 +178,9 @@ export default function DeliverView({
               <button
                 type="button"
                 className="btn btn-primary work-path-next"
-                onClick={() => runExport('pdf')}
+                onClick={() => runExport(logoOnly ? 'mark' : 'pdf')}
               >
-                Brand book PDF
+                {logoOnly ? 'Download logo files' : 'Brand book PDF'}
               </button>
             </div>
 
@@ -328,6 +336,19 @@ export default function DeliverView({
             <details className="deliver-advanced">
               <summary>More formats</summary>
               <div className="finish-secondary-row pack-more-row">
+                {/* On a logo-only job the book moved off the primary CTA, but
+                    it stays here for anyone who wants it anyway — reachable,
+                    just not the default. On a full-identity job the book IS
+                    the primary button, so it would be a duplicate here. */}
+                {logoOnly && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => runExport('pdf')}
+                  >
+                    Brand book PDF
+                  </button>
+                )}
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"

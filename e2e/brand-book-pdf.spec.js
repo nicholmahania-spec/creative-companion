@@ -24,7 +24,9 @@ test.describe('Brand book PDF', () => {
       page.locator('h1.page-title', { hasText: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
 
-    await expect(page.getByText(/Ready · \d+\/\d+/i).first()).toBeVisible()
+    await expect(
+      page.getByText(/Ready to ship|Still to add/i).first()
+    ).toBeVisible()
 
     // G key jumps to the earliest process gap from any path view
     await page.keyboard.press('g')
