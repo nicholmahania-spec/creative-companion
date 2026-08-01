@@ -27,20 +27,18 @@ const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-export default function DefineStartHere({ detective, onOpenChapter }) {
+export default function DefineStartHere({ detective }) {
   const requiredEmpty = useMemo(() => getRequiredEmpty(detective), [detective])
   const startHere = useMemo(
     () => requiredEmpty.slice(0, START_HERE_CAP),
     [requiredEmpty]
   )
 
-  /** Jump straight to one named field. Opening the chapter first matters in
-   *  accordion mode, where the input is not mounted until it opens. */
+  /** Jump straight to one named field. The brief is flat now, so every
+   *  input is already mounted — the jump is just scroll and focus, no
+   *  chapter to open first. */
   const jumpToField = useCallback(
-    (fieldId, chapterId) => {
-      if (chapterId) {
-        onOpenChapter?.(chapterId)
-      }
+    (fieldId) => {
       requestAnimationFrame(() => {
         const el =
           document.getElementById(`detective-${fieldId}`) ||
@@ -57,7 +55,7 @@ export default function DefineStartHere({ detective, onOpenChapter }) {
         el.focus()
       })
     },
-    [onOpenChapter]
+    []
   )
 
   return (
@@ -76,7 +74,7 @@ export default function DefineStartHere({ detective, onOpenChapter }) {
                 key={f.id}
                 type="button"
                 className="btn btn-primary"
-                onClick={() => jumpToField(f.id, f.chapterId)}
+                onClick={() => jumpToField(f.id)}
               >
                 {f.label}
               </button>

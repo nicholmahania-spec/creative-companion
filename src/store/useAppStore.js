@@ -295,8 +295,9 @@ export function createBlankProject(name = 'My project', brief = '') {
     decisionLog: [],
     palette: [...defaultProjectPalette],
     deadline: '',
-    /** Which Define chapter accordion is open; unset until the user opens one */
-    defineOpenChapter: null,
+    /* defineOpenChapter is gone — the brief is flat, there is no open
+       chapter to remember. Old projects may still carry the field; it is
+       ignored (projectShellEqual keeps it in its ignore set for them). */
     /** Last journey view opened in this project, so switching back resumes
      *  where you were instead of teleporting you to a computed "first gap". */
     lastView: null,
@@ -731,14 +732,6 @@ const useAppStore = create(
           ),
         })),
 
-      /** Persist which Define chapter accordion is open per-project, so
-       * leaving and returning restores it instead of resetting to the top. */
-      setDefineOpenChapter: (projectId, chapterId) =>
-        set((state) => ({
-          projects: state.projects.map((p) =>
-            p.id === projectId ? { ...p, defineOpenChapter: chapterId } : p
-          ),
-        })),
 
       /** Remember the view a project was last on. */
       setProjectLastView: (projectId, view) =>

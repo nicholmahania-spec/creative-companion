@@ -95,8 +95,6 @@ export default function DetectiveSheet({
   updateDetective,
   /** Hide internal progress chrome when parent owns the dopamine timeline */
   splitMode = false,
-  openChapter: openChapterProp,
-  onOpenChapter,
   /** DefineView renders "Start with these" itself, up in the header band
    *  above the milestone list — see components/DefineStartHere. Standalone
    *  uses of this sheet keep their own copy. */
@@ -107,46 +105,49 @@ export default function DetectiveSheet({
   projectDeadline = '',
   setProjectDeadline,
 }) {
-  const [openChapterLocal, setOpenChapterLocal] = useState('core')
-  const openChapter = openChapterProp ?? openChapterLocal
-  const setOpenChapter = onOpenChapter ?? setOpenChapterLocal
+  /* FLAT, not an accordion (adhd-executive-function-advisor ruling for the
+     2026 design handoff). The accordion billed a five-way chapter decision
+     on every arrival, made four chapters a memory test ("hidden, not one
+     click away" — the owner's own words), broke find-in-page on unmounted
+     fields, and needed persisted open-chapter state that raced arrivals.
+     Everything is mounted; the rail below is a scroll INDEX (a map, not a
+     fork) whose active tab follows scroll position. The whole open-chapter
+     apparatus — the flag, the persisted defineOpenChapter, the auto-open
+     effect — is deleted, not parked behind a toggle: an expand/collapse
+     control would just bill a decision to undo the layout's default. */
+  const [currentChapter, setCurrentChapter] = useState(DETECTIVE_CHAPTERS[0].id)
   const [focusField, setFocusField] = useState(null)
   const isMobile = useIsMobile()
-  const accordion = true
 
   const progress = useMemo(() => getDetectiveProgress(detective), [detective])
   const chapterStats = progress.chapters
 
-  /** Shared with DefineStartHere — the sheet needs it to decide which
-   * chapter to open on arrival, the header band needs it for the jump
-   * buttons, and two copies of "which required fields are still empty"
-   * would eventually disagree. */
+  /** Shared with DefineStartHere — two copies of "which required fields are
+   * still empty" would eventually disagree. */
   const requiredEmpty = useMemo(() => getRequiredEmpty(detective, projectDeadline), [detective, projectDeadline])
 
-  /** On arrival, open the chapter that still needs answers — but never
-   * scroll or steal focus. The page moving on its own before the user has
-   * read anything forces re-orientation as the first act, re-fired on every
-   * return visit, and duplicated what "Start with these" does better (an
-   * explicit, user-chosen jump). Opening the right chapter is enough. */
-  const didAutoStart = useRef(false)
+  /* The rail highlight follows scroll, so it is always true — a chapter tab
+     that only changes on click is a promise that goes stale the moment the
+     user scrolls. rootMargin biases to the band under the sticky chrome. */
   useEffect(() => {
-    // Only when this sheet owns its own chapter state. When a parent supplies
-    // `openChapter` it has already decided: DefineView resolves the stored
-    // `defineOpenChapter` first and only falls back to the first incomplete
-    // chapter when nothing is stored. Running anyway did not just lose that
-    // race, it destroyed the record — `setOpenChapter` is the parent's
-    // persisting callback, so every arrival wrote chapter 01 over wherever
-    // the user actually left off. Verified before this guard: a stored
-    // "constraints" came back as "overview" after a reload, which made the
-    // resume feature dead for any project with an unfilled required field —
-    // nearly all of them, since clientName is required.
-    if (openChapterProp != null) return
-    if (didAutoStart.current) return
-    const first = requiredEmpty[0]
-    if (!first) return
-    didAutoStart.current = true
-    setOpenChapter(first.chapterId)
-  }, [requiredEmpty, setOpenChapter, openChapterProp])
+    if (typeof IntersectionObserver === 'undefined') return undefined
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            const id = e.target.dataset.chapter
+            if (id) setCurrentChapter(id)
+          }
+        }
+      },
+      { rootMargin: '-20% 0px -70% 0px' }
+    )
+    for (const ch of DETECTIVE_CHAPTERS) {
+      const el = document.getElementById(`define-chapter-content-${ch.id}`)
+      if (el) io.observe(el)
+    }
+    return () => io.disconnect()
+  }, [])
 
   return (
     <div className={`define-workbook${splitMode ? ' is-split' : ''}`}>
@@ -156,15 +157,13 @@ export default function DetectiveSheet({
           and renders the component itself. Two copies of the page's only
           anti-stall control, one of them unreachable, is exactly how a
           regression lands somewhere nobody looks. */}
-      {showStartHere && (
-        <DefineStartHere detective={detective} onOpenChapter={setOpenChapter} />
-      )}
+      {showStartHere && <DefineStartHere detective={detective} />}
 
       {!isMobile && (
       <nav className="define-chapter-rail" aria-label="Brief chapters">
           {DETECTIVE_CHAPTERS.map((ch, i) => {
             const st = chapterStats[i]
-            const active = openChapter === ch.id
+            const active = currentChapter === ch.id
             return (
               <button
                 key={ch.id}
@@ -173,16 +172,14 @@ export default function DetectiveSheet({
                   st.complete ? ' is-complete' : ''
                 }${st.requiredDone && !st.complete ? ' is-ready' : ''}`}
                 onClick={() => {
-                  setOpenChapter(ch.id)
-                  // Master-scroll mode renders every chapter at once, so the
-                  // rail has to move the page, not just change which is open.
-                  if (!accordion) {
-                    requestAnimationFrame(() => {
-                      document
-                        .getElementById(`define-chapter-content-${ch.id}`)
-                        ?.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
-                    })
-                  }
+                  // A scroll index, not a switcher: everything is mounted,
+                  // so clicking only moves the page.
+                  setCurrentChapter(ch.id)
+                  requestAnimationFrame(() => {
+                    document
+                      .getElementById(`define-chapter-content-${ch.id}`)
+                      ?.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+                  })
                 }}
                 aria-current={active ? 'step' : undefined}
                 aria-controls={`define-chapter-content-${ch.id}`}
@@ -218,74 +215,40 @@ export default function DetectiveSheet({
 
       <div className="define-chapters">
         {DETECTIVE_CHAPTERS.map((ch) => {
-          const isOpen = openChapter === ch.id
           const st = chapterStats.find((s) => s.id === ch.id)
-          // Desktop split shows every chapter's fields at once (master scroll);
-          // accordion mode (standalone OR mobile split) shows one at a time.
-          const showFields = accordion ? isOpen : true
-          // Only fully hide the article in non-split accordion; split keeps the
-          // header visible so mobile users can tap between chapters.
-          const articleHidden = !splitMode && !isOpen
+          const isCurrent = currentChapter === ch.id
           return (
             <article
               key={ch.id}
               id={`define-chapter-content-${ch.id}`}
-              // `is-current` carries the panel surface. Desktop split shows
-              // every chapter's fields at once, so without it all five cards
-              // sit at identical weight and none of them reads as "the one
-              // you're in" — which is also where a Start-with-these jump lands.
-              className={`define-chapter${showFields ? ' is-open' : ''}${
-                isOpen ? ' is-current' : ''
-              }`}
+              // `is-current` mirrors the rail highlight so the chapter under
+              // the reading position reads as "the one you're in".
+              className={`define-chapter is-open${isCurrent ? ' is-current' : ''}`}
               data-chapter={ch.id}
-              hidden={articleHidden}
             >
-              {splitMode && accordion ? (
-                <button
-                  type="button"
-                  className="define-chapter-head define-chapter-toggle"
-                  onClick={() => setOpenChapter(ch.id)}
-                  aria-expanded={isOpen}
-                  aria-controls={`define-chapter-fields-${ch.id}`}
-                >
-                  <span className="define-chapter-badge">{ch.num}</span>
-                  <h2 className="define-chapter-title">{ch.title}</h2>
-                  {st?.requiredDone && (
-                    <span className="define-chapter-done-chip" aria-label="Complete">
-                      ✓
-                    </span>
-                  )}
-                  {/* The rail is not rendered below 768px, so without this the
-                      phone has no per-chapter "how much is left" at all — and
-                      scrolling back to check costs more there, not less.
-                      Reuses the string the rail already computes. */}
-                  {st?.requiredRemaining > 0 && (
-                    <span className="define-chapter-head-need">
-                      {st.requiredRemaining} needed
-                    </span>
-                  )}
-                  <span className="define-chapter-caret" aria-hidden="true">
-                    {isOpen ? '▾' : '▸'}
+              {/* Numbered section head with a rule line (2026 design) — a
+                  heading over always-visible fields, never a toggle. The
+                  "N needed" chip stays: on phones the rail doesn't render,
+                  so this is the only per-chapter "how much is left". */}
+              <header className="define-chapter-head">
+                <span className="define-chapter-badge">{ch.num}</span>
+                <h2 className="define-chapter-title">{ch.title}</h2>
+                {st?.requiredDone && (
+                  <span className="define-chapter-done-chip" aria-label="Complete">
+                    ✓
                   </span>
-                </button>
-              ) : (
-                <header className="define-chapter-head">
-                  <span className="define-chapter-badge">{ch.num}</span>
-                  <div>
-                    <h2 className="define-chapter-title">{ch.title}</h2>
-                  </div>
-                  {st?.complete && (
-                    <span className="define-chapter-done-chip" aria-label="Complete">
-                      ✓
-                    </span>
-                  )}
-                </header>
-              )}
+                )}
+                {st?.requiredRemaining > 0 && (
+                  <span className="define-chapter-head-need">
+                    {st.requiredRemaining} needed
+                  </span>
+                )}
+                <span className="define-chapter-rule" aria-hidden="true" />
+              </header>
 
               <div
                 className="define-fields"
-                id={`define-chapter-fields-${ch.id}`}
-                hidden={!showFields}>
+                id={`define-chapter-fields-${ch.id}`}>
                 {ch.fields.map((f) => {
                   const focused = focusField === f.id
                   const filled = isFilled(detective?.[f.id])
@@ -326,12 +289,19 @@ export default function DetectiveSheet({
                           htmlFor={`detective-${f.id}`}
                         >
                           {f.label}
-                          {/* No required asterisk. It's a convention you have
-                              to already know, its tooltip never appears on
-                              touch, and this view is only ever seen by the
-                              person who set the brief up. The chapter rail
-                              already says how many fields are needed. */}
                         </label>
+                        {/* A worded "Needed" badge, not an asterisk — the
+                            asterisk is a convention you have to already know
+                            and its tooltip never appears on touch. On a flat
+                            page only these five fields are load-bearing;
+                            marking them is the whole anti-overwhelm
+                            mechanism (everything unbadged reads as
+                            optional). Gone once answered — a badge that
+                            stays after the work is done is a debt notice on
+                            a paid bill. */}
+                        {f.required && !filled && (
+                          <span className="define-field-needed">Needed</span>
+                        )}
                         {filled && (
                           <span className="define-field-check" aria-hidden="true">
                             ✓
