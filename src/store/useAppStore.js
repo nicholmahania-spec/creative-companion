@@ -1437,8 +1437,15 @@ const useAppStore = create(
 
       /** Merge answers that came from a client (portal form or an OCR'd
        *  paper form) into the project's own Define/detective answers.
-       *  Only fills fields that actually have a value — never blanks
-       *  something already filled in. */
+       *  CONTRACT: a non-empty incoming value ALWAYS wins — it overwrites an
+       *  existing answer (line ~1484 keys only on the incoming value, not the
+       *  current one). Only empty or wrong-shape incoming values are skipped.
+       *  This is deliberate: it runs AFTER a human review step, so the
+       *  incoming values are the reviewed truth. Do NOT rely on this to
+       *  protect an existing designer answer — it won't. That behaviour lives
+       *  in mergeDiscoveryAnswers below (it computes `alreadySet` and skips);
+       *  the two functions carry near-identical comments but OPPOSITE
+       *  semantics, so read the body, not the blurb, before reusing either. */
       /**
        * @param {object} incoming - answers to merge
        * @param {string|number} [projectId] - the project the work STARTED on.

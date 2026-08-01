@@ -274,8 +274,11 @@ export async function signOutCloud() {
 /** Send password reset email (Supabase Auth). */
 export async function resetPasswordForEmail(email) {
   if (!supabase) return { ok: false, error: 'Supabase not configured' }
-  const redirectTo =
-    typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : undefined
+  // appUrl() (origin + base path), never window.location.pathname — a reset
+  // started from a public deep link (/c/<id>, /f/<id>) must land on the app,
+  // not back on that link. Routes through appPaths so it survives the
+  // root-vs-subpath deploy split. (#23)
+  const redirectTo = typeof window !== 'undefined' ? appUrl() : undefined
   const { error } = await supabase.auth.resetPasswordForEmail(
     String(email || '').trim(),
     redirectTo ? { redirectTo } : undefined
