@@ -361,6 +361,16 @@ export async function handleXaiProxy(req) {
       }),
     })
     const text = await res.text()
+    /* The upstream status is forwarded verbatim, which means an xAI rejection
+       reaches the browser looking exactly like a fault in this proxy. Log the
+       real reason server-side: it is the only place the actual message
+       survives, and without it a bad model name and a bad key are the same
+       opaque 400 from outside. */
+    if (!res.ok) {
+      console.error(
+        `xAI upstream ${res.status} for model "${model}": ${String(text).slice(0, 300)}`
+      )
+    }
     return {
       statusCode: res.status,
       headers: jsonHeaders,
