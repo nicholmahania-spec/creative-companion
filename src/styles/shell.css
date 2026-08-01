@@ -6631,14 +6631,23 @@ body:has(.app.deep)::after {
    ============================================================ */
 
 :root {
-  --ts-canvas: #F5F5F5;
-  --ts-panel: #FFFFFF;
-  --ts-ink: #1A1A1A;
-  /* Was a hardcoded #A1A1A1 that shadowed the theme-aware definition at the
-     top of the file and failed contrast in both themes. Point it at the real
-     token so it follows the theme and the fix. */
+  /* All of these point at the theme-aware tokens rather than restating light
+     values, for the reason --ts-mute already recorded below.
+
+     They were literals — #F5F5F5, #FFFFFF, #1A1A1A, #E7E7E7 — declared here,
+     far below the definitions at the top of the file and below the .app.deep
+     block, so they won every time. The rule directly under this one is
+     `body, .app { background-color: var(--ts-canvas) !important }`, which
+     meant the page background in DARK MODE resolved to the light canvas. The
+     dark theme was being applied and then painted over.
+
+     --ts-mute was fixed on its own and its four siblings were left, which is
+     why the bug survived the fix that was meant to catch it. */
+  --ts-canvas: var(--bg-canvas);
+  --ts-panel: var(--bg-elevated);
+  --ts-ink: var(--text-primary);
   --ts-mute: var(--text-muted);
-  --ts-border: #E7E7E7;
+  --ts-border: var(--border-subtle);
   --ts-focus: var(--dopamine);
   --ts-radius: var(--radius);
 }
@@ -6808,17 +6817,17 @@ select:focus {
   min-height: 44px;
 }
 
-/* Page titles */
+/* Page titles
 
-/* One step above a section title (--fs-4). It was 1.25rem while chapter
-   headings sat at 1.5rem, so "Project overview" read as less important than
-   the sections inside it. */
-.page-title {
-  font-size: var(--fs-5) !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.02em;
-  color: var(--ts-ink) !important;
-}
+   Deliberately NOT redeclared here. This block used to force
+   `font-size: var(--fs-5) !important`, which beat the display scale declared
+   near the top of this file — clamp(1.75rem, 3.5vw, 2.35rem) with display
+   tracking — so every <h1> in the app rendered flat at 1.5rem and the
+   responsive ramp was dead code nobody could see was dead.
+
+   Its stated reason was to outrank section titles (--fs-4), and the base rule
+   already does that by a wider margin. Removing the override serves the
+   intent it was written for; keeping it defeated it. */
 
 /* Empty titles only when hideTips */
 

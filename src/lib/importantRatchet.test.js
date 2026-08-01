@@ -5,7 +5,7 @@
  * climbing anyway, because a rule nothing checks is a suggestion. This makes
  * it mechanical.
  *
- * The cost is not theoretical. `shell.css` carries 461 of these, and the
+ * The cost is not theoretical. `shell.css` carries 458 of these, and the
  * journey navigation is where they pile up — 8 rules for
  * `.journey-sidebar .journey-step`, 5 for `.journey-sidebar .journey-bar-list`.
  * That is what let a `width: max-content !important`, written for the
@@ -39,7 +39,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
  * clean, which is the one place this debt is cheap to not acquire.
  */
 const BUDGET = {
-  'src/styles/shell.css': 461,
+  'src/styles/shell.css': 458,
   'src/styles/lazy-buddy.css': 55,
   'src/styles/lazy-settings.css': 36,
   'src/styles/lazy-design.css': 22,

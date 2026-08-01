@@ -252,3 +252,78 @@ describe('typography guardrails', () => {
     for (const n of prose) expect(n).toBeLessThanOrEqual(75)
   })
 })
+
+/**
+ * A token declared once must not be restated as a literal further down.
+ *
+ * This is the same defect twice. --ts-mute was a hardcoded #A1A1A1 in a
+ * second :root block near the end of shell.css, shadowing the theme-aware
+ * definition at the top and failing contrast in both themes. It was fixed —
+ * and its four siblings in the same block were left alone, so --ts-canvas,
+ * --ts-panel, --ts-ink and --ts-border went on being light-mode literals.
+ *
+ * The rule immediately under that block is
+ * `body, .app { background-color: var(--ts-canvas) !important }`, so the page
+ * background in DARK MODE resolved to #F5F5F5. The dark theme was applied and
+ * then painted over. A whole theme, half-working, because a fix was applied to
+ * the token that had been noticed rather than to the pattern.
+ *
+ * CLAUDE.md states the rule as "never re-hardcode --ts-mute (or any theme
+ * token)". The existing guard checked --ts-mute by name. This checks the set.
+ */
+describe('theme tokens are declared once', () => {
+  const TS_TOKENS = [
+    '--ts-canvas',
+    '--ts-panel',
+    '--ts-ink',
+    '--ts-mute',
+    '--ts-border',
+  ]
+
+  it('never assigns a raw colour to a theme token', () => {
+    const offenders = []
+    for (const token of TS_TOKENS) {
+      const re = new RegExp(`${token}\\s*:\\s*(#[0-9a-fA-F]{3,8}|rgba?\\()`, 'g')
+      for (const m of css.matchAll(re)) offenders.push(`${token}: ${m[1]}`)
+    }
+    expect(
+      offenders,
+      'A theme token was given a literal colour. It will shadow the\n' +
+        'theme-aware definition wherever it appears later in the file, and the\n' +
+        'theme will half-apply. Point it at the underlying token instead:\n  ' +
+        offenders.join('\n  ')
+    ).toEqual([])
+  })
+
+  /* Guards the guard — a typo in the token names would assert nothing. */
+  it('finds the tokens it is checking', () => {
+    for (const token of TS_TOKENS) {
+      expect(css, `${token} should exist`).toContain(token)
+    }
+  })
+})
+
+/**
+ * The page title's display scale must not be overridden away.
+ *
+ * .page-title is declared near the top of shell.css as
+ * clamp(1.75rem, 3.5vw, 2.35rem) with display tracking. A second declaration
+ * ~6,400 lines later forced var(--fs-5) !important, so every <h1> in the app
+ * rendered flat at 1.5rem and the responsive ramp was dead code. It passed
+ * every existing guard: the value was tokenised, in rem, and on the ramp.
+ * Correct by every rule that was being checked, and still wrong.
+ */
+describe('page title keeps its display scale', () => {
+  it('is sized by a clamp, not flattened by a later override', () => {
+    const blocks = [...css.matchAll(/^\.page-title\s*\{([^}]*)\}/gm)].map(
+      (m) => m[1]
+    )
+    expect(blocks.length, '.page-title should be declared').toBeGreaterThan(0)
+    const sized = blocks.filter((b) => /font-size:/.test(b))
+    expect(
+      sized.length,
+      '.page-title should have exactly one font-size declaration'
+    ).toBe(1)
+    expect(sized[0]).toMatch(/clamp\(/)
+  })
+})
