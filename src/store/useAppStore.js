@@ -479,6 +479,65 @@ export function pickPersisted(state) {
   return out
 }
 
+/* Debounced persisted write (issue #6).
+   The workspace persists as ONE blob and DetectiveSheet fields call
+   updateDetective on every keystroke, so without this each character ran a
+   synchronous JSON.stringify(pickPersisted(state)) — projects, every mood
+   image as a data URL, every brief — plus localStorage.setItem on the main
+   thread. As a workspace fills toward the ~5MB budget that is visible typing
+   lag. We coalesce rapid writes into one trailing write, and flush on
+   tab-hide / unload so nothing is ever lost. */
+const PERSIST_DEBOUNCE_MS = 400
+let _persistPending = null // latest { key, value } not yet written
+let _persistTimer = null
+
+function _writePersistNow() {
+  if (_persistTimer) {
+    clearTimeout(_persistTimer)
+    _persistTimer = null
+  }
+  if (!_persistPending) return
+  const { key, value } = _persistPending
+  _persistPending = null
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch (err) {
+    const quota =
+      err?.name === 'QuotaExceededError' ||
+      err?.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+      err?.code === 22
+    console.error(
+      quota
+        ? '[store] Browser storage is full — changes are NOT being saved. Remove some mood board images.'
+        : '[store] Could not save to browser storage.',
+      err
+    )
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('cc-storage-error', { detail: { quota } })
+      )
+    }
+  }
+}
+
+/** Flush any pending debounced persist write immediately. Exported for tests;
+ *  also wired to tab-hide / unload below so a trailing write is never lost. */
+export function flushPersist() {
+  _writePersistNow()
+}
+
+if (typeof window !== 'undefined') {
+  // beforeunload/pagehide cover desktop; visibilitychange:hidden covers mobile
+  // where the unload events are unreliable.
+  window.addEventListener('beforeunload', _writePersistNow)
+  window.addEventListener('pagehide', _writePersistNow)
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') _writePersistNow()
+    })
+  }
+}
+
 const useAppStore = create(
   persist(
     (set, get) => ({
@@ -2584,27 +2643,21 @@ const useAppStore = create(
           }
         },
         setItem: (key, value) => {
-          try {
-            localStorage.setItem(key, JSON.stringify(value))
-          } catch (err) {
-            const quota =
-              err?.name === 'QuotaExceededError' ||
-              err?.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-              err?.code === 22
-            console.error(
-              quota
-                ? '[store] Browser storage is full — changes are NOT being saved. Remove some mood board images.'
-                : '[store] Could not save to browser storage.',
-              err
-            )
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(
-                new CustomEvent('cc-storage-error', { detail: { quota } })
-              )
-            }
-          }
+          // Coalesce the per-keystroke storm into one trailing write. The
+          // actual stringify + localStorage.setItem (and its quota handling)
+          // happen in _writePersistNow, flushed on tab-hide/unload. Issue #6.
+          _persistPending = { key, value }
+          if (_persistTimer) clearTimeout(_persistTimer)
+          _persistTimer = setTimeout(_writePersistNow, PERSIST_DEBOUNCE_MS)
         },
         removeItem: (key) => {
+          // Cancel any pending debounced write first, so a stale trailing
+          // write can't resurrect data we're clearing.
+          _persistPending = null
+          if (_persistTimer) {
+            clearTimeout(_persistTimer)
+            _persistTimer = null
+          }
           try {
             localStorage.removeItem(key)
           } catch {
