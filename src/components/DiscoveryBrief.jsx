@@ -19,6 +19,7 @@ import {
   createDiscoveryShare,
   discoveryShareUrl,
   fetchDiscoveryShare,
+  revokeDiscoveryShare,
 } from '../lib/discoveryShare'
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
@@ -270,6 +271,29 @@ function HandoffMode({
 }) {
   const [creatingLink, setCreatingLink] = useState(false)
   const [checkingLink, setCheckingLink] = useState(false)
+  // Two-tap confirm for revoke — destructive/outbound, so a word + inline
+  // confirm, no modal. `revoked` reflects the kill locally (this surface
+  // doesn't re-fetch the share's revoked_at).
+  const [revoked, setRevoked] = useState(false)
+  const [revokeArmed, setRevokeArmed] = useState(false)
+  const [revoking, setRevoking] = useState(false)
+
+  const handleRevokeShare = async () => {
+    if (!revokeArmed) {
+      setRevokeArmed(true)
+      return
+    }
+    setRevoking(true)
+    const r = await revokeDiscoveryShare(shareId)
+    setRevoking(false)
+    setRevokeArmed(false)
+    if (r.ok) {
+      setRevoked(true)
+      flashToast?.('Link revoked — the old link no longer opens')
+    } else {
+      flashToast?.(r.error || 'Couldn’t revoke the link')
+    }
+  }
 
   const handleCreateLink = async () => {
     setCreatingLink(true)
@@ -368,6 +392,11 @@ function HandoffMode({
           >
             {creatingLink ? 'Creating link…' : 'Create client link'}
           </button>
+        ) : revoked ? (
+          <p className="client-portal-revoked-note">
+            Link revoked — the old link no longer opens. Anything the client
+            already submitted is kept. Create a new link to share again.
+          </p>
         ) : (
           <>
             <div className="discovery-brief-share-row">
@@ -404,6 +433,27 @@ function HandoffMode({
                   {checkingLink ? 'Checking…' : 'Check for client’s answers'}
                 </button>
               )}
+            </div>
+            <div className="client-portal-revoke-row">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm client-portal-revoke-btn"
+                onClick={handleRevokeShare}
+                onBlur={() => setRevokeArmed(false)}
+                disabled={revoking}
+              >
+                {revoking
+                  ? 'Revoking…'
+                  : revokeArmed
+                    ? 'Tap again to revoke'
+                    : 'Revoke link'}
+              </button>
+              {revokeArmed && !revoking ? (
+                <span className="client-portal-revoke-hint">
+                  Kills this link for anyone holding it. Submitted answers are
+                  kept.
+                </span>
+              ) : null}
             </div>
           </>
         )}

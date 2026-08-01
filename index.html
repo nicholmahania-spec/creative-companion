@@ -22,8 +22,15 @@
     <title>Creative Companion — one next design step</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Only Plus Jakarta Sans (the UI font) loads render-blocking on every
+         visit. The seven display families the Brand Book Builder offers
+         (DM Sans, Fraunces, Lato, Libre Baskerville, Playfair Display,
+         Source Sans 3, Space Grotesk) are fetched on demand by
+         src/lib/fontLoader.js when that lazy view/type picker needs them —
+         no reason to block first paint of the login/app for fonts one
+         lazy route uses. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Lato:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Source+Sans+3:wght@400;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>

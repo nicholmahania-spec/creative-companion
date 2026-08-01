@@ -88,6 +88,27 @@ export function blankDetective() {
 }
 
 /**
+ * The ONLY fields a template may carry onto a project. A template is a house
+ * STYLE, not a project — so applying one must never touch `detective`
+ * (Chapter 01 IS the client record), `tasks`, `directions`, or `moodItems`.
+ * `applyTemplate` filters `template.data` through this list, which also
+ * neutralises templates saved before this became a rule (they may still hold
+ * a cloned `detective`/`tasks`/`directions`). Add a key here only if it is
+ * genuinely reusable style, never project- or client-specific working data.
+ */
+export const TEMPLATE_STYLE_KEYS = [
+  'tagline', 'voice',
+  'typeHeading', 'typeBody',
+  'logoWordmark', 'logoDirection', 'logoImage', 'logoClearspace',
+  'logoMinSize', 'logoDonts',
+  'palette', 'colorRoles',
+  'messagingPromise', 'messagingProof', 'messagingPersonality',
+  'imageryStyle', 'imageryDo', 'imageryDont',
+  'writingCase', 'writingCaps', 'writingNotes',
+  'printPantone', 'printStock', 'printFinish',
+]
+
+/**
  * Compose the free-text brief from Detective Sheet answers. Pure function
  * so it can run on every keystroke (updateDetective) as well as from the
  * standalone applyDetectiveToBrief action, instead of only ever running
@@ -314,7 +335,6 @@ export function blankWorkspaceState() {
     currentProjectId: project.id,
     tasks: [],
     moodItems: [],
-    conceptItems: [],
     breakKit: [],
     theme: deviceTheme(),
     /* 'auto' until the user actually toggles. Without this there is no way
@@ -425,7 +445,6 @@ export const PERSISTED_KEYS = [
   'currentProjectId',
   'tasks',
   'moodItems',
-  'conceptItems',
   'breakKit',
   'theme',
   /* Must persist alongside `theme`, or an explicit choice survives only until
@@ -443,7 +462,6 @@ export const PERSISTED_KEYS = [
 ]
 
 const PERSIST_DEFAULTS = {
-  conceptItems: [],
   breakKit: [],
   oppositeIndex: 0,
   sparksTried: 0,
@@ -458,6 +476,65 @@ export function pickPersisted(state) {
   return out
 }
 
+/* Debounced persisted write (issue #6).
+   The workspace persists as ONE blob and DetectiveSheet fields call
+   updateDetective on every keystroke, so without this each character ran a
+   synchronous JSON.stringify(pickPersisted(state)) — projects, every mood
+   image as a data URL, every brief — plus localStorage.setItem on the main
+   thread. As a workspace fills toward the ~5MB budget that is visible typing
+   lag. We coalesce rapid writes into one trailing write, and flush on
+   tab-hide / unload so nothing is ever lost. */
+const PERSIST_DEBOUNCE_MS = 400
+let _persistPending = null // latest { key, value } not yet written
+let _persistTimer = null
+
+function _writePersistNow() {
+  if (_persistTimer) {
+    clearTimeout(_persistTimer)
+    _persistTimer = null
+  }
+  if (!_persistPending) return
+  const { key, value } = _persistPending
+  _persistPending = null
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch (err) {
+    const quota =
+      err?.name === 'QuotaExceededError' ||
+      err?.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+      err?.code === 22
+    console.error(
+      quota
+        ? '[store] Browser storage is full — changes are NOT being saved. Remove some mood board images.'
+        : '[store] Could not save to browser storage.',
+      err
+    )
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('cc-storage-error', { detail: { quota } })
+      )
+    }
+  }
+}
+
+/** Flush any pending debounced persist write immediately. Exported for tests;
+ *  also wired to tab-hide / unload below so a trailing write is never lost. */
+export function flushPersist() {
+  _writePersistNow()
+}
+
+if (typeof window !== 'undefined') {
+  // beforeunload/pagehide cover desktop; visibilitychange:hidden covers mobile
+  // where the unload events are unreliable.
+  window.addEventListener('beforeunload', _writePersistNow)
+  window.addEventListener('pagehide', _writePersistNow)
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') _writePersistNow()
+    })
+  }
+}
+
 const useAppStore = create(
   persist(
     (set, get) => ({
@@ -466,7 +543,6 @@ const useAppStore = create(
       currentProjectId: initial.currentProjectId,
       tasks: [],
       moodItems: [],
-      conceptItems: [],
       breakKit: [],
       theme: deviceTheme(),
       themeSource: 'auto',
@@ -1665,7 +1741,6 @@ const useAppStore = create(
           currentProjectId: s.currentProjectId,
           tasks: s.tasks,
           moodItems: s.moodItems,
-          conceptItems: s.conceptItems || [],
           breakKit: s.breakKit || [],
           forms: s.forms || [],
           theme: s.theme,
@@ -1742,7 +1817,6 @@ const useAppStore = create(
           currentProjectId,
           tasks: data.tasks,
           moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
-          conceptItems: Array.isArray(data.conceptItems) ? data.conceptItems : [],
           breakKit: Array.isArray(data.breakKit) ? data.breakKit : [],
           forms: Array.isArray(data.forms) ? data.forms : [],
           theme: data.theme === 'deep' ? 'deep' : 'warm',
@@ -1807,8 +1881,7 @@ const useAppStore = create(
 
       /** Delete a project and its tasks/pins. Keeps at least one project. */
       deleteProject: (id) => {
-        const { projects, tasks, moodItems, conceptItems, currentProjectId } =
-          get()
+        const { projects, tasks, moodItems, currentProjectId } = get()
         if (projects.length <= 1) {
           return { ok: false, error: 'Keep at least one project' }
         }
@@ -1828,7 +1901,6 @@ const useAppStore = create(
           currentProjectId: nextId,
           tasks: tasks.filter((t) => t.projectId !== id),
           moodItems: moodItems.filter((m) => m.projectId !== id),
-          conceptItems: (conceptItems || []).filter((c) => c.projectId !== id),
         })
         return { ok: true }
       },
@@ -2321,62 +2393,6 @@ const useAppStore = create(
 
       setMoodItems: (moodItems) => set({ moodItems }),
 
-      // ——— Concept pipeline (sketches → develop → iterate → lock → package) ———
-
-      addConceptItem: (item) =>
-        set((state) => ({
-          conceptItems: [
-            {
-              id: item.id || Date.now() + Math.random(),
-              projectId: item.projectId ?? state.currentProjectId,
-              stage: item.stage || 'sketch',
-              visual: item.visual || '',
-              title: item.title || '',
-              note: item.note || '',
-              stepId: item.stepId || null,
-              parentId: item.parentId || null,
-              createdAt: item.createdAt || new Date().toISOString(),
-            },
-            ...(state.conceptItems || []),
-          ],
-        })),
-
-      updateConceptItem: (id, patch) =>
-        set((state) => ({
-          conceptItems: (state.conceptItems || []).map((c) =>
-            c.id === id ? { ...c, ...patch } : c
-          ),
-        })),
-
-      removeConceptItem: (id) =>
-        set((state) => ({
-          conceptItems: (state.conceptItems || []).filter(
-            (c) => c.id !== id && c.parentId !== id
-          ),
-        })),
-
-      /** Move sketch into develop lane */
-      selectSketchToDevelop: (id) =>
-        set((state) => ({
-          conceptItems: (state.conceptItems || []).map((c) =>
-            c.id === id ? { ...c, stage: 'develop' } : c
-          ),
-        })),
-
-      /** Lock idea into concept plan */
-      lockConceptItem: (id, planNote = '') =>
-        set((state) => ({
-          conceptItems: (state.conceptItems || []).map((c) =>
-            c.id === id
-              ? {
-                  ...c,
-                  stage: 'locked',
-                  note: planNote?.trim() ? planNote.trim() : c.note,
-                }
-              : c
-          ),
-        })),
-
       nextSpark: () =>
         set((state) => {
           const next = (state.sparkIndex + 1) % sparkPrompts.length
@@ -2415,6 +2431,135 @@ const useAppStore = create(
         const { projects, currentProjectId } = get()
         return projects.find((p) => p.id === currentProjectId)
       },
+
+      // Template Management
+      saveAsTemplate: (name, description = '') => {
+        const state = get()
+        const { currentProjectId, projects } = state
+
+        if (!currentProjectId) return { ok: false, error: 'No active project' }
+
+        const project = projects.find(p => p.id === currentProjectId)
+        if (!project) return { ok: false, error: 'Project not found' }
+
+        // Create template from current project state
+        const template = {
+          id: `template-${Date.now()}`,
+          name,
+          description,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          // Store the essential design elements that make up a template
+          data: {
+            tagline: project.tagline,
+            voice: project.voice,
+            typeHeading: project.typeHeading,
+            typeBody: project.typeBody,
+            logoWordmark: project.logoWordmark,
+            logoDirection: project.logoDirection,
+            // Omit binary mark from templates (localStorage quota)
+            logoImage: '',
+            logoClearspace: project.logoClearspace,
+            logoMinSize: project.logoMinSize,
+            logoDonts: project.logoDonts,
+            palette: [...project.palette],
+            colorRoles: project.colorRoles ? { ...project.colorRoles } : null,
+            messagingPromise: project.messagingPromise,
+            messagingProof: project.messagingProof,
+            messagingPersonality: project.messagingPersonality,
+            imageryStyle: project.imageryStyle,
+            imageryDo: project.imageryDo,
+            imageryDont: project.imageryDont,
+            /* House style travels with the template. A studio that sets
+               sentence case and a preferred stock once should not re-set them
+               on every project started from this template. */
+            writingCase: project.writingCase,
+            writingCaps: project.writingCaps,
+            writingNotes: project.writingNotes,
+            printPantone: project.printPantone,
+            printStock: project.printStock,
+            printFinish: project.printFinish
+            /* A template is a house STYLE, not a project. It deliberately does
+               NOT carry `detective` (Chapter 01 IS the client record —
+               name, email, phone, contacts), `tasks`, `directions`, or
+               `moodItems`. Cloning those means applying a template to a live
+               project silently overwrites that client's brief with a
+               different client's data, unrecoverably. Style travels; the
+               client record never does. See TEMPLATE_STYLE_KEYS below. */
+          }
+        }
+
+        set(state => ({
+          templates: [...state.templates, template]
+        }))
+
+        return { ok: true, templateId: template.id }
+      },
+
+      getTemplates: () => {
+        const state = get()
+        return [...state.templates].sort((a, b) =>
+          new Date(b.updatedAt) - new Date(a.updatedAt)
+        )
+      },
+
+      getTemplateById: (templateId) => {
+        const state = get()
+        return state.templates.find(t => t.id === templateId) || null
+      },
+
+      updateTemplate: (templateId, updates) => {
+        set(state => ({
+          templates: state.templates.map(template =>
+            template.id === templateId
+              ? { ...template, ...updates, updatedAt: new Date().toISOString() }
+              : template
+          )
+        }))
+        return { ok: true }
+      },
+
+      deleteTemplate: (templateId) => {
+        set(state => ({
+          templates: state.templates.filter(t => t.id !== templateId)
+        }))
+        return { ok: true }
+      },
+
+      applyTemplate: async (templateId) => {
+        const state = get()
+        const template = state.templates.find(t => t.id === templateId)
+        if (!template) return { ok: false, error: 'Template not found' }
+
+        const { currentProjectId, projects } = state
+        if (!currentProjectId) return { ok: false, error: 'No active project' }
+
+        // Style-only apply. Filter template.data through TEMPLATE_STYLE_KEYS so
+        // the client record (detective), tasks, directions and moodItems are
+        // never overwritten — including by templates saved before this rule.
+        const styleData = {}
+        for (const key of TEMPLATE_STYLE_KEYS) {
+          if (key in template.data) styleData[key] = template.data[key]
+        }
+
+        set(state => ({
+          projects: state.projects.map(project =>
+            project.id === currentProjectId
+              ? {
+                  ...project,
+                  ...styleData,
+                  // Increment version when applying template
+                  designVersion: `v${parseInt(project.designVersion.replace('v', '')) + 1}`
+                }
+              : project
+          )
+        }))
+
+        // Create a version when applying template
+        await versionService.autoVersion('template-applied')
+
+        return { ok: true }
+      },
     }),
     {
       name: 'creative-companion-storage',
@@ -2434,27 +2579,21 @@ const useAppStore = create(
           }
         },
         setItem: (key, value) => {
-          try {
-            localStorage.setItem(key, JSON.stringify(value))
-          } catch (err) {
-            const quota =
-              err?.name === 'QuotaExceededError' ||
-              err?.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-              err?.code === 22
-            console.error(
-              quota
-                ? '[store] Browser storage is full — changes are NOT being saved. Remove some mood board images.'
-                : '[store] Could not save to browser storage.',
-              err
-            )
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(
-                new CustomEvent('cc-storage-error', { detail: { quota } })
-              )
-            }
-          }
+          // Coalesce the per-keystroke storm into one trailing write. The
+          // actual stringify + localStorage.setItem (and its quota handling)
+          // happen in _writePersistNow, flushed on tab-hide/unload. Issue #6.
+          _persistPending = { key, value }
+          if (_persistTimer) clearTimeout(_persistTimer)
+          _persistTimer = setTimeout(_writePersistNow, PERSIST_DEBOUNCE_MS)
         },
         removeItem: (key) => {
+          // Cancel any pending debounced write first, so a stale trailing
+          // write can't resurrect data we're clearing.
+          _persistPending = null
+          if (_persistTimer) {
+            clearTimeout(_persistTimer)
+            _persistTimer = null
+          }
           try {
             localStorage.removeItem(key)
           } catch {
@@ -2499,9 +2638,6 @@ const useAppStore = create(
           prefs: { ...blank.prefs, ...(persisted.prefs || {}) },
           tasks: Array.isArray(persisted.tasks) ? persisted.tasks : [],
           moodItems,
-          conceptItems: Array.isArray(persisted.conceptItems)
-            ? persisted.conceptItems
-            : [],
           breakKit: Array.isArray(persisted.breakKit)
             ? persisted.breakKit
             : [],
@@ -2556,7 +2692,6 @@ const useAppStore = create(
             if (next !== cur) useAppStore.setState({ projects: next })
           })
           if (!Array.isArray(state.moodItems)) state.moodItems = []
-          if (!Array.isArray(state.conceptItems)) state.conceptItems = []
           if (!Array.isArray(state.breakKit)) state.breakKit = []
           // Normalize boardOrder for pins that predate board drag
           if (state.moodItems?.length) {
@@ -2614,130 +2749,6 @@ const useAppStore = create(
         } catch {
           /* ignore */
         }
-      },
-      // Template Management
-      saveAsTemplate: (name, description = '') => {
-        const state = get()
-        const { currentProjectId, projects } = state
-
-        if (!currentProjectId) return { ok: false, error: 'No active project' }
-
-        const project = projects.find(p => p.id === currentProjectId)
-        if (!project) return { ok: false, error: 'Project not found' }
-
-        // Create template from current project state
-        const template = {
-          id: `template-${Date.now()}`,
-          name,
-          description,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          // Store the essential design elements that make up a template
-          data: {
-            tagline: project.tagline,
-            voice: project.voice,
-            typeHeading: project.typeHeading,
-            typeBody: project.typeBody,
-            logoWordmark: project.logoWordmark,
-            logoDirection: project.logoDirection,
-            // Omit binary mark from templates (localStorage quota)
-            logoImage: '',
-            logoClearspace: project.logoClearspace,
-            logoMinSize: project.logoMinSize,
-            logoDonts: project.logoDonts,
-            palette: [...project.palette],
-            colorRoles: project.colorRoles ? { ...project.colorRoles } : null,
-            messagingPromise: project.messagingPromise,
-            messagingProof: project.messagingProof,
-            messagingPersonality: project.messagingPersonality,
-            imageryStyle: project.imageryStyle,
-            imageryDo: project.imageryDo,
-            imageryDont: project.imageryDont,
-            /* House style travels with the template. A studio that sets
-               sentence case and a preferred stock once should not re-set them
-               on every project started from this template. */
-            writingCase: project.writingCase,
-            writingCaps: project.writingCaps,
-            writingNotes: project.writingNotes,
-            printPantone: project.printPantone,
-            printStock: project.printStock,
-            printFinish: project.printFinish,
-            // Full detective clone (no hand-whitelist) — required fields + spectra
-            detective: project.detective
-              ? {
-                  ...blankDetective(),
-                  ...JSON.parse(JSON.stringify(project.detective)),
-                }
-              : null,
-            directions: project.directions ? [...project.directions].map(d => ({ ...d })) : [],
-            tasks: project.tasks ? [...project.tasks].map(t => ({ ...t })) : [],
-            moodItems: project.moodItems ? [...project.moodItems].map(m => ({ ...m })) : []
-          }
-        }
-
-        set(state => ({
-          templates: [...state.templates, template]
-        }))
-
-        return { ok: true, templateId: template.id }
-      },
-
-      getTemplates: () => {
-        const state = get()
-        return [...state.templates].sort((a, b) =>
-          new Date(b.updatedAt) - new Date(a.updatedAt)
-        )
-      },
-
-      getTemplateById: (templateId) => {
-        const state = get()
-        return state.templates.find(t => t.id === templateId) || null
-      },
-
-      updateTemplate: (templateId, updates) => {
-        set(state => ({
-          templates: state.templates.map(template =>
-            template.id === templateId
-              ? { ...template, ...updates, updatedAt: new Date().toISOString() }
-              : template
-          )
-        }))
-        return { ok: true }
-      },
-
-      deleteTemplate: (templateId) => {
-        set(state => ({
-          templates: state.templates.filter(t => t.id !== templateId)
-        }))
-        return { ok: true }
-      },
-
-      applyTemplate: async (templateId) => {
-        const state = get()
-        const template = state.templates.find(t => t.id === templateId)
-        if (!template) return { ok: false, error: 'Template not found' }
-
-        const { currentProjectId, projects } = state
-        if (!currentProjectId) return { ok: false, error: 'No active project' }
-
-        // Apply template data to current project
-        set(state => ({
-          projects: state.projects.map(project =>
-            project.id === currentProjectId
-              ? {
-                  ...project,
-                  ...template.data,
-                  // Increment version when applying template
-                  designVersion: `v${parseInt(project.designVersion.replace('v', '')) + 1}`
-                }
-              : project
-          )
-        }))
-
-        // Create a version when applying template
-        await versionService.autoVersion('template-applied')
-
-        return { ok: true }
       },
     }
   )

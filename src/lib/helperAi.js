@@ -20,7 +20,7 @@ import {
   activityTip,
   twoDirectionsTip,
 } from './buddy'
-import { HELPER_SYSTEM_PROMPT } from './helperPersona'
+import { HELPER_ASK_SYSTEM_PROMPT, HELPER_SYSTEM_PROMPT } from './helperPersona'
 import { actionCatalogueForPrompt, parseProposals } from './helperActions'
 import { supabase } from './supabase'
 
@@ -369,7 +369,7 @@ export async function askHelper(question, history = [], activity = {}) {
        any OpenAI-compatible endpoint, and — the reason that matters — the
        model returns a *proposal*, never a call. Nothing can execute. */
     const raw = await callXaiChat({
-      system: `${HELPER_SYSTEM_PROMPT}\n\n${actionCatalogueForPrompt()}`,
+      system: `${HELPER_ASK_SYSTEM_PROMPT}\n\n${actionCatalogueForPrompt()}`,
       user,
       history,
       maxTokens: 320,
