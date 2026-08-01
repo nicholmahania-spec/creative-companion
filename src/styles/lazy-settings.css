@@ -276,7 +276,6 @@
 }
 
 .onboard-primary {
-  z-index: var(--z-toast);
   justify-content: center;
 }
 

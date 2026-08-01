@@ -5,10 +5,35 @@ import { supabase, isSupabaseConfigured } from './supabase'
  * @returns {{ ok: true, payload: object|null, updatedAt?: string } | { ok: false, error: string }}
  */
 /** Reject after ms so a stalled network request can't hang the UI forever. */
-function withTimeout(promise, ms, label) {
+/**
+ * Race a request against a deadline, and — where the SDK allows it — actually
+ * cancel the request when the deadline passes.
+ *
+ * Racing alone was not enough. Promise.race settles, but the underlying
+ * request keeps running, so a push already reported to the user as failed
+ * could still land afterwards. Since the workspace write is a whole-row upsert
+ * (onConflict: 'user_id'), a zombie request landing late overwrites everything
+ * saved since — last-RESPONSE-wins on a flaky connection, which is exactly the
+ * situation the timeouts here were sized for.
+ *
+ * Pass an AbortController and wire its signal into the request to close that.
+ * PostgREST supports .abortSignal(); Storage's upload() takes no signal in
+ * @supabase/storage-js as shipped here, so image uploads remain bounded by the
+ * timeout only. Their failure mode is a leftover object under a key nothing
+ * references, not corrupted workspace data, which is why that gap is tolerable
+ * where this one was not.
+ */
+function withTimeout(promise, ms, label, controller) {
   let timerId
   const timeout = new Promise((_, reject) => {
-    timerId = setTimeout(() => reject(new Error(`${label} timed out`)), ms)
+    timerId = setTimeout(() => {
+      try {
+        controller?.abort()
+      } catch {
+        /* already settled or unsupported — the race still rejects below */
+      }
+      reject(new Error(`${label} timed out`))
+    }, ms)
   })
   return Promise.race([promise, timeout])
     .then(result => {
@@ -194,12 +219,15 @@ export async function pushWorkspace(payload) {
 
     // Same reasoning as pullWorkspace — uploading a multi-MB payload over
     // mobile data needs real headroom, not a few seconds.
+    const controller = new AbortController()
     const { error } = await withTimeout(
-      supabase.from('user_workspaces').upsert(body, {
-        onConflict: 'user_id',
-      }),
+      supabase
+        .from('user_workspaces')
+        .upsert(body, { onConflict: 'user_id' })
+        .abortSignal(controller.signal),
       25000,
-      'Cloud desk save'
+      'Cloud desk save',
+      controller
     )
 
     if (error) {

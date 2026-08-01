@@ -3,6 +3,8 @@
  * “Next · …” lives on each step. Never shout “First empty · Define”
  * while working later steps.
  */
+import { labelForStepId } from '../lib/journey'
+
 export default function JourneyGapStrip({
   pathNextGap = null,
   leaveBehindThin = false,
@@ -41,7 +43,7 @@ export default function JourneyGapStrip({
           type="button"
           className="journey-gap-strip-btn is-ship"
           onClick={() => setActiveView('finish')}
-          title="Steps look full · open Deliver"
+          title={`Steps look full · open ${labelForStepId('deliver')}`}
         >
           Download brand book PDF
         </button>

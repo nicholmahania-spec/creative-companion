@@ -27,7 +27,6 @@ describe('workspace round-trip', () => {
   beforeEach(() => {
     useAppStore.setState({
       templates: [{ id: 't1', name: 'Studio starter' }],
-      currentTemplateId: 't1',
       portalSeen: { abc: true },
       themeSource: 'user',
     })
@@ -48,13 +47,12 @@ describe('workspace round-trip', () => {
 
   it('restores templates through export -> hydrate', () => {
     const payload = useAppStore.getState().exportAllData()
-    useAppStore.setState({ templates: [], currentTemplateId: null })
+    useAppStore.setState({ templates: [] })
 
     const r = useAppStore.getState().hydrateFromPayload(payload)
     expect(r.ok).toBe(true)
     expect(useAppStore.getState().templates).toHaveLength(1)
     expect(useAppStore.getState().templates[0].name).toBe('Studio starter')
-    expect(useAppStore.getState().currentTemplateId).toBe('t1')
   })
 
   it('keeps portalSeen and themeSource across the trip', () => {
@@ -72,13 +70,11 @@ describe('workspace round-trip', () => {
        same data loss in the other direction. */
     const payload = useAppStore.getState().exportAllData()
     delete payload.templates
-    delete payload.currentTemplateId
     delete payload.portalSeen
     delete payload.themeSource
 
     useAppStore.getState().hydrateFromPayload(payload)
     expect(useAppStore.getState().templates).toHaveLength(1)
-    expect(useAppStore.getState().currentTemplateId).toBe('t1')
     expect(useAppStore.getState().portalSeen).toEqual({ abc: true })
     expect(useAppStore.getState().themeSource).toBe('user')
   })

@@ -2,12 +2,12 @@
  * Public, no-login client dashboard (/c/:portalId) — bypasses the whole
  * authenticated app shell, same pattern as PublicDiscoveryFill.jsx.
  *
- * Shows the client: which of the 7 journey steps the studio has pushed to
+ * Shows the client: which of the journey steps the studio has pushed to
  * them, lets them approve/request changes per step with a note, a simple
  * chat thread with the studio, and (if the studio has asked) the Project
  * overview form to fill out and submit themselves.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { clientFacingError } from '../lib/clientFacingError'
 import { JOURNEY_STEPS } from '../lib/journey'
 import ClientBriefFields from './ClientBriefFields'
@@ -37,6 +37,45 @@ export default function PublicClientPortal({ portalId }) {
   const [surveySubmitting, setSurveySubmitting] = useState(false)
   const chatEndRef = useRef(null)
 
+  /* Everything this client types lives in component state until they press a
+     submit button, and the form and survey are both single-use server-side. So
+     a client who closes the tab, is called away, or whose phone evicts the page
+     loses the lot, with no acknowledgement that anything happened and no way
+     back short of a new link and an awkward email.
+
+     /f/ has drafted to localStorage since it was built, with that reasoning
+     written down. This surface — the longer of the two, and the one a client
+     returns to repeatedly — never got it. Same data shape, same failure, second
+     copy missed, which is the drift this codebase keeps recording.
+
+     Step notes are drafted too, not just the two forms: the note is where the
+     client's actual change request lives ("the mark reads too corporate"),
+     which is the single most expensive sentence on the page to lose, because
+     it is the one that says what to redraw. */
+  const draftKey = `cc-portal-draft-${portalId}`
+  /* Nothing is persisted until the server load has been merged in. Without
+     this the first render would write empty state straight over a saved
+     draft — the restore would lose a race with its own save. */
+  const draftRestored = useRef(false)
+
+  const readDraft = () => {
+    try {
+      const d = JSON.parse(localStorage.getItem(draftKey) || 'null')
+      return d && typeof d === 'object' ? d : {}
+    } catch {
+      /* an unparseable draft is not worth blocking the portal over */
+      return {}
+    }
+  }
+
+  const writeDraft = (patch) => {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({ ...readDraft(), ...patch }))
+    } catch {
+      /* private mode / quota — the portal still works, it just won't survive */
+    }
+  }
+
   const load = async () => {
     const r = await fetchClientPortal(portalId)
     if (!r.ok) {
@@ -45,7 +84,17 @@ export default function PublicClientPortal({ portalId }) {
       return
     }
     setPortal(r)
-    setFormAnswers((prev) => (Object.keys(prev).length ? prev : r.detectiveAnswers || {}))
+    const draft = readDraft()
+    setFormAnswers((prev) =>
+      Object.keys(prev).length
+        ? prev
+        : { ...(r.detectiveAnswers || {}), ...(draft.form || {}) }
+    )
+    setSurveyAnswers((prev) =>
+      Object.keys(prev).length ? prev : draft.survey || {}
+    )
+    setNoteDrafts((prev) => (Object.keys(prev).length ? prev : draft.notes || {}))
+    draftRestored.current = true
     setLoadState('ready')
     const m = await fetchClientPortalMessages(portalId)
     if (m.ok) setMessages(m.messages)
@@ -56,22 +105,59 @@ export default function PublicClientPortal({ portalId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portalId])
 
-  /* Skip the first run. On load `messages` goes [] -> fetched, and scrolling
-     on that transition dropped the client at the chat block — well below the
-     fold — without ever seeing the steps or the form they were sent for. */
-  const didFirstScroll = useRef(false)
+  /* Scroll to the chat ONLY when this client just sent something.
+     Two ways this goes wrong otherwise. On load `messages` goes [] -> fetched,
+     and scrolling on that transition dropped the client at the chat block —
+     well below the fold — without ever seeing the steps or the form they were
+     sent for. And now that the thread refreshes on its own, an incoming reply
+     would yank someone mid-sentence in the brief down to the chat. A page that
+     moves under you while you are typing is worse than a message you see a
+     moment later, so the scroll follows the client's own action and nothing
+     else. */
+  const scrollAfterNextMessages = useRef(false)
   useEffect(() => {
-    if (!didFirstScroll.current) {
-      didFirstScroll.current = true
-      return
-    }
+    if (!scrollAfterNextMessages.current) return
+    scrollAfterNextMessages.current = false
     chatEndRef.current?.scrollIntoView({ block: 'nearest' })
   }, [messages])
 
-  const refreshMessages = async () => {
+  /* One writer for all three, rather than wrapping every setter call site —
+     fewer places for a future field to be added and silently not drafted. */
+  useEffect(() => {
+    if (!draftRestored.current) return
+    writeDraft({ form: formAnswers, survey: surveyAnswers, notes: noteDrafts })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formAnswers, surveyAnswers, noteDrafts])
+
+  const refreshMessages = useCallback(async () => {
     const m = await fetchClientPortalMessages(portalId)
     if (m.ok) setMessages(m.messages)
-  }
+  }, [portalId])
+
+  /* Keep the thread current without making the client remember to.
+     The studio side of this same conversation has polled since it was built —
+     "a message thread that only updates when you remember to press Refresh is
+     a message thread that gets missed" — and this half, the one a stranger
+     reads on a phone with no way to be told how it works, had only a button.
+
+     Deliberately not the studio's flat 30s interval: this runs on someone
+     else's phone. Refreshing when the tab becomes visible covers the case that
+     actually happens (they come back to look), and the interval only ticks
+     while the tab is visible, so a backgrounded page costs nothing. */
+  useEffect(() => {
+    if (!portalId) return undefined
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refreshMessages()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') void refreshMessages()
+    }, 60000)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(id)
+    }
+  }, [portalId, refreshMessages])
 
   /* Every handler clears `error` first. Without it one transient failure left
      a red line on the card for the rest of the session, including after
@@ -89,6 +175,9 @@ export default function PublicClientPortal({ portalId }) {
       return
     }
     setChatInput('')
+    // The client asked for this one, so following it down to the thread is
+    // wanted here and only here.
+    scrollAfterNextMessages.current = true
     await refreshMessages()
   }
 
@@ -108,6 +197,13 @@ export default function PublicClientPortal({ portalId }) {
       setError(clientFacingError(r.error))
       return
     }
+    /* Only this step's note — the others are still unsent work. */
+    setNoteDrafts((d) => {
+      const next = { ...d }
+      delete next[stepId]
+      writeDraft({ notes: next })
+      return next
+    })
     await load()
     setPendingStepId(null)
   }
@@ -122,6 +218,7 @@ export default function PublicClientPortal({ portalId }) {
       setError(clientFacingError(r.error))
       return
     }
+    writeDraft({ form: {} })
     await load()
   }
 
@@ -135,6 +232,7 @@ export default function PublicClientPortal({ portalId }) {
       setError(clientFacingError(r.error))
       return
     }
+    writeDraft({ survey: {} })
     await load()
   }
 
@@ -260,7 +358,7 @@ export default function PublicClientPortal({ portalId }) {
                 {/* Beside the button that caused it. This used to render only
                     at the very bottom of the page, several screens below the
                     submit, so a failed submit looked like nothing happened. */}
-                {error && <p className="public-fill-error">{error}</p>}
+                {error && <p className="public-fill-error" role="alert">{error}</p>}
                 <button type="submit" className="btn btn-primary" disabled={formSubmitting}>
                   {formSubmitting ? 'Submitting…' : 'Submit'}
                 </button>
@@ -313,7 +411,7 @@ export default function PublicClientPortal({ portalId }) {
                   )}
                 </div>
               ))}
-              {error && <p className="public-fill-error">{error}</p>}
+              {error && <p className="public-fill-error" role="alert">{error}</p>}
               <button
                 type="submit"
                 className="btn btn-primary"
@@ -366,12 +464,22 @@ export default function PublicClientPortal({ portalId }) {
               Send
             </button>
           </form>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={refreshMessages}>
+          {/* Kept even though the thread now refreshes itself: pressing it is
+              how someone confirms nothing is stuck, and it is an explicit ask
+              to look at the thread, so this one does follow down to it. */}
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => {
+              scrollAfterNextMessages.current = true
+              void refreshMessages()
+            }}
+          >
             Refresh messages
           </button>
         </div>
 
-        {error && <p className="public-fill-error">{error}</p>}
+        {error && <p className="public-fill-error" role="alert">{error}</p>}
       </div>
     </div>
   )

@@ -21,6 +21,7 @@ import {
   DETECTIVE_CHAPTERS,
   formatDetectiveAnswer,
   filledDetectiveChapters,
+  progressItemInScope,
 } from './detectiveBrief'
 import { OVERVIEW_FIELD_PREFIX } from './overviewOcr'
 import {
@@ -372,13 +373,6 @@ export function buildBrandPackSnapshot({
     dontUse: p.dontUse || '',
     deadline: p.deadline || '',
     palette: colors,
-    // Omit empty concept package (UI pipeline removed; avoid noise in export)
-    conceptPackage: (() => {
-      const c = p.conceptPackage
-      if (!c || typeof c !== 'object') return null
-      const has = Object.values(c).some((v) => String(v || '').trim())
-      return has ? c : null
-    })(),
     openTasks: openTasks.map((t) => ({
       id: t.id,
       title: t.title,
@@ -514,13 +508,31 @@ export function packReadiness(pack) {
       section: null,
     },
   ]
-  const okCount = checks.filter((c) => c.ok).length
+  /* Only require what the brief picked. tagline/palette/voice are book fields
+     a logo-only client did not buy, so a done logo job must not read as
+     "Ready · 4/8". progressItemInScope reads the same deliverablesPicked the
+     brand-progress chip uses, so the two counters can never disagree about
+     scope. Everything not scopeable (goal, pins, positioning, handoff,
+     learnings) always counts. */
+  const picked = det.deliverablesPicked
+  const scopedChecks = checks.filter((c) => progressItemInScope(c.id, picked))
+  const okCount = scopedChecks.filter((c) => c.ok).length
+  const gaps = scopedChecks.filter((c) => !c.ok)
   // Thin if core brand pieces missing (not handoff/learnings — those are ship polish)
-  const coreOk = checks
+  const coreOk = scopedChecks
     .filter((c) => !['handoff', 'learnings'].includes(c.id))
     .filter((c) => c.ok).length
   const thin = coreOk < 3
-  return { checks, okCount, thin, hasName, coreOk }
+  /* "Done" ignores handoff/learnings for the same reason coreOk does — they
+     are ship polish, not requirements, and a job is shippable without a
+     personal learnings note. Blocking "ready to ship" on an optional note
+     would nag a finished job, which is the whole thing this scoping removes. */
+  const coreChecks = scopedChecks.filter(
+    (c) => !['handoff', 'learnings'].includes(c.id)
+  )
+  const allDone =
+    coreChecks.length > 0 && coreChecks.every((c) => c.ok)
+  return { checks: scopedChecks, okCount, thin, hasName, coreOk, gaps, allDone }
 }
 
 /** Markdown brand direction pack */
@@ -1600,292 +1612,6 @@ export function printCurrentPage(options = {}) {
  * @param {object} schema - The form schema (for labels and structure)
  * @returns {string} HTML markup for the form
  */
-export function buildFormPdfMarkup(formData, schema = {}) {
-  const formFields = Object.keys(schema.shape || {});
-
-  // If no schema provided, just show all form data
-  const fieldsToShow = formFields.length > 0 ? formFields : Object.keys(formData);
-
-  const fieldsHtml = fieldsToShow.map(fieldName => {
-    const value = formData[fieldName];
-    const label = schema.shape[fieldName]?._def?.description ||
-                  fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-
-    // Format the value is null or undefined, show placeholder
-    const displayValue = value === null || value === undefined
-      ? '(Not provided)'
-      : Array.isArray(value)
-        ? value.join(', ')
-        : String(value);
-
-    return `
-      <div class="form-field-row">
-        <div class="form-field-label">${escapeFormHtml(label)}:</div>
-        <div class="form-field-value">${escapeFormHtml(displayValue)}</div>
-      </div>
-    `;
-  }).join('');
-
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="utf-8"/>
-      <meta name="viewport" content="width=device-width, initial-scale=1"/>
-      <title>Form Submission - Creative Companion</title>
-      <link rel="preconnect" href="https://fonts.googleapis.com"/>
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-      <style>
-        :root { color-scheme: light; }
-        * { box-sizing: border-box; }
-        body {
-          margin: 0;
-          font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
-          color: #0B1220;
-          background: #EEF0F6;
-          line-height: 1.5;
-          -webkit-font-smoothing: antialiased;
-        }
-        .form-container { max-width: 600px; margin: 0 auto; padding: 2rem; }
-        .form-header {
-          text-align: center;
-          margin-bottom: 2rem;
-          padding-bottom: 1rem;
-          border-bottom: 1px solid rgba(11,18,32,.08);
-        }
-        .form-title {
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: #1C1917;
-          margin-bottom: 0.5rem;
-        }
-        .form-subtitle {
-          font-size: 0.9rem;
-          color: rgba(11,18,32,.65);
-        }
-        .form-fields { margin-bottom: 2rem; }
-        .form-field-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1rem 2rem;
-          margin-bottom: 1.25rem;
-          page-break-inside: avoid;
-        }
-        .form-field-label {
-          font-weight: 600;
-          color: #0B1220;
-        }
-        .form-field-value {
-          color: rgba(11,18,32,.65);
-          word-break: break-word;
-        }
-        .form-footer {
-          margin-top: 2rem;
-          padding-top: 1rem;
-          border-top: 1px solid rgba(11,18,32,.08);
-          font-size: 0.8rem;
-          color: rgba(11,18,32,.45);
-          text-align: center;
-        }
-        @media print {
-          body { background: #fff; }
-          .form-container { padding: 0; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="form-container">
-        <div class="form-header">
-          <h1 class="form-title">Form Submission</h1>
-          <p class="form-subtitle">Creative Companion · ${new Date().toLocaleDateString()}</p>
-        </div>
-        <div class="form-fields">
-          ${fieldsHtml}
-        </div>
-        <div class="form-footer">
-          Generated by Creative Companion · Form data export
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-/**
- * Escape HTML special characters to prevent XSS
- * @param {string} text - Text to escape
- * @returns {string} Escaped text
- */
-function escapeFormHtml(text) {
-  if (!text) return '';
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-/**
- * Download form as PDF (vector-based)
- * @param {object} formData - The form data to include in PDF
- * @param {object} schema - The form schema (for labels and structure)
- * @param {Promise|null} handlePromise - From captureSaveHandle()
- * @param {{ hideWatermark?: boolean }} [options]
- * @returns {Promise<{ ok: boolean, error?: string, cancelled?: boolean, method?: string }>}
- */
-export async function downloadFormPdf(
-  formData,
-  schema = {},
-  handlePromise = null,
-  options = {}
-) {
-  try {
-    await preloadPdfEngine()
-    const { jsPDF } = await jsPdfModulePromise
-
-    const pdf = new jsPDF({
-      unit: 'pt',
-      format: 'letter',
-      compress: true,
-    })
-
-    const margin = 50
-    const pageW = pdf.internal.pageSize.getWidth()
-    const pageH = pdf.internal.pageSize.getHeight()
-    const contentW = pageW - margin * 2
-
-    let y = margin
-
-    // Add header
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(18)
-    pdf.setTextColor(28, 25, 23) // Dark gray from your palette
-    pdf.text('Form Submission', margin, y)
-    y += 30
-
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(10)
-    pdf.setTextColor(11, 18, 32) // Blue-gray
-    pdf.text(`Creative Companion · ${new Date().toLocaleDateString()}`, margin, y)
-    y += 40
-
-    // Add form fields
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(12)
-    pdf.setTextColor(28, 25, 23)
-
-    const formFields = Object.keys(schema.shape || {});
-    const fieldsToShow = formFields.length > 0 ? formFields : Object.keys(formData);
-
-    for (const fieldName of fieldsToShow) {
-      const value = formData[fieldName];
-      const label = schema.shape[fieldName]?._def?.description ||
-                    fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-      const displayValue = value === null || value === undefined
-        ? '(Not provided)'
-        : Array.isArray(value)
-          ? value.join(', ')
-          : String(value);
-
-      // Check if we need a new page
-      if (y > pageH - margin - 60) {
-        pdf.addPage()
-        y = margin
-      }
-
-      // Draw label
-      pdf.text(`${label}:`, margin, y)
-
-      // Draw value (wrapping if needed)
-      pdf.setFont('helvetica', 'normal')
-      const valueLines = pdf.splitTextToSize(displayValue, contentW - 100)
-      pdf.text(valueLines, margin + 150, y)
-
-      // Move y position based on number of lines
-      const lineHeight = 12 * LINE_HEIGHT.normal // 12pt font * 1.5 line height
-      y += Math.max(valueLines.length, 1) * lineHeight + 10
-    }
-
-    // Add footer
-    if (y > pageH - margin - 30) {
-      pdf.addPage()
-      y = margin
-    }
-
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(8)
-    pdf.setTextColor(150, 150, 150)
-    pdf.text(`Generated by Creative Companion · Form data export`, margin, pageH - margin)
-
-    const slug = 'form-submission'
-    const name = `${slug}-form.pdf`
-
-    let blob
-    try {
-      const ab = pdf.output('arraybuffer')
-      blob = new Blob([ab], { type: 'application/pdf' })
-    } catch {
-      blob = pdf.output('blob')
-      if (!blob.type) blob = new Blob([blob], { type: 'application/pdf' })
-    }
-
-    if (options.returnBlobOnly) {
-      return {
-        ok: true,
-        blob,
-        method: 'blob',
-        pages: pdf.getNumberOfPages(),
-      }
-    }
-
-    if (handlePromise) {
-      const written = await writeToSaveHandle(handlePromise, blob)
-      if (written.ok || written.cancelled) {
-        return {
-          ...written,
-          method: 'file-picker',
-          pages: pdf.getNumberOfPages(),
-        }
-      }
-    }
-
-    try {
-      pdf.save(name)
-      return {
-        ok: true,
-        method: 'jspdf-save',
-        pages: pdf.getNumberOfPages(),
-      }
-    } catch {
-      // fall through
-    }
-
-    const viaAnchor = downloadBlob(blob, name)
-    if (viaAnchor.ok) {
-      return {
-        ...viaAnchor,
-        method: viaAnchor.method || 'anchor',
-        pages: pdf.getNumberOfPages(),
-      }
-    }
-
-    return { ok: false, error: 'Browser blocked the download' }
-  } catch (e) {
-    return { ok: false, error: e?.message || 'Form PDF generation failed' }
-  }
-}
-
-/**
- * Project overview PDF — Define brief as a single document.
- * - filled: only answered fields (no sea of em-dashes)
- * - blank: full questionnaire with ruled lines + AcroForm fields
- *   (print / type / scan back)
- *
- * @param {object} project - project.detective holds the answers
- * @param {{ blank?: boolean, clientName?: string, returnBlobOnly?: boolean }} [options]
- */
 export async function downloadProjectOverviewPdf(project, options = {}) {
   try {
     if (!jsPdfModulePromise) {
@@ -2128,5 +1854,104 @@ export async function downloadProjectOverviewPdf(project, options = {}) {
       ok: false,
       error: e?.message || 'Project overview PDF generation failed',
     }
+  }
+}
+
+/**
+ * The contents of a logo-only handoff, as plain data — no browser, no canvas,
+ * so it is fully testable and ships only what genuinely exists.
+ *
+ * A logo-only client needs the mark and a note, not a book about a brand that
+ * does not exist. This returns the real uploaded mark (exactly as its data URL
+ * holds it, same extraction the brand kit already uses) plus a README that is
+ * honest about what is and is not in the pack — including, when the source is
+ * raster, that it is raster and not vector, so the recipient is not told they
+ * have something they do not.
+ *
+ * Deliberately does NOT fabricate mono/reverse files. Those exist on screen as
+ * real CSS previews, but writing them as separate deliverables would need
+ * canvas rendering this can't test or verify — and a pack of files the app
+ * can't honestly produce is the exact thing the build rule forbids. Naming
+ * them as "usually also supplied" in the README is honest; shipping fakes is
+ * not.
+ *
+ * @param {object} pack  a brand pack snapshot
+ * @returns {{ files: Array<{name:string, content:string, base64:boolean}>, hasMark: boolean }}
+ */
+export function markPackFiles(pack = {}) {
+  const files = []
+  const name = pack.projectName || 'Logo'
+  let hasMark = false
+  let markLine = 'No mark has been uploaded yet — add one on the Identity page.'
+
+  const src = String(pack.logoImage || '')
+  const m = src.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/)
+  if (m) {
+    const mime = m[1]
+    const ext = mime.includes('png')
+      ? 'png'
+      : mime.includes('jpeg') || mime.includes('jpg')
+        ? 'jpg'
+        : mime.includes('svg')
+          ? 'svg'
+          : mime.includes('webp')
+            ? 'webp'
+            : 'png'
+    files.push({ name: `logo.${ext}`, content: m[2], base64: true })
+    hasMark = true
+    const isVector = ext === 'svg'
+    markLine = isVector
+      ? 'logo.svg — vector, scales to any size.'
+      : `logo.${ext} — raster (not vector). Fine for screen and known print sizes; ask for a redraw if you need it at billboard scale.`
+  }
+
+  const readme = [
+    `${name} — logo files`,
+    '',
+    'In this pack:',
+    `- ${markLine}`,
+    '',
+    'A full logo handoff usually also includes a one-colour version and a',
+    'reverse (light-on-dark) version. Those are shown as previews in the app;',
+    'ask if you need them supplied as separate files.',
+  ].join('\n')
+
+  files.push({ name: 'README.txt', content: readme, base64: false })
+  return { files, hasMark }
+}
+
+/**
+ * Download the logo-only handoff: the real mark plus an honest README, zipped.
+ *
+ * The thin browser layer over markPackFiles() — that function decides the
+ * contents (pure, tested); this one only zips and saves them, the same JSZip +
+ * downloadBlobReliable path the brand kit uses. No canvas, nothing fabricated.
+ *
+ * @param {object} pack
+ * @param {Promise|null} handlePromise  a pre-captured File System Access handle
+ * @returns {Promise<{ok: boolean, error?: string}>}
+ */
+export async function downloadMarkPack(pack, handlePromise = null) {
+  try {
+    const { files, hasMark } = markPackFiles(pack)
+    const JSZip = (await import('jszip')).default
+    const zip = new JSZip()
+    const slug = slugifyFilename(pack.projectName, 'logo')
+    const folder = zip.folder(slug) || zip
+    for (const f of files) {
+      folder.file(f.name, f.content, f.base64 ? { base64: true } : undefined)
+    }
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const zipName = `${slug}-logo-files.zip`
+    if (handlePromise) {
+      const written = await writeToSaveHandle(handlePromise, blob)
+      if (written.ok || written.cancelled) {
+        return { ...written, method: 'file-picker', hasMark }
+      }
+    }
+    const r = await downloadBlobReliable(blob, zipName, null)
+    return { ...r, hasMark }
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Logo pack export failed' }
   }
 }

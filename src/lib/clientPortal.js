@@ -1,6 +1,6 @@
 /**
  * Client portal — a no-login dashboard link for a project's client.
- * Studio side chooses which of the 7 journey steps are "pushed" (visible)
+ * Studio side chooses which of the journey steps are "pushed" (visible)
  * to the client; the client can view what's pushed, approve or request
  * changes per step, chat with the studio, and fill in the Project overview
  * form themselves if asked to.
@@ -10,6 +10,7 @@
  * touches the tables directly (mirrors discoveryShare.js's pattern).
  */
 import { supabase, isSupabaseConfigured } from './supabase'
+import { ANSWERS_TOO_LARGE_MESSAGE, answersTooLarge } from './answerPayload'
 import { publicUrl } from './appPaths'
 
 /** Build the client-facing URL for a portal id. */
@@ -327,6 +328,14 @@ export async function submitClientPortalForm(portalId, answers) {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: 'Cloud sync isn’t configured' }
   }
+  /* Before the round trip, not after: the RPC signals "too large" and "already
+     submitted" the same way (false), so an oversize payload that reaches it
+     comes back as a message telling the client they are finished when they are
+     not — on a link that only works once. Caught here, the link is not burned
+     and the message can name the one thing they can do about it. */
+  if (answersTooLarge(answers)) {
+    return { ok: false, error: ANSWERS_TOO_LARGE_MESSAGE }
+  }
   const { data, error } = await supabase.rpc('submit_client_portal_form', {
     portal_id_in: portalId,
     submitted: answers || {},
@@ -345,6 +354,14 @@ export async function submitClientPortalForm(portalId, answers) {
 export async function submitClientPortalSurvey(portalId, answers) {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  /* Before the round trip, not after: the RPC signals "too large" and "already
+     submitted" the same way (false), so an oversize payload that reaches it
+     comes back as a message telling the client they are finished when they are
+     not — on a link that only works once. Caught here, the link is not burned
+     and the message can name the one thing they can do about it. */
+  if (answersTooLarge(answers)) {
+    return { ok: false, error: ANSWERS_TOO_LARGE_MESSAGE }
   }
   const { data, error } = await supabase.rpc('submit_client_portal_survey', {
     portal_id_in: portalId,

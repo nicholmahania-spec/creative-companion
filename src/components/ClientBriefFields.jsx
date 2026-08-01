@@ -43,15 +43,30 @@ export default function ClientBriefFields({ answers = {}, onChange, idPrefix, ta
               </div>
             )
           }
+          const tipId = f.tip ? `${fieldId}-tip` : undefined
+          /* choice/checklist render a radiogroup / fieldsets, not an element
+             with id={fieldId} — so htmlFor pointed at nothing there, which is
+             the actual WCAG failure. Those groups carry their own accessible
+             name (aria-label / legend); the visible caption stays but drops
+             the broken association. */
+          const singleControl = f.type !== 'choice' && f.type !== 'checklist'
           return (
             <div className="field-block" key={f.id}>
-              <label className="field-label" htmlFor={fieldId}>
+              <label
+                className="field-label"
+                htmlFor={singleControl ? fieldId : undefined}
+              >
                 {f.label}
               </label>
               {f.type === 'choice' ? (
                 /* Same row treatment as the checklist so "pick one" and
                    "pick many" don't read as two different systems. */
-                <div className="define-choice" role="radiogroup" aria-label={f.label}>
+                <div
+                  className="define-choice"
+                  role="radiogroup"
+                  aria-label={f.label}
+                  aria-describedby={tipId}
+                >
                   {f.options.map((o) => {
                     const on = answers[f.id] === o.id
                     return (
@@ -72,11 +87,17 @@ export default function ClientBriefFields({ answers = {}, onChange, idPrefix, ta
                   id={fieldId}
                   type="date"
                   className="field-input"
+                  aria-describedby={tipId}
                   value={answers[f.id] || ''}
                   onChange={(e) => onChange(f.id, e.target.value)}
                 />
               ) : f.type === 'checklist' ? (
-                <div className="define-checklist">
+                <div
+                  className="define-checklist"
+                  role="group"
+                  aria-label={f.label}
+                  aria-describedby={tipId}
+                >
                   {[
                     {
                       key: 'included',
@@ -129,6 +150,7 @@ export default function ClientBriefFields({ answers = {}, onChange, idPrefix, ta
                   id={fieldId}
                   className="field-input"
                   rows={3}
+                  aria-describedby={tipId}
                   value={answers[f.id] || ''}
                   onChange={(e) => onChange(f.id, e.target.value)}
                 />
@@ -136,11 +158,16 @@ export default function ClientBriefFields({ answers = {}, onChange, idPrefix, ta
                 <input
                   id={fieldId}
                   className="field-input"
+                  aria-describedby={tipId}
                   value={answers[f.id] || ''}
                   onChange={(e) => onChange(f.id, e.target.value)}
                 />
               )}
-              {f.tip && <p className="discovery-brief-hint">{f.tip}</p>}
+              {f.tip && (
+                <p id={tipId} className="discovery-brief-hint">
+                  {f.tip}
+                </p>
+              )}
               {f.attach && targetId && (
                 <BriefAttach
                   targetId={targetId}

@@ -21,6 +21,7 @@ import {
   twoDirectionsTip,
 } from './buddy'
 import { HELPER_SYSTEM_PROMPT } from './helperPersona'
+import { supabase } from './supabase'
 
 const DEFAULT_MODEL = 'grok-4.5'
 
@@ -257,14 +258,20 @@ export async function callXaiChat({
   if (key !== 'proxy') {
     headers.Authorization = `Bearer ${key}`
   } else {
-    // Optional shared secret for Netlify proxy (production requires it)
+    /* Prove who we are with the Supabase session, not a shared secret.
+       This used to send VITE_XAI_PROXY_SECRET in X-CC-Proxy-Key. Vite inlines
+       VITE_ values into the shipped bundle, so that secret was public and the
+       guard it fed was decorative — anyone who viewed source could bill xAI
+       calls to this project. The access token is per-user, short-lived and
+       refreshed by the client, and the proxy verifies it against Supabase. */
     try {
-      const proxySecret = String(
-        import.meta.env?.VITE_XAI_PROXY_SECRET || ''
-      ).trim()
-      if (proxySecret) headers['X-CC-Proxy-Key'] = proxySecret
+      const { data } = (await supabase?.auth.getSession()) || {}
+      const token = data?.session?.access_token
+      if (token) headers.Authorization = `Bearer ${token}`
     } catch {
-      /* ignore */
+      /* No session — the proxy will answer 401 and the Helper degrades to its
+         scripted lines, which is the correct outcome rather than a silent
+         unauthenticated call. */
     }
   }
 

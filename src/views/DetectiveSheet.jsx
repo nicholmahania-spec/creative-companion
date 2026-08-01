@@ -12,12 +12,6 @@ import {
 import useIsMobile from '../lib/useIsMobile'
 import DefineStartHere from '../components/DefineStartHere'
 import BriefSpectrum from '../components/BriefSpectrum'
-import {
-  trackDetectiveFieldUpdate,
-  trackChapterNavigation,
-  startPerformanceTimer,
-  endPerformanceTimer
-} from '../lib/analytics'
 import '../styles/lazy-define.css'
 
 export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
@@ -180,7 +174,6 @@ export default function DetectiveSheet({
                 }${st.requiredDone && !st.complete ? ' is-ready' : ''}`}
                 onClick={() => {
                   setOpenChapter(ch.id)
-                  trackChapterNavigation(ch.id, 'open')
                   // Master-scroll mode renders every chapter at once, so the
                   // rail has to move the page, not just change which is open.
                   if (!accordion) {
@@ -321,7 +314,6 @@ export default function DetectiveSheet({
                             value={detective?.[f.id] || ''}
                             onChange={(v) => {
                               updateDetective?.(f.id, v)
-                              trackDetectiveFieldUpdate(f.id, v, ch.id)
                             }}
                             idPrefix="detective"
                           />
@@ -353,7 +345,6 @@ export default function DetectiveSheet({
                             value={detective?.[f.id]}
                             onPick={(v) => {
                               updateDetective?.(f.id, v)
-                              trackDetectiveFieldUpdate(f.id, v, ch.id)
                             }}
                           />
                         ) : f.type === 'date' ? (
@@ -372,7 +363,6 @@ export default function DetectiveSheet({
                             selected={detective?.[f.id]}
                             onToggle={(next) => {
                               updateDetective?.(f.id, next)
-                              trackDetectiveFieldUpdate(f.id, next.join(', '), ch.id)
                             }}
                           />
                         ) : f.area ? (
@@ -382,12 +372,7 @@ export default function DetectiveSheet({
                             rows={3}
                             value={detective?.[f.id] || ''}
                             onChange={(e) => {
-                              const fieldId = f.id;
-                              const startTime = `detective_field_${fieldId}_${Date.now()}`;
-                              startPerformanceTimer(startTime);
-                              updateDetective?.(f.id, e.target.value);
-                              trackDetectiveFieldUpdate(f.id, e.target.value, ch.id);
-                              endPerformanceTimer(startTime, { fieldId, chapterId: ch.id });
+                              updateDetective?.(f.id, e.target.value)
                             }}
                             onFocus={() => setFocusField(f.id)}
                             onBlur={() => setFocusField(null)}
@@ -399,12 +384,7 @@ export default function DetectiveSheet({
                             className="define-input field-input"
                             value={detective?.[f.id] || ''}
                             onChange={(e) => {
-                              const fieldId = f.id;
-                              const startTime = `detective_field_${fieldId}_${Date.now()}`;
-                              startPerformanceTimer(startTime);
-                              updateDetective?.(f.id, e.target.value);
-                              trackDetectiveFieldUpdate(f.id, e.target.value, ch.id);
-                              endPerformanceTimer(startTime, { fieldId, chapterId: ch.id });
+                              updateDetective?.(f.id, e.target.value)
                             }}
                             onFocus={() => setFocusField(f.id)}
                             onBlur={() => setFocusField(null)}

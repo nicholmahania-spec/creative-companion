@@ -14,7 +14,6 @@ import {
   chosenDirection,
 } from '../lib/decisionLog'
 import LayoutPatterns from '../components/LayoutPatterns'
-import { trackFeatureUsage } from '../lib/analytics'
 import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
@@ -304,7 +303,6 @@ export default function SketchView(props) {
               className="text-link"
               onClick={() => {
                 setActiveView?.('spark')
-                trackFeatureUsage('decision_log_edit', 'opened')
               }}
             >
               Edit
@@ -333,7 +331,6 @@ export default function SketchView(props) {
                   className="btn btn-ghost btn-sm"
                   onClick={() => {
                     ideateDirs.forEach(queueDraft)
-                    trackFeatureUsage('ideate_queue_all', 'used')
                   }}
                 >
                   Queue all
@@ -378,7 +375,6 @@ export default function SketchView(props) {
               onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 captureStep?.();
-                trackFeatureUsage('sketch_task_added', 'capture', { source: 'desk_capture_enter' });
               }
             }}
               placeholder="Next step"
@@ -388,7 +384,6 @@ export default function SketchView(props) {
               type="button"
               onClick={() => {
                 captureStep?.();
-                trackFeatureUsage('sketch_task_added', 'capture', { source: 'desk_capture_button' });
               }}
               className="btn btn-primary"
             >
@@ -485,7 +480,6 @@ export default function SketchView(props) {
                         checked={false}
                         onChange={() => {
                 toggleTask(task.id);
-                trackFeatureUsage('sketch_task_toggled', 'toggle', { taskId: task.id, source: 'queue_checkbox' });
               }}
                       />
                       <span className="task-row-body">

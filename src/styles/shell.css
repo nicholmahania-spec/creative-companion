@@ -2424,7 +2424,18 @@ h3 {
   bottom: 1.35rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 160;
+  /* Above every dialog layer (.export-overlay 200, .running-todo-panel 201,
+     the floating control at 250) and below the skip link at 10001.
+
+     It was 160, which is UNDER .export-overlay's 200 and its full-viewport
+     rgba(18,18,18,0.48) backdrop — so every toast raised from inside an open
+     dialog was painted beneath that dialog and could not be seen. Export
+     failures, send failures, scan failures and "Cloud sync isn't configured"
+     on Create client dashboard all fired correctly and all looked like
+     nothing happening. A beta tester pressed that button twice and reported
+     no toast, no error, nothing in the console; the toast was there the whole
+     time, behind the panel. */
+  z-index: 300;
   max-width: min(92vw, 28rem);
   padding: 0.55rem 1rem;
   border-radius: var(--radius);
@@ -2481,6 +2492,7 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .done-undo {
+  position: relative;
   border: none;
   background: rgba(106, 106, 106, 0.12);
   color: var(--accent-growth);
@@ -2491,6 +2503,20 @@ html[data-reduce-motion='true'] *::after {
   cursor: pointer;
   flex-shrink: 0;
 }
+
+/* Same 44px touch-floor expansion as .brief-attach-remove: the visual stays,
+   the hit area reaches the project's stated minimum. --tap-min was defined
+   and unused. */
+.done-undo::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--tap-min);
+  height: var(--tap-min);
+}
+
 
 .done-undo:hover {
   background: rgba(106, 106, 106, 0.22);
@@ -3162,7 +3188,6 @@ html[data-reduce-motion='true'] *::after {
    * position — here that meant an arbitrary implicit grid cell, overlapping
    * header chrome. */
   right: 1rem;
-  z-index: var(--z-overlay);
   z-index: 150;
   background: var(--text-primary);
   color: var(--bg-canvas);
@@ -3749,7 +3774,6 @@ body.cc-printing-page button {
 
 .type-specimen-h {
   margin: 0 0 0.25rem;
-  z-index: var(--z-toast);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.15;
@@ -3853,6 +3877,64 @@ body.cc-printing-page button {
 .system-accordion-nav {
     gap: 0.25rem;
   }
+}
+
+/* ── Shared dialog chrome ──────────────────────────────────────────────
+   Every overlay in the app uses .export-overlay/.export-panel: Discovery
+   brief, Client inbox, Before/After, Overview share, Shortcuts, Onboarding,
+   the export panel, the running-to-do prompt, confirmations.
+
+   These four rules lived in lazy-deliver.css, which is imported by
+   DeliverView — a React.lazy chunk. Until the user visited Deliver, every
+   dialog in the app rendered with NO position, NO backdrop and NO z-index:
+   an ordinary block in normal document flow, with the page behind it fully
+   visible and clickable. That is not a modal, and on a cold cache it covered
+   the whole first-run sequence.
+
+   It also silently broke the "modals always centre" rule at every breakpoint,
+   since align-items came from the same missing rule. CLAUDE.md said this
+   chrome lived in shell.css; it did not, which is why nobody caught it. Now
+   it does.
+
+   Placed immediately above the max-width:640px block below, which overrides
+   .export-overlay's padding — base must precede the override at equal
+   specificity or the small-screen fix is dead. */
+.export-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(18, 18, 18, 0.48);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.export-panel {
+  width: min(440px, 100%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 1.6rem 1.55rem;
+  box-shadow: var(--shadow-3);
+}
+
+.export-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.export-panel-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1.35rem;
+  justify-content: flex-end;
 }
 
 @media (max-width: 640px) {
@@ -4396,36 +4478,6 @@ body.cc-printing-page button {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Demo tour */
-
-.demo-tour-panel {
-  width: min(26rem, 100%);
-  max-width: 28rem;
-}
-
-.demo-tour-overlay .view-lede {
-  margin-bottom: 1rem;
-}
-
-.demo-tour-dots {
-  display: flex;
-  gap: 0.35rem;
-  margin: 0 0 0.85rem;
-}
-
-.demo-tour-dots span {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 50%;
-  background: var(--bg-muted);
-  border: 1px solid var(--border-subtle);
-}
-
-.demo-tour-dots span.is-on {
-  background: var(--accent-growth);
-  border-color: var(--accent-growth);
-}
-
 /* ——— Beautify v1.3.0 ——— */
 
 .btn-primary {
@@ -4716,7 +4768,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .desk-confirm-body {
   margin: 0 0 0.55rem;
-  z-index: var(--z-toast);
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
@@ -6595,14 +6646,23 @@ body:has(.app.deep)::after {
    ============================================================ */
 
 :root {
-  --ts-canvas: #F5F5F5;
-  --ts-panel: #FFFFFF;
-  --ts-ink: #1A1A1A;
-  /* Was a hardcoded #A1A1A1 that shadowed the theme-aware definition at the
-     top of the file and failed contrast in both themes. Point it at the real
-     token so it follows the theme and the fix. */
+  /* All of these point at the theme-aware tokens rather than restating light
+     values, for the reason --ts-mute already recorded below.
+
+     They were literals — #F5F5F5, #FFFFFF, #1A1A1A, #E7E7E7 — declared here,
+     far below the definitions at the top of the file and below the .app.deep
+     block, so they won every time. The rule directly under this one is
+     `body, .app { background-color: var(--ts-canvas) !important }`, which
+     meant the page background in DARK MODE resolved to the light canvas. The
+     dark theme was being applied and then painted over.
+
+     --ts-mute was fixed on its own and its four siblings were left, which is
+     why the bug survived the fix that was meant to catch it. */
+  --ts-canvas: var(--bg-canvas);
+  --ts-panel: var(--bg-elevated);
+  --ts-ink: var(--text-primary);
   --ts-mute: var(--text-muted);
-  --ts-border: #E7E7E7;
+  --ts-border: var(--border-subtle);
   --ts-focus: var(--dopamine);
   --ts-radius: var(--radius);
 }
@@ -6772,17 +6832,17 @@ select:focus {
   min-height: 44px;
 }
 
-/* Page titles */
+/* Page titles
 
-/* One step above a section title (--fs-4). It was 1.25rem while chapter
-   headings sat at 1.5rem, so "Project overview" read as less important than
-   the sections inside it. */
-.page-title {
-  font-size: var(--fs-5) !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.02em;
-  color: var(--ts-ink) !important;
-}
+   Deliberately NOT redeclared here. This block used to force
+   `font-size: var(--fs-5) !important`, which beat the display scale declared
+   near the top of this file — clamp(1.75rem, 3.5vw, 2.35rem) with display
+   tracking — so every <h1> in the app rendered flat at 1.5rem and the
+   responsive ramp was dead code nobody could see was dead.
+
+   Its stated reason was to outrank section titles (--fs-4), and the base rule
+   already does that by a wider margin. Removing the override serves the
+   intent it was written for; keeping it defeated it. */
 
 /* Empty titles only when hideTips */
 
@@ -7003,25 +7063,6 @@ select:focus {
   border-radius: 0 !important;
   min-height: 40px;
   box-shadow: none !important;
-}
-
-.demo-tour-studio {
-  border-radius: var(--radius-sm) !important;
-  box-shadow: none !important;
-  border: 1px solid var(--ts-border, #E7E7E7);
-}
-
-.demo-tour-studio .demo-tour-lede {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--ts-mute, #A1A1A1);
-  margin: 0.35rem 0 0.85rem;
-}
-
-.demo-tour-studio .demo-tour-dots span {
-  border-radius: var(--radius);
-  width: 0.45rem;
-  height: 0.45rem;
 }
 
 .buddy-studio .buddy-kit-input,
@@ -7725,6 +7766,7 @@ select:focus {
 }
 
 .journey-projects-add {
+  position: relative;
   display: inline-grid;
   place-items: center;
   /* 24px, the WCAG 2.2 target-size minimum (2.5.8). Was 20x20. */
@@ -7739,6 +7781,20 @@ select:focus {
   line-height: 1;
   cursor: pointer;
 }
+
+/* Same 44px touch-floor expansion as .brief-attach-remove: the visual stays,
+   the hit area reaches the project's stated minimum. --tap-min was defined
+   and unused. */
+.journey-projects-add::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--tap-min);
+  height: var(--tap-min);
+}
+
 .journey-projects-add:hover {
   /* #606060 darkened toward a light background — correct in light, the
      wrong direction in dark (≈2.3:1). --text-primary moves toward full
@@ -9465,6 +9521,29 @@ textarea.artboard-brief-input {
   font-size: var(--fs-2);
   line-height: 1;
   cursor: pointer;
+}
+
+/* Expand the TOUCH area to the 44px floor without changing how the badge
+   looks.
+
+   The button was 1.25rem square — 20px — and it is on the PUBLIC client form:
+   a stranger, on a phone, deleting a photo they just uploaded. It was the
+   smallest target in the app, on the surface with the least margin for error
+   and no support channel.
+
+   A transparent pseudo-element centred on the button is used rather than
+   growing the button itself, because the badge is absolutely positioned in
+   the corner of a thumbnail — resizing it would move the visual, and
+   repainting it behind a pseudo-element risks it vanishing under an
+   ancestor's background. This changes only what a finger can hit. */
+.brief-attach-remove::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--tap-min);
+  height: var(--tap-min);
 }
 
 .brief-attach-add {

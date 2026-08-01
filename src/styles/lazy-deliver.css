@@ -14,44 +14,6 @@
   margin: 0.5rem 0 0.25rem;
 }
 
-.export-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: rgba(18, 18, 18, 0.48);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-}
-
-.export-panel {
-  width: min(440px, 100%);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  padding: 1.6rem 1.55rem;
-  box-shadow: var(--shadow-3);
-}
-
-.export-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.export-panel-actions {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-top: 1.35rem;
-  justify-content: flex-end;
-}
-
 .pack-ready-list {
   list-style: none;
   margin: 0 0 0.65rem;
@@ -152,7 +114,6 @@
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  z-index: var(--z-overlay);
 }
 
 /* ——— v1.1 Pack presentation ——— */

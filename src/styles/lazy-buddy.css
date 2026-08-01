@@ -194,7 +194,6 @@
 }
 
 .game-hud-badge {
-  z-index: var(--z-overlay);
   font-weight: 700;
   padding: 0.25rem 0.45rem;
   border-radius: var(--radius);

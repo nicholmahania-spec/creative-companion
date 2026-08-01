@@ -193,7 +193,14 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
     <div className="login-page login-page-studio">
       <div className="login-card login-card-solo">
         <div className="login-brand">
-          <LogoLockup reduceMotion={false} />
+          {/* Static mark here, deliberately. reduceMotion short-circuits
+              before PathMarkMotion's `await import('lottie-web')`, so passing
+              false pulled ~300 KB of animation library onto the one screen
+              every visitor sees — including anyone who never signs in — to
+              draw a mark next to a password field. The animated version still
+              plays in the header after sign-in, where it is a flourish rather
+              than a tax on the gate. */}
+          <LogoLockup reduceMotion />
           <h1 className="login-h1">Creative Companion</h1>
           <p className="login-lede login-lede-short">
             {useCloud

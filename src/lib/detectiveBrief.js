@@ -570,3 +570,216 @@ export function getDetectiveProgress(detective = {}) {
     requiredReady,
   }
 }
+
+/** Every declared field, flattened. */
+export const ALL_DETECTIVE_FIELDS = DETECTIVE_CHAPTERS.flatMap((c) => c.fields)
+
+const normalise = (s) =>
+  String(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+
+/**
+ * Coerce answers arriving as free text into the shape their field declares.
+ *
+ * The blank "Project overview" PDF draws a plain text box for every field
+ * regardless of type — there is no checkbox for a checklist, no radio for a
+ * choice, no worded scale for a spectrum — and both read paths
+ * (readOverviewPdfForm, parseOverviewOcrText) return Record<string,string>
+ * with no per-type handling. So a client filling the page in by hand writes
+ * "logo, cards, colours" into a field the whole app treats as an array of
+ * option ids.
+ *
+ * Written straight through, that string is silently wrong everywhere: the
+ * Define checklist renders every box unchecked for a value that is sitting
+ * right there, the spectrum control shows no position, composeBriefFromDetective
+ * drops the deliverables line, isFilled() still counts it so progress reads
+ * further along than it is — and touchpointsFor() falls back to
+ * LEGACY_TOUCHPOINTS, which means the brand book PDF handed to the client
+ * prints stock applications instead of the ones they asked for. Every consumer
+ * guards with `Array.isArray(x) ? x : []`, which is why none of it throws.
+ *
+ * So: match what can be matched, and never write what cannot. Anything left
+ * over is handed back as text so the review screen can show it and the human
+ * can tick the right boxes — losing the client's words would be its own bug.
+ *
+ * @param {Record<string, unknown>} answers
+ * @returns {{ answers: Record<string, unknown>, unmatched: Record<string, string> }}
+ */
+export function coerceScannedAnswers(answers = {}) {
+  const out = {}
+  const unmatched = {}
+
+  for (const [id, raw] of Object.entries(answers || {})) {
+    const field = ALL_DETECTIVE_FIELDS.find((f) => f.id === id)
+
+    // Unknown field, or already the right shape — nothing to do.
+    if (!field || Array.isArray(raw)) {
+      out[id] = raw
+      continue
+    }
+    const text = String(raw ?? '')
+    if (!text.trim()) continue
+
+    if (field.type === 'checklist') {
+      const options = field.options || []
+      /* Match whole labels against the whole string, longest first, rather
+         than splitting on commas and matching the pieces. Several real option
+         labels contain commas themselves — "Logo variations (stacked,
+         horizontal, icon)" is the most likely thing a client writes — and
+         splitting shreds exactly those into fragments that match nothing. */
+      let rest = ` ${normalise(text)} `
+      const picked = []
+      const byLength = [...options].sort(
+        (a, b) => normalise(b.label).length - normalise(a.label).length
+      )
+      for (const o of byLength) {
+        for (const candidate of [normalise(o.label), normalise(o.id)]) {
+          if (!candidate) continue
+          if (rest.includes(` ${candidate} `) || rest.includes(candidate)) {
+            if (!picked.includes(o.id)) picked.push(o.id)
+            rest = rest.replace(candidate, ' ')
+            break
+          }
+        }
+      }
+      // Keep declaration order, not match order — this is a scope list.
+      if (picked.length) {
+        out[id] = options.filter((o) => picked.includes(o.id)).map((o) => o.id)
+      }
+      const leftover = rest
+        .split(/[,;\n·•]+/)
+        .map((t) => t.trim())
+        .filter((t) => t.length > 2)
+        .join(', ')
+      if (leftover) unmatched[id] = leftover
+      continue
+    }
+
+    if (field.type === 'choice') {
+      const n = normalise(text)
+      const hit = (field.options || []).find(
+        (o) => normalise(o.id) === n || normalise(o.label) === n
+      )
+      if (hit) out[id] = hit.id
+      else unmatched[id] = text.trim()
+      continue
+    }
+
+    if (field.type === 'spectrum') {
+      const n = normalise(text)
+      const hit = spectrumChoices(field.poles).find(
+        (c) => normalise(c.value) === n || normalise(c.label) === n
+      )
+      if (hit) out[id] = hit.value
+      else unmatched[id] = text.trim()
+      continue
+    }
+
+    out[id] = raw
+  }
+
+  return { answers: out, unmatched }
+}
+
+/**
+ * True when a value cannot legally be stored in this field.
+ *
+ * Deliberately narrow: it only rejects the case that has actually caused
+ * silent damage — free text arriving for a field the schema declares as a
+ * checklist, a choice or a spectrum. Unknown fields, correct shapes and empty
+ * values all pass, because a guard that rejects too much loses real answers,
+ * which is the bug it exists to prevent, pointed the other way.
+ *
+ * @param {string} fieldId
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+export function isWrongShapeForField(fieldId, value) {
+  const field = ALL_DETECTIVE_FIELDS.find((f) => f.id === fieldId)
+  if (!field) return false
+
+  if (field.type === 'checklist') {
+    // Must be an array of declared option ids.
+    if (!Array.isArray(value)) return true
+    const ids = new Set((field.options || []).map((o) => o.id))
+    return value.some((v) => !ids.has(v))
+  }
+
+  if (field.type === 'choice') {
+    if (Array.isArray(value)) return true
+    const v = String(value ?? '').trim()
+    if (!v) return false
+    return !(field.options || []).some((o) => o.id === v)
+  }
+
+  if (field.type === 'spectrum') {
+    if (Array.isArray(value)) return true
+    const v = String(value ?? '').trim()
+    if (!v) return false
+    return !spectrumChoices(field.poles).some((c) => c.value === v)
+  }
+
+  return false
+}
+
+/**
+ * Which brand-element progress items a picked deliverable brings into scope.
+ *
+ * Keyed by the progress-item ids that brandProgressSummary and packReadiness
+ * already use ('palette' = colours, 'tagline', 'voice'). An item listed here
+ * counts only if the brief picked a deliverable that needs it. Everything NOT
+ * listed — the logo itself, and the process items (goal, research pins,
+ * positioning, handoff note, learnings) — always counts, because they apply to
+ * any identity job including a logo-only one.
+ *
+ * This is what lets a finished logo-only job read as finished: the client
+ * picked logoPrimary, so colours/tagline/voice are simply not counted, and
+ * there is nothing left "to go". No "logo only" mode, no toggle — the answer
+ * was already given in the brief's deliverablesPicked.
+ */
+const SCOPE_BY_ITEM = {
+  palette: ['colourPalette', 'guidelines'],
+  tagline: ['guidelines'],
+  voice: ['guidelines'],
+}
+
+/**
+ * @param {string} itemId  a progress-item id (e.g. 'palette', 'logo', 'voice')
+ * @param {string[]} deliverablesPicked  the brief's deliverablesPicked
+ * @returns {boolean} whether this item should count toward progress/readiness
+ */
+export function progressItemInScope(itemId, deliverablesPicked) {
+  const picked = Array.isArray(deliverablesPicked) ? deliverablesPicked : []
+  /* No brief filled yet → count everything. An unstarted brief must not read
+     as scoped-down-and-done; the full set is the honest default until the job
+     actually says otherwise. This also keeps every existing full-identity
+     project behaving exactly as before. */
+  if (!picked.length) return true
+  const needs = SCOPE_BY_ITEM[itemId]
+  if (!needs) return true // logo + process items — always in scope
+  return needs.some((d) => picked.includes(d))
+}
+
+/** The pure-mark deliverables — a job wanting only these gets the mark files,
+ *  not the 21-page book. */
+const MARK_ONLY_DELIVERABLES = ['logoPrimary', 'logoVariations']
+
+/**
+ * True when the brief asks for the mark and nothing that needs the book.
+ *
+ * Conservative on purpose: only an unambiguous logo-only pick (logoPrimary
+ * and/or logoVariations, nothing else) routes to the mark pack. Add colours,
+ * type, guidelines or any application and it is a fuller job that still gets
+ * the book — so no existing project's export changes, only the case the
+ * cold-start tester actually hit.
+ *
+ * @param {string[]} deliverablesPicked
+ * @returns {boolean}
+ */
+export function isLogoOnlyScope(deliverablesPicked) {
+  const picked = Array.isArray(deliverablesPicked) ? deliverablesPicked : []
+  if (!picked.length) return false
+  return picked.every((d) => MARK_ONLY_DELIVERABLES.includes(d))
+}

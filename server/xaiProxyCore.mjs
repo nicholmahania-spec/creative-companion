@@ -152,6 +152,61 @@ export function proxySecretOk(headers) {
   return { required: true, ok }
 }
 
+/**
+ * True when the server has what it needs to check a real Supabase session.
+ * Deliberately reads non-VITE_ names: a VITE_ value is inlined into the browser
+ * bundle at build time, which is exactly how the old shared secret stopped
+ * being a secret.
+ */
+export function sessionAuthConfigured() {
+  return Boolean(
+    (process.env.SUPABASE_URL || '').trim() &&
+      (process.env.SUPABASE_ANON_KEY || '').trim()
+  )
+}
+
+/**
+ * Verify the caller holds a real Supabase session.
+ *
+ * Why this exists: the previous gate was a shared secret the browser sent in
+ * X-CC-Proxy-Key, sourced from VITE_XAI_PROXY_SECRET. Vite inlines VITE_ values
+ * into the shipped bundle, so that "secret" was readable by anyone who viewed
+ * source, and the companion origin check reads the Origin *request header*,
+ * which curl sets freely. Both guards fell to one `curl`, and the thing behind
+ * them is an LLM relay billed to XAI_API_KEY.
+ *
+ * Why a network call rather than local JWT verification: Supabase issues both
+ * legacy HS256 tokens (verified with the project JWT secret) and modern
+ * asymmetric ones (verified via JWKS). Asking Supabase itself is correct for
+ * both, needs no crypto dependency in a serverless bundle, and cannot drift out
+ * of step when a project migrates signing schemes. The cost is one round trip
+ * per Helper call, which is small next to the xAI call it is gating.
+ *
+ * @returns {Promise<{ configured: boolean, ok: boolean }>}
+ */
+export async function verifySupabaseSession(headers, fetchImpl = fetch) {
+  if (!sessionAuthConfigured()) return { configured: false, ok: false }
+
+  const auth = headerGet(headers, 'authorization')
+  const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : ''
+  if (!token) return { configured: true, ok: false }
+
+  const base = (process.env.SUPABASE_URL || '').trim().replace(/\/$/, '')
+  const anon = (process.env.SUPABASE_ANON_KEY || '').trim()
+  try {
+    const res = await fetchImpl(`${base}/auth/v1/user`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}`, apikey: anon },
+    })
+    return { configured: true, ok: res.status === 200 }
+  } catch {
+    // Fail closed. An unreachable auth service means we cannot establish who
+    // this is, and the failure mode of guessing "probably fine" is someone
+    // else's bill.
+    return { configured: true, ok: false }
+  }
+}
+
 function pickModel(requested) {
   const m = String(requested || 'grok-4.5').trim()
   if (ALLOWED_MODELS.has(m)) return m
@@ -180,27 +235,51 @@ export async function handleXaiProxy(req) {
     }
   }
 
-  const secretCheck = proxySecretOk(headers)
-  if (secretCheck.required && !secretCheck.ok) {
-    return {
-      statusCode: 401,
-      headers: jsonHeaders,
-      body: JSON.stringify({
-        error:
-          secretCheck.required &&
-          !(process.env.XAI_PROXY_SECRET || '').trim()
-            ? 'XAI_PROXY_SECRET required in production'
-            : 'Unauthorized',
-      }),
+  /* Auth, in preference order.
+     A verified Supabase session is the real gate — it is the only credential
+     here that a bundle-reader cannot obtain. The shared secret is kept as the
+     fallback for deployments that have not set SUPABASE_URL/SUPABASE_ANON_KEY
+     server-side yet, so enabling session auth is a config change rather than a
+     breaking one, and so a half-configured deploy fails loudly on the old path
+     instead of silently opening. */
+  const session = await verifySupabaseSession(headers)
+  let authOk
+  let authStrong
+  if (session.configured) {
+    authOk = session.ok
+    authStrong = session.ok
+    if (!authOk) {
+      return {
+        statusCode: 401,
+        headers: jsonHeaders,
+        body: JSON.stringify({ error: 'Sign in required' }),
+      }
     }
+  } else {
+    const secretCheck = proxySecretOk(headers)
+    if (secretCheck.required && !secretCheck.ok) {
+      return {
+        statusCode: 401,
+        headers: jsonHeaders,
+        body: JSON.stringify({
+          error:
+            secretCheck.required &&
+            !(process.env.XAI_PROXY_SECRET || '').trim()
+              ? 'XAI_PROXY_SECRET required in production'
+              : 'Unauthorized',
+        }),
+      }
+    }
+    authOk = secretCheck.ok
+    authStrong = secretCheck.required && secretCheck.ok
   }
 
   if (!origin) {
-    if (!secretCheck.required || !secretCheck.ok) {
+    if (!authStrong) {
       return {
         statusCode: 403,
         headers: jsonHeaders,
-        body: JSON.stringify({ error: 'Origin required (or proxy secret)' }),
+        body: JSON.stringify({ error: 'Origin required (or a signed-in session)' }),
       }
     }
   } else if (!isOriginAllowed(origin)) {
@@ -212,8 +291,7 @@ export async function handleXaiProxy(req) {
   }
 
   const ip = req.ip || clientIpFromHeaders(headers)
-  const max =
-    secretCheck.required && secretCheck.ok ? RATE_MAX_DEFAULT : RATE_MAX_OPEN
+  const max = authStrong ? RATE_MAX_DEFAULT : RATE_MAX_OPEN
   if (!rateLimit(ip, max)) {
     return {
       statusCode: 429,

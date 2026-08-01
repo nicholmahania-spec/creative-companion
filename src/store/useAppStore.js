@@ -1,4 +1,8 @@
-import { DELIVERABLE_OPTIONS, DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
+import {
+  DELIVERABLE_OPTIONS,
+  DETECTIVE_CHAPTERS,
+  isWrongShapeForField,
+} from '../lib/detectiveBrief'
 import { liftMeasuredRows } from './workLogSeparation'
 import { revisionSummary, roundCharge } from '../lib/revisions'
 import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
@@ -11,7 +15,6 @@ import {
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/breakKit'
 import versionService from '../services/versionService'
-import { trackVersionAction } from '../lib/analytics'
 
 /**
  * Every field id the Define sheet knows about.
@@ -140,7 +143,7 @@ export function composeBriefFromDetective(detective) {
 /**
  * Default brand identity template fields on each project.
  * Factory so every project gets fresh nested objects (detective,
- * conceptPackage, colorRoleWhy, deliverWordsChecked) — never shared refs.
+ * colorRoleWhy, deliverWordsChecked, pathReached) — never shared refs.
  */
 export function brandIdentityDefaults() {
   return {
@@ -171,6 +174,9 @@ export function brandIdentityDefaults() {
   colorRoles: null,
   /** Why each assigned color role fits the Define brand words */
   colorRoleWhy: { cover: '', text: '', accent: '', quiet: '' },
+  /* Stops this project has ever completed. A record, not a live verdict —
+     see pathStepHasContent for why completion must not be able to regress. */
+  pathReached: {},
   /** Why the chosen type pair fits the Define brand words */
   typeWhy: '',
   /** data URL mark for pack cover */
@@ -232,16 +238,6 @@ export function brandIdentityDefaults() {
   deliverWordsChecked: {},
   /** Define: Design Detective Sheet */
   detective: blankDetective(),
-  conceptPackage: {
-    audience: '',
-    outcome: '',
-    concept: '',
-    voice: '',
-    visualDirection: '',
-    doUse: '',
-    dontUse: '',
-    notes: '',
-  },
   }
 }
 
@@ -335,7 +331,6 @@ export function blankWorkspaceState() {
     prefs: {
       soundEnabled: true,
       reduceMotion: false,
-      bodyDoubleSilent: false,
       forceBreaksEnabled: true,
       forceBreaksConsented: false,
       queueCollapsed: true,
@@ -397,7 +392,6 @@ export function blankWorkspaceState() {
     },
     // Template management
     templates: [],
-    currentTemplateId: null,
   }
 }
 
@@ -409,7 +403,6 @@ export const seedMoodItems = []
 const initial = {
   ...blankWorkspaceState(),
   templates: [],
-  currentTemplateId: null,
 }
 
 
@@ -447,7 +440,6 @@ export const PERSISTED_KEYS = [
   'prefs',
   'portalSeen',
   'templates',
-  'currentTemplateId',
 ]
 
 const PERSIST_DEFAULTS = {
@@ -778,6 +770,39 @@ const useAppStore = create(
        * Merge a patch into the active project's Brand Book Builder settings.
        * Section-level merge — `{ grid: {...} }` replaces only `grid`.
        */
+      /**
+       * Record that stops have been reached. Only ever adds.
+       *
+       * There is deliberately no way to clear a single stop: the whole point
+       * is that ordinary work — starring another pin, a client re-submitting
+       * their brief — must not be able to take a tick away. Starting over is
+       * a new project.
+       *
+       * @param {string[]} stepIds
+       * @param {string|number} [projectId] the project the work happened on
+       */
+      markPathReached: (stepIds, projectId) =>
+        set((state) => {
+          const ids = (stepIds || []).filter(Boolean)
+          if (!ids.length) return {}
+          const target = projectId ?? state.currentProjectId
+          let changed = false
+          const projects = state.projects.map((p) => {
+            if (p.id !== target) return p
+            const reached = { ...(p.pathReached || {}) }
+            for (const id of ids) {
+              if (!reached[id]) {
+                reached[id] = true
+                changed = true
+              }
+            }
+            return changed ? { ...p, pathReached: reached } : p
+          })
+          // No-op writes would churn the persist layer and the cloud push on
+          // every render pass that recomputes progress.
+          return changed ? { projects } : {}
+        }),
+
       setBookBuilder: (patch) =>
         set((state) => ({
           projects: state.projects.map((p) =>
@@ -1026,15 +1051,31 @@ const useAppStore = create(
         }),
 
       /** Claim the next invoice number and advance the counter. */
-      takeInvoiceNumber: () => {
+      /**
+       * The number this invoice WOULD get. Does not consume it.
+       *
+       * Split out of takeInvoiceNumber, which incremented before the PDF
+       * existed — so a cancelled save dialog, a failed PDF engine import, or
+       * an out-of-memory on a long log burned the number anyway, and each
+       * retry burned another. Cancelling twice put the sequence three ahead.
+       * That is exactly the gap the original comment said numbering-on-export
+       * was there to prevent; it just moved the hole rather than closing it.
+       */
+      peekInvoiceNumber: () => {
         const { prefs } = get()
         const n = Number(prefs?.invoiceNextNumber) || 1
-        set((state) => ({
-          prefs: { ...state.prefs, invoiceNextNumber: n + 1 },
-        }))
         const prefix = String(prefs?.invoicePrefix || '').trim()
         return prefix ? `${prefix}${n}` : String(n)
       },
+
+      /** Consume it — call only once the PDF has actually been produced. */
+      commitInvoiceNumber: () =>
+        set((state) => ({
+          prefs: {
+            ...state.prefs,
+            invoiceNextNumber: (Number(state.prefs?.invoiceNextNumber) || 1) + 1,
+          },
+        })),
 
       removeTimeEntry: (id) =>
         set((state) => ({
@@ -1354,6 +1395,16 @@ const useAppStore = create(
                 merged[k] = [...existing, ...v.filter((f) => !seen.has(f.url))]
                 return
               }
+              /* Refuse a shape the schema does not declare. The paper/OCR
+                 route hands back plain text for every field, and a string
+                 written into a checklist/choice/spectrum slot is invisible
+                 everywhere downstream — unchecked boxes for a value that is
+                 present, a spectrum with no position, and a client brand book
+                 that prints stock applications because touchpointsFor() fell
+                 back to LEGACY_TOUCHPOINTS. Nothing throws, so nothing tells
+                 you. Review coerces these before they get here; this is the
+                 backstop for any path that does not. */
+              if (isWrongShapeForField(k, v)) return
               if (String(v || '').trim()) merged[k] = v
             })
             return { ...p, detective: merged }
@@ -1414,6 +1465,16 @@ const useAppStore = create(
             if (p.id !== target) return p
             const merged = { ...(p.discoveryAnswers || {}) }
             Object.entries(clientAnswers || {}).forEach(([k, v]) => {
+              /* Refuse a shape the schema does not declare. The paper/OCR
+                 route hands back plain text for every field, and a string
+                 written into a checklist/choice/spectrum slot is invisible
+                 everywhere downstream — unchecked boxes for a value that is
+                 present, a spectrum with no position, and a client brand book
+                 that prints stock applications because touchpointsFor() fell
+                 back to LEGACY_TOUCHPOINTS. Nothing throws, so nothing tells
+                 you. Review coerces these before they get here; this is the
+                 backstop for any path that does not. */
+              if (isWrongShapeForField(k, v)) return
               if (String(v || '').trim()) merged[k] = v
             })
             const detective = { ...(p.detective || {}) }
@@ -1503,13 +1564,7 @@ const useAppStore = create(
           ),
         })
         // Fire-and-forget version snapshot — must not block the synchronous return
-        versionService.autoVersion('version bump').then((versionId) => {
-          if (versionId) {
-            versionService.getVersionById(versionId).then((version) => {
-              if (version) trackVersionAction('create', version)
-            })
-          }
-        }).catch(() => {})
+        versionService.autoVersion('version bump').catch(() => {})
         return { ok: true, version: next }
       },
 
@@ -1527,13 +1582,7 @@ const useAppStore = create(
         }
         const result = {...get().bumpDesignVersion(), bumped: true}
         // Fire-and-forget version snapshot — must not block the synchronous return
-        versionService.autoVersion('initial version bump').then((versionId) => {
-          if (versionId) {
-            versionService.getVersionById(versionId).then((version) => {
-              if (version) trackVersionAction('create', version)
-            })
-          }
-        }).catch(() => {})
+        versionService.autoVersion('initial version bump').catch(() => {})
         return {...result, version: result.version}
       },
 
@@ -1567,7 +1616,6 @@ const useAppStore = create(
           prefs: {
             soundEnabled: true,
             reduceMotion: false,
-            bodyDoubleSilent: false,
             forceBreaksEnabled: true,
             queueCollapsed: true,
             showHowItWorks: false,
@@ -1633,7 +1681,6 @@ const useAppStore = create(
              every saved template. Anything in `partialize` has to be in the
              payload too, or the round-trip is lossy by construction. */
           templates: s.templates || [],
-          currentTemplateId: s.currentTemplateId ?? null,
           portalSeen: s.portalSeen || {},
           themeSource: s.themeSource,
         }
@@ -1719,9 +1766,6 @@ const useAppStore = create(
              would wipe what the user has locally. Absent means "keep what we
              have", not "the user deleted them". */
           ...(Array.isArray(data.templates) ? { templates: data.templates } : {}),
-          ...(data.currentTemplateId !== undefined
-            ? { currentTemplateId: data.currentTemplateId }
-            : {}),
           ...(data.portalSeen && typeof data.portalSeen === 'object'
             ? { portalSeen: data.portalSeen }
             : {}),
@@ -2249,10 +2293,22 @@ const useAppStore = create(
         return { ok: true }
       },
 
-      setLogoImage: (dataUrl) =>
+      /**
+       * @param {string} dataUrl
+       * @param {string|number} [projectId] the project this image belongs to
+       *
+       * Takes an explicit project for the same reason setProjectPalette does.
+       * Both callers read the file and downscale it before writing, and on a
+       * large image that gap is long enough to switch projects in — after
+       * which this wrote the mark to whatever was current when the promise
+       * resolved, not the project the file was chosen for. No error, no toast:
+       * the wrong project quietly gains someone else's logo and the right one
+       * looks like the upload never happened.
+       */
+      setLogoImage: (dataUrl, projectId) =>
         set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === state.currentProjectId
+            p.id === (projectId ?? state.currentProjectId)
               ? { ...p, logoImage: dataUrl || '' }
               : p
           ),
@@ -2320,87 +2376,6 @@ const useAppStore = create(
               : c
           ),
         })),
-
-      updateConceptPackageField: (field, value) =>
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== state.currentProjectId) return p
-            const pack = {
-              audience: '',
-              outcome: '',
-              concept: '',
-              voice: '',
-              visualDirection: '',
-              doUse: '',
-              dontUse: '',
-              notes: '',
-              ...(p.conceptPackage || {}),
-              [field]: value,
-            }
-            return { ...p, conceptPackage: pack }
-          }),
-        })),
-
-      /**
-       * Apply concept package + locked notes into Brand identity fields.
-       * Returns patch summary for toast/UI.
-       */
-      applyConceptPackageToBrand: () => {
-        const { projects, currentProjectId, conceptItems } = get()
-        const project = projects.find((p) => p.id === currentProjectId)
-        if (!project) return { ok: false, error: 'No project' }
-
-        const draft = {
-          audience: '',
-          outcome: '',
-          concept: '',
-          voice: '',
-          visualDirection: '',
-          doUse: '',
-          dontUse: '',
-          notes: '',
-          ...(project.conceptPackage || {}),
-        }
-        const locked = (conceptItems || []).filter(
-          (c) =>
-            c.projectId === currentProjectId &&
-            (c.stage === 'locked' || c.stage === 'develop')
-        )
-
-        const briefParts = []
-        if (draft.audience?.trim())
-          briefParts.push(`Audience: ${draft.audience.trim()}`)
-        if (draft.outcome?.trim())
-          briefParts.push(`Outcome: ${draft.outcome.trim()}`)
-        if (draft.notes?.trim()) briefParts.push(draft.notes.trim())
-        const lockedLines = locked
-          .map((c) => c.note || c.title)
-          .filter(Boolean)
-          .slice(0, 10)
-        if (lockedLines.length) {
-          briefParts.push(`Concept plan: ${lockedLines.join(' · ')}`)
-        }
-
-        const nextBrief =
-          briefParts.join('\n\n') || project.brief || ''
-
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== currentProjectId) return p
-            return {
-              ...p,
-              brief: nextBrief,
-              tagline: draft.concept?.trim() || p.tagline || '',
-              voice: draft.voice?.trim() || p.voice || '',
-              logoDirection:
-                draft.visualDirection?.trim() || p.logoDirection || '',
-              doUse: draft.doUse?.trim() || p.doUse || '',
-              dontUse: draft.dontUse?.trim() || p.dontUse || '',
-            }
-          }),
-        }))
-        return { ok: true }
-      },
 
       nextSpark: () =>
         set((state) => {
@@ -2694,16 +2669,6 @@ const useAppStore = create(
                   ...JSON.parse(JSON.stringify(project.detective)),
                 }
               : null,
-            conceptPackage: project.conceptPackage ? {
-              audience: project.conceptPackage.audience,
-              outcome: project.conceptPackage.outcome,
-              concept: project.conceptPackage.concept,
-              voice: project.conceptPackage.voice,
-              visualDirection: project.conceptPackage.visualDirection,
-              doUse: project.conceptPackage.doUse,
-              dontUse: project.conceptPackage.dontUse,
-              notes: project.conceptPackage.notes
-            } : null,
             directions: project.directions ? [...project.directions].map(d => ({ ...d })) : [],
             tasks: project.tasks ? [...project.tasks].map(t => ({ ...t })) : [],
             moodItems: project.moodItems ? [...project.moodItems].map(m => ({ ...m })) : []
@@ -2770,22 +2735,10 @@ const useAppStore = create(
         }))
 
         // Create a version when applying template
-        const versionId = await versionService.autoVersion('template-applied')
-        // Track version creation
-        if (versionId) {
-          const version = await versionService.getVersionById(versionId)
-          if (version) {
-            trackVersionAction('create', version)
-          }
-        }
+        await versionService.autoVersion('template-applied')
 
         return { ok: true }
       },
-
-      setCurrentTemplateId: (templateId) => {
-        set({ currentTemplateId: templateId })
-        return { ok: true }
-      }
     }
   )
 )

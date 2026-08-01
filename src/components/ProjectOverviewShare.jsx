@@ -12,7 +12,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { JOURNEY_STEPS } from '../lib/journey'
-import { DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
+import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../lib/detectiveBrief'
 import { downloadProjectOverviewPdf } from '../lib/exportFiles'
 import { ocrOverviewForm, ocrOverviewPdf, readOverviewPdfForm } from '../lib/overviewOcr'
 import {
@@ -72,7 +72,22 @@ export function ProjectOverviewSharePanel({
      discard one — so by the time Apply is pressed the active project may be
      a different one entirely. */
   const beginReview = useCallback(
-    (d) => setDraft({ ...d, ownerProjectId: d?.ownerProjectId ?? project?.id }),
+    (d) => {
+      /* Scanned and PDF-form answers arrive as plain text for EVERY field,
+         because the blank form has no checkbox, radio or scale to offer. Put
+         them into the shape their field declares before anything is rendered
+         or saved — a raw string in a checklist field is invisible everywhere
+         downstream and silently changes what the client's brand book prints.
+         Whatever cannot be matched is carried alongside as text so the review
+         screen can show it rather than dropping the client's words. */
+      const { answers, unmatched } = coerceScannedAnswers(d?.answers || {})
+      setDraft({
+        ...d,
+        answers,
+        unmatched,
+        ownerProjectId: d?.ownerProjectId ?? project?.id,
+      })
+    },
     [project?.id]
   )
   const panelRef = useRef(null)
@@ -265,6 +280,12 @@ function PortalMode({
   flashMicro,
 }) {
   const [creating, setCreating] = useState(false)
+  /* Kept beside the button as well as toasted. A toast is a glance you can
+     miss — the owner's own note is that anything at the bottom of the screen
+     does not get seen — and this one was invisible outright until the toast
+     was lifted above the dialog backdrop. The reason a client link could not
+     be made belongs next to the control that could not make it. */
+  const [createError, setCreateError] = useState('')
   const [portal, setPortal] = useState(null)
   const [messages, setMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
@@ -301,6 +322,7 @@ function PortalMode({
   }, [portalId, refresh])
 
   const handleCreate = async () => {
+    setCreateError('')
     setCreating(true)
     const r = await createClientPortal({
       projectLocalId: project?.id,
@@ -309,7 +331,9 @@ function PortalMode({
     })
     setCreating(false)
     if (!r.ok) {
-      flashToast?.(r.error || 'Couldn’t create the dashboard')
+      const message = r.error || 'Couldn’t create the dashboard'
+      setCreateError(message)
+      flashToast?.(message)
       return
     }
     onSetPortalId?.(r.portalId)
@@ -434,6 +458,11 @@ function PortalMode({
           >
             {creating ? 'Creating…' : 'Create client dashboard'}
           </button>
+          {createError && (
+            <p className="discovery-brief-hint" role="alert">
+              {createError}
+            </p>
+          )}
         </>
       ) : !loaded ? (
         <p className="discovery-brief-hint">Loading the dashboard…</p>
@@ -624,7 +653,7 @@ function PortalMode({
 /** Shared review step for anything that would otherwise write to the project
  *  behind the user's back — OCR guesses and client submissions alike. */
 function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
-  const { answers, current = {}, source } = draft
+  const { answers, current = {}, source, unmatched = {} } = draft
   const missed = ALL_FIELDS.filter((f) => !(f.id in answers))
 
   return (
@@ -646,8 +675,16 @@ function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
         // it's wrong, silently overwrites the client's uploaded images with
         // whatever string they typed. Read-only thumbnails instead: nothing
         // to accidentally corrupt, and it shows what's actually there.
-        if (Array.isArray(value)) {
-          const baseId = fieldId.endsWith('Files') ? fieldId.slice(0, -5) : fieldId
+        /* Attachments ONLY. This used to test Array.isArray(value), which is
+           true of the checklist fields too — deliverablesPicked and
+           brandSurfaces are arrays of option ids, not {name,url} pairs. They
+           fell in here and rendered as <a href={undefined}><img
+           src={undefined}>: a row of broken images labelled "What do you need
+           made? — attached", read-only. That is the answer that decides what
+           you are being paid for, on the screen whose whole promise is that
+           you see every line before it is saved. */
+        if (fieldId.endsWith('Files') && Array.isArray(value)) {
+          const baseId = fieldId.slice(0, -5)
           return (
             <div className="field-block" key={fieldId}>
               <label className="field-label">{fieldLabel(baseId)} — attached</label>
@@ -668,6 +705,72 @@ function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
             </div>
           )
         }
+        /* Real checkboxes, from the schema's own options, so the value stays
+           an array of valid ids and nothing here can corrupt it by typing.
+           Grouped the same way the client saw it — an extra is priced
+           differently, and that distinction has to survive the round trip. */
+        const field = ALL_FIELDS.find((f) => f.id === fieldId)
+        if (field?.type === 'checklist') {
+          const picked = Array.isArray(value) ? value : []
+          const setPicked = (next) =>
+            onChange({ ...draft, answers: { ...answers, [fieldId]: next } })
+          return (
+            <div className="field-block" key={fieldId}>
+              <label className="field-label">{fieldLabel(fieldId)}</label>
+              {unmatched[fieldId] && (
+                <p className="discovery-brief-hint">
+                  Couldn’t match to an option: “{unmatched[fieldId]}” — tick
+                  what it meant.
+                </p>
+              )}
+              <div className="define-checklist">
+                {[
+                  {
+                    key: 'included',
+                    label: 'Included',
+                    items: (field.options || []).filter((o) => !o.extra),
+                  },
+                  {
+                    key: 'extra',
+                    label: 'Quoted separately',
+                    items: (field.options || []).filter((o) => o.extra),
+                  },
+                ]
+                  .filter((g) => g.items.length > 0)
+                  .map((g) => (
+                    <fieldset key={g.key} className="define-checklist-group">
+                      <legend className="define-checklist-legend">
+                        {g.label}
+                      </legend>
+                      {g.items.map((o) => {
+                        const on = picked.includes(o.id)
+                        return (
+                          <label
+                            key={o.id}
+                            className={`define-check-row${on ? ' is-on' : ''}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={() =>
+                                setPicked(
+                                  on
+                                    ? picked.filter((x) => x !== o.id)
+                                    : [...picked, o.id]
+                                )
+                              }
+                            />
+                            <span>{o.label}</span>
+                          </label>
+                        )
+                      })}
+                    </fieldset>
+                  ))}
+              </div>
+            </div>
+          )
+        }
+
         const existing = String(current?.[fieldId] || '').trim()
         return (
           <div className="field-block" key={fieldId}>

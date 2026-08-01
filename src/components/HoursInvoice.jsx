@@ -3,8 +3,9 @@
  * note) against an hourly rate, with a simple itemized invoice export.
  * Business-ops utility, separate from the creative workflow.
  */
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { downloadInvoicePdf, invoiceTotals, dueDateFrom } from '../lib/invoice'
+import { useModalFocus } from '../lib/useModalFocus'
 
 export function HoursInvoicePanel({
   open,
@@ -18,7 +19,8 @@ export function HoursInvoicePanel({
   flashToast,
   prefs = {},
   setPref,
-  takeInvoiceNumber,
+  peekInvoiceNumber,
+  commitInvoiceNumber,
 }) {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [hours, setHours] = useState('')
@@ -27,6 +29,23 @@ export function HoursInvoicePanel({
   const [billTo, setBillTo] = useState('')
   const [busy, setBusy] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  /* Focus trap, focus restore and Escape.
+
+     This declared aria-modal="true" while implementing none of it — which is
+     the worst available combination, not a missing nicety: assistive tech is
+     told the rest of the page is unavailable while Tab walks straight out into
+     it. Focus also never entered the dialog on open and was never returned to
+     the opener on close.
+
+     useModalFocus is the same hook ProjectOverviewShare and ClientInbox
+     already use; passing onClose is what wires Escape, so one call covers all
+     three. */
+  const getRoot = useCallback(() => document.querySelector('.hours-invoice-panel'), [])
+  useModalFocus(open, getRoot, {
+    initialSelector: '.running-todo-panel-head button, button',
+    onClose,
+  })
+
 
   if (!open) return null
 
@@ -67,10 +86,13 @@ export function HoursInvoicePanel({
     if (!timeLog.length) return
     setBusy(true)
     try {
-      /* Claimed once, at export. Numbering on open would burn a number
-         every time the panel was looked at, and gaps in an invoice sequence
-         are exactly what an accountant asks about. */
-      const invoiceNumber = takeInvoiceNumber ? takeInvoiceNumber() : ''
+      /* Read the number, but do not consume it until the PDF exists.
+         Numbering on open would burn one every time the panel was looked at,
+         and gaps in an invoice sequence are exactly what an accountant asks
+         about — but claiming it before the export could also fail burned one
+         on every cancelled save dialog, which is the same hole one step
+         later. */
+      const invoiceNumber = peekInvoiceNumber ? peekInvoiceNumber() : ''
       const r = await downloadInvoicePdf({
         orgName,
         billTo,
@@ -84,8 +106,12 @@ export function HoursInvoicePanel({
         taxLabel: prefs.invoiceTaxLabel,
         taxPercent: prefs.invoiceTaxPercent,
       })
-      if (r?.ok) flashToast?.('Invoice downloaded')
-      else flashToast?.(r?.error || 'Could not export invoice')
+      if (r?.ok) {
+        commitInvoiceNumber?.()
+        flashToast?.('Invoice downloaded')
+      } else {
+        flashToast?.(r?.error || 'Could not export invoice')
+      }
     } finally {
       setBusy(false)
     }

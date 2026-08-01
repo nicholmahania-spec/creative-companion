@@ -166,12 +166,20 @@ immediately, and Netlify was held back rather than gambled on.
 - `insights.md` — architecture, design tokens, CSS gotchas, critical constraints
 - **CSS is split, and `src/index.css` is no longer where it lives.** That file
   is now two lines — a single `@import './styles/shell.css'`. The design
-  system is ~19.7k lines across `src/styles/*.css` plus `src/theme/theme.css`:
+  system is ~19.7k lines across `src/styles/*.css`:
   - `src/styles/shell.css` (~9.5k) — the always-on shell: tokens, header,
     journey bar, sidebar/drawer, buttons, overlays. Start here.
   - `src/styles/lazy-*.css` — per-view, imported by the route component
     (`lazy-design`, `lazy-mood`, `lazy-define`, `lazy-deliver`, …).
-  - `src/styles/brand-book-builder.css`, `src/theme/theme.css`.
+  - `src/styles/brand-book-builder.css`.
+
+  There is no theme.css under a src/theme directory, and this note used to say
+  there was. That file existed, was imported by nothing, and was deleted
+  2026-07-31 — it also carried `@apply` directives with no Tailwind installed,
+  so acting on the old note and importing it would have broken the build. Path
+  written without backticks on purpose: `claudeMdPaths.test.js` checks that
+  every backticked path in this file resolves, and it should keep failing on a
+  real one rather than on a sentence explaining an absence.
 
   Grepping `src/index.css` for a rule returns nothing and reads as "this
   style does not exist" — that misfire cost four wrong conclusions in one

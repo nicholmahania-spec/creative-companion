@@ -17,6 +17,7 @@ export default function BriefAttach({ targetId, files = [], onChange, idPrefix, 
   const inputRef = useRef(null)
 
   const anySending = pending.some((p) => p.status === 'sending')
+  const failedCount = pending.filter((p) => p.status === 'failed').length
 
   function pickFiles(fileList) {
     const picked = Array.from(fileList || [])
@@ -108,7 +109,21 @@ export default function BriefAttach({ targetId, files = [], onChange, idPrefix, 
       </div>
       {anySending && (
         <p className="brief-attach-note" aria-live="polite">
-          {pending.filter((p) => p.status === 'sending').length} file still sending
+          {pending.filter((p) => p.status === 'sending').length}
+          {pending.filter((p) => p.status === 'sending').length === 1
+            ? ' file still sending'
+            : ' files still sending'}
+        </p>
+      )}
+      {/* A failed upload was announced to nobody — the only signal was the
+          thumbnail dimming and a button appearing, both purely visual. This
+          is assertive because it means an image the client thinks they
+          attached did not send, on a form they may be about to submit. */}
+      {failedCount > 0 && (
+        <p className="sr-only" role="alert">
+          {failedCount === 1
+            ? "1 image didn't send. Use the Try again button on it."
+            : `${failedCount} images didn't send. Use the Try again buttons on them.`}
         </p>
       )}
     </div>

@@ -13,7 +13,6 @@ import PathViewSkeleton from './components/PathViewSkeleton'
 
 import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
-import { trackExportAction } from './lib/analytics'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
   BREAKDOWN_DEPTHS,
@@ -83,6 +82,7 @@ import {
 } from './lib/journey'
 import {
   pathStepHasContent,
+  pathStepMeetsCondition,
   pathProgressSummary,
   pathFirstGap,
   pathGapFocusSelector,
@@ -102,6 +102,7 @@ import {
   downloadBrandPackPdf,
   downloadBrandPackPdfRaster,
   downloadBrandKitZip,
+  downloadMarkPack,
   downloadWorkspaceBackup,
   packReadiness,
   preloadPdfEngine,
@@ -258,14 +259,23 @@ function App() {
   )
   const prefs = useAppStore((s) => s.prefs) || {}
   const setPref = useCallback((...a) => useAppStore.getState().setPref(...a), [])
-  /* Claims the next invoice number at export. Bound here like every other
-     store action the shell hands down — it was passed to HoursInvoicePanel
-     without ever being defined, which is a render-time ReferenceError that
-     blanks the entire app. Unit tests and the build both stayed green
-     through it: nothing renders App in vitest, and an undefined identifier
-     in JSX is perfectly valid syntax. */
-  const takeInvoiceNumber = useCallback(
-    (...a) => useAppStore.getState().takeInvoiceNumber(...a),
+  /* Invoice numbering, split in two: read it to print on the PDF, consume it
+     only once the PDF exists.
+
+     BOTH must be bound here, like every other store action the shell hands
+     down. The single-function version was once passed to HoursInvoicePanel
+     without ever being defined — a render-time ReferenceError that blanks the
+     entire app, which unit tests and the build both stayed green through,
+     because nothing renders App in vitest and an undefined identifier in JSX
+     is perfectly valid syntax. Splitting one prop into two is exactly the edit
+     that reintroduces it; invoiceNumbering.test.js now checks that anything
+     passed to the panel is actually defined here. */
+  const peekInvoiceNumber = useCallback(
+    (...a) => useAppStore.getState().peekInvoiceNumber(...a),
+    []
+  )
+  const commitInvoiceNumber = useCallback(
+    (...a) => useAppStore.getState().commitInvoiceNumber(...a),
     []
   )
   const exportAllData = useCallback(
@@ -452,7 +462,6 @@ function App() {
   const [overviewSharePanelOpen, setOverviewSharePanelOpen] = useState(false)
   const [autoOpenPortalReview, setAutoOpenPortalReview] = useState(false)
   const [clientInboxOpen, setClientInboxOpen] = useState(false)
-  const [demoTour, setDemoTour] = useState(null)
   const [navDir, setNavDir] = useState('none')
   const prevJourneyIdx = useRef(0)
   const [savePulse, setSavePulse] = useState(false)
@@ -496,7 +505,7 @@ function App() {
   const [showHydratingEscape, setShowHydratingEscape] = useState(false)
   /** Which project's detail shows on the multi-project Home — separate from
    * currentProjectId so browsing the list doesn't switch the active project
-   * until the user actually clicks Continue / Open Deliver. */
+   * until the user actually clicks Continue / the final-stop CTA. */
   const [homeSelectedProjectId, setHomeSelectedProjectId] = useState(null)
   const [syncState, setSyncState] = useState('idle') // idle | syncing | ok | error
   const [syncError, setSyncError] = useState('')
@@ -716,6 +725,29 @@ function App() {
     [pathMissingRows]
   )
   const thisStepId = journeyIdForView(activeView)
+  const markPathReached = useCallback(
+    (...a) => useAppStore.getState().markPathReached(...a),
+    []
+  )
+
+  /* Record a stop the moment its live condition is first met.
+
+     Completion is latched rather than recomputed (see pathStepHasContent), so
+     something has to write the latch. This is the one place that knows both
+     the live conditions and the active project, and markPathReached only ever
+     adds — a no-op write returns early so this cannot churn the persist layer
+     or the cloud push on every render. */
+  useEffect(() => {
+    const projectId = activeProject?.id
+    if (!projectId) return
+    const newly = JOURNEY_STEPS.filter(
+      (step) =>
+        !activeProject?.pathReached?.[step.id] &&
+        pathStepMeetsCondition(step.id, pathProgressCtx)
+    ).map((step) => step.id)
+    if (newly.length) markPathReached(newly, projectId)
+  }, [activeProject, pathProgressCtx, markPathReached])
+
   const thisStepFilled = useMemo(() => {
     if (!thisStepId) return null
     return pathStepHasContent(thisStepId, pathProgressCtx)
@@ -1083,11 +1115,6 @@ function App() {
         setShortcutsOpen(false)
         return
       }
-      if (demoTour) {
-        e.preventDefault()
-        setDemoTour(null)
-        return
-      }
       if (deskConfirm) {
         e.preventDefault()
         setDeskConfirm(null)
@@ -1120,7 +1147,6 @@ function App() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [
     shortcutsOpen,
-    demoTour,
     deskConfirm,
     forceBreakConsentOpen,
     exportPanel,
@@ -1586,10 +1612,6 @@ function App() {
     () => document.querySelector('.shortcuts-overlay'),
     []
   )
-  const getDemoTourRoot = useCallback(
-    () => document.querySelector('.demo-tour-overlay'),
-    []
-  )
   useModalFocus(!!exportPanel && !showBreakdown, getExportRoot, {
     initialSelector: '.export-panel-header button, button',
   })
@@ -1605,9 +1627,6 @@ function App() {
   })
   // Shortcuts panel: trap Tab and restore focus to the opener on close.
   useModalFocus(shortcutsOpen, getShortcutsRoot, {
-    initialSelector: 'button',
-  })
-  useModalFocus(!!demoTour, getDemoTourRoot, {
     initialSelector: 'button',
   })
 
@@ -1629,7 +1648,6 @@ function App() {
         exportPanel ||
         showBreakdown ||
         showOnboarding ||
-        demoTour ||
         deskConfirm ||
         forceBreakConsentOpen ||
         document.querySelector('.board-lightbox-overlay')
@@ -1692,7 +1710,6 @@ function App() {
     exportPanel,
     showBreakdown,
     showOnboarding,
-    demoTour,
     deskConfirm,
     forceBreakConsentOpen,
     shortcutsOpen,
@@ -2036,6 +2053,56 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run on user change only
   }, [CLOUD, unlocked, cloudUser?.id])
 
+  /* One push at a time, and only the newest result counts.
+
+     The debounce above clears the TIMER, but once it fires the upsert runs for
+     up to 25 seconds while the user keeps typing — long enough for the next
+     debounce to fire a second push underneath the first. Completion order is
+     not guaranteed, and pushWorkspace writes a whole row (onConflict:
+     'user_id'), so an older snapshot resolving last overwrote everything newer.
+     Last-response-wins, on exactly the flaky-mobile case this code was built
+     for. The manual retry button raced the same way.
+
+     So: if a push is running, note that another is wanted and coalesce the
+     burst into one trailing push rather than stacking calls. Each attempt
+     carries a generation, and a reply from a superseded generation is dropped
+     — it must not overwrite state or drag the sync indicator backwards. */
+  const pushInFlightRef = useRef(false)
+  const pushQueuedRef = useRef(false)
+  const pushGenRef = useRef(0)
+
+  const runCloudPush = useCallback(async () => {
+    if (pushInFlightRef.current) {
+      pushQueuedRef.current = true
+      return { ok: true, coalesced: true }
+    }
+    pushInFlightRef.current = true
+    let last = { ok: true }
+    try {
+      do {
+        pushQueuedRef.current = false
+        const gen = (pushGenRef.current += 1)
+        setSyncState('syncing')
+        const result = await pushWorkspace(exportAllData())
+        last = result
+        // A newer push started while this one was in the air — its result is
+        // the truth, so say nothing about this one.
+        if (gen !== pushGenRef.current) continue
+        if (result.ok) {
+          setSyncState('ok')
+          setSyncError('')
+          applyImageUrlReplacements(result.replacements)
+        } else {
+          setSyncState('error')
+          setSyncError(result.error || 'Couldn’t sync')
+        }
+      } while (pushQueuedRef.current)
+    } finally {
+      pushInFlightRef.current = false
+    }
+    return last
+  }, [exportAllData, applyImageUrlReplacements])
+
   // Debounced push to Supabase when desk changes (local always saved via zustand)
   useEffect(() => {
     if (!CLOUD || !unlocked || !cloudUser || !cloudSyncReady.current) return
@@ -2045,21 +2112,12 @@ function App() {
     }
     if (cloudHydrating) return
     // Don't flip to "syncing" until the debounce fires — avoids flicker on every keystroke
-    const t = window.setTimeout(async () => {
-      setSyncState('syncing')
-      const payload = exportAllData()
-      const result = await pushWorkspace(payload)
-      if (result.ok) {
-        setSyncState('ok')
-        setSyncError('')
-        applyImageUrlReplacements(result.replacements)
-      } else {
-        setSyncState('error')
-        setSyncError(result.error || 'Couldn’t sync')
-      }
+    const t = window.setTimeout(() => {
+      void runCloudPush()
     }, 1600)
     return () => window.clearTimeout(t)
   }, [
+    runCloudPush,
     CLOUD,
     unlocked,
     cloudUser?.id,
@@ -2114,6 +2172,9 @@ function App() {
       flashToast('Cover image must be under 2.5MB')
       return
     }
+    /* Capture the project before the async read, so a project switch during
+       the downscale cannot land this image on the wrong one. */
+    const ownerProjectId = activeProject?.id
     // Local data URL, downscaled like mood pins — protects localStorage quota
     const reader = new FileReader()
     reader.onerror = () =>
@@ -2122,10 +2183,10 @@ function App() {
       try {
         const { downscaleDataUrl } = await import('./lib/moodPins')
         const scaled = await downscaleDataUrl(reader.result, file.type)
-        setLogoImage(scaled)
+        setLogoImage(scaled, ownerProjectId)
         flashMicro('Cover image updated')
       } catch {
-        setLogoImage(reader.result)
+        setLogoImage(reader.result, ownerProjectId)
         flashMicro('Cover image updated')
       }
     }
@@ -2377,7 +2438,6 @@ function App() {
         )
       }
       // Track export action
-      trackExportAction(kind, true)
       // XP stays in Progress HUD — success toast stays human leave-behind language
       flashToast(
         kind === 'backup' ? 'Backup saved' : 'Client pack saved',
@@ -2392,6 +2452,8 @@ function App() {
         ? `${slug}-brand-direction.pdf`
         : kind === 'kit'
           ? `${slug}-brand-kit.zip`
+          : kind === 'mark'
+            ? `${slug}-logo-files.zip`
           : kind === 'html'
             ? `${slug}-brand-direction.html`
             : kind === 'md'
@@ -2429,12 +2491,37 @@ function App() {
           finishOk('Everything (zip)')
         } else if (result.cancelled) {
           flashToast('Save cancelled — no problem')
-          trackExportAction('kit', false)
         } else {
           flashToast(
             result.error || 'Download did not finish — try again?'
           )
-          trackExportAction('kit', false)
+        }
+        return result
+      })().finally(clearBusy)
+    }
+
+    if (kind === 'mark') {
+      // Logo-only handoff: the real mark + an honest README, zipped. No book.
+      flashToast('Zipping the logo files…', { important: true })
+      return (async () => {
+        const result = await downloadMarkPack(pack, handlePromise)
+        if (result.ok) {
+          setLastExportNote(
+            `Logo files (zip) · ${new Date().toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit',
+            })}`
+          )
+          finishOk('Logo files (zip)')
+          if (result.hasMark === false) {
+            // The pack still saved (README explains the gap) — but say plainly
+            // that no mark was in it, rather than letting "saved" imply one was.
+            flashToast('Saved — but no logo image was in it yet')
+          }
+        } else if (result.cancelled) {
+          flashToast('Save cancelled — no problem')
+        } else {
+          flashToast(result.error || 'Download did not finish — try again?')
         }
         return result
       })().finally(clearBusy)
@@ -2462,10 +2549,8 @@ function App() {
           finishOk('Brand book PDF')
         } else if (result.cancelled) {
           flashToast('Save cancelled — no problem')
-          trackExportAction('pdf', false)
         } else {
           flashToast(result.error || 'Could not finish that PDF — try again?')
-          trackExportAction('pdf', false)
         }
         return result
       })().finally(clearBusy)
@@ -2504,10 +2589,8 @@ function App() {
           finishOk('Preview PDF')
         } else if (result.cancelled) {
           flashToast('Save cancelled — no problem')
-          trackExportAction('pdf-preview', false)
         } else {
           flashToast(result.error || 'Could not finish that PDF — try again?')
-          trackExportAction('pdf-preview', false)
         }
         return result
       })().finally(clearBusy)
@@ -2520,10 +2603,8 @@ function App() {
             finishOk('Brand HTML')
           } else if (result.cancelled) {
             flashToast('Save cancelled — no problem')
-            trackExportAction('html', false)
           } else {
             flashToast(result.error || 'Download did not finish — try again?')
-            trackExportAction('html', false)
           }
           return result
         })
@@ -2546,10 +2627,8 @@ function App() {
           if (result.ok) finishOk('Brand JSON')
           else if (result.cancelled) {
             flashToast('Save cancelled — no problem')
-            trackExportAction('json', false)
           } else {
             flashToast(result.error || 'Download did not finish — try again?')
-            trackExportAction('json', false)
           }
           return result
         })
@@ -2560,7 +2639,6 @@ function App() {
       if (result.ok) finishOk('Workspace backup')
       else {
         flashToast(result.error || 'Download did not finish — try again?')
-        trackExportAction('backup', false)
       }
       clearBusy()
       return Promise.resolve(result)
@@ -2586,10 +2664,8 @@ function App() {
               `Print dialog · ${when} — Save as PDF if you want a file`
             )
             flashToast('Print is open — choose Save as PDF if you want a file')
-            trackExportAction('print', true)
           } else {
             flashToast(r.error || 'Print did not open — try again?')
-            trackExportAction('print', false)
           }
           clearBusy()
           resolve(r)
@@ -2699,9 +2775,8 @@ function App() {
       if (result.ok) {
         setBodyDoubling(true)
         setActiveView('project')
-        setDemoTour({ step: 0 })
         notifyAction(
-          'Soft Signal demo loaded · short tour open',
+          'Soft Signal demo loaded',
           'project_create',
           { label: 'Soft Signal demo' }
         )
@@ -2737,7 +2812,6 @@ function App() {
       if (result.ok) {
         setBodyDoubling(true)
         setActiveView('finish')
-        setDemoTour(null)
         notifyAction(
           'Harbor & Hearth demo loaded · open Pack for full brand book',
           'project_create',
@@ -3144,11 +3218,10 @@ function App() {
                       }
                       return
                     }
-                    const result = await pushWorkspace(exportAllData())
+                    // Same coalescing path as the auto-push, so pressing
+                    // retry cannot race the save already in flight.
+                    const result = await runCloudPush()
                     if (result.ok) {
-                      setSyncState('ok')
-                      setSyncError('')
-                      applyImageUrlReplacements(result.replacements)
                       flashToast('Desk saved to the cloud')
                     } else {
                       setSyncState('error')
@@ -3185,7 +3258,7 @@ function App() {
               onClick={() => setActiveView('calendar')}
             >
               <HeaderIcon name="calendar" />
-              <span className="header-icon-btn__label">Calendar</span>
+              <span className="header-icon-btn__label">{toolsLabelForView('calendar')}</span>
             </button>
 
             <button
@@ -3194,7 +3267,7 @@ function App() {
               onClick={() => setActiveView('clients')}
             >
               <HeaderIcon name="people" />
-              <span className="header-icon-btn__label">Clients</span>
+              <span className="header-icon-btn__label">{toolsLabelForView('clients')}</span>
             </button>
 
             {/* Print moved into the Tools menu. It's genuinely low-frequency,
@@ -3217,7 +3290,7 @@ function App() {
               onClick={() => setActiveView('settings')}
             >
               <span aria-hidden="true">⚙</span>
-              <span className="header-icon-btn__label">Settings</span>
+              <span className="header-icon-btn__label">{toolsLabelForView('settings')}</span>
             </button>
 
             <div className="more-wrap" ref={moreWrapRef}>
@@ -3502,7 +3575,7 @@ function App() {
             })}
           </ol>
           {/* Only when it actually goes somewhere. When the next gap IS the
-              current page, "Continue → Project overview" points at the screen
+              current page, "Continue → <first stop>" points at the screen
               you're already on — a control that does nothing is worse than no
               control. "Start with these" is the call to action on that page. */}
           {pathNextGap && pathNextGap.view !== activeView && (
@@ -3849,7 +3922,7 @@ function App() {
                             {rowPack
                               ? 'Ship'
                               : rowFull
-                                ? 'Deliver'
+                                ? labelForStepId('deliver')
                                 : nextGap
                                   ? nextGap.label
                                   : '—'}
@@ -3876,7 +3949,7 @@ function App() {
                 </h2>
                 {pathFull && !packReady ? (
                   <p className="home-kicker" style={{ marginTop: '0.35rem' }}>
-                    Pack still thin — open Deliver to fill gaps or ship anyway
+                    {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
                   </p>
                 ) : null}
                 <div className="home-cta-row">
@@ -3892,7 +3965,7 @@ function App() {
                       switchProjectAndContinue(selected.project.id)
                     }}
                   >
-                    {pathFull ? 'Open Deliver' : 'Continue'}
+                    {pathFull ? `Open ${labelForStepId('deliver')}` : 'Continue'}
                   </button>
                 </div>
 
@@ -3938,21 +4011,21 @@ function App() {
                   className="btn btn-primary home-cta"
                   onClick={() => setActiveView('finish')}
                 >
-                  Open Deliver
+                  {`Open ${labelForStepId('deliver')}`}
                 </button>
               </>
             ) : pathStepsFull ? (
               <>
                 <h1 className="home-title">Path steps look full</h1>
                 <p className="home-kicker" style={{ marginTop: '0.5rem' }}>
-                  Pack still thin — open Deliver to fill gaps or ship anyway
+                  {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
                 </p>
                 <button
                   type="button"
                   className="btn btn-primary home-cta"
                   onClick={() => setActiveView('finish')}
                 >
-                  Open Deliver
+                  {`Open ${labelForStepId('deliver')}`}
                 </button>
               </>
             ) : pathNextGap ? (
@@ -3979,7 +4052,7 @@ function App() {
                   className="btn btn-primary home-cta"
                   onClick={() => setActiveView('finish')}
                 >
-                  Open Deliver
+                  {`Open ${labelForStepId('deliver')}`}
                 </button>
               </>
             )}
@@ -4064,6 +4137,7 @@ function App() {
             <StepDependencyReminder stepId="research" />
             <ResearchView
               navDir={navDir}
+              journeyNext={journeyNext}
               deskMood={deskMood}
               activeProjectId={activeProjectId}
               brandWords={activeProject?.detective?.brandWords || ''}
@@ -4204,6 +4278,7 @@ function App() {
             <StepDependencyReminder stepId="design" />
             <DesignView
               navDir={navDir}
+              journeyNext={journeyNext}
               activeProject={activeProject}
               deskMood={deskMood}
               projectPalette={projectPalette}
@@ -4288,7 +4363,7 @@ function App() {
               accessName={accessName}
               syncState={syncState}
               syncError={syncError}
-              pushWorkspace={pushWorkspace}
+              runCloudPush={runCloudPush}
               exportAllData={exportAllData}
               setSyncState={setSyncState}
               setSyncError={setSyncError}
@@ -4351,6 +4426,7 @@ function App() {
             />}>
             <DefineView
               navDir={navDir}
+              journeyNext={journeyNext}
               activeProject={activeProject}
               deskTasks={deskTasks}
               setActiveView={setActiveView}
@@ -4393,83 +4469,6 @@ function App() {
       </footer>
 
 
-      {demoTour && (
-        <div
-          className="export-overlay demo-tour-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="demo-tour-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setDemoTour(null)
-          }}
-        >
-          <div className="export-panel demo-tour-panel demo-tour-studio">
-            <p className="onboard-eyebrow">Demo</p>
-            <div className="demo-tour-dots" aria-hidden="true">
-              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-                <span key={i} className={i <= demoTour.step ? 'is-on' : ''} />
-              ))}
-            </div>
-            <h2 id="demo-tour-title" style={{ marginTop: 0 }}>
-              {
-                [
-                  /* Was a frozen seven-entry list naming Define/Ideate/
-                     Sketch/Design/Review/Deliver and walking through Ideate
-                     and Review as if they were path stops. A first-run tour
-                     that contradicts every other screen is worse than none. */
-                  ...JOURNEY_STEPS.map((st, i) => `${i + 1} · ${st.label}`),
-                ][demoTour.step] || 'Tour'
-              }
-            </h2>
-            <p className="view-lede demo-tour-lede">
-              {
-                [
-                  'Goal · who · feel',
-                  'Pins · ★ up to 6',
-                  'Sparks · shortlist',
-                  'Drafts + why',
-                  'Artboard · version',
-                  'Notes · gaps',
-                  'PDF · handoff',
-                ][demoTour.step]
-              }
-            </p>
-            <div className="onboard-actions" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  const views = PATH_VIEWS
-                  const s = demoTour.step
-                  setActiveView(views[s])
-                  if (s >= 6) setDemoTour(null)
-                  else setDemoTour({ step: s + 1 })
-                }}
-              >
-                {demoTour.step >= 6 ? 'Deliver' : 'Next'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => {
-                  const views = PATH_VIEWS
-                  setActiveView(views[demoTour.step] || 'project')
-                  setDemoTour(null)
-                }}
-              >
-                Stay
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setDemoTour(null)}
-              >
-                Skip
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showOnboarding && (
         <div
@@ -4505,20 +4504,28 @@ function App() {
                 autoComplete="off"
               />
             </label>
-            <details className="onboard-brief-details">
-              <summary>Brief</summary>
-              <label className="onboard-label" htmlFor="onboard-brief">
-                <span className="sr-only">Brief</span>
-                <textarea
-                  id="onboard-brief"
-                  value={onboardBrief}
-                  onChange={(e) => setOnboardBrief(e.target.value)}
-                  placeholder="What’s the job? One line is plenty"
-                  rows={2}
-                  className="onboard-input"
-                />
-              </label>
-            </details>
+            {/* Visible, not behind a <details>.
+                This was a collapsed <summary>Brief</summary> whose only label
+                was sr-only, so on the app's very first screen the user saw the
+                bare word "Brief" over empty space with no way to tell what was
+                inside. The owner's words on exactly this pattern: "they are
+                hidden and my first thought was 'I have no idea what this is.'
+                It's a cognitive load issue and invisible." A closed <details>
+                with a bare label is a memory test, not a control.
+                The field stays optional — showing it bills no decision that
+                cannot be skipped, and catching the job in one line while it is
+                still in your head is the point. */}
+            <label className="onboard-label" htmlFor="onboard-brief">
+              <span>Brief (optional)</span>
+              <textarea
+                id="onboard-brief"
+                value={onboardBrief}
+                onChange={(e) => setOnboardBrief(e.target.value)}
+                placeholder="What’s the job? One line is plenty"
+                rows={2}
+                className="onboard-input"
+              />
+            </label>
             {/* One button.
 
                 There were two — "Start the brief" and "Empty desk" — and they
@@ -4607,7 +4614,8 @@ function App() {
         flashToast={flashToast}
         prefs={prefs}
         setPref={setPref}
-        takeInvoiceNumber={takeInvoiceNumber}
+        peekInvoiceNumber={peekInvoiceNumber}
+        commitInvoiceNumber={commitInvoiceNumber}
       />
       <DiscoveryBriefPanel
         open={discoveryPanelOpen}

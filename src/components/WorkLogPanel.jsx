@@ -7,8 +7,9 @@
  *
  * Nothing here is billable. `timeLog` and the invoice are hand-entered.
  */
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { JOURNEY_STEPS } from '../lib/journey'
+import { useModalFocus } from '../lib/useModalFocus'
 
 /** Labels for both journey view ids (`studio`) and step ids (`research`). */
 const STAGE_TO_LABEL = Object.fromEntries([
@@ -53,6 +54,23 @@ export function WorkLogPanel({ open, onClose, workLog = [], onRemoveEntry }) {
       max,
     }
   }, [workLog])
+  /* Focus trap, focus restore and Escape.
+
+     This declared aria-modal="true" while implementing none of it — which is
+     the worst available combination, not a missing nicety: assistive tech is
+     told the rest of the page is unavailable while Tab walks straight out into
+     it. Focus also never entered the dialog on open and was never returned to
+     the opener on close.
+
+     useModalFocus is the same hook ProjectOverviewShare and ClientInbox
+     already use; passing onClose is what wires Escape, so one call covers all
+     three. */
+  const getRoot = useCallback(() => document.querySelector('.work-log-panel'), [])
+  useModalFocus(open, getRoot, {
+    initialSelector: '.running-todo-panel-head button, button',
+    onClose,
+  })
+
 
   if (!open) return null
 

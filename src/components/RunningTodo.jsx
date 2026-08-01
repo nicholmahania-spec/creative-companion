@@ -3,8 +3,9 @@
  * Stays flat/unsorted until Sort groups it by the 7 workflow stages;
  * after that, new items land pre-tagged into their stage automatically.
  */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { RUNNING_TODO_STAGES } from '../lib/runningTodoStages'
+import { useModalFocus } from '../lib/useModalFocus'
 
 /** Centered "anything to add?" popup.
  *
@@ -55,6 +56,17 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel, skipAsk 
     return () => window.removeEventListener('keydown', onKey, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, text])
+
+  /* Trap and restore only. Escape stays with the handler above, which does a
+     SAFE close — it captures half-typed text before dismissing, which the
+     hook's plain onClose would throw away. So the hook is given no onClose. */
+  const getPromptRoot = useCallback(
+    () => document.querySelector('.running-todo-prompt-overlay'),
+    []
+  )
+  useModalFocus(open, getPromptRoot, {
+    initialSelector: '.running-todo-prompt-panel textarea, button',
+  })
 
   if (!open) return null
 

@@ -9,6 +9,7 @@
  * submit_discovery_share (single-use write, pending -> submitted).
  */
 import { supabase, isSupabaseConfigured } from './supabase'
+import { ANSWERS_TOO_LARGE_MESSAGE, answersTooLarge } from './answerPayload'
 import { publicUrl } from './appPaths'
 
 /** Build the client-facing URL for a share id. */
@@ -78,6 +79,14 @@ export async function fetchDiscoveryShare(shareId) {
 export async function submitDiscoveryShare(shareId, answers) {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: 'Cloud sync isn’t configured' }
+  }
+  /* Before the round trip, not after: the RPC signals "too large" and "already
+     submitted" the same way (false), so an oversize payload that reaches it
+     comes back as a message telling the client they are finished when they are
+     not — on a link that only works once. Caught here, the link is not burned
+     and the message can name the one thing they can do about it. */
+  if (answersTooLarge(answers)) {
+    return { ok: false, error: ANSWERS_TOO_LARGE_MESSAGE }
   }
   const { data, error } = await supabase.rpc('submit_discovery_share', {
     share_id: shareId,

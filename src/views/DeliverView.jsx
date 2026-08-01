@@ -8,6 +8,7 @@ import CaseStudyExport from '../components/CaseStudyExport'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
+import { isLogoOnlyScope } from '../lib/detectiveBrief'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
 import {
@@ -74,7 +75,19 @@ export default function DeliverView({
   const packSnap = buildCurrentBrandPack()
   const ready = packReadiness(packSnap)
   const gaps = ready.checks.filter((c) => !c.ok)
+  /* Core gaps drive the headline and the chip colour; handoff/learnings are
+     ship polish (see packReadiness.allDone) and must not make a finished job
+     read red or unfinished. The full `gaps` list still shows below as optional
+     additions. */
+  const coreGaps = gaps.filter((c) => !['handoff', 'learnings'].includes(c.id))
   const okCount = ready.checks.filter((c) => c.ok).length
+
+  /* A logo-only job ships the mark, not a 21-page book about a brand that
+     doesn't exist. The cold-start tester delivered a logo and the only finish
+     button produced the wrong artifact, so the project couldn't close in-app.
+     When the brief scopes to the mark alone, the primary CTA becomes the logo
+     files; the book stays reachable under More for anyone who still wants it. */
+  const logoOnly = isLogoOnlyScope(activeProject?.detective?.deliverablesPicked)
 
 
   const goal = activeProject?.detective?.goal
@@ -142,10 +155,16 @@ export default function DeliverView({
           </InfoReveal>
         </div>
         <span
-          className={`deliver-status-chip${gaps.length ? ' is-gaps' : ' is-ready'}`}
+          className={`deliver-status-chip${ready.allDone ? ' is-ready' : ' is-gaps'}`}
           aria-live="polite"
         >
-          {`Ready · ${okCount}/${ready.checks.length}`}
+          {/* Name the state, not a fraction. "Ready · 4/8" is a number on a
+              job whose scope made four of those eight irrelevant; scoping
+              already removed the out-of-scope checks, and here the count goes
+              too. Done = "Ready to ship"; otherwise name the gaps. */}
+          {ready.allDone
+            ? 'Ready to ship'
+            : `Still to add: ${coreGaps.map((c) => c.label).join(', ')}`}
         </span>
       </div>
 
@@ -159,9 +178,9 @@ export default function DeliverView({
               <button
                 type="button"
                 className="btn btn-primary work-path-next"
-                onClick={() => runExport('pdf')}
+                onClick={() => runExport(logoOnly ? 'mark' : 'pdf')}
               >
-                Brand book PDF
+                {logoOnly ? 'Download logo files' : 'Brand book PDF'}
               </button>
             </div>
 
@@ -317,6 +336,19 @@ export default function DeliverView({
             <details className="deliver-advanced">
               <summary>More formats</summary>
               <div className="finish-secondary-row pack-more-row">
+                {/* On a logo-only job the book moved off the primary CTA, but
+                    it stays here for anyone who wants it anyway — reachable,
+                    just not the default. On a full-identity job the book IS
+                    the primary button, so it would be a duplicate here. */}
+                {logoOnly && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => runExport('pdf')}
+                  >
+                    Brand book PDF
+                  </button>
+                )}
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"

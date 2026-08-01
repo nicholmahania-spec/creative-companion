@@ -91,9 +91,15 @@ describe('Settings has exactly one door per screen size', () => {
 
   it('reaches Settings from the header on desktop', () => {
     /* The Tools menu clipped its own bottom four rows, Settings among them.
-       The replacement is a header button, not a second dropdown. */
+       The replacement is a header button, not a second dropdown.
+
+       Matches the label being DERIVED, not spelled. This asserted the literal
+       word "Settings" until the Tools labels were moved onto
+       toolsLabelForView() — at which point a correct change turned this red,
+       which is the exact failure mode the single-source rule exists to
+       prevent, just pointed at a test. Tests have to derive too. */
     expect(app).toMatch(
-      /header-icon-btn[\s\S]{0,200}setActiveView\('settings'\)[\s\S]{0,200}Settings/
+      /header-icon-btn[\s\S]{0,200}setActiveView\('settings'\)[\s\S]{0,260}toolsLabelForView\('settings'\)/
     )
   })
 

@@ -238,16 +238,6 @@ export function isPathView(view) {
  * "Project overview / Sketch / Design / Deliver" after the rename, so the
  * banner welcoming you back named stops that no longer existed.
  */
-export const VIEW_RESUME_LABELS = Object.fromEntries(
-  [...ALL_VIEWS].map((v) => [v, labelForView(v)])
-)
-
-/**
- * Focus the first matching path-gap field after a view jump.
- * @param {string} viewOrStepId - path view ('flow') or step id ('sketch')
- * @param {{ delayMs?: number }} [opts]
- * @returns {boolean} whether a selector was scheduled
- */
 export function focusPathGapField(viewOrStepId, { delayMs = 140 } = {}) {
   if (typeof document === 'undefined') return false
   let stepId = viewOrStepId
@@ -283,38 +273,3 @@ export function focusPathGapField(viewOrStepId, { delayMs = 140 } = {}) {
 /**
  * Build resume banner payload from desk session + project context.
  */
-export function buildResumeBanner({
-  session = null,
-  projectName = '',
-  nextStepTitle = '',
-  decisionLine = '',
-  activeView = null,
-} = {}) {
-  const view =
-    (session?.activeView && ALL_VIEWS.has(session.activeView)
-      ? session.activeView
-      : null) ||
-    (activeView && ALL_VIEWS.has(activeView) ? activeView : null) ||
-    (nextStepTitle ? 'flow' : 'project')
-
-  const breakHydrate = hydrateForcedBreak(session?.forcedBreak)
-  const focusHydrate = hydrateFocus(session?.focus)
-
-  let mode = 'reload' // default soft resume
-  if (breakHydrate?.active) mode = 'break-active'
-  else if (breakHydrate?.expired) mode = 'break-done'
-  else if (focusHydrate?.running) mode = 'timer-running'
-  else if (focusHydrate?.ended) mode = 'timer-ended'
-
-  return {
-    name: projectName || 'Project',
-    step: nextStepTitle || '',
-    view,
-    viewLabel: VIEW_RESUME_LABELS[view] || view,
-    decisionLine: decisionLine || '',
-    mode,
-    rejoinTimer: !!(focusHydrate?.running && focusHydrate.leftSec > 0),
-    focusLeftSec: focusHydrate?.leftSec || 0,
-    afterBreak: mode === 'break-done',
-  }
-}

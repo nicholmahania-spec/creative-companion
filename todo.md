@@ -299,6 +299,90 @@ before commit.
 
 ## Feature ideas — not yet scoped, not yet built
 
+### Reverse audit (2026-08-01) — the logo-only path. Gaps 2 & 3 DONE, Gap 1 SPEC
+
+A reverse audit — starting from what the client actually receives and tracing
+backward — found three holes on the path a *logo-only* job takes. Two are
+built; the third is specced here, ready to build, not built.
+
+**Gap 2 — DONE (`55919f9`).** Progress and readiness counters measured a
+logo-only job against colours, tagline, voice and a 21-page book the client
+never bought, so a finished job read "3 to go" / "Ready · 4/8". `progressItemInScope`
+now reads the brief's `deliverablesPicked` and drops out-of-scope checks; the
+Deliver chip names the state ("Ready to ship" / "Still to add: …") instead of
+a fraction. *ADHD why:* "3 to go" on finished work is a blame signal with no
+valid action behind it (rejection sensitivity), and a fraction is the one
+representation this user has said does not register.
+
+**Gap 3 — DONE (`baf606b`, v3.6.0).** The only finish button produced a brand
+book — the wrong artifact for a mark-only job — so the project could not close
+in-app. `isLogoOnlyScope` routes the Deliver primary CTA to "Download logo
+files" (`runExport('mark')` → `downloadMarkPack`): the real uploaded mark in
+its actual format + an honest README naming what is and isn't in the pack. The
+book stays under More formats. *ADHD why:* an unfinishable last step is where a
+time-blind, initiation-challenged user stalls hardest.
+
+**Gap 1 — SPEC, ready to build, NOT built. Present 2–3 logo concepts, client picks one.**
+
+The problem the reverse audit hit: the app has exactly one mark slot
+(`logoImage`). Real identity practice (Bokhua, *Principles of Logo Design*,
+Ch. 4) presents 2–3 distinct concepts and the client chooses. Today a designer
+who makes three has nowhere to stage them and no way to route the chosen one —
+the losing concepts live in a folder outside the app, and "which one did they
+approve" is re-derived from memory or a scroll-back through email.
+
+*Why it's a problem for ADHD — four parts, per CLAUDE.md:*
+- **Problem:** multiple concepts have no home in the tool; only the single
+  final mark fits.
+- **Why for ADHD:** object permanence + working memory — a concept kept
+  outside the app is invisible and therefore gone; the chosen-route question
+  becomes a recurring working-memory tax, re-answered every time it comes up.
+- **Solution:** a `logoConcepts: []` array per project, shown as an
+  always-visible thumbnail strip on Identity; one concept is starred as the
+  chosen route, and starring writes that image into the existing `logoImage`
+  so everything downstream (Deliver, book, portal) is unchanged.
+- **Why the solution helps ADHD:** the strip is ambient, not remembered
+  (object permanence); starring is one gesture (no decision fatigue); the
+  chosen route flows downstream automatically (no "remember to copy the final
+  one into the deliverable" step — interruption recovery).
+
+**ADHD-advisor shape, baked in — do not redesign from scratch when picked up:**
+- **No concept-count prompt.** The app never asks "how many concepts?" — you
+  add them one at a time as you make them. Zero, one, or three are all valid;
+  the strip just shows what exists. Asking up front bills a decision at the
+  blank-canvas moment, which is exactly the friction to avoid.
+- **Star, don't sort.** One ★ marks the chosen route. No ranking, no
+  ordering step, no "archive the rejects" chore — the unstarred concepts just
+  stay on the strip as the record of what was explored.
+- **Reuse, don't reinvent.** Concept thumbnails reuse the existing
+  `assetService.uploadImage` path (same as Design → Logo). Starring reuses the
+  `setLogoImage` write so no downstream code changes. This is additive.
+- **Nothing else.** No separate Concepts page or nav item, no per-concept
+  metadata form, no "present to client" wizard.
+
+**Open decisions — left open on purpose, confirm before building (do not
+pre-decide these):**
+1. **Migrating an existing single mark.** A project already carrying a
+   `logoImage` should become "one starred concept" on first load — but decide
+   whether `logoImage` stays the canonical downstream value (starring writes
+   it) or becomes derived from the starred concept. Recommend the former: keep
+   `logoImage` as the single source everything reads, so the migration is
+   purely additive and nothing downstream is touched.
+2. **Client-facing selection.** The `/c/:portalId` portal already carries
+   per-step approve / request-changes. Whether the client can star a concept
+   themselves (feeding that existing approval) or only the studio stars is a
+   real scope fork — the studio-side strip + star is the core; client-facing
+   selection is a clean phase 2, not part of the first build.
+3. **Where the losing concepts appear in the deliverable, if at all.** A
+   "concepts explored" page in the book is defensible as a record, but it is
+   also the kind of thing that turns a mark handoff into a bigger document —
+   decide per the job's scope, not globally.
+
+**Blocked on:** nothing technical — the upload path, the store, and the
+downstream `logoImage` consumer all already exist. Blocked only on the three
+open decisions above being confirmed, since each is a design call that is mine
+to propose and the owner's to make.
+
 ### Client contract signing before work begins — SCOPED, ready to build (2026-07-28)
 
 Decisions locked in by the owner:
