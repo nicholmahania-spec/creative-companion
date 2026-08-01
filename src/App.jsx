@@ -1654,6 +1654,23 @@ function App() {
       ) {
         return
       }
+      /* WCAG 2.1.4 (Character Key Shortcuts): a bare single-key shortcut must
+         not fire while focus is on some other control. These stay live in the
+         workspace's resting state — focus in `#main-content` or nowhere in
+         particular (the document body, where it sits on load and after a blur)
+         — and go quiet the moment focus is deliberately placed elsewhere: a
+         header/sidebar button, the Helper, an open dialog, or a speech-input
+         target. (Text fields are already handled by the typing-guard above.)
+         No off-switch and no modifier, so the initiation aid — press 1, you're
+         in Define — is intact. A deliberate resting-body allowance: forcing
+         focus into the workspace on every keystroke to satisfy the letter of
+         2.1.4 would fight the app's own focus and is exactly the friction the
+         ADHD mandate ranks above it. */
+      const workspace = document.getElementById('main-content')
+      const ae = document.activeElement
+      const inWorkspace =
+        !ae || ae === document.body || (workspace && workspace.contains(ae))
+      if (!inWorkspace) return
       if (shortcutsOpen) {
         if (e.key === 'Escape' || e.key === '?' || e.key === '/') {
           e.preventDefault()
@@ -1898,6 +1915,37 @@ function App() {
     else if (idx < prev) setNavDir('back')
     else setNavDir('none')
     prevJourneyIdx.current = idx
+  }, [activeView])
+
+  /* Re-arm the single-key shortcuts after a header/sidebar navigation. Click a
+     stage in the journey bar and focus sits on that button — outside the
+     workspace — so the shortcuts would stay quiet until you clicked back into
+     the content. When focus is parked on a control OUTSIDE #main-content at a
+     view change, pull it into the workspace. It never touches the resting
+     states (body, or focus already in the content), never steals from a
+     control the view itself focused (e.g. N → capture box, which is inside
+     the workspace), and stands down while a dialog owns focus. */
+  useEffect(() => {
+    const main = document.getElementById('main-content')
+    if (!main) return
+    if (
+      exportPanel ||
+      showBreakdown ||
+      showOnboarding ||
+      deskConfirm ||
+      forceBreakConsentOpen ||
+      shortcutsOpen ||
+      document.querySelector('.board-lightbox-overlay')
+    ) {
+      return
+    }
+    const ae = document.activeElement
+    if (!ae || ae === document.body || main.contains(ae)) return
+    main.focus({ preventScroll: true })
+    // Keyed on activeView ONLY: this arms the workspace on navigation. Keying
+    // it on the dialog states too would re-fire on dialog CLOSE and stomp the
+    // dialog's own focus-restore-to-opener — the guard above reads the current
+    // dialog state at nav time, which is all it needs.
   }, [activeView])
 
   // Close More / Account / sidebar project menus on outside click / Escape

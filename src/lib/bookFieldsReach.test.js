@@ -71,9 +71,11 @@ describe('the logo direction reaches the client', () => {
  * "Every field the book shows you must reach the book the client receives" was
  * written after logoDirection was found with an editor, an on-screen render
  * and no printing. The two guards below it check exactly that one field. Any
- * other field could acquire an editor and print nowhere, and did: typeWhy asks
- * "Why these fonts" on the Identity page and reaches no artifact of any kind —
- * three references in the whole repo, all of them the input itself.
+ * other field could acquire an editor and print nowhere, and did: typeWhy
+ * asked "Why these fonts" on the Identity page and reached no artifact of any
+ * kind — caught here as an exemption, then resolved 2026-08-01 by printing it
+ * on the book's type page (it now appears in brandBookPdf.js), which is why it
+ * is no longer in EXEMPT below.
  *
  * So this checks the set rather than the instance: every field with an editor
  * must appear in something a client receives. Exemptions are listed with their
@@ -111,11 +113,6 @@ const EXEMPT = {
   colorRoleWhy: 'feeds a completion gate, not a deliverable',
   /* Drives the Assets completion gate. Checklist state, not content. */
   deliverWordsChecked: 'feeds a completion gate, not a deliverable',
-  /* OPEN DECISION, not a design choice. "Why these fonts" is typed on the
-     Identity page and printed nowhere; the book has a type page that prints
-     the face names and could carry the reason. Recorded here rather than
-     dropped so the debt is visible in the guard that would otherwise hide it. */
-  typeWhy: 'unresolved: print it on the book type page, or remove the field',
 }
 
 describe('every editable brand field reaches something the client gets', () => {
