@@ -77,6 +77,13 @@ export default function PublicDiscoveryFill({ shareId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    // Validate on tap, not by greying the button — an unexplained disabled
+    // control is a silent wall (#7). The reason arrives at the moment and place
+    // of the action.
+    if (!hasAnyAnswer) {
+      setError('Answer at least one question before sending.')
+      return
+    }
     setSubmitting(true)
     setError('')
     const r = await submitDiscoveryShare(shareId, answers)
@@ -112,11 +119,11 @@ export default function PublicDiscoveryFill({ shareId }) {
         )}
 
         {loadState === 'loading' && (
-          <p className="public-fill-status">Loading…</p>
+          <p className="public-fill-status" role="status">Loading…</p>
         )}
 
         {loadState === 'notfound' && (
-          <p className="public-fill-status">
+          <p className="public-fill-status" role="alert">
             {error || 'This link isn’t valid — ask your contact to send a fresh one.'}
           </p>
         )}
@@ -125,7 +132,7 @@ export default function PublicDiscoveryFill({ shareId }) {
             After ten minutes of work, the form vanishing and being replaced
             by the page's quietest treatment reads as failure at a glance. */}
         {loadState === 'submitted' && (
-          <div className="public-fill-done">
+          <div className="public-fill-done" role="status">
             <h2 className="public-fill-done-title">Thanks — that’s sent</h2>
             <p className="public-fill-status">
               Your designer has your answers and will be in touch. This link
@@ -144,19 +151,28 @@ export default function PublicDiscoveryFill({ shareId }) {
               targetId={shareId}
             />
 
-            {error && <p className="public-fill-error">{error}</p>}
+            {error && (
+              <p className="public-fill-error" role="alert">
+                {error}
+              </p>
+            )}
 
             {/* Said before the button, not after the fact. The lede invites a
                 partial answer; without this the one-shot submit is a trap
-                sprung on someone who did as they were told. */}
-            <p className="public-fill-submit-note">
-              You can send this once — take your time.
-            </p>
+                sprung on someone who did as they were told. Hidden while an
+                error shows so the client reconciles one message, not two. */}
+            {!error && (
+              <p className="public-fill-submit-note">
+                You can send this once — take your time.
+              </p>
+            )}
 
+            {/* Enabled except mid-submit; the all-blank case is caught on tap
+                with an inline reason rather than a dead greyed button (#7). */}
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={submitting || !hasAnyAnswer}
+              disabled={submitting}
             >
               {submitting ? 'Submitting…' : 'Submit'}
             </button>

@@ -28,6 +28,9 @@ export default function PublicClientPortal({ portalId }) {
   const [portal, setPortal] = useState(null)
   const [messages, setMessages] = useState([])
   const [error, setError] = useState('')
+  // Which action an error belongs to, so one failure is announced once beside
+  // its own control instead of by three role="alert" nodes at once (#11).
+  const [errorScope, setErrorScope] = useState(null)
   const [chatInput, setChatInput] = useState('')
   const [sending, setSending] = useState(false)
   const [formAnswers, setFormAnswers] = useState({})
@@ -172,6 +175,7 @@ export default function PublicClientPortal({ portalId }) {
     setSending(false)
     if (!r.ok) {
       setError(clientFacingError(r.error))
+      setErrorScope('chat')
       return
     }
     setChatInput('')
@@ -185,6 +189,10 @@ export default function PublicClientPortal({ portalId }) {
      two round-trips with both buttons live and unchanged, so on a slow
      connection a client sees nothing happen and presses again. */
   const [pendingStepId, setPendingStepId] = useState(null)
+  // Two-tap confirm for Approve only — a client's approval is a commitment with
+  // money attached, so a mis-tap shouldn't fire on one press. Request-changes
+  // stays one tap (it's reversible). (#10)
+  const [armedApproveStepId, setArmedApproveStepId] = useState(null)
 
   const respondStep = async (stepId, status) => {
     if (pendingStepId) return
@@ -195,6 +203,7 @@ export default function PublicClientPortal({ portalId }) {
     if (!r.ok) {
       setPendingStepId(null)
       setError(clientFacingError(r.error))
+      setErrorScope('step')
       return
     }
     /* Only this step's note — the others are still unsent work. */
@@ -216,6 +225,7 @@ export default function PublicClientPortal({ portalId }) {
     setFormSubmitting(false)
     if (!r.ok) {
       setError(clientFacingError(r.error))
+      setErrorScope('form')
       return
     }
     writeDraft({ form: {} })
@@ -230,6 +240,7 @@ export default function PublicClientPortal({ portalId }) {
     setSurveySubmitting(false)
     if (!r.ok) {
       setError(clientFacingError(r.error))
+      setErrorScope('survey')
       return
     }
     writeDraft({ survey: {} })
@@ -240,7 +251,7 @@ export default function PublicClientPortal({ portalId }) {
     return (
       <div className="public-fill-page">
         <div className="public-fill-card">
-          <p className="public-fill-status">Loading…</p>
+          <p className="public-fill-status" role="status">Loading…</p>
         </div>
       </div>
     )
@@ -250,7 +261,7 @@ export default function PublicClientPortal({ portalId }) {
     return (
       <div className="public-fill-page">
         <div className="public-fill-card">
-          <p className="public-fill-status">
+          <p className="public-fill-status" role="alert">
             {error || 'This link isn’t valid — ask your contact to send a fresh one.'}
           </p>
         </div>
@@ -292,7 +303,7 @@ export default function PublicClientPortal({ portalId }) {
                           : 'Waiting on you'}
                     </span>
                   </div>
-                  {status !== 'approved' && (
+                  {status !== 'approved' ? (
                     <div className="client-portal-step-actions">
                       <textarea
                         className="field-input"
@@ -308,9 +319,26 @@ export default function PublicClientPortal({ portalId }) {
                           type="button"
                           className="btn btn-primary btn-sm"
                           disabled={pendingStepId === step.id}
-                          onClick={() => respondStep(step.id, 'approved')}
+                          onClick={() => {
+                            // Two-tap: first tap arms, second approves.
+                            if (armedApproveStepId === step.id) {
+                              setArmedApproveStepId(null)
+                              respondStep(step.id, 'approved')
+                            } else {
+                              setArmedApproveStepId(step.id)
+                            }
+                          }}
+                          onBlur={() =>
+                            setArmedApproveStepId((id) =>
+                              id === step.id ? null : id
+                            )
+                          }
                         >
-                          {pendingStepId === step.id ? 'Saving…' : 'Approve'}
+                          {pendingStepId === step.id
+                            ? 'Saving…'
+                            : armedApproveStepId === step.id
+                              ? 'Tap again to approve'
+                              : 'Approve'}
                         </button>
                         <button
                           type="button"
@@ -321,6 +349,23 @@ export default function PublicClientPortal({ portalId }) {
                           Request changes
                         </button>
                       </div>
+                    </div>
+                  ) : (
+                    /* Approved no longer unmounts every control — a client who
+                       changes their mind keeps a visible, labelled route back
+                       (object permanence), via the already-reversible
+                       changes_requested path. (#10) */
+                    <div className="client-portal-step-actions">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        disabled={pendingStepId === step.id}
+                        onClick={() => respondStep(step.id, 'changes_requested')}
+                      >
+                        {pendingStepId === step.id
+                          ? 'Saving…'
+                          : 'Request changes instead'}
+                      </button>
                     </div>
                   )}
                   {status === 'changes_requested' && portal.stepStatus?.[step.id]?.note ? (
@@ -358,7 +403,9 @@ export default function PublicClientPortal({ portalId }) {
                 {/* Beside the button that caused it. This used to render only
                     at the very bottom of the page, several screens below the
                     submit, so a failed submit looked like nothing happened. */}
-                {error && <p className="public-fill-error" role="alert">{error}</p>}
+                {error && errorScope === 'form' && (
+                  <p className="public-fill-error" role="alert">{error}</p>
+                )}
                 <button type="submit" className="btn btn-primary" disabled={formSubmitting}>
                   {formSubmitting ? 'Submitting…' : 'Submit'}
                 </button>
@@ -411,7 +458,9 @@ export default function PublicClientPortal({ portalId }) {
                   )}
                 </div>
               ))}
-              {error && <p className="public-fill-error" role="alert">{error}</p>}
+              {error && errorScope === 'survey' && (
+                <p className="public-fill-error" role="alert">{error}</p>
+              )}
               <button
                 type="submit"
                 className="btn btn-primary"
@@ -479,7 +528,11 @@ export default function PublicClientPortal({ portalId }) {
           </button>
         </div>
 
-        {error && <p className="public-fill-error" role="alert">{error}</p>}
+        {/* Catch-all only for the actions without a local slot — step
+            approvals and chat — so a single failure is announced once (#11). */}
+        {error && (errorScope === 'step' || errorScope === 'chat') && (
+          <p className="public-fill-error" role="alert">{error}</p>
+        )}
       </div>
     </div>
   )

@@ -25,6 +25,17 @@ export function publicUrl(prefix, id) {
 }
 
 /**
+ * Absolute URL of the app's own base (origin + base path). For redirects that
+ * must land back on the app across BOTH root and subpath deploys — e.g. the
+ * Supabase password-reset redirectTo. Never build these from
+ * window.location.pathname: on a public deep link that is /c/<id>, and the
+ * reset would send the user there instead of into the app.
+ */
+export function appUrl() {
+  return `${window.location.origin}${appBasePath()}`
+}
+
+/**
  * Current pathname with the base prefix stripped, so route patterns can
  * be written as plain '/c/:id' regardless of where the app is mounted.
  */

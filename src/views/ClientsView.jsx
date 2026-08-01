@@ -1,8 +1,9 @@
 /**
- * Client directory — Polaroid-style cards by default (visual recall —
- * the user recognizes clients by the brand logo, not by reading a name),
- * with a list-view toggle, search, and sort. View toggle intentionally
- * does not persist — always opens back to Polaroid view.
+ * Client directory — Polaroid-style cards (visual recall: the user recognizes
+ * clients by the brand logo, not by reading a name), with search and sort.
+ * No card/list view toggle: a presentation preference the user re-decides on
+ * every visit is pure decision-fatigue overhead — neither view does more work
+ * than the other, so we commit to the recognizable one. (#18)
  */
 import { useMemo, useState } from 'react'
 import { labelForStepId } from '../lib/journey'
@@ -17,7 +18,6 @@ import '../styles/lazy-clients.css'
 export default function ClientsView({ projects = [], selectProject, setActiveView }) {
   const [query, setQuery] = useState('')
   const [sortMode, setSortMode] = useState('recent')
-  const [view, setView] = useState('polaroid')
 
   const clients = useMemo(() => buildClientGroups(projects), [projects])
   const visible = useMemo(
@@ -52,24 +52,6 @@ export default function ClientsView({ projects = [], selectProject, setActiveVie
             <option value="recent">Most recent</option>
             <option value="alpha">A–Z</option>
           </select>
-          <div className="clients-view-toggle" role="group" aria-label="Card or list view">
-            <button
-              type="button"
-              className={`clients-view-toggle-btn${view === 'polaroid' ? ' is-active' : ''}`}
-              onClick={() => setView('polaroid')}
-              aria-pressed={view === 'polaroid'}
-            >
-              Cards
-            </button>
-            <button
-              type="button"
-              className={`clients-view-toggle-btn${view === 'list' ? ' is-active' : ''}`}
-              onClick={() => setView('list')}
-              aria-pressed={view === 'list'}
-            >
-              List
-            </button>
-          </div>
         </div>
       </div>
 
@@ -79,18 +61,12 @@ export default function ClientsView({ projects = [], selectProject, setActiveVie
             ? `No clients yet — add a client name on a project’s ${labelForStepId('define')} step.`
             : 'No matches.'}
         </p>
-      ) : view === 'polaroid' ? (
+      ) : (
         <div className="clients-grid">
           {visible.map((c) => (
             <ClientCard key={c.name} client={c} onOpen={openProject} />
           ))}
         </div>
-      ) : (
-        <ul className="clients-list">
-          {visible.map((c) => (
-            <ClientRow key={c.name} client={c} onOpen={openProject} />
-          ))}
-        </ul>
       )}
     </div>
   )
@@ -139,37 +115,5 @@ function ClientCard({ client, onOpen }) {
         </ul>
       </div>
     </div>
-  )
-}
-
-function ClientRow({ client, onOpen }) {
-  return (
-    <li className="client-row">
-      <ClientPhoto client={client} />
-      <div className="client-row-body">
-        <p className="client-row-name">{client.name}</p>
-        <ul className="client-row-projects">
-          {client.projects.map((p) => (
-            <li key={p.id}>
-              <button type="button" className="text-link" onClick={() => onOpen(p)}>
-                {p.name}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="client-row-actions">
-        {client.phone && (
-          <a className="btn btn-ghost btn-sm" href={`tel:${client.phone}`}>
-            Call
-          </a>
-        )}
-        {client.email && (
-          <a className="btn btn-ghost btn-sm" href={`mailto:${client.email}`}>
-            Email
-          </a>
-        )}
-      </div>
-    </li>
   )
 }

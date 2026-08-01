@@ -304,7 +304,16 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 required
                 minLength={mode === 'setup' || mode === 'signup' ? 8 : 6}
                 aria-invalid={!!error && error.includes('Password')}
-                aria-describedby="password-error password-strength"
+                aria-describedby={
+                  [
+                    error ? 'password-error' : null,
+                    mode === 'setup' || mode === 'signup'
+                      ? 'password-strength'
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' ') || undefined
+                }
               />
               <button
                 type="button"
@@ -363,7 +372,11 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
                 required
                 minLength={8}
                 aria-invalid={!!error && error.includes('Passwords do not match')}
-                aria-describedby="confirm-error"
+                aria-describedby={
+                  error && error.includes('Passwords do not match')
+                    ? 'password-error'
+                    : undefined
+                }
               />
             </label>
           )}
