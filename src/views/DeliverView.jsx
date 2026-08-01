@@ -74,6 +74,11 @@ export default function DeliverView({
   const packSnap = buildCurrentBrandPack()
   const ready = packReadiness(packSnap)
   const gaps = ready.checks.filter((c) => !c.ok)
+  /* Core gaps drive the headline and the chip colour; handoff/learnings are
+     ship polish (see packReadiness.allDone) and must not make a finished job
+     read red or unfinished. The full `gaps` list still shows below as optional
+     additions. */
+  const coreGaps = gaps.filter((c) => !['handoff', 'learnings'].includes(c.id))
   const okCount = ready.checks.filter((c) => c.ok).length
 
 
@@ -142,10 +147,16 @@ export default function DeliverView({
           </InfoReveal>
         </div>
         <span
-          className={`deliver-status-chip${gaps.length ? ' is-gaps' : ' is-ready'}`}
+          className={`deliver-status-chip${ready.allDone ? ' is-ready' : ' is-gaps'}`}
           aria-live="polite"
         >
-          {`Ready · ${okCount}/${ready.checks.length}`}
+          {/* Name the state, not a fraction. "Ready · 4/8" is a number on a
+              job whose scope made four of those eight irrelevant; scoping
+              already removed the out-of-scope checks, and here the count goes
+              too. Done = "Ready to ship"; otherwise name the gaps. */}
+          {ready.allDone
+            ? 'Ready to ship'
+            : `Still to add: ${coreGaps.map((c) => c.label).join(', ')}`}
         </span>
       </div>
 

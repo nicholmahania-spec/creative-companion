@@ -10,15 +10,20 @@ export default function BeforeAfterChip({ project, onOpen }) {
   const summary = brandProgressSummary(project)
   if (summary.doneCount === 0) return null
 
-  const doneText = `Built: ${summary.doneLabels.join(', ')}`
-  const remaining = summary.remainingLabels.length
-    ? ` · ${summary.remainingLabels.length} to go`
-    : ''
+  /* Name the things, never a count. "3 to go" on a finished job reads as
+     blame, and a number is the one representation this user has said does not
+     register. When everything IN SCOPE is present, the chip says so by name;
+     otherwise it names what is still open — a concrete noun, not "N to go". */
+  const label = summary.allDone
+    ? `Ready: ${summary.doneLabels.join(', ')}`
+    : `Built: ${summary.doneLabels.join(', ')}` +
+      (summary.remainingLabels.length
+        ? ` · still open: ${summary.remainingLabels.join(', ')}`
+        : '')
 
   return (
     <button type="button" className="before-after-chip" onClick={onOpen}>
-      {doneText}
-      {remaining}
+      {label}
     </button>
   )
 }

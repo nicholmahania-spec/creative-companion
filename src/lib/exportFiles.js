@@ -21,6 +21,7 @@ import {
   DETECTIVE_CHAPTERS,
   formatDetectiveAnswer,
   filledDetectiveChapters,
+  progressItemInScope,
 } from './detectiveBrief'
 import { OVERVIEW_FIELD_PREFIX } from './overviewOcr'
 import {
@@ -507,13 +508,31 @@ export function packReadiness(pack) {
       section: null,
     },
   ]
-  const okCount = checks.filter((c) => c.ok).length
+  /* Only require what the brief picked. tagline/palette/voice are book fields
+     a logo-only client did not buy, so a done logo job must not read as
+     "Ready · 4/8". progressItemInScope reads the same deliverablesPicked the
+     brand-progress chip uses, so the two counters can never disagree about
+     scope. Everything not scopeable (goal, pins, positioning, handoff,
+     learnings) always counts. */
+  const picked = det.deliverablesPicked
+  const scopedChecks = checks.filter((c) => progressItemInScope(c.id, picked))
+  const okCount = scopedChecks.filter((c) => c.ok).length
+  const gaps = scopedChecks.filter((c) => !c.ok)
   // Thin if core brand pieces missing (not handoff/learnings — those are ship polish)
-  const coreOk = checks
+  const coreOk = scopedChecks
     .filter((c) => !['handoff', 'learnings'].includes(c.id))
     .filter((c) => c.ok).length
   const thin = coreOk < 3
-  return { checks, okCount, thin, hasName, coreOk }
+  /* "Done" ignores handoff/learnings for the same reason coreOk does — they
+     are ship polish, not requirements, and a job is shippable without a
+     personal learnings note. Blocking "ready to ship" on an optional note
+     would nag a finished job, which is the whole thing this scoping removes. */
+  const coreChecks = scopedChecks.filter(
+    (c) => !['handoff', 'learnings'].includes(c.id)
+  )
+  const allDone =
+    coreChecks.length > 0 && coreChecks.every((c) => c.ok)
+  return { checks: scopedChecks, okCount, thin, hasName, coreOk, gaps, allDone }
 }
 
 /** Markdown brand direction pack */

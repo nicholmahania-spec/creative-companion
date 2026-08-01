@@ -723,3 +723,41 @@ export function isWrongShapeForField(fieldId, value) {
 
   return false
 }
+
+/**
+ * Which brand-element progress items a picked deliverable brings into scope.
+ *
+ * Keyed by the progress-item ids that brandProgressSummary and packReadiness
+ * already use ('palette' = colours, 'tagline', 'voice'). An item listed here
+ * counts only if the brief picked a deliverable that needs it. Everything NOT
+ * listed — the logo itself, and the process items (goal, research pins,
+ * positioning, handoff note, learnings) — always counts, because they apply to
+ * any identity job including a logo-only one.
+ *
+ * This is what lets a finished logo-only job read as finished: the client
+ * picked logoPrimary, so colours/tagline/voice are simply not counted, and
+ * there is nothing left "to go". No "logo only" mode, no toggle — the answer
+ * was already given in the brief's deliverablesPicked.
+ */
+const SCOPE_BY_ITEM = {
+  palette: ['colourPalette', 'guidelines'],
+  tagline: ['guidelines'],
+  voice: ['guidelines'],
+}
+
+/**
+ * @param {string} itemId  a progress-item id (e.g. 'palette', 'logo', 'voice')
+ * @param {string[]} deliverablesPicked  the brief's deliverablesPicked
+ * @returns {boolean} whether this item should count toward progress/readiness
+ */
+export function progressItemInScope(itemId, deliverablesPicked) {
+  const picked = Array.isArray(deliverablesPicked) ? deliverablesPicked : []
+  /* No brief filled yet → count everything. An unstarted brief must not read
+     as scoped-down-and-done; the full set is the honest default until the job
+     actually says otherwise. This also keeps every existing full-identity
+     project behaving exactly as before. */
+  if (!picked.length) return true
+  const needs = SCOPE_BY_ITEM[itemId]
+  if (!needs) return true // logo + process items — always in scope
+  return needs.some((d) => picked.includes(d))
+}
