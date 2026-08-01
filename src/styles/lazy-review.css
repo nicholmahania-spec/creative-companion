@@ -282,6 +282,24 @@
   color: var(--text-primary);
 }
 
+/* Client-state chip — same band, same read-only-glance pattern as the
+   before/after chip; a named state, never a count. Primary ink because it
+   announces an arrival, not ambient history. */
+.client-state-chip {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--text-primary);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
 .before-after-list {
   list-style: none;
   margin: 0;
