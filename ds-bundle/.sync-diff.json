@@ -1,0 +1,23 @@
+{
+  "styleChanged": false,
+  "anchorUsed": false,
+  "anchorReason": "not_provided",
+  "keyedBy": "renderHashes",
+  "unchanged": [],
+  "changed": [],
+  "added": [
+    "Button"
+  ],
+  "removed": [],
+  "renderChurned": [],
+  "upload": {
+    "any": true,
+    "components": [
+      "Button"
+    ],
+    "deletePaths": [],
+    "bundle": true,
+    "styling": true,
+    "aux": true
+  }
+}

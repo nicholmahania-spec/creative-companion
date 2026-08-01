@@ -1,0 +1,19 @@
+{
+  "shape": "package",
+  "styleSha": "f2d58c06d3c41074d4da9b587183997cd726a3a9374b58af8801477054bf4ceb",
+  "renderHashes": {
+    "Button": "f9ecdd4f28bc3353"
+  },
+  "sourceKeys": {
+    "Button": "622eb1bbb98b7665"
+  },
+  "keyRecipe": 7,
+  "scriptsSha": "d459f86d12e88254",
+  "sourceHashes": {
+    "components/general/Button/Button.jsx": "bae8a7f666be",
+    "components/general/Button/Button.d.ts": "65a9a8598091",
+    "components/general/Button/Button.prompt.md": "c8d52ae5110e"
+  },
+  "auxSha": "f079482524d8e089",
+  "bundleSha12": "c0805e0879e2"
+}

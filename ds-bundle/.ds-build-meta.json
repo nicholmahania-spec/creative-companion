@@ -1,0 +1,9 @@
+{
+  "namespace": "CreativeCompanion",
+  "source": "creative-companion-react@2.0.0",
+  "shape": "package",
+  "provider": null,
+  "componentCount": 1,
+  "skippedStoryIds": [],
+  "runtimeFontPrefixes": []
+}
