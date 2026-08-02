@@ -61,28 +61,9 @@ export default function SparkView({
     notifyAction: notifyActionStore,
   } = useAppStore()
 
-  
-
-  // Focus timer tick
-  useEffect(() => {
-    let timer = null
-    if (isFocusRunning && focusLeft > 0) {
-      timer = window.setInterval(() => {
-        setFocusLeft((prev) => {
-          const newVal = Math.max(prev - 1, 0)
-          if (newVal === 0) {
-            setIsFocusRunning(false)
-            setSessionComplete(true)
-            flashToast?.('Focus session complete!')
-          }
-          return newVal
-        })
-      }, 1000)
-    }
-    return () => {
-      if (timer) window.clearInterval(timer)
-    }
-  }, [isFocusRunning, focusLeft, setFocusLeft, setIsFocusRunning, setSessionComplete, flashToast])
+  /* No countdown tick here on purpose — App.jsx already runs one globally for
+     as long as isFocusRunning, and it owns the forced break at zero. A second
+     interval on the same store value made the clock run at double speed. */
 
   const handleFocusClick = () => {
     if (isFocusRunning) {
@@ -93,7 +74,7 @@ export default function SparkView({
     } else {
       // Start focus
       setIsFocusRunning(true)
-      setFocusLeft(20)
+      setFocusLeft(20 * 60)
       setTimerFocusSource('ideate')
       setPomodoroWorkStartedAt(Date.now())
       notifyActionStore?.('Focus started', 'focus')

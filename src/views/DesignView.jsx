@@ -66,60 +66,6 @@ export default function DesignView({
   brandEditSectionProp,
   setBrandEditSectionProp,
 }) {
-  // Focus mode
-  const {
-    focusLeft,
-    isFocusRunning,
-    timerFocusSource,
-    pomodoroWorkStartedAt,
-    setFocusLeft,
-    setIsFocusRunning,
-    setTimerFocusSource,
-    setPomodoroWorkStartedAt,
-    setSessionComplete,
-    forcedBreak,
-  } = useAppStore()
-
-
-  // Focus timer tick
-  useEffect(() => {
-    let timer = null
-    if (isFocusRunning && focusLeft > 0) {
-      timer = window.setInterval(() => {
-        setFocusLeft((prev) => {
-          const newVal = Math.max(prev - 1, 0)
-          if (newVal === 0) {
-            setIsFocusRunning(false)
-            setSessionComplete(true)
-            flashToast?.('Focus session complete!')
-          }
-          return newVal
-        })
-      }, 1000)
-    }
-    return () => {
-      if (timer) window.clearInterval(timer)
-    }
-  }, [isFocusRunning, focusLeft, setFocusLeft, setIsFocusRunning, setSessionComplete, flashToast])
-
-  const handleFocusClick = () => {
-    if (isFocusRunning) {
-      // Pause/focus exit
-      setIsFocusRunning(false)
-      notifyAction?.('Focus paused', 'focus')
-      flashToast?.('Focus paused')
-    } else {
-      // Start focus
-      setIsFocusRunning(true)
-      setFocusLeft(20)
-      setTimerFocusSource('design')
-      setPomodoroWorkStartedAt(Date.now())
-      notifyAction?.('Focus started', 'focus')
-      flashToast?.('Focus mode: 20 minutes')
-    }
-  }
-
-
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const updateDirection = useAppStore((s) => s.updateDirection)
   const addContact = useAppStore((s) => s.addContact)

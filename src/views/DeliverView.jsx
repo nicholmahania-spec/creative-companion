@@ -72,59 +72,6 @@ export default function DeliverView({
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
 
-  // Focus mode
-  const {
-    focusLeft,
-    isFocusRunning,
-    timerFocusSource,
-    pomodoroWorkStartedAt,
-    setFocusLeft,
-    setIsFocusRunning,
-    setTimerFocusSource,
-    setPomodoroWorkStartedAt,
-    setSessionComplete,
-    forcedBreak,
-  } = useAppStore()
-
-
-  // Focus timer tick
-  useEffect(() => {
-    let timer = null
-    if (isFocusRunning && focusLeft > 0) {
-      timer = window.setInterval(() => {
-        setFocusLeft((prev) => {
-          const newVal = Math.max(prev - 1, 0)
-          if (newVal === 0) {
-            setIsFocusRunning(false)
-            setSessionComplete(true)
-            flashToast?.('Focus session complete!')
-          }
-          return newVal
-        })
-      }, 1000)
-    }
-    return () => {
-      if (timer) window.clearInterval(timer)
-    }
-  }, [isFocusRunning, focusLeft, setFocusLeft, setIsFocusRunning, setSessionComplete, flashToast])
-
-  const handleFocusClick = () => {
-    if (isFocusRunning) {
-      // Pause/focus exit
-      setIsFocusRunning(false)
-      notifyAction?.('Focus paused', 'focus')
-      flashToast?.('Focus paused')
-    } else {
-      // Start focus
-      setIsFocusRunning(true)
-      setFocusLeft(20)
-      setTimerFocusSource('deliver')
-      setPomodoroWorkStartedAt(Date.now())
-      notifyAction?.('Focus started', 'focus')
-      flashToast?.('Focus mode: 20 minutes')
-    }
-  }
-
   const packSnap = buildCurrentBrandPack()
   const ready = packReadiness(packSnap)
   const gaps = ready.checks.filter((c) => !c.ok)
