@@ -14,7 +14,20 @@ import {
 } from '../lib/decisionLog'
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/breakKit'
+import { IDENTITY_FIELDS } from '../lib/identityStamp'
 import versionService from '../services/versionService'
+
+/**
+ * The patch that records "the identity moved just now".
+ *
+ * Spread into the same `set` as the field write, never as a follow-up call —
+ * a second write would be a second persist round and could interleave with a
+ * project switch, stamping the wrong project.
+ */
+const identityEdit = () => ({ identityEditedAt: new Date().toISOString() })
+
+/** Only genuine identity fields stamp — orgPhone and print notes are not the identity. */
+const IDENTITY_FIELD_SET = new Set(IDENTITY_FIELDS)
 
 /**
  * Every field id the Define sheet knows about.
@@ -198,6 +211,18 @@ export function brandIdentityDefaults() {
   /* Stops this project has ever completed. A record, not a live verdict —
      see pathStepHasContent for why completion must not be able to regress. */
   pathReached: {},
+  /* The user's own verdict on a stop, which outranks both the live condition
+     and pathReached. `true` = done, `false` = not done, absent = let the app
+     decide. Tri-state on purpose: the app's conditions are proxies (Touchpoints
+     reads brandSurfaces, Identity reads craft signals), so work done in
+     Illustrator or approved over the phone is invisible to them, and a stop can
+     equally auto-tick before the user considers it finished. Either way the
+     toggle must visibly do something, which a plain boolean cannot promise. */
+  pathDone: {},
+  /* Identity version stamp. Real ISO strings, never rendered — see
+     lib/identityStamp.js for why the UI shows a sentence instead. */
+  identityEditedAt: '',
+  identitySavedAt: '',
   /** Why the chosen type pair fits the Define brand words */
   typeWhy: '',
   /** data URL mark for pack cover */
@@ -745,7 +770,7 @@ const useAppStore = create(
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === state.currentProjectId
-              ? { ...p, logoDirection: direction }
+              ? { ...p, logoDirection: direction, ...identityEdit() }
               : p
           ),
         })),
@@ -830,6 +855,7 @@ const useAppStore = create(
               ? {
                   ...p,
                   palette: (palette || []).slice(0, 8),
+                  ...identityEdit(),
                 }
               : p
           ),
@@ -872,6 +898,39 @@ const useAppStore = create(
           return changed ? { projects } : {}
         }),
 
+      /**
+       * The user's own verdict on a stop. Outranks the live condition AND
+       * `pathReached` — see pathStepHasContent.
+       *
+       * @param {string} stepId
+       * @param {boolean|null} done - true = done, false = not done,
+       *   null = hand it back to the app's own judgement.
+       * @param {string|number} [projectId]
+       *
+       * Unlike markPathReached, this CAN clear a tick, and that is the point:
+       * markPathReached protects against ordinary work silently taking a mark
+       * away, which is a non-local loss with no cause on screen. This is the
+       * opposite — an explicit action the user just took, with the same
+       * control still sitting there to undo it. No confirm, deliberately:
+       * nothing is destroyed, the toggle is its own undo, and a confirm here
+       * would read as the app asking whether you are sure you are behind.
+       */
+      setStepDone: (stepId, done, projectId) =>
+        set((state) => {
+          const id = String(stepId || '')
+          if (!id) return {}
+          const target = projectId ?? state.currentProjectId
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== target) return p
+              const next = { ...(p.pathDone || {}) }
+              if (done === null || done === undefined) delete next[id]
+              else next[id] = !!done
+              return { ...p, pathDone: next }
+            }),
+          }
+        }),
+
       setBookBuilder: (patch) =>
         set((state) => ({
           projects: state.projects.map((p) =>
@@ -909,6 +968,7 @@ const useAppStore = create(
                       id: r.id,
                       name: r.name,
                     })),
+                    ...identityEdit(),
                   }
                 : p
             ),
@@ -924,7 +984,7 @@ const useAppStore = create(
             ]
             if (index < 0 || index >= next.length) return p
             next[index] = hex
-            return { ...p, palette: next }
+            return { ...p, palette: next, ...identityEdit() }
           }),
         })),
 
@@ -937,7 +997,7 @@ const useAppStore = create(
             ]
             if (next.length >= 8) return p
             next.push(hex)
-            return { ...p, palette: next }
+            return { ...p, palette: next, ...identityEdit() }
           }),
         })),
 
@@ -950,7 +1010,7 @@ const useAppStore = create(
             ]
             if (next.length <= 2) return p
             next.splice(index, 1)
-            return { ...p, palette: next }
+            return { ...p, palette: next, ...identityEdit() }
           }),
         })),
 
@@ -1616,7 +1676,13 @@ const useAppStore = create(
       updateBrandField: (field, value) =>
         set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === state.currentProjectId ? { ...p, [field]: value } : p
+            p.id === state.currentProjectId
+              ? {
+                  ...p,
+                  [field]: value,
+                  ...(IDENTITY_FIELD_SET.has(field) ? identityEdit() : null),
+                }
+              : p
           ),
         })),
 
@@ -1632,10 +1698,16 @@ const useAppStore = create(
         const m = cur.match(/^v?(\d+)$/i)
         const n = m ? Number(m[1]) + 1 : 2
         const next = `v${n}`
+        /* `identitySavedAt` is what the words-only stamp compares against — a
+           bump is the moment a versionService snapshot is taken, so it is the
+           honest meaning of "last saved version". Written in the same `set` as
+           designVersion so the two can never disagree about whether a save
+           happened. */
+        const savedAt = new Date().toISOString()
         set({
           projects: state.projects.map((proj) =>
             proj.id === state.currentProjectId
-              ? { ...proj, designVersion: next }
+              ? { ...proj, designVersion: next, identitySavedAt: savedAt }
               : proj
           ),
         })
@@ -2359,6 +2431,7 @@ const useAppStore = create(
                 ...(p.colorRoles || {}),
                 [key]: hex,
               },
+              ...identityEdit(),
             }
           }),
         }))
@@ -2381,7 +2454,7 @@ const useAppStore = create(
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === (projectId ?? state.currentProjectId)
-              ? { ...p, logoImage: dataUrl || '' }
+              ? { ...p, logoImage: dataUrl || '', ...identityEdit() }
               : p
           ),
         })),
