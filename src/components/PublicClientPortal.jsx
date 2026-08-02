@@ -23,6 +23,39 @@ import { SURVEY_SCALE } from '../lib/clientSurvey'
 import '../styles/lazy-clients.css'
 import '../styles/lazy-define.css'
 
+/**
+ * When a message was sent, for the CLIENT's eyes.
+ *
+ * Today's messages get the time alone; anything older carries the date too,
+ * so a thread read a week later still says which day. Formatted with the
+ * browser's own locale and time zone rather than the studio's — the client
+ * may be in neither. Returns '' on a missing or unusable stamp so a message
+ * renders without a time rather than with a wrong one.
+ *
+ * The studio side of this same thread deliberately does NOT use this — see
+ * lib/messageDayLabel.js.
+ */
+function sentAtLabel(iso) {
+  if (!iso) return ''
+  const t = Date.parse(iso)
+  if (Number.isNaN(t)) return ''
+  const d = new Date(t)
+  const now = new Date()
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  try {
+    return d.toLocaleString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      ...(sameDay ? {} : { day: 'numeric', month: 'short' }),
+    })
+  } catch {
+    return ''
+  }
+}
+
 export default function PublicClientPortal({ portalId }) {
   const [loadState, setLoadState] = useState('loading') // loading | ready | notfound
   const [portal, setPortal] = useState(null)
@@ -494,6 +527,21 @@ export default function PublicClientPortal({ portalId }) {
                 >
                   <span className="client-portal-chat-sender">
                     {m.sender === 'client' ? 'You' : 'Designer'}
+                    {/* A conventional timestamp, deliberately: the studio-side
+                        view uses day labels instead (lib/messageDayLabel.js)
+                        because the owner is time-blind, but a client is an
+                        ordinary person judging whether their designer is
+                        responsive, and this is what every other messaging
+                        surface they use shows. Rendered in the CLIENT's own
+                        locale and zone — they may not share the studio's. */}
+                    {sentAtLabel(m.created_at) && (
+                      <time
+                        className="client-portal-chat-time"
+                        dateTime={m.created_at}
+                      >
+                        {sentAtLabel(m.created_at)}
+                      </time>
+                    )}
                   </span>
                   <p>{m.body}</p>
                 </div>
