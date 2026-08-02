@@ -14,7 +14,6 @@ import {
   chosenDirection,
 } from '../lib/decisionLog'
 import LayoutPatterns from '../components/LayoutPatterns'
-import useModalFocus from '../hooks/useModalFocus'
 import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
@@ -88,28 +87,10 @@ export default function SketchView(props) {
     forcedBreak,
   } = useAppStore()
 
-  useModalFocus(isFocusRunning, !!focusLeft, timerFocusSource)
 
-  // Focus timer tick
-  useEffect(() => {
-    let timer = null
-    if (isFocusRunning && focusLeft > 0) {
-      timer = window.setInterval(() => {
-        setFocusLeft((prev) => {
-          const newVal = Math.max(prev - 1, 0)
-          if (newVal === 0) {
-            setIsFocusRunning(false)
-            setSessionComplete(true)
-            flashToast?.('Focus session complete!')
-          }
-          return newVal
-        })
-      }, 1000)
-    }
-    return () => {
-      if (timer) window.clearInterval(timer)
-    }
-  }, [isFocusRunning, focusLeft, setFocusLeft, setIsFocusRunning, setSessionComplete, flashToast])
+  /* No countdown tick here on purpose — App.jsx already runs one globally for
+     as long as isFocusRunning, and it owns the forced break at zero. A second
+     interval on the same store value made the clock run at double speed. */
 
   const handleFocusClick = () => {
     if (isFocusRunning) {
@@ -120,7 +101,7 @@ export default function SketchView(props) {
     } else {
       // Start focus
       setIsFocusRunning(true)
-      setFocusLeft(20)
+      setFocusLeft(20 * 60)
       setTimerFocusSource('sketch')
       setPomodoroWorkStartedAt(Date.now())
       notifyAction?.('Focus started', 'focus')

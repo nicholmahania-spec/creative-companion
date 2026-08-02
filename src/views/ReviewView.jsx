@@ -5,7 +5,6 @@
 import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase, REVIEW_QUESTIONS } from '../lib/processGuide'
-import useModalFocus from '../hooks/useModalFocus'
 import { labelForStepId } from '../lib/journey'
 import { packReadiness } from '../lib/exportFiles'
 import InfoReveal from '../components/InfoReveal'
@@ -44,61 +43,6 @@ export default function ReviewView({
   const miss = reviewChecks.filter((c) => !c.ok)
   const okCount = reviewChecks.filter((c) => c.ok).length
   const [activePrompt, setActivePrompt] = useState(0)
-
-  // Focus mode
-  const {
-    focusLeft,
-    isFocusRunning,
-    timerFocusSource,
-    pomodoroWorkStartedAt,
-    setFocusLeft,
-    setIsFocusRunning,
-    setTimerFocusSource,
-    setPomodoroWorkStartedAt,
-    setSessionComplete,
-    forcedBreak,
-  } = useAppStore()
-
-  useModalFocus(isFocusRunning, !!focusLeft, timerFocusSource)
-
-  // Focus timer tick
-  useEffect(() => {
-    let timer = null
-    if (isFocusRunning && focusLeft > 0) {
-      timer = window.setInterval(() => {
-        setFocusLeft((prev) => {
-          const newVal = Math.max(prev - 1, 0)
-          if (newVal === 0) {
-            setIsFocusRunning(false)
-            setSessionComplete(true)
-            flashToast?.('Focus session complete!')
-          }
-          return newVal
-        })
-      }, 1000)
-    }
-    return () => {
-      if (timer) window.clearInterval(timer)
-    }
-  }, [isFocusRunning, focusLeft, setFocusLeft, setIsFocusRunning, setSessionComplete, flashToast])
-
-  const handleFocusClick = () => {
-    if (isFocusRunning) {
-      // Pause/focus exit
-      setIsFocusRunning(false)
-      notifyAction?.('Focus paused', 'focus')
-      flashToast?.('Focus paused')
-    } else {
-      // Start focus
-      setIsFocusRunning(true)
-      setFocusLeft(20)
-      setTimerFocusSource('review')
-      setPomodoroWorkStartedAt(Date.now())
-      notifyAction?.('Focus started', 'focus')
-      flashToast?.('Focus mode: 20 minutes')
-    }
-  }
-
 
   const goal = activeProject?.detective?.goal
     ? String(activeProject.detective.goal)
