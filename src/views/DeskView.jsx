@@ -26,6 +26,7 @@ import { labelForView } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import { relativeDeadlineLabel } from '../lib/dates'
 import BrandArtboard from '../components/BrandArtboard'
+import WorkStageStrip from '../components/WorkStageStrip'
 import '../styles/lazy-desk.css'
 
 /** Three-letter stop tag, from the stop's own label — never a hand-typed map. */
@@ -92,6 +93,12 @@ export default function DeskView({
           </button>
         </div>
       </div>
+
+      {/* Directly under the project name — the fixed spot that is on screen
+          the moment the project opens. Not the bottom, not behind a toggle:
+          both are invisible to this user. Read-only and never clickable; the
+          clock itself stays where it already lives. */}
+      <WorkStageStrip workLog={project?.workLog} />
 
       <div className="desk-grid">
         <section className="desk-panel desk-artboard" aria-label="Live artboard">

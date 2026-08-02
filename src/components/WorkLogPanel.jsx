@@ -8,52 +8,19 @@
  * Nothing here is billable. `timeLog` and the invoice are hand-entered.
  */
 import { useCallback, useMemo, useState } from 'react'
-import { JOURNEY_STEPS } from '../lib/journey'
 import { useModalFocus } from '../lib/useModalFocus'
-
-/** Labels for both journey view ids (`studio`) and step ids (`research`). */
-const STAGE_TO_LABEL = Object.fromEntries([
-  ...JOURNEY_STEPS.map((s) => [s.view, s.label]),
-  ...JOURNEY_STEPS.map((s) => [s.id, s.label]),
-])
-
-function stageLabel(stage) {
-  /* 'Work', not a stage name. This read 'Touchpoints' because a bulk rename
-     swept the old generic default ('Work') along with the stop it renamed —
-     turning a neutral fallback into a specific stop, which would misattribute
-     unlabelled hours in the one panel meant to be a trustworthy record. */
-  if (!stage) return 'Work'
-  return STAGE_TO_LABEL[stage] || stage
-}
+/* Shared with the desk's WorkStageStrip. Two copies of "where did the time
+   go" would eventually disagree, and this is the one record that has to stay
+   trustworthy. The 'Work' fallback and its history live there now. */
+import { summarizeWorkLog, stageLabel } from '../lib/workLogSummary'
 
 export function WorkLogPanel({ open, onClose, workLog = [], onRemoveEntry }) {
   const [showNumbers, setShowNumbers] = useState(false)
 
-  const { byStage, sessionCount, dominant, sorted } = useMemo(() => {
-    const list = Array.isArray(workLog) ? workLog : []
-    const byStageMap = {}
-    let totalH = 0
-    list.forEach((e) => {
-      const h = Number(e.hours) || 0
-      totalH += h
-      const key = String(e.stage || e.note || 'work')
-      byStageMap[key] = (byStageMap[key] || 0) + h
-    })
-    const stages = Object.entries(byStageMap).sort((a, b) => b[1] - a[1])
-    const max = stages[0]?.[1] || 0
-    const dominant = stages[0] ? stageLabel(stages[0][0]) : null
-    const sorted = [...list].sort((a, b) =>
-      String(b.date).localeCompare(String(a.date))
-    )
-    return {
-      byStage: stages,
-      sessionCount: list.length,
-      totalH,
-      dominant,
-      sorted,
-      max,
-    }
-  }, [workLog])
+  const { byStage, sessionCount, dominant, sorted } = useMemo(
+    () => summarizeWorkLog(workLog),
+    [workLog]
+  )
   /* Focus trap, focus restore and Escape.
 
      This declared aria-modal="true" while implementing none of it — which is

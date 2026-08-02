@@ -228,3 +228,44 @@
   padding-top: var(--space-4);
   border-top: 1px solid var(--border-subtle);
 }
+
+/* Where this project's time went — one bar, stage axis, always on screen.
+   See WorkStageStrip.jsx for why this replaces the design handoff's weekday
+   chart rather than implementing it. Every value here comes off the ramps:
+   both ratchets sit at zero slack and a fresh literal fails the build. */
+.work-strip {
+  margin: 0 0 var(--space-5);
+}
+
+.work-strip-bar {
+  display: flex;
+  width: 100%;
+  gap: var(--space-1);
+}
+
+/* min-width:0 so a small stage shrinks and clips its label instead of forcing
+   the bar wider — the bar's job is proportion, and a segment that refuses to
+   shrink reports the wrong one. */
+.work-strip-seg {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+}
+
+.work-strip-seg-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.work-strip-caption {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+}
