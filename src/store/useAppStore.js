@@ -210,6 +210,8 @@ export function brandIdentityDefaults() {
   logoMinSize: '',
   /** Logo don'ts — one per line; defaults apply in export if empty */
   logoDonts: '',
+  /** Logo concepts array for presenting multiple options to client */
+  logoConcepts: [],
   /** Messaging pillars */
   messagingPromise: '',
   messagingProof: '',
