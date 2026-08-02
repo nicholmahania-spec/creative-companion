@@ -657,7 +657,10 @@ h3 {
 .header {
   padding: 0.55rem 1.25rem;
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-elevated);
+  /* --bg-card, not --bg-elevated: identical in light (both #FFFFFF), but in
+     dark the header sits at #1F1F1F rather than #252525, so the chrome reads
+     as the page's frame instead of a panel floating above it. */
+  background: var(--bg-card);
   box-shadow: none;
   position: sticky;
   top: 0;
@@ -1467,6 +1470,10 @@ h3 {
   gap: 0.5rem;
   min-height: 2.5rem;
   padding: 0.55rem 1.2rem;
+  /* Moved up from .btn-primary. Only primary carried nowrap, so a ghost
+     button beside a primary in a flex row shrank and broke its label onto
+     two lines — same row, two control heights, reading as a render fault. */
+  white-space: nowrap;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
   cursor: pointer;
@@ -1525,7 +1532,6 @@ h3 {
      ~7px taller than its neighbours. */
   padding: 0.55rem 1.35rem;
   border-radius: var(--radius-sm);
-  white-space: nowrap;
   font-family: var(--font-display);
   letter-spacing: -0.02em;
 }
