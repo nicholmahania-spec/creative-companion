@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react'
 import { labelForStepId } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import useAppStore from '../store/useAppStore'
-import useModalFocus from '../hooks/useModalFocus'
 import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-ideate.css'
 
@@ -63,7 +62,6 @@ export default function SparkView({
   } = useAppStore()
 
   
-  useModalFocus(isFocusRunning, !!focusLeft, timerFocusSource)
 
   // Focus timer tick
   useEffect(() => {

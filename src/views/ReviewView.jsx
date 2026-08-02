@@ -5,7 +5,6 @@
 import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase, REVIEW_QUESTIONS } from '../lib/processGuide'
-import useModalFocus from '../hooks/useModalFocus'
 import { labelForStepId } from '../lib/journey'
 import { packReadiness } from '../lib/exportFiles'
 import InfoReveal from '../components/InfoReveal'
@@ -59,7 +58,6 @@ export default function ReviewView({
     forcedBreak,
   } = useAppStore()
 
-  useModalFocus(isFocusRunning, !!focusLeft, timerFocusSource)
 
   // Focus timer tick
   useEffect(() => {

@@ -14,7 +14,6 @@ import {
   chosenDirection,
 } from '../lib/decisionLog'
 import LayoutPatterns from '../components/LayoutPatterns'
-import useModalFocus from '../hooks/useModalFocus'
 import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
@@ -88,7 +87,6 @@ export default function SketchView(props) {
     forcedBreak,
   } = useAppStore()
 
-  useModalFocus(isFocusRunning, !!focusLeft, timerFocusSource)
 
   // Focus timer tick
   useEffect(() => {

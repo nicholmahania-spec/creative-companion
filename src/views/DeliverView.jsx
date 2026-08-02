@@ -11,7 +11,6 @@ import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
 import { isLogoOnlyScope } from '../lib/detectiveBrief'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
-import useModalFocus from '../hooks/useModalFocus'
 import {
   BOOK_PAGE_SIZES,
   BOOK_EDGE_SPACE,
@@ -85,11 +84,8 @@ export default function DeliverView({
     setPomodoroWorkStartedAt,
     setSessionComplete,
     forcedBreak,
-    notifyAction,
-    flashToast,
   } = useAppStore()
 
-  useModalFocus(isFocusRunning, !!focusLeft, timerFocusSource)
 
   // Focus timer tick
   useEffect(() => {
