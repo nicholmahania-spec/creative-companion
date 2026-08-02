@@ -58,6 +58,14 @@ But the permission ends with the piece of work it named. When it is done,
 come back and ask; do not roll into the next thing on your own read of what
 follows.
 
+**It happened again on 2026-08-01, and the owner's words are recorded so it
+sticks: "never do that again. we wasted usage credits on something i didnt
+want."** During the design-handoff rebuild, the visual dressing (2px title
+rules, eyebrow labels, column rhythm) was silently scoped out of the brief
+and wall screens while commits claimed those screens were "matched to the
+design." Scope reductions are the owner's call to make, every time — say
+what is being left out BEFORE building, not after being asked where it went.
+
 The failure mode this exists to stop is momentum: a session where each
 single-word approval is treated as covering everything after it, and design
 decisions that were mine to *propose* get quietly *made* instead. That

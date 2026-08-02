@@ -306,15 +306,21 @@ describe('theme tokens are declared once', () => {
 /**
  * The page title's display scale must not be overridden away.
  *
- * .page-title is declared near the top of shell.css as
- * clamp(1.75rem, 3.5vw, 2.35rem) with display tracking. A second declaration
+ * .page-title is declared near the top of shell.css. A second declaration
  * ~6,400 lines later forced var(--fs-5) !important, so every <h1> in the app
  * rendered flat at 1.5rem and the responsive ramp was dead code. It passed
  * every existing guard: the value was tokenised, in rem, and on the ramp.
  * Correct by every rule that was being checked, and still wrong.
+ *
+ * The size itself is now the 2026 design's fixed display step (--fs-6, 2rem)
+ * rather than a viewport clamp — the handoff draws every screen's h1 at one
+ * size, so titles read identically on every screen instead of drifting with
+ * the window. The GUARD is unchanged in substance: exactly one font-size, and
+ * it must be the top of the ramp (--fs-6), never a smaller token or a later
+ * !important flattening it.
  */
 describe('page title keeps its display scale', () => {
-  it('is sized by a clamp, not flattened by a later override', () => {
+  it('is sized at the display step, not flattened by a later override', () => {
     const blocks = [...css.matchAll(/^\.page-title\s*\{([^}]*)\}/gm)].map(
       (m) => m[1]
     )
@@ -324,6 +330,6 @@ describe('page title keeps its display scale', () => {
       sized.length,
       '.page-title should have exactly one font-size declaration'
     ).toBe(1)
-    expect(sized[0]).toMatch(/clamp\(/)
+    expect(sized[0]).toMatch(/var\(--fs-6\)/)
   })
 })

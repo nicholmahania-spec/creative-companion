@@ -46,6 +46,7 @@ const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const ClientsView = lazy(() => import('./views/ClientsView'))
 const ClientRecordView = lazy(() => import('./views/ClientRecordView'))
+const DeskView = lazy(() => import('./views/DeskView'))
 const NewProjectIntake = lazy(() => import('./views/NewProjectIntake'))
 const BrandBookBuilderView = lazy(
   () => import('./views/BrandBookBuilderView')
@@ -1033,14 +1034,19 @@ function App() {
     setProjectLastView(activeProjectId, activeView)
   }, [activeProjectId, activeView, setProjectLastView])
 
+  /* Opening a project always lands on the desk — one predictable
+     destination. A conditional landing (desk sometimes, resume other times)
+     costs re-orientation on every open, because the user cannot predict
+     where the click ends up. The resume target is not lost: the desk shows
+     it as the first row of What's next, in the same slot every time, so the
+     app visibly remembered instead of teleporting. */
   const openProjectWhereLeftOff = useCallback(
     (projectId) => {
-      const target = (projects || []).find((p) => p.id === projectId)
       setCurrentProject(projectId)
-      setActiveView(target?.lastView || 'project')
+      setActiveView('desk')
       setNavOpen(false)
     },
-    [projects, setCurrentProject, setActiveView]
+    [setCurrentProject, setActiveView]
   )
 
   /** Filled after runExport is defined — export actions ref this. */
@@ -3076,6 +3082,8 @@ function App() {
       target = 'home'
     } else if (activeView === 'clientRecord') {
       target = 'clients'
+    } else if (activeView === 'desk') {
+      target = 'home'
     } else {
       target = pathFallback
     }
@@ -3412,7 +3420,15 @@ function App() {
           {pathNextGap && pathNextGap.view !== activeView && (
             <button
               type="button"
-              className="btn btn-primary step-rail-cta"
+              /* is-earned: the gradient ring fires ONLY when the stop you are
+                 on is complete — a reward you caused, not standing chrome
+                 (advisor: rarity is the mechanism; a permanent chromatic
+                 accent habituates in days and taxes attention forever).
+                 Static always, one per screen, never on destructive or
+                 client-facing controls. */
+              className={`btn btn-primary step-rail-cta${
+                journeyActive && thisStepFilled ? ' is-earned' : ''
+              }`}
               onClick={() => goToProcessStep(pathNextGap, { micro: 'next' })}
             >
               Continue → {pathNextGap.label}
@@ -4224,6 +4240,28 @@ function App() {
                 setClientRecordName(name)
                 setActiveView('clientRecord')
               }}
+            />
+          </Suspense>
+        )}
+
+        {activeView === 'desk' && (
+          <Suspense fallback={<PathViewSkeleton label="Loading desk…" />}>
+            <DeskView
+              project={activeProject}
+              palette={projectPalette}
+              pins={deskMood}
+              rows={pathRows}
+              nextGap={pathNextGap}
+              tasks={deskTasks}
+              clientInbox={clientInbox}
+              onOpenView={setActiveView}
+              onOpenClientInbox={() => setClientInboxOpen(true)}
+              onToggleTask={toggleTask}
+              onToggleNotNeeded={(stepId) =>
+                activeProject &&
+                useAppStore.getState().toggleStepNotNeeded(activeProject.id, stepId)
+              }
+              onEditIdentity={() => setActiveView('brand')}
             />
           </Suspense>
         )}
