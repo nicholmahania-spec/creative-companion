@@ -41,9 +41,15 @@
 
 /* Brand identity template — System overrides via .system-view max-width:none */
 
-.brand-layout {
-  max-width: 42rem;
-}
+/* The bare `.brand-layout { max-width: 42rem }` that used to sit here is gone.
+   It was dead for this view and harmful to another. DesignView's root always
+   carries `system-view`, so `.brand-layout.system-view` below always won here
+   — but `.brand-layout` is also DefineView's root class, and this file is a
+   per-view lazy sheet injected AFTER the main CSS. So a rule that did nothing
+   on Design out-ordered all three `.define-dashboard` width rules and pinned
+   the brief to 672px, including the >=1400px one meant to give it 1188px.
+   Worse, it was load-order dependent: which width the brief got came down to
+   whether Design's stylesheet had been fetched yet. */
 
 .brand-layout.system-view {
   max-width: none;

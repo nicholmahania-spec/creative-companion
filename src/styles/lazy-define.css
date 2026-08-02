@@ -553,7 +553,12 @@
    the field grid at a third. Nothing shared a right edge, which is what
    "nothing lines up" actually was — not the individual boxes. Left-aligned
    rather than centred so the left edge never moves as content changes. */
-.define-dashboard {
+/* Compounded with .surface-document (always on this root) purely for
+   specificity. At one class this tied with `.surface-document`'s 52rem and
+   `.define-studio`'s 42rem and lost on source order, so the column the token
+   describes was never the column that rendered. Two classes settles it
+   without an !important — the ratchet is at zero slack and would fail. */
+.define-dashboard.surface-document {
   max-width: var(--define-col);
   margin-inline: 0;
   padding-bottom: var(--space-6);
@@ -740,7 +745,7 @@
    .define-split-form keeps its box because it carries role="region", and
    display:contents on a landmark risks dropping it from the a11y tree. */
 @media (min-width: 1400px) {
-  .define-dashboard {
+  .define-dashboard.surface-document {
     max-width: calc(var(--define-col) + var(--space-6) + 260px);
   }
   /* The header band stays on the content column; the gutter holds the rail
