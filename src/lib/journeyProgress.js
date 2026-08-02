@@ -73,6 +73,22 @@ function hasJustifiedColorRoles(project = {}) {
  * expressed as the loss of a mark.
  */
 export function pathStepHasContent(stepId, ctx = {}) {
+  /* The user's own verdict outranks both the latch and the live condition,
+     in BOTH directions — see `pathDone` in the store.
+
+     Every condition above is a proxy: Touchpoints reads `brandSurfaces`,
+     Identity reads craft signals. A mark drawn in Illustrator or a stage
+     signed off over the phone is invisible to them, and Touchpoints has
+     already shipped a bug where onboarding auto-ticked it before any work
+     existed. So the app must be correctable in both directions.
+
+     There is no third "marked done, no content" visual state and no asterisk.
+     One tick, one meaning: a second grade of done is a new symbol to decode on
+     every glance with no action attached, and a tick that shows but does not
+     count is the same broken feedback loop as one that vanishes. */
+  const verdict = ctx?.project?.pathDone?.[stepId]
+  if (verdict === true) return true
+  if (verdict === false) return false
   if (ctx?.project?.pathReached?.[stepId]) return true
   return pathStepMeetsCondition(stepId, ctx)
 }

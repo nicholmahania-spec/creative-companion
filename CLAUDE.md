@@ -799,6 +799,65 @@ credentials cannot delete remote refs, so that needs doing from a surface
 with actual push/admin rights to the GitHub repo. `gh-pages` is not a feature
 branch — it's the CI-published Pages deploy target — and was left alone.
 
+## "Done" has two authorities, and the user's one wins
+
+`project.pathDone` is the user's own verdict on a stop, and it outranks both
+the live condition and `pathReached` — in BOTH directions. Tri-state on
+purpose: `true` = done, `false` = not done, key absent = let the app decide.
+
+It is not a boolean because the app has to be correctable both ways. Every
+condition in `pathStepMeetsCondition` is a proxy — Touchpoints reads
+`brandSurfaces`, Identity reads craft signals — so a mark drawn in Illustrator
+or a stage approved over the phone is invisible to them, and Touchpoints has
+already shipped the opposite bug, auto-ticking on onboarding before any work
+existed. A toggle that only worked in one direction would visibly do nothing in
+half the cases that need it, and a control the user learns is unreliable is
+worse than no control.
+
+**One tick, one meaning.** The flag counts on the journey bar, the home dots,
+"what's missing" and `pathFirstGap` alike. Do not add a third "marked done, no
+content" visual state, a "marked manually" asterisk, a reason field, a nag when
+a manually-done stage later gains real content, or a strict-vs-manual setting.
+A tick that shows but does not count is the same broken feedback loop as one
+that vanishes; a third symbol is a decode cost on every glance with no action
+attached. Un-marking carries no confirm — nothing is destroyed, the toggle is
+its own undo, and the honest prediction is that the answer is always yes.
+
+This does not reopen the vanishing-tick problem `markPathReached` exists to
+stop. That bug was *silent, non-local* loss caused by ordinary work; this is an
+explicit action the user just took with the same control sitting there to undo
+it.
+
+## The identity stamp is words, never a number or a time
+
+`project.identityEditedAt` and `identitySavedAt` are real ISO strings and
+**neither is ever rendered**. `src/lib/identityStamp.js` turns them into one of
+three sentences; `src/components/IdentityStampChip.jsx` shows it on the
+Identity stop only. The owner has no concept of time and numbers do not
+register, so "v4" or "3 days ago" is a value that must be translated before it
+means anything. `identityStamp.test.js` fails on a digit in any label, and on
+the words *stale / out of date / unsynced / pending / behind / you* — a status
+that names the user as the agent of a deviation is a verdict with no edit that
+fixes it.
+
+**It compares against the last saved version, not against the client.** The
+obvious wording — "the client hasn't seen this version" — was rejected because
+nothing in this app records a client being shown the identity (`portalSeen`
+runs the other way: it tracks the designer seeing the client's activity). That
+chip would have been bound to a field nothing writes, which is the Promise/Proof
+failure exactly. `identitySavedAt` is written by `bumpDesignVersion`, which is
+a real, discrete, already-existing event.
+
+Nine store actions stamp `identityEditedAt`; they are listed in
+`IDENTITY_WRITER_ACTIONS` and the test drives each one. Instrument the store,
+never the ~40 view call sites that funnel through it. `updateBrandField` also
+writes org contact details and print notes, so it stamps only for ids in
+`IDENTITY_FIELDS` — a new phone number is not a change to the identity.
+
+The manual `Bump · vN` control in `src/views/DesignView.jsx` was deliberately
+left alone: a version stays a milestone you name, edits alone do not spend one,
+and every bump fires a `versionService` snapshot against an 8-per-project cap.
+
 ## The journey is declared once — derive from it, never restate it
 
 `src/lib/journey.js` owns the path: the stops, their order, their ids, their

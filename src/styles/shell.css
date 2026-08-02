@@ -9604,3 +9604,65 @@ textarea.artboard-brief-input {
   font-family: inherit;
 }
 
+
+/* ── Identity version stamp + manual Mark done ──────────────────────────────
+   Both live in the chip band at the top of every journey stop, alongside the
+   before/after and client-state chips. They sit in shell.css rather than a
+   lazy-* sheet because they render on EVERY path stop, not one view.
+
+   Snapped to the space and type ramps and the single --radius on purpose:
+   these are new rules, and CLAUDE.md's container note asks new work to use the
+   ramps rather than adding to the 229 distinct paddings that came before. */
+
+/* Read-only status line. Not a button — the control that saves a version
+   already lives on the Identity screen. Muted ink, because this is ambient
+   history rather than an arrival needing attention. */
+.identity-stamp-chip {
+  display: block;
+  width: 100%;
+  max-width: 65ch;
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+/* Unsaved edits are the state worth noticing, so it gets the weight — but
+   never colour alone, since colour cannot be the only carrier of a state. The
+   sentence itself already differs. */
+.identity-stamp-chip.is-unsaved {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.step-done-toggle {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-family: inherit;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.step-done-toggle:hover {
+  color: var(--text-primary);
+}
+
+/* Done reads as a settled state, not a highlight competing with the next
+   action. The ✓ is decorative; the word "done" carries the meaning. */
+.step-done-toggle.is-done {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}

@@ -122,6 +122,8 @@ import {
 import LogoLockup from './components/LogoLockup'
 import StepDependencyReminder from './components/StepDependencyReminder'
 import BeforeAfterChip from './components/BeforeAfterChip'
+import IdentityStampChip from './components/IdentityStampChip'
+import StepDoneToggle from './components/StepDoneToggle'
 import BeforeAfterOverlay from './components/BeforeAfterOverlay'
 import HeaderIcon from './components/HeaderIcon'
 import PullToRefresh from './components/PullToRefresh'
@@ -3814,6 +3816,31 @@ function App() {
           <BeforeAfterChip
             project={activeProject}
             onOpen={() => setBeforeAfterOpen(true)}
+          />
+        )}
+        {/* Identity version stamp — Identity stop only, since it is the only
+            stop whose edits it tracks. Read-only: the "Bump" control that
+            saves a version already lives on this screen, and a second control
+            doing the same thing is a choice billed for no gain. */}
+        {activeView === 'brand' && <IdentityStampChip project={activeProject} />}
+        {/* Mark done — same fixed position on every stage, so it is never
+            somewhere the user has to go looking for it. Below the fold and
+            behind a toggle are both recorded as functionally invisible here. */}
+        {journeyActive && activeProject && (
+          <StepDoneToggle
+            label={labelForView(activeView)}
+            done={pathStepHasContent(journeyActive, {
+              project: activeProject,
+              moodItems: deskMood,
+              tasks: deskTasks,
+              sparkIndex,
+              palette: projectPalette,
+            })}
+            onChange={(next) =>
+              useAppStore
+                .getState()
+                .setStepDone(journeyActive, next, activeProject.id)
+            }
           />
         )}
         {/* Client-state chip — the one piece of the handoff's desk that
