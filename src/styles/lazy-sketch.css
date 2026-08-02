@@ -305,7 +305,7 @@
 
 .sketch-decision-line {
   font-size: 0.78rem;
-  color: #A1A1A1;
+  color: var(--ts-mute);
   margin: 0 0 0.65rem;
 }
 
