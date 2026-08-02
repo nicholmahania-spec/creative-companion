@@ -14,6 +14,7 @@ import {
   chosenDirection,
 } from '../lib/decisionLog'
 import LayoutPatterns from '../components/LayoutPatterns'
+import useModalFocus from '../hooks/useModalFocus'
 import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
@@ -71,6 +72,60 @@ export default function SketchView(props) {
   const captureStep = handleCapture || addQuickTaskProp
   const bumpStepFocus = () => {
     if (typeof setStepFocusKey === 'function') setStepFocusKey((k) => k + 1)
+  }
+
+  // Focus mode
+  const {
+    focusLeft,
+    isFocusRunning,
+    timerFocusSource,
+    pomodoroWorkStartedAt,
+    setFocusLeft,
+    setIsFocusRunning,
+    setTimerFocusSource,
+    setPomodoroWorkStartedAt,
+    setSessionComplete,
+    forcedBreak,
+  } = useAppStore()
+
+  useModalFocus(isFocusRunning, !!focusLeft, timerFocusSource)
+
+  // Focus timer tick
+  useEffect(() => {
+    let timer = null
+    if (isFocusRunning && focusLeft > 0) {
+      timer = window.setInterval(() => {
+        setFocusLeft((prev) => {
+          const newVal = Math.max(prev - 1, 0)
+          if (newVal === 0) {
+            setIsFocusRunning(false)
+            setSessionComplete(true)
+            flashToast?.('Focus session complete!')
+          }
+          return newVal
+        })
+      }, 1000)
+    }
+    return () => {
+      if (timer) window.clearInterval(timer)
+    }
+  }, [isFocusRunning, focusLeft, setFocusLeft, setIsFocusRunning, setSessionComplete, flashToast])
+
+  const handleFocusClick = () => {
+    if (isFocusRunning) {
+      // Pause/focus exit
+      setIsFocusRunning(false)
+      notifyAction?.('Focus paused', 'focus')
+      flashToast?.('Focus paused')
+    } else {
+      // Start focus
+      setIsFocusRunning(true)
+      setFocusLeft(20)
+      setTimerFocusSource('sketch')
+      setPomodoroWorkStartedAt(Date.now())
+      notifyAction?.('Focus started', 'focus')
+      flashToast?.('Focus mode: 20 minutes')
+    }
   }
 
   const dec =
@@ -143,6 +198,29 @@ export default function SketchView(props) {
               </span>
             )}
           </p>
+        </div>
+        <div className="sketch-top-actions">
+          <button
+            type="button"
+            className={`btn btn-ghost btn-sm${isFocusRunning ? ' is-active' : ''}`}
+            onClick={handleFocusClick}
+            disabled={!!forcedBreak}
+            aria-label={isFocusRunning ? 'Pause focus' : 'Start focus mode'}
+          >
+            {isFocusRunning ? (
+              <>
+                <span className="icon">⏸</span>
+                <span className="label">Pause</span>
+              </>
+            ) : (
+              <>
+                <span className="icon">⚡</span>
+                <span className="label">
+                  Focus <span className="timer">{focusLeft}′</span>
+                </span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 

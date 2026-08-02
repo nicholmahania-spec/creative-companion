@@ -2,10 +2,11 @@
  * Ideate (Tools) — diverge first: volume and range over quality.
  * Shortlist A/B/C only after many rough ideas. Not a single “winning” concept page.
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { labelForStepId } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import useAppStore from '../store/useAppStore'
+import useModalFocus from '../hooks/useModalFocus'
 import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-ideate.css'
 
@@ -44,6 +45,63 @@ export default function SparkView({
   // Persisted diverge dump (project.roughIdeas) — only the draft line is session-local
   const rough = Array.isArray(roughIdeas) ? roughIdeas : []
   const [roughDraft, setRoughDraft] = useState('')
+
+  // Focus mode
+  const {
+    focusLeft,
+    isFocusRunning,
+    timerFocusSource,
+    pomodoroWorkStartedAt,
+    setFocusLeft,
+    setIsFocusRunning,
+    setTimerFocusSource,
+    setPomodoroWorkStartedAt,
+    setSessionComplete,
+    flashToast,
+    forcedBreak,
+    notifyAction: notifyActionStore,
+  } = useAppStore()
+
+  
+  useModalFocus(isFocusRunning, !!focusLeft, timerFocusSource)
+
+  // Focus timer tick
+  useEffect(() => {
+    let timer = null
+    if (isFocusRunning && focusLeft > 0) {
+      timer = window.setInterval(() => {
+        setFocusLeft((prev) => {
+          const newVal = Math.max(prev - 1, 0)
+          if (newVal === 0) {
+            setIsFocusRunning(false)
+            setSessionComplete(true)
+            flashToast?.('Focus session complete!')
+          }
+          return newVal
+        })
+      }, 1000)
+    }
+    return () => {
+      if (timer) window.clearInterval(timer)
+    }
+  }, [isFocusRunning, focusLeft, setFocusLeft, setIsFocusRunning, setSessionComplete, flashToast])
+
+  const handleFocusClick = () => {
+    if (isFocusRunning) {
+      // Pause/focus exit
+      setIsFocusRunning(false)
+      notifyActionStore?.('Focus paused', 'focus')
+      flashToast?.('Focus paused')
+    } else {
+      // Start focus
+      setIsFocusRunning(true)
+      setFocusLeft(20)
+      setTimerFocusSource('ideate')
+      setPomodoroWorkStartedAt(Date.now())
+      notifyActionStore?.('Focus started', 'focus')
+      flashToast?.('Focus mode: 20 minutes')
+    }
+  }
 
   const pinSparkStay = () => {
     addMoodPin({
@@ -159,6 +217,29 @@ export default function SparkView({
           <p className="page-sub ideate-thesis">
             Volume first. Messy list, then a short shortlist — not one polished concept.
           </p>
+        </div>
+        <div className="ideate-top-actions">
+          <button
+            type="button"
+            className={`btn btn-ghost btn-sm${isFocusRunning ? ' is-active' : ''}`}
+            onClick={handleFocusClick}
+            disabled={!!forcedBreak}
+            aria-label={isFocusRunning ? 'Pause focus' : 'Start focus mode'}
+          >
+            {isFocusRunning ? (
+              <>
+                <span className="icon">⏸</span>
+                <span className="label">Pause</span>
+              </>
+            ) : (
+              <>
+                <span className="icon">⚡</span>
+                <span className="label">
+                  Focus <span className="timer">{focusLeft}′</span>
+                </span>
+              </>
+            )}
+          </button>
         </div>
       </div>
       <div className="ideate-meta">
