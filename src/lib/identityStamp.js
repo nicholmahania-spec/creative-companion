@@ -38,6 +38,7 @@ export const IDENTITY_FIELDS = [
   'logoImage',
   'logoWordmark',
   'logoDirection',
+  'logoClientChose',
   'logoClearspace',
   'logoMinSize',
   'logoDonts',

@@ -109,15 +109,16 @@ export default function DeliverView({
     .filter(Boolean)
   const checked = activeProject?.deliverWordsChecked || {}
 
+  /* Named gap beside ship — download never blocked; hollowness must not feel ready. */
+  const firstCoreGap = coreGaps[0] || null
   const statusLine = ready.allDone
     ? 'Ready to ship'
-    : coreGaps.length === 1
-      ? `Still to add · ${coreGaps[0].label}`
-      : coreGaps.length > 1
-        ? `Still to add · ${coreGaps.length} things`
-        : gaps.length > 0
-          ? 'Add a handoff note when you ship'
-          : 'Preview the book, then download'
+    : firstCoreGap
+      ? `Still to add · ${firstCoreGap.label}`
+      : gaps.length > 0
+        ? 'Add a handoff note when you ship'
+        : 'Preview the book, then download'
+  const moreCoreCount = Math.max(0, coreGaps.length - 1)
 
   return (
     <div
@@ -156,8 +157,28 @@ export default function DeliverView({
         </div>
       </section>
 
-      {/* One ship job — download + handoff */}
+      {/* One ship job — gap named beside CTA; download always available */}
       <section className="assets-ship" aria-label="Ship">
+        {firstCoreGap ? (
+          <div className="assets-ship-gap" role="status">
+            <span className="assets-ship-gap-label">
+              Still thin
+              {moreCoreCount > 0 ? ` · +${moreCoreCount} more` : ''}
+            </span>
+            <button
+              type="button"
+              className="assets-ship-gap-fix"
+              onClick={() => jumpGap(firstCoreGap)}
+            >
+              {`Open · ${firstCoreGap.label}`}
+            </button>
+          </div>
+        ) : (
+          <p className="assets-ship-ready" role="status">
+            Core pack looks ready — download when you want
+          </p>
+        )}
+
         <div className="path-continue-row deliver-primary-ship">
           <button
             type="button"
@@ -188,11 +209,11 @@ export default function DeliverView({
           </p>
         ) : null}
 
-        {coreGaps.length > 0 && (
+        {coreGaps.length > 1 && (
           <div className="deliver-gaps assets-gaps">
-            <p className="field-label assets-gaps-label">Still open on the path</p>
+            <p className="field-label assets-gaps-label">Also open</p>
             <ul className="pack-ready-list deliver-gap-list">
-              {coreGaps.slice(0, 6).map((c) => (
+              {coreGaps.slice(1, 6).map((c) => (
                 <li key={c.id} className="is-miss">
                   <button
                     type="button"

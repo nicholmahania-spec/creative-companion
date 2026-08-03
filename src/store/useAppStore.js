@@ -231,6 +231,11 @@ export function brandIdentityDefaults() {
   typeWhy: '',
   /** data URL mark for pack cover */
   logoImage: '',
+  /**
+   * Studio record of which mark the client approved (object permanence).
+   * Not multi-concept storage — one line on Mark. Optional.
+   */
+  logoClientChose: '',
   /** Optional wordmark text (falls back to project name) */
   logoWordmark: '',
   /** Clearspace / min-size / lockup guidance */
