@@ -175,7 +175,7 @@ export function ProjectOverviewSharePanel({
       <div className="export-panel overview-share-panel" ref={panelRef}>
         <div className="export-panel-header">
           <h3 id="overview-share-title" className="overview-share-title">
-            Share project overview
+            Share Strategy form
           </h3>
           <button
             type="button"
@@ -458,7 +458,7 @@ function PortalMode({
           )}
         </>
       ) : !loaded ? (
-        <p className="discovery-brief-hint">Loading the dashboard…</p>
+        <p className="discovery-brief-hint">Loading…</p>
       ) : loadError ? (
         <>
           <p className="discovery-brief-hint">

@@ -313,7 +313,7 @@ export default function DeskView({
           >
             <div className="desk-panel-head">
               <span className="desk-eyebrow">
-                {labelForStepId('research')} · starred for the pack
+                {labelForStepId('research')} · starred for the client shortlist
               </span>
               <button
                 type="button"

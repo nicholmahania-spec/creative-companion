@@ -706,7 +706,7 @@ export function packBriefMarkdown(pack = {}) {
     })
     lines.push('')
   }
-  lines.push('_Creative Companion · brand leave-behind_')
+  lines.push('_Creative Companion · brand pack_')
   return lines.join('\n')
 }
 

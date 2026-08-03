@@ -152,8 +152,8 @@ export function HoursInvoicePanel({
 
         {timeLog.length === 0 ? (
           <p className="running-todo-empty">
-            No billable hours yet. These are entered by hand — your work clock
-            keeps its own record under Timer, and never bills from it.
+            No billable hours yet. Add them here by hand. The automatic clock
+            (header) is private and never fills this list.
           </p>
         ) : (
           <ul className="hours-log-list">

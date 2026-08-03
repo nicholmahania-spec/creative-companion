@@ -34,8 +34,8 @@ export default function JourneyGapStrip({
       {(showPathMarkPackThin || showPathFullPackThin) && (
         <span className="journey-leavebehind-thin" role="status">
           {showPathFullPackThin
-            ? 'Client pack still thin for handoff'
-            : 'Need tagline or ★ pins for client pack'}
+            ? 'Client shortlist still thin for handoff'
+            : 'Need a tagline or starred Research images'}
         </span>
       )}
       {pathFull && (

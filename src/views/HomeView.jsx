@@ -72,7 +72,7 @@ export default function HomeView({
   const nextLabel = packReady
     ? "Brand book ready"
     : pathFull
-      ? "Path full — pack still thin"
+      ? "Path full — shortlist still thin"
       : focus.nextGap
         ? focus.nextGap.label
         : "All caught up";

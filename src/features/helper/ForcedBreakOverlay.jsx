@@ -61,7 +61,7 @@ export default function ForcedBreakOverlay({
       aria-describedby="forced-break-body"
     >
       <div className="forced-break-card">
-        <p className="forced-break-eyebrow">Break lock</p>
+        <p className="forced-break-eyebrow">Screen lock</p>
         <h2 id="forced-break-title" className="forced-break-title">
           {copy.title}
         </h2>

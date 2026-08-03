@@ -29,7 +29,7 @@ export const JOURNEY_STEPS = [
     label: 'Research',
     process: 'Conducting research',
     plain:
-      'Gather refs and notes. Star up to 6 for the pack — the shortlist is your direction.',
+      'Gather refs and notes. Star up to 6 for the client shortlist — that is your direction.',
     enough: 'Enough: a few pins, or starred pins that each say why.',
     nextView: 'brand',
     nextLabel: 'Go to Identity',

@@ -54,8 +54,8 @@ export default function CaseStudyExport({ activeProject, flashToast }) {
       <summary>Case study</summary>
 
       <p className="panel-hint">
-        Built from the brief, your decision log and the work clock. Share the
-        process — that is the part that shows there is no “design logo” button.
+        Built from the brief, your decision log, and time on the path. Export to
+        show how the work happened.
       </p>
 
       <ul className="case-study-answers">

@@ -13,7 +13,7 @@
  * one was found the same way, by someone noticing the ratio again.
  *
  * So it stops being a per-screen judgement and becomes a rule. Say what is
- * still open ("★ 3 in pack · room for 3"), or say it is done ("★ pack full").
+ * still open ("★ 3 for the client (room for 3)"), or say it is done ("★ Client shortlist full (6)").
  */
 
 import { describe, it, expect } from 'vitest'
@@ -61,8 +61,8 @@ describe('pack count phrasing', () => {
     }
     expect(
       offenders,
-      'State the pack count as a floor — "N in pack · room for X", or ' +
-        '"pack full". Not a ratio:\n' + offenders.join('\n')
+      'State the pack count as a floor — "N for the client (room for X)", or ' +
+        '"shortlist full". Not a ratio:\n' + offenders.join('\n')
     ).toEqual([])
   })
 
@@ -74,6 +74,6 @@ describe('pack count phrasing', () => {
       'utf8'
     )
     expect(research).toMatch(/room for/)
-    expect(research).toMatch(/pack full/)
+    expect(research).toMatch(/shortlist full/)
   })
 })

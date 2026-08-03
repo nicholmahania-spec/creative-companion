@@ -994,7 +994,7 @@ export default function BrandBookBuilderView() {
           res.pages ? `Saved · ${res.pages}-page PDF` : 'Saved · brand book PDF'
         )
       } else if (res.cancelled) {
-        setExportNote('Save cancelled — no problem')
+        setExportNote('Save cancelled')
       } else {
         setExportNote(res.error || 'Export didn’t finish — try again?')
       }
@@ -1206,7 +1206,7 @@ export default function BrandBookBuilderView() {
               />
             ))}
           </div>
-          <button type="button" className="bbb-btn" onClick={addColor} disabled={colors.length >= MAX_COLORS}>+ add color token</button>
+          <button type="button" className="bbb-btn" onClick={addColor} disabled={colors.length >= MAX_COLORS}>+ add color</button>
           {/* Deferred: Style presets (Style chips) — not built. Colours are
               set one token at a time, no starting-point palettes. */}
         </Section>

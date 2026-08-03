@@ -60,7 +60,7 @@ export default function GameHUD({ compact = false }) {
      an ambient sighted glance and are hidden from assistive tech, which hears
      this one coherent summary instead of orphan tokens like "3d" and "2/3". */
   const hudLabel = [
-    `Progress: band ${xp.level}`,
+    `Progress: level ${xp.level}`,
     `${game.dayStreak || 0}-day streak`,
     (game.combo || 0) > 1 ? `combo times ${game.combo}` : null,
     `today ${daily.xp} of ${DAILY_XP_GOAL}${daily.done ? ', goal met' : ''}`,

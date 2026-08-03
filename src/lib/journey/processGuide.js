@@ -53,7 +53,7 @@ const COACHING = {
     title: 'Designing identity',
     plain: 'Mark, words, colour, type, then preview. One screen at a time.',
     prompt:
-      'Build the system, then check it holds on the artboard. Bump version before a big change.',
+      'Build the system, then check it holds on the artboard. Name a new version before a big change.',
     checks: [
       'Mark captured (image and/or wordmark rules)',
       'Words that say who this is and how it sounds',
@@ -91,7 +91,7 @@ const COACHING = {
   deliver: {
     title: 'Managing assets',
     plain:
-      'Preview the leave-behind, write a short handoff, download once.',
+      'Preview what the client gets, write a short handoff, download once.',
     prompt:
       'Check the preview. One handoff line. Download the brand book (or logo files).',
     checks: [

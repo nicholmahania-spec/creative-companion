@@ -1278,7 +1278,7 @@ function App() {
       playBreakChime()
       setHelperBreakCare({ open: true, minutes: breakMin })
       flashToast(
-        `Work block done (~${Math.round(workMin)} min). Break locks are off — stretch if you can.`
+        `Work block done (~${Math.round(workMin)} min). Screen lock is off — stretch if you can.`
       )
       return
     }
@@ -1294,7 +1294,7 @@ function App() {
       if (!prefs.forceBreaksExplained) {
         setPref('forceBreaksExplained', true)
         setForceBreakConsentOpen(true)
-        flashToast('Break lock · check Settings')
+        flashToast('Screen locked for a break — open Settings to turn this off')
       }
       return
     }
@@ -1338,8 +1338,8 @@ function App() {
     const kitN = planItems.length
     flashToast(
       kitN > 0
-        ? `Break locked: ${breakMin} min · ${kitN} care item(s) for this window`
-        : `Break locked: ${breakMin} min (you worked about ${Math.round(workMin)} min)`
+        ? `Screen locked for a break: ${breakMin} min · ${kitN} care item(s) for this window`
+        : `Screen locked for a break: ${breakMin} min (you worked about ${Math.round(workMin)} min)`
     )
   }
 
@@ -1853,7 +1853,7 @@ function App() {
       if (breakH.active.resumeView) {
         setActiveView(breakH.active.resumeView)
       }
-      flashToast('Break still running — desk locked')
+      flashToast('Break still running — wait for it to finish')
       return undefined
     }
 
@@ -2519,7 +2519,7 @@ function App() {
           )
           finishOk('Everything (zip)')
         } else if (result.cancelled) {
-          flashToast('Save cancelled — no problem')
+          flashToast('Save cancelled')
         } else {
           flashToast(
             result.error || 'Download did not finish — try again?'
@@ -2548,7 +2548,7 @@ function App() {
             flashToast('Saved — but no logo image was in it yet')
           }
         } else if (result.cancelled) {
-          flashToast('Save cancelled — no problem')
+          flashToast('Save cancelled')
         } else {
           flashToast(result.error || 'Download did not finish — try again?')
         }
@@ -2577,7 +2577,7 @@ function App() {
           )
           finishOk('Brand book PDF')
         } else if (result.cancelled) {
-          flashToast('Save cancelled — no problem')
+          flashToast('Save cancelled')
         } else {
           flashToast(result.error || 'Could not finish that PDF — try again?')
         }
@@ -2617,7 +2617,7 @@ function App() {
           )
           finishOk('Preview PDF')
         } else if (result.cancelled) {
-          flashToast('Save cancelled — no problem')
+          flashToast('Save cancelled')
         } else {
           flashToast(result.error || 'Could not finish that PDF — try again?')
         }
@@ -2631,7 +2631,7 @@ function App() {
           if (result.ok) {
             finishOk('Brand HTML')
           } else if (result.cancelled) {
-            flashToast('Save cancelled — no problem')
+            flashToast('Save cancelled')
           } else {
             flashToast(result.error || 'Download did not finish — try again?')
           }
@@ -2644,7 +2644,7 @@ function App() {
         .then((result) => {
           if (result.ok) finishOk('Brand Markdown')
           else if (result.cancelled)
-            flashToast('Save cancelled — no problem')
+            flashToast('Save cancelled')
           else flashToast(result.error || 'Download did not finish — try again?')
           return result
         })
@@ -2655,7 +2655,7 @@ function App() {
         .then((result) => {
           if (result.ok) finishOk('Brand JSON')
           else if (result.cancelled) {
-            flashToast('Save cancelled — no problem')
+            flashToast('Save cancelled')
           } else {
             flashToast(result.error || 'Download did not finish — try again?')
           }
@@ -2920,13 +2920,13 @@ function App() {
       setUnlocked(false)
       setAccessName('')
       cloudSyncReady.current = false
-      flashToast('Signed out — rest easy')
+      flashToast('Signed out')
       return
     }
     closeSession()
     setUnlocked(false)
     setAccessName('')
-    flashToast('Desk locked')
+    flashToast('Locked')
   }
 
   if (!authReady) {
@@ -2969,7 +2969,7 @@ function App() {
         <div className="login-page">
           <div className="login-card">
             <p className="login-lede" style={{ marginBottom: '0.5rem' }}>
-              Loading desk…
+              Loading your projects…
             </p>
             {showHydratingEscape && (
               <button
@@ -3264,7 +3264,7 @@ function App() {
                         const hydrated = hydrateFromPayload(result.payload)
                         if (hydrated.ok) {
                           setSyncState('ok')
-                          flashToast('Desk saved to the cloud')
+                          flashToast('Saved to the cloud')
                         } else {
                           skipNextCloudPush.current = false
                           setSyncState('error')
@@ -3273,7 +3273,7 @@ function App() {
                         }
                       } else {
                         setSyncState('ok')
-                        flashToast('Desk saved to the cloud')
+                        flashToast('Saved to the cloud')
                       }
                       return
                     }
@@ -3281,7 +3281,7 @@ function App() {
                     // retry cannot race the save already in flight.
                     const result = await runCloudPush()
                     if (result.ok) {
-                      flashToast('Desk saved to the cloud')
+                      flashToast('Saved to the cloud')
                     } else {
                       setSyncState('error')
                       setSyncError(result.error || 'Couldn’t sync')
@@ -3768,7 +3768,7 @@ function App() {
           {/* Only when actually in a Tools menu view — never "Tools · Home" */}
           {isToolsMenuView(activeView) && (
             <span className="journey-tools-pill" role="status" aria-live="polite">
-              Tools · {toolsLabelForView(activeView)}
+              {toolsLabelForView(activeView)}
             </span>
           )}
       </nav>
@@ -4132,7 +4132,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">↗</span> Share project overview
+                <span aria-hidden="true">↗</span> Share Strategy form
               </button>
               <button
                 type="button"
@@ -4230,7 +4230,7 @@ function App() {
           aria-labelledby="force-break-consent-title"
         >
           <p id="force-break-consent-title" className="desk-confirm-body">
-            Lock desk 5–10 min after focus? Off anytime in Settings.
+            Lock the screen 5–10 min after focus? You can turn this off in Settings.
           </p>
           <div className="desk-confirm-actions">
             <button
@@ -4240,7 +4240,7 @@ function App() {
                 setPref('forceBreaksConsented', true)
                 setPref('forceBreaksEnabled', true)
                 setForceBreakConsentOpen(false)
-                flashToast('Break lock on')
+                flashToast('Screen lock on')
               }}
             >
               On
@@ -4251,7 +4251,7 @@ function App() {
               onClick={() => {
                 setPref('forceBreaksEnabled', false)
                 setForceBreakConsentOpen(false)
-                flashToast('Break lock off')
+                flashToast('Screen lock off')
               }}
             >
               Off
@@ -4545,7 +4545,7 @@ function App() {
             {breakdownStep === 0 && (
               <div className="breakdown-step">
                 <p className="breakdown-lead">
-                  Giant blob → tiny Sketch steps.
+                  Big job → small steps.
                 </p>
                 <button
                   type="button"
@@ -4582,7 +4582,7 @@ function App() {
                   rows={2}
                   value={bdDone}
                   onChange={(e) => setBdDone(e.target.value)}
-                  placeholder="Ship definition"
+                  placeholder={'What “done” looks like'}
                 />
                 <div className="breakdown-nav">
                   <button

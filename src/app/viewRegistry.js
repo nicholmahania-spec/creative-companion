@@ -42,7 +42,7 @@ export function skeletonLabelForView(view) {
   if (view === 'calendar') return 'Loading calendar…'
   if (view === 'clients') return 'Loading clients…'
   if (view === 'clientRecord') return 'Loading client…'
-  if (view === 'desk') return 'Loading desk…'
+  if (view === 'desk') return 'Loading this project…'
   if (view === 'create' || view === 'spark') return 'Loading…'
   if (view === 'book') return 'Loading brand book…'
   if (view === 'review') return 'Loading Review…'

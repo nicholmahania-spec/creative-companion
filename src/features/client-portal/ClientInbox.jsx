@@ -283,7 +283,7 @@ export function ClientInboxPanel({
 
             {status === 'not-configured' && (
               <div className="client-inbox-empty">
-                <p>Client links need cloud sync turned on.</p>
+                <p>Client links need a cloud account. Open Settings and sign in, then come back.</p>
               </div>
             )}
 

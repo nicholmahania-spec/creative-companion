@@ -24,7 +24,7 @@ export function discoveryShareUrl(shareId) {
  */
 export async function createDiscoveryShare({ projectLocalId, clientName, answers }) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { data: userData } = await supabase.auth.getUser()
   const ownerId = userData?.user?.id
@@ -58,7 +58,7 @@ export async function createDiscoveryShare({ projectLocalId, clientName, answers
  */
 export async function revokeDiscoveryShare(shareId) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { error } = await supabase
     .from('discovery_shares')
@@ -77,7 +77,7 @@ export async function revokeDiscoveryShare(shareId) {
  */
 export async function fetchDiscoveryShare(shareId) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { data, error } = await supabase.rpc('get_discovery_share', {
     share_id: shareId,
@@ -99,7 +99,7 @@ export async function fetchDiscoveryShare(shareId) {
  */
 export async function submitDiscoveryShare(shareId, answers) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   /* Before the round trip, not after: the RPC signals "too large" and "already
      submitted" the same way (false), so an oversize payload that reaches it

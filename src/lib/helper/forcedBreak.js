@@ -31,7 +31,7 @@ export function formatBreakClock(totalSeconds) {
 export function breakReasonCopy(workMinutes, breakMin) {
   const w = Math.round(workMinutes)
   return {
-    title: 'Break · desk locked',
+    title: 'Break · screen locked',
     body: `~${w} min work · ${breakMin} min rest · water · stand`,
     tip: 'Unlocks when the clock hits zero',
   }

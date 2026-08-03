@@ -1219,7 +1219,7 @@ export default function DesignView({
                     disabled={!pinCount || extractingPins}
                     title={
                       starredPinCount
-                        ? `Sample ★ pack pins (${starredPinCount})`
+                        ? `Sample ★ shortlist (${starredPinCount})`
                         : pinCount
                           ? `Sample all Research pins (${pinCount})`
                           : 'Add pins on Research first'
@@ -1614,7 +1614,7 @@ export default function DesignView({
               className="design-preview-rail design-artboard-bottom"
               tabIndex={0}
               role="region"
-              aria-label="Live leave-behind preview"
+              aria-label="Live brand preview"
             >
               <div className="design-rail-label">Artboard</div>
               <Suspense

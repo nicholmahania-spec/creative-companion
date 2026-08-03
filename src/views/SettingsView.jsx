@@ -141,7 +141,7 @@ export default function SettingsView(props) {
               onClick={async () => {
                 const result = await runCloudPush()
                 if (result.ok) {
-                  flashToast('Desk saved to the cloud')
+                  flashToast('Saved to the cloud')
                 } else {
                   flashToast(result.error || 'Could not sync right now')
                 }
@@ -263,14 +263,14 @@ export default function SettingsView(props) {
               type="button"
               className="btn btn-ghost settings-danger btn-sm"
               onClick={() => {
-                ask('Wipe desk · one blank project?', () => {
+                ask('Wipe everything and start with one blank project?', () => {
                   clearToEmpty()
                   setActiveView('project')
-                  flashToast('Empty desk ready')
+                  flashToast('Cleared — one blank project left')
                 })
               }}
             >
-              Empty desk
+              Clear all projects
             </button>
             <button
               type="button"

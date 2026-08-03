@@ -2273,7 +2273,7 @@ const useAppStore = create(
             (m.projectId == null || m.projectId === projectId)
         )
         if (starred.length >= 6) {
-          return { ok: false, error: 'Leave-behind is full (6 pins max)' }
+          return { ok: false, error: 'Client shortlist is full (6 max)' }
         }
         set({
           moodItems: state.moodItems.map((m) =>

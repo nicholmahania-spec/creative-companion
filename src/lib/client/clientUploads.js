@@ -27,7 +27,7 @@ export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
  */
 export async function uploadClientFile(targetId, file) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   if (!file || !file.type?.startsWith('image/')) {
     return { ok: false, error: 'Only images can be attached' }

@@ -218,7 +218,7 @@ export default function LoginView({ onUnlocked, cloud = false }) {
                 : 'Create your studio account'
               : mode === 'setup'
                 ? 'Set a password for this device'
-                : 'Unlock your desk'}
+                : 'Unlock'}
           </p>
           {!useCloud && mode === 'setup' && (
             <p className="login-lede login-setup-explain">

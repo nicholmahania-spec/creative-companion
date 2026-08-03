@@ -10,7 +10,7 @@ const TOAST_COPY = {
   pdfFailed: 'Could not finish that PDF — try again?',
   stepComplete: 'Step done',
   queueClear: 'All done here',
-  syncedOk: 'Desk saved to the cloud',
+  syncedOk: 'Saved to the cloud',
 }
 
 describe('humanize — no legacy 4-step or Figma in Helper voice', () => {

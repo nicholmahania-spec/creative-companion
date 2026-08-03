@@ -25,7 +25,7 @@ export function clientPortalUrl(portalId) {
  */
 export async function createClientPortal({ projectLocalId, clientName, detectiveAnswers }) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { data: userData } = await supabase.auth.getUser()
   const ownerId = userData?.user?.id
@@ -59,7 +59,7 @@ export async function createClientPortal({ projectLocalId, clientName, detective
  */
 export async function revokeClientPortal(portalId) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const now = new Date().toISOString()
   const { error } = await supabase
@@ -76,7 +76,7 @@ export async function revokeClientPortal(portalId) {
 /** Studio side: update which steps are pushed (visible) to the client. */
 export async function setPortalStepVisibility(portalId, stepVisibility) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { error } = await supabase
     .from('client_portals')
@@ -94,7 +94,7 @@ export async function setPortalStepVisibility(portalId, stepVisibility) {
 /** Studio side: refresh the fillable form snapshot pushed to the client. */
 export async function setPortalDetectiveAnswers(portalId, detectiveAnswers) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { error } = await supabase
     .from('client_portals')
@@ -122,7 +122,7 @@ export async function setPortalDetectiveAnswers(portalId, detectiveAnswers) {
  */
 export async function sendPortalSurvey(portalId, kind, questions) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { error } = await supabase
     .from('client_portals')
@@ -147,7 +147,7 @@ export async function sendPortalSurvey(portalId, kind, questions) {
 /** Studio side: read the current portal + step statuses (owner-only, direct table read). */
 export async function fetchPortalStudioView(portalId) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { data, error } = await supabase
     .from('client_portals')
@@ -166,7 +166,7 @@ export async function fetchPortalStudioView(portalId) {
 /** Studio side: post a message as the studio (owner-only RLS insert). */
 export async function postStudioMessage(portalId, body) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { error } = await supabase
     .from('client_portal_messages')
@@ -183,7 +183,7 @@ export async function postStudioMessage(portalId, body) {
 /** Studio side: read chat messages (owner-only, direct table read). */
 export async function fetchStudioMessages(portalId) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { data, error } = await supabase
     .from('client_portal_messages')
@@ -211,7 +211,7 @@ export async function fetchStudioMessages(portalId) {
  */
 export async function fetchOwnerPortals() {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { data: userData } = await supabase.auth.getUser()
   const ownerId = userData?.user?.id
@@ -238,7 +238,7 @@ export async function fetchOwnerPortals() {
  */
 export async function fetchMessagesForPortals(portalIds) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const ids = (portalIds || []).filter(Boolean)
   if (!ids.length) return { ok: true, messages: [] }
@@ -261,7 +261,7 @@ export async function fetchMessagesForPortals(portalIds) {
 /** Client side: fetch the portal's visible state (no auth). */
 export async function fetchClientPortal(portalId) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { data, error } = await supabase.rpc('get_client_portal', { portal_id: portalId })
   if (error) {
@@ -291,7 +291,7 @@ export async function fetchClientPortal(portalId) {
 /** Client side: fetch chat messages (no auth). */
 export async function fetchClientPortalMessages(portalId) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { data, error } = await supabase.rpc('get_client_portal_messages', {
     portal_id_in: portalId,
@@ -308,7 +308,7 @@ export async function fetchClientPortalMessages(portalId) {
 /** Client side: post a chat message (no auth, always sender='client'). */
 export async function postClientPortalMessage(portalId, body) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { data, error } = await supabase.rpc('post_client_portal_message', {
     portal_id_in: portalId,
@@ -327,7 +327,7 @@ export async function postClientPortalMessage(portalId, body) {
 /** Client side: approve or request changes on a pushed step (no auth). */
 export async function respondToPortalStep(portalId, stepId, status, note = '') {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   const { data, error } = await supabase.rpc('respond_client_portal_step', {
     portal_id_in: portalId,
@@ -348,7 +348,7 @@ export async function respondToPortalStep(portalId, stepId, status, note = '') {
 /** Client side: submit the fillable Project overview form (single-use, no auth). */
 export async function submitClientPortalForm(portalId, answers) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   /* Before the round trip, not after: the RPC signals "too large" and "already
      submitted" the same way (false), so an oversize payload that reaches it
@@ -375,7 +375,7 @@ export async function submitClientPortalForm(portalId, answers) {
 /** Client side: submit the survey (single-use, no auth). */
 export async function submitClientPortalSurvey(portalId, answers) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Cloud sync isn’t configured' }
+    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
   }
   /* Before the round trip, not after: the RPC signals "too large" and "already
      submitted" the same way (false), so an oversize payload that reaches it

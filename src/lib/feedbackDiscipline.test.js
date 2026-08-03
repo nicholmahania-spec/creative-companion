@@ -159,7 +159,7 @@ describe('findUngatedSuccessReports', () => {
     const good = `
       const run = async () => {
         const r = await save()
-        flashToast(r.ok ? 'Desk saved to the cloud' : r.error)
+        flashToast(r.ok ? 'Saved to the cloud' : r.error)
       }
     `
     expect(findUngatedSuccessReports(good)).toEqual([])
