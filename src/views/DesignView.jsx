@@ -485,8 +485,6 @@ export default function DesignView({
                 {/* Quiet status only — pack floor, not goal/words scoreboard. */}
                 <p className="design-identity-status" role="status">
                   {IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}
-                  <span aria-hidden="true"> · </span>
-                  {substepIndex + 1} of {IDENTITY_SUBSTEPS.length}
                   <InfoReveal>
                     {(getProcessPhase('design')?.checks || []).join(' · ')}
                   </InfoReveal>
@@ -590,14 +588,14 @@ export default function DesignView({
               </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-custom">
-                  Logo direction
+                  How the mark behaves
                 </label>
                 <input
                   id="logo-custom"
                   className="field-input"
                   value={activeProject?.logoDirection || ''}
                   onChange={(e) => setLogoDirection(e.target.value)}
-                  placeholder="Mark rules"
+                  placeholder="e.g. always with wordmark"
                 />
               </div>
               <div className="brand-two-up">
@@ -613,12 +611,12 @@ export default function DesignView({
                     onChange={(e) =>
                       updateBrandField('logoClearspace', e.target.value)
                     }
-                    placeholder="Clearspace"
+                    placeholder={'e.g. height of the “x” all around'}
                   />
                 </div>
                 <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                   <label className="field-label" htmlFor="logo-min-size">
-                    Smallest logo size
+                    Smallest mark size
                   </label>
                   <input
                     id="logo-min-size"
@@ -627,39 +625,14 @@ export default function DesignView({
                     onChange={(e) =>
                       updateBrandField('logoMinSize', e.target.value)
                     }
-                    placeholder="Min size"
+                    placeholder="e.g. 24px digital · 12mm print"
                   />
                 </div>
               </div>
 
-              {activeProject?.logoImage ? (
-                <div
-                  className="logo-variant-row"
-                  role="group"
-                  aria-label="Logo versions"
-                >
-                  <p className="field-label" style={{ marginBottom: '0.4rem' }}>
-                    Logo versions
-                  </p>
-                  <div className="logo-variant-grid">
-                    <div className="logo-variant-card is-primary">
-                      <span className="logo-variant-label">Primary</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                    <div className="logo-variant-card is-reverse">
-                      <span className="logo-variant-label">Reverse</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                    <div className="logo-variant-card is-mono">
-                      <span className="logo-variant-label">Mono</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                  </div>
-                </div>
-              ) : null}
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-donts">
-                  Logo mistakes to avoid
+                  Mark mistakes to avoid
                 </label>
                 <textarea
                   id="logo-donts"
@@ -678,10 +651,10 @@ export default function DesignView({
                 <div
                   className="logo-variant-row"
                   role="group"
-                  aria-label="Logo versions"
+                  aria-label="Mark versions"
                 >
                   <p className="field-label" style={{ marginBottom: '0.4rem' }}>
-                    Logo versions
+                    Mark versions
                   </p>
                   <div className="logo-variant-grid">
                     <div className="logo-variant-card is-primary">
@@ -711,7 +684,7 @@ export default function DesignView({
                       e.target.value = ''
                       if (!file) return
                       if (file.size > 2.5 * 1024 * 1024) {
-                        flashToast('Logo image must be under 2.5MB')
+                        flashToast('Image must be under 2.5MB')
                         return
                       }
 
@@ -755,7 +728,7 @@ export default function DesignView({
                     className="btn btn-ghost"
                     onClick={() => {
                       setLogoImage('')
-                      flashMicro('Logo image removed')
+                      flashMicro('Mark image removed')
                     }}
                   >
                     Remove mark
@@ -905,7 +878,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('messagingPromise', e.target.value)
                   }
-                  placeholder="Promise"
+                  placeholder="What we always deliver"
                 />
               </div>
               <div className="field-block">
@@ -920,7 +893,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('messagingProof', e.target.value)
                   }
-                  placeholder="Proof"
+                  placeholder="How they know it’s true"
                 />
               </div>
               <div className="field-block">
@@ -935,7 +908,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('messagingPersonality', e.target.value)
                   }
-                  placeholder="Personality"
+                  placeholder="Three traits"
                 />
               </div>
             </section>
@@ -1620,7 +1593,11 @@ export default function DesignView({
                 Open Research
               </button>
             </p>
-            <div className="design-preview-notes">
+            <div className="design-preview-notes is-secondary">
+              <p className="design-preview-notes-lede">
+                Optional notes for the book — the job on this screen is the
+                artboard above.
+              </p>
               <h3 className="design-preview-notes-title">Imagery</h3>
               <div className="field-block">
                 <label className="field-label" htmlFor="img-style">
@@ -1634,7 +1611,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('imageryStyle', e.target.value)
                   }
-                  placeholder="Look"
+                  placeholder="Warm light · less stock"
                 />
               </div>
               <div className="field-block">
@@ -1649,7 +1626,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('imageryDo', e.target.value)
                   }
-                  placeholder="Do"
+                  placeholder="Hands, real spaces"
                 />
               </div>
               <div className="field-block">
@@ -1664,7 +1641,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('imageryDont', e.target.value)
                   }
-                  placeholder="Don't"
+                  placeholder="Clip art · harsh flash"
                 />
               </div>
               <h3 className="design-preview-notes-title">Writing and print</h3>
