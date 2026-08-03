@@ -12,7 +12,7 @@ import {
 } from '../lib/cloudSync'
 import { versionLabel } from '../lib/version'
 import { JOURNEY_STEPS } from '../lib/journey'
-import LogoLockup from './LogoLockup'
+import LogoLockup from '../components/LogoLockup'
 import '../styles/lazy-settings.css'
 
 // Password strength validation
@@ -64,7 +64,7 @@ const validatePasswordStrength = (password) => {
 /**
  * Login / access gate — Tech-Studio: single centered card, no marketing column.
  */
-export default function LoginPage({ onUnlocked, cloud = false }) {
+export default function LoginView({ onUnlocked, cloud = false }) {
   const useCloud = cloud && isSupabaseConfigured()
   const setupDone = hasAccessSetup()
   const [mode, setMode] = useState(

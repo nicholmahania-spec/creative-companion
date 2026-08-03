@@ -8,9 +8,9 @@
  * overview form to fill out and submit themselves.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { clientFacingError } from '../lib/clientFacingError'
-import { JOURNEY_STEPS } from '../lib/journey'
-import ClientBriefFields from './ClientBriefFields'
+import { clientFacingError } from '../../lib/clientFacingError'
+import { JOURNEY_STEPS } from '../../lib/journey'
+import ClientBriefFields from '../../components/ClientBriefFields'
 import {
   fetchClientPortal,
   fetchClientPortalMessages,
@@ -18,10 +18,10 @@ import {
   respondToPortalStep,
   submitClientPortalForm,
   submitClientPortalSurvey,
-} from '../lib/clientPortal'
-import { SURVEY_SCALE } from '../lib/clientSurvey'
-import '../styles/lazy-clients.css'
-import '../styles/lazy-define.css'
+} from '../../lib/clientPortal'
+import { SURVEY_SCALE } from '../../lib/clientSurvey'
+import '../../styles/lazy-clients.css'
+import '../../styles/lazy-define.css'
 
 /**
  * When a message was sent, for the CLIENT's eyes.

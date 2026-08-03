@@ -39,7 +39,7 @@ import {
   APP_BUILD_DATE,
   versionLabel,
 } from './lib/version'
-const LoginPage = lazy(() => import('./components/LoginPage'))
+const LoginView = lazy(() => import('./views/LoginView'))
 const BuddyMate = lazy(() => import('./components/BuddyMate'))
 const ForcedBreakOverlay = lazy(() => import('./components/ForcedBreakOverlay'))
 const BrandArtboard = lazy(() => import('./components/BrandArtboard'))
@@ -142,13 +142,13 @@ import HighlightExplain from './components/HighlightExplain'
 import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
 import { HoursInvoicePanel } from './components/HoursInvoice'
 import { WorkLogPanel } from './components/WorkLogPanel'
-import { DiscoveryBriefPanel } from './components/DiscoveryBrief'
-import { ProjectOverviewSharePanel } from './components/ProjectOverviewShare'
+import { DiscoveryBriefPanel } from './features/client-portal/DiscoveryBrief'
+import { ProjectOverviewSharePanel } from './features/client-portal/ProjectOverviewShare'
 import {
   ClientInboxChip,
   ClientInboxPanel,
   useClientInbox,
-} from './components/ClientInbox'
+} from './features/client-portal/ClientInbox'
 import { guessRunningTodoStage } from './lib/runningTodoStages'
 import { installAutoGrow } from './lib/autoGrow'
 import { useModalFocus } from './lib/useModalFocus'
@@ -2994,7 +2994,7 @@ function App() {
   if (!unlocked) {
     return (
       <div className={`app ${theme} login-shell`}>
-        <LoginPage
+        <LoginView
           cloud={CLOUD}
           onUnlocked={(result) => {
             if (result?.mode === 'cloud') {

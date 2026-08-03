@@ -23,7 +23,7 @@ import { DETECTIVE_CHAPTERS } from './detectiveBrief'
  * two halves of that: attachments are identified structurally, and every
  * checklist the schema declares has somewhere real to render.
  */
-const SRC = new URL('../components/ProjectOverviewShare.jsx', import.meta.url)
+const SRC = new URL('../features/client-portal/ProjectOverviewShare.jsx', import.meta.url)
   .pathname
 const src = readFileSync(SRC, 'utf8')
 

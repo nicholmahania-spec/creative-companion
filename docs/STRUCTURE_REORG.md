@@ -155,9 +155,9 @@ src/
 
 | Phase | Scope | Risk | Status |
 |-------|--------|------|--------|
-| **0** | Extract `HomeView` from `App.jsx` | Low | **Done this session** |
-| **1** | `LoginPage` → `views/LoginView` (+ re-export shim) | Low | Next |
-| **2** | `features/client-portal/*` + public main.jsx imports | Medium | Next |
+| **0** | Extract `HomeView` from `App.jsx` | Low | **Done** |
+| **1** | `LoginPage` → `views/LoginView` | Low | **Done** |
+| **2** | `features/client-portal/*` + public main.jsx imports | Medium | **Done** |
 | **3** | `features/brief/*` (DetectiveSheet, ClientBriefFields, …) | Medium | Later |
 | **4** | `features/helper/*`, billing panels | Medium | Later |
 | **5** | `app/routes.js` map; thin App to outlet only | Higher | Later |

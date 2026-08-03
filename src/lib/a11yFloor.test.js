@@ -72,7 +72,7 @@ describe('touch targets reach the 44px floor', () => {
 
 describe('client-facing failures reach a screen reader', () => {
   it('the client portal announces its errors', () => {
-    const src = read('components/PublicClientPortal.jsx')
+    const src = read('features/client-portal/PublicClientPortal.jsx')
     // Every public-fill-error line must carry role="alert" — an error a
     // stranger on a phone cannot hear is an error they will not act on.
     const errorLines = src.match(/className="public-fill-error"[^>]*>/g) || []
