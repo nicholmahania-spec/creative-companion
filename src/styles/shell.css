@@ -8249,17 +8249,26 @@ select:focus {
     transform: scale(1);
     pointer-events: auto;
   }
-  /* Drawer list fills the card and wraps — never max-content (that clipped
-     three of five stages with nowhere to scroll). */
+  /* Path steps: one full-width row each in the drawer (not a wrapped chip grid). */
   .app-shell > .journey-sidebar .journey-bar-list {
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
     width: 100% !important;
     min-width: 0 !important;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
   }
   .app-shell > .journey-sidebar .journey-bar-item {
-    flex: 1 1 auto !important;
-    min-width: 6rem;
+    flex: 0 0 auto !important;
+    width: 100%;
+    min-width: 0;
+  }
+  .app-shell > .journey-sidebar .journey-step {
+    width: 100%;
+  }
+  .app-shell > .journey-sidebar .journey-tools-pill {
+    margin: var(--space-2) var(--space-3);
+    align-self: stretch;
   }
   .app.deep .app-shell > .journey-sidebar {
     background: var(--bg-elevated, #252525) !important;

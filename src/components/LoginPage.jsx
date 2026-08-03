@@ -11,6 +11,7 @@ import {
   resetPasswordForEmail,
 } from '../lib/cloudSync'
 import { versionLabel } from '../lib/version'
+import { JOURNEY_STEPS } from '../lib/journey'
 import LogoLockup from './LogoLockup'
 import '../styles/lazy-settings.css'
 
@@ -202,20 +203,30 @@ export default function LoginPage({ onUnlocked, cloud = false }) {
               than a tax on the gate. */}
           <LogoLockup reduceMotion />
           <h1 className="login-h1">Creative Companion</h1>
+          <p className="login-promise">
+            Client brand projects — brief to leave-behind in five stops.
+          </p>
+          <ol className="login-path-mini" aria-label="The path">
+            {JOURNEY_STEPS.map((s) => (
+              <li key={s.id}>
+                <span className="login-path-num">{s.num}</span>
+                <span className="login-path-label">{s.label}</span>
+              </li>
+            ))}
+          </ol>
           <p className="login-lede login-lede-short">
             {useCloud
               ? mode === 'login'
-                ? 'Sign in'
-                : 'Create account'
+                ? 'Sign in to your studio'
+                : 'Create your studio account'
               : mode === 'setup'
-                ? 'Set password'
-                : 'Unlock desk'}
+                ? 'Set a password for this device'
+                : 'Unlock your desk'}
           </p>
           {!useCloud && mode === 'setup' && (
             <p className="login-lede login-setup-explain">
-              A calm workspace for freelance design projects. Your work is
-              stored on this device — this password locks it, and there's no
-              reset, so save it somewhere safe.
+              Work stays on this device. There is no password reset — save it
+              somewhere safe.
             </p>
           )}
         </div>

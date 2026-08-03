@@ -88,6 +88,7 @@ import {
   getNextJourney,
   getPrevJourney,
   toolsLabelForView,
+  isToolsMenuView,
 } from './lib/journey'
 import {
   pathStepHasContent,
@@ -3847,7 +3848,8 @@ function App() {
               )
             })}
           </ol>
-          {!journeyActive && (
+          {/* Only when actually in a Tools menu view — never "Tools · Home" */}
+          {isToolsMenuView(activeView) && (
             <span className="journey-tools-pill" role="status" aria-live="polite">
               Tools · {toolsLabelForView(activeView)}
             </span>
