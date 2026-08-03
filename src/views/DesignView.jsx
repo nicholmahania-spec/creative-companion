@@ -804,7 +804,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('tagline', e.target.value)
                   }
-                  placeholder="One line"
+                  placeholder="e.g. Quiet confidence, made local"
                 />
               </div>
               <div className="field-block">
@@ -816,7 +816,7 @@ export default function DesignView({
                   className="field-textarea"
                   value={activeProject?.brief || ''}
                   onChange={(e) => updateProjectBrief(e.target.value)}
-                  placeholder="Who · feel"
+                  placeholder="Who it’s for · how it should feel"
                   rows={2}
                 />
               </div>
@@ -829,7 +829,7 @@ export default function DesignView({
                   className="field-textarea"
                   value={activeProject?.voice || ''}
                   onChange={(e) => updateBrandField('voice', e.target.value)}
-                  placeholder="How we sound"
+                  placeholder="Warm, plain, a bit wry"
                   rows={2}
                 />
               </div>
@@ -846,7 +846,7 @@ export default function DesignView({
                     onChange={(e) =>
                       updateBrandField('doUse', e.target.value)
                     }
-                    placeholder="Fits"
+                    placeholder="Short sentences · real photos"
                     rows={2}
                   />
                 </div>
@@ -861,7 +861,7 @@ export default function DesignView({
                     onChange={(e) =>
                       updateBrandField('dontUse', e.target.value)
                     }
-                    placeholder="Avoid"
+                    placeholder="Jargon · stock grins"
                     rows={2}
                   />
                 </div>
@@ -878,7 +878,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('messagingPromise', e.target.value)
                   }
-                  placeholder="What we always deliver"
+                  placeholder="e.g. We ship on the date we said"
                 />
               </div>
               <div className="field-block">
@@ -893,7 +893,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('messagingProof', e.target.value)
                   }
-                  placeholder="How they know it’s true"
+                  placeholder="e.g. 40 homes built · zero missed opens"
                 />
               </div>
               <div className="field-block">
@@ -908,7 +908,7 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('messagingPersonality', e.target.value)
                   }
-                  placeholder="Three traits"
+                  placeholder="Steady · clear · a little dry humor"
                 />
               </div>
             </section>

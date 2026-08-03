@@ -1,5 +1,103 @@
 /* Auto-split from index.css — lazy-sketch.css */
 
+/* Touchpoints applications (path rebuild) — beat .sketch-studio 40rem cap */
+.sketch-studio.touchpoints-studio,
+.touchpoints-studio {
+  max-width: none;
+  width: 100%;
+  margin-inline: 0;
+}
+
+.touchpoints-status {
+  margin: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.touchpoints-blurb {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  max-width: 65ch;
+}
+
+.touchpoints-empty {
+  margin: var(--space-4) 0;
+  padding: var(--space-5);
+  max-width: 36rem;
+}
+
+.touchpoints-empty-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-4);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.touchpoints-empty-sub {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  line-height: 1.4;
+  max-width: 65ch;
+}
+
+.touchpoints-list {
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.touchpoints-card {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+
+.touchpoints-card.is-ready {
+  border-color: var(--border-strong, var(--border-subtle));
+}
+
+.touchpoints-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.touchpoints-card-title {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.touchpoints-card .field-label {
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.touchpoints-card .field-textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .touchpoints-card-head .btn {
+    min-height: var(--tap-min, 2.75rem);
+  }
+}
+
 .sketch-ideate-details {
   margin: 0 0 0.75rem;
   font-size: 0.875rem;

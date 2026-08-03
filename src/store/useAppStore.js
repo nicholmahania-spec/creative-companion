@@ -225,6 +225,8 @@ export function brandIdentityDefaults() {
   identitySavedAt: '',
   /** Last Identity sub-screen (mark/words/colour/type/preview) — resume after leave */
   identitySubstep: 'logo',
+  /** Touchpoints applications: { [touchpointId]: { note, done } } */
+  touchpointApps: {},
   /** Why the chosen type pair fits the Define brand words */
   typeWhy: '',
   /** data URL mark for pack cover */

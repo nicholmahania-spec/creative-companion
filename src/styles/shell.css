@@ -2058,12 +2058,14 @@ h3 {
   width: 100%;
 }
 
-/* System + Pack / Identity — fill main grid cell (path rebuild checklist).
+/* System + Pack / Identity / Touchpoints — fill main grid cell (path rebuild).
    Was min(1120px) centered — left a dead gutter next to the sidebar. */
 .main:has(.system-view),
 .main:has(.pack-view),
 .main:has(.design-studio),
+.main:has(.touchpoints-studio),
 .app.view-brand .main,
+.app.view-flow .main,
 .app.is-pack-view .main {
   max-width: none;
   margin-inline: 0;

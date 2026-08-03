@@ -76,11 +76,11 @@ export function pathStepHasContent(stepId, ctx = {}) {
   /* The user's own verdict outranks both the latch and the live condition,
      in BOTH directions — see `pathDone` in the store.
 
-     Every condition above is a proxy: Touchpoints reads `brandSurfaces`,
+     Every condition above is a proxy: Touchpoints reads `touchpointApps`,
      Identity reads craft signals. A mark drawn in Illustrator or a stage
      signed off over the phone is invisible to them, and Touchpoints has
-     already shipped a bug where onboarding auto-ticked it before any work
-     existed. So the app must be correctable in both directions.
+     already shipped a bug where Strategy surfaces auto-ticked it before any
+     work on this stop. So the app must be correctable in both directions.
 
      There is no third "marked done, no content" visual state and no asterisk.
      One tick, one meaning: a second grade of done is a new symbol to decode on
@@ -141,17 +141,16 @@ export function pathStepMeetsCondition(stepId, ctx = {}) {
       return !!(hasDirection || hasSparkPin || hasRough)
     }
     case 'sketch': {
-      /* Touchpoints = work done on this stop (desk steps completed), not
-         Strategy brief checklists. brandSurfaces / deliverablesPicked are
-         filled on the brief, so using them made Touchpoints auto-tick as
-         soon as Strategy was done — a lying path map (2026-08-03 audit).
-
-         Completing at least one real task is work that only this stage's
-         UI produces. Open/empty tasks (including onboarding's first step)
-         do not count. Manual pathDone still overrides via pathStepHasContent. */
-      return (tasks || []).some(
-        (t) => t && t.completed === true && String(t.title || '').trim()
-      )
+      /* Touchpoints = application notes on this stop (touchpointApps), not
+         Strategy checklists and not mere open desk tasks. At least one
+         application from the brief list has a note or “looks right”. */
+      const apps = project.touchpointApps || {}
+      const any = Object.keys(apps).some((id) => {
+        const row = apps[id]
+        if (!row || typeof row !== 'object') return false
+        return !!(row.done || String(row.note || '').trim())
+      })
+      return any
     }
     case 'design': {
       // Craft signals only — stock default palette alone does not count
@@ -266,7 +265,7 @@ export function pathGapFocusSelector(stepId) {
     case 'ideate':
       return '#dir-title-a, .spark-actions .btn-primary'
     case 'sketch':
-      return '#desk-capture, #step-why, #current-step'
+      return '.touchpoints-list textarea, .touchpoints-empty .btn-primary, #desk-capture'
     case 'design':
       return '#brand-tagline, #brand-brief, .system-acc-tab'
     case 'review':
