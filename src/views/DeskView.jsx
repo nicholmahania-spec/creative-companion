@@ -9,6 +9,9 @@
  * 2026-08-03): object permanence — under Done = invisible. Empty = short
  * status + CTA only, no essay. Due date lives on What's next, not Client.
  *
+ * Artboard ambient (advisor): pack handoff status (real thin/core/ready) +
+ * quiet Open Assets; Edit identity is the sole primary. No PDF on the desk.
+ *
  * Owner chose literal mock (option B) for counts, relative times, Mark done
  * primary, and a week strip from real workLog. Shell chrome stays the app's.
  */
@@ -17,8 +20,23 @@ import { getProcessPhase } from '../lib/processGuide'
 import { relativeDeadlineLabel } from '../lib/dates'
 import { pinFaceStyle, pinVisualKind } from '../lib/moodPins'
 import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
+import {
+  buildBrandPackSnapshot,
+  packReadiness,
+} from '../lib/exportFiles'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
 import '../styles/lazy-desk.css'
+
+/**
+ * Leave-behind ambient status for the artboard stamp slot.
+ * Real signals only: packReadiness.thin + path-all-done (same formula as
+ * App brandBookReady = pathStepsFull && !leaveBehindThin).
+ */
+export function packHandoffStatus({ thin, pathFull }) {
+  if (thin) return 'Pack still thin for handoff'
+  if (pathFull) return 'Pack ready for handoff'
+  return 'Pack has a core'
+}
 
 const stopTag = (label = '') => label.slice(0, 3).toUpperCase()
 
@@ -120,6 +138,7 @@ export default function DeskView({
   onEditIdentity,
   onEditBrief,
   onOpenWall,
+  onOpenAssets,
 }) {
   const notNeeded = Array.isArray(project?.stepsNotNeeded)
     ? project.stepsNotNeeded
@@ -160,11 +179,19 @@ export default function DeskView({
 
   const deadline = relativeDeadlineLabel(project?.deadline)
 
-  const version = String(project?.designVersion || '').trim() || 'v1'
-  const editedAge = relativeAgeLabel(project?.identityEditedAt)
-  const versionLabel = editedAge
-    ? `${version} · edited ${editedAge}`
-    : version
+  /* Pack ambient (advisor A): replace number stamp with leave-behind state. */
+  const packSnap = buildBrandPackSnapshot({
+    project,
+    tasks,
+    moodItems: pins,
+    palette,
+  })
+  const packReady = packReadiness(packSnap)
+  const pathFull = rows.length > 0 && rows.every((r) => r.done)
+  const packStatus = packHandoffStatus({
+    thin: !!packReady.thin,
+    pathFull,
+  })
 
   const packPins = (pins || [])
     .filter((p) => p.inPack)
@@ -206,8 +233,13 @@ export default function DeskView({
               <span className="desk-eyebrow">
                 {labelForStepId('design')} · live artboard
               </span>
-              <span className="desk-stamp" role="status">
-                {versionLabel}
+              <span
+                className={`desk-stamp desk-pack-status is-${
+                  packReady.thin ? 'thin' : pathFull ? 'ready' : 'core'
+                }`}
+                role="status"
+              >
+                {packStatus}
               </span>
             </div>
             <DeskLiveArtboard
@@ -223,6 +255,15 @@ export default function DeskView({
               >
                 Edit identity
               </button>
+              {typeof onOpenAssets === 'function' && (
+                <button
+                  type="button"
+                  className="desk-panel-link desk-panel-link-quiet"
+                  onClick={onOpenAssets}
+                >
+                  Open {labelForStepId('deliver')}
+                </button>
+              )}
               <span className="desk-artboard-note">
                 Brand colour lives here only — the desk stays out of the way.
               </span>

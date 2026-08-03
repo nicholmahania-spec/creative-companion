@@ -4296,6 +4296,7 @@ function App() {
               onEditIdentity={() => setActiveView('brand')}
               onEditBrief={() => setActiveView('project')}
               onOpenWall={() => setActiveView('studio')}
+              onOpenAssets={() => setActiveView('finish')}
             />
           </Suspense>
         )}

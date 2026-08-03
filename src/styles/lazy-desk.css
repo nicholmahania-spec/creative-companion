@@ -72,6 +72,26 @@
   color: var(--text-muted);
 }
 
+/* Leave-behind ambient — words only, no counts (advisor A). */
+.desk-pack-status {
+  max-width: 28ch;
+  text-align: right;
+  line-height: 1.3;
+}
+
+.desk-pack-status.is-ready {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.desk-pack-status.is-core {
+  color: var(--text-primary);
+}
+
+.desk-pack-status.is-thin {
+  color: var(--text-muted);
+}
+
 .desk-progress-strong {
   color: var(--text-primary);
   font-weight: 700;
