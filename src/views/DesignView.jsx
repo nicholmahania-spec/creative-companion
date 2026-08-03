@@ -12,7 +12,11 @@ import {
   prevIdentitySubstep,
 } from '../lib/identitySubsteps'
 import useAppStore from '../store/useAppStore'
-import versionService from '../services/versionService'
+import versionService, {
+  versionIdentityPreview,
+  versionKindLabel,
+} from '../services/versionService'
+import { messageDayLabel } from '../lib/messageDayLabel'
 import {
   DEFAULT_PALETTE,
   normalizeHex,
@@ -1844,76 +1848,97 @@ export default function DesignView({
                     </div>
                   ) : versionHistory.length === 0 ? (
                     <div className="dv-tpl-empty">
-                      <p>No versions yet. Use Bump when you want a save point.</p>
+                      <p>
+                        No saves yet. Work on Identity and the app keeps an
+                        hourly save while the studio is open — or use Bump on
+                        Preview when you want a named point.
+                      </p>
                     </div>
                   ) : (
                     <div className="dv-tpl-list">
-                      {versionHistory.map((version) => (
-                        <div
-                          key={version.id}
-                          className="dv-tpl-card"
-                          onClick={() => {
-                            setSelectedVersion(version)
-                            setDiffResult(null)
-                            // Load diff between selected version and current state
-                            loadVersionDiff(version.id)
-                          }}
-                        >
-                          <div className="dv-tpl-row">
-                            <div>
-                              <h3 className="dv-tpl-name">{version.versionLabel || 'Unnamed'}</h3>
-                              <p className="dv-tpl-meta">
-                                {new Date(version.timestamp).toLocaleDateString()}
+                      {versionHistory.map((version) => {
+                        const preview = versionIdentityPreview(version.data)
+                        const kind =
+                          version.kind ||
+                          version.changeSummary?.kind ||
+                          'save'
+                        const day =
+                          messageDayLabel(version.timestamp) || 'Earlier'
+                        const selected = selectedVersion?.id === version.id
+                        return (
+                          <div
+                            key={version.id}
+                            className={`dv-tpl-card dv-ver-card${
+                              selected ? ' is-selected' : ''
+                            }`}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                              setSelectedVersion(version)
+                              setDiffResult(null)
+                              loadVersionDiff(version.id)
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                setSelectedVersion(version)
+                                setDiffResult(null)
+                                loadVersionDiff(version.id)
+                              }
+                            }}
+                          >
+                            <div className="dv-tpl-row">
+                              <div>
+                                <h3 className="dv-tpl-name">{preview.title}</h3>
+                                <p className="dv-tpl-meta">
+                                  {versionKindLabel(kind)} · {day}
+                                </p>
+                              </div>
+                              <div className="dv-tpl-actions">
+                                <span className="dv-ver-badge is-patch">
+                                  {versionKindLabel(kind)}
+                                </span>
+                              </div>
+                            </div>
+                            {preview.lines.map((line) => (
+                              <p key={line} className="dv-tpl-desc">
+                                {line}
                               </p>
-                            </div>
-                            <div className="dv-tpl-actions">
-                              {version.changeSummary?.severity && (
-                                <span
-                                  className={`dv-ver-badge ${
-                                    version.changeSummary.severity === 'major'
-                                      ? 'is-major'
-                                      : version.changeSummary.severity === 'minor'
-                                        ? 'is-minor'
-                                        : 'is-patch'
-                                  }`}
-                                >
-                                  {version.changeSummary.severity}
-                                </span>
-                              )}
-                              {version.changeSummary?.changeCount && (
-                                <span className="dv-ver-count">
-                                  {version.changeSummary.changeCount} changes
-                                </span>
-                              )}
-                            </div>
+                            ))}
+                            {preview.palette.length > 0 && (
+                              <div
+                                className="dv-ver-swatches"
+                                aria-label="Palette in this save"
+                              >
+                                {preview.palette.map((hex) => (
+                                  <span
+                                    key={hex}
+                                    className="dv-ver-swatch"
+                                    style={{ background: hex }}
+                                    title={hex}
+                                  />
+                                ))}
+                              </div>
+                            )}
                           </div>
-                          {version.changeSummary?.summary && (
-                            <p className="dv-tpl-desc">
-                              {version.changeSummary.summary}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </div>
-                {(selectedVersion || diffResult) && (
+                {selectedVersion && (
                   <div className="dv-diff-panel">
                     <div className="dv-diff-head">
-                      <h3>
-                        {selectedVersion ? 'Compare versions' : 'Changes'}
-                      </h3>
+                      <h3>This save</h3>
                       <div className="dv-diff-head-actions">
-                        {selectedVersion && (
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            disabled={restoringVersion}
-                            onClick={() => restoreSelectedVersion()}
-                          >
-                            {restoringVersion ? 'Restoring…' : 'Restore this'}
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          disabled={restoringVersion}
+                          onClick={() => restoreSelectedVersion()}
+                        >
+                          {restoringVersion ? 'Restoring…' : 'Restore this'}
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
@@ -1921,117 +1946,83 @@ export default function DesignView({
                             setDiffResult(null)
                           }}
                           className="btn btn-sm btn-ghost"
-                          aria-label="Close diff"
+                          aria-label="Close"
                         >
                           ×
                         </button>
                       </div>
                     </div>
-                    {/* Version info */}
-                    <div className="dv-diff-grid">
-                      <div>
-                        <h4>Current Version</h4>
-                        <p className="dv-diff-meta">
-                          {activeProject?.designVersion || 'v1'} •{" "}
-                          {new Date().toLocaleString()}
-                        </p>
-                      </div>
-                      <div>
-                        <h4>Selected Version</h4>
-                        <p className="dv-diff-meta">
-                          {selectedVersion?.versionLabel || 'Unnamed'} •{" "}
-                          {selectedVersion?.timestamp ? new Date(selectedVersion.timestamp).toLocaleString() : '—'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Diff results or loading */}
+                    {(() => {
+                      const preview = versionIdentityPreview(
+                        selectedVersion.data
+                      )
+                      const kind =
+                        selectedVersion.kind ||
+                        selectedVersion.changeSummary?.kind ||
+                        'save'
+                      const day =
+                        messageDayLabel(selectedVersion.timestamp) ||
+                        'Earlier'
+                      return (
+                        <div className="dv-ver-detail">
+                          <p className="dv-tpl-meta">
+                            {versionKindLabel(kind)} · {day}
+                          </p>
+                          <p className="dv-ver-detail-title">{preview.title}</p>
+                          {preview.lines.map((line) => (
+                            <p key={line} className="dv-tpl-desc">
+                              {line}
+                            </p>
+                          ))}
+                          {preview.palette.length > 0 && (
+                            <div className="dv-ver-swatches">
+                              {preview.palette.map((hex) => (
+                                <span
+                                  key={hex}
+                                  className="dv-ver-swatch"
+                                  style={{ background: hex }}
+                                  title={hex}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          <p className="dv-ver-detail-hint">
+                            Restore puts mark words colour and type back to
+                            this picture. The logo image file is not stored in
+                            history — only the words around it.
+                          </p>
+                        </div>
+                      )
+                    })()}
                     {loadingDiff ? (
                       <div className="dv-tpl-empty">
-                        <p>Generating diff…</p>
+                        <p>Comparing to now…</p>
                       </div>
-                    ) : diffResult ? (
-                      <div>
-                        {diffResult.error ? (
-                          <div className="dv-diff-error">
-                            <p>{diffResult.error}</p>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="dv-diff-summaryrow">
-                              <span className={`dv-ver-badge ${
-                                diffResult.severity === 'major'
-                                  ? 'is-major'
-                                  : diffResult.severity === 'minor'
-                                    ? 'is-minor'
-                                    : diffResult.changeCount > 10
-                                      ? 'is-major'
-                                      : diffResult.changeCount > 5
-                                        ? 'is-minor'
-                                        : 'is-patch'
-                              }`}
-                              >
-                                {diffResult.severity || 'patch'}
-                              </span>
-                              <span className="dv-diff-field">
-                                {diffResult.changeCount} changes
-                              </span>
-                            </div>
-                            <p className="dv-diff-summary">
-                              {diffResult.summary}
-                            </p>
-
-                            {/* Changes breakdown */}
-                            <div>
-                              {diffResult.modified.length > 0 && (
-                                <div className="dv-diff-section">
-                                  <h4>Modified ({diffResult.modified.length})</h4>
-                                  {diffResult.modified.map((change) => (
-                                    <div key={change.field} className="dv-diff-row">
-                                      <span className="dv-diff-field">{change.field}:</span>
-                                      {" "}
-                                      <span className="dv-diff-old">{fmtDiffVal(change.oldValue)}</span>
-                                      <span className="dv-diff-arrow">→</span>
-                                      <span className="dv-diff-added">{fmtDiffVal(change.newValue)}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {diffResult.added.length > 0 && (
-                                <div className="dv-diff-section">
-                                  <h4>Added ({diffResult.added.length})</h4>
-                                  {diffResult.added.map((change) => (
-                                    <div key={change.field} className="dv-diff-row">
-                                      <span className="dv-diff-field">{change.field}:</span>
-                                      {" "}
-                                      <span className="dv-diff-added">{fmtDiffVal(change.value)}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {diffResult.removed.length > 0 && (
-                                <div className="dv-diff-section">
-                                  <h4>Removed ({diffResult.removed.length})</h4>
-                                  {diffResult.removed.map((change) => (
-                                    <div key={change.field} className="dv-diff-row">
-                                      <span className="dv-diff-field">{change.field}:</span>
-                                      {" "}
-                                      <span className="dv-diff-removed">{fmtDiffVal(change.value)}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </>
+                    ) : diffResult && !diffResult.error ? (
+                      <div className="dv-diff-section">
+                        <h4>
+                          Vs now
+                          {diffResult.changeCount
+                            ? ` · ${diffResult.changeCount} different`
+                            : ' · same as now'}
+                        </h4>
+                        {diffResult.summary && diffResult.changeCount > 0 && (
+                          <p className="dv-diff-summary">{diffResult.summary}</p>
                         )}
+                        {diffResult.modified.slice(0, 8).map((change) => (
+                          <div key={change.field} className="dv-diff-row">
+                            <span className="dv-diff-field">{change.field}:</span>{' '}
+                            <span className="dv-diff-old">
+                              {fmtDiffVal(change.oldValue)}
+                            </span>
+                            <span className="dv-diff-arrow">→</span>
+                            <span className="dv-diff-added">
+                              {fmtDiffVal(change.newValue)}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ) : (
-                      <div className="dv-tpl-empty">
-                        <p>
-                          Select a version from the history to see the diff
-                        </p>
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 )}
               </div>
