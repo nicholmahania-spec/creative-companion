@@ -498,25 +498,13 @@ export default function MainOutlet(p) {
         syncState={syncState}
         syncError={syncError}
         runCloudPush={runCloudPush}
-        exportAllData={exportAllData}
-        setSyncState={setSyncState}
-        setSyncError={setSyncError}
         handleSignOut={handleSignOut}
         theme={theme}
         toggleTheme={toggleTheme}
         openShortcuts={() => setShortcutsOpen(true)}
         reduceMotion={reduceMotion}
-        soundEnabled={soundEnabled}
-        showHowItWorks={showHowItWorks}
-        showProgress={showProgress}
-        queueCollapsed={queueCollapsed}
-        forceBreaksEnabled={forceBreaksEnabled}
         setPref={setPref}
-        bodyDoubling={bodyDoubling}
-        toggleBodyDoubling={toggleBodyDoubling}
         flashToast={flashToast}
-        forcedBreak={forcedBreak}
-        endForcedBreak={endForcedBreak}
         prefs={prefs}
         pwCurrent={pwCurrent}
         setPwCurrent={setPwCurrent}
@@ -531,11 +519,7 @@ export default function MainOutlet(p) {
         loadSoftSignalDemo={loadSoftSignalDemo}
         loadHarborHearthDemo={loadHarborHearthDemo}
         versionLabel={versionLabel}
-        APP_BUILD={APP_BUILD}
         APP_BUILD_DATE={APP_BUILD_DATE}
-        STORAGE_EXPLAIN={STORAGE_EXPLAIN}
-        notifyAction={notifyAction}
-        createNewProject={createNewProject}
         requestConfirm={(label, onConfirm) =>
           setDeskConfirm({
             kind: 'settings',
@@ -546,7 +530,6 @@ export default function MainOutlet(p) {
             },
           })
         }
-        openForceBreakConsent={() => setForceBreakConsentOpen(true)}
       />
     )
   }

@@ -1,12 +1,13 @@
-import { helperAiStatus } from '../lib/helper/helperAi'
-import {
-  FOCUS_MASK_MIN_PCT,
-  FOCUS_MASK_MAX_PCT,
-  clampFocusMaskPct,
-} from '../lib/uiPrefs'
 import '../styles/lazy-settings.css'
 
-/** Settings — short labels, Typing calm first, Advanced collapsed. */
+/**
+ * Settings — one door, open surface (no Advanced nest).
+ *
+ * Calm prefs + data/account only. Focus-mask knobs, Desk chrome toggles,
+ * Helper, and break-lock left as store defaults (no UI). Tools menu is
+ * separate (off-path work). Samples stay here so Soft Signal can replace
+ * a live desk (empty-home demos cannot).
+ */
 export default function SettingsView(props) {
   const {
     setActiveView,
@@ -15,25 +16,13 @@ export default function SettingsView(props) {
     syncState,
     syncError,
     runCloudPush,
-    exportAllData,
-    setSyncState,
-    setSyncError,
     handleSignOut,
     theme,
     toggleTheme,
     openShortcuts,
     reduceMotion,
-    soundEnabled,
-    showHowItWorks,
-    showProgress,
-    queueCollapsed,
-    forceBreaksEnabled,
     setPref,
-    bodyDoubling,
-    toggleBodyDoubling,
     flashToast,
-    forcedBreak,
-    endForcedBreak,
     prefs,
     pwCurrent,
     setPwCurrent,
@@ -49,11 +38,9 @@ export default function SettingsView(props) {
     loadHarborHearthDemo,
     versionLabel,
     APP_BUILD_DATE,
-    STORAGE_EXPLAIN,
     requestConfirm,
-    openForceBreakConsent,
   } = props
-  const aiStatus = helperAiStatus()
+
   const ask = (label, onConfirm) => {
     if (typeof requestConfirm === 'function') requestConfirm(label, onConfirm)
     else if (window.confirm(label)) onConfirm?.()
@@ -61,117 +48,21 @@ export default function SettingsView(props) {
 
   return (
     <div className="settings-view settings-studio">
-      {/* No local back link — the app header's back affordance carries the
-          return (to where you were on the path, not a hardcoded stop). */}
       <div className="flow-top">
         <h1 className="page-title">Settings</h1>
-        {/* "Nothing folded away" would be false here — Advanced (and Storage
-            inside it) is a <details> a user has to open. This line only
-            claims what's actually true of this page. */}
         <p className="settings-intro">
-          These apply across every project. Advanced options are tucked
-          under one panel below — everything else here is already open.
+          Calm typing and desk data. Everything here is already open.
         </p>
       </div>
 
-      <nav className="settings-jump" aria-label="Settings sections">
-        {[
-          ['calm', 'Typing'],
-          ['desk', 'Desk'],
-          ['data', 'Data'],
-          ['advanced', 'Advanced'],
-        ].map(([id, label]) => (
-          <a
-            key={id}
-            className="settings-jump-link"
-            href={`#settings-${id}`}
-          >
-            {label}
-          </a>
-        ))}
-      </nav>
-
       <section className="panel brand-section" id="settings-calm">
-        <div className="brand-section-label">Typing</div>
+        <div className="brand-section-label">Calm</div>
 
-        <p className="settings-subhead">
-          Quiet the chrome while you type
-        </p>
         <SettingsSwitch
           label="Hide nav while typing"
           checked={!!prefs.hideNavUntilBlur}
           onToggle={() => setPref('hideNavUntilBlur', !prefs.hideNavUntilBlur)}
         />
-
-        <p className="settings-subhead">
-          Dim other fields while one is active
-        </p>
-        <div className="settings-row">
-          <strong>Active field ring</strong>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() =>
-              setPref(
-                'focusRingStrength',
-                prefs.focusRingStrength === 'high' ? 'normal' : 'high'
-              )
-            }
-          >
-            {prefs.focusRingStrength === 'high' ? 'Normal' : 'High'}
-          </button>
-        </div>
-        {/* Track starts at the floor, and the number shown is the clamped
-            value the app actually applies. Before, the slider ran from 0 and
-            displayed a stored 25% while the app applied 40% — every position
-            below the floor was dead travel, so dragging did nothing and the
-            readout disagreed with the screen. */}
-        <div className="settings-row settings-row-stack">
-          <strong>
-            Field dim · {clampFocusMaskPct(prefs.focusMaskPct)}%
-          </strong>
-          <input
-            type="range"
-            min={FOCUS_MASK_MIN_PCT}
-            max={FOCUS_MASK_MAX_PCT}
-            step={5}
-            className="settings-range"
-            value={clampFocusMaskPct(prefs.focusMaskPct)}
-            aria-label="Field dim intensity"
-            onChange={(e) =>
-              setPref('focusMaskPct', Number(e.target.value))
-            }
-          />
-        </div>
-        <div className="settings-row">
-          <strong>Dim blur</strong>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() =>
-              setPref('focusMaskBlur', Number(prefs.focusMaskBlur) > 0 ? 0 : 2)
-            }
-          >
-            {Number(prefs.focusMaskBlur) > 0 ? '2px' : 'Off'}
-          </button>
-        </div>
-
-        <p className="settings-subhead">Notifications</p>
-        <div className="settings-row">
-          <strong>Batch toasts</strong>
-          <select
-            className="field-input settings-locale-select"
-            value={String(prefs.toastBatchWindow || 0)}
-            aria-label="Batch toasts"
-            onChange={(e) =>
-              setPref('toastBatchWindow', Number(e.target.value))
-            }
-          >
-            <option value="0">Off</option>
-            <option value="30">30s</option>
-            <option value="120">2 min</option>
-          </select>
-        </div>
         <SettingsSwitch
           label="Less motion"
           checked={reduceMotion}
@@ -181,51 +72,6 @@ export default function SettingsView(props) {
           label="Hide tips"
           checked={!!prefs.hideTips}
           onToggle={() => setPref('hideTips', !prefs.hideTips)}
-        />
-        <div className="settings-row">
-          <strong>Theme</strong>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => toggleTheme()}
-          >
-            {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
-          </button>
-        </div>
-        {/* Moved off the Tools menu, which was clipping its own bottom four
-            rows. This was the only one of those four with no home on this page
-            already — theme is directly above and Sign out is further down. The
-            `?` key still opens the same panel. */}
-        {openShortcuts && (
-          <div className="settings-row">
-            <strong>Keyboard shortcuts</strong>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => openShortcuts()}
-            >
-              Show
-            </button>
-          </div>
-        )}
-      </section>
-
-      <section className="panel brand-section" id="settings-desk">
-        <div className="brand-section-label">Desk</div>
-        <SettingsSwitch
-          label="Collapse queue"
-          checked={queueCollapsed}
-          onToggle={() => setPref('queueCollapsed', !queueCollapsed)}
-        />
-        <SettingsSwitch
-          label="Sketch intro"
-          checked={showHowItWorks}
-          onToggle={() => setPref('showHowItWorks', !showHowItWorks)}
-        />
-        <SettingsSwitch
-          label="Progress strip"
-          checked={showProgress}
-          onToggle={() => setPref('showProgress', !showProgress)}
         />
         <div className="settings-row">
           <strong>Toasts</strong>
@@ -242,6 +88,28 @@ export default function SettingsView(props) {
             {prefs.toastMode === 'all' ? 'Quiet' : 'All'}
           </button>
         </div>
+        <div className="settings-row">
+          <strong>Theme</strong>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => toggleTheme()}
+          >
+            {theme === 'warm' ? 'Switch to dark' : 'Switch to light'}
+          </button>
+        </div>
+        {openShortcuts ? (
+          <div className="settings-row">
+            <strong>Keyboard shortcuts</strong>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => openShortcuts()}
+            >
+              Show
+            </button>
+          </div>
+        ) : null}
       </section>
 
       <section className="panel brand-section" id="settings-data">
@@ -273,18 +141,12 @@ export default function SettingsView(props) {
           >
             {CLOUD ? 'Sign out' : 'Lock'}
           </button>
-          {CLOUD && (
+          {CLOUD ? (
             <button
               type="button"
               className="btn btn-secondary btn-sm"
               disabled={syncState === 'syncing'}
               onClick={async () => {
-                /* Same coalescing path as the auto-push and the retry button.
-                   Pressing Sync while a save is already in flight used to
-                   start a second one, and whichever replied last won — with a
-                   whole-row upsert, that means the older snapshot could
-                   overwrite the newer. It also owns the sync state, so this
-                   handler no longer sets it. */
                 const result = await runCloudPush()
                 if (result.ok) {
                   flashToast('Desk saved to the cloud')
@@ -295,7 +157,7 @@ export default function SettingsView(props) {
             >
               {syncState === 'syncing' ? 'Syncing…' : 'Sync'}
             </button>
-          )}
+          ) : null}
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -326,7 +188,7 @@ export default function SettingsView(props) {
             }}
           />
         </div>
-        {!CLOUD && (
+        {!CLOUD ? (
           <div className="settings-pw-block">
             <label className="field-label" htmlFor="pw-current">
               Password
@@ -370,7 +232,38 @@ export default function SettingsView(props) {
               </button>
             </div>
           </div>
-        )}
+        ) : null}
+
+        <div className="settings-row">
+          <strong>Sample project</strong>
+          <div className="settings-row-actions settings-samples">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => loadSoftSignalDemo?.()}
+            >
+              Soft Signal
+            </button>
+            {typeof loadHarborHearthDemo === 'function' ? (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => loadHarborHearthDemo()}
+              >
+                Harbor &amp; Hearth
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="settings-row" id="settings-about">
+          <strong>Version</strong>
+          <span className="settings-meta-inline">
+            {versionLabel()}
+            {APP_BUILD_DATE ? ` · ${APP_BUILD_DATE}` : ''}
+          </span>
+        </div>
+
         <div className="settings-danger-zone">
           <p className="settings-danger-title">Danger</p>
           <div className="settings-actions">
@@ -380,9 +273,6 @@ export default function SettingsView(props) {
               onClick={() => {
                 ask('Wipe desk · one blank project?', () => {
                   clearToEmpty()
-                  // 'flow' (Touchpoints/Sketch) is the 4th of 5 stops — a
-                  // brand-new blank project starts at Strategy (Define),
-                  // not mid-journey with nothing yet to sketch.
                   setActiveView('project')
                   flashToast('Empty desk ready')
                 })
@@ -396,7 +286,6 @@ export default function SettingsView(props) {
               onClick={() => {
                 ask('Full reset + setup?', () => {
                   clearAllData()
-                  /* No first-run modal — Home empty state + New project intake. */
                   setActiveView('home')
                   flashToast('Reset')
                 })
@@ -407,94 +296,6 @@ export default function SettingsView(props) {
           </div>
         </div>
       </section>
-
-      <details
-        className="panel brand-section settings-advanced"
-        id="settings-advanced"
-      >
-        <summary className="brand-section-label settings-advanced-sum">
-          Advanced
-        </summary>
-        <div className="settings-advanced-body">
-          <SettingsSwitch
-            label="Helper"
-            checked={bodyDoubling}
-            onToggle={() => toggleBodyDoubling()}
-          />
-          <SettingsSwitch
-            label="Quiet Helper"
-            checked={!!prefs.helperQuiet}
-            onToggle={() => setPref('helperQuiet', !prefs.helperQuiet)}
-          />
-          <SettingsSwitch
-            label="Timer sound"
-            checked={soundEnabled}
-            onToggle={() => setPref('soundEnabled', !soundEnabled)}
-          />
-          <SettingsSwitch
-            label="Break lock"
-            checked={forceBreaksEnabled}
-            onToggle={() => {
-              const next = !forceBreaksEnabled
-              if (next && !prefs.forceBreaksConsented) {
-                openForceBreakConsent?.()
-                return
-              }
-              setPref('forceBreaksEnabled', next)
-              if (!next && forcedBreak) endForcedBreak(true)
-              flashToast(next ? 'Breaks on' : 'Breaks off')
-            }}
-          />
-          <details className="settings-nested">
-            <summary>Storage</summary>
-            <p className="settings-meta">
-              {CLOUD
-                ? 'Cloud + cache'
-                : STORAGE_EXPLAIN?.summary || 'Local only'}
-            </p>
-            <p className="settings-meta">
-              <code className="settings-code">
-                {STORAGE_EXPLAIN?.workDataKey}
-              </code>
-            </p>
-          </details>
-          <div className="settings-row">
-            <strong>Demo</strong>
-            <div className="settings-row-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => loadSoftSignalDemo()}
-              >
-                Soft Signal
-              </button>
-              {typeof loadHarborHearthDemo === 'function' && (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => loadHarborHearthDemo()}
-                  title="Fictitious bakery brand — opens the project desk sample"
-                >
-                  Harbor &amp; Hearth
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="settings-row">
-            <strong>Helper AI</strong>
-            <span className={`helper-ai-badge is-${aiStatus.mode}`}>
-              {aiStatus.short}
-            </span>
-          </div>
-          <div className="settings-row" id="settings-about">
-            <strong>Version</strong>
-            <span className="settings-meta-inline">
-              {versionLabel()}
-              {APP_BUILD_DATE ? ` · ${APP_BUILD_DATE}` : ''}
-            </span>
-          </div>
-        </div>
-      </details>
     </div>
   )
 }
