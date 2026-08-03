@@ -28,6 +28,54 @@ import '../styles/brand-book-builder.css'
 /* Application mock geometry (shared with Touchpoints) */
 import '../styles/lazy-sketch.css'
 
+/* Overflow detection component to flag when page content exceeds boundaries */
+function OverflowDetector({ children, onOverflow }) {
+  const containerRef = useRef(null)
+  const [hasOverflow, setHasOverflow] = useState(false)
+
+  useEffect(() => {
+    const observeResize = () => {
+      if (!containerRef.current) return
+
+      // Check if content overflows vertically
+      const isOverflowing = containerRef.current.scrollHeight > containerRef.current.clientHeight
+      setHasOverflow(isOverflowing)
+
+      // Call the callback if provided
+      if (onOverflow) {
+        onOverflow(isOverflowing)
+      }
+    }
+
+    // Create a ResizeObserver to detect size changes
+    const resizeObserver = new ResizeObserver(observeResize)
+
+    // Also check on init and when properties that might affect layout change
+    observeResize()
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [onOverflow])
+
+  // Apply a visual indicator when overflowing
+  const containerStyle = hasOverflow
+    ? { position: 'relative', minHeight: '100%' }
+    : {}
+
+  return (
+    <div ref={containerRef} style={containerStyle} className="bbb-overflow-detector">
+      {children}
+      {hasOverflow && (
+        <div className="bbb-overflow-indicator">
+          <span role="img" aria-label="Content overflows page">↓</span>
+          <span className="sr-only">Content overflows page boundary</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ----------------------------------------------------------------------
    The owner's BrandBookBuilder, integrated.
 
@@ -1131,24 +1179,32 @@ export default function BrandBookBuilderView() {
      The old path passed 0..n only for inner pages, so Logo (page 2 of N)
      printed "1" while the flip controls said "2 of N". */
   const pageElements = [
-    <FrontCover
-      key="cover"
-      id="bbb-anchor-0"
-      pageIndex={0}
-      kit={{ ...kit, ...bgFor('pageCover') }}
-      style={gridMarginVar}
-    />,
+    <OverflowDetector key="cover">
+      <FrontCover
+        key="cover"
+        id="bbb-anchor-0"
+        pageIndex={0}
+        kit={{ ...kit, ...bgFor('pageCover') }}
+        style={gridMarginVar}
+      />
+    </OverflowDetector>,
     ...inner.map((render, i) => {
       const el = render(i + 1)
-      return React.cloneElement(el, { id: `bbb-anchor-${i + 1}` })
+      return (
+        <OverflowDetector key={`content-${i}`}>
+          {React.cloneElement(el, { id: `bbb-anchor-${i + 1}` })}
+        </OverflowDetector>
+      )
     }),
-    <BackCover
-      key="back"
-      id={`bbb-anchor-${inner.length + 1}`}
-      pageIndex={inner.length + 1}
-      kit={{ ...kit, ...bgFor('pageBack') }}
-      style={gridMarginVar}
-    />,
+    <OverflowDetector key="back">
+      <BackCover
+        key="back"
+        id={`bbb-anchor-${inner.length + 1}`}
+        pageIndex={inner.length + 1}
+        kit={{ ...kit, ...bgFor('pageBack') }}
+        style={gridMarginVar}
+      />
+    </OverflowDetector>,
   ];
 
   return (
