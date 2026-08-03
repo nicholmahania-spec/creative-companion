@@ -5,6 +5,7 @@ import {
   journeyIdForView,
   getNextJourney,
   toolsLabelForView,
+  isToolsMenuView,
 } from './journey'
 
 describe('JOURNEY_STEPS five-stop path', () => {
@@ -67,5 +68,8 @@ describe('JOURNEY_STEPS five-stop path', () => {
     expect(journeyIdForView('review')).toBe(null)
     expect(toolsLabelForView('spark')).toBe('Ideate')
     expect(toolsLabelForView('review')).toBe('Review')
+    expect(isToolsMenuView('spark')).toBe(true)
+    expect(isToolsMenuView('home')).toBe(false)
+    expect(isToolsMenuView('project')).toBe(false)
   })
 })

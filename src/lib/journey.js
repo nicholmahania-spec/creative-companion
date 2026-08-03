@@ -122,6 +122,22 @@ export function toolsLabelForView(view) {
   }
 }
 
+/**
+ * Views that live under Tools (not Go to / path / desk).
+ * The sidebar "Tools · …" pill must only show here — never "Tools · Home".
+ */
+export const TOOLS_MENU_VIEWS = [
+  'spark',
+  'review',
+  'insights',
+  'book',
+  'concept',
+]
+
+export function isToolsMenuView(view) {
+  return TOOLS_MENU_VIEWS.includes(view)
+}
+
 export function getJourneyStep(view) {
   const id = journeyIdForView(view)
   return JOURNEY_STEPS.find((s) => s.id === id) || null

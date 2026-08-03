@@ -476,6 +476,48 @@
   color: var(--ts-mute) !important;
 }
 
+.login-promise {
+  margin: var(--space-1) 0 var(--space-3);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  max-width: 28ch;
+}
+
+.login-path-mini {
+  list-style: none;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  justify-content: center;
+}
+
+.login-path-mini li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-muted, var(--bg-canvas));
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.login-path-num {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
+  font-weight: 700;
+}
+
+.login-path-label {
+  letter-spacing: -0.01em;
+}
+
 /* Settings rows */
 
 .settings-row {
