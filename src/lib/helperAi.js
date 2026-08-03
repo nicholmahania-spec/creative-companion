@@ -353,8 +353,11 @@ export async function askHelper(question, history = [], activity = {}) {
   if (!q) return { text: '', source: 'scripted' }
 
   if (!isHelperAiConfigured()) {
+    /* Not "your connection" — GitHub Pages and any host without a proxy/key
+       have no live model. Blaming the network made a static deploy look
+       broken when the app was honest about everything else. */
     return {
-      text: "I can't answer questions without a connection — the buttons below still work offline.",
+      text: "Typed questions need live AI, and this copy does not have it. The tips under the buttons still work.",
       source: 'scripted',
     }
   }

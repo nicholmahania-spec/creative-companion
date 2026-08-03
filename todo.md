@@ -31,11 +31,10 @@ reasoning. It is not a list of what is left. These are:
     static hosting with no serverless functions. Cost most of an evening on
     2026-08-01, twice, because nothing on screen says which copy you are on.
   - Netlify `creativecompanion.netlify.app` — last deploy errored 2026-07-19,
-    404s. CLAUDE.md still calls it "the primary deploy target".
+    404s. ~~CLAUDE.md still called it primary~~ → fixed: Vercel is primary.
   Pick one, retire the others, or at minimum make each say which it is.
-- **The Pages Helper blames your connection.** It says "I can't answer
-  questions without a connection" when the truth is that copy has no backend.
-  Misleading in the one place the app is supposed to be honest.
+- ~~**The Pages Helper blames your connection.**~~ Fixed: free-text without
+  live AI names the missing live path, not the network.
 - **Never `vercel deploy --prod` from the CLI on this project.** It uploads
   the local working directory and overrides the Git build — its metadata even
   records `githubCommitMessage: "initial commit"`, `gitDirty: 1`. On
@@ -65,9 +64,8 @@ reasoning. It is not a list of what is left. These are:
   `width:max-content` that clipped stages). Keep ratcheting down by fixing
   base rules; never raise the budget.
 - **Netlify is dead** — last deploy errored 2026-07-19 and
-  `creativecompanion.netlify.app` 404s. Production is Vercel. CLAUDE.md still
-  calls Netlify the primary target, which sent a whole session chasing the
-  wrong host.
+  `creativecompanion.netlify.app` 404s. Production is Vercel.
+  ~~CLAUDE.md called Netlify primary~~ → docs fixed.
 
 ---
 

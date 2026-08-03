@@ -3,6 +3,7 @@ import {
   scriptedCoachReply,
   isHelperAiConfigured,
   helperAiStatus,
+  askHelper,
 } from './helperAi'
 
 describe('helperAi scripted fallback', () => {
@@ -23,6 +24,19 @@ describe('helperAi scripted fallback', () => {
     const status = helperAiStatus()
     expect(['live', 'scripted']).toContain(status.mode)
     expect(status.label.length).toBeGreaterThan(3)
+  })
+
+  it('free-text without live AI does not blame the network', async () => {
+    /* Pages / scripted hosts used to say "without a connection" — false when
+       the host simply has no backend. Guard the honest line. */
+    if (isHelperAiConfigured()) {
+      /* Live env in CI — skip the unconfigured branch */
+      return
+    }
+    const r = await askHelper('What should I do next?', [], activity)
+    expect(r.source).toBe('scripted')
+    expect(r.text.toLowerCase()).not.toMatch(/connection|offline|network/)
+    expect(r.text.toLowerCase()).toMatch(/live ai|typed|button/)
   })
 
   it('recommend returns task-aware scripted coaching', () => {
