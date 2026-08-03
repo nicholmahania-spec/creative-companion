@@ -86,14 +86,14 @@ describe('a crash shows a screen, not a white page', () => {
   })
 })
 
-describe('Settings has exactly one door, in the sidebar Go to band', () => {
+describe('Settings has exactly one door, in the sidebar Studio band', () => {
   const app = read('App.jsx')
 
-  it('reaches Settings from the Go to band', () => {
+  it('reaches Settings from the Studio band', () => {
     /* History, so the next rewrite keeps the invariant rather than the
        markup: Settings' door has moved twice — out of a Tools menu that
        clipped its own bottom rows, onto a header button (desktop) plus a
-       mobile-only Tools-menu mirror, and now into the sidebar's Go to band,
+       mobile-only Tools-menu mirror, and now into the sidebar's Studio band,
        which the ☰ drawer reaches on mobile. ONE door, the same door, at
        every width — the two-door split existed only because the old header
        row had no room on phones.
