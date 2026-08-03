@@ -1524,6 +1524,50 @@ h3 {
   color: var(--text-muted);
 }
 
+/* Home: single up-next card (not a second full path map) */
+.home-dash-up-next-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  margin: 0 0 var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--text-primary);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-dash-up-next-card:hover {
+  background: var(--bg-muted);
+}
+
+.home-dash-up-next-kicker {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.home-dash-up-next-title {
+  font-size: var(--fs-4);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.home-dash-up-next-plain {
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-muted);
+  max-width: 40ch;
+}
+
 .home-dash-hours-bars {
   display: flex;
   align-items: flex-end;
@@ -8339,11 +8383,8 @@ select:focus {
   /* Inline segmented Form / Refs toggle */
 }
 
-/* Sidebar "Go to" band — the global destinations that used to live in the
-   top nav. Its own class, NOT .journey-projects-section: the desktop
-   sidebar overrides target that class and must not restyle this band.
-   Fixed short band above the variable-length project list. Labeled rows,
-   icon leads, word follows; zero !important, tokens only. */
+/* Studio band — multi-project destinations (not the path).
+   Path steps live under "This project" so Home/nav don't dual-map the same five stops. */
 .journey-goto-section {
   display: flex;
   flex-direction: column;
@@ -8353,13 +8394,34 @@ select:focus {
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.journey-goto-heading {
+.journey-goto-heading,
+.journey-path-heading {
   padding: 0.35rem 0.05rem 0.4rem;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+.journey-path-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.journey-path-empty {
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.journey-desk-row.is-current {
+  background: var(--bg-muted);
+  font-weight: 600;
 }
 
 .journey-goto-row {

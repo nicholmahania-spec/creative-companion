@@ -3575,8 +3575,9 @@ function App() {
               Settings is a destination, not a dropdown — theme and Log out
               live on that page, so a menu here would just ask "which of the
               two menus holds this?" before every use. */}
-          <div className="journey-goto-section" aria-label="Go to">
-            <span className="journey-goto-heading">Go to</span>
+          {/* Studio = multi-project destinations. Path steps below = This project. */}
+          <div className="journey-goto-section" aria-label="Studio">
+            <span className="journey-goto-heading">Studio</span>
             <button
               type="button"
               className="journey-goto-row"
@@ -3785,70 +3786,95 @@ function App() {
               </select>
             )}
           </div>
-          <ol className="journey-bar-list">
-            {JOURNEY_STEPS.map((step, idx) => {
-              const active = journeyActive === step.id
-              const label = step.label
-              const plain = step.plain
-              const pathCtx = {
-                project: activeProject,
-                moodItems: deskMood,
-                tasks: deskTasks,
-                sparkIndex,
-                palette: projectPalette,
-              }
-              const hasContent = pathStepHasContent(step.id, pathCtx)
-              const prevLit =
-                idx > 0 &&
-                pathStepHasContent(JOURNEY_STEPS[idx - 1].id, pathCtx)
-              return (
-                <li
-                  key={step.id}
-                  className={`journey-bar-item${active ? ' is-active' : ''}${
-                    hasContent && !active ? ' is-done' : ''
-                  }`}
-                >
-                  {idx > 0 && (
-                    <span
-                      className={`journey-flow-link${prevLit ? ' is-lit' : ''}`}
-                      aria-hidden="true"
-                    />
-                  )}
-                  <button
-                    type="button"
-                    className={`journey-step${active ? ' is-active' : ''}${
+          <div className="journey-path-section" aria-label="This project path">
+            <span className="journey-path-heading">This project</span>
+            {activeProject ? (
+              <button
+                type="button"
+                className={`journey-goto-row journey-desk-row${
+                  activeView === 'desk' ? ' is-current' : ''
+                }`}
+                onClick={() => {
+                  setActiveView('desk')
+                  setNavOpen(false)
+                }}
+              >
+                <span aria-hidden="true">▦</span>
+                Desk
+              </button>
+            ) : (
+              <p className="journey-path-empty">
+                Open a project to see its path.
+              </p>
+            )}
+            <ol className="journey-bar-list">
+              {JOURNEY_STEPS.map((step, idx) => {
+                const active = journeyActive === step.id
+                const label = step.label
+                const plain = step.plain
+                const pathCtx = {
+                  project: activeProject,
+                  moodItems: deskMood,
+                  tasks: deskTasks,
+                  sparkIndex,
+                  palette: projectPalette,
+                }
+                const hasContent = pathStepHasContent(step.id, pathCtx)
+                const prevLit =
+                  idx > 0 &&
+                  pathStepHasContent(JOURNEY_STEPS[idx - 1].id, pathCtx)
+                return (
+                  <li
+                    key={step.id}
+                    className={`journey-bar-item${active ? ' is-active' : ''}${
                       hasContent && !active ? ' is-done' : ''
                     }`}
-                    onClick={() => {
-                      setActiveView(step.view)
-                      setNavOpen(false)
-                      // Empty steps: land focus on a useful field
-                      if (!hasContent) {
-                        focusPathGapTarget(pathGapFocusSelector(step.id))
-                      }
-                    }}
-                    aria-current={active ? 'step' : undefined}
-                    aria-label={`Step ${step.num}: ${label}. ${plain}${
-                      hasContent ? ' Has content.' : ''
-                    } Press ${step.num} to open.`}
-                    title={`${plain} · key ${step.num}`}
                   >
-                    <span className="journey-node" aria-hidden="true">
-                      {hasContent && !active ? (
-                        <span className="journey-check">✓</span>
-                      ) : (
-                        <PathStepIcon id={step.id} />
-                      )}
-                    </span>
-                    <span className="journey-num" aria-hidden="true">
-                      {hasContent && !active ? '✓' : String(step.num).padStart(2, '0')}
-                    </span>
-                    <span className="journey-label">{label}</span>
-                  </button>
-                </li>
-              )
-            })}
-          </ol>
+                    {idx > 0 && (
+                      <span
+                        className={`journey-flow-link${prevLit ? ' is-lit' : ''}`}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <button
+                      type="button"
+                      className={`journey-step${active ? ' is-active' : ''}${
+                        hasContent && !active ? ' is-done' : ''
+                      }`}
+                      disabled={!activeProject}
+                      onClick={() => {
+                        if (!activeProject) return
+                        setActiveView(step.view)
+                        setNavOpen(false)
+                        if (!hasContent) {
+                          focusPathGapTarget(pathGapFocusSelector(step.id))
+                        }
+                      }}
+                      aria-current={active ? 'step' : undefined}
+                      aria-label={`Step ${step.num}: ${label}. ${plain}${
+                        hasContent ? ' Has content.' : ''
+                      } Press ${step.num} to open.`}
+                      title={`${plain} · key ${step.num}`}
+                    >
+                      <span className="journey-node" aria-hidden="true">
+                        {hasContent && !active ? (
+                          <span className="journey-check">✓</span>
+                        ) : (
+                          <PathStepIcon id={step.id} />
+                        )}
+                      </span>
+                      <span className="journey-num" aria-hidden="true">
+                        {hasContent && !active
+                          ? '✓'
+                          : String(step.num).padStart(2, '0')}
+                      </span>
+                      <span className="journey-label">{label}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
           {/* Only when actually in a Tools menu view — never "Tools · Home" */}
           {isToolsMenuView(activeView) && (
             <span className="journey-tools-pill" role="status" aria-live="polite">
@@ -4134,59 +4160,57 @@ function App() {
                     </ul>
                   </section>
 
-                  {/* Path for focus project */}
+                  {/* One next stop only — full path lives in nav / Desk (audit dual-map). */}
                   <section
-                    className="home-dash-panel"
-                    aria-label="Path for focus project"
+                    className="home-dash-panel home-dash-up-next"
+                    aria-label="Up next on focus project"
                   >
                     <div className="home-dash-panel-head">
-                      <h2 className="home-dash-panel-title">Path</h2>
+                      <h2 className="home-dash-panel-title">Up next</h2>
                       <span className="home-dash-panel-meta">
                         {focus.project.name}
                       </span>
                     </div>
-                    <ul className="home-dash-path-list">
-                      {focus.rows.map((r) => {
-                        const isCurrent =
-                          focus.nextGap && r.id === focus.nextGap.id
-                        return (
-                          <li
-                            key={r.id}
-                            className={`home-dash-path-row${
-                              r.done ? ' is-done' : ''
-                            }${isCurrent ? ' is-current' : ''}`}
-                          >
-                            <button
-                              type="button"
-                              className="home-dash-path-btn"
-                              onClick={() => {
-                                setCurrentProject(focus.project.id)
-                                setActiveView(r.view)
-                              }}
-                            >
-                              <span
-                                className="home-dash-path-mark"
-                                aria-hidden="true"
-                              >
-                                {r.done ? '✓' : isCurrent ? '→' : '·'}
-                              </span>
-                              <span className="home-dash-path-label">
-                                {r.label}
-                              </span>
-                              <span className="home-dash-path-state">
-                                {r.done
-                                  ? 'Done'
-                                  : isCurrent
-                                    ? 'Up next'
-                                    : 'Open'}
-                              </span>
-                            </button>
-                          </li>
-                        )
-                      })}
-                    </ul>
+                    {pathFull ? (
+                      <p className="home-dash-panel-empty">
+                        Path complete — open Assets to ship or Desk to review.
+                      </p>
+                    ) : focus.nextGap ? (
+                      <button
+                        type="button"
+                        className="home-dash-up-next-card"
+                        onClick={() => {
+                          setCurrentProject(focus.project.id)
+                          setActiveView(focus.nextGap.view)
+                        }}
+                      >
+                        <span className="home-dash-up-next-kicker">
+                          Continue
+                        </span>
+                        <span className="home-dash-up-next-title">
+                          {focus.nextGap.label}
+                        </span>
+                        <span className="home-dash-up-next-plain">
+                          {nextStepMeta?.plain ||
+                            nextStepMeta?.enough ||
+                            'Open this stop'}
+                        </span>
+                      </button>
+                    ) : (
+                      <p className="home-dash-panel-empty">
+                        Nothing open on the path.
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm home-dash-panel-cta"
+                      onClick={() =>
+                        openProjectWhereLeftOff(focus.project.id)
+                      }
+                    >
+                      Open desk
+                    </button>
                   </section>
-
                   {/* Client needs you */}
                   <section
                     className="home-dash-panel"

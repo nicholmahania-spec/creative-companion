@@ -123,7 +123,7 @@ export function toolsLabelForView(view) {
 }
 
 /**
- * Views that live under Tools (not Go to / path / desk).
+ * Views that live under Tools (not Studio destinations / path / desk).
  * The sidebar "Tools · …" pill must only show here — never "Tools · Home".
  */
 export const TOOLS_MENU_VIEWS = [
