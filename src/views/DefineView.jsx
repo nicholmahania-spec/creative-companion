@@ -4,10 +4,10 @@
  * One job: answers get written here (client later, or you now).
  * Head: title · status · Send the brief (when not sent). Form is the start.
  * No start ramp, no interview CTA, no chapter rail, no project-name band.
- * Milestones + scope demoted below the form.
+ * Scope sits below the form (milestones removed — owner).
  * Footer: Back to desk · Next · Research · short needed count.
  */
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useMemo } from 'react'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
 import { getRequiredEmpty } from '../lib/brief/detectiveBrief'
@@ -50,9 +50,6 @@ export default function DefineView(props) {
     flashMicro,
   } = props
 
-  const projectId = useAppStore(
-    (s) => activeProjectProp?.id || s.currentProjectId
-  )
   const activeProject = useAppStore((s) => {
     const id = activeProjectProp?.id || s.currentProjectId
     return (s.projects || []).find((p) => p.id === id) || activeProjectProp || null
@@ -71,19 +68,6 @@ export default function DefineView(props) {
   )
   const projectDeadline =
     projectDeadlineProp || activeProject?.deadline || ''
-
-  const addMilestone = useCallback(
-    (...a) => useAppStore.getState().addMilestone(...a),
-    []
-  )
-  const updateMilestone = useCallback(
-    (...a) => useAppStore.getState().updateMilestone(...a),
-    []
-  )
-  const removeMilestone = useCallback(
-    (...a) => useAppStore.getState().removeMilestone(...a),
-    []
-  )
 
   const scrollToChapter = useCallback((chapterId) => {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -105,54 +89,6 @@ export default function DefineView(props) {
       activeProject?.discoveryShareStatus,
     ]
   )
-
-  const milestones = activeProject?.detective?.milestones || []
-  const [pendingRemovals, setPendingRemovals] = useState({})
-  const pendingRemovalsRef = useRef(pendingRemovals)
-  pendingRemovalsRef.current = pendingRemovals
-
-  /* Undo window then real delete — used to only commit on leave-page, so
-     Remove looked broken if you stayed on Strategy. */
-  const scheduleRemoveMilestone = useCallback(
-    (id) => {
-      const ownerProjectId = projectId
-      setPendingRemovals((prev) => {
-        if (prev[id]?.timeoutId) clearTimeout(prev[id].timeoutId)
-        const timeoutId = setTimeout(() => {
-          removeMilestone?.(id, ownerProjectId)
-          setPendingRemovals((cur) => {
-            const next = { ...cur }
-            delete next[id]
-            return next
-          })
-        }, 5000)
-        return {
-          ...prev,
-          [id]: { timeoutId, ownerProjectId },
-        }
-      })
-    },
-    [projectId, removeMilestone]
-  )
-
-  const undoRemoveMilestone = useCallback((id) => {
-    setPendingRemovals((prev) => {
-      const entry = prev[id]
-      if (entry?.timeoutId) clearTimeout(entry.timeoutId)
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      Object.entries(pendingRemovalsRef.current).forEach(([id, entry]) => {
-        clearTimeout(entry?.timeoutId)
-        removeMilestone?.(id, entry?.ownerProjectId)
-      })
-    }
-  }, [removeMilestone])
 
   const deadlineRelative = useMemo(
     () => relativeDeadlineLabel(projectDeadline),
@@ -230,74 +166,7 @@ export default function DefineView(props) {
         </div>
       </div>
 
-      <section
-        className="define-brief-secondary"
-        aria-label="Dates and scope"
-      >
-        <div className="define-milestones-compact">
-          <span className="define-field-label">Milestones</span>
-          <div className="define-milestones-list">
-            {milestones.map((m) => {
-              const isPending = Boolean(pendingRemovals[m.id])
-              if (isPending) {
-                return (
-                  <div
-                    key={m.id}
-                    className="detective-milestone-row is-pending-removal"
-                    role="status"
-                  >
-                    <span>Removed “{m.label || 'Untitled'}”</span>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => undoRemoveMilestone(m.id)}
-                    >
-                      Undo
-                    </button>
-                  </div>
-                )
-              }
-              return (
-                <div key={m.id} className="detective-milestone-row">
-                  <input
-                    className="define-input field-input"
-                    value={m.label}
-                    onChange={(e) =>
-                      updateMilestone?.(m.id, 'label', e.target.value)
-                    }
-                    placeholder="What happens"
-                    aria-label="Milestone name"
-                  />
-                  <input
-                    type="date"
-                    className="define-input field-input detective-milestone-date"
-                    value={m.date}
-                    onChange={(e) =>
-                      updateMilestone?.(m.id, 'date', e.target.value)
-                    }
-                    aria-label="Milestone date"
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => scheduleRemoveMilestone(m.id)}
-                    aria-label="Remove milestone"
-                  >
-                    Remove
-                  </button>
-                </div>
-              )
-            })}
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => addMilestone?.('', '')}
-            >
-              + Add
-            </button>
-          </div>
-        </div>
-
+      <section className="define-brief-secondary" aria-label="Scope">
         <ScopePanel
           activeProject={activeProject}
           onOpenChapter={scrollToChapter}

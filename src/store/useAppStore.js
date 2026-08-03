@@ -669,64 +669,8 @@ const useAppStore = create(
           }),
         })),
 
-      /** Add a dated checkpoint (moodboard approval, sketches due, etc.) */
-      addMilestone: (label, date) =>
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== state.currentProjectId) return p
-            const det = { ...blankDetective(), ...(p.detective || {}) }
-            const milestones = [
-              ...(det.milestones || []),
-              // Not Date.now(): two adds in the same millisecond collided,
-              // and update/remove match by id — an edit would hit both rows.
-              {
-                id:
-                  typeof crypto !== 'undefined' && crypto.randomUUID
-                    ? crypto.randomUUID()
-                    : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                label: label || '',
-                date: date || '',
-              },
-            ]
-            const nextDet = { ...det, milestones }
-            const brief = composeBriefFromDetective(nextDet)
-            return { ...p, detective: nextDet, brief: brief || p.brief }
-          }),
-        })),
-
-      updateMilestone: (id, field, value) =>
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== state.currentProjectId) return p
-            const det = { ...blankDetective(), ...(p.detective || {}) }
-            const milestones = (det.milestones || []).map((m) =>
-              m.id === id ? { ...m, [field]: value } : m
-            )
-            const nextDet = { ...det, milestones }
-            const brief = composeBriefFromDetective(nextDet)
-            return { ...p, detective: nextDet, brief: brief || p.brief }
-          }),
-        })),
-
-      /* Takes the project the removal was scheduled against. The delete is
-         deferred behind an undo window, so by the time it fires the user may
-         have switched projects — and resolving against currentProjectId then
-         meant the filter matched nothing, the row was never removed, and the
-         milestone silently reappeared next time they opened that project. */
-      removeMilestone: (id, projectId) =>
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            const target = projectId ?? state.currentProjectId
-            if (p.id !== target) return p
-            const det = { ...blankDetective(), ...(p.detective || {}) }
-            const milestones = (det.milestones || []).filter((m) => m.id !== id)
-            const nextDet = { ...det, milestones }
-            // Recompose like add/update do — without this, a deleted
-            // milestone vanished from the UI but lived on in every export.
-            const brief = composeBriefFromDetective(nextDet)
-            return { ...p, detective: nextDet, brief: brief || p.brief }
-          }),
-        })),
+      /* Milestones UI removed (owner). detective.milestones may still exist
+         on old projects and is still formatted into terms/export if present. */
 
       /** Compose free brief from detective sheet answers */
       /** @deprecated brief now auto-syncs from updateDetective(); kept for
