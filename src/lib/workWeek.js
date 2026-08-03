@@ -49,8 +49,20 @@ function collectRows(workLog = []) {
   return rows
 }
 
+/**
+ * Full bar height in the chart track (px). A full bar means “about a solid
+ * half-day on that bucket,” not “the only day you touched the clock.”
+ * Relative-only max scaling made 0.2h look like a full working day.
+ */
+const BAR_TRACK_PX = 56
+/** Hours that map to a full bar. Days busier than this still max out. */
+const BAR_FULL_HOURS = 4
+
 function bucketsFromHours(hoursArr, labels) {
-  const max = Math.max(...hoursArr, 0.01)
+  const peak = Math.max(...hoursArr, 0)
+  /* Scale against the busier of peak day and a real work floor — thin weeks
+     stay short stubs; busy days still rank against each other. */
+  const scale = Math.max(peak, BAR_FULL_HOURS)
   const total = hoursArr.reduce((a, b) => a + b, 0)
   return {
     total,
@@ -58,7 +70,10 @@ function bucketsFromHours(hoursArr, labels) {
       key: `${labels[i]}-${i}`,
       label: labels[i],
       hours: h,
-      hPx: h > 0 ? Math.max(4, Math.round((h / max) * 56)) : 2,
+      hPx:
+        h > 0
+          ? Math.max(4, Math.min(BAR_TRACK_PX, Math.round((h / scale) * BAR_TRACK_PX)))
+          : 2,
       fill: h > 0,
     })),
   }
@@ -112,6 +127,7 @@ export function hoursForRange(workLog = [], range = 'week', now = new Date()) {
     const total = rows
       .filter((r) => startOfLocalDay(r.d) === today)
       .reduce((a, r) => a + r.hours, 0)
+    const dayScale = Math.max(total, BAR_FULL_HOURS)
     return {
       total,
       rangeLabel: 'Today',
@@ -120,7 +136,16 @@ export function hoursForRange(workLog = [], range = 'week', now = new Date()) {
           key: 'today',
           label: 'Today',
           hours: total,
-          hPx: total > 0 ? 56 : 2,
+          hPx:
+            total > 0
+              ? Math.max(
+                  4,
+                  Math.min(
+                    BAR_TRACK_PX,
+                    Math.round((total / dayScale) * BAR_TRACK_PX)
+                  )
+                )
+              : 2,
           fill: total > 0,
         },
       ],
@@ -204,10 +229,23 @@ export function workLogsFromProjects(projects = []) {
   return out
 }
 
-/** Round total for display, e.g. 16 or 16.5 */
+/** Round total for display, e.g. 16 or 16.5 — prefer hoursLoggedWords for UI. */
 export function formatHoursWorked(total) {
   const n = Number(total) || 0
   if (n <= 0) return '0'
   const rounded = Math.round(n * 10) / 10
   return Number.isInteger(rounded) ? String(rounded) : String(rounded)
+}
+
+/**
+ * Words-first readout for the work clock (owner is time-blind; raw 0.2h
+ * does not register and looks like failure next to a tall bar).
+ */
+export function hoursLoggedWords(total) {
+  const n = Number(total) || 0
+  if (n <= 0) return 'No hours logged this week'
+  if (n < 0.5) return 'A little on the clock'
+  if (n < 2) return 'Some time logged'
+  if (n < 6) return 'A solid stretch logged'
+  return 'A full week on the clock'
 }
