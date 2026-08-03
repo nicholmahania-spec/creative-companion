@@ -118,6 +118,9 @@ const EXEMPT = {
   /* Touchpoints application notes — path gate + designer working notes.
      Full book application mocks still read brief surfaces, not these notes. */
   touchpointApps: 'Touchpoints working notes / path gate, not a pack field yet',
+  /* Studio approval fact on Mark — object permanence for “which route they
+     picked.” Not printed in the client book (internal recovery). */
+  logoClientChose: 'studio approval note, not a pack field',
 }
 describe('every editable brand field reaches something the client gets', () => {
   const sources = allSource().map((p) => readFileSync(p, 'utf8'))

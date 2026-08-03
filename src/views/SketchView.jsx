@@ -1,12 +1,12 @@
 /**
  * Touchpoints — apply the identity on real surfaces from the brief.
  * One job: note / mark each application that the brand book will show.
- * Desk task queue is secondary (collapsed), not the path gate.
  */
 import { useMemo, useCallback, lazy, Suspense } from 'react'
 import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/processGuide'
+import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
 import LayoutPatterns from '../components/LayoutPatterns'
 import {
@@ -18,6 +18,30 @@ import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
 
+/** One-tap surfaces so a thin job isn’t stuck bouncing to Strategy. */
+const QUICK_SURFACES = [
+  { id: 'website', label: 'Website' },
+  { id: 'social', label: 'Social' },
+  { id: 'print', label: 'Print' },
+  { id: 'app', label: 'App' },
+]
+
+/** Word status — never N of M (numbers don’t register for this user). */
+export function touchpointsStatusLine({ hasBriefSurfaces, apps, proofs }) {
+  if (!hasBriefSurfaces) return 'No surfaces yet'
+  const notedIds = (apps || []).filter((id) => {
+    const row = proofs?.[id]
+    return !!(row?.done || String(row?.note || '').trim())
+  })
+  if (notedIds.length === 0) return 'Applications from the brief'
+  if (notedIds.length >= apps.length) return 'All applications noted'
+  const first = touchpointLabel(notedIds[0])
+  if (notedIds.length === 1) {
+    return `${first} noted · rest open`
+  }
+  return `${first} and more noted · rest open`
+}
+
 export default function SketchView({
   navDir = 'none',
   activeProject = null,
@@ -26,6 +50,7 @@ export default function SketchView({
   flashMicro,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
+  const updateDetective = useAppStore((s) => s.updateDetective)
 
   const surfaces = activeProject?.detective?.brandSurfaces
   const deliverables = activeProject?.detective?.deliverablesPicked
@@ -41,9 +66,12 @@ export default function SketchView({
 
   const setApp = useCallback(
     (id, patch) => {
-      const prev = useAppStore.getState().projects.find(
-        (p) => p.id === (activeProject?.id || useAppStore.getState().currentProjectId)
-      )?.touchpointApps || {}
+      const prev =
+        useAppStore.getState().projects.find(
+          (p) =>
+            p.id ===
+            (activeProject?.id || useAppStore.getState().currentProjectId)
+        )?.touchpointApps || {}
       const cur = { ...(prev[id] || {}), ...patch }
       updateBrandField('touchpointApps', {
         ...prev,
@@ -53,14 +81,32 @@ export default function SketchView({
     [activeProject?.id, updateBrandField]
   )
 
-  const doneCount = apps.filter((id) => {
-    const row = proofs[id]
-    return !!(row?.done || String(row?.note || '').trim())
-  }).length
-
   const hasBriefSurfaces =
     (Array.isArray(surfaces) && surfaces.length > 0) ||
     (Array.isArray(deliverables) && deliverables.length > 0)
+
+  const statusLine = touchpointsStatusLine({
+    hasBriefSurfaces,
+    apps: hasBriefSurfaces ? apps : [],
+    proofs,
+  })
+
+  const openSurfacesInStrategy = () => {
+    setActiveView?.('project')
+    focusPathGapTarget(
+      '#detective-brandSurfaces, #detective-field-brandSurfaces, #detective-deliverablesPicked, #detective-goal'
+    )
+  }
+
+  const addQuickSurface = (id) => {
+    const prev = Array.isArray(surfaces) ? [...surfaces] : []
+    if (prev.includes(id)) {
+      flashMicro?.(`${touchpointLabel(id)} · already on the list`)
+      return
+    }
+    updateDetective('brandSurfaces', [...prev, id])
+    flashMicro?.(`${touchpointLabel(id)} · added`)
+  }
 
   return (
     <div
@@ -73,13 +119,7 @@ export default function SketchView({
             {labelForStepId('sketch')}
           </h1>
           <p className="touchpoints-status" role="status">
-            {apps.length === 0
-              ? 'No surfaces yet'
-              : doneCount === 0
-                ? 'Applications from the brief'
-                : doneCount >= apps.length
-                  ? 'All applications noted'
-                  : `${doneCount} of ${apps.length} noted`}
+            {statusLine}
             <InfoReveal>
               {(getProcessPhase('sketch')?.checks || []).join(' · ')}
             </InfoReveal>
@@ -99,15 +139,31 @@ export default function SketchView({
             Name where the brand appears
           </p>
           <p className="touchpoints-empty-sub">
-            In Strategy, answer “Where will this be used?” or pick deliverables.
-            Those become the applications you prove here.
+            Pick one surface to start, or open Strategy and answer “Where will
+            this be used?”
           </p>
+          <div
+            className="touchpoints-quick"
+            role="group"
+            aria-label="Add a surface"
+          >
+            {QUICK_SURFACES.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => addQuickSurface(s.id)}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
-            className="btn btn-primary"
-            onClick={() => setActiveView?.('project')}
+            className="btn btn-primary touchpoints-empty-cta"
+            onClick={openSurfacesInStrategy}
           >
-            {`Open ${labelForStepId('define')}`}
+            {`Open ${labelForStepId('define')} · surfaces`}
           </button>
         </section>
       ) : (
@@ -159,7 +215,6 @@ export default function SketchView({
               )
             })}
           </ul>
-          {/* Quiet reference — closed by default; not the path job */}
           <LayoutPatterns />
         </>
       )}

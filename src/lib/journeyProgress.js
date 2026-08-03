@@ -259,7 +259,7 @@ export function pathFirstGap(steps, ctx) {
 export function pathGapFocusSelector(stepId) {
   switch (stepId) {
     case 'define':
-      return '#detective-clientName, #detective-goal, #detective-audience'
+      return '#detective-brandSurfaces, #detective-field-brandSurfaces, #detective-deliverablesPicked, #detective-clientName, #detective-goal, #detective-audience'
     case 'research':
       return '.board-upload-btn, .studio-view .btn-primary, #board-note'
     case 'ideate':

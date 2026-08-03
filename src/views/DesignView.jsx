@@ -598,6 +598,24 @@ export default function DesignView({
                   placeholder="e.g. always with wordmark"
                 />
               </div>
+              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+                <label className="field-label" htmlFor="logo-client-chose">
+                  Client chose
+                </label>
+                <input
+                  id="logo-client-chose"
+                  className="field-input"
+                  value={activeProject?.logoClientChose || ''}
+                  onChange={(e) =>
+                    updateBrandField('logoClientChose', e.target.value)
+                  }
+                  placeholder="e.g. Option B · monogram, 3 Aug phone call"
+                />
+                <p className="field-hint" style={{ marginTop: '0.35rem' }}>
+                  Optional — so “which mark they approved” lives here, not only
+                  in email.
+                </p>
+              </div>
               <div className="brand-two-up">
                 <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                   <label className="field-label" htmlFor="logo-clearspace">

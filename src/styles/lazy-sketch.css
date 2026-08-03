@@ -44,6 +44,17 @@
   max-width: 65ch;
 }
 
+.touchpoints-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+}
+
+.touchpoints-empty-cta {
+  margin-top: var(--space-1);
+}
+
 .touchpoints-list {
   list-style: none;
   margin: var(--space-4) 0 0;
