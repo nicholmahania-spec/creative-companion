@@ -118,11 +118,18 @@ led to this being found and fixed, 2026-07-27/28 session).
 Active development branch: `main`  
 (Stale `claude/debug-code-6u77sp` and `fix/save-button-alignment` remotes were deleted 2026-07-28.)
 
-## Deploy — Netlify is primary; never use a relative base
+## Deploy — Vercel is primary; never use a relative base
 
-Netlify serves from the **root**, so `vite.config.js` uses `base: '/'`.
-GitHub Pages (secondary, `GITHUB_PAGES=true`) serves from
-`/creative-companion/` instead.
+**Production is Vercel** (`creative-companion-ten.vercel.app`), Git-driven from
+`main`. The Helper (live AI proxy) works there. Do **not** `vercel deploy
+--prod` from the CLI here — it uploads the local dirty tree and has silently
+shipped pre-merge bundles.
+
+`vite.config.js` uses `base: '/'` for root hosts (Vercel). GitHub Pages
+(secondary, `GITHUB_PAGES=true`) serves from `/creative-companion/` and is
+**static only** — no serverless, so no live Helper. Netlify config
+(`netlify.toml`, `public/_redirects`) remains for SPA rewrites if revived; the
+live Netlify site last errored 2026-07-19 and is not production.
 
 **`base` must never be `'./'`.** Relative asset URLs resolve against the
 *current route*, so on a public deep link like `/c/<portalId>` the browser
@@ -133,9 +140,9 @@ client link. Works at the root, breaks everywhere else. CI guards this.
 Public deep links (`/f/:shareId`, `/c/:portalId`) must build URLs with
 `publicUrl()` and match routes via `routePath()` from `src/lib/appPaths.js`
 — never `window.location.origin` or a raw `location.pathname` — so they
-survive both root and subpath deploys. SPA fallback: `netlify.toml` +
-`public/_redirects` for Netlify, `dist/404.html` (copied in the workflow)
-for Pages.
+survive both root and subpath deploys. SPA fallback: Vercel rewrites +
+`netlify.toml` / `public/_redirects` if Netlify is used, `dist/404.html`
+(copied in the workflow) for Pages.
 
 ## Node version — 26 in CI, 24 on the deploy targets, and that is deliberate
 

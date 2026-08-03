@@ -418,7 +418,7 @@ lottie-web · lucide-react + radix icons · zod · Sentry · Vercel Speed Insigh
 Vitest (87 unit test files) + Playwright (11 e2e specs, incl. axe/a11y, offline,
 brand-book PDF, and a full process walk).
 
-**Deploy:** Netlify is primary and serves from the root, so `base: '/'`. GitHub
+**Deploy:** Vercel is primary and serves from the root, so `base: '/'`. GitHub
 Pages is secondary (`GITHUB_PAGES=true`, `/creative-companion/`). Vercel config
 also present.
 
