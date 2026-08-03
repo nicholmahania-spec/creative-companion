@@ -3,12 +3,14 @@
  *
  * Grid matches Studio.dc.html:
  *   main (1fr): artboard → starred pack → brief
- *   right (340px): What's next → queue → Done → Client → This week
+ *   right (340px): Client strip (top) → What's next → Done → This week
  *
- * Owner chose literal mock (2026-08-03 option B), including counts,
- * relative times, Mark done as primary, and a week strip driven by real
- * workLog data (never invented hours). Shell chrome (icon rail, top bar)
- * stays the app's — not duplicated here.
+ * Client strip sits above What's next (adhd-executive-function-advisor,
+ * 2026-08-03): object permanence — under Done = invisible. Empty = short
+ * status + CTA only, no essay. Due date lives on What's next, not Client.
+ *
+ * Owner chose literal mock (option B) for counts, relative times, Mark done
+ * primary, and a week strip from real workLog. Shell chrome stays the app's.
  */
 import { labelForView, labelForStepId } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
@@ -182,7 +184,8 @@ export default function DeskView({
   const projectId = project?.id != null ? String(project.id) : ''
   const activity = (clientInbox?.rows || [])
     .filter((r) => String(r.projectLocalId ?? '') === projectId)
-    .slice(0, 8)
+    .slice(0, 3)
+  const unreadClient = activity.some((a) => a.unread)
 
   const week = weekFromWorkLog(project?.workLog || [])
 
@@ -310,13 +313,67 @@ export default function DeskView({
         </div>
 
         {/* ── RIGHT COLUMN ── */}
-        <aside className="desk-rail" aria-label="What's next and client">
+        <aside className="desk-rail" aria-label="Client and what's next">
+          {/* Compact Client strip — always first in the rail (not under Done). */}
+          <section
+            className={`desk-panel desk-client-strip${unreadClient ? ' has-unread' : ''}`}
+            aria-label="Client"
+          >
+            <div className="desk-panel-head">
+              <span className="desk-eyebrow">Client</span>
+              <span className="desk-client-status">
+                {activity.length === 0
+                  ? 'No messages yet'
+                  : unreadClient
+                    ? 'Needs a look'
+                    : 'Up to date'}
+              </span>
+            </div>
+            {activity.length > 0 && (
+              <ul className="desk-activity">
+                {activity.map((a) => {
+                  const when = a.sortAt ? relativeAgeLabel(a.sortAt) : ''
+                  return (
+                    <li
+                      key={a.id}
+                      className={`desk-activity-row${a.unread ? ' is-unread' : ''}`}
+                    >
+                      <span
+                        className="desk-activity-dot"
+                        aria-hidden="true"
+                      />
+                      <span className="desk-activity-text">{a.title}</span>
+                      {a.kind === 'approval' && (
+                        <span className="desk-activity-pill">Approved</span>
+                      )}
+                      {when ? (
+                        <span className="desk-activity-when">{when}</span>
+                      ) : null}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+            <button
+              type="button"
+              className="btn btn-secondary desk-client-cta"
+              onClick={onOpenClientInbox}
+            >
+              Client link &amp; approvals
+            </button>
+          </section>
+
           <section className="desk-panel desk-next" aria-label="What's next">
             <div className="desk-panel-head">
               <span className="desk-eyebrow">What&rsquo;s next</span>
-              {progressLabel && (
-                <span className="desk-progress">{progressLabel}</span>
-              )}
+              <div className="desk-next-meta">
+                {deadline && project?.deadline && (
+                  <span className="desk-due">{deadline}</span>
+                )}
+                {progressLabel && (
+                  <span className="desk-progress">{progressLabel}</span>
+                )}
+              </div>
             </div>
 
             {project?.lastView && (
@@ -438,59 +495,6 @@ export default function DeskView({
                 </ul>
               </div>
             )}
-          </section>
-
-          <section className="desk-panel desk-client" aria-label="Client">
-            <div className="desk-panel-head">
-              <span className="desk-eyebrow">Client</span>
-              {deadline && project?.deadline && (
-                <span className="desk-due">{deadline}</span>
-              )}
-            </div>
-            {activity.length === 0 ? (
-              <p className="desk-empty">
-                Nothing from the client yet. Send them the portal link and
-                their answers, uploads and approvals land here.
-              </p>
-            ) : (
-              <ul className="desk-activity">
-                {activity.map((a) => {
-                  const when = a.sortAt ? relativeAgeLabel(a.sortAt) : ''
-                  return (
-                    <li
-                      key={a.id}
-                      className={`desk-activity-row${a.unread ? ' is-unread' : ''}`}
-                    >
-                      <span
-                        className="desk-activity-dot"
-                        aria-hidden="true"
-                      />
-                      <span className="desk-activity-text">
-                        {a.title}
-                        {a.preview ? (
-                          <span className="desk-activity-preview">
-                            {a.preview}
-                          </span>
-                        ) : null}
-                      </span>
-                      {a.kind === 'approval' && (
-                        <span className="desk-activity-pill">Approved</span>
-                      )}
-                      {when ? (
-                        <span className="desk-activity-when">{when}</span>
-                      ) : null}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-            <button
-              type="button"
-              className="btn btn-secondary desk-client-cta"
-              onClick={onOpenClientInbox}
-            >
-              Client link &amp; approvals
-            </button>
           </section>
 
           <section className="desk-panel desk-week" aria-label="This week">

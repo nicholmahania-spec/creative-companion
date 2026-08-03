@@ -65,7 +65,8 @@
 
 .desk-stamp,
 .desk-progress,
-.desk-due {
+.desk-due,
+.desk-client-status {
   font-size: var(--fs-1);
   font-weight: 600;
   color: var(--text-muted);
@@ -74,6 +75,36 @@
 .desk-progress-strong {
   color: var(--text-primary);
   font-weight: 700;
+}
+
+.desk-next-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+/* Compact Client strip — top of rail, always visible */
+.desk-client-strip {
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+}
+
+.desk-client-strip.has-unread .desk-client-status {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.desk-client-strip .desk-activity {
+  margin: 0;
+}
+
+.desk-client-strip .desk-activity-row {
+  padding: var(--space-1) 0;
+}
+
+.desk-client-strip .desk-client-cta {
+  margin-top: var(--space-1);
 }
 
 .desk-panel-link {
@@ -577,7 +608,6 @@
 
 .desk-client-cta {
   width: 100%;
-  margin-top: var(--space-2);
 }
 
 /* Brief */
