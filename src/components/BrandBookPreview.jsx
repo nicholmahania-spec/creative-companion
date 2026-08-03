@@ -15,20 +15,18 @@ import { downloadBrandPackVectorPdf } from '../lib/exportFiles'
  * (7 pages thin, 16+ full), so a hand-written list would be wrong for almost
  * every project.
  *
- * A column, not a grid — it keeps reading order, so there is no "where does my
- * eye go next" decision per row. Labels matter more than the thumbnails: at
- * this size the page is unreadable, so the name is the only thing that lets
- * someone find the page they care about without scanning all of them.
+ * A column, not a grid — it keeps reading order. CSS caps each sheet so at
+ * least one full page fits in the viewport (max-height ~68dvh); the raster
+ * is sharp enough that scaling down stays clean.
  */
 
 /** Wait this long after the last edit before re-rendering. */
 const SETTLE_MS = 700
 /**
- * Rasterised width per page, in CSS pixels. Matched to the widest the panel
- * gets — rendering smaller and letting CSS stretch it made the type furry,
- * and a preview you can't quite read is one you stop trusting as proof.
+ * Rasterised width per page, in CSS pixels. Sized for a viewport-fit sheet
+ * (~28rem max), not full main width — oversize rasters only cost memory.
  */
-const THUMB_W = 420
+const THUMB_W = 560
 
 export default function BrandBookPreview({
   pack,
