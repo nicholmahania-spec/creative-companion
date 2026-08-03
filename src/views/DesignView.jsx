@@ -43,15 +43,6 @@ const prefersReducedMotion = () =>
 
 /* The flat column's order, numbered 01-06. One source read by both the
    rail and the section heads — never restate this list. */
-const DESIGN_SECTIONS = [
-  { id: 'logo', num: '01', title: 'The mark' },
-  { id: 'essentials', num: '02', title: 'What it says' },
-  { id: 'colors', num: '03', title: 'Colour' },
-  { id: 'type', num: '04', title: 'Type' },
-  { id: 'pins', num: '05', title: 'Pack' },
-  { id: 'stationery', num: '06', title: 'Stationery' },
-]
-
 export default function DesignView({
   navDir = 'none',
   journeyNext = null,
@@ -62,9 +53,9 @@ export default function DesignView({
   setActiveView,
   flashToast,
   flashMicro,
-  /** Controlled accordion tab when jumping from Review/Deliver readiness */
+  /** Deep-link scroll target when jumping from Review/Deliver readiness */
   brandEditSectionProp,
-  setBrandEditSectionProp,
+  setBrandEditSectionProp: _setBrandEditSectionProp,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const updateDirection = useAppStore((s) => s.updateDirection)
@@ -82,18 +73,9 @@ export default function DesignView({
   const setLogoDirection = useAppStore((s) => s.setLogoDirection)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
 
-  /* FLAT column, not tabs (adhd-executive-function-advisor ruling, 2026
-     design handoff). All six sections are always mounted; the rail below is
-     a scroll INDEX whose highlight follows scroll position
-     (IntersectionObserver — same pattern as DetectiveSheet's chapter rail),
-     never a switcher that hides siblings. brandEditSectionLocal is that
-     highlight, not a visibility gate. */
-  const [brandEditSectionLocal, setBrandEditSectionLocal] = useState('logo')
-  const brandEditSection = brandEditSectionLocal
-  const setBrandEditSection = setBrandEditSectionLocal
-  /* A deep link (e.g. Review/Deliver readiness "fix palette roles") scrolls
-     to the section and puts a brief focus ring on its head — it no longer
-     hides the other five. */
+  /* Flat column — all six sections always mounted. Section heads (01–06)
+     are the map; no sticky tab rail. Deep links from Review/Deliver scroll
+     to a section and ring its head briefly. */
   const [deepLinkFocus, setDeepLinkFocus] = useState(null)
   const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
   const [checkBgIndex, setCheckBgIndex] = useState(0)
@@ -344,28 +326,6 @@ export default function DesignView({
     return () => clearTimeout(t)
   }, [brandEditSectionProp])
 
-  // Rail highlight follows scroll position, same pattern as DetectiveSheet's
-  // chapter rail — a scroll index is only honest if it's always current.
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') return undefined
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            const id = e.target.dataset.section
-            if (id) setBrandEditSectionLocal(id)
-          }
-        }
-      },
-      { rootMargin: '-20% 0px -70% 0px' }
-    )
-    for (const s of DESIGN_SECTIONS) {
-      const el = document.getElementById(`design-section-content-${s.id}`)
-      if (el) io.observe(el)
-    }
-    return () => io.disconnect()
-  }, [])
-
   const paletteRoles = useMemo(
     () => mapPaletteRoles(projectPalette),
     [projectPalette]
@@ -603,42 +563,6 @@ export default function DesignView({
             </div>
 
             <div className="design-edit-column">
-            {/* Scroll INDEX, not a switcher — every section below is always
-                mounted. Clicking moves the page; the highlight follows scroll
-                (IntersectionObserver), so it never goes stale. Six rows,
-                never five plus an "Advanced" fork — Stationery is an
-                ordinary stop, not a hidden extra. */}
-            <nav className="design-section-rail" aria-label="Identity sections">
-              {DESIGN_SECTIONS.map((s) => {
-                const active = brandEditSection === s.id
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className={`design-section-tab${active ? ' is-active' : ''}`}
-                    aria-current={active ? 'step' : undefined}
-                    aria-controls={`design-section-content-${s.id}`}
-                    onClick={() => {
-                      setBrandEditSection(s.id)
-                      requestAnimationFrame(() => {
-                        document
-                          .getElementById(`design-section-content-${s.id}`)
-                          ?.scrollIntoView({
-                            block: 'start',
-                            behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-                          })
-                      })
-                    }}
-                  >
-                    <span className="design-section-tab-num" aria-hidden="true">
-                      {s.num}
-                    </span>
-                    <span className="design-section-tab-label">{s.title}</span>
-                  </button>
-                )
-              })}
-            </nav>
-
             {/* Logo section — 01 The mark */}
             <section
               id="design-section-content-logo"

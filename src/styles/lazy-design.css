@@ -1572,67 +1572,10 @@
 /* ============================================================
    Identity editor — FLAT column, 2026 rebuild
    (adhd-executive-function-advisor ruling). Six sections always mounted,
-   numbered 01-06; the rail below is a scroll INDEX, not a tab switcher —
-   its highlight follows scroll position and clicking only moves the page.
+   numbered 01-06 via section heads only (no sticky tab rail).
    Numbered heads mirror the brief's chapter pattern
    (.define-chapter-head/.define-chapter-rule in lazy-define.css).
    ============================================================ */
-
-/* Scroll index — text pills, not a second card grid of controls */
-.design-section-rail {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-2);
-  margin-bottom: var(--space-4);
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  padding: var(--space-2) 0;
-  background: var(--bg-canvas);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.design-section-tab {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
-  border: none;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: var(--fs-1);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.design-section-tab:hover {
-  color: var(--text-primary);
-  background: var(--bg-muted);
-}
-
-.design-section-tab.is-active {
-  color: var(--text-primary);
-  font-weight: 700;
-  background: var(--bg-muted);
-  box-shadow: inset 0 -2px 0 var(--text-primary);
-}
-
-.design-section-tab-num {
-  font-family: var(--font-display);
-  letter-spacing: 0.02em;
-  opacity: 0.65;
-  font-weight: 500;
-}
-
-.app.deep .design-section-rail {
-  background: var(--bg-canvas);
-  border-bottom-color: var(--border-subtle);
-}
-
-.app.deep .design-section-tab.is-active {
-  background: var(--bg-muted);
-}
 
 /* Numbered section head — number + title + hairline rule to the column
    edge, same visual language as .define-chapter-head. */
