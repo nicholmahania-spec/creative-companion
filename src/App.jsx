@@ -4392,48 +4392,9 @@ function App() {
               navDir={navDir}
               activeProject={activeProject}
               projectPalette={projectPalette}
-              projectDeadline={projectDeadline}
-              completedCount={completedCount}
-              deskTasks={deskTasks}
-              doneTasks={doneTasks}
-              queueTasks={queueTasks}
-              nextTask={nextTask}
-              stepFocusKey={stepFocusKey}
-              setStepFocusKey={setStepFocusKey}
-              showHowItWorks={showHowItWorks}
-              hideHowItWorks={hideHowItWorks}
-              openBreakdown={openBreakdown}
               journeyNext={journeyNext}
               setActiveView={setActiveView}
-              flashToast={flashToast}
               flashMicro={flashMicro}
-              notifyAction={notifyAction}
-              quickInput={quickInput}
-              setQuickInput={setQuickInput}
-              captureEnergy={captureEnergy}
-              setCaptureEnergy={setCaptureEnergy}
-              captureDue={captureDue}
-              setCaptureDue={setCaptureDue}
-              captureOptionsOpen={captureOptionsOpen}
-              setCaptureOptionsOpen={setCaptureOptionsOpen}
-              handleCapture={addQuickTask}
-              queueCollapsed={queueCollapsed}
-              queueOpen={queueOpen}
-              setQueueOpen={setQueueOpen}
-              doneOpen={doneOpen}
-              setDoneOpen={setDoneOpen}
-              toggleTask={toggleTask}
-              updateTaskTitle={updateTaskTitle}
-              updateTaskMeta={updateTaskMeta}
-              updateTaskWhy={updateTaskWhy}
-              removeTask={removeTask}
-              breakIntoSteps={breakIntoSteps}
-              setTaskDueDate={setTaskDueDate}
-              stepDueOpen={stepDueOpen}
-              setStepDueOpen={setStepDueOpen}
-              completeCurrentStep={completeCurrentStep}
-              startVoice={startVoice}
-              setDeskConfirm={setDeskConfirm}
             />
           </Suspense>
         )}
@@ -4549,7 +4510,7 @@ function App() {
               setProjectDeadline={setProjectDeadline}
               activeProject={activeProject}
               upcomingDeadlines={upcomingDeadlines}
-              onOpenTaskPanel={() => setRunningTodoPanelOpen(true)}
+
             />
           </Suspense>
         )}

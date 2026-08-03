@@ -216,7 +216,11 @@ export default function SparkView({
               <>
                 <span className="icon">⚡</span>
                 <span className="label">
-                  Focus <span className="timer">{focusLeft}′</span>
+                  Focus{' '}
+                  <span className="timer">
+                    {Math.floor((focusLeft || 0) / 60)}:
+                    {String((focusLeft || 0) % 60).padStart(2, '0')}
+                  </span>
                 </span>
               </>
             )}

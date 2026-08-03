@@ -405,7 +405,15 @@ class VersionService {
       await updateProjectBrief(data.brief || '')
       await setProjectDeadline(data.deadline || '')
       await setLogoDirection(data.logoDirection || '')
-      await setLogoImage(data.logoImage || '')
+      /* Snapshots store '[image-omitted]' instead of the data URL — do not
+         wipe the live mark with that sentinel. */
+      if (
+        data.logoImage &&
+        data.logoImage !== '[image-omitted]' &&
+        !String(data.logoImage).startsWith('[')
+      ) {
+        await setLogoImage(data.logoImage)
+      }
 
       // Restore brand fields
       await updateBrandField('tagline', data.tagline || '')
@@ -421,12 +429,19 @@ class VersionService {
       if (data.palette) {
         await setProjectPalette(data.palette)
       }
-      if (data.colorRoles) {
-        // Update each color role individually
-        Object.entries(data.colorRoles).forEach(([role, color]) => {
-          // This would need a specific method in the store, for now we'll skip
-          // In a real implementation, we'd have updateColorRole or similar
-        })
+      if (data.colorRoles && typeof data.colorRoles === 'object') {
+        const setColorRole = useAppStore.getState().setColorRole
+        if (typeof setColorRole === 'function') {
+          Object.entries(data.colorRoles).forEach(([role, color]) => {
+            if (color != null && color !== '') {
+              try {
+                setColorRole(role, color)
+              } catch {
+                /* skip unknown roles */
+              }
+            }
+          })
+        }
       }
 
       // Restore messaging

@@ -19,7 +19,6 @@ export default function CalendarView(props) {
     setProjectDeadline,
     activeProject,
     upcomingDeadlines: upcomingProp,
-    onOpenTaskPanel,
   } = props
 
   const [pendingDeadline, setPendingDeadline] = useState(null)
@@ -196,13 +195,13 @@ export default function CalendarView(props) {
                       if (ev.projectId != null) {
                         selectProject(ev.projectId)
                       }
-                      // Tasks aren't tied to any one journey stage — the
-                      // running to-do list is where this one actually
-                      // lives, not Sketch specifically.
+                      // Project due → Strategy brief. Task due → Desk
+                      // (where desk tasks with due dates actually live),
+                      // not the running to-do panel (different list).
                       if (ev.type === 'project') {
                         setActiveView('project')
                       } else {
-                        onOpenTaskPanel?.()
+                        setActiveView('desk')
                       }
                     }}
                   >
@@ -251,7 +250,7 @@ export default function CalendarView(props) {
                       setActiveView('project')
                     } else if (row.projectId != null) {
                       selectProject(row.projectId)
-                      onOpenTaskPanel?.()
+                      setActiveView('desk')
                     }
                   }}
                 >

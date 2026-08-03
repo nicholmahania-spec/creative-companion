@@ -111,15 +111,28 @@ export default function DefineView(props) {
   const pendingRemovalsRef = useRef(pendingRemovals)
   pendingRemovalsRef.current = pendingRemovals
 
+  /* Undo window then real delete — used to only commit on leave-page, so
+     Remove looked broken if you stayed on Strategy. */
   const scheduleRemoveMilestone = useCallback(
     (id) => {
       const ownerProjectId = projectId
-      setPendingRemovals((prev) => ({
-        ...prev,
-        [id]: { timeoutId: null, ownerProjectId },
-      }))
+      setPendingRemovals((prev) => {
+        if (prev[id]?.timeoutId) clearTimeout(prev[id].timeoutId)
+        const timeoutId = setTimeout(() => {
+          removeMilestone?.(id, ownerProjectId)
+          setPendingRemovals((cur) => {
+            const next = { ...cur }
+            delete next[id]
+            return next
+          })
+        }, 5000)
+        return {
+          ...prev,
+          [id]: { timeoutId, ownerProjectId },
+        }
+      })
     },
-    [projectId]
+    [projectId, removeMilestone]
   )
 
   const undoRemoveMilestone = useCallback((id) => {
