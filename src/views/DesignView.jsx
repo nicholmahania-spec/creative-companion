@@ -173,7 +173,7 @@ export default function DesignView({
       setTemplates([...raw].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
     } catch (error) {
       console.error('Failed to load templates:', error)
-      flashToast?.('Failed to load templates')
+      flashToast?.('Templates didn’t load. Try again')
     } finally {
       setLoadingTemplates(false)
     }
@@ -182,7 +182,7 @@ export default function DesignView({
   // Save current project as template
   const saveAsTemplate = async (name, description) => {
     if (!name.trim()) {
-      flashToast?.('Template name is required')
+      flashToast?.('Name the template first')
       return false
     }
 
@@ -195,7 +195,7 @@ export default function DesignView({
         setTemplateName('')
         setTemplateDescription('')
         setSelectedTemplate(null)
-        flashToast?.('Template saved successfully')
+        flashToast?.('Template saved')
         // Track template save action - we need to get the newly created template
         // Since the store.saveAsTemplate returns the templateId, we can use that
         // or get the updated templates list
@@ -206,12 +206,12 @@ export default function DesignView({
         ) || updatedTemplates[updatedTemplates.length - 1]; // fallback to last one
         return true
       } else {
-        flashToast?.(`Failed to save template: ${result.error}`)
+        flashToast?.(result.error || 'Didn’t save. Try again')
         return false
       }
     } catch (error) {
       console.error('Failed to save template:', error)
-      flashToast?.('Failed to save template')
+      flashToast?.('Didn’t save. Try again')
       return false
     }
   }
@@ -224,17 +224,17 @@ export default function DesignView({
       if (result.ok) {
         // Refresh version history after applying template
         await loadVersionHistory()
-        flashMicro?.('Template applied successfully')
+        flashMicro?.('Template applied')
         // Track template apply action
         const appliedTemplate = store.getTemplateById(templateId)
         return true
       } else {
-        flashToast?.(`Failed to apply template: ${result.error}`)
+        flashToast?.(result.error || 'Didn’t apply. Try again')
         return false
       }
     } catch (error) {
       console.error('Failed to apply template:', error)
-      flashToast?.('Failed to apply template')
+      flashToast?.('Didn’t apply. Try again')
       return false
     }
   }
@@ -252,12 +252,12 @@ export default function DesignView({
         // Track template delete action
         return true
       } else {
-        flashToast?.(`Failed to delete template: ${result.error}`)
+        flashToast?.(result.error || 'Didn’t delete. Try again')
         return false
       }
     } catch (error) {
       console.error('Failed to delete template:', error)
-      flashToast?.('Failed to delete template')
+      flashToast?.('Didn’t delete. Try again')
       return false
     }
   }
@@ -274,12 +274,12 @@ export default function DesignView({
         // Track template update action
         return true
       } else {
-        flashToast?.(`Failed to update template: ${result.error}`)
+        flashToast?.(result.error || 'Didn’t update. Try again')
         return false
       }
     } catch (error) {
       console.error('Failed to update template:', error)
-      flashToast?.('Failed to update template')
+      flashToast?.('Didn’t update. Try again')
       return false
     }
   }
@@ -294,7 +294,7 @@ export default function DesignView({
       setVersionHistory(versions)
     } catch (error) {
       console.error('Failed to load version history:', error)
-      flashToast?.('Failed to load version history')
+      flashToast?.('Version history didn’t load. Try again')
     } finally {
       setLoadingVersions(false)
     }
@@ -947,11 +947,17 @@ export default function DesignView({
                         <span className="palette-health-score is-idle">—</span>
                       </div>
                       <p className="panel-hint" style={{ margin: 0 }}>
-                        Add a color to see this.
+                        Add a colour to see this.
                       </p>
                     </div>
                   )
                 }
+                const healthWord =
+                  health.score >= 80
+                    ? 'Solid'
+                    : health.score >= 50
+                      ? 'Getting there'
+                      : 'Needs work'
                 return (
                   <div className="palette-health">
                     <div className="palette-health-head">
@@ -966,11 +972,12 @@ export default function DesignView({
                               ? ' is-mid'
                               : ' is-low'
                         }`}
+                        title={`${health.score}%`}
                       >
-                        {health.score}%
+                        {healthWord}
                       </span>
                     </div>
-                    <div className="palette-health-bar">
+                    <div className="palette-health-bar" aria-hidden="true">
                       <div
                         className="palette-health-bar-fill"
                         style={{ width: `${health.score}%` }}
@@ -984,9 +991,6 @@ export default function DesignView({
                   <p className="field-label" style={{ margin: 0 }}>
                     Palette
                   </p>
-                  <span className="panel-hint" style={{ margin: 0 }}>
-                    {projectPalette.length}/8
-                  </span>
                 </div>
 
                 <div className="brand-palette-bleed">
@@ -1012,7 +1016,7 @@ export default function DesignView({
                         <div className="palette-row">
                           <label
                             className="palette-swatch-wrap"
-                            title="Pick color"
+                            title="Pick colour"
                           >
                             <input
                               type="color"
@@ -1029,7 +1033,7 @@ export default function DesignView({
                                   })
                                 }
                               }}
-                              aria-label={`Color ${index + 1} picker`}
+                              aria-label={`Colour ${index + 1} picker`}
                             />
                             <span
                               className="palette-swatch"
@@ -1050,7 +1054,7 @@ export default function DesignView({
                               if (e.key === 'Enter') e.currentTarget.blur()
                             }}
                             spellCheck={false}
-                            aria-label={`Color ${index + 1} hex`}
+                            aria-label={`Colour ${index + 1} hex`}
                           />
                           <span
                             className="palette-preview-chip"
@@ -1144,7 +1148,7 @@ export default function DesignView({
                     disabled={projectPalette.length >= 8}
                     onClick={() => addPaletteColor('#888888')}
                   >
-                    Add color
+                    Add colour
                   </button>
                   <button
                     type="button"
@@ -1173,7 +1177,7 @@ export default function DesignView({
                       setHexDrafts({})
                     }}
                   >
-                    Reset default
+                    Reset to default
                   </button>
                 </div>
 
@@ -1182,7 +1186,7 @@ export default function DesignView({
               <div className="palette-roles-editor" style={{ marginTop: '1rem' }}>
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
-                    Pack roles
+                    Colour jobs
                   </p>
                 </div>
                 <div className="system-role-assign" style={{ marginTop: '0.45rem' }}>
@@ -1222,16 +1226,18 @@ export default function DesignView({
                 </div>
               </div>
 
-              <details className="design-advanced">
-                <summary>AA · Why · Suggest</summary>
-                <div className="finish-secondary-row" style={{ marginTop: '0.65rem' }}>
+              <div className="design-contrast-block">
+                <p className="field-label" style={{ margin: '1rem 0 0.45rem' }}>
+                  Contrast and why
+                </p>
+                <div className="finish-secondary-row" style={{ marginTop: '0.35rem' }}>
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
                     title="Nudge text / accent / quiet / cover until AA targets pass"
                     onClick={() => applyAaRoleFix()}
                   >
-                    Fix AA
+                    Fix contrast
                   </button>
                   {!activeProject?.colorRoles?.[brandRoleAssign] && (
                     <button
@@ -1255,12 +1261,6 @@ export default function DesignView({
                 {(() => {
                   const roleWhy = activeProject?.colorRoleWhy || {}
                   const brandWords = activeProject?.detective?.brandWords || ''
-                  const justifiedCount = [
-                    'cover',
-                    'text',
-                    'accent',
-                    'quiet',
-                  ].filter((r) => String(roleWhy[r] || '').trim()).length
                   return (
                     <div className="field-block" style={{ marginTop: '0.65rem' }}>
                       <label className="field-label" htmlFor="color-role-why">
@@ -1268,12 +1268,6 @@ export default function DesignView({
                         {brandWords.trim()
                           ? ` · ${brandWords.trim().slice(0, 24)}`
                           : ''}
-                        <span
-                          className="panel-hint"
-                          style={{ marginLeft: '0.4rem' }}
-                        >
-                          {justifiedCount}/4
-                        </span>
                       </label>
                       <input
                         id="color-role-why"
@@ -1288,18 +1282,13 @@ export default function DesignView({
                             ...roleWhy,
                             [brandRoleAssign]: e.target.value,
                           })}
-                        placeholder="Why this role"
+                        placeholder="Why this job fits"
                       />
                     </div>
                   )
                 })()}
 
                 <div className="palette-checker" style={{ marginTop: '0.85rem' }}>
-                  <div className="palette-section-head">
-                    <p className="field-label" style={{ margin: 0 }}>
-                      Contrast
-                    </p>
-                  </div>
                   <label className="field-label" htmlFor="check-bg">
                     Background
                   </label>
@@ -1328,7 +1317,7 @@ export default function DesignView({
                   </div>
                   <ul className="palette-check-list">
                     {contrastPairs.length === 0 ? (
-                      <li className="panel-hint">2+ colors</li>
+                      <li className="panel-hint">Need two colours to check</li>
                     ) : (
                       contrastPairs.map((pair) => (
                         <li
@@ -1374,7 +1363,7 @@ export default function DesignView({
                                 fixPairFg(pair.fg, pair.bg, pair.index)
                               }
                             >
-                              Fix AA
+                              Fix
                             </button>
                           ))}
                         </li>
@@ -1425,7 +1414,7 @@ export default function DesignView({
                     )}
                   </div>
                 </div>
-              </details>
+              </div>
             </section>
             )}
 
@@ -1784,7 +1773,7 @@ export default function DesignView({
             <div className="dv-modal-overlay">
               <div className="dv-modal-panel">
                 <div className="dv-modal-head">
-                  <h2>Version History</h2>
+                  <h2>Version history</h2>
                   <button
                     onClick={() => setShowVersionHistory(false)}
                     className="btn btn-sm btn-ghost"
@@ -1796,12 +1785,11 @@ export default function DesignView({
                 <div className="dv-modal-scroll">
                   {loadingVersions ? (
                     <div className="dv-tpl-empty">
-                      <p>Loading version history…</p>
+                      <p>Loading…</p>
                     </div>
                   ) : versionHistory.length === 0 ? (
                     <div className="dv-tpl-empty">
-                      <p>No versions found for this project.</p>
-                      <p>Create a version by making changes and bumping the design version.</p>
+                      <p>No versions yet. Use Bump when you want a save point.</p>
                     </div>
                   ) : (
                     <div className="dv-tpl-list">
@@ -1820,7 +1808,7 @@ export default function DesignView({
                             <div>
                               <h3 className="dv-tpl-name">{version.versionLabel || 'Unnamed'}</h3>
                               <p className="dv-tpl-meta">
-                                {new Date(version.timestamp).toLocaleString()}
+                                {new Date(version.timestamp).toLocaleDateString()}
                               </p>
                             </div>
                             <div className="dv-tpl-actions">
@@ -1858,7 +1846,7 @@ export default function DesignView({
                   <div className="dv-diff-panel">
                     <div className="dv-diff-head">
                       <h3>
-                        {selectedVersion ? 'Comparing Versions' : 'Diff Details'}
+                        {selectedVersion ? 'Compare versions' : 'Changes'}
                       </h3>
                       <button
                         onClick={() => {
@@ -1987,7 +1975,7 @@ export default function DesignView({
             <div className="dv-modal-overlay">
               <div className="dv-modal-panel is-narrow">
                 <div className="dv-modal-head">
-                  <h2>Template Library</h2>
+                  <h2>Templates</h2>
                   <button
                     onClick={() => setShowTemplateModal(false)}
                     className="btn btn-sm btn-ghost"
@@ -1999,12 +1987,11 @@ export default function DesignView({
                 <div className="dv-modal-scroll">
                   {loadingTemplates ? (
                     <div className="dv-tpl-empty">
-                      <p>Loading templates…</p>
+                      <p>Loading…</p>
                     </div>
                   ) : templates.length === 0 ? (
                     <div className="dv-tpl-empty">
-                      <p>No templates saved yet.</p>
-                      <p>Create templates from your designs to reuse them later.</p>
+                      <p>No templates yet.</p>
                     </div>
                   ) : (
                     <div className="dv-tpl-list">
@@ -2025,7 +2012,7 @@ export default function DesignView({
                                 </p>
                               )}
                               <p className="dv-tpl-meta">
-                                Created: {new Date(template.createdAt).toLocaleString()}
+                                {new Date(template.createdAt).toLocaleDateString()}
                               </p>
                             </div>
                             <div className="dv-tpl-actions">
@@ -2077,7 +2064,7 @@ export default function DesignView({
               <div className="dv-modal-panel is-narrow">
                 <div className="dv-modal-head">
                   <h2>
-                    {selectedTemplate ? 'Update Template' : 'Save as Template'}
+                    {selectedTemplate ? 'Update template' : 'Save as template'}
                   </h2>
                   <button
                     onClick={() => {
@@ -2116,23 +2103,23 @@ export default function DesignView({
                   }}
                 >
                   <div className="field-block">
-                    <label className="field-label" htmlFor="dv-tpl-name">Template Name</label>
+                    <label className="field-label" htmlFor="dv-tpl-name">Template name</label>
                     <input
                       id="dv-tpl-name"
                       type="text"
                       value={templateName}
                       onChange={(e) => setTemplateName(e.target.value)}
-                      placeholder="Enter template name"
+                      placeholder="Name"
                       className="field-input"
                     />
                   </div>
                   <div className="field-block">
-                    <label className="field-label" htmlFor="dv-tpl-desc">Description (optional)</label>
+                    <label className="field-label" htmlFor="dv-tpl-desc">Notes (optional)</label>
                     <textarea
                       id="dv-tpl-desc"
                       value={templateDescription}
                       onChange={(e) => setTemplateDescription(e.target.value)}
-                      placeholder="Describe when to use this template"
+                      placeholder="When you’d use this"
                       rows={3}
                       className="field-textarea"
                     />
