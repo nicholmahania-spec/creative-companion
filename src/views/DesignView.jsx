@@ -614,13 +614,8 @@ export default function DesignView({
                 )
               })}
             </nav>
-            <p className="panel-hint design-min-hint" style={{ margin: '0 0 0.75rem' }}>
-              Tagline, colors, or logo is enough for the path.
-            </p>
 
-            {/* Logo section — physically first in the column (01 The mark),
-                moved here from its old spot after Type so DOM order matches
-                the ruling's numbering. */}
+            {/* Logo section — 01 The mark */}
             <section
               id="design-section-content-logo"
               data-section="logo"

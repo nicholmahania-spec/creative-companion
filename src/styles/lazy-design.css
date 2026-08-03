@@ -70,8 +70,8 @@
    band contains milestones/StartHere and draws its own rule element
    instead. */
 .design-studio > .brand-template-top {
-  padding-bottom: var(--space-4);
-  border-bottom: 2px solid var(--text-primary);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .brand-template-top .page-title {
@@ -93,6 +93,24 @@
 .design-identity-head-text {
   min-width: 0;
   flex: 1 1 14rem;
+}
+
+/* Version tools recede — secondary chrome, not a third primary row */
+.design-studio .version-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  opacity: 0.85;
+}
+
+.design-studio .version-controls .btn {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.design-studio .version-controls .btn:hover {
+  color: var(--text-primary);
+  opacity: 1;
 }
 
 /* Path footer: Next leads, desk secondary (path rebuild) */
@@ -1260,12 +1278,14 @@
 
 /* Design preview label only */
 
-.design-rail-label {
-  font-size: 0.6875rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ts-mute) !important;
+/* Quiet plane label — sentence case, not a shouting micro-eyebrow */
+.design-studio .design-rail-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-muted);
+  margin: 0 0 var(--space-2);
 }
 
 .review-studio .review-feedback-hero .brand-section-label {
@@ -1608,16 +1628,18 @@
    (.define-chapter-head/.define-chapter-rule in lazy-define.css).
    ============================================================ */
 
+/* Scroll index — text pills, not a second card grid of controls */
 .design-section-rail {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  gap: var(--space-1) var(--space-2);
+  margin-bottom: var(--space-4);
   position: sticky;
   top: 0;
   z-index: 2;
   padding: var(--space-2) 0;
   background: var(--bg-canvas);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .design-section-tab {
@@ -1625,10 +1647,10 @@
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--bg-canvas);
-  color: var(--text-secondary);
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
   font-size: var(--fs-1);
   font-weight: 600;
   cursor: pointer;
@@ -1642,13 +1664,24 @@
 .design-section-tab.is-active {
   color: var(--text-primary);
   font-weight: 700;
-  border-color: var(--text-primary);
+  background: var(--bg-muted);
+  box-shadow: inset 0 -2px 0 var(--text-primary);
 }
 
 .design-section-tab-num {
   font-family: var(--font-display);
-  letter-spacing: 0.04em;
-  opacity: 0.7;
+  letter-spacing: 0.02em;
+  opacity: 0.65;
+  font-weight: 500;
+}
+
+.app.deep .design-section-rail {
+  background: var(--bg-canvas);
+  border-bottom-color: var(--border-subtle);
+}
+
+.app.deep .design-section-tab.is-active {
+  background: var(--bg-muted);
 }
 
 /* Numbered section head — number + title + hairline rule to the column
@@ -1708,15 +1741,13 @@
   }
 }
 
-/* Micro field labels: uppercase, wide tracking, muted — matches the
-   brief's field language. Inputs sit on canvas with a hairline border that
-   solidifies to full ink on focus. Scoped to the edit column only. */
+/* Sentence-case field labels (path rebuild) — conversational, not settings. */
 .design-edit-column .field-label {
-  font-size: var(--fs-1);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-primary);
 }
 
 .design-edit-column .field-input,
