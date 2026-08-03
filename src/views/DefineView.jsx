@@ -4,7 +4,7 @@
  * One job: answers get written here (client later, or you now).
  * Head: title · status · Send the brief (when not sent). Form is the start.
  * No start ramp, no interview CTA, no chapter rail, no project-name band.
- * Scope sits below the form (milestones removed — owner).
+ * No milestones / Scope strip under the form (owner — brief is the work).
  * Footer: Back to desk · Next · Research · short needed count.
  */
 import { Suspense, lazy, useCallback, useMemo } from 'react'
@@ -12,7 +12,6 @@ import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
 import { getRequiredEmpty } from '../lib/brief/detectiveBrief'
 import { relativeDeadlineLabel } from '../lib/dates'
-import ScopePanel from '../features/brief/ScopePanel'
 import '../styles/lazy-define.css'
 
 const DetectiveSheet = lazy(() => import('../features/brief/DetectiveSheet'))
@@ -47,7 +46,6 @@ export default function DefineView(props) {
     setActiveView,
     setProjectDeadline: setProjectDeadlineProp,
     projectDeadline: projectDeadlineProp = '',
-    flashMicro,
   } = props
 
   const activeProject = useAppStore((s) => {
@@ -68,13 +66,6 @@ export default function DefineView(props) {
   )
   const projectDeadline =
     projectDeadlineProp || activeProject?.deadline || ''
-
-  const scrollToChapter = useCallback((chapterId) => {
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    document
-      .getElementById(`define-chapter-content-${chapterId}`)
-      ?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' })
-  }, [])
 
   const requiredEmpty = useMemo(
     () => getRequiredEmpty(activeProject?.detective, projectDeadline),
@@ -165,14 +156,6 @@ export default function DefineView(props) {
           </Suspense>
         </div>
       </div>
-
-      <section className="define-brief-secondary" aria-label="Scope">
-        <ScopePanel
-          activeProject={activeProject}
-          onOpenChapter={scrollToChapter}
-          flashMicro={flashMicro}
-        />
-      </section>
 
       <div
         className="define-brief-footer"

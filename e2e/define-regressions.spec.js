@@ -105,11 +105,11 @@ test.describe('Define page regressions', () => {
     skipIfCloud(test, gate)
     await openDefine(page)
 
-    // Title → form → scope → footer. No CSS `order` scramble — visual top
-    // must match DOM top (WCAG 2.4.3).
+    // Title → form → footer. No CSS `order` scramble — visual top must
+    // match DOM top (WCAG 2.4.3).
     const orders = await page.evaluate(() => {
       const sel =
-        '.define-brief-title, .define-chapters, .define-brief-secondary, .define-brief-footer'
+        '.define-brief-title, .define-chapters, .define-brief-footer'
       const nodes = [...document.querySelectorAll(sel)]
       const name = (n) =>
         (n.className || '').toString().split(/\s+/).find(Boolean) || n.tagName

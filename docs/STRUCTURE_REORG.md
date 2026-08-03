@@ -84,7 +84,6 @@ src/
       ClientBriefFields.jsx
       BriefAttach.jsx
       BriefSpectrum.jsx
-      ScopePanel.jsx
       DefineStartHere.jsx
     research/
       (mood helpers only if extracted)

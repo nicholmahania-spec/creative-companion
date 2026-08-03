@@ -54,49 +54,8 @@ test.describe('phase surfaces render and respond', () => {
     await expect(page.locator('h1.page-title').first()).toBeVisible()
   })
 
-  test('Scope panel opens and copies real project terms', async ({
-    page,
-    context,
-  }) => {
-    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-    const gate = await unlockAndOnboard(page, { name: 'Scope Project' })
-    skipIfCloud(test, gate)
-    /* Strategy IS the landing view, so there is nothing to click. Its rail
-       control is the current step and not an ordinary button. */
-
-    const toggle = page.locator('.scope-panel-toggle')
-    await expect(toggle).toBeVisible()
-    // Closed, it is a state line and nothing else.
-    await expect(page.locator('.scope-panel-body')).toHaveCount(0)
-
-    await toggle.click()
-    await expect(page.locator('.scope-panel-body')).toBeVisible()
-
-    // The revision count is the one field the research insists is a NUMBER.
-    const rounds = page.locator('#scope-revisions')
-    await expect(rounds).toBeVisible()
-    await rounds.fill('3')
-    await page.locator('#scope-approver').fill('Sarah Whitton')
-    await page.locator('#scope-outof').fill('No website build.')
-
-    // Display must equal emission — the deadline row exists precisely so
-    // nothing lands on the clipboard that is not on screen.
-    await expect(page.getByText('Delivery by')).toBeVisible()
-
-    const copy = page.locator('.scope-terms-copy')
-    await expect(copy).toBeVisible()
-    await copy.click()
-
-    const clip = await page.evaluate(() => navigator.clipboard.readText())
-    expect(clip).toContain('Revisions')
-    expect(clip).toContain('3 rounds included')
-    expect(clip).toContain('Sarah Whitton approves the work')
-    expect(clip).toContain('No website build.')
-    /* The fee must never reach the clipboard: budgetRange is the client's
-       opening guess and hourlyRate is a private rate. */
-    expect(clip).not.toMatch(/budget/i)
-    expect(clip).not.toMatch(/per hour/i)
-  })
+  /* Scope panel removed from Strategy (owner) — terms/revisions live in store
+     + unit tests; no Strategy UI. */
 
   test('Review shows revision rounds and logs feedback', async ({ page }) => {
     const gate = await unlockAndOnboard(page, { name: 'Review Project' })
