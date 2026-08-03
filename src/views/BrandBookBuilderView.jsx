@@ -86,16 +86,18 @@ const resolveBg = (colors, key) => resolvePageBg(colors, key);
 
 /* ------------------------------------------------------------ Section */
 
-/* Always-open — the <details> collapse is gone. A closed panel with only a
-   label is a memory test, not a control ("they are hidden and my first
-   thought was 'I have no idea what this is'" — CLAUDE.md), so every section
-   renders its heading and its body at once. */
-function Section({ title, children }) {
+/* Collapsible rail sections (prototype Brand Kit). `defaultOpen` keeps the
+   primary controls (name, setup, colours) visible on arrival; the rest start
+   closed so the rail matches the Sparrow kit mock. */
+function Section({ title, children, defaultOpen = false }) {
   return (
-    <div className="bbb-section">
-      <h2 className="bbb-section__title">{title}</h2>
+    <details className="bbb-section" defaultOpen={defaultOpen}>
+      <summary className="bbb-section__summary">
+        <span className="bbb-section__title">{title}</span>
+        <span className="bbb-section__toggle" aria-hidden="true" />
+      </summary>
       <div className="bbb-section__body">{children}</div>
-    </div>
+    </details>
   );
 }
 
@@ -391,15 +393,18 @@ function LogoPage({ kit, style, pageIndex = 0, id }) {
           <span className="bbb-logo-construct__inset" aria-hidden="true" />
         </div>
         <p className="bbb-logo-spec__text" style={{ fontFamily: bStack }}>
-          {logo.image
-            ? [
-                logo.clearspace ||
-                  'Clearspace ~ half the mark height on all sides.',
-                logo.minSize ||
-                  'Min 24px digital · 0.5″ print (mark height).',
-                'Prefer full-colour primary; reverse on dark; mono for one-ink.',
-              ].join(' ')
-            : [logo.clearspace, logo.minSize].filter(Boolean).join(' ')}
+          {/* One line per rule — joining with spaces made clearspace + min-size
+              + usage read as a single run-on sentence on the flip page. */}
+          {[
+            logo.clearspace || DEFAULT_LOGO_CLEARSPACE,
+            logo.minSize || DEFAULT_LOGO_MIN_SIZE,
+          ]
+            .filter(Boolean)
+            .map((line) => (
+              <span key={line} className="bbb-logo-spec__line">
+                {line}
+              </span>
+            ))}
         </p>
       </div>
 
@@ -586,38 +591,74 @@ function PageNum({ showPageNumbers, alternate, pageIndex }) {
 
 /* ------------------------------------------------------------ Flipbook */
 
-/* Flip overlay reskin: the top-right × is gone — Close is a labelled button
-   in the same control row as Back/Next, so the whole "how do I move / how do
-   I leave" decision lives in one place instead of two. Pages are the SAME
-   elements the canvas renders (cloned only to re-key their anchor id, so the
-   canvas and the overlay never carry the same id twice at once) — never a
-   duplicated page component. */
+/* Open book: left = verso (back of previous leaf), right = recto (front).
+   Both faces are upright page content — never a CSS rotateY mirror of the
+   same sheet (that was the "mirror image" bug). Cover opens on the right
+   alone, like a real book. Pages are still the canvas elements, re-keyed. */
 function Flipbook({ open, onClose, pages, index, setIndex }) {
-  if (!open) return null;
-  const total = pages.length;
+  if (!open) return null
+  const total = pages.length
+  if (!total) return null
+  /* `index` is the right-hand (recto) page. Left is the previous page. */
+  const rightIndex = Math.min(Math.max(0, index), total - 1)
+  const leftIndex = rightIndex > 0 ? rightIndex - 1 : null
+  const leftPage = leftIndex != null ? pages[leftIndex] : null
+  const rightPage = pages[rightIndex]
+
+  const clonePage = (el, side, pageI) =>
+    React.cloneElement(el, {
+      id: el.props.id ? `flip-${side}-${el.props.id}` : `flip-${side}-${pageI}`,
+      key: `${side}-${pageI}`,
+    })
+
   return (
-    <div className="bbb-flip-overlay bbb-flip-overlay--show">
-      <div className="bbb-flip-stage">
-        {pages.map((PageEl, i) => (
-          <div
-            key={i}
-            className="bbb-flip-page"
-            style={{ zIndex: i < index ? i : total - i, transform: i < index ? "rotateY(-178deg)" : "rotateY(0deg)" }}
-          >
-            {React.cloneElement(PageEl, {
-              id: PageEl.props.id ? `flip-${PageEl.props.id}` : undefined,
-            })}
+    <div
+      className="bbb-flip-overlay bbb-flip-overlay--show"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Brand book flip through"
+    >
+      <div
+        className={`bbb-flip-stage${leftPage ? ' bbb-flip-stage--spread' : ' bbb-flip-stage--cover'}`}
+      >
+        {leftPage ? (
+          <div className="bbb-flip-leaf bbb-flip-leaf--verso" aria-label={`Page ${leftIndex + 1}`}>
+            {clonePage(leftPage, 'verso', leftIndex)}
           </div>
-        ))}
+        ) : (
+          <div className="bbb-flip-leaf bbb-flip-leaf--empty" aria-hidden="true" />
+        )}
+        <div className="bbb-flip-gutter" aria-hidden="true" />
+        <div className="bbb-flip-leaf bbb-flip-leaf--recto" aria-label={`Page ${rightIndex + 1}`}>
+          {clonePage(rightPage, 'recto', rightIndex)}
+        </div>
       </div>
       <div className="bbb-flip-controls">
-        <button type="button" disabled={index === 0} onClick={() => setIndex((i) => Math.max(0, i - 1))}>&larr; Back</button>
-        <span className="bbb-flip-controls__count">{index + 1} of {total}</span>
-        <button type="button" disabled={index === total - 1} onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}>Next &rarr;</button>
-        <button type="button" className="bbb-flip-close-btn" onClick={onClose}>Close</button>
+        <button
+          type="button"
+          disabled={rightIndex === 0}
+          onClick={() => setIndex((i) => Math.max(0, i - 1))}
+        >
+          &larr; Back
+        </button>
+        <span className="bbb-flip-controls__count">
+          {leftIndex != null
+            ? `${leftIndex + 1}–${rightIndex + 1} of ${total}`
+            : `${rightIndex + 1} of ${total}`}
+        </span>
+        <button
+          type="button"
+          disabled={rightIndex >= total - 1}
+          onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}
+        >
+          Next &rarr;
+        </button>
+        <button type="button" className="bbb-flip-close-btn" onClick={onClose}>
+          Close
+        </button>
       </div>
     </div>
-  );
+  )
 }
 
 /* ------------------------------------------------------- ColorRow */
@@ -1086,11 +1127,28 @@ export default function BrandBookBuilderView() {
      page). One id per position in `pageElements`, assigned after the fact
      rather than threaded through every push above, so the numbering can
      never drift from what actually renders. */
-  const innerElements = inner.map((render, i) => render(i));
+  /* pageIndex must match the page's place in the finished book (cover = 0).
+     The old path passed 0..n only for inner pages, so Logo (page 2 of N)
+     printed "1" while the flip controls said "2 of N". */
   const pageElements = [
-    <FrontCover key="cover" id="bbb-anchor-0" kit={{ ...kit, ...bgFor("pageCover") }} style={gridMarginVar} />,
-    ...innerElements.map((el, i) => React.cloneElement(el, { id: `bbb-anchor-${i + 1}` })),
-    <BackCover key="back" id={`bbb-anchor-${innerElements.length + 1}`} kit={{ ...kit, ...bgFor("pageBack") }} style={gridMarginVar} />,
+    <FrontCover
+      key="cover"
+      id="bbb-anchor-0"
+      pageIndex={0}
+      kit={{ ...kit, ...bgFor('pageCover') }}
+      style={gridMarginVar}
+    />,
+    ...inner.map((render, i) => {
+      const el = render(i + 1)
+      return React.cloneElement(el, { id: `bbb-anchor-${i + 1}` })
+    }),
+    <BackCover
+      key="back"
+      id={`bbb-anchor-${inner.length + 1}`}
+      pageIndex={inner.length + 1}
+      kit={{ ...kit, ...bgFor('pageBack') }}
+      style={gridMarginVar}
+    />,
   ];
 
   return (
@@ -1134,7 +1192,7 @@ export default function BrandBookBuilderView() {
         {/* Named for what's inside rather than "Identity": the app's third
             path stop is already called that, and the heading is the only
             clue to what a section holds. */}
-        <Section title="Name &amp; tagline">
+        <Section title="Name &amp; tagline" defaultOpen>
           <div className="bbb-field">
             <label htmlFor="bbb-brandName">Brand name</label>
             <input id="bbb-brandName" type="text" value={brandName} onChange={(e) => setBrandName(e.target.value)} />
@@ -1148,7 +1206,7 @@ export default function BrandBookBuilderView() {
         {/* Sheet / Edge space / print-shop bleed — the three controls the
             top-bar summary states as a sentence. Named stops replace the old
             free-typed margin percent ("named stops, not number fields"). */}
-        <Section title="Setup">
+        <Section title="Setup" defaultOpen>
           <ChipRow
             label="Sheet"
             value={printSettings.pageSize}
@@ -1194,7 +1252,7 @@ export default function BrandBookBuilderView() {
           );
         })}
 
-        <Section title="Colors">
+        <Section title="Colors" defaultOpen>
           <div className="bbb-color-list">
             {colors.map((c, i) => (
               <ColorRow
@@ -1211,11 +1269,9 @@ export default function BrandBookBuilderView() {
               set one token at a time, no starting-point palettes. */}
         </Section>
 
-        {/* Fine-tuning, grouped under one section rather than five — each
-            still gets its own micro-head, but nothing here is a decision
-            you need on arrival the way Setup and Colors are. */}
-        <Section title="Advanced">
-          <p className="bbb-microhead">Type scale</p>
+        {/* Prototype kit rail: each fine-tune group is its own collapsed
+            section (Type scale, Type color, …), not one long Advanced block. */}
+        <Section title="Type scale">
           <div className="bbb-field">
             <label htmlFor="bbb-headlineFont">Headline font</label>
             <FontSelect id="bbb-headlineFont" value={headlineFont} onChange={setHeadlineFont} />
@@ -1262,16 +1318,18 @@ export default function BrandBookBuilderView() {
               </select>
             </div>
           </div>
+        </Section>
 
-          <p className="bbb-microhead">Type color</p>
+        <Section title="Type color">
           <TokenSelect id="bbb-colorHeadline" label="Headline" value={typeColor.headline} colors={colors}
             noneValue="auto" noneLabel="Auto" onChange={(v) => setTypeColor((t) => ({ ...t, headline: v }))} />
           <TokenSelect id="bbb-colorSubhead" label="Subhead" value={typeColor.subhead} colors={colors}
             noneValue="auto" noneLabel="Auto" onChange={(v) => setTypeColor((t) => ({ ...t, subhead: v }))} />
           <TokenSelect id="bbb-colorBody" label="Body" value={typeColor.body} colors={colors}
             noneValue="auto" noneLabel="Auto" onChange={(v) => setTypeColor((t) => ({ ...t, body: v }))} />
+        </Section>
 
-          <p className="bbb-microhead">Page backgrounds</p>
+        <Section title="Page backgrounds">
           <TokenSelect id="bbb-bgCover" label="Front cover" value={pageBg.pageCover} colors={colors}
             noneValue="white" noneLabel="White" onChange={(v) => setPageBg((p) => ({ ...p, pageCover: v }))} />
           <TokenSelect id="bbb-bgColors" label="Color page" value={pageBg.pageColors} colors={colors}
@@ -1280,8 +1338,9 @@ export default function BrandBookBuilderView() {
             noneValue="white" noneLabel="White" onChange={(v) => setPageBg((p) => ({ ...p, pageType: v }))} />
           <TokenSelect id="bbb-bgBack" label="Back cover" value={pageBg.pageBack} colors={colors}
             noneValue="white" noneLabel="White" onChange={(v) => setPageBg((p) => ({ ...p, pageBack: v }))} />
+        </Section>
 
-          <p className="bbb-microhead">Grid guides</p>
+        <Section title="Grid">
           <div className="bbb-field">
             <label htmlFor="bbb-gridColumns">Columns</label>
             <input id="bbb-gridColumns" type="text" inputMode="numeric" value={grid.columns} onChange={(e) => setGrid((g) => ({ ...g, columns: Number(e.target.value) || 1 }))} />
@@ -1298,8 +1357,9 @@ export default function BrandBookBuilderView() {
             <input id="bbb-showGrid" type="checkbox" checked={grid.show} onChange={(e) => setGrid((g) => ({ ...g, show: e.target.checked }))} />
             <label htmlFor="bbb-showGrid">Show grid guides</label>
           </div>
+        </Section>
 
-          <p className="bbb-microhead">Running elements</p>
+        <Section title="Running elements">
           <div className="bbb-field bbb-field--checkbox">
             <input id="bbb-showHeader" type="checkbox" checked={running.show} onChange={(e) => setRunning((r) => ({ ...r, show: e.target.checked }))} />
             <label htmlFor="bbb-showHeader">Show header</label>
@@ -1336,20 +1396,9 @@ export default function BrandBookBuilderView() {
           </div>
         </Section>
 
-        {/* The book's spine — its sections by name, so a glance says "yes,
-            that's a brand book" rather than a raw page number.
-            Deliberately NOT "Pages · N": that count was the on-screen preview
-            cards (each ~9 lines), which roughly doubled the real exported PDF —
-            a number that meant nothing to a time-blind reader except a false
-            "this is bloated" alarm. The true page count now appears once, on
-            the export itself, where it answers a real question. A run of
-            continuation pages collapses to a single named entry — the Agreed
-            brief is one line, "record", not the thing that dominates the
-            felt length. Open by default: a collapsed label is a memory test. */}
-        {/* The book's spine, now with each in-book entry an anchor that
-            scrolls the canvas to that page — per-page lock and ↑/↓ reorder
-            would attach to this same row and are deferred, not built. */}
-        <Section title="In this book">
+        {/* Book spine: which pages are in / not yet. Starts open so the map
+            of the book is not hidden behind a bare label. */}
+        <Section title="In this book" defaultOpen>
           <ul className="bbb-pagelist">
             {pageElements
               .map((el) => ({

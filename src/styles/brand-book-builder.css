@@ -54,7 +54,10 @@
 .bbb-root {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  /* Fill `.main` (grid 1fr cell). Pages then size to the canvas height. */
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
   font-family: "Inter Local", "Inter", sans-serif;
   background: #efece4;
 }
@@ -106,17 +109,21 @@
   display: flex;
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ------------------------------------------------------------- panel */
 
 .bbb-panel {
-  width: 320px;
+  width: min(320px, 34vw);
   flex-shrink: 0;
   background: #1f1e1c;
   color: #eeece5;
   padding: var(--space-lg, 24px) var(--space-lg, 24px);
   overflow-y: auto;
+  height: 100%;
+  max-height: 100%;
 }
 
 .bbb-panel__title {
@@ -128,19 +135,28 @@
   margin: 0 0 var(--space-lg, 20px);
 }
 
-/* Always-open sections — the accordion (<details>/<summary>) is gone. A
-   collapsed section reads as "I have no idea what this is" (user's own
-   words, CLAUDE.md), so every section here renders its heading and body at
-   once; there is nothing left to expand. */
+/* Collapsible rail sections — summary row + body when open (Brand Kit
+   prototype). + / − markers on the toggle, no custom JS. */
 .bbb-section {
   border-bottom: 0.5px solid #3a3936;
-  margin-bottom: var(--space-xs, 4px);
-  padding: var(--space-md, 14px) 0;
+  margin-bottom: 0;
+  padding: 0;
 }
 .bbb-section:last-of-type { border-bottom: none; }
 
-/* Uppercase micro-head: the label for a section or, nested inside Advanced,
-   for one of its named sub-groups. */
+.bbb-section__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm, 8px);
+  padding: var(--space-md, 14px) 0;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.bbb-section__summary::-webkit-details-marker { display: none; }
+.bbb-section__summary::marker { content: ""; }
+
 .bbb-section__title,
 .bbb-microhead {
   font-size: var(--fs-1);
@@ -148,12 +164,52 @@
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-muted);
+  margin: 0;
+}
+.bbb-microhead {
   margin: 0 0 var(--space-xs, 6px);
 }
+
+/* Closed: +, open: − (matches the kit prototype). */
+.bbb-section__toggle {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  position: relative;
+  color: #a7a49a;
+}
+.bbb-section__toggle::before,
+.bbb-section__toggle::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+  border-radius: 1px;
+}
+.bbb-section__toggle::before {
+  /* horizontal bar (always) */
+  left: 2px;
+  right: 2px;
+  top: 50%;
+  height: 1.5px;
+  transform: translateY(-50%);
+}
+.bbb-section__toggle::after {
+  /* vertical bar → + when closed */
+  top: 2px;
+  bottom: 2px;
+  left: 50%;
+  width: 1.5px;
+  transform: translateX(-50%);
+}
+.bbb-section[open] > .bbb-section__summary .bbb-section__toggle::after {
+  display: none; /* − when open */
+}
+
 .bbb-section__body {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm, 10px);
+  padding: 0 0 var(--space-md, 14px);
 }
 
 .bbb-field { display: flex; flex-direction: column; gap: var(--space-xs, 4px); }
@@ -302,24 +358,35 @@
 
 /* ------------------------------------------------------------ canvas */
 
-/* Deferred: a transform-scale canvas model (one true-size page scaled down
-   for the viewport) is not built. Pages below render at a fixed CSS size
-   instead. */
+/* Full-height page strip: each sheet fills the canvas height (letter/A4
+   aspect), scroll sideways through the book — matches the prototype rail +
+   large page cards, not a small wrapping gallery. */
 .bbb-canvas {
   flex: 1;
-  padding: var(--space-xl, 40px);
-  display: flex;
-  gap: var(--space-xl, 32px);
-  flex-wrap: wrap;
-  align-content: flex-start;
-  justify-content: center;
   min-width: 0;
+  min-height: 0;
+  padding: var(--space-lg, 24px);
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-xl, 32px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* Page height = canvas content box (padding already inside). */
+  --bbb-page-h: 100%;
 }
 
 .bbb-page {
-  width: min(320px, calc(100vw - 80px));
-  /* A4 default on screen; print media overrides to true sheet size. */
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  /* Prefer filling the canvas height; width follows the sheet aspect. */
+  height: var(--bbb-page-h);
+  width: auto;
+  max-height: 100%;
   aspect-ratio: 210 / 297;
+  /* Cap width so a short wide window still leaves room for the panel. */
+  max-width: min(100%, calc(100vw - 320px - 4rem));
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   position: relative;
@@ -495,27 +562,95 @@
   justify-content: center;
   flex-direction: column;
   gap: var(--space-lg, 20px);
+  padding: var(--space-lg, 24px);
 }
 .bbb-flip-overlay--show { display: flex; }
+/* Open book: verso (left / back) + recto (right / front). Both faces are
+   upright content — no rotateY mirror of a single sheet. */
 .bbb-flip-stage {
   position: relative;
-  perspective: 2200px;
-  width: min(380px, calc(100vw - 48px));
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  width: min(880px, calc(100vw - 48px));
+  max-height: min(78vh, 720px);
+  aspect-ratio: 17 / 11; /* two letter pages side by side */
+  perspective: none;
+}
+.bbb-flip-stage--cover {
+  /* Cover alone sits on the right half, like opening a real book. */
   aspect-ratio: 8.5 / 11;
+  width: min(440px, calc(100vw - 48px));
 }
-.bbb-flip-page {
-  position: absolute;
-  inset: 0;
-  transition: transform 0.65s cubic-bezier(0.45, 0, 0.2, 1);
-  transform-origin: left center;
-  transform-style: preserve-3d;
+.bbb-flip-stage--cover .bbb-flip-leaf--empty {
+  display: none;
 }
-.bbb-flip-page .bbb-page {
+.bbb-flip-stage--cover .bbb-flip-gutter {
+  display: none;
+}
+.bbb-flip-leaf {
+  position: relative;
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.bbb-flip-leaf--empty {
+  flex: 1 1 50%;
+  background: transparent;
+}
+.bbb-flip-gutter {
+  flex: 0 0 2px;
+  align-self: stretch;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.22),
+    rgba(0, 0, 0, 0.06) 40%,
+    rgba(0, 0, 0, 0.06) 60%,
+    rgba(0, 0, 0, 0.18)
+  );
+  z-index: 2;
+}
+.bbb-flip-leaf .bbb-page {
   width: 100%;
   height: 100%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  max-width: none;
+  max-height: none;
+  aspect-ratio: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
 }
-.bbb-flip-page .bbb-page-label { display: none; }
+.bbb-flip-leaf--verso .bbb-page {
+  border-radius: 2px 0 0 2px;
+  box-shadow: -4px 8px 28px rgba(0, 0, 0, 0.4);
+}
+.bbb-flip-leaf--recto .bbb-page {
+  border-radius: 0 2px 2px 0;
+  box-shadow: 4px 8px 28px rgba(0, 0, 0, 0.4);
+}
+.bbb-flip-stage--cover .bbb-flip-leaf--recto .bbb-page {
+  border-radius: 2px;
+}
+.bbb-flip-leaf .bbb-page-label { display: none; }
+
+@media (max-width: 640px) {
+  /* Narrow screens: one upright page at a time (still no mirror). */
+  .bbb-flip-stage,
+  .bbb-flip-stage--cover {
+    width: min(420px, calc(100vw - 32px));
+    aspect-ratio: 8.5 / 11;
+  }
+  .bbb-flip-stage--spread .bbb-flip-leaf--verso,
+  .bbb-flip-stage--spread .bbb-flip-gutter {
+    display: none;
+  }
+  .bbb-flip-stage--spread .bbb-flip-leaf--recto {
+    flex: 1 1 100%;
+  }
+  .bbb-flip-leaf--recto .bbb-page {
+    border-radius: 2px;
+  }
+}
 
 /* Back / "n of m" / Next / Close, one row — Close moved in from the old
    top-right ×, which had no visible word (the icon-rule exception for a
@@ -548,14 +683,42 @@
    gone. The component's own @media print block still tidies a manual Ctrl+P. */
 
 @media (max-width: 860px) {
-  .bbb-body { flex-direction: column; min-height: auto; }
-  .bbb-panel { width: 100%; }
-  .bbb-canvas { padding: var(--space-lg, 28px) var(--space-md, 16px); }
+  .bbb-root {
+    height: auto;
+    max-height: none;
+    min-height: min(100dvh, 100%);
+  }
+  .bbb-body {
+    flex-direction: column;
+    min-height: auto;
+    overflow: visible;
+  }
+  .bbb-panel {
+    width: 100%;
+    height: auto;
+    max-height: min(42dvh, 22rem);
+  }
+  .bbb-canvas {
+    padding: var(--space-lg, 28px) var(--space-md, 16px);
+    overflow-x: auto;
+    overflow-y: visible;
+    /* On stacked layout, size pages from the viewport rather than 100% of a
+       heightless flex child. */
+    --bbb-page-h: min(70dvh, 36rem);
+    min-height: calc(var(--bbb-page-h) + 3rem);
+  }
+  .bbb-page {
+    height: var(--bbb-page-h);
+    max-width: min(100%, calc(100vw - 2.5rem));
+  }
 }
 @media (max-width: 480px) {
   .bbb-panel { padding: var(--space-md, 18px) var(--space-md, 16px); }
-  .bbb-canvas { padding: var(--space-md, 20px) var(--space-sm, 12px); gap: var(--space-lg, 24px); }
-  .bbb-page { width: min(320px, calc(100vw - 56px)); }
+  .bbb-canvas {
+    padding: var(--space-md, 20px) var(--space-sm, 12px);
+    gap: var(--space-lg, 24px);
+    --bbb-page-h: min(65dvh, 28rem);
+  }
 }
 
 /* ---------------------------------------------------- content pages
@@ -650,8 +813,13 @@
    a missing paragraph is not. Covers, colour and type pages are unchanged:
    their content is generated to fit. */
 .bbb-page--content {
+  /* Grow with copy rather than clip; keep at least a full sheet height so
+     short pages still fill the stage. */
   aspect-ratio: auto;
-  min-height: calc(min(320px, 100vw - 80px) * 11 / 8.5);
+  height: auto;
+  min-height: var(--bbb-page-h, min(calc(100dvh - 8.5rem), 100%));
+  width: calc(var(--bbb-page-h, min(calc(100dvh - 8.5rem), 36rem)) * 210 / 297);
+  max-width: min(100%, calc(100vw - 320px - 4rem));
   overflow: visible;
 }
 
@@ -736,9 +904,14 @@
 .bbb-logo-spec__text {
   margin: 0;
   font-size: 0.625rem;
-  line-height: 1.6;
+  line-height: 1.5;
   color: #6f6b5e;
 }
+.bbb-logo-spec__line {
+  display: block;
+  margin: 0 0 0.35em;
+}
+.bbb-logo-spec__line:last-child { margin-bottom: 0; }
 .bbb-page[data-dark] .bbb-logo-spec__text { color: #c9c6ba; }
 
 .bbb-logo-donts__label {
@@ -758,18 +931,22 @@
 .bbb-logo-donts__pills {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs, 4px);
-  max-height: 22%;
+  gap: var(--space-xs, 4px) var(--space-sm, 6px);
+  max-height: 28%;
   overflow: hidden;
 }
 
 .bbb-logo-dont {
-  font-size: 0.4375rem;
+  font-size: 0.5rem;
   line-height: 1.35;
-  padding: 2px 6px;
+  padding: 3px 7px;
   border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: var(--radius-pill, 999px);
   color: #6f6b5e;
+  max-width: 100%;
+  /* Long don’ts must wrap inside the chip, not run into the next pill. */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .bbb-page[data-dark] .bbb-logo-dont {
   border-color: rgba(255, 255, 255, 0.22);
