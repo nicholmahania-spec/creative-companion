@@ -3455,11 +3455,12 @@ function App() {
               )
             })}
           </ol>
-          {/* Only when it actually goes somewhere. When the next gap IS the
-              current page, "Continue → <first stop>" points at the screen
-              you're already on — a control that does nothing is worse than no
-              control. "Start with these" is the call to action on that page. */}
-          {pathNextGap && pathNextGap.view !== activeView && (
+          {/* Sequential next on the path — not earliest incomplete gap.
+              Gap-jumping sent people on Research/Identity back to Strategy
+              ("Continue → Strategy") while they were mid-path. Primary Next
+              on each page and this rail both walk forward; Home still uses
+              pathNextGap for "where work is empty." Hide on the last stop. */}
+          {journeyNext && (
             <button
               type="button"
               /* is-earned: the gradient ring fires ONLY when the stop you are
@@ -3471,9 +3472,9 @@ function App() {
               className={`btn btn-primary step-rail-cta${
                 journeyActive && thisStepFilled ? ' is-earned' : ''
               }`}
-              onClick={() => goToProcessStep(pathNextGap, { micro: 'next' })}
+              onClick={() => goToProcessStep(journeyNext, { micro: 'open' })}
             >
-              Continue → {pathNextGap.label}
+              Continue → {journeyNext.label}
             </button>
           )}
         </nav>

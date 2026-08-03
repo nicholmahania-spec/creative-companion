@@ -1882,6 +1882,7 @@ export default function DesignView({
                   palette={projectPalette}
                   pins={deskMood.filter((m) => m.inPack)}
                   editable={false}
+                  compact
                   hideWatermark={hidePackWatermark}
                 />
               </Suspense>
