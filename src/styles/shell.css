@@ -6108,7 +6108,9 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   align-items: stretch;
   gap: 0;
   height: 100%;
-  padding: 1.1rem 0;
+  /* Horizontal inset so active-row left edge / border never kisses the
+     viewport edge (desktop rail and open drawer). */
+  padding: 1.1rem var(--space-3);
   background: var(--ts-panel, #F9F9F9);
   border-right: 1px solid var(--border-subtle);
 }
@@ -8224,7 +8226,7 @@ select:focus {
 
 /* Left step rail: strong, readable — no barely-visible 0.4 ghosts */
 .journey-sidebar {
-  padding: 0.85rem 0 !important;
+  padding: 0.85rem var(--space-3) !important;
 }
 .journey-sidebar .journey-bar-list {
   gap: 0.15rem !important;
@@ -10156,12 +10158,14 @@ textarea.artboard-brief-input {
 
   .app-shell > .journey-sidebar .journey-projects-section {
     border: none !important;
+    /* Top gap only — horizontal inset comes from .journey-sidebar padding
+       so the active project’s left edge isn’t flush to the screen. */
     padding: var(--space-4) 0 0 !important;
   }
   .app-shell > .journey-sidebar .journey-projects-head {
     margin-bottom: var(--space-3) !important;
-    /* Match the rows' 12px inset — the heading sat flush to the edge. */
-    padding-left: var(--space-3);
+    /* Sidebar already insets; don’t double-pad the heading. */
+    padding-left: 0;
   }
   .app-shell > .journey-sidebar .journey-projects-heading {
     /* was #A1A1A1 on the panel — 2.3:1, under the enforced floor */
