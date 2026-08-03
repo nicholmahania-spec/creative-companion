@@ -1,7 +1,7 @@
 /**
- * Design step — live artboard preview + accordion editors
- * (tagline, voice, colors, type, logo, pack pins).
- * Owns palette hex drafts / role assign / contrast checker local state.
+ * Identity (Design) — live artboard + flat editors (mark, words, colour, type, pack, stationery).
+ * Path rebuild (2026-08-03): full main width, mark-done off, Next leads footer.
+ * Artboard readable first (left wide / first mobile); one wall pack, no dual homes.
  */
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react'
 import { labelForStepId } from '../lib/journey'
@@ -518,36 +518,20 @@ export default function DesignView({
   return (
     <>
           <div className="brand-layout surface-document system-view design-studio view-enter" data-nav-dir={navDir}>
-            <div className="brand-template-top">
-              <div>
+            <div className="brand-template-top design-identity-head">
+              <div className="design-identity-head-text">
                 <h1 className="page-title">
                   {labelForStepId('design')}
                 </h1>
-                <p className="page-sub">
-                  {activeProject?.name || 'Project'}
-                  {/* Floor, not ratio — the same call ResearchView records at
-                      its own heading, and the one the project sidebar and the
-                      Define chapter rail already made. "★ 3/6" is a number to
-                      decode that produces no next action, and it reads as a
-                      scoreboard three-fifths empty. Say what is still open,
-                      or say it is done. */}
+                {/* Quiet status only — pack floor, not goal/words scoreboard. */}
+                <p className="design-identity-status" role="status">
                   {(() => {
                     const inPack = deskMood.filter((m) => m.inPack).length
-                    if (!inPack) return null
-                    return (
-                      <span>
-                        {inPack >= 6
-                          ? ' · ★ pack full'
-                          : ` · ★ ${inPack} in pack · room for ${6 - inPack}`}
-                      </span>
-                    )
+                    if (!inPack) return 'Artboard · no pack pins yet'
+                    return inPack >= 6
+                      ? 'Artboard · ★ pack full'
+                      : `Artboard · ★ ${inPack} in pack · room for ${6 - inPack}`
                   })()}
-                  {activeProject?.detective?.goal && (
-                    <span> · Goal: {String(activeProject.detective.goal).slice(0, 20)}{String(activeProject.detective.goal).length > 20 ? '…' : ''}</span>
-                  )}
-                  {activeProject?.detective?.brandWords && (
-                    <span> · {String(activeProject.detective.brandWords).slice(0, 20)}{String(activeProject.detective.brandWords).length > 20 ? '…' : ''}</span>
-                  )}
                   <InfoReveal>
                     {(getProcessPhase('design')?.checks || []).join(' · ')}
                   </InfoReveal>
@@ -563,7 +547,6 @@ export default function DesignView({
                       const r = bumpDesignVersion()
                       if (r?.ok)
                         flashMicro(`Version ${r.version}`)
-                      // Refresh version history after bumping
                       await loadVersionHistory()
                     }}
                   >
@@ -1894,7 +1877,7 @@ export default function DesignView({
               role="region"
               aria-label="Live leave-behind preview"
             >
-              <div className="design-rail-label">Preview</div>
+              <div className="design-rail-label">Artboard</div>
               <Suspense
                 fallback={<div className="panel-hint">Loading…</div>}
               >
@@ -1909,6 +1892,22 @@ export default function DesignView({
               </Suspense>
             </div>
 
+            <div className="path-continue-row design-path-footer">
+              <button
+                type="button"
+                className="btn btn-primary work-path-next"
+                onClick={() => setActiveView?.(journeyNext?.view || 'flow')}
+              >
+                {`Next · ${journeyNext?.label || labelForStepId('sketch')}`}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setActiveView?.('desk')}
+              >
+                Back to the desk
+              </button>
+            </div>
           </div>
 
           {/* Version History Modal */}
@@ -2295,15 +2294,6 @@ export default function DesignView({
             </div>
           )}
 
-      <div className="path-continue-row">
-        <button
-          type="button"
-          className="btn btn-primary work-path-next"
-          onClick={() => setActiveView?.(journeyNext?.view || 'flow')}
-        >
-          {`Next · ${journeyNext?.label || labelForStepId('sketch')}`}
-        </button>
-      </div>
     </>
   )
 }

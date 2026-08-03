@@ -125,7 +125,10 @@ hours, scope dashboards above the work). Demote contract/planning
   `.app:has(.research-studio) .main` full width; **hybrid artboard**
   (`.research-artboard` frame + auto-flow grid inside — not free pan/zoom
   placement, not a bare document empty state)
+- Identity: `src/views/DesignView.jsx`, `src/styles/lazy-design.css`,
+  `.main:has(.design-studio)` full width; artboard primary; quiet status;
+  Next + Back footer
 - Do not reintroduce: chapter rail on The brief, start-here multi-chip ramp,
   interview CTA that only focuses the first field, project-name band when
   sidebar/header already name the project; Research 980/1160px centered caps;
-  Research empty prose without a framed drop plane
+  Research empty prose without a framed drop plane; Identity 1120px main cap

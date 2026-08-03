@@ -2058,13 +2058,22 @@ h3 {
   width: 100%;
 }
 
-/* System + Pack need room for sticky artboard / preview side-by-side */
-
+/* System + Pack / Identity — fill main grid cell (path rebuild checklist).
+   Was min(1120px) centered — left a dead gutter next to the sidebar. */
 .main:has(.system-view),
 .main:has(.pack-view),
+.main:has(.design-studio),
 .app.view-brand .main,
 .app.is-pack-view .main {
-  max-width: min(1120px, 100%);
+  max-width: none;
+  margin-inline: 0;
+  width: 100%;
+  padding-inline: var(--space-5);
+}
+
+/* Identity — artboard + editors are the job; hide full-width mark-done banner. */
+.main:has(.design-studio) .step-done-toggle {
+  display: none;
 }
 
 /* Global version footer — every view */
