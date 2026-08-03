@@ -45,7 +45,7 @@ export default function JourneyGapStrip({
           onClick={() => setActiveView('finish')}
           title={`Steps look full · open ${labelForStepId('deliver')}`}
         >
-          Download brand book PDF
+          {`Open ${labelForStepId('deliver')}`}
         </button>
       )}
     </div>

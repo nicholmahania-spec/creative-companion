@@ -957,7 +957,7 @@ export default function DesignView({
                     ? 'Solid'
                     : health.score >= 50
                       ? 'Getting there'
-                      : 'Needs work'
+                      : 'Tighten roles'
                 return (
                   <div className="palette-health">
                     <div className="palette-health-head">

@@ -1249,6 +1249,26 @@
   background: var(--bg-muted);
 }
 
+/* Phone: one scroll row of substeps — not 2–3 wraps under the step rail */
+@media (max-width: 640px) {
+  .identity-subnav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: var(--space-1);
+    padding-bottom: var(--space-2);
+    scrollbar-width: none;
+  }
+
+  .identity-subnav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .identity-subnav-btn {
+    flex: 0 0 auto;
+  }
+}
+
 .design-preview-pack-hint {
   margin: var(--space-2) 0 var(--space-3);
   font-size: var(--fs-2);

@@ -364,13 +364,14 @@
    the reference itself, so it belongs on the reference, not below it. */
 .research-pin-star {
   position: absolute;
-  top: var(--space-1);
-  right: var(--space-1);
-  width: 24px;
-  height: 24px;
+  top: 0;
+  right: 0;
+  /* 44px tap floor (was 24px) — glyph stays readable via font-size */
+  width: var(--tap-min, 2.75rem);
+  height: var(--tap-min, 2.75rem);
   display: grid;
   place-items: center;
-  font-size: var(--fs-1);
+  font-size: var(--fs-2);
   line-height: 1;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
@@ -477,8 +478,8 @@
 
 .research-pin-remove {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: var(--tap-min, 2.75rem);
+  height: var(--tap-min, 2.75rem);
   display: grid;
   place-items: center;
   border: 1px solid var(--border-subtle);
@@ -645,10 +646,10 @@
    be the smallest thing on the row. */
 .research-shortlist-drop {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 24px;
-  height: 24px;
+  top: -4px;
+  right: -4px;
+  width: var(--tap-min, 2.75rem);
+  height: var(--tap-min, 2.75rem);
   display: grid;
   place-items: center;
   border: 1px solid var(--field-line);
@@ -838,7 +839,7 @@
 
 .research-studio .page-sub {
   font-size: var(--fs-1);
-  color: #A1A1A1;
+  color: var(--text-muted);
 }
 
 /* Ideate — decision strip quieter */
