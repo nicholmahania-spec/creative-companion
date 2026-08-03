@@ -9519,7 +9519,7 @@ select:focus {
 .journey-project-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   min-height: var(--tap-min);
   gap: 0.5rem;
   width: 100%;
@@ -10247,21 +10247,20 @@ textarea.artboard-brief-input {
   }
 
   .app-shell > .journey-sidebar .journey-project-row {
-    /* No box. One 2px edge marks the current project; everything else is
-       type weight and whitespace. */
+    /* Name only — no "Next: …" second line. One 2px edge marks current. */
     display: flex !important;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1px;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
     width: 100%;
     border: none !important;
     border-left: 2px solid transparent !important;
     border-radius: var(--radius-none) !important;
     background: none !important;
     box-shadow: none !important;
-    padding: 0 0 0 var(--space-3) !important;
+    padding: 0.35rem 0 0.35rem var(--space-3) !important;
     text-align: left;
-    min-height: 0 !important;
+    min-height: var(--tap-min) !important;
   }
   .app-shell > .journey-sidebar .journey-project-row.is-active {
     border-left-color: var(--text-primary) !important;
@@ -10284,12 +10283,6 @@ textarea.artboard-brief-input {
   .app-shell > .journey-sidebar .journey-project-row.is-active .journey-project-row-name {
     font-weight: 700;
     color: var(--text-primary);
-  }
-  .app-shell > .journey-sidebar .journey-project-row-next {
-    font-size: var(--fs-1);
-    font-weight: 500;
-    color: var(--text-muted);
-    line-height: 1.3;
   }
   .app-shell > .journey-sidebar .journey-project-row-count {
     /* "1/7" is a ratio to decode that produces no next action, and "0/7" on

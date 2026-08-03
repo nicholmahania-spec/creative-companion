@@ -3578,10 +3578,9 @@ function App() {
                 const p = summary.project
                 const isActive = p.id === activeProjectId
                 const menuOpen = openProjectMenuId === p.id
-                // A named next action beats a ratio: "1/5" has to be decoded
-                // into a meaning and still doesn't say what to do. Shared with
-                // Home via listRowNext so both surfaces speak the same phrase.
-                const nextLabel = listRowNext(summary)
+                // Sidebar: name only. "Next: Strategy" fought the project
+                // name for attention and looked like a second row of chrome
+                // (Home still uses listRowNext for its denser list).
                 return (
                   <li key={p.id} className="journey-project-row-wrap">
                     <button
@@ -3591,7 +3590,6 @@ function App() {
                       aria-current={isActive ? 'true' : undefined}
                     >
                       <span className="journey-project-row-name">{p.name}</span>
-                      <span className="journey-project-row-next">{nextLabel}</span>
                     </button>
                     <div className="journey-project-row-menu-wrap">
                       <button
