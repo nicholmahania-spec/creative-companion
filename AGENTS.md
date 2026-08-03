@@ -57,3 +57,70 @@ Run mentally or in the running app with theme toggled to **deep**:
 
 - Design grammar: `DESIGN_GRAMMAR.md` → **G4.4 Dark mode audit**
 - Palette tokens live in `src/index.css` (`:root` + `.app.deep`)
+
+---
+
+## Path page rebuild checklist (mandatory — Strategy lessons apply to every stop)
+
+Learned on **The brief** (Strategy) rebuild, 2026-08-03. Apply on **Research,
+Identity, Touchpoints, Assets**, and any new full-page path surface — not only
+Define. Do not re-learn these by shipping the same bugs again.
+
+### Width and layout — no floating islands
+
+| Do | Don’t |
+|----|--------|
+| Fill the **main grid cell** beside the sidebar (`max-width: none` on `.main` for that view) | Stack centered caps: `.main` 780px + `.surface-document` 52rem + page root 42rem + `margin-inline: auto` |
+| Left-align content in the content column | Re-cap after a “float fix” (e.g. `min(68rem)` left a dead right gutter) |
+| Long fields / primary content **full width** of the main column | Half-empty 2-col grids where every field is `gridSpan: half` |
+| Short pairs only where real (e.g. email/phone, date/contact) | Two-column for long questions on a wide page |
+
+Check: `src/styles/shell.css` `.app:has(.define-brief) .main` is the pattern — each
+path view needs its own full-width main rule (or a shared `.path-view` class)
+when you rebuild it.
+
+### One job per page
+
+| Page role | Chrome allowed |
+|-----------|----------------|
+| **Writing surface** (Strategy brief) | Title · status · one share CTA · form · quiet footer |
+| **Command surface** (Desk) | Project command: next, client, week, pack |
+| **Orchestration** (Home) | Multi-project pickup, hours, needs-you |
+
+Do **not** put Desk/Home density on a writing page (task lists, dual status,
+hours, scope dashboards above the work). Demote contract/planning
+(milestones, scope) **below** the primary work or keep on Desk.
+
+### One map, one initiation path
+
+| Do | Don’t |
+|----|--------|
+| Section headings **in the content** are the only chapter/stop map | A second rail/sidebar that re-lists the same chapters with “N needed” |
+| The work itself is the start (first field / first pin / first tool) | “Start with X” chips that jump to the first thing already on screen |
+| One solid primary CTA for the page job | Equal-weight dual primaries (Send + Interview + Start + Next) |
+
+### Type and chrome hierarchy
+
+| Do | Don’t |
+|----|--------|
+| **Sentence-case** labels on conversational forms | All-caps “settings eyebrow” labels on a client brief |
+| Quiet **NEEDED** / needed count only where gating matters | Full-field scoreboards (“0 of 35”) or long “Still blank: A, B, C…” lists |
+| Footer: **path continue primary** leads; secondary back/desk | Secondary-looking Next, primary-looking Back |
+| Shell mark-done / path chrome soft or off on writing surfaces | Full-width “Mark Strategy done” competing with the form |
+
+### Width checklist before “done” on any path page
+
+1. `.main` for this view is not capped below the grid cell (no leftover gutter)
+2. Page root is not `margin-inline: auto` with a reading-width max unless the owner asked for a narrow measure
+3. Primary content uses full main width; half columns only for real short pairs
+4. No dual map (rail + in-content sections for the same list)
+5. One clear primary action; form/board/tool is the initiation target
+6. Dark mode still audited if colors changed
+
+### Reference implementation
+
+- Strategy brief: `src/views/DefineView.jsx`, `src/styles/lazy-define.css`,
+  `.app:has(.define-brief) .main` in `src/styles/shell.css`
+- Do not reintroduce: chapter rail on The brief, start-here multi-chip ramp,
+  interview CTA that only focuses the first field, project-name band when
+  sidebar/header already name the project
