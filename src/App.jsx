@@ -4781,7 +4781,6 @@ function App() {
               navDir={navDir}
               journeyNext={journeyNext}
               activeProject={activeProject}
-              deskTasks={deskTasks}
               setActiveView={setActiveView}
               updateDetective={updateDetective}
               onOpenShare={() => setOverviewSharePanelOpen(true)}

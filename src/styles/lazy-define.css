@@ -29,7 +29,118 @@
   --define-glow: transparent;
   max-width: 42rem;
   margin-inline: auto;
-  padding-bottom: 6.5rem;
+  /* Room for sticky brief footer */
+  padding-bottom: 8rem;
+}
+
+/* ── The brief (Strategy) — Studio mock chrome ── */
+.define-brief {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.define-brief .define-project-name {
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.define-brief-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.define-brief-title {
+  margin: 0;
+}
+
+.define-brief-status {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.define-brief-lede {
+  margin: 0;
+  max-width: 65ch;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.define-brief-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.define-brief-head .define-deadline-relative {
+  margin: 0;
+}
+
+.define-brief-head .define-title-rule {
+  width: 100%;
+  margin: var(--space-2) 0 0;
+}
+
+.define-brief-head .define-start-here {
+  width: 100%;
+  margin: 0;
+}
+
+.define-brief-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.define-brief-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  margin-inline: calc(-1 * var(--space-4, 1rem));
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-elevated, var(--bg-card));
+  border-top: 1px solid var(--border-subtle);
+}
+
+.define-brief-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.define-brief-still-blank {
+  margin: 0;
+  max-width: 65ch;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.app.deep .define-brief-footer {
+  background: var(--bg-card);
+  border-top-color: var(--border-subtle);
+}
+
+.app.deep .define-brief-status {
+  color: var(--text-primary);
+}
+
+.app.deep .define-brief-lede {
+  color: var(--text-secondary);
 }
 
 /* Project essentials card */
