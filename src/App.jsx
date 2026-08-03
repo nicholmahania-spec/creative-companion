@@ -70,7 +70,7 @@ import {
   getPrevJourney,
   toolsLabelForView,
   isToolsMenuView,
-} from './lib/journey'
+} from './lib/journey/journey'
 import {
   pathStepHasContent,
   pathStepMeetsCondition,
@@ -80,11 +80,11 @@ import {
   buildPathProgressCtx,
   focusPathGapTarget,
   sameProjectId,
-} from './lib/journeyProgress'
+} from './lib/journey/journeyProgress'
 import {
   nextIdentitySubstep,
   resolveIdentitySubstep,
-} from './lib/identitySubsteps'
+} from './lib/journey/identitySubsteps'
 
 import JourneyGapStrip from './components/JourneyGapStrip'
 import PathStepIcon from './components/PathStepIcon'
@@ -104,7 +104,7 @@ import {
   printElementById,
   printCurrentPage,
   slugifyFilename,
-} from './lib/exportFiles'
+} from './lib/book/exportFiles'
 import {
   hoursForRange,
   workLogsFromProjects,

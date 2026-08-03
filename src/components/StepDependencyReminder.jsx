@@ -26,7 +26,7 @@ import {
   STEP_DEPENDENCIES,
   fieldLabel,
   fieldMeta,
-} from '../lib/stepDependencies'
+} from '../lib/journey/stepDependencies'
 import { formatDetectiveAnswer } from '../lib/brief/detectiveBrief'
 
 export default function StepDependencyReminder({ stepId }) {

@@ -7,7 +7,7 @@ import {
   pathStepHasContent,
   pathStepMeetsCondition,
 } from './journeyProgress'
-import useAppStore from '../store/useAppStore'
+import useAppStore from '../../store/useAppStore'
 
 /** A ctx whose 'design' condition is genuinely false. */
 const emptyCtx = (pathDone, pathReached) => ({

@@ -6,17 +6,17 @@
 import { Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
 import CaseStudyExport from '../components/CaseStudyExport'
-import { labelForStepId, JOURNEY_STEPS } from '../lib/journey'
-import { getProcessPhase } from '../lib/processGuide'
-import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
+import { labelForStepId, JOURNEY_STEPS } from '../lib/journey/journey'
+import { getProcessPhase } from '../lib/journey/processGuide'
+import { packReadiness, packBriefMarkdown } from '../lib/book/exportFiles'
 import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
-import { focusPathGapTarget } from '../lib/journeyProgress'
+import { focusPathGapTarget } from '../lib/journey/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
 import {
   BOOK_PAGE_SIZES,
   BOOK_EDGE_SPACE,
   bookSetupSummary,
-} from '../lib/brandBookSetup'
+} from '../lib/book/brandBookSetup'
 import '../styles/lazy-deliver.css'
 
 const BrandBookPreview = lazy(

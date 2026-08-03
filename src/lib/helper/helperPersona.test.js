@@ -4,7 +4,7 @@ import {
   HELPER_SYSTEM_PROMPT,
   PROCESS_SPINE,
 } from './helperPersona'
-import { JOURNEY_STEPS } from '../journey'
+import { JOURNEY_STEPS } from '../journey/journey'
 import { DESIGN_SYSTEM_PROMPT as fromBuddy } from './buddy'
 
 /**

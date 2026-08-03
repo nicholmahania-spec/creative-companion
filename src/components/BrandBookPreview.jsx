@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { downloadBrandPackVectorPdf } from '../lib/exportFiles'
+import { downloadBrandPackVectorPdf } from '../lib/book/exportFiles'
 
 /**
  * The brand book, previewed by rendering the actual PDF.

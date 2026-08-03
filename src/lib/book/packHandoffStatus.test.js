@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { packHandoffStatus } from '../views/DeskView.jsx'
+import { packHandoffStatus } from '../../views/DeskView.jsx'
 
 describe('packHandoffStatus (desk ambient A)', () => {
   it('thin pack reads thin for handoff', () => {

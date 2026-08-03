@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { progressItemInScope } from './brief/detectiveBrief'
-import { brandProgressSummary } from './beforeAfter'
-import { packReadiness } from './exportFiles'
+import { progressItemInScope } from '../brief/detectiveBrief'
+import { brandProgressSummary } from '../beforeAfter'
+import { packReadiness } from '../book/exportFiles'
 
 /**
  * A logo-only job must read as finished when the logo is finished.

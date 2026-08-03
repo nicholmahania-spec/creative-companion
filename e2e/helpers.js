@@ -1,4 +1,4 @@
-import { JOURNEY_STEPS } from '../src/lib/journey.js'
+import { JOURNEY_STEPS } from '../src/lib/journey/journey.js'
 import { DETECTIVE_CHAPTERS } from '../src/lib/brief/detectiveBrief.js'
 
 /**

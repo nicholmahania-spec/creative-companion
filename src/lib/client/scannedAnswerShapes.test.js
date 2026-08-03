@@ -4,7 +4,7 @@ import {
   coerceScannedAnswers,
   isWrongShapeForField,
 } from '../brief/detectiveBrief'
-import { touchpointsFor } from '../touchpoints'
+import { touchpointsFor } from '../journey/touchpoints'
 
 /**
  * Free text from the paper/OCR route must never reach a typed field.

@@ -9,9 +9,9 @@
  * half-checked scan to a stray backdrop click is the abandonment case.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { JOURNEY_STEPS } from '../../lib/journey'
+import { JOURNEY_STEPS } from '../../lib/journey/journey'
 import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../../lib/brief/detectiveBrief'
-import { downloadProjectOverviewPdf } from '../../lib/exportFiles'
+import { downloadProjectOverviewPdf } from '../../lib/book/exportFiles'
 import { groupMessagesByDay } from '../../lib/client/messageDayLabel'
 import { ocrOverviewForm, ocrOverviewPdf, readOverviewPdfForm } from '../../lib/overviewOcr'
 import {

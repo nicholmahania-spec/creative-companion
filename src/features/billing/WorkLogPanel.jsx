@@ -8,7 +8,7 @@
  * Nothing here is billable. `timeLog` and the invoice are hand-entered.
  */
 import { useCallback, useMemo, useState } from 'react'
-import { JOURNEY_STEPS } from '../../lib/journey'
+import { JOURNEY_STEPS } from '../../lib/journey/journey'
 import { useModalFocus } from '../../lib/useModalFocus'
 import '../../styles/lazy-worklog.css'
 

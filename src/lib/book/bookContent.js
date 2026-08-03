@@ -1,6 +1,6 @@
-import { filledDetectiveChapters } from './brief/detectiveBrief'
+import { filledDetectiveChapters } from '../brief/detectiveBrief'
 import { bookPlan } from './bookDocument'
-import { touchpointLabel } from './touchpoints'
+import { touchpointLabel } from '../journey/touchpoints'
 
 /**
  * The brand book's content, page by page, built only from answers that exist.

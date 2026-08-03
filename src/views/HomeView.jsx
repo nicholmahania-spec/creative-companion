@@ -2,7 +2,7 @@
  * Home / Studio dashboard — return wall for multi-project pickup.
  * Extracted from App.jsx so the shell is not also the Home page.
  */
-import { JOURNEY_STEPS, labelForStepId } from "../lib/journey";
+import { JOURNEY_STEPS, labelForStepId } from "../lib/journey/journey";
 import {
   hoursForRange,
   workLogsFromProjects,

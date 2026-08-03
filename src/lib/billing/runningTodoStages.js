@@ -1,4 +1,4 @@
-import { JOURNEY_STEPS, labelForStepId } from '../journey'
+import { JOURNEY_STEPS, labelForStepId } from '../journey/journey'
 
 /**
  * Keyword-based stage tagging for the running to-do list.

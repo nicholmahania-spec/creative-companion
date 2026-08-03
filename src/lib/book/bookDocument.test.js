@@ -17,10 +17,13 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { bookPlan, bookSectionIds, FOUNDATION_PAGES, SECTION_PAGES } from './bookDocument'
 
-const SRC = new URL('..', import.meta.url).pathname
+const SRC = new URL('../..', import.meta.url).pathname
 
 /** Only the declaration and this test may spell the section list out. */
-const ALLOWED = new Set(['lib/bookDocument.js', 'lib/bookDocument.test.js'])
+const ALLOWED = new Set([
+  'lib/book/bookDocument.js',
+  'lib/book/bookDocument.test.js',
+])
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -131,7 +134,7 @@ describe('bookDocument — nothing restates the plan', () => {
   })
 
   it('brandBookPdf derives its plan rather than declaring one', () => {
-    const pdf = files.find((f) => f.rel === 'lib/brandBookPdf.js')
+    const pdf = files.find((f) => f.rel === 'lib/book/brandBookPdf.js')
     expect(pdf, 'brandBookPdf.js should still exist').toBeTruthy()
     expect(pdf.text).toContain('bookPlan(pack)')
     /* The shape of the old private declaration. Its return would be a second

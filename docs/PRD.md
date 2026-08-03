@@ -59,7 +59,7 @@ ranked below the ADHD lens. If they disagree, the layout gets reworked.
 
 ### 3.1 The path — exactly five stops
 
-Declared once in `src/lib/journey.js` (`JOURNEY_STEPS`). Process language follows
+Declared once in `src/lib/journey/journey.js` (`JOURNEY_STEPS`). Process language follows
 classic brand-identity practice (Wheeler / *Logo Design Love*), ordered
 **brief-first** for ADHD: know the project before gathering refs. Step **ids** are
 frozen for history/progress; **labels** are user-facing and may change.

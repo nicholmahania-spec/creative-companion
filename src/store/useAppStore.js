@@ -14,7 +14,7 @@ import {
 } from '../lib/decisionLog'
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/helper/breakKit'
-import { IDENTITY_FIELDS } from '../lib/identityStamp'
+import { IDENTITY_FIELDS } from '../lib/journey/identityStamp'
 import versionService from '../services/versionService'
 
 /**

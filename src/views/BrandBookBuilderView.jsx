@@ -10,14 +10,14 @@ import {
   EDGE_STOPS,
   EDGE_ORDER,
   nearestEdgeStop,
-} from '../lib/bookBuilder'
-import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES } from '../lib/bookContent'
-import { currentBrandPack } from '../lib/currentPack'
-import { downloadBrandPackVectorPdf } from '../lib/exportFiles'
-import { bookSectionIds, bookPlan, FOUNDATION_PAGES, SECTION_PAGES } from '../lib/bookDocument'
-import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/fontCatalog'
+} from '../lib/book/bookBuilder'
+import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES } from '../lib/book/bookContent'
+import { currentBrandPack } from '../lib/book/currentPack'
+import { downloadBrandPackVectorPdf } from '../lib/book/exportFiles'
+import { bookSectionIds, bookPlan, FOUNDATION_PAGES, SECTION_PAGES } from '../lib/book/bookDocument'
+import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/book/fontCatalog'
 import { monogramFor, logoDontsList, DEFAULT_LOGO_CLEARSPACE, DEFAULT_LOGO_MIN_SIZE } from '../lib/brandSystem'
-import { loadBrandFamilies } from '../lib/fontLoader'
+import { loadBrandFamilies } from '../lib/book/fontLoader'
 import '../styles/brand-book-builder.css'
 
 /* ----------------------------------------------------------------------

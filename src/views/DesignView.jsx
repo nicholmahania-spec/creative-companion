@@ -4,13 +4,13 @@
  * Stationery lives on Assets; ★ pack pins stay on Research.
  */
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react'
-import { labelForStepId } from '../lib/journey'
+import { labelForStepId } from '../lib/journey/journey'
 import {
   IDENTITY_SUBSTEPS,
   resolveIdentitySubstep,
   nextIdentitySubstep,
   prevIdentitySubstep,
-} from '../lib/identitySubsteps'
+} from '../lib/journey/identitySubsteps'
 import useAppStore from '../store/useAppStore'
 import versionService, {
   versionIdentityPreview,
@@ -36,8 +36,8 @@ import {
   paletteHealthScore,
   suggestRoleColor,
 } from '../lib/color'
-import { getProcessPhase } from '../lib/processGuide'
-import { loadTypePairFont, loadBrandFamilies } from '../lib/fontLoader'
+import { getProcessPhase } from '../lib/journey/processGuide'
+import { loadTypePairFont, loadBrandFamilies } from '../lib/book/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
 import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-design.css'

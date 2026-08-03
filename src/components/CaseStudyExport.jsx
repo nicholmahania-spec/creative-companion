@@ -13,12 +13,12 @@
 import { useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { DELIVERABLE_OPTIONS } from '../lib/brief/detectiveBrief'
-import { downloadBlob, slugifyFilename } from '../lib/exportFiles'
+import { downloadBlob, slugifyFilename } from '../lib/book/exportFiles'
 import {
   buildCaseStudy,
   caseStudyMarkdown,
   durationPhrase,
-} from '../lib/caseStudy'
+} from '../lib/book/caseStudy'
 
 const LABELS = Object.fromEntries(
   DELIVERABLE_OPTIONS.map((o) => [o.id, o.label])

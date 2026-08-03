@@ -25,12 +25,12 @@ import {
   toolsLabelForView,
 } from './journey'
 
-const SRC = new URL('..', import.meta.url).pathname
+const SRC = new URL('../..', import.meta.url).pathname
 
 /** journey.js is allowed to say these things — it is the declaration. */
 const ALLOWED = new Set([
-  'lib/journey.js', // the declaration itself
-  'lib/journeySingleSource.test.js',
+  'lib/journey/journey.js', // the declaration itself
+  'lib/journey/journeySingleSource.test.js',
 ])
 
 function walk(dir, out = []) {

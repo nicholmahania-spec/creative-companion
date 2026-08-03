@@ -8,7 +8,7 @@
  * Footer: Back to desk · Next · Research · short needed count.
  */
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { labelForStepId } from '../lib/journey'
+import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
 import { getRequiredEmpty } from '../lib/brief/detectiveBrief'
 import { relativeDeadlineLabel } from '../lib/dates'

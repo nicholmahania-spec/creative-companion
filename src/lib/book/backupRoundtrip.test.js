@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   blankWorkspaceState,
   createBlankProject,
-} from '../store/useAppStore'
+} from '../../store/useAppStore'
 import {
   buildBrandPackSnapshot,
   packReadiness,

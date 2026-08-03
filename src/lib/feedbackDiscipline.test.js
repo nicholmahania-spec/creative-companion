@@ -29,7 +29,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { downloadBlob } from './exportFiles'
+import { downloadBlob } from './book/exportFiles'
 import { downloadInvoicePdf } from './billing/invoice'
 
 // ── Layer 1: the real path reports its own failure ───────────────────────

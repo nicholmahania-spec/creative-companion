@@ -82,7 +82,7 @@ describe('the logo direction reaches the client', () => {
  * reason, because an unexplained exemption is how the original single-field
  * version of this rule stayed single-field.
  */
-const SRC_ROOT = new URL('..', import.meta.url).pathname
+const SRC_ROOT = new URL('../..', import.meta.url).pathname
 
 function allSource() {
   const out = []
@@ -99,11 +99,11 @@ function allSource() {
 
 /** Things a client actually receives. */
 const CLIENT_ARTIFACTS = [
-  'lib/brandBookPdf.js',
-  'lib/exportFiles.js',
+  'lib/book/brandBookPdf.js',
+  'lib/book/exportFiles.js',
   'lib/projectTerms.js',
   'lib/brandSystem.js',
-  'lib/caseStudy.js',
+  'lib/book/caseStudy.js',
   'components/StationeryKit.jsx',
 ]
 
@@ -134,7 +134,7 @@ describe('every editable brand field reaches something the client gets', () => {
   ]
 
   const artifactText = CLIENT_ARTIFACTS.map((rel) =>
-    readFileSync(new URL(`../${rel}`, import.meta.url).pathname, 'utf8')
+    readFileSync(join(SRC_ROOT, rel), 'utf8')
   ).join('\n')
 
   it('finds the editable fields it is meant to check', () => {

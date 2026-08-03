@@ -1,4 +1,4 @@
-import { JOURNEY_STEPS, labelForStepId } from '../journey'
+import { JOURNEY_STEPS, labelForStepId } from '../journey/journey'
 /**
  * Client inbox — one merged stream of everything clients did, across every
  * project.

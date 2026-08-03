@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { touchpointsStatusLine } from '../views/SketchView.jsx'
+import { touchpointsStatusLine } from '../../views/SketchView.jsx'
 
 describe('touchpointsStatusLine — words, not N of M', () => {
   it('names empty brief state', () => {

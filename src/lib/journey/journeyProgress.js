@@ -1,4 +1,4 @@
-import { getDetectiveProgress } from './brief/detectiveBrief'
+import { getDetectiveProgress } from '../brief/detectiveBrief'
 
 /**
  * Stock blank-project palette (matches useAppStore.defaultProjectPalette).

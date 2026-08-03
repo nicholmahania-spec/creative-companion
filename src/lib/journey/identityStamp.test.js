@@ -6,7 +6,7 @@ import {
   identityStampLabel,
   identityStampState,
 } from './identityStamp'
-import useAppStore from '../store/useAppStore'
+import useAppStore from '../../store/useAppStore'
 
 const iso = (ms) => new Date(ms).toISOString()
 

@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { clientFacingError } from '../../lib/client/clientFacingError'
-import { JOURNEY_STEPS } from '../../lib/journey'
+import { JOURNEY_STEPS } from '../../lib/journey/journey'
 import ClientBriefFields from '../brief/ClientBriefFields'
 import {
   fetchClientPortal,

@@ -3,10 +3,10 @@
  * One job: check the book mock + note / mark good.
  */
 import { useMemo, useCallback, lazy, Suspense } from 'react'
-import { labelForStepId } from '../lib/journey'
+import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
-import { getProcessPhase } from '../lib/processGuide'
-import { focusPathGapTarget } from '../lib/journeyProgress'
+import { getProcessPhase } from '../lib/journey/processGuide'
+import { focusPathGapTarget } from '../lib/journey/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
 import TouchpointMockThumb from '../components/TouchpointMockThumb'
 import {
@@ -14,7 +14,7 @@ import {
   touchpointLabel,
   touchpointsBlurb,
   touchpointCheckHint,
-} from '../lib/touchpoints'
+} from '../lib/journey/touchpoints'
 import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))

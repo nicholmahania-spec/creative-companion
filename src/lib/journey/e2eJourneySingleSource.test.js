@@ -19,7 +19,7 @@ import { JOURNEY_STEPS } from './journey'
  * that reintroduced the copy.
  */
 
-const E2E_DIR = new URL('../../e2e', import.meta.url).pathname
+const E2E_DIR = new URL('../../../e2e', import.meta.url).pathname
 
 /**
  * Words that named a path stop and now name nothing.

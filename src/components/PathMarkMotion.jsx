@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { pathMarkLottie } from '../lib/pathMarkLottie'
+import { pathMarkLottie } from '../lib/journey/pathMarkLottie'
 
 /**
  * Animated product mark — Lottie when motion allowed, static SVG fallback.

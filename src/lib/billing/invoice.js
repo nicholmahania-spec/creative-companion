@@ -14,7 +14,7 @@
  * only express hours, so a fixed-price project had to be invented into hours
  * that multiplied out to the agreed number.
  */
-import { downloadBlob } from '../exportFiles'
+import { downloadBlob } from '../book/exportFiles'
 
 function safeFilename(filename) {
   return String(filename || 'invoice').replace(/[/\\?%*:|"<>]/g, '-')

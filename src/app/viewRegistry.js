@@ -6,7 +6,7 @@
  * warm: included in idle path-chunk prefetch.
  */
 import { lazy } from 'react'
-import { labelForView } from '../lib/journey'
+import { labelForView } from '../lib/journey/journey'
 
 export const lazyViews = {
   home: lazy(() => import('../views/HomeView')),

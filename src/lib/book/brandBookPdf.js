@@ -40,7 +40,7 @@ import {
   contrastRatio,
   formatRatio,
   nudgeHexForContrast,
-} from './color'
+} from '../color'
 import {
   buildColorSystem,
   decisionLineFromPack,
@@ -49,9 +49,9 @@ import {
   DEFAULT_LOGO_MIN_SIZE,
   TYPE_SCALE,
   monogramFor,
-} from './brandSystem'
-import { filledDetectiveChapters } from './brief/detectiveBrief'
-import { touchpointsFor, touchpointsBlurb, touchpointLabel } from './touchpoints'
+} from '../brandSystem'
+import { filledDetectiveChapters } from '../brief/detectiveBrief'
+import { touchpointsFor, touchpointsBlurb, touchpointLabel } from '../journey/touchpoints'
 import { slugifyFilename, downloadBlob, writeToSaveHandle } from './exportFiles'
 import { resolveBookSetup } from './brandBookSetup'
 import { bookPlan } from './bookDocument'
