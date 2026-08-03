@@ -3924,52 +3924,8 @@ function App() {
             }
           />
         )}
-        {/* Client-state chip — the one piece of the handoff's desk that
-            survived the advisor's review (the desk itself was rejected: it
-            duplicated the situation report the journey bar, the chip above
-            and Home already give, and cost a hop at task initiation). A
-            client acting on their portal was a SILENT state change — this
-            makes it a persistent on-screen trace. Renders only when
-            something actually arrived (a chip that always shows a state
-            would be a scoreboard); named states, never counts; click goes
-            to the destination the label promises. */}
-        {journeyActive &&
-          CLOUD &&
-          activeProject &&
-          (() => {
-            const arrived = (clientInbox.rows || []).filter(
-              (r) => r.unread && sameProjectId(r.projectLocalId, activeProject.id)
-            )
-            if (!arrived.length) return null
-            const top = arrived.find((r) => r.kind === 'form') || arrived[0]
-            const label =
-              top.kind === 'form'
-                ? 'They replied — review answers'
-                : top.kind === 'approval'
-                  ? `Approved: ${top.stepLabel}`
-                  : top.kind === 'notes'
-                    ? `Notes from the client on ${top.stepLabel}`
-                    : 'New message from the client'
-            return (
-              <button
-                type="button"
-                className="client-state-chip"
-                onClick={() => {
-                  if (top.kind === 'form') {
-                    // Straight to the review screen — the destination the
-                    // label promises, via the same one-shot flag the inbox
-                    // uses (the "Open their answers" lesson).
-                    setAutoOpenPortalReview(true)
-                    setOverviewSharePanelOpen(true)
-                  } else {
-                    setClientInboxOpen(true)
-                  }
-                }}
-              >
-                {label}
-              </button>
-            )
-          })()}
+        {/* Client arrival is not a banner under every path title (owner:
+            wrong shape). Unread lives in Client inbox / Home rows only. */}
         {/* ===== HOME — studio dashboard (all project counts) =====
             Glanceable work status: pick-up + project cards + path + client.
             Not a sparse single CTA card. */}
