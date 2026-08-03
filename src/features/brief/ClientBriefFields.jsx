@@ -14,7 +14,7 @@
  * client can actually answer in — "What does your business do?" rather than
  * "Unique Selling Proposition (USP)".
  */
-import { DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
+import { DETECTIVE_CHAPTERS } from '../../lib/detectiveBrief'
 import BriefSpectrum from './BriefSpectrum'
 import BriefAttach from './BriefAttach'
 

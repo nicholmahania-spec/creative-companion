@@ -13,9 +13,9 @@
  * blocks moving on. An unagreed scope is worth seeing, not worth stopping for.
  */
 import { useState } from 'react'
-import useAppStore from '../store/useAppStore'
-import { scopeGaps, REVISION_BILLING } from '../lib/revisions'
-import { projectTermsText, hasProjectTerms } from '../lib/projectTerms'
+import useAppStore from '../../store/useAppStore'
+import { scopeGaps, REVISION_BILLING } from '../../lib/revisions'
+import { projectTermsText, hasProjectTerms } from '../../lib/projectTerms'
 
 export default function ScopePanel({ activeProject, onOpenChapter, flashMicro }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)

@@ -43,7 +43,7 @@ src/
 | **God shell** | `App.jsx` owns chrome, home, export, cloud, timers, modals |
 | **Flat components/** | Login, public portal, brief fields, desk artboard all siblings |
 | **lib/ sprawl** | Domain logic + tests mixed; hard to find “client portal” vs “color” |
-| **DetectiveSheet as view** | Brief form is a view file but used as component inside Define |
+| **DetectiveSheet as view** | ~~was view~~ now `features/brief/DetectiveSheet` |
 | **Login as component** | Entry surface, not a leaf widget |
 | **CSS** | Already well sorted: `shell` + `lazy-*` (keep) |
 
@@ -158,8 +158,8 @@ src/
 | **0** | Extract `HomeView` from `App.jsx` | Low | **Done** |
 | **1** | `LoginPage` → `views/LoginView` | Low | **Done** |
 | **2** | `features/client-portal/*` + public main.jsx imports | Medium | **Done** |
-| **3** | `features/brief/*` (DetectiveSheet, ClientBriefFields, …) | Medium | Later |
-| **4** | `features/helper/*`, billing panels | Medium | Later |
+| **3** | `features/brief/*` (DetectiveSheet, ClientBriefFields, …) | Medium | **Done** |
+| **4** | `features/helper/*`, billing panels | Medium | **Done** |
 | **5** | `app/routes.js` map; thin App to outlet only | Higher | Later |
 | **6** | Optional `lib/{domain}/` folders with codemod | High | Only with test green + owner OK |
 

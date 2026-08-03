@@ -51,7 +51,7 @@ describe('invoice numbering', () => {
      a failed export starts burning numbers again. */
   it('the export commits only on success', () => {
     const panel = readFileSync(
-      new URL('../components/HoursInvoice.jsx', import.meta.url).pathname,
+      new URL('../features/billing/HoursInvoice.jsx', import.meta.url).pathname,
       'utf8'
     )
     const okBranch = /if \(r\?\.ok\) \{([\s\S]*?)\} else \{/.exec(panel)?.[1]

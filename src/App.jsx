@@ -40,10 +40,10 @@ import {
   versionLabel,
 } from './lib/version'
 const LoginView = lazy(() => import('./views/LoginView'))
-const BuddyMate = lazy(() => import('./components/BuddyMate'))
-const ForcedBreakOverlay = lazy(() => import('./components/ForcedBreakOverlay'))
+const BuddyMate = lazy(() => import('./features/helper/BuddyMate'))
+const ForcedBreakOverlay = lazy(() => import('./features/helper/ForcedBreakOverlay'))
 const BrandArtboard = lazy(() => import('./components/BrandArtboard'))
-const GameHUD = lazy(() => import('./components/GameHUD'))
+const GameHUD = lazy(() => import('./features/helper/GameHUD'))
 const InsightsView = lazy(() => import('./views/InsightsView'))
 const CalendarView = lazy(() => import('./views/CalendarView'))
 const ClientsView = lazy(() => import('./views/ClientsView'))
@@ -139,9 +139,9 @@ import StepDependencyReminder from './components/StepDependencyReminder'
 import HeaderIcon from './components/HeaderIcon'
 import PullToRefresh from './components/PullToRefresh'
 import HighlightExplain from './components/HighlightExplain'
-import { RunningTodoAddModal, RunningTodoPanel } from './components/RunningTodo'
-import { HoursInvoicePanel } from './components/HoursInvoice'
-import { WorkLogPanel } from './components/WorkLogPanel'
+import { RunningTodoAddModal, RunningTodoPanel } from './features/billing/RunningTodo'
+import { HoursInvoicePanel } from './features/billing/HoursInvoice'
+import { WorkLogPanel } from './features/billing/WorkLogPanel'
 import { DiscoveryBriefPanel } from './features/client-portal/DiscoveryBrief'
 import { ProjectOverviewSharePanel } from './features/client-portal/ProjectOverviewShare'
 import {

@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { clientFacingError } from '../../lib/clientFacingError'
 import { JOURNEY_STEPS } from '../../lib/journey'
-import ClientBriefFields from '../../components/ClientBriefFields'
+import ClientBriefFields from '../brief/ClientBriefFields'
 import {
   fetchClientPortal,
   fetchClientPortalMessages,

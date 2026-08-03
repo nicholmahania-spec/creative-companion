@@ -20,8 +20,8 @@ describe('dialogs that claim aria-modal actually manage focus', () => {
      declared unavailable — the worst combination, not a missing nicety. These
      four declared the attribute and implemented none of it. */
   const DIALOGS = [
-    'components/WorkLogPanel.jsx',
-    'components/HoursInvoice.jsx',
+    'features/billing/WorkLogPanel.jsx',
+    'features/billing/HoursInvoice.jsx',
   ]
 
   for (const rel of DIALOGS) {
@@ -38,7 +38,7 @@ describe('dialogs that claim aria-modal actually manage focus', () => {
   }
 
   it('RunningTodoAddModal traps focus (Escape stays with its safe-close handler)', () => {
-    const src = read('components/RunningTodo.jsx')
+    const src = read('features/billing/RunningTodo.jsx')
     expect(src).toMatch(/useModalFocus\(open,/)
     // Deliberately NOT onClose here: the component's own Escape handler does a
     // safe close that captures half-typed text, which the hook's plain onClose
@@ -85,13 +85,13 @@ describe('client-facing failures reach a screen reader', () => {
   })
 
   it('a failed brief upload is announced, not just shown', () => {
-    const src = read('components/BriefAttach.jsx')
+    const src = read('features/brief/BriefAttach.jsx')
     expect(src).toMatch(/failedCount/)
     expect(src).toMatch(/role="alert"/)
   })
 
   it('the brief tip is associated with its field', () => {
-    const src = read('components/ClientBriefFields.jsx')
+    const src = read('features/brief/ClientBriefFields.jsx')
     expect(src).toMatch(/const tipId =/)
     expect(src).toMatch(/aria-describedby=\{tipId\}/)
     // And the label no longer points at a non-existent id for group fields.
@@ -111,7 +111,7 @@ describe('single-key shortcuts are focus-scoped (WCAG 2.1.4)', () => {
 })
 
 describe('the running to-do panel is a drawer, not a false modal', () => {
-  const src = read('components/RunningTodo.jsx')
+  const src = read('features/billing/RunningTodo.jsx')
 
   it('the browsing panel is a complementary landmark, not aria-modal', () => {
     // The <aside> panel had role="dialog" + aria-modal="true" with no focus
@@ -135,7 +135,7 @@ describe('the running to-do panel is a drawer, not a false modal', () => {
 })
 
 describe('the progress HUD carries meaning off `title`', () => {
-  const src = read('components/GameHUD.jsx')
+  const src = read('features/helper/GameHUD.jsx')
 
   it('the summary is a real accessible name, not a title', () => {
     // `title` is dead on touch and keyboard. The whole summary lives on the

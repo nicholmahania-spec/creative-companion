@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   HELPER_BODY_ASSETS_PATH,
   reelForMood,
-} from '../lib/helperLottieReels'
+} from '../../lib/helperLottieReels'
 
 /** Character art aspect (560×662). */
 const BODY_ASPECT = 560 / 662

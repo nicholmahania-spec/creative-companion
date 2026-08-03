@@ -12,10 +12,10 @@ import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
 import { getRequiredEmpty } from '../lib/detectiveBrief'
 import { relativeDeadlineLabel } from '../lib/dates'
-import ScopePanel from '../components/ScopePanel'
+import ScopePanel from '../features/brief/ScopePanel'
 import '../styles/lazy-define.css'
 
-const DetectiveSheet = lazy(() => import('./DetectiveSheet'))
+const DetectiveSheet = lazy(() => import('../features/brief/DetectiveSheet'))
 
 /** Local project signals only — no portal fetch on every Strategy visit. */
 function briefSendStatus(project) {
