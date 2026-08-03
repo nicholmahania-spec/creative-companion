@@ -6120,7 +6120,8 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   align-items: stretch;
   gap: 0;
   height: 100%;
-  padding: 1.1rem 0;
+  /* Horizontal inset so active-row left edge is not flush to the viewport. */
+  padding: 1.1rem var(--space-3);
   background: var(--ts-panel, #F9F9F9);
   border-right: 1px solid var(--border-subtle);
 }
@@ -8236,7 +8237,7 @@ select:focus {
 
 /* Left step rail: strong, readable — no barely-visible 0.4 ghosts */
 .journey-sidebar {
-  padding: 0.85rem 0 !important;
+  padding: 0.85rem var(--space-3) !important;
 }
 .journey-sidebar .journey-bar-list {
   gap: 0.15rem !important;
