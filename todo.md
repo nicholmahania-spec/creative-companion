@@ -58,9 +58,8 @@ reasoning. It is not a list of what is left. These are:
 - **Gap 1, logo-only path** — specced 2026-08-01, not built.
 - **Mobile drawer vs bottom sheet** — shipped as a full-width drawer; revisit
   once tried on an actual phone.
-- **`conceptPackage`** — eight store fields, snapshotted by `versionService`
-  and carried in exports, that no UI writes or reads. Removing it changes the
-  persisted shape and the export contract, so it wants its own pass.
+- **`conceptPackage`** — gone from `src/` (only lived in old audit docs).
+  Do not reintroduce.
 - **CSS override layers** — 663 `!important` declarations, 463 in
   `shell.css`. `importantRatchet.test.js` stops the count rising; reducing it
   needs small measured batches (`scripts/css-snapshot.mjs`), because stripping

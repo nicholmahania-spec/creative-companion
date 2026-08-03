@@ -569,7 +569,7 @@ candidate directions, not decisions. Consult
 | `AGENTS.md` | Per-session agent rules |
 | `todo.md` | Session log + prioritized residual work |
 | `docs/RESEARCH_PHASES.md` | The 7-phase research plan (1–2 done) |
-| `DESIGN_GRAMMAR.md` / `docs/DESIGN_GRAMMAR.md` | Visual/UX grammar |
+| `DESIGN_GRAMMAR.md` (repo root) | Visual/UX grammar |
 | `docs/REDESIGN_BRIEF.md` | Original IA wireframes |
 | `docs/SUPABASE.md` | Backend setup |
 | `docs/DEPLOY_AI.md` | Helper proxy env |
