@@ -10298,27 +10298,10 @@ textarea.artboard-brief-input {
 /* Read-only status line. Not a button — the control that saves a version
    already lives on the Identity screen. Muted ink, because this is ambient
    history rather than an arrival needing attention. */
-.identity-stamp-chip {
-  display: block;
-  width: 100%;
-  max-width: 65ch;
-  margin: 0 0 var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--fs-1);
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: var(--bg-muted);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-}
 
 /* Unsaved edits are the state worth noticing, so it gets the weight — but
    never colour alone, since colour cannot be the only carrier of a state. The
    sentence itself already differs. */
-.identity-stamp-chip.is-unsaved {
-  font-weight: 600;
-  color: var(--text-primary);
-}
 
 .step-done-toggle {
   display: block;

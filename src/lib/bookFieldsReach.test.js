@@ -113,6 +113,8 @@ const EXEMPT = {
   colorRoleWhy: 'feeds a completion gate, not a deliverable',
   /* Drives the Assets completion gate. Checklist state, not content. */
   deliverWordsChecked: 'feeds a completion gate, not a deliverable',
+  /* UI resume only — which Mark/Words/Colour/Type/Preview screen was last. */
+  identitySubstep: 'resume position on Identity, not a deliverable field',
 }
 
 describe('every editable brand field reaches something the client gets', () => {
