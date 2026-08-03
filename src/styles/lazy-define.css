@@ -130,33 +130,47 @@
   color: var(--text-muted);
 }
 
-.define-brief-send.btn-primary,
-.define-brief-footer .btn-primary {
-  background: var(--text-primary);
-  color: var(--bg-canvas);
-  border: 1px solid var(--text-primary);
+/*
+ * 1. Width — long answers take the full main column. Schema marks many
+ *    short fields half, which left half-empty rows on a wide brief.
+ *    Full by default; only CRM short pairs share a row.
+ */
+.define-brief .define-fields {
+  grid-template-columns: 1fr;
+  gap: var(--space-4) var(--space-5);
 }
 
-.define-brief-send.btn-primary:hover:not(:disabled),
-.define-brief-footer .btn-primary:hover:not(:disabled) {
-  background: var(--text-primary);
-  color: var(--bg-canvas);
-  filter: brightness(0.92);
+.define-brief .define-field {
+  grid-column: 1 / -1;
+  min-width: 0;
 }
 
-.define-brief-send.btn-secondary,
-.define-brief-footer .btn-secondary {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
+.define-brief .define-field-control,
+.define-brief .define-input,
+.define-brief .define-field textarea,
+.define-brief .define-choice,
+.define-brief .define-checklist {
+  width: 100%;
+  max-width: none;
 }
 
-.define-brief-send.btn-secondary:hover:not(:disabled),
-.define-brief-footer .btn-secondary:hover:not(:disabled) {
-  border-color: var(--text-primary);
-  color: var(--text-primary);
+@media (min-width: 640px) {
+  .define-brief .define-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .define-brief #detective-field-projectDeadline,
+  .define-brief #detective-field-primaryContact,
+  .define-brief #detective-field-clientEmail,
+  .define-brief #detective-field-clientPhone {
+    grid-column: span 1;
+  }
 }
 
+/*
+ * 2–3. Send + Next are solid primaries (shell .btn-primary !important).
+ * Footer: Next leads, Back is secondary outline.
+ */
 .define-brief-secondary {
   display: flex;
   flex-direction: column;
@@ -214,6 +228,11 @@
   align-items: center;
   gap: var(--space-2);
   flex: 0 1 auto;
+}
+
+.define-brief-footer .work-path-next {
+  font-weight: 700;
+  min-width: 10rem;
 }
 
 .define-brief-still-blank {

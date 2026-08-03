@@ -305,17 +305,17 @@ export default function DefineView(props) {
           <div className="define-brief-footer-actions">
             <button
               type="button"
-              className="btn btn-secondary"
-              onClick={() => setActiveView?.('desk')}
-            >
-              Back to the desk
-            </button>
-            <button
-              type="button"
               className="btn btn-primary work-path-next"
               onClick={() => setActiveView?.(journeyNext?.view || 'studio')}
             >
               {`Next · ${journeyNext?.label || labelForStepId('research')}`}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setActiveView?.('desk')}
+            >
+              Back to the desk
             </button>
           </div>
           {neededLine ? (
