@@ -9,9 +9,9 @@
  * (owner-only RLS), plus SECURITY DEFINER RPCs so the anon client never
  * touches the tables directly (mirrors discoveryShare.js's pattern).
  */
-import { supabase, isSupabaseConfigured } from './supabase'
+import { supabase, isSupabaseConfigured } from '../supabase'
 import { ANSWERS_TOO_LARGE_MESSAGE, answersTooLarge } from './answerPayload'
-import { publicUrl } from './appPaths'
+import { publicUrl } from '../appPaths'
 
 /** Build the client-facing URL for a portal id. */
 export function clientPortalUrl(portalId) {

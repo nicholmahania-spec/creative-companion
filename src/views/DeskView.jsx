@@ -20,12 +20,12 @@ import { labelForView, labelForStepId } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import { namedDeadlineLabel } from '../lib/dates'
 import { pinFaceStyle, pinVisualKind } from '../lib/moodPins'
-import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
+import { DELIVERABLE_OPTIONS } from '../lib/brief/detectiveBrief'
 import {
   buildBrandPackSnapshot,
   packReadiness,
 } from '../lib/exportFiles'
-import { weekFromWorkLog, hoursLoggedWords } from '../lib/workWeek'
+import { weekFromWorkLog, hoursLoggedWords } from '../lib/billing/workWeek'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
 import '../styles/lazy-desk.css'
 

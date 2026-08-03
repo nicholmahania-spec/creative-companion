@@ -50,7 +50,7 @@ import {
   TYPE_SCALE,
   monogramFor,
 } from './brandSystem'
-import { filledDetectiveChapters } from './detectiveBrief'
+import { filledDetectiveChapters } from './brief/detectiveBrief'
 import { touchpointsFor, touchpointsBlurb, touchpointLabel } from './touchpoints'
 import { slugifyFilename, downloadBlob, writeToSaveHandle } from './exportFiles'
 import { resolveBookSetup } from './brandBookSetup'

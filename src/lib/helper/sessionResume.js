@@ -7,8 +7,8 @@ import {
   journeyIdForView,
   labelForView,
   PATH_VIEWS as JOURNEY_PATH_VIEWS,
-} from './journey'
-import { pathGapFocusSelector } from './journeyProgress'
+} from '../journey'
+import { pathGapFocusSelector } from '../journeyProgress'
 
 export const DESK_SESSION_KEY = 'cc-desk-session-v1'
 

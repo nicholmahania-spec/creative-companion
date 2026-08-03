@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { progressItemInScope } from './detectiveBrief'
+import { progressItemInScope } from './brief/detectiveBrief'
 import { brandProgressSummary } from './beforeAfter'
 import { packReadiness } from './exportFiles'
 

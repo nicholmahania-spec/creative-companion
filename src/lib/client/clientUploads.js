@@ -14,7 +14,7 @@
  * text on a live project is never silently retyped as an array — see the
  * NOTE in detectiveBrief.js on why field shapes don't change after ship.
  */
-import { supabase, isSupabaseConfigured } from './supabase'
+import { supabase, isSupabaseConfigured } from '../supabase'
 
 const BUCKET = 'client-uploads'
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024

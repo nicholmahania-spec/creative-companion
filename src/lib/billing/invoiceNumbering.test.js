@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import useAppStore from '../store/useAppStore'
+import useAppStore from '../../store/useAppStore'
 
 /**
  * Two failures live here, and the second one is about how the first was fixed.
@@ -21,7 +21,7 @@ import useAppStore from '../store/useAppStore'
  *    is valid syntax. Splitting one prop into two is precisely the edit that
  *    reintroduces it, so the split comes with this guard.
  */
-const APP = new URL('../App.jsx', import.meta.url).pathname
+const APP = new URL('../../App.jsx', import.meta.url).pathname
 const app = readFileSync(APP, 'utf8')
 
 describe('invoice numbering', () => {
@@ -51,7 +51,7 @@ describe('invoice numbering', () => {
      a failed export starts burning numbers again. */
   it('the export commits only on success', () => {
     const panel = readFileSync(
-      new URL('../features/billing/HoursInvoice.jsx', import.meta.url).pathname,
+      new URL('../../features/billing/HoursInvoice.jsx', import.meta.url).pathname,
       'utf8'
     )
     const okBranch = /if \(r\?\.ok\) \{([\s\S]*?)\} else \{/.exec(panel)?.[1]

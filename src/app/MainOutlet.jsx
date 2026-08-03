@@ -6,7 +6,7 @@ import { Suspense } from 'react'
 import PathViewSkeleton from '../components/PathViewSkeleton'
 import StepDependencyReminder from '../components/StepDependencyReminder'
 import useAppStore from '../store/useAppStore'
-import { POMODORO_WORK_MIN } from '../lib/forcedBreak'
+import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
   buildMonthGrid,
   formatMonthYear,

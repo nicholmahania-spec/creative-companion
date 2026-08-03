@@ -4,7 +4,7 @@
  * after that, new items land pre-tagged into their stage automatically.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { RUNNING_TODO_STAGES } from '../../lib/runningTodoStages'
+import { RUNNING_TODO_STAGES } from '../../lib/billing/runningTodoStages'
 import { useModalFocus } from '../../lib/useModalFocus'
 
 /** Centered "anything to add?" popup.

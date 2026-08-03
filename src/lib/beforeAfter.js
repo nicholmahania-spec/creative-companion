@@ -4,7 +4,7 @@
  * entry anywhere; this is a glanceable progress signal, not a tool.
  */
 import { isStockProjectPalette } from './journeyProgress'
-import { progressItemInScope } from './detectiveBrief'
+import { progressItemInScope } from './brief/detectiveBrief'
 
 const PROGRESS_ITEMS = [
   { id: 'palette', label: 'colors' },

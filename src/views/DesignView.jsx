@@ -16,7 +16,7 @@ import versionService, {
   versionIdentityPreview,
   versionKindLabel,
 } from '../services/versionService'
-import { messageDayLabel } from '../lib/messageDayLabel'
+import { messageDayLabel } from '../lib/client/messageDayLabel'
 import {
   DEFAULT_PALETTE,
   normalizeHex,

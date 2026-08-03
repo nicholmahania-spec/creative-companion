@@ -763,7 +763,7 @@ upstream had extracted the client-facing questionnaire renderer into
 `ClientBriefFields.jsx` (shared by `/c/:portalId` and `/f/:shareId`) — took
 that structure and added the missing `choice`/`date` field-type branches to
 it, rather than reverting to the old per-surface copies. Also: upstream added
-`src/lib/clientBriefContract.test.js`, which caps client-facing field `tip`
+`src/lib/brief/clientBriefContract.test.js`, which caps client-facing field `tip`
 text at 6 words — several tips in this session were rewritten shorter to
 satisfy it. **Lesson recorded here so it isn't re-learned:** a
 `replace("=======\n")` string match during manual conflict resolution can
@@ -907,7 +907,7 @@ One thread, two audiences, two representations. Do not "unify" them.
   person judging whether their designer is responsive, and this is what every
   other messaging surface they use shows.
 - **Studio side** (`src/features/client-portal/ProjectOverviewShare.jsx`) — day dividers
-  only, from `src/lib/messageDayLabel.js`. No per-message stamp, no clock time.
+  only, from `src/lib/client/messageDayLabel.js`. No per-message stamp, no clock time.
 
 A clock time is not information for this owner; it is an input to a subtraction
 performed against a "now" fetched from somewhere, billed on every message.
@@ -935,7 +935,7 @@ a third divider state for "marked read" — the unread divider already exists.
 Related and NOT the same thing: step approvals and change-requests genuinely
 have no per-event time. They live in the `client_portals.step_status` jsonb and
 share the portal's `updated_at`, which is what the "Per-event times don't exist
-server-side" note in `src/lib/clientInbox.js` refers to. Per-MESSAGE times do
+server-side" note in `src/lib/client/clientInbox.js` refers to. Per-MESSAGE times do
 exist — `client_portal_messages.created_at` is real, is returned by
 `get_client_portal_messages`, and needed no migration. Giving approvals their
 own timestamps would need one.

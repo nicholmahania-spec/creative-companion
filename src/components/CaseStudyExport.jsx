@@ -12,7 +12,7 @@
  */
 import { useState } from 'react'
 import useAppStore from '../store/useAppStore'
-import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
+import { DELIVERABLE_OPTIONS } from '../lib/brief/detectiveBrief'
 import { downloadBlob, slugifyFilename } from '../lib/exportFiles'
 import {
   buildCaseStudy,

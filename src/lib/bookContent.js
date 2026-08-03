@@ -1,4 +1,4 @@
-import { filledDetectiveChapters } from './detectiveBrief'
+import { filledDetectiveChapters } from './brief/detectiveBrief'
 import { bookPlan } from './bookDocument'
 import { touchpointLabel } from './touchpoints'
 

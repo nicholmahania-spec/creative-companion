@@ -43,9 +43,9 @@ const GameHUD = lazy(() => import('./features/helper/GameHUD'))
 import {
   breakMinutesForWork,
   POMODORO_WORK_MIN,
-} from './lib/forcedBreak'
-import { pickBreakPlan } from './lib/breakKit'
-import { markBreak, minutesSinceBreak, loadSessionStart, loadWellness } from './lib/buddy'
+} from './lib/helper/forcedBreak'
+import { pickBreakPlan } from './lib/helper/breakKit'
+import { markBreak, minutesSinceBreak, loadSessionStart, loadWellness } from './lib/helper/buddy'
 import {
   saveDeskSession,
   loadDeskSession,
@@ -57,8 +57,8 @@ import {
   hydrateFocus,
   tickForcedBreak,
   focusPathGapField,
-} from './lib/sessionResume'
-import { awardAndBroadcast } from './lib/buddyGame'
+} from './lib/helper/sessionResume'
+import { awardAndBroadcast } from './lib/helper/buddyGame'
 import {
   JOURNEY_STEPS,
   PATH_STEP_COUNT,
@@ -111,7 +111,7 @@ import {
   formatHoursWorked,
   hoursLoggedWords,
   HOURS_RANGES,
-} from './lib/workWeek'
+} from './lib/billing/workWeek'
 import LogoLockup from './components/LogoLockup'
 import HeaderIcon from './components/HeaderIcon'
 import PullToRefresh from './components/PullToRefresh'
@@ -126,7 +126,7 @@ import {
   ClientInboxPanel,
   useClientInbox,
 } from './features/client-portal/ClientInbox'
-import { guessRunningTodoStage } from './lib/runningTodoStages'
+import { guessRunningTodoStage } from './lib/billing/runningTodoStages'
 import { installAutoGrow } from './lib/autoGrow'
 import { useModalFocus } from './lib/useModalFocus'
 import useIsMobile from './lib/useIsMobile'

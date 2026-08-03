@@ -1,4 +1,4 @@
-import { helperAiStatus } from '../lib/helperAi'
+import { helperAiStatus } from '../lib/helper/helperAi'
 import {
   FOCUS_MASK_MIN_PCT,
   FOCUS_MASK_MAX_PCT,

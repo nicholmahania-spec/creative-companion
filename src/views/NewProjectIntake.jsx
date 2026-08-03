@@ -16,8 +16,8 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
-import { DELIVERABLE_OPTIONS, isLogoOnlyScope } from '../lib/detectiveBrief'
-import { createDiscoveryShare, discoveryShareUrl } from '../lib/discoveryShare'
+import { DELIVERABLE_OPTIONS, isLogoOnlyScope } from '../lib/brief/detectiveBrief'
+import { createDiscoveryShare, discoveryShareUrl } from '../lib/client/discoveryShare'
 import '../styles/lazy-create.css'
 
 const ENGAGEMENT = [

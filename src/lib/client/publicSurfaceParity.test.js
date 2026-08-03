@@ -25,9 +25,9 @@ import { readFileSync } from 'node:fs'
  * What they may not do is have one of them silently lack a protection the other
  * documents as necessary.
  */
-const FILL = new URL('../features/client-portal/PublicDiscoveryFill.jsx', import.meta.url)
+const FILL = new URL('../../features/client-portal/PublicDiscoveryFill.jsx', import.meta.url)
   .pathname
-const PORTAL = new URL('../features/client-portal/PublicClientPortal.jsx', import.meta.url)
+const PORTAL = new URL('../../features/client-portal/PublicClientPortal.jsx', import.meta.url)
   .pathname
 
 const fill = readFileSync(FILL, 'utf8')

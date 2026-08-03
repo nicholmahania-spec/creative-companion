@@ -7,7 +7,7 @@
  * ProjectOverviewShare.jsx). Silent auto-fill of wrong answers would be
  * worse than no import at all.
  */
-import { DETECTIVE_CHAPTERS } from './detectiveBrief'
+import { DETECTIVE_CHAPTERS } from './brief/detectiveBrief'
 
 const ALL_FIELDS = DETECTIVE_CHAPTERS.flatMap((c) => c.fields)
 

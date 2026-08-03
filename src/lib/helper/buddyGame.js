@@ -1,4 +1,4 @@
-import { labelForStepId } from './journey'
+import { labelForStepId } from '../journey'
 /**
  * Optional quiet progress meter (bands, daily targets, marks).
  * Local-only. Fires `cc-buddy-game` so HUD + Helper stay in sync.

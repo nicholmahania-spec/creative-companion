@@ -6,7 +6,7 @@ import {
   questStatus,
   refreshGameDay,
   xpProgress,
-} from '../../lib/buddyGame'
+} from '../../lib/helper/buddyGame'
 import { ProgressRing } from '../../components/PathStepIcon'
 import '../../styles/lazy-buddy.css'
 
