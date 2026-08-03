@@ -1,35 +1,60 @@
 /**
- * Project desk — the per-project hub from the 2026 design handoff.
+ * Project desk — the per-project hub from the 2026 design handoff (build 4).
  *
- * Built on the owner's explicit instruction (it reverses an earlier
- * adhd-executive-function-advisor ruling; the advisor then ruled on HOW to
- * build it, and this file follows that second ruling):
+ * Layout hierarchy (adhd-executive-function-advisor, 2026-08-03):
+ * - **Action column** = What's next (resume, gap card, queue). Sole launchpad.
+ * - **Ambient column** = identity artboard, starred pack, client, brief —
+ *   skim + one outbound each. Not five peer decisions.
  *
- * - It is the landing for opening a project, unconditionally. A conditional
- *   destination (desk sometimes, resume other times) is a working-memory tax
- *   on every open — the user has to predict where the app will put them. The
- *   resume target is not dropped: it is the first row of What's next, always
- *   in the same slot, so "the app remembered" is visible instead of inferred.
- * - The highlighted card is always the journey's first gap. One source, never
- *   empty — a card that can go blank reintroduces blank-page paralysis at the
- *   moment the screen exists to prevent it.
- * - Everything here is DERIVED from real project state. Nothing on this screen
- *   is a number the user must decode: no n/10, no hours, no percentages.
+ * Deliberately NOT the mockup's version of:
+ * - week-hours chart (deferred time feature / numbers don't register)
+ * - 56px icon rail (owner keeps labelled sidebar)
+ * - n/10 counters
+ * - per-approval clock times (nothing writes them — fake feature)
+ * - "v4 · 2h ago" identity stamp (words only via identityStamp)
  *
- * Deliberately NOT the design's version: no 56px icon rail (the owner keeps
- * their labelled sidebar), no week-hours stat (the deferred time feature), no
- * counters. And the card's primary action opens the work rather than marking
- * it done — stop completion is derived from real content, so a manual
- * done-flag would let this screen claim work the journey bar shows as empty.
+ * Mark done is real (`setStepDone` / `pathDone`) but tertiary under the gap
+ * card — never a peer of Open. Open stays the only primary so the desk
+ * launches work instead of grading it.
  */
-import { labelForView } from '../lib/journey'
+import { labelForView, labelForStepId } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import { relativeDeadlineLabel } from '../lib/dates'
+import { identityStamp } from '../lib/identityStamp'
+import { messageDayLabel } from '../lib/messageDayLabel'
+import { pinFaceStyle, pinVisualKind } from '../lib/moodPins'
 import BrandArtboard from '../components/BrandArtboard'
 import '../styles/lazy-desk.css'
 
 /** Three-letter stop tag, from the stop's own label — never a hand-typed map. */
 const stopTag = (label = '') => label.slice(0, 3).toUpperCase()
+
+/**
+ * Brief fields shown when filled. Labels match detectiveBrief; order is the
+ * glance order (who → why → for whom → feel → words).
+ */
+const BRIEF_FIELDS = [
+  { id: 'clientName', label: 'Business name' },
+  { id: 'goal', label: 'What this should change' },
+  { id: 'audience', label: 'Who it is for' },
+  { id: 'usp', label: 'What the business does' },
+  { id: 'feel', label: 'How it should feel' },
+  { id: 'brandWords', label: 'What matters most' },
+]
+
+function briefValue(detective, id) {
+  const raw = detective?.[id]
+  if (Array.isArray(raw)) {
+    return raw.map((v) => String(v || '').trim()).filter(Boolean).join(', ')
+  }
+  return String(raw || '').trim()
+}
+
+function pinBorder(pin) {
+  if (pin?.packHero) return '2px solid var(--text-primary)'
+  if (pin?.inPack) return '1px solid var(--text-primary)'
+  return '1px solid var(--border-subtle)'
+}
 
 export default function DeskView({
   project,
@@ -43,7 +68,10 @@ export default function DeskView({
   onOpenClientInbox,
   onToggleTask,
   onToggleNotNeeded,
+  onMarkStepDone,
   onEditIdentity,
+  onEditBrief,
+  onOpenWall,
 }) {
   const notNeeded = Array.isArray(project?.stepsNotNeeded)
     ? project.stepsNotNeeded
@@ -67,11 +95,35 @@ export default function DeskView({
      hidden reads as "I have no idea what this is". */
   const finished = [
     ...doneTasks.map((t) => ({ key: `t-${t.id}`, label: t.title, tag: '' })),
-    ...doneStops.map((r) => ({ key: `s-${r.id}`, label: r.label, tag: stopTag(r.label) })),
+    ...doneStops.map((r) => ({
+      key: `s-${r.id}`,
+      label: r.label,
+      tag: stopTag(r.label),
+    })),
   ].slice(0, 3)
 
   const deadline = relativeDeadlineLabel(project?.deadline)
-  const inboxRow = (clientInbox?.rows || []).find((r) => r.unread)
+  const stamp = identityStamp(project)
+
+  const packPins = (pins || [])
+    .filter((p) => p.inPack)
+    .sort((a, b) => {
+      if (a.packHero && !b.packHero) return -1
+      if (!a.packHero && b.packHero) return 1
+      return (a.packOrder ?? 999) - (b.packOrder ?? 999)
+    })
+    .slice(0, 6)
+
+  const detective = project?.detective || {}
+  const briefRows = BRIEF_FIELDS.map((f) => ({
+    ...f,
+    value: briefValue(detective, f.id),
+  })).filter((f) => f.value)
+
+  const projectId = project?.id != null ? String(project.id) : ''
+  const activity = (clientInbox?.rows || [])
+    .filter((r) => String(r.projectLocalId ?? '') === projectId)
+    .slice(0, 6)
 
   return (
     <div className="desk-view view-enter">
@@ -88,36 +140,13 @@ export default function DeskView({
             className="desk-client-chip"
             onClick={onOpenClientInbox}
           >
-            {inboxRow ? `Client · ${inboxRow.title}` : 'Client'}
+            Client
           </button>
         </div>
       </div>
 
       <div className="desk-grid">
-        <section className="desk-panel desk-artboard" aria-label="Live artboard">
-          <div className="desk-panel-head">
-            <span className="desk-eyebrow">
-              {labelForView('brand')} · live artboard
-            </span>
-          </div>
-          <BrandArtboard
-            id="desk-artboard"
-            project={project}
-            palette={palette}
-            pins={pins}
-            compact
-          />
-          <div className="desk-artboard-foot">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={onEditIdentity}
-            >
-              Edit identity
-            </button>
-          </div>
-        </section>
-
+        {/* ── Action column (dominant) ── */}
         <section className="desk-panel desk-next" aria-label="What's next">
           <div className="desk-panel-head">
             <span className="desk-eyebrow">What&rsquo;s next</span>
@@ -158,6 +187,17 @@ export default function DeskView({
                   Not needed
                 </button>
               </div>
+              {/* Tertiary only — never a peer of Open (decision fatigue on
+                  the one card that exists to end blank-page paralysis). */}
+              {typeof onMarkStepDone === 'function' && (
+                <button
+                  type="button"
+                  className="desk-mark-done"
+                  onClick={() => onMarkStepDone(gapRow.id, true)}
+                >
+                  Mark {gapRow.label} done
+                </button>
+              )}
             </div>
           )}
 
@@ -189,7 +229,7 @@ export default function DeskView({
 
           {(finished.length > 0 || skippedStops.length > 0) && (
             <div className="desk-done">
-              <span className="desk-eyebrow">Finished</span>
+              <span className="desk-eyebrow desk-eyebrow-strong">Done</span>
               <ul className="desk-list">
                 {finished.map((f) => (
                   <li key={f.key} className="desk-row is-done">
@@ -215,6 +255,183 @@ export default function DeskView({
             </div>
           )}
         </section>
+
+        {/* ── Ambient column ── */}
+        <div className="desk-ambient">
+          <section
+            className="desk-panel desk-artboard"
+            aria-label="Live artboard"
+          >
+            <div className="desk-panel-head">
+              <span className="desk-eyebrow">
+                {labelForStepId('design')} · live artboard
+              </span>
+              {stamp.state !== 'none' && (
+                <span
+                  className={`desk-stamp is-${stamp.state}`}
+                  role="status"
+                >
+                  {stamp.label}
+                </span>
+              )}
+            </div>
+            <BrandArtboard
+              id="desk-artboard"
+              project={project}
+              palette={palette}
+              pins={pins}
+              compact
+            />
+            <div className="desk-artboard-foot">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={onEditIdentity}
+              >
+                Edit identity
+              </button>
+            </div>
+          </section>
+
+          <section
+            className="desk-panel desk-pack"
+            aria-label="Research pack"
+          >
+            <div className="desk-panel-head">
+              <span className="desk-eyebrow">
+                {labelForStepId('research')} · starred for the pack
+              </span>
+              <button
+                type="button"
+                className="desk-panel-link"
+                onClick={onOpenWall}
+              >
+                Open the wall
+              </button>
+            </div>
+            {packPins.length === 0 ? (
+              <p className="desk-empty">
+                Nothing starred yet — open the wall and star up to 6 for the
+                pack.
+              </p>
+            ) : (
+              <div className="desk-pack-grid">
+                {packPins.map((pin) => {
+                  const kind = pinVisualKind(pin)
+                  const face = pinFaceStyle(pin)
+                  return (
+                    <div
+                      key={pin.id}
+                      className="desk-pack-pin"
+                      style={{ ...face, border: pinBorder(pin) }}
+                      title={pin.note || pin.link || ''}
+                    >
+                      {kind === 'color' && (
+                        <span className="desk-pack-hex">
+                          {String(pin.hex || pin.visual || '').slice(0, 7)}
+                        </span>
+                      )}
+                      {(kind === 'empty' ||
+                        pin.type === 'quote' ||
+                        pin.type === 'note' ||
+                        pin.type === 'spark') &&
+                        pin.note && (
+                          <p className="desk-pack-note">{pin.note}</p>
+                        )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+
+          <div className="desk-ambient-bottom">
+            <section className="desk-panel desk-client" aria-label="Client">
+              <div className="desk-panel-head">
+                <span className="desk-eyebrow">Client</span>
+              </div>
+              {activity.length === 0 ? (
+                <p className="desk-empty">
+                  Nothing from the client yet. Send them the portal link and
+                  their answers, uploads and approvals land here.
+                </p>
+              ) : (
+                <ul className="desk-activity">
+                  {activity.map((a) => {
+                    /* Messages carry created_at; step approvals do not have
+                       per-event times — omit a when rather than invent one. */
+                    const when =
+                      a.kind === 'message' && a.sortAt
+                        ? messageDayLabel(a.sortAt)
+                        : ''
+                    return (
+                      <li
+                        key={a.id}
+                        className={`desk-activity-row${a.unread ? ' is-unread' : ''}`}
+                      >
+                        <span
+                          className="desk-activity-dot"
+                          aria-hidden="true"
+                        />
+                        <span className="desk-activity-text">
+                          {a.title}
+                          {a.preview ? (
+                            <span className="desk-activity-preview">
+                              {a.preview}
+                            </span>
+                          ) : null}
+                        </span>
+                        {a.kind === 'approval' && (
+                          <span className="desk-activity-pill">Approved</span>
+                        )}
+                        {when ? (
+                          <span className="desk-activity-when">{when}</span>
+                        ) : null}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={onOpenClientInbox}
+              >
+                Client link &amp; approvals
+              </button>
+            </section>
+
+            <section className="desk-panel desk-brief" aria-label="Brief">
+              <div className="desk-panel-head">
+                <span className="desk-eyebrow">
+                  {labelForStepId('define')} · the brief
+                </span>
+                <button
+                  type="button"
+                  className="desk-panel-link desk-panel-link-quiet"
+                  onClick={onEditBrief}
+                >
+                  Edit
+                </button>
+              </div>
+              {briefRows.length === 0 ? (
+                <p className="desk-empty">
+                  Nothing in the brief yet. Open Strategy and fill what you
+                  can — blanks are fine.
+                </p>
+              ) : (
+                <dl className="desk-brief-grid">
+                  {briefRows.map((row) => (
+                    <div key={row.id} className="desk-brief-item">
+                      <dt>{row.label}</dt>
+                      <dd>{row.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   )

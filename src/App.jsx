@@ -4288,7 +4288,13 @@ function App() {
                 activeProject &&
                 useAppStore.getState().toggleStepNotNeeded(activeProject.id, stepId)
               }
+              onMarkStepDone={(stepId, done) =>
+                activeProject &&
+                useAppStore.getState().setStepDone(stepId, done, activeProject.id)
+              }
               onEditIdentity={() => setActiveView('brand')}
+              onEditBrief={() => setActiveView('project')}
+              onOpenWall={() => setActiveView('studio')}
             />
           </Suspense>
         )}
