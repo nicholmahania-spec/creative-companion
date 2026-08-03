@@ -2,6 +2,25 @@
 
 **Product requirements:** `docs/PRD.md` (five-stop path, Helper verbs, non-goals).
 
+## Owner decisions are final — advisors inform, they do not override
+
+**Stated by the owner 2026-08-03:** never reverse, quietly re-decide, or
+“improve away” a choice the owner has already made — even when an audit
+subagent, design book, prior session note, or the agent’s own taste points
+the other way.
+
+| Do | Don’t |
+|----|--------|
+| **Consult advisors** (`adhd-executive-function-advisor` and the rest) so the owner gets tradeoffs, risks, and options **before** choosing | Treat advisor output as a veto or as permission to undo an explicit call |
+| Present findings as **information for a decision** (options + costs, one clear recommendation when asked) | Ship a different product call while the commit message pretends it matches the brief |
+| If safety/security or a hard technical block applies, say so **once**, plainly | Re-litigate settled path/IA/chrome decisions every session |
+
+**Explicit go-ahead still scopes implementation** (“build that”, “go”, “apply it”) — but only for the work named. It does **not** license reopening earlier owner decisions unless the owner reopens them.
+
+When an advisor conflicts with a standing owner decision, **state the tension once**, keep the owner’s decision, and only change course if the owner says so.
+
+---
+
 ## Define is form-only (owner decision — do not reintroduce Refs)
 
 **Project overview (Define) is the brief form only.** Inspiration / refs live on

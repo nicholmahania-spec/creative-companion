@@ -73,6 +73,30 @@ happened across the research phases on 2026-07-28 — where the client survey
 lived, whether the case study prints hours, whether writing guidelines
 default or stay blank. All defensible, none confirmed.
 
+## Owner decisions are final — advisors inform, they do not override
+
+**Stated by the owner 2026-08-03:** never reverse, quietly re-decide, or
+“improve away” a choice the owner has already made — even when an audit
+subagent, a design book, a prior session note, or the agent’s own taste
+points the other way.
+
+**Still consult the advisors** (`adhd-executive-function-advisor` and the
+specialist agents) on UI, UX, workflow, gating, and product calls so the
+owner can decide with eyes open: tradeoffs, risks, and options. Advisor
+output is **input to the owner**, not a veto and not permission to undo an
+explicit call.
+
+| Do | Don’t |
+|----|--------|
+| Run the relevant advisor(s) and report findings before the owner is asked to choose | Treat advisor ranking as automatically binding over the owner |
+| Recommend when asked; keep recommendations labeled as such | Ship a different product call while claiming the brief was followed |
+| If safety/security or a hard technical block applies, say so once, plainly | Re-litigate settled path / IA / chrome decisions every session |
+
+When an advisor conflicts with a standing owner decision, **state the
+tension once**, keep the owner’s decision, and only change course if the
+owner says so. Same spine as the workflow rule above: explicit go-ahead
+scopes *implementation* of named work — it does not reopen earlier decisions.
+
 ## Git workflow rule — version bump (MANUAL — hooks don't work here)
 
 **Bump the version yourself, in the same shell sequence as the commit, using
@@ -336,12 +360,17 @@ freelancers (task initiation, working memory, decision fatigue, time
 blindness, rejection sensitivity). This is the reason the tool exists, not a
 secondary concern.
 
-**Before finalizing any UI, UX, workflow, or gating decision, consult the
-`adhd-executive-function-advisor` subagent first.** Aesthetics, convention,
-and cleverness are subordinate to this lens. If a proposed change adds
-friction (extra required decisions, ambiguous locked states, silent state
-loss, shame-coded errors) it needs to be reworked or rejected, even if it is
-otherwise good software design.
+**Before the owner is asked to finalize any UI, UX, workflow, or gating
+decision, consult the `adhd-executive-function-advisor` subagent first**
+(and other specialists as relevant). Report the finding to the owner so
+the decision is informed. Aesthetics, convention, and cleverness are
+subordinate to this lens **when the owner has not already locked a call**.
+
+If a **proposed** change adds friction (extra required decisions, ambiguous
+locked states, silent state loss, shame-coded errors), surface that and
+recommend rework — **do not silently ship a different product decision.**
+If the owner has already decided, keep that decision (see **Owner decisions
+are final** above); still report the advisor conflict once if it is new.
 
 **Reducing cognitive load is the single biggest priority within this rule.**
 When choices compete, pick whichever one requires the user to think, decide,
