@@ -8404,11 +8404,97 @@ select:focus {
   color: var(--text-muted);
 }
 
+/* This project path — full-width labeled rows, not number-only chips.
+   Base .journey-num still carries a fixed gray box from the old breadcrumb
+   chrome; without a reset here the drawer shows 01–05 and no step names. */
 .journey-path-section {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
+  width: 100%;
+  align-self: stretch;
+}
+
+.journey-path-section .journey-path-heading,
+.journey-path-section .journey-path-empty {
+  padding-left: 0.55rem;
+  padding-right: 0.55rem;
+}
+
+.journey-path-section .journey-desk-row {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  /* Match list inset so Desk lines up with Strategy / Research rows */
+  padding-left: 0.7rem;
+  padding-right: 0.7rem;
+}
+
+.journey-path-section .journey-bar-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+}
+
+.journey-path-section .journey-bar-item {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.journey-path-section .journey-step {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+/* Kill the square badge — number is a leading index, not a chip */
+.journey-path-section .journey-num {
+  flex: 0 0 auto;
+  display: inline;
+  width: auto;
+  height: auto;
+  min-width: 1.4rem;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.journey-path-section .journey-step.is-active .journey-num,
+.journey-path-section .journey-step.is-done:not(.is-active) .journey-num {
+  background: transparent;
+}
+
+.journey-path-section .journey-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: none;
+}
+
+.journey-path-section .journey-step:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .journey-path-empty {
