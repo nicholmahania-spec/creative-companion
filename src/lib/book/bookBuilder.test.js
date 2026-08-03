@@ -28,7 +28,8 @@ describe('bookBuilderFor', () => {
     const got = bookBuilderFor({})
     expect(got).toEqual(blankBookBuilder())
     expect(got.grid.columns).toBe(12)
-    expect(got.print.pageSize).toBe('letter')
+    expect(got.print.pageSize).toBe('a4')
+    expect(got.grid.edge).toBe('roomy')
   })
 
   it('survives a null project', () => {
@@ -43,7 +44,10 @@ describe('bookBuilderFor', () => {
     expect(got.grid.columns).toBe(4)
     expect(got.grid.rows).toBe(1)
     expect(got.grid.gutter).toBe(3)
-    expect(got.grid.margin).toBe(9)
+    /* Blank default margin (roomy-on-A4 %) fills siblings; edge not inferred
+       onto legacy partial saves that never chose a stop. */
+    expect(got.grid.margin).toBe(blankBookBuilder().grid.margin)
+    expect(got.grid.edge).toBeUndefined()
     expect(got.grid.show).toBe(true)
     // Untouched sections still complete.
     expect(got.running.showPageNumbers).toBe(true)

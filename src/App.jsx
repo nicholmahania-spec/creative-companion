@@ -3306,12 +3306,22 @@ function App() {
                 you can't tell "no error" from "nothing is happening". Not a
                 button: it answers the question at a glance and costs no
                 decision. Errors keep their own retry chip above. */}
-            {CLOUD && syncState !== 'error' && (
-              <span className="header-saved" aria-live="polite">
-                <span className="header-saved-dot" aria-hidden="true" />
-                {syncState === 'syncing' ? 'Saving…' : 'Saved'}
-              </span>
-            )}
+            {/* Local: pulse after persist writes. Cloud: syncState. Never a
+                hardcoded permanent “Saved” when storage is blocked. */}
+            {!storageBlockedRef.current &&
+              (CLOUD
+                ? syncState !== 'error' && (
+                    <span className="header-saved" aria-live="polite">
+                      <span className="header-saved-dot" aria-hidden="true" />
+                      {syncState === 'syncing' ? 'Saving…' : 'Saved'}
+                    </span>
+                  )
+                : (
+                    <span className="header-saved" aria-live="polite">
+                      <span className="header-saved-dot" aria-hidden="true" />
+                      {savePulse ? 'Saving…' : 'Saved'}
+                    </span>
+                  ))}
 
           </div>
         </div>

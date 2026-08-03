@@ -9,6 +9,18 @@
    * Tech Studio: light cool-gray canvas, white component surfaces, steel-blue
    * interactive accent. Flat geometry — no glass, no glow, no gradients.
    */
+  /* Active project brand roles (Identity / book). Overwritten live by
+     applyBrandCssVars from project.palette + colorRoles. Fallbacks keep
+     chrome readable before a project palette is set. */
+  --brand-primary: #1C1917;
+  --brand-accent: #0F766E;
+  --brand-ink: #1A1A1A;
+  --brand-paper: #FAFAF9;
+  --color-primary: var(--brand-primary);
+  --color-accent: var(--brand-accent);
+  --color-ink: var(--brand-ink);
+  --color-paper: var(--brand-paper);
+
   /* Tech-Studio chrome stays flat; interactive dopamine is chromatic again
      (owner asked for colorful CTAs — Button-64 adapted, not rainbow-85). */
   --accent-primary: #5B42F3;

@@ -318,12 +318,33 @@
 
 .bbb-page {
   width: min(320px, calc(100vw - 80px));
-  aspect-ratio: 8.5 / 11;
+  /* A4 default on screen; print media overrides to true sheet size. */
+  aspect-ratio: 210 / 297;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   position: relative;
   overflow: hidden;
   padding: var(--space-md, 9%);
+}
+
+.bbb-lockup__art {
+  max-width: 72%;
+  max-height: 56%;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.bbb-color-row__hex-input {
+  font-family: ui-monospace, monospace;
+  font-size: var(--fs-1, 0.75rem);
+  width: 6rem;
+  min-width: 0;
+  border: 1px solid var(--border-subtle, #e7e7e7);
+  border-radius: var(--radius, 4px);
+  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+  background: var(--bg-elevated, #fff);
+  color: var(--text-primary, #1a1a1a);
 }
 .bbb-page-label {
   position: absolute;

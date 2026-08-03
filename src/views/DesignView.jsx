@@ -39,8 +39,17 @@ import {
 import { getProcessPhase } from '../lib/journey/processGuide'
 import { loadTypePairFont, loadBrandFamilies } from '../lib/book/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
+import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
 import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-design.css'
+
+/** User-facing labels for palette role chips (store keys stay cover/text/…). */
+const ROLE_LABELS = {
+  cover: 'Primary',
+  accent: 'Accent',
+  text: 'Ink',
+  quiet: 'Paper',
+}
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
@@ -108,6 +117,19 @@ export default function DesignView({
       setCheckBgIndex(Math.max(0, projectPalette.length - 1))
     }
   }, [projectPalette.length, checkBgIndex])
+
+  /* Live brand tokens → :root / .app so swatches and previews share one map. */
+  useEffect(() => {
+    applyBrandCssVars(activeProject)
+    return () => clearBrandCssVars()
+  }, [
+    activeProject?.id,
+    projectPalette,
+    activeProject?.colorRoles?.cover,
+    activeProject?.colorRoles?.text,
+    activeProject?.colorRoles?.accent,
+    activeProject?.colorRoles?.quiet,
+  ])
 
   // Fetch the type pair's real Google Fonts stylesheet so the artboard
   // (and this page) render the actual face, not just its name. Runs on
@@ -1246,15 +1268,15 @@ export default function DesignView({
                   </p>
                 </div>
                 <div className="system-role-assign" style={{ marginTop: '0.45rem' }}>
-                  {['cover', 'text', 'accent', 'quiet'].map((role) => (
+                  {['cover', 'accent', 'text', 'quiet'].map((role) => (
                     <button
                       key={role}
                       type="button"
                       className={`role-pick-chip${brandRoleAssign === role ? ' is-active' : ''}`}
                       onClick={() => setBrandRoleAssign(role)}
-                      title={effectiveRoles[role]}
+                      title={`${ROLE_LABELS[role]} · ${effectiveRoles[role]}`}
                     >
-                      {role[0].toUpperCase() + role.slice(1)}
+                      {ROLE_LABELS[role]}
                       <span
                         className="role-pick-swatch"
                         style={{ background: effectiveRoles[role] }}

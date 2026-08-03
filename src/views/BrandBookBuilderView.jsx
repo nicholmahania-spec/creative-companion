@@ -18,6 +18,7 @@ import { bookSectionIds, bookPlan, FOUNDATION_PAGES, SECTION_PAGES } from '../li
 import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/book/fontCatalog'
 import { monogramFor, logoDontsList, DEFAULT_LOGO_CLEARSPACE, DEFAULT_LOGO_MIN_SIZE } from '../lib/brandSystem'
 import { loadBrandFamilies } from '../lib/book/fontLoader'
+import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
 import '../styles/brand-book-builder.css'
 
 /* ----------------------------------------------------------------------
@@ -303,12 +304,24 @@ function LogoPage({ kit, style, pageIndex = 0, id }) {
       <div className="bbb-lockup-grid">
         {grounds.map((ground, i) => (
           <div key={i} className="bbb-lockup" style={{ background: ground }}>
-            <span
-              className="bbb-lockup__mark"
-              style={{ fontFamily: hStack, fontWeight: headlineWeight, color: isLight(ground) ? "#1a1a1a" : "#f4f1ea" }}
-            >
-              {mono} {wordmark}
-            </span>
+            {logo.image ? (
+              <img
+                src={logo.image}
+                alt=""
+                className="bbb-lockup__art"
+              />
+            ) : (
+              <span
+                className="bbb-lockup__mark"
+                style={{
+                  fontFamily: hStack,
+                  fontWeight: headlineWeight,
+                  color: isLight(ground) ? '#1a1a1a' : '#f4f1ea',
+                }}
+              >
+                {mono} {wordmark}
+              </span>
+            )}
           </div>
         ))}
       </div>
@@ -471,11 +484,38 @@ function Flipbook({ open, onClose, pages, index, setIndex }) {
 /* ------------------------------------------------------- ColorRow */
 
 function ColorRow({ color, onChange, onRemove, canRemove }) {
+  /* <input type="color"> requires #rrggbb; draft typing must not crash it. */
+  const pickerHex = /^#[0-9a-fA-F]{6}$/.test(String(color.hex || ''))
+    ? color.hex
+    : '#888888'
   return (
     <div className="bbb-color-row">
-      <input type="color" value={color.hex} onChange={(e) => onChange({ ...color, hex: e.target.value })} />
-      <input type="text" value={color.name} onChange={(e) => onChange({ ...color, name: e.target.value })} />
-      <span className="bbb-color-row__hex">{color.hex.toUpperCase()}</span>
+      <input
+        type="color"
+        value={pickerHex}
+        aria-label={`${color.name || 'Colour'} picker`}
+        onChange={(e) => onChange({ ...color, hex: e.target.value })}
+      />
+      <input
+        type="text"
+        value={color.name}
+        aria-label="Colour name"
+        onChange={(e) => onChange({ ...color, name: e.target.value })}
+      />
+      <input
+        type="text"
+        className="bbb-color-row__hex-input"
+        value={String(color.hex || '').toUpperCase()}
+        spellCheck={false}
+        aria-label={`${color.name || 'Colour'} hex`}
+        onChange={(e) => {
+          let v = e.target.value.trim()
+          if (!v.startsWith('#')) v = `#${v}`
+          if (/^#[0-9a-fA-F]{0,6}$/i.test(v)) {
+            onChange({ ...color, hex: v.length === 7 ? v : color.hex })
+          }
+        }}
+      />
       <button
         type="button"
         aria-label="Remove color"
@@ -585,6 +625,12 @@ export default function BrandBookBuilderView() {
     ])
   }, [headlineFont, headlineWeight, bodyFont, bodyWeight])
 
+  /* Palette → CSS tokens so page previews and shell can share brand colours. */
+  useEffect(() => {
+    applyBrandCssVars(activeProject)
+    return () => clearBrandCssVars()
+  }, [activeProject, activeProject?.palette, activeProject?.colorRoles])
+
   const colors = readPaletteTokens(project)
 
   const [flipOpen, setFlipOpen] = useState(false);
@@ -681,44 +727,80 @@ export default function BrandBookBuilderView() {
 
   const gridMarginVar = { "--space-md": `${grid.margin}%` };
 
+  const sheetW = (dims.w + bleedIn * 2).toFixed(3)
+  const sheetH = (dims.h + bleedIn * 2).toFixed(3)
+  const padIn = marginIn.toFixed(3)
   const printCss = `
-    @page{size:${(dims.w + bleedIn * 2).toFixed(3)}in ${(dims.h + bleedIn * 2).toFixed(3)}in;margin:0}
+    @page{size:${sheetW}in ${sheetH}in;margin:0}
     @media print{
-      .bbb-panel,.bbb-page-label,.bbb-grid-overlay{display:none!important}
-      body{background:#fff}
-      .bbb-canvas{padding:0;gap:0;display:block}
-      .bbb-page{box-shadow:none;page-break-after:always;break-after:page;
-        width:${(dims.w + bleedIn * 2).toFixed(3)}in;height:${(dims.h + bleedIn * 2).toFixed(3)}in;
-        padding:${marginIn.toFixed(3)}in}
-      /* Same reason as the on-screen rule: a content page that runs long
-         flows onto the next sheet rather than having its tail cut off. */
-      .bbb-page--content{height:auto;min-height:${(dims.h + bleedIn * 2).toFixed(3)}in}
+      html.bbb-printing .bbb-topbar,
+      html.bbb-printing .bbb-panel,
+      html.bbb-printing .bbb-pagelist,
+      html.bbb-printing .bbb-page-label,
+      html.bbb-printing .bbb-grid-overlay,
+      html.bbb-printing .bbb-flip-overlay,
+      html.bbb-printing .header-redesign,
+      html.bbb-printing .journey-sidebar,
+      html.bbb-printing .step-rail,
+      html.bbb-printing .app-footer,
+      html.bbb-printing .game-hud,
+      html.bbb-printing .todo-fab{display:none!important}
+      html.bbb-printing body,
+      html.bbb-printing .app,
+      html.bbb-printing .app-shell,
+      html.bbb-printing .main{background:#fff!important;margin:0!important;padding:0!important}
+      html.bbb-printing .bbb-root,
+      html.bbb-printing .bbb-body,
+      html.bbb-printing .bbb-canvas{
+        display:block!important;padding:0!important;gap:0!important;margin:0!important;
+        width:100%!important;max-width:none!important;background:#fff!important
+      }
+      html.bbb-printing .bbb-page{
+        box-shadow:none!important;page-break-after:always;break-after:page;
+        width:${sheetW}in!important;height:${sheetH}in!important;
+        min-height:${sheetH}in!important;max-width:none!important;
+        padding:${padIn}in!important;margin:0!important;overflow:visible!important;
+        aspect-ratio:auto!important
+      }
+      html.bbb-printing .bbb-page--content{height:auto!important;min-height:${sheetH}in!important}
     }
   `;
 
-  /* One book. This used to window.print() the on-screen preview cards — but
-     those cards are budgeted to ~9 lines each for a ~320px thumbnail, so
-     printing one full sheet per card produced a sparse ~54-page book, a
-     different and worse artifact than Deliver's "Brand book PDF". Both now go
-     through the same vector generator, so there is exactly one brand book and
-     the page count the client receives is the one the export reports. The
-     builder's own page-size / bleed controls still drive it, mapped to the
-     book setup the generator resolves. */
+  /* Print uses the live canvas + @media print (A4/roomy from Setup chips).
+     Vector PDF remains the high-fidelity download path when the OS print
+     dialog is not enough — same pack, same geometry, one source of truth. */
+  const handlePrint = () => {
+    setExportNote('')
+    /* class on root so print CSS can hide chrome without fighting React. */
+    document.documentElement.classList.add('bbb-printing')
+    const cleanup = () => {
+      document.documentElement.classList.remove('bbb-printing')
+      window.removeEventListener('afterprint', cleanup)
+    }
+    window.addEventListener('afterprint', cleanup)
+    window.setTimeout(() => {
+      try {
+        window.print()
+      } catch {
+        cleanup()
+        setExportNote('Print dialog didn’t open — try again?')
+      }
+    }, 50)
+  }
+
   const handleExport = async () => {
     if (exporting) return
     setExporting(true)
     setExportNote('')
     const book = {
-      pageSize: printSettings.pageSize,
-      edgeSpace: 'standard',
+      pageSize: printSettings.pageSize === 'a4' ? 'a4' : 'letter',
+      edgeSpace: EDGE_STOPS[activeEdge] ? activeEdge : 'standard',
       printShop: !!printSettings.bleed,
     }
     try {
       if (document.fonts && document.fonts.ready) await document.fonts.ready
       const res = await downloadBrandPackVectorPdf(pack, null, { book })
       if (res.ok) {
-        // The true count of the deliverable, named at the one moment it
-        // answers a real question — how big is the file I just made.
         setExportNote(
           res.pages ? `Saved · ${res.pages}-page PDF` : 'Saved · brand book PDF'
         )
@@ -795,8 +877,17 @@ export default function BrandBookBuilderView() {
           <button type="button" className="bbb-btn" onClick={() => { setFlipIndex(0); setFlipOpen(true); }}>
             Flip through it
           </button>
-          <button type="button" className="bbb-btn bbb-btn--primary" onClick={handleExport} disabled={exporting}>
-            {exporting ? 'Making the PDF…' : 'Print / save as PDF'}
+          <button type="button" className="bbb-btn bbb-btn--primary" onClick={handlePrint}>
+            Print / save as PDF
+          </button>
+          <button
+            type="button"
+            className="bbb-btn"
+            onClick={handleExport}
+            disabled={exporting}
+            title="Download a vector PDF (same live project values)"
+          >
+            {exporting ? 'Making the PDF…' : 'Download PDF'}
           </button>
           {exportNote && (
             <span className="bbb-topbar__note" aria-live="polite">{exportNote}</span>
