@@ -42,13 +42,9 @@ test.describe('Desk reliability', () => {
     skipIfCloud(test, gate)
     await page.getByRole('button', { name: 'Tools' }).click()
     await expect(page.locator('#tools-menu, .more-menu')).toBeVisible()
-    /* Was asserting a Settings row here. Settings left this menu when the
-       header split — it is a labelled button in the header now, and the copy
-       that remains in this menu is `.more-menu-item-mobile-only`, hidden above
-       767px. Any still-present row proves the menu opened; Print is the first
-       one under "This project". */
+    /* Print left Tools (lives on Assets/Export). First "This project" row is Export. */
     await expect(
-      page.locator('#tools-menu').getByRole('menuitem', { name: /Print/i })
+      page.locator('#tools-menu').getByRole('menuitem', { name: /Export/i })
     ).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(page.locator('#tools-menu, .more-menu')).toHaveCount(0)

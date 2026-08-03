@@ -102,7 +102,6 @@ import {
   packReadiness,
   preloadPdfEngine,
   printElementById,
-  printCurrentPage,
   slugifyFilename,
 } from './lib/book/exportFiles'
 import {
@@ -2901,33 +2900,6 @@ function App() {
     })
   }
 
-  const handleDeleteProject = () => {
-    if (!activeProject) return
-    handleDeleteProjectById(activeProject.id, activeProject.name)
-  }
-
-  const handleArchiveProject = () => {
-    if (!activeProject) return
-    const active = (projects || []).filter((p) => !p.archived)
-    if (active.length < 2) {
-      flashToast('Keep at least one project')
-      return
-    }
-    const id = activeProject.id
-    const name = activeProject.name
-    setDeskConfirm({
-      kind: 'archive-project',
-      label: `Archive “${name}”? It moves out of your active list — you can restore it anytime from Define.`,
-      confirmLabel: 'Archive',
-      onConfirm: () => {
-        const result = archiveProject(id)
-        if (result?.ok) flashToast('Project archived')
-        else flashToast(result?.error || 'Could not archive that')
-        setDeskConfirm(null)
-      },
-    })
-  }
-
   const handleAddRunningTodoItem = (text) => {
     const currentStageId = journeyIdForView(activeView) || 'define'
     addRunningTodoItem(text, guessRunningTodoStage(text, currentStageId))
@@ -4048,20 +4020,10 @@ function App() {
         flashMicro={flashMicro}
       />
 
-      {/* Tools — a centered overlay, not a header dropdown (the header nav
-          is gone; the trigger lives in the sidebar's Go to band). Centered
-          per the standing rule: dialogs render front and center, never
-          anchored/bottom/top. Backdrop click and the global Esc chain
-          close it. Same items, same order as the old menu:
-          ordered by how often each is reached, not by category tidiness —
-          an unsorted list is read in full every time. Destructive last.
-          The three mobile-only Go-to mirrors (Calendar/Clients/Settings)
-          are retired: those rows live in the sidebar band at every width
-          now, and two doors to one place is a which-one fork.
-
-          The Account group (Settings/theme/Log out) stays gone — those
-          live on the Settings page, one home each. The to-do list keeps
-          its one door: the labelled pill in the header. */}
+      {/* Tools — centered overlay (dialogs front-and-center). Pruned 2026-08:
+          Print lives on Assets / Export; Archive/Delete live on each project
+          row ⋯ (one door each — a long Tools list was decision fatigue).
+          Go-to first (off-path rooms), then project actions by frequency. */}
       {moreOpen && (
         <div
           className="export-overlay tools-overlay"
@@ -4138,18 +4100,6 @@ function App() {
                 role="menuitem"
                 className="more-menu-item"
                 onClick={() => {
-                  setMoreOpen(false)
-                  const r = printCurrentPage()
-                  if (!r.ok) flashToast(r.error || 'Print failed')
-                }}
-              >
-                <HeaderIcon name="print" /> Print / Save as PDF
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="more-menu-item"
-                onClick={() => {
                   setOverviewSharePanelOpen(true)
                   setMoreOpen(false)
                 }}
@@ -4188,30 +4138,6 @@ function App() {
                 }}
               >
                 <span aria-hidden="true">?</span> Discovery brief
-              </button>
-              {/* Archive/Delete: destructive actions keep one learnable
-                  home, worded, last. */}
-              <button
-                type="button"
-                role="menuitem"
-                className="more-menu-item"
-                onClick={() => {
-                  handleArchiveProject()
-                  setMoreOpen(false)
-                }}
-              >
-                <span aria-hidden="true">□</span> Archive project
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="more-menu-item is-danger"
-                onClick={() => {
-                  handleDeleteProject()
-                  setMoreOpen(false)
-                }}
-              >
-                <span aria-hidden="true">×</span> Delete project
               </button>
             </div>
           </div>

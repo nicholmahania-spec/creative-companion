@@ -3123,7 +3123,9 @@ h3 {
 
 /* Header Settings active state */
 
-/* Action feedback toast (complete step, backup, etc.) — stone, not indigo */
+/* Action feedback toast — secondary hybrid chrome (ADHD advisor): soft plate
+   + thin static rainbow ring for findability. No spin (ephemeral status, not
+   a CTA). Same look for success and error — meaning stays in the words. */
 
 .action-toast {
   position: fixed;
@@ -3145,20 +3147,45 @@ h3 {
   max-width: min(92vw, 28rem);
   padding: 0.55rem 1rem;
   border-radius: var(--radius);
-  background: #1A1A1A;
-  color: #FAFAFA;
+  /* Soft plate + static rainbow ring (same stops as secondary buttons). */
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
+    conic-gradient(
+      from 0deg,
+      #ff006e,
+      #8338ec,
+      #3a86ff,
+      #00ddeb,
+      #06d6a0,
+      #ffbe0b,
+      #ff006e
+    )
+      border-box;
+  color: var(--text-primary);
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   text-align: center;
   box-shadow: none;
-  border: 1px solid transparent;
   animation: chipIn 0.35s var(--ease-out, ease-out);
   pointer-events: none;
 }
 
 .app.deep .action-toast {
-  background: var(--bg-elevated);
+  background:
+    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
+    conic-gradient(
+      from 0deg,
+      #ff6bcb,
+      #c084fc,
+      #8b7cf7,
+      #2dd4e0,
+      #5eead4,
+      #fbbf24,
+      #ff6bcb
+    )
+      border-box;
   color: var(--text-primary);
   box-shadow: none;
 }
