@@ -5,6 +5,12 @@
  */
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react'
 import { labelForStepId } from '../lib/journey'
+import {
+  IDENTITY_SUBSTEPS,
+  resolveIdentitySubstep,
+  nextIdentitySubstep,
+  prevIdentitySubstep,
+} from '../lib/identitySubsteps'
 import useAppStore from '../store/useAppStore'
 import versionService from '../services/versionService'
 import {
@@ -34,17 +40,6 @@ import '../styles/lazy-design.css'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
-/** Sub-screens under Identity — one source for nav + footer Next. */
-export const IDENTITY_SUBSTEPS = [
-  { id: 'logo', label: 'Mark' },
-  { id: 'essentials', label: 'Words' },
-  { id: 'colors', label: 'Colour' },
-  { id: 'type', label: 'Type' },
-  { id: 'preview', label: 'Preview' },
-]
-
-const SUBSTEP_IDS = IDENTITY_SUBSTEPS.map((s) => s.id)
-
 export default function DesignView({
   navDir = 'none',
   journeyNext = null,
@@ -55,9 +50,9 @@ export default function DesignView({
   setActiveView,
   flashToast,
   flashMicro,
-  /** Deep-link scroll target when jumping from Review/Deliver readiness */
-  brandEditSectionProp,
-  setBrandEditSectionProp: _setBrandEditSectionProp,
+  /** One-shot deep link from Review/Deliver readiness — cleared after apply */
+  brandEditSectionProp = null,
+  setBrandEditSectionProp = null,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const updateDirection = useAppStore((s) => s.updateDirection)
@@ -72,8 +67,13 @@ export default function DesignView({
   const setLogoDirection = useAppStore((s) => s.setLogoDirection)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
 
-  /* One sub-screen at a time. Deep links set the sub-step (not a scroll). */
-  const [identitySubstep, setIdentitySubstep] = useState('logo')
+  /* Resume from project; sub-nav / Next / deep link all write identitySubstep. */
+  const identitySubstep = resolveIdentitySubstep(activeProject?.identitySubstep)
+  const setIdentitySubstep = (id) => {
+    const next = resolveIdentitySubstep(id)
+    if (next === identitySubstep) return
+    updateBrandField('identitySubstep', next)
+  }
   const [deepLinkFocus, setDeepLinkFocus] = useState(null)
   const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
   const [checkBgIndex, setCheckBgIndex] = useState(0)
@@ -300,26 +300,24 @@ export default function DesignView({
     }
   }
 
-  // Honor parent jump (e.g. readiness “fix palette roles”) → open that sub-screen.
+  // One-shot deep link (e.g. readiness “fix palette roles”) — apply then clear
+  // so the next visit resumes from identitySubstep, not a sticky gap target.
   useEffect(() => {
     if (!brandEditSectionProp) return
-    const map = {
-      messaging: 'essentials',
-      voice: 'essentials',
-      imagery: 'preview',
-      pins: 'preview',
-      stationery: 'preview',
-    }
-    const raw = map[brandEditSectionProp] || brandEditSectionProp
-    const target = SUBSTEP_IDS.includes(raw) ? raw : 'logo'
-    setIdentitySubstep(target)
+    const target = resolveIdentitySubstep(brandEditSectionProp)
+    updateBrandField('identitySubstep', target)
+    setBrandEditSectionProp?.(null)
     setDeepLinkFocus(target)
     const t = setTimeout(() => setDeepLinkFocus(null), 2200)
     return () => clearTimeout(t)
-  }, [brandEditSectionProp])
+  }, [brandEditSectionProp, setBrandEditSectionProp, updateBrandField])
 
-  const substepIndex = Math.max(0, SUBSTEP_IDS.indexOf(identitySubstep))
-  const nextSubstep = IDENTITY_SUBSTEPS[substepIndex + 1] || null
+  const substepIndex = Math.max(
+    0,
+    IDENTITY_SUBSTEPS.findIndex((s) => s.id === identitySubstep)
+  )
+  const nextSubstep = nextIdentitySubstep(identitySubstep)
+  const prevSubstep = prevIdentitySubstep(identitySubstep)
 
   // New sub-screen → top of page (avoid landing mid-form from a previous step)
   useEffect(() => {
@@ -1789,15 +1787,13 @@ export default function DesignView({
                   ? `Next · ${nextSubstep.label}`
                   : `Next · ${journeyNext?.label || labelForStepId('sketch')}`}
               </button>
-              {substepIndex > 0 ? (
+              {prevSubstep ? (
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={() =>
-                    setIdentitySubstep(IDENTITY_SUBSTEPS[substepIndex - 1].id)
-                  }
+                  onClick={() => setIdentitySubstep(prevSubstep.id)}
                 >
-                  Back · {IDENTITY_SUBSTEPS[substepIndex - 1].label}
+                  Back · {prevSubstep.label}
                 </button>
               ) : (
                 <button

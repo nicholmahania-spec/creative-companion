@@ -223,6 +223,8 @@ export function brandIdentityDefaults() {
      lib/identityStamp.js for why the UI shows a sentence instead. */
   identityEditedAt: '',
   identitySavedAt: '',
+  /** Last Identity sub-screen (mark/words/colour/type/preview) — resume after leave */
+  identitySubstep: 'logo',
   /** Why the chosen type pair fits the Define brand words */
   typeWhy: '',
   /** data URL mark for pack cover */

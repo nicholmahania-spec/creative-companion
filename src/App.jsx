@@ -99,6 +99,10 @@ import {
   focusPathGapTarget,
   sameProjectId,
 } from './lib/journeyProgress'
+import {
+  nextIdentitySubstep,
+  resolveIdentitySubstep,
+} from './lib/identitySubsteps'
 
 import JourneyGapStrip from './components/JourneyGapStrip'
 import PathStepIcon from './components/PathStepIcon'
@@ -406,11 +410,12 @@ function App() {
     }
   }, [])
 
-  /** Identity sub-screen when jumping from Review/Deliver readiness fixes */
-  const [brandEditSection, setBrandEditSection] = useState('logo')
+  /** One-shot Identity sub-screen target from Review/Deliver readiness (null = none) */
+  const [brandEditSection, setBrandEditSection] = useState(null)
   const goSystemSection = useCallback(
     (section) => {
       if (section) setBrandEditSection(section)
+      else setBrandEditSection(null)
       setActiveView('brand')
     },
     [setActiveView]
@@ -1003,6 +1008,31 @@ function App() {
     },
     [setActiveView]
   )
+
+  /**
+   * Identity: rail Continue and footer Next share one rule — advance
+   * Mark→…→Preview, then path Touchpoints. Elsewhere: path next stop.
+   */
+  const advancePathOrIdentity = useCallback(() => {
+    if (activeView === 'brand') {
+      const cur = resolveIdentitySubstep(
+        useAppStore.getState().projects.find(
+          (p) => p.id === useAppStore.getState().currentProjectId
+        )?.identitySubstep
+      )
+      const nextSub = nextIdentitySubstep(cur)
+      if (nextSub) {
+        useAppStore.getState().updateBrandField('identitySubstep', nextSub.id)
+        flashMicro(`Going to ${nextSub.label}`)
+        return
+      }
+      const pathNext = getNextJourney('brand')
+      if (pathNext) goToProcessStep(pathNext, { micro: 'open' })
+      return
+    }
+    const pathNext = getNextJourney(activeView)
+    if (pathNext) goToProcessStep(pathNext, { micro: 'open' })
+  }, [activeView, goToProcessStep])
 
   /** Earliest incomplete step — reuses buildPathProgressCtx (same filters as strip) */
   const goToNextProcessGap = useCallback(() => {
@@ -3098,6 +3128,19 @@ function App() {
 
   const journeyActive = journeyIdForView(activeView)
   const journeyNext = getNextJourney(activeView)
+  /** Rail label on Identity: next sub-screen, else Touchpoints (path next). */
+  const identityRailNext =
+    activeView === 'brand'
+      ? nextIdentitySubstep(activeProject?.identitySubstep) || journeyNext
+      : null
+  const stepRailContinueLabel =
+    activeView === 'brand'
+      ? identityRailNext?.label || journeyNext?.label
+      : journeyNext?.label
+  const stepRailContinueVisible =
+    activeView === 'brand'
+      ? !!(identityRailNext || journeyNext)
+      : !!journeyNext
 
   /* Header back affordance — one stable header whose contents adapt per view
      (2026 design handoff). Derivation, not a per-view lookup table:
@@ -3455,12 +3498,10 @@ function App() {
               )
             })}
           </ol>
-          {/* Sequential next on the path — not earliest incomplete gap.
-              Gap-jumping sent people on Research/Identity back to Strategy
-              ("Continue → Strategy") while they were mid-path. Primary Next
-              on each page and this rail both walk forward; Home still uses
-              pathNextGap for "where work is empty." Hide on the last stop. */}
-          {journeyNext && (
+          {/* Sequential forward. On Identity, same advance as footer Next
+              (sub-screens then Touchpoints) — never skip craft screens.
+              Elsewhere: next path stop. Home still uses pathNextGap. */}
+          {stepRailContinueVisible && stepRailContinueLabel && (
             <button
               type="button"
               /* is-earned: the gradient ring fires ONLY when the stop you are
@@ -3472,9 +3513,9 @@ function App() {
               className={`btn btn-primary step-rail-cta${
                 journeyActive && thisStepFilled ? ' is-earned' : ''
               }`}
-              onClick={() => goToProcessStep(journeyNext, { micro: 'open' })}
+              onClick={() => advancePathOrIdentity()}
             >
-              Continue → {journeyNext.label}
+              Continue → {stepRailContinueLabel}
             </button>
           )}
         </nav>
