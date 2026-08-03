@@ -50,11 +50,28 @@
   gap: var(--space-4);
 }
 
+/* One head row: title + status left, Send right — then straight into the form. */
 .define-brief-head {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.define-brief-head-row {
+  display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--space-2);
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+}
+
+.define-brief-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1 1 12rem;
 }
 
 .define-brief-title {
@@ -63,96 +80,81 @@
 
 .define-brief-status {
   margin: 0;
-  font-size: var(--fs-3);
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .define-brief-status-due {
   font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.define-brief-lede {
-  margin: 0;
-  max-width: 65ch;
-  font-size: var(--fs-2);
-  font-weight: 500;
-  color: var(--text-secondary);
-  line-height: 1.45;
-}
-
-.define-brief-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-/* Only Send + footer Next stay filled; Interview + start-here chips are outline. */
-.define-brief-actions .btn-primary,
-.define-brief-footer .btn-primary {
-  background: var(--text-primary);
-  color: var(--bg-canvas);
-  border: 1px solid var(--text-primary);
-}
-
-.define-brief-actions .btn-primary:hover:not(:disabled),
-.define-brief-footer .btn-primary:hover:not(:disabled) {
-  background: var(--text-primary);
-  color: var(--bg-canvas);
-  filter: brightness(0.92);
-}
-
-.define-brief-actions .btn-secondary,
-.define-brief .define-start-here-list .btn-secondary,
-.define-brief-footer .btn-secondary {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-}
-
-.define-brief-actions .btn-secondary:hover:not(:disabled),
-.define-brief .define-start-here-list .btn-secondary:hover:not(:disabled),
-.define-brief-footer .btn-secondary:hover:not(:disabled) {
-  border-color: var(--text-primary);
-  color: var(--text-primary);
-}
-
-/* Count line quiet; one outline jump is the only anti-stall control. */
-.define-brief .define-start-here-title {
-  margin: 0 0 var(--space-2);
-  font-size: var(--fs-2);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
-  color: var(--text-secondary);
-}
-
-.define-brief .define-start-here.is-done .define-start-here-title {
-  font-size: var(--fs-2);
-  font-weight: 500;
   color: var(--text-muted);
+}
+
+.define-brief-send {
+  flex: 0 0 auto;
+  align-self: center;
 }
 
 .define-brief-head .define-title-rule {
   width: 100%;
   flex: none;
   height: 1px;
-  margin: var(--space-2) 0;
+  margin: 0;
   background: var(--border-subtle);
 }
 
-.define-brief-head .define-start-here {
-  width: 100%;
-  margin: 0;
+/* Conversation labels, not settings eyebrows */
+.define-brief .define-field-label,
+.define-brief legend.define-field-label {
+  font-family: var(--font-sans, inherit);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-primary);
 }
 
-.define-brief .define-start-here-list {
-  margin: 0;
+.define-brief .define-field-needed {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-.define-brief .define-start-here-list .btn {
-  min-height: var(--tap-min, 2.75rem);
+.define-brief-secondary .define-field-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-muted);
+}
+
+.define-brief-send.btn-primary,
+.define-brief-footer .btn-primary {
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  border: 1px solid var(--text-primary);
+}
+
+.define-brief-send.btn-primary:hover:not(:disabled),
+.define-brief-footer .btn-primary:hover:not(:disabled) {
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  filter: brightness(0.92);
+}
+
+.define-brief-send.btn-secondary,
+.define-brief-footer .btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+.define-brief-send.btn-secondary:hover:not(:disabled),
+.define-brief-footer .btn-secondary:hover:not(:disabled) {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .define-brief-secondary {
@@ -232,30 +234,32 @@
   }
 }
 
-.app.deep .define-brief-footer {
-  background: var(--bg-canvas);
-  border-top-color: var(--border-subtle);
-  box-shadow: none;
-}
-
 .app.deep .define-brief-status {
-  color: var(--text-primary);
-}
-
-.app.deep .define-brief-status-due,
-.app.deep .define-brief-lede {
   color: var(--text-secondary);
 }
 
-.app.deep .define-brief-actions .btn-primary,
+.app.deep .define-brief-status-due {
+  color: var(--text-muted);
+}
+
+.app.deep .define-brief .define-field-label,
+.app.deep .define-brief legend.define-field-label {
+  color: var(--text-primary);
+}
+
+.app.deep .define-brief-footer {
+  background: var(--bg-canvas);
+  border-top-color: var(--border-subtle);
+}
+
+.app.deep .define-brief-send.btn-primary,
 .app.deep .define-brief-footer .btn-primary {
   background: var(--text-primary);
   color: var(--bg-canvas);
   border-color: var(--text-primary);
 }
 
-.app.deep .define-brief-actions .btn-secondary,
-.app.deep .define-brief .define-start-here-list .btn-secondary,
+.app.deep .define-brief-send.btn-secondary,
 .app.deep .define-brief-footer .btn-secondary {
   background: transparent;
   color: var(--text-primary);

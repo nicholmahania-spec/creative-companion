@@ -1,20 +1,17 @@
 /**
- * Strategy / The brief — form-only writing surface (Studio mock).
+ * Strategy / The brief — form-only writing surface.
  *
- * Inspiration/refs live on Research, not beside this page — owner removed
- * the Refs block deliberately; do not reintroduce without asking.
- *
- * Chrome (pruned): title · status · Send / Interview · one start jump · form.
- * Milestones + scope below the form. Sticky footer: desk · Next · short blank.
- * No project-name band (sidebar/header already name the project).
- * No chapter rail (form headings are the only map).
+ * One job: answers get written here (client later, or you now).
+ * Head: title · status · Send the brief (when not sent). Form is the start.
+ * No start ramp, no interview CTA, no chapter rail, no project-name band.
+ * Milestones + scope demoted below the form.
+ * Footer: Back to desk · Next · Research · short needed count.
  */
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
 import { getRequiredEmpty } from '../lib/detectiveBrief'
 import { relativeDeadlineLabel } from '../lib/dates'
-import DefineStartHere from '../components/DefineStartHere'
 import ScopePanel from '../components/ScopePanel'
 import '../styles/lazy-define.css'
 
@@ -53,8 +50,6 @@ export default function DefineView(props) {
     flashMicro,
   } = props
 
-  // Own the live project row so App shell can skip detective equality and not
-  // re-render the whole tree on every Define keystroke.
   const projectId = useAppStore(
     (s) => activeProjectProp?.id || s.currentProjectId
   )
@@ -104,12 +99,14 @@ export default function DefineView(props) {
 
   const sendStatus = useMemo(
     () => briefSendStatus(activeProject),
-    [activeProject?.clientPortalId, activeProject?.discoveryShareId, activeProject?.discoveryShareStatus]
+    [
+      activeProject?.clientPortalId,
+      activeProject?.discoveryShareId,
+      activeProject?.discoveryShareStatus,
+    ]
   )
 
   const milestones = activeProject?.detective?.milestones || []
-  /** Milestone rows queued for removal: id -> entry. Purely transient UI
-   * state — never belongs in the store. No countdown (time blindness). */
   const [pendingRemovals, setPendingRemovals] = useState({})
   const pendingRemovalsRef = useRef(pendingRemovals)
   pendingRemovalsRef.current = pendingRemovals
@@ -149,40 +146,14 @@ export default function DefineView(props) {
     [projectDeadline]
   )
 
-  /** Designer fills the brief live (mock: "I'm interviewing them"). */
-  const startInterview = useCallback(() => {
-    const first =
-      requiredEmpty[0] ||
-      { id: 'clientName' }
-    requestAnimationFrame(() => {
-      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')
-        .matches
-      const el =
-        document.getElementById(`detective-${first.id}`) ||
-        document
-          .getElementById(`detective-field-${first.id}`)
-          ?.querySelector('input, textarea, button')
-      if (!el) {
-        document
-          .getElementById('define-chapter-content-overview')
-          ?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' })
-        return
-      }
-      el.scrollIntoView({
-        block: 'center',
-        behavior: reduce ? 'auto' : 'smooth',
-      })
-      el.focus?.()
-    })
-  }, [requiredEmpty])
-
-  /* Footer: short count only — full labels live on Start with / NEEDED badges. */
-  const stillBlankLine =
+  const neededLine =
     requiredEmpty.length === 0
       ? ''
       : requiredEmpty.length === 1
-        ? '1 still blank'
-        : `${requiredEmpty.length} still blank`
+        ? '1 needed'
+        : `${requiredEmpty.length} needed`
+
+  const showSend = sendStatus.kind === 'not_sent'
 
   return (
     <div
@@ -190,35 +161,38 @@ export default function DefineView(props) {
       data-nav-dir={navDir}
     >
       <header className="define-brief-head">
-        <h1 className="page-title define-brief-title">The brief</h1>
-        <p className="define-brief-status" data-status={sendStatus.kind}>
-          {sendStatus.label}
-          {deadlineRelative ? (
-            <span className="define-brief-status-due"> · {deadlineRelative}</span>
-          ) : null}
-        </p>
-        <div className="define-brief-actions">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => onOpenShare?.()}
-          >
-            Send it to them
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={startInterview}
-          >
-            I&rsquo;m interviewing them
-          </button>
+        <div className="define-brief-head-row">
+          <div className="define-brief-head-text">
+            <h1 className="page-title define-brief-title">The brief</h1>
+            <p className="define-brief-status" data-status={sendStatus.kind}>
+              {sendStatus.label}
+              {deadlineRelative ? (
+                <span className="define-brief-status-due">
+                  {' '}
+                  · {deadlineRelative}
+                </span>
+              ) : null}
+            </p>
+          </div>
+          {showSend ? (
+            <button
+              type="button"
+              className="btn btn-primary define-brief-send"
+              onClick={() => onOpenShare?.()}
+            >
+              Send the brief
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-secondary define-brief-send"
+              onClick={() => onOpenShare?.()}
+            >
+              Share
+            </button>
+          )}
         </div>
         <div className="define-title-rule" aria-hidden="true" />
-        <DefineStartHere
-          detective={activeProject?.detective}
-          projectDeadline={projectDeadline}
-          researchLabel={labelForStepId('research')}
-        />
       </header>
 
       <div className="define-split" data-define-layout="form-only">
@@ -247,7 +221,6 @@ export default function DefineView(props) {
         </div>
       </div>
 
-      {/* Demoted below the form so cheap edits don't intercept initiation. */}
       <section
         className="define-brief-secondary"
         aria-label="Dates and scope"
@@ -301,7 +274,7 @@ export default function DefineView(props) {
                     onClick={() => scheduleRemoveMilestone(m.id)}
                     aria-label="Remove milestone"
                   >
-                    ✕
+                    Remove
                   </button>
                 </div>
               )
@@ -323,7 +296,11 @@ export default function DefineView(props) {
         />
       </section>
 
-      <div className="define-brief-footer" role="region" aria-label="Brief actions">
+      <div
+        className="define-brief-footer"
+        role="region"
+        aria-label="Brief actions"
+      >
         <div className="define-brief-footer-row">
           <div className="define-brief-footer-actions">
             <button
@@ -341,8 +318,8 @@ export default function DefineView(props) {
               {`Next · ${journeyNext?.label || labelForStepId('research')}`}
             </button>
           </div>
-          {stillBlankLine ? (
-            <p className="define-brief-still-blank">{stillBlankLine}</p>
+          {neededLine ? (
+            <p className="define-brief-still-blank">{neededLine}</p>
           ) : null}
         </div>
       </div>

@@ -2475,7 +2475,7 @@ function App() {
         const el =
           document.getElementById('detective-clientName') ||
           document.getElementById('detective-goal') ||
-          document.querySelector('.define-start-here .btn-primary')
+          document.querySelector('.define-brief .define-input')
         if (!el) return false
         try {
           el.focus?.({ preventScroll: false })

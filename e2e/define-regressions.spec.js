@@ -105,11 +105,11 @@ test.describe('Define page regressions', () => {
     skipIfCloud(test, gate)
     await openDefine(page)
 
-    // Title → start-here → form → demoted milestones. No CSS `order`
-    // scramble — visual top must match DOM top (WCAG 2.4.3).
+    // Title → form → demoted milestones → footer. No CSS `order` scramble
+    // — visual top must match DOM top (WCAG 2.4.3).
     const orders = await page.evaluate(() => {
       const sel =
-        '.define-brief-title, .define-start-here, .define-chapters, .define-milestones-compact, .define-brief-footer'
+        '.define-brief-title, .define-chapters, .define-milestones-compact, .define-brief-footer'
       const nodes = [...document.querySelectorAll(sel)]
       const name = (n) =>
         (n.className || '').toString().split(/\s+/).find(Boolean) || n.tagName
@@ -123,10 +123,9 @@ test.describe('Define page regressions', () => {
       return { dom, visual }
     })
     expect(orders.dom).toContain('define-brief-title')
-    expect(orders.dom).toContain('define-start-here')
     expect(orders.dom).toContain('define-chapters')
     expect(orders.dom).toContain('define-milestones-compact')
-    expect(orders.dom.length).toBeGreaterThanOrEqual(4)
+    expect(orders.dom.length).toBeGreaterThanOrEqual(3)
     expect(orders.visual).toEqual(orders.dom)
   })
 
