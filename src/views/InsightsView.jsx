@@ -144,9 +144,6 @@ export default function InsightsView(props) {
         <div className="settings-row insights-break-row">
           <span className="insights-break-copy">
             <strong>Break lock</strong>
-            <span className="insights-break-hint">
-              When the timer ends, the screen locks until you take the break.
-            </span>
           </span>
           <button
             type="button"

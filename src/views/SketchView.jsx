@@ -5,14 +5,11 @@
 import { useMemo, useCallback, lazy, Suspense } from 'react'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
-import { getProcessPhase } from '../lib/journey/processGuide'
 import { focusPathGapTarget } from '../lib/journey/journeyProgress'
-import InfoReveal from '../components/InfoReveal'
 import TouchpointMockThumb from '../components/TouchpointMockThumb'
 import {
   touchpointsFor,
   touchpointLabel,
-  touchpointsBlurb,
   touchpointCheckHint,
 } from '../lib/journey/touchpoints'
 import '../styles/lazy-sketch.css'
@@ -58,10 +55,6 @@ export default function SketchView({
   const deliverables = activeProject?.detective?.deliverablesPicked
   const apps = useMemo(
     () => touchpointsFor(surfaces, deliverables),
-    [surfaces, deliverables]
-  )
-  const blurb = useMemo(
-    () => touchpointsBlurb(surfaces, deliverables),
     [surfaces, deliverables]
   )
   const proofs = activeProject?.touchpointApps || {}
@@ -124,18 +117,9 @@ export default function SketchView({
           <h1 className="page-title work-page-title">
             {labelForStepId('sketch')}
           </h1>
-          <p className="path-job-line">
-            Where the brand shows up — check the mock the book will show.
-          </p>
           <p className="touchpoints-status" role="status">
             {statusLine}
-            <InfoReveal>
-              {(getProcessPhase('sketch')?.checks || []).join(' · ')}
-            </InfoReveal>
           </p>
-          {blurb ? (
-            <p className="touchpoints-blurb">{blurb}</p>
-          ) : null}
         </div>
       </div>
 
@@ -146,10 +130,6 @@ export default function SketchView({
           </Suspense>
           <p className="touchpoints-empty-title">
             Name where the brand appears
-          </p>
-          <p className="touchpoints-empty-sub">
-            Pick one surface to start, or open Strategy and answer “Where will
-            this be used?”
           </p>
           <div
             className="touchpoints-quick"

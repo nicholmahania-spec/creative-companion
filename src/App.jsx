@@ -3683,7 +3683,6 @@ function App() {
               {JOURNEY_STEPS.map((step, idx) => {
                 const active = journeyActive === step.id
                 const label = step.label
-                const plain = step.plain
                 const pathCtx = {
                   project: activeProject,
                   moodItems: deskMood,
@@ -3723,10 +3722,7 @@ function App() {
                         }
                       }}
                       aria-current={active ? 'step' : undefined}
-                      aria-label={`Step ${step.num}: ${label}. ${plain}${
-                        hasContent ? ' Has content.' : ''
-                      } Press ${step.num} to open.`}
-                      title={`${plain} · key ${step.num}`}
+                      aria-label={`${label}${hasContent ? ', has content' : ''}`}
                     >
                       <span className="journey-node" aria-hidden="true">
                         {hasContent && !active ? (

@@ -203,9 +203,6 @@ export default function LoginView({ onUnlocked, cloud = false }) {
               than a tax on the gate. */}
           <LogoLockup reduceMotion />
           <h1 className="login-h1">Creative Companion</h1>
-          <p className="login-promise">
-            Client brand projects — brief to leave-behind in five stops.
-          </p>
           <ol className="login-path-mini" aria-label="The path">
             {JOURNEY_STEPS.map((s) => (
               <li key={s.id}>

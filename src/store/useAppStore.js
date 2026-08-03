@@ -405,7 +405,7 @@ export function blankWorkspaceState() {
       focusRingStrength: 'normal',
       /** Collapse the sidebar to zero-width while a field has focus */
       hideNavUntilBlur: false,
-      /** Hide process tips / InfoReveal and instructional page-subs (Tech-Studio) */
+      /** Legacy: tips UI removed; kept default true so old prefs hydrate quietly */
       hideTips: true,
       /** Pack / PDF: hide Creative Companion footer watermark */
       /* Client work goes out clean unless the designer chooses otherwise.

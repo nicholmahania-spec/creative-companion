@@ -17,7 +17,7 @@
  * equal Continue. Mark done stays secondary next to Open {stop}.
  */
 import { labelForView, labelForStepId } from '../lib/journey/journey'
-import { getProcessPhase } from '../lib/journey/processGuide'
+
 import { namedDeadlineLabel } from '../lib/dates'
 import { pinFaceStyle, pinVisualKind } from '../lib/moodPins'
 import { DELIVERABLE_OPTIONS } from '../lib/brief/detectiveBrief'
@@ -140,7 +140,6 @@ export default function DeskView({
   const skipped = (id) => notNeeded.includes(id)
 
   const gapRow = nextGap && !skipped(nextGap.id) ? nextGap : null
-  const phase = gapRow ? getProcessPhase(gapRow.id) : null
 
   const openTasks = tasks.filter((t) => !t.completed)
   const doneTasks = tasks.filter((t) => t.completed)
@@ -222,9 +221,7 @@ export default function DeskView({
 
   const week = weekFromWorkLog(project?.workLog || [])
 
-  const gapTitle =
-    phase?.plain ||
-    (gapRow ? `Pick this up in ${gapRow.label}.` : '')
+  const gapTitle = gapRow ? gapRow.label : ''
 
   const pickup = deskPickup({
     lastView: project?.lastView,
@@ -307,9 +304,6 @@ export default function DeskView({
                     Open {labelForStepId('deliver')}
                   </button>
                 )}
-              <span className="desk-artboard-note">
-                Ambient preview — path work is under What&rsquo;s next.
-              </span>
             </div>
           </section>
 
@@ -330,10 +324,7 @@ export default function DeskView({
               </button>
             </div>
             {packPins.length === 0 ? (
-              <p className="desk-empty">
-                Nothing starred yet — open the wall and star up to 6 for the
-                pack.
-              </p>
+              <p className="desk-empty">Nothing starred yet.</p>
             ) : (
               <div className="desk-pack-grid">
                 {packPins.map((pin) => {
@@ -379,10 +370,7 @@ export default function DeskView({
               </button>
             </div>
             {briefRows.length === 0 ? (
-              <p className="desk-empty">
-                Nothing in the brief yet. Open Strategy and fill what you
-                can — blanks are fine.
-              </p>
+              <p className="desk-empty">Nothing in the brief yet.</p>
             ) : (
               <dl className="desk-brief-grid">
                 {briefRows.map((row) => (

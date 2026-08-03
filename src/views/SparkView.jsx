@@ -4,9 +4,7 @@
  */
 import { useState, useEffect } from 'react'
 import { labelForStepId } from '../lib/journey/journey'
-import { getProcessPhase } from '../lib/journey/processGuide'
 import useAppStore from '../store/useAppStore'
-import InfoReveal from '../components/InfoReveal'
 import LayoutPatterns from '../components/LayoutPatterns'
 import '../styles/lazy-ideate.css'
 import '../styles/lazy-sketch.css'
@@ -39,7 +37,6 @@ export default function SparkView({
   const filledDirs = dirs.filter((d) => String(d.title || '').trim()).length
   const chosen = dirs.find((d) => d.chosen && String(d.title || '').trim())
   const canSend = !!chosen
-  const phase = getProcessPhase('ideate')
   const title = 'Ideate'
   const goalLine = String(projectGoal || '').trim()
 
@@ -195,9 +192,6 @@ export default function SparkView({
       <div className="flow-top ideate-top">
         <div className="ideate-top-text">
           <h1 className="page-title">{title}</h1>
-          <p className="page-sub ideate-thesis">
-            Volume first. Messy list, then a short shortlist — not one polished concept.
-          </p>
         </div>
         <div className="ideate-top-actions">
           <button
@@ -231,14 +225,6 @@ export default function SparkView({
         <p className="ideate-progress" role="status">
           {statusLine}
         </p>
-        {phase ? (
-          <p className="ideate-phase" role="status">
-            <InfoReveal>
-              {(phase.checks || []).join(' · ')}
-              {phase.prompt ? ` — ${phase.prompt}` : ''}
-            </InfoReveal>
-          </p>
-        ) : null}
         {goalLine ? (
           <p className="ideate-goal" title={goalLine}>
             Goal: {goalLine.slice(0, 80)}
@@ -250,9 +236,6 @@ export default function SparkView({
       {/* Diverge first — messy dump before shortlist */}
       <section className="ideate-rough" aria-label="Rough ideas">
         <p className="ideate-rough-label">1 · Diverge (rough dump)</p>
-        <p className="ideate-rough-hint">
-          Aim for range, not quality. Capture many lines. Promote only when you have options.
-        </p>
         {rough.length > 0 ? (
           <ul className="ideate-rough-list">
             {rough.map((t, i) => (

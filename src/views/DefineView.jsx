@@ -106,9 +106,6 @@ export default function DefineView(props) {
             <h1 className="page-title define-brief-title">
               {labelForStepId('define')}
             </h1>
-            <p className="define-brief-job path-job-line">
-              Client brief — who it is for and what it should do.
-            </p>
             <p className="define-brief-status" data-status={sendStatus.kind}>
               {sendStatus.label}
               {deadlineRelative ? (

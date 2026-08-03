@@ -50,9 +50,6 @@ export default function SettingsView(props) {
     <div className="settings-view settings-studio">
       <div className="flow-top">
         <h1 className="page-title">Settings</h1>
-        <p className="settings-intro">
-          Calm typing and desk data. Everything here is already open.
-        </p>
       </div>
 
       <section className="panel brand-section" id="settings-calm">
@@ -67,11 +64,6 @@ export default function SettingsView(props) {
           label="Less motion"
           checked={reduceMotion}
           onToggle={() => setPref('reduceMotion', !reduceMotion)}
-        />
-        <SettingsSwitch
-          label="Hide tips"
-          checked={!!prefs.hideTips}
-          onToggle={() => setPref('hideTips', !prefs.hideTips)}
         />
         <div className="settings-row">
           <strong>Toasts</strong>

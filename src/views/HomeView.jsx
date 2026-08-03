@@ -55,21 +55,13 @@ export default function HomeView({
             + New project
           </button>
         </header>
-        <p className="home-dash-empty">
-          Run client brand projects from brief to leave-behind — five stops, one
-          pack to send.
-        </p>
         <ol className="home-dash-path-promise" aria-label="The path">
           {JOURNEY_STEPS.map((s) => (
             <li key={s.id}>
               <strong>{s.label}</strong>
-              <span>{s.plain}</span>
             </li>
           ))}
         </ol>
-        <p className="home-dash-empty-hint">
-          Start a project when you&rsquo;re ready — blanks are fine.
-        </p>
       </section>
     );
   }
@@ -84,20 +76,10 @@ export default function HomeView({
       : focus.nextGap
         ? focus.nextGap.label
         : "All caught up";
-  const nextStepMeta = JOURNEY_STEPS.find((s) => s.id === focus.nextGap?.id);
-  const nextPlain =
-    nextStepMeta?.plain ||
-    (packReady
-      ? "Download or send the leave-behind from Assets."
-      : pathFull
-        ? `Open ${labelForStepId("deliver")} to fill gaps or ship.`
-        : "");
-
   return (
     <section className="home-dash" aria-label="Home dashboard">
       <header className="home-dash-head">
         <div>
-          <p className="home-dash-eyebrow">Home</p>
           <h1 className="home-dash-title">Studio</h1>
         </div>
         <button
@@ -126,13 +108,6 @@ export default function HomeView({
           <h2 className="home-dash-pickup-title">
             {focus.hasUnreadClient ? "Client inbox" : nextLabel}
           </h2>
-          {focus.hasUnreadClient ? (
-            <p className="home-dash-pickup-plain">
-              Open their messages and answers.
-            </p>
-          ) : nextPlain ? (
-            <p className="home-dash-pickup-plain">{nextPlain}</p>
-          ) : null}
         </div>
         <div className="home-dash-pickup-actions">
           <button
@@ -250,9 +225,7 @@ export default function HomeView({
             <span className="home-dash-panel-meta">{focus.project.name}</span>
           </div>
           {pathFull ? (
-            <p className="home-dash-panel-empty">
-              Path complete — open Assets to ship or Desk to review.
-            </p>
+            <p className="home-dash-panel-empty">Path complete.</p>
           ) : focus.nextGap ? (
             <button
               type="button"
@@ -265,11 +238,6 @@ export default function HomeView({
               <span className="home-dash-up-next-kicker">Continue</span>
               <span className="home-dash-up-next-title">
                 {focus.nextGap.label}
-              </span>
-              <span className="home-dash-up-next-plain">
-                {nextStepMeta?.plain ||
-                  nextStepMeta?.enough ||
-                  "Open this stop"}
               </span>
             </button>
           ) : (

@@ -1167,7 +1167,6 @@ export default function BrandBookBuilderView() {
             checked={printSettings.bleed}
             onChange={(v) => setPrintSettings((p) => ({ ...p, bleed: v }))}
           />
-          <p className="bbb-hint">Print shop adds a 0.125in bleed so a trimmed edge keeps full colour.</p>
         </Section>
 
         {/* The book's words, one section per page it prints on, in the order
@@ -1208,9 +1207,6 @@ export default function BrandBookBuilderView() {
             ))}
           </div>
           <button type="button" className="bbb-btn" onClick={addColor} disabled={colors.length >= MAX_COLORS}>+ add color token</button>
-          {colors.length >= MAX_COLORS && (
-            <p className="bbb-hint">{MAX_COLORS} is the maximum &mdash; remove one to add another.</p>
-          )}
           {/* Deferred: Style presets (Style chips) — not built. Colours are
               set one token at a time, no starting-point palettes. */}
         </Section>
@@ -1266,7 +1262,6 @@ export default function BrandBookBuilderView() {
               </select>
             </div>
           </div>
-          <p className="bbb-hint">Sizes shown in points, same unit InDesign uses. If the real font is installed locally (e.g. via Adobe Fonts), it&apos;s used automatically over the web-font copy.</p>
 
           <p className="bbb-microhead">Type color</p>
           <TokenSelect id="bbb-colorHeadline" label="Headline" value={typeColor.headline} colors={colors}
@@ -1275,7 +1270,6 @@ export default function BrandBookBuilderView() {
             noneValue="auto" noneLabel="Auto" onChange={(v) => setTypeColor((t) => ({ ...t, subhead: v }))} />
           <TokenSelect id="bbb-colorBody" label="Body" value={typeColor.body} colors={colors}
             noneValue="auto" noneLabel="Auto" onChange={(v) => setTypeColor((t) => ({ ...t, body: v }))} />
-          <p className="bbb-hint">&quot;Auto&quot; tracks sensible defaults (headline &rarr; primary, subhead &rarr; accent, body &rarr; adapts to light/dark pages). Pick a token to lock it instead.</p>
 
           <p className="bbb-microhead">Page backgrounds</p>
           <TokenSelect id="bbb-bgCover" label="Front cover" value={pageBg.pageCover} colors={colors}
@@ -1286,7 +1280,6 @@ export default function BrandBookBuilderView() {
             noneValue="white" noneLabel="White" onChange={(v) => setPageBg((p) => ({ ...p, pageType: v }))} />
           <TokenSelect id="bbb-bgBack" label="Back cover" value={pageBg.pageBack} colors={colors}
             noneValue="white" noneLabel="White" onChange={(v) => setPageBg((p) => ({ ...p, pageBack: v }))} />
-          <p className="bbb-hint">Backgrounds reference a color token, same as everything else &mdash; rename or delete that token and the page follows.</p>
 
           <p className="bbb-microhead">Grid guides</p>
           <div className="bbb-field">
@@ -1305,7 +1298,6 @@ export default function BrandBookBuilderView() {
             <input id="bbb-showGrid" type="checkbox" checked={grid.show} onChange={(e) => setGrid((g) => ({ ...g, show: e.target.checked }))} />
             <label htmlFor="bbb-showGrid">Show grid guides</label>
           </div>
-          <p className="bbb-hint">Rows and columns share one gutter value; the edge itself is set by Edge space, above. The color page&apos;s swatch columns derive from this column count.</p>
 
           <p className="bbb-microhead">Running elements</p>
           <div className="bbb-field bbb-field--checkbox">
@@ -1342,7 +1334,6 @@ export default function BrandBookBuilderView() {
             <input id="bbb-alternatePages" type="checkbox" checked={running.alternate} onChange={(e) => setRunning((r) => ({ ...r, alternate: e.target.checked }))} />
             <label htmlFor="bbb-alternatePages">Alternate for facing pages</label>
           </div>
-          <p className="bbb-hint">These sit on interior pages only &mdash; covers stay clean.</p>
         </Section>
 
         {/* The book's spine — its sections by name, so a glance says "yes,
