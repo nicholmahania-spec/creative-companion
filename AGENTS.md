@@ -122,7 +122,10 @@ hours, scope dashboards above the work). Demote contract/planning
 - Strategy brief: `src/views/DefineView.jsx`, `src/styles/lazy-define.css`,
   `.app:has(.define-brief) .main` in `src/styles/shell.css`
 - Research wall: `src/views/ResearchView.jsx`, `src/styles/lazy-mood.css`,
-  `.app:has(.research-studio) .main` / `.app.view-studio .main` full width
+  `.app:has(.research-studio) .main` full width; **hybrid artboard**
+  (`.research-artboard` frame + auto-flow grid inside — not free pan/zoom
+  placement, not a bare document empty state)
 - Do not reintroduce: chapter rail on The brief, start-here multi-chip ramp,
   interview CTA that only focuses the first field, project-name band when
-  sidebar/header already name the project; Research 980/1160px centered caps
+  sidebar/header already name the project; Research 980/1160px centered caps;
+  Research empty prose without a framed drop plane

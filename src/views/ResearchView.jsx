@@ -1,8 +1,8 @@
 /**
- * Board (Research) — wall primary; ★ pack pins; path footer → Identity.
- * ADHD: short chrome, goal anchor, note focus without sibling blur.
- * Path rebuild (2026-08-03): fill main width, no floating 980/1160 island,
- * mark-done off, Next leads footer (same lessons as The brief).
+ * Board (Research) — artboard wall primary; ★ pack pins; path footer → Identity.
+ * Hybrid (owner 2026-08-03): framed artboard plane + auto-flow grid inside.
+ * No free pan/zoom placement tax; pins auto-layout. One wall, no lanes.
+ * Path rebuild: fill main width, mark-done off, Next leads footer.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { labelForStepId } from '../lib/journey'
@@ -387,37 +387,29 @@ export default function ResearchView({
               </div>
             </div>
 
-            {/* Above the grid, and never gated on pin count. This strip used
-                to sit BELOW a 60vh canvas, so on a fresh board the only
-                visible way in was one button inside the empty state: URL and
-                Note were off-screen (258px of scrolling on a phone) and
-                Upload was not rendered at all until a pin already existed.
-                Every route in was hidden at exactly the moment you had
-                nothing and needed one. */}
-            <section className="panel brand-section board-add-compact">
-              <div className="board-add-toolbar">
-                {(
-                  <label className="btn btn-secondary board-upload-btn">
-                    Upload
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
-                      multiple
-                      className="sr-only"
-                      onChange={(e) => {
-                        uploadMoodFiles(e.target.files)
-                        e.target.value = ''
-                      }}
-                    />
-                  </label>
-                )}
-                {/* Separate control, not a second option inside the picker.
-                    `capture` asks the OS for the camera directly, so on a
-                    phone this is one tap to a viewfinder instead of tapping
-                    Upload and then hunting for "Take Photo" in a sheet —
-                    which is the whole point when the reference you want is
-                    the thing in front of you. Hidden where there is no
-                    camera, so it is never a dead control. */}
+            {/* Hybrid artboard: framed plane owns the fold; pins auto-flow
+                inside (no pan/zoom placement tax). Toolbar sits on the board
+                edge so empty state is still a drop surface, not a prose void. */}
+            <section
+              className={`research-artboard${boardDropActive ? ' is-drop-active' : ''}${
+                deskMood.length === 0 ? ' is-empty' : ''
+              }`}
+              aria-label="Research wall"
+            >
+              <div className="research-artboard-toolbar board-add-toolbar">
+                <label className="btn btn-secondary board-upload-btn">
+                  Upload
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
+                    multiple
+                    className="sr-only"
+                    onChange={(e) => {
+                      uploadMoodFiles(e.target.files)
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
                 {canCapturePhoto && (
                   <label className="btn btn-secondary board-upload-btn">
                     Take photo
@@ -455,16 +447,9 @@ export default function ResearchView({
                 >
                   Note
                 </button>
-                {/* The bulk pack actions used to live here, inside a closed
-                    <details> labelled "Pack tools" — a word that does not say
-                    what is under it, on a page you return to after days away.
-                    The owner's own verdict on that pattern: "they are hidden
-                    and my first thought was 'I have no idea what this is.'"
-                    They now sit beside the pack status in the heading, where
-                    the count they act on already is. */}
               </div>
               {boardAddMode === 'url' && (
-                <div className="board-inline-form">
+                <div className="board-inline-form research-artboard-form">
                   <label className="field-label sr-only" htmlFor="board-url">
                     URL
                   </label>
@@ -475,9 +460,7 @@ export default function ResearchView({
                       value={boardUrl}
                       onChange={(e) => setBoardUrl(e.target.value)}
                       placeholder="https://…"
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && submitBoardUrl()
-                      }
+                      onKeyDown={(e) => e.key === 'Enter' && submitBoardUrl()}
                     />
                     <button
                       type="button"
@@ -491,7 +474,7 @@ export default function ResearchView({
                 </div>
               )}
               {boardAddMode === 'note' && (
-                <div className="board-inline-form">
+                <div className="board-inline-form research-artboard-form">
                   <label className="field-label sr-only" htmlFor="board-note">
                     Note
                   </label>
@@ -502,9 +485,7 @@ export default function ResearchView({
                       value={boardNote}
                       onChange={(e) => setBoardNote(e.target.value)}
                       placeholder="Direction note"
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && submitBoardNote()
-                      }
+                      onKeyDown={(e) => e.key === 'Enter' && submitBoardNote()}
                     />
                     <button
                       type="button"
@@ -516,22 +497,12 @@ export default function ResearchView({
                   </div>
                 </div>
               )}
-            </section>
-            <section className="panel brand-section board-wall-panel research-wall">
-              {/* Newest first, always — deskMood already arrives sorted this
-                  way (App.jsx sorts by boardOrder, and a fresh pin is filed
-                  at boardOrder 0). Starring never reorders the wall: the ★
-                  pack has its own order (packOrder), kept in the shortlist
-                  strip below. */}
-              <p className="research-grid-hint">
-                Newest first. Drop an image anywhere below, or use Upload, URL
-                or Note above.
-              </p>
               <div
-                className={`research-grid-wrap${boardDropActive ? ' is-drop-active' : ''}`}
+                className="research-artboard-plane research-grid-wrap"
                 onDragOver={(e) => {
                   e.preventDefault()
-                  if (e.dataTransfer?.types?.includes('Files')) setBoardDropActive(true)
+                  if (e.dataTransfer?.types?.includes('Files'))
+                    setBoardDropActive(true)
                 }}
                 onDragLeave={(e) => {
                   if (e.target === e.currentTarget) setBoardDropActive(false)
@@ -559,10 +530,10 @@ export default function ResearchView({
                 }}
               >
                 {deskMood.length === 0 ? (
-                  <div className="empty-state empty-state-craft research-empty">
-                    <p className="empty-state-subtitle">
-                      Nothing on the wall yet. Add an image, a colour, a link
-                      or a note — anything the client sent lands here too.
+                  <div className="research-artboard-empty">
+                    <p className="research-artboard-empty-title">Drop here</p>
+                    <p className="research-artboard-empty-sub">
+                      Images, links, or notes. Client refs land here too.
                     </p>
                   </div>
                 ) : (
