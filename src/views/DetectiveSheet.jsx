@@ -99,6 +99,13 @@ export default function DetectiveSheet({
    *  above the milestone list — see components/DefineStartHere. Standalone
    *  uses of this sheet keep their own copy. */
   showStartHere = true,
+  /**
+   * Chapter rail = second map of the same five chapters. The brief page
+   * passes false: form headings already number chapters, and a dual map
+   * is decision-fatigue clutter (2026-08-03 declutter). Standalone / other
+   * surfaces can keep the rail.
+   */
+  showChapterRail = true,
   /** The deadline lives on the project record, not in `detective` — it drives
    *  the calendar and the relative label — so it is threaded in rather than
    *  read from the answers object. */
@@ -159,7 +166,7 @@ export default function DetectiveSheet({
           regression lands somewhere nobody looks. */}
       {showStartHere && <DefineStartHere detective={detective} />}
 
-      {!isMobile && (
+      {showChapterRail && !isMobile && (
       <nav className="define-chapter-rail" aria-label="Brief chapters">
           {DETECTIVE_CHAPTERS.map((ch, i) => {
             const st = chapterStats[i]

@@ -139,8 +139,10 @@ test.describe('Define page regressions', () => {
     await page.setViewportSize({ width: 1500, height: 900 })
     await openDefine(page)
 
+    // The brief hides the rail on purpose (dual chapter map = clutter).
+    // Standalone sheet uses can still render it; skip when absent.
     const rail = page.locator('.define-chapter-rail')
-    if (!(await rail.count())) test.skip(true, 'rail not rendered at this width')
+    if (!(await rail.count())) test.skip(true, 'rail not rendered on The brief')
 
     // The rail is the only per-chapter "N needed" readout; it used to leave
     // the viewport after the first screenful of a ~22-field master scroll.

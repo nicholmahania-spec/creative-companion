@@ -224,13 +224,12 @@ export default function DefineView(props) {
         <h1 className="page-title define-brief-title">The brief</h1>
         <p className="define-brief-status" data-status={sendStatus.kind}>
           {sendStatus.label}
+          {deadlineRelative ? (
+            <span className="define-brief-status-due"> · {deadlineRelative}</span>
+          ) : null}
         </p>
-        {sendStatus.kind === 'not_sent' && (
-          <p className="define-brief-lede">
-            The brief is theirs to answer. Send it, or fill it in together
-            while you have them on the phone.
-          </p>
-        )}
+        {/* No lede paragraph — status line already says the state; another
+            sentence before the form is a second decode (declutter 2026-08-03). */}
         <div className="define-brief-actions">
           <button
             type="button"
@@ -247,11 +246,8 @@ export default function DefineView(props) {
             I&rsquo;m interviewing them
           </button>
         </div>
-        {deadlineRelative && (
-          <p className="define-deadline-relative" aria-live="polite">
-            {deadlineRelative}
-          </p>
-        )}
+        {/* Full rule under the intro CTAs (Studio mock), always — not tied to
+            deadline so the break before Start with these never disappears. */}
         <div className="define-title-rule" aria-hidden="true" />
         <DefineStartHere
           detective={activeProject?.detective}
@@ -278,6 +274,7 @@ export default function DefineView(props) {
               updateDetective={updateDetective}
               splitMode
               showStartHere={false}
+              showChapterRail={false}
               projectDeadline={projectDeadline}
               setProjectDeadline={setProjectDeadline}
             />
@@ -362,25 +359,27 @@ export default function DefineView(props) {
       </section>
 
       <div className="define-brief-footer" role="region" aria-label="Brief actions">
-        <div className="define-brief-footer-actions">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => setActiveView?.('desk')}
-          >
-            Back to the desk
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary work-path-next"
-            onClick={() => setActiveView?.(journeyNext?.view || 'studio')}
-          >
-            {`Next · ${journeyNext?.label || labelForStepId('research')}`}
-          </button>
+        <div className="define-brief-footer-row">
+          <div className="define-brief-footer-actions">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setActiveView?.('desk')}
+            >
+              Back to the desk
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary work-path-next"
+              onClick={() => setActiveView?.(journeyNext?.view || 'studio')}
+            >
+              {`Next · ${journeyNext?.label || labelForStepId('research')}`}
+            </button>
+          </div>
+          {stillBlankLine ? (
+            <p className="define-brief-still-blank">{stillBlankLine}</p>
+          ) : null}
         </div>
-        {stillBlankLine ? (
-          <p className="define-brief-still-blank">{stillBlankLine}</p>
-        ) : null}
       </div>
     </div>
   )

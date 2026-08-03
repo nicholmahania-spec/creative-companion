@@ -10318,3 +10318,37 @@ textarea.artboard-brief-input {
   color: var(--text-primary);
   border-color: var(--text-primary);
 }
+
+/* The brief — mark-done is path chrome, not the page's job. Soften so it
+   doesn't read as a full-width banner competing with Send / Start with these. */
+.main:has(.define-brief) .step-done-toggle {
+  width: auto;
+  max-width: 100%;
+  margin-bottom: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border-color: transparent;
+}
+
+.main:has(.define-brief) .step-done-toggle:hover {
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+  background: var(--bg-muted);
+}
+
+.main:has(.define-brief) .step-done-toggle.is-done {
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+  background: transparent;
+}
+
+.app.deep .main:has(.define-brief) .step-done-toggle {
+  color: var(--text-muted);
+}
+
+.app.deep .main:has(.define-brief) .step-done-toggle:hover,
+.app.deep .main:has(.define-brief) .step-done-toggle.is-done {
+  color: var(--text-secondary);
+}

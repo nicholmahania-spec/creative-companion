@@ -61,7 +61,9 @@ export default function DefineStartHere({
               <button
                 key={f.id}
                 type="button"
-                className="btn btn-primary"
+                /* Outline, not solid primary — Send/Next keep the only filled
+                   CTAs so five white bricks don't compete (declutter 2026-08-03). */
+                className="btn btn-secondary"
                 onClick={() => jumpToField(f.id)}
               >
                 {f.label}

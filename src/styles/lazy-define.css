@@ -43,6 +43,10 @@
 .define-brief .define-project-name {
   align-self: flex-start;
   max-width: 100%;
+  margin-bottom: calc(-1 * var(--space-2));
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 .define-brief-head {
@@ -63,6 +67,11 @@
   color: var(--text-primary);
 }
 
+.define-brief-status-due {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 .define-brief-lede {
   margin: 0;
   max-width: 65ch;
@@ -78,13 +87,57 @@
   gap: var(--space-2);
 }
 
-.define-brief-head .define-deadline-relative {
-  margin: 0;
+/* Only Send + footer Next stay filled; Interview + start-here chips are outline. */
+.define-brief-actions .btn-primary,
+.define-brief-footer .btn-primary {
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  border: 1px solid var(--text-primary);
+}
+
+.define-brief-actions .btn-primary:hover:not(:disabled),
+.define-brief-footer .btn-primary:hover:not(:disabled) {
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  filter: brightness(0.92);
+}
+
+.define-brief-actions .btn-secondary,
+.define-brief .define-start-here-list .btn-secondary,
+.define-brief-footer .btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+.define-brief-actions .btn-secondary:hover:not(:disabled),
+.define-brief .define-start-here-list .btn-secondary:hover:not(:disabled),
+.define-brief-footer .btn-secondary:hover:not(:disabled) {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+/* Start-here title is the anti-stall signal; chips stay quiet underneath. */
+.define-brief .define-start-here-title {
+  font-size: var(--fs-4);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.define-brief .define-start-here.is-done .define-start-here-title {
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .define-brief-head .define-title-rule {
   width: 100%;
-  margin: var(--space-2) 0 0;
+  flex: none;
+  height: 2px;
+  margin: var(--space-3) 0 var(--space-2);
+  background: var(--text-primary);
 }
 
 .define-brief-head .define-start-here {
@@ -92,26 +145,56 @@
   margin: 0;
 }
 
+.define-brief .define-start-here-list .btn {
+  min-height: var(--tap-min, 2.75rem);
+}
+
 .define-brief-secondary {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  padding-top: var(--space-4);
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+  padding-top: var(--space-5);
   border-top: 1px solid var(--border-subtle);
+}
+
+/* Scope sits in the demoted band — drop its own top rule so we don't stack. */
+.define-brief-secondary .scope-panel {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.define-brief-secondary .scope-panel-toggle {
+  gap: var(--space-3);
+}
+
+.define-brief-secondary .scope-panel-state {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .define-brief-footer {
   position: sticky;
   bottom: 0;
   z-index: 5;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
+  margin-top: var(--space-5);
   margin-inline: calc(-1 * var(--space-4, 1rem));
   padding: var(--space-3) var(--space-4);
-  background: var(--bg-elevated, var(--bg-card));
+  padding-bottom: max(var(--space-3), env(safe-area-inset-bottom, 0px));
+  background: var(--bg-canvas);
   border-top: 1px solid var(--border-subtle);
+  box-shadow: 0 -1px 0 var(--border-subtle);
+}
+
+.define-brief-footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
 }
 
 .define-brief-footer-actions {
@@ -119,28 +202,55 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  flex: 0 1 auto;
 }
 
 .define-brief-still-blank {
   margin: 0;
+  flex: 1 1 12rem;
   max-width: 65ch;
   font-size: var(--fs-1);
   font-weight: 500;
   color: var(--text-muted);
   line-height: 1.4;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .define-brief-still-blank {
+    flex: 1 1 100%;
+    text-align: left;
+  }
 }
 
 .app.deep .define-brief-footer {
-  background: var(--bg-card);
+  background: var(--bg-canvas);
   border-top-color: var(--border-subtle);
+  box-shadow: none;
 }
 
 .app.deep .define-brief-status {
   color: var(--text-primary);
 }
 
+.app.deep .define-brief-status-due,
 .app.deep .define-brief-lede {
   color: var(--text-secondary);
+}
+
+.app.deep .define-brief-actions .btn-primary,
+.app.deep .define-brief-footer .btn-primary {
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  border-color: var(--text-primary);
+}
+
+.app.deep .define-brief-actions .btn-secondary,
+.app.deep .define-brief .define-start-here-list .btn-secondary,
+.app.deep .define-brief-footer .btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
 }
 
 /* Project essentials card */
