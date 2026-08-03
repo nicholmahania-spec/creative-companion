@@ -33,7 +33,17 @@
   padding-bottom: 8rem;
 }
 
-/* ── The brief (Strategy) — pruned chrome ── */
+/* ── The brief (Strategy) — fill the main column, no floating island ──
+   .define-studio + .surface-document both center a ~42–52rem column; that
+   leaves empty gutters on a wide desk. Brief uses the full main width. */
+.define-studio.define-brief.surface-document,
+.define-studio.define-brief {
+  max-width: none;
+  width: 100%;
+  margin-inline: 0;
+  padding-bottom: 6rem;
+}
+
 .define-brief {
   display: flex;
   flex-direction: column;

@@ -6525,6 +6525,15 @@ body:has(.app.deep)::after {
   background: transparent;
 }
 
+/* The brief — use the full content column (not a 780px island floating mid-screen).
+   Left-align with the rest of the shell; form fields span the width. */
+.app:has(.define-brief) .main {
+  max-width: min(68rem, 100%);
+  margin-inline: 0;
+  width: 100%;
+  padding-inline: var(--space-5);
+}
+
 /* ── Positioning spectrum ────────────────────────────────────────────────
    Poles at the ends, five dots between, and no numbers anywhere: a 1–5
    scale would make every answer a translation step, both for the client
