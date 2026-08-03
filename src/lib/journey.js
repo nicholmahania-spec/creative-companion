@@ -60,7 +60,7 @@ export const JOURNEY_STEPS = [
     label: 'Assets',
     process: 'Managing assets',
     plain:
-      'Brand book, PDF, tokens, handoff. Preview and download the leave-behind.',
+      'Preview the book, write a handoff, download. One ship job.',
     nextView: null,
     nextLabel: null,
   },

@@ -91,15 +91,14 @@ const COACHING = {
   deliver: {
     title: 'Managing assets',
     plain:
-      'Brand book PDF, tokens, handoff note. One paragraph: what worked? what next?',
+      'Preview the leave-behind, write a short handoff, download once.',
     prompt:
-      'Brand book PDF + short handoff note. One learnings paragraph. Then note what felt like you.',
+      'Check the preview. One handoff line. Download the brand book (or logo files).',
     checks: [
-      'Files ready (print and/or brand book PDF)',
-      'Watermark choice intentional for the client',
-      'Client pack not empty (tagline, colors, or starred pictures)',
-      'Handoff note written',
-      'Learnings written: what felt like "me"? what next?',
+      'Preview matches what you will send',
+      'Handoff note says what is included',
+      'Primary download is the right artifact for this job',
+      'Learnings optional — when you want a note for next time',
     ],
   },
 }
