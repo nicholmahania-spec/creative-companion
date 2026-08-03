@@ -30,12 +30,7 @@ test.describe('Soft Signal demo', () => {
       timeout: 8000,
     })
 
-    // Demo loader lives in the collapsed Advanced group
-    await page
-      .locator('summary')
-      .filter({ hasText: /Advanced/i })
-      .first()
-      .click()
+    // Sample projects sit open under Data (Advanced nest removed)
     await page.getByRole('button', { name: /^Soft Signal$/i }).click()
 
     const banner = page.locator('.desk-confirm-banner')
