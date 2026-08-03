@@ -17,7 +17,7 @@
  */
 import { labelForView, labelForStepId } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
-import { relativeDeadlineLabel } from '../lib/dates'
+import { namedDeadlineLabel } from '../lib/dates'
 import { pinFaceStyle, pinVisualKind } from '../lib/moodPins'
 import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
 import {
@@ -177,7 +177,18 @@ export default function DeskView({
     })),
   ].slice(0, 8)
 
-  const deadline = relativeDeadlineLabel(project?.deadline)
+  /* First brief deliverable label — names the due (working memory). */
+  const primaryDeliverableId = Array.isArray(project?.detective?.deliverablesPicked)
+    ? project.detective.deliverablesPicked.find((id) => String(id || '').trim())
+    : null
+  const primaryDeliverableLabel =
+    DELIVERABLE_OPTIONS.find((o) => o.id === primaryDeliverableId)?.label ||
+    String(project?.detective?.deliverables || '').trim().split(/[,\n]/)[0] ||
+    ''
+  const deadline = namedDeadlineLabel(
+    project?.deadline,
+    primaryDeliverableLabel
+  )
 
   /* Pack ambient (advisor A): replace number stamp with leave-behind state. */
   const packSnap = buildBrandPackSnapshot({
@@ -192,6 +203,7 @@ export default function DeskView({
     thin: !!packReady.thin,
     pathFull,
   })
+  const packHandoffReady = packStatus === 'Pack ready for handoff'
 
   const packPins = (pins || [])
     .filter((p) => p.inPack)
@@ -255,15 +267,24 @@ export default function DeskView({
               >
                 Edit identity
               </button>
-              {typeof onOpenAssets === 'function' && (
-                <button
-                  type="button"
-                  className="desk-panel-link desk-panel-link-quiet"
-                  onClick={onOpenAssets}
-                >
-                  Open {labelForStepId('deliver')}
-                </button>
-              )}
+              {typeof onOpenAssets === 'function' &&
+                (packHandoffReady ? (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={onOpenAssets}
+                  >
+                    Open {labelForStepId('deliver')} — pack ready
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="desk-panel-link desk-panel-link-quiet"
+                    onClick={onOpenAssets}
+                  >
+                    Open {labelForStepId('deliver')}
+                  </button>
+                ))}
               <span className="desk-artboard-note">
                 Brand colour lives here only — the desk stays out of the way.
               </span>
