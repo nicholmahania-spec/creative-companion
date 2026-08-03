@@ -42,7 +42,7 @@ const BUDGET = {
   'src/styles/shell.css': 442,
   'src/styles/lazy-buddy.css': 55,
   'src/styles/lazy-settings.css': 36,
-  'src/styles/lazy-design.css': 21,
+  'src/styles/lazy-design.css': 18,
   'src/styles/lazy-sketch.css': 21,
   'src/styles/lazy-define.css': 18,
   'src/styles/lazy-deliver.css': 18,

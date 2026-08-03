@@ -132,7 +132,7 @@ import {
 import LogoLockup from './components/LogoLockup'
 import StepDependencyReminder from './components/StepDependencyReminder'
 import BeforeAfterChip from './components/BeforeAfterChip'
-import IdentityStampChip from './components/IdentityStampChip'
+
 import StepDoneToggle from './components/StepDoneToggle'
 import BeforeAfterOverlay from './components/BeforeAfterOverlay'
 import HeaderIcon from './components/HeaderIcon'
@@ -3904,7 +3904,6 @@ function App() {
             stop whose edits it tracks. Read-only: the "Bump" control that
             saves a version already lives on this screen, and a second control
             doing the same thing is a choice billed for no gain. */}
-        {activeView === 'brand' && <IdentityStampChip project={activeProject} />}
         {/* Mark done — same fixed position on every stage, so it is never
             somewhere the user has to go looking for it. Below the fold and
             behind a toggle are both recorded as functionally invisible here. */}

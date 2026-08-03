@@ -835,7 +835,10 @@ export default function ResearchView({
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => setActiveView?.('desk')}
+                onClick={() => {
+                  const hub = 'desk'
+                  setActiveView?.(hub)
+                }}
               >
                 Back to the desk
               </button>

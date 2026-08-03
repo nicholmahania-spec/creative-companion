@@ -41,8 +41,8 @@ const STYLES = new URL('../styles', import.meta.url).pathname
 
 /** Seeded at the measured state on 2026-08-01. Only ever revise downward. */
 const BUDGET = {
-  fontSize: 80,
-  spacing: 323,
+  fontSize: 79,
+  spacing: 322,
 }
 
 function allCss() {
