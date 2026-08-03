@@ -7,11 +7,9 @@ import { Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
 import CaseStudyExport from '../components/CaseStudyExport'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey/journey'
-import { getProcessPhase } from '../lib/journey/processGuide'
 import { packReadiness, packBriefMarkdown } from '../lib/book/exportFiles'
 import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
 import { focusPathGapTarget } from '../lib/journey/journeyProgress'
-import InfoReveal from '../components/InfoReveal'
 import {
   BOOK_PAGE_SIZES,
   BOOK_EDGE_SPACE,
@@ -130,14 +128,8 @@ export default function DeliverView({
           <h1 className="page-title work-page-title">
             {labelForStepId('deliver')}
           </h1>
-          <p className="path-job-line">
-            Preview &amp; send the pack — handoff, then download.
-          </p>
           <p className="assets-status" role="status">
             {statusLine}
-            <InfoReveal>
-              {(getProcessPhase('deliver')?.checks || []).join(' · ')}
-            </InfoReveal>
           </p>
         </div>
       </div>
@@ -290,9 +282,6 @@ export default function DeliverView({
 
         <section className="assets-stationery" aria-label="Stationery">
           <h2 className="assets-secondary-title">Stationery</h2>
-          <p className="deliver-stationery-lede">
-            Letterhead, card, envelope, signature — applications of the system.
-          </p>
           <Suspense fallback={<div className="panel-hint">Loading…</div>}>
             <StationeryKit
               activeProject={activeProject}

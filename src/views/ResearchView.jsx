@@ -7,8 +7,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
-import { getProcessPhase } from '../lib/journey/processGuide'
-import InfoReveal from '../components/InfoReveal'
 import { pinFaceStyle, pinImageUrl, readImageFilesAsPins } from '../lib/moodPins'
 import { extractDominantColors, sampleColorAt } from '../lib/extractColors'
 import { useModalFocus } from '../lib/useModalFocus'
@@ -292,9 +290,6 @@ export default function ResearchView({
                 <h1 className="page-title">
                   {labelForStepId('research')}
                 </h1>
-                <p className="path-job-line">
-                  Refs for the pack — star up to 6 with a why.
-                </p>
                 {/* Floor, not ratio. "★ 3/6" is a number to decode that
                     produces no next action, and it reads as a scoreboard
                     three-fifths empty — the same pattern the project sidebar
@@ -385,9 +380,6 @@ export default function ResearchView({
                 >
                   ⏱
                 </button>
-                <InfoReveal>
-                  {(getProcessPhase('research')?.checks || []).join(' · ')}
-                </InfoReveal>
               </div>
             </div>
 
@@ -536,9 +528,6 @@ export default function ResearchView({
                 {deskMood.length === 0 ? (
                   <div className="research-artboard-empty">
                     <p className="research-artboard-empty-title">Drop here</p>
-                    <p className="research-artboard-empty-sub">
-                      Images, links, or notes. Client refs land here too.
-                    </p>
                   </div>
                 ) : (
                   <div className="research-grid">

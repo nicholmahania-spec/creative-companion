@@ -114,10 +114,6 @@ export default function NewProjectIntake({
           so backing out mid-busy leaves a real project, never a torn one). */}
       <div className="create-body">
         <h1 className="create-title">New project</h1>
-        <p className="create-lede">
-          Name it and you’re working. The full brief is theirs to answer — you’ll
-          send it, or fill it in together on a call.
-        </p>
 
         <div className="create-field">
           <label className="create-label" htmlFor="create-client">
@@ -157,10 +153,6 @@ export default function NewProjectIntake({
 
         <fieldset className="create-section">
           <legend className="create-legend">What do they need made?</legend>
-          <p className="create-hint">
-            Optional — leave blank for the full brand package, or tick to narrow
-            the scope.
-          </p>
           <p className="create-scope-chip" role="status">
             {scopeLabel}
           </p>

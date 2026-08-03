@@ -36,11 +36,9 @@ import {
   paletteHealthScore,
   suggestRoleColor,
 } from '../lib/color'
-import { getProcessPhase } from '../lib/journey/processGuide'
 import { loadTypePairFont, loadBrandFamilies } from '../lib/book/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
 import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
-import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-design.css'
 
 /** User-facing labels for palette role chips (store keys stay cover/text/…). */
@@ -539,15 +537,9 @@ export default function DesignView({
                 <h1 className="page-title">
                   {labelForStepId('design')}
                 </h1>
-                <p className="path-job-line">
-                  Mark, words, colour, type — then preview.
-                </p>
                 {/* Quiet status only — pack floor, not goal/words scoreboard. */}
                 <p className="design-identity-status" role="status">
                   {IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}
-                  <InfoReveal>
-                    {(getProcessPhase('design')?.checks || []).join(' · ')}
-                  </InfoReveal>
                 </p>
               </div>
               {/* Meta chrome only on Preview — craft screens open on the field,
@@ -671,10 +663,6 @@ export default function DesignView({
                   }
                   placeholder="e.g. Option B · monogram, 3 Aug phone call"
                 />
-                <p className="field-hint" style={{ marginTop: '0.35rem' }}>
-                  Optional — so “which mark they approved” lives here, not only
-                  in email.
-                </p>
               </div>
               <div className="brand-two-up">
                 <div className="field-block" style={{ marginBottom: '0.85rem' }}>
@@ -1024,9 +1012,6 @@ export default function DesignView({
                         </span>
                         <span className="palette-health-score is-idle">—</span>
                       </div>
-                      <p className="panel-hint" style={{ margin: 0 }}>
-                        Add a colour to see this.
-                      </p>
                     </div>
                   )
                 }
@@ -1543,11 +1528,6 @@ export default function DesignView({
                   ))}
                   <option value="custom">Custom labels…</option>
                 </select>
-                <p className="panel-hint">
-                  Shows here and on the artboard preview. The PDF and exported
-                  files still use the app's default typeface — this picker
-                  doesn't change those yet.
-                </p>
               </div>
               <div className="brand-type-pair">
                 <div className="field-block">
@@ -1650,21 +1630,7 @@ export default function DesignView({
                 />
               </Suspense>
             </div>
-            <p className="design-preview-pack-hint">
-              ★ pins come from Research.
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => setActiveView?.('studio')}
-              >
-                Open Research
-              </button>
-            </p>
             <div className="design-preview-notes is-secondary">
-              <p className="design-preview-notes-lede">
-                Optional notes for the book — the job on this screen is the
-                artboard above.
-              </p>
               <h3 className="design-preview-notes-title">Imagery</h3>
               <div className="field-block">
                 <label className="field-label" htmlFor="img-style">
@@ -2008,11 +1974,6 @@ export default function DesignView({
                               ))}
                             </div>
                           )}
-                          <p className="dv-ver-detail-hint">
-                            Restore puts mark words colour and type back to
-                            this picture. The logo image file is not stored in
-                            history — only the words around it.
-                          </p>
                         </div>
                       )
                     })()}

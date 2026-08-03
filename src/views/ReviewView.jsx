@@ -4,10 +4,9 @@
  */
 import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
-import { getProcessPhase, REVIEW_QUESTIONS } from '../lib/journey/processGuide'
+import { REVIEW_QUESTIONS } from '../lib/journey/processGuide'
 import { labelForStepId } from '../lib/journey/journey'
 import { packReadiness } from '../lib/book/exportFiles'
-import InfoReveal from '../components/InfoReveal'
 import RevisionRounds from '../components/RevisionRounds'
 import '../styles/lazy-review.css'
 
@@ -92,9 +91,6 @@ export default function ReviewView({
               {brandWords ? `${brandWords.slice(0, 30)}${brandWords.length > 30 ? '...' : ''}` : ''}
             </p>
           )}
-          <InfoReveal>
-            {(getProcessPhase('review')?.checks || []).join(' · ')}
-          </InfoReveal>
         </div>
         {miss.length === 0 ? (
           <span className="review-status-chip is-ready" aria-live="polite">
