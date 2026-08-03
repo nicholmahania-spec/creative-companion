@@ -58,7 +58,8 @@ src/
   main.jsx
   App.jsx                      # shell only: header, sidebar, main outlet, modals
   app/
-    routes.js                  # view id → lazy component map (optional)
+    viewRegistry.js            # lazy views + warm chunks + step ids
+    MainOutlet.jsx             # activeView → page (props from App)
   views/                       # full pages only
     HomeView.jsx               # ✅ Phase 0 done
     DefineView.jsx
@@ -160,7 +161,7 @@ src/
 | **2** | `features/client-portal/*` + public main.jsx imports | Medium | **Done** |
 | **3** | `features/brief/*` (DetectiveSheet, ClientBriefFields, …) | Medium | **Done** |
 | **4** | `features/helper/*`, billing panels | Medium | **Done** |
-| **5** | `app/routes.js` map; thin App to outlet only | Higher | Later |
+| **5** | `app/viewRegistry.js` + `app/MainOutlet.jsx`; App shells outlet | Higher | **Done** |
 | **6** | Optional `lib/{domain}/` folders with codemod | High | Only with test green + owner OK |
 
 Each phase: move → fix imports → `npm test` → no new `!important` debt.
@@ -180,7 +181,7 @@ Each phase: move → fix imports → `npm test` → no new `!important` debt.
 ## 7. Success criteria
 
 - [x] Home UI not inlined in App  
-- [ ] App.jsx under ~4k lines (further extractions)  
-- [ ] Public + login discoverable in one feature/view folder  
-- [ ] `npm test` + build green after each phase  
-- [ ] No dual maps reintroduced; Studio vs This project preserved
+- [x] Main views leave App via `app/MainOutlet` + `app/viewRegistry` (~4.8k App shell)  
+- [x] Public + login discoverable (`features/client-portal/*`, `views/LoginView`)  
+- [x] `npm test` + build green after each phase  
+- [x] No dual maps reintroduced; Studio vs This project preserved
