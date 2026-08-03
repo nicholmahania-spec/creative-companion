@@ -358,9 +358,8 @@
 
 /* ------------------------------------------------------------ canvas */
 
-/* Full-height page strip: each sheet fills the canvas height (letter/A4
-   aspect), scroll sideways through the book — matches the prototype rail +
-   large page cards, not a small wrapping gallery. */
+/* Page strip: sheets are as large as possible but always fully visible
+   (contain). Sideways scroll only when several pages sit in the strip. */
 .bbb-canvas {
   flex: 1;
   min-width: 0;
@@ -373,25 +372,35 @@
   gap: var(--space-xl, 32px);
   overflow-x: auto;
   overflow-y: hidden;
-  /* Page height = canvas content box (padding already inside). */
-  --bbb-page-h: 100%;
+  /* Size queries so pages can fit both axes of this box. */
+  container-type: size;
+  container-name: bbb-canvas;
 }
 
 .bbb-page {
   box-sizing: border-box;
   flex: 0 0 auto;
-  /* Prefer filling the canvas height; width follows the sheet aspect. */
-  height: var(--bbb-page-h);
-  width: auto;
+  /* Contain: the limiting dimension wins so the whole sheet stays on screen. */
+  width: min(100cqw, calc(100cqh * 210 / 297));
+  height: min(100cqh, calc(100cqw * 297 / 210));
+  max-width: 100%;
   max-height: 100%;
   aspect-ratio: 210 / 297;
-  /* Cap width so a short wide window still leaves room for the panel. */
-  max-width: min(100%, calc(100vw - 320px - 4rem));
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   position: relative;
   overflow: hidden;
   padding: var(--space-md, 9%);
+}
+
+/* Fallback when container queries are unavailable. */
+@supports not (width: 1cqw) {
+  .bbb-page {
+    width: min(100%, calc((100dvh - 9rem) * 210 / 297), 42rem);
+    height: auto;
+    max-height: calc(100dvh - 9rem);
+    aspect-ratio: 210 / 297;
+  }
 }
 
 .bbb-lockup__art {
@@ -702,14 +711,13 @@
     padding: var(--space-lg, 28px) var(--space-md, 16px);
     overflow-x: auto;
     overflow-y: visible;
-    /* On stacked layout, size pages from the viewport rather than 100% of a
-       heightless flex child. */
-    --bbb-page-h: min(70dvh, 36rem);
-    min-height: calc(var(--bbb-page-h) + 3rem);
+    min-height: min(72dvh, 40rem);
+    /* Fixed query box when the column layout has no definite height. */
+    height: min(72dvh, 40rem);
   }
   .bbb-page {
-    height: var(--bbb-page-h);
-    max-width: min(100%, calc(100vw - 2.5rem));
+    width: min(100cqw, calc(100cqh * 210 / 297), calc(100vw - 2.5rem));
+    height: min(100cqh, calc(100cqw * 297 / 210));
   }
 }
 @media (max-width: 480px) {
@@ -717,7 +725,8 @@
   .bbb-canvas {
     padding: var(--space-md, 20px) var(--space-sm, 12px);
     gap: var(--space-lg, 24px);
-    --bbb-page-h: min(65dvh, 28rem);
+    height: min(65dvh, 30rem);
+    min-height: min(65dvh, 30rem);
   }
 }
 
@@ -813,14 +822,9 @@
    a missing paragraph is not. Covers, colour and type pages are unchanged:
    their content is generated to fit. */
 .bbb-page--content {
-  /* Grow with copy rather than clip; keep at least a full sheet height so
-     short pages still fill the stage. */
-  aspect-ratio: auto;
-  height: auto;
-  min-height: var(--bbb-page-h, min(calc(100dvh - 8.5rem), 100%));
-  width: calc(var(--bbb-page-h, min(calc(100dvh - 8.5rem), 36rem)) * 210 / 297);
-  max-width: min(100%, calc(100vw - 320px - 4rem));
-  overflow: visible;
+  /* Same contain box as other sheets; long copy scrolls inside the page
+     rather than growing past the canvas and getting clipped. */
+  overflow: auto;
 }
 
 /* ---------------------------------------------------------------- logo page
