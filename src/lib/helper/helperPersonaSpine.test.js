@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { JOURNEY_STEPS } from './journey.js'
+import { JOURNEY_STEPS } from '../journey.js'
 import {
   PROCESS_SPINE,
   HELPER_SYSTEM_PROMPT,

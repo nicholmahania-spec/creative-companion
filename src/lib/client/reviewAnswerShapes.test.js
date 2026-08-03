@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { DETECTIVE_CHAPTERS } from './detectiveBrief'
+import { DETECTIVE_CHAPTERS } from '../brief/detectiveBrief'
 
 /**
  * The client-answer review screen must branch on what a field IS, not on what
@@ -23,7 +23,7 @@ import { DETECTIVE_CHAPTERS } from './detectiveBrief'
  * two halves of that: attachments are identified structurally, and every
  * checklist the schema declares has somewhere real to render.
  */
-const SRC = new URL('../features/client-portal/ProjectOverviewShare.jsx', import.meta.url)
+const SRC = new URL('../../features/client-portal/ProjectOverviewShare.jsx', import.meta.url)
   .pathname
 const src = readFileSync(SRC, 'utf8')
 

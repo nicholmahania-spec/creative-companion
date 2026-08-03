@@ -6,7 +6,7 @@
  * Count line + one button = initiation without a second inventory.
  */
 import { useCallback, useMemo } from 'react'
-import { getRequiredEmpty } from '../../lib/detectiveBrief'
+import { getRequiredEmpty } from '../../lib/brief/detectiveBrief'
 
 /** Smooth scrolling is a vestibular trigger for some users; honor the OS pref. */
 const prefersReducedMotion = () =>

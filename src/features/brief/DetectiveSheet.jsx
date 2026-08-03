@@ -8,7 +8,7 @@ import {
   getDetectiveProgress,
   getRequiredEmpty,
   isFilled,
-} from '../../lib/detectiveBrief'
+} from '../../lib/brief/detectiveBrief'
 import useIsMobile from '../../lib/useIsMobile'
 import DefineStartHere from './DefineStartHere'
 import BriefSpectrum from './BriefSpectrum'

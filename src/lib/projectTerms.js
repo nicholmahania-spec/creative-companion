@@ -40,7 +40,7 @@
  * dangerous kind, because the stale copy is the one with legal force. Every
  * call regenerates from the brief as it stands right now.
  */
-import { DELIVERABLE_OPTIONS } from './detectiveBrief'
+import { DELIVERABLE_OPTIONS } from './brief/detectiveBrief'
 import { REVISION_BILLING } from './revisions'
 
 const LABELS = Object.fromEntries(DELIVERABLE_OPTIONS.map((o) => [o.id, o.label]))

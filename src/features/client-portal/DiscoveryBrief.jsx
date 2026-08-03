@@ -14,13 +14,13 @@ import {
   discoveryBriefToMarkdown,
   discoveryBriefToPlainText,
   countAnswered,
-} from '../../lib/discoveryBrief'
+} from '../../lib/client/discoveryBrief'
 import {
   createDiscoveryShare,
   discoveryShareUrl,
   fetchDiscoveryShare,
   revokeDiscoveryShare,
-} from '../../lib/discoveryShare'
+} from '../../lib/client/discoveryShare'
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 

@@ -8,9 +8,9 @@
  * table directly — get_discovery_share (read) and
  * submit_discovery_share (single-use write, pending -> submitted).
  */
-import { supabase, isSupabaseConfigured } from './supabase'
+import { supabase, isSupabaseConfigured } from '../supabase'
 import { ANSWERS_TOO_LARGE_MESSAGE, answersTooLarge } from './answerPayload'
-import { publicUrl } from './appPaths'
+import { publicUrl } from '../appPaths'
 
 /** Build the client-facing URL for a share id. */
 export function discoveryShareUrl(shareId) {

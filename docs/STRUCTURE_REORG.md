@@ -116,10 +116,13 @@ src/
     EmptyIllustration.jsx
     PullToRefresh.jsx
     JourneyGapStrip.jsx
-  lib/                         # keep; gradually group by prefix or subdirs
-    journey.js
-    clientPortal.js
-    …
+  lib/
+    client/                    # portal, discovery, inbox, answer payload
+    helper/                    # buddy, AI, forced break, session resume
+    billing/                   # invoice, work week, running-todo stages
+    brief/                     # detectiveBrief + contract tests
+    journey.js                 # path SSOT (flat — cross-cutting)
+    color.js, exportFiles.js…  # still flat until a later cut
   store/
   services/
   styles/                      # unchanged pattern
@@ -148,7 +151,7 @@ src/
 - Merge Settings into a “Profile” mega-page  
 - Put Ideate back on the five-stop path without an owner decision  
 - Dump full Calendar grid onto Home  
-- Split `lib/` in one PR (breaks test path guards / muscle memory)
+- Split **all** of `lib/` in one PR — domain slices only (phase 6)
 
 ---
 
@@ -162,7 +165,8 @@ src/
 | **3** | `features/brief/*` (DetectiveSheet, ClientBriefFields, …) | Medium | **Done** |
 | **4** | `features/helper/*`, billing panels | Medium | **Done** |
 | **5** | `app/viewRegistry.js` + `app/MainOutlet.jsx`; App shells outlet | Higher | **Done** |
-| **6** | Optional `lib/{domain}/` folders with codemod | High | Only with test green + owner OK |
+| **6** | `lib/{client,helper,billing,brief}/` + import codemod | High | **Done** (first cut) |
+| **6b** | Optional later: `lib/journey/`, `lib/book/` if still noisy | Medium | Only if needed |
 
 Each phase: move → fix imports → `npm test` → no new `!important` debt.
 
@@ -183,5 +187,6 @@ Each phase: move → fix imports → `npm test` → no new `!important` debt.
 - [x] Home UI not inlined in App  
 - [x] Main views leave App via `app/MainOutlet` + `app/viewRegistry` (~4.8k App shell)  
 - [x] Public + login discoverable (`features/client-portal/*`, `views/LoginView`)  
+- [x] First `lib/` domain cut: client / helper / billing / brief (mirrors features)  
 - [x] `npm test` + build green after each phase  
 - [x] No dual maps reintroduced; Studio vs This project preserved

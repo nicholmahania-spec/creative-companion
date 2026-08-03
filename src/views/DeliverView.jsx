@@ -9,7 +9,7 @@ import CaseStudyExport from '../components/CaseStudyExport'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import { packReadiness, packBriefMarkdown } from '../lib/exportFiles'
-import { isLogoOnlyScope } from '../lib/detectiveBrief'
+import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
 import {

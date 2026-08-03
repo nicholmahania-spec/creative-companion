@@ -9,7 +9,7 @@ import {
   formatHoursWorked,
   hoursLoggedWords,
   HOURS_RANGES,
-} from "../lib/workWeek";
+} from "../lib/billing/workWeek";
 import { relativeDeadlineLabel, formatShortDate } from "../lib/dates";
 
 export default function HomeView({

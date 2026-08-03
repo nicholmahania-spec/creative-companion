@@ -58,8 +58,8 @@ describe('checklist groups', () => {
     // The bug was one renderer being fixed and its twin missed — the client
     // surface and the designer surface draw this from separate files.
     for (const rel of [
-      '../features/brief/DetectiveSheet.jsx',
-      '../features/brief/ClientBriefFields.jsx',
+      '../../features/brief/DetectiveSheet.jsx',
+      '../../features/brief/ClientBriefFields.jsx',
     ]) {
       const src = readFileSync(
         fileURLToPath(new URL(rel, import.meta.url)),

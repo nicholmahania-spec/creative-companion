@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { idleLine, activityTip, wellnessLine } from './buddy'
+import { idleLine, activityTip, wellnessLine } from './helper/buddy'
 
 /**
  * Toast copy — was routed through the i18n catalog (single 'en' locale);

@@ -10,7 +10,7 @@
  *   failed   — thumbnail stays, dimmed, "Didn't send. Try again" button
  */
 import { useRef, useState } from 'react'
-import { uploadClientFile } from '../../lib/clientUploads'
+import { uploadClientFile } from '../../lib/client/clientUploads'
 
 export default function BriefAttach({ targetId, files = [], onChange, idPrefix, fieldId }) {
   const [pending, setPending] = useState([]) // { key, name, previewUrl, status }

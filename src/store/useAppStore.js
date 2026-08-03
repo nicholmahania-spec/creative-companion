@@ -2,7 +2,7 @@ import {
   DELIVERABLE_OPTIONS,
   DETECTIVE_CHAPTERS,
   isWrongShapeForField,
-} from '../lib/detectiveBrief'
+} from '../lib/brief/detectiveBrief'
 import { liftMeasuredRows } from './workLogSeparation'
 import { revisionSummary, roundCharge } from '../lib/revisions'
 import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
@@ -13,7 +13,7 @@ import {
   decisionFromDirection,
 } from '../lib/decisionLog'
 import { addDays, toISODate } from '../lib/dates'
-import { createBreakItem } from '../lib/breakKit'
+import { createBreakItem } from '../lib/helper/breakKit'
 import { IDENTITY_FIELDS } from '../lib/identityStamp'
 import versionService from '../services/versionService'
 

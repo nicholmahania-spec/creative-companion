@@ -10,7 +10,7 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
-import { getRequiredEmpty } from '../lib/detectiveBrief'
+import { getRequiredEmpty } from '../lib/brief/detectiveBrief'
 import { relativeDeadlineLabel } from '../lib/dates'
 import ScopePanel from '../features/brief/ScopePanel'
 import '../styles/lazy-define.css'

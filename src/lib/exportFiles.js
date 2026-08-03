@@ -22,7 +22,7 @@ import {
   formatDetectiveAnswer,
   filledDetectiveChapters,
   progressItemInScope,
-} from './detectiveBrief'
+} from './brief/detectiveBrief'
 import { OVERVIEW_FIELD_PREFIX } from './overviewOcr'
 import {
   appendSystemMarkdown,

@@ -22,7 +22,7 @@ import {
 } from './buddy'
 import { HELPER_ASK_SYSTEM_PROMPT, HELPER_SYSTEM_PROMPT } from './helperPersona'
 import { actionCatalogueForPrompt, parseProposals } from './helperActions'
-import { supabase } from './supabase'
+import { supabase } from '../supabase'
 
 const DEFAULT_MODEL = 'grok-4.5'
 

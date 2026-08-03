@@ -3,7 +3,7 @@
  * every step stays freely navigable. Used only to show an inline, in-context
  * reminder (never a lock) at the top of a step when its inputs are missing.
  */
-import { DETECTIVE_CHAPTERS } from './detectiveBrief'
+import { DETECTIVE_CHAPTERS } from './brief/detectiveBrief'
 
 export const STEP_DEPENDENCIES = {
   research: ['audience', 'goal'],

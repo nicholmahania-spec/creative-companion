@@ -3,8 +3,8 @@ import useAppStore, {
   blankWorkspaceState,
   createBlankProject,
 } from './useAppStore'
-import { DETECTIVE_CHAPTERS } from '../lib/detectiveBrief'
-import { DISCOVERY_FIELDS } from '../lib/discoveryBrief'
+import { DETECTIVE_CHAPTERS } from '../lib/brief/detectiveBrief'
+import { DISCOVERY_FIELDS } from '../lib/client/discoveryBrief'
 
 /**
  * The two questionnaires are separate schemas under separate project keys:

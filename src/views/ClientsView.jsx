@@ -19,7 +19,7 @@ import {
   filterAndSortClients,
   clientMonogram,
   monogramTone,
-} from '../lib/clientDirectory'
+} from '../lib/client/clientDirectory'
 import '../styles/lazy-clients.css'
 
 const SORT_MODES = [

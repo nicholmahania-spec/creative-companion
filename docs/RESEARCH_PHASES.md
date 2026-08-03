@@ -105,7 +105,7 @@ call was "trust the ADHD review", so it is not a third link system: it is
 three columns on `client_portals`, one RPC, and a block on the portal page the
 client already has bookmarked. Same id, same RLS, same 30s poll.
 
-- `src/lib/clientSurvey.js` holds three question sets — partway through /
+- `src/lib/client/clientSurvey.js` holds three question sets — partway through /
   after handover / quarterly. **The moment picks the questions**; there is no
   survey builder, because a blank question list is the blank-canvas paralysis
   every other feature here was scoped down to avoid, and a badly-worded survey

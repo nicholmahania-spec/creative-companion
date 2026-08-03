@@ -1,4 +1,4 @@
-import { labelForView } from './journey'
+import { labelForView } from '../journey'
 /**
  * Design buddy — scripted UI/UX & graphic design coach (not a live LLM).
  * Persona: Helper (see helperPersona.js). Process: Define → Deliver.

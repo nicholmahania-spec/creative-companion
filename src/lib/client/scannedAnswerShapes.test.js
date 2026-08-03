@@ -3,8 +3,8 @@ import {
   DELIVERABLE_OPTIONS,
   coerceScannedAnswers,
   isWrongShapeForField,
-} from './detectiveBrief'
-import { touchpointsFor } from './touchpoints'
+} from '../brief/detectiveBrief'
+import { touchpointsFor } from '../touchpoints'
 
 /**
  * Free text from the paper/OCR route must never reach a typed field.

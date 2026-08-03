@@ -13,7 +13,7 @@ import {
   buildClientGroups,
   clientMonogram,
   monogramTone,
-} from '../lib/clientDirectory'
+} from '../lib/client/clientDirectory'
 import { relativeDeadlineLabel } from '../lib/dates'
 import useAppStore from '../store/useAppStore'
 import '../styles/lazy-clients.css'

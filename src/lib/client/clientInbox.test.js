@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { labelForStepId } from './journey'
+import { labelForStepId } from '../journey'
 import { buildInboxRows, portalSeenSnapshot } from './clientInbox'
 
 const projects = [{ id: 7, name: 'Acme rebrand' }]

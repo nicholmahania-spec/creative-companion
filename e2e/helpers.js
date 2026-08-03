@@ -1,5 +1,5 @@
 import { JOURNEY_STEPS } from '../src/lib/journey.js'
-import { DETECTIVE_CHAPTERS } from '../src/lib/detectiveBrief.js'
+import { DETECTIVE_CHAPTERS } from '../src/lib/brief/detectiveBrief.js'
 
 /**
  * Shared Playwright unlock + onboard for local desk gate.

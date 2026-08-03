@@ -4,10 +4,10 @@
  * whole authenticated app shell) — see the /f/:id check in App.jsx.
  */
 import { useEffect, useState } from 'react'
-import { clientFacingError } from '../../lib/clientFacingError'
-import { DETECTIVE_CHAPTERS } from '../../lib/detectiveBrief'
+import { clientFacingError } from '../../lib/client/clientFacingError'
+import { DETECTIVE_CHAPTERS } from '../../lib/brief/detectiveBrief'
 import ClientBriefFields from '../brief/ClientBriefFields'
-import { fetchDiscoveryShare, submitDiscoveryShare } from '../../lib/discoveryShare'
+import { fetchDiscoveryShare, submitDiscoveryShare } from '../../lib/client/discoveryShare'
 import '../../styles/lazy-define.css'
 import '../../styles/lazy-clients.css'
 

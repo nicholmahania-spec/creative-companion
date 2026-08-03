@@ -1,4 +1,4 @@
-import { JOURNEY_STEPS } from './journey'
+import { JOURNEY_STEPS } from '../journey'
 
 /**
  * Single Helper / design-buddy persona for live AI + documented system identity.

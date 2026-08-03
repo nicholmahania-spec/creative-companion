@@ -4,7 +4,7 @@
  * Business-ops utility, separate from the creative workflow.
  */
 import { useCallback, useState } from 'react'
-import { downloadInvoicePdf, invoiceTotals, dueDateFrom } from '../../lib/invoice'
+import { downloadInvoicePdf, invoiceTotals, dueDateFrom } from '../../lib/billing/invoice'
 import { useModalFocus } from '../../lib/useModalFocus'
 
 export function HoursInvoicePanel({

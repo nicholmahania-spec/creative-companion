@@ -27,7 +27,7 @@ import {
   fieldLabel,
   fieldMeta,
 } from '../lib/stepDependencies'
-import { formatDetectiveAnswer } from '../lib/detectiveBrief'
+import { formatDetectiveAnswer } from '../lib/brief/detectiveBrief'
 
 export default function StepDependencyReminder({ stepId }) {
   const detective = useAppStore(

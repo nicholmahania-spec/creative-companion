@@ -88,7 +88,7 @@ unnumbered invoice is unreconcilable at either end come tax time. It also
 could only express hours, so a fixed-price project had to be invented into
 hours that multiplied out to the agreed number.
 
-**Now:** `src/lib/invoice.js` exports `lineAmount` / `invoiceTotals` /
+**Now:** `src/lib/billing/invoice.js` exports `lineAmount` / `invoiceTotals` /
 `dueDateFrom` (one answer to "what is owed", shared by the panel and the PDF
 so they can never disagree). Lines are hourly *or* flat `amount`; a flat line
 prints `—` / `Fixed` rather than a misleading "1 x total". Header carries
@@ -109,7 +109,7 @@ not on panel open, so the sequence has no gaps.
   defaults for workspaces saved *before* v5, so a workspace already at v5 has
   no key and would silently lose its due date.
 - Reworded "Due X on today's date" → "Due X if sent today".
-- New `src/lib/invoice.test.js` — 14 tests. Arithmetic (mixed hourly/fixed,
+- New `src/lib/billing/invoice.test.js` — 14 tests. Arithmetic (mixed hourly/fixed,
   tax on subtotal not per line, no NaN on empty), terms (month rollover, no
   mutation of the issued date, empty on missing terms), and three that
   generate a **real PDF and read its text layer back with pdfjs** to assert
@@ -299,7 +299,7 @@ to what extends the existing architecture vs. what would fight it.
 
 Per-project todo list, deliberately kept separate from the existing desk-tasks/
 quick-add system. `src/components/RunningTodo.jsx` (popup + drawer),
-`src/lib/runningTodoStages.js` (keyword stage tagging), store fields/actions in
+`src/lib/billing/runningTodoStages.js` (keyword stage tagging), store fields/actions in
 `useAppStore.js` (`runningTodo`, `addRunningTodoItem`, `toggleRunningTodoItem`,
 `removeRunningTodoItem`, `sortRunningTodo`, `resetRunningTodoIfNewDay`).
 
@@ -353,7 +353,7 @@ opened a valid letterhead PDF.
 ### D. Lightweight hours/invoice tracker — done (`d45ff42`)
 New "Hours & invoice" Tools-menu entry, drawer UI matching the running
 to-do panel. Log dated hours against a rate, see running totals, export a
-simple itemized invoice PDF (`src/lib/invoice.js`). Verified: totals math
+simple itemized invoice PDF (`src/lib/billing/invoice.js`). Verified: totals math
 correct, valid PDF downloaded.
 
 All 119 tests pass; each phase verified end-to-end in a headless browser
@@ -603,7 +603,7 @@ Three paths, all reachable from Tools → "Share project overview":
    `mergeDetectiveAnswers` (never blanks an already-filled field).
    New tables `public.client_portals` + `public.client_portal_messages`
    (owner-only RLS) with anon-callable SECURITY DEFINER RPCs; client code
-   in `src/lib/clientPortal.js`, `src/components/PublicClientPortal.jsx`,
+   in `src/lib/client/clientPortal.js`, `src/components/PublicClientPortal.jsx`,
    studio side in `src/components/ProjectOverviewShare.jsx`.
 3. **Print blank / scan back in** — download a blank ruled PDF for a client
    to fill by hand, then upload a photo/scan. `tesseract.js` OCR

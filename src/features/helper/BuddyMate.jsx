@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { labelForView } from '../../lib/journey'
-import { applyProposal } from '../../lib/helperActions'
+import { applyProposal } from '../../lib/helper/helperActions'
 import {
   activityTip,
   buddyMood,
@@ -27,25 +27,25 @@ import {
   timeBlindLine,
   wellnessLine,
   whatTimeLine,
-} from '../../lib/buddy'
+} from '../../lib/helper/buddy'
 import {
   awardAndBroadcast,
   BADGES,
   gameSummaryLine,
   loadGame,
   xpProgress,
-} from '../../lib/buddyGame'
+} from '../../lib/helper/buddyGame'
 import {
   BREAK_KINDS,
   isBreakItemOpen,
   kindMeta,
-} from '../../lib/breakKit'
+} from '../../lib/helper/breakKit'
 import {
   askHelper,
   coachWithHelper,
   isHelperAiConfigured,
   helperAiStatus,
-} from '../../lib/helperAi'
+} from '../../lib/helper/helperAi'
 import useAppStore from '../../store/useAppStore'
 import HelperCharacterLottie from './HelperCharacterLottie'
 import '../../styles/lazy-buddy.css'

@@ -10,9 +10,9 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { JOURNEY_STEPS } from '../../lib/journey'
-import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../../lib/detectiveBrief'
+import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../../lib/brief/detectiveBrief'
 import { downloadProjectOverviewPdf } from '../../lib/exportFiles'
-import { groupMessagesByDay } from '../../lib/messageDayLabel'
+import { groupMessagesByDay } from '../../lib/client/messageDayLabel'
 import { ocrOverviewForm, ocrOverviewPdf, readOverviewPdfForm } from '../../lib/overviewOcr'
 import {
   clientPortalUrl,
@@ -24,14 +24,14 @@ import {
   postStudioMessage,
   setPortalDetectiveAnswers,
   setPortalStepVisibility,
-} from '../../lib/clientPortal'
+} from '../../lib/client/clientPortal'
 import {
   SURVEY_KINDS,
   surveyQuestions,
   surveyLine,
   surveyKindLabel,
   groupAnswers,
-} from '../../lib/clientSurvey'
+} from '../../lib/client/clientSurvey'
 import '../../styles/lazy-define.css'
 import '../../styles/lazy-clients.css'
 

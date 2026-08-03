@@ -8,7 +8,7 @@
  * overview form to fill out and submit themselves.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { clientFacingError } from '../../lib/clientFacingError'
+import { clientFacingError } from '../../lib/client/clientFacingError'
 import { JOURNEY_STEPS } from '../../lib/journey'
 import ClientBriefFields from '../brief/ClientBriefFields'
 import {
@@ -18,8 +18,8 @@ import {
   respondToPortalStep,
   submitClientPortalForm,
   submitClientPortalSurvey,
-} from '../../lib/clientPortal'
-import { SURVEY_SCALE } from '../../lib/clientSurvey'
+} from '../../lib/client/clientPortal'
+import { SURVEY_SCALE } from '../../lib/client/clientSurvey'
 import '../../styles/lazy-clients.css'
 import '../../styles/lazy-define.css'
 
