@@ -7218,23 +7218,45 @@ body:has(.app.deep)::after {
   font-weight: 600 !important;
 }
 
-/* Themed pair, not hard-coded literals. #1A1A1A/#FFFFFF assumed a
-   permanently dark button; --ts-ink inverts with the theme and --ts-canvas
-   is its paired inverse, so the fill/label relationship holds in both.
-   .is-earned exempt — the earned ring (end of file) owns background/border
-   there; narrow the lock, never out-shout it. */
+/* Chromatic primary + spinning rainbow border (owner: Button-85 chrome).
+   Fill stays solid for label contrast; motion is the ring only. */
 .btn-primary:not(.is-earned) {
-  background: var(--dopamine) !important;
+  border: 3px solid transparent !important;
+  background:
+    linear-gradient(var(--dopamine), var(--dopamine)) padding-box,
+    conic-gradient(
+      from var(--btn-spin, 0deg),
+      #ff006e,
+      #8338ec,
+      #3a86ff,
+      #00ddeb,
+      #06d6a0,
+      #ffbe0b,
+      #ff006e
+    )
+      border-box !important;
   color: var(--on-dopamine) !important;
-  border: 1px solid var(--dopamine-deep) !important;
   border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
   font-family: inherit !important;
+  animation: btn-spin-chrome 2.4s linear infinite;
 }
 
 /* Guarded so a disabled primary stops repainting on hover. */
 .btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned) {
-  background: var(--dopamine-deep) !important;
+  background:
+    linear-gradient(var(--dopamine-deep), var(--dopamine-deep)) padding-box,
+    conic-gradient(
+      from var(--btn-spin, 0deg),
+      #ff006e,
+      #8338ec,
+      #3a86ff,
+      #00ddeb,
+      #06d6a0,
+      #ffbe0b,
+      #ff006e
+    )
+      border-box !important;
   filter: none !important;
   transform: none !important;
   box-shadow: none !important;
@@ -7353,25 +7375,47 @@ body,
 /* .is-earned is exempt: the earned gradient ring (end of file) must own
    background/border there, and the ratchet forbids out-shouting a lock —
    narrow the base rule instead. */
-/* Solid chromatic primary — the Tech-Studio ink lock painted every CTA
-   black/grey and hid the Button-64 / dopamine work. One color family, no
-   rainbow animation (Button-85 stayed rejected for attention tax). */
+/* Primary law — purple plate + spinning rainbow chrome (see @property block). */
 .btn-primary:not(.is-earned),
 .path-continue-row .btn-primary:not(.is-earned),
 .work-path-next.btn-primary:not(.is-earned) {
-  background: var(--dopamine) !important;
+  border: 3px solid transparent !important;
+  background:
+    linear-gradient(var(--dopamine), var(--dopamine)) padding-box,
+    conic-gradient(
+      from var(--btn-spin, 0deg),
+      #ff006e,
+      #8338ec,
+      #3a86ff,
+      #00ddeb,
+      #06d6a0,
+      #ffbe0b,
+      #ff006e
+    )
+      border-box !important;
   color: var(--on-dopamine) !important;
-  border: 1px solid var(--dopamine-deep) !important;
   border-radius: var(--ts-radius) !important;
   box-shadow: none !important;
   min-height: 40px;
   font-weight: 600;
+  animation: btn-spin-chrome 2.4s linear infinite;
 }
 
 .btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned),
 .path-continue-row .btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned) {
-  background: var(--dopamine-deep) !important;
-  border-color: var(--dopamine-deep) !important;
+  background:
+    linear-gradient(var(--dopamine-deep), var(--dopamine-deep)) padding-box,
+    conic-gradient(
+      from var(--btn-spin, 0deg),
+      #ff006e,
+      #8338ec,
+      #3a86ff,
+      #00ddeb,
+      #06d6a0,
+      #ffbe0b,
+      #ff006e
+    )
+      border-box !important;
 }
 
 .btn-secondary:not(.is-earned) {
@@ -7420,8 +7464,19 @@ body,
    the interior press feedback comes from the base :active rules. */
 .btn-primary:active:not(:disabled):not([aria-disabled='true']):not(.is-earned),
 .path-continue-row .btn-primary:active:not(:disabled):not([aria-disabled='true']):not(.is-earned) {
-  background: var(--dopamine-ink) !important;
-  border-color: var(--dopamine-ink) !important;
+  background:
+    linear-gradient(var(--dopamine-ink), var(--dopamine-ink)) padding-box,
+    conic-gradient(
+      from var(--btn-spin, 0deg),
+      #ff006e,
+      #8338ec,
+      #3a86ff,
+      #00ddeb,
+      #06d6a0,
+      #ffbe0b,
+      #ff006e
+    )
+      border-box !important;
 }
 
 .btn-secondary:hover:not(:disabled):not([aria-disabled='true']) {
@@ -10499,34 +10554,76 @@ textarea.artboard-brief-input {
   white-space: nowrap;
 }
 
-/* The earned ring — the app's one chromatic reward (owner's "dopamine
-   hit" buttons, translated). Fires ONLY when the current stop's needed
-   work is done; static always (a looping glow is an attention magnet in
-   peripheral vision and habituates while the tax stays); one per screen;
-   never on destructive, outbound, or client-facing controls; never on an
-   error/empty/locked state. The gradient lives in the BORDER via
-   padding-box/border-box layering, so the keyboard focus ring (an OUTER
-   outline) stays a geometrically separate layer and is never ambiguous
-   with the decoration. */
-/* Earned ring — secondary lock is :not(.is-earned), so no !important war. */
+/* Spinning rainbow chrome (owner-requested Button-85).
+   Custom property animation; reduced-motion falls back to a static ring. */
+@property --btn-spin {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes btn-spin-chrome {
+  to {
+    --btn-spin: 360deg;
+  }
+}
+
+.btn-primary:disabled,
+.btn-primary[aria-disabled='true'],
+.btn-primary:disabled:not(.is-earned),
+.btn-primary[aria-disabled='true']:not(.is-earned) {
+  animation: none;
+}
+
+/* Earned Continue — same spinning chrome, thicker ring as the reward state. */
 .btn.step-rail-cta.is-earned {
   border: 3px solid transparent;
   background:
     linear-gradient(var(--dopamine), var(--dopamine)) padding-box,
-    linear-gradient(135deg, #af40ff, #5b42f3 50%, #00ddeb) border-box;
+    conic-gradient(
+      from var(--btn-spin, 0deg),
+      #ff006e,
+      #8338ec,
+      #3a86ff,
+      #00ddeb,
+      #06d6a0,
+      #ffbe0b,
+      #ff006e
+    )
+      border-box;
   color: var(--on-dopamine);
   border-radius: var(--ts-radius);
   box-shadow: none;
   min-height: 40px;
   font-weight: 600;
   font-family: inherit;
+  animation: btn-spin-chrome 2s linear infinite;
 }
 
 .app.deep .btn.step-rail-cta.is-earned {
   background:
     linear-gradient(var(--dopamine), var(--dopamine)) padding-box,
-    linear-gradient(135deg, #c084fc, #8b7cf7 50%, #2dd4e0) border-box;
+    conic-gradient(
+      from var(--btn-spin, 0deg),
+      #ff6bcb,
+      #c084fc,
+      #8b7cf7,
+      #2dd4e0,
+      #5eead4,
+      #fbbf24,
+      #ff6bcb
+    )
+      border-box;
   color: var(--on-dopamine);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary:not(.is-earned),
+  .path-continue-row .btn-primary:not(.is-earned),
+  .work-path-next.btn-primary:not(.is-earned),
+  .btn.step-rail-cta.is-earned {
+    animation: none;
+  }
 }
 
 
