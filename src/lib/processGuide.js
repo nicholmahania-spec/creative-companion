@@ -65,15 +65,14 @@ const COACHING = {
   sketch: {
     title: 'Creating touchpoints',
     plain:
-      'Apply the system — 2–3 drafts or desk steps. Each needs one line on why it fits.',
+      'Apply the system on real surfaces from the brief. One note per application.',
     prompt:
-      'Only 2–3 drafts or one current desk step. Each has one line: why it fits the goal.',
+      'Walk the applications from Strategy. Note how each looks, or mark looks right.',
     checks: [
-      '2–3 options sketched (not 20 polished ones)',
-      'Each option has a one-line "why it fits"',
-      'Time-boxed (about 2 hours for drafts)',
-      'Current desk step is application work, not endless polish',
-      'Ready to ship into Assets when the system holds',
+      'Applications match where the brand is used',
+      'Each important surface has a note or “looks right”',
+      'Proofs are specific enough to hand off',
+      'Ready for Assets when the system holds on real things',
     ],
   },
   review: {

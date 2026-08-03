@@ -25,7 +25,7 @@ import { pathProgressSummary } from './journeyProgress'
  *   define    all required brief fields filled (getDetectiveProgress)
  *   research  every starred pin has a "why"
  *   design    a craft signal (wordmark) beyond the stock palette
- *   sketch    at least one completed titled task (not Strategy checklists)
+ *   sketch    at least one touchpointApps note or “looks right”
  *   deliver   a handoff note or learnings
  */
 const everythingDone = {
@@ -40,9 +40,10 @@ const everythingDone = {
       brandWords: 'warm, coastal',
     },
     logoWordmark: 'Harbor',
+    touchpointApps: { website: { note: 'Hero uses the wordmark' } },
     handoffNote: 'Everything is in the pack.',
   },
-  tasks: [{ id: 1, title: 'Apply lockup to card', completed: true }],
+  tasks: [],
   moodItems: [{ type: 'image', inPack: true, note: 'the light' }],
   sparkIndex: 3,
 }

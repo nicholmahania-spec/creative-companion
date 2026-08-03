@@ -115,8 +115,10 @@ const EXEMPT = {
   deliverWordsChecked: 'optional ship polish checkboxes, not a deliverable',
   /* UI resume only — which Mark/Words/Colour/Type/Preview screen was last. */
   identitySubstep: 'resume position on Identity, not a deliverable field',
+  /* Touchpoints application notes — path gate + designer working notes.
+     Full book application mocks still read brief surfaces, not these notes. */
+  touchpointApps: 'Touchpoints working notes / path gate, not a pack field yet',
 }
-
 describe('every editable brand field reaches something the client gets', () => {
   const sources = allSource().map((p) => readFileSync(p, 'utf8'))
   const writable = [

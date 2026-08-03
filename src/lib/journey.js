@@ -49,7 +49,7 @@ export const JOURNEY_STEPS = [
     label: 'Touchpoints',
     process: 'Creating touchpoints',
     plain:
-      'Apply the system — desk steps, drafts, and real-world applications.',
+      'Apply the system on real surfaces from the brief — one note per application.',
     nextView: 'finish',
     nextLabel: 'Go to Assets',
   },

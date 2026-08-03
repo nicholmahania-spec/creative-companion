@@ -87,13 +87,19 @@ describe('pathStepHasContent', () => {
     ).toBe(true)
   })
 
-  /* Touchpoints is done when work on that stop is finished — not when the
-     Strategy brief names surfaces/deliverables (those auto-ticked the stop). */
-  it('sketch is not done just because a task exists or the brief names surfaces', () => {
+  /* Touchpoints is done when an application on this stop has a note or
+     “looks right” — not Strategy surfaces, not mere desk tasks. */
+  it('sketch is not done from brief surfaces, open tasks, or completed tasks alone', () => {
     expect(
       pathStepHasContent('sketch', {
         project: {},
         tasks: [{ id: 1, title: 'Draft logo', why: '', completed: false }],
+      })
+    ).toBe(false)
+    expect(
+      pathStepHasContent('sketch', {
+        project: {},
+        tasks: [{ id: 1, title: 'Apply lockup to card', completed: true }],
       })
     ).toBe(false)
     expect(
@@ -106,16 +112,29 @@ describe('pathStepHasContent', () => {
         project: { detective: { deliverablesPicked: ['businessCard'] } },
       })
     ).toBe(false)
+    expect(
+      pathStepHasContent('sketch', {
+        project: { touchpointApps: {} },
+      })
+    ).toBe(false)
   })
 
-  it('sketch is done when at least one titled task is completed', () => {
+  it('sketch is done when at least one application has a note or looks right', () => {
     expect(pathStepHasContent('sketch', { project: {}, tasks: [] })).toBe(
       false
     )
     expect(
       pathStepHasContent('sketch', {
-        project: {},
-        tasks: [{ id: 1, title: 'Apply lockup to card', completed: true }],
+        project: {
+          touchpointApps: { website: { note: 'Hero uses the wordmark' } },
+        },
+      })
+    ).toBe(true)
+    expect(
+      pathStepHasContent('sketch', {
+        project: {
+          touchpointApps: { social: { done: true } },
+        },
       })
     ).toBe(true)
   })
@@ -166,11 +185,10 @@ describe('pathStepHasContent', () => {
         handoffNote: 'hi',
         learnings: 'yay',
         directions: [{ id: 'a', title: 'Quiet', note: 'Fits the goal' }],
+        touchpointApps: { website: { note: 'Hero uses wordmark' } },
       },
       moodItems: [{ id: 1, inPack: true, type: 'quote', note: 'ref' }],
-      tasks: [
-        { id: 1, title: 'Apply lockup', why: 'Fits the goal', completed: true },
-      ],
+      tasks: [],
       sparkIndex: 3,
       palette: ['#111', '#222'],
     })
