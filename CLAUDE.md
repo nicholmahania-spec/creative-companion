@@ -873,11 +873,11 @@ and every bump fires a `versionService` snapshot against an 8-per-project cap.
 
 One thread, two audiences, two representations. Do not "unify" them.
 
-- **Client side** (`src/components/PublicClientPortal.jsx`) — a conventional
+- **Client side** (`src/features/client-portal/PublicClientPortal.jsx`) — a conventional
   timestamp, in the client's own locale and zone. A client is an ordinary
   person judging whether their designer is responsive, and this is what every
   other messaging surface they use shows.
-- **Studio side** (`src/components/ProjectOverviewShare.jsx`) — day dividers
+- **Studio side** (`src/features/client-portal/ProjectOverviewShare.jsx`) — day dividers
   only, from `src/lib/messageDayLabel.js`. No per-message stamp, no clock time.
 
 A clock time is not information for this owner; it is an input to a subtraction

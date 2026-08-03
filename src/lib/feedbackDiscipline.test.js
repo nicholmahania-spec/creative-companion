@@ -202,7 +202,7 @@ describe('the app itself', () => {
     'src/views/ReviewView.jsx',
     'src/components/HoursInvoice.jsx',
     'src/components/CaseStudyExport.jsx',
-    'src/components/ProjectOverviewShare.jsx',
+    'src/features/client-portal/ProjectOverviewShare.jsx',
     'src/components/RevisionRounds.jsx',
   ]
 

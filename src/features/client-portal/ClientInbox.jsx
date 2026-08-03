@@ -14,8 +14,8 @@
  * - Read is marked only on explicit open, never on poll or hover.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { fetchOwnerPortals, fetchMessagesForPortals, postStudioMessage } from '../lib/clientPortal'
-import { buildInboxRows, portalSeenSnapshot } from '../lib/clientInbox'
+import { fetchOwnerPortals, fetchMessagesForPortals, postStudioMessage } from '../../lib/clientPortal'
+import { buildInboxRows, portalSeenSnapshot } from '../../lib/clientInbox'
 
 const KIND_GLYPH = {
   approval: '✓',

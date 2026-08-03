@@ -6,21 +6,21 @@
  * completed file back).
  */
 import { useState, useRef } from 'react'
-import { useModalFocus } from '../lib/useModalFocus'
-import { downscaleDataUrl } from '../lib/moodPins'
+import { useModalFocus } from '../../lib/useModalFocus'
+import { downscaleDataUrl } from '../../lib/moodPins'
 import {
   DISCOVERY_SECTIONS,
   DISCOVERY_FIELDS,
   discoveryBriefToMarkdown,
   discoveryBriefToPlainText,
   countAnswered,
-} from '../lib/discoveryBrief'
+} from '../../lib/discoveryBrief'
 import {
   createDiscoveryShare,
   discoveryShareUrl,
   fetchDiscoveryShare,
   revokeDiscoveryShare,
-} from '../lib/discoveryShare'
+} from '../../lib/discoveryShare'
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 

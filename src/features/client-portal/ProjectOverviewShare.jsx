@@ -9,11 +9,11 @@
  * half-checked scan to a stray backdrop click is the abandonment case.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { JOURNEY_STEPS } from '../lib/journey'
-import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../lib/detectiveBrief'
-import { downloadProjectOverviewPdf } from '../lib/exportFiles'
-import { groupMessagesByDay } from '../lib/messageDayLabel'
-import { ocrOverviewForm, ocrOverviewPdf, readOverviewPdfForm } from '../lib/overviewOcr'
+import { JOURNEY_STEPS } from '../../lib/journey'
+import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../../lib/detectiveBrief'
+import { downloadProjectOverviewPdf } from '../../lib/exportFiles'
+import { groupMessagesByDay } from '../../lib/messageDayLabel'
+import { ocrOverviewForm, ocrOverviewPdf, readOverviewPdfForm } from '../../lib/overviewOcr'
 import {
   clientPortalUrl,
   createClientPortal,
@@ -24,16 +24,16 @@ import {
   postStudioMessage,
   setPortalDetectiveAnswers,
   setPortalStepVisibility,
-} from '../lib/clientPortal'
+} from '../../lib/clientPortal'
 import {
   SURVEY_KINDS,
   surveyQuestions,
   surveyLine,
   surveyKindLabel,
   groupAnswers,
-} from '../lib/clientSurvey'
-import '../styles/lazy-define.css'
-import '../styles/lazy-clients.css'
+} from '../../lib/clientSurvey'
+import '../../styles/lazy-define.css'
+import '../../styles/lazy-clients.css'
 
 const ALL_FIELDS = DETECTIVE_CHAPTERS.flatMap((c) => c.fields)
 const fieldLabel = (id) => ALL_FIELDS.find((f) => f.id === id)?.label || id
