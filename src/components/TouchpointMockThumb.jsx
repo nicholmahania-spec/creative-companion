@@ -4,7 +4,7 @@
  * so “this mock is good” is about something you can see.
  */
 import { mapPaletteRoles, normalizeHex, bestTextOn } from '../lib/color'
-import { touchpointLabel } from '../lib/touchpoints'
+import { touchpointLabel } from '../lib/journey/touchpoints'
 
 /** Aspect ratio class / CSS aspect-ratio per mock shape. */
 export const TOUCHPOINT_ASPECT = {

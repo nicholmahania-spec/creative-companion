@@ -1,4 +1,4 @@
-import { DEFAULT_PALETTE } from './color'
+import { DEFAULT_PALETTE } from '../color'
 import { buildBrandPackSnapshot } from './exportFiles'
 
 /**

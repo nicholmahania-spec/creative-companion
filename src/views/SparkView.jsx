@@ -3,8 +3,8 @@
  * Shortlist A/B/C only after many rough ideas. Not a single “winning” concept page.
  */
 import { useState, useEffect } from 'react'
-import { labelForStepId } from '../lib/journey'
-import { getProcessPhase } from '../lib/processGuide'
+import { labelForStepId } from '../lib/journey/journey'
+import { getProcessPhase } from '../lib/journey/processGuide'
 import useAppStore from '../store/useAppStore'
 import InfoReveal from '../components/InfoReveal'
 import LayoutPatterns from '../components/LayoutPatterns'

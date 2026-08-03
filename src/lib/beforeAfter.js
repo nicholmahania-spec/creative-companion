@@ -3,7 +3,7 @@
  * exists elsewhere (brand fields on the project). Adds zero new data
  * entry anywhere; this is a glanceable progress signal, not a tool.
  */
-import { isStockProjectPalette } from './journeyProgress'
+import { isStockProjectPalette } from './journey/journeyProgress'
 import { progressItemInScope } from './brief/detectiveBrief'
 
 const PROGRESS_ITEMS = [

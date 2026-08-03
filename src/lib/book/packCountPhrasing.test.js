@@ -21,7 +21,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve, join } from 'node:path'
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
 
 function sourceFiles(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {

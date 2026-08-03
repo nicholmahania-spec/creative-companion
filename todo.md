@@ -347,7 +347,7 @@ existing file, tag usable/outdated/missing, optional note + thumbnail.
 New "Stationery" tab in Design: letterhead (8.5x11in), business card
 (3.5x2in, per contact), envelope (#10), email signature (HTML+PNG) — all
 filled with real palette/type/logo/org contact info and exported at correct
-physical page sizes via `src/lib/stationery.js`. Verified: downloaded and
+physical page sizes via `src/lib/book/stationery.js`. Verified: downloaded and
 opened a valid letterhead PDF.
 
 ### D. Lightweight hours/invoice tracker — done (`d45ff42`)
@@ -749,7 +749,7 @@ unrelated jobs: one silently keeping a record, the other interrupting you.
 ## Brief PDF in the brand book — DONE (2026-07-28)
 
 Shipped as its own "Agreed brief" section in `downloadBrandPackVectorPdf`
-(`src/lib/brandBookPdf.js`), placed right after Strategy and before Logo
+(`src/lib/book/brandBookPdf.js`), placed right after Strategy and before Logo
 system. Every filled field renders bold question, its `tip` as an "e.g."
 example line beneath in the accent colour, then the real answer in its own
 shaded box — the common pattern from both reference briefs below. The old
@@ -796,7 +796,7 @@ dropping it, which is what the placeholder-only treatment does on screen.
 
 **What already exists to build on:**
 - `jspdf` 4.2.1, `pdf-lib` 1.17.1, `pdfjs-dist` are all installed
-- `downloadBrandPackVectorPdf()` in `src/lib/exportFiles.js` already composes
+- `downloadBrandPackVectorPdf()` in `src/lib/book/exportFiles.js` already composes
   a vector brand book with real font embedding (`setFont` by role) and
   `pdf.addPage()` pagination — the brief becomes a section in that, not a new
   pipeline

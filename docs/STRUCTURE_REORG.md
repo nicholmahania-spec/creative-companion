@@ -121,8 +121,9 @@ src/
     helper/                    # buddy, AI, forced break, session resume
     billing/                   # invoice, work week, running-todo stages
     brief/                     # detectiveBrief + contract tests
-    journey.js                 # path SSOT (flat — cross-cutting)
-    color.js, exportFiles.js…  # still flat until a later cut
+    journey/                   # path SSOT, progress, process guide, identity stamp
+    book/                      # brand book, exportFiles, fonts, case study
+    color.js, dates.js…        # remaining flat shared utils
   store/
   services/
   styles/                      # unchanged pattern
@@ -166,7 +167,7 @@ src/
 | **4** | `features/helper/*`, billing panels | Medium | **Done** |
 | **5** | `app/viewRegistry.js` + `app/MainOutlet.jsx`; App shells outlet | Higher | **Done** |
 | **6** | `lib/{client,helper,billing,brief}/` + import codemod | High | **Done** (first cut) |
-| **6b** | Optional later: `lib/journey/`, `lib/book/` if still noisy | Medium | Only if needed |
+| **6b** | `lib/journey/`, `lib/book/` | Medium | **Done** |
 
 Each phase: move → fix imports → `npm test` → no new `!important` debt.
 
@@ -188,5 +189,7 @@ Each phase: move → fix imports → `npm test` → no new `!important` debt.
 - [x] Main views leave App via `app/MainOutlet` + `app/viewRegistry` (~4.8k App shell)  
 - [x] Public + login discoverable (`features/client-portal/*`, `views/LoginView`)  
 - [x] First `lib/` domain cut: client / helper / billing / brief (mirrors features)  
+- [x] Phase 6b: `lib/journey/` + `lib/book/`  
+
 - [x] `npm test` + build green after each phase  
 - [x] No dual maps reintroduced; Studio vs This project preserved

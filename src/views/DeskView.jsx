@@ -16,15 +16,15 @@
  * resume only when it opens a *different* place — secondary, never a second
  * equal Continue. Mark done stays secondary next to Open {stop}.
  */
-import { labelForView, labelForStepId } from '../lib/journey'
-import { getProcessPhase } from '../lib/processGuide'
+import { labelForView, labelForStepId } from '../lib/journey/journey'
+import { getProcessPhase } from '../lib/journey/processGuide'
 import { namedDeadlineLabel } from '../lib/dates'
 import { pinFaceStyle, pinVisualKind } from '../lib/moodPins'
 import { DELIVERABLE_OPTIONS } from '../lib/brief/detectiveBrief'
 import {
   buildBrandPackSnapshot,
   packReadiness,
-} from '../lib/exportFiles'
+} from '../lib/book/exportFiles'
 import { weekFromWorkLog, hoursLoggedWords } from '../lib/billing/workWeek'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
 import '../styles/lazy-desk.css'

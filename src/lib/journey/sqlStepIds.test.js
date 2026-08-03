@@ -27,7 +27,7 @@ import { JOURNEY_STEPS } from './journey'
  * and 'review' are Tools views the studio can also push for review, which is
  * deliberate. It may not contain LESS.
  */
-const SUPABASE = new URL('../../supabase', import.meta.url).pathname
+const SUPABASE = new URL('../../../supabase', import.meta.url).pathname
 
 function sqlFiles() {
   const out = []

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { labelForView } from '../../lib/journey'
+import { labelForView } from '../../lib/journey/journey'
 import { applyProposal } from '../../lib/helper/helperActions'
 import {
   activityTip,

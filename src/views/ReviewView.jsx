@@ -4,9 +4,9 @@
  */
 import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
-import { getProcessPhase, REVIEW_QUESTIONS } from '../lib/processGuide'
-import { labelForStepId } from '../lib/journey'
-import { packReadiness } from '../lib/exportFiles'
+import { getProcessPhase, REVIEW_QUESTIONS } from '../lib/journey/processGuide'
+import { labelForStepId } from '../lib/journey/journey'
+import { packReadiness } from '../lib/book/exportFiles'
 import InfoReveal from '../components/InfoReveal'
 import RevisionRounds from '../components/RevisionRounds'
 import '../styles/lazy-review.css'

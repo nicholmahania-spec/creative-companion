@@ -7,7 +7,7 @@
  * for PDF, and keep HTML/MD/JSON paths fully synchronous when possible.
  */
 
-import { pinFaceCssText, pinVisualKind } from './moodPins'
+import { pinFaceCssText, pinVisualKind } from '../moodPins'
 import {
   resolvedGrid,
   resolvedPageBackgrounds,
@@ -15,15 +15,15 @@ import {
   resolvedTypeColors,
   resolvedTypeScale,
 } from './bookBuilder'
-import { toISODate } from './dates'
-import { mapPaletteRoles, normalizeHex, bestTextOn } from './color'
+import { toISODate } from '../dates'
+import { mapPaletteRoles, normalizeHex, bestTextOn } from '../color'
 import {
   DETECTIVE_CHAPTERS,
   formatDetectiveAnswer,
   filledDetectiveChapters,
   progressItemInScope,
-} from './brief/detectiveBrief'
-import { OVERVIEW_FIELD_PREFIX } from './overviewOcr'
+} from '../brief/detectiveBrief'
+import { OVERVIEW_FIELD_PREFIX } from '../overviewOcr'
 import {
   appendSystemMarkdown,
   buildColorSystem,
@@ -36,7 +36,7 @@ import {
   TYPE_SCALE,
   ROLE_JOBS,
   colorSpec,
-} from './brandSystem'
+} from '../brandSystem'
 
 // Typographic scale and vertical rhythm system
 const BASE_UNIT = 4  // 4px base unit for vertical rhythm

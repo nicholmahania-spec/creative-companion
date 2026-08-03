@@ -13,7 +13,7 @@
  * client counts). Match the design's look, drop its toggle. (#18)
  */
 import { useMemo, useState } from 'react'
-import { labelForStepId } from '../lib/journey'
+import { labelForStepId } from '../lib/journey/journey'
 import {
   buildClientGroups,
   filterAndSortClients,

@@ -870,7 +870,7 @@ it.
 ## The identity stamp is words, never a number or a time
 
 `project.identityEditedAt` and `identitySavedAt` are real ISO strings and
-**neither is ever rendered as a clock or version number**. `src/lib/identityStamp.js`
+**neither is ever rendered as a clock or version number**. `src/lib/journey/identityStamp.js`
 turns them into one of three sentences for any surface that needs a words-only
 status. The ambient Identity chip was removed (noise under the path title);
 Bump on Preview remains the deliberate save-point control. The owner has no
@@ -942,7 +942,7 @@ own timestamps would need one.
 
 ## The journey is declared once — derive from it, never restate it
 
-`src/lib/journey.js` owns the path: the stops, their order, their ids, their
+`src/lib/journey/journey.js` owns the path: the stops, their order, their ids, their
 views, their labels, and how many there are. Everything else reads from it.
 
 Use `JOURNEY_STEPS`, `PATH_VIEWS`, `PATH_STEP_COUNT`, `labelForView(view)`,

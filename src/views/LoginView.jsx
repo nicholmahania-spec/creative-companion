@@ -11,7 +11,7 @@ import {
   resetPasswordForEmail,
 } from '../lib/cloudSync'
 import { versionLabel } from '../lib/version'
-import { JOURNEY_STEPS } from '../lib/journey'
+import { JOURNEY_STEPS } from '../lib/journey/journey'
 import LogoLockup from '../components/LogoLockup'
 import '../styles/lazy-settings.css'
 

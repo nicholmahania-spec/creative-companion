@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isLogoOnlyScope } from './brief/detectiveBrief'
+import { isLogoOnlyScope } from '../brief/detectiveBrief'
 import { markPackFiles } from './exportFiles'
 
 /**

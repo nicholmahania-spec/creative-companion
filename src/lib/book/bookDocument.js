@@ -1,6 +1,6 @@
-import { normalizeHex } from './color'
-import { decisionLineFromPack } from './brandSystem'
-import { touchpointsFor } from './touchpoints'
+import { normalizeHex } from '../color'
+import { decisionLineFromPack } from '../brandSystem'
+import { touchpointsFor } from '../journey/touchpoints'
 
 /**
  * The brand book's plan — its pages, their order, their numbering, and the

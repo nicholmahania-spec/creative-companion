@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 /* Capture the blob instead of writing a file — the PDF is the thing under
    test, not the download. */
 const written = []
-vi.mock('../exportFiles', () => ({
+vi.mock('../book/exportFiles', () => ({
   downloadBlob: (blob, filename) => {
     written.push({ blob, filename })
     return { ok: true, filename }

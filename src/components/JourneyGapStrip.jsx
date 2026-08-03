@@ -3,7 +3,7 @@
  * “Next · …” lives on each step. Never shout “First empty · Define”
  * while working later steps.
  */
-import { labelForStepId } from '../lib/journey'
+import { labelForStepId } from '../lib/journey/journey'
 
 export default function JourneyGapStrip({
   pathNextGap = null,

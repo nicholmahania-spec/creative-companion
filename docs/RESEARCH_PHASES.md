@@ -139,7 +139,7 @@ brand was for. An app-only brand got a carrier bag; a bakery got a social tile
 it had no account for. Meanwhile Phase 1's "Where will this be used?" was
 collected and consumed by nothing.
 
-`src/lib/touchpoints.js` maps brief answers onto mocks; `brandBookPdf` holds
+`src/lib/journey/touchpoints.js` maps brief answers onto mocks; `brandBookPdf` holds
 nine renderers (business card, print, social, website, app, email, packaging,
 merch, signage) and a layout loop that owns every coordinate — the renderers
 draw inside the box they are handed and read nothing about page position,
@@ -262,7 +262,7 @@ building it here rather than writing case studies from memory months later:
 | How long it took | `workLog`, the private work clock |
 | How it turned out | `learnings` / `handoffNote` |
 
-`src/lib/caseStudy.js` assembles it, `CaseStudyExport` sits closed on Deliver
+`src/lib/book/caseStudy.js` assembles it, `CaseStudyExport` sits closed on Deliver
 — after the Learned field, since that feeds the outcome section and offering
 the export above it would ask for the story before its last line was written.
 Exports markdown, because the destination is someone else's site or deck.

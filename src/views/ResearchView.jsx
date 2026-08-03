@@ -5,9 +5,9 @@
  * Path rebuild: fill main width, mark-done off, Next leads footer.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { labelForStepId } from '../lib/journey'
+import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
-import { getProcessPhase } from '../lib/processGuide'
+import { getProcessPhase } from '../lib/journey/processGuide'
 import InfoReveal from '../components/InfoReveal'
 import { pinFaceStyle, pinImageUrl, readImageFilesAsPins } from '../lib/moodPins'
 import { extractDominantColors, sampleColorAt } from '../lib/extractColors'

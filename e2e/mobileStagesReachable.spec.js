@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { JOURNEY_STEPS } from '../src/lib/journey.js'
+import { JOURNEY_STEPS } from '../src/lib/journey/journey.js'
 import { skipIfCloud, unlockAndOnboard } from './helpers.js'
 
 /**
