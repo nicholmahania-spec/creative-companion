@@ -6039,7 +6039,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 }
 
 @media (max-width: 860px) {
-.app-shell {
+  .app-shell {
     grid-template-columns: 1fr;
     grid-template-areas:
       'header'
@@ -6049,7 +6049,9 @@ html[dir="rtl"] .buddy-shell.buddy-float {
       'footer';
   }
 
-.journey-sidebar {
+  /* Horizontal path strip — single rule block (duplicate !important lock removed).
+     Do not use width: max-content on the list — it clipped stages in the drawer. */
+  .journey-sidebar {
     width: 100%;
     min-width: 0;
     max-width: none;
@@ -6057,26 +6059,57 @@ html[dir="rtl"] .buddy-shell.buddy-float {
     flex-direction: row;
     align-items: center;
     height: auto;
-    padding: 0.4rem 0.6rem;
+    padding: 0.4rem 0.55rem;
     border-right: none;
     border-bottom: 1px solid var(--border-subtle);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-.journey-sidebar .journey-bar-list {
+  .journey-sidebar .journey-bar-list {
     flex-direction: row;
+    flex-wrap: nowrap;
+    width: 100%;
+    min-width: 0;
     padding: 0;
+    gap: 0.25rem;
   }
 
-.journey-sidebar .journey-step {
+  .journey-sidebar .journey-bar-item {
+    flex: 0 0 auto;
+  }
+
+  .journey-sidebar .journey-step {
     border-left: none;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
+    min-height: 40px;
+    padding: 0.4rem 0.55rem;
   }
 
-.journey-sidebar .journey-step.is-active {
+  .journey-sidebar .journey-step.is-active {
     border-left-color: transparent;
     border-bottom-color: var(--dopamine);
+    background: var(--bg-elevated);
+    box-shadow: none;
+  }
+
+  .journey-sidebar .journey-label {
+    display: block;
+    font-size: 0.72rem;
+    max-width: none;
+  }
+
+  .journey-sidebar .journey-num {
+    display: inline;
+    font-size: 0.65rem;
+    margin-right: 0.25rem;
+  }
+
+  .journey-sidebar .journey-progress-pill {
+    margin: 0 0 0 auto;
+    flex-shrink: 0;
+    padding: 0.3rem 0.5rem;
   }
 }
 
@@ -6960,74 +6993,9 @@ body:has(.app.deep)::after {
   grid-template-columns: 200px 1fr;
 }
 
-@media (max-width: 860px) {
-.app-shell {
-    grid-template-columns: 1fr !important;
-    grid-template-areas:
-      'header'
-      'hud'
-      'sidebar'
-      'main'
-      'footer' !important;
-  }
-
-.journey-sidebar {
-    width: 100% !important;
-    max-width: none !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    height: auto !important;
-    padding: 0.4rem 0.55rem !important;
-    border-right: none !important;
-    border-bottom: 1px solid #E7E7E7 !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-.journey-sidebar .journey-bar-list {
-    flex-direction: row !important;
-    width: max-content !important;
-    min-width: 100%;
-    padding: 0 !important;
-    gap: 0.25rem;
-  }
-
-.journey-sidebar .journey-bar-item {
-    flex: 0 0 auto !important;
-  }
-
-.journey-sidebar .journey-step {
-    border-left: none !important;
-    border-bottom: 2px solid transparent !important;
-    white-space: nowrap !important;
-    min-height: 40px !important;
-    padding: 0.4rem 0.55rem !important;
-  }
-
-.journey-sidebar .journey-step.is-active {
-    background: var(--ts-canvas, #F5F5F5) !important;
-    box-shadow: none !important;
-    border-bottom-color: #606060 !important;
-  }
-
-.journey-sidebar .journey-label {
-    display: block !important;
-    font-size: 0.72rem !important;
-    max-width: none !important;
-  }
-
-.journey-sidebar .journey-num {
-    display: inline !important;
-    font-size: 0.65rem !important;
-    margin-right: 0.25rem;
-  }
-
-.journey-sidebar .journey-progress-pill {
-    margin: 0 0 0 auto !important;
-    flex-shrink: 0;
-    padding: 0.3rem 0.5rem !important;
-  }
-}
+/* Mobile journey strip: single non-!important block above (~6041).
+   Duplicate TECH-STUDIO lock media (width:max-content !important) removed —
+   it re-declared the same strip and clipped stages in the drawer. */
 
 .header-redesign {
   min-height: 48px;
@@ -8200,14 +8168,8 @@ select:focus {
     transform: scale(1);
     pointer-events: auto;
   }
-  /* The list inside this drawer must wrap to the card's width. The 860px
-     block sets `width: max-content !important` on the same selector — right
-     for the 768-860px horizontal strip it was written for, wrong here: the
-     drawer is a fixed 358px card with `overflow-x: hidden`, so max-content
-     made the list 652px and left 3 of the 5 stages clipped with nothing to
-     scroll. This drawer is the only surface on mobile that names all five
-     (the rail collapses the inactive four to unlabelled dots), so a stage
-     that does not render here cannot be found at all. */
+  /* Drawer list fills the card and wraps — never max-content (that clipped
+     three of five stages with nowhere to scroll). */
   .app-shell > .journey-sidebar .journey-bar-list {
     flex-direction: row !important;
     flex-wrap: wrap !important;

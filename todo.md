@@ -60,10 +60,10 @@ reasoning. It is not a list of what is left. These are:
   once tried on an actual phone.
 - **`conceptPackage`** — gone from `src/` (only lived in old audit docs).
   Do not reintroduce.
-- **CSS override layers** — 663 `!important` declarations, 463 in
-  `shell.css`. `importantRatchet.test.js` stops the count rising; reducing it
-  needs small measured batches (`scripts/css-snapshot.mjs`), because stripping
-  the journey family wholesale moves 336 computed styles.
+- **CSS override layers** — `shell.css` budget **412** `!important` (down from
+  442, 2026-08 prune: removed duplicate mobile journey lock /
+  `width:max-content` that clipped stages). Keep ratcheting down by fixing
+  base rules; never raise the budget.
 - **Netlify is dead** — last deploy errored 2026-07-19 and
   `creativecompanion.netlify.app` 404s. Production is Vercel. CLAUDE.md still
   calls Netlify the primary target, which sent a whole session chasing the
