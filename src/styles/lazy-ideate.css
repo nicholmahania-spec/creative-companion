@@ -18,6 +18,12 @@
   animation: flowIn 0.45s ease-out;
 }
 
+.spark-view.ideate-studio {
+  max-width: none;
+  width: 100%;
+  min-width: 0;
+}
+
 .spark-card {
   background: var(--bg-warm);
   color: var(--text-primary);
@@ -26,7 +32,8 @@
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-1);
   width: 100%;
-  max-width: 36rem;
+  /* Provocation still reads short; don’t float a 36rem card in a void */
+  max-width: min(100%, 48rem);
 }
 
 .spark-card p {

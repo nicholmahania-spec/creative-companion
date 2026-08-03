@@ -830,11 +830,13 @@
 }
 
 .settings-view.settings-studio {
-  max-width: 48rem;
+  max-width: min(100%, 56rem);
+  width: 100%;
+  margin-inline: 0;
 }
 
 .settings-view.settings-studio .panel.brand-section {
-  max-width: 48rem;
+  max-width: none;
   margin-bottom: var(--space-6);
 }
 
