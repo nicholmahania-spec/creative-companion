@@ -450,15 +450,6 @@ function App() {
   forcedBreakRef.current = forcedBreak
   /** View to restore after forced break ends */
   const preBreakViewRef = useRef(null)
-  const [showOnboarding, setShowOnboarding] = useState(false)
-  const [onboardName, setOnboardName] = useState('')
-  const [onboardBrief, setOnboardBrief] = useState('')
-  const [onboardFirstStep, setOnboardFirstStep] = useState('')
-  /* Set only once Start has actually been pressed with an empty name. The
-     hint used to render from the moment the dialog opened, so the first thing
-     the app ever said was what you had failed to do — before you had been
-     given a chance to do it. */
-  const [onboardNudge, setOnboardNudge] = useState(false)
   const [recentUndo, setRecentUndo] = useState(null)
   const [exportPanel, setExportPanel] = useState(null)
   const [exportBusy, setExportBusy] = useState(false)
@@ -1248,10 +1239,6 @@ function App() {
         setShowBreakdown(false)
         return
       }
-      if (showOnboarding) {
-        // Onboarding is required first-run — do not Esc-dismiss
-        return
-      }
       setMoreOpen(false)
       // Ask Helper to tuck if expanded
       window.dispatchEvent(new CustomEvent('cc-helper-minimize'))
@@ -1264,7 +1251,6 @@ function App() {
     forceBreakConsentOpen,
     exportPanel,
     showBreakdown,
-    showOnboarding,
   ])
 
   /* No outside-click closer for the Tools menu anymore: it opens as a
@@ -1694,9 +1680,12 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked, bodyDoubling, forcedBreak])
 
-  // Focus traps — export / breakdown / onboard (Research lightbox lives in ResearchView)
+  // Focus traps — export / breakdown (Research lightbox lives in ResearchView)
   const getExportRoot = useCallback(
-    () => document.querySelector('.export-overlay.no-print-hide, .export-overlay.portfolio-export, .export-overlay:not(.onboard-overlay)'),
+    () =>
+      document.querySelector(
+        '.export-overlay.no-print-hide, .export-overlay.portfolio-export, .export-overlay'
+      ),
     []
   )
   const getBreakdownRoot = useCallback(
@@ -1704,10 +1693,6 @@ function App() {
       document
         .querySelector('.export-overlay .breakdown-panel')
         ?.closest('.export-overlay') || null,
-    []
-  )
-  const getOnboardRoot = useCallback(
-    () => document.querySelector('.onboard-overlay'),
     []
   )
   const getDeskConfirmRoot = useCallback(
@@ -1723,9 +1708,6 @@ function App() {
   })
   useModalFocus(!!showBreakdown, getBreakdownRoot, {
     initialSelector: '.export-panel-header button, button',
-  })
-  useModalFocus(!!showOnboarding, getOnboardRoot, {
-    initialSelector: '#onboard-name',
   })
   // Destructive/blocking confirm: land focus on Cancel (safe default), trap Tab
   useModalFocus(!!deskConfirm, getDeskConfirmRoot, {
@@ -1753,7 +1735,6 @@ function App() {
       if (
         exportPanel ||
         showBreakdown ||
-        showOnboarding ||
         deskConfirm ||
         forceBreakConsentOpen ||
         document.querySelector('.board-lightbox-overlay')
@@ -1832,7 +1813,6 @@ function App() {
   }, [
     exportPanel,
     showBreakdown,
-    showOnboarding,
     deskConfirm,
     forceBreakConsentOpen,
     shortcutsOpen,
@@ -2037,7 +2017,6 @@ function App() {
     if (
       exportPanel ||
       showBreakdown ||
-      showOnboarding ||
       deskConfirm ||
       forceBreakConsentOpen ||
       shortcutsOpen ||
@@ -2282,10 +2261,19 @@ function App() {
     exportAllData,
   ])
 
-  // First-run project gate (after access unlock)
+  /* First unlock: no modal gate. Home (+ New project → intake) is enough.
+     The old New project dialog duplicated create intake and blocked the desk. */
   useEffect(() => {
-    if (unlocked && !cloudHydrating && !onboarded) setShowOnboarding(true)
-  }, [unlocked, onboarded, cloudHydrating])
+    if (!unlocked || cloudHydrating || onboarded) return
+    setOnboarded(true)
+    try {
+      localStorage.setItem('cc-onboarded', '1')
+    } catch {
+      /* ignore */
+    }
+    setBodyDoubling(false)
+    setActiveView('home')
+  }, [unlocked, onboarded, cloudHydrating, setOnboarded, setBodyDoubling, setActiveView])
 
   /* The header rename input and its draft state are gone — rename lives on
      the project screen's title now (DefineView), where the name is visible
@@ -2428,95 +2416,6 @@ function App() {
         }),
       })
     }
-  }
-
-  /**
-   * First run. Everything typed into the dialog is kept, and nothing that was
-   * not typed is invented.
-   *
-   * This used to take a `mode`, because there were two buttons. The second one
-   * ("Empty desk") ran `clearToEmpty()` and dropped the brief and the first
-   * step on the floor without saying so — you wrote two things, pressed a
-   * button that did not say "discard", and they were gone with nothing to undo
-   * from. On the app's very first screen, that teaches the one lesson it must
-   * never teach: that typing here is not safe.
-   *
-   * With that fixed the two paths differed only in what the app made up for
-   * you, so the second button was removed rather than repaired. The starter
-   * task went with it: seeding "Write one design step you can finish in about
-   * 25 minutes" into someone's list when they left the box blank is a task
-   * they did not ask for, sitting in the one place that is supposed to hold
-   * only real work.
-   */
-  const finishOnboarding = () => {
-    const name = onboardName.trim()
-    const brief = onboardBrief.trim() // optional; do not invent placeholder brief
-    const firstStep = onboardFirstStep.trim()
-    if (name) {
-      // First run: the workspace already holds one untouched blank project —
-      // rename it instead of appending a stray empty "My project" lane.
-      const st = useAppStore.getState()
-      const only = st.projects.length === 1 ? st.projects[0] : null
-      const untouchedBlank =
-        only &&
-        only.name === 'My project' &&
-        !String(only.brief || '').trim() &&
-        !(st.tasks || []).length
-      let project
-      if (untouchedBlank) {
-        renameProject(only.id, name)
-        if (brief) updateProjectBrief(brief)
-        project = only
-      } else {
-        project = createNewProject(name, brief)
-        // First path stop is Research (studio); Strategy (project) is next.
-      }
-      // CRM identity lives in detective.clientName (not only project display name)
-      updateDetective('clientName', name)
-      awardAndBroadcast('project_create', { label: name })
-      if (firstStep) {
-        addTask({
-          id: Date.now() + 1,
-          title: firstStep,
-          energy: 'med',
-          meta: 'First step · do this now',
-          completed: false,
-          seeded: false,
-          projectId: project?.id || useAppStore.getState().currentProjectId,
-          dueDate: '',
-          why: '',
-        })
-        awardAndBroadcast('task_capture', { label: 'First step' })
-      }
-      flashToast('Project created — start with the goal, then head to Research')
-    }
-    setOnboarded(true)
-    localStorage.setItem('cc-onboarded', '1')
-    setShowOnboarding(false)
-    // Quiet first session — Helper stays off until user opts in (Tools or Settings)
-    setBodyDoubling(false)
-    // Path step 1 = Strategy (project brief); Research is next
-    setActiveView('project')
-    window.setTimeout(() => {
-      const tryFocus = () => {
-        const el =
-          document.getElementById('detective-clientName') ||
-          document.getElementById('detective-goal') ||
-          document.querySelector('.define-brief .define-input')
-        if (!el) return false
-        try {
-          el.focus?.({ preventScroll: false })
-          el.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
-        } catch {
-          /* ignore */
-        }
-        return true
-      }
-      // DetectiveSheet is lazy; retry once after paint if first pass misses
-      if (!tryFocus()) {
-        window.setTimeout(tryFocus, 120)
-      }
-    }, 80)
   }
 
   const buildCurrentBrandPack = () =>
@@ -4730,7 +4629,6 @@ function App() {
               importFileRef={importFileRef}
               clearToEmpty={clearToEmpty}
               clearAllData={clearAllData}
-              setShowOnboarding={setShowOnboarding}
               loadSoftSignalDemo={loadSoftSignalDemo}
               loadHarborHearthDemo={loadHarborHearthDemo}
               versionLabel={versionLabel}
@@ -4802,107 +4700,6 @@ function App() {
             : 'Local-only'}
         </span>
       </footer>
-
-
-
-      {showOnboarding && (
-        <div
-          className="export-overlay onboard-overlay onboard-studio"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="onboard-title"
-        >
-          <div className="export-panel onboard-panel">
-            <h2 id="onboard-title" className="onboard-title">
-              New project
-            </h2>
-            <label className="onboard-label" htmlFor="onboard-name">
-              Client / project name
-              <input
-                id="onboard-name"
-                value={onboardName}
-                onChange={(e) => setOnboardName(e.target.value)}
-                placeholder="Usually the client's name"
-                className="onboard-input"
-                autoFocus
-                autoComplete="off"
-              />
-            </label>
-            <label className="onboard-label" htmlFor="onboard-step">
-              First step
-              <input
-                id="onboard-step"
-                value={onboardFirstStep}
-                onChange={(e) => setOnboardFirstStep(e.target.value)}
-                placeholder="One small task to start with — you can skip this"
-                className="onboard-input"
-                autoComplete="off"
-              />
-            </label>
-            {/* Visible, not behind a <details>.
-                This was a collapsed <summary>Brief</summary> whose only label
-                was sr-only, so on the app's very first screen the user saw the
-                bare word "Brief" over empty space with no way to tell what was
-                inside. The owner's words on exactly this pattern: "they are
-                hidden and my first thought was 'I have no idea what this is.'
-                It's a cognitive load issue and invisible." A closed <details>
-                with a bare label is a memory test, not a control.
-                The field stays optional — showing it bills no decision that
-                cannot be skipped, and catching the job in one line while it is
-                still in your head is the point. */}
-            <label className="onboard-label" htmlFor="onboard-brief">
-              <span>Brief (optional)</span>
-              <textarea
-                id="onboard-brief"
-                value={onboardBrief}
-                onChange={(e) => setOnboardBrief(e.target.value)}
-                placeholder="What’s the job? One line is plenty"
-                rows={2}
-                className="onboard-input"
-              />
-            </label>
-            {/* One button.
-
-                There were two — "Start the brief" and "Empty desk" — and they
-                were never opposites of the same thing: one named a
-                destination, the other named a state, so choosing meant first
-                constructing the comparison yourself, on the very first screen
-                of the app. What actually separated them was that "Empty desk"
-                silently threw away the brief and the first step you had just
-                typed. With that fixed, an empty Brief and an empty First step
-                already ARE the empty desk, and the second button had nothing
-                left to mean.
-
-                Not disabled. This dialog deliberately cannot be dismissed with
-                Escape, so a single disabled button is a locked room — and a
-                dead primary is a first interaction that refuses you. It always
-                fires; a click with no name focuses the name box and says so,
-                which is guidance after the attempt rather than a gate before
-                it. */}
-            <div className="onboard-actions">
-              <button
-                type="button"
-                className="btn btn-primary onboard-primary"
-                onClick={() => {
-                  if (!onboardName.trim()) {
-                    setOnboardNudge(true)
-                    document.getElementById('onboard-name')?.focus()
-                    return
-                  }
-                  finishOnboarding()
-                }}
-              >
-                Start
-              </button>
-            </div>
-            {onboardNudge && !onboardName.trim() && (
-              <p className="onboard-gate-hint">
-                Add a name first — usually the client’s.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
 
       {savePulse && (
         <div className="autosave-chip" role="status">✓ Saved</div>

@@ -122,23 +122,17 @@ describe('Settings has exactly one door, in the sidebar Studio band', () => {
   })
 })
 
-describe('the first-run dialog keeps what was typed', () => {
+describe('first-run no longer gates on a New project modal', () => {
   const app = readCode('App.jsx')
 
-  it('has one button, because it cannot be dismissed', () => {
-    /* Escape is deliberately blocked on this dialog. A single DISABLED button
-       would therefore be a locked room, so the primary must always fire. */
-    expect(app).not.toMatch(/onboard-primary[\s\S]{0,160}disabled=/)
+  it('does not mount the onboard New project dialog', () => {
+    /* Creation is Home → create intake (or sidebar +), not a blocking modal. */
+    expect(app).not.toMatch(/onboard-overlay/)
+    expect(app).not.toMatch(/finishOnboarding/)
+    expect(app).not.toMatch(/setShowOnboarding\(true\)/)
   })
 
-  it('no longer offers a second path that discarded the brief', () => {
-    expect(app).not.toMatch(/Empty desk</)
-    expect(app).not.toMatch(/finishOnboarding\('empty'\)/)
-  })
-
-  it('invents no starter task for a blank first step', () => {
-    /* Seeding a task nobody wrote puts invented work in the one list that is
-       supposed to hold only real work. */
+  it('invents no starter task seed for a blank first step', () => {
     expect(app).not.toMatch(/Write one design step you can finish/)
   })
 })

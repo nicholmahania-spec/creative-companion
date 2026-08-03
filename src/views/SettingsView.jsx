@@ -45,7 +45,6 @@ export default function SettingsView(props) {
     importFileRef,
     clearToEmpty,
     clearAllData,
-    setShowOnboarding,
     loadSoftSignalDemo,
     loadHarborHearthDemo,
     versionLabel,
@@ -397,8 +396,8 @@ export default function SettingsView(props) {
               onClick={() => {
                 ask('Full reset + setup?', () => {
                   clearAllData()
-                  setShowOnboarding(true)
-                  setActiveView('project')
+                  /* No first-run modal — Home empty state + New project intake. */
+                  setActiveView('home')
                   flashToast('Reset')
                 })
               }}
