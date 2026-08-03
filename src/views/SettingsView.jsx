@@ -263,10 +263,10 @@ export default function SettingsView(props) {
               type="button"
               className="btn btn-ghost settings-danger btn-sm"
               onClick={() => {
-                ask('Wipe everything and start with one blank project?', () => {
+                ask('Wipe every project? The desk will be empty until you start a new one.', () => {
                   clearToEmpty()
-                  setActiveView('project')
-                  flashToast('Cleared — one blank project left')
+                  setActiveView('create')
+                  flashToast('Cleared — no projects')
                 })
               }}
             >

@@ -1902,15 +1902,22 @@ const useAppStore = create(
         }))
       },
 
-      /** Delete a project and its tasks/pins. Keeps at least one project. */
+      /** Delete a project and its tasks/pins. Last project may be removed
+       *  (empty workspace is allowed — create again from + / New project). */
       deleteProject: (id) => {
         const { projects, tasks, moodItems, currentProjectId } = get()
-        if (projects.length <= 1) {
-          return { ok: false, error: 'Keep at least one project' }
-        }
         const remaining = projects.filter((p) => p.id !== id)
         if (remaining.length === projects.length) {
           return { ok: false, error: 'Project not found' }
+        }
+        if (remaining.length === 0) {
+          set({
+            projects: [],
+            currentProjectId: null,
+            tasks: tasks.filter((t) => t.projectId !== id),
+            moodItems: moodItems.filter((m) => m.projectId !== id),
+          })
+          return { ok: true, empty: true }
         }
         const nextId =
           currentProjectId === id
@@ -1925,33 +1932,32 @@ const useAppStore = create(
           tasks: tasks.filter((t) => t.projectId !== id),
           moodItems: moodItems.filter((m) => m.projectId !== id),
         })
-        return { ok: true }
+        return { ok: true, empty: false }
       },
 
-      /** Soft-archive: hide from default lists, keep data. */
+      /** Soft-archive: hide from default lists, keep data. Last active project
+       *  may be archived — workspace can have no open projects. */
       archiveProject: (id) => {
         const { projects, currentProjectId } = get()
-        const activeList = projects.filter((p) => !p.archived)
-        if (activeList.length <= 1 && activeList[0]?.id === id) {
-          return { ok: false, error: 'Keep at least one active project' }
-        }
         const target = projects.find((p) => p.id === id)
         if (!target) return { ok: false, error: 'Project not found' }
         let nextId = currentProjectId
         if (currentProjectId === id) {
           nextId =
-            projects.find((p) => p.id !== id && !p.archived)?.id ||
-            projects.find((p) => p.id !== id)?.id
+            projects.find((p) => p.id !== id && !p.archived)?.id ?? null
         }
         set({
           projects: projects.map((p) =>
             p.id === id
               ? { ...p, archived: true, active: false }
-              : { ...p, active: p.id === nextId }
+              : {
+                  ...p,
+                  active: nextId != null && p.id === nextId,
+                }
           ),
           currentProjectId: nextId,
         })
-        return { ok: true }
+        return { ok: true, empty: nextId == null }
       },
 
       unarchiveProject: (id) => {
@@ -1975,15 +1981,16 @@ const useAppStore = create(
         }
       },
 
+      /** Wipe all projects — true empty desk (no placeholder project). */
       clearToEmpty: () => {
         const blank = blankWorkspaceState()
         set({
           ...blank,
           onboarded: true,
-          projects: blank.projects.map((p) => ({
-            ...p,
-            name: 'My project',
-          })),
+          projects: [],
+          currentProjectId: null,
+          tasks: [],
+          moodItems: [],
         })
       },
 

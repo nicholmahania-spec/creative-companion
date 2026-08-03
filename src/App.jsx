@@ -2885,21 +2885,21 @@ function App() {
 
   const handleDeleteProjectById = (id, name) => {
     if (!id) return
-    if (projects.length <= 1) {
-      flashToast('Keep at least one project')
-      return
-    }
     const wasActive = id === activeProjectId
+    const isLast = projects.length <= 1
     setDeskConfirm({
       kind: 'delete-project',
-      label: `Delete this project and its steps & pictures? You cannot undo this. (“${name}”)`,
+      label: isLast
+        ? `Delete “${name}”? This is your only project — the desk will be empty until you start a new one. You cannot undo this.`
+        : `Delete this project and its steps & pictures? You cannot undo this. (“${name}”)`,
       confirmLabel: 'Delete',
       danger: true,
       onConfirm: () => {
         const result = deleteProject(id)
         if (result.ok) {
-          flashToast('Project deleted')
-          if (wasActive) setActiveView('project')
+          flashToast(result.empty ? 'Project deleted — desk is empty' : 'Project deleted')
+          if (result.empty) setActiveView('create')
+          else if (wasActive) setActiveView('project')
         } else {
           flashToast(result.error || 'Could not delete that')
         }
@@ -3567,6 +3567,21 @@ function App() {
               </button>
             </div>
             <ul className="journey-projects-list">
+              {projectGroups.length === 0 && (
+                <li className="journey-projects-empty" role="status">
+                  <p className="journey-projects-empty-copy">No projects yet.</p>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      setActiveView('create')
+                      setNavOpen(false)
+                    }}
+                  >
+                    New project
+                  </button>
+                </li>
+              )}
               {projectGroups.map((group) => (
                 <Fragment key={group.key}>
                   {showClientHeadings && group.clientName && (
@@ -3616,25 +3631,25 @@ function App() {
                             type="button"
                             role="menuitem"
                             className="project-menu-item"
-                            disabled={activeProjects.length < 2}
                             onClick={() => {
                               const r = archiveProject(p.id)
-                              if (!r.ok) flashToast(r.error || 'Could not archive that')
+                              if (!r.ok) {
+                                flashToast(r.error || 'Could not archive that')
+                              } else if (r.empty) {
+                                flashToast('Archived — no open projects')
+                                setActiveView('create')
+                              } else {
+                                flashToast('Project archived')
+                              }
                               setOpenProjectMenuId(null)
                             }}
                           >
                             Archive project
                           </button>
-                          {activeProjects.length < 2 && (
-                            <p className="project-menu-note">
-                              Needs a second active project to switch to.
-                            </p>
-                          )}
                           <button
                             type="button"
                             role="menuitem"
                             className="project-menu-item project-menu-danger"
-                            disabled={projects.length <= 1}
                             onClick={() => {
                               setOpenProjectMenuId(null)
                               handleDeleteProjectById(p.id, p.name)
@@ -3642,11 +3657,6 @@ function App() {
                           >
                             Delete project
                           </button>
-                          {projects.length <= 1 && (
-                            <p className="project-menu-note">
-                              This is your only project.
-                            </p>
-                          )}
                         </div>
                       )}
                     </div>

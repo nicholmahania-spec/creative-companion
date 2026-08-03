@@ -42,6 +42,29 @@ describe('blank workspace defaults', () => {
     expect(s.currentProjectId).toBe(s.projects[0].id)
   })
 
+  it('deleteProject can remove the last project (empty workspace)', () => {
+    useAppStore.getState().clearToEmpty()
+    expect(useAppStore.getState().projects).toHaveLength(0)
+    expect(useAppStore.getState().currentProjectId).toBe(null)
+
+    const p = useAppStore.getState().createNewProject('Solo', '')
+    expect(useAppStore.getState().projects).toHaveLength(1)
+    const r = useAppStore.getState().deleteProject(p.id)
+    expect(r.ok).toBe(true)
+    expect(r.empty).toBe(true)
+    expect(useAppStore.getState().projects).toHaveLength(0)
+    expect(useAppStore.getState().currentProjectId).toBe(null)
+  })
+
+  it('clearToEmpty leaves no projects', () => {
+    useAppStore.getState().createNewProject('A', '')
+    useAppStore.getState().createNewProject('B', '')
+    useAppStore.getState().clearToEmpty()
+    expect(useAppStore.getState().projects).toEqual([])
+    expect(useAppStore.getState().currentProjectId).toBe(null)
+    expect(useAppStore.getState().onboarded).toBe(true)
+  })
+
   it('createBlankProject has detective sheet + designVersion', () => {
     const p = createBlankProject('Demo', '')
     expect(p.detective).toEqual(blankDetective())
