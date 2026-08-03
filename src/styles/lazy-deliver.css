@@ -1,5 +1,73 @@
 /* Auto-split from index.css — lazy-deliver.css */
 
+/* Assets path rebuild — single column, preview primary, ship next */
+.assets-studio.deliver-studio.pack-view {
+  max-width: none;
+  width: 100%;
+  margin-inline: 0;
+}
+
+.assets-status {
+  margin: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.assets-preview-panel {
+  margin: var(--space-4) 0 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.assets-preview-frame {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.assets-ship {
+  margin: var(--space-5) 0 0;
+  max-width: 40rem;
+}
+
+.assets-gaps {
+  margin-top: var(--space-4);
+}
+
+.assets-gaps-label {
+  margin: 0 0 var(--space-2);
+}
+
+.assets-secondary {
+  margin: var(--space-6) 0 0;
+  max-width: 48rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.assets-secondary-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-3);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.assets-stationery {
+  margin: var(--space-2) 0 0;
+}
+
+.assets-footer.path-continue-row {
+  margin-top: var(--space-5);
+  justify-content: flex-start;
+}
 
 .export-identity-cover {
   border-radius: var(--radius-sm);
@@ -531,23 +599,8 @@
   color: var(--text-primary);
 }
 
-@media (min-width: 861px) {
-  .deliver-split {
-    grid-template-columns: minmax(0, 55fr) minmax(14rem, 45fr);
-    gap: 1rem 1.15rem;
-  }
-
-  .deliver-preview-panel {
-    position: sticky;
-    top: 4.5rem;
-    max-height: calc(100vh - 5.5rem);
-    overflow: auto;
-  }
-
-  .deliver-goal-anchor {
-    max-width: 42rem;
-  }
-}
+/* Two-column ship/preview split retired (path rebuild 2026-08-03).
+   Assets is a single column: preview → ship → secondary. */
 
 .deliver-ship-panel {
   margin: 0;
@@ -644,8 +697,14 @@
   box-shadow: none;
 }
 
-.deliver-studio:has(.deliver-focus-field:focus) .deliver-goal-anchor,
+.deliver-studio:has(.deliver-focus-field:focus) .assets-status,
 .deliver-studio:has(.deliver-focus-field:focus) .page-title {
+  opacity: 1;
+  filter: none;
+}
+
+/* When writing handoff, keep preview ambient — don't hide the book */
+.deliver-studio:has(.deliver-focus-field:focus) .assets-preview-panel {
   opacity: 1;
   filter: none;
 }
