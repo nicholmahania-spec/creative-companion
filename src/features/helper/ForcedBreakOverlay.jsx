@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { breakReasonCopy, formatBreakClock } from '../lib/forcedBreak'
-import { breakPlanCopy, kindMeta } from '../lib/breakKit'
-import '../styles/lazy-buddy.css'
+import { breakReasonCopy, formatBreakClock } from '../../lib/forcedBreak'
+import { breakPlanCopy, kindMeta } from '../../lib/breakKit'
+import '../../styles/lazy-buddy.css'
 
 /**
  * Full-screen lock until forced break ends.

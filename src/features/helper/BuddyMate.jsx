@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { labelForView } from '../lib/journey'
-import { applyProposal } from '../lib/helperActions'
+import { labelForView } from '../../lib/journey'
+import { applyProposal } from '../../lib/helperActions'
 import {
   activityTip,
   buddyMood,
@@ -27,29 +27,29 @@ import {
   timeBlindLine,
   wellnessLine,
   whatTimeLine,
-} from '../lib/buddy'
+} from '../../lib/buddy'
 import {
   awardAndBroadcast,
   BADGES,
   gameSummaryLine,
   loadGame,
   xpProgress,
-} from '../lib/buddyGame'
+} from '../../lib/buddyGame'
 import {
   BREAK_KINDS,
   isBreakItemOpen,
   kindMeta,
-} from '../lib/breakKit'
+} from '../../lib/breakKit'
 import {
   askHelper,
   coachWithHelper,
   isHelperAiConfigured,
   helperAiStatus,
-} from '../lib/helperAi'
-import useAppStore from '../store/useAppStore'
+} from '../../lib/helperAi'
+import useAppStore from '../../store/useAppStore'
 import HelperCharacterLottie from './HelperCharacterLottie'
-import '../styles/lazy-buddy.css'
-import '../styles/lazy-motion.css'
+import '../../styles/lazy-buddy.css'
+import '../../styles/lazy-motion.css'
 
 const BUDDY_BASE = `${import.meta.env.BASE_URL}buddy/`
 /** Photoreal full-body Helper — Lottie asset + static fallback */

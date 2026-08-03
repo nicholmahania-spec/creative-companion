@@ -24,7 +24,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const buddy = readFileSync(
-  fileURLToPath(new URL('../components/BuddyMate.jsx', import.meta.url)),
+  fileURLToPath(new URL('../features/helper/BuddyMate.jsx', import.meta.url)),
   'utf8'
 )
 const helper = readFileSync(

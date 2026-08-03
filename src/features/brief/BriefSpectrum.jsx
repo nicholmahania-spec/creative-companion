@@ -10,7 +10,7 @@
  * screen reader announces a position rather than "radio 4 of 5" — the same
  * reason the visible scale has no numbers on it.
  */
-import { spectrumChoices } from '../lib/detectiveBrief'
+import { spectrumChoices } from '../../lib/detectiveBrief'
 
 export default function BriefSpectrum({ field, value, onChange, idPrefix }) {
   const choices = spectrumChoices(field.poles)

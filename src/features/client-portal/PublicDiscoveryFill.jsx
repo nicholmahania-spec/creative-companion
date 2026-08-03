@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import { clientFacingError } from '../../lib/clientFacingError'
 import { DETECTIVE_CHAPTERS } from '../../lib/detectiveBrief'
-import ClientBriefFields from '../../components/ClientBriefFields'
+import ClientBriefFields from '../brief/ClientBriefFields'
 import { fetchDiscoveryShare, submitDiscoveryShare } from '../../lib/discoveryShare'
 import '../../styles/lazy-define.css'
 import '../../styles/lazy-clients.css'

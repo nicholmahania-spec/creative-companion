@@ -8,9 +8,9 @@
  * Nothing here is billable. `timeLog` and the invoice are hand-entered.
  */
 import { useCallback, useMemo, useState } from 'react'
-import { JOURNEY_STEPS } from '../lib/journey'
-import { useModalFocus } from '../lib/useModalFocus'
-import '../styles/lazy-worklog.css'
+import { JOURNEY_STEPS } from '../../lib/journey'
+import { useModalFocus } from '../../lib/useModalFocus'
+import '../../styles/lazy-worklog.css'
 
 /** Labels for both journey view ids (`studio`) and step ids (`research`). */
 const STAGE_TO_LABEL = Object.fromEntries([

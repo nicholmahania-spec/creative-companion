@@ -8,11 +8,11 @@ import {
   getDetectiveProgress,
   getRequiredEmpty,
   isFilled,
-} from '../lib/detectiveBrief'
-import useIsMobile from '../lib/useIsMobile'
-import DefineStartHere from '../components/DefineStartHere'
-import BriefSpectrum from '../components/BriefSpectrum'
-import '../styles/lazy-define.css'
+} from '../../lib/detectiveBrief'
+import useIsMobile from '../../lib/useIsMobile'
+import DefineStartHere from './DefineStartHere'
+import BriefSpectrum from './BriefSpectrum'
+import '../../styles/lazy-define.css'
 
 export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 

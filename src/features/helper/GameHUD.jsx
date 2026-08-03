@@ -6,9 +6,9 @@ import {
   questStatus,
   refreshGameDay,
   xpProgress,
-} from '../lib/buddyGame'
-import { ProgressRing } from './PathStepIcon'
-import '../styles/lazy-buddy.css'
+} from '../../lib/buddyGame'
+import { ProgressRing } from '../../components/PathStepIcon'
+import '../../styles/lazy-buddy.css'
 
 /**
  * Optional quiet progress strip (Settings → Progress strip).
