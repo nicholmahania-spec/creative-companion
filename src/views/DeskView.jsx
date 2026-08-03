@@ -24,6 +24,7 @@ import {
   buildBrandPackSnapshot,
   packReadiness,
 } from '../lib/exportFiles'
+import { weekFromWorkLog } from '../lib/workWeek'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
 import '../styles/lazy-desk.css'
 
@@ -39,8 +40,6 @@ export function packHandoffStatus({ thin, pathFull }) {
 }
 
 const stopTag = (label = '') => label.slice(0, 3).toUpperCase()
-
-const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 /** Relative age for mock timestamps — 2h / Yesterday / 2 days / 1 week. */
 export function relativeAgeLabel(iso, now = new Date()) {
@@ -91,35 +90,6 @@ function pinBorder(pin) {
   if (pin?.packHero) return '2px solid var(--text-primary)'
   if (pin?.inPack) return '1px solid var(--border-subtle)'
   return '1px dashed var(--border-strong)'
-}
-
-/** Hours per weekday for the current local week (Sun–Sat), from workLog. */
-function weekFromWorkLog(workLog = [], now = new Date()) {
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  start.setDate(start.getDate() - start.getDay())
-  const hours = Array(7).fill(0)
-  for (const row of workLog) {
-    if (!row?.date || !(Number(row.hours) > 0)) continue
-    const d = new Date(`${row.date}T12:00:00`)
-    if (Number.isNaN(d.getTime())) continue
-    if (d < start) continue
-    const end = new Date(start)
-    end.setDate(end.getDate() + 7)
-    if (d >= end) continue
-    hours[d.getDay()] += Number(row.hours) || 0
-  }
-  const total = hours.reduce((a, b) => a + b, 0)
-  const max = Math.max(...hours, 0.01)
-  return {
-    total,
-    days: hours.map((h, i) => ({
-      day: WEEKDAYS[i],
-      hours: h,
-      // 4–64px bar height from real hours only
-      hPx: h > 0 ? Math.max(4, Math.round((h / max) * 56)) : 2,
-      fill: h > 0,
-    })),
-  }
 }
 
 export default function DeskView({

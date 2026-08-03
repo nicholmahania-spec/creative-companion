@@ -119,6 +119,12 @@ import {
   printCurrentPage,
   slugifyFilename,
 } from './lib/exportFiles'
+import {
+  hoursForRange,
+  workLogsFromProjects,
+  formatHoursWorked,
+  HOURS_RANGES,
+} from './lib/workWeek'
 import LogoLockup from './components/LogoLockup'
 import StepDependencyReminder from './components/StepDependencyReminder'
 import BeforeAfterChip from './components/BeforeAfterChip'
@@ -520,6 +526,8 @@ function App() {
    * currentProjectId so browsing the list doesn't switch the active project
    * until the user actually clicks Continue / the final-stop CTA. */
   const [homeSelectedProjectId, setHomeSelectedProjectId] = useState(null)
+  /** Home hours panel: day | week | month | year | all */
+  const [homeHoursRange, setHomeHoursRange] = useState('week')
   const [syncState, setSyncState] = useState('idle') // idle | syncing | ok | error
   const [syncError, setSyncError] = useState('')
   /** Which direction last failed — decides what "Retry" actually retries */
@@ -3938,6 +3946,10 @@ function App() {
               (s.project?.detective?.clientName || '').trim()
             const needsYouList = orderedFlat.filter((s) => s.hasUnreadClient)
             const readyList = orderedFlat.filter((s) => s.packReady)
+            const studioHours = hoursForRange(
+              workLogsFromProjects(activeProjects),
+              homeHoursRange
+            )
 
             if (n === 0) {
               return (
@@ -4269,6 +4281,80 @@ function App() {
                           </li>
                         ))}
                       </ul>
+                    )}
+                  </section>
+
+                  {/* Hours worked — private workLog only */}
+                  <section
+                    className="home-dash-panel home-dash-hours"
+                    aria-label="Hours worked"
+                  >
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Hours worked</h2>
+                      <span className="home-dash-panel-meta">
+                        {studioHours.total > 0
+                          ? `${formatHoursWorked(studioHours.total)}h · ${studioHours.rangeLabel}`
+                          : studioHours.rangeLabel}
+                      </span>
+                    </div>
+                    <div
+                      className="home-dash-hours-ranges"
+                      role="tablist"
+                      aria-label="Hours range"
+                    >
+                      {HOURS_RANGES.map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={homeHoursRange === r.id}
+                          className={`home-dash-hours-range${
+                            homeHoursRange === r.id ? ' is-active' : ''
+                          }`}
+                          onClick={() => setHomeHoursRange(r.id)}
+                        >
+                          {r.label}
+                        </button>
+                      ))}
+                    </div>
+                    {studioHours.total <= 0 ? (
+                      <p className="home-dash-panel-empty">
+                        No clocked hours in this range. Time on the work clock
+                        shows up here (private — not the invoice).
+                      </p>
+                    ) : (
+                      <>
+                        <p className="home-dash-hours-total">
+                          <strong>{formatHoursWorked(studioHours.total)}</strong>
+                          <span> hours</span>
+                        </p>
+                        <div
+                          className={`home-dash-hours-bars${
+                            homeHoursRange === 'month' ? ' is-dense' : ''
+                          }`}
+                          role="img"
+                          aria-label={`${formatHoursWorked(studioHours.total)} hours ${studioHours.rangeLabel}`}
+                        >
+                          {studioHours.buckets.map((b) => (
+                            <div key={b.key} className="home-dash-hours-col">
+                              <div
+                                className={`home-dash-hours-bar${
+                                  b.fill ? ' is-filled' : ''
+                                }`}
+                                style={{ height: `${b.hPx}px` }}
+                                title={
+                                  b.fill
+                                    ? `${b.label}: ${formatHoursWorked(b.hours)}h`
+                                    : undefined
+                                }
+                              />
+                              <span className="home-dash-hours-label">
+                                {b.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     )}
                   </section>
                 </div>

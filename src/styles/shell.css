@@ -1409,6 +1409,111 @@ h3 {
   background: var(--bg-muted);
 }
 
+/* Hours worked panel */
+.home-dash-hours {
+  grid-column: 1 / -1;
+}
+
+.home-dash-hours-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.home-dash-hours-range {
+  min-height: var(--tap-min, 2.75rem);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-canvas);
+  font: inherit;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.home-dash-hours-range.is-active {
+  border-color: var(--text-primary);
+  background: var(--bg-elevated, var(--bg-card));
+  color: var(--text-primary);
+}
+
+.home-dash-hours-range:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.home-dash-hours-total {
+  margin: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.home-dash-hours-total strong {
+  font-size: var(--fs-5);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.home-dash-hours-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-1);
+  min-height: 4rem;
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+
+.home-dash-hours-bars.is-dense {
+  gap: var(--space-1);
+}
+
+.home-dash-hours-col {
+  flex: 1 1 0;
+  min-width: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.home-dash-hours-bars.is-dense .home-dash-hours-col {
+  min-width: var(--space-2);
+}
+
+.home-dash-hours-bar {
+  width: 100%;
+  max-width: 1.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+}
+
+.home-dash-hours-bar.is-filled {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.home-dash-hours-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.home-dash-hours-bars.is-dense .home-dash-hours-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+}
+
+.app.deep .home-dash-hours-range.is-active {
+  background: var(--bg-card);
+  border-color: var(--text-primary);
+}
+
 .home-eyebrow {
   margin: 0 0 0.75rem;
   font-size: 0.8rem;
