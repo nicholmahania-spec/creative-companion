@@ -41,7 +41,15 @@ export function blankBookBuilder() {
       pageType: 'white',
       pageBack: 'white',
     },
-    grid: { columns: 12, rows: 1, gutter: 3, margin: 9, show: true },
+    /* Roomy edge % of A4 width (~20mm) — matches EDGE_STOPS.roomy on a4. */
+    grid: {
+      columns: 12,
+      rows: 1,
+      gutter: 3,
+      margin: 9.4,
+      edge: 'roomy',
+      show: true,
+    },
     running: {
       show: true,
       text: '',
@@ -52,9 +60,11 @@ export function blankBookBuilder() {
       showPageNumbers: true,
       alternate: false,
     },
-    print: { pageSize: 'letter', bleed: false },
+    /* A4 + roomy: design-doc default for the builder top bar / print. */
+    print: { pageSize: 'a4', bleed: false },
   }
 }
+
 
 /** Sections whose keys are merged individually rather than replaced wholesale. */
 const SECTIONS = ['type', 'typeColor', 'pageBg', 'grid', 'running', 'print']
