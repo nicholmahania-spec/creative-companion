@@ -358,8 +358,9 @@
 
 /* ------------------------------------------------------------ canvas */
 
-/* Page strip: sheets are as large as possible but always fully visible
-   (contain). Sideways scroll only when several pages sit in the strip. */
+/* Page strip: sheets as large as possible, always fully on screen (contain).
+   Viewport math — not container queries — because cqh/cqw with pages that
+   size themselves creates a circular size and the browser clips the sheet. */
 .bbb-canvas {
   flex: 1;
   min-width: 0;
@@ -371,36 +372,26 @@
   justify-content: flex-start;
   gap: var(--space-xl, 32px);
   overflow-x: auto;
-  overflow-y: hidden;
-  /* Size queries so pages can fit both axes of this box. */
-  container-type: size;
-  container-name: bbb-canvas;
+  overflow-y: auto;
+  /* App sidebar ~200px + editor rail ~320px + chrome/padding. */
+  --bbb-avail-w: max(14rem, calc(100vw - 200px - 320px - 4.5rem));
+  --bbb-avail-h: max(14rem, calc(100dvh - 7.25rem));
 }
 
 .bbb-page {
   box-sizing: border-box;
   flex: 0 0 auto;
-  /* Contain: the limiting dimension wins so the whole sheet stays on screen. */
-  width: min(100cqw, calc(100cqh * 210 / 297));
-  height: min(100cqh, calc(100cqw * 297 / 210));
-  max-width: 100%;
-  max-height: 100%;
+  /* Letter/A4: whichever axis is tighter wins so the full page is visible. */
+  width: min(var(--bbb-avail-w), calc(var(--bbb-avail-h) * 210 / 297));
+  height: min(var(--bbb-avail-h), calc(var(--bbb-avail-w) * 297 / 210));
+  max-width: var(--bbb-avail-w);
+  max-height: var(--bbb-avail-h);
   aspect-ratio: 210 / 297;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   position: relative;
   overflow: hidden;
   padding: var(--space-md, 9%);
-}
-
-/* Fallback when container queries are unavailable. */
-@supports not (width: 1cqw) {
-  .bbb-page {
-    width: min(100%, calc((100dvh - 9rem) * 210 / 297), 42rem);
-    height: auto;
-    max-height: calc(100dvh - 9rem);
-    aspect-ratio: 210 / 297;
-  }
 }
 
 .bbb-lockup__art {
@@ -710,14 +701,11 @@
   .bbb-canvas {
     padding: var(--space-lg, 28px) var(--space-md, 16px);
     overflow-x: auto;
-    overflow-y: visible;
-    min-height: min(72dvh, 40rem);
-    /* Fixed query box when the column layout has no definite height. */
-    height: min(72dvh, 40rem);
-  }
-  .bbb-page {
-    width: min(100cqw, calc(100cqh * 210 / 297), calc(100vw - 2.5rem));
-    height: min(100cqh, calc(100cqw * 297 / 210));
+    overflow-y: auto;
+    /* Full width under a stacked panel — no 320px rail beside the pages. */
+    --bbb-avail-w: max(12rem, calc(100vw - 3rem));
+    --bbb-avail-h: max(12rem, min(70dvh, 36rem));
+    min-height: calc(var(--bbb-avail-h) + 2rem);
   }
 }
 @media (max-width: 480px) {
@@ -725,8 +713,8 @@
   .bbb-canvas {
     padding: var(--space-md, 20px) var(--space-sm, 12px);
     gap: var(--space-lg, 24px);
-    height: min(65dvh, 30rem);
-    min-height: min(65dvh, 30rem);
+    --bbb-avail-w: max(10rem, calc(100vw - 2rem));
+    --bbb-avail-h: max(10rem, min(62dvh, 28rem));
   }
 }
 
