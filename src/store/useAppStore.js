@@ -2218,6 +2218,14 @@ const useAppStore = create(
           ),
         })),
 
+      /** Color (and similar) pin body — hex / visual string on the pin. */
+      updateMoodPinVisual: (id, visual) =>
+        set((state) => ({
+          moodItems: state.moodItems.map((m) =>
+            m.id === id ? { ...m, visual: String(visual || '') } : m
+          ),
+        })),
+
       /** Reposition which part of an image pin shows through the cropped
        * tile/pack thumbnails (0-100 percentages, CSS background-position). */
       setMoodPinFocal: (id, focalX, focalY) =>

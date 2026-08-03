@@ -38,6 +38,7 @@ export default function ResearchView({
   const addMoodPin = useAppStore((s) => s.addMoodPin)
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
   const updateMoodPinNote = useAppStore((s) => s.updateMoodPinNote)
+  const updateMoodPinVisual = useAppStore((s) => s.updateMoodPinVisual)
   const toggleMoodPinInPack = useAppStore((s) => s.toggleMoodPinInPack)
   const movePackPin = useAppStore((s) => s.movePackPin)
   const setMoodPinFocal = useAppStore((s) => s.setMoodPinFocal)
@@ -658,16 +659,35 @@ export default function ResearchView({
                                 <input
                                   type="color"
                                   className="research-pin-color-input"
-                                  value={/^#([0-9a-f]{3}){1,2}$/i.test(item.visual) ? item.visual : '#000000'}
-                                  disabled
-                                  aria-label="Pin color (read-only — no color editor yet)"
+                                  value={
+                                    /^#([0-9a-f]{3}){1,2}$/i.test(item.visual)
+                                      ? item.visual
+                                      : '#000000'
+                                  }
+                                  onChange={(e) =>
+                                    updateMoodPinVisual(item.id, e.target.value)
+                                  }
+                                  aria-label="Pin color"
                                 />
                                 <input
                                   type="text"
                                   className="field-input research-pin-hex-input"
                                   value={item.visual || ''}
-                                  readOnly
-                                  aria-label="Pin hex value (read-only — no color editor yet)"
+                                  onChange={(e) => {
+                                    const v = e.target.value.trim()
+                                    updateMoodPinVisual(item.id, v)
+                                  }}
+                                  onBlur={(e) => {
+                                    const v = e.target.value.trim()
+                                    if (
+                                      v &&
+                                      !/^#([0-9a-f]{3}){1,2}$/i.test(v)
+                                    ) {
+                                      /* Keep draft if incomplete; color input still works */
+                                    }
+                                  }}
+                                  spellCheck={false}
+                                  aria-label="Pin hex value"
                                 />
                               </div>
                             )}

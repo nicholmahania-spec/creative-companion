@@ -87,6 +87,7 @@ export default function DesignView({
   const [selectedVersion, setSelectedVersion] = useState(null)
   const [diffResult, setDiffResult] = useState(null)
   const [loadingDiff, setLoadingDiff] = useState(false)
+  const [restoringVersion, setRestoringVersion] = useState(false)
 
   // Template management state
   const [templates, setTemplates] = useState([])
@@ -123,6 +124,36 @@ export default function DesignView({
   useEffect(() => {
     loadVersionHistory()
   }, [activeProject?.id])
+
+  const restoreSelectedVersion = async () => {
+    if (!selectedVersion?.id || restoringVersion) return
+    const label = selectedVersion.versionLabel || 'this version'
+    const ok =
+      typeof window !== 'undefined'
+        ? window.confirm(
+            `Restore identity to ${label}? Current mark, words, colour and type will be replaced. Use Bump first if you want a save point.`
+          )
+        : true
+    if (!ok) return
+    setRestoringVersion(true)
+    try {
+      const restored = await versionService.restoreVersion(selectedVersion.id)
+      if (!restored) {
+        flashToast?.('Could not restore that version')
+        return
+      }
+      await loadVersionHistory()
+      setDiffResult(null)
+      setSelectedVersion(null)
+      setShowVersionHistory(false)
+      flashToast?.(`Restored ${label}`)
+    } catch (e) {
+      console.error('Failed to restore version:', e)
+      flashToast?.('Could not restore that version')
+    } finally {
+      setRestoringVersion(false)
+    }
+  }
 
   // Load version diff between selected version and current state
   const loadVersionDiff = async (versionId) => {
@@ -1872,16 +1903,29 @@ export default function DesignView({
                       <h3>
                         {selectedVersion ? 'Compare versions' : 'Changes'}
                       </h3>
-                      <button
-                        onClick={() => {
-                          setSelectedVersion(null)
-                          setDiffResult(null)
-                        }}
-                        className="btn btn-sm btn-ghost"
-                        aria-label="Close diff"
-                      >
-                        ×
-                      </button>
+                      <div className="dv-diff-head-actions">
+                        {selectedVersion && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            disabled={restoringVersion}
+                            onClick={() => restoreSelectedVersion()}
+                          >
+                            {restoringVersion ? 'Restoring…' : 'Restore this'}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedVersion(null)
+                            setDiffResult(null)
+                          }}
+                          className="btn btn-sm btn-ghost"
+                          aria-label="Close diff"
+                        >
+                          ×
+                        </button>
+                      </div>
                     </div>
                     {/* Version info */}
                     <div className="dv-diff-grid">
