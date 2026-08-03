@@ -1064,6 +1064,17 @@ function App() {
   const activeProjects = (projects || []).filter((p) => !p.archived)
   const archivedProjects = (projects || []).filter((p) => p.archived)
 
+  /** Project ids with unread client activity (boolean only — no counts). */
+  const projectsWithClientUnread = useMemo(() => {
+    const set = new Set()
+    for (const r of clientInbox?.rows || []) {
+      if (r?.unread && r.projectLocalId != null) {
+        set.add(String(r.projectLocalId))
+      }
+    }
+    return set
+  }, [clientInbox?.rows])
+
   /** Per-project next-step summary for the multi-project Home dashboard */
   const projectsSummary = useMemo(
     () =>
@@ -1098,9 +1109,10 @@ function App() {
           nextGap: pathFirstGap(JOURNEY_STEPS, ctx),
           pathFull: doneCount >= PATH_STEP_COUNT,
           packReady: doneCount >= PATH_STEP_COUNT && !packThin,
+          hasUnreadClient: projectsWithClientUnread.has(String(p.id)),
         }
       }),
-    [activeProjects, moodItems, tasks, sparkIndex]
+    [activeProjects, moodItems, tasks, sparkIndex, projectsWithClientUnread]
   )
 
   /* One ordering + client grouping for BOTH the sidebar and Home, so a
@@ -1122,6 +1134,25 @@ function App() {
   )
 
   const showClientHeadings = showClientHeadingsFor(projectGroups)
+
+  /** Flat project order for Home default-select (same as grouped lists). */
+  const homeOrderedSummaries = useMemo(
+    () => projectGroups.flatMap((g) => g.projects),
+    [projectGroups]
+  )
+
+  /* Return wall: when the selected Home project is missing, land on the top
+     of needs-you → in-progress → ready (never an empty detail pane). */
+  useEffect(() => {
+    if (activeView !== 'home') return
+    if (homeOrderedSummaries.length === 0) return
+    const stillThere = homeOrderedSummaries.some(
+      (s) => s.project.id === homeSelectedProjectId
+    )
+    if (!stillThere) {
+      setHomeSelectedProjectId(homeOrderedSummaries[0].project.id)
+    }
+  }, [activeView, homeOrderedSummaries, homeSelectedProjectId])
 
   /* One phrasing for a project's next action, shared by the sidebar and the
      Home list so the two surfaces speak the identical phrase (advisor: memory
@@ -3890,25 +3921,29 @@ function App() {
               </button>
             )
           })()}
-        {/* ===== HOME (multi-project) — master/detail, not a card grid ===== */}
+        {/* ===== HOME — Return wall (master/detail) =====
+            Pick-up (one elevated CTA) + work list sorted needs-you →
+            in-progress → ready. New project is secondary. Unread only on
+            project rows. Reviewed by adhd-executive-function-advisor. */}
         {activeView === 'home' && activeProjects.length > 1 && (() => {
-          // Same ordering + grouping as the sidebar (#17), flattened for the
-          // selected-row lookup.
-          const orderedFlat = projectGroups.flatMap((g) => g.projects)
+          const orderedFlat = homeOrderedSummaries
           const selected =
             orderedFlat.find((s) => s.project.id === homeSelectedProjectId) ||
             orderedFlat[0]
           if (!selected) return null
           const pathFull = !!selected.pathFull
           const packReady = !!selected.packReady
+          const needsYou = orderedFlat.find((s) => s.hasUnreadClient)
+          const clientOf = (s) =>
+            (s.project?.detective?.clientName || '').trim()
           return (
-            <section className="home-view home-md home-studio">
+            <section className="home-view home-md home-studio home-return-wall">
               <nav className="home-md-list" aria-label="Your projects">
                 <div className="home-md-list-head">
                   <h1 className="home-md-list-title">Projects</h1>
                   <button
                     type="button"
-                    className="btn btn-primary btn-sm home-new-project"
+                    className="btn btn-secondary btn-sm home-new-project"
                     onClick={() => setActiveView('create')}
                   >
                     + New project
@@ -3929,15 +3964,24 @@ function App() {
                         const p = summary.project
                         const rowFull = !!summary.pathFull
                         const isActive = p.id === selected.project.id
+                        const unread = !!summary.hasUnreadClient
                         return (
                           <li key={p.id}>
                             <button
                               type="button"
-                              className={`home-md-row${isActive ? ' is-active' : ''}`}
+                              className={`home-md-row${isActive ? ' is-active' : ''}${
+                                unread ? ' has-unread' : ''
+                              }`}
                               onClick={() => setHomeSelectedProjectId(p.id)}
                             >
                               <span className="home-md-row-top">
                                 <span className="home-md-row-name">{p.name}</span>
+                                {unread ? (
+                                  <span
+                                    className="home-md-row-badge"
+                                    aria-label="Client activity waiting"
+                                  />
+                                ) : null}
                               </span>
                               <span
                                 className={`home-md-row-next${rowFull ? ' is-done' : ''}`}
@@ -3954,8 +3998,34 @@ function App() {
               </nav>
 
               <div className="home-md-detail">
+                {/* Ambient only when real — omit empty strip entirely */}
+                {needsYou ? (
+                  <button
+                    type="button"
+                    className="home-needs-you"
+                    onClick={() =>
+                      setHomeSelectedProjectId(needsYou.project.id)
+                    }
+                  >
+                    Client replied
+                    {needsYou.project.name
+                      ? ` — ${needsYou.project.name}`
+                      : ''}
+                  </button>
+                ) : null}
+                {clientOf(selected) ? (
+                  <p className="home-eyebrow home-detail-client">
+                    {clientOf(selected)}
+                  </p>
+                ) : null}
                 <p className="home-kicker">
-                  {packReady ? 'Ready' : pathFull ? 'Path full' : 'Next'}
+                  {selected.hasUnreadClient
+                    ? 'Needs you'
+                    : packReady
+                      ? 'Ready'
+                      : pathFull
+                        ? 'Path full'
+                        : 'Next'}
                 </p>
                 <h2 className="home-title">
                   {packReady
@@ -3967,14 +4037,14 @@ function App() {
                         : 'All caught up'}
                 </h2>
                 {pathFull && !packReady ? (
-                  <p className="home-kicker" style={{ marginTop: '0.35rem' }}>
+                  <p className="home-kicker home-pack-thin-note">
                     {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
                   </p>
                 ) : null}
                 <div className="home-cta-row">
                   <button
                     type="button"
-                    className="btn btn-primary home-cta"
+                    className="btn btn-primary home-cta home-cta-continue"
                     onClick={() => {
                       if (pathFull) {
                         setCurrentProject(selected.project.id)
@@ -3984,14 +4054,26 @@ function App() {
                       switchProjectAndContinue(selected.project.id)
                     }}
                   >
-                    {pathFull ? `Open ${labelForStepId('deliver')}` : 'Continue'}
+                    <span className="home-cta-continue-inner">
+                      {pathFull
+                        ? `Open ${labelForStepId('deliver')}`
+                        : 'Continue'}
+                    </span>
                   </button>
                 </div>
+                <button
+                  type="button"
+                  className="home-desk-link"
+                  onClick={() =>
+                    openProjectWhereLeftOff(selected.project.id)
+                  }
+                >
+                  Open desk
+                </button>
 
                 <div className="home-md-strip">
-                  {/* The filled-dot strip is the sole ambient completeness
-                      cue — no numeric ratio to decode (#3). */}
-                  <div className="home-md-steps">
+                  {/* Filled-dot strip only — no numeric ratio (#3). */}
+                  <div className="home-md-steps" aria-label="Path steps">
                     {selected.rows.map((r, i) => {
                       const num = i + 1
                       const isCurrent =

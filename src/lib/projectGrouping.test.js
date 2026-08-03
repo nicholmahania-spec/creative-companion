@@ -22,6 +22,16 @@ describe('groupProjectsByClient', () => {
     expect(ids(groups)).toEqual([['Acme', ['b', 'c', 'a']]])
   })
 
+  it('orders needs-you (unread) before other in-progress', () => {
+    const summary = [
+      { ...sum('a', 'Acme', false), hasUnreadClient: false },
+      { ...sum('b', 'Acme', false), hasUnreadClient: true },
+      { ...sum('c', 'Acme', true), hasUnreadClient: false },
+    ]
+    const groups = groupProjectsByClient(summary, projs('a', 'b', 'c'))
+    expect(ids(groups)).toEqual([['Acme', ['b', 'a', 'c']]])
+  })
+
   it('puts unclienten projects UNLABELED at the top, above named clients', () => {
     const summary = [
       sum('a', 'Acme'),

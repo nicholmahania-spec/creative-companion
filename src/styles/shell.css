@@ -1135,6 +1135,123 @@ h3 {
   margin-top: 1rem;
 }
 
+/* ── Return wall (Home) ─────────────────────────────────────────
+   One elevated Continue; New project is secondary. Unread only on
+   project rows. Token-mapped “frame” CTA — no rainbow, no glow. */
+
+.home-return-wall .home-md-row.has-unread .home-md-row-name {
+  font-weight: 700;
+}
+
+.home-md-row-badge {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--dopamine, var(--accent-primary));
+}
+
+.home-needs-you {
+  display: block;
+  width: 100%;
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-needs-you:hover {
+  border-color: var(--text-primary);
+}
+
+.home-detail-client {
+  margin: 0 0 var(--space-1);
+  text-align: left;
+}
+
+.home-pack-thin-note {
+  margin-top: var(--space-1);
+}
+
+.home-desk-link {
+  display: inline-block;
+  margin-top: var(--space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.home-desk-link:hover {
+  color: var(--text-primary);
+}
+
+/* Continue — adapted Button-64 structure with dopamine tokens only.
+   Outer frame uses padding from the space ramp (not a raw px one-off). */
+.home-cta-continue {
+  padding: var(--space-1);
+  background-image: linear-gradient(
+    144deg,
+    var(--dopamine-soft),
+    var(--dopamine) 50%,
+    var(--dopamine-deep)
+  );
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: none;
+  color: var(--on-dopamine, #fff);
+}
+
+.home-cta-continue-inner {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius);
+  background: var(--dopamine, var(--accent-primary));
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.home-cta-continue:hover .home-cta-continue-inner,
+.home-cta-continue:focus-visible .home-cta-continue-inner {
+  background: transparent;
+  color: var(--on-dopamine, #fff);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-cta-continue-inner {
+    transition: none;
+  }
+}
+
+.app.deep .home-cta-continue {
+  background-image: linear-gradient(
+    144deg,
+    var(--dopamine-soft),
+    var(--dopamine) 50%,
+    var(--dopamine-deep)
+  );
+}
+
+.app.deep .home-needs-you {
+  background: var(--bg-muted);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
 .home-md-rows {
   list-style: none;
   margin: 0;
@@ -1173,7 +1290,8 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .home-md-row-name {
