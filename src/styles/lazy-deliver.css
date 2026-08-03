@@ -358,12 +358,6 @@
   box-sizing: border-box;
 }
 
-.app.is-pack-view .before-after-chip {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 .deliver-stationery-panel {
   margin-top: var(--space-4);

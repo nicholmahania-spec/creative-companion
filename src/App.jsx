@@ -131,10 +131,6 @@ import {
 } from './lib/workWeek'
 import LogoLockup from './components/LogoLockup'
 import StepDependencyReminder from './components/StepDependencyReminder'
-import BeforeAfterChip from './components/BeforeAfterChip'
-
-import StepDoneToggle from './components/StepDoneToggle'
-import BeforeAfterOverlay from './components/BeforeAfterOverlay'
 import HeaderIcon from './components/HeaderIcon'
 import PullToRefresh from './components/PullToRefresh'
 import HighlightExplain from './components/HighlightExplain'
@@ -488,7 +484,6 @@ function App() {
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [openProjectMenuId, setOpenProjectMenuId] = useState(null)
-  const [beforeAfterOpen, setBeforeAfterOpen] = useState(false)
   const [restoreSelect, setRestoreSelect] = useState('')
   const [navOpen, setNavOpen] = useState(false)
   const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
@@ -3894,38 +3889,10 @@ function App() {
             setActiveView={setActiveView}
           />
         )}
-        {journeyActive && (
-          <BeforeAfterChip
-            project={activeProject}
-            onOpen={() => setBeforeAfterOpen(true)}
-          />
-        )}
-        {/* Identity version stamp — Identity stop only, since it is the only
-            stop whose edits it tracks. Read-only: the "Bump" control that
-            saves a version already lives on this screen, and a second control
-            doing the same thing is a choice billed for no gain. */}
-        {/* Mark done — same fixed position on every stage, so it is never
-            somewhere the user has to go looking for it. Below the fold and
-            behind a toggle are both recorded as functionally invisible here. */}
-        {journeyActive && activeProject && (
-          <StepDoneToggle
-            label={labelForView(activeView)}
-            done={pathStepHasContent(journeyActive, {
-              project: activeProject,
-              moodItems: deskMood,
-              tasks: deskTasks,
-              sparkIndex,
-              palette: projectPalette,
-            })}
-            onChange={(next) =>
-              useAppStore
-                .getState()
-                .setStepDone(journeyActive, next, activeProject.id)
-            }
-          />
-        )}
-        {/* Client arrival is not a banner under every path title (owner:
-            wrong shape). Unread lives in Client inbox / Home rows only. */}
+        {/* Path-title ambient chips removed (owner): identity stamp, client
+            arrival, before/after progress line, and stage Mark done. They
+            stacked under every journey page title. Mark done stays on the
+            desk gap card; unread client stays in inbox / Home rows. */}
         {/* ===== HOME — studio dashboard (all project counts) =====
             Glanceable work status: pick-up + project cards + path + client.
             Not a sparse single CTA card. */}
@@ -5005,12 +4972,6 @@ function App() {
         onOpenPortal={openInboxPortal}
         flashToast={flashToast}
         flashMicro={flashMicro}
-      />
-
-      <BeforeAfterOverlay
-        open={beforeAfterOpen}
-        onClose={() => setBeforeAfterOpen(false)}
-        project={activeProject}
       />
 
       {/* Tools — a centered overlay, not a header dropdown (the header nav

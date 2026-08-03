@@ -264,23 +264,7 @@
   align-items: center;
 }
 
-.before-after-chip {
-  display: block;
-  width: 100%;
-  margin: 0 0 0.75rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8125rem;
-  text-align: left;
-  color: var(--text-secondary);
-  background: var(--bg-muted);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  cursor: pointer;
-}
 
-.before-after-chip:hover {
-  color: var(--text-primary);
-}
 
 .before-after-list {
   list-style: none;

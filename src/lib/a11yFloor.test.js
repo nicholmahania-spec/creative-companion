@@ -20,7 +20,6 @@ describe('dialogs that claim aria-modal actually manage focus', () => {
      declared unavailable — the worst combination, not a missing nicety. These
      four declared the attribute and implemented none of it. */
   const DIALOGS = [
-    'components/BeforeAfterOverlay.jsx',
     'components/WorkLogPanel.jsx',
     'components/HoursInvoice.jsx',
   ]
@@ -47,13 +46,6 @@ describe('dialogs that claim aria-modal actually manage focus', () => {
     expect(src).toMatch(/if \(e\.key === 'Escape'\)/)
   })
 
-  it('the Before/After close button has an accessible name', () => {
-    const src = read('components/BeforeAfterOverlay.jsx')
-    // The × alone announces as "times"; the button needs a real name and the
-    // glyph hidden so it is not read twice.
-    expect(src).toMatch(/aria-label="Close"/)
-    expect(src).toMatch(/aria-hidden="true">×/)
-  })
 })
 
 describe('touch targets reach the 44px floor', () => {
