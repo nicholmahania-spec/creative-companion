@@ -563,7 +563,6 @@ export default function MainOutlet(p) {
         onOpenShare={() => setOverviewSharePanelOpen(true)}
         setProjectDeadline={setProjectDeadline}
         projectDeadline={projectDeadline}
-        flashMicro={flashMicro}
       />
     )
   }
