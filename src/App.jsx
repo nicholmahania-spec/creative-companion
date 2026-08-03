@@ -14,7 +14,8 @@ import {
   groupProjectsByClient,
   showClientHeadings as showClientHeadingsFor,
 } from './lib/projectGrouping'
-import PathViewSkeleton from './components/PathViewSkeleton'
+import MainOutlet from './app/MainOutlet'
+import { warmPathViewChunks } from './app/viewRegistry'
 import versionService from './services/versionService'
 
 import { DEFAULT_PALETTE } from './lib/color'
@@ -26,13 +27,8 @@ import {
 } from './lib/microsteps'
 import {
   toISODate,
-  buildMonthGrid,
-  formatMonthYear,
-  formatShortDate,
-  urgencyLabel,
   deadlineUrgency,
   daysUntil,
-  relativeDeadlineLabel,
 } from './lib/dates'
 import {
   APP_BUILD,
@@ -44,24 +40,6 @@ const BuddyMate = lazy(() => import('./features/helper/BuddyMate'))
 const ForcedBreakOverlay = lazy(() => import('./features/helper/ForcedBreakOverlay'))
 const BrandArtboard = lazy(() => import('./components/BrandArtboard'))
 const GameHUD = lazy(() => import('./features/helper/GameHUD'))
-const InsightsView = lazy(() => import('./views/InsightsView'))
-const CalendarView = lazy(() => import('./views/CalendarView'))
-const ClientsView = lazy(() => import('./views/ClientsView'))
-const ClientRecordView = lazy(() => import('./views/ClientRecordView'))
-const DeskView = lazy(() => import('./views/DeskView'))
-const NewProjectIntake = lazy(() => import('./views/NewProjectIntake'))
-const BrandBookBuilderView = lazy(
-  () => import('./views/BrandBookBuilderView')
-)
-const SettingsView = lazy(() => import('./views/SettingsView'))
-const SparkView = lazy(() => import('./views/SparkView'))
-const ResearchView = lazy(() => import('./views/ResearchView'))
-const SketchView = lazy(() => import('./views/SketchView'))
-const DefineView = lazy(() => import('./views/DefineView'))
-const DesignView = lazy(() => import('./views/DesignView'))
-const ReviewView = lazy(() => import('./views/ReviewView'))
-const DeliverView = lazy(() => import('./views/DeliverView'))
-const HomeView = lazy(() => import('./views/HomeView'))
 import {
   breakMinutesForWork,
   POMODORO_WORK_MIN,
@@ -135,7 +113,6 @@ import {
   HOURS_RANGES,
 } from './lib/workWeek'
 import LogoLockup from './components/LogoLockup'
-import StepDependencyReminder from './components/StepDependencyReminder'
 import HeaderIcon from './components/HeaderIcon'
 import PullToRefresh from './components/PullToRefresh'
 import HighlightExplain from './components/HighlightExplain'
@@ -158,7 +135,6 @@ import {
   closeSession,
   getSession,
   changeAccessPassword,
-  STORAGE_EXPLAIN,
 } from './lib/auth'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 
@@ -1829,11 +1805,7 @@ function App() {
   useEffect(() => {
     if (!unlocked || cloudHydrating) return undefined
     const warm = () => {
-      void import('./views/DefineView')
-      void import('./views/SketchView')
-      void import('./views/ResearchView')
-      void import('./views/DesignView')
-      void import('./views/DeliverView')
+      warmPathViewChunks()
     }
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       const id = window.requestIdleCallback(warm, { timeout: 4500 })
@@ -3837,421 +3809,127 @@ function App() {
             setActiveView={setActiveView}
           />
         )}
-        {/* Path-title ambient chips removed (owner): identity stamp, client
-            arrival, before/after progress line, and stage Mark done. They
-            stacked under every journey page title. Mark done stays on the
-            desk gap card; unread client stays in inbox / Home rows. */}
-        {/* ===== HOME — Studio return wall (view owns the page) ===== */}
-        {activeView === 'home' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading Home…" />}>
-            <HomeView
-              activeProjects={activeProjects}
-              homeOrderedSummaries={homeOrderedSummaries}
-              homeSelectedProjectId={homeSelectedProjectId}
-              setHomeSelectedProjectId={setHomeSelectedProjectId}
-              homeHoursRange={homeHoursRange}
-              setHomeHoursRange={setHomeHoursRange}
-              setActiveView={setActiveView}
-              setCurrentProject={setCurrentProject}
-              openProjectWhereLeftOff={openProjectWhereLeftOff}
-              switchProjectAndContinue={switchProjectAndContinue}
-              setClientInboxOpen={setClientInboxOpen}
-              listRowNext={listRowNext}
-              upcomingDeadlines={upcomingDeadlines}
-            />
-          </Suspense>
-        )}
-        {/* ===== WORK — one step owns the fold ===== */}
-        {/* ===== SKETCH (lazy) ===== */}
-        {activeView === 'flow' && (
-          <Suspense fallback={<PathViewSkeleton
-              label={`Loading ${labelForView('flow')}…`}
-            />}>
-            <StepDependencyReminder stepId="sketch" />
-            <SketchView
-              navDir={navDir}
-              activeProject={activeProject}
-              projectPalette={projectPalette}
-              journeyNext={journeyNext}
-              setActiveView={setActiveView}
-              flashMicro={flashMicro}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== RESEARCH (lazy) ===== */}
-        {activeView === 'studio' && (
-          <Suspense fallback={<PathViewSkeleton
-              label={`Loading ${labelForView('studio')}…`}
-            />}>
-            <StepDependencyReminder stepId="research" />
-            <ResearchView
-              navDir={navDir}
-              journeyNext={journeyNext}
-              deskMood={deskMood}
-              activeProjectId={activeProjectId}
-              brandWords={activeProject?.detective?.brandWords || ''}
-              projectPalette={projectPalette}
-              forcedBreak={forcedBreak}
-              setActiveView={setActiveView}
-              flashToast={flashToast}
-              flashMicro={flashMicro}
-              notifyAction={notifyAction}
-              setSessionComplete={setSessionComplete}
-              setFocusLeft={setFocusLeft}
-              setPomodoroWorkStartedAt={setPomodoroWorkStartedAt}
-              setIsFocusRunning={setIsFocusRunning}
-              setTimerFocusSource={setTimerFocusSource}
-              onAddPinModeChange={setResearchAddOpen}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== SPARK (lazy) ===== */}
-        {activeView === 'spark' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading…" />}>
-            <StepDependencyReminder stepId="ideate" />
-            <SparkView
-              setActiveView={setActiveView}
-              nextTask={nextTask}
-              currentSpark={currentSpark}
-              nextSpark={nextSpark}
-              oppositeSpark={oppositeSpark}
-              addMoodPin={addMoodPin}
-              projectPalette={projectPalette}
-              notifyAction={notifyAction}
-              directions={activeProject?.directions}
-              updateDirection={updateDirection}
-              roughIdeas={activeProject?.roughIdeas || []}
-              decisionLog={activeProject?.decisionLog || []}
-              sparksTried={sparksTried || 0}
-              flashMicro={flashMicro}
-              addTask={addTask}
-              projectId={activeProjectId}
-              projectGoal={
-                activeProject?.detective?.goal ||
-                activeProject?.brief ||
-                ''
-              }
-            />
-          </Suspense>
-        )}
-
-        {/* ===== FOCUS (lazy) ===== */}
-        {activeView === 'insights' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading timer…" />}>
-            <InsightsView
-              setActiveView={setActiveView}
-              nextTask={nextTask}
-              focusMinutes={focusMinutes}
-              focusSeconds={focusSeconds}
-              sessionLabel={sessionLabel}
-              forcedBreak={forcedBreak}
-              startOrPauseFocus={startOrPauseFocus}
-              resetFocus={resetFocus}
-              isFocusRunning={isFocusRunning}
-              focusLeft={focusLeft}
-              POMODORO_WORK_MIN={POMODORO_WORK_MIN}
-              forceBreaksEnabled={forceBreaksEnabled}
-              setPref={setPref}
-              bodyDoubling={bodyDoubling}
-              toggleBodyDoubling={toggleBodyDoubling}
-              flashToast={flashToast}
-              endForcedBreak={endForcedBreak}
-              sessionComplete={sessionComplete}
-              toggleTask={toggleTask}
-              completedCount={completedCount}
-              deskTasks={deskTasks}
-              prefs={prefs}
-              openForceBreakConsent={() => setForceBreakConsentOpen(true)}
-              timerFocusSource={timerFocusSource}
-              setTimerFocusSource={setTimerFocusSource}
-            />
-          </Suspense>
-
-        )}
-        {/* ===== CALENDAR (lazy) ===== */}
-        {activeView === 'calendar' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading calendar…" />}>
-            <CalendarView
-              setActiveView={setActiveView}
-              calCursor={calCursor}
-              setCalCursor={setCalCursor}
-              buildMonthGrid={buildMonthGrid}
-              formatMonthYear={formatMonthYear}
-              formatShortDate={formatShortDate}
-              urgencyLabel={urgencyLabel}
-              deadlineUrgency={deadlineUrgency}
-              daysUntil={daysUntil}
-              toISODate={toISODate}
-              calendarEvents={calendarEvents}
-              selectProject={selectProject}
-              projectDeadline={projectDeadline}
-              setProjectDeadline={setProjectDeadline}
-              activeProject={activeProject}
-              upcomingDeadlines={upcomingDeadlines}
-
-            />
-          </Suspense>
-        )}
-
-        {/* ===== CLIENTS (lazy) ===== */}
-        {activeView === 'clients' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading clients…" />}>
-            <ClientsView
-              projects={projects}
-              selectProject={selectProject}
-              setActiveView={setActiveView}
-              openClientRecord={(name) => {
-                setClientRecordName(name)
-                setActiveView('clientRecord')
-              }}
-            />
-          </Suspense>
-        )}
-
-        {activeView === 'desk' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading desk…" />}>
-            <DeskView
-              project={activeProject}
-              palette={projectPalette}
-              pins={deskMood}
-              rows={pathRows}
-              nextGap={pathNextGap}
-              tasks={deskTasks}
-              clientInbox={clientInbox}
-              onOpenView={setActiveView}
-              onOpenClientInbox={() => setClientInboxOpen(true)}
-              onToggleTask={toggleTask}
-              onToggleNotNeeded={(stepId) =>
-                activeProject &&
-                useAppStore.getState().toggleStepNotNeeded(activeProject.id, stepId)
-              }
-              onMarkStepDone={(stepId, done) =>
-                activeProject &&
-                useAppStore.getState().setStepDone(stepId, done, activeProject.id)
-              }
-              onEditIdentity={() => setActiveView('brand')}
-              onEditBrief={() => setActiveView('project')}
-              onOpenWall={() => setActiveView('studio')}
-              onOpenAssets={() => setActiveView('finish')}
-            />
-          </Suspense>
-        )}
-
-        {activeView === 'clientRecord' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading client…" />}>
-            <ClientRecordView
-              clientName={clientRecordName}
-              projects={projects}
-              projectsSummary={projectsSummary}
-              listRowNext={listRowNext}
-              openProject={openProjectWhereLeftOff}
-              onNewProject={(name) => {
-                setIntakeClientName(name)
-                setActiveView('create')
-              }}
-              flashMicro={flashMicro}
-            />
-          </Suspense>
-        )}
-
-        {activeView === 'create' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading…" />}>
-            <NewProjectIntake
-              setActiveView={setActiveView}
-              flashToast={flashToast}
-              /* Pre-filled when opened from a client record ("New project
-                 for {client}") — cleared on unmount so the next fresh
-                 intake doesn't inherit a stale name. */
-              initialClientName={intakeClientName}
-              onDone={() => setIntakeClientName('')}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== BRAND BOOK BUILDER (lazy) ===== */}
-        {activeView === 'book' && (
-          <Suspense
-            fallback={<PathViewSkeleton label="Loading brand book…" />}
-          >
-            <BrandBookBuilderView />
-          </Suspense>
-        )}
-
-        {/* Concept pipeline removed from UI — Research + Design path only */}
-
-        {/* ===== BRAND IDENTITY TEMPLATE ===== */}
-        {/* ===== DESIGN (lazy) ===== */}
-        {activeView === 'brand' && (
-          <Suspense fallback={<PathViewSkeleton
-              label={`Loading ${labelForView('brand')}…`}
-            />}>
-            <StepDependencyReminder stepId="design" />
-            <DesignView
-              navDir={navDir}
-              journeyNext={journeyNext}
-              activeProject={activeProject}
-              deskMood={deskMood}
-              projectPalette={projectPalette}
-              hidePackWatermark={hidePackWatermark}
-              setActiveView={setActiveView}
-              flashToast={flashToast}
-              flashMicro={flashMicro}
-              /* Prop names must match DesignView's destructure — they
-                 didn't (brandEditSection vs brandEditSectionProp), so the
-                 deep-link jump from Review/Deliver was silently inert. */
-              brandEditSectionProp={brandEditSection}
-              setBrandEditSectionProp={setBrandEditSection}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== REVIEW (lazy) ===== */}
-        {activeView === 'review' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading Review…" />}>
-            <StepDependencyReminder stepId="review" />
-            <ReviewView
-              navDir={navDir}
-              activeProject={activeProject}
-              deskMood={deskMood}
-              projectPalette={projectPalette}
-              pathRows={pathRows}
-              pathDoneCount={pathDoneCount}
-              pathMissingLabelsList={pathMissingLabelsList}
-              pathNextGap={pathNextGap}
-              hidePackWatermark={hidePackWatermark}
-              setActiveView={setActiveView}
-              goToProcessStep={goToProcessStep}
-              goSystemSection={goSystemSection}
-              buildCurrentBrandPack={buildCurrentBrandPack}
-              flashToast={flashToast}
-              flashMicro={flashMicro}
-              toggleBodyDoubling={toggleBodyDoubling}
-              bodyDoubling={bodyDoubling}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== DELIVER (lazy) ===== */}
-        {activeView === 'finish' && (
-          <Suspense fallback={<PathViewSkeleton
-              label={`Loading ${labelForView('finish')}…`}
-            />}>
-            <StepDependencyReminder stepId="deliver" />
-            <DeliverView
-              navDir={navDir}
-              activeProject={activeProject}
-              projectPalette={projectPalette}
-              deskTasks={deskTasks}
-              completedCount={completedCount}
-              pathRows={pathRows}
-              pathDoneCount={pathDoneCount}
-              pathMissingLabelsList={pathMissingLabelsList}
-              pathNextGap={pathNextGap}
-              leaveBehindThin={leaveBehindThin}
-              hidePackWatermark={hidePackWatermark}
-              bookSetup={bookSetup}
-              setActiveView={setActiveView}
-              goToProcessStep={goToProcessStep}
-              goSystemSection={goSystemSection}
-              buildCurrentBrandPack={buildCurrentBrandPack}
-              setPref={setPref}
-              runExport={runExport}
-              openExportPanel={openExportPanel}
-              flashToast={flashToast}
-              handleSignOut={handleSignOut}
-              downloadDataBackup={downloadDataBackup}
-              createNewProject={createNewProject}
-              notifyAction={notifyAction}
-              CLOUD={CLOUD}
-              lastExportNote={lastExportNote}
-            />
-          </Suspense>
-        )}
-
-        {/* ===== SETTINGS (lazy) ===== */}
-        {activeView === 'settings' && (
-          <Suspense fallback={<PathViewSkeleton label="Loading settings…" />}>
-            <SettingsView
-              setActiveView={setActiveView}
-              CLOUD={CLOUD}
-              accessName={accessName}
-              syncState={syncState}
-              syncError={syncError}
-              runCloudPush={runCloudPush}
-              exportAllData={exportAllData}
-              setSyncState={setSyncState}
-              setSyncError={setSyncError}
-              handleSignOut={handleSignOut}
-              theme={theme}
-              toggleTheme={toggleTheme}
-              openShortcuts={() => setShortcutsOpen(true)}
-              reduceMotion={reduceMotion}
-              soundEnabled={soundEnabled}
-              showHowItWorks={showHowItWorks}
-              showProgress={showProgress}
-              queueCollapsed={queueCollapsed}
-              forceBreaksEnabled={forceBreaksEnabled}
-              setPref={setPref}
-              bodyDoubling={bodyDoubling}
-              toggleBodyDoubling={toggleBodyDoubling}
-              flashToast={flashToast}
-              forcedBreak={forcedBreak}
-              endForcedBreak={endForcedBreak}
-              prefs={prefs}
-              pwCurrent={pwCurrent}
-              setPwCurrent={setPwCurrent}
-              pwNext={pwNext}
-              setPwNext={setPwNext}
-              changeAccessPassword={changeAccessPassword}
-              downloadDataBackup={downloadDataBackup}
-              handleImportBackup={handleImportBackup}
-              importFileRef={importFileRef}
-              clearToEmpty={clearToEmpty}
-              clearAllData={clearAllData}
-              loadSoftSignalDemo={loadSoftSignalDemo}
-              loadHarborHearthDemo={loadHarborHearthDemo}
-              versionLabel={versionLabel}
-              APP_BUILD={APP_BUILD}
-              APP_BUILD_DATE={APP_BUILD_DATE}
-              STORAGE_EXPLAIN={STORAGE_EXPLAIN}
-              notifyAction={notifyAction}
-              createNewProject={createNewProject}
-              requestConfirm={(label, onConfirm) =>
-                setDeskConfirm({
-                  kind: 'settings',
-                  label,
-                  onConfirm: () => {
-                    onConfirm?.()
-                    setDeskConfirm(null)
-                  },
-                })
-              }
-              openForceBreakConsent={() => setForceBreakConsentOpen(true)}
-            />
-          </Suspense>
-        )}
-
-{/* ===== PROJECTS ===== */}
-        {/* ===== DEFINE (lazy) ===== */}
-        {activeView === 'project' && (
-          <Suspense fallback={<PathViewSkeleton
-              label={`Loading ${labelForView('project')}…`}
-            />}>
-            <DefineView
-              navDir={navDir}
-              journeyNext={journeyNext}
-              activeProject={activeProject}
-              setActiveView={setActiveView}
-              updateDetective={updateDetective}
-              onOpenShare={() => setOverviewSharePanelOpen(true)}
-              setProjectDeadline={setProjectDeadline}
-              projectDeadline={projectDeadline}
-              flashMicro={flashMicro}
-            />
-          </Suspense>
-        )}
+        {/* Main page outlet — views registered in app/viewRegistry.js */}
+        <MainOutlet
+          activeView={activeView}
+          navDir={navDir}
+          journeyNext={journeyNext}
+          activeProject={activeProject}
+          activeProjectId={activeProjectId}
+          projectPalette={projectPalette}
+          deskMood={deskMood}
+          deskTasks={deskTasks}
+          setActiveView={setActiveView}
+          flashToast={flashToast}
+          flashMicro={flashMicro}
+          notifyAction={notifyAction}
+          activeProjects={activeProjects}
+          homeOrderedSummaries={homeOrderedSummaries}
+          homeSelectedProjectId={homeSelectedProjectId}
+          setHomeSelectedProjectId={setHomeSelectedProjectId}
+          homeHoursRange={homeHoursRange}
+          setHomeHoursRange={setHomeHoursRange}
+          setCurrentProject={setCurrentProject}
+          openProjectWhereLeftOff={openProjectWhereLeftOff}
+          switchProjectAndContinue={switchProjectAndContinue}
+          setClientInboxOpen={setClientInboxOpen}
+          listRowNext={listRowNext}
+          upcomingDeadlines={upcomingDeadlines}
+          forcedBreak={forcedBreak}
+          setSessionComplete={setSessionComplete}
+          setFocusLeft={setFocusLeft}
+          setPomodoroWorkStartedAt={setPomodoroWorkStartedAt}
+          setIsFocusRunning={setIsFocusRunning}
+          setTimerFocusSource={setTimerFocusSource}
+          setResearchAddOpen={setResearchAddOpen}
+          nextTask={nextTask}
+          currentSpark={currentSpark}
+          nextSpark={nextSpark}
+          oppositeSpark={oppositeSpark}
+          addMoodPin={addMoodPin}
+          updateDirection={updateDirection}
+          sparksTried={sparksTried}
+          addTask={addTask}
+          focusMinutes={focusMinutes}
+          focusSeconds={focusSeconds}
+          sessionLabel={sessionLabel}
+          startOrPauseFocus={startOrPauseFocus}
+          resetFocus={resetFocus}
+          isFocusRunning={isFocusRunning}
+          focusLeft={focusLeft}
+          forceBreaksEnabled={forceBreaksEnabled}
+          setPref={setPref}
+          bodyDoubling={bodyDoubling}
+          toggleBodyDoubling={toggleBodyDoubling}
+          endForcedBreak={endForcedBreak}
+          sessionComplete={sessionComplete}
+          toggleTask={toggleTask}
+          completedCount={completedCount}
+          prefs={prefs}
+          setForceBreakConsentOpen={setForceBreakConsentOpen}
+          timerFocusSource={timerFocusSource}
+          calCursor={calCursor}
+          setCalCursor={setCalCursor}
+          calendarEvents={calendarEvents}
+          selectProject={selectProject}
+          projectDeadline={projectDeadline}
+          setProjectDeadline={setProjectDeadline}
+          projects={projects}
+          setClientRecordName={setClientRecordName}
+          clientRecordName={clientRecordName}
+          pathRows={pathRows}
+          pathNextGap={pathNextGap}
+          clientInbox={clientInbox}
+          projectsSummary={projectsSummary}
+          setIntakeClientName={setIntakeClientName}
+          intakeClientName={intakeClientName}
+          hidePackWatermark={hidePackWatermark}
+          brandEditSection={brandEditSection}
+          setBrandEditSection={setBrandEditSection}
+          pathDoneCount={pathDoneCount}
+          pathMissingLabelsList={pathMissingLabelsList}
+          goToProcessStep={goToProcessStep}
+          goSystemSection={goSystemSection}
+          buildCurrentBrandPack={buildCurrentBrandPack}
+          leaveBehindThin={leaveBehindThin}
+          bookSetup={bookSetup}
+          runExport={runExport}
+          openExportPanel={openExportPanel}
+          handleSignOut={handleSignOut}
+          downloadDataBackup={downloadDataBackup}
+          createNewProject={createNewProject}
+          CLOUD={CLOUD}
+          lastExportNote={lastExportNote}
+          accessName={accessName}
+          syncState={syncState}
+          syncError={syncError}
+          runCloudPush={runCloudPush}
+          exportAllData={exportAllData}
+          setSyncState={setSyncState}
+          setSyncError={setSyncError}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          setShortcutsOpen={setShortcutsOpen}
+          reduceMotion={reduceMotion}
+          soundEnabled={soundEnabled}
+          showHowItWorks={showHowItWorks}
+          showProgress={showProgress}
+          queueCollapsed={queueCollapsed}
+          pwCurrent={pwCurrent}
+          setPwCurrent={setPwCurrent}
+          pwNext={pwNext}
+          setPwNext={setPwNext}
+          changeAccessPassword={changeAccessPassword}
+          handleImportBackup={handleImportBackup}
+          importFileRef={importFileRef}
+          clearToEmpty={clearToEmpty}
+          clearAllData={clearAllData}
+          loadSoftSignalDemo={loadSoftSignalDemo}
+          loadHarborHearthDemo={loadHarborHearthDemo}
+          setDeskConfirm={setDeskConfirm}
+          updateDetective={updateDetective}
+          setOverviewSharePanelOpen={setOverviewSharePanelOpen}
+        />
         </ErrorBoundary>
 
       </main>
