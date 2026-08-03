@@ -4,11 +4,10 @@
  * Inspiration/refs live on Research, not beside this page — owner removed
  * the Refs block deliberately; do not reintroduce without asking.
  *
- * Chrome hierarchy (mock + adhd-executive-function-advisor 2026-08-03):
- *   title · send status · Send / Interview · Start with these · form
- *   milestones + scope demoted below the form
- *   sticky footer: Back to desk · Next · Research · Still blank
- * Recent tasks stay on Desk only — not re-listed here.
+ * Chrome (pruned): title · status · Send / Interview · one start jump · form.
+ * Milestones + scope below the form. Sticky footer: desk · Next · short blank.
+ * No project-name band (sidebar/header already name the project).
+ * No chapter rail (form headings are the only map).
  */
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { labelForStepId } from '../lib/journey'
@@ -150,22 +149,6 @@ export default function DefineView(props) {
     [projectDeadline]
   )
 
-  const [nameDraft, setNameDraft] = useState(activeProject?.name || '')
-  useEffect(() => {
-    setNameDraft(activeProject?.name || '')
-  }, [activeProject?.id, activeProject?.name])
-  const commitRename = () => {
-    if (!activeProject) return
-    const next = String(nameDraft || '').trim()
-    if (!next) {
-      setNameDraft(activeProject.name || '')
-      return
-    }
-    if (next === activeProject.name) return
-    useAppStore.getState().renameProject(activeProject.id, next)
-    flashMicro?.('Name saved')
-  }
-
   /** Designer fills the brief live (mock: "I'm interviewing them"). */
   const startInterview = useCallback(() => {
     const first =
@@ -193,33 +176,19 @@ export default function DefineView(props) {
     })
   }, [requiredEmpty])
 
+  /* Footer: short count only — full labels live on Start with / NEEDED badges. */
   const stillBlankLine =
     requiredEmpty.length === 0
       ? ''
-      : `Still blank: ${requiredEmpty.map((f) => f.label).join(', ')}`
+      : requiredEmpty.length === 1
+        ? '1 still blank'
+        : `${requiredEmpty.length} still blank`
 
   return (
     <div
       className="brand-layout surface-document define-studio define-brief view-enter"
       data-nav-dir={navDir}
     >
-      {activeProject && (
-        <input
-          className="define-project-name"
-          value={nameDraft}
-          onChange={(e) => setNameDraft(e.target.value)}
-          onBlur={commitRename}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              commitRename()
-              e.currentTarget.blur()
-            }
-          }}
-          aria-label="Project name"
-        />
-      )}
-
       <header className="define-brief-head">
         <h1 className="page-title define-brief-title">The brief</h1>
         <p className="define-brief-status" data-status={sendStatus.kind}>
@@ -228,8 +197,6 @@ export default function DefineView(props) {
             <span className="define-brief-status-due"> · {deadlineRelative}</span>
           ) : null}
         </p>
-        {/* No lede paragraph — status line already says the state; another
-            sentence before the form is a second decode (declutter 2026-08-03). */}
         <div className="define-brief-actions">
           <button
             type="button"
@@ -246,8 +213,6 @@ export default function DefineView(props) {
             I&rsquo;m interviewing them
           </button>
         </div>
-        {/* Full rule under the intro CTAs (Studio mock), always — not tied to
-            deadline so the break before Start with these never disappears. */}
         <div className="define-title-rule" aria-hidden="true" />
         <DefineStartHere
           detective={activeProject?.detective}

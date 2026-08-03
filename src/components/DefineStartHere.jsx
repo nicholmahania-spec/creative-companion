@@ -1,13 +1,12 @@
 /**
  * "Start with these" — the Define page's anti-stall control.
  *
- * Lives in the brief header band, fixed position, above the form:
- * task initiation ramp that collapses "pick a chapter → scan empty field"
- * into one click. Milestones and scope sit below the form so they cannot
- * intercept this ramp (adhd-executive-function-advisor 2026-08-03).
+ * One jump only (first empty required field). Three chips restated the same
+ * list the form NEEDED badges already show, and competed with Send.
+ * Count line + one button = initiation without a second inventory.
  */
 import { useCallback, useMemo } from 'react'
-import { getRequiredEmpty, START_HERE_CAP } from '../lib/detectiveBrief'
+import { getRequiredEmpty } from '../lib/detectiveBrief'
 
 /** Smooth scrolling is a vestibular trigger for some users; honor the OS pref. */
 const prefersReducedMotion = () =>
@@ -24,10 +23,7 @@ export default function DefineStartHere({
     () => getRequiredEmpty(detective, projectDeadline),
     [detective, projectDeadline]
   )
-  const startHere = useMemo(
-    () => requiredEmpty.slice(0, START_HERE_CAP),
-    [requiredEmpty]
-  )
+  const first = requiredEmpty[0] || null
 
   const jumpToField = useCallback((fieldId) => {
     requestAnimationFrame(() => {
@@ -49,31 +45,26 @@ export default function DefineStartHere({
     <div
       className={`define-start-here${requiredEmpty.length === 0 ? ' is-done' : ''}`}
     >
-      {startHere.length > 0 ? (
+      {first ? (
         <>
           <p className="define-start-here-title">
             {requiredEmpty.length === 1
-              ? `1 thing needed before ${researchLabel} — start with this`
-              : `${requiredEmpty.length} things needed before ${researchLabel} — start with these`}
+              ? `1 thing needed before ${researchLabel}`
+              : `${requiredEmpty.length} things needed before ${researchLabel}`}
           </p>
           <div className="define-start-here-list">
-            {startHere.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                /* Outline, not solid primary — Send/Next keep the only filled
-                   CTAs so five white bricks don't compete (declutter 2026-08-03). */
-                className="btn btn-secondary"
-                onClick={() => jumpToField(f.id)}
-              >
-                {f.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => jumpToField(first.id)}
+            >
+              Start with {first.label}
+            </button>
           </div>
         </>
       ) : (
         <p className="define-start-here-title">
-          Everything needed is answered — the rest is optional detail.
+          Everything needed is answered — the rest is optional.
         </p>
       )}
     </div>
