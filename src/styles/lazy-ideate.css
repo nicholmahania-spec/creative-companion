@@ -231,29 +231,6 @@
   letter-spacing: 0.02em;
 }
 
-.sketch-ideate-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin: 0 0 0.75rem;
-  align-items: center;
-}
-
-.sketch-ideate-more summary {
-  cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.sketch-studio:has(.sketch-now:focus-within) .sketch-below,
-.sketch-studio:has(.sketch-now:focus-within) .sketch-ideate-strip {
-  opacity: 0.25;
-  pointer-events: none;
-  filter: none;
-  transition: opacity 0.15s ease;
-}
-
 .ideate-progress {
   font-size: 0.9rem;
 }
