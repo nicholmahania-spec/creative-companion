@@ -265,11 +265,12 @@
   color: var(--text-muted);
 }
 
-/* Client record — one client, their contacts, their projects. */
+/* Client record — fill main cell; projects list can grow full width */
 .client-record {
-  max-width: 51rem;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
+  min-width: 0;
 }
 
 .client-record-head {

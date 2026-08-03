@@ -27,7 +27,7 @@ If a screen fights these, the screen is wrong — not the grammar.
 Ideate (`spark`) and Review are **Tools**, not path siblings. Timer, Calendar, Clients, Settings, Brand Book Builder — Tools.
 
 **G1.1 One job per path page** — writing / wall / artboard / applications / ship. No Desk density on writing surfaces.  
-**G1.2 Full main width** for path views (no floating reading-width islands).  
+**G1.2 Full main width** — shell `.main` fills the grid cell on every view (no 780px island). Reading measure lives on form/prose columns inside the page, not on `.main`.  
 **G1.3 One primary CTA** per page job; path Next solid; rail Continue secondary.  
 **G1.4 `pathDone` both ways** — user verdict outranks proxies. One tick, one meaning.
 

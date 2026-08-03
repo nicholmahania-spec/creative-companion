@@ -66,6 +66,15 @@
   gap: var(--space-3);
 }
 
+/* Wide monitors: use the main cell — two application cards per row */
+@media (min-width: 1100px) {
+  .touchpoints-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3) var(--space-4);
+  }
+}
+
 .touchpoints-card {
   margin: 0;
   padding: var(--space-4);

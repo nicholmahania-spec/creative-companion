@@ -112,6 +112,12 @@
   --radius-squircle: var(--radius);
   --radius-node: var(--radius);
 
+  /*
+   * Layout measure: shell `.main` fills the grid cell (path rebuild / wide
+   * monitors). Reading width lives on form/prose columns inside views —
+   * never re-cap `.main` to ~780px or you get a dead gutter beside the sidebar.
+   */
+
   /* ---- Spacing ramp ----------------------------------------------------
      229 distinct padding values existed before this, with clusters like
      0.55rem 0.7rem / 0.5rem 0.65rem / 0.55rem 0.65rem that are visually
@@ -1029,9 +1035,9 @@ h3 {
 /* ── Home studio dashboard ───────────────────────────────────── */
 .home-dash {
   width: 100%;
-  max-width: 68rem;
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-4) var(--space-7);
+  max-width: none;
+  margin: 0;
+  padding: var(--space-5) 0 var(--space-7);
   box-sizing: border-box;
   text-align: left;
 }
@@ -2050,22 +2056,37 @@ h3 {
   }
 }
 
+/*
+ * Main fills the grid cell beside the sidebar on every view.
+ * Was max-width: 780px + margin auto — on large monitors that left a dead
+ * gutter for any surface without a :has() override (Desk, Home, Tools…).
+ * Reading measure belongs on form/prose columns inside the view, not here.
+ */
 .main {
   flex: 1;
-  padding: 1.85rem 1.5rem 2.5rem;
-  max-width: 780px;
-  margin: 0 auto;
+  padding: 1.85rem var(--space-5) 2.5rem;
+  max-width: none;
+  margin-inline: 0;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-/* System + Pack / Identity / Touchpoints — fill main grid cell (path rebuild).
-   Was min(1120px) centered — left a dead gutter next to the sidebar. */
+/* Path views — explicit full cell (redundant with .main, kept as documentation) */
 .main:has(.system-view),
 .main:has(.pack-view),
 .main:has(.design-studio),
 .main:has(.touchpoints-studio),
+.main:has(.define-brief),
+.main:has(.desk-view),
+.main:has(.home-dash),
+.main:has(.review-studio),
+.main:has(.clients-view),
+.main:has(.calendar-view),
 .app.view-brand .main,
 .app.view-flow .main,
+.app.view-project .main,
+.app.view-studio .main,
 .app.is-pack-view .main {
   max-width: none;
   margin-inline: 0;
@@ -2618,10 +2639,12 @@ h3 {
   background: var(--bg-elevated);
 }
 
-/* Insights — uneven layout, not 3 equal cards */
+/* Insights — timer-first; reading column, not a floating 40rem island */
 
 .insights-layout {
-  max-width: 40rem;
+  max-width: min(100%, 48rem);
+  width: 100%;
+  margin-inline: 0;
 }
 
 .insights-focus {
