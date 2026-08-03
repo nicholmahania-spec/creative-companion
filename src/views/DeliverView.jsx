@@ -167,7 +167,11 @@ export default function DeliverView({
               too. Done = "Ready to ship"; otherwise name the gaps. */}
           {ready.allDone
             ? 'Ready to ship'
-            : `Still to add: ${coreGaps.map((c) => c.label).join(', ')}`}
+            : coreGaps.length === 1
+              ? `Still to add · ${coreGaps[0].label}`
+              : coreGaps.length > 1
+                ? `Still to add · ${coreGaps.length} things`
+                : 'Still to add'}
         </span>
       </div>
 
