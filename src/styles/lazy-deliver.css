@@ -40,9 +40,24 @@
 }
 
 .assets-ship {
-  margin: var(--space-5) 0 0;
+  margin: var(--space-4) 0 0;
   max-width: min(100%, 40rem);
   min-width: 0;
+}
+
+/* Ship ticket — always near the CTA; sticky so preview doesn’t bury it */
+.assets-ship-ticket {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  padding: var(--space-3) 0 var(--space-4);
+  margin-bottom: var(--space-2);
+  background: var(--bg-canvas, #F5F5F5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.app.deep .assets-ship-ticket {
+  background: var(--bg-canvas, #151515);
 }
 
 /* Named hollowness beside the download — never blocks, always visible */
@@ -147,19 +162,20 @@
     margin-bottom: 0;
   }
 
+  /* DOM order: top → ship → preview → secondary → footer */
+  .assets-studio > .assets-ship {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    max-width: none;
+  }
+
   .assets-studio > .assets-preview-panel {
     grid-column: 1;
     grid-row: 2 / span 2;
     margin: 0;
     max-width: none;
     width: 100%;
-  }
-
-  .assets-studio > .assets-ship {
-    grid-column: 2;
-    grid-row: 2;
-    margin: 0;
-    max-width: none;
   }
 
   .assets-studio > .assets-secondary {
@@ -172,6 +188,15 @@
   .assets-studio > .assets-footer {
     grid-column: 1 / -1;
     margin-top: var(--space-4);
+  }
+
+  .assets-ship-ticket {
+    top: 4.75rem;
+    border-bottom: none;
+    padding: var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    background: var(--bg-card);
   }
 
   .assets-preview-frame {

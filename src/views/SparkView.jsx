@@ -7,7 +7,9 @@ import { labelForStepId } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
 import useAppStore from '../store/useAppStore'
 import InfoReveal from '../components/InfoReveal'
+import LayoutPatterns from '../components/LayoutPatterns'
 import '../styles/lazy-ideate.css'
+import '../styles/lazy-sketch.css'
 
 export default function SparkView({
   setActiveView,
@@ -404,6 +406,9 @@ export default function SparkView({
           </div>
         </aside>
       </div>
+
+      {/* Reference only — path Touchpoints stays applications (audit). */}
+      <LayoutPatterns />
 
       <div className="path-continue-row ideate-send-row">
         <button

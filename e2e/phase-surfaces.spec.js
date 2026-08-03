@@ -158,12 +158,14 @@ test.describe('phase surfaces render and respond', () => {
     ).toBeVisible()
   })
 
-  test('Sketch carries the layout pattern reference, closed', async ({
+  test('Ideate carries the layout pattern reference, closed', async ({
     page,
   }) => {
-    const gate = await unlockAndOnboard(page, { name: 'Sketch Project' })
+    const gate = await unlockAndOnboard(page, { name: 'Ideate Project' })
     skipIfCloud(test, gate)
-    await openStep(page, /Touchpoints/i)
+    /* Layout patterns live under Tools · Ideate — not on path Touchpoints */
+    await page.getByRole('button', { name: /Tools/i }).click()
+    await page.getByRole('menuitem', { name: /Ideate/i }).click()
 
     const ref = page.locator('.layout-patterns')
     await expect(ref).toBeVisible()

@@ -291,6 +291,9 @@ export default function ResearchView({
                 <h1 className="page-title">
                   {labelForStepId('research')}
                 </h1>
+                <p className="path-job-line">
+                  Refs for the pack — star up to 6 with a why.
+                </p>
                 {/* Floor, not ratio. "★ 3/6" is a number to decode that
                     produces no next action, and it reads as a scoreboard
                     three-fifths empty — the same pattern the project sidebar

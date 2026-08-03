@@ -1071,12 +1071,60 @@ h3 {
 }
 
 .home-dash-empty {
-  margin: 0;
-  max-width: 40ch;
+  margin: 0 0 var(--space-4);
+  max-width: 48ch;
   font-size: var(--fs-2);
   font-weight: 500;
   color: var(--text-muted);
   line-height: 1.45;
+}
+
+.home-dash-path-promise {
+  list-style: none;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 40rem;
+}
+
+.home-dash-path-promise li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+
+.home-dash-path-promise strong {
+  font-size: var(--fs-2);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.home-dash-path-promise span {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.home-dash-empty-hint {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--text-secondary);
+}
+
+@media (min-width: 900px) {
+  .home-dash-path-promise {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2) var(--space-3);
+    max-width: none;
+  }
 }
 
 .home-dash-pickup {
@@ -6572,6 +6620,16 @@ body:has(.app.deep)::after {
   font-family: var(--font-display);
   font-size: clamp(1.35rem, 2.4vw, 1.65rem);
   letter-spacing: var(--tracking-display);
+}
+
+/* Path stop job line — one sentence under H1 (what this stop produces) */
+.path-job-line {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-muted);
+  max-width: 48ch;
 }
 
 .insights-timer {

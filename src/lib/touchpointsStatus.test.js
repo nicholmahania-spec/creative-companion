@@ -19,7 +19,7 @@ describe('touchpointsStatusLine — words, not N of M', () => {
       proofs: { website: { note: 'Hero wordmark' } },
     })
     expect(line).toMatch(/Website noted/i)
-    expect(line).toMatch(/rest open/i)
+    expect(line).toMatch(/enough for the path/i)
     expect(line).not.toMatch(/\d+\s+of\s+\d+/)
   })
 

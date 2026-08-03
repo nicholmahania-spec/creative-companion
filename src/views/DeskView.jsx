@@ -262,23 +262,43 @@ export default function DeskView({
               palette={palette}
             />
             <div className="desk-artboard-foot">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={onEditIdentity}
-              >
-                Edit identity
-              </button>
+              {/* One desk primary = path gap (audit P0). Identity is secondary. */}
+              {gapRow ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => onOpenView(gapRow.view)}
+                >
+                  {`Open ${gapRow.label}`}
+                </button>
+              ) : packHandoffReady && typeof onOpenAssets === 'function' ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={onOpenAssets}
+                >
+                  {`Open ${labelForStepId('deliver')} — pack ready`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={onEditIdentity}
+                >
+                  Edit identity
+                </button>
+              )}
+              {gapRow ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={onEditIdentity}
+                >
+                  Edit identity
+                </button>
+              ) : null}
               {typeof onOpenAssets === 'function' &&
-                (packHandoffReady ? (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={onOpenAssets}
-                  >
-                    Open {labelForStepId('deliver')} — pack ready
-                  </button>
-                ) : (
+                !(packHandoffReady && !gapRow) && (
                   <button
                     type="button"
                     className="desk-panel-link desk-panel-link-quiet"
@@ -286,9 +306,9 @@ export default function DeskView({
                   >
                     Open {labelForStepId('deliver')}
                   </button>
-                ))}
+                )}
               <span className="desk-artboard-note">
-                Brand colour lives here only — the desk stays out of the way.
+                Ambient preview — path work is under What&rsquo;s next.
               </span>
             </div>
           </section>

@@ -163,7 +163,12 @@ export default function DefineView(props) {
       <header className="define-brief-head">
         <div className="define-brief-head-row">
           <div className="define-brief-head-text">
-            <h1 className="page-title define-brief-title">The brief</h1>
+            <h1 className="page-title define-brief-title">
+              {labelForStepId('define')}
+            </h1>
+            <p className="define-brief-job path-job-line">
+              Client brief — who it is for and what it should do.
+            </p>
             <p className="define-brief-status" data-status={sendStatus.kind}>
               {sendStatus.label}
               {deadlineRelative ? (
@@ -174,29 +179,14 @@ export default function DefineView(props) {
               ) : null}
             </p>
           </div>
-          {showSend ? (
-            <button
-              type="button"
-              /* One solid primary on the page: footer Next while blanks remain;
-                 Send elevates only when the form can actually go out. */
-              className={`btn define-brief-send${
-                (requiredEmpty?.length || 0) === 0
-                  ? ' btn-primary'
-                  : ' btn-secondary'
-              }`}
-              onClick={() => onOpenShare?.()}
-            >
-              Send the brief
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-secondary define-brief-send"
-              onClick={() => onOpenShare?.()}
-            >
-              Share
-            </button>
-          )}
+          {/* Share never competes with path Continue (audit P1). */}
+          <button
+            type="button"
+            className="btn btn-secondary define-brief-send"
+            onClick={() => onOpenShare?.()}
+          >
+            {showSend ? 'Send the brief' : 'Share'}
+          </button>
         </div>
         <div className="define-title-rule" aria-hidden="true" />
       </header>

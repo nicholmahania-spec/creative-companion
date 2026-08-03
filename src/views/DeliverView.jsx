@@ -130,6 +130,9 @@ export default function DeliverView({
           <h1 className="page-title work-page-title">
             {labelForStepId('deliver')}
           </h1>
+          <p className="path-job-line">
+            Preview &amp; send the pack — handoff, then download.
+          </p>
           <p className="assets-status" role="status">
             {statusLine}
             <InfoReveal>
@@ -139,26 +142,8 @@ export default function DeliverView({
         </div>
       </div>
 
-      {/* Primary surface — the real book, same PDF as download */}
-      <section
-        className="assets-preview-panel"
-        tabIndex={0}
-        role="region"
-        aria-label="Pack preview"
-      >
-        <div className="assets-preview-frame deliver-pack-preview">
-          <Suspense fallback={<div className="panel-hint">Loading preview…</div>}>
-            <BrandBookPreview
-              pack={packSnap}
-              book={bookSetup}
-              hideWatermark={hidePackWatermark}
-            />
-          </Suspense>
-        </div>
-      </section>
-
-      {/* One ship job — gap named beside CTA; download always available */}
-      <section className="assets-ship" aria-label="Ship">
+      {/* Ship ticket first in DOM for mobile; sticky on wide (audit P0). */}
+      <section className="assets-ship assets-ship-ticket" aria-label="Ship">
         {firstCoreGap ? (
           <div className="assets-ship-gap" role="status">
             <span className="assets-ship-gap-label">
@@ -229,10 +214,28 @@ export default function DeliverView({
         )}
       </section>
 
+      {/* Preview — real book; ship ticket stays sticky on wide */}
+      <section
+        className="assets-preview-panel"
+        tabIndex={0}
+        role="region"
+        aria-label="Pack preview"
+      >
+        <div className="assets-preview-frame deliver-pack-preview">
+          <Suspense fallback={<div className="panel-hint">Loading preview…</div>}>
+            <BrandBookPreview
+              pack={packSnap}
+              book={bookSetup}
+              hideWatermark={hidePackWatermark}
+            />
+          </Suspense>
+        </div>
+      </section>
+
       {/* Secondary — setup, learnings, stationery, formats */}
       <div className="assets-secondary">
         <details className="deliver-advanced" open={false}>
-          <summary>Page setup</summary>
+          <summary>Page setup · print size</summary>
           <div className="book-setup" role="group" aria-label="Page setup">
             <SetupChoice
               label="Page size"
@@ -327,7 +330,7 @@ export default function DeliverView({
         )}
 
         <details className="deliver-advanced">
-          <summary>More formats</summary>
+          <summary>Extras · print, ZIP, backup</summary>
           <div className="finish-secondary-row pack-more-row">
             {logoOnly && (
               <button
