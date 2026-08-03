@@ -492,45 +492,49 @@ export default function DesignView({
                   </InfoReveal>
                 </p>
               </div>
-              <div className="brand-template-actions">
-                <div className="version-controls">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    title="Bump the design version"
-                    onClick={async () => {
-                      const r = bumpDesignVersion()
-                      if (r?.ok)
-                        flashMicro(`Version ${r.version}`)
-                      await loadVersionHistory()
-                    }}
-                  >
-                    Bump · {activeProject?.designVersion || 'v1'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    title="View version history"
-                    onClick={async () => {
-                      await loadVersionHistory()
-                      setShowVersionHistory(true)
-                    }}
-                  >
-                    History
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    title="Manage templates"
-                    onClick={async () => {
-                      await loadTemplates()
-                      setShowTemplateModal(true)
-                    }}
-                  >
-                    Templates
-                  </button>
+              {/* Meta chrome only on Preview — craft screens open on the field,
+                  not version/template decisions (ADHD: decision fatigue). */}
+              {identitySubstep === 'preview' && (
+                <div className="brand-template-actions">
+                  <div className="version-controls">
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      title="Bump the design version"
+                      onClick={async () => {
+                        const r = bumpDesignVersion()
+                        if (r?.ok)
+                          flashMicro(`Version ${r.version}`)
+                        await loadVersionHistory()
+                      }}
+                    >
+                      Bump · {activeProject?.designVersion || 'v1'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      title="View version history"
+                      onClick={async () => {
+                        await loadVersionHistory()
+                        setShowVersionHistory(true)
+                      }}
+                    >
+                      History
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      title="Manage templates"
+                      onClick={async () => {
+                        await loadTemplates()
+                        setShowTemplateModal(true)
+                      }}
+                    >
+                      Templates
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <nav className="identity-subnav" aria-label="Identity screens">
@@ -563,7 +567,6 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <span className="design-section-badge">01</span>
                 <h2 className="design-section-title">Mark</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
@@ -771,7 +774,6 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <span className="design-section-badge">02</span>
                 <h2 className="design-section-title">Words</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
@@ -858,86 +860,84 @@ export default function DesignView({
                   rows={2}
                 />
               </div>
-              <details className="design-advanced">
-                <summary>Do / Don&apos;t · Messages</summary>
-                <div className="brand-do-dont" style={{ marginTop: '0.65rem' }}>
-                  <div className="field-block" style={{ marginBottom: 0 }}>
-                    <label className="field-label" htmlFor="brand-do">
-                      Do
-                    </label>
-                    <textarea
-                      id="brand-do"
-                      className="field-textarea"
-                      value={activeProject?.doUse || ''}
-                      onChange={(e) =>
-                        updateBrandField('doUse', e.target.value)
-                      }
-                      placeholder="Fits"
-                      rows={2}
-                    />
-                  </div>
-                  <div className="field-block" style={{ marginBottom: 0 }}>
-                    <label className="field-label" htmlFor="brand-dont">
-                      Don&apos;t
-                    </label>
-                    <textarea
-                      id="brand-dont"
-                      className="field-textarea"
-                      value={activeProject?.dontUse || ''}
-                      onChange={(e) =>
-                        updateBrandField('dontUse', e.target.value)
-                      }
-                      placeholder="Avoid"
-                      rows={2}
-                    />
-                  </div>
-                </div>
-                <div className="field-block" style={{ marginTop: '0.75rem' }}>
-                  <label className="field-label" htmlFor="msg-promise">
-                    Promise
+              {/* Always visible — collapsed details read as "not there" */}
+              <div className="brand-do-dont" style={{ marginTop: '0.65rem' }}>
+                <div className="field-block" style={{ marginBottom: 0 }}>
+                  <label className="field-label" htmlFor="brand-do">
+                    Do
                   </label>
                   <textarea
-                    id="msg-promise"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.messagingPromise || ''}
+                    id="brand-do"
+                    className="field-textarea"
+                    value={activeProject?.doUse || ''}
                     onChange={(e) =>
-                      updateBrandField('messagingPromise', e.target.value)
+                      updateBrandField('doUse', e.target.value)
                     }
-                    placeholder="Promise"
+                    placeholder="Fits"
+                    rows={2}
                   />
                 </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="msg-proof">
-                    Proof
+                <div className="field-block" style={{ marginBottom: 0 }}>
+                  <label className="field-label" htmlFor="brand-dont">
+                    Don&apos;t
                   </label>
                   <textarea
-                    id="msg-proof"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.messagingProof || ''}
+                    id="brand-dont"
+                    className="field-textarea"
+                    value={activeProject?.dontUse || ''}
                     onChange={(e) =>
-                      updateBrandField('messagingProof', e.target.value)
+                      updateBrandField('dontUse', e.target.value)
                     }
-                    placeholder="Proof"
+                    placeholder="Avoid"
+                    rows={2}
                   />
                 </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="msg-personality">
-                    Personality
-                  </label>
-                  <textarea
-                    id="msg-personality"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.messagingPersonality || ''}
-                    onChange={(e) =>
-                      updateBrandField('messagingPersonality', e.target.value)
-                    }
-                    placeholder="Personality"
-                  />
-                </div>
-              </details>
+              </div>
+              <div className="field-block" style={{ marginTop: '0.75rem' }}>
+                <label className="field-label" htmlFor="msg-promise">
+                  Promise
+                </label>
+                <textarea
+                  id="msg-promise"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.messagingPromise || ''}
+                  onChange={(e) =>
+                    updateBrandField('messagingPromise', e.target.value)
+                  }
+                  placeholder="Promise"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="msg-proof">
+                  Proof
+                </label>
+                <textarea
+                  id="msg-proof"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.messagingProof || ''}
+                  onChange={(e) =>
+                    updateBrandField('messagingProof', e.target.value)
+                  }
+                  placeholder="Proof"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="msg-personality">
+                  Personality
+                </label>
+                <textarea
+                  id="msg-personality"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.messagingPersonality || ''}
+                  onChange={(e) =>
+                    updateBrandField('messagingPersonality', e.target.value)
+                  }
+                  placeholder="Personality"
+                />
+              </div>
             </section>
             )}
 
@@ -950,7 +950,6 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <span className="design-section-badge">03</span>
                 <h2 className="design-section-title">Colour</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
@@ -1466,7 +1465,6 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <span className="design-section-badge">04</span>
                 <h2 className="design-section-title">Type</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
@@ -1623,149 +1621,145 @@ export default function DesignView({
               </button>
             </p>
             <div className="design-preview-notes">
-              <details className="design-advanced">
-                <summary>Imagery guidelines</summary>
-                <div className="field-block" style={{ marginTop: '0.65rem' }}>
-                  <label className="field-label" htmlFor="img-style">
-                    Look of photos / drawings
-                  </label>
-                  <textarea
-                    id="img-style"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.imageryStyle || ''}
-                    onChange={(e) =>
-                      updateBrandField('imageryStyle', e.target.value)
-                    }
-                    placeholder="Look"
-                  />
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="img-do">
-                    Pictures we want
-                  </label>
-                  <textarea
-                    id="img-do"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.imageryDo || ''}
-                    onChange={(e) =>
-                      updateBrandField('imageryDo', e.target.value)
-                    }
-                    placeholder="Do"
-                  />
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="img-dont">
-                    Pictures to avoid
-                  </label>
-                  <textarea
-                    id="img-dont"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.imageryDont || ''}
-                    onChange={(e) =>
-                      updateBrandField('imageryDont', e.target.value)
-                    }
-                    placeholder="Don't"
-                  />
-                </div>
-              </details>
-              <details className="design-advanced">
-                <summary>Writing and print rules</summary>
-                <div className="field-block" style={{ marginTop: '0.65rem' }}>
-                  <label className="field-label" htmlFor="wr-case">
-                    Headings
-                  </label>
-                  <select
-                    id="wr-case"
-                    className="field-input"
-                    value={activeProject?.writingCase || 'sentence'}
-                    onChange={(e) =>
-                      updateBrandField('writingCase', e.target.value)
-                    }
-                  >
-                    <option value="sentence">
-                      Sentence case — Like this one
-                    </option>
-                    <option value="title">Title case — Like This One</option>
-                  </select>
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="wr-caps">
-                    ALL CAPS
-                  </label>
-                  <select
-                    id="wr-caps"
-                    className="field-input"
-                    value={activeProject?.writingCaps || 'sparing'}
-                    onChange={(e) =>
-                      updateBrandField('writingCaps', e.target.value)
-                    }
-                  >
-                    <option value="sparing">Short labels only</option>
-                    <option value="labels">UI labels and navigation only</option>
-                    <option value="never">Never</option>
-                  </select>
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="wr-notes">
-                    Anything else about the words
-                  </label>
-                  <textarea
-                    id="wr-notes"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.writingNotes || ''}
-                    onChange={(e) =>
-                      updateBrandField('writingNotes', e.target.value)
-                    }
-                    placeholder="Optional"
-                  />
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="pr-pantone">
-                    Pantone match
-                  </label>
-                  <input
-                    id="pr-pantone"
-                    className="field-input"
-                    value={activeProject?.printPantone || ''}
-                    onChange={(e) =>
-                      updateBrandField('printPantone', e.target.value)
-                    }
-                    placeholder="e.g. 871C for the gold"
-                  />
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="pr-stock">
-                    Paper stock
-                  </label>
-                  <input
-                    id="pr-stock"
-                    className="field-input"
-                    value={activeProject?.printStock || ''}
-                    onChange={(e) =>
-                      updateBrandField('printStock', e.target.value)
-                    }
-                    placeholder="e.g. 350gsm uncoated"
-                  />
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="pr-finish">
-                    Finish
-                  </label>
-                  <input
-                    id="pr-finish"
-                    className="field-input"
-                    value={activeProject?.printFinish || ''}
-                    onChange={(e) =>
-                      updateBrandField('printFinish', e.target.value)
-                    }
-                    placeholder="e.g. matt lamination, spot UV"
-                  />
-                </div>
-              </details>
+              <h3 className="design-preview-notes-title">Imagery</h3>
+              <div className="field-block">
+                <label className="field-label" htmlFor="img-style">
+                  Look of photos / drawings
+                </label>
+                <textarea
+                  id="img-style"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.imageryStyle || ''}
+                  onChange={(e) =>
+                    updateBrandField('imageryStyle', e.target.value)
+                  }
+                  placeholder="Look"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="img-do">
+                  Pictures we want
+                </label>
+                <textarea
+                  id="img-do"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.imageryDo || ''}
+                  onChange={(e) =>
+                    updateBrandField('imageryDo', e.target.value)
+                  }
+                  placeholder="Do"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="img-dont">
+                  Pictures to avoid
+                </label>
+                <textarea
+                  id="img-dont"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.imageryDont || ''}
+                  onChange={(e) =>
+                    updateBrandField('imageryDont', e.target.value)
+                  }
+                  placeholder="Don't"
+                />
+              </div>
+              <h3 className="design-preview-notes-title">Writing and print</h3>
+              <div className="field-block">
+                <label className="field-label" htmlFor="wr-case">
+                  Headings
+                </label>
+                <select
+                  id="wr-case"
+                  className="field-input"
+                  value={activeProject?.writingCase || 'sentence'}
+                  onChange={(e) =>
+                    updateBrandField('writingCase', e.target.value)
+                  }
+                >
+                  <option value="sentence">
+                    Sentence case — Like this one
+                  </option>
+                  <option value="title">Title case — Like This One</option>
+                </select>
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="wr-caps">
+                  ALL CAPS
+                </label>
+                <select
+                  id="wr-caps"
+                  className="field-input"
+                  value={activeProject?.writingCaps || 'sparing'}
+                  onChange={(e) =>
+                    updateBrandField('writingCaps', e.target.value)
+                  }
+                >
+                  <option value="sparing">Short labels only</option>
+                  <option value="labels">UI labels and navigation only</option>
+                  <option value="never">Never</option>
+                </select>
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="wr-notes">
+                  Anything else about the words
+                </label>
+                <textarea
+                  id="wr-notes"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.writingNotes || ''}
+                  onChange={(e) =>
+                    updateBrandField('writingNotes', e.target.value)
+                  }
+                  placeholder="Optional"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="pr-pantone">
+                  Pantone match
+                </label>
+                <input
+                  id="pr-pantone"
+                  className="field-input"
+                  value={activeProject?.printPantone || ''}
+                  onChange={(e) =>
+                    updateBrandField('printPantone', e.target.value)
+                  }
+                  placeholder="e.g. 871C for the gold"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="pr-stock">
+                  Paper stock
+                </label>
+                <input
+                  id="pr-stock"
+                  className="field-input"
+                  value={activeProject?.printStock || ''}
+                  onChange={(e) =>
+                    updateBrandField('printStock', e.target.value)
+                  }
+                  placeholder="e.g. 350gsm uncoated"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="pr-finish">
+                  Finish
+                </label>
+                <input
+                  id="pr-finish"
+                  className="field-input"
+                  value={activeProject?.printFinish || ''}
+                  onChange={(e) =>
+                    updateBrandField('printFinish', e.target.value)
+                  }
+                  placeholder="e.g. matt lamination, spot UV"
+                />
+              </div>
             </div>
             </>
             )}
