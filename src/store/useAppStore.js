@@ -296,8 +296,6 @@ export function brandIdentityDefaults() {
   }
 }
 
-/** @deprecated shared instance — prefer brandIdentityDefaults() */
-export const defaultBrandIdentity = brandIdentityDefaults()
 
 /** Three Ideate direction slots (A/B/C) */
 export function blankDirections() {
