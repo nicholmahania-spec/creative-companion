@@ -2,6 +2,73 @@
 import useAppStore from '../store/useAppStore'
 import { buildColorSystem } from '../lib/brandSystem'
 
+/** Map autoVersion changeType → short kind for the History list. */
+export function versionKindFromChangeType(changeType = '') {
+  const t = String(changeType || '').toLowerCase()
+  if (t.includes('hourly')) return 'hourly'
+  if (t.includes('template')) return 'template'
+  if (t.includes('bump') || t.includes('version')) return 'bump'
+  return 'save'
+}
+
+/** Human label for a version kind (no clocks). */
+export function versionKindLabel(kind) {
+  switch (kind) {
+    case 'hourly':
+      return 'Hourly save'
+    case 'template':
+      return 'Template'
+    case 'bump':
+      return 'Bump'
+    default:
+      return 'Save'
+  }
+}
+
+/**
+ * Glanceable identity snapshot for History cards — what you'd get if you restore.
+ * Words and colour, not raw field dumps.
+ * @param {object|null|undefined} data - version.data
+ */
+export function versionIdentityPreview(data) {
+  const d = data || {}
+  const wordmark = String(d.logoWordmark || '').trim()
+  const direction = String(d.logoDirection || '').trim()
+  const tagline = String(d.tagline || '').trim()
+  const typeHeading = String(d.typeHeading || '').trim()
+  const typeBody = String(d.typeBody || '').trim()
+  const voice = String(d.voice || '').trim()
+  const promise = String(d.messagingPromise || '').trim()
+  const palette = Array.isArray(d.palette)
+    ? d.palette
+        .map((c) => (typeof c === 'string' ? c : c?.hex || c?.value || ''))
+        .filter((h) => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(h))
+        .slice(0, 8)
+    : []
+  const title =
+    wordmark ||
+    direction ||
+    tagline ||
+    (palette.length ? 'Colour work' : '') ||
+    typeHeading ||
+    'Empty identity'
+  const lines = []
+  if (tagline && tagline !== title) lines.push(tagline)
+  if (voice) lines.push(voice.length > 72 ? `${voice.slice(0, 70)}…` : voice)
+  if (promise && !lines.includes(promise)) {
+    lines.push(promise.length > 72 ? `${promise.slice(0, 70)}…` : promise)
+  }
+  if (typeHeading || typeBody) {
+    lines.push([typeHeading, typeBody].filter(Boolean).join(' · '))
+  }
+  return {
+    title,
+    lines: lines.slice(0, 3),
+    palette,
+    hasMark: !!(wordmark || direction || (d.logoImage && d.logoImage !== '[image-omitted]')),
+  }
+}
+
 /**
  * Version Service
  * Handles versioning, diffing, and history tracking for design projects
@@ -9,15 +76,18 @@ import { buildColorSystem } from '../lib/brandSystem'
 class VersionService {
   constructor() {
     this.storageKey = 'project-versions'
-    /** Low cap — snapshots must not compete with desk localStorage quota. */
-    this.maxVersionsPerProject = 8
+    /** Enough for a work-day of hourly saves + bumps without bloating quota. */
+    this.maxVersionsPerProject = 24
+    /** Min gap between hourly saves (ms). */
+    this.hourlyMinGapMs = 55 * 60 * 1000
   }
 
   /**
    * Create a version snapshot of the current project state
+   * @param {{ changeType?: string }} [opts]
    * @returns {Promise<Object>} Version snapshot
    */
-  async createVersionSnapshot() {
+  async createVersionSnapshot(opts = {}) {
     const store = useAppStore.getState()
     const { projects, currentProjectId } = store
 
@@ -26,12 +96,15 @@ class VersionService {
     const project = projects.find(p => p.id === currentProjectId)
     if (!project) return null
 
+    const kind = versionKindFromChangeType(opts.changeType)
+
     // Create a deep copy of the relevant project data for versioning
     const versionData = {
       id: `${project.id}-v${project.designVersion}-${Date.now()}`,
       projectId: project.id,
       versionLabel: project.designVersion || 'v1',
       timestamp: new Date().toISOString(),
+      kind,
       // Store only the design-relevant parts of the project
       data: {
         // Brand identity
@@ -90,11 +163,12 @@ class VersionService {
       // Metadata about what changed since last version (to be filled by diff)
       changeSummary: {
         fieldsChanged: [],
-        severity: 'patch' // patch, minor, major
+        severity: 'patch',
+        kind,
+        summary: versionKindLabel(kind),
+        changeCount: 0,
       }
     }
-
-    // Track version creation
 
     return versionData
   }
@@ -352,15 +426,41 @@ class VersionService {
       const latestVersion = versions[0] // Most recent
 
       // Create new snapshot
-      const newVersion = await this.createVersionSnapshot()
+      const kind = versionKindFromChangeType(changeType)
+      const newVersion = await this.createVersionSnapshot({ changeType })
       if (!newVersion) return null
 
       // If we have a previous version, calculate what changed
       if (latestVersion) {
         const diff = this.diffVersions(latestVersion, newVersion)
+        const fieldList = [
+          ...diff.added,
+          ...diff.removed,
+          ...diff.modified,
+        ].map((c) => c.field)
         newVersion.changeSummary = {
-          fieldsChanged: [...diff.added, ...diff.removed, ...diff.modified].map(c => c.field),
-          severity: diff.severity
+          fieldsChanged: fieldList,
+          severity: diff.severity || 'patch',
+          changeCount: diff.changeCount || 0,
+          summary:
+            kind === 'hourly'
+              ? diff.changeCount
+                ? `Hourly · ${diff.summary}`
+                : 'Hourly save'
+              : kind === 'bump'
+                ? diff.changeCount
+                  ? `Bump · ${diff.summary}`
+                  : 'Bump'
+                : diff.summary || versionKindLabel(kind),
+          kind,
+        }
+      } else {
+        newVersion.changeSummary = {
+          fieldsChanged: [],
+          severity: 'patch',
+          changeCount: 0,
+          summary: versionKindLabel(kind),
+          kind,
         }
       }
 
@@ -369,6 +469,50 @@ class VersionService {
       return versionId
     } catch (error) {
       console.error('Error in auto versioning:', error)
+      return null
+    }
+  }
+
+  /**
+   * Hourly identity snapshot while the studio is open.
+   * Skips if nothing identity-related changed since the last save, or if a
+   * save already landed recently (avoids double-fire with Bump).
+   * @returns {Promise<string|null>}
+   */
+  async maybeHourlyVersion() {
+    try {
+      const store = useAppStore.getState()
+      const { currentProjectId, projects } = store
+      if (!currentProjectId) return null
+      const project = (projects || []).find((p) => p.id === currentProjectId)
+      if (!project) return null
+
+      const versions = await this.getProjectVersions(currentProjectId)
+      const latest = versions[0]
+      if (latest?.timestamp) {
+        const age = Date.now() - Date.parse(latest.timestamp)
+        if (!Number.isNaN(age) && age < this.hourlyMinGapMs) return null
+      }
+
+      const candidate = await this.createVersionSnapshot({
+        changeType: 'hourly',
+      })
+      if (!candidate) return null
+
+      if (latest) {
+        const diff = this.diffVersions(latest, candidate)
+        if (!diff.changeCount) return null
+      } else {
+        /* First ever snapshot: only if there is something to remember */
+        const preview = versionIdentityPreview(candidate.data)
+        const empty =
+          preview.title === 'Empty identity' && preview.palette.length === 0
+        if (empty) return null
+      }
+
+      return this.autoVersion('hourly')
+    } catch (error) {
+      console.error('Error in hourly versioning:', error)
       return null
     }
   }

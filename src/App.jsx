@@ -15,6 +15,7 @@ import {
   showClientHeadings as showClientHeadingsFor,
 } from './lib/projectGrouping'
 import PathViewSkeleton from './components/PathViewSkeleton'
+import versionService from './services/versionService'
 
 import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
@@ -1839,6 +1840,22 @@ function App() {
     const timer = window.setTimeout(warm, 2200)
     return () => window.clearTimeout(timer)
   }, [unlocked, cloudHydrating])
+
+  /* Identity history: about once an hour while the studio is open, if the
+     mark/words/colour actually changed. Bump still saves a named point. */
+  useEffect(() => {
+    if (!unlocked || !onboarded || cloudHydrating || !activeProjectId) {
+      return undefined
+    }
+    const HOUR_MS = 60 * 60 * 1000
+    const run = () => {
+      versionService.maybeHourlyVersion().catch(() => {})
+    }
+    /* Catch up if the last save is already stale (tab left open overnight). */
+    run()
+    const id = window.setInterval(run, HOUR_MS)
+    return () => window.clearInterval(id)
+  }, [unlocked, onboarded, cloudHydrating, activeProjectId])
 
   // Hydrate forced break + focus timer after unlock (reload mid-session)
   useEffect(() => {
