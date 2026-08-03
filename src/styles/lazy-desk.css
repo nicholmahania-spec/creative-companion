@@ -21,7 +21,8 @@
 @media (min-width: 960px) {
   .desk-grid {
     grid-template-columns: minmax(0, 1fr) 340px;
-    align-items: start;
+    /* Equal column height so the main stack can fill beside a tall rail */
+    align-items: stretch;
   }
 }
 
@@ -31,7 +32,13 @@
   flex-direction: column;
   gap: 1px;
   min-width: 0;
+  min-height: 0;
   background: var(--border-subtle);
+}
+
+/* Strategy · the brief absorbs leftover main height — no dead slab under it */
+.desk-brief {
+  flex: 1 1 auto;
 }
 
 .desk-panel {
