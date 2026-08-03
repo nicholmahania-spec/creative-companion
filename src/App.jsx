@@ -32,6 +32,7 @@ import {
   urgencyLabel,
   deadlineUrgency,
   daysUntil,
+  relativeDeadlineLabel,
 } from './lib/dates'
 import {
   APP_BUILD,
@@ -4127,6 +4128,67 @@ function App() {
                       Open desk
                     </button>
                   </section>
+
+                  {/* Due soon — deadlines only, not a full month (ADHD: no second map). */}
+                  <section
+                    className="home-dash-panel home-dash-due"
+                    aria-label="Due soon"
+                  >
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Due soon</h2>
+                      <span className="home-dash-panel-meta">
+                        {(upcomingDeadlines || []).length
+                          ? `${Math.min(5, upcomingDeadlines.length)} coming`
+                          : 'None'}
+                      </span>
+                    </div>
+                    {(upcomingDeadlines || []).length === 0 ? (
+                      <p className="home-dash-panel-empty">
+                        No project or task dues yet. Set one on Deadlines when
+                        a date matters.
+                      </p>
+                    ) : (
+                      <ul className="home-dash-due-list">
+                        {(upcomingDeadlines || []).slice(0, 5).map((row) => (
+                          <li key={`${row.kind}-${row.id}`}>
+                            <button
+                              type="button"
+                              className={`home-dash-due-row urgency-${row.urgency || 'later'}`}
+                              onClick={() => {
+                                if (row.kind === 'project') {
+                                  setCurrentProject(row.id)
+                                  setActiveView('project')
+                                } else if (row.projectId != null) {
+                                  setCurrentProject(row.projectId)
+                                  setActiveView('desk')
+                                } else {
+                                  setActiveView('calendar')
+                                }
+                              }}
+                            >
+                              <span className="home-dash-due-name">
+                                {row.kind === 'project' ? 'Project' : 'Task'}
+                                {': '}
+                                {row.name}
+                              </span>
+                              <span className="home-dash-due-when">
+                                {relativeDeadlineLabel(row.date) ||
+                                  formatShortDate(row.date)}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm home-dash-panel-cta"
+                      onClick={() => setActiveView('calendar')}
+                    >
+                      Full deadlines
+                    </button>
+                  </section>
+
                   {/* Client needs you */}
                   <section
                     className="home-dash-panel"
