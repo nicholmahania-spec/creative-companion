@@ -8,8 +8,10 @@ import { describe, it, expect } from 'vitest'
 import {
   touchpointsFor,
   touchpointsBlurb,
+  touchpointCheckHint,
   TOUCHPOINT_ORDER,
   LEGACY_TOUCHPOINTS,
+  TOUCHPOINT_LABEL,
 } from './touchpoints'
 
 describe('touchpointsFor', () => {
@@ -74,5 +76,14 @@ describe('touchpointsBlurb', () => {
 
   it('stays generic when nothing was named', () => {
     expect(touchpointsBlurb([], [])).not.toMatch(/you said/)
+  })
+})
+
+describe('touchpointCheckHint', () => {
+  it('gives a concrete check line for every book mock', () => {
+    for (const id of TOUCHPOINT_ORDER) {
+      expect(touchpointCheckHint(id).length).toBeGreaterThan(4)
+      expect(TOUCHPOINT_LABEL[id]).toBeTruthy()
+    }
   })
 })

@@ -87,6 +87,24 @@
   border-color: var(--border-strong, var(--border-subtle));
 }
 
+/* Storyboard row: mock (what the book draws) + note / mark good */
+.touchpoints-card-layout {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 7.5rem) minmax(0, 1fr);
+  gap: var(--space-3) var(--space-4);
+  align-items: start;
+}
+
+@media (max-width: 520px) {
+  .touchpoints-card-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.touchpoints-card-body {
+  min-width: 0;
+}
+
 .touchpoints-card-head {
   display: flex;
   flex-wrap: wrap;
@@ -118,6 +136,199 @@
   .touchpoints-card-head .btn {
     min-height: var(--tap-min, 2.75rem);
   }
+}
+
+/* —— Mock thumbnails (schematic of book applications) —— */
+.tp-mock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  max-width: 8rem;
+}
+
+.tp-mock-sheet {
+  width: 100%;
+  height: 100%;
+  min-height: 4.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+.tp-mock-caption {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.tp-mock-logo {
+  display: block;
+  max-height: 1.35rem;
+  max-width: 70%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.tp-mock-wordmark {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.tp-mock-meta {
+  font-size: 0.55rem;
+  font-weight: 500;
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tp-mock-block {
+  display: block;
+  height: var(--space-2);
+  width: 55%;
+  border-radius: var(--radius-none);
+  opacity: 0.85;
+}
+
+.tp-mock-lines {
+  display: block;
+  height: var(--space-2);
+  width: 80%;
+  border-radius: var(--radius-none);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.tp-mock-card-inner,
+.tp-mock-email-inner,
+.tp-mock-generic {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.tp-mock-print-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.tp-mock-print-band {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+}
+
+.tp-mock-print-inner .tp-mock-meta {
+  padding: var(--space-1) var(--space-2);
+}
+
+.tp-mock-social-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  text-align: center;
+}
+
+.tp-mock-web-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tp-mock-web-nav {
+  display: flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  min-height: var(--space-4);
+}
+
+.tp-mock-web-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.tp-mock-app-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tp-mock-app-status {
+  height: var(--space-2);
+  flex-shrink: 0;
+}
+
+.tp-mock-app-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.tp-mock-pack-inner,
+.tp-mock-sign-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  text-align: center;
+}
+
+.tp-mock-merch-inner {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+}
+
+.tp-mock-merch-tee {
+  width: 70%;
+  height: 75%;
+  border: 1px solid;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+}
+
+.app.deep .tp-mock-sheet {
+  box-shadow: none;
 }
 
 .sketch-studio-top {

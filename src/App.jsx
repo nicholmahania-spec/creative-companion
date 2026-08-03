@@ -4363,6 +4363,7 @@ function App() {
             <SketchView
               navDir={navDir}
               activeProject={activeProject}
+              projectPalette={projectPalette}
               projectDeadline={projectDeadline}
               completedCount={completedCount}
               deskTasks={deskTasks}

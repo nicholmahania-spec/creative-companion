@@ -50,6 +50,24 @@ export const TOUCHPOINT_LABEL = {
 export const touchpointLabel = (id) => TOUCHPOINT_LABEL[id] || id
 
 /**
+ * One-line prompt for the note field — what to check on this mock.
+ * Keeps Touchpoints tied to the book applications page.
+ */
+export const TOUCHPOINT_CHECK = {
+  businessCard: 'Lockup, type size, contact hierarchy',
+  print: 'Headline, logo placement, margins',
+  social: 'Crop, wordmark vs icon, contrast',
+  website: 'Nav mark, hero type, accent use',
+  app: 'Icon, splash, readable at small size',
+  email: 'Header mark, signature line',
+  packaging: 'Front panel, hierarchy at arm’s length',
+  merch: 'Print area, one colour vs full',
+  signage: 'Distance read, contrast',
+}
+
+export const touchpointCheckHint = (id) =>
+  TOUCHPOINT_CHECK[id] || 'How the system shows up here'
+/**
  * Brief surface id → the mocks it implies.
  *
  * `print` yields two: a business card is print, and it is the single most

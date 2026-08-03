@@ -70,8 +70,8 @@ const COACHING = {
       'Walk the applications from Strategy. Note how each looks, or mark looks right.',
     checks: [
       'Applications match where the brand is used',
-      'Each important surface has a note or “looks right”',
-      'Proofs are specific enough to hand off',
+      'Each mock checked (note or “this mock is good”)',
+      'Notes match what the book will show',
       'Ready for Assets when the system holds on real things',
     ],
   },

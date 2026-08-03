@@ -1,6 +1,6 @@
 /**
  * Touchpoints — apply the identity on real surfaces from the brief.
- * One job: note / mark each application that the brand book will show.
+ * One job: check the book mock + note / mark good.
  */
 import { useMemo, useCallback, lazy, Suspense } from 'react'
 import { labelForStepId } from '../lib/journey'
@@ -8,10 +8,12 @@ import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/processGuide'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
+import TouchpointMockThumb from '../components/TouchpointMockThumb'
 import {
   touchpointsFor,
   touchpointLabel,
   touchpointsBlurb,
+  touchpointCheckHint,
 } from '../lib/touchpoints'
 import '../styles/lazy-sketch.css'
 
@@ -32,19 +34,19 @@ export function touchpointsStatusLine({ hasBriefSurfaces, apps, proofs }) {
     const row = proofs?.[id]
     return !!(row?.done || String(row?.note || '').trim())
   })
-  if (notedIds.length === 0) return 'Applications from the brief'
-  if (notedIds.length >= apps.length) return 'All applications noted'
+  if (notedIds.length === 0) return 'Check each mock the book will show'
+  if (notedIds.length >= apps.length) return 'All mocks checked'
   const first = touchpointLabel(notedIds[0])
-  /* Path gate is “any one” — say enough, not a leftover scoreboard. */
   if (notedIds.length === 1) {
-    return `${first} noted · enough for the path · rest optional`
+    return `${first} checked · enough for the path · rest optional`
   }
-  return `${first} and more noted · enough for the path · rest optional`
+  return `${first} and more checked · enough for the path · rest optional`
 }
 
 export default function SketchView({
   navDir = 'none',
   activeProject = null,
+  projectPalette = [],
   journeyNext = null,
   setActiveView,
   flashMicro,
@@ -63,6 +65,10 @@ export default function SketchView({
     [surfaces, deliverables]
   )
   const proofs = activeProject?.touchpointApps || {}
+  const palette =
+    Array.isArray(projectPalette) && projectPalette.length
+      ? projectPalette
+      : activeProject?.palette || []
 
   const setApp = useCallback(
     (id, patch) => {
@@ -119,7 +125,7 @@ export default function SketchView({
             {labelForStepId('sketch')}
           </h1>
           <p className="path-job-line">
-            Where the brand shows up — one note per surface.
+            Where the brand shows up — check the mock the book will show.
           </p>
           <p className="touchpoints-status" role="status">
             {statusLine}
@@ -170,55 +176,62 @@ export default function SketchView({
           </button>
         </section>
       ) : (
-        <>
-          <ul className="touchpoints-list" aria-label="Applications">
-            {apps.map((id) => {
-              const row = proofs[id] || {}
-              const note = row.note || ''
-              const done = !!row.done
-              const hasNote = String(note).trim().length > 0
-              const ready = done || hasNote
-              return (
-                <li
-                  key={id}
-                  className={`touchpoints-card${ready ? ' is-ready' : ''}`}
-                >
-                  <div className="touchpoints-card-head">
-                    <h2 className="touchpoints-card-title">
-                      {touchpointLabel(id)}
-                    </h2>
-                    <button
-                      type="button"
-                      className={`btn btn-sm${done ? ' btn-secondary' : ' btn-ghost'}`}
-                      aria-pressed={done}
-                      onClick={() => {
-                        setApp(id, { done: !done })
-                        flashMicro?.(
-                          !done
-                            ? `${touchpointLabel(id)} · looks right`
-                            : `${touchpointLabel(id)} · open again`
-                        )
-                      }}
-                    >
-                      {done ? 'Looks right' : 'Mark looks right'}
-                    </button>
-                  </div>
-                  <label className="field-label" htmlFor={`tp-note-${id}`}>
-                    How it shows up
-                  </label>
-                  <textarea
-                    id={`tp-note-${id}`}
-                    className="field-textarea"
-                    rows={2}
-                    value={note}
-                    onChange={(e) => setApp(id, { note: e.target.value })}
-                    placeholder="One line — layout, words, or what to check"
+        <ul className="touchpoints-list" aria-label="Applications">
+          {apps.map((id) => {
+            const row = proofs[id] || {}
+            const note = row.note || ''
+            const done = !!row.done
+            const hasNote = String(note).trim().length > 0
+            const ready = done || hasNote
+            return (
+              <li
+                key={id}
+                className={`touchpoints-card${ready ? ' is-ready' : ''}`}
+              >
+                <div className="touchpoints-card-layout">
+                  <TouchpointMockThumb
+                    id={id}
+                    project={activeProject}
+                    palette={palette}
                   />
-                </li>
-              )
-            })}
-          </ul>
-        </>
+                  <div className="touchpoints-card-body">
+                    <div className="touchpoints-card-head">
+                      <h2 className="touchpoints-card-title">
+                        {touchpointLabel(id)}
+                      </h2>
+                      <button
+                        type="button"
+                        className={`btn btn-sm${done ? ' btn-secondary' : ' btn-ghost'}`}
+                        aria-pressed={done}
+                        onClick={() => {
+                          setApp(id, { done: !done })
+                          flashMicro?.(
+                            !done
+                              ? `${touchpointLabel(id)} · mock is good`
+                              : `${touchpointLabel(id)} · open again`
+                          )
+                        }}
+                      >
+                        {done ? 'Mock is good' : 'This mock is good'}
+                      </button>
+                    </div>
+                    <label className="field-label" htmlFor={`tp-note-${id}`}>
+                      How it shows up
+                    </label>
+                    <textarea
+                      id={`tp-note-${id}`}
+                      className="field-textarea"
+                      rows={2}
+                      value={note}
+                      onChange={(e) => setApp(id, { note: e.target.value })}
+                      placeholder={touchpointCheckHint(id)}
+                    />
+                  </div>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
       )}
 
       <div className="path-continue-row">
