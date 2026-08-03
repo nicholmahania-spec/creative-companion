@@ -87,40 +87,37 @@ describe('pathStepHasContent', () => {
     ).toBe(true)
   })
 
-  /* Touchpoints asks WHERE the brand appears, and renders the application
-     mocks chosen by the brief. The gate used to be `tasks.length >= 1`,
-     written when this stop meant something else and left behind by the
-     rename — and since onboarding creates exactly one task, every brand-new
-     project opened with this stage already ticked done. */
-  it('sketch is not done just because a task exists', () => {
+  /* Touchpoints is done when work on that stop is finished — not when the
+     Strategy brief names surfaces/deliverables (those auto-ticked the stop). */
+  it('sketch is not done just because a task exists or the brief names surfaces', () => {
     expect(
       pathStepHasContent('sketch', {
         project: {},
-        tasks: [{ id: 1, title: 'Draft logo', why: '' }],
+        tasks: [{ id: 1, title: 'Draft logo', why: '', completed: false }],
       })
     ).toBe(false)
-  })
-
-  it('sketch is done once the brief says where the brand is used', () => {
-    expect(pathStepHasContent('sketch', { project: {} })).toBe(false)
     expect(
       pathStepHasContent('sketch', {
         project: { detective: { brandSurfaces: ['website', 'social'] } },
       })
-    ).toBe(true)
-    // A deliverable the client asked to be MADE counts too — someone can
-    // order business cards without ticking "Print" as a place it lives.
+    ).toBe(false)
     expect(
       pathStepHasContent('sketch', {
         project: { detective: { deliverablesPicked: ['businessCard'] } },
       })
-    ).toBe(true)
-    // Empty arrays are not an answer.
+    ).toBe(false)
+  })
+
+  it('sketch is done when at least one titled task is completed', () => {
+    expect(pathStepHasContent('sketch', { project: {}, tasks: [] })).toBe(
+      false
+    )
     expect(
       pathStepHasContent('sketch', {
-        project: { detective: { brandSurfaces: [], deliverablesPicked: [] } },
+        project: {},
+        tasks: [{ id: 1, title: 'Apply lockup to card', completed: true }],
       })
-    ).toBe(false)
+    ).toBe(true)
   })
 
   it('design ignores stock default palette alone', () => {
@@ -171,7 +168,9 @@ describe('pathStepHasContent', () => {
         directions: [{ id: 'a', title: 'Quiet', note: 'Fits the goal' }],
       },
       moodItems: [{ id: 1, inPack: true, type: 'quote', note: 'ref' }],
-      tasks: [{ id: 1, title: 'Draft', why: 'Fits the goal' }],
+      tasks: [
+        { id: 1, title: 'Apply lockup', why: 'Fits the goal', completed: true },
+      ],
       sparkIndex: 3,
       palette: ['#111', '#222'],
     })
@@ -287,26 +286,23 @@ describe('completion latches', () => {
     ).toBe(true)
   })
 
-  /* The sharpest case: brandWords is a client-visible brief field that
-     mergeDetectiveAnswers overwrites, and deliverWordsChecked was keyed by the
-     word's own text. So a client re-submitting their brief could un-complete
-     the designer's final stop, weeks later, from a different screen. */
-  it('assets does not un-tick when the client edits their brand words', () => {
+  /* Assets path-done is handoff/learnings only — brand-word checkboxes no
+     longer gate the tick (they live under collapsed UI and could un-tick
+     after a client re-submits brandWords). Latch still holds once reached. */
+  it('assets stays met from handoff even if brand words change', () => {
     const done = {
       id: 'p',
       handoffNote: 'files sent',
       detective: { brandWords: 'honest, solid' },
-      deliverWordsChecked: { honest: true, solid: true },
     }
     expect(pathStepMeetsCondition('deliver', { project: done })).toBe(true)
 
-    // The client re-submits with a reworded answer; the old keys no longer match.
     const afterClientEdit = {
       ...done,
       detective: { brandWords: 'honest, solid, warm' },
     }
     expect(pathStepMeetsCondition('deliver', { project: afterClientEdit })).toBe(
-      false
+      true
     )
     expect(
       pathStepHasContent('deliver', {

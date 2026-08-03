@@ -111,8 +111,8 @@ const EXEMPT = {
   /* Drives the Identity completion gate (journeyProgress.js) and the palette
      health read. Internal rationale — deliberately not printed. */
   colorRoleWhy: 'feeds a completion gate, not a deliverable',
-  /* Drives the Assets completion gate. Checklist state, not content. */
-  deliverWordsChecked: 'feeds a completion gate, not a deliverable',
+  /* Optional Assets ship polish — not path-done (audit 2026-08-03). */
+  deliverWordsChecked: 'optional ship polish checkboxes, not a deliverable',
   /* UI resume only — which Mark/Words/Colour/Type/Preview screen was last. */
   identitySubstep: 'resume position on Identity, not a deliverable field',
 }

@@ -612,10 +612,20 @@ export default function SketchView(props) {
           type="button"
           className="btn btn-primary work-path-next"
           onClick={() =>
-            setActiveView?.(journeyNext?.view || 'brand')
+            setActiveView?.(journeyNext?.view || 'finish')
           }
         >
           {`Next · ${journeyNext?.label || labelForStepId('deliver')}`}
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => {
+            const hub = 'desk'
+            setActiveView?.(hub)
+          }}
+        >
+          Back to the desk
         </button>
       </div>
     </div>

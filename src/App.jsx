@@ -3505,7 +3505,8 @@ function App() {
                  accent habituates in days and taxes attention forever).
                  Static always, one per screen, never on destructive or
                  client-facing controls. */
-              className={`btn btn-primary step-rail-cta${
+              /* Secondary: in-page Next is the solid primary (one forward). */
+              className={`btn btn-secondary step-rail-cta${
                 journeyActive && thisStepFilled ? ' is-earned' : ''
               }`}
               onClick={() => advancePathOrIdentity()}
@@ -3990,8 +3991,16 @@ function App() {
                           ? 'Ready'
                           : 'Next'}
                     </p>
-                    <h2 className="home-dash-pickup-title">{nextLabel}</h2>
-                    {nextPlain ? (
+                    <h2 className="home-dash-pickup-title">
+                      {focus.hasUnreadClient
+                        ? 'Client inbox'
+                        : nextLabel}
+                    </h2>
+                    {focus.hasUnreadClient ? (
+                      <p className="home-dash-pickup-plain">
+                        Open their messages and answers.
+                      </p>
+                    ) : nextPlain ? (
                       <p className="home-dash-pickup-plain">{nextPlain}</p>
                     ) : null}
                   </div>
@@ -4000,6 +4009,11 @@ function App() {
                       type="button"
                       className="btn btn-primary home-dash-primary"
                       onClick={() => {
+                        if (focus.hasUnreadClient) {
+                          setCurrentProject(focus.project.id)
+                          setClientInboxOpen(true)
+                          return
+                        }
                         if (pathFull) {
                           setCurrentProject(focus.project.id)
                           setActiveView('finish')
@@ -4008,18 +4022,20 @@ function App() {
                         switchProjectAndContinue(focus.project.id)
                       }}
                     >
-                      {pathFull
-                        ? `Open ${labelForStepId('deliver')}`
-                        : `Continue · ${focus.nextGap?.label || 'work'}`}
+                      {focus.hasUnreadClient
+                        ? 'Open client inbox'
+                        : pathFull
+                          ? `Open ${labelForStepId('deliver')}`
+                          : `Continue · ${focus.nextGap?.label || 'work'}`}
                     </button>
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-ghost"
                       onClick={() =>
                         openProjectWhereLeftOff(focus.project.id)
                       }
                     >
-                      Open desk
+                      Desk
                     </button>
                   </div>
                 </div>
