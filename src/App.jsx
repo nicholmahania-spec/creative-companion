@@ -2877,9 +2877,10 @@ function App() {
       const result = importAllData(data)
       if (result.ok) {
         setBodyDoubling(true)
-        setActiveView('finish')
+        /* Desk is the project hub — open there so the Studio sample is visible. */
+        setActiveView('desk')
         notifyAction(
-          'Harbor & Hearth demo loaded · open Pack for full brand book',
+          'Harbor & Hearth demo loaded · desk sample ready',
           'project_create',
           { label: 'Harbor & Hearth demo' }
         )
@@ -2895,7 +2896,7 @@ function App() {
     setDeskConfirm({
       kind: 'demo',
       label:
-        'Load Harbor & Hearth full brand guide demo? Replaces workspace. Backup first if needed.',
+        'Load Harbor & Hearth desk sample? Replaces workspace. Backup first if needed.',
       onConfirm: () => {
         setDeskConfirm(null)
         void runHarborHearthImport()
