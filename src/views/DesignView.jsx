@@ -432,7 +432,7 @@ export default function DesignView({
     const nextPal = mergeRolesIntoPalette(projectPalette, roles, 8)
     if (nextPal.length >= 2) setProjectPalette(nextPal)
     flashMicro?.(
-      `Fixed ${changes.length} role${changes.length === 1 ? '' : 's'} for AA · ${changes.map((c) => c.role).join(', ')}`
+      `Fixed contrast on ${changes.map((c) => c.role).join(', ')}`
     )
   }
 
