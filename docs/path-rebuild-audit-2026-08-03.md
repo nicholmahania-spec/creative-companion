@@ -51,8 +51,9 @@ Post-merge of desk/Home/Strategy/Research/Identity rebuild + chip removal + mobi
 
 ---
 
-## Shipped in this follow-up PR
+## Shipped in follow-up PRs
 
+### PR #69 (quick honesty)
 1. Gap strip: **Open Assets** (was “Download brand book PDF”)  
 2. Research pin star / remove / shortlist drop → **44px**  
 3. Palette health: **Tighten roles** (was Needs work)  
@@ -61,18 +62,20 @@ Post-merge of desk/Home/Strategy/Research/Identity rebuild + chip removal + mobi
 6. Assets status chip: short form, not full gap list  
 7. Research `.page-sub`: **token muted** (not `#A1A1A1`)  
 
+### PR path-audit-all (blocking set)
+1. **Touchpoints gate** — completed titled task only (not Strategy checklists)  
+2. **Assets path-done** — handoff/learnings only (brand-word checks optional polish)  
+3. **Home pickup** — client unread → **Open client inbox** primary; Desk is ghost  
+4. **Desk gap** — **Open {stop}** primary; Mark done secondary  
+5. **Strategy** — one solid primary (Send when form complete, else Next)  
+6. **Step-rail Continue** — secondary (page Next is solid primary)  
+7. **Touchpoints footer** — Back to the desk + correct Next fallback  
+8. **Desk task checks** — 44px tap targets  
+
 ---
 
-## Recommended next PRs (order)
+## Still open (later)
 
-1. **Touchpoints honesty** — gate + scope (owner pick)  
-2. **Home pickup one CTA** (ADHD B1+B2)  
-3. **Desk gap Open primary** (B3)  
-4. Strategy Send demotion when blank  
-5. Identity Words placeholders copy pass  
-
----
-
-## Single next move after this PR
-
-**Owner decision on Touchpoints:** rebuild applications surface vs drop from `JOURNEY_STEPS` until real — path map is lying today.
+- Full Touchpoints **applications** rebuild (gate is honest; page is still a task desk)  
+- Identity Words placeholders copy pass  
+- Dual-resume Desk lastView vs gap labeling polish

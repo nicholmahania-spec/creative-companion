@@ -430,10 +430,17 @@ export default function DeskView({
                   <span className="desk-card-title">{gapTitle}</span>
                 </button>
                 <div className="desk-card-actions">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => onOpenView(gapRow.view)}
+                  >
+                    {`Open ${gapRow.label}`}
+                  </button>
                   {typeof onMarkStepDone === 'function' && (
                     <button
                       type="button"
-                      className="btn btn-primary"
+                      className="btn btn-secondary"
                       onClick={() => onMarkStepDone(gapRow.id, true)}
                     >
                       Mark done

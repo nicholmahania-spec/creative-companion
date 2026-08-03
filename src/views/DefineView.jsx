@@ -150,8 +150,8 @@ export default function DefineView(props) {
     requiredEmpty.length === 0
       ? ''
       : requiredEmpty.length === 1
-        ? '1 needed'
-        : `${requiredEmpty.length} needed`
+        ? '1 still blank'
+        : `${requiredEmpty.length} still blank`
 
   const showSend = sendStatus.kind === 'not_sent'
 
@@ -177,7 +177,13 @@ export default function DefineView(props) {
           {showSend ? (
             <button
               type="button"
-              className="btn btn-primary define-brief-send"
+              /* One solid primary on the page: footer Next while blanks remain;
+                 Send elevates only when the form can actually go out. */
+              className={`btn define-brief-send${
+                (requiredEmpty?.length || 0) === 0
+                  ? ' btn-primary'
+                  : ' btn-secondary'
+              }`}
               onClick={() => onOpenShare?.()}
             >
               Send the brief
@@ -305,7 +311,11 @@ export default function DefineView(props) {
           <div className="define-brief-footer-actions">
             <button
               type="button"
-              className="btn btn-primary work-path-next"
+              className={`btn work-path-next${
+                showSend && (requiredEmpty?.length || 0) === 0
+                  ? ' btn-secondary'
+                  : ' btn-primary'
+              }`}
               onClick={() => setActiveView?.(journeyNext?.view || 'studio')}
             >
               {`Next · ${journeyNext?.label || labelForStepId('research')}`}

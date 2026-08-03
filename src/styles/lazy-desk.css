@@ -476,26 +476,41 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--space-4);
-  height: var(--space-4);
-  margin-top: var(--space-1);
+  /* 44px tap; drawn box stays small via inset border on the face */
+  width: var(--tap-min, 2.75rem);
+  height: var(--tap-min, 2.75rem);
+  margin-top: 0;
   padding: 0;
-  border: 1.5px solid var(--border-strong);
+  border: none;
   border-radius: var(--radius);
-  background: var(--bg-card);
+  background: transparent;
   color: var(--bg-card);
   font-size: var(--fs-1);
   line-height: 1;
   cursor: pointer;
+  position: relative;
 }
 
-.desk-row-check:hover {
+.desk-row-check::before {
+  content: '';
+  width: var(--space-4);
+  height: var(--space-4);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  box-sizing: border-box;
+}
+
+.desk-row-check.is-checked::before {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+}
+
+.desk-row-check:hover::before {
   border-color: var(--text-primary);
 }
 
 .desk-row-check.is-checked {
-  border-color: var(--text-primary);
-  background: var(--text-primary);
   color: var(--bg-card);
   cursor: pointer;
 }

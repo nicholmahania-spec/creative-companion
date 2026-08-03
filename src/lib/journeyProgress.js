@@ -141,26 +141,16 @@ export function pathStepMeetsCondition(stepId, ctx = {}) {
       return !!(hasDirection || hasSparkPin || hasRough)
     }
     case 'sketch': {
-      /* Touchpoints is about WHERE the brand appears — it renders the
-         application mocks chosen by the brief's `brandSurfaces` (see
-         lib/touchpoints.js). It used to be `tasks.length >= 1`, which was
-         written when this stop meant something else and survived the rename.
-         Onboarding asks for a first step, which creates exactly one task, so
-         every brand-new project opened with Touchpoints already ticked done.
+      /* Touchpoints = work done on this stop (desk steps completed), not
+         Strategy brief checklists. brandSurfaces / deliverablesPicked are
+         filled on the brief, so using them made Touchpoints auto-tick as
+         soon as Strategy was done — a lying path map (2026-08-03 audit).
 
-         A stage that reports done before any work exists is worse than one
-         that reports nothing: it removes the thing the rail is for, which is
-         knowing where you actually are without reconstructing it. And a tick
-         you did not earn makes every other tick worth less.
-
-         `touchpointsFor` is not used here on purpose — it falls back to a
-         legacy set when nothing is picked, so its length can never be zero.
-         The honest question is whether anyone answered. */
-      const surfaces = project.detective?.brandSurfaces
-      const deliverables = project.detective?.deliverablesPicked
-      return (
-        (Array.isArray(surfaces) && surfaces.length > 0) ||
-        (Array.isArray(deliverables) && deliverables.length > 0)
+         Completing at least one real task is work that only this stage's
+         UI produces. Open/empty tasks (including onboarding's first step)
+         do not count. Manual pathDone still overrides via pathStepHasContent. */
+      return (tasks || []).some(
+        (t) => t && t.completed === true && String(t.title || '').trim()
       )
     }
     case 'design': {
@@ -182,16 +172,12 @@ export function pathStepMeetsCondition(stepId, ctx = {}) {
         (project.tagline?.trim() && mood.some((m) => m.inPack))
       )
     case 'deliver': {
-      const hasNote = !!(
+      /* Handoff or learnings = a real close. Brand-word checkboxes live under
+         collapsed “Brand words” on Assets and must not silently gate the
+         path tick (2026-08-03 audit). Optional ship polish only. */
+      return !!(
         project.handoffNote?.trim() || project.learnings?.trim()
       )
-      const words = String(project.detective?.brandWords || '')
-        .split(',')
-        .map((w) => w.trim())
-        .filter(Boolean)
-      if (!words.length) return hasNote
-      const checked = project.deliverWordsChecked || {}
-      return hasNote && words.every((w) => checked[w])
     }
     default:
       return false
