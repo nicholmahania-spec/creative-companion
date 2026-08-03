@@ -19,7 +19,14 @@ import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/book/fon
 import { monogramFor, logoDontsList, DEFAULT_LOGO_CLEARSPACE, DEFAULT_LOGO_MIN_SIZE } from '../lib/brandSystem'
 import { loadBrandFamilies } from '../lib/book/fontLoader'
 import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
+import {
+  touchpointsFor,
+  touchpointLabel,
+} from '../lib/journey/touchpoints'
+import TouchpointMockThumb from '../components/TouchpointMockThumb'
 import '../styles/brand-book-builder.css'
+/* Application mock geometry (shared with Touchpoints) */
+import '../styles/lazy-sketch.css'
 
 /* ----------------------------------------------------------------------
    The owner's BrandBookBuilder, integrated.
@@ -232,29 +239,75 @@ function FrontCover({ kit, style, id }) {
    alternating margins on the wrong side. Defaults keep the old behaviour if
    this page is ever rendered on its own. */
 function ColorsPage({ kit, style, pageIndex = 0, id }) {
-  const { colors, bg, dark, grid, running, swatchCols } = kit;
+  const { colors, bg, dark, grid, running, swatchCols, roleColors } = kit
+  const swatches = colors.slice(0, 6)
+  const roles = roleColors || []
   return (
-    <div id={id} className="bbb-page bbb-page--colors" data-dark={dark || undefined} style={{ background: bg, ...style }}>
+    <div
+      id={id}
+      className="bbb-page bbb-page--colors"
+      data-dark={dark || undefined}
+      style={{ background: bg, ...style }}
+    >
       <span className="bbb-page-label">Color page</span>
       <GridOverlay {...grid} />
       <RunningHeader {...running} pageIndex={pageIndex} />
       <p className="bbb-ph-title">Color palette</p>
-      <div className="bbb-swatch-grid" style={{ gridTemplateColumns: `repeat(${swatchCols}, 1fr)` }}>
-        {colors.slice(0, 6).map((c) => {
-          const light = isLight(c.hex);
+      {roles.length > 0 && (
+        <div className="bbb-role-swatches" aria-label="Brand colour roles">
+          {roles.map((r) => {
+            const light = isLight(r.hex)
+            return (
+              <div
+                key={r.id}
+                className="bbb-role-swatch"
+                style={{ background: r.hex }}
+              >
+                <span
+                  className="bbb-role-swatch__name"
+                  style={{ color: light ? '#2a2a28' : '#f4f1ea' }}
+                >
+                  {r.name}
+                </span>
+                <span
+                  className="bbb-role-swatch__hex"
+                  style={{ color: light ? '#2a2a28' : '#f4f1ea' }}
+                >
+                  {String(r.hex || '').toUpperCase()}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      <div
+        className="bbb-swatch-grid"
+        style={{
+          gridTemplateColumns: `repeat(${Math.min(swatchCols, Math.max(2, swatches.length))}, 1fr)`,
+        }}
+      >
+        {swatches.map((c) => {
+          const light = isLight(c.hex)
           return (
-            <div key={c.id} className="bbb-swatch" style={{ background: c.hex }}>
-              <span className="bbb-swatch__label" style={{ color: light ? "#2a2a28" : "#f4f1ea" }}>
-                {c.name} &middot; {c.hex.toUpperCase()}
+            <div
+              key={c.id}
+              className="bbb-swatch"
+              style={{ background: c.hex || '#e7e7e7' }}
+            >
+              <span
+                className="bbb-swatch__label"
+                style={{ color: light ? '#2a2a28' : '#f4f1ea' }}
+              >
+                {c.name} &middot; {String(c.hex || '').toUpperCase()}
               </span>
             </div>
-          );
+          )
         })}
       </div>
       <RunningFooter {...running} pageIndex={pageIndex} />
       <PageNum {...running} pageIndex={pageIndex} />
     </div>
-  );
+  )
 }
 
 function TypePage({ kit, style, pageIndex = 1, id }) {
@@ -338,7 +391,15 @@ function LogoPage({ kit, style, pageIndex = 0, id }) {
           <span className="bbb-logo-construct__inset" aria-hidden="true" />
         </div>
         <p className="bbb-logo-spec__text" style={{ fontFamily: bStack }}>
-          {[logo.clearspace, logo.minSize].filter(Boolean).join(" ")}
+          {logo.image
+            ? [
+                logo.clearspace ||
+                  'Clearspace ~ half the mark height on all sides.',
+                logo.minSize ||
+                  'Min 24px digital · 0.5″ print (mark height).',
+                'Prefer full-colour primary; reverse on dark; mono for one-ink.',
+              ].join(' ')
+            : [logo.clearspace, logo.minSize].filter(Boolean).join(' ')}
         </p>
       </div>
 
@@ -416,6 +477,84 @@ function BackCover({ kit, style, id }) {
       <p className="bbb-back-mark" style={{ fontFamily: hStack, fontWeight: headlineWeight, color: headlineHex }}>{name}</p>
     </div>
   );
+}
+
+/**
+ * Applications — live mocks (logo + palette + wordmark), not a bare bullet list.
+ * Same touchpoint keys the PDF draws so screen and deliverable stay aligned.
+ */
+function AppsPage({ kit, style, pageIndex = 0, id, touchpoints = [], project }) {
+  const {
+    bg,
+    dark,
+    grid,
+    running,
+    hStack,
+    bStack,
+    headlineWeight,
+    headlineHex,
+    subheadHex,
+    bodyHex,
+    bodyWeight,
+    bodySize,
+  } = kit
+  const palette = (kit.colors || []).map((c) => c.hex).filter(Boolean)
+  const list =
+    Array.isArray(touchpoints) && touchpoints.length
+      ? touchpoints
+      : ['businessCard', 'social', 'packaging', 'signage']
+
+  return (
+    <div
+      id={id}
+      className="bbb-page bbb-page--apps"
+      data-dark={dark || undefined}
+      style={{ background: bg, ...style }}
+    >
+      <span className="bbb-page-label">Applications</span>
+      <GridOverlay {...grid} />
+      <RunningHeader {...running} pageIndex={pageIndex} />
+      <p
+        className="bbb-ph-title"
+        style={{ fontFamily: hStack, fontWeight: headlineWeight, color: headlineHex }}
+      >
+        Brand in use
+      </p>
+      <p
+        className="bbb-ph-sub"
+        style={{
+          fontFamily: bStack,
+          fontWeight: bodyWeight,
+          color: subheadHex,
+        }}
+      >
+        Applications
+      </p>
+      <div className="bbb-apps-grid">
+        {list.map((tpId) => (
+          <div key={tpId} className="bbb-apps-card">
+            <TouchpointMockThumb
+              id={tpId}
+              project={project}
+              palette={palette}
+            />
+            <span
+              className="bbb-apps-card__label"
+              style={{
+                fontFamily: bStack,
+                fontSize: `${Math.max(7, Number(bodySize) || 10)}pt`,
+                color: bodyHex || undefined,
+              }}
+            >
+              {touchpointLabel(tpId)}
+            </span>
+          </div>
+        ))}
+      </div>
+      <RunningFooter {...running} pageIndex={pageIndex} />
+      <PageNum {...running} pageIndex={pageIndex} />
+    </div>
+  )
 }
 
 /* -------------------------------------------------- running elements */
@@ -708,13 +847,63 @@ export default function BrandBookBuilderView() {
   const writeBookField = (f, value) =>
     f.scope === 'detective' ? updateDetective(f.field, value) : updateBrandField(f.field, value);
 
+  /* Primary / Accent / Ink / Paper from roles + named tokens for the colour page. */
+  const roleColors = (() => {
+    const roles = {
+      ...Object.fromEntries(
+        (colors || []).map((c) => [String(c.name || '').toLowerCase(), c.hex])
+      ),
+    }
+    const cr = project.colorRoles || {}
+    const pick = (name, roleKey, fallbackIdx) => ({
+      id: name,
+      name,
+      hex:
+        (cr[roleKey] && String(cr[roleKey])) ||
+        roles[name.toLowerCase()] ||
+        colors[fallbackIdx]?.hex ||
+        '#888888',
+    })
+    return [
+      pick('Primary', 'cover', 0),
+      pick('Accent', 'accent', 1),
+      pick('Ink', 'text', 2),
+      pick('Paper', 'quiet', 3),
+    ].filter((r) => r.hex)
+  })()
+
+  const appsTouchpoints = touchpointsFor(
+    pack.brandSurfaces,
+    pack.detective?.deliverablesPicked || pack.deliverablesPicked
+  )
+
   const kit = {
     logo: logoKit,
-    name: brandName, tagline, headlineHex, subheadHex, bodyHex, accent, colors, swatchCols,
-    hStack, bStack, headlineSize, headlineWeight, subheadSize, subheadWeight, bodySize, bodyWeight,
-    grid: { columns: grid.columns, rows: grid.rows, gutter: grid.gutter, show: grid.show },
+    name: brandName,
+    tagline,
+    headlineHex,
+    subheadHex,
+    bodyHex,
+    accent,
+    colors,
+    roleColors,
+    swatchCols,
+    hStack,
+    bStack,
+    headlineSize,
+    headlineWeight,
+    subheadSize,
+    subheadWeight,
+    bodySize,
+    bodyWeight,
+    grid: {
+      columns: grid.columns,
+      rows: grid.rows,
+      gutter: grid.gutter,
+      show: grid.show,
+    },
     running: runningProps,
-  };
+  }
 
   /* Deferred: overflow ("spilled") detection — a page that runs past its
      sheet is not flagged in this view. Not built. */
@@ -839,14 +1028,57 @@ export default function BrandBookBuilderView() {
   contentPages.filter((pg) => pg.kind === "foundation").forEach(pushContent);
 
   bookSectionIds(pack).forEach((id) => {
-    if (id === "color") { inner.push((i) => <ColorsPage key="colors" pageIndex={i} kit={{ ...kit, ...bgFor("pageColors") }} style={gridMarginVar} />); return; }
-    if (id === "type") { inner.push((i) => <TypePage key="type" pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />); return; }
-    /* Logo draws its lockups first, then any notes the project holds — the
-       visual page is what the client receives, the notes are the detail
-       behind it. */
-    if (id === "logo") inner.push((i) => <LogoPage key="logo" pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />);
-    pagesFor(id).forEach(pushContent);
-  });
+    if (id === 'color') {
+      inner.push((i) => (
+        <ColorsPage
+          key="colors"
+          pageIndex={i}
+          kit={{ ...kit, ...bgFor('pageColors') }}
+          style={gridMarginVar}
+        />
+      ))
+      return
+    }
+    if (id === 'type') {
+      inner.push((i) => (
+        <TypePage
+          key="type"
+          pageIndex={i}
+          kit={{ ...kit, ...bgFor('pageType') }}
+          style={gridMarginVar}
+        />
+      ))
+      return
+    }
+    /* Logo draws lockups first; prose notes from PAGE_FIELDS follow. */
+    if (id === 'logo') {
+      inner.push((i) => (
+        <LogoPage
+          key="logo"
+          pageIndex={i}
+          kit={{ ...kit, ...bgFor('pageType') }}
+          style={gridMarginVar}
+        />
+      ))
+      pagesFor(id).forEach(pushContent)
+      return
+    }
+    /* Applications: mock grid (live identity), not a bare bullet list. */
+    if (id === 'apps') {
+      inner.push((i) => (
+        <AppsPage
+          key="apps"
+          pageIndex={i}
+          kit={{ ...kit, ...bgFor('pageType') }}
+          style={gridMarginVar}
+          touchpoints={appsTouchpoints}
+          project={project}
+        />
+      ))
+      return
+    }
+    pagesFor(id).forEach(pushContent)
+  })
 
   contentPages.filter((pg) => pg.kind === "appendix").forEach(pushContent);
 
