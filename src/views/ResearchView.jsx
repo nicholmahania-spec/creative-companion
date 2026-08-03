@@ -1,6 +1,8 @@
 /**
- * Board (Research) — wall primary; ★ pack pins; sticky Next → System.
+ * Board (Research) — wall primary; ★ pack pins; path footer → Identity.
  * ADHD: short chrome, goal anchor, note focus without sibling blur.
+ * Path rebuild (2026-08-03): fill main width, no floating 980/1160 island,
+ * mark-done off, Next leads footer (same lessons as The brief).
  */
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { labelForStepId } from '../lib/journey'
@@ -850,6 +852,23 @@ export default function ResearchView({
                 </ul>
               </section>
             )}
+
+            <div className="path-continue-row research-path-footer">
+              <button
+                type="button"
+                className="btn btn-primary work-path-next"
+                onClick={() => setActiveView?.(journeyNext?.view || 'brand')}
+              >
+                {`Next · ${journeyNext?.label || labelForStepId('design')}`}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setActiveView?.('desk')}
+              >
+                Back to the desk
+              </button>
+            </div>
           </div>
         {boardLightbox && (
           <div
@@ -998,15 +1017,6 @@ export default function ResearchView({
           </div>
         )}
 
-      <div className="path-continue-row">
-        <button
-          type="button"
-          className="btn btn-primary work-path-next"
-          onClick={() => setActiveView?.(journeyNext?.view || 'brand')}
-        >
-          {`Next · ${journeyNext?.label || labelForStepId('design')}`}
-        </button>
-      </div>
     </>
   )
 }

@@ -2109,8 +2109,19 @@ h3 {
   background: color-mix(in srgb, var(--bg-elevated, #171717) 55%, transparent);
 }
 
-.app.view-studio .main {
-  max-width: 980px;
+/* Research used to cap main at 980px — a floating island next to the sidebar.
+   Path rebuild checklist: fill the main grid cell (same as The brief). */
+.app.view-studio .main,
+.app:has(.research-studio) .main {
+  max-width: none;
+  margin-inline: 0;
+  width: 100%;
+  padding-inline: var(--space-5);
+}
+
+/* Soften path mark-done on Research — wall is the job, not a full-width banner. */
+.main:has(.research-studio) .step-done-toggle {
+  display: none;
 }
 
 /* ——— Buttons ——— */

@@ -64,11 +64,64 @@
    position things on is a decision every pin, and the free-canvas geometry
    was never required — pins that had never been moved were already
    auto-placed. The grid keeps the wall metaphor without the arranging
-   chore. Content column capped so the grid doesn't stretch into
-   unreadably-wide rows on large screens. */
+   chore.
+
+   Path rebuild (2026-08-03): fill the main column — no 1160px centered
+   island. Pin cards stay readable via auto-fill minmax, not a page max-width. */
 .research-studio {
-  max-width: 1160px;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin-inline: 0;
+  padding-bottom: 5rem;
+}
+
+/* Head row: title + pack status left, timer right (one primary work surface). */
+.research-studio-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.research-top-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.research-status {
+  margin: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.research-studio-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+}
+
+/* Footer: Next leads (primary), desk secondary — match The brief hierarchy. */
+.research-studio .path-continue-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.research-studio .path-continue-row .work-path-next {
+  font-weight: 700;
+  min-width: 10rem;
 }
 
 .research-grid-hint {
@@ -91,7 +144,8 @@
 
 .research-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  /* Slightly larger min so wide main doesn't produce a thin pin sea */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
   gap: var(--space-4);
 }
 

@@ -121,6 +121,8 @@ hours, scope dashboards above the work). Demote contract/planning
 
 - Strategy brief: `src/views/DefineView.jsx`, `src/styles/lazy-define.css`,
   `.app:has(.define-brief) .main` in `src/styles/shell.css`
+- Research wall: `src/views/ResearchView.jsx`, `src/styles/lazy-mood.css`,
+  `.app:has(.research-studio) .main` / `.app.view-studio .main` full width
 - Do not reintroduce: chapter rail on The brief, start-here multi-chip ramp,
   interview CTA that only focuses the first field, project-name band when
-  sidebar/header already name the project
+  sidebar/header already name the project; Research 980/1160px centered caps
