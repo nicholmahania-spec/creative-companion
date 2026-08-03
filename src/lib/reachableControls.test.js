@@ -114,11 +114,19 @@ describe('Settings has exactly one door, in the sidebar Studio band', () => {
     expect(app).not.toMatch(/more-menu-item-mobile-only/)
   })
 
-  it('keeps theme and sign-out on the Settings page, not in two places', () => {
+  it('keeps theme and sign-out on Settings; Account menu is a fast path only', () => {
+    /* Settings remains the complete prefs/data surface. Header Account menu
+       may also flip theme and sign out — that is intentional (owner + ADHD
+       advisor), not a second Settings page. */
     const settings = read('views/SettingsView.jsx')
     expect(settings).toMatch(/toggleTheme\(\)/)
     expect(settings).toMatch(/handleSignOut/)
     expect(settings).toMatch(/Keyboard shortcuts/)
+    const account = read('components/AccountMenu.jsx')
+    expect(account).toMatch(/Switch to dark/)
+    expect(account).toMatch(/Settings/)
+    expect(account).toMatch(/Sign out/)
+    expect(account).not.toMatch(/Backup|Import|Sync|Hide tips|Less motion/)
   })
 })
 

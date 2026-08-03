@@ -113,6 +113,7 @@ import {
 } from './lib/billing/workWeek'
 import LogoLockup from './components/LogoLockup'
 import HeaderIcon from './components/HeaderIcon'
+import AccountMenu from './components/AccountMenu'
 import PullToRefresh from './components/PullToRefresh'
 import HighlightExplain from './components/HighlightExplain'
 import { RunningTodoAddModal, RunningTodoPanel } from './features/billing/RunningTodo'
@@ -454,6 +455,7 @@ function App() {
   const prevJourneyIdx = useRef(0)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const [openProjectMenuId, setOpenProjectMenuId] = useState(null)
   const [restoreSelect, setRestoreSelect] = useState('')
   const [navOpen, setNavOpen] = useState(false)
@@ -1217,6 +1219,11 @@ function App() {
         setShowBreakdown(false)
         return
       }
+      if (accountOpen) {
+        e.preventDefault()
+        setAccountOpen(false)
+        return
+      }
       setMoreOpen(false)
       // Ask Helper to tuck if expanded
       window.dispatchEvent(new CustomEvent('cc-helper-minimize'))
@@ -1227,6 +1234,7 @@ function App() {
     shortcutsOpen,
     deskConfirm,
     forceBreakConsentOpen,
+    accountOpen,
     exportPanel,
     showBreakdown,
   ])
@@ -3323,6 +3331,20 @@ function App() {
                     </span>
                   ))}
 
+            {/* Account — rightmost. Identity + theme + Settings + sign out/lock.
+                Not a second Settings surface: full prefs stay on Settings. */}
+            <AccountMenu
+              open={accountOpen}
+              onOpen={() => setAccountOpen(true)}
+              onClose={() => setAccountOpen(false)}
+              accessName={accessName}
+              theme={theme}
+              toggleTheme={toggleTheme}
+              onOpenSettings={() => setActiveView('settings')}
+              onSignOut={handleSignOut}
+              cloud={CLOUD}
+            />
+
           </div>
         </div>
       </header>
@@ -3444,9 +3466,9 @@ function App() {
               two weeks survivable. No aria-label: the visible text is the
               accessible name, which keeps voice control working.
 
-              Settings is a destination, not a dropdown — theme and Log out
-              live on that page, so a menu here would just ask "which of the
-              two menus holds this?" before every use. */}
+              Settings stays the full prefs page (sidebar). Theme / Sign out
+              also live on the header Account menu as a fast path — not a
+              second Settings map. */}
           {/* Studio = multi-project destinations. Path steps below = This project. */}
           <div className="journey-goto-section" aria-label="Studio">
             <span className="journey-goto-heading">Studio</span>
