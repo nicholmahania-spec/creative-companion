@@ -76,6 +76,7 @@ Post-merge of desk/Home/Strategy/Research/Identity rebuild + chip removal + mobi
 
 ## Still open (later)
 
-- Full Touchpoints **applications** rebuild (gate is honest; page is still a task desk)  
-- Identity Words placeholders copy pass  
-- Dual-resume Desk lastView vs gap labeling polish
+- ~~Full Touchpoints **applications** rebuild~~ → PR #71  
+- ~~Identity Words placeholders copy pass~~ → PR #71  
+- ~~Assets single-column ship~~ → PR #72  
+- ~~Dual-resume Desk lastView vs gap labeling polish~~ → deskPickup: gap primary, resume secondary only when different  

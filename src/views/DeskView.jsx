@@ -12,8 +12,9 @@
  * Artboard ambient (advisor): pack handoff status (real thin/core/ready) +
  * quiet Open Assets; Edit identity is the sole primary. No PDF on the desk.
  *
- * Owner chose literal mock (option B) for counts, relative times, Mark done
- * primary, and a week strip from real workLog. Shell chrome stays the app's.
+ * What's next (path-rebuild audit): path gap is the primary job; lastView
+ * resume only when it opens a *different* place — secondary, never a second
+ * equal Continue. Mark done stays secondary next to Open {stop}.
  */
 import { labelForView, labelForStepId } from '../lib/journey'
 import { getProcessPhase } from '../lib/processGuide'
@@ -40,6 +41,29 @@ export function packHandoffStatus({ thin, pathFull }) {
 }
 
 const stopTag = (label = '') => label.slice(0, 3).toUpperCase()
+
+/**
+ * Desk dual-resume: one initiation path for "What's next".
+ * - Path gap (first incomplete stop) is the primary pickup.
+ * - lastView resume only when it would open somewhere else (secondary).
+ * - Same destination → one control only (no "Back to X" + "Open X").
+ *
+ * @param {{ lastView?: string|null, gapView?: string|null }} args
+ * @returns {{ showResume: boolean, resumePrimary: boolean }}
+ */
+export function deskPickup({ lastView = null, gapView = null } = {}) {
+  const resume =
+    lastView && lastView !== 'desk' && String(lastView).trim()
+      ? String(lastView)
+      : null
+  if (!resume) return { showResume: false, resumePrimary: false }
+  if (gapView && resume === gapView) {
+    return { showResume: false, resumePrimary: false }
+  }
+  /* No path gap left → resume is the only pickup (path full / all skipped). */
+  if (!gapView) return { showResume: true, resumePrimary: true }
+  return { showResume: true, resumePrimary: false }
+}
 
 /** Relative age for mock timestamps — 2h / Yesterday / 2 days / 1 week. */
 export function relativeAgeLabel(iso, now = new Date()) {
@@ -201,6 +225,14 @@ export default function DeskView({
   const gapTitle =
     phase?.plain ||
     (gapRow ? `Pick this up in ${gapRow.label}.` : '')
+
+  const pickup = deskPickup({
+    lastView: project?.lastView,
+    gapView: gapRow?.view || null,
+  })
+  const resumeLabel = pickup.showResume
+    ? labelForView(project.lastView)
+    : ''
 
   return (
     <div className="desk-view view-enter">
@@ -408,17 +440,6 @@ export default function DeskView({
               </div>
             </div>
 
-            {project?.lastView && (
-              <button
-                type="button"
-                className="desk-resume"
-                onClick={() => onOpenView(project.lastView)}
-              >
-                Back to {labelForView(project.lastView)}
-                <span className="desk-resume-sub">where you left off</span>
-              </button>
-            )}
-
             {gapRow && (
               <div className="desk-card">
                 <button
@@ -456,6 +477,23 @@ export default function DeskView({
                 </div>
               </div>
             )}
+
+            {pickup.showResume && resumeLabel ? (
+              <button
+                type="button"
+                className={
+                  pickup.resumePrimary
+                    ? 'desk-resume'
+                    : 'desk-resume desk-resume-secondary'
+                }
+                onClick={() => onOpenView(project.lastView)}
+              >
+                {pickup.resumePrimary
+                  ? `Back to ${resumeLabel}`
+                  : `Or back to ${resumeLabel}`}
+                <span className="desk-resume-sub">where you left off</span>
+              </button>
+            ) : null}
 
             <ul className="desk-list">
               {openTasks.map((t) => (

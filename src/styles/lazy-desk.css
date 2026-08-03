@@ -340,7 +340,7 @@
   color: var(--text-muted);
 }
 
-/* Resume */
+/* Resume — primary only when path has no gap; secondary under gap card */
 .desk-resume {
   display: flex;
   flex-direction: column;
@@ -362,13 +362,24 @@
   border-color: var(--text-primary);
 }
 
+.desk-resume-secondary {
+  border-style: dashed;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.desk-resume-secondary:hover {
+  border-color: var(--border-strong, var(--border-subtle));
+  color: var(--text-primary);
+}
+
 .desk-resume-sub {
   font-size: var(--fs-1);
   font-weight: 500;
   color: var(--text-muted);
 }
 
-/* Gap card — Mark done primary (mock) */
+/* Gap card — Open {stop} is primary; Mark done secondary */
 .desk-card {
   display: flex;
   flex-direction: column;
