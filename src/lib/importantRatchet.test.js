@@ -39,7 +39,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
  * clean, which is the one place this debt is cheap to not acquire.
  */
 const BUDGET = {
-  'src/styles/shell.css': 412,
+  'src/styles/shell.css': 410,
   'src/styles/lazy-buddy.css': 55,
   'src/styles/lazy-settings.css': 36,
   'src/styles/lazy-design.css': 18,
