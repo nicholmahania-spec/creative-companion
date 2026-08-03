@@ -1065,7 +1065,7 @@ h3 {
   gap: 0.6rem;
 }
 
-/* Master/detail Home — glass stage, not a card grid */
+/* Master/detail Home — return wall (list only when n ≥ 2) */
 
 .home-md {
   display: grid;
@@ -1081,6 +1081,52 @@ h3 {
   -webkit-backdrop-filter: none;
   overflow: hidden;
   text-align: left;
+}
+
+/* Solo / empty: one pick-up column — same wall, no list chrome */
+.home-return-wall.is-solo,
+.home-return-wall.is-empty {
+  grid-template-columns: 1fr;
+  max-width: 36rem;
+  align-items: stretch;
+}
+
+.home-md-detail-solo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: var(--space-6) var(--space-5);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.home-return-wall.is-solo .home-title,
+.home-return-wall.is-empty .home-title {
+  text-align: left;
+}
+
+.home-return-wall.is-solo .home-cta-row,
+.home-return-wall.is-empty .home-cta-row {
+  justify-content: flex-start;
+}
+
+.home-empty-copy {
+  margin: 0 0 var(--space-4);
+  max-width: 36ch;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.home-needs-you-static {
+  cursor: default;
+  border-style: solid;
+}
+
+.home-needs-you-static:hover {
+  border-color: var(--border-subtle);
 }
 
 @media (max-width: 720px) {

@@ -3921,252 +3921,252 @@ function App() {
               </button>
             )
           })()}
-        {/* ===== HOME — Return wall (master/detail) =====
-            Pick-up (one elevated CTA) + work list sorted needs-you →
-            in-progress → ready. New project is secondary. Unread only on
-            project rows. Reviewed by adhd-executive-function-advisor. */}
-        {activeView === 'home' && activeProjects.length > 1 && (() => {
-          const orderedFlat = homeOrderedSummaries
-          const selected =
-            orderedFlat.find((s) => s.project.id === homeSelectedProjectId) ||
-            orderedFlat[0]
-          if (!selected) return null
-          const pathFull = !!selected.pathFull
-          const packReady = !!selected.packReady
-          const needsYou = orderedFlat.find((s) => s.hasUnreadClient)
-          const clientOf = (s) =>
-            (s.project?.detective?.clientName || '').trim()
-          return (
-            <section className="home-view home-md home-studio home-return-wall">
-              <nav className="home-md-list" aria-label="Your projects">
-                <div className="home-md-list-head">
-                  <h1 className="home-md-list-title">Projects</h1>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm home-new-project"
-                    onClick={() => setActiveView('create')}
-                  >
-                    + New project
-                  </button>
-                </div>
-                <ul className="home-md-rows">
-                  {projectGroups.map((group) => (
-                    <Fragment key={group.key}>
-                      {showClientHeadings && group.clientName && (
-                        <li
-                          className="home-md-group-head"
-                          role="presentation"
-                        >
-                          {group.clientName}
-                        </li>
-                      )}
-                      {group.projects.map((summary) => {
-                        const p = summary.project
-                        const rowFull = !!summary.pathFull
-                        const isActive = p.id === selected.project.id
-                        const unread = !!summary.hasUnreadClient
-                        return (
-                          <li key={p.id}>
-                            <button
-                              type="button"
-                              className={`home-md-row${isActive ? ' is-active' : ''}${
-                                unread ? ' has-unread' : ''
-                              }`}
-                              onClick={() => setHomeSelectedProjectId(p.id)}
-                            >
-                              <span className="home-md-row-top">
-                                <span className="home-md-row-name">{p.name}</span>
-                                {unread ? (
-                                  <span
-                                    className="home-md-row-badge"
-                                    aria-label="Client activity waiting"
-                                  />
-                                ) : null}
-                              </span>
-                              <span
-                                className={`home-md-row-next${rowFull ? ' is-done' : ''}`}
-                              >
-                                {listRowNext(summary)}
-                              </span>
-                            </button>
-                          </li>
-                        )
-                      })}
-                    </Fragment>
-                  ))}
-                </ul>
-              </nav>
+        {/* ===== HOME — one Return wall (0 / 1 / many) =====
+            Same pick-up forever. List only when n ≥ 2. No dual hero
+            (adhd-executive-function-advisor 2026-08-03). */}
+        {activeView === 'home' &&
+          (() => {
+            const n = activeProjects.length
+            const orderedFlat = homeOrderedSummaries
+            const showList = n >= 2
+            const selected =
+              n === 0
+                ? null
+                : orderedFlat.find(
+                    (s) => s.project.id === homeSelectedProjectId
+                  ) || orderedFlat[0]
 
-              <div className="home-md-detail">
-                {/* Ambient only when real — omit empty strip entirely */}
-                {needsYou ? (
+            if (n === 0) {
+              return (
+                <section className="home-view home-md home-studio home-return-wall is-empty">
+                  <div className="home-md-detail home-md-detail-solo">
+                    <p className="home-kicker">Home</p>
+                    <h2 className="home-title">No active project</h2>
+                    <p className="home-empty-copy">
+                      Start one when you&rsquo;re ready.
+                    </p>
+                    <div className="home-cta-row">
+                      <button
+                        type="button"
+                        className="btn btn-primary home-cta home-cta-continue"
+                        onClick={() => setActiveView('create')}
+                      >
+                        <span className="home-cta-continue-inner">
+                          + New project
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </section>
+              )
+            }
+
+            if (!selected) return null
+            const pathFull = !!selected.pathFull
+            const packReady = !!selected.packReady
+            const needsYou = orderedFlat.find((s) => s.hasUnreadClient)
+            const clientOf = (s) =>
+              (s.project?.detective?.clientName || '').trim()
+
+            return (
+              <section
+                className={`home-view home-md home-studio home-return-wall${
+                  showList ? '' : ' is-solo'
+                }`}
+              >
+                {showList ? (
+                  <nav className="home-md-list" aria-label="Your projects">
+                    <div className="home-md-list-head">
+                      <h1 className="home-md-list-title">Projects</h1>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm home-new-project"
+                        onClick={() => setActiveView('create')}
+                      >
+                        + New project
+                      </button>
+                    </div>
+                    <ul className="home-md-rows">
+                      {projectGroups.map((group) => (
+                        <Fragment key={group.key}>
+                          {showClientHeadings && group.clientName && (
+                            <li
+                              className="home-md-group-head"
+                              role="presentation"
+                            >
+                              {group.clientName}
+                            </li>
+                          )}
+                          {group.projects.map((summary) => {
+                            const p = summary.project
+                            const rowFull = !!summary.pathFull
+                            const isActive = p.id === selected.project.id
+                            const unread = !!summary.hasUnreadClient
+                            return (
+                              <li key={p.id}>
+                                <button
+                                  type="button"
+                                  className={`home-md-row${
+                                    isActive ? ' is-active' : ''
+                                  }${unread ? ' has-unread' : ''}`}
+                                  onClick={() =>
+                                    setHomeSelectedProjectId(p.id)
+                                  }
+                                >
+                                  <span className="home-md-row-top">
+                                    <span className="home-md-row-name">
+                                      {p.name}
+                                    </span>
+                                    {unread ? (
+                                      <span
+                                        className="home-md-row-badge"
+                                        aria-label="Client activity waiting"
+                                      />
+                                    ) : null}
+                                  </span>
+                                  <span
+                                    className={`home-md-row-next${
+                                      rowFull ? ' is-done' : ''
+                                    }`}
+                                  >
+                                    {listRowNext(summary)}
+                                  </span>
+                                </button>
+                              </li>
+                            )
+                          })}
+                        </Fragment>
+                      ))}
+                    </ul>
+                  </nav>
+                ) : null}
+
+                <div
+                  className={`home-md-detail${
+                    showList ? '' : ' home-md-detail-solo'
+                  }`}
+                >
+                  {needsYou && showList ? (
+                    <button
+                      type="button"
+                      className="home-needs-you"
+                      onClick={() =>
+                        setHomeSelectedProjectId(needsYou.project.id)
+                      }
+                    >
+                      Client replied
+                      {needsYou.project.name
+                        ? ` — ${needsYou.project.name}`
+                        : ''}
+                    </button>
+                  ) : needsYou && !showList ? (
+                    <p
+                      className="home-needs-you home-needs-you-static"
+                      role="status"
+                    >
+                      Client replied
+                    </p>
+                  ) : null}
+                  {clientOf(selected) ? (
+                    <p className="home-eyebrow home-detail-client">
+                      {clientOf(selected)}
+                    </p>
+                  ) : (
+                    <p className="home-eyebrow home-detail-client">
+                      {selected.project.name}
+                    </p>
+                  )}
+                  <p className="home-kicker">
+                    {selected.hasUnreadClient
+                      ? 'Needs you'
+                      : packReady
+                        ? 'Ready'
+                        : pathFull
+                          ? 'Path full'
+                          : 'Next'}
+                  </p>
+                  <h2 className="home-title">
+                    {packReady
+                      ? 'Brand book ready'
+                      : pathFull
+                        ? 'Path steps look full'
+                        : selected.nextGap
+                          ? selected.nextGap.label
+                          : 'All caught up'}
+                  </h2>
+                  {pathFull && !packReady ? (
+                    <p className="home-kicker home-pack-thin-note">
+                      {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
+                    </p>
+                  ) : null}
+                  <div className="home-cta-row">
+                    <button
+                      type="button"
+                      className="btn btn-primary home-cta home-cta-continue"
+                      onClick={() => {
+                        if (pathFull) {
+                          setCurrentProject(selected.project.id)
+                          setActiveView('finish')
+                          return
+                        }
+                        switchProjectAndContinue(selected.project.id)
+                      }}
+                    >
+                      <span className="home-cta-continue-inner">
+                        {pathFull
+                          ? `Open ${labelForStepId('deliver')}`
+                          : 'Continue'}
+                      </span>
+                    </button>
+                  </div>
                   <button
                     type="button"
-                    className="home-needs-you"
+                    className="home-desk-link"
                     onClick={() =>
-                      setHomeSelectedProjectId(needsYou.project.id)
+                      openProjectWhereLeftOff(selected.project.id)
                     }
                   >
-                    Client replied
-                    {needsYou.project.name
-                      ? ` — ${needsYou.project.name}`
-                      : ''}
+                    Open desk
                   </button>
-                ) : null}
-                {clientOf(selected) ? (
-                  <p className="home-eyebrow home-detail-client">
-                    {clientOf(selected)}
-                  </p>
-                ) : null}
-                <p className="home-kicker">
-                  {selected.hasUnreadClient
-                    ? 'Needs you'
-                    : packReady
-                      ? 'Ready'
-                      : pathFull
-                        ? 'Path full'
-                        : 'Next'}
-                </p>
-                <h2 className="home-title">
-                  {packReady
-                    ? 'Brand book ready'
-                    : pathFull
-                      ? 'Path steps look full'
-                      : selected.nextGap
-                        ? selected.nextGap.label
-                        : 'All caught up'}
-                </h2>
-                {pathFull && !packReady ? (
-                  <p className="home-kicker home-pack-thin-note">
-                    {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
-                  </p>
-                ) : null}
-                <div className="home-cta-row">
-                  <button
-                    type="button"
-                    className="btn btn-primary home-cta home-cta-continue"
-                    onClick={() => {
-                      if (pathFull) {
-                        setCurrentProject(selected.project.id)
-                        setActiveView('finish')
-                        return
-                      }
-                      switchProjectAndContinue(selected.project.id)
-                    }}
-                  >
-                    <span className="home-cta-continue-inner">
-                      {pathFull
-                        ? `Open ${labelForStepId('deliver')}`
-                        : 'Continue'}
-                    </span>
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  className="home-desk-link"
-                  onClick={() =>
-                    openProjectWhereLeftOff(selected.project.id)
-                  }
-                >
-                  Open desk
-                </button>
 
-                <div className="home-md-strip">
-                  {/* Filled-dot strip only — no numeric ratio (#3). */}
-                  <div className="home-md-steps" aria-label="Path steps">
-                    {selected.rows.map((r, i) => {
-                      const num = i + 1
-                      const isCurrent =
-                        selected.nextGap && r.id === selected.nextGap.id
-                      return (
-                        <div
-                          key={r.id}
-                          className={`home-md-step${r.done ? ' is-done' : ''}${
-                            isCurrent ? ' is-current' : ''
-                          }`}
-                          title={r.label}
-                        >
-                          <span className="home-md-step-dot">
-                            {r.done ? '✓' : num}
-                          </span>
-                        </div>
-                      )
-                    })}
+                  <div className="home-md-strip">
+                    <div className="home-md-steps" aria-label="Path steps">
+                      {selected.rows.map((r, i) => {
+                        const num = i + 1
+                        const isCurrent =
+                          selected.nextGap && r.id === selected.nextGap.id
+                        return (
+                          <div
+                            key={r.id}
+                            className={`home-md-step${
+                              r.done ? ' is-done' : ''
+                            }${isCurrent ? ' is-current' : ''}`}
+                            title={r.label}
+                          >
+                            <span className="home-md-step-dot">
+                              {r.done ? '✓' : num}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
+
+                  {!showList ? (
+                    <div className="home-cta-row home-new-project-row">
+                      <button
+                        type="button"
+                        className="btn btn-secondary home-new-project"
+                        onClick={() => setActiveView('create')}
+                      >
+                        + New project
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
-              </div>
-            </section>
-          )
-        })()}
-        {activeView === 'home' && activeProjects.length <= 1 && (
-          <section className="home-view home-studio">
-            <p className="home-eyebrow">
-              {activeProject?.name || 'Project'}
-            </p>
-            {brandBookReady ? (
-              <>
-                <h1 className="home-title">Brand book ready</h1>
-                <button
-                  type="button"
-                  className="btn btn-primary home-cta"
-                  onClick={() => setActiveView('finish')}
-                >
-                  {`Open ${labelForStepId('deliver')}`}
-                </button>
-              </>
-            ) : pathStepsFull ? (
-              <>
-                <h1 className="home-title">Path steps look full</h1>
-                <p className="home-kicker" style={{ marginTop: '0.5rem' }}>
-                  {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-primary home-cta"
-                  onClick={() => setActiveView('finish')}
-                >
-                  {`Open ${labelForStepId('deliver')}`}
-                </button>
-              </>
-            ) : pathNextGap ? (
-              <>
-                <p className="home-kicker">Next</p>
-                <h1 className="home-title">
-                  {pathNextGap.label}
-                </h1>
-                <div className="home-cta-row">
-                  <button
-                    type="button"
-                    className="btn btn-primary home-cta"
-                    onClick={() => goToNextProcessGap()}
-                  >
-                    Continue
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h1 className="home-title">All caught up</h1>
-                <button
-                  type="button"
-                  className="btn btn-primary home-cta"
-                  onClick={() => setActiveView('finish')}
-                >
-                  {`Open ${labelForStepId('deliver')}`}
-                </button>
-              </>
-            )}
-            <div className="home-cta-row home-new-project-row">
-              <button
-                type="button"
-                className="btn btn-secondary home-new-project"
-                onClick={() => setActiveView('create')}
-              >
-                + New project
-              </button>
-            </div>
-          </section>
-        )}
+              </section>
+            )
+          })()}
         {/* ===== WORK — one step owns the fold ===== */}
         {/* ===== SKETCH (lazy) ===== */}
         {activeView === 'flow' && (
