@@ -3921,248 +3921,356 @@ function App() {
               </button>
             )
           })()}
-        {/* ===== HOME — one Return wall (0 / 1 / many) =====
-            Same pick-up forever. List only when n ≥ 2. No dual hero
-            (adhd-executive-function-advisor 2026-08-03). */}
+        {/* ===== HOME — studio dashboard (all project counts) =====
+            Glanceable work status: pick-up + project cards + path + client.
+            Not a sparse single CTA card. */}
         {activeView === 'home' &&
           (() => {
             const n = activeProjects.length
             const orderedFlat = homeOrderedSummaries
-            const showList = n >= 2
-            const selected =
+            const focus =
               n === 0
                 ? null
                 : orderedFlat.find(
                     (s) => s.project.id === homeSelectedProjectId
                   ) || orderedFlat[0]
+            const clientOf = (s) =>
+              (s.project?.detective?.clientName || '').trim()
+            const needsYouList = orderedFlat.filter((s) => s.hasUnreadClient)
+            const readyList = orderedFlat.filter((s) => s.packReady)
 
             if (n === 0) {
               return (
-                <section className="home-view home-md home-studio home-return-wall is-empty">
-                  <div className="home-md-detail home-md-detail-solo">
-                    <p className="home-kicker">Home</p>
-                    <h2 className="home-title">No active project</h2>
-                    <p className="home-empty-copy">
-                      Start one when you&rsquo;re ready.
-                    </p>
-                    <div className="home-cta-row">
-                      <button
-                        type="button"
-                        className="btn btn-primary home-cta home-cta-continue"
-                        onClick={() => setActiveView('create')}
-                      >
-                        <span className="home-cta-continue-inner">
-                          + New project
-                        </span>
-                      </button>
-                    </div>
-                  </div>
+                <section className="home-dash" aria-label="Home dashboard">
+                  <header className="home-dash-head">
+                    <h1 className="home-dash-title">Home</h1>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => setActiveView('create')}
+                    >
+                      + New project
+                    </button>
+                  </header>
+                  <p className="home-dash-empty">
+                    No active projects. Start one when you&rsquo;re ready.
+                  </p>
                 </section>
               )
             }
 
-            if (!selected) return null
-            const pathFull = !!selected.pathFull
-            const packReady = !!selected.packReady
-            const needsYou = orderedFlat.find((s) => s.hasUnreadClient)
-            const clientOf = (s) =>
-              (s.project?.detective?.clientName || '').trim()
+            if (!focus) return null
+            const pathFull = !!focus.pathFull
+            const packReady = !!focus.packReady
+            const nextLabel = packReady
+              ? 'Brand book ready'
+              : pathFull
+                ? 'Path full — pack still thin'
+                : focus.nextGap
+                  ? focus.nextGap.label
+                  : 'All caught up'
+            const nextStepMeta = JOURNEY_STEPS.find(
+              (s) => s.id === focus.nextGap?.id
+            )
+            const nextPlain =
+              nextStepMeta?.plain ||
+              (packReady
+                ? 'Download or send the leave-behind from Assets.'
+                : pathFull
+                  ? `Open ${labelForStepId('deliver')} to fill gaps or ship.`
+                  : '')
 
             return (
-              <section
-                className={`home-view home-md home-studio home-return-wall${
-                  showList ? '' : ' is-solo'
-                }`}
-              >
-                {showList ? (
-                  <nav className="home-md-list" aria-label="Your projects">
-                    <div className="home-md-list-head">
-                      <h1 className="home-md-list-title">Projects</h1>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm home-new-project"
-                        onClick={() => setActiveView('create')}
-                      >
-                        + New project
-                      </button>
-                    </div>
-                    <ul className="home-md-rows">
-                      {projectGroups.map((group) => (
-                        <Fragment key={group.key}>
-                          {showClientHeadings && group.clientName && (
-                            <li
-                              className="home-md-group-head"
-                              role="presentation"
-                            >
-                              {group.clientName}
-                            </li>
-                          )}
-                          {group.projects.map((summary) => {
-                            const p = summary.project
-                            const rowFull = !!summary.pathFull
-                            const isActive = p.id === selected.project.id
-                            const unread = !!summary.hasUnreadClient
-                            return (
-                              <li key={p.id}>
-                                <button
-                                  type="button"
-                                  className={`home-md-row${
-                                    isActive ? ' is-active' : ''
-                                  }${unread ? ' has-unread' : ''}`}
-                                  onClick={() =>
-                                    setHomeSelectedProjectId(p.id)
-                                  }
-                                >
-                                  <span className="home-md-row-top">
-                                    <span className="home-md-row-name">
-                                      {p.name}
-                                    </span>
-                                    {unread ? (
-                                      <span
-                                        className="home-md-row-badge"
-                                        aria-label="Client activity waiting"
-                                      />
-                                    ) : null}
-                                  </span>
-                                  <span
-                                    className={`home-md-row-next${
-                                      rowFull ? ' is-done' : ''
-                                    }`}
-                                  >
-                                    {listRowNext(summary)}
-                                  </span>
-                                </button>
-                              </li>
-                            )
-                          })}
-                        </Fragment>
-                      ))}
-                    </ul>
-                  </nav>
-                ) : null}
-
-                <div
-                  className={`home-md-detail${
-                    showList ? '' : ' home-md-detail-solo'
-                  }`}
-                >
-                  {needsYou && showList ? (
-                    <button
-                      type="button"
-                      className="home-needs-you"
-                      onClick={() =>
-                        setHomeSelectedProjectId(needsYou.project.id)
-                      }
-                    >
-                      Client replied
-                      {needsYou.project.name
-                        ? ` — ${needsYou.project.name}`
-                        : ''}
-                    </button>
-                  ) : needsYou && !showList ? (
-                    <p
-                      className="home-needs-you home-needs-you-static"
-                      role="status"
-                    >
-                      Client replied
-                    </p>
-                  ) : null}
-                  {clientOf(selected) ? (
-                    <p className="home-eyebrow home-detail-client">
-                      {clientOf(selected)}
-                    </p>
-                  ) : (
-                    <p className="home-eyebrow home-detail-client">
-                      {selected.project.name}
-                    </p>
-                  )}
-                  <p className="home-kicker">
-                    {selected.hasUnreadClient
-                      ? 'Needs you'
-                      : packReady
-                        ? 'Ready'
-                        : pathFull
-                          ? 'Path full'
-                          : 'Next'}
-                  </p>
-                  <h2 className="home-title">
-                    {packReady
-                      ? 'Brand book ready'
-                      : pathFull
-                        ? 'Path steps look full'
-                        : selected.nextGap
-                          ? selected.nextGap.label
-                          : 'All caught up'}
-                  </h2>
-                  {pathFull && !packReady ? (
-                    <p className="home-kicker home-pack-thin-note">
-                      {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
-                    </p>
-                  ) : null}
-                  <div className="home-cta-row">
-                    <button
-                      type="button"
-                      className="btn btn-primary home-cta home-cta-continue"
-                      onClick={() => {
-                        if (pathFull) {
-                          setCurrentProject(selected.project.id)
-                          setActiveView('finish')
-                          return
-                        }
-                        switchProjectAndContinue(selected.project.id)
-                      }}
-                    >
-                      <span className="home-cta-continue-inner">
-                        {pathFull
-                          ? `Open ${labelForStepId('deliver')}`
-                          : 'Continue'}
-                      </span>
-                    </button>
+              <section className="home-dash" aria-label="Home dashboard">
+                <header className="home-dash-head">
+                  <div>
+                    <p className="home-dash-eyebrow">Home</p>
+                    <h1 className="home-dash-title">Studio</h1>
                   </div>
                   <button
                     type="button"
-                    className="home-desk-link"
-                    onClick={() =>
-                      openProjectWhereLeftOff(selected.project.id)
-                    }
+                    className="btn btn-secondary"
+                    onClick={() => setActiveView('create')}
                   >
-                    Open desk
+                    + New project
                   </button>
+                </header>
 
-                  <div className="home-md-strip">
-                    <div className="home-md-steps" aria-label="Path steps">
-                      {selected.rows.map((r, i) => {
-                        const num = i + 1
-                        const isCurrent =
-                          selected.nextGap && r.id === selected.nextGap.id
+                {/* Pick-up — one primary action */}
+                <div className="home-dash-pickup">
+                  <div className="home-dash-pickup-copy">
+                    <p className="home-dash-pickup-project">
+                      {clientOf(focus)
+                        ? `${clientOf(focus)} · ${focus.project.name}`
+                        : focus.project.name}
+                      {focus.hasUnreadClient ? (
+                        <span className="home-dash-pill">Client waiting</span>
+                      ) : null}
+                    </p>
+                    <p className="home-dash-pickup-kicker">
+                      {focus.hasUnreadClient
+                        ? 'Needs you'
+                        : packReady
+                          ? 'Ready'
+                          : 'Next'}
+                    </p>
+                    <h2 className="home-dash-pickup-title">{nextLabel}</h2>
+                    {nextPlain ? (
+                      <p className="home-dash-pickup-plain">{nextPlain}</p>
+                    ) : null}
+                  </div>
+                  <div className="home-dash-pickup-actions">
+                    <button
+                      type="button"
+                      className="btn btn-primary home-dash-primary"
+                      onClick={() => {
+                        if (pathFull) {
+                          setCurrentProject(focus.project.id)
+                          setActiveView('finish')
+                          return
+                        }
+                        switchProjectAndContinue(focus.project.id)
+                      }}
+                    >
+                      {pathFull
+                        ? `Open ${labelForStepId('deliver')}`
+                        : `Continue · ${focus.nextGap?.label || 'work'}`}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() =>
+                        openProjectWhereLeftOff(focus.project.id)
+                      }
+                    >
+                      Open desk
+                    </button>
+                  </div>
+                </div>
+
+                <div className="home-dash-grid">
+                  {/* Projects */}
+                  <section
+                    className="home-dash-panel home-dash-projects"
+                    aria-label="Projects"
+                  >
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Projects</h2>
+                      <span className="home-dash-panel-meta">
+                        {n === 1 ? '1 open' : `${n} open`}
+                      </span>
+                    </div>
+                    <ul className="home-dash-project-list">
+                      {orderedFlat.map((summary) => {
+                        const p = summary.project
+                        const isFocus = p.id === focus.project.id
+                        const unread = !!summary.hasUnreadClient
+                        const client = clientOf(summary)
                         return (
-                          <div
-                            key={r.id}
-                            className={`home-md-step${
-                              r.done ? ' is-done' : ''
-                            }${isCurrent ? ' is-current' : ''}`}
-                            title={r.label}
-                          >
-                            <span className="home-md-step-dot">
-                              {r.done ? '✓' : num}
-                            </span>
-                          </div>
+                          <li key={p.id}>
+                            <button
+                              type="button"
+                              className={`home-dash-project-card${
+                                isFocus ? ' is-focus' : ''
+                              }${unread ? ' has-unread' : ''}`}
+                              onClick={() => {
+                                setHomeSelectedProjectId(p.id)
+                                if (n === 1) {
+                                  openProjectWhereLeftOff(p.id)
+                                }
+                              }}
+                            >
+                              <span className="home-dash-project-card-top">
+                                <span className="home-dash-project-name">
+                                  {p.name}
+                                </span>
+                                {unread ? (
+                                  <span
+                                    className="home-md-row-badge"
+                                    aria-label="Client activity waiting"
+                                  />
+                                ) : null}
+                              </span>
+                              {client ? (
+                                <span className="home-dash-project-client">
+                                  {client}
+                                </span>
+                              ) : null}
+                              <span
+                                className={`home-dash-project-next${
+                                  summary.pathFull ? ' is-done' : ''
+                                }`}
+                              >
+                                {listRowNext(summary)}
+                              </span>
+                              <span
+                                className="home-dash-mini-path"
+                                aria-hidden="true"
+                              >
+                                {summary.rows.map((r) => (
+                                  <i
+                                    key={r.id}
+                                    className={
+                                      r.done
+                                        ? 'is-done'
+                                        : summary.nextGap?.id === r.id
+                                          ? 'is-current'
+                                          : ''
+                                    }
+                                  />
+                                ))}
+                              </span>
+                            </button>
+                          </li>
                         )
                       })}
-                    </div>
-                  </div>
+                    </ul>
+                  </section>
 
-                  {!showList ? (
-                    <div className="home-cta-row home-new-project-row">
-                      <button
-                        type="button"
-                        className="btn btn-secondary home-new-project"
-                        onClick={() => setActiveView('create')}
-                      >
-                        + New project
-                      </button>
+                  {/* Path for focus project */}
+                  <section
+                    className="home-dash-panel"
+                    aria-label="Path for focus project"
+                  >
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Path</h2>
+                      <span className="home-dash-panel-meta">
+                        {focus.project.name}
+                      </span>
                     </div>
-                  ) : null}
+                    <ul className="home-dash-path-list">
+                      {focus.rows.map((r) => {
+                        const isCurrent =
+                          focus.nextGap && r.id === focus.nextGap.id
+                        return (
+                          <li
+                            key={r.id}
+                            className={`home-dash-path-row${
+                              r.done ? ' is-done' : ''
+                            }${isCurrent ? ' is-current' : ''}`}
+                          >
+                            <button
+                              type="button"
+                              className="home-dash-path-btn"
+                              onClick={() => {
+                                setCurrentProject(focus.project.id)
+                                setActiveView(r.view)
+                              }}
+                            >
+                              <span
+                                className="home-dash-path-mark"
+                                aria-hidden="true"
+                              >
+                                {r.done ? '✓' : isCurrent ? '→' : '·'}
+                              </span>
+                              <span className="home-dash-path-label">
+                                {r.label}
+                              </span>
+                              <span className="home-dash-path-state">
+                                {r.done
+                                  ? 'Done'
+                                  : isCurrent
+                                    ? 'Up next'
+                                    : 'Open'}
+                              </span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </section>
+
+                  {/* Client needs you */}
+                  <section
+                    className="home-dash-panel"
+                    aria-label="Client activity"
+                  >
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Client</h2>
+                      <span className="home-dash-panel-meta">
+                        {needsYouList.length
+                          ? 'Waiting on you'
+                          : 'Quiet'}
+                      </span>
+                    </div>
+                    {needsYouList.length === 0 ? (
+                      <p className="home-dash-panel-empty">
+                        No unread client activity across open projects.
+                      </p>
+                    ) : (
+                      <ul className="home-dash-client-list">
+                        {needsYouList.map((s) => (
+                          <li key={s.project.id}>
+                            <button
+                              type="button"
+                              className="home-dash-client-row"
+                              onClick={() => {
+                                setHomeSelectedProjectId(s.project.id)
+                                setCurrentProject(s.project.id)
+                                setClientInboxOpen(true)
+                              }}
+                            >
+                              <span className="home-dash-client-name">
+                                {s.project.name}
+                              </span>
+                              <span className="home-dash-client-action">
+                                Open inbox
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm home-dash-panel-cta"
+                      onClick={() => setClientInboxOpen(true)}
+                    >
+                      Client inbox
+                    </button>
+                  </section>
+
+                  {/* Ready to ship */}
+                  <section
+                    className="home-dash-panel"
+                    aria-label="Ready to ship"
+                  >
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Ready to ship</h2>
+                      <span className="home-dash-panel-meta">
+                        {readyList.length
+                          ? `${readyList.length} pack${readyList.length === 1 ? '' : 's'}`
+                          : 'None yet'}
+                      </span>
+                    </div>
+                    {readyList.length === 0 ? (
+                      <p className="home-dash-panel-empty">
+                        When a pack is ready for handoff, it shows up here.
+                      </p>
+                    ) : (
+                      <ul className="home-dash-client-list">
+                        {readyList.map((s) => (
+                          <li key={s.project.id}>
+                            <button
+                              type="button"
+                              className="home-dash-client-row"
+                              onClick={() => {
+                                setCurrentProject(s.project.id)
+                                setActiveView('finish')
+                              }}
+                            >
+                              <span className="home-dash-client-name">
+                                {s.project.name}
+                              </span>
+                              <span className="home-dash-client-action">
+                                Open {labelForStepId('deliver')}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
                 </div>
               </section>
             )
