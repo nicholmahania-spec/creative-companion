@@ -1,7 +1,7 @@
 /**
- * Identity (Design) — live artboard + flat editors (mark, words, colour, type, pack, stationery).
- * Path rebuild (2026-08-03): full main width, mark-done off, Next leads footer.
- * Artboard readable first (left wide / first mobile); one wall pack, no dual homes.
+ * Identity — one job per screen under a single path stop:
+ * Mark → Words → Colour → Type → Preview.
+ * Stationery lives on Assets; ★ pack pins stay on Research.
  */
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react'
 import { labelForStepId } from '../lib/journey'
@@ -27,22 +27,24 @@ import {
   suggestRoleColor,
 } from '../lib/color'
 import { getProcessPhase } from '../lib/processGuide'
-import { pinFaceStyle } from '../lib/moodPins'
 import { loadTypePairFont, loadBrandFamilies } from '../lib/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
 import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-design.css'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
-const StationeryKit = lazy(() => import('../components/StationeryKit'))
 
-/** Smooth scrolling is a vestibular trigger for some users; honor the OS pref. */
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+/** Sub-screens under Identity — one source for nav + footer Next. */
+export const IDENTITY_SUBSTEPS = [
+  { id: 'logo', label: 'Mark' },
+  { id: 'essentials', label: 'Words' },
+  { id: 'colors', label: 'Colour' },
+  { id: 'type', label: 'Type' },
+  { id: 'preview', label: 'Preview' },
+]
 
-/* The flat column's order, numbered 01-06. One source read by both the
-   rail and the section heads — never restate this list. */
+const SUBSTEP_IDS = IDENTITY_SUBSTEPS.map((s) => s.id)
+
 export default function DesignView({
   navDir = 'none',
   journeyNext = null,
@@ -59,9 +61,6 @@ export default function DesignView({
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const updateDirection = useAppStore((s) => s.updateDirection)
-  const addContact = useAppStore((s) => s.addContact)
-  const updateContact = useAppStore((s) => s.updateContact)
-  const removeContact = useAppStore((s) => s.removeContact)
   const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
   const updatePaletteColor = useAppStore((s) => s.updatePaletteColor)
@@ -73,9 +72,8 @@ export default function DesignView({
   const setLogoDirection = useAppStore((s) => s.setLogoDirection)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
 
-  /* Flat column — all six sections always mounted. Section heads (01–06)
-     are the map; no sticky tab rail. Deep links from Review/Deliver scroll
-     to a section and ring its head briefly. */
+  /* One sub-screen at a time. Deep links set the sub-step (not a scroll). */
+  const [identitySubstep, setIdentitySubstep] = useState('logo')
   const [deepLinkFocus, setDeepLinkFocus] = useState(null)
   const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
   const [checkBgIndex, setCheckBgIndex] = useState(0)
@@ -302,29 +300,32 @@ export default function DesignView({
     }
   }
 
-  // Honor parent jump (e.g. readiness “fix palette roles”): scroll to the
-  // section and ring its head briefly. Everything stays mounted and visible
-  // — this never hides the other five sections.
+  // Honor parent jump (e.g. readiness “fix palette roles”) → open that sub-screen.
   useEffect(() => {
     if (!brandEditSectionProp) return
     const map = {
       messaging: 'essentials',
       voice: 'essentials',
-      imagery: 'pins',
+      imagery: 'preview',
+      pins: 'preview',
+      stationery: 'preview',
     }
-    const target = map[brandEditSectionProp] || brandEditSectionProp
-    requestAnimationFrame(() => {
-      document
-        .getElementById(`design-section-content-${target}`)
-        ?.scrollIntoView({
-          block: 'start',
-          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-        })
-    })
+    const raw = map[brandEditSectionProp] || brandEditSectionProp
+    const target = SUBSTEP_IDS.includes(raw) ? raw : 'logo'
+    setIdentitySubstep(target)
     setDeepLinkFocus(target)
     const t = setTimeout(() => setDeepLinkFocus(null), 2200)
     return () => clearTimeout(t)
   }, [brandEditSectionProp])
+
+  const substepIndex = Math.max(0, SUBSTEP_IDS.indexOf(identitySubstep))
+  const nextSubstep = IDENTITY_SUBSTEPS[substepIndex + 1] || null
+
+  // New sub-screen → top of page (avoid landing mid-form from a previous step)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [identitySubstep])
 
   const paletteRoles = useMemo(
     () => mapPaletteRoles(projectPalette),
@@ -485,13 +486,9 @@ export default function DesignView({
                 </h1>
                 {/* Quiet status only — pack floor, not goal/words scoreboard. */}
                 <p className="design-identity-status" role="status">
-                  {(() => {
-                    const inPack = deskMood.filter((m) => m.inPack).length
-                    if (!inPack) return 'Artboard · no pack pins yet'
-                    return inPack >= 6
-                      ? 'Artboard · ★ pack full'
-                      : `Artboard · ★ ${inPack} in pack · room for ${6 - inPack}`
-                  })()}
+                  {IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}
+                  <span aria-hidden="true"> · </span>
+                  {substepIndex + 1} of {IDENTITY_SUBSTEPS.length}
                   <InfoReveal>
                     {(getProcessPhase('design')?.checks || []).join(' · ')}
                   </InfoReveal>
@@ -538,8 +535,28 @@ export default function DesignView({
               </div>
             </div>
 
+            <nav className="identity-subnav" aria-label="Identity screens">
+              {IDENTITY_SUBSTEPS.map((step, i) => {
+                const active = identitySubstep === step.id
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    className={`identity-subnav-btn${active ? ' is-active' : ''}`}
+                    aria-current={active ? 'step' : undefined}
+                    onClick={() => setIdentitySubstep(step.id)}
+                  >
+                    <span className="identity-subnav-num" aria-hidden="true">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    {step.label}
+                  </button>
+                )
+              })}
+            </nav>
+
             <div className="design-edit-column">
-            {/* Logo section — 01 The mark */}
+            {identitySubstep === 'logo' && (
             <section
               id="design-section-content-logo"
               data-section="logo"
@@ -549,7 +566,7 @@ export default function DesignView({
             >
               <header className="design-section-head">
                 <span className="design-section-badge">01</span>
-                <h2 className="design-section-title">The mark</h2>
+                <h2 className="design-section-title">Mark</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
@@ -745,8 +762,9 @@ export default function DesignView({
                 ) : null}
               </div>
             </section>
+            )}
 
-            {/* 02 What it says */}
+            {identitySubstep === 'essentials' && (
             <section
               id="design-section-content-essentials"
               data-section="essentials"
@@ -756,7 +774,7 @@ export default function DesignView({
             >
               <header className="design-section-head">
                 <span className="design-section-badge">02</span>
-                <h2 className="design-section-title">What it says</h2>
+                <h2 className="design-section-title">Words</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
               <div className="field-block brand-direction-block">
@@ -923,8 +941,9 @@ export default function DesignView({
                 </div>
               </details>
             </section>
+            )}
 
-            {/* 03 Colour */}
+            {identitySubstep === 'colors' && (
             <section
               id="design-section-content-colors"
               data-section="colors"
@@ -1438,8 +1457,9 @@ export default function DesignView({
                 </div>
               </details>
             </section>
+            )}
 
-            {/* 04 Type */}
+            {identitySubstep === 'type' && (
             <section
               id="design-section-content-type"
               data-section="type"
@@ -1569,48 +1589,42 @@ export default function DesignView({
                 />
               </div>
             </section>
+            )}
 
-            {/* 05 Pack — starred pins + imagery advanced */}
-            <section
-              id="design-section-content-pins"
-              data-section="pins"
-              className={`panel brand-section${
-                deepLinkFocus === 'pins' ? ' is-deep-link-focus' : ''
-              }`}
+
+            {identitySubstep === 'preview' && (
+            <>
+            <div
+              className="design-preview-rail design-artboard-bottom"
+              tabIndex={0}
+              role="region"
+              aria-label="Live leave-behind preview"
             >
-              <header className="design-section-head">
-                <span className="design-section-badge">05</span>
-                <h2 className="design-section-title">Pack</h2>
-                <span className="design-section-rule" aria-hidden="true" />
-              </header>
-              {(() => {
-                const packPins = deskMood.filter((m) => m.inPack)
-                if (packPins.length === 0) {
-                  return (
-                    <div className="brand-mood-empty">
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => setActiveView('studio')}
-                      >
-                        ★ pins in Research
-                      </button>
-                    </div>
-                  )
-                }
-                return (
-                  <div className="brand-mood-row">
-                    {packPins.slice(0, 6).map((p) => (
-                      <div
-                        key={p.id}
-                        className="brand-mood-thumb"
-                        style={pinFaceStyle(p)}
-                        title={p.note}
-                      />
-                    ))}
-                  </div>
-                )
-              })()}
+              <div className="design-rail-label">Artboard</div>
+              <Suspense
+                fallback={<div className="panel-hint">Loading…</div>}
+              >
+                <BrandArtboard
+                  id="system-artboard"
+                  project={activeProject || {}}
+                  palette={projectPalette}
+                  pins={deskMood.filter((m) => m.inPack)}
+                  editable={false}
+                  hideWatermark={hidePackWatermark}
+                />
+              </Suspense>
+            </div>
+            <p className="design-preview-pack-hint">
+              ★ pins come from Research.
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => setActiveView?.('studio')}
+              >
+                Open Research
+              </button>
+            </p>
+            <div className="design-preview-notes">
               <details className="design-advanced">
                 <summary>Imagery guidelines</summary>
                 <div className="field-block" style={{ marginTop: '0.65rem' }}>
@@ -1659,11 +1673,6 @@ export default function DesignView({
                   />
                 </div>
               </details>
-              {/* Writing and print rules. Two selects rather than a blank box:
-                  the answer is a choice from a short list, and asking for
-                  prose here would get the same skip every open-ended field
-                  gets. Both already carry a defensible default, so the book
-                  prints a rule whether or not this is ever opened. */}
               <details className="design-advanced">
                 <summary>Writing and print rules</summary>
                 <div className="field-block" style={{ marginTop: '0.65rem' }}>
@@ -1759,75 +1768,48 @@ export default function DesignView({
                   />
                 </div>
               </details>
-            </section>
-
-            {/* 06 Stationery — an ordinary section now, not an "Advanced"
-                fork; letterhead, business card, envelope, email signature */}
-            <section
-              id="design-section-content-stationery"
-              data-section="stationery"
-              className={`panel brand-section${
-                deepLinkFocus === 'stationery' ? ' is-deep-link-focus' : ''
-              }`}
-            >
-              <header className="design-section-head">
-                <span className="design-section-badge">06</span>
-                <h2 className="design-section-title">Stationery</h2>
-                <span className="design-section-rule" aria-hidden="true" />
-              </header>
-              <Suspense fallback={<div className="panel-hint">Loading…</div>}>
-                <StationeryKit
-                  activeProject={activeProject}
-                  projectPalette={projectPalette}
-                  updateBrandField={updateBrandField}
-                  addContact={addContact}
-                  updateContact={updateContact}
-                  removeContact={removeContact}
-                  flashToast={flashToast}
-                />
-              </Suspense>
-            </section>
             </div>
-
-            {/* Full leave-behind sheet at the bottom — not sticky, not a
-                clipped scroll card. Edit above; see the whole board here. */}
-            <div
-              className="design-preview-rail design-artboard-bottom"
-              tabIndex={0}
-              role="region"
-              aria-label="Live leave-behind preview"
-            >
-              <div className="design-rail-label">Artboard</div>
-              <Suspense
-                fallback={<div className="panel-hint">Loading…</div>}
-              >
-                <BrandArtboard
-                  id="system-artboard"
-                  project={activeProject || {}}
-                  palette={projectPalette}
-                  pins={deskMood.filter((m) => m.inPack)}
-                  editable={false}
-                  hideWatermark={hidePackWatermark}
-                />
-              </Suspense>
+            </>
+            )}
             </div>
 
             <div className="path-continue-row design-path-footer">
               <button
                 type="button"
                 className="btn btn-primary work-path-next"
-                onClick={() => setActiveView?.(journeyNext?.view || 'flow')}
+                onClick={() => {
+                  if (nextSubstep) {
+                    setIdentitySubstep(nextSubstep.id)
+                    return
+                  }
+                  setActiveView?.(journeyNext?.view || 'flow')
+                }}
               >
-                {`Next · ${journeyNext?.label || labelForStepId('sketch')}`}
+                {nextSubstep
+                  ? `Next · ${nextSubstep.label}`
+                  : `Next · ${journeyNext?.label || labelForStepId('sketch')}`}
               </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setActiveView?.('desk')}
-              >
-                Back to the desk
-              </button>
+              {substepIndex > 0 ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    setIdentitySubstep(IDENTITY_SUBSTEPS[substepIndex - 1].id)
+                  }
+                >
+                  Back · {IDENTITY_SUBSTEPS[substepIndex - 1].label}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActiveView?.('desk')}
+                >
+                  Back to the desk
+                </button>
+              )}
             </div>
+
           </div>
 
           {/* Version History Modal */}

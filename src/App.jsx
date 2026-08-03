@@ -406,8 +406,8 @@ function App() {
     }
   }, [])
 
-  /** Design accordion target when jumping from Review/Deliver readiness fixes */
-  const [brandEditSection, setBrandEditSection] = useState('essentials')
+  /** Identity sub-screen when jumping from Review/Deliver readiness fixes */
+  const [brandEditSection, setBrandEditSection] = useState('logo')
   const goSystemSection = useCallback(
     (section) => {
       if (section) setBrandEditSection(section)
@@ -4681,6 +4681,7 @@ function App() {
             <DeliverView
               navDir={navDir}
               activeProject={activeProject}
+              projectPalette={projectPalette}
               deskTasks={deskTasks}
               completedCount={completedCount}
               pathRows={pathRows}

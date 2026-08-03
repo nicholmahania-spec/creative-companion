@@ -365,6 +365,17 @@
   white-space: nowrap;
 }
 
+.deliver-stationery-panel {
+  margin-top: var(--space-4);
+}
+
+.deliver-stationery-lede {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  max-width: 65ch;
+}
+
 /* Beat shell .path-continue-row sticky / flex-end */
 .deliver-studio .path-continue-row.deliver-primary-ship {
   position: static !important;

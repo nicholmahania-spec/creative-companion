@@ -38,7 +38,7 @@ export const JOURNEY_STEPS = [
     num: '3',
     label: 'Identity',
     process: 'Designing identity',
-    plain: 'Logo, color, type, voice. Bump version before big edits.',
+    plain: 'Mark, words, colour, type, then preview. One screen at a time.',
     nextView: 'flow',
     nextLabel: 'Go to Touchpoints',
   },
