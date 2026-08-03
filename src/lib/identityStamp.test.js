@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   IDENTITY_FIELDS,
   IDENTITY_WRITER_ACTIONS,
@@ -156,11 +156,29 @@ describe('the store stamps every identity writer action', () => {
     expect(identityStampState(after)).toBe('saved')
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('an edit after a save reads unsaved again', () => {
+    /* The clock is driven explicitly here. Run at real speed, the bump and the
+       edit after it land in the same millisecond, `edited > saved` is false,
+       and this reads 'saved' — a flaky pass that depends on how fast the
+       machine is. A real user cannot type inside a millisecond, so the
+       equal-timestamps tie-break stays as it is (a bump writes both stamps in
+       one `set`, and must not immediately read as unsaved); it is the test
+       that has to stop racing. */
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-02T10:00:00.000Z'))
     freshProject()
     useAppStore.getState().updateBrandField('tagline', 'One')
+
+    vi.setSystemTime(new Date('2026-08-02T10:05:00.000Z'))
     useAppStore.getState().bumpDesignVersion()
+
+    vi.setSystemTime(new Date('2026-08-02T10:10:00.000Z'))
     useAppStore.getState().updateBrandField('voice', 'Warm, plain')
+
     const st = useAppStore.getState()
     const p = st.projects.find((x) => x.id === st.currentProjectId)
     expect(identityStampState(p)).toBe('unsaved')

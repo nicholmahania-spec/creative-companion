@@ -858,6 +858,48 @@ The manual `Bump · vN` control in `src/views/DesignView.jsx` was deliberately
 left alone: a version stays a milestone you name, edits alone do not spend one,
 and every bump fires a `versionService` snapshot against an 8-per-project cap.
 
+## The client chat shows time two different ways, on purpose
+
+One thread, two audiences, two representations. Do not "unify" them.
+
+- **Client side** (`src/components/PublicClientPortal.jsx`) — a conventional
+  timestamp, in the client's own locale and zone. A client is an ordinary
+  person judging whether their designer is responsive, and this is what every
+  other messaging surface they use shows.
+- **Studio side** (`src/components/ProjectOverviewShare.jsx`) — day dividers
+  only, from `src/lib/messageDayLabel.js`. No per-message stamp, no clock time.
+
+A clock time is not information for this owner; it is an input to a subtraction
+performed against a "now" fetched from somewhere, billed on every message.
+
+The vocabularies still map, which is what stops a phone call going wrong: "the
+message you sent this morning" and a divider reading **Today** are the same
+fact at different resolution. **An app-invented scale would break that** — do
+not replace the day names with Recent / A while back / Ages, because none of
+those has an equivalent in the client's speech.
+
+**Absolute day names, never elapsed.** Today / Yesterday / the weekday name /
+a flat `Earlier` past the current week — a closed list of four, guarded by
+`messageDayLabel.test.js`, which fails on any digit and on
+*waiting / overdue / unanswered / late / stale / you / ago*. An absolute day
+states a fact about the MESSAGE; "3 days unanswered" states a fact about the
+PERSON, and the only edit that fixes that is the reply already being avoided.
+Collapsing to `Earlier` also stops the label becoming a quietly bigger
+accusation the longer a thread sits.
+
+Do not add: a "show exact times" toggle (a second decision to undo the first),
+hover/tap-to-reveal the real stamp (`title` is never the carrier of meaning
+here, and it turns a label into a control), a response-time stat or streak, or
+a third divider state for "marked read" — the unread divider already exists.
+
+Related and NOT the same thing: step approvals and change-requests genuinely
+have no per-event time. They live in the `client_portals.step_status` jsonb and
+share the portal's `updated_at`, which is what the "Per-event times don't exist
+server-side" note in `src/lib/clientInbox.js` refers to. Per-MESSAGE times do
+exist — `client_portal_messages.created_at` is real, is returned by
+`get_client_portal_messages`, and needed no migration. Giving approvals their
+own timestamps would need one.
+
 ## The journey is declared once — derive from it, never restate it
 
 `src/lib/journey.js` owns the path: the stops, their order, their ids, their

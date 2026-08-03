@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { JOURNEY_STEPS } from '../lib/journey'
 import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../lib/detectiveBrief'
 import { downloadProjectOverviewPdf } from '../lib/exportFiles'
+import { groupMessagesByDay } from '../lib/messageDayLabel'
 import { ocrOverviewForm, ocrOverviewPdf, readOverviewPdfForm } from '../lib/overviewOcr'
 import {
   clientPortalUrl,
@@ -656,14 +657,27 @@ function PortalMode({
             {messages.length === 0 ? (
               <p className="discovery-brief-hint">No messages yet.</p>
             ) : (
-              messages.map((m) => (
-                <div key={m.id} className={`client-portal-chat-msg is-${m.sender}`}>
-                  <span className="client-portal-chat-sender">
-                    {m.sender === 'studio'
-                      ? 'You'
-                      : project?.detective?.clientName || 'Client'}
-                  </span>
-                  <p>{m.body}</p>
+              /* Day dividers, never a per-message stamp and never an elapsed
+                 count — see lib/messageDayLabel.js. One label per run rather
+                 than one per message also keeps a long thread cheap to scan. */
+              groupMessagesByDay(messages).map((run, i) => (
+                <div key={`${run.label}-${i}`} className="client-portal-chat-day">
+                  {run.label && (
+                    <p className="client-portal-chat-day-label">{run.label}</p>
+                  )}
+                  {run.messages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={`client-portal-chat-msg is-${m.sender}`}
+                    >
+                      <span className="client-portal-chat-sender">
+                        {m.sender === 'studio'
+                          ? 'You'
+                          : project?.detective?.clientName || 'Client'}
+                      </span>
+                      <p>{m.body}</p>
+                    </div>
+                  ))}
                 </div>
               ))
             )}

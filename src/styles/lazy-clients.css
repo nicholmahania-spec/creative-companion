@@ -533,6 +533,29 @@
   color: var(--text-secondary);
 }
 
+/* Day divider — studio side only. One label per run of same-day messages, so
+   a long thread costs a handful of reads rather than one per message. Muted
+   and small: it answers "is this still warm", it is not the content. */
+.client-portal-chat-day-label {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.client-portal-chat-day:first-child .client-portal-chat-day-label {
+  margin-top: 0;
+}
+
+/* Client side only — a conventional time beside the sender name. */
+.client-portal-chat-time {
+  margin-left: var(--space-2);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-muted);
+}
+
 .client-portal-chat-msg.is-client {
   padding-left: 0.75rem;
   border-left: 2px solid var(--border-subtle);
