@@ -578,6 +578,30 @@ export default function DesignView({
               </div>
             </div>
 
+            {/* Artboard band — single column under the title, not a side rail.
+                Full-width editors follow; no empty second column on scroll. */}
+            <div
+              className="system-artboard-sticky design-preview-rail"
+              tabIndex={0}
+              role="region"
+              aria-label="Live leave-behind preview"
+            >
+              <div className="design-rail-label">Artboard</div>
+              <Suspense
+                fallback={<div className="panel-hint">Loading…</div>}
+              >
+                <BrandArtboard
+                  id="system-artboard"
+                  project={activeProject || {}}
+                  palette={projectPalette}
+                  pins={deskMood.filter((m) => m.inPack)}
+                  editable={false}
+                  compact
+                  hideWatermark={hidePackWatermark}
+                />
+              </Suspense>
+            </div>
+
             <div className="design-edit-column">
             {/* Scroll INDEX, not a switcher — every section below is always
                 mounted. Clicking moves the page; the highlight follows scroll
@@ -1863,29 +1887,6 @@ export default function DesignView({
                 />
               </Suspense>
             </section>
-            </div>
-
-            {/* Preview — sticky 45% right on wide */}
-            <div
-              className="system-artboard-sticky design-preview-rail"
-              tabIndex={0}
-              role="region"
-              aria-label="Live leave-behind preview"
-            >
-              <div className="design-rail-label">Artboard</div>
-              <Suspense
-                fallback={<div className="panel-hint">Loading…</div>}
-              >
-                <BrandArtboard
-                  id="system-artboard"
-                  project={activeProject || {}}
-                  palette={projectPalette}
-                  pins={deskMood.filter((m) => m.inPack)}
-                  editable={false}
-                  compact
-                  hideWatermark={hidePackWatermark}
-                />
-              </Suspense>
             </div>
 
             <div className="path-continue-row design-path-footer">
