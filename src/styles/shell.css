@@ -10035,7 +10035,8 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
   scrollbar-width: thin;
 }
 
-.header-todo-pill {
+.header-todo-pill,
+.header-account-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -10052,8 +10053,32 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
   transition: background var(--transition), color var(--transition);
 }
 
-.header-todo-pill:hover {
+.header-todo-pill:hover,
+.header-account-pill:hover {
   background: var(--surface-hover, var(--surface));
+}
+
+/* Compact account panel — four rows, not a second Settings page. */
+.account-panel {
+  width: min(20rem, 92vw);
+  max-height: none;
+}
+
+.account-menu-identity {
+  margin: 0;
+  padding: 0.45rem 0.55rem;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.account-menu-sep {
+  height: 1px;
+  margin: var(--space-1) var(--space-2);
+  background: var(--border-subtle);
+  border: none;
 }
 
 .header-todo-count {

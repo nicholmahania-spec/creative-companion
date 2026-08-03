@@ -57,6 +57,19 @@ const ICONS = {
       strokeLinejoin="round"
     />
   ),
+  account: (
+    <>
+      <circle cx="12" cy="8" r="3.25" fill="none" stroke="currentColor" strokeWidth="1.75" />
+      <path
+        d="M4.5 19.5c.9-4.3 3.6-6.5 7.5-6.5s6.6 2.2 7.5 6.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </>
+  ),
 }
 
 export default function HeaderIcon({ name, className = '' }) {
