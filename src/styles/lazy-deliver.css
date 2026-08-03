@@ -1,10 +1,11 @@
 /* Auto-split from index.css — lazy-deliver.css */
 
-/* Assets path rebuild — single column, preview primary, ship next */
+/* Assets — fill the main cell. Stack on narrow; preview | ship on wide. */
 .assets-studio.deliver-studio.pack-view {
   max-width: none;
   width: 100%;
   margin-inline: 0;
+  min-width: 0;
 }
 
 .assets-status {
@@ -18,8 +19,7 @@
   margin: var(--space-4) 0 0;
   min-width: 0;
   width: 100%;
-  /* Don’t stretch a full-main white void around a single page */
-  max-width: min(100%, 34rem);
+  max-width: min(100%, 36rem);
 }
 
 .assets-preview-frame {
@@ -27,13 +27,11 @@
   padding: var(--space-3);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
-  /* Desk surface under the paper — white-on-white made the page look lost */
   background: var(--bg-muted, #EBEBEB);
   max-width: 100%;
   min-width: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  /* Tall enough for one full page + label; not a half-empty billboard */
   max-height: min(78dvh, 46rem);
 }
 
@@ -43,7 +41,8 @@
 
 .assets-ship {
   margin: var(--space-5) 0 0;
-  max-width: 40rem;
+  max-width: min(100%, 40rem);
+  min-width: 0;
 }
 
 /* Named hollowness beside the download — never blocks, always visible */
@@ -102,7 +101,8 @@
 
 .assets-secondary {
   margin: var(--space-6) 0 0;
-  max-width: 48rem;
+  max-width: min(100%, 48rem);
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -118,11 +118,88 @@
 
 .assets-stationery {
   margin: var(--space-2) 0 0;
+  min-width: 0;
 }
 
 .assets-footer.path-continue-row {
   margin-top: var(--space-5);
   justify-content: flex-start;
+}
+
+/*
+ * Large monitors: fill the main cell.
+ * Left = book preview (sticky, one full page).
+ * Right = ship + stationery + secondary (scrolls).
+ * Narrow stays single column so mobile is unchanged.
+ */
+@media (min-width: 1100px) {
+  .assets-studio.deliver-studio.pack-view {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 32rem);
+    grid-template-rows: auto auto auto auto;
+    column-gap: var(--space-6);
+    row-gap: var(--space-4);
+    align-items: start;
+  }
+
+  .assets-studio > .deliver-top {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+  }
+
+  .assets-studio > .assets-preview-panel {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+    margin: 0;
+    max-width: none;
+    width: 100%;
+  }
+
+  .assets-studio > .assets-ship {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    max-width: none;
+  }
+
+  .assets-studio > .assets-secondary {
+    grid-column: 2;
+    grid-row: 3;
+    margin: 0;
+    max-width: none;
+  }
+
+  .assets-studio > .assets-footer {
+    grid-column: 1 / -1;
+    margin-top: var(--space-4);
+  }
+
+  .assets-preview-frame {
+    max-height: min(82dvh, 54rem);
+    position: sticky;
+    top: 4.75rem;
+  }
+
+  .assets-studio .book-preview-sheet {
+    max-height: min(74dvh, 48rem);
+  }
+
+  /* Stationery fills the ship column — no half-empty 2-up on a void */
+  .assets-studio .stationery-templates {
+    width: 100%;
+  }
+}
+
+/* Mid-wide: still stacked, but use more of the column before the 2-col kicks in */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .assets-preview-panel {
+    max-width: min(100%, 42rem);
+  }
+
+  .assets-ship,
+  .assets-secondary {
+    max-width: min(100%, 48rem);
+  }
 }
 
 .export-identity-cover {
