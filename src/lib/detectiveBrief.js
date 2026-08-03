@@ -88,7 +88,7 @@ export const DETECTIVE_CHAPTERS = [
         tip: 'Trading name is fine',
         area: false,
         required: true,
-        gridSpan: 'half',
+        gridSpan: 'full',
       },
       {
         id: 'engagementType',
@@ -142,7 +142,7 @@ export const DETECTIVE_CHAPTERS = [
         area: false,
         designerOnly: true,
         required: false,
-        gridSpan: 'half',
+        gridSpan: 'full',
       },
     ],
   },

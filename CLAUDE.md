@@ -172,6 +172,9 @@ immediately, and Netlify was held back rather than gambled on.
 
 - `todo.md` — prioritized remaining work list
 - `insights.md` — architecture, design tokens, CSS gotchas, critical constraints
+- `AGENTS.md` — agent rules including **path page rebuild checklist** (full main
+  width, no dual maps, one initiation path, form labels, CTA hierarchy). Apply
+  on every stop after Strategy — do not re-learn these on Research/Identity/etc.
 - **CSS is split, and `src/index.css` is no longer where it lives.** That file
   is now two lines — a single `@import './styles/shell.css'`. The design
   system is ~19.7k lines across `src/styles/*.css`:

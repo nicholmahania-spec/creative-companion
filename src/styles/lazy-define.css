@@ -29,7 +29,260 @@
   --define-glow: transparent;
   max-width: 42rem;
   margin-inline: auto;
-  padding-bottom: 6.5rem;
+  /* Room for sticky brief footer */
+  padding-bottom: 8rem;
+}
+
+/* ── The brief (Strategy) — fill the main column, no floating island ──
+   .define-studio + .surface-document both center a ~42–52rem column; that
+   leaves empty gutters on a wide desk. Brief uses the full main width. */
+.define-studio.define-brief.surface-document,
+.define-studio.define-brief {
+  max-width: none;
+  width: 100%;
+  margin-inline: 0;
+  padding-bottom: 6rem;
+}
+
+.define-brief {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* One head row: title + status left, Send right — then straight into the form. */
+.define-brief-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.define-brief-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+}
+
+.define-brief-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.define-brief-title {
+  margin: 0;
+}
+
+.define-brief-status {
+  margin: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.define-brief-status-due {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.define-brief-send {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.define-brief-head .define-title-rule {
+  width: 100%;
+  flex: none;
+  height: 1px;
+  margin: 0;
+  background: var(--border-subtle);
+}
+
+/* Conversation labels, not settings eyebrows */
+.define-brief .define-field-label,
+.define-brief legend.define-field-label {
+  font-family: var(--font-sans, inherit);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+.define-brief .define-field-needed {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.define-brief-secondary .define-field-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-muted);
+}
+
+/*
+ * 1. Width — long answers take the full main column. Schema marks many
+ *    short fields half, which left half-empty rows on a wide brief.
+ *    Full by default; only CRM short pairs share a row.
+ */
+.define-brief .define-fields {
+  grid-template-columns: 1fr;
+  gap: var(--space-4) var(--space-5);
+}
+
+.define-brief .define-field {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.define-brief .define-field-control,
+.define-brief .define-input,
+.define-brief .define-field textarea,
+.define-brief .define-choice,
+.define-brief .define-checklist {
+  width: 100%;
+  max-width: none;
+}
+
+@media (min-width: 640px) {
+  .define-brief .define-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .define-brief #detective-field-projectDeadline,
+  .define-brief #detective-field-primaryContact,
+  .define-brief #detective-field-clientEmail,
+  .define-brief #detective-field-clientPhone {
+    grid-column: span 1;
+  }
+}
+
+/*
+ * 2–3. Send + Next are solid primaries (shell .btn-primary !important).
+ * Footer: Next leads, Back is secondary outline.
+ */
+.define-brief-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.define-brief-secondary .define-milestones-compact {
+  margin-top: 0;
+}
+
+/* Scope sits in the demoted band — drop its own top rule so we don't stack. */
+.define-brief-secondary .scope-panel {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.define-brief-secondary .scope-panel-toggle {
+  gap: var(--space-3);
+}
+
+.define-brief-secondary .scope-panel-state {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.define-brief-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: var(--space-4);
+  margin-inline: calc(-1 * var(--space-4, 1rem));
+  padding: var(--space-2) var(--space-4);
+  padding-bottom: max(var(--space-2), env(safe-area-inset-bottom, 0px));
+  background: var(--bg-canvas);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.define-brief-footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+}
+
+.define-brief-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 1 auto;
+}
+
+.define-brief-footer .work-path-next {
+  font-weight: 700;
+  min-width: 10rem;
+}
+
+.define-brief-still-blank {
+  margin: 0;
+  flex: 1 1 12rem;
+  max-width: 65ch;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.4;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .define-brief-still-blank {
+    flex: 1 1 100%;
+    text-align: left;
+  }
+}
+
+.app.deep .define-brief-status {
+  color: var(--text-secondary);
+}
+
+.app.deep .define-brief-status-due {
+  color: var(--text-muted);
+}
+
+.app.deep .define-brief .define-field-label,
+.app.deep .define-brief legend.define-field-label {
+  color: var(--text-primary);
+}
+
+.app.deep .define-brief-footer {
+  background: var(--bg-canvas);
+  border-top-color: var(--border-subtle);
+}
+
+.app.deep .define-brief-send.btn-primary,
+.app.deep .define-brief-footer .btn-primary {
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+  border-color: var(--text-primary);
+}
+
+.app.deep .define-brief-send.btn-secondary,
+.app.deep .define-brief-footer .btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
 }
 
 /* Project essentials card */

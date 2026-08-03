@@ -98,6 +98,22 @@ export function relativeDeadlineLabel(iso) {
   return 'Due later on'
 }
 
+/**
+ * Due line for Desk What's next: name the deliverable + worded when.
+ * e.g. "Signage · Due this week". Without a deliverable label, same as
+ * relativeDeadlineLabel. Worded when (not "12d") for time blindness.
+ *
+ * @param {string} iso
+ * @param {string} [deliverableLabel] primary deliverable name from the brief
+ */
+export function namedDeadlineLabel(iso, deliverableLabel) {
+  const due = relativeDeadlineLabel(iso)
+  if (!due) return ''
+  const name = String(deliverableLabel || '').trim()
+  if (!name) return due
+  return `${name} · ${due}`
+}
+
 export function urgencyLabel(iso) {
   const n = daysUntil(iso)
   if (n == null) return ''

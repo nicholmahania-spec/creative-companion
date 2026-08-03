@@ -1,5 +1,5 @@
 /**
- * Deliver — handoff + ship left (55%), sticky pack preview right (45%).
+ * Deliver — handoff + ship; stationery applications (moved from Identity).
  * ADHD: one primary Download, gaps compact, advanced formats/leave.
  */
 import { Suspense, lazy, useEffect } from 'react'
@@ -21,6 +21,7 @@ import '../styles/lazy-deliver.css'
 const BrandBookPreview = lazy(
   () => import('../components/BrandBookPreview')
 )
+const StationeryKit = lazy(() => import('../components/StationeryKit'))
 
 /**
  * A row of named stops. Options come from brandBookSetup so the labels here
@@ -50,9 +51,8 @@ function SetupChoice({ label, options, value, onChange }) {
 export default function DeliverView({
   navDir = 'none',
   activeProject = null,
-  /* deskMood / projectPalette are gone: they fed the artboard preview this
-     view no longer renders. The preview builds from the pack snapshot, which
-     already carries the pins and palette. */
+  projectPalette = [],
+  /* deskMood is gone: the pack preview builds from the pack snapshot. */
   hidePackWatermark = false,
   bookSetup = { pageSize: 'letter', edgeSpace: 'standard', printShop: false },
   setActiveView,
@@ -71,6 +71,9 @@ export default function DeliverView({
   lastExportNote = '',
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
+  const addContact = useAppStore((s) => s.addContact)
+  const updateContact = useAppStore((s) => s.updateContact)
+  const removeContact = useAppStore((s) => s.removeContact)
 
   const packSnap = buildCurrentBrandPack()
   const ready = packReadiness(packSnap)
@@ -309,6 +312,25 @@ export default function DeliverView({
                   screen to answer it. Same polarity as before: checked hides. */}
               <span>Hide Creative Companion credit</span>
             </label>
+
+            <section className="panel brand-section deliver-stationery-panel">
+              <div className="brand-section-label">Stationery</div>
+              <p className="deliver-stationery-lede">
+                Letterhead, card, envelope, signature — applications of the
+                system, not Identity craft.
+              </p>
+              <Suspense fallback={<div className="panel-hint">Loading…</div>}>
+                <StationeryKit
+                  activeProject={activeProject}
+                  projectPalette={projectPalette}
+                  updateBrandField={updateBrandField}
+                  addContact={addContact}
+                  updateContact={updateContact}
+                  removeContact={removeContact}
+                  flashToast={flashToast}
+                />
+              </Suspense>
+            </section>
 
             {brandWordList.length > 0 && (
               <details className="deliver-advanced">

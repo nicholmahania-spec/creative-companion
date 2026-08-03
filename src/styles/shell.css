@@ -1026,6 +1026,494 @@ h3 {
   padding: 0 1.25rem;
 }
 
+/* ── Home studio dashboard ───────────────────────────────────── */
+.home-dash {
+  width: 100%;
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-7);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.home-dash-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.home-dash-eyebrow {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.home-dash-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-6);
+  font-weight: 700;
+  letter-spacing: var(--tracking-display, -0.025em);
+  line-height: 1.05;
+  color: var(--text-primary);
+}
+
+.home-dash-empty {
+  margin: 0;
+  max-width: 40ch;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.home-dash-pickup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+
+@media (min-width: 720px) {
+  .home-dash-pickup {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+}
+
+.home-dash-pickup-project {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.home-dash-pill {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.home-dash-pickup-kicker {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.home-dash-pickup-title {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-5);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.home-dash-pickup-plain {
+  margin: var(--space-2) 0 0;
+  max-width: 48ch;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.home-dash-pickup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.home-dash-primary {
+  min-height: var(--tap-min, 2.75rem);
+  padding: var(--space-3) var(--space-5);
+  font-weight: 600;
+}
+
+.home-dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 800px) {
+  .home-dash-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.home-dash-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+
+.home-dash-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.home-dash-panel-title {
+  margin: 0;
+  font-size: var(--fs-2);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.home-dash-panel-meta {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.home-dash-panel-empty {
+  margin: 0;
+  flex: 1;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text-muted);
+  max-width: 36ch;
+}
+
+.home-dash-panel-cta {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.home-dash-project-list,
+.home-dash-path-list,
+.home-dash-client-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.home-dash-project-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  margin: 0 0 var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-canvas);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.home-dash-project-card:hover {
+  border-color: var(--text-primary);
+}
+
+.home-dash-project-card.is-focus {
+  border-color: var(--text-primary);
+  background: var(--bg-elevated, var(--bg-card));
+}
+
+.home-dash-project-card-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.home-dash-project-name {
+  font-size: var(--fs-2);
+  font-weight: 700;
+}
+
+.home-dash-project-client {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.home-dash-project-next {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.home-dash-project-next.is-done {
+  color: var(--text-primary);
+}
+
+.home-dash-mini-path {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.home-dash-mini-path i {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--border-strong, var(--border-subtle));
+}
+
+.home-dash-mini-path i.is-done {
+  background: var(--text-primary);
+}
+
+.home-dash-mini-path i.is-current {
+  background: var(--dopamine, var(--accent-primary));
+  outline: 1px solid var(--text-primary);
+  outline-offset: 1px;
+}
+
+.home-dash-path-row {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.home-dash-path-row:first-child {
+  border-top: 0;
+}
+
+.home-dash-path-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--tap-min, 2.75rem);
+  padding: var(--space-2) 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.home-dash-path-btn:hover .home-dash-path-label {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.home-dash-path-mark {
+  flex: none;
+  width: 1.25rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.home-dash-path-row.is-done .home-dash-path-mark {
+  color: var(--text-primary);
+}
+
+.home-dash-path-row.is-current .home-dash-path-mark {
+  color: var(--text-primary);
+}
+
+.home-dash-path-label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-2);
+  font-weight: 600;
+}
+
+.home-dash-path-row.is-done .home-dash-path-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.home-dash-path-state {
+  flex: none;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.home-dash-path-row.is-current .home-dash-path-state {
+  color: var(--text-primary);
+}
+
+.home-dash-client-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--tap-min, 2.75rem);
+  padding: var(--space-2) 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.home-dash-client-list li:first-child .home-dash-client-row {
+  border-top: 0;
+}
+
+.home-dash-client-name {
+  font-size: var(--fs-2);
+  font-weight: 600;
+}
+
+.home-dash-client-action {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.home-dash-client-row:hover .home-dash-client-action {
+  color: var(--text-primary);
+}
+
+.app.deep .home-dash-panel,
+.app.deep .home-dash-pickup {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+}
+
+.app.deep .home-dash-project-card {
+  background: var(--bg-muted);
+}
+
+/* Hours worked panel */
+.home-dash-hours {
+  grid-column: 1 / -1;
+}
+
+.home-dash-hours-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.home-dash-hours-range {
+  min-height: var(--tap-min, 2.75rem);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-canvas);
+  font: inherit;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.home-dash-hours-range.is-active {
+  border-color: var(--text-primary);
+  background: var(--bg-elevated, var(--bg-card));
+  color: var(--text-primary);
+}
+
+.home-dash-hours-range:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.home-dash-hours-total {
+  margin: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.home-dash-hours-total strong {
+  font-size: var(--fs-5);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.home-dash-hours-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-1);
+  min-height: 4rem;
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+
+.home-dash-hours-bars.is-dense {
+  gap: var(--space-1);
+}
+
+.home-dash-hours-col {
+  flex: 1 1 0;
+  min-width: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.home-dash-hours-bars.is-dense .home-dash-hours-col {
+  min-width: var(--space-2);
+}
+
+.home-dash-hours-bar {
+  width: 100%;
+  max-width: 1.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+}
+
+.home-dash-hours-bar.is-filled {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.home-dash-hours-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.home-dash-hours-bars.is-dense .home-dash-hours-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+}
+
+.app.deep .home-dash-hours-range.is-active {
+  background: var(--bg-card);
+  border-color: var(--text-primary);
+}
+
 .home-eyebrow {
   margin: 0 0 0.75rem;
   font-size: 0.8rem;
@@ -1065,7 +1553,7 @@ h3 {
   gap: 0.6rem;
 }
 
-/* Master/detail Home — glass stage, not a card grid */
+/* Master/detail Home — return wall (list only when n ≥ 2) */
 
 .home-md {
   display: grid;
@@ -1081,6 +1569,52 @@ h3 {
   -webkit-backdrop-filter: none;
   overflow: hidden;
   text-align: left;
+}
+
+/* Solo / empty: one pick-up column — same wall, no list chrome */
+.home-return-wall.is-solo,
+.home-return-wall.is-empty {
+  grid-template-columns: 1fr;
+  max-width: 36rem;
+  align-items: stretch;
+}
+
+.home-md-detail-solo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: var(--space-6) var(--space-5);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.home-return-wall.is-solo .home-title,
+.home-return-wall.is-empty .home-title {
+  text-align: left;
+}
+
+.home-return-wall.is-solo .home-cta-row,
+.home-return-wall.is-empty .home-cta-row {
+  justify-content: flex-start;
+}
+
+.home-empty-copy {
+  margin: 0 0 var(--space-4);
+  max-width: 36ch;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.home-needs-you-static {
+  cursor: default;
+  border-style: solid;
+}
+
+.home-needs-you-static:hover {
+  border-color: var(--border-subtle);
 }
 
 @media (max-width: 720px) {
@@ -1135,6 +1669,123 @@ h3 {
   margin-top: 1rem;
 }
 
+/* ── Return wall (Home) ─────────────────────────────────────────
+   One elevated Continue; New project is secondary. Unread only on
+   project rows. Token-mapped “frame” CTA — no rainbow, no glow. */
+
+.home-return-wall .home-md-row.has-unread .home-md-row-name {
+  font-weight: 700;
+}
+
+.home-md-row-badge {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--dopamine, var(--accent-primary));
+}
+
+.home-needs-you {
+  display: block;
+  width: 100%;
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-needs-you:hover {
+  border-color: var(--text-primary);
+}
+
+.home-detail-client {
+  margin: 0 0 var(--space-1);
+  text-align: left;
+}
+
+.home-pack-thin-note {
+  margin-top: var(--space-1);
+}
+
+.home-desk-link {
+  display: inline-block;
+  margin-top: var(--space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.home-desk-link:hover {
+  color: var(--text-primary);
+}
+
+/* Continue — adapted Button-64 structure with dopamine tokens only.
+   Outer frame uses padding from the space ramp (not a raw px one-off). */
+.home-cta-continue {
+  padding: var(--space-1);
+  background-image: linear-gradient(
+    144deg,
+    var(--dopamine-soft),
+    var(--dopamine) 50%,
+    var(--dopamine-deep)
+  );
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: none;
+  color: var(--on-dopamine, #fff);
+}
+
+.home-cta-continue-inner {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius);
+  background: var(--dopamine, var(--accent-primary));
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.home-cta-continue:hover .home-cta-continue-inner,
+.home-cta-continue:focus-visible .home-cta-continue-inner {
+  background: transparent;
+  color: var(--on-dopamine, #fff);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-cta-continue-inner {
+    transition: none;
+  }
+}
+
+.app.deep .home-cta-continue {
+  background-image: linear-gradient(
+    144deg,
+    var(--dopamine-soft),
+    var(--dopamine) 50%,
+    var(--dopamine-deep)
+  );
+}
+
+.app.deep .home-needs-you {
+  background: var(--bg-muted);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
 .home-md-rows {
   list-style: none;
   margin: 0;
@@ -1173,7 +1824,8 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .home-md-row-name {
@@ -1406,13 +2058,22 @@ h3 {
   width: 100%;
 }
 
-/* System + Pack need room for sticky artboard / preview side-by-side */
-
+/* System + Pack / Identity — fill main grid cell (path rebuild checklist).
+   Was min(1120px) centered — left a dead gutter next to the sidebar. */
 .main:has(.system-view),
 .main:has(.pack-view),
+.main:has(.design-studio),
 .app.view-brand .main,
 .app.is-pack-view .main {
-  max-width: min(1120px, 100%);
+  max-width: none;
+  margin-inline: 0;
+  width: 100%;
+  padding-inline: var(--space-5);
+}
+
+/* Identity — artboard + editors are the job; hide full-width mark-done banner. */
+.main:has(.design-studio) .step-done-toggle {
+  display: none;
 }
 
 /* Global version footer — every view */
@@ -1457,8 +2118,19 @@ h3 {
   background: color-mix(in srgb, var(--bg-elevated, #171717) 55%, transparent);
 }
 
-.app.view-studio .main {
-  max-width: 980px;
+/* Research used to cap main at 980px — a floating island next to the sidebar.
+   Path rebuild checklist: fill the main grid cell (same as The brief). */
+.app.view-studio .main,
+.app:has(.research-studio) .main {
+  max-width: none;
+  margin-inline: 0;
+  width: 100%;
+  padding-inline: var(--space-5);
+}
+
+/* Soften path mark-done on Research — wall is the job, not a full-width banner. */
+.main:has(.research-studio) .step-done-toggle {
+  display: none;
 }
 
 /* ——— Buttons ——— */
@@ -5873,6 +6545,15 @@ body:has(.app.deep)::after {
   background: transparent;
 }
 
+/* The brief — fill the main grid cell. Do not re-cap width (68rem left a
+   dead gutter on wide screens) and do not re-center with margin auto. */
+.app:has(.define-brief) .main {
+  max-width: none;
+  margin-inline: 0;
+  width: 100%;
+  padding-inline: var(--space-5);
+}
+
 /* ── Positioning spectrum ────────────────────────────────────────────────
    Poles at the ends, five dots between, and no numbers anywhere: a 1–5
    scale would make every answer a translation step, both for the client
@@ -9665,4 +10346,10 @@ textarea.artboard-brief-input {
 .step-done-toggle.is-done {
   color: var(--text-primary);
   border-color: var(--text-primary);
+}
+
+/* The brief — hide mark-done on this writing surface. Journey bar already
+   shows path state; a fourth "what do I do" control above Send was clutter. */
+.main:has(.define-brief) .step-done-toggle {
+  display: none;
 }

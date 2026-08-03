@@ -51,15 +51,15 @@ const COACHING = {
   },
   design: {
     title: 'Designing identity',
-    plain: 'Logo, color, type, voice. Name the version before big changes.',
+    plain: 'Mark, words, colour, type, then preview. One screen at a time.',
     prompt:
-      'Layout, type, color, clear order. Rules over decoration. Bump version (v1 → v2).',
+      'Build the system, then check it holds on the artboard. Bump version before a big change.',
     checks: [
-      'Color jobs set (cover / text / accent / quiet)',
-      'Font pair chosen; body text easy to read',
-      'One main action in the design',
-      'Space left empty on purpose',
-      'Version named (v1 → v2) before big changes',
+      'Mark captured (image and/or wordmark rules)',
+      'Words that say who this is and how it sounds',
+      'Colour jobs set (cover / text / accent / quiet)',
+      'Type pair that can carry real text',
+      'Preview: the pieces read as one system',
     ],
   },
   sketch: {

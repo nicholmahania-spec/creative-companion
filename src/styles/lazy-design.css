@@ -70,12 +70,63 @@
    band contains milestones/StartHere and draws its own rule element
    instead. */
 .design-studio > .brand-template-top {
-  padding-bottom: var(--space-4);
-  border-bottom: 2px solid var(--text-primary);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .brand-template-top .page-title {
   margin-bottom: 0.25rem;
+}
+
+/* Quiet status under Identity title — not a multi-field scoreboard */
+.design-identity-status {
+  margin: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.app.deep .design-identity-status {
+  color: var(--text-secondary);
+}
+
+.design-identity-head-text {
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+/* Version tools recede — secondary chrome, not a third primary row */
+.design-studio .version-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  opacity: 0.85;
+}
+
+.design-studio .version-controls .btn {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.design-studio .version-controls .btn:hover {
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+/* Path footer: Next leads, desk secondary (path rebuild) */
+.design-studio .path-continue-row.design-path-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.design-studio .design-path-footer .work-path-next {
+  font-weight: 700;
+  min-width: 10rem;
 }
 
 .brand-cover {
@@ -666,37 +717,7 @@
   margin-bottom: 1rem;
 }
 
-@media (min-width: 900px) {
-.system-view {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(17rem, 0.9fr);
-    gap: 1.25rem 1.5rem;
-    align-items: start;
-    width: 100%;
-  }
-
-.system-view .brand-template-top {
-    grid-column: 1 / -1;
-  }
-
-.system-artboard-sticky {
-    position: sticky;
-    top: 4.5rem;
-    max-height: calc(100vh - 5.5rem);
-    overflow: auto;
-    grid-row: 2 / span 20;
-    grid-column: 1;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-1);
-  }
-
-.system-view .system-edit-label,
-  .system-view .system-accordion-nav,
-  .system-view .panel.brand-section,
-  .system-view .brand-export-bar {
-    grid-column: 2;
-  }
-}
+/* Identity is single-column now — no side artboard grid (see .design-studio). */
 
 .pack-view .pack-preview-artboard {
   background: #FAFAFA;
@@ -1145,6 +1166,137 @@
   box-shadow: none;
 }
 
+/* Identity — one sub-screen at a time (Mark → Words → Colour → Type → Preview). */
+.design-studio.system-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  gap: 0;
+}
+
+/* Sub-screen map — text pills, not a second card grid */
+.identity-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: 0 0 var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.identity-subnav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.identity-subnav-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-muted);
+}
+
+.identity-subnav-btn.is-active {
+  color: var(--text-primary);
+  font-weight: 700;
+  background: var(--bg-muted);
+  box-shadow: inset 0 -2px 0 var(--text-primary);
+}
+
+.identity-subnav-num {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  opacity: 0.65;
+  font-weight: 500;
+}
+
+.app.deep .identity-subnav-btn.is-active {
+  background: var(--bg-muted);
+}
+
+.design-preview-pack-hint {
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Secondary to the artboard — always visible, never a second primary job */
+.design-preview-notes {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  max-width: 65ch;
+}
+
+.design-preview-notes.is-secondary {
+  opacity: 0.95;
+}
+
+.design-preview-notes-lede {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-muted);
+  max-width: 65ch;
+}
+
+.design-preview-notes-title {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--fs-2);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+}
+
+.design-preview-notes .design-preview-notes-title:first-of-type {
+  margin-top: var(--space-1);
+}
+
+/* Artboard owns Preview — full width, first fold */
+.design-studio .design-artboard-bottom {
+  margin-top: 0;
+}
+
+.design-studio .design-edit-column {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Full sheet after the form — natural height, page scrolls with it */
+.design-studio .design-artboard-bottom {
+  width: 100%;
+  max-width: none;
+  margin: var(--space-5) 0 0;
+  max-height: none;
+  height: auto;
+  overflow: visible;
+  position: static;
+  z-index: auto;
+  background: var(--ts-panel, var(--bg-elevated, #ffffff));
+  box-shadow: none;
+}
+
+.app.deep .design-studio .design-artboard-bottom {
+  background: var(--ts-panel, var(--bg-elevated, #2f2f2f));
+  border-color: var(--border-subtle);
+}
+
+.design-studio .path-continue-row.design-path-footer {
+  width: 100%;
+}
 
 .design-studio .role-pick-chip {
   border-radius: var(--radius);
@@ -1162,77 +1314,16 @@
   outline-offset: 1px;
 }
 
-/* Mobile: artboard before accordion (DOM has edit column first) */
-@media (max-width: 899px) {
-  .design-studio.system-view {
-    display: flex;
-    flex-direction: column;
-  }
-  .design-studio .brand-template-top {
-    order: 0;
-  }
-  .design-studio .system-artboard-sticky.design-preview-rail {
-    order: 1;
-    margin-bottom: 1rem;
-  }
-  .design-studio .design-edit-column {
-    order: 2;
-  }
-  .design-studio .path-continue-row {
-    order: 3;
-  }
-}
-
-/* Wide: artboard left (pack truth), editors right */
-@media (min-width: 900px) {
-  .design-studio.system-view {
-    display: grid;
-    grid-template-columns: minmax(0, 55fr) minmax(14rem, 45fr);
-    gap: 1rem 1.15rem;
-    align-items: start;
-    width: 100%;
-  }
-
-  .design-studio .brand-template-top {
-    grid-column: 1 / -1;
-  }
-
-  .design-studio .system-artboard-sticky.design-preview-rail {
-    grid-column: 1;
-    grid-row: 2;
-    position: sticky;
-    top: 4.5rem;
-    max-height: calc(100vh - 5.5rem);
-    overflow: auto;
-    margin-bottom: 0;
-    box-shadow: none;
-  }
-
-  .design-studio .design-edit-column {
-    grid-column: 2;
-    grid-row: 2;
-  }
-
-  .design-studio .brand-export-bar.path-continue-row,
-  .design-studio .path-continue-row {
-    grid-column: 1 / -1;
-    grid-row: 3;
-  }
-
-  .design-studio .system-accordion-nav,
-  .design-studio .panel.brand-section {
-    grid-column: auto;
-  }
-}
-
 /* Design preview label only */
 
-.design-rail-label {
-  font-size: 0.6875rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ts-mute) !important;
+/* Quiet plane label — sentence case, not a shouting micro-eyebrow */
+.design-studio .design-rail-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-muted);
+  margin: 0 0 var(--space-2);
 }
 
 .review-studio .review-feedback-hero .brand-section-label {
@@ -1569,54 +1660,10 @@
 /* ============================================================
    Identity editor — FLAT column, 2026 rebuild
    (adhd-executive-function-advisor ruling). Six sections always mounted,
-   numbered 01-06; the rail below is a scroll INDEX, not a tab switcher —
-   its highlight follows scroll position and clicking only moves the page.
+   numbered 01-06 via section heads only (no sticky tab rail).
    Numbered heads mirror the brief's chapter pattern
    (.define-chapter-head/.define-chapter-rule in lazy-define.css).
    ============================================================ */
-
-.design-section-rail {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  padding: var(--space-2) 0;
-  background: var(--bg-canvas);
-}
-
-.design-section-tab {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--bg-canvas);
-  color: var(--text-secondary);
-  font-size: var(--fs-1);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.design-section-tab:hover {
-  color: var(--text-primary);
-  background: var(--bg-muted);
-}
-
-.design-section-tab.is-active {
-  color: var(--text-primary);
-  font-weight: 700;
-  border-color: var(--text-primary);
-}
-
-.design-section-tab-num {
-  font-family: var(--font-display);
-  letter-spacing: 0.04em;
-  opacity: 0.7;
-}
 
 /* Numbered section head — number + title + hairline rule to the column
    edge, same visual language as .define-chapter-head. */
@@ -1675,15 +1722,13 @@
   }
 }
 
-/* Micro field labels: uppercase, wide tracking, muted — matches the
-   brief's field language. Inputs sit on canvas with a hairline border that
-   solidifies to full ink on focus. Scoped to the edit column only. */
+/* Sentence-case field labels (path rebuild) — conversational, not settings. */
 .design-edit-column .field-label {
-  font-size: var(--fs-1);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-primary);
 }
 
 .design-edit-column .field-input,

@@ -1,10 +1,16 @@
 /**
- * Design step — live artboard preview + accordion editors
- * (tagline, voice, colors, type, logo, pack pins).
- * Owns palette hex drafts / role assign / contrast checker local state.
+ * Identity — one job per screen under a single path stop:
+ * Mark → Words → Colour → Type → Preview.
+ * Stationery lives on Assets; ★ pack pins stay on Research.
  */
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react'
 import { labelForStepId } from '../lib/journey'
+import {
+  IDENTITY_SUBSTEPS,
+  resolveIdentitySubstep,
+  nextIdentitySubstep,
+  prevIdentitySubstep,
+} from '../lib/identitySubsteps'
 import useAppStore from '../store/useAppStore'
 import versionService from '../services/versionService'
 import {
@@ -27,30 +33,12 @@ import {
   suggestRoleColor,
 } from '../lib/color'
 import { getProcessPhase } from '../lib/processGuide'
-import { pinFaceStyle } from '../lib/moodPins'
 import { loadTypePairFont, loadBrandFamilies } from '../lib/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
 import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-design.css'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
-const StationeryKit = lazy(() => import('../components/StationeryKit'))
-
-/** Smooth scrolling is a vestibular trigger for some users; honor the OS pref. */
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-
-/* The flat column's order, numbered 01-06. One source read by both the
-   rail and the section heads — never restate this list. */
-const DESIGN_SECTIONS = [
-  { id: 'logo', num: '01', title: 'The mark' },
-  { id: 'essentials', num: '02', title: 'What it says' },
-  { id: 'colors', num: '03', title: 'Colour' },
-  { id: 'type', num: '04', title: 'Type' },
-  { id: 'pins', num: '05', title: 'Pack' },
-  { id: 'stationery', num: '06', title: 'Stationery' },
-]
 
 export default function DesignView({
   navDir = 'none',
@@ -62,15 +50,12 @@ export default function DesignView({
   setActiveView,
   flashToast,
   flashMicro,
-  /** Controlled accordion tab when jumping from Review/Deliver readiness */
-  brandEditSectionProp,
-  setBrandEditSectionProp,
+  /** One-shot deep link from Review/Deliver readiness — cleared after apply */
+  brandEditSectionProp = null,
+  setBrandEditSectionProp = null,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const updateDirection = useAppStore((s) => s.updateDirection)
-  const addContact = useAppStore((s) => s.addContact)
-  const updateContact = useAppStore((s) => s.updateContact)
-  const removeContact = useAppStore((s) => s.removeContact)
   const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
   const updatePaletteColor = useAppStore((s) => s.updatePaletteColor)
@@ -82,18 +67,13 @@ export default function DesignView({
   const setLogoDirection = useAppStore((s) => s.setLogoDirection)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
 
-  /* FLAT column, not tabs (adhd-executive-function-advisor ruling, 2026
-     design handoff). All six sections are always mounted; the rail below is
-     a scroll INDEX whose highlight follows scroll position
-     (IntersectionObserver — same pattern as DetectiveSheet's chapter rail),
-     never a switcher that hides siblings. brandEditSectionLocal is that
-     highlight, not a visibility gate. */
-  const [brandEditSectionLocal, setBrandEditSectionLocal] = useState('logo')
-  const brandEditSection = brandEditSectionLocal
-  const setBrandEditSection = setBrandEditSectionLocal
-  /* A deep link (e.g. Review/Deliver readiness "fix palette roles") scrolls
-     to the section and puts a brief focus ring on its head — it no longer
-     hides the other five. */
+  /* Resume from project; sub-nav / Next / deep link all write identitySubstep. */
+  const identitySubstep = resolveIdentitySubstep(activeProject?.identitySubstep)
+  const setIdentitySubstep = (id) => {
+    const next = resolveIdentitySubstep(id)
+    if (next === identitySubstep) return
+    updateBrandField('identitySubstep', next)
+  }
   const [deepLinkFocus, setDeepLinkFocus] = useState(null)
   const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
   const [checkBgIndex, setCheckBgIndex] = useState(0)
@@ -193,7 +173,7 @@ export default function DesignView({
       setTemplates([...raw].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
     } catch (error) {
       console.error('Failed to load templates:', error)
-      flashToast?.('Failed to load templates')
+      flashToast?.('Templates didn’t load. Try again')
     } finally {
       setLoadingTemplates(false)
     }
@@ -202,7 +182,7 @@ export default function DesignView({
   // Save current project as template
   const saveAsTemplate = async (name, description) => {
     if (!name.trim()) {
-      flashToast?.('Template name is required')
+      flashToast?.('Name the template first')
       return false
     }
 
@@ -215,7 +195,7 @@ export default function DesignView({
         setTemplateName('')
         setTemplateDescription('')
         setSelectedTemplate(null)
-        flashToast?.('Template saved successfully')
+        flashToast?.('Template saved')
         // Track template save action - we need to get the newly created template
         // Since the store.saveAsTemplate returns the templateId, we can use that
         // or get the updated templates list
@@ -226,12 +206,12 @@ export default function DesignView({
         ) || updatedTemplates[updatedTemplates.length - 1]; // fallback to last one
         return true
       } else {
-        flashToast?.(`Failed to save template: ${result.error}`)
+        flashToast?.(result.error || 'Didn’t save. Try again')
         return false
       }
     } catch (error) {
       console.error('Failed to save template:', error)
-      flashToast?.('Failed to save template')
+      flashToast?.('Didn’t save. Try again')
       return false
     }
   }
@@ -244,17 +224,17 @@ export default function DesignView({
       if (result.ok) {
         // Refresh version history after applying template
         await loadVersionHistory()
-        flashMicro?.('Template applied successfully')
+        flashMicro?.('Template applied')
         // Track template apply action
         const appliedTemplate = store.getTemplateById(templateId)
         return true
       } else {
-        flashToast?.(`Failed to apply template: ${result.error}`)
+        flashToast?.(result.error || 'Didn’t apply. Try again')
         return false
       }
     } catch (error) {
       console.error('Failed to apply template:', error)
-      flashToast?.('Failed to apply template')
+      flashToast?.('Didn’t apply. Try again')
       return false
     }
   }
@@ -272,12 +252,12 @@ export default function DesignView({
         // Track template delete action
         return true
       } else {
-        flashToast?.(`Failed to delete template: ${result.error}`)
+        flashToast?.(result.error || 'Didn’t delete. Try again')
         return false
       }
     } catch (error) {
       console.error('Failed to delete template:', error)
-      flashToast?.('Failed to delete template')
+      flashToast?.('Didn’t delete. Try again')
       return false
     }
   }
@@ -294,12 +274,12 @@ export default function DesignView({
         // Track template update action
         return true
       } else {
-        flashToast?.(`Failed to update template: ${result.error}`)
+        flashToast?.(result.error || 'Didn’t update. Try again')
         return false
       }
     } catch (error) {
       console.error('Failed to update template:', error)
-      flashToast?.('Failed to update template')
+      flashToast?.('Didn’t update. Try again')
       return false
     }
   }
@@ -314,57 +294,36 @@ export default function DesignView({
       setVersionHistory(versions)
     } catch (error) {
       console.error('Failed to load version history:', error)
-      flashToast?.('Failed to load version history')
+      flashToast?.('Version history didn’t load. Try again')
     } finally {
       setLoadingVersions(false)
     }
   }
 
-  // Honor parent jump (e.g. readiness “fix palette roles”): scroll to the
-  // section and ring its head briefly. Everything stays mounted and visible
-  // — this never hides the other five sections.
+  // One-shot deep link (e.g. readiness “fix palette roles”) — apply then clear
+  // so the next visit resumes from identitySubstep, not a sticky gap target.
   useEffect(() => {
     if (!brandEditSectionProp) return
-    const map = {
-      messaging: 'essentials',
-      voice: 'essentials',
-      imagery: 'pins',
-    }
-    const target = map[brandEditSectionProp] || brandEditSectionProp
-    requestAnimationFrame(() => {
-      document
-        .getElementById(`design-section-content-${target}`)
-        ?.scrollIntoView({
-          block: 'start',
-          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-        })
-    })
+    const target = resolveIdentitySubstep(brandEditSectionProp)
+    updateBrandField('identitySubstep', target)
+    setBrandEditSectionProp?.(null)
     setDeepLinkFocus(target)
     const t = setTimeout(() => setDeepLinkFocus(null), 2200)
     return () => clearTimeout(t)
-  }, [brandEditSectionProp])
+  }, [brandEditSectionProp, setBrandEditSectionProp, updateBrandField])
 
-  // Rail highlight follows scroll position, same pattern as DetectiveSheet's
-  // chapter rail — a scroll index is only honest if it's always current.
+  const substepIndex = Math.max(
+    0,
+    IDENTITY_SUBSTEPS.findIndex((s) => s.id === identitySubstep)
+  )
+  const nextSubstep = nextIdentitySubstep(identitySubstep)
+  const prevSubstep = prevIdentitySubstep(identitySubstep)
+
+  // New sub-screen → top of page (avoid landing mid-form from a previous step)
   useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') return undefined
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            const id = e.target.dataset.section
-            if (id) setBrandEditSectionLocal(id)
-          }
-        }
-      },
-      { rootMargin: '-20% 0px -70% 0px' }
-    )
-    for (const s of DESIGN_SECTIONS) {
-      const el = document.getElementById(`design-section-content-${s.id}`)
-      if (el) io.observe(el)
-    }
-    return () => io.disconnect()
-  }, [])
+    if (typeof window === 'undefined') return
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [identitySubstep])
 
   const paletteRoles = useMemo(
     () => mapPaletteRoles(projectPalette),
@@ -473,7 +432,7 @@ export default function DesignView({
     const nextPal = mergeRolesIntoPalette(projectPalette, roles, 8)
     if (nextPal.length >= 2) setProjectPalette(nextPal)
     flashMicro?.(
-      `Fixed ${changes.length} role${changes.length === 1 ? '' : 's'} for AA · ${changes.map((c) => c.role).join(', ')}`
+      `Fixed contrast on ${changes.map((c) => c.role).join(', ')}`
     )
   }
 
@@ -518,126 +477,86 @@ export default function DesignView({
   return (
     <>
           <div className="brand-layout surface-document system-view design-studio view-enter" data-nav-dir={navDir}>
-            <div className="brand-template-top">
-              <div>
+            <div className="brand-template-top design-identity-head">
+              <div className="design-identity-head-text">
                 <h1 className="page-title">
                   {labelForStepId('design')}
                 </h1>
-                <p className="page-sub">
-                  {activeProject?.name || 'Project'}
-                  {/* Floor, not ratio — the same call ResearchView records at
-                      its own heading, and the one the project sidebar and the
-                      Define chapter rail already made. "★ 3/6" is a number to
-                      decode that produces no next action, and it reads as a
-                      scoreboard three-fifths empty. Say what is still open,
-                      or say it is done. */}
-                  {(() => {
-                    const inPack = deskMood.filter((m) => m.inPack).length
-                    if (!inPack) return null
-                    return (
-                      <span>
-                        {inPack >= 6
-                          ? ' · ★ pack full'
-                          : ` · ★ ${inPack} in pack · room for ${6 - inPack}`}
-                      </span>
-                    )
-                  })()}
-                  {activeProject?.detective?.goal && (
-                    <span> · Goal: {String(activeProject.detective.goal).slice(0, 20)}{String(activeProject.detective.goal).length > 20 ? '…' : ''}</span>
-                  )}
-                  {activeProject?.detective?.brandWords && (
-                    <span> · {String(activeProject.detective.brandWords).slice(0, 20)}{String(activeProject.detective.brandWords).length > 20 ? '…' : ''}</span>
-                  )}
+                {/* Quiet status only — pack floor, not goal/words scoreboard. */}
+                <p className="design-identity-status" role="status">
+                  {IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}
                   <InfoReveal>
                     {(getProcessPhase('design')?.checks || []).join(' · ')}
                   </InfoReveal>
                 </p>
               </div>
-              <div className="brand-template-actions">
-                <div className="version-controls">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    title="Bump the design version"
-                    onClick={async () => {
-                      const r = bumpDesignVersion()
-                      if (r?.ok)
-                        flashMicro(`Version ${r.version}`)
-                      // Refresh version history after bumping
-                      await loadVersionHistory()
-                    }}
-                  >
-                    Bump · {activeProject?.designVersion || 'v1'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    title="View version history"
-                    onClick={async () => {
-                      await loadVersionHistory()
-                      setShowVersionHistory(true)
-                    }}
-                  >
-                    History
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    title="Manage templates"
-                    onClick={async () => {
-                      await loadTemplates()
-                      setShowTemplateModal(true)
-                    }}
-                  >
-                    Templates
-                  </button>
+              {/* Meta chrome only on Preview — craft screens open on the field,
+                  not version/template decisions (ADHD: decision fatigue). */}
+              {identitySubstep === 'preview' && (
+                <div className="brand-template-actions">
+                  <div className="version-controls">
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      title="Bump the design version"
+                      onClick={async () => {
+                        const r = bumpDesignVersion()
+                        if (r?.ok)
+                          flashMicro(`Version ${r.version}`)
+                        await loadVersionHistory()
+                      }}
+                    >
+                      Bump · {activeProject?.designVersion || 'v1'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      title="View version history"
+                      onClick={async () => {
+                        await loadVersionHistory()
+                        setShowVersionHistory(true)
+                      }}
+                    >
+                      History
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      title="Manage templates"
+                      onClick={async () => {
+                        await loadTemplates()
+                        setShowTemplateModal(true)
+                      }}
+                    >
+                      Templates
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
-            <div className="design-edit-column">
-            {/* Scroll INDEX, not a switcher — every section below is always
-                mounted. Clicking moves the page; the highlight follows scroll
-                (IntersectionObserver), so it never goes stale. Six rows,
-                never five plus an "Advanced" fork — Stationery is an
-                ordinary stop, not a hidden extra. */}
-            <nav className="design-section-rail" aria-label="Identity sections">
-              {DESIGN_SECTIONS.map((s) => {
-                const active = brandEditSection === s.id
+            <nav className="identity-subnav" aria-label="Identity screens">
+              {IDENTITY_SUBSTEPS.map((step, i) => {
+                const active = identitySubstep === step.id
                 return (
                   <button
-                    key={s.id}
+                    key={step.id}
                     type="button"
-                    className={`design-section-tab${active ? ' is-active' : ''}`}
+                    className={`identity-subnav-btn${active ? ' is-active' : ''}`}
                     aria-current={active ? 'step' : undefined}
-                    aria-controls={`design-section-content-${s.id}`}
-                    onClick={() => {
-                      setBrandEditSection(s.id)
-                      requestAnimationFrame(() => {
-                        document
-                          .getElementById(`design-section-content-${s.id}`)
-                          ?.scrollIntoView({
-                            block: 'start',
-                            behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-                          })
-                      })
-                    }}
+                    onClick={() => setIdentitySubstep(step.id)}
                   >
-                    <span className="design-section-tab-num" aria-hidden="true">
-                      {s.num}
+                    <span className="identity-subnav-num" aria-hidden="true">
+                      {String(i + 1).padStart(2, '0')}
                     </span>
-                    <span className="design-section-tab-label">{s.title}</span>
+                    {step.label}
                   </button>
                 )
               })}
             </nav>
-            <p className="panel-hint design-min-hint" style={{ margin: '0 0 0.75rem' }}>
-              Tagline, colors, or logo is enough for the path.
-            </p>
 
-            {/* Logo section — physically first in the column (01 The mark),
-                moved here from its old spot after Type so DOM order matches
-                the ruling's numbering. */}
+            <div className="design-edit-column">
+            {identitySubstep === 'logo' && (
             <section
               id="design-section-content-logo"
               data-section="logo"
@@ -646,8 +565,7 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <span className="design-section-badge">01</span>
-                <h2 className="design-section-title">The mark</h2>
+                <h2 className="design-section-title">Mark</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
@@ -670,14 +588,14 @@ export default function DesignView({
               </div>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-custom">
-                  Logo direction
+                  How the mark behaves
                 </label>
                 <input
                   id="logo-custom"
                   className="field-input"
                   value={activeProject?.logoDirection || ''}
                   onChange={(e) => setLogoDirection(e.target.value)}
-                  placeholder="Mark rules"
+                  placeholder="e.g. always with wordmark"
                 />
               </div>
               <div className="brand-two-up">
@@ -693,12 +611,12 @@ export default function DesignView({
                     onChange={(e) =>
                       updateBrandField('logoClearspace', e.target.value)
                     }
-                    placeholder="Clearspace"
+                    placeholder={'e.g. height of the “x” all around'}
                   />
                 </div>
                 <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                   <label className="field-label" htmlFor="logo-min-size">
-                    Smallest logo size
+                    Smallest mark size
                   </label>
                   <input
                     id="logo-min-size"
@@ -707,39 +625,14 @@ export default function DesignView({
                     onChange={(e) =>
                       updateBrandField('logoMinSize', e.target.value)
                     }
-                    placeholder="Min size"
+                    placeholder="e.g. 24px digital · 12mm print"
                   />
                 </div>
               </div>
 
-              {activeProject?.logoImage ? (
-                <div
-                  className="logo-variant-row"
-                  role="group"
-                  aria-label="Logo versions"
-                >
-                  <p className="field-label" style={{ marginBottom: '0.4rem' }}>
-                    Logo versions
-                  </p>
-                  <div className="logo-variant-grid">
-                    <div className="logo-variant-card is-primary">
-                      <span className="logo-variant-label">Primary</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                    <div className="logo-variant-card is-reverse">
-                      <span className="logo-variant-label">Reverse</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                    <div className="logo-variant-card is-mono">
-                      <span className="logo-variant-label">Mono</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                  </div>
-                </div>
-              ) : null}
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-donts">
-                  Logo mistakes to avoid
+                  Mark mistakes to avoid
                 </label>
                 <textarea
                   id="logo-donts"
@@ -758,10 +651,10 @@ export default function DesignView({
                 <div
                   className="logo-variant-row"
                   role="group"
-                  aria-label="Logo versions"
+                  aria-label="Mark versions"
                 >
                   <p className="field-label" style={{ marginBottom: '0.4rem' }}>
-                    Logo versions
+                    Mark versions
                   </p>
                   <div className="logo-variant-grid">
                     <div className="logo-variant-card is-primary">
@@ -791,7 +684,7 @@ export default function DesignView({
                       e.target.value = ''
                       if (!file) return
                       if (file.size > 2.5 * 1024 * 1024) {
-                        flashToast('Logo image must be under 2.5MB')
+                        flashToast('Image must be under 2.5MB')
                         return
                       }
 
@@ -835,7 +728,7 @@ export default function DesignView({
                     className="btn btn-ghost"
                     onClick={() => {
                       setLogoImage('')
-                      flashMicro('Logo image removed')
+                      flashMicro('Mark image removed')
                     }}
                   >
                     Remove mark
@@ -843,8 +736,9 @@ export default function DesignView({
                 ) : null}
               </div>
             </section>
+            )}
 
-            {/* 02 What it says */}
+            {identitySubstep === 'essentials' && (
             <section
               id="design-section-content-essentials"
               data-section="essentials"
@@ -853,8 +747,7 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <span className="design-section-badge">02</span>
-                <h2 className="design-section-title">What it says</h2>
+                <h2 className="design-section-title">Words</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
               <div className="field-block brand-direction-block">
@@ -940,89 +833,88 @@ export default function DesignView({
                   rows={2}
                 />
               </div>
-              <details className="design-advanced">
-                <summary>Do / Don&apos;t · Messages</summary>
-                <div className="brand-do-dont" style={{ marginTop: '0.65rem' }}>
-                  <div className="field-block" style={{ marginBottom: 0 }}>
-                    <label className="field-label" htmlFor="brand-do">
-                      Do
-                    </label>
-                    <textarea
-                      id="brand-do"
-                      className="field-textarea"
-                      value={activeProject?.doUse || ''}
-                      onChange={(e) =>
-                        updateBrandField('doUse', e.target.value)
-                      }
-                      placeholder="Fits"
-                      rows={2}
-                    />
-                  </div>
-                  <div className="field-block" style={{ marginBottom: 0 }}>
-                    <label className="field-label" htmlFor="brand-dont">
-                      Don&apos;t
-                    </label>
-                    <textarea
-                      id="brand-dont"
-                      className="field-textarea"
-                      value={activeProject?.dontUse || ''}
-                      onChange={(e) =>
-                        updateBrandField('dontUse', e.target.value)
-                      }
-                      placeholder="Avoid"
-                      rows={2}
-                    />
-                  </div>
-                </div>
-                <div className="field-block" style={{ marginTop: '0.75rem' }}>
-                  <label className="field-label" htmlFor="msg-promise">
-                    Promise
+              {/* Always visible — collapsed details read as "not there" */}
+              <div className="brand-do-dont" style={{ marginTop: '0.65rem' }}>
+                <div className="field-block" style={{ marginBottom: 0 }}>
+                  <label className="field-label" htmlFor="brand-do">
+                    Do
                   </label>
                   <textarea
-                    id="msg-promise"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.messagingPromise || ''}
+                    id="brand-do"
+                    className="field-textarea"
+                    value={activeProject?.doUse || ''}
                     onChange={(e) =>
-                      updateBrandField('messagingPromise', e.target.value)
+                      updateBrandField('doUse', e.target.value)
                     }
-                    placeholder="Promise"
+                    placeholder="Fits"
+                    rows={2}
                   />
                 </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="msg-proof">
-                    Proof
+                <div className="field-block" style={{ marginBottom: 0 }}>
+                  <label className="field-label" htmlFor="brand-dont">
+                    Don&apos;t
                   </label>
                   <textarea
-                    id="msg-proof"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.messagingProof || ''}
+                    id="brand-dont"
+                    className="field-textarea"
+                    value={activeProject?.dontUse || ''}
                     onChange={(e) =>
-                      updateBrandField('messagingProof', e.target.value)
+                      updateBrandField('dontUse', e.target.value)
                     }
-                    placeholder="Proof"
+                    placeholder="Avoid"
+                    rows={2}
                   />
                 </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="msg-personality">
-                    Personality
-                  </label>
-                  <textarea
-                    id="msg-personality"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.messagingPersonality || ''}
-                    onChange={(e) =>
-                      updateBrandField('messagingPersonality', e.target.value)
-                    }
-                    placeholder="Personality"
-                  />
-                </div>
-              </details>
+              </div>
+              <div className="field-block" style={{ marginTop: '0.75rem' }}>
+                <label className="field-label" htmlFor="msg-promise">
+                  Promise
+                </label>
+                <textarea
+                  id="msg-promise"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.messagingPromise || ''}
+                  onChange={(e) =>
+                    updateBrandField('messagingPromise', e.target.value)
+                  }
+                  placeholder="What we always deliver"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="msg-proof">
+                  Proof
+                </label>
+                <textarea
+                  id="msg-proof"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.messagingProof || ''}
+                  onChange={(e) =>
+                    updateBrandField('messagingProof', e.target.value)
+                  }
+                  placeholder="How they know it’s true"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="msg-personality">
+                  Personality
+                </label>
+                <textarea
+                  id="msg-personality"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.messagingPersonality || ''}
+                  onChange={(e) =>
+                    updateBrandField('messagingPersonality', e.target.value)
+                  }
+                  placeholder="Three traits"
+                />
+              </div>
             </section>
+            )}
 
-            {/* 03 Colour */}
+            {identitySubstep === 'colors' && (
             <section
               id="design-section-content-colors"
               data-section="colors"
@@ -1031,7 +923,6 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <span className="design-section-badge">03</span>
                 <h2 className="design-section-title">Colour</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
@@ -1056,11 +947,17 @@ export default function DesignView({
                         <span className="palette-health-score is-idle">—</span>
                       </div>
                       <p className="panel-hint" style={{ margin: 0 }}>
-                        Add a color to see this.
+                        Add a colour to see this.
                       </p>
                     </div>
                   )
                 }
+                const healthWord =
+                  health.score >= 80
+                    ? 'Solid'
+                    : health.score >= 50
+                      ? 'Getting there'
+                      : 'Needs work'
                 return (
                   <div className="palette-health">
                     <div className="palette-health-head">
@@ -1075,11 +972,12 @@ export default function DesignView({
                               ? ' is-mid'
                               : ' is-low'
                         }`}
+                        title={`${health.score}%`}
                       >
-                        {health.score}%
+                        {healthWord}
                       </span>
                     </div>
-                    <div className="palette-health-bar">
+                    <div className="palette-health-bar" aria-hidden="true">
                       <div
                         className="palette-health-bar-fill"
                         style={{ width: `${health.score}%` }}
@@ -1093,9 +991,6 @@ export default function DesignView({
                   <p className="field-label" style={{ margin: 0 }}>
                     Palette
                   </p>
-                  <span className="panel-hint" style={{ margin: 0 }}>
-                    {projectPalette.length}/8
-                  </span>
                 </div>
 
                 <div className="brand-palette-bleed">
@@ -1121,7 +1016,7 @@ export default function DesignView({
                         <div className="palette-row">
                           <label
                             className="palette-swatch-wrap"
-                            title="Pick color"
+                            title="Pick colour"
                           >
                             <input
                               type="color"
@@ -1138,7 +1033,7 @@ export default function DesignView({
                                   })
                                 }
                               }}
-                              aria-label={`Color ${index + 1} picker`}
+                              aria-label={`Colour ${index + 1} picker`}
                             />
                             <span
                               className="palette-swatch"
@@ -1159,7 +1054,7 @@ export default function DesignView({
                               if (e.key === 'Enter') e.currentTarget.blur()
                             }}
                             spellCheck={false}
-                            aria-label={`Color ${index + 1} hex`}
+                            aria-label={`Colour ${index + 1} hex`}
                           />
                           <span
                             className="palette-preview-chip"
@@ -1253,7 +1148,7 @@ export default function DesignView({
                     disabled={projectPalette.length >= 8}
                     onClick={() => addPaletteColor('#888888')}
                   >
-                    Add color
+                    Add colour
                   </button>
                   <button
                     type="button"
@@ -1282,7 +1177,7 @@ export default function DesignView({
                       setHexDrafts({})
                     }}
                   >
-                    Reset default
+                    Reset to default
                   </button>
                 </div>
 
@@ -1291,7 +1186,7 @@ export default function DesignView({
               <div className="palette-roles-editor" style={{ marginTop: '1rem' }}>
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
-                    Pack roles
+                    Colour jobs
                   </p>
                 </div>
                 <div className="system-role-assign" style={{ marginTop: '0.45rem' }}>
@@ -1331,16 +1226,18 @@ export default function DesignView({
                 </div>
               </div>
 
-              <details className="design-advanced">
-                <summary>AA · Why · Suggest</summary>
-                <div className="finish-secondary-row" style={{ marginTop: '0.65rem' }}>
+              <div className="design-contrast-block">
+                <p className="field-label" style={{ margin: '1rem 0 0.45rem' }}>
+                  Contrast and why
+                </p>
+                <div className="finish-secondary-row" style={{ marginTop: '0.35rem' }}>
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
                     title="Nudge text / accent / quiet / cover until AA targets pass"
                     onClick={() => applyAaRoleFix()}
                   >
-                    Fix AA
+                    Fix contrast
                   </button>
                   {!activeProject?.colorRoles?.[brandRoleAssign] && (
                     <button
@@ -1364,12 +1261,6 @@ export default function DesignView({
                 {(() => {
                   const roleWhy = activeProject?.colorRoleWhy || {}
                   const brandWords = activeProject?.detective?.brandWords || ''
-                  const justifiedCount = [
-                    'cover',
-                    'text',
-                    'accent',
-                    'quiet',
-                  ].filter((r) => String(roleWhy[r] || '').trim()).length
                   return (
                     <div className="field-block" style={{ marginTop: '0.65rem' }}>
                       <label className="field-label" htmlFor="color-role-why">
@@ -1377,12 +1268,6 @@ export default function DesignView({
                         {brandWords.trim()
                           ? ` · ${brandWords.trim().slice(0, 24)}`
                           : ''}
-                        <span
-                          className="panel-hint"
-                          style={{ marginLeft: '0.4rem' }}
-                        >
-                          {justifiedCount}/4
-                        </span>
                       </label>
                       <input
                         id="color-role-why"
@@ -1397,18 +1282,13 @@ export default function DesignView({
                             ...roleWhy,
                             [brandRoleAssign]: e.target.value,
                           })}
-                        placeholder="Why this role"
+                        placeholder="Why this job fits"
                       />
                     </div>
                   )
                 })()}
 
                 <div className="palette-checker" style={{ marginTop: '0.85rem' }}>
-                  <div className="palette-section-head">
-                    <p className="field-label" style={{ margin: 0 }}>
-                      Contrast
-                    </p>
-                  </div>
                   <label className="field-label" htmlFor="check-bg">
                     Background
                   </label>
@@ -1437,7 +1317,7 @@ export default function DesignView({
                   </div>
                   <ul className="palette-check-list">
                     {contrastPairs.length === 0 ? (
-                      <li className="panel-hint">2+ colors</li>
+                      <li className="panel-hint">Need two colours to check</li>
                     ) : (
                       contrastPairs.map((pair) => (
                         <li
@@ -1483,7 +1363,7 @@ export default function DesignView({
                                 fixPairFg(pair.fg, pair.bg, pair.index)
                               }
                             >
-                              Fix AA
+                              Fix
                             </button>
                           ))}
                         </li>
@@ -1534,10 +1414,11 @@ export default function DesignView({
                     )}
                   </div>
                 </div>
-              </details>
+              </div>
             </section>
+            )}
 
-            {/* 04 Type */}
+            {identitySubstep === 'type' && (
             <section
               id="design-section-content-type"
               data-section="type"
@@ -1546,7 +1427,6 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <span className="design-section-badge">04</span>
                 <h2 className="design-section-title">Type</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
@@ -1667,234 +1547,18 @@ export default function DesignView({
                 />
               </div>
             </section>
+            )}
 
-            {/* 05 Pack — starred pins + imagery advanced */}
-            <section
-              id="design-section-content-pins"
-              data-section="pins"
-              className={`panel brand-section${
-                deepLinkFocus === 'pins' ? ' is-deep-link-focus' : ''
-              }`}
-            >
-              <header className="design-section-head">
-                <span className="design-section-badge">05</span>
-                <h2 className="design-section-title">Pack</h2>
-                <span className="design-section-rule" aria-hidden="true" />
-              </header>
-              {(() => {
-                const packPins = deskMood.filter((m) => m.inPack)
-                if (packPins.length === 0) {
-                  return (
-                    <div className="brand-mood-empty">
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => setActiveView('studio')}
-                      >
-                        ★ pins in Research
-                      </button>
-                    </div>
-                  )
-                }
-                return (
-                  <div className="brand-mood-row">
-                    {packPins.slice(0, 6).map((p) => (
-                      <div
-                        key={p.id}
-                        className="brand-mood-thumb"
-                        style={pinFaceStyle(p)}
-                        title={p.note}
-                      />
-                    ))}
-                  </div>
-                )
-              })()}
-              <details className="design-advanced">
-                <summary>Imagery guidelines</summary>
-                <div className="field-block" style={{ marginTop: '0.65rem' }}>
-                  <label className="field-label" htmlFor="img-style">
-                    Look of photos / drawings
-                  </label>
-                  <textarea
-                    id="img-style"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.imageryStyle || ''}
-                    onChange={(e) =>
-                      updateBrandField('imageryStyle', e.target.value)
-                    }
-                    placeholder="Look"
-                  />
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="img-do">
-                    Pictures we want
-                  </label>
-                  <textarea
-                    id="img-do"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.imageryDo || ''}
-                    onChange={(e) =>
-                      updateBrandField('imageryDo', e.target.value)
-                    }
-                    placeholder="Do"
-                  />
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="img-dont">
-                    Pictures to avoid
-                  </label>
-                  <textarea
-                    id="img-dont"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.imageryDont || ''}
-                    onChange={(e) =>
-                      updateBrandField('imageryDont', e.target.value)
-                    }
-                    placeholder="Don't"
-                  />
-                </div>
-              </details>
-              {/* Writing and print rules. Two selects rather than a blank box:
-                  the answer is a choice from a short list, and asking for
-                  prose here would get the same skip every open-ended field
-                  gets. Both already carry a defensible default, so the book
-                  prints a rule whether or not this is ever opened. */}
-              <details className="design-advanced">
-                <summary>Writing and print rules</summary>
-                <div className="field-block" style={{ marginTop: '0.65rem' }}>
-                  <label className="field-label" htmlFor="wr-case">
-                    Headings
-                  </label>
-                  <select
-                    id="wr-case"
-                    className="field-input"
-                    value={activeProject?.writingCase || 'sentence'}
-                    onChange={(e) =>
-                      updateBrandField('writingCase', e.target.value)
-                    }
-                  >
-                    <option value="sentence">
-                      Sentence case — Like this one
-                    </option>
-                    <option value="title">Title case — Like This One</option>
-                  </select>
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="wr-caps">
-                    ALL CAPS
-                  </label>
-                  <select
-                    id="wr-caps"
-                    className="field-input"
-                    value={activeProject?.writingCaps || 'sparing'}
-                    onChange={(e) =>
-                      updateBrandField('writingCaps', e.target.value)
-                    }
-                  >
-                    <option value="sparing">Short labels only</option>
-                    <option value="labels">UI labels and navigation only</option>
-                    <option value="never">Never</option>
-                  </select>
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="wr-notes">
-                    Anything else about the words
-                  </label>
-                  <textarea
-                    id="wr-notes"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.writingNotes || ''}
-                    onChange={(e) =>
-                      updateBrandField('writingNotes', e.target.value)
-                    }
-                    placeholder="Optional"
-                  />
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="pr-pantone">
-                    Pantone match
-                  </label>
-                  <input
-                    id="pr-pantone"
-                    className="field-input"
-                    value={activeProject?.printPantone || ''}
-                    onChange={(e) =>
-                      updateBrandField('printPantone', e.target.value)
-                    }
-                    placeholder="e.g. 871C for the gold"
-                  />
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="pr-stock">
-                    Paper stock
-                  </label>
-                  <input
-                    id="pr-stock"
-                    className="field-input"
-                    value={activeProject?.printStock || ''}
-                    onChange={(e) =>
-                      updateBrandField('printStock', e.target.value)
-                    }
-                    placeholder="e.g. 350gsm uncoated"
-                  />
-                </div>
-                <div className="field-block">
-                  <label className="field-label" htmlFor="pr-finish">
-                    Finish
-                  </label>
-                  <input
-                    id="pr-finish"
-                    className="field-input"
-                    value={activeProject?.printFinish || ''}
-                    onChange={(e) =>
-                      updateBrandField('printFinish', e.target.value)
-                    }
-                    placeholder="e.g. matt lamination, spot UV"
-                  />
-                </div>
-              </details>
-            </section>
 
-            {/* 06 Stationery — an ordinary section now, not an "Advanced"
-                fork; letterhead, business card, envelope, email signature */}
-            <section
-              id="design-section-content-stationery"
-              data-section="stationery"
-              className={`panel brand-section${
-                deepLinkFocus === 'stationery' ? ' is-deep-link-focus' : ''
-              }`}
-            >
-              <header className="design-section-head">
-                <span className="design-section-badge">06</span>
-                <h2 className="design-section-title">Stationery</h2>
-                <span className="design-section-rule" aria-hidden="true" />
-              </header>
-              <Suspense fallback={<div className="panel-hint">Loading…</div>}>
-                <StationeryKit
-                  activeProject={activeProject}
-                  projectPalette={projectPalette}
-                  updateBrandField={updateBrandField}
-                  addContact={addContact}
-                  updateContact={updateContact}
-                  removeContact={removeContact}
-                  flashToast={flashToast}
-                />
-              </Suspense>
-            </section>
-            </div>
-
-            {/* Preview — sticky 45% right on wide */}
+            {identitySubstep === 'preview' && (
+            <>
             <div
-              className="system-artboard-sticky design-preview-rail"
+              className="design-preview-rail design-artboard-bottom"
               tabIndex={0}
               role="region"
               aria-label="Live leave-behind preview"
             >
-              <div className="design-rail-label">Preview</div>
+              <div className="design-rail-label">Artboard</div>
               <Suspense
                 fallback={<div className="panel-hint">Loading…</div>}
               >
@@ -1908,6 +1572,199 @@ export default function DesignView({
                 />
               </Suspense>
             </div>
+            <p className="design-preview-pack-hint">
+              ★ pins come from Research.
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => setActiveView?.('studio')}
+              >
+                Open Research
+              </button>
+            </p>
+            <div className="design-preview-notes is-secondary">
+              <p className="design-preview-notes-lede">
+                Optional notes for the book — the job on this screen is the
+                artboard above.
+              </p>
+              <h3 className="design-preview-notes-title">Imagery</h3>
+              <div className="field-block">
+                <label className="field-label" htmlFor="img-style">
+                  Look of photos / drawings
+                </label>
+                <textarea
+                  id="img-style"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.imageryStyle || ''}
+                  onChange={(e) =>
+                    updateBrandField('imageryStyle', e.target.value)
+                  }
+                  placeholder="Warm light · less stock"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="img-do">
+                  Pictures we want
+                </label>
+                <textarea
+                  id="img-do"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.imageryDo || ''}
+                  onChange={(e) =>
+                    updateBrandField('imageryDo', e.target.value)
+                  }
+                  placeholder="Hands, real spaces"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="img-dont">
+                  Pictures to avoid
+                </label>
+                <textarea
+                  id="img-dont"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.imageryDont || ''}
+                  onChange={(e) =>
+                    updateBrandField('imageryDont', e.target.value)
+                  }
+                  placeholder="Clip art · harsh flash"
+                />
+              </div>
+              <h3 className="design-preview-notes-title">Writing and print</h3>
+              <div className="field-block">
+                <label className="field-label" htmlFor="wr-case">
+                  Headings
+                </label>
+                <select
+                  id="wr-case"
+                  className="field-input"
+                  value={activeProject?.writingCase || 'sentence'}
+                  onChange={(e) =>
+                    updateBrandField('writingCase', e.target.value)
+                  }
+                >
+                  <option value="sentence">
+                    Sentence case — Like this one
+                  </option>
+                  <option value="title">Title case — Like This One</option>
+                </select>
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="wr-caps">
+                  ALL CAPS
+                </label>
+                <select
+                  id="wr-caps"
+                  className="field-input"
+                  value={activeProject?.writingCaps || 'sparing'}
+                  onChange={(e) =>
+                    updateBrandField('writingCaps', e.target.value)
+                  }
+                >
+                  <option value="sparing">Short labels only</option>
+                  <option value="labels">UI labels and navigation only</option>
+                  <option value="never">Never</option>
+                </select>
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="wr-notes">
+                  Anything else about the words
+                </label>
+                <textarea
+                  id="wr-notes"
+                  className="field-input"
+                  rows={2}
+                  value={activeProject?.writingNotes || ''}
+                  onChange={(e) =>
+                    updateBrandField('writingNotes', e.target.value)
+                  }
+                  placeholder="Optional"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="pr-pantone">
+                  Pantone match
+                </label>
+                <input
+                  id="pr-pantone"
+                  className="field-input"
+                  value={activeProject?.printPantone || ''}
+                  onChange={(e) =>
+                    updateBrandField('printPantone', e.target.value)
+                  }
+                  placeholder="e.g. 871C for the gold"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="pr-stock">
+                  Paper stock
+                </label>
+                <input
+                  id="pr-stock"
+                  className="field-input"
+                  value={activeProject?.printStock || ''}
+                  onChange={(e) =>
+                    updateBrandField('printStock', e.target.value)
+                  }
+                  placeholder="e.g. 350gsm uncoated"
+                />
+              </div>
+              <div className="field-block">
+                <label className="field-label" htmlFor="pr-finish">
+                  Finish
+                </label>
+                <input
+                  id="pr-finish"
+                  className="field-input"
+                  value={activeProject?.printFinish || ''}
+                  onChange={(e) =>
+                    updateBrandField('printFinish', e.target.value)
+                  }
+                  placeholder="e.g. matt lamination, spot UV"
+                />
+              </div>
+            </div>
+            </>
+            )}
+            </div>
+
+            <div className="path-continue-row design-path-footer">
+              <button
+                type="button"
+                className="btn btn-primary work-path-next"
+                onClick={() => {
+                  if (nextSubstep) {
+                    setIdentitySubstep(nextSubstep.id)
+                    return
+                  }
+                  setActiveView?.(journeyNext?.view || 'flow')
+                }}
+              >
+                {nextSubstep
+                  ? `Next · ${nextSubstep.label}`
+                  : `Next · ${journeyNext?.label || labelForStepId('sketch')}`}
+              </button>
+              {prevSubstep ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setIdentitySubstep(prevSubstep.id)}
+                >
+                  Back · {prevSubstep.label}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActiveView?.('desk')}
+                >
+                  Back to the desk
+                </button>
+              )}
+            </div>
 
           </div>
 
@@ -1916,7 +1773,7 @@ export default function DesignView({
             <div className="dv-modal-overlay">
               <div className="dv-modal-panel">
                 <div className="dv-modal-head">
-                  <h2>Version History</h2>
+                  <h2>Version history</h2>
                   <button
                     onClick={() => setShowVersionHistory(false)}
                     className="btn btn-sm btn-ghost"
@@ -1928,12 +1785,11 @@ export default function DesignView({
                 <div className="dv-modal-scroll">
                   {loadingVersions ? (
                     <div className="dv-tpl-empty">
-                      <p>Loading version history…</p>
+                      <p>Loading…</p>
                     </div>
                   ) : versionHistory.length === 0 ? (
                     <div className="dv-tpl-empty">
-                      <p>No versions found for this project.</p>
-                      <p>Create a version by making changes and bumping the design version.</p>
+                      <p>No versions yet. Use Bump when you want a save point.</p>
                     </div>
                   ) : (
                     <div className="dv-tpl-list">
@@ -1952,7 +1808,7 @@ export default function DesignView({
                             <div>
                               <h3 className="dv-tpl-name">{version.versionLabel || 'Unnamed'}</h3>
                               <p className="dv-tpl-meta">
-                                {new Date(version.timestamp).toLocaleString()}
+                                {new Date(version.timestamp).toLocaleDateString()}
                               </p>
                             </div>
                             <div className="dv-tpl-actions">
@@ -1990,7 +1846,7 @@ export default function DesignView({
                   <div className="dv-diff-panel">
                     <div className="dv-diff-head">
                       <h3>
-                        {selectedVersion ? 'Comparing Versions' : 'Diff Details'}
+                        {selectedVersion ? 'Compare versions' : 'Changes'}
                       </h3>
                       <button
                         onClick={() => {
@@ -2119,7 +1975,7 @@ export default function DesignView({
             <div className="dv-modal-overlay">
               <div className="dv-modal-panel is-narrow">
                 <div className="dv-modal-head">
-                  <h2>Template Library</h2>
+                  <h2>Templates</h2>
                   <button
                     onClick={() => setShowTemplateModal(false)}
                     className="btn btn-sm btn-ghost"
@@ -2131,12 +1987,11 @@ export default function DesignView({
                 <div className="dv-modal-scroll">
                   {loadingTemplates ? (
                     <div className="dv-tpl-empty">
-                      <p>Loading templates…</p>
+                      <p>Loading…</p>
                     </div>
                   ) : templates.length === 0 ? (
                     <div className="dv-tpl-empty">
-                      <p>No templates saved yet.</p>
-                      <p>Create templates from your designs to reuse them later.</p>
+                      <p>No templates yet.</p>
                     </div>
                   ) : (
                     <div className="dv-tpl-list">
@@ -2157,7 +2012,7 @@ export default function DesignView({
                                 </p>
                               )}
                               <p className="dv-tpl-meta">
-                                Created: {new Date(template.createdAt).toLocaleString()}
+                                {new Date(template.createdAt).toLocaleDateString()}
                               </p>
                             </div>
                             <div className="dv-tpl-actions">
@@ -2209,7 +2064,7 @@ export default function DesignView({
               <div className="dv-modal-panel is-narrow">
                 <div className="dv-modal-head">
                   <h2>
-                    {selectedTemplate ? 'Update Template' : 'Save as Template'}
+                    {selectedTemplate ? 'Update template' : 'Save as template'}
                   </h2>
                   <button
                     onClick={() => {
@@ -2248,23 +2103,23 @@ export default function DesignView({
                   }}
                 >
                   <div className="field-block">
-                    <label className="field-label" htmlFor="dv-tpl-name">Template Name</label>
+                    <label className="field-label" htmlFor="dv-tpl-name">Template name</label>
                     <input
                       id="dv-tpl-name"
                       type="text"
                       value={templateName}
                       onChange={(e) => setTemplateName(e.target.value)}
-                      placeholder="Enter template name"
+                      placeholder="Name"
                       className="field-input"
                     />
                   </div>
                   <div className="field-block">
-                    <label className="field-label" htmlFor="dv-tpl-desc">Description (optional)</label>
+                    <label className="field-label" htmlFor="dv-tpl-desc">Notes (optional)</label>
                     <textarea
                       id="dv-tpl-desc"
                       value={templateDescription}
                       onChange={(e) => setTemplateDescription(e.target.value)}
-                      placeholder="Describe when to use this template"
+                      placeholder="When you’d use this"
                       rows={3}
                       className="field-textarea"
                     />
@@ -2295,15 +2150,6 @@ export default function DesignView({
             </div>
           )}
 
-      <div className="path-continue-row">
-        <button
-          type="button"
-          className="btn btn-primary work-path-next"
-          onClick={() => setActiveView?.(journeyNext?.view || 'flow')}
-        >
-          {`Next · ${journeyNext?.label || labelForStepId('sketch')}`}
-        </button>
-      </div>
     </>
   )
 }

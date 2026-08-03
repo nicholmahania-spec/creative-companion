@@ -99,6 +99,10 @@ import {
   focusPathGapTarget,
   sameProjectId,
 } from './lib/journeyProgress'
+import {
+  nextIdentitySubstep,
+  resolveIdentitySubstep,
+} from './lib/identitySubsteps'
 
 import JourneyGapStrip from './components/JourneyGapStrip'
 import PathStepIcon from './components/PathStepIcon'
@@ -119,6 +123,12 @@ import {
   printCurrentPage,
   slugifyFilename,
 } from './lib/exportFiles'
+import {
+  hoursForRange,
+  workLogsFromProjects,
+  formatHoursWorked,
+  HOURS_RANGES,
+} from './lib/workWeek'
 import LogoLockup from './components/LogoLockup'
 import StepDependencyReminder from './components/StepDependencyReminder'
 import BeforeAfterChip from './components/BeforeAfterChip'
@@ -400,11 +410,12 @@ function App() {
     }
   }, [])
 
-  /** Design accordion target when jumping from Review/Deliver readiness fixes */
-  const [brandEditSection, setBrandEditSection] = useState('essentials')
+  /** One-shot Identity sub-screen target from Review/Deliver readiness (null = none) */
+  const [brandEditSection, setBrandEditSection] = useState(null)
   const goSystemSection = useCallback(
     (section) => {
       if (section) setBrandEditSection(section)
+      else setBrandEditSection(null)
       setActiveView('brand')
     },
     [setActiveView]
@@ -520,6 +531,8 @@ function App() {
    * currentProjectId so browsing the list doesn't switch the active project
    * until the user actually clicks Continue / the final-stop CTA. */
   const [homeSelectedProjectId, setHomeSelectedProjectId] = useState(null)
+  /** Home hours panel: day | week | month | year | all */
+  const [homeHoursRange, setHomeHoursRange] = useState('week')
   const [syncState, setSyncState] = useState('idle') // idle | syncing | ok | error
   const [syncError, setSyncError] = useState('')
   /** Which direction last failed — decides what "Retry" actually retries */
@@ -996,6 +1009,31 @@ function App() {
     [setActiveView]
   )
 
+  /**
+   * Identity: rail Continue and footer Next share one rule — advance
+   * Mark→…→Preview, then path Touchpoints. Elsewhere: path next stop.
+   */
+  const advancePathOrIdentity = useCallback(() => {
+    if (activeView === 'brand') {
+      const cur = resolveIdentitySubstep(
+        useAppStore.getState().projects.find(
+          (p) => p.id === useAppStore.getState().currentProjectId
+        )?.identitySubstep
+      )
+      const nextSub = nextIdentitySubstep(cur)
+      if (nextSub) {
+        useAppStore.getState().updateBrandField('identitySubstep', nextSub.id)
+        flashMicro(`Going to ${nextSub.label}`)
+        return
+      }
+      const pathNext = getNextJourney('brand')
+      if (pathNext) goToProcessStep(pathNext, { micro: 'open' })
+      return
+    }
+    const pathNext = getNextJourney(activeView)
+    if (pathNext) goToProcessStep(pathNext, { micro: 'open' })
+  }, [activeView, goToProcessStep])
+
   /** Earliest incomplete step — reuses buildPathProgressCtx (same filters as strip) */
   const goToNextProcessGap = useCallback(() => {
     const gap = pathFirstGap(
@@ -1064,6 +1102,17 @@ function App() {
   const activeProjects = (projects || []).filter((p) => !p.archived)
   const archivedProjects = (projects || []).filter((p) => p.archived)
 
+  /** Project ids with unread client activity (boolean only — no counts). */
+  const projectsWithClientUnread = useMemo(() => {
+    const set = new Set()
+    for (const r of clientInbox?.rows || []) {
+      if (r?.unread && r.projectLocalId != null) {
+        set.add(String(r.projectLocalId))
+      }
+    }
+    return set
+  }, [clientInbox?.rows])
+
   /** Per-project next-step summary for the multi-project Home dashboard */
   const projectsSummary = useMemo(
     () =>
@@ -1098,9 +1147,10 @@ function App() {
           nextGap: pathFirstGap(JOURNEY_STEPS, ctx),
           pathFull: doneCount >= PATH_STEP_COUNT,
           packReady: doneCount >= PATH_STEP_COUNT && !packThin,
+          hasUnreadClient: projectsWithClientUnread.has(String(p.id)),
         }
       }),
-    [activeProjects, moodItems, tasks, sparkIndex]
+    [activeProjects, moodItems, tasks, sparkIndex, projectsWithClientUnread]
   )
 
   /* One ordering + client grouping for BOTH the sidebar and Home, so a
@@ -1122,6 +1172,25 @@ function App() {
   )
 
   const showClientHeadings = showClientHeadingsFor(projectGroups)
+
+  /** Flat project order for Home default-select (same as grouped lists). */
+  const homeOrderedSummaries = useMemo(
+    () => projectGroups.flatMap((g) => g.projects),
+    [projectGroups]
+  )
+
+  /* Return wall: when the selected Home project is missing, land on the top
+     of needs-you → in-progress → ready (never an empty detail pane). */
+  useEffect(() => {
+    if (activeView !== 'home') return
+    if (homeOrderedSummaries.length === 0) return
+    const stillThere = homeOrderedSummaries.some(
+      (s) => s.project.id === homeSelectedProjectId
+    )
+    if (!stillThere) {
+      setHomeSelectedProjectId(homeOrderedSummaries[0].project.id)
+    }
+  }, [activeView, homeOrderedSummaries, homeSelectedProjectId])
 
   /* One phrasing for a project's next action, shared by the sidebar and the
      Home list so the two surfaces speak the identical phrase (advisor: memory
@@ -2436,7 +2505,7 @@ function App() {
         const el =
           document.getElementById('detective-clientName') ||
           document.getElementById('detective-goal') ||
-          document.querySelector('.define-start-here .btn-primary')
+          document.querySelector('.define-brief .define-input')
         if (!el) return false
         try {
           el.focus?.({ preventScroll: false })
@@ -2877,9 +2946,10 @@ function App() {
       const result = importAllData(data)
       if (result.ok) {
         setBodyDoubling(true)
-        setActiveView('finish')
+        /* Desk is the project hub — open there so the Studio sample is visible. */
+        setActiveView('desk')
         notifyAction(
-          'Harbor & Hearth demo loaded · open Pack for full brand book',
+          'Harbor & Hearth demo loaded · desk sample ready',
           'project_create',
           { label: 'Harbor & Hearth demo' }
         )
@@ -2895,7 +2965,7 @@ function App() {
     setDeskConfirm({
       kind: 'demo',
       label:
-        'Load Harbor & Hearth full brand guide demo? Replaces workspace. Backup first if needed.',
+        'Load Harbor & Hearth desk sample? Replaces workspace. Backup first if needed.',
       onConfirm: () => {
         setDeskConfirm(null)
         void runHarborHearthImport()
@@ -3058,6 +3128,19 @@ function App() {
 
   const journeyActive = journeyIdForView(activeView)
   const journeyNext = getNextJourney(activeView)
+  /** Rail label on Identity: next sub-screen, else Touchpoints (path next). */
+  const identityRailNext =
+    activeView === 'brand'
+      ? nextIdentitySubstep(activeProject?.identitySubstep) || journeyNext
+      : null
+  const stepRailContinueLabel =
+    activeView === 'brand'
+      ? identityRailNext?.label || journeyNext?.label
+      : journeyNext?.label
+  const stepRailContinueVisible =
+    activeView === 'brand'
+      ? !!(identityRailNext || journeyNext)
+      : !!journeyNext
 
   /* Header back affordance — one stable header whose contents adapt per view
      (2026 design handoff). Derivation, not a per-view lookup table:
@@ -3415,11 +3498,10 @@ function App() {
               )
             })}
           </ol>
-          {/* Only when it actually goes somewhere. When the next gap IS the
-              current page, "Continue → <first stop>" points at the screen
-              you're already on — a control that does nothing is worse than no
-              control. "Start with these" is the call to action on that page. */}
-          {pathNextGap && pathNextGap.view !== activeView && (
+          {/* Sequential forward. On Identity, same advance as footer Next
+              (sub-screens then Touchpoints) — never skip craft screens.
+              Elsewhere: next path stop. Home still uses pathNextGap. */}
+          {stepRailContinueVisible && stepRailContinueLabel && (
             <button
               type="button"
               /* is-earned: the gradient ring fires ONLY when the stop you are
@@ -3431,9 +3513,9 @@ function App() {
               className={`btn btn-primary step-rail-cta${
                 journeyActive && thisStepFilled ? ' is-earned' : ''
               }`}
-              onClick={() => goToProcessStep(pathNextGap, { micro: 'next' })}
+              onClick={() => advancePathOrIdentity()}
             >
-              Continue → {pathNextGap.label}
+              Continue → {stepRailContinueLabel}
             </button>
           )}
         </nav>
@@ -3889,201 +3971,438 @@ function App() {
               </button>
             )
           })()}
-        {/* ===== HOME (multi-project) — master/detail, not a card grid ===== */}
-        {activeView === 'home' && activeProjects.length > 1 && (() => {
-          // Same ordering + grouping as the sidebar (#17), flattened for the
-          // selected-row lookup.
-          const orderedFlat = projectGroups.flatMap((g) => g.projects)
-          const selected =
-            orderedFlat.find((s) => s.project.id === homeSelectedProjectId) ||
-            orderedFlat[0]
-          if (!selected) return null
-          const pathFull = !!selected.pathFull
-          const packReady = !!selected.packReady
-          return (
-            <section className="home-view home-md home-studio">
-              <nav className="home-md-list" aria-label="Your projects">
-                <div className="home-md-list-head">
-                  <h1 className="home-md-list-title">Projects</h1>
+        {/* ===== HOME — studio dashboard (all project counts) =====
+            Glanceable work status: pick-up + project cards + path + client.
+            Not a sparse single CTA card. */}
+        {activeView === 'home' &&
+          (() => {
+            const n = activeProjects.length
+            const orderedFlat = homeOrderedSummaries
+            const focus =
+              n === 0
+                ? null
+                : orderedFlat.find(
+                    (s) => s.project.id === homeSelectedProjectId
+                  ) || orderedFlat[0]
+            const clientOf = (s) =>
+              (s.project?.detective?.clientName || '').trim()
+            const needsYouList = orderedFlat.filter((s) => s.hasUnreadClient)
+            const readyList = orderedFlat.filter((s) => s.packReady)
+            const studioHours = hoursForRange(
+              workLogsFromProjects(activeProjects),
+              homeHoursRange
+            )
+
+            if (n === 0) {
+              return (
+                <section className="home-dash" aria-label="Home dashboard">
+                  <header className="home-dash-head">
+                    <h1 className="home-dash-title">Home</h1>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => setActiveView('create')}
+                    >
+                      + New project
+                    </button>
+                  </header>
+                  <p className="home-dash-empty">
+                    No active projects. Start one when you&rsquo;re ready.
+                  </p>
+                </section>
+              )
+            }
+
+            if (!focus) return null
+            const pathFull = !!focus.pathFull
+            const packReady = !!focus.packReady
+            const nextLabel = packReady
+              ? 'Brand book ready'
+              : pathFull
+                ? 'Path full — pack still thin'
+                : focus.nextGap
+                  ? focus.nextGap.label
+                  : 'All caught up'
+            const nextStepMeta = JOURNEY_STEPS.find(
+              (s) => s.id === focus.nextGap?.id
+            )
+            const nextPlain =
+              nextStepMeta?.plain ||
+              (packReady
+                ? 'Download or send the leave-behind from Assets.'
+                : pathFull
+                  ? `Open ${labelForStepId('deliver')} to fill gaps or ship.`
+                  : '')
+
+            return (
+              <section className="home-dash" aria-label="Home dashboard">
+                <header className="home-dash-head">
+                  <div>
+                    <p className="home-dash-eyebrow">Home</p>
+                    <h1 className="home-dash-title">Studio</h1>
+                  </div>
                   <button
                     type="button"
-                    className="btn btn-primary btn-sm home-new-project"
+                    className="btn btn-secondary"
                     onClick={() => setActiveView('create')}
                   >
                     + New project
                   </button>
+                </header>
+
+                {/* Pick-up — one primary action */}
+                <div className="home-dash-pickup">
+                  <div className="home-dash-pickup-copy">
+                    <p className="home-dash-pickup-project">
+                      {clientOf(focus)
+                        ? `${clientOf(focus)} · ${focus.project.name}`
+                        : focus.project.name}
+                      {focus.hasUnreadClient ? (
+                        <span className="home-dash-pill">Client waiting</span>
+                      ) : null}
+                    </p>
+                    <p className="home-dash-pickup-kicker">
+                      {focus.hasUnreadClient
+                        ? 'Needs you'
+                        : packReady
+                          ? 'Ready'
+                          : 'Next'}
+                    </p>
+                    <h2 className="home-dash-pickup-title">{nextLabel}</h2>
+                    {nextPlain ? (
+                      <p className="home-dash-pickup-plain">{nextPlain}</p>
+                    ) : null}
+                  </div>
+                  <div className="home-dash-pickup-actions">
+                    <button
+                      type="button"
+                      className="btn btn-primary home-dash-primary"
+                      onClick={() => {
+                        if (pathFull) {
+                          setCurrentProject(focus.project.id)
+                          setActiveView('finish')
+                          return
+                        }
+                        switchProjectAndContinue(focus.project.id)
+                      }}
+                    >
+                      {pathFull
+                        ? `Open ${labelForStepId('deliver')}`
+                        : `Continue · ${focus.nextGap?.label || 'work'}`}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() =>
+                        openProjectWhereLeftOff(focus.project.id)
+                      }
+                    >
+                      Open desk
+                    </button>
+                  </div>
                 </div>
-                <ul className="home-md-rows">
-                  {projectGroups.map((group) => (
-                    <Fragment key={group.key}>
-                      {showClientHeadings && group.clientName && (
-                        <li
-                          className="home-md-group-head"
-                          role="presentation"
-                        >
-                          {group.clientName}
-                        </li>
-                      )}
-                      {group.projects.map((summary) => {
+
+                <div className="home-dash-grid">
+                  {/* Projects */}
+                  <section
+                    className="home-dash-panel home-dash-projects"
+                    aria-label="Projects"
+                  >
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Projects</h2>
+                      <span className="home-dash-panel-meta">
+                        {n === 1 ? '1 open' : `${n} open`}
+                      </span>
+                    </div>
+                    <ul className="home-dash-project-list">
+                      {orderedFlat.map((summary) => {
                         const p = summary.project
-                        const rowFull = !!summary.pathFull
-                        const isActive = p.id === selected.project.id
+                        const isFocus = p.id === focus.project.id
+                        const unread = !!summary.hasUnreadClient
+                        const client = clientOf(summary)
                         return (
                           <li key={p.id}>
                             <button
                               type="button"
-                              className={`home-md-row${isActive ? ' is-active' : ''}`}
-                              onClick={() => setHomeSelectedProjectId(p.id)}
+                              className={`home-dash-project-card${
+                                isFocus ? ' is-focus' : ''
+                              }${unread ? ' has-unread' : ''}`}
+                              onClick={() => {
+                                setHomeSelectedProjectId(p.id)
+                                if (n === 1) {
+                                  openProjectWhereLeftOff(p.id)
+                                }
+                              }}
                             >
-                              <span className="home-md-row-top">
-                                <span className="home-md-row-name">{p.name}</span>
+                              <span className="home-dash-project-card-top">
+                                <span className="home-dash-project-name">
+                                  {p.name}
+                                </span>
+                                {unread ? (
+                                  <span
+                                    className="home-md-row-badge"
+                                    aria-label="Client activity waiting"
+                                  />
+                                ) : null}
                               </span>
+                              {client ? (
+                                <span className="home-dash-project-client">
+                                  {client}
+                                </span>
+                              ) : null}
                               <span
-                                className={`home-md-row-next${rowFull ? ' is-done' : ''}`}
+                                className={`home-dash-project-next${
+                                  summary.pathFull ? ' is-done' : ''
+                                }`}
                               >
                                 {listRowNext(summary)}
+                              </span>
+                              <span
+                                className="home-dash-mini-path"
+                                aria-hidden="true"
+                              >
+                                {summary.rows.map((r) => (
+                                  <i
+                                    key={r.id}
+                                    className={
+                                      r.done
+                                        ? 'is-done'
+                                        : summary.nextGap?.id === r.id
+                                          ? 'is-current'
+                                          : ''
+                                    }
+                                  />
+                                ))}
                               </span>
                             </button>
                           </li>
                         )
                       })}
-                    </Fragment>
-                  ))}
-                </ul>
-              </nav>
+                    </ul>
+                  </section>
 
-              <div className="home-md-detail">
-                <p className="home-kicker">
-                  {packReady ? 'Ready' : pathFull ? 'Path full' : 'Next'}
-                </p>
-                <h2 className="home-title">
-                  {packReady
-                    ? 'Brand book ready'
-                    : pathFull
-                      ? 'Path steps look full'
-                      : selected.nextGap
-                        ? selected.nextGap.label
-                        : 'All caught up'}
-                </h2>
-                {pathFull && !packReady ? (
-                  <p className="home-kicker" style={{ marginTop: '0.35rem' }}>
-                    {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
-                  </p>
-                ) : null}
-                <div className="home-cta-row">
-                  <button
-                    type="button"
-                    className="btn btn-primary home-cta"
-                    onClick={() => {
-                      if (pathFull) {
-                        setCurrentProject(selected.project.id)
-                        setActiveView('finish')
-                        return
-                      }
-                      switchProjectAndContinue(selected.project.id)
-                    }}
+                  {/* Path for focus project */}
+                  <section
+                    className="home-dash-panel"
+                    aria-label="Path for focus project"
                   >
-                    {pathFull ? `Open ${labelForStepId('deliver')}` : 'Continue'}
-                  </button>
-                </div>
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Path</h2>
+                      <span className="home-dash-panel-meta">
+                        {focus.project.name}
+                      </span>
+                    </div>
+                    <ul className="home-dash-path-list">
+                      {focus.rows.map((r) => {
+                        const isCurrent =
+                          focus.nextGap && r.id === focus.nextGap.id
+                        return (
+                          <li
+                            key={r.id}
+                            className={`home-dash-path-row${
+                              r.done ? ' is-done' : ''
+                            }${isCurrent ? ' is-current' : ''}`}
+                          >
+                            <button
+                              type="button"
+                              className="home-dash-path-btn"
+                              onClick={() => {
+                                setCurrentProject(focus.project.id)
+                                setActiveView(r.view)
+                              }}
+                            >
+                              <span
+                                className="home-dash-path-mark"
+                                aria-hidden="true"
+                              >
+                                {r.done ? '✓' : isCurrent ? '→' : '·'}
+                              </span>
+                              <span className="home-dash-path-label">
+                                {r.label}
+                              </span>
+                              <span className="home-dash-path-state">
+                                {r.done
+                                  ? 'Done'
+                                  : isCurrent
+                                    ? 'Up next'
+                                    : 'Open'}
+                              </span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </section>
 
-                <div className="home-md-strip">
-                  {/* The filled-dot strip is the sole ambient completeness
-                      cue — no numeric ratio to decode (#3). */}
-                  <div className="home-md-steps">
-                    {selected.rows.map((r, i) => {
-                      const num = i + 1
-                      const isCurrent =
-                        selected.nextGap && r.id === selected.nextGap.id
-                      return (
-                        <div
+                  {/* Client needs you */}
+                  <section
+                    className="home-dash-panel"
+                    aria-label="Client activity"
+                  >
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Client</h2>
+                      <span className="home-dash-panel-meta">
+                        {needsYouList.length
+                          ? 'Waiting on you'
+                          : 'Quiet'}
+                      </span>
+                    </div>
+                    {needsYouList.length === 0 ? (
+                      <p className="home-dash-panel-empty">
+                        No unread client activity across open projects.
+                      </p>
+                    ) : (
+                      <ul className="home-dash-client-list">
+                        {needsYouList.map((s) => (
+                          <li key={s.project.id}>
+                            <button
+                              type="button"
+                              className="home-dash-client-row"
+                              onClick={() => {
+                                setHomeSelectedProjectId(s.project.id)
+                                setCurrentProject(s.project.id)
+                                setClientInboxOpen(true)
+                              }}
+                            >
+                              <span className="home-dash-client-name">
+                                {s.project.name}
+                              </span>
+                              <span className="home-dash-client-action">
+                                Open inbox
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm home-dash-panel-cta"
+                      onClick={() => setClientInboxOpen(true)}
+                    >
+                      Client inbox
+                    </button>
+                  </section>
+
+                  {/* Ready to ship */}
+                  <section
+                    className="home-dash-panel"
+                    aria-label="Ready to ship"
+                  >
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Ready to ship</h2>
+                      <span className="home-dash-panel-meta">
+                        {readyList.length
+                          ? `${readyList.length} pack${readyList.length === 1 ? '' : 's'}`
+                          : 'None yet'}
+                      </span>
+                    </div>
+                    {readyList.length === 0 ? (
+                      <p className="home-dash-panel-empty">
+                        When a pack is ready for handoff, it shows up here.
+                      </p>
+                    ) : (
+                      <ul className="home-dash-client-list">
+                        {readyList.map((s) => (
+                          <li key={s.project.id}>
+                            <button
+                              type="button"
+                              className="home-dash-client-row"
+                              onClick={() => {
+                                setCurrentProject(s.project.id)
+                                setActiveView('finish')
+                              }}
+                            >
+                              <span className="home-dash-client-name">
+                                {s.project.name}
+                              </span>
+                              <span className="home-dash-client-action">
+                                Open {labelForStepId('deliver')}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+
+                  {/* Hours worked — private workLog only */}
+                  <section
+                    className="home-dash-panel home-dash-hours"
+                    aria-label="Hours worked"
+                  >
+                    <div className="home-dash-panel-head">
+                      <h2 className="home-dash-panel-title">Hours worked</h2>
+                      <span className="home-dash-panel-meta">
+                        {studioHours.total > 0
+                          ? `${formatHoursWorked(studioHours.total)}h · ${studioHours.rangeLabel}`
+                          : studioHours.rangeLabel}
+                      </span>
+                    </div>
+                    <div
+                      className="home-dash-hours-ranges"
+                      role="tablist"
+                      aria-label="Hours range"
+                    >
+                      {HOURS_RANGES.map((r) => (
+                        <button
                           key={r.id}
-                          className={`home-md-step${r.done ? ' is-done' : ''}${
-                            isCurrent ? ' is-current' : ''
+                          type="button"
+                          role="tab"
+                          aria-selected={homeHoursRange === r.id}
+                          className={`home-dash-hours-range${
+                            homeHoursRange === r.id ? ' is-active' : ''
                           }`}
-                          title={r.label}
+                          onClick={() => setHomeHoursRange(r.id)}
                         >
-                          <span className="home-md-step-dot">
-                            {r.done ? '✓' : num}
-                          </span>
+                          {r.label}
+                        </button>
+                      ))}
+                    </div>
+                    {studioHours.total <= 0 ? (
+                      <p className="home-dash-panel-empty">
+                        No clocked hours in this range. Time on the work clock
+                        shows up here (private — not the invoice).
+                      </p>
+                    ) : (
+                      <>
+                        <p className="home-dash-hours-total">
+                          <strong>{formatHoursWorked(studioHours.total)}</strong>
+                          <span> hours</span>
+                        </p>
+                        <div
+                          className={`home-dash-hours-bars${
+                            homeHoursRange === 'month' ? ' is-dense' : ''
+                          }`}
+                          role="img"
+                          aria-label={`${formatHoursWorked(studioHours.total)} hours ${studioHours.rangeLabel}`}
+                        >
+                          {studioHours.buckets.map((b) => (
+                            <div key={b.key} className="home-dash-hours-col">
+                              <div
+                                className={`home-dash-hours-bar${
+                                  b.fill ? ' is-filled' : ''
+                                }`}
+                                style={{ height: `${b.hPx}px` }}
+                                title={
+                                  b.fill
+                                    ? `${b.label}: ${formatHoursWorked(b.hours)}h`
+                                    : undefined
+                                }
+                              />
+                              <span className="home-dash-hours-label">
+                                {b.label}
+                              </span>
+                            </div>
+                          ))}
                         </div>
-                      )
-                    })}
-                  </div>
+                      </>
+                    )}
+                  </section>
                 </div>
-              </div>
-            </section>
-          )
-        })()}
-        {activeView === 'home' && activeProjects.length <= 1 && (
-          <section className="home-view home-studio">
-            <p className="home-eyebrow">
-              {activeProject?.name || 'Project'}
-            </p>
-            {brandBookReady ? (
-              <>
-                <h1 className="home-title">Brand book ready</h1>
-                <button
-                  type="button"
-                  className="btn btn-primary home-cta"
-                  onClick={() => setActiveView('finish')}
-                >
-                  {`Open ${labelForStepId('deliver')}`}
-                </button>
-              </>
-            ) : pathStepsFull ? (
-              <>
-                <h1 className="home-title">Path steps look full</h1>
-                <p className="home-kicker" style={{ marginTop: '0.5rem' }}>
-                  {`Pack still thin — open ${labelForStepId('deliver')} to fill gaps or ship anyway`}
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-primary home-cta"
-                  onClick={() => setActiveView('finish')}
-                >
-                  {`Open ${labelForStepId('deliver')}`}
-                </button>
-              </>
-            ) : pathNextGap ? (
-              <>
-                <p className="home-kicker">Next</p>
-                <h1 className="home-title">
-                  {pathNextGap.label}
-                </h1>
-                <div className="home-cta-row">
-                  <button
-                    type="button"
-                    className="btn btn-primary home-cta"
-                    onClick={() => goToNextProcessGap()}
-                  >
-                    Continue
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h1 className="home-title">All caught up</h1>
-                <button
-                  type="button"
-                  className="btn btn-primary home-cta"
-                  onClick={() => setActiveView('finish')}
-                >
-                  {`Open ${labelForStepId('deliver')}`}
-                </button>
-              </>
-            )}
-            <div className="home-cta-row home-new-project-row">
-              <button
-                type="button"
-                className="btn btn-secondary home-new-project"
-                onClick={() => setActiveView('create')}
-              >
-                + New project
-              </button>
-            </div>
-          </section>
-        )}
+              </section>
+            )
+          })()}
         {/* ===== WORK — one step owns the fold ===== */}
         {/* ===== SKETCH (lazy) ===== */}
         {activeView === 'flow' && (
@@ -4288,7 +4607,14 @@ function App() {
                 activeProject &&
                 useAppStore.getState().toggleStepNotNeeded(activeProject.id, stepId)
               }
+              onMarkStepDone={(stepId, done) =>
+                activeProject &&
+                useAppStore.getState().setStepDone(stepId, done, activeProject.id)
+              }
               onEditIdentity={() => setActiveView('brand')}
+              onEditBrief={() => setActiveView('project')}
+              onOpenWall={() => setActiveView('studio')}
+              onOpenAssets={() => setActiveView('finish')}
             />
           </Suspense>
         )}
@@ -4396,6 +4722,7 @@ function App() {
             <DeliverView
               navDir={navDir}
               activeProject={activeProject}
+              projectPalette={projectPalette}
               deskTasks={deskTasks}
               completedCount={completedCount}
               pathRows={pathRows}
@@ -4497,7 +4824,6 @@ function App() {
               navDir={navDir}
               journeyNext={journeyNext}
               activeProject={activeProject}
-              deskTasks={deskTasks}
               setActiveView={setActiveView}
               updateDetective={updateDetective}
               onOpenShare={() => setOverviewSharePanelOpen(true)}

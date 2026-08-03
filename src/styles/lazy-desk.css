@@ -1,69 +1,44 @@
-/* Project desk — the 2026 handoff's hub. Two panels split by a hairline
-   seam, the design's own device: a 1px gap over a border-subtle background,
-   so the split reads as structure without drawing two boxes. Tokens only,
-   no !important. */
+/* Project desk — Studio mockup two-column hub (option B).
+ * main 1fr | rail 340px, hairline seams. Tokens only, no !important.
+ */
 
 .desk-view {
-  max-width: 1160px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-}
-
-.desk-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding-bottom: var(--space-4);
-  margin-bottom: var(--space-6);
-  border-bottom: 2px solid var(--text-primary);
-}
-
-.desk-title {
-  margin: 0;
-}
-
-.desk-head-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.desk-due {
-  font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.desk-client-chip {
-  min-height: var(--tap-min);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  background: var(--bg-card);
-  font: inherit;
-  font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.desk-client-chip:hover {
-  border-color: var(--text-primary);
 }
 
 .desk-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
+  gap: 1px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 960px) {
   .desk-grid {
-    grid-template-columns: minmax(0, 1fr) 22rem;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    /* Equal column height so the main stack can fill beside a tall rail */
+    align-items: stretch;
   }
+}
+
+.desk-main,
+.desk-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  min-height: 0;
+  background: var(--border-subtle);
+}
+
+/* Strategy · the brief absorbs leftover main height — no dead slab under it */
+.desk-brief {
+  flex: 1 1 auto;
 }
 
 .desk-panel {
@@ -71,6 +46,16 @@
   flex-direction: column;
   gap: var(--space-3);
   min-width: 0;
+  padding: var(--space-5);
+  background: var(--bg-card);
+}
+
+.desk-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .desk-eyebrow {
@@ -81,17 +66,285 @@
   color: var(--text-muted);
 }
 
-.desk-artboard-foot {
-  display: flex;
-  justify-content: flex-start;
+.desk-eyebrow-strong {
+  color: var(--text-primary);
 }
 
-/* Where you left off. A landmark, so it keeps its slot even when the list
-   below it changes. */
+.desk-stamp,
+.desk-progress,
+.desk-due,
+.desk-client-status {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Leave-behind ambient — words only, no counts (advisor A). */
+.desk-pack-status {
+  max-width: 28ch;
+  text-align: right;
+  line-height: 1.3;
+}
+
+.desk-pack-status.is-ready {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.desk-pack-status.is-core {
+  color: var(--text-primary);
+}
+
+.desk-pack-status.is-thin {
+  color: var(--text-muted);
+}
+
+.desk-progress-strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.desk-next-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+/* Compact Client strip — top of rail, always visible */
+.desk-client-strip {
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+}
+
+.desk-client-strip.has-unread .desk-client-status {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.desk-client-strip .desk-activity {
+  margin: 0;
+}
+
+.desk-client-strip .desk-activity-row {
+  padding: var(--space-1) 0;
+}
+
+.desk-client-strip .desk-client-cta {
+  margin-top: var(--space-1);
+}
+
+.desk-panel-link {
+  min-height: var(--tap-min);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: none;
+  font: inherit;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.desk-panel-link:hover {
+  border-color: var(--text-primary);
+}
+
+.desk-panel-link-quiet {
+  border: 0;
+  padding: var(--space-1) 0;
+  color: var(--text-muted);
+}
+
+.desk-panel-link-quiet:hover {
+  color: var(--text-primary);
+  border: 0;
+}
+
+.desk-artboard-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.desk-artboard-note {
+  margin-left: auto;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  max-width: 36ch;
+  text-align: right;
+}
+
+/* ── Live artboard (Studio mock ab-grid) ── */
+.desk-live-artboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 18rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .desk-live-artboard {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    min-height: 18.5rem;
+  }
+}
+
+.desk-live-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-5);
+  min-width: 0;
+  padding: var(--space-6) var(--space-5);
+  border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+
+@media (min-width: 640px) {
+  .desk-live-left {
+    border-bottom: 0;
+    border-right: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+    padding: var(--space-6) var(--space-5);
+  }
+}
+
+.desk-live-identity {
+  min-width: 0;
+}
+
+.desk-live-logo {
+  display: block;
+  max-height: 2.75rem;
+  max-width: 8rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: var(--space-3);
+}
+
+.desk-live-wordmark {
+  margin: 0;
+  font-size: var(--fs-6);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  overflow-wrap: break-word;
+}
+
+.desk-live-tagline {
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.desk-live-swatches {
+  display: flex;
+  gap: 0;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.desk-live-swatch {
+  flex: 1;
+  min-width: 0;
+  height: 3.5rem;
+  display: flex;
+  align-items: flex-end;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.desk-live-swatch span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.desk-live-empty-pal {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  opacity: 0.65;
+}
+
+.desk-live-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+}
+
+.desk-live-type-block {
+  min-width: 0;
+}
+
+.desk-live-type-label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.desk-live-heading {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.desk-live-body {
+  margin: 0;
+  max-width: 34ch;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.desk-live-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+.desk-live-chip {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 600;
+}
+
+
+.desk-empty {
+  margin: 0;
+  max-width: 36ch;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Resume */
 .desk-resume {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
   width: 100%;
   text-align: left;
   padding: var(--space-2) var(--space-3);
@@ -115,16 +368,34 @@
   color: var(--text-muted);
 }
 
-/* The one highlighted thing on the screen. Bordered in full ink because it
-   is the single next action — everything else here is information. */
+/* Gap card — Mark done primary (mock) */
 .desk-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   padding: var(--space-4);
   border: 1px solid var(--text-primary);
   border-radius: var(--radius);
   background: var(--bg-card);
+}
+
+.desk-card-hit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.desk-card-hit:hover .desk-card-title {
+  color: var(--text-muted);
 }
 
 .desk-card-tag {
@@ -137,10 +408,11 @@
 
 .desk-card-title {
   margin: 0;
-  max-width: 62ch;
+  max-width: 28ch;
   font-size: var(--fs-3);
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
   color: var(--text-primary);
 }
 
@@ -148,9 +420,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin-top: var(--space-1);
 }
 
+/* Lists */
 .desk-list {
   list-style: none;
   margin: 0;
@@ -159,11 +431,11 @@
 
 .desk-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   min-height: var(--tap-min);
-  padding: var(--space-1) 0;
-  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .desk-row-open,
@@ -177,6 +449,7 @@
   font: inherit;
   font-size: var(--fs-2);
   font-weight: 500;
+  line-height: 1.4;
   color: var(--text-primary);
 }
 
@@ -190,19 +463,29 @@
 
 .desk-row-tag {
   flex: none;
+  padding-top: var(--space-1);
   font-size: var(--fs-1);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .desk-row-check {
   flex: none;
-  width: 18px;
-  height: 18px;
-  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-4);
+  height: var(--space-4);
+  margin-top: var(--space-1);
+  padding: 0;
+  border: 1.5px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--bg-card);
+  color: var(--bg-card);
+  font-size: var(--fs-1);
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -210,12 +493,20 @@
   border-color: var(--text-primary);
 }
 
-.desk-row.is-done .desk-row-task {
-  text-decoration: line-through;
-  color: var(--text-muted);
+.desk-row-check.is-checked {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+  color: var(--bg-card);
+  cursor: pointer;
 }
 
-/* Greyed, never struck — a declined step is not failed work. */
+.desk-row.is-done .desk-row-task {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 .desk-row.is-skipped .desk-row-open {
   color: var(--text-muted);
 }
@@ -224,7 +515,224 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
   padding-top: var(--space-4);
-  border-top: 1px solid var(--border-subtle);
+  border-top: 2px solid var(--text-primary);
+}
+
+/* Pack */
+.desk-pack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+@media (min-width: 600px) {
+  .desk-pack-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.desk-pack-pin {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  background: var(--bg-muted);
+}
+
+.desk-pack-hex {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-card) 72%, transparent);
+}
+
+.desk-pack-note {
+  margin: 0;
+  padding: var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-primary);
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Client */
+.desk-activity {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.desk-activity-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.desk-activity-dot {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  margin-top: 0.45em;
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+}
+
+.desk-activity-row.is-unread .desk-activity-dot {
+  background: var(--text-primary);
+}
+
+.desk-activity-text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.desk-activity-row.is-unread .desk-activity-text {
+  font-weight: 600;
+}
+
+.desk-activity-preview {
+  display: block;
+  margin-top: var(--space-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-activity-pill {
+  flex: none;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--positive, #15803d);
+  color: #fff;
+}
+
+.desk-activity-when {
+  flex: none;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.desk-client-cta {
+  width: 100%;
+}
+
+/* Brief */
+.desk-brief-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 600px) {
+  .desk-brief-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4) var(--space-5);
+  }
+}
+
+.desk-brief-item {
+  min-width: 0;
+}
+
+.desk-brief-item dt {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.desk-brief-item dd {
+  margin: 0;
+  max-width: 44ch;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+}
+
+/* This week — real workLog only */
+.desk-week-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  height: 4rem;
+}
+
+.desk-week-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.desk-week-bar {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+}
+
+.desk-week-bar.is-filled {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.desk-week-day {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.desk-week-total {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Dark */
+.app.deep .desk-grid,
+.app.deep .desk-main,
+.app.deep .desk-rail {
+  background: var(--border-subtle);
+}
+
+.app.deep .desk-panel {
+  background: var(--bg-card);
+}
+
+.app.deep .desk-activity-pill {
+  color: #fff;
+}
+
+.app.deep .desk-week-bar.is-filled {
+  background: var(--text-primary);
 }

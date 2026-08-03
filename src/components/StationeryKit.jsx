@@ -6,6 +6,9 @@
 import { useRef, useState } from 'react'
 import { fontFamilyFromLabel, mapPaletteRoles, normalizeHex, bestTextOn } from '../lib/color'
 import { elementToPdf, elementToPng, PAGE_SIZES } from '../lib/stationery'
+/* Stationery rules live in lazy-design.css; import here so Assets can load
+   the kit without visiting Identity first. */
+import '../styles/lazy-design.css'
 
 export default function StationeryKit({
   activeProject = {},

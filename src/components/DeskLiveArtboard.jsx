@@ -1,0 +1,170 @@
+/**
+ * Desk "Identity · live artboard" — the Studio mock's two-panel card.
+ *
+ * Not BrandArtboard (direction sheet for Design/PDF). This is only the
+ * glanceable lockup: wordmark + tagline + palette | type specimens + voice chips.
+ */
+import { useMemo } from 'react'
+import { bestTextOn, fontFamilyFromLabel, normalizeHex } from '../lib/color'
+
+function voiceChipsFrom(project = {}) {
+  const fromWords = String(project.detective?.brandWords || project.brandWords || '')
+  const fromVoice = String(project.voice || '')
+  const raw = fromWords.trim() || fromVoice
+  return raw
+    .split(/[,;/|·•\n]+/)
+    .map((w) => w.trim())
+    .filter((w) => w.length > 0 && w.length <= 28)
+    .slice(0, 5)
+}
+
+function headingSpecimen(project = {}) {
+  const promise = String(project.messagingPromise || '').trim()
+  if (promise) {
+    const first = promise.split(/[.!?]/)[0].trim()
+    if (first.length >= 8 && first.length <= 48) return first
+    return promise.slice(0, 48).trim()
+  }
+  const tag = String(project.tagline || '').trim()
+  if (tag) return tag
+  return 'Heading specimen'
+}
+
+function bodySpecimen(project = {}) {
+  const voice = String(project.voice || '').trim()
+  if (voice) return voice.length > 220 ? `${voice.slice(0, 217).trimEnd()}…` : voice
+  const brief = String(project.brief || project.detective?.goal || '').trim()
+  if (brief) return brief.length > 220 ? `${brief.slice(0, 217).trimEnd()}…` : brief
+  return 'Body specimen — set voice or a short positioning line in Identity.'
+}
+
+export default function DeskLiveArtboard({
+  project = {},
+  palette = [],
+  id = 'desk-live-artboard',
+}) {
+  const wordmark =
+    String(project.logoWordmark || '').trim() ||
+    String(project.name || '').trim() ||
+    'Wordmark'
+  const tagline = String(project.tagline || '').trim()
+  const typeH = project.typeHeading || 'Plus Jakarta Sans Bold'
+  const typeB = project.typeBody || 'Plus Jakarta Sans Regular'
+  const chips = useMemo(() => voiceChipsFrom(project), [project])
+  const heading = headingSpecimen(project)
+  const body = bodySpecimen(project)
+
+  const swatches = (palette || [])
+    .map((c) => normalizeHex(c) || String(c || '').trim())
+    .filter(Boolean)
+    .slice(0, 6)
+
+  /* Paper + ink from brand when possible — mock uses cream paper / dark ink. */
+  const paper =
+    normalizeHex(project.colorRoles?.quiet) ||
+    swatches.find((h) => {
+      const n = h.replace('#', '')
+      if (n.length !== 6) return false
+      const r = parseInt(n.slice(0, 2), 16)
+      const g = parseInt(n.slice(2, 4), 16)
+      const b = parseInt(n.slice(4, 6), 16)
+      return (r + g + b) / 3 > 200
+    }) ||
+    '#F3EBDD'
+  const ink =
+    normalizeHex(project.colorRoles?.text) ||
+    swatches.find((h) => {
+      const n = h.replace('#', '')
+      if (n.length !== 6) return false
+      const r = parseInt(n.slice(0, 2), 16)
+      const g = parseInt(n.slice(2, 4), 16)
+      const b = parseInt(n.slice(4, 6), 16)
+      return (r + g + b) / 3 < 80
+    }) ||
+    '#221A14'
+  const muted = ink
+
+  return (
+    <div
+      id={id}
+      className="desk-live-artboard"
+      style={{ background: paper, color: ink }}
+    >
+      <div className="desk-live-left">
+        <div className="desk-live-identity">
+          {project.logoImage ? (
+            <img
+              className="desk-live-logo"
+              src={project.logoImage}
+              alt=""
+            />
+          ) : null}
+          <p
+            className="desk-live-wordmark"
+            style={{ fontFamily: fontFamilyFromLabel(typeH) }}
+          >
+            {wordmark}
+          </p>
+          {tagline ? (
+            <p className="desk-live-tagline" style={{ color: muted, opacity: 0.72 }}>
+              {tagline}
+            </p>
+          ) : null}
+        </div>
+        {swatches.length > 0 ? (
+          <div className="desk-live-swatches" aria-label="Palette">
+            {swatches.map((hex) => (
+              <div
+                key={hex}
+                className="desk-live-swatch"
+                style={{
+                  background: hex,
+                  color: bestTextOn(hex),
+                }}
+                title={hex}
+              >
+                <span>{hex}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="desk-live-empty-pal">No palette yet — set colours in Identity.</p>
+        )}
+      </div>
+
+      <div className="desk-live-right">
+        <div className="desk-live-type-block">
+          <span className="desk-live-type-label" style={{ opacity: 0.55 }}>
+            Heading · 700
+          </span>
+          <p
+            className="desk-live-heading"
+            style={{ fontFamily: fontFamilyFromLabel(typeH) }}
+          >
+            {heading}
+          </p>
+        </div>
+        <div className="desk-live-type-block">
+          <span className="desk-live-type-label" style={{ opacity: 0.55 }}>
+            Body · 500
+          </span>
+          <p
+            className="desk-live-body"
+            style={{ fontFamily: fontFamilyFromLabel(typeB) }}
+          >
+            {body}
+          </p>
+        </div>
+        {chips.length > 0 ? (
+          <div className="desk-live-chips" aria-label="Voice words">
+            {chips.map((w) => (
+              <span key={w} className="desk-live-chip" style={{ borderColor: `${ink}24`, color: ink }}>
+                {w}
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}

@@ -474,7 +474,7 @@ export default function SettingsView(props) {
                   type="button"
                   className="btn btn-secondary btn-sm"
                   onClick={() => loadHarborHearthDemo()}
-                  title="Full fictitious brand with every brand-book chapter filled"
+                  title="Fictitious bakery brand — opens the project desk sample"
                 >
                   Harbor &amp; Hearth
                 </button>

@@ -97,7 +97,7 @@ test.describe('Define page regressions', () => {
     await expect(page.locator('.running-todo-prompt-overlay')).toHaveCount(0)
   })
 
-  test('header band reading order matches focus order', async ({ page }) => {
+  test('brief chrome reading order matches focus order', async ({ page }) => {
     const gate = await unlockAndOnboard(page, {
       name: 'Order Project',
       testerName: 'Order Tester',
@@ -105,25 +105,27 @@ test.describe('Define page regressions', () => {
     skipIfCloud(test, gate)
     await openDefine(page)
 
-    // "Start with these" is placed in a flex band that orders its rows with
-    // the CSS `order` property. Getting that value wrong put the block
-    // visually second while it stayed third in the DOM — a WCAG 2.4.3
-    // mismatch that looks completely fine in a screenshot.
+    // Title → form → demoted milestones → footer. No CSS `order` scramble
+    // — visual top must match DOM top (WCAG 2.4.3).
     const orders = await page.evaluate(() => {
-      const sel = '.page-title, .define-deadline-inline, .define-start-here, .define-milestones-compact, .define-chapters'
+      const sel =
+        '.define-brief-title, .define-chapters, .define-milestones-compact, .define-brief-footer'
       const nodes = [...document.querySelectorAll(sel)]
-      const name = (n) => (n.className || '').toString().split(' ')[0] || n.tagName
+      const name = (n) =>
+        (n.className || '').toString().split(/\s+/).find(Boolean) || n.tagName
       const dom = nodes.map(name)
       const visual = [...nodes]
-        .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)
+        .sort(
+          (a, b) =>
+            a.getBoundingClientRect().top - b.getBoundingClientRect().top
+        )
         .map(name)
       return { dom, visual }
     })
-    // Guard against a vacuous pass: with no matches this compares [] to []
-    // and goes green while proving nothing.
-    expect(orders.dom).toContain('define-start-here')
+    expect(orders.dom).toContain('define-brief-title')
+    expect(orders.dom).toContain('define-chapters')
     expect(orders.dom).toContain('define-milestones-compact')
-    expect(orders.dom.length).toBeGreaterThanOrEqual(4)
+    expect(orders.dom.length).toBeGreaterThanOrEqual(3)
     expect(orders.visual).toEqual(orders.dom)
   })
 
@@ -136,8 +138,10 @@ test.describe('Define page regressions', () => {
     await page.setViewportSize({ width: 1500, height: 900 })
     await openDefine(page)
 
+    // The brief hides the rail on purpose (dual chapter map = clutter).
+    // Standalone sheet uses can still render it; skip when absent.
     const rail = page.locator('.define-chapter-rail')
-    if (!(await rail.count())) test.skip(true, 'rail not rendered at this width')
+    if (!(await rail.count())) test.skip(true, 'rail not rendered on The brief')
 
     // The rail is the only per-chapter "N needed" readout; it used to leave
     // the viewport after the first screenful of a ~22-field master scroll.
