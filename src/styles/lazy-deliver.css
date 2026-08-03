@@ -28,7 +28,10 @@
   background: var(--bg-card);
   max-width: 100%;
   min-width: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Room for at least one full page in the frame without blowing past the viewport */
+  max-height: min(85dvh, 52rem);
 }
 
 .assets-ship {
@@ -275,7 +278,10 @@
 
 /* ——— Brand book preview (renders the real PDF, page by page) ———
    A single scrolling column, not a grid: a column keeps the reading order of
-   the document itself, so the eye never has to choose where to go next. */
+   the document itself, so the eye never has to choose where to go next.
+
+   Each sheet is sized to fit at least one full page in the viewport. Full-main
+   width made letter pages taller than the screen — unusable as proof. */
 
 .book-preview-list {
   list-style: none;
@@ -283,31 +289,45 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  align-items: center;
+  gap: var(--space-5);
 }
 
 .book-preview-page {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-1);
+  width: 100%;
+  max-width: min(100%, 28rem);
 }
 
-/* The sheet carries a border because it is standing in for paper — this is
-   one of the few places a box is doing real work rather than decorating. */
+/* Paper sheet: height-capped so one page fits on screen; width follows aspect. */
 .book-preview-sheet {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
+  max-height: min(68dvh, 36rem);
+  object-fit: contain;
+  margin-inline: auto;
   border: 1px solid rgba(26, 26, 26, 0.14);
   background: #FFFFFF;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+.app.deep .book-preview-sheet {
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .book-preview-name {
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: var(--space-2);
   font-size: var(--fs-1);
   color: var(--text-muted);
+  max-width: 100%;
 }
 
 .book-preview-num {
