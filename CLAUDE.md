@@ -834,14 +834,15 @@ it.
 ## The identity stamp is words, never a number or a time
 
 `project.identityEditedAt` and `identitySavedAt` are real ISO strings and
-**neither is ever rendered**. `src/lib/identityStamp.js` turns them into one of
-three sentences; `src/components/IdentityStampChip.jsx` shows it on the
-Identity stop only. The owner has no concept of time and numbers do not
-register, so "v4" or "3 days ago" is a value that must be translated before it
-means anything. `identityStamp.test.js` fails on a digit in any label, and on
-the words *stale / out of date / unsynced / pending / behind / you* — a status
-that names the user as the agent of a deviation is a verdict with no edit that
-fixes it.
+**neither is ever rendered as a clock or version number**. `src/lib/identityStamp.js`
+turns them into one of three sentences for any surface that needs a words-only
+status. The ambient Identity chip was removed (noise under the path title);
+Bump on Preview remains the deliberate save-point control. The owner has no
+concept of time and numbers do not register, so "v4" or "3 days ago" is a
+value that must be translated before it means anything. `identityStamp.test.js`
+fails on a digit in any label, and on the words *stale / out of date /
+unsynced / pending / behind / you* — a status that names the user as the agent
+of a deviation is a verdict with no edit that fixes it.
 
 **It compares against the last saved version, not against the client.** The
 obvious wording — "the client hasn't seen this version" — was rejected because
