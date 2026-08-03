@@ -18,12 +18,12 @@ describe('touchpointsStatusLine — words, not N of M', () => {
       apps: ['website', 'social', 'print'],
       proofs: { website: { note: 'Hero wordmark' } },
     })
-    expect(line).toMatch(/Website noted/i)
+    expect(line).toMatch(/Website checked/i)
     expect(line).toMatch(/enough for the path/i)
     expect(line).not.toMatch(/\d+\s+of\s+\d+/)
   })
 
-  it('says all noted when every app is ready', () => {
+  it('says all mocks checked when every app is ready', () => {
     expect(
       touchpointsStatusLine({
         hasBriefSurfaces: true,
@@ -33,6 +33,6 @@ describe('touchpointsStatusLine — words, not N of M', () => {
           social: { note: 'Grid' },
         },
       })
-    ).toBe('All applications noted')
+    ).toBe('All mocks checked')
   })
 })
