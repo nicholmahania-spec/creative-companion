@@ -6525,10 +6525,10 @@ body:has(.app.deep)::after {
   background: transparent;
 }
 
-/* The brief — use the full content column (not a 780px island floating mid-screen).
-   Left-align with the rest of the shell; form fields span the width. */
+/* The brief — fill the main grid cell. Do not re-cap width (68rem left a
+   dead gutter on wide screens) and do not re-center with margin auto. */
 .app:has(.define-brief) .main {
-  max-width: min(68rem, 100%);
+  max-width: none;
   margin-inline: 0;
   width: 100%;
   padding-inline: var(--space-5);
