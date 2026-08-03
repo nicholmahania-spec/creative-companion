@@ -3,6 +3,7 @@ import {
   hoursForRange,
   weekFromWorkLog,
   formatHoursWorked,
+  hoursLoggedWords,
   workLogsFromProjects,
   HOURS_RANGES,
 } from './workWeek.js'
@@ -85,6 +86,32 @@ describe('formatHoursWorked', () => {
     expect(formatHoursWorked(0)).toBe('0')
     expect(formatHoursWorked(16)).toBe('16')
     expect(formatHoursWorked(16.5)).toBe('16.5')
+  })
+})
+
+describe('bar scale does not inflate thin weeks', () => {
+  it('a 0.2h day is a short stub, not a full bar', () => {
+    const r = hoursForRange([row('2026-08-02', 0.2)], 'week', now)
+    const sun = r.buckets[0]
+    expect(sun.fill).toBe(true)
+    expect(sun.hPx).toBeLessThan(20)
+    expect(sun.hPx).toBeGreaterThanOrEqual(4)
+  })
+
+  it('a 4h day reaches a full bar', () => {
+    const r = hoursForRange([row('2026-08-02', 4)], 'week', now)
+    expect(r.buckets[0].hPx).toBe(56)
+  })
+})
+
+describe('hoursLoggedWords', () => {
+  it('avoids raw clock numbers as the primary phrase', () => {
+    expect(hoursLoggedWords(0)).toBe('No hours logged this week')
+    expect(hoursLoggedWords(0.2)).toBe('A little on the clock')
+    expect(hoursLoggedWords(1)).toBe('Some time logged')
+    expect(hoursLoggedWords(3)).toBe('A solid stretch logged')
+    expect(hoursLoggedWords(8)).toBe('A full week on the clock')
+    expect(hoursLoggedWords(0.2)).not.toMatch(/\d/)
   })
 })
 

@@ -128,6 +128,7 @@ import {
   hoursForRange,
   workLogsFromProjects,
   formatHoursWorked,
+  hoursLoggedWords,
   HOURS_RANGES,
 } from './lib/workWeek'
 import LogoLockup from './components/LogoLockup'
@@ -4286,9 +4287,7 @@ function App() {
                     <div className="home-dash-panel-head">
                       <h2 className="home-dash-panel-title">Hours worked</h2>
                       <span className="home-dash-panel-meta">
-                        {studioHours.total > 0
-                          ? `${formatHoursWorked(studioHours.total)}h · ${studioHours.rangeLabel}`
-                          : studioHours.rangeLabel}
+                        {studioHours.rangeLabel}
                       </span>
                     </div>
                     <div
@@ -4319,15 +4318,18 @@ function App() {
                     ) : (
                       <>
                         <p className="home-dash-hours-total">
-                          <strong>{formatHoursWorked(studioHours.total)}</strong>
-                          <span> hours</span>
+                          {hoursLoggedWords(studioHours.total)}
+                          <span className="home-dash-hours-range-note">
+                            {' '}
+                            · {studioHours.rangeLabel}
+                          </span>
                         </p>
                         <div
                           className={`home-dash-hours-bars${
                             homeHoursRange === 'month' ? ' is-dense' : ''
                           }`}
                           role="img"
-                          aria-label={`${formatHoursWorked(studioHours.total)} hours ${studioHours.rangeLabel}`}
+                          aria-label={`${hoursLoggedWords(studioHours.total)} · ${studioHours.rangeLabel}`}
                         >
                           {studioHours.buckets.map((b) => (
                             <div key={b.key} className="home-dash-hours-col">

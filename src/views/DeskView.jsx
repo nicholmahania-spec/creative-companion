@@ -25,7 +25,7 @@ import {
   buildBrandPackSnapshot,
   packReadiness,
 } from '../lib/exportFiles'
-import { weekFromWorkLog } from '../lib/workWeek'
+import { weekFromWorkLog, hoursLoggedWords } from '../lib/workWeek'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
 import '../styles/lazy-desk.css'
 
@@ -611,9 +611,7 @@ export default function DeskView({
               ))}
             </div>
             <p className="desk-week-total">
-              {week.total > 0
-                ? `${Math.round(week.total * 10) / 10} hours logged`
-                : 'No hours logged this week'}
+              {hoursLoggedWords(week.total)}
             </p>
           </section>
         </aside>

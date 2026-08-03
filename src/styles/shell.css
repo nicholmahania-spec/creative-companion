@@ -1512,11 +1512,24 @@ h3 {
   letter-spacing: -0.02em;
 }
 
+.home-dash-hours-total {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.home-dash-hours-range-note {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
 .home-dash-hours-bars {
   display: flex;
   align-items: flex-end;
   gap: var(--space-1);
   min-height: 4rem;
+  height: 4rem;
   overflow-x: auto;
   padding-bottom: var(--space-1);
 }
