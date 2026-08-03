@@ -1,62 +1,13 @@
-/* Project desk — 2026 handoff hub (build 4).
- *
- * Hierarchy: What's next is the action column; identity / pack / client /
- * brief are ambient. Hairline seams (1px gap over border-subtle) match the
- * Studio mockup without drawing five equal boxes. Tokens only, no !important.
+/* Project desk — Studio mockup two-column hub (option B).
+ * main 1fr | rail 340px, hairline seams. Tokens only, no !important.
  */
 
 .desk-view {
-  max-width: 1160px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
 }
 
-.desk-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding-bottom: var(--space-4);
-  margin-bottom: var(--space-6);
-  border-bottom: 2px solid var(--text-primary);
-}
-
-.desk-title {
-  margin: 0;
-}
-
-.desk-head-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.desk-due {
-  font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.desk-client-chip {
-  min-height: var(--tap-min);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  background: var(--bg-card);
-  font: inherit;
-  font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.desk-client-chip:hover {
-  border-color: var(--text-primary);
-}
-
-/* Action | ambient — action first in DOM and on the left at desktop. */
 .desk-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -67,11 +18,20 @@
   overflow: hidden;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 960px) {
   .desk-grid {
-    grid-template-columns: minmax(17rem, 22rem) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 340px;
     align-items: start;
   }
+}
+
+.desk-main,
+.desk-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  background: var(--border-subtle);
 }
 
 .desk-panel {
@@ -103,16 +63,17 @@
   color: var(--text-primary);
 }
 
-.desk-stamp {
+.desk-stamp,
+.desk-progress,
+.desk-due {
   font-size: var(--fs-1);
   font-weight: 600;
   color: var(--text-muted);
-  max-width: 28ch;
-  text-align: right;
 }
 
-.desk-stamp.is-unsaved {
+.desk-progress-strong {
   color: var(--text-primary);
+  font-weight: 700;
 }
 
 .desk-panel-link {
@@ -145,7 +106,18 @@
 
 .desk-artboard-foot {
   display: flex;
-  justify-content: flex-start;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.desk-artboard-note {
+  margin-left: auto;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  max-width: 36ch;
+  text-align: right;
 }
 
 .desk-empty {
@@ -157,30 +129,7 @@
   color: var(--text-muted);
 }
 
-/* Ambient stack to the right of What's next */
-.desk-ambient {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  background: var(--border-subtle);
-}
-
-.desk-ambient-bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1px;
-  background: var(--border-subtle);
-}
-
-@media (min-width: 900px) {
-  .desk-ambient-bottom {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-}
-
-/* Where you left off. A landmark, so it keeps its slot even when the list
-   below it changes. */
+/* Resume */
 .desk-resume {
   display: flex;
   flex-direction: column;
@@ -208,16 +157,34 @@
   color: var(--text-muted);
 }
 
-/* The one highlighted thing on the screen. Bordered in full ink because it
-   is the single next action — everything else here is information. */
+/* Gap card — Mark done primary (mock) */
 .desk-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   padding: var(--space-4);
   border: 1px solid var(--text-primary);
   border-radius: var(--radius);
   background: var(--bg-card);
+}
+
+.desk-card-hit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.desk-card-hit:hover .desk-card-title {
+  color: var(--text-muted);
 }
 
 .desk-card-tag {
@@ -230,10 +197,11 @@
 
 .desk-card-title {
   margin: 0;
-  max-width: 62ch;
+  max-width: 28ch;
   font-size: var(--fs-3);
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
   color: var(--text-primary);
 }
 
@@ -241,30 +209,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin-top: var(--space-1);
 }
 
-/* Tertiary — text only, under the primary row, never a peer button. */
-.desk-mark-done {
-  align-self: flex-start;
-  margin-top: var(--space-1);
-  min-height: var(--tap-min);
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--text-muted);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.desk-mark-done:hover {
-  color: var(--text-primary);
-}
-
+/* Lists */
 .desk-list {
   list-style: none;
   margin: 0;
@@ -273,11 +220,11 @@
 
 .desk-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   min-height: var(--tap-min);
-  padding: var(--space-1) 0;
-  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .desk-row-open,
@@ -291,6 +238,7 @@
   font: inherit;
   font-size: var(--fs-2);
   font-weight: 500;
+  line-height: 1.4;
   color: var(--text-primary);
 }
 
@@ -304,19 +252,29 @@
 
 .desk-row-tag {
   flex: none;
+  padding-top: var(--space-1);
   font-size: var(--fs-1);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .desk-row-check {
   flex: none;
-  width: 18px;
-  height: 18px;
-  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-4);
+  height: var(--space-4);
+  margin-top: var(--space-1);
+  padding: 0;
+  border: 1.5px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--bg-card);
+  color: var(--bg-card);
+  font-size: var(--fs-1);
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -324,12 +282,20 @@
   border-color: var(--text-primary);
 }
 
-.desk-row.is-done .desk-row-task {
-  text-decoration: line-through;
-  color: var(--text-muted);
+.desk-row-check.is-checked {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+  color: var(--bg-card);
+  cursor: pointer;
 }
 
-/* Greyed, never struck — a declined step is not failed work. */
+.desk-row.is-done .desk-row-task {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 .desk-row.is-skipped .desk-row-open {
   color: var(--text-muted);
 }
@@ -338,12 +304,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
   padding-top: var(--space-4);
   border-top: 2px solid var(--text-primary);
 }
 
-/* Starred pack strip */
+/* Pack */
 .desk-pack-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -387,7 +353,7 @@
   overflow: hidden;
 }
 
-/* Client activity */
+/* Client */
 .desk-activity {
   list-style: none;
   margin: 0;
@@ -433,7 +399,7 @@
   margin-top: var(--space-1);
   font-weight: 500;
   color: var(--text-muted);
-  max-width: 40ch;
+  max-width: 28ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -456,7 +422,12 @@
   color: var(--text-muted);
 }
 
-/* Brief summary */
+.desk-client-cta {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+/* Brief */
 .desk-brief-grid {
   margin: 0;
   display: grid;
@@ -494,10 +465,53 @@
   overflow-wrap: break-word;
 }
 
-/* Dark mode: rely on semantic tokens. Spot-check seams stay visible. */
+/* This week — real workLog only */
+.desk-week-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  height: 4rem;
+}
+
+.desk-week-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.desk-week-bar {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-muted);
+}
+
+.desk-week-bar.is-filled {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.desk-week-day {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.desk-week-total {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Dark */
 .app.deep .desk-grid,
-.app.deep .desk-ambient,
-.app.deep .desk-ambient-bottom {
+.app.deep .desk-main,
+.app.deep .desk-rail {
   background: var(--border-subtle);
 }
 
@@ -507,4 +521,8 @@
 
 .app.deep .desk-activity-pill {
   color: #fff;
+}
+
+.app.deep .desk-week-bar.is-filled {
+  background: var(--text-primary);
 }
