@@ -271,19 +271,9 @@
   border-top-color: var(--border-subtle);
 }
 
-.app.deep .define-brief-send.btn-primary,
-.app.deep .define-brief-footer .btn-primary {
-  background: var(--text-primary);
-  color: var(--bg-canvas);
-  border-color: var(--text-primary);
-}
-
-.app.deep .define-brief-send.btn-secondary,
-.app.deep .define-brief-footer .btn-secondary {
-  background: transparent;
-  color: var(--text-primary);
-  border-color: var(--border-subtle);
-}
+/* Primary/secondary chrome lives in shell.css (dopamine plate + rainbow ring).
+   Do not restate flat fills here — they lost to the lock layer and only
+   confused dark-mode audits. */
 
 /* Project essentials card */
 
