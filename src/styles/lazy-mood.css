@@ -69,19 +69,20 @@
   padding-bottom: 5rem;
 }
 
-/* The wall is a board, not a document card with empty prose. */
+/* The wall is a board, not a blank page. Tint the plane so empty/full both
+   read as a surface you drop onto — tokens only, paired for deep. */
 .research-artboard {
   display: flex;
   flex-direction: column;
   min-height: min(70vh, 42rem);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-strong, var(--border-subtle));
   border-radius: var(--radius);
-  background: var(--bg-muted);
+  background: color-mix(in srgb, var(--text-primary) 6%, var(--bg-muted));
   overflow: hidden;
 }
 
 .app.deep .research-artboard {
-  background: var(--bg-card);
+  background: color-mix(in srgb, var(--bg-canvas) 55%, var(--bg-card));
   border-color: var(--border-subtle);
 }
 
@@ -90,6 +91,7 @@
   box-shadow: inset 0 0 0 1px var(--text-primary);
 }
 
+/* Chrome on the wall edge — slightly lighter than the plane */
 .research-artboard-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -97,31 +99,36 @@
   gap: var(--space-2);
   padding: var(--space-3);
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-elevated, var(--bg-card));
+  background: color-mix(in srgb, var(--bg-canvas) 70%, var(--bg-elevated, var(--bg-card)));
 }
 
 .app.deep .research-artboard-toolbar {
-  background: var(--bg-muted);
+  background: color-mix(in srgb, var(--bg-card) 80%, var(--bg-muted));
 }
 
 .research-artboard-form {
   padding: 0 var(--space-3) var(--space-3);
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-elevated, var(--bg-card));
+  background: color-mix(in srgb, var(--bg-canvas) 70%, var(--bg-elevated, var(--bg-card)));
 }
 
 .app.deep .research-artboard-form {
-  background: var(--bg-muted);
+  background: color-mix(in srgb, var(--bg-card) 80%, var(--bg-muted));
 }
 
-/* Drop / pin plane — fills remaining artboard height */
+/* Drop / pin plane — fills remaining artboard height; tinted board body */
 .research-artboard-plane {
   flex: 1 1 auto;
   min-height: min(52vh, 28rem);
   padding: var(--space-4);
+  background: color-mix(in srgb, var(--text-primary) 4%, var(--bg-muted));
   transition:
     background-color var(--transition, 0.15s ease),
     outline-color var(--transition, 0.15s ease);
+}
+
+.app.deep .research-artboard-plane {
+  background: color-mix(in srgb, var(--bg-canvas) 40%, var(--bg-muted));
 }
 
 .research-artboard.is-empty .research-artboard-plane {
@@ -153,12 +160,24 @@
   line-height: 1.4;
 }
 
+/* Pins sit on the wall — slightly lifted from the tinted plane */
+.research-artboard .research-pin-card {
+  background: var(--bg-elevated, var(--bg-card));
+  border-color: var(--border-subtle);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+.app.deep .research-artboard .research-pin-card {
+  background: var(--bg-card);
+  box-shadow: none;
+}
+
 .research-artboard.is-drop-active .research-artboard-plane {
-  background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  background: color-mix(in srgb, var(--text-primary) 10%, var(--bg-muted));
 }
 
 .app.deep .research-artboard.is-drop-active .research-artboard-plane {
-  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  background: color-mix(in srgb, var(--text-primary) 12%, var(--bg-muted));
 }
 
 /* Head row: title + pack status left, timer right (one primary work surface). */
