@@ -8,7 +8,6 @@ import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/processGuide'
 import { focusPathGapTarget } from '../lib/journeyProgress'
 import InfoReveal from '../components/InfoReveal'
-import LayoutPatterns from '../components/LayoutPatterns'
 import {
   touchpointsFor,
   touchpointLabel,
@@ -36,10 +35,11 @@ export function touchpointsStatusLine({ hasBriefSurfaces, apps, proofs }) {
   if (notedIds.length === 0) return 'Applications from the brief'
   if (notedIds.length >= apps.length) return 'All applications noted'
   const first = touchpointLabel(notedIds[0])
+  /* Path gate is “any one” — say enough, not a leftover scoreboard. */
   if (notedIds.length === 1) {
-    return `${first} noted · rest open`
+    return `${first} noted · enough for the path · rest optional`
   }
-  return `${first} and more noted · rest open`
+  return `${first} and more noted · enough for the path · rest optional`
 }
 
 export default function SketchView({
@@ -118,6 +118,9 @@ export default function SketchView({
           <h1 className="page-title work-page-title">
             {labelForStepId('sketch')}
           </h1>
+          <p className="path-job-line">
+            Where the brand shows up — one note per surface.
+          </p>
           <p className="touchpoints-status" role="status">
             {statusLine}
             <InfoReveal>
@@ -215,7 +218,6 @@ export default function SketchView({
               )
             })}
           </ul>
-          <LayoutPatterns />
         </>
       )}
 

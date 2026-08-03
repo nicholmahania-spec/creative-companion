@@ -16,7 +16,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
-import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
+import { DELIVERABLE_OPTIONS, isLogoOnlyScope } from '../lib/detectiveBrief'
 import { createDiscoveryShare, discoveryShareUrl } from '../lib/discoveryShare'
 import '../styles/lazy-create.css'
 
@@ -57,6 +57,14 @@ export default function NewProjectIntake({
 
   const togglePick = (id) =>
     setPicked((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
+
+  /* Empty picks = full brand package (progressItemInScope). Surface that. */
+  const scopeLabel =
+    picked.length === 0
+      ? 'Scope: full brand package'
+      : isLogoOnlyScope(picked)
+        ? 'Scope: logo only'
+        : `Scope: ${picked.length} deliverable${picked.length === 1 ? '' : 's'}`
 
   const create = () =>
     useAppStore.getState().createProjectFromIntake({
@@ -152,6 +160,9 @@ export default function NewProjectIntake({
           <p className="create-hint">
             Optional — leave blank for the full brand package, or tick to narrow
             the scope.
+          </p>
+          <p className="create-scope-chip" role="status">
+            {scopeLabel}
           </p>
           <div className="create-deliverables">
             {DELIVERABLE_GROUPS.map((g) => (

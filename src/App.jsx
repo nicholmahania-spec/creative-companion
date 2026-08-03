@@ -3930,7 +3930,19 @@ function App() {
                     </button>
                   </header>
                   <p className="home-dash-empty">
-                    No active projects. Start one when you&rsquo;re ready.
+                    Run client brand projects from brief to leave-behind —
+                    five stops, one pack to send.
+                  </p>
+                  <ol className="home-dash-path-promise" aria-label="The path">
+                    {JOURNEY_STEPS.map((s) => (
+                      <li key={s.id}>
+                        <strong>{s.label}</strong>
+                        <span>{s.plain}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="home-dash-empty-hint">
+                    Start a project when you&rsquo;re ready — blanks are fine.
                   </p>
                 </section>
               )

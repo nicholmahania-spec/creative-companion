@@ -482,6 +482,9 @@ export default function DesignView({
                 <h1 className="page-title">
                   {labelForStepId('design')}
                 </h1>
+                <p className="path-job-line">
+                  Mark, words, colour, type — then preview.
+                </p>
                 {/* Quiet status only — pack floor, not goal/words scoreboard. */}
                 <p className="design-identity-status" role="status">
                   {IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}

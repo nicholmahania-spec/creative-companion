@@ -17,7 +17,8 @@ export const JOURNEY_STEPS = [
     label: 'Strategy',
     process: 'Clarifying strategy',
     plain:
-      'Positioning and brief. Who is this for? How should it feel? One clear goal.',
+      'Who is this for, and what should the brand do? Client brief — one clear goal is enough to continue.',
+    enough: 'Enough: client name, goal, audience, and what you are making.',
     nextView: 'studio',
     nextLabel: 'Go to Research',
   },
@@ -28,7 +29,8 @@ export const JOURNEY_STEPS = [
     label: 'Research',
     process: 'Conducting research',
     plain:
-      'Gather refs, notes, and existing brand cues. Star up to 6 for the pack.',
+      'Gather refs and notes. Star up to 6 for the pack — the shortlist is your direction.',
+    enough: 'Enough: a few pins, or starred pins that each say why.',
     nextView: 'brand',
     nextLabel: 'Go to Identity',
   },
@@ -38,7 +40,9 @@ export const JOURNEY_STEPS = [
     num: '3',
     label: 'Identity',
     process: 'Designing identity',
-    plain: 'Mark, words, colour, type, then preview. One screen at a time.',
+    plain:
+      'Mark, words, colour, type — then preview. One screen at a time.',
+    enough: 'Enough: a mark or wordmark, plus words or colour that feel real.',
     nextView: 'flow',
     nextLabel: 'Go to Touchpoints',
   },
@@ -49,7 +53,8 @@ export const JOURNEY_STEPS = [
     label: 'Touchpoints',
     process: 'Creating touchpoints',
     plain:
-      'Apply the system on real surfaces from the brief — one note per application.',
+      'Where the brand shows up — one note per surface from the brief.',
+    enough: 'Enough: one surface noted or marked looks right. Rest is optional.',
     nextView: 'finish',
     nextLabel: 'Go to Assets',
   },
@@ -59,12 +64,19 @@ export const JOURNEY_STEPS = [
     num: '5',
     label: 'Assets',
     process: 'Managing assets',
-    plain:
-      'Preview the book, write a handoff, download. One ship job.',
+    plain: 'Preview the pack, write a handoff, download. One ship job.',
+    enough: 'Enough: download the right files; handoff says what is included.',
     nextView: null,
     nextLabel: null,
   },
 ]
+
+/** One-line job + enough for path page status (never restate labels elsewhere). */
+export function pathJobLines(stepId) {
+  const s = JOURNEY_STEPS.find((x) => x.id === stepId)
+  if (!s) return { plain: '', enough: '' }
+  return { plain: s.plain || '', enough: s.enough || '' }
+}
 
 /** Path view ids only (for work clock, keyboard 1–5, etc.) */
 export const PATH_VIEWS = JOURNEY_STEPS.map((s) => s.view)
