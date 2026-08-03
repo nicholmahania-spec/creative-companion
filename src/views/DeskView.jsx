@@ -15,7 +15,7 @@ import { getProcessPhase } from '../lib/processGuide'
 import { relativeDeadlineLabel } from '../lib/dates'
 import { pinFaceStyle, pinVisualKind } from '../lib/moodPins'
 import { DELIVERABLE_OPTIONS } from '../lib/detectiveBrief'
-import BrandArtboard from '../components/BrandArtboard'
+import DeskLiveArtboard from '../components/DeskLiveArtboard'
 import '../styles/lazy-desk.css'
 
 const stopTag = (label = '') => label.slice(0, 3).toUpperCase()
@@ -207,17 +207,15 @@ export default function DeskView({
                 {versionLabel}
               </span>
             </div>
-            <BrandArtboard
+            <DeskLiveArtboard
               id="desk-artboard"
               project={project}
               palette={palette}
-              pins={pins}
-              compact
             />
             <div className="desk-artboard-foot">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-primary"
                 onClick={onEditIdentity}
               >
                 Edit identity
