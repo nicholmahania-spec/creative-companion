@@ -139,8 +139,8 @@ src/
 | **Tools** | Ideate, Timer, Review, Book, Hours | Menu | **Keep** off-path |
 | **Identity** | Bump / History | Preview only | **Keep** (craft screens stay clean) |
 | **Path footers** | Next primary | Bottom of each stop | **Keep** |
-| **Login** | Gate | `components/LoginPage` | **Move** → `views/LoginView` (Phase 1) |
-| **Public /f /c** | Client fill | `components/Public*` | **Move** → `features/client-portal/` (Phase 2) |
+| **Login** | Gate | `views/LoginView` | **Done** |
+| **Public `/f` `/c`** | Client fill | `features/client-portal/*` | **Done** |
 
 ### Do **not** do
 
