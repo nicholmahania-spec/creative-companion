@@ -125,3 +125,5 @@ npx netlify deploy --prod
 Private prototype — update this file if you open-source it.
 
 # Trigger rebuild for GitHub Pages
+
+<!-- Testing Vercel CI/CD Tue Aug  4 12:19:00 CDT 2026 -->
