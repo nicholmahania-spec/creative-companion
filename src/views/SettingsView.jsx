@@ -66,7 +66,7 @@ export default function SettingsView(props) {
           onToggle={() => setPref('reduceMotion', !reduceMotion)}
         />
         <div className="settings-row">
-          <strong>Toasts</strong>
+          <strong>Notifications</strong>
           <button
             type="button"
             className="btn btn-secondary btn-sm"
