@@ -15,6 +15,7 @@ import {
   BOOK_EDGE_SPACE,
   bookSetupSummary,
 } from '../lib/book/brandBookSetup'
+import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import '../styles/lazy-deliver.css'
 
 const BrandBookPreview = lazy(
@@ -67,6 +68,19 @@ export default function DeliverView({
   notifyAction,
   CLOUD = false,
   lastExportNote = '',
+  // Focus timer props
+  forcedBreak,
+  setSessionComplete,
+  startOrPauseFocus,
+  resetFocus,
+  isFocusRunning,
+  focusLeft,
+  setFocusLeft,
+  setPomodoroWorkStartedAt,
+  setIsFocusRunning,
+  setTimerFocusSource,
+  sessionLabel,
+  sessionComplete,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const addContact = useAppStore((s) => s.addContact)
@@ -131,7 +145,45 @@ export default function DeliverView({
           <p className="assets-status" role="status">
             {statusLine}
           </p>
-        </div>
+          {/* Focus Timer */}
+          <div className="insights-timer" style={{ marginTop: '1rem' }}>
+            {isFocusRunning || focusLeft < POMODORO_WORK_MIN * 60
+              ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')}`
+              : 'not started'}
+          </div>
+          <div className="insights-focus-actions" style={{ marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={startOrPauseFocus}
+              className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
+              disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
+            >
+              {isFocusRunning ? 'Pause' : focusLeft === 0 ? 'Start' : 'Resume'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTimerFocusSource?.(null)
+                resetFocus(25)
+              }}
+              className="btn btn-secondary btn-sm"
+              disabled={!!forcedBreak}
+            >
+              25
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTimerFocusSource?.(null)
+                resetFocus(2)
+              }}
+              className="btn btn-ghost btn-sm"
+              disabled={!!forcedBreak}
+            >
+              2
+            </button>
+          </div>
+      </div>
       </div>
 
       {/* Ship ticket first in DOM for mobile; sticky on wide (audit P0). */}

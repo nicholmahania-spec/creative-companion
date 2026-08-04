@@ -17,6 +17,7 @@ import versionService, {
   versionKindLabel,
 } from '../services/versionService'
 import { messageDayLabel } from '../lib/client/messageDayLabel'
+import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
   DEFAULT_PALETTE,
   normalizeHex,
@@ -64,6 +65,19 @@ export default function DesignView({
   /** One-shot deep link from Review/Deliver readiness — cleared after apply */
   brandEditSectionProp = null,
   setBrandEditSectionProp = null,
+  // Focus timer props
+  forcedBreak,
+  setSessionComplete,
+  startOrPauseFocus,
+  resetFocus,
+  isFocusRunning,
+  focusLeft,
+  setFocusLeft,
+  setPomodoroWorkStartedAt,
+  setIsFocusRunning,
+  setTimerFocusSource,
+  sessionLabel,
+  sessionComplete,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const updateDirection = useAppStore((s) => s.updateDirection)
@@ -604,8 +618,46 @@ export default function DesignView({
                     {step.label}
                   </button>
                 )
-              })}
-            </nav>
+              })}</nav>
+
+            {/* Focus Timer */}
+            <div className="insights-timer" style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+              {isFocusRunning || focusLeft < POMODORO_WORK_MIN * 60
+                ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')}`
+                : 'not started'}
+            </div>
+            <div className="insights-focus-actions" style={{ marginBottom: '1.5rem' }}>
+              <button
+                type="button"
+                onClick={startOrPauseFocus}
+                className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
+                disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
+              >
+                {isFocusRunning ? 'Pause' : focusLeft === 0 ? 'Start' : 'Resume'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTimerFocusSource?.(null)
+                  resetFocus(25)
+                }}
+                className="btn btn-secondary btn-sm"
+                disabled={!!forcedBreak}
+              >
+                25
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTimerFocusSource?.(null)
+                  resetFocus(2)
+                }}
+                className="btn btn-ghost btn-sm"
+                disabled={!!forcedBreak}
+              >
+                2
+              </button>
+            </div>
 
             <div className="design-edit-column">
             {identitySubstep === 'logo' && (

@@ -8,6 +8,7 @@ import { REVIEW_QUESTIONS } from '../lib/journey/processGuide'
 import { labelForStepId } from '../lib/journey/journey'
 import { packReadiness } from '../lib/book/exportFiles'
 import RevisionRounds from '../components/RevisionRounds'
+import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import '../styles/lazy-review.css'
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
@@ -34,6 +35,19 @@ export default function ReviewView({
   buildCurrentBrandPack,
   flashToast,
   flashMicro,
+  // Focus timer props
+  forcedBreak,
+  setSessionComplete,
+  startOrPauseFocus,
+  resetFocus,
+  isFocusRunning,
+  focusLeft,
+  setFocusLeft,
+  setPomodoroWorkStartedAt,
+  setIsFocusRunning,
+  setTimerFocusSource,
+  sessionLabel,
+  sessionComplete,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const packSnap = buildCurrentBrandPack()
@@ -101,6 +115,44 @@ export default function ReviewView({
             Gaps · {miss.length} left
           </span>
         )}
+        {/* Focus Timer */}
+        <div className="insights-timer" style={{ marginTop: '1rem' }}>
+          {isFocusRunning || focusLeft < POMODORO_WORK_MIN * 60
+            ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')}`
+            : 'not started'}
+        </div>
+        <div className="insights-focus-actions" style={{ marginTop: '0.5rem' }}>
+          <button
+            type="button"
+            onClick={startOrPauseFocus}
+            className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
+            disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
+          >
+            {isFocusRunning ? 'Pause' : focusLeft === 0 ? 'Start' : 'Resume'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTimerFocusSource?.(null)
+              resetFocus(25)
+            }}
+            className="btn btn-secondary btn-sm"
+            disabled={!!forcedBreak}
+          >
+            25
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTimerFocusSource?.(null)
+              resetFocus(2)
+            }}
+            className="btn btn-ghost btn-sm"
+            disabled={!!forcedBreak}
+          >
+            2
+          </button>
+        </div>
       </div>
 
       <div className="review-split">

@@ -3,15 +3,15 @@
  * ADHD: short chrome, goal anchor, note focus without sibling blur.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { labelForStepId } from '../lib/journey'
+import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
-import { getProcessPhase } from '../lib/processGuide'
-import InfoReveal from '../components/InfoReveal'
+import { getProcessPhase } from '../lib/journey/processGuide'
 import { pinFaceStyle, pinImageUrl, readImageFilesAsPins } from '../lib/moodPins'
 import { extractDominantColors, sampleColorAt } from '../lib/extractColors'
 import { useModalFocus } from '../lib/useModalFocus'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { validateBoardUrl } from '../lib/safeBoardUrl'
+import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import '../styles/lazy-mood.css'
 
 export default function ResearchView({
@@ -32,6 +32,13 @@ export default function ResearchView({
   setIsFocusRunning,
   setTimerFocusSource,
   onAddPinModeChange,
+  // Focus timer props
+  startOrPauseFocus,
+  resetFocus,
+  isFocusRunning,
+  focusLeft,
+  sessionLabel,
+  sessionComplete,
 }) {
   const addMoodPin = useAppStore((s) => s.addMoodPin)
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
@@ -351,6 +358,45 @@ export default function ResearchView({
                 ) : null}
               </div>
               <div className="research-studio-actions">
+            {/* Focus Timer */}
+            <div className="insights-timer" style={{ marginTop: '1rem' }}>
+              {isFocusRunning || focusLeft < POMODORO_WORK_MIN * 60
+                ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')}`
+                : 'not started'}
+            </div>
+            <div className="insights-focus-actions" style={{ marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={startOrPauseFocus}
+                className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
+                disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
+              >
+                {isFocusRunning ? 'Pause' : focusLeft === 0 ? 'Start' : 'Resume'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTimerFocusSource?.(null)
+                  resetFocus(25)
+                }}
+                className="btn btn-secondary btn-sm"
+                disabled={!!forcedBreak}
+              >
+                25
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTimerFocusSource?.(null)
+                  resetFocus(2)
+                }}
+                className="btn btn-ghost btn-sm"
+                disabled={!!forcedBreak}
+              >
+                2
+              </button>
+            </div>
+              </div>
             </div>
 
             {/* Above the grid, and never gated on pin count. This strip used

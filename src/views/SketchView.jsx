@@ -3,11 +3,11 @@
  * Tech-Studio ADHD: one primary (Done), sticky Next, focus isolation.
  */
 import { Suspense, lazy, useState, useRef, useEffect } from 'react'
-import { labelForStepId } from '../lib/journey'
+import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
-import { getProcessPhase } from '../lib/processGuide'
+import { getProcessPhase } from '../lib/journey/processGuide'
 import { formatShortDate, urgencyLabel } from '../lib/dates'
-import InfoReveal from '../components/InfoReveal'
+import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
   formatDecisionLine,
   latestDecision,
@@ -64,6 +64,19 @@ export default function SketchView(props) {
     completeCurrentStep,
     startVoice,
     setDeskConfirm,
+    // Focus timer props
+    forcedBreak,
+    setSessionComplete,
+    startOrPauseFocus,
+    resetFocus,
+    isFocusRunning,
+    focusLeft,
+    setFocusLeft,
+    setPomodoroWorkStartedAt,
+    setIsFocusRunning,
+    setTimerFocusSource,
+    sessionLabel,
+    sessionComplete,
   } = props
 
   const addTask = useAppStore((s) => s.addTask)
@@ -141,6 +154,10 @@ export default function SketchView(props) {
               <span className="work-context-progress">
                 {' '}
                 · {completedCount}/{deskTasks.length}
+              </span>
+            )}
+          </p>
+        </div>
       </div>
 
       {/* Fold: current step owns attention (redesign brief Work AOF) */}
@@ -341,6 +358,45 @@ export default function SketchView(props) {
             should this be" is the question that stalls a sketch, and naming
             the eight patterns turns it into a one-second decision. */}
         <LayoutPatterns />
+
+        {/* Focus Timer */}
+        <div className="insights-timer" style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+          {isFocusRunning || focusLeft < POMODORO_WORK_MIN * 60
+            ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')}`
+            : 'not started'}
+        </div>
+        <div className="insights-focus-actions" style={{ marginBottom: '1.5rem' }}>
+          <button
+            type="button"
+            onClick={startOrPauseFocus}
+            className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
+            disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
+          >
+            {isFocusRunning ? 'Pause' : focusLeft === 0 ? 'Start' : 'Resume'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTimerFocusSource?.(null)
+              resetFocus(25)
+            }}
+            className="btn btn-secondary btn-sm"
+            disabled={!!forcedBreak}
+          >
+            25
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTimerFocusSource?.(null)
+              resetFocus(2)
+            }}
+            className="btn btn-ghost btn-sm"
+            disabled={!!forcedBreak}
+          >
+            2
+          </button>
+        </div>
 
         {/* The brand book's handoff page reads this — used to be writable
             only in off-path Review, so the numbered path alone could never
