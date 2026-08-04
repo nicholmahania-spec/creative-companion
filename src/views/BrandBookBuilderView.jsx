@@ -1534,8 +1534,6 @@ export default function BrandBookBuilderView() {
             of the book is not hidden behind a bare label. */}
         <Section title="In this book" defaultOpen>
           <ul className="bbb-pagelist">
-            {/* Use precomputed map for efficient lookup */}
-            {null} {/* Placeholder - map is computed above */}
 
             {/* Use pageOrder to determine the display order of pages */}
             {pageOrder.map((id, index) => {
