@@ -531,8 +531,8 @@ function App() {
       return false
     }
   })
-  /** Settings pref OR OS prefers-reduced-motion — drives Lottie + hop */
-  const reduceMotion = !!prefs.reduceMotion || osReduceMotion
+  /** Settings pref overrides OS prefers-reduced-motion — drives Lottie + hop */
+  const reduceMotion = prefs.reduceMotion ?? osReduceMotion
   /** Pomodoro desk lock — default on; user can disable */
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
   const showProgress = !!prefs.showProgress
