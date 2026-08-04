@@ -259,9 +259,9 @@ Three standing translations. Slade-Brooking's thirteen stages are agency-shaped 
 
 Currency claims require `WebSearch` and a citation. "I don't have a current read on this" is an acceptable answer; an invented trend is not, because it gets acted on in front of a client.
 
-**Known gap it will keep finding, correctly:** the journey has no Analysis stop. Slade-Brooking gives it a full chapter — USP, competitor and market analysis, visual analysis boards — and `journey.js` goes from Research straight to Identity. Confirmed 2026-07-31 as a real hole, not deliberate compression. Not yet built.
+**Known gap it will keep finding, correctly:** the journey has no Analysis stop. Slade-Brooking gives it a full chapter — USP, competitor and market analysis, visual analysis boards — and `src/lib/journey/journey.js` goes from Research straight to Identity. Confirmed 2026-07-31 as a real hole, not deliberate compression. Not yet built.
 
-**Also known and deliberate:** the app briefs before it researches, where d.school insists on the reverse. That order is an executive-function decision recorded in `journey.js`. The professor may raise it once on a job where it genuinely bites; it does not relitigate it every project. Same treatment for Bokhua's mood-board advice, which conflicts with the one-wall Research decision below — the professor may explain why grouping tempts people, and may not recommend reversing the decision.
+**Also known and deliberate:** the app briefs before it researches, where d.school insists on the reverse. That order is an executive-function decision recorded in `src/lib/journey/journey.js`. The professor may raise it once on a job where it genuinely bites; it does not relitigate it every project. Same treatment for Bokhua's mood-board advice, which conflicts with the one-wall Research decision below — the professor may explain why grouping tempts people, and may not recommend reversing the decision.
 
 ### QC Agent — `quality-control-critic`
 
