@@ -1321,31 +1321,6 @@ export default function BrandBookBuilderView() {
       </div>
 
       <div className="bbb-body">
-        {/* Create a map from ID to pageElement for efficient lookup */}
-        {(() => {
-          const map = new Map();
-          pageElements.forEach((el) => {
-            const id = el.props.id;
-            if (id) map.set(id, el);
-          });
-          return map;
-        })()}
-
-        {/* Create ordered array of page elements based on pageOrder */}
-        {(() => {
-          const map = new Map();
-          pageElements.forEach((el) => {
-            const id = el.props.id;
-            if (id) map.set(id, el);
-          });
-          const ordered = [];
-          pageOrder.forEach((id) => {
-            const el = map.get(id);
-            if (el) ordered.push(el);
-          });
-          return ordered;
-        })()}
-
         <h1 className="bbb-panel__title">Brand book &mdash; source of truth</h1>
 
         {/* Named for what's inside rather than "Identity": the app's third
@@ -1559,19 +1534,12 @@ export default function BrandBookBuilderView() {
             of the book is not hidden behind a bare label. */}
         <Section title="In this book" defaultOpen>
           <ul className="bbb-pagelist">
-            {/* Create a map from ID to pageElement for efficient lookup */}
-            {() => {
-              const map = new Map();
-              pageElements.forEach((el) => {
-                const id = el.props.id;
-                if (id) map.set(id, el);
-              });
-              return map;
-            }}()
+            {/* Use precomputed map for efficient lookup */}
+            {null} {/* Placeholder - map is computed above */}
 
             {/* Use pageOrder to determine the display order of pages */}
             {pageOrder.map((id, index) => {
-              const el = map.get(id);
+              const el = pageElementMap.get(id);
               if (!el) return null;
 
               const pageEl = el.props.children; // Get the actual page component (inside OverflowDetector)
@@ -1583,7 +1551,7 @@ export default function BrandBookBuilderView() {
               // Skip duplicate labels (consecutive pages with same label)
               if (index > 0) {
                 const prevId = pageOrder[index - 1];
-                const prevEl = map.get(prevId);
+                const prevEl = pageElementMap.get(prevId);
                 if (prevEl) {
                   const prevPageEl = prevEl.props.children;
                   const prevLabel = prevPageEl.props.page
@@ -1664,15 +1632,8 @@ export default function BrandBookBuilderView() {
       </div>
 
       <div className="bbb-canvas">
-        {/* Render page elements in the order specified by pageOrder */}
-        {(() => {
-          const elements = [];
-          pageOrder.forEach((id) => {
-            const el = pageElementMap.get(id);
-            if (el) elements.push(el);
-          });
-          return elements;
-        })()}
+        {/* Render precomputed ordered page elements */}
+        {orderedPageElements}
       </div>
 
       <Flipbook open={flipOpen} onClose={() => setFlipOpen(false)} pages={pageElements} index={flipIndex} setIndex={setFlipIndex} />
