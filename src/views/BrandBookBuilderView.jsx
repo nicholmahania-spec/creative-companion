@@ -875,14 +875,13 @@ export default function BrandBookBuilderView() {
 
 // Initialize page locking and ordering from bookBuilder store
   useEffect(() => {
-    const bb = bookBuilderFor(project);
     if (bb.pageLocking) {
       setLockedPages(new Set(bb.pageLocking.lockedPages || []));
     }
     if (bb.pageOrder && bb.pageOrder.length > 0) {
       setPageOrder(bb.pageOrder);
     }
-  }, [project, bookBuilderFor]);
+  }, [project]);
 
   // Save page locking and ordering to bookBuilder store
   useEffect(() => {
