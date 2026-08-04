@@ -1347,6 +1347,7 @@ export default function BrandBookBuilderView() {
       </div>
 
       <div className="bbb-body">
+        <div className="bbb-panel">
         <h1 className="bbb-panel__title">Brand book &mdash; source of truth</h1>
 
         {/* Named for what's inside rather than "Identity": the app's third
@@ -1663,10 +1664,11 @@ export default function BrandBookBuilderView() {
             </>
           )}
         </Section>
-      </div>
+        </div>
 
-      <div className="bbb-canvas">
-        {canvasPages}
+        <div className="bbb-canvas">
+          {canvasPages}
+        </div>
       </div>
 
       <Flipbook open={flipOpen} onClose={() => setFlipOpen(false)} pages={canvasPages} index={flipIndex} setIndex={setFlipIndex} />
