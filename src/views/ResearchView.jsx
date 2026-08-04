@@ -1,12 +1,12 @@
 /**
- * Board (Research) — artboard wall primary; ★ pack pins; path footer → Identity.
- * Hybrid (owner 2026-08-03): framed artboard plane + auto-flow grid inside.
- * No free pan/zoom placement tax; pins auto-layout. One wall, no lanes.
- * Path rebuild: fill main width, mark-done off, Next leads footer.
+ * Board (Research) — wall primary; ★ pack pins; sticky Next → System.
+ * ADHD: short chrome, goal anchor, note focus without sibling blur.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { labelForStepId } from '../lib/journey/journey'
+import { labelForStepId } from '../lib/journey'
 import useAppStore from '../store/useAppStore'
+import { getProcessPhase } from '../lib/processGuide'
+import InfoReveal from '../components/InfoReveal'
 import { pinFaceStyle, pinImageUrl, readImageFilesAsPins } from '../lib/moodPins'
 import { extractDominantColors, sampleColorAt } from '../lib/extractColors'
 import { useModalFocus } from '../lib/useModalFocus'
@@ -36,7 +36,6 @@ export default function ResearchView({
   const addMoodPin = useAppStore((s) => s.addMoodPin)
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
   const updateMoodPinNote = useAppStore((s) => s.updateMoodPinNote)
-  const updateMoodPinVisual = useAppStore((s) => s.updateMoodPinVisual)
   const toggleMoodPinInPack = useAppStore((s) => s.toggleMoodPinInPack)
   const movePackPin = useAppStore((s) => s.movePackPin)
   const setMoodPinFocal = useAppStore((s) => s.setMoodPinFocal)
@@ -236,7 +235,7 @@ export default function ResearchView({
        Say nothing, add nothing. */
     const note = boardNote.trim()
     if (!note) {
-      flashToast?.('Type a note, then add')
+      flashToast?.('Write a note first')
       return
     }
     const pin = {
@@ -299,11 +298,9 @@ export default function ResearchView({
                 <p className="research-status" role="status">
                   {starred > 0
                     ? starred >= 6
-                      ? '★ Client shortlist full (6)'
-                      : `★ ${starred} for the client (room for ${6 - starred})`
-                    : deskMood.length === 0
-                      ? 'Nothing on the wall yet'
-                      : `${deskMood.length} on the wall`}
+                      ? '★ pack full'
+                      : `★ ${starred} in pack · room for ${6 - starred}`
+                    : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
                 </p>
                 {/* One button, never two, and only when it does something.
                     Showing both leaves one inert in most states, which is a
@@ -340,7 +337,7 @@ export default function ResearchView({
                         const r = toggleMoodPinInPack(p.id)
                         if (r.ok && r.inPack) added++
                       }
-                      if (!added) flashToast('Client shortlist is full (6 max)')
+                      if (!added) flashToast('Client pack is full (6 pictures max)')
                     }}
                   >
                     Star the rest
@@ -354,60 +351,39 @@ export default function ResearchView({
                 ) : null}
               </div>
               <div className="research-studio-actions">
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm research-timer-btn"
-                  title="20-min timer"
-                  aria-label="Start 20-minute research timer"
-                  onClick={() => {
-                    if (forcedBreak) {
-                      flashToast('Finish break first')
-                      return
-                    }
-                    setSessionComplete(false)
-                    setTimerFocusSource?.('research')
-                    setFocusLeft(20 * 60)
-                    setPomodoroWorkStartedAt(Date.now())
-                    setIsFocusRunning(true)
-                    /* No setActiveView('insights'). Starting the research
-                       timer used to navigate off Research — you pressed a
-                       timer for the work you were about to do and the page
-                       carrying that work disappeared, so the first act of a
-                       timed session was finding your way back. */
-                    notifyAction('Focus on', 'focus_start', {
-                      label: 'Research timer',
-                    })
-                    flashToast('Research · 20 min')
-                  }}
-                >
-                  ⏱
-                </button>
-              </div>
             </div>
 
-            {/* Hybrid artboard: framed plane owns the fold; pins auto-flow
-                inside (no pan/zoom placement tax). Toolbar sits on the board
-                edge so empty state is still a drop surface, not a prose void. */}
-            <section
-              className={`research-artboard${boardDropActive ? ' is-drop-active' : ''}${
-                deskMood.length === 0 ? ' is-empty' : ''
-              }`}
-              aria-label="Research wall"
-            >
-              <div className="research-artboard-toolbar board-add-toolbar">
-                <label className="btn btn-secondary board-upload-btn">
-                  Upload
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
-                    multiple
-                    className="sr-only"
-                    onChange={(e) => {
-                      uploadMoodFiles(e.target.files)
-                      e.target.value = ''
-                    }}
-                  />
-                </label>
+            {/* Above the grid, and never gated on pin count. This strip used
+                to sit BELOW a 60vh canvas, so on a fresh board the only
+                visible way in was one button inside the empty state: URL and
+                Note were off-screen (258px of scrolling on a phone) and
+                Upload was not rendered at all until a pin already existed.
+                Every route in was hidden at exactly the moment you had
+                nothing and needed one. */}
+            <section className="panel brand-section board-add-compact">
+              <div className="board-add-toolbar">
+                {(
+                  <label className="btn btn-secondary board-upload-btn">
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/*"
+                      multiple
+                      className="sr-only"
+                      onChange={(e) => {
+                        uploadMoodFiles(e.target.files)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                )}
+                {/* Separate control, not a second option inside the picker.
+                    `capture` asks the OS for the camera directly, so on a
+                    phone this is one tap to a viewfinder instead of tapping
+                    Upload and then hunting for "Take Photo" in a sheet —
+                    which is the whole point when the reference you want is
+                    the thing in front of you. Hidden where there is no
+                    camera, so it is never a dead control. */}
                 {canCapturePhoto && (
                   <label className="btn btn-secondary board-upload-btn">
                     Take photo
@@ -445,9 +421,16 @@ export default function ResearchView({
                 >
                   Note
                 </button>
+                {/* The bulk pack actions used to live here, inside a closed
+                    <details> labelled "Pack tools" — a word that does not say
+                    what is under it, on a page you return to after days away.
+                    The owner's own verdict on that pattern: "they are hidden
+                    and my first thought was 'I have no idea what this is.'"
+                    They now sit beside the pack status in the heading, where
+                    the count they act on already is. */}
               </div>
               {boardAddMode === 'url' && (
-                <div className="board-inline-form research-artboard-form">
+                <div className="board-inline-form">
                   <label className="field-label sr-only" htmlFor="board-url">
                     URL
                   </label>
@@ -458,7 +441,9 @@ export default function ResearchView({
                       value={boardUrl}
                       onChange={(e) => setBoardUrl(e.target.value)}
                       placeholder="https://…"
-                      onKeyDown={(e) => e.key === 'Enter' && submitBoardUrl()}
+                      onKeyDown={(e) =>
+                        e.key === 'Enter' && submitBoardUrl()
+                      }
                     />
                     <button
                       type="button"
@@ -472,7 +457,7 @@ export default function ResearchView({
                 </div>
               )}
               {boardAddMode === 'note' && (
-                <div className="board-inline-form research-artboard-form">
+                <div className="board-inline-form">
                   <label className="field-label sr-only" htmlFor="board-note">
                     Note
                   </label>
@@ -483,7 +468,9 @@ export default function ResearchView({
                       value={boardNote}
                       onChange={(e) => setBoardNote(e.target.value)}
                       placeholder="Direction note"
-                      onKeyDown={(e) => e.key === 'Enter' && submitBoardNote()}
+                      onKeyDown={(e) =>
+                        e.key === 'Enter' && submitBoardNote()
+                      }
                     />
                     <button
                       type="button"
@@ -495,12 +482,22 @@ export default function ResearchView({
                   </div>
                 </div>
               )}
+            </section>
+            <section className="panel brand-section board-wall-panel research-wall">
+              {/* Newest first, always — deskMood already arrives sorted this
+                  way (App.jsx sorts by boardOrder, and a fresh pin is filed
+                  at boardOrder 0). Starring never reorders the wall: the ★
+                  pack has its own order (packOrder), kept in the shortlist
+                  strip below. */}
+              <p className="research-grid-hint">
+                Newest first. Drop an image anywhere below, or use Upload, URL
+                or Note above.
+              </p>
               <div
-                className="research-artboard-plane research-grid-wrap"
+                className={`research-grid-wrap${boardDropActive ? ' is-drop-active' : ''}`}
                 onDragOver={(e) => {
                   e.preventDefault()
-                  if (e.dataTransfer?.types?.includes('Files'))
-                    setBoardDropActive(true)
+                  if (e.dataTransfer?.types?.includes('Files')) setBoardDropActive(true)
                 }}
                 onDragLeave={(e) => {
                   if (e.target === e.currentTarget) setBoardDropActive(false)
@@ -528,8 +525,11 @@ export default function ResearchView({
                 }}
               >
                 {deskMood.length === 0 ? (
-                  <div className="research-artboard-empty">
-                    <p className="research-artboard-empty-title">Drop here</p>
+                  <div className="empty-state empty-state-craft research-empty">
+                    <p className="empty-state-subtitle">
+                      Nothing on the wall yet. Add an image, a colour, a link
+                      or a note — anything the client sent lands here too.
+                    </p>
                   </div>
                 ) : (
                   <div className="research-grid">
@@ -540,8 +540,8 @@ export default function ResearchView({
                       const isLink = !isImage && !isColor && Boolean(item.link)
                       const face = pinFaceStyle(item)
                       const starTitle = item.inPack
-                        ? 'Remove from client shortlist'
-                        : 'Add to client shortlist (max 6)'
+                        ? 'Remove from pack'
+                        : 'Add to pack (max 6)'
                       return (
                         <article
                           key={item.id}
@@ -600,7 +600,7 @@ export default function ResearchView({
                               className={`research-pin-star${item.inPack ? ' is-on' : ''}`}
                               title={starTitle}
                               aria-label={
-                                item.inPack ? 'On shortlist — remove' : 'Add to client shortlist'
+                                item.inPack ? 'In pack — remove' : 'Add to pack'
                               }
                               aria-pressed={!!item.inPack}
                               onClick={() => {
@@ -608,10 +608,10 @@ export default function ResearchView({
                                 if (!r.ok)
                                   flashToast(
                                     r.error ||
-                                      'Client shortlist is full (6 max)'
+                                      'Client pack is full (6 pictures max)'
                                   )
                                 else
-                                  flashMicro(r.inPack ? '★ shortlist' : '☆ removed')
+                                  flashMicro(r.inPack ? '★ pack' : '☆ pack')
                               }}
                             >
                               {item.inPack ? '★' : '☆'}
@@ -650,35 +650,16 @@ export default function ResearchView({
                                 <input
                                   type="color"
                                   className="research-pin-color-input"
-                                  value={
-                                    /^#([0-9a-f]{3}){1,2}$/i.test(item.visual)
-                                      ? item.visual
-                                      : '#000000'
-                                  }
-                                  onChange={(e) =>
-                                    updateMoodPinVisual(item.id, e.target.value)
-                                  }
-                                  aria-label="Pin color"
+                                  value={/^#([0-9a-f]{3}){1,2}$/i.test(item.visual) ? item.visual : '#000000'}
+                                  disabled
+                                  aria-label="Pin color (read-only — no color editor yet)"
                                 />
                                 <input
                                   type="text"
                                   className="field-input research-pin-hex-input"
                                   value={item.visual || ''}
-                                  onChange={(e) => {
-                                    const v = e.target.value.trim()
-                                    updateMoodPinVisual(item.id, v)
-                                  }}
-                                  onBlur={(e) => {
-                                    const v = e.target.value.trim()
-                                    if (
-                                      v &&
-                                      !/^#([0-9a-f]{3}){1,2}$/i.test(v)
-                                    ) {
-                                      /* Keep draft if incomplete; color input still works */
-                                    }
-                                  }}
-                                  spellCheck={false}
-                                  aria-label="Pin hex value"
+                                  readOnly
+                                  aria-label="Pin hex value (read-only — no color editor yet)"
                                 />
                               </div>
                             )}
@@ -837,26 +818,6 @@ export default function ResearchView({
                 </ul>
               </section>
             )}
-
-            <div className="path-continue-row research-path-footer">
-              <button
-                type="button"
-                className="btn btn-primary work-path-next"
-                onClick={() => setActiveView?.(journeyNext?.view || 'brand')}
-              >
-                {`Next · ${journeyNext?.label || labelForStepId('design')}`}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  const hub = 'desk'
-                  setActiveView?.(hub)
-                }}
-              >
-                Back to the desk
-              </button>
-            </div>
           </div>
         {boardLightbox && (
           <div
@@ -990,7 +951,7 @@ export default function ResearchView({
                   onClick={() => {
                     const r = toggleMoodPinInPack(boardLightbox.id)
                     if (!r.ok)
-                      flashToast(r.error || 'Client shortlist is full (6 max)')
+                      flashToast(r.error || 'Client pack is full (6 pictures max)')
                     else {
                       setBoardLightbox((p) =>
                         p ? { ...p, inPack: r.inPack } : null
@@ -1005,6 +966,15 @@ export default function ResearchView({
           </div>
         )}
 
+      <div className="path-continue-row">
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() => setActiveView?.(journeyNext?.view || 'brand')}
+        >
+          {`Next · ${journeyNext?.label || labelForStepId('design')}`}
+        </button>
+      </div>
     </>
   )
 }

@@ -3,11 +3,11 @@
  * Shortlist A/B/C only after many rough ideas. Not a single “winning” concept page.
  */
 import { useState, useEffect } from 'react'
-import { labelForStepId } from '../lib/journey/journey'
+import { labelForStepId } from '../lib/journey'
+import { getProcessPhase } from '../lib/processGuide'
 import useAppStore from '../store/useAppStore'
-import LayoutPatterns from '../components/LayoutPatterns'
+import InfoReveal from '../components/InfoReveal'
 import '../styles/lazy-ideate.css'
-import '../styles/lazy-sketch.css'
 
 export default function SparkView({
   setActiveView,
@@ -37,6 +37,7 @@ export default function SparkView({
   const filledDirs = dirs.filter((d) => String(d.title || '').trim()).length
   const chosen = dirs.find((d) => d.chosen && String(d.title || '').trim())
   const canSend = !!chosen
+  const phase = getProcessPhase('ideate')
   const title = 'Ideate'
   const goalLine = String(projectGoal || '').trim()
 
@@ -44,42 +45,6 @@ export default function SparkView({
   const rough = Array.isArray(roughIdeas) ? roughIdeas : []
   const [roughDraft, setRoughDraft] = useState('')
 
-  // Focus mode
-  const {
-    focusLeft,
-    isFocusRunning,
-    timerFocusSource,
-    pomodoroWorkStartedAt,
-    setFocusLeft,
-    setIsFocusRunning,
-    setTimerFocusSource,
-    setPomodoroWorkStartedAt,
-    setSessionComplete,
-    flashToast,
-    forcedBreak,
-    notifyAction: notifyActionStore,
-  } = useAppStore()
-
-  /* No countdown tick here on purpose — App.jsx already runs one globally for
-     as long as isFocusRunning, and it owns the forced break at zero. A second
-     interval on the same store value made the clock run at double speed. */
-
-  const handleFocusClick = () => {
-    if (isFocusRunning) {
-      // Pause/focus exit
-      setIsFocusRunning(false)
-      notifyActionStore?.('Focus paused', 'focus')
-      flashToast?.('Focus paused')
-    } else {
-      // Start focus
-      setIsFocusRunning(true)
-      setFocusLeft(20 * 60)
-      setTimerFocusSource('ideate')
-      setPomodoroWorkStartedAt(Date.now())
-      notifyActionStore?.('Focus started', 'focus')
-      flashToast?.('Focus mode: 20 minutes')
-    }
-  }
 
   const pinSparkStay = () => {
     addMoodPin({
@@ -192,39 +157,23 @@ export default function SparkView({
       <div className="flow-top ideate-top">
         <div className="ideate-top-text">
           <h1 className="page-title">{title}</h1>
-        </div>
-        <div className="ideate-top-actions">
-          <button
-            type="button"
-            className={`btn btn-ghost btn-sm${isFocusRunning ? ' is-active' : ''}`}
-            onClick={handleFocusClick}
-            disabled={!!forcedBreak}
-            aria-label={isFocusRunning ? 'Pause focus' : 'Start focus mode'}
-          >
-            {isFocusRunning ? (
-              <>
-                <span className="icon">⏸</span>
-                <span className="label">Pause</span>
-              </>
-            ) : (
-              <>
-                <span className="icon">⚡</span>
-                <span className="label">
-                  Focus{' '}
-                  <span className="timer">
-                    {Math.floor((focusLeft || 0) / 60)}:
-                    {String((focusLeft || 0) % 60).padStart(2, '0')}
-                  </span>
-                </span>
-              </>
-            )}
-          </button>
+          <p className="page-sub ideate-thesis">
+            Volume first. Messy list, then a short shortlist — not one polished concept.
+          </p>
         </div>
       </div>
       <div className="ideate-meta">
         <p className="ideate-progress" role="status">
           {statusLine}
         </p>
+        {phase ? (
+          <p className="ideate-phase" role="status">
+            <InfoReveal>
+              {(phase.checks || []).join(' · ')}
+              {phase.prompt ? ` — ${phase.prompt}` : ''}
+            </InfoReveal>
+          </p>
+        ) : null}
         {goalLine ? (
           <p className="ideate-goal" title={goalLine}>
             Goal: {goalLine.slice(0, 80)}
@@ -236,6 +185,9 @@ export default function SparkView({
       {/* Diverge first — messy dump before shortlist */}
       <section className="ideate-rough" aria-label="Rough ideas">
         <p className="ideate-rough-label">1 · Diverge (rough dump)</p>
+        <p className="ideate-rough-hint">
+          Aim for range, not quality. Capture many lines. Promote only when you have options.
+        </p>
         {rough.length > 0 ? (
           <ul className="ideate-rough-list">
             {rough.map((t, i) => (
@@ -393,9 +345,6 @@ export default function SparkView({
           </div>
         </aside>
       </div>
-
-      {/* Reference only — path Touchpoints stays applications (audit). */}
-      <LayoutPatterns />
 
       <div className="path-continue-row ideate-send-row">
         <button
