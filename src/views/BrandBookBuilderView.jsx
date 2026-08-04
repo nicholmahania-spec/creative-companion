@@ -29,34 +29,33 @@ import '../styles/brand-book-builder.css'
 import '../styles/lazy-sketch.css'
 
 /* Overflow detection component to flag when page content exceeds boundaries */
-function OverflowDetector({ children, onOverflow }) {
+function OverflowDetector({ children, onOverflow, id }) {
   const containerRef = useRef(null)
   const [hasOverflow, setHasOverflow] = useState(false)
+  const onOverflowRef = useRef(onOverflow)
+  onOverflowRef.current = onOverflow
 
   useEffect(() => {
     const observeResize = () => {
       if (!containerRef.current) return
 
       // Check if content overflows vertically
-      const isOverflowing = containerRef.current.scrollHeight > containerRef.current.clientHeight
+      const isOverflowing =
+        containerRef.current.scrollHeight > containerRef.current.clientHeight
       setHasOverflow(isOverflowing)
 
-      // Call the callback if provided
-      if (onOverflow) {
-        onOverflow(isOverflowing)
+      if (onOverflowRef.current) {
+        onOverflowRef.current(isOverflowing)
       }
     }
 
-    // Create a ResizeObserver to detect size changes
     let resizeObserver
     try {
       resizeObserver = new ResizeObserver(observeResize)
-
-      // Also check on init and when properties that might affect layout change
+      resizeObserver.observe(containerRef.current)
       observeResize()
     } catch (err) {
       console.warn('ResizeObserver not supported:', err)
-      // Fallback: check on mount only
       observeResize()
     }
 
@@ -65,14 +64,16 @@ function OverflowDetector({ children, onOverflow }) {
         resizeObserver.disconnect()
       }
     }
-  }, [onOverflow])
+  }, [])
 
   return (
-    <div ref={containerRef} className="bbb-overflow-detector">
+    <div ref={containerRef} className="bbb-overflow-detector" id={id}>
       {children}
       {hasOverflow && (
         <div className="bbb-overflow-indicator">
-          <span role="img" aria-label="Content overflows page">↓</span>
+          <span role="img" aria-label="Content overflows page">
+            ↓
+          </span>
           <span className="sr-only">Content overflows page boundary</span>
         </div>
       )}
@@ -138,19 +139,18 @@ const resolveBg = (colors, key) => resolvePageBg(colors, key);
 
 /* ------------------------------------------------------------ Section */
 
-/* Collapsible rail sections (prototype Brand Kit). `defaultOpen` keeps the
-   primary controls (name, setup, colours) visible on arrival; the rest start
-   closed so the rail matches the Sparrow kit mock. */
+/* Collapsible rail sections (prototype Brand Kit). Open sections use the
+   native `open` attribute so React does not warn about defaultOpen on DOM. */
 function Section({ title, children, defaultOpen = false }) {
   return (
-    <details className="bbb-section" defaultOpen={defaultOpen}>
+    <details className="bbb-section" {...(defaultOpen ? { open: true } : {})}>
       <summary className="bbb-section__summary">
         <span className="bbb-section__title">{title}</span>
         <span className="bbb-section__toggle" aria-hidden="true" />
       </summary>
       <div className="bbb-section__body">{children}</div>
     </details>
-  );
+  )
 }
 
 /* Chip row for a small, closed choice set — Sheet, Edge space. One aria-pressed
@@ -869,31 +869,38 @@ export default function BrandBookBuilderView() {
   const [flipIndex, setFlipIndex] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [exportNote, setExportNote] = useState('');
-  // Page locking and ordering state
-  const [lockedPages, setLockedPages] = useState(new Set());
-  const [pageOrder, setPageOrder] = useState([]);
+  /* Optional lock/reorder — only set when the user acts. Empty means natural
+     book order (pageElements as built). Never auto-write empty order back to
+     the store on open: that wiped the canvas and could loop set→effect→set. */
+  const [lockedPages, setLockedPages] = useState(() => {
+    const saved = project?.bookBuilder?.pageLocking?.lockedPages
+    return new Set(Array.isArray(saved) ? saved : [])
+  })
+  const [pageOrder, setPageOrder] = useState(() => {
+    const saved = project?.bookBuilder?.pageOrder
+    return Array.isArray(saved) && saved.length > 0 ? saved : []
+  })
+  const lockOrderHydratedFor = useRef(project?.id ?? null)
 
-// Initialize page locking and ordering from bookBuilder store
+  /* Re-hydrate lock/order only when switching projects. */
   useEffect(() => {
-    if (bb.pageLocking) {
-      setLockedPages(new Set(bb.pageLocking.lockedPages || []));
-    }
-    if (bb.pageOrder && bb.pageOrder.length > 0) {
-      setPageOrder(bb.pageOrder);
-    }
-  }, [project]);
+    const id = project?.id ?? null
+    if (lockOrderHydratedFor.current === id) return
+    lockOrderHydratedFor.current = id
+    const saved = project?.bookBuilder
+    const savedLock = saved?.pageLocking?.lockedPages
+    const savedOrder = saved?.pageOrder
+    setLockedPages(new Set(Array.isArray(savedLock) ? savedLock : []))
+    setPageOrder(Array.isArray(savedOrder) && savedOrder.length > 0 ? savedOrder : [])
+  }, [project?.id, project?.bookBuilder])
 
-  // Save page locking and ordering to bookBuilder store
-  useEffect(() => {
-    if (project.id) {
-      setBookBuilder({
-        pageLocking: {
-          lockedPages: Array.from(lockedPages)
-        },
-        pageOrder: pageOrder
-      });
-    }
-  }, [lockedPages, pageOrder, project.id, setBookBuilder]);
+  const persistLockOrder = (nextLock, nextOrder) => {
+    if (!project?.id) return
+    setBookBuilder({
+      pageLocking: { lockedPages: Array.from(nextLock) },
+      pageOrder: nextOrder,
+    })
+  }
 
   const updateColor = (idx, next) =>
     setPaletteTokens(colors.map((c, i) => (i === idx ? next : c)))
@@ -907,38 +914,38 @@ export default function BrandBookBuilderView() {
 
   /* Page locking and ordering helpers */
   const togglePageLock = (pageId) => {
-    setLockedPages(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(pageId)) {
-        newSet.delete(pageId);
-      } else {
-        newSet.add(pageId);
-      }
-      return newSet;
-    });
-  };
+    setLockedPages((prev) => {
+      const next = new Set(prev)
+      if (next.has(pageId)) next.delete(pageId)
+      else next.add(pageId)
+      persistLockOrder(next, pageOrder)
+      return next
+    })
+  }
 
-  const movePageUp = (pageId) => {
-    setPageOrder(prev => {
-      if (!prev.includes(pageId)) return prev;
-      const index = prev.indexOf(pageId);
-      if (index <= 0) return prev; // Already at top or not found
-      const newOrder = [...prev];
-      [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
-      return newOrder;
-    });
-  };
+  const movePageUp = (pageId, fallbackOrder = []) => {
+    setPageOrder((prev) => {
+      const base = prev.length ? [...prev] : [...fallbackOrder]
+      if (!base.includes(pageId)) return prev.length ? prev : base
+      const index = base.indexOf(pageId)
+      if (index <= 0) return base
+      ;[base[index], base[index - 1]] = [base[index - 1], base[index]]
+      persistLockOrder(lockedPages, base)
+      return base
+    })
+  }
 
-  const movePageDown = (pageId) => {
-    setPageOrder(prev => {
-      if (!prev.includes(pageId)) return prev;
-      const index = prev.indexOf(pageId);
-      if (index >= prev.length - 1) return prev; // Already at bottom or not found
-      const newOrder = [...prev];
-      [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
-      return newOrder;
-    });
-  };
+  const movePageDown = (pageId, fallbackOrder = []) => {
+    setPageOrder((prev) => {
+      const base = prev.length ? [...prev] : [...fallbackOrder]
+      if (!base.includes(pageId)) return prev.length ? prev : base
+      const index = base.indexOf(pageId)
+      if (index < 0 || index >= base.length - 1) return base
+      ;[base[index], base[index + 1]] = [base[index + 1], base[index]]
+      persistLockOrder(lockedPages, base)
+      return base
+    })
+  }
 
   /* ---- derived values, recomputed every render (mirrors the vanilla render()) ---- */
 
@@ -1243,7 +1250,7 @@ export default function BrandBookBuilderView() {
      The old path passed 0..n only for inner pages, so Logo (page 2 of N)
      printed "1" while the flip controls said "2 of N". */
   const pageElements = [
-    <OverflowDetector key="cover">
+    <OverflowDetector key="cover" id="bbb-anchor-0">
       <FrontCover
         key="cover"
         id="bbb-anchor-0"
@@ -1254,13 +1261,14 @@ export default function BrandBookBuilderView() {
     </OverflowDetector>,
     ...inner.map((render, i) => {
       const el = render(i + 1)
+      const anchorId = `bbb-anchor-${i + 1}`
       return (
-        <OverflowDetector key={`content-${i}`}>
-          {React.cloneElement(el, { id: `bbb-anchor-${i + 1}` })}
+        <OverflowDetector key={`content-${i}`} id={anchorId}>
+          {React.cloneElement(el, { id: anchorId })}
         </OverflowDetector>
       )
     }),
-    <OverflowDetector key="back">
+    <OverflowDetector key="back" id={`bbb-anchor-${inner.length + 1}`}>
       <BackCover
         key="back"
         id={`bbb-anchor-${inner.length + 1}`}
@@ -1271,19 +1279,38 @@ export default function BrandBookBuilderView() {
     </OverflowDetector>,
   ];
 
-  // Create a map from ID to pageElement for efficient lookup
-  const pageElementMap = new Map();
-  pageElements.forEach((el) => {
-    const id = el.props.id;
-    if (id) pageElementMap.set(id, el);
-  });
+  /* Id may live on the OverflowDetector wrapper or the page child. The
+     reorder work only set child ids, so the map was always empty and the
+     canvas rendered zero pages. */
+  const pageNodeId = (el) => {
+    if (!el?.props) return null
+    if (el.props.id) return el.props.id
+    const child = el.props.children
+    if (child?.props?.id) return child.props.id
+    return null
+  }
 
-  // Create ordered array of page elements based on pageOrder
-  const orderedPageElements = [];
-  pageOrder.forEach((id) => {
-    const el = pageElementMap.get(id);
-    if (el) orderedPageElements.push(el);
-  });
+  const pageElementMap = new Map()
+  pageElements.forEach((el) => {
+    const id = pageNodeId(el)
+    if (id) pageElementMap.set(id, el)
+  })
+
+  const naturalIds = pageElements.map(pageNodeId).filter(Boolean)
+  /* Saved order when the user reordered; otherwise natural cover→…→back. */
+  const effectiveOrder =
+    pageOrder.length > 0
+      ? [
+          ...pageOrder.filter((id) => naturalIds.includes(id)),
+          ...naturalIds.filter((id) => !pageOrder.includes(id)),
+        ]
+      : naturalIds
+
+  const orderedPageElements = effectiveOrder
+    .map((id) => pageElementMap.get(id))
+    .filter(Boolean)
+  const canvasPages =
+    orderedPageElements.length > 0 ? orderedPageElements : pageElements
 
   return (
     <div className="bbb-root">
@@ -1320,6 +1347,7 @@ export default function BrandBookBuilderView() {
       </div>
 
       <div className="bbb-body">
+        <div className="bbb-panel">
         <h1 className="bbb-panel__title">Brand book &mdash; source of truth</h1>
 
         {/* Named for what's inside rather than "Identity": the app's third
@@ -1533,75 +1561,85 @@ export default function BrandBookBuilderView() {
             of the book is not hidden behind a bare label. */}
         <Section title="In this book" defaultOpen>
           <ul className="bbb-pagelist">
+            {effectiveOrder.map((id, index) => {
+              const el = pageElementMap.get(id)
+              if (!el) return null
 
-            {/* Use pageOrder to determine the display order of pages */}
-            {pageOrder.map((id, index) => {
-              const el = pageElementMap.get(id);
-              if (!el) return null;
-
-              const pageEl = el.props.children; // Get the actual page component (inside OverflowDetector)
-              const label = pageEl.props.page
+              const pageEl = el.props.children
+              const label = pageEl?.props?.page
                 ? pageEl.props.page.label
-                : BUILTIN_PAGE_LABELS[pageEl.props.key];
-              const isLocked = lockedPages.has(id);
+                : BUILTIN_PAGE_LABELS[pageEl?.key] ||
+                  BUILTIN_PAGE_LABELS[String(pageEl?.props?.id || '').replace(/^bbb-anchor-/, '')] ||
+                  id
+              const isLocked = lockedPages.has(id)
 
-              // Skip duplicate labels (consecutive pages with same label)
               if (index > 0) {
-                const prevId = pageOrder[index - 1];
-                const prevEl = pageElementMap.get(prevId);
+                const prevId = effectiveOrder[index - 1]
+                const prevEl = pageElementMap.get(prevId)
                 if (prevEl) {
-                  const prevPageEl = prevEl.props.children;
-                  const prevLabel = prevPageEl.props.page
+                  const prevPageEl = prevEl.props.children
+                  const prevLabel = prevPageEl?.props?.page
                     ? prevPageEl.props.page.label
-                    : BUILTIN_PAGE_LABELS[prevPageEl.props.key];
-                  if (label === prevLabel) return null;
+                    : BUILTIN_PAGE_LABELS[prevPageEl?.key]
+                  if (label === prevLabel) return null
                 }
               }
 
               return (
-                <li key={id} className={`bbb-pagelist__in ${isLocked ? 'bbb-pagelist__locked' : ''}`}>
+                <li
+                  key={id}
+                  className={`bbb-pagelist__in${isLocked ? ' bbb-pagelist__locked' : ''}`}
+                >
                   <div className="bbb-page-controls">
-                    {/* Lock toggle */}
                     <button
                       type="button"
-                      className={`bbb-icon-btn ${isLocked ? 'bbb-icon-btn--locked' : ''}`}
+                      className={`bbb-icon-btn${isLocked ? ' bbb-icon-btn--locked' : ''}`}
                       onClick={() => togglePageLock(id)}
-                      title={isLocked ? 'Unlock page' : 'Lock page'}
                       aria-label={isLocked ? 'Unlock page' : 'Lock page'}
                     >
-                      {isLocked ? '🔓 Unlock' : '🔒 Lock'}
+                      {isLocked ? 'Unlock' : 'Lock'}
                     </button>
-
-                    {/* Move up button */}
                     <button
                       type="button"
-                      className={`bbb-icon-btn ${index === 0 || isLocked ? 'bbb-icon-btn--disabled' : ''}`}
-                      onClick={(index > 0 && !isLocked) ? () => movePageUp(id) : undefined}
+                      className={`bbb-icon-btn${index === 0 || isLocked ? ' bbb-icon-btn--disabled' : ''}`}
+                      onClick={
+                        index > 0 && !isLocked
+                          ? () => movePageUp(id, effectiveOrder)
+                          : undefined
+                      }
                       disabled={index === 0 || isLocked}
-                      title={index === 0 || isLocked ? 'Cannot move up' : 'Move up'}
                       aria-label={index === 0 || isLocked ? 'Cannot move up' : 'Move up'}
                     >
-                      ↑ Move up
+                      Move up
                     </button>
-
-                    {/* Move down button */}
                     <button
                       type="button"
-                      className={`bbb-icon-btn ${index === pageOrder.length - 1 || isLocked ? 'bbb-icon-btn--disabled' : ''}`}
-                      onClick={(index < pageOrder.length - 1 && !isLocked) ? () => movePageDown(id) : undefined}
-                      disabled={index === pageOrder.length - 1 || isLocked}
-                      title={index === pageOrder.length - 1 || isLocked ? 'Cannot move down' : 'Move down'}
-                      aria-label={index === pageOrder.length - 1 || isLocked ? 'Cannot move down' : 'Move down'}
+                      className={`bbb-icon-btn${
+                        index === effectiveOrder.length - 1 || isLocked
+                          ? ' bbb-icon-btn--disabled'
+                          : ''
+                      }`}
+                      onClick={
+                        index < effectiveOrder.length - 1 && !isLocked
+                          ? () => movePageDown(id, effectiveOrder)
+                          : undefined
+                      }
+                      disabled={index === effectiveOrder.length - 1 || isLocked}
+                      aria-label={
+                        index === effectiveOrder.length - 1 || isLocked
+                          ? 'Cannot move down'
+                          : 'Move down'
+                      }
                     >
-                      ↓ Move down
+                      Move down
                     </button>
-
-                    {/* Page link */}
                     <a
                       href={`#${id}`}
                       onClick={(e) => {
-                        e.preventDefault();
-                        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        e.preventDefault()
+                        document
+                          .getElementById(id)
+                          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                       }}
                       className="bbb-page-link"
                     >
@@ -1609,7 +1647,7 @@ export default function BrandBookBuilderView() {
                     </a>
                   </div>
                 </li>
-              );
+              )
             })}
           </ul>
           {omittedPages.length > 0 && (
@@ -1626,14 +1664,14 @@ export default function BrandBookBuilderView() {
             </>
           )}
         </Section>
+        </div>
+
+        <div className="bbb-canvas">
+          {canvasPages}
+        </div>
       </div>
 
-      <div className="bbb-canvas">
-        {/* Render precomputed ordered page elements */}
-        {orderedPageElements}
-      </div>
-
-      <Flipbook open={flipOpen} onClose={() => setFlipOpen(false)} pages={pageElements} index={flipIndex} setIndex={setFlipIndex} />
+      <Flipbook open={flipOpen} onClose={() => setFlipOpen(false)} pages={canvasPages} index={flipIndex} setIndex={setFlipIndex} />
     </div>
   );
 }
