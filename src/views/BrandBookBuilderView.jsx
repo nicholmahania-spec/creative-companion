@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import useAppStore from '../store/useAppStore'
 import {
   bookBuilderFor,
@@ -865,6 +865,32 @@ export default function BrandBookBuilderView() {
   const [flipIndex, setFlipIndex] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [exportNote, setExportNote] = useState('');
+  // Page locking and ordering state
+  const [lockedPages, setLockedPages] = useState(new Set());
+  const [pageOrder, setPageOrder] = useState([]);
+
+// Initialize page locking and ordering from bookBuilder store
+  useEffect(() => {
+    const bb = bookBuilderFor(project);
+    if (bb.pageLocking) {
+      setLockedPages(new Set(bb.pageLocking.lockedPages || []));
+    }
+    if (bb.pageOrder && bb.pageOrder.length > 0) {
+      setPageOrder(bb.pageOrder);
+    }
+  }, [project, bookBuilderFor]);
+
+  // Save page locking and ordering to bookBuilder store
+  useEffect(() => {
+    if (project.id) {
+      setBookBuilder({
+        pageLocking: {
+          lockedPages: Array.from(lockedPages)
+        },
+        pageOrder: pageOrder
+      });
+    }
+  }, [lockedPages, pageOrder, project.id, setBookBuilder]);
 
   const updateColor = (idx, next) =>
     setPaletteTokens(colors.map((c, i) => (i === idx ? next : c)))
@@ -875,6 +901,41 @@ export default function BrandBookBuilderView() {
       ...colors,
       { id: mintTokenId(), name: 'New token', hex: '#888888' },
     ])
+
+  /* Page locking and ordering helpers */
+  const togglePageLock = (pageId) => {
+    setLockedPages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(pageId)) {
+        newSet.delete(pageId);
+      } else {
+        newSet.add(pageId);
+      }
+      return newSet;
+    });
+  };
+
+  const movePageUp = (pageId) => {
+    setPageOrder(prev => {
+      if (!prev.includes(pageId)) return prev;
+      const index = prev.indexOf(pageId);
+      if (index <= 0) return prev; // Already at top or not found
+      const newOrder = [...prev];
+      [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
+      return newOrder;
+    });
+  };
+
+  const movePageDown = (pageId) => {
+    setPageOrder(prev => {
+      if (!prev.includes(pageId)) return prev;
+      const index = prev.indexOf(pageId);
+      if (index >= prev.length - 1) return prev; // Already at bottom or not found
+      const newOrder = [...prev];
+      [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+      return newOrder;
+    });
+  };
 
   /* ---- derived values, recomputed every render (mirrors the vanilla render()) ---- */
 
@@ -1207,6 +1268,20 @@ export default function BrandBookBuilderView() {
     </OverflowDetector>,
   ];
 
+  // Create a map from ID to pageElement for efficient lookup
+  const pageElementMap = new Map();
+  pageElements.forEach((el) => {
+    const id = el.props.id;
+    if (id) pageElementMap.set(id, el);
+  });
+
+  // Create ordered array of page elements based on pageOrder
+  const orderedPageElements = [];
+  pageOrder.forEach((id) => {
+    const el = pageElementMap.get(id);
+    if (el) orderedPageElements.push(el);
+  });
+
   return (
     <div className="bbb-root">
       <style>{printCss}</style>
@@ -1242,7 +1317,31 @@ export default function BrandBookBuilderView() {
       </div>
 
       <div className="bbb-body">
-      <div className="bbb-panel">
+        {/* Create a map from ID to pageElement for efficient lookup */}
+        {(() => {
+          const map = new Map();
+          pageElements.forEach((el) => {
+            const id = el.props.id;
+            if (id) map.set(id, el);
+          });
+          return map;
+        })()}
+
+        {/* Create ordered array of page elements based on pageOrder */}
+        {(() => {
+          const map = new Map();
+          pageElements.forEach((el) => {
+            const id = el.props.id;
+            if (id) map.set(id, el);
+          });
+          const ordered = [];
+          pageOrder.forEach((id) => {
+            const el = map.get(id);
+            if (el) ordered.push(el);
+          });
+          return ordered;
+        })()}
+
         <h1 className="bbb-panel__title">Brand book &mdash; source of truth</h1>
 
         {/* Named for what's inside rather than "Identity": the app's third
@@ -1456,25 +1555,93 @@ export default function BrandBookBuilderView() {
             of the book is not hidden behind a bare label. */}
         <Section title="In this book" defaultOpen>
           <ul className="bbb-pagelist">
-            {pageElements
-              .map((el) => ({
-                id: el.props.id,
-                label: el.props.page ? el.props.page.label : BUILTIN_PAGE_LABELS[el.key],
-              }))
-              .filter((m, i, arr) => m.label && m.label !== arr[i - 1]?.label)
-              .map((m) => (
-                <li key={m.id} className="bbb-pagelist__in">
-                  <a
-                    href={`#${m.id}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById(m.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
-                  >
-                    {m.label}
-                  </a>
+            {/* Create a map from ID to pageElement for efficient lookup */}
+            {() => {
+              const map = new Map();
+              pageElements.forEach((el) => {
+                const id = el.props.id;
+                if (id) map.set(id, el);
+              });
+              return map;
+            }}()
+
+            {/* Use pageOrder to determine the display order of pages */}
+            {pageOrder.map((id, index) => {
+              const el = map.get(id);
+              if (!el) return null;
+
+              const pageEl = el.props.children; // Get the actual page component (inside OverflowDetector)
+              const label = pageEl.props.page
+                ? pageEl.props.page.label
+                : BUILTIN_PAGE_LABELS[pageEl.props.key];
+              const isLocked = lockedPages.has(id);
+
+              // Skip duplicate labels (consecutive pages with same label)
+              if (index > 0) {
+                const prevId = pageOrder[index - 1];
+                const prevEl = map.get(prevId);
+                if (prevEl) {
+                  const prevPageEl = prevEl.props.children;
+                  const prevLabel = prevPageEl.props.page
+                    ? prevPageEl.props.page.label
+                    : BUILTIN_PAGE_LABELS[prevPageEl.props.key];
+                  if (label === prevLabel) return null;
+                }
+              }
+
+              return (
+                <li key={id} className={`bbb-pagelist__in ${isLocked ? 'bbb-pagelist__locked' : ''}`}>
+                  <div className="bbb-page-controls">
+                    {/* Lock toggle */}
+                    <button
+                      type="button"
+                      className={`bbb-icon-btn ${isLocked ? 'bbb-icon-btn--locked' : ''}`}
+                      onClick={() => togglePageLock(id)}
+                      title={isLocked ? 'Unlock page' : 'Lock page'}
+                      aria-label={isLocked ? 'Unlock page' : 'Lock page'}
+                    >
+                      {isLocked ? '🔓 Unlock' : '🔒 Lock'}
+                    </button>
+
+                    {/* Move up button */}
+                    <button
+                      type="button"
+                      className={`bbb-icon-btn ${index === 0 || isLocked ? 'bbb-icon-btn--disabled' : ''}`}
+                      onClick={(index > 0 && !isLocked) ? () => movePageUp(id) : undefined}
+                      disabled={index === 0 || isLocked}
+                      title={index === 0 || isLocked ? 'Cannot move up' : 'Move up'}
+                      aria-label={index === 0 || isLocked ? 'Cannot move up' : 'Move up'}
+                    >
+                      ↑ Move up
+                    </button>
+
+                    {/* Move down button */}
+                    <button
+                      type="button"
+                      className={`bbb-icon-btn ${index === pageOrder.length - 1 || isLocked ? 'bbb-icon-btn--disabled' : ''}`}
+                      onClick={(index < pageOrder.length - 1 && !isLocked) ? () => movePageDown(id) : undefined}
+                      disabled={index === pageOrder.length - 1 || isLocked}
+                      title={index === pageOrder.length - 1 || isLocked ? 'Cannot move down' : 'Move down'}
+                      aria-label={index === pageOrder.length - 1 || isLocked ? 'Cannot move down' : 'Move down'}
+                    >
+                      ↓ Move down
+                    </button>
+
+                    {/* Page link */}
+                    <a
+                      href={`#${id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      className="bbb-page-link"
+                    >
+                      {label}
+                    </a>
+                  </div>
                 </li>
-              ))}
+              );
+            })}
           </ul>
           {omittedPages.length > 0 && (
             <>
@@ -1493,8 +1660,15 @@ export default function BrandBookBuilderView() {
       </div>
 
       <div className="bbb-canvas">
-        {pageElements}
-      </div>
+        {/* Render page elements in the order specified by pageOrder */}
+        {(() => {
+          const elements = [];
+          pageOrder.forEach((id) => {
+            const el = pageElementMap.get(id);
+            if (el) elements.push(el);
+          });
+          return elements;
+        })()}
       </div>
 
       <Flipbook open={flipOpen} onClose={() => setFlipOpen(false)} pages={pageElements} index={flipIndex} setIndex={setFlipIndex} />
