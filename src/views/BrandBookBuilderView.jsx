@@ -48,23 +48,27 @@ function OverflowDetector({ children, onOverflow }) {
     }
 
     // Create a ResizeObserver to detect size changes
-    const resizeObserver = new ResizeObserver(observeResize)
+    let resizeObserver
+    try {
+      resizeObserver = new ResizeObserver(observeResize)
 
-    // Also check on init and when properties that might affect layout change
-    observeResize()
+      // Also check on init and when properties that might affect layout change
+      observeResize()
+    } catch (err) {
+      console.warn('ResizeObserver not supported:', err)
+      // Fallback: check on mount only
+      observeResize()
+    }
 
     return () => {
-      resizeObserver.disconnect()
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
     }
   }, [onOverflow])
 
-  // Apply a visual indicator when overflowing
-  const containerStyle = hasOverflow
-    ? { position: 'relative', minHeight: '100%' }
-    : {}
-
   return (
-    <div ref={containerRef} style={containerStyle} className="bbb-overflow-detector">
+    <div ref={containerRef} className="bbb-overflow-detector">
       {children}
       {hasOverflow && (
         <div className="bbb-overflow-indicator">
