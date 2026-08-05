@@ -235,6 +235,19 @@ export default function DeliverView({
         {lastExportNote ? (
           <p className="pack-export-confirm" role="status">
             {lastExportNote}
+            {/* A failed export must offer the way out, next to the button
+                that failed. Without this the note states a problem and
+                leaves the designer to work out the remedy — and the remedy
+                (press the same button and hope) is not discoverable. */}
+            {/^Not saved/.test(lastExportNote) ? (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm pack-export-retry"
+                onClick={() => runExport('pdf', { direct: true })}
+              >
+                Download it now
+              </button>
+            ) : null}
           </p>
         ) : null}
 

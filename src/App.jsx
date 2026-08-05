@@ -2500,7 +2500,15 @@ function App() {
    * each step (exportBusy used to no-op every call after the first).
    * @returns {Promise<{ ok?: boolean, busy?: boolean, cancelled?: boolean }>}
    */
-  const runExport = (kind) => {
+  /* `direct: true` skips the save-file picker and downloads straight to the
+     downloads folder.
+     Why it exists: two cold-start runs reported "Download brand book PDF"
+     as doing nothing. The picker had been dismissed (or was unavailable),
+     and the vector path returns cancelled WITHOUT falling back — so the only
+     trace was a toast that dismisses itself. Miss it and the button looks
+     dead, on the one deliverable the client is paying for. A genuine cancel
+     must still cancel, so the fallback is offered rather than forced. */
+  const runExport = (kind, { direct = false } = {}) => {
     if (exportBusyRef.current) return Promise.resolve({ ok: false, busy: true })
     exportBusyRef.current = true
     setExportBusy(true)
@@ -2553,9 +2561,10 @@ function App() {
                 : kind === 'backup'
                   ? `creative-companion-backup-${toISODate()}.json`
                   : null
-    const handlePromise = saveName
-      ? captureSaveHandle(saveName, 'Creative Companion export')
-      : null
+    const handlePromise =
+      saveName && !direct
+        ? captureSaveHandle(saveName, 'Creative Companion export')
+        : null
 
     const clearBusy = () => {
       exportBusyRef.current = false
@@ -2638,8 +2647,13 @@ function App() {
           )
           finishOk('Brand book PDF')
         } else if (result.cancelled) {
+          /* A persistent line, not just a toast. The toast was the ONLY
+             signal and it disappears; the note stays on screen next to the
+             button with a way to finish the job. */
+          setLastExportNote('Not saved — you closed the save box. Download anyway?')
           flashToast('Save cancelled')
         } else {
+          setLastExportNote(`Not saved — ${result.error || 'the PDF did not finish'}. Try again?`)
           flashToast(result.error || 'Could not finish that PDF — try again?')
         }
         return result
