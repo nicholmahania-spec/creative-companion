@@ -4,7 +4,6 @@ import {
   chromaOf,
   dominantColours,
   filterBrandColours,
-  INTRUDER_MIN_DELTA,
   intruderColours,
   isBackgroundTint,
   isSubstrate,
