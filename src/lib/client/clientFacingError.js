@@ -2,7 +2,7 @@
  * Translate an internal error into something a client should read.
  *
  * `clientPortal.js` and `discoveryShare.js` serve two audiences from one set
- * of return values: the studio, who can act on "Client links need a cloud account. Sign in (or set up sync in Settings), then try again.",
+ * of return values: the studio, who can act on CLOUD_REQUIRED,
  * and the client, who cannot. That string reached `/f/:shareId` and
  * `/c/:portalId` verbatim — a page a stranger opens on their phone as a
  * favour, telling them about a configuration they have never heard of and
@@ -13,11 +13,13 @@
  * the ones that are not, and passes everything else through unchanged.
  */
 
+import { CLOUD_REQUIRED } from './cloudRequired.js'
+
 /** Internal-only messages, and what the client should see instead. */
 const CLIENT_SAFE = new Map([
   ['Cloud sync isn’t configured', 'This link isn’t working right now. Try again shortly.'],
   ["Cloud sync isn't configured", 'This link isn’t working right now. Try again shortly.'],
-  ['Client links need a cloud account. Sign in (or set up sync in Settings), then try again.', 'This link isn’t working right now. Try again shortly.'],
+  [CLOUD_REQUIRED, 'This link isn’t working right now. Try again shortly.'],
 ])
 
 /** Anything mentioning these is studio plumbing, not the client's problem. */
