@@ -27,7 +27,7 @@
  * about, which is precisely the failure mode above.
  */
 
-import { hexToRgb, xyzToLab, rgbToXyz } from './deltaE.js'
+import { deltaE00Hex, hexToLab, hexToRgb, xyzToLab, rgbToXyz } from './deltaE.js'
 
 /** Lightness above this is treated as paper/background, not a brand colour. */
 export const SUBSTRATE_L_MAX = 92
@@ -145,16 +145,80 @@ export function dominantColours(data, { maxColours = 5 } = {}) {
      near the floor; among the pixels that are actually ink it is the entire
      story. Measuring against the wrong denominator is how the floor ends up
      discarding the only colour that mattered. */
-  const colours = [...buckets.values()]
+  const raw = [...buckets.values()]
     .map((c) => ({
       hex: rgbToHex({ r: c.r / c.n, g: c.g / c.n, b: c.b / c.n }),
       coverage: c.n / ink,
     }))
     .filter((c) => c.coverage >= COVERAGE_FLOOR)
     .sort((a, b) => b.coverage - a.coverage)
+
+  const merged = mergeNearDuplicates(raw)
+  /* Background tints are found AFTER merging, because a tint is only
+     recognisable once its anti-aliased near-duplicates have been folded back
+     into it and it is carrying its true share. */
+  const tinted = merged.filter(isBackgroundTint)
+  const colours = merged
+    .filter((c) => !isBackgroundTint(c))
     .slice(0, maxColours)
 
-  return { colours, readable: colours.length > 0, substrateShare }
+  return {
+    colours,
+    readable: colours.length > 0,
+    substrateShare,
+    backgroundTints: tinted.map((t) => t.hex),
+  }
+}
+
+/**
+ * Merge colours the eye would call the same colour.
+ *
+ * MEASURED, not assumed. Run against a real 5-year-celebration PDF, the RGB
+ * bucketing alone returned #024aaa, #045abe, #024ab9 and #0656af as four
+ * separate findings. Those four are 2.2–5.7 ΔE00 apart — they are one brand
+ * blue, anti-aliased and re-quantised by the renderer, and reporting them
+ * separately would have fired four banners about a single correct colour.
+ *
+ * RGB buckets cannot fix this by getting coarser, because "how far apart is
+ * far" is not an RGB question: the same RGB step is invisible in one part of
+ * the space and obvious in another. So the merge happens in ΔE00, using the
+ * same threshold the checker uses to call something a match — if two samples
+ * would both count as matching the same brand colour, they must not be
+ * reported as two findings.
+ *
+ * Coverage is summed into the heaviest member, so the merged entry keeps its
+ * true share of the artwork.
+ */
+export function mergeNearDuplicates(colours, threshold = 2) {
+  const out = []
+  for (const c of colours) {
+    const near = out.find((o) => {
+      const d = deltaE00Hex(o.hex, c.hex)
+      return d != null && d < threshold
+    })
+    if (near) near.coverage += c.coverage
+    else out.push({ ...c })
+  }
+  return out.sort((a, b) => b.coverage - a.coverage)
+}
+
+/**
+ * Is this a page background rather than a brand colour?
+ *
+ * The lightness cutoff alone was not enough. A real birth-plan PDF carries a
+ * pale blue page tint of #dae7f6 — L 91.1, just under the substrate ceiling —
+ * and it came back as 92% of the "ink" on the page, i.e. as that document's
+ * dominant brand colour. It is the paper, printed.
+ *
+ * Lightness cannot separate those on its own without also discarding genuinely
+ * pale brand tints, so DOMINANCE is the second signal: a very light colour
+ * that covers most of the artwork is a background. A pale brand accent does
+ * not cover 90% of a page; a tint block does.
+ */
+export function isBackgroundTint({ hex, coverage }) {
+  const lab = hexToLab(hex)
+  if (!lab) return false
+  return lab.L > 85 && coverage > 0.5
 }
 
 /**
@@ -166,4 +230,58 @@ export function filterBrandColours(hexes = []) {
     const rgb = hexToRgb(hex)
     return rgb ? !isSubstrate(rgb) : false
   })
+}
+
+/**
+ * The check, inverted — and this inversion is the whole design.
+ *
+ * The obvious rule is "flag every colour in the asset that is not in the
+ * palette". Measured against four real client PDFs, that rule is unusable:
+ *
+ *   - a gradient logo (red→purple→navy) yields six midpoints, each 13–36 ΔE00
+ *     from BOTH brand colours. Six false positives on a correct file.
+ *   - a shaded blue yields samples 2–6 ΔE00 apart, individually distinct but
+ *     collectively one design decision.
+ *   - maximalist artwork yields dozens of legitimate illustration colours.
+ *
+ * None of those are mistakes by the designer, and a banner about any of them
+ * is a false alarm. The base rate is the problem: a designer uploading their
+ * own approved deliverable has usually used the right colours, so under the
+ * obvious rule almost every alert is wrong — and Dixon, Wickens & McCarley
+ * (2007) put the crossover at 0.70 reliability, below which the automation is
+ * worse than none.
+ *
+ * So ask the other question: IS EACH APPROVED COLOUR ACTUALLY PRESENT? That
+ * one is answerable, and its failure mode is the useful one — a business card
+ * that missed the brand navy is a real problem a designer wants to know about,
+ * whereas a business card containing an unlisted shade of grey is not.
+ *
+ * Gradients, illustration and shading no longer generate findings at all,
+ * because nothing is judged for merely existing.
+ */
+export function paletteCoverage(assetColours = [], palette = []) {
+  const found = []
+  const missing = []
+  for (const brandHex of palette) {
+    let best = null
+    for (const c of assetColours) {
+      const d = deltaE00Hex(c.hex, brandHex)
+      if (d == null) continue
+      if (!best || d < best.delta) best = { delta: d, ...c }
+    }
+    if (best && best.delta < 2) {
+      found.push({ brandHex, as: best.hex, delta: best.delta, coverage: best.coverage })
+    } else if (best && best.delta <= 5) {
+      found.push({
+        brandHex,
+        as: best.hex,
+        delta: best.delta,
+        coverage: best.coverage,
+        drifted: true,
+      })
+    } else {
+      missing.push(brandHex)
+    }
+  }
+  return { found, missing }
 }

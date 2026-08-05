@@ -4,7 +4,10 @@ import {
   chromaOf,
   dominantColours,
   filterBrandColours,
+  isBackgroundTint,
   isSubstrate,
+  mergeNearDuplicates,
+  paletteCoverage,
   rgbToHex,
 } from './dominantColour.js'
 import { hexToRgb } from './deltaE.js'
@@ -166,5 +169,112 @@ describe('helpers', () => {
   it('the coverage floor is a share, not a pixel count', () => {
     expect(COVERAGE_FLOOR).toBeGreaterThan(0)
     expect(COVERAGE_FLOOR).toBeLessThan(0.05)
+  })
+})
+
+describe('paletteCoverage — the inverted check, measured on real assets', () => {
+  /* These colours are the real output of running the extractor over
+     Table_Cards_for_linktree.pdf, a genuine client deliverable. The asset uses
+     the 100 Families gradient mark, so six of its eight extracted colours are
+     gradient MIDPOINTS sitting 13–36 ΔE00 from every brand colour.
+
+     Under the obvious rule — "flag every asset colour not in the palette" —
+     those six midpoints are six false alarms on a completely correct file.
+     Under this rule they generate nothing, because nothing is judged for
+     merely existing. That difference is the entire reason the check is
+     inverted, and it was found by measurement, not by reasoning. */
+  const realAsset = [
+    { hex: '#292961', coverage: 0.353 },
+    { hex: '#b92233', coverage: 0.234 },
+    { hex: '#473376', coverage: 0.067 },
+    { hex: '#673d8c', coverage: 0.058 },
+    { hex: '#a82846', coverage: 0.054 },
+    { hex: '#923060', coverage: 0.046 },
+    { hex: '#7b387a', coverage: 0.038 },
+    { hex: '#b3243b', coverage: 0.034 },
+  ]
+
+  it('finds an approved colour that is present, and says how close', () => {
+    const { found } = paletteCoverage(realAsset, ['#2B2C5F'])
+    expect(found).toHaveLength(1)
+    expect(found[0].as).toBe('#292961')
+    expect(found[0].delta).toBeLessThan(2)
+    expect(found[0].drifted).toBeUndefined()
+  })
+
+  it('marks a colour that is present but drifted', () => {
+    const { found } = paletteCoverage(realAsset, ['#5B3A8E'])
+    expect(found[0].drifted).toBe(true)
+    expect(found[0].delta).toBeGreaterThan(2)
+    expect(found[0].delta).toBeLessThanOrEqual(5)
+  })
+
+  it('generates NO finding for the six gradient midpoints', () => {
+    /* The measured result that justifies the whole design. Six colours in a
+       correct asset, none of them in the palette, and not one produces a
+       banner. */
+    const { found, missing } = paletteCoverage(realAsset, ['#2B2C5F'])
+    expect(found).toHaveLength(1)
+    expect(missing).toHaveLength(0)
+  })
+
+  it('reports an approved colour that is genuinely absent', () => {
+    // The useful failure: a deliverable that missed a brand colour entirely.
+    const { missing } = paletteCoverage(
+      [{ hex: '#292961', coverage: 1 }],
+      ['#2B2C5F', '#00A651']
+    )
+    expect(missing).toEqual(['#00A651'])
+  })
+
+  it('says nothing at all for an empty palette or an unreadable asset', () => {
+    expect(paletteCoverage(realAsset, [])).toEqual({ found: [], missing: [] })
+    expect(paletteCoverage([], ['#2B2C5F']).missing).toEqual(['#2B2C5F'])
+  })
+})
+
+describe('measured fixes from the real PDFs', () => {
+  it('merges near-duplicates, and is honest about how tight that is', () => {
+    /* Real output from 5_year_Celebration.pdf: four entries at #024aaa,
+       #045abe, #024ab9 and #0656af. Measured, they are 2.19–5.66 ΔE00 apart —
+       so at a merge threshold of 2 NONE of them merge. That is recorded here
+       rather than fixed by loosening the threshold, because loosening it to
+       swallow them would also merge genuinely distinct brand colours that sit
+       3–4 apart.
+
+       It stopped mattering once the check was inverted. Under `paletteCoverage`
+       nothing is reported for merely existing, so an over-split colour list
+       costs nothing — it is a display detail, not a source of false alarms.
+       The merge is kept for the case it does handle: true duplicates from
+       renderer rounding. */
+    const merged = mergeNearDuplicates([
+      { hex: '#024aaa', coverage: 0.145 },
+      { hex: '#034bab', coverage: 0.045 },
+    ])
+    expect(merged).toHaveLength(1)
+    expect(merged[0].coverage).toBeCloseTo(0.19, 3)
+
+    // And the real four, which do NOT merge at this threshold:
+    const real = mergeNearDuplicates([
+      { hex: '#024aaa', coverage: 0.145 },
+      { hex: '#045abe', coverage: 0.098 },
+      { hex: '#024ab9', coverage: 0.045 },
+      { hex: '#0656af', coverage: 0.034 },
+    ])
+    expect(real.length).toBeGreaterThan(1)
+  })
+
+  it('treats a dominant pale tint as background, not a brand colour', () => {
+    /* Real output from Birth_Coach_Method_Birth_Plan.pdf: #dae7f6 at L 91.1 —
+       just under the substrate ceiling — came back as 92% of the page's
+       "ink", i.e. as that document's dominant brand colour. It is the paper,
+       printed. Lightness alone could not separate it from a pale brand tint
+       without discarding both, so dominance is the second signal. */
+    expect(isBackgroundTint({ hex: '#dae7f6', coverage: 0.921 })).toBe(true)
+  })
+
+  it('does not treat a pale brand accent as background', () => {
+    // Same lightness, ordinary coverage — an accent, not a page tint.
+    expect(isBackgroundTint({ hex: '#dae7f6', coverage: 0.08 })).toBe(false)
   })
 })
