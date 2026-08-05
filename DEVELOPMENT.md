@@ -423,3 +423,85 @@ contaminated run that says so is useful; one that doesn't is worse than no test.
 **Everything the client persona generates is synthetic and must carry a
 `DEMO — ` prefix.** A generated brief is indistinguishable from a real one once
 it is in the store.
+
+## Contested claims in the Expansion Spec (reviewed 2026-08-05)
+
+The Expansion Spec was appended to `CLAUDE.md` verbatim on the owner's
+instruction. Two of its load-bearing claims did **not** survive review by the
+`devils-advocate` agent. Recorded here rather than in `CLAUDE.md` so the spec
+stays the spec — but do not start building §1 without reading this.
+
+### §1 — the five-dimension vocabulary and the "82% aligned" score
+
+**Does not survive as written.** *(Confidence: medium-high — findings are real
+and directly on point; full texts returned 403, so treat the structure as solid
+and any specific loadings as unread.)*
+
+- **Shaikh & Chaparro**, *Perception of Fonts: Perceived Personality Traits and
+  Uses* (Wichita State SURL; repr. *Digital Fonts and Reading*, World
+  Scientific, 2016) — 379 participants, 40 typefaces, 15 semantic-differential
+  scales. Factor analysis returned **three CORRELATED factors** (Osgood's
+  Potency / Evaluative / Activity), not five independent ones. They also treat
+  *appropriateness* as a separate instrument, where the spec folds Formality
+  and Era onto the same ruler.
+- **Brumberger**, *The Rhetoric of Typography* (Technical Communication 50(2),
+  2003) — readers ascribe persona to the **text** independently of the
+  typeface, and ratings shift by demographic. Personality is a property of
+  type-plus-copy-plus-reader, so a stored per-font vector is unstable however
+  carefully it is tagged.
+
+Why it matters mechanically: Euclidean distance assumes orthogonal,
+commensurably-scaled axes. If the real structure is three correlated factors,
+five hand-drawn axes over it are partly redundant — Weight/Energy and
+Formality/Era will co-vary — and a redundant pair silently gets **double
+weight**. The scalar also hides the dimension that carried the brief: a font
+wrong on Warmth alone still scores ~78%, which the spec's own copy renders as
+"worth a second look, not a blocker" — when Warmth is exactly the brief for
+"warm, playful, approachable".
+
+Cheapest honest fixes, in order: drop the single percentage and show
+**per-dimension bars**; or validate the five scales first (≈30 fonts, ≈20
+designers, factor it — if you recover three correlated factors, use three axes
+with an explicitly weighted or Mahalanobis distance).
+
+**Also unsourced:** the spec applies ONE vocabulary to typefaces, colours,
+patterns and imagery. A search for evidence that colour and typeface share a
+dimensional space returned **nothing** — every study found was typeface-only.
+Not disproof, but the burden sits with the spec.
+
+### §4 — "consistency checking is just a diff"
+
+**Survives with rework.** *(Confidence: high on the colour metric — the ΔE00
+numbers below were computed, not recalled. Medium on font extraction —
+practitioner sources, untested toolchain.)*
+
+Use **CIEDE2000** (CIE 015 / ISO 11664-6), not RGB distance. Computed on the
+spec's own example:
+
+| Pair | ΔE00 | RGB Euclidean |
+| --- | --- | --- |
+| `#2E5C8A` vs `#1B4C7E` (the spec's real mismatch) | **5.4** | 27.6 |
+| `#F2F2F2` vs `#E5E5E5` (two off-whites nobody would flag) | **2.77** | 22.5 |
+
+Half the perceptual difference, nearly the same RGB distance — so any RGB
+threshold tuned to catch the first also fires on the second. Under this repo's
+ADHD mandate that is not cosmetic: a checker that cries wolf on invisible
+differences attaches an unresolvable "did I do something wrong?" to every
+upload. Suggested bands: ΔE00 < 2 match, 2–5 close, > 5 different.
+
+Extraction has no cheap fix and the promise should be narrowed:
+- "simple pixel sampling" on a photographic mockup returns the background
+- CMYK print assets have a legitimately different hex after conversion and
+  will always flag
+- **type converted to outlines carries no font name at all** — and that is the
+  normal delivery format for brand work, so the checker would report clean on
+  exactly the files most likely to have drifted
+
+Scope it to "flag only what we can extract confidently, and say plainly when
+we could not read the file."
+
+### Not checked
+
+Algorithm-aversion / false-precision literature (Dietvorst, Logg) was probed
+and **not** retrieved — do not cite it as support. The dimensionality objection
+above already disposes of the percentage without it.
