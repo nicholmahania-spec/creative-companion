@@ -40,6 +40,7 @@ import {
   suggestRoleAaFixes,
   mergeRolesIntoPalette,
   paletteHealthScore,
+  healthLabel,
   healthScopeLabels,
   suggestRoleColor,
 } from '../lib/color'
@@ -67,7 +68,16 @@ const HEALTH_SCOPE_NOTE = (() => {
     names.length > 1
       ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
       : names[0]
-  return `Reads ${list}, plus how the whole palette sits together. Your other colours don't count against it.`
+  /* The second clause was "Your other colours don't count against it" — a
+     denial, which makes the reader construct the penalty in order to
+     discard it, and the only place on this screen that raised the idea of
+     being penalised at all. It also answered the wrong question: after
+     writing five rationales the live question is "did that land anywhere?",
+     not "was I punished?". It lands — `colorRoles` is copied wholesale into
+     both the version snapshot and the export payload, so all nine jobs
+     reach the client's files. "Jobs" matches the "Colour jobs" heading
+     below rather than introducing a second word for the same thing. */
+  return `Reads ${list}, plus how the palette sits together. Your other jobs are saved with the brand — they just don't move this number.`
 })()
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
@@ -1113,12 +1123,7 @@ export default function DesignView({
                    returned early duplicated the head markup, which is how a
                    line ends up on one branch only. */
                 const idle = health.score === null
-                const healthWord =
-                  health.score >= 80
-                    ? 'Solid'
-                    : health.score >= 50
-                      ? 'Getting there'
-                      : 'Tighten roles'
+                const { word, band } = healthLabel(health)
                 return (
                   <div className="palette-health">
                     <div className="palette-health-head">
@@ -1126,18 +1131,10 @@ export default function DesignView({
                         Palette health
                       </span>
                       <span
-                        className={`palette-health-score${
-                          idle
-                            ? ' is-idle'
-                            : health.score >= 80
-                              ? ' is-good'
-                              : health.score >= 50
-                                ? ' is-mid'
-                                : ' is-low'
-                        }`}
+                        className={`palette-health-score ${band}`}
                         title={idle ? undefined : `${health.score}%`}
                       >
-                        {idle ? '—' : healthWord}
+                        {word}
                       </span>
                     </div>
                     {!idle && (
@@ -1147,6 +1144,17 @@ export default function DesignView({
                           style={{ width: `${health.score}%` }}
                         />
                       </div>
+                    )}
+                    {/* The hue verdict is 20% of the score and was rendered
+                        NOWHERE — the panel named a judgment ("how the whole
+                        palette sits together") that the designer had no way
+                        to see, check or act on. It is already written in the
+                        app's voice; it shows at the one moment it is the
+                        thing to act on, rather than as a permanent row. */}
+                    {health.weakest === 'harmony' && health.harmony?.note && (
+                      <p className="palette-health-scope">
+                        {health.harmony.note}
+                      </p>
                     )}
                     <p className="palette-health-scope">{HEALTH_SCOPE_NOTE}</p>
                   </div>

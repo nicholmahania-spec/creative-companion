@@ -934,6 +934,20 @@ export function healthScopeLabels() {
  *    now `null` until there is something to measure; render it as "—",
  *    never as 0%.
  *
+ *    That fix was WRITTEN BUT NOT WIRED, and stayed broken for as long as
+ *    it looked fixed. `started` also accepted a palette on its own, and
+ *    `App.jsx` substitutes DEFAULT_PALETTE whenever a project has none — so
+ *    `palette.length` is never 0 in the running app and the "—" state was
+ *    unreachable. Measured on a fresh project with no roles assigned: 33%,
+ *    red, "Tighten roles". It went from 20% to 33%; it did not go away.
+ *    Every project opened on a failing grade for work not yet begun, which
+ *    is the single worst moment to put one — task initiation.
+ *
+ *    A palette alone is not something this can measure. Three of the four
+ *    HEALTH_ROLE_KEYS have to be READ against each other to mean anything,
+ *    and none of them exist until a role is assigned. So the trigger is an
+ *    assigned role, not a colour on screen.
+ *
  * @param {{ palette: string[], colorRoles: object, colorRoleWhy: object }} args
  */
 export function paletteHealthScore({
@@ -946,7 +960,7 @@ export function paletteHealthScore({
   )
   const justified = assigned.filter((k) => String(colorRoleWhy[k] || '').trim())
 
-  const started = (palette || []).length > 0 || assigned.length > 0
+  const started = assigned.length > 0
   const harmony = checkPaletteHarmony(palette)
   const pairs = roleContrastPairs(colorRoles)
 
@@ -954,8 +968,8 @@ export function paletteHealthScore({
     return {
       score: null,
       started: false,
-      roleScore: 0,
-      contrastScore: 0,
+      roleScore: null,
+      contrastScore: null,
       harmony,
       pairs,
       assignedCount: 0,
@@ -976,9 +990,18 @@ export function paletteHealthScore({
   const harmonyScore = harmony.ok === null ? null : harmony.ok ? 1 : 0.4
 
   const terms = [
-    { value: roleScore, weight: 0.4 },
-    { value: contrastScore, weight: 0.4 },
-    { value: harmonyScore, weight: 0.2 },
+    /* `id` is not decoration. The score is a weighted blend of three
+       incommensurable things, and the low band used to be labelled
+       "Tighten roles" — a cause it had never checked. Measured: four roles
+       assigned AND justified, with failing contrast and clashing hues,
+       scored 48 and told the designer to go tighten the one part they had
+       finished. Meanwhile writing NO rationales at all scored 60, because
+       roles carry 0.4 and the other two carry 0.6 between them, so a
+       rationale gap alone cannot reach the low band. Carrying the ids lets
+       the label name the term that is actually dragging. */
+    { id: 'roles', value: roleScore, weight: 0.4 },
+    { id: 'contrast', value: contrastScore, weight: 0.4 },
+    { id: 'harmony', value: harmonyScore, weight: 0.2 },
   ].filter((t) => t.value !== null)
 
   const totalWeight = terms.reduce((s, t) => s + t.weight, 0)
@@ -988,15 +1011,78 @@ export function paletteHealthScore({
       )
     : null
 
+  /* The measured term losing the most points — except that a failing
+     contrast pair is a floor, not a points gap, and jumps the queue.
+     Measured case that settled this: hues merely "unevenly spaced" lose
+     0.12 while a genuine AA failure at 1.86:1 lost only 0.10, so pure
+     arithmetic told a designer to go look at their hues while a text pair
+     was unreadable. Everything else here is taste; this one reaches the
+     client as a page they cannot read.
+
+     A term that was WITHHELD can never be named. That is the whole point:
+     the label may only accuse something the scorer actually measured. */
+  const order = { contrast: 0, roles: 1, harmony: 2 }
+  const weakest = pairs.some((p) => !p.ok)
+    ? 'contrast'
+    : terms
+        .map((t) => ({ id: t.id, shortfall: (1 - t.value) * t.weight }))
+        .filter((t) => t.shortfall > 0)
+        .sort(
+          (a, b) => b.shortfall - a.shortfall || order[a.id] - order[b.id]
+        )[0]?.id || null
+
   return {
     score,
     started: true,
     roleScore,
-    contrastScore: contrastScore ?? 0,
+    /* NOT `?? 0`. Flattening a withheld term to zero contradicted this
+       function's own "unmeasurable is not failing" rule three lines up, and
+       made an unmeasured contrast term read as the weakest one to anybody
+       reading the result. Null means not measured. */
+    contrastScore,
     harmony,
     pairs,
+    weakest,
     assignedCount: assigned.length,
     justifiedCount: justified.length,
+  }
+}
+
+/**
+ * The word and colour band the meter shows, kept out of the view.
+ *
+ * This lived in `DesignView` as a nested ternary, which meant the only
+ * incorrect thing about it — a low band that named a cause the scorer had
+ * never checked — could not be tested without rendering, and nothing in
+ * this suite renders views. The band words are a product decision; they
+ * belong where they can be measured.
+ *
+ * The three low-band words are NOUNS, matching "Solid" and "Getting there".
+ * "Tighten roles" was an instruction, so the low state read as a telling-off
+ * rather than a reading — and it was frequently a wrong instruction.
+ *
+ * @param {ReturnType<typeof paletteHealthScore>} health
+ * @returns {{ word: string, band: string, reason: string | null }}
+ */
+export function healthLabel(health) {
+  if (!health || health.score === null) {
+    return { word: '—', band: 'is-idle', reason: null }
+  }
+  if (health.score >= 80) return { word: 'Solid', band: 'is-good', reason: null }
+  if (health.score >= 50) {
+    return { word: 'Getting there', band: 'is-mid', reason: null }
+  }
+  const word = {
+    contrast: 'Contrast to fix',
+    harmony: 'Hues to check',
+    roles: 'Roles to name',
+  }[health.weakest]
+  // No weakest term means nothing measured is short, which cannot produce a
+  // sub-50 score — but a band word is not the place to assert that.
+  return {
+    word: word || 'Early days',
+    band: 'is-low',
+    reason: health.weakest || null,
   }
 }
 

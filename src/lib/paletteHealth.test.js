@@ -26,6 +26,8 @@ import { describe, it, expect } from 'vitest'
 import {
   BRAND_ROLE_KEYS,
   BRAND_ROLE_LABELS,
+  DEFAULT_PALETTE,
+  healthLabel,
   healthScopeLabels,
   HEALTH_ROLE_KEYS,
   checkPaletteHarmony,
@@ -50,8 +52,32 @@ describe('palette health', () => {
     expect(h.started).toBe(false)
   })
 
-  it('scores as soon as there is a color, without a palette role', () => {
-    const h = paletteHealthScore({ palette: ['#123456'] })
+  it('does not grade a palette nobody has given a job to', () => {
+    /* This test used to be called "scores as soon as there is a color,
+       without a palette role" and asserted the opposite. The NAME was the
+       bug: scoring early is not the goal, scoring fairly is.
+
+       What it protected was unreachable in the running app anyway. `App.jsx`
+       substitutes DEFAULT_PALETTE whenever a project has no palette, so
+       `palette.length` is never 0 and the "—" state could not render.
+       Measured on a fresh project: 33%, red, "Tighten roles" — a failing
+       grade for work not yet begun, at the exact moment (task initiation)
+       where it does the most damage. The comment above the panel claimed
+       this had been fixed. It had moved from 20% to 33%. */
+    const fresh = paletteHealthScore({ palette: DEFAULT_PALETTE })
+    expect(fresh.started, 'a palette alone is not something to measure').toBe(
+      false
+    )
+    expect(fresh.score, 'a fresh project must open on "—", not a grade').toBeNull()
+    expect(healthLabel(fresh).word).toBe('—')
+    expect(healthLabel(fresh).band).toBe('is-idle')
+  })
+
+  it('starts scoring once a colour has been given a job', () => {
+    const h = paletteHealthScore({
+      palette: DEFAULT_PALETTE,
+      colorRoles: { cover: '#1C1917' },
+    })
     expect(h.started).toBe(true)
     expect(typeof h.score).toBe('number')
   })
@@ -258,5 +284,123 @@ describe('the meter discloses what it reads', () => {
       'Background',
     ])
     expect(BRAND_ROLE_KEYS).toHaveLength(9)
+  })
+})
+
+describe('the low band names the thing that is actually wrong', () => {
+  /* "Tighten roles" was the label for EVERY score under 50, and it had
+     never checked whether roles were the problem. Measured before the fix:
+
+       state                                              score  label
+       fresh project, nothing assigned                       33  Tighten roles
+       all five UNSCORED jobs assigned + justified           33  Tighten roles
+       four roles assigned AND justified, contrast failing   48  Tighten roles
+       four roles assigned, ZERO rationales, all else fine   60  Getting there
+
+     Read the last two together. Writing every rationale could land you in
+     "Tighten roles"; writing none of them could not — roles carry 0.4 and
+     the other two terms carry 0.6 between them, so a rationale gap alone
+     can never reach the low band. The label spent the user's scarcest
+     resource, initiation energy, on the one thing already done. */
+
+  it('does not blame roles when the roles are done and contrast is not', () => {
+    const health = paletteHealthScore({
+      palette: ['#B3AF8F', '#66999B', '#FFC482', '#2B3A67'],
+      colorRoles: {
+        cover: '#B3AF8F',
+        text: '#C9C5A8',
+        accent: '#BFC8A0',
+        quiet: '#C4C0A2',
+      },
+      colorRoleWhy: { cover: 'w', text: 'w', accent: 'w', quiet: 'w' },
+    })
+    expect(health.score).toBeLessThan(50)
+    expect(health.justifiedCount, 'every role is justified in this fixture').toBe(
+      4
+    )
+    expect(health.weakest).toBe('contrast')
+    expect(healthLabel(health).word).toBe('Contrast to fix')
+  })
+
+  it('never names a term the scorer did not measure', () => {
+    /* The trap that made this easy to get wrong: the returned
+       `contrastScore` used to be flattened `?? 0`, so a WITHHELD contrast
+       term looked like a failing one to anything reading the result — and
+       the fix for a mislabel is not a second mislabel. With one role
+       assigned there are no pairs at all, so contrast must not be named. */
+    const health = paletteHealthScore({
+      palette: DEFAULT_PALETTE,
+      colorRoles: { cover: '#1C1917' },
+    })
+    expect(health.pairs).toHaveLength(0)
+    expect(health.contrastScore, 'not measured is not zero').toBeNull()
+    expect(health.weakest).not.toBe('contrast')
+    expect(healthLabel(health).word).not.toBe('Contrast to fix')
+  })
+
+  it('names the term losing the most points, not a fixed favourite', () => {
+    // Clashing hues lose 0.2 × 0.6 = 0.12; one missing rationale loses
+    // 0.4 × 0.25 = 0.10. Harmony is the bigger hole, so harmony is named —
+    // a fixed priority order with roles above harmony would say "roles"
+    // here, and roles are three-quarters done.
+    const health = paletteHealthScore({
+      palette: ['#0F766E', '#B91C1C', '#CA8A04'],
+      colorRoles: {
+        cover: '#1C1917',
+        text: '#FFFFFF',
+        accent: '#CA8A04',
+        quiet: '#1C1917',
+      },
+      colorRoleWhy: { cover: 'w', text: 'w', accent: 'w' },
+    })
+    expect(health.harmony.ok).toBe(false)
+    expect(health.contrastScore, 'no contrast failure in this fixture').toBe(1)
+    expect(health.justifiedCount).toBe(3)
+    expect(health.weakest).toBe('harmony')
+  })
+
+  it('puts an unreadable pair ahead of a matter of taste', () => {
+    /* Measured, and the reason `weakest` is not pure arithmetic: hues that
+       are merely "unevenly spaced" lose 0.12, while a real AA failure at
+       1.86:1 loses 0.10. On points alone the meter sent a designer to look
+       at their hues while a text pair was unreadable. Harmony is taste;
+       contrast is a page the client cannot read. */
+    const health = paletteHealthScore({
+      palette: ['#0F766E', '#B91C1C', '#CA8A04'],
+      colorRoles: {
+        cover: '#0F766E',
+        text: '#FFFFFF',
+        accent: '#CA8A04',
+        quiet: '#1C1917',
+      },
+      colorRoleWhy: { cover: 'w', text: 'w', accent: 'w' },
+    })
+    const failing = health.pairs.filter((p) => !p.ok)
+    expect(failing.map((p) => p.id)).toEqual(['accent-on-cover'])
+    expect(health.harmony.ok, 'hues also clash in this fixture').toBe(false)
+    // Harmony loses more points here, and still does not get named.
+    expect(health.weakest).toBe('contrast')
+  })
+
+  it('gives the top bands the same words as before', () => {
+    // The rename is the LOW band only. Solid and Getting there are what
+    // every existing screenshot, test and habit already expects.
+    expect(healthLabel({ score: 92 }).word).toBe('Solid')
+    expect(healthLabel({ score: 80 }).word).toBe('Solid')
+    expect(healthLabel({ score: 50 }).word).toBe('Getting there')
+    expect(healthLabel({ score: null }).word).toBe('—')
+    expect(healthLabel(null).word).toBe('—')
+  })
+
+  it('reads as a state, not an order', () => {
+    /* "Tighten roles" is an imperative sitting between "Solid" and "Getting
+       there", which are states — so the low band read as a telling-off
+       rather than a reading. Every band word is a noun phrase now. */
+    for (const weakest of ['contrast', 'harmony', 'roles', null]) {
+      const { word } = healthLabel({ score: 30, weakest })
+      expect(word, `${weakest} label must not start with a verb`).not.toMatch(
+        /^(Tighten|Fix|Add|Write|Choose|Check|Pick|Improve)\b/
+      )
+    }
   })
 })

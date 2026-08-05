@@ -42,6 +42,23 @@ test('the palette meter names the jobs it scores', async ({ page }) => {
   const panel = page.locator('.palette-health')
   await expect(panel).toBeVisible({ timeout: 8000 })
 
+  /* A FRESH PROJECT MUST NOT OPEN ON A FAILING GRADE.
+     The unit-level fix for this ("score is null until there is something to
+     measure") was written, commented as done, and never reachable: `started`
+     also accepted a palette on its own, and App.jsx substitutes
+     DEFAULT_PALETTE whenever a project has none, so `palette.length` was
+     never 0. Measured in this exact state before the fix: 33%, red,
+     "Tighten roles" — a failing grade for work not yet begun, at the moment
+     of task initiation. Only a browser can catch that, because the wiring
+     that broke it lives two components above the scorer. */
+  const chip = panel.locator('.palette-health-score')
+  await expect(chip).toHaveText('—')
+  await expect(chip).not.toHaveClass(/is-low/)
+  await expect(
+    panel.locator('.palette-health-bar'),
+    'no bar to fill when nothing is measured'
+  ).toHaveCount(0)
+
   /* One note, not one per state. The earlier version of this panel returned
      early for the unscored case and duplicated the head markup, which is the
      shape that leaves a line on one branch only. */
