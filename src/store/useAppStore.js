@@ -4,6 +4,7 @@ import {
   isLogoOnlyScope,
   isWrongShapeForField,
 } from '../lib/brief/detectiveBrief'
+import { BRAND_ROLE_KEYS } from '../lib/color'
 import { liftMeasuredRows } from './workLogSeparation'
 import { revisionSummary, roundCharge } from '../lib/revisions'
 import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
@@ -2453,7 +2454,11 @@ const useAppStore = create(
 
       setColorRole: (role, hex) => {
         const key = String(role || '')
-        if (!['cover', 'text', 'accent', 'quiet'].includes(key)) {
+        /* Widened for Secondary and the extra accent slots. Read from
+           color.js rather than re-typed, because a second copy of this list is
+           exactly how a role becomes assignable in the UI and silently
+           rejected by the store. */
+        if (!BRAND_ROLE_KEYS.includes(key)) {
           return { ok: false, error: 'Unknown role' }
         }
         set((state) => ({

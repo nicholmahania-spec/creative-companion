@@ -29,6 +29,8 @@ import {
   buildPassPairs,
   bestTextOn,
   formatRatio,
+  BRAND_ROLE_KEYS,
+  BRAND_ROLE_LABELS,
   mapPaletteRoles,
   fontFamilyFromLabel,
   TYPE_PAIRS,
@@ -47,12 +49,11 @@ import ReadabilityRows from '../features/palette/ReadabilityRows'
 import '../styles/lazy-design.css'
 
 /** User-facing labels for palette role chips (store keys stay cover/text/…). */
-const ROLE_LABELS = {
-  cover: 'Primary',
-  accent: 'Accent',
-  text: 'Ink',
-  quiet: 'Paper',
-}
+/* Labels and the job list both come from color.js now. They were a private
+   copy here, which is how "Primary" on screen and `cover` in the store drifted
+   apart from the store's own whitelist — a role could be offered in the UI and
+   silently rejected on save. One list, one set of names. */
+const ROLE_LABELS = BRAND_ROLE_LABELS
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
@@ -435,12 +436,17 @@ export default function DesignView({
 
   const effectiveRoles = useMemo(() => {
     const o = activeProject?.colorRoles || {}
-    return {
-      cover: normalizeHex(o.cover) || paletteRoles.cover,
-      text: normalizeHex(o.text) || paletteRoles.text,
-      accent: normalizeHex(o.accent) || paletteRoles.accent,
-      quiet: normalizeHex(o.quiet) || paletteRoles.quiet,
+    /* Every job the vocabulary knows, not just the original four. The extra
+       slots (Secondary, further Accents, Neutrals) have NO fallback on
+       purpose: an unassigned job is unanswered, not wrong, and inventing a
+       default for it would put a colour in a role the designer never chose
+       and then measure them against it. `roleContrastPairs` already filters
+       unassigned roles out rather than failing them. */
+    const out = {}
+    for (const key of BRAND_ROLE_KEYS) {
+      out[key] = normalizeHex(o[key]) || paletteRoles[key] || ''
     }
+    return out
   }, [activeProject?.colorRoles, paletteRoles])
 
   const passPairs = useMemo(
@@ -1336,7 +1342,7 @@ export default function DesignView({
                   </p>
                 </div>
                 <div className="system-role-assign" style={{ marginTop: '0.45rem' }}>
-                  {['cover', 'accent', 'text', 'quiet'].map((role) => (
+                  {BRAND_ROLE_KEYS.map((role) => (
                     <button
                       key={role}
                       type="button"

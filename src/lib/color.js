@@ -785,6 +785,69 @@ export function checkPaletteHarmony(palette = []) {
 export const HEALTH_ROLE_KEYS = ['cover', 'text', 'accent', 'quiet']
 
 /**
+ * The jobs a colour can hold in a brand, in the vocabulary designers use.
+ *
+ * The STORED keys are deliberately unchanged. `cover` and `quiet` are what
+ * every existing project already has on disk and what the brand book and
+ * exports already read; renaming them would have meant a migration for a
+ * change that is really about labels. So the rename is what you SEE, and the
+ * keys stay put:
+ *
+ *   cover     → "Primary"      the main brand colour
+ *   secondary → "Secondary"    NEW — the second brand colour
+ *   accent    → "Accent"       supporting colour
+ *   accent2   → "Accent 2"     NEW — brands routinely have more than one
+ *   accent3   → "Accent 3"     NEW
+ *   neutral   → "Neutral"      NEW — greys, rules, muted panels
+ *   neutral2  → "Neutral 2"    NEW
+ *   text      → "Text"         was "Ink"
+ *   quiet     → "Background"   was "Paper"
+ *
+ * Adding `secondary` also unpicks the knot that prompted this: with only one
+ * brand colour and one text colour, `text` had to serve as ink on the light
+ * surface AND on the dark one, which no real brand does. A default palette
+ * therefore opened showing white-on-cream at 1.09:1 — a failure the designer
+ * had not caused.
+ */
+export const BRAND_ROLE_KEYS = [
+  'cover',
+  'secondary',
+  'accent',
+  'accent2',
+  'accent3',
+  'neutral',
+  'neutral2',
+  'text',
+  'quiet',
+]
+
+/** What each job is called on screen. Display only — see above. */
+export const BRAND_ROLE_LABELS = {
+  cover: 'Primary',
+  secondary: 'Secondary',
+  accent: 'Accent',
+  accent2: 'Accent 2',
+  accent3: 'Accent 3',
+  neutral: 'Neutral',
+  neutral2: 'Neutral 2',
+  text: 'Text',
+  quiet: 'Background',
+}
+
+/** The accent slots, in order. Brands routinely use more than one. */
+export const ACCENT_KEYS = ['accent', 'accent2', 'accent3']
+
+/**
+ * Neutral slots — greys, warm stocks, the quiet middle of a palette.
+ *
+ * Separate from `quiet` (the background) on purpose. A neutral is a colour in
+ * the system: rules, dividers, secondary type, a muted panel. The background is
+ * the surface everything else sits on. Collapsing them is why a palette ends up
+ * with one grey doing five jobs badly.
+ */
+export const NEUTRAL_KEYS = ['neutral', 'neutral2']
+
+/**
  * The color pairs a reader actually sees, with the ratio each one owes.
  *
  * The score used to compare EVERY palette color against the quiet
