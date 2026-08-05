@@ -50,23 +50,63 @@ test.describe('mobile drawer clears the header', () => {
        * Height is the quantity `--header-h` is supposed to track, and it is
        * the same number at any scroll position.
        *
-       * KNOWN DEFECT, deliberately not fixed here and not silently absorbed
-       * by this change: at these widths the header does NOT stay on screen.
-       * `.app` carries `overflow: hidden auto`, which makes it the sticky
-       * containing block for `.header` — but `.app` is as tall as its content
-       * (~5300px at 390px wide) and never scrolls itself, so the DOCUMENT
-       * scrolls and the sticky header rides off the top with it. Measured at
-       * 390px: scrollY 140, header top -140. The hamburger goes with it.
-       *
-       * That is the exact failure this file's docstring describes, and it is
-       * an app bug rather than a test bug — but fixing it means changing
-       * overflow on the app shell, which is a global layout change and does
-       * not belong in a test-repair commit. Recorded here so it is not lost.
-       *
-       * The drawer/header coupling below is still genuinely asserted: if
-       * `--header-h` drifts from the header's real height, this fails. */
+       * The drawer/header coupling is still genuinely asserted: if
+       * `--header-h` drifts from the header's real height, this fails. The
+       * separate `test.fail` case below covers the defect found while fixing
+       * this, so that it is executable rather than only described. */
       expect(m.token).toBeGreaterThanOrEqual(m.headerHeight - 1)
       expect(m.token).toBeLessThanOrEqual(m.headerHeight + 8)
+    })
+
+    /**
+     * KNOWN FAILURE — the header does not stay on screen at these widths.
+     *
+     * This is `test.fail()`, not a comment and not a deletion. It RUNS on
+     * every CI pass and is green while the bug exists; the moment someone
+     * fixes the header it flips to failing and says so. A prose note cannot
+     * do that — it just quietly becomes untrue. The suite stays green either
+     * way, so this costs nothing today and pays out on the day it matters.
+     *
+     * The bug: a sticky element sticks to its nearest ancestor that is a
+     * scroll container. Four ancestors qualify here — `html` (shell.css:213),
+     * `body` (:220), `#root` (:235) and `.app` (:273) — each declaring
+     * `overflow-x: hidden`, which COMPUTES to `hidden auto`, because a
+     * two-value overflow turns a `visible` axis into `auto` when the other
+     * axis is not visible. None of them ever scrolls: each is as tall as its
+     * content (~5300px at 390px wide). So the DOCUMENT scrolls instead, and
+     * the header — sticky relative to a box that never moves — rides off the
+     * top with it, taking the hamburger that opens the drawer.
+     *
+     * Grepping for `hidden auto` finds nothing; it is computed, never
+     * declared. And fixing only `.app` leaves `#root` as the next scrolling
+     * ancestor, so the header still will not stick — all four need changing.
+     *
+     * Not fixed here on purpose. The obvious repair is `hidden` → `clip`,
+     * but `clip` also forbids programmatic scrolling on those boxes, and the
+     * app has scroll call sites that serve its founding executive-function
+     * features — `sessionResume.js` ("where you left off") and
+     * `journeyProgress.js` (`focusPathGapTarget`) among them. That is a
+     * global layout change with real blast radius, and it does not belong in
+     * a commit that repairs tests.
+     */
+    test(`the header stays on screen while scrolling at ${width}px`, async ({
+      page,
+    }) => {
+      test.fail()
+      test.setTimeout(120_000)
+      const gate = await unlockAndOnboard(page, { name: 'Drawer Offset' })
+      skipIfCloud(test, gate)
+
+      await page.setViewportSize({ width, height: 844 })
+      await page.waitForTimeout(400)
+      await page.evaluate(() => window.scrollBy(0, 600))
+      await page.waitForTimeout(300)
+
+      const top = await page.evaluate(
+        () => document.querySelector('.header')?.getBoundingClientRect().top
+      )
+      // Sticky means "still at the top after scrolling", not "was there once".
+      expect(top).toBeGreaterThanOrEqual(-1)
     })
   }
 })
