@@ -24,7 +24,7 @@ test.describe('Desk reliability', () => {
     await expect(path).toBeVisible()
     await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
+      page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
     await expect(
       page.getByRole('button', { name: /Brand book PDF/i })
@@ -56,7 +56,7 @@ test.describe('Desk reliability', () => {
     const path = await pathNav(page)
     await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
+      page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
     await page
       .locator('.deliver-advanced summary', { hasText: 'More formats' })
