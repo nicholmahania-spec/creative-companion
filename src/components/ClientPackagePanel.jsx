@@ -222,11 +222,17 @@ export default function ClientPackagePanel({
             ))}
           </ul>
         )}
+        {/* Visually hidden, but still a real control in the accessibility
+            tree — `sr-only` hides it from sight, not from a screen reader, so
+            without a name it announces as an unlabelled file input (axe rates
+            this critical). The visible button below is what everyone actually
+            presses; this input has to carry its own name regardless. */}
         <input
           ref={fileRef}
           type="file"
           multiple
           className="sr-only"
+          aria-label="Add files to the client package"
           onChange={onPick}
         />
         <button
