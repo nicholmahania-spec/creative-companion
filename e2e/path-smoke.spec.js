@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import {
   unlockAndOnboard,
+  openDeliverSectionWith,
   pathNav,
   skipIfCloud,
   stepByIdIn,
@@ -89,8 +90,11 @@ test.describe('Creative Companion path smoke', () => {
     await expect(
       page.getByRole('button', { name: /Brand book PDF/i })
     ).toBeVisible()
-    // Print lives under More formats now
-    await page.locator('.deliver-advanced summary', { hasText: 'More formats' }).click()
+    /* Print lives behind a disclosure. Find that disclosure by the control it
+       holds, not by its label — the label was "More formats" and is now
+       "Extras · print, ZIP, backup", which hung this click for the full 60s
+       while Print itself worked. */
+    await openDeliverSectionWith(page, /^Print$/)
     await expect(
       page.getByRole('button', { name: 'Print', exact: true })
     ).toBeVisible()

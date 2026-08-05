@@ -112,6 +112,19 @@ test('every preference switch has a visible, clickable body', async ({ page }) =
   await expect(page.locator('.insights-break-row')).toBeVisible()
   await check('Timer')
 
-  // The switch says what it does, in the visible label rather than a title.
-  await expect(page.locator('.insights-break-hint')).toContainText('locks')
+  /* The `.insights-break-hint` assertion that used to close this test is gone.
+     It required the Break lock switch to state its consequence in a visible
+     line — "When the timer ends, the screen locks until you take the break."
+     That line was removed in c4c5f57 ("remove educational sayings and process
+     tips from app chrome"), and the owner confirmed on 2026-08-05 that it
+     stays removed. The switch is labelled "Break lock" and nothing else.
+
+     Recorded rather than quietly deleted, because the assertion was not
+     wrong — it encoded a real principle, that a control should say what it
+     does where you can see it. That principle lost to a deliberate decision
+     about chrome, and the next person to notice the gap should find this note
+     instead of re-deriving the rule and reinstating the line.
+
+     What this test still covers is unchanged and is its actual subject: every
+     preference switch has a visible, clickable body. */
 })

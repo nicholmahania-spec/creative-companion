@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import {
   headingForStep,
   openBriefFieldChapter,
+  openIdentitySubstep,
   openTool,
   pathNav,
   skipIfCloud,
@@ -75,26 +76,38 @@ test.describe('Soft Signal demo', () => {
     // Demo seeds leave-behind ★ pins
     await stepByIdIn(path, 'design').click()
     await expect(headingForStep(page, 'design').first()).toBeVisible()
-    /* Floor, not ratio — Design states the pack count the way Research does
-       ("★ 3 in pack · room for 3" / "★ pack full"), rather than the old
-       "★ N/6" scoreboard this assertion used to freeze.
+    /* The pack-count assertion that used to sit here is GONE, deliberately.
+       It required Design to state a pack count ("★ 3 in pack · room for 3" /
+       "★ pack full"). Design does not, and that is not a regression: commit
+       5592385, "stop Design showing a scoreboard (#43)", removed it on
+       purpose. Design now surfaces the shortlist only where it is actionable,
+       as the "Sample ★ shortlist (n)" control.
 
-       This used to cite packCountPhrasing.test.js as forbidding the ratio.
-       That guard was REMOVED on 2026-08-05: PRD §7 specifies a dashboard
-       completion percentage and §32 measures completion percentages, which
-       the guard failed the build on. Ratios are permitted again; this
-       assertion is now a plain expectation of the current copy, not the
-       enforcement of a rule. */
-    await expect(
-      page.getByText(/★\s*\d+ in pack|★\s*pack full/).first()
-    ).toBeVisible({ timeout: 5000 })
-    /* Brand book fields seeded. The editor is a flat column now — every
-       section is always mounted, so there are no tabs to click first;
-       messaging + imagery still live in collapsed sub-accordions, so
-       assert seeded values, not visibility. */
+       So this test was requiring the app to undo a merged decision. Making it
+       pass by restoring the count would have reversed #43 to satisfy a stale
+       expectation — which is why the assertion is removed rather than
+       rewritten to match whatever Design happens to render today.
+
+       What this test is actually for — that the demo seeds ★ pins and Design
+       opens on them — is still covered: the heading assertion above proves
+       Design loaded, and the wall's own pack count is asserted in the
+       Research leg of this same walk. */
+    /* Brand book fields seeded.
+       This used to say "the editor is a flat column now — every section is
+       always mounted, so there are no tabs to click first". That stopped
+       being true when Identity was split into Mark → Words → Colour → Type →
+       Preview (commit 20d21a1): the messaging fields live on the Words
+       sub-screen and are not mounted until it is opened, so #msg-promise
+       simply did not exist and the walk died here.
+
+       Sub-screen labels come from IDENTITY_SUBSTEPS rather than being typed,
+       so a rename moves this with it instead of breaking it. The helper is
+       shared — process-walk hit the same wall on `#brand-tagline`. */
+    await openIdentitySubstep(page, 'essentials')
     await expect(page.locator('#msg-promise')).toHaveValue(/.{10,}/, {
       timeout: 5000,
     })
+    await openIdentitySubstep(page, 'preview')
     await expect(page.locator('#img-style')).toHaveValue(/.{5,}/, {
       timeout: 5000,
     })

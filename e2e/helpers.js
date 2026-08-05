@@ -1,5 +1,6 @@
 import { JOURNEY_STEPS } from '../src/lib/journey/journey.js'
 import { DETECTIVE_CHAPTERS } from '../src/lib/brief/detectiveBrief.js'
+import { IDENTITY_SUBSTEPS } from '../src/lib/journey/identitySubsteps.js'
 
 /**
  * Shared Playwright unlock + onboard for local desk gate.
@@ -211,6 +212,56 @@ export async function openBriefFieldChapter(page, fieldId) {
     await page.waitForTimeout(250)
   }
   return page.locator(`#detective-${fieldId}`)
+}
+
+/**
+ * Open one of Design's Identity sub-screens.
+ *
+ * Identity was split into Mark → Words → Colour → Type → Preview (20d21a1).
+ * Each sub-screen is mounted only while it is open, so fields that used to sit
+ * on one flat Design column — `#msg-promise`, `#brand-tagline`, `#img-style` —
+ * are simply absent until the sub-screen holding them is selected. Specs that
+ * reached straight for them died waiting on an element that had not been
+ * rendered yet, on an app that was working.
+ *
+ * Labels come from IDENTITY_SUBSTEPS rather than being typed, so a rename
+ * moves the callers with it instead of breaking them — the same single-source
+ * rule `stepByIdIn` applies to the path.
+ */
+export async function openIdentitySubstep(page, id) {
+  const label = IDENTITY_SUBSTEPS.find((s) => s.id === id)?.label
+  if (!label) throw new Error(`No Identity substep with id "${id}"`)
+  const tab = page
+    .getByRole('navigation', { name: /Identity screens/i })
+    .getByRole('button', { name: label, exact: true })
+  if (await tab.count()) {
+    await tab.first().click()
+    await page.waitForTimeout(400)
+  }
+}
+
+/**
+ * Open the Deliver disclosure that CONTAINS a given control.
+ *
+ * Specs used to click `.deliver-advanced summary` filtered by "More formats".
+ * That disclosure is now "Extras · print, ZIP, backup", so the click waited on
+ * a summary that does not exist while the control behind it worked fine.
+ *
+ * Deliver has four `.deliver-advanced` disclosures and their labels are
+ * ordinary product copy, free to change. What is NOT free to change is that
+ * Print lives behind a disclosure — that is the behaviour under test. So find
+ * the section by what it holds, not by what it is called.
+ *
+ * `label` must be matched with a DOM locator, NOT `getByRole`. Role queries
+ * resolve against the accessibility tree, and a CLOSED <details> hides its
+ * children from that tree — so a role-based filter matches nothing here and
+ * the click waits forever on a section that is right there. The children are
+ * still in the DOM, which is why a plain `button` locator finds them.
+ */
+export async function openDeliverSectionWith(page, label) {
+  const control = page.locator('button', { hasText: label })
+  const section = page.locator('.deliver-advanced').filter({ has: control })
+  await section.first().locator('summary').first().click()
 }
 
 /**

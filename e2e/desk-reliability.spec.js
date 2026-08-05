@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import {
   labelForStep,
+  openDeliverSectionWith,
   pathNav,
   skipIfCloud,
   stepByIdIn,
@@ -10,6 +11,7 @@ import {
 /**
  * Desk reliability: local unlock → path → Deliver exports · Esc overlays.
  */
+
 test.describe('Desk reliability', () => {
   test('Deliver shows Brand book PDF and Print under More formats', async ({
     page,
@@ -29,9 +31,7 @@ test.describe('Desk reliability', () => {
     await expect(
       page.getByRole('button', { name: /Brand book PDF/i })
     ).toBeVisible()
-    await page
-      .locator('.deliver-advanced summary', { hasText: 'More formats' })
-      .click()
+    await openDeliverSectionWith(page, /^Print$/)
     await expect(
       page.getByRole('button', { name: 'Print', exact: true })
     ).toBeVisible()
@@ -58,9 +58,7 @@ test.describe('Desk reliability', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
-    await page
-      .locator('.deliver-advanced summary', { hasText: 'More formats' })
-      .click()
+    await openDeliverSectionWith(page, /^Preview$/)
     await page.getByRole('button', { name: 'Preview', exact: true }).click()
     await expect(
       page.getByRole('dialog', { name: /^Export$/i })

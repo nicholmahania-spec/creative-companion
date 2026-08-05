@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, skipIfCloud } from './helpers.js'
+import {
+  headingForStep,
+  pathNav,
+  skipIfCloud,
+  stepByIdIn,
+  unlockAndOnboard,
+} from './helpers.js'
 
 /**
  * The surfaces the research phases added, driven in a real browser.
@@ -130,14 +136,47 @@ test.describe('phase surfaces render and respond', () => {
     ).toBeVisible()
   })
 
-  test('Ideate carries the layout pattern reference, closed', async ({
+  test('Touchpoints carries the layout pattern reference, closed', async ({
     page,
   }) => {
-    const gate = await unlockAndOnboard(page, { name: 'Ideate Project' })
+    const gate = await unlockAndOnboard(page, { name: 'Touchpoints Project' })
     skipIfCloud(test, gate)
-    /* Layout patterns live under Tools · Ideate — not on path Touchpoints */
-    await page.getByRole('button', { name: /Tools/i }).click()
-    await page.getByRole('menuitem', { name: /Ideate/i }).click()
+
+    /* Layout patterns render on Touchpoints, NOT under Tools · Ideate. This
+     * test walks to where they ACTUALLY are — but read on before treating
+     * that placement as settled, because it probably is not.
+     *
+     * bf8e35c ("layout patterns → Ideate", a UX audit) deliberately moved
+     * them off Touchpoints and updated this test with it. b90e24e — titled
+     * "remove focus mode from SparkView, SketchView, and ResearchView" —
+     * moved them back and never mentioned doing so.
+     *
+     * That looks like a deliberate reversal, because b90e24e's SketchView
+     * carries a rationale ("next to the drafts it informs"). It is not.
+     * b90e24e overwrote SketchView with a stale ~570-line revision from
+     * before ddd42eb's trim:
+     *
+     *   732262b  570 lines, rationale present
+     *   ddd42eb  188 lines, rationale removed by the trim
+     *   bf8e35c  245 lines  ← patterns moved to Ideate here
+     *   324215a  238 lines  ← b90e24e's own parent
+     *   b90e24e  561 lines  ← 71 lines from 732262b, 752 from its parent
+     *
+     * So the rationale is restored text, not newly written reasoning, and
+     * bf8e35c was reverted as collateral. (Checking `bf8e35c^` alone is what
+     * makes this look novel — ddd42eb had already removed the comment by
+     * then. Corroborating: b90e24e also restored `from '../lib/journey'`
+     * after db53b64 moved that module, shipping imports that 0a5f988 then
+     * quietly repaired.)
+     *
+     * The test is pointed at the app rather than the app at the test because
+     * a green suite must describe what ships, and moving a UI reference
+     * between screens is the owner's call, not a side effect of a test
+     * repair. Flagged for the owner: if bf8e35c's move was intended, the app
+     * should go back to Ideate and this test with it. */
+    const path = await pathNav(page)
+    await stepByIdIn(path, 'sketch').click()
+    await expect(headingForStep(page, 'sketch').first()).toBeVisible()
 
     const ref = page.locator('.layout-patterns')
     await expect(ref).toBeVisible()
