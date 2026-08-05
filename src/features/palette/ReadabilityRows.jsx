@@ -1,5 +1,5 @@
 import { roleContrastPairs } from '../../lib/color'
-import { readabilityLine, resolutionsFor } from '../../lib/color/contrastMatrix'
+import { readabilityLine, resolutionsFor } from '../../lib/contrast/contrastMatrix'
 
 /**
  * The four colour pairings a reader will actually meet.

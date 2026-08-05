@@ -1446,7 +1446,24 @@ export default function DesignView({
                     swatch-to-hex mapping in their head, then judged mostly combinations
                     nobody would ever set type in. See ReadabilityRows.jsx. */}
                 <div className="palette-checker" style={{ marginTop: '0.85rem' }}>
-                  <ReadabilityRows roles={effectiveRoles} onApply={applyReadabilityRoute} />
+                  {/* RAW colorRoles, not effectiveRoles. effectiveRoles fills
+                      the four legacy keys from `mapPaletteRoles`, so passing it
+                      here made a brand-new project open reporting two contrast
+                      failures for roles the designer had never assigned —
+                      white-on-cream at 1.0:1 among them. Worse, each phantom
+                      failure offered an Adjust button that WRITES a real role,
+                      so acting on the illusion created state.
+                      `ReadabilityRows` states the invariant in its own header
+                      ("an unassigned role is absent, never failed") and this
+                      argument was quietly breaking it. The health score two
+                      panels up already passes the raw map, so the same screen
+                      was reporting "0 roles assigned" and two role failures at
+                      the same time. effectiveRoles stays for the chip swatch
+                      previews, which genuinely do want a fallback to show. */}
+                  <ReadabilityRows
+                    roles={activeProject?.colorRoles || {}}
+                    onApply={applyReadabilityRoute}
+                  />
 
                   <div
                     className="palette-pass-pairs"
