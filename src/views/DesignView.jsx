@@ -1341,14 +1341,26 @@ export default function DesignView({
                     Colour jobs
                   </p>
                 </div>
-                <div className="system-role-assign" style={{ marginTop: '0.45rem' }}>
+                {/* A mode switch, and it must say so. Every subsequent click on
+                    the palette row writes into whichever job is armed, so a
+                    screen-reader user could overwrite Primary while intending
+                    Accent 2 with no feedback at all — the selected state lived
+                    only in a CSS class. Nine jobs multiply the number of wrong
+                    destinations. */}
+                <div
+                  className="system-role-assign"
+                  role="group"
+                  aria-label="Which job to assign next"
+                  style={{ marginTop: '0.45rem' }}
+                >
                   {BRAND_ROLE_KEYS.map((role) => (
                     <button
                       key={role}
                       type="button"
                       className={`role-pick-chip${brandRoleAssign === role ? ' is-active' : ''}`}
                       onClick={() => setBrandRoleAssign(role)}
-                      title={`${ROLE_LABELS[role]} · ${effectiveRoles[role]}`}
+                      aria-pressed={brandRoleAssign === role}
+                      title={`${ROLE_LABELS[role]} · ${effectiveRoles[role] || 'not chosen yet'}`}
                     >
                       {ROLE_LABELS[role]}
                       <span

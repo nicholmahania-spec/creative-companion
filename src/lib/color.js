@@ -684,10 +684,25 @@ export async function extractPaletteFromPins(
 /** Ensure AA-fixed role hexes exist on the palette (append if missing). */
 export function mergeRolesIntoPalette(palette = [], roles = {}, max = 8) {
   const base = (palette || []).map(normalizeHex).filter(Boolean)
-  const extra = ['text', 'cover', 'accent', 'quiet']
-    .map((k) => normalizeHex(roles[k]))
-    .filter(Boolean)
-  return dedupePalette([...base, ...extra], { max, minDistance: 18 })
+  /* Every job, not a private copy of the old four. */
+  const roleHexes = BRAND_ROLE_KEYS.map((k) => normalizeHex(roles[k])).filter(
+    Boolean
+  )
+  /* ROLE COLOURS GO FIRST, and that ordering is the whole fix.
+     `dedupePalette` fills from the front and stops at `max`, so appending role
+     hexes after a full palette meant they were the ones evicted — silently.
+     Measured on a full 8-colour palette: `suggestRoleAaFixes` returned three
+     fixes, `applyAaRoleFix` wrote all three roles, this function returned an
+     array IDENTICAL to its input, and the toast still said "Fixed contrast on
+     text, accent, cover." The roles then pointed at hexes present nowhere in
+     the palette, and since a role can only be re-picked by clicking a palette
+     swatch, the designer could not even see the colour their brand now used.
+     It started at six distinct colours, not eight.
+
+     Putting them first means a role colour can never be the one dropped. What
+     gets evicted instead is an unassigned palette member, which is the correct
+     thing to lose when something has to go. */
+  return dedupePalette([...roleHexes, ...base], { max, minDistance: 18 })
 }
 
 /**
@@ -970,7 +985,7 @@ export function paletteHealthScore({
  * Suggest a hex for a role that has no color assigned yet, derived from
  * the existing palette rather than a random pick.
  * @param {string[]} palette
- * @param {'cover'|'text'|'accent'|'quiet'} role
+ * @param {string} role — any key in BRAND_ROLE_KEYS role
  */
 export function suggestRoleColor(palette = [], role) {
   const base = (palette || []).map(normalizeHex).filter(Boolean)[0]
@@ -989,6 +1004,25 @@ export function suggestRoleColor(palette = [], role) {
       return hslToHex(hsl.h, Math.min(hsl.s * 0.8, 0.3), 0.14)
     case 'text':
       return bestTextOn(hslToHex(hsl.h, hsl.s, 0.96))
+    /* The five jobs added with the wider vocabulary. Without these they all
+       fell to `default` and returned `palette[0]` — which `mapPaletteRoles`
+       also computes as Primary, so "Suggest Secondary", "Suggest Accent 2",
+       "Suggest Neutral" and the rest all proposed the SAME hex, and the same
+       hex the Primary already held. Five buttons, one answer, and the answer
+       was a colour already spoken for. */
+    case 'secondary':
+      // A neighbouring hue, darker than the accent so the two do not compete.
+      return hslToHex(hsl.h + 150, Math.max(hsl.s * 0.85, 0.35), 0.38)
+    case 'accent2':
+      return hslToHex(hsl.h + 210, Math.max(hsl.s, 0.45), 0.5)
+    case 'accent3':
+      return hslToHex(hsl.h + 60, Math.max(hsl.s, 0.4), 0.55)
+    case 'neutral':
+      // Neutrals carry a trace of the brand hue rather than being dead grey —
+      // a warm brand with a cold grey in it reads as two brands.
+      return hslToHex(hsl.h, 0.06, 0.62)
+    case 'neutral2':
+      return hslToHex(hsl.h, 0.08, 0.34)
     default:
       return base || '#0F766E'
   }

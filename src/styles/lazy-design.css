@@ -1373,6 +1373,18 @@
   outline-offset: 1px;
 }
 
+/* The selected chip had NO keyboard focus indicator. The rule above is
+   specificity (0,4,0) and the global :focus-visible ring is (0,1,0), so
+   tabbing onto the already-selected chip changed nothing at all — measured
+   byte-identical computed styles, focused and unfocused. Matched specificity
+   here so focus wins over selection, because selection is visible from the
+   fill and focus is visible from nothing else. */
+.design-studio .system-role-assign .role-pick-chip:focus-visible,
+.design-studio .system-role-assign .role-pick-chip.is-active:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+
 /* Design preview label only */
 
 /* Quiet plane label — sentence case, not a shouting micro-eyebrow */

@@ -158,3 +158,52 @@ describe('Fix AA actually fixes the palette', () => {
     expect(twice).toHaveLength(0)
   })
 })
+
+describe('applying a contrast fix does not silently drop it', () => {
+  /* The defect, measured: on a full 8-colour palette, `suggestRoleAaFixes`
+     returned three fixes, the view wrote all three roles, and
+     `mergeRolesIntoPalette` returned an array IDENTICAL to its input — while
+     the toast reported success. The roles then pointed at hexes present
+     nowhere in the palette, and since a role can only be re-picked by clicking
+     a palette swatch, the designer could not see or recover the colour their
+     brand had just been changed to. It began failing at SIX distinct colours,
+     not eight. */
+  it('keeps every role hex even when the palette is already full', async () => {
+    const { mergeRolesIntoPalette } = await import('./color.js')
+    const full = [
+      '#1C1917', '#0F766E', '#A8A29E', '#FAFAF9',
+      '#B91C1C', '#7C3AED', '#2563EB', '#CA8A04',
+    ]
+    const fixed = { text: '#2F4553', accent: '#416163', cover: '#E2E6F3' }
+    const merged = mergeRolesIntoPalette(full, fixed, 8)
+    for (const hex of Object.values(fixed)) {
+      expect(
+        merged.map((c) => c.toLowerCase()),
+        `${hex} was evicted — the fix was applied and then thrown away`
+      ).toContain(hex.toLowerCase())
+    }
+  })
+
+  it('drops an unassigned palette member rather than a role colour', async () => {
+    /* When something has to go, the correct thing to lose is a colour holding
+       no job — not the one the brand just committed to. Written properly on
+       the second attempt: the first version of this test was
+       `expect(true).toBe(true)`, which is the exact vacuous shape the commit
+       above it complains about. */
+    const { mergeRolesIntoPalette } = await import('./color.js')
+    const full = [
+      '#1C1917', '#0F766E', '#A8A29E', '#FAFAF9',
+      '#B91C1C', '#7C3AED', '#2563EB', '#CA8A04',
+    ]
+    const roles = { cover: '#E2E6F3' }
+    const merged = mergeRolesIntoPalette(full, roles, 8)
+    expect(merged).toHaveLength(8)
+    expect(merged.map((c) => c.toLowerCase())).toContain('#e2e6f3')
+    // Something had to go, and it was a plain palette member, not the role.
+    const lost = full.filter(
+      (c) => !merged.map((m) => m.toLowerCase()).includes(c.toLowerCase())
+    )
+    expect(lost.length).toBeGreaterThan(0)
+    expect(lost.map((c) => c.toLowerCase())).not.toContain('#e2e6f3')
+  })
+})
