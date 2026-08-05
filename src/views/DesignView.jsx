@@ -105,6 +105,10 @@ export default function DesignView({
   const typeTagged = Object.values(typeTags).some(
     (v) => v !== null && v !== undefined && v !== ''
   )
+  const colourTags = activeProject?.brandTokenTags?.colour || {}
+  const colourTagged = Object.values(colourTags).some(
+    (v) => v !== null && v !== undefined && v !== ''
+  )
   const setIdentitySubstep = (id) => {
     const next = resolveIdentitySubstep(id)
     if (next === identitySubstep) return
@@ -1055,6 +1059,27 @@ export default function DesignView({
                 <h2 className="design-section-title">Colour</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
+
+              {/* Same loop as Type: the words from Strategy come back here,
+                  at the moment colour is chosen. One component, because a
+                  second way of drawing the same comparison is a second thing
+                  to keep in step. */}
+              <details className="design-align" open={colourTagged}>
+                <summary>How this compares to your strategy</summary>
+                <AlignmentBars
+                  target={strategyProfile(activeProject?.strategyAttributes || [])}
+                  token={colourTags}
+                  tokenName="this palette"
+                />
+                <p className="align-tag-lead">Where does this palette sit?</p>
+                <AxisTagger
+                  idPrefix="colour-axis"
+                  value={colourTags}
+                  onChange={(next) =>
+                    setBrandTokenTags(activeProject?.id, 'colour', next)
+                  }
+                />
+              </details>
               {(() => {
                 const health = paletteHealthScore({
                   palette: projectPalette,
