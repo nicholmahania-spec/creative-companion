@@ -138,6 +138,7 @@ import {
 } from './lib/auth'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { syncAllProjects } from './services/syncEngine'
+import { stepsForProject } from './lib/journey/projectTypes'
 
 import {
   pullWorkspace,
@@ -1450,6 +1451,18 @@ function App() {
     () => JOURNEY_STEPS.map((s) => s.view).filter(Boolean),
     []
   )
+
+  /* The path this PROJECT walks, not the full catalogue.
+     A logo job does not show Touchpoints. Numbering is recomputed inside
+     stepsForProject, so the rail positions and the 1-N keyboard shortcuts
+     both describe what is actually on screen. STAGE_VIEWS above stays the
+     full catalogue on purpose — it drives work-clock recording, and time
+     spent in a view is still time worked whether or not that stage is part
+     of this project's path. */
+  const pathSteps = useMemo(
+    () => stepsForProject(activeProject),
+    [activeProject?.projectType, activeProject?.stepsOn]
+  )
   const [workIdle, setWorkIdle] = useState(false)
   const workRunning =
     STAGE_VIEWS.includes(String(activeView || '')) && !workIdle && !forcedBreak
@@ -1788,9 +1801,14 @@ function App() {
         goToNextProcessGap()
         return
       }
+      /* Keys address the path THIS project walks, not the catalogue.
+         On a four-stage project, key 5 must do nothing rather than jump to
+         a stage the rail does not show — a shortcut that reaches somewhere
+         invisible is how you end up somewhere you cannot navigate back to.
+         pathSteps is already renumbered, so index and label agree. */
       const n = Number(e.key)
-      if (n < 1 || n > JOURNEY_STEPS.length) return
-      const step = JOURNEY_STEPS[n - 1]
+      if (n < 1 || n > pathSteps.length) return
+      const step = pathSteps[n - 1]
       if (!step?.view) return
       e.preventDefault()
       setActiveView(step.view)
@@ -1807,6 +1825,7 @@ function App() {
     recentUndo,
     setActiveView,
     goToNextProcessGap,
+    pathSteps,
   ])
 
   // Prefetch path view chunks while idle
@@ -3387,7 +3406,7 @@ function App() {
       {journeyActive && (
         <nav className="step-rail" aria-label="Process position">
           <ol className="step-rail-list">
-            {JOURNEY_STEPS.map((step) => {
+            {pathSteps.map((step) => {
               const active = journeyActive === step.id
               const label = step.label
               const done =
@@ -3741,7 +3760,7 @@ function App() {
               </p>
             )}
             <ol className="journey-bar-list">
-              {JOURNEY_STEPS.map((step, idx) => {
+              {pathSteps.map((step, idx) => {
                 const active = journeyActive === step.id
                 const label = step.label
                 const pathCtx = {
