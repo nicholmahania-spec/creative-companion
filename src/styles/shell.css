@@ -3611,8 +3611,17 @@ html[data-reduce-motion='true'] *::after {
   font-weight: 500;
 }
 
+/* Overdue reads as MORE PRESENT, not as an alarm: a deeper grey border, the
+   same move `.deadline-chip.urgency-overdue` already makes with its text
+   colour. This rule used to carry a red-tinted border, and it was the single
+   place in the app that broke its own rule — everywhere else a late item is
+   stated in muted grey (`dates.js:81-98` words the label rather than counting
+   down; `lazy-desk.css:74-81` keeps the whole waiting row muted). A designer
+   who is already late does not need the interface to raise its voice; they
+   need to be able to look at the list without flinching away from it. Two
+   visual languages for one state is its own load. */
 .deadline-list-item.urgency-overdue {
-  border-color: rgba(185, 28, 28, 0.3);
+  border-color: rgba(104, 104, 104, 0.5);
   background: rgba(234, 234, 234, 0.45);
 }
 

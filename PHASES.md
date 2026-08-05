@@ -52,7 +52,24 @@ gets lost quietly.
 
 **Done when:** `npm test` and the full e2e suite are green on `main`.
 
-**Status 2026-08-05: partly done. 18 failures → 11.**
+**Status 2026-08-05 (final): DONE. 18 failures → 11 → 0.**
+
+*CI is green on `main` at `9019ebb` — CI, Pages and Cloud Node Checker all
+pass. Every failure in the table below has since been fixed, including the
+primary-button hover defect, whose fix is recorded in the docstring of
+`e2e/button-states.spec.js` (it now reads `background-image` as well as
+`background-color`, because primary and secondary are painted with a gradient
+plate and their `background-color` is transparent in every state — reading
+colour alone reported "never repaints" for the two most-used buttons in the
+app while they were demonstrably changing).*
+
+**The table below is kept as history, not as a to-do list.** It was read as
+live during Phase 5 planning and produced a confident recommendation to go fix
+a defect that no longer existed. If you are looking for work, do not start
+here — run CI.
+
+<details>
+<summary>Historical: the 11 failures as they stood mid-phase</summary>
 
 *Numbers are from CI, which is authoritative. A local run of the same commit
 reported 14 failed / 10 passed across only 24 tests, against CI's 11 / 19
@@ -83,6 +100,8 @@ group looks like genuine app defects:
 Each needs its own diagnosis before anyone decides whether the test or the app
 is wrong. Do not assume "stale test" — that assumption is what produced the
 wrong first hypothesis on this very suite.
+
+</details>
 
 **Risk:** low. Test-only so far.
 
