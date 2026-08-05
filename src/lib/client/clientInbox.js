@@ -10,7 +10,10 @@ import { JOURNEY_STEPS, labelForStepId } from '../journey/journey'
  * back above the line the moment any single new message arrived. So unread is
  * derived by comparing each event against a snapshot of what was last seen.
  *
- * No counts and no timestamps leave this module: unread is a boolean per row,
+ * No counts leave this module, and the only timestamp that does is `at`, on
+ * message rows, where a real per-event `created_at` exists. Step/approval rows
+ * have no `at` by design — see the note beside it. `sortAt` is internal
+ * ordering data and must never be rendered. Unread stays a boolean per row,
  * and recency is expressed only as sort order plus the new/seen split.
  */
 /**
@@ -164,6 +167,16 @@ export function buildInboxRows(portals, messages, seen, projects) {
       projectName: projectName.get(String(portal.project_local_id)) || 'Another project',
       clientName: who,
       sortAt: m.created_at || '',
+      /* `at` is the DISPLAYABLE time, and only message rows get one, because
+         only messages carry a real per-event `created_at`. Step/approval rows
+         deliberately have none: their `sortAt` is the portal's row-level
+         `updated_at`, shared by every event on that portal, so rendering it
+         would show the same age against several different approvals and move
+         them all whenever anything else on the portal changed.
+         Consumers must read `at`, never `sortAt` — the desk read `sortAt` and
+         showed exactly that fabricated age. Keeping the rule in the data
+         rather than in each view is what stops the next view repeating it. */
+      at: m.created_at || '',
       id: `${portal.id}:msg:${m.id}`,
       kind: 'message',
       unread,

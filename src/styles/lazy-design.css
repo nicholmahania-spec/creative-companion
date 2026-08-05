@@ -507,7 +507,7 @@
   align-items: center;
   justify-content: center;
   min-width: 4.25rem;
-  padding: 0.22rem 0.5rem;
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius);
   font-size: 0.7rem;
   font-weight: 700;

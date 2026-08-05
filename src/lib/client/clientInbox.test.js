@@ -130,3 +130,39 @@ describe('buildInboxRows', () => {
     expect(rows[0].projectName).toBe('Another project')
   })
 })
+
+/**
+ * The desk rendered `sortAt` as a visible age, against this module's own note
+ * that it is "approximate only ... never shown to the user". For a step row
+ * that is the portal's row-level `updated_at`, so several different approvals
+ * all showed one age, and that age moved whenever anything else on the portal
+ * changed. `at` exists to be the displayable time, and only where a real
+ * per-event timestamp does.
+ */
+describe('displayable timestamps', () => {
+  it('gives message rows an `at` equal to the message created_at', () => {
+    const { rows } = buildInboxRows(
+      [portal],
+      [msg('m1', 'client', 'hello', '2026-07-04T09:00:00Z')],
+      {},
+      projects
+    )
+    const message = rows.find((r) => r.kind === 'message')
+    expect(message).toBeTruthy()
+    expect(message.at).toBe('2026-07-04T09:00:00Z')
+  })
+
+  it('gives step rows no `at` at all, so no view can render a fake age', () => {
+    const { rows } = buildInboxRows([portal], [], {}, projects)
+    const steps = rows.filter((r) => r.kind !== 'message')
+    expect(steps.length).toBeGreaterThan(0)
+    for (const r of steps) expect(r.at).toBeUndefined()
+  })
+
+  it('never lets a step row inherit the portal updated_at as a display time', () => {
+    const { rows } = buildInboxRows([portal], [], {}, projects)
+    for (const r of rows.filter((x) => x.kind !== 'message')) {
+      expect(r.at).not.toBe(portal.updated_at)
+    }
+  })
+})

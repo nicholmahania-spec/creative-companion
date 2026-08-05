@@ -76,8 +76,15 @@ test.describe('Soft Signal demo', () => {
     await stepByIdIn(path, 'design').click()
     await expect(headingForStep(page, 'design').first()).toBeVisible()
     /* Floor, not ratio — Design states the pack count the way Research does
-       ("★ 3 in pack · room for 3" / "★ pack full"). The old assertion froze
-       the "★ N/6" scoreboard that packCountPhrasing.test.js now forbids. */
+       ("★ 3 in pack · room for 3" / "★ pack full"), rather than the old
+       "★ N/6" scoreboard this assertion used to freeze.
+
+       This used to cite packCountPhrasing.test.js as forbidding the ratio.
+       That guard was REMOVED on 2026-08-05: PRD §7 specifies a dashboard
+       completion percentage and §32 measures completion percentages, which
+       the guard failed the build on. Ratios are permitted again; this
+       assertion is now a plain expectation of the current copy, not the
+       enforcement of a rule. */
     await expect(
       page.getByText(/★\s*\d+ in pack|★\s*pack full/).first()
     ).toBeVisible({ timeout: 5000 })
