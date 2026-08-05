@@ -20,6 +20,7 @@ import { messageDayLabel } from '../lib/client/messageDayLabel'
 import AlignmentBars from '../components/AlignmentBars'
 import AxisTagger from '../components/AxisTagger'
 import { strategyProfile } from '../lib/brand/alignment'
+import { axesForPalette, vetoBreaches } from '../lib/brand/colourAxes'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
   DEFAULT_PALETTE,
@@ -105,9 +106,30 @@ export default function DesignView({
   const typeTagged = Object.values(typeTags).some(
     (v) => v !== null && v !== undefined && v !== ''
   )
-  const colourTags = activeProject?.brandTokenTags?.colour || {}
-  const colourTagged = Object.values(colourTags).some(
-    (v) => v !== null && v !== undefined && v !== ''
+  /* Read from the palette itself rather than from sliders the designer
+     moved. Formality and Era come back null on purpose — nothing in a hex
+     makes a colour formal or retro, and guessing is what made the old panel
+     call a forbidden orange a match. */
+  const paletteAxes = useMemo(
+    () => axesForPalette(projectPalette || []),
+    [projectPalette]
+  )
+  /* The client's own stated vetoes, read back against the palette. The
+     cheapest useful second opinion in the app: no judgement required,
+     because the client already said it. */
+  const colourVetoes = useMemo(
+    () =>
+      vetoBreaches(
+        projectPalette || [],
+        [
+          activeProject?.detective?.avoid,
+          activeProject?.detective?.colorNotes,
+          activeProject?.brief,
+        ]
+          .filter(Boolean)
+          .join('\n')
+      ),
+    [projectPalette, activeProject?.detective?.avoid, activeProject?.brief]
   )
   const setIdentitySubstep = (id) => {
     const next = resolveIdentitySubstep(id)
@@ -1064,20 +1086,22 @@ export default function DesignView({
                   at the moment colour is chosen. One component, because a
                   second way of drawing the same comparison is a second thing
                   to keep in step. */}
-              <details className="design-align" open={colourTagged}>
-                <summary>How this compares to your strategy</summary>
+              {/* Reads the ACTUAL hex values, not sliders. Swapping the
+                  palette moves these bars; that is the whole point. */}
+              <details className="design-align" open>
+                <summary>How this palette compares to your strategy</summary>
+                {colourVetoes.length > 0 && (
+                  <p className="align-veto" role="status">
+                    Your brief says no {[...new Set(colourVetoes.map((v) => v.family))].join(' or ')}.
+                    {' '}
+                    {colourVetoes.map((v) => v.hex).join(', ')} is in the palette.
+                  </p>
+                )}
                 <AlignmentBars
                   target={strategyProfile(activeProject?.strategyAttributes || [])}
-                  token={colourTags}
+                  token={paletteAxes}
                   thingLabel="this palette"
-                />
-                <p className="align-tag-lead">Where does this palette sit?</p>
-                <AxisTagger
-                  idPrefix="colour-axis"
-                  value={colourTags}
-                  onChange={(next) =>
-                    setBrandTokenTags(activeProject?.id, 'colour', next)
-                  }
+                  derived
                 />
               </details>
               {(() => {

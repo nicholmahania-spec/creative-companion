@@ -15,7 +15,15 @@ import '../styles/lazy-alignment.css'
  * and nothing is coloured as an error — a difference is information, not a
  * mistake, and the designer is the one who decides.
  */
-export default function AlignmentBars({ target, token, thingLabel = 'this' }) {
+export default function AlignmentBars({
+  target,
+  token,
+  thingLabel = 'this',
+  /** true when the values were READ from the work (hex, font metrics)
+   *  rather than placed on sliders by the designer. Changes what the panel
+   *  may honestly claim, so it changes what it says. */
+  derived = false,
+}) {
   const rows = compareToTarget(target, token)
   const note = alignmentNote(rows)
 
@@ -48,8 +56,9 @@ export default function AlignmentBars({ target, token, thingLabel = 'this' }) {
           it catches you drifting from your own brief — but only if it is
           not dressed up as the app judging the work. */}
       <p className="align-basis">
-        Comparing where you placed {thingLabel} against where you placed your
-        words. It does not look at the {thingLabel === 'this palette' ? 'colours' : 'letterforms'} themselves.
+        {derived
+          ? `Read from ${thingLabel} itself, against the words you set in Strategy.`
+          : `Comparing where you placed ${thingLabel} against where you placed your words — it does not look at the work itself.`}
       </p>
       {note ? (
         <p className="align-note" role="status">
