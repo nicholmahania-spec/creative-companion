@@ -26,7 +26,6 @@ import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
   DEFAULT_PALETTE,
   normalizeHex,
-  buildPairChecks,
   buildPassPairs,
   bestTextOn,
   formatRatio,
@@ -38,13 +37,13 @@ import {
   extractPaletteFromPins,
   suggestRoleAaFixes,
   mergeRolesIntoPalette,
-  nudgeHexForContrast,
   paletteHealthScore,
   suggestRoleColor,
 } from '../lib/color'
 import { loadTypePairFont, loadBrandFamilies } from '../lib/book/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
 import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
+import ReadabilityRows from '../features/palette/ReadabilityRows'
 import '../styles/lazy-design.css'
 
 /** User-facing labels for palette role chips (store keys stay cover/text/…). */
@@ -66,6 +65,7 @@ export default function DesignView({
   hidePackWatermark = false,
   setActiveView,
   flashToast,
+  offerUndo,
   flashMicro,
   /** One-shot deep link from Review/Deliver readiness — cleared after apply */
   brandEditSectionProp = null,
@@ -140,7 +140,6 @@ export default function DesignView({
   }
   const [deepLinkFocus, setDeepLinkFocus] = useState(null)
   const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
-  const [checkBgIndex, setCheckBgIndex] = useState(0)
   const [hexDrafts, setHexDrafts] = useState({})
   const [extractingPins, setExtractingPins] = useState(false)
   const [showPassPairs, setShowPassPairs] = useState(false)
@@ -163,11 +162,7 @@ export default function DesignView({
   const [loadingTemplates, setLoadingTemplates] = useState(false)
 
 
-  useEffect(() => {
-    if (checkBgIndex >= projectPalette.length) {
-      setCheckBgIndex(Math.max(0, projectPalette.length - 1))
-    }
-  }, [projectPalette.length, checkBgIndex])
+
 
   /* Live brand tokens → :root / .app so swatches and previews share one map. */
   useEffect(() => {
@@ -448,17 +443,6 @@ export default function DesignView({
     }
   }, [activeProject?.colorRoles, paletteRoles])
 
-  const checkBg =
-    projectPalette[checkBgIndex] ||
-    paletteRoles.background ||
-    projectPalette[0] ||
-    '#FFFFFF'
-
-  const contrastPairs = useMemo(
-    () => buildPairChecks(projectPalette, checkBg),
-    [projectPalette, checkBg]
-  )
-
   const passPairs = useMemo(
     () => buildPassPairs(projectPalette, 4.5).slice(0, 12),
     [projectPalette]
@@ -524,6 +508,39 @@ export default function DesignView({
     }
   }
 
+  /**
+   * Apply one suggested route from a readability row.
+   *
+   * Fixes at ROLE level, never per pair. A colour holds a job, and the same
+   * colour appears in more than one pairing — nudging it for one row silently
+   * rewrites the verdict of the others, which is how a designer ends up
+   * chasing the same problem around the screen. Setting the role keeps the
+   * palette and the export in step, the way `applyAaRoleFix` already does.
+   *
+   * Undo, not a confirmation. CLAUDE.md §2: "every destructive or reordering
+   * action gets a 5-second undo toast rather than a confirmation dialog —
+   * confirmation dialogs are a decision; undo is not." An adjustment that
+   * cannot be taken back is not a suggestion, whatever the button says.
+   */
+  const applyReadabilityRoute = (route) => {
+    if (!route?.role || !route?.to) return
+    const previous = (activeProject?.colorRoles || {})[route.role]
+    setColorRole(route.role, route.to)
+    const nextPal = projectPalette.map((c) =>
+      c?.toLowerCase() === String(route.from).toLowerCase() ? route.to : c
+    )
+    if (nextPal.length >= 2) setProjectPalette(nextPal)
+    offerUndo?.(`${route.role} colour`, () => {
+      if (previous) setColorRole(route.role, previous)
+      setProjectPalette(projectPalette)
+    })
+    flashToast?.(
+      route.newColour
+        ? `${route.role} changed — check it still reads as your brand`
+        : `${route.role} adjusted`
+    )
+  }
+
   const applyAaRoleFix = () => {
     const { roles, changes } = suggestRoleAaFixes(
       projectPalette,
@@ -544,22 +561,13 @@ export default function DesignView({
     )
   }
 
-  const fixPairFg = (fg, bg, index) => {
-    const fix = nudgeHexForContrast(fg, bg, 4.5)
-    if (!fix || !fix.changed) {
-      flashMicro?.('Already AA or cannot fix this pair')
-      return
-    }
-    if (typeof index === 'number' && index >= 0) {
-      updatePaletteColor(index, fix.hex)
-      setHexDrafts((d) => {
-        const next = { ...d }
-        delete next[index]
-        return next
-      })
-    }
-    flashMicro?.(`${fg} → ${fix.hex} · ${formatRatio(fix.ratio)}`)
-  }
+  /* `fixPairFg` lived here: a per-PAIR nudge that rewrote one palette entry.
+     Removed with the pairwise list it served. A colour appears in several
+     pairings, so fixing one silently rewrote the verdict of the others — it
+     could not be idempotent by construction, and the designer's model of
+     "what I already fixed" was destroyed by their own next fix, with nothing
+     on screen recording it. Adjustments now happen at ROLE level via
+     `applyReadabilityRoute`, which settles. */
 
   const fmtDiffVal = (v) => {
     if (v === null || v === undefined) return '—'
@@ -1426,88 +1434,13 @@ export default function DesignView({
                   )
                 })()}
 
+                {/* Four pairings a reader will actually meet, each shown as real type
+                    on real colour. Replaced a Background dropdown of raw hex strings
+                    plus a row per remaining colour — that asked the designer to hold a
+                    swatch-to-hex mapping in their head, then judged mostly combinations
+                    nobody would ever set type in. See ReadabilityRows.jsx. */}
                 <div className="palette-checker" style={{ marginTop: '0.85rem' }}>
-                  <label className="field-label" htmlFor="check-bg">
-                    Background
-                  </label>
-                  <select
-                    id="check-bg"
-                    className="palette-bg-select"
-                    value={checkBgIndex}
-                    onChange={(e) => setCheckBgIndex(Number(e.target.value))}
-                  >
-                    {projectPalette.map((c, i) => (
-                      <option key={`${c}-bg-${i}`} value={i}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                  <div
-                    className="palette-check-preview"
-                    style={{ background: checkBg }}
-                  >
-                    <p
-                      className="palette-check-preview-text"
-                      style={{ color: bestTextOn(checkBg) }}
-                    >
-                      Aa
-                    </p>
-                  </div>
-                  <ul className="palette-check-list">
-                    {contrastPairs.length === 0 ? (
-                      <li className="panel-hint">Need two colours to check</li>
-                    ) : (
-                      contrastPairs.map((pair) => (
-                        <li
-                          key={`${pair.fg}-${pair.bg}`}
-                          className="palette-check-row"
-                        >
-                          <span className="palette-check-pair">
-                            <span
-                              className="palette-check-fg"
-                              style={{
-                                background: pair.fg,
-                                color: bestTextOn(pair.fg),
-                              }}
-                            >
-                              Aa
-                            </span>
-                            <span className="palette-check-on">on</span>
-                            <span className="palette-check-bg-chip"
-                              style={{ background: pair.bg }}
-                            />
-                          </span>
-                          <span className="palette-check-ratio">
-                            {formatRatio(pair.ratio)}
-                          </span>
-                          <span
-                            className={`palette-check-badge ${pair.label.level}`}
-                          >
-                            {pair.label.text}
-                          </span>
-                          <span className="palette-check-detail">
-                            {pair.grade.aaNormal
-                              ? 'OK'
-                              : pair.grade.aaLarge
-                                ? 'Large'
-                                : 'Fail'}
-                          </span>
-                          {(!pair.grade.aaNormal && (
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm palette-fix-pair"
-                              title="Nudge lightness until AA body"
-                              onClick={() =>
-                                fixPairFg(pair.fg, pair.bg, pair.index)
-                              }
-                            >
-                              Fix
-                            </button>
-                          ))}
-                        </li>
-                      ))
-                    )}
-                  </ul>
+                  <ReadabilityRows roles={effectiveRoles} onApply={applyReadabilityRoute} />
 
                   <div
                     className="palette-pass-pairs"

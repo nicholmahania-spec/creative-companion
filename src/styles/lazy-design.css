@@ -1851,3 +1851,110 @@
 .design-edit-column .field-textarea:focus {
   border-color: var(--text-primary);
 }
+
+/* ── Readability rows ──────────────────────────────────────────────────────
+   Four pairings a reader will actually meet, each shown as real type on real
+   colour. Replaced a dropdown of raw hex strings plus a list of every other
+   colour against the chosen one — see ReadabilityRows.jsx for why four and
+   not all fifty-six. */
+.readability-rows {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.readability-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr);
+  gap: var(--space-3) var(--space-4);
+  align-items: start;
+}
+
+@media (max-width: 560px) {
+  .readability-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The sample is the point. Whether type is comfortable to read is not fully
+   expressible as a ratio, and the designer's real question is answered by
+   looking rather than by parsing "4.52:1". */
+.readability-sample {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  min-height: 3.5rem;
+}
+
+.readability-sample-text {
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.readability-label {
+  margin: 0 0 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Stated, never alarmed. The shortfall is carried by weight and by the words,
+   which name the gap AND the bar — strictly more use than a colour could be.
+   `nonPunitiveState.test.js` now covers `fail`-shaped selectors, and this one
+   deliberately keeps no hue at all. */
+.readability-verdict {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.readability-verdict.is-short {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.readability-routes {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.readability-route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.readability-route-swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.readability-route-swatches i {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  display: inline-block;
+}
+
+.readability-route-hex {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The one thing on this row that must not be missed: the suggestion clears the
+   bar and is no longer their colour. Weight, not hue. */
+.readability-route-warn {
+  font-weight: 700;
+  color: var(--text-secondary);
+}

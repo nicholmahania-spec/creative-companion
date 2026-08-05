@@ -309,3 +309,16 @@ export function resolutionsFor(fgHex, bgHex, target = WCAG.AA_NORMAL) {
      accepting one without considering that the other side could have moved. */
   return out
 }
+
+/**
+ * The plain sentence for a role pairing: what it is, and what it would need.
+ *
+ * Lives here rather than beside the component so the component file exports
+ * only a component — a file that mixes the two breaks fast refresh, and the
+ * wording is logic anyway: it is the thing the copy rules apply to.
+ */
+export function readabilityLine(pair) {
+  const ratio = `${pair.ratio.toFixed(1)}:1`
+  if (pair.ok) return `${ratio} — comfortable to read`
+  return `${ratio} — this needs ${pair.need}:1 to be easy to read`
+}

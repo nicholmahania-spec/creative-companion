@@ -29,8 +29,9 @@
  */
 import { ESLint } from 'eslint'
 
-/** Measured 2026-08-05, immediately after the first run. A ceiling, not a target. */
-const BUDGET = 140
+/** Measured 2026-08-05. Lowered 140→139 when the readability rewrite removed
+    orphaned code. A ceiling, not a target — lower it whenever you gain ground. */
+const BUDGET = 139
 
 /** Rules that are never allowed, whatever the budget says. */
 const ZERO_TOLERANCE = new Set([
