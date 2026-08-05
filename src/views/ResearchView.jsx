@@ -305,7 +305,7 @@ export default function ResearchView({
                 <p className="research-status" role="status">
                   {starred > 0
                     ? starred >= 6
-                      ? '★ shortlist full'
+                      ? '★ pack full'
                       : `★ ${starred} in pack · room for ${6 - starred}`
                     : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
                 </p>
