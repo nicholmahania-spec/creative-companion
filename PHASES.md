@@ -37,42 +37,95 @@ gets lost quietly.
 - Re-run the full suite, fix whatever remains, one cause at a time.
 - Land PR #124 (heading selectors by role + name).
 
+- **A "download my data" escape hatch, before Phase 2 destroys anything.**
+  Added after review. Decision 2 says existing projects are disposable, and no
+  source disputes that — but the whole store is already one JSON blob under
+  `creative-companion-storage`, so dumping it to a file is minutes of work. It
+  removes the entire class of "I said it didn't matter and I was wrong", which
+  is worth more than the time it costs.
+
 **Not in scope**
 - Any `src/` behaviour change. If a check fails because the app is genuinely
   wrong, that is reported, not silently fixed here.
 
-**Done when:** `npm test` and the full e2e suite are green on `main`.
+**Done when:** `npm test` and the full e2e suite are green on `main`, and the
+current workspace can be exported to a file.
 
-**Risk:** low. Test-only.
+**Risk:** low. Test-only, plus one read-only export.
 
 ---
 
-## Phase 1 — Projects become real rows, and sync exists
+## Phase 1a — The walking skeleton
 
-**The big one.** Everything after this depends on it, and it is the phase most
-likely to lose data if rushed.
+Split out of Phase 1 after review. The original Phase 1 bundled a table, RLS,
+an audit, bidirectional background sync, a conflict rule and a four-state
+indicator — and delivered no product function. Cockburn's walking skeleton is
+"a tiny implementation of the system that performs a small end-to-end
+function… it need not use the final architecture, but it should link together
+the main architectural components." None of "tiny" described the original.
+
+**In scope — the thinnest thing that proves the whole path works**
+- A `projects` table with RLS, audited by `backend-security-auditor` before
+  anything writes to it.
+- Sync **one** project, **one** direction, **manually triggered**. No
+  background loop, no conflict handling, no indicator states.
+- Auth + RLS + the round trip, proven end to end.
+
+**Done when:** one project written locally appears in Supabase, owned by the
+right user, and a different user cannot read it.
+
+**Why this split matters as a measurement:** if 1a is green in a day, the
+ordering was right and this costs nothing. If 1a takes a week, that is the
+signal that Phase 4 should have come first — because Phase 4 needs no Supabase
+at all, and decisions 4/5/6 are currently being paid for by an app with two
+workspace rows.
+
+**Risk: medium.** Bounded, and the point is to find out early.
+
+---
+
+## Phase 1b — Real sync
+
+Only after 1a is green. May be re-ordered after Phase 4 on the strength of
+what 1a measures.
 
 **In scope**
-- A `projects` table in Supabase, owned by a user, with RLS written and then
-  audited by `backend-security-auditor` before anything writes to it.
 - Local storage stays the working copy. The app must still open, read and
   write projects with no network and no sign-in.
-- Background sync local ↔ Supabase, with an explicit, written-down conflict
-  rule (last-write-wins is a decision, not a default — it gets stated).
+- Background sync local ↔ Supabase.
+- **A stated conflict rule — AND the losing version retained.** This is the
+  correction that came out of review, and it is the difference between a safe
+  plan and a lossy one. CouchDB/PouchDB — the most-deployed offline document
+  sync model — picks an arbitrary deterministic winner, and that is only safe
+  *because losing revisions stay fetchable by rev*. Last-write-wins there is a
+  **display** choice applied after both versions are durably stored, never a
+  storage choice. Their guidance is blunt: *"In your code, you should always be
+  handling conflicts. No matter how unlikely it may seem, 409s can and do
+  occur."* A `projects` row is document-shaped, so a laptop editing the client
+  fields and a phone editing the wall notes resolve to one row — and without
+  retention, one side's work is gone with nothing to recover it from.
+- **The client-portal merge path is IN scope**, reversing the original
+  exclusion. `mergeDetectiveAnswers` / `mergeDiscoveryAnswers` already write
+  client-submitted answers into a project. That is a live second writer, so it
+  crosses the new sync boundary by definition and cannot be scoped out of a
+  phase about concurrent writes.
 - A visible, honest sync state: synced / syncing / offline / failed. Failure
   stays on screen with a retry rather than disappearing into a toast.
 
 **Not in scope**
-- Moving `strategy_attributes`, `brand_tokens` or `decisions` yet. Those come
-  in Phase 3, once the projects table has proven stable.
-- Any change to what the client portal reads.
+- `strategy_attributes`, `brand_tokens`, `decisions`. Those come in Phase 3.
 
 **Done when:** a project created offline appears in Supabase after
-reconnecting; a project edited in two places resolves by the stated rule; the
-offline e2e test passes; the security audit is clean.
+reconnecting; a project edited in two places resolves by the stated rule **and
+the losing version is still reachable**; a client portal submission during an
+offline window is not lost; the offline e2e test passes; the audit is clean.
 
 **Risk: high.** The failure mode is silent data loss, which does not announce
-itself. Budget for this phase being slower than it looks.
+itself. Budget for this being slower than it looks.
+
+**Worth noting:** Phase 3's `decisions` table is append-only in shape, and
+append-only rows never conflict. The most valuable table in the plan may be
+the one that least needs any of this machinery.
 
 ---
 
@@ -100,6 +153,19 @@ name them correctly, and no module holds its own copy of the list.
 
 **Risk: medium-high.** Wide blast radius — historically nine modules held
 private copies of this list and exactly one got updated.
+
+**One constraint carried in from review.** No evidence was found that more
+stages is worse for this audience — the one peer-reviewed source retrieved,
+Weick's *Small Wins* (American Psychologist, 1984), argues the opposite: large
+framing "exceeds bounded rationality and induces dysfunctional levels of
+arousal", and recasting work as smaller concrete outcomes is what restores
+action. That supports ten over five.
+
+But `DEVELOPMENT.md` records that a survey of unfinished stages is a backlog,
+and a backlog turns "I'm working" into "I'm behind" — and ten stops make that
+survey twice as long. That is a constraint on **how the ten are displayed**
+(journey bar, desk, completion gates), not an argument against declaring ten.
+Never show all ten as an unfinished list; show where you are and what is next.
 
 ---
 
@@ -226,5 +292,5 @@ flip.
   `home-dash-title`, `login-h1`, `clients-view-title`, `client-record-name`,
   `create-title`, `bbb-panel__title`. A design-system call, deliberately not
   forced by a test selector.
-- **Conflict rule for sync** (Phase 1). Needs stating explicitly before it is
+- **Conflict rule for sync** (Phase 1b). Needs stating explicitly before it is
   implemented.
