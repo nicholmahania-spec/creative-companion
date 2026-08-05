@@ -3779,7 +3779,7 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .app.deep .palette-check-badge.fail {
-  color: #FCA5A5;
+  color: #E4E4E4;
 }
 
 .brand-type-body {

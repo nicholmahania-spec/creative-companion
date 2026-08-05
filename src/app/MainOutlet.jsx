@@ -92,6 +92,7 @@ export default function MainOutlet(p) {
     startVoice,
     setActiveView,
     flashToast,
+    offerUndo,
     flashMicro,
     notifyAction,
     // home
@@ -500,6 +501,7 @@ export default function MainOutlet(p) {
         hidePackWatermark={hidePackWatermark}
         setActiveView={setActiveView}
         flashToast={flashToast}
+        offerUndo={offerUndo}
         flashMicro={flashMicro}
         brandEditSectionProp={brandEditSection}
         setBrandEditSectionProp={setBrandEditSection}

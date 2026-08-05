@@ -84,3 +84,63 @@ describe('logoDontsList / appendSystemMarkdown', () => {
     expect(md).toMatch(/Logo don'ts|Logo don’ts|Logo/i)
   })
 })
+
+describe('every assigned colour job reaches the client', () => {
+  /* The gap this pins. `roleRows` feeds tokens.css, tokens.json, brand.md and
+     the brand book's swatch labels — it is the entire route by which a colour's
+     JOB (not just its hex) reaches the client. It was a hardcoded list of the
+     original four, so when the vocabulary grew to nine, a designer could assign
+     a Secondary or a Neutral and the client would never learn which hex it was.
+     The colour still shipped, anonymously, as a numbered swatch.
+
+     Nothing caught it: 999 tests were green, and the test above still passes
+     honestly because its fixture assigns no roles at all, so `mapPaletteRoles`
+     supplies exactly the legacy four. */
+  it('carries Secondary and Neutrals through, not just the original four', async () => {
+    const { buildColorSystem } = await import('./brandSystem.js')
+    const sys = buildColorSystem(
+      ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9', '#7C3AED'],
+      {
+        cover: '#1C1917',
+        secondary: '#7C3AED',
+        accent: '#0F766E',
+        neutral: '#A8A29E',
+        text: '#1C1917',
+        quiet: '#FAFAF9',
+      }
+    )
+    const roles = sys.roleRows.map((r) => r.role)
+    expect(roles).toContain('secondary')
+    expect(roles).toContain('neutral')
+  })
+
+  it('skips a job nobody assigned rather than emitting it blank', () => {
+    /* An unanswered job is not an answer. Printing `accent3: ""` into a
+       client's token file would be worse than omitting it — the same rule
+       `brandRoles.test.js` pins for the UI. */
+    const sys = buildColorSystem(['#0C0A09', '#FAFAF9', '#0F766E'])
+    expect(sys.roleRows.every((r) => r.hex)).toBe(true)
+    expect(sys.roleRows.map((r) => r.role)).not.toContain('accent3')
+  })
+
+  it('labels jobs the way the designer was shown them', () => {
+    /* The client's brand.md said "cover" and "quiet" — the app's own internal
+       storage keys — where the designer had been shown "Primary" and
+       "Background". */
+    const sys = buildColorSystem(['#0C0A09', '#FAFAF9', '#0F766E'])
+    const cover = sys.roleRows.find((r) => r.role === 'cover')
+    expect(cover.label).toBe('Primary')
+    const quiet = sys.roleRows.find((r) => r.role === 'quiet')
+    expect(quiet?.label).toBe('Background')
+  })
+
+  it('describes what every job is for', () => {
+    // A job with no description reaches the client as a bare hex with a name
+    // and no guidance — which is what a brand book exists to prevent.
+    const sys = buildColorSystem(
+      ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9', '#7C3AED'],
+      { secondary: '#7C3AED', neutral: '#A8A29E' }
+    )
+    for (const r of sys.roleRows) expect(r.job, r.role).toBeTruthy()
+  })
+})

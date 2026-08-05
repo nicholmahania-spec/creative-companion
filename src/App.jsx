@@ -4016,6 +4016,7 @@ function App() {
           startVoice={startVoice}
           setActiveView={setActiveView}
           flashToast={flashToast}
+          offerUndo={offerUndo}
           flashMicro={flashMicro}
           notifyAction={notifyAction}
           activeProjects={activeProjects}

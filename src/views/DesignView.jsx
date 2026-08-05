@@ -26,10 +26,11 @@ import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
   DEFAULT_PALETTE,
   normalizeHex,
-  buildPairChecks,
   buildPassPairs,
   bestTextOn,
   formatRatio,
+  BRAND_ROLE_KEYS,
+  BRAND_ROLE_LABELS,
   mapPaletteRoles,
   fontFamilyFromLabel,
   TYPE_PAIRS,
@@ -38,22 +39,46 @@ import {
   extractPaletteFromPins,
   suggestRoleAaFixes,
   mergeRolesIntoPalette,
-  nudgeHexForContrast,
   paletteHealthScore,
+  healthLabel,
+  healthScopeLabels,
   suggestRoleColor,
 } from '../lib/color'
 import { loadTypePairFont, loadBrandFamilies } from '../lib/book/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
 import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
+import ReadabilityRows from '../features/palette/ReadabilityRows'
 import '../styles/lazy-design.css'
 
 /** User-facing labels for palette role chips (store keys stay cover/text/…). */
-const ROLE_LABELS = {
-  cover: 'Primary',
-  accent: 'Accent',
-  text: 'Ink',
-  quiet: 'Paper',
-}
+/* Labels and the job list both come from color.js now. They were a private
+   copy here, which is how "Primary" on screen and `cover` in the store drifted
+   apart from the store's own whitelist — a role could be offered in the UI and
+   silently rejected on save. One list, one set of names. */
+const ROLE_LABELS = BRAND_ROLE_LABELS
+
+/* What the health meter reads, said out loud. The palette offers nine jobs
+   and the score looks at four of them; without this line, filling in the
+   other five and seeing the number not move reads as the meter being
+   broken. Written once and shown in both states — a scored panel and an
+   unscored one need the same explanation. */
+const HEALTH_SCOPE_NOTE = (() => {
+  const names = healthScopeLabels()
+  const list =
+    names.length > 1
+      ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+      : names[0]
+  /* The second clause was "Your other colours don't count against it" — a
+     denial, which makes the reader construct the penalty in order to
+     discard it, and the only place on this screen that raised the idea of
+     being penalised at all. It also answered the wrong question: after
+     writing five rationales the live question is "did that land anywhere?",
+     not "was I punished?". It lands — `colorRoles` is copied wholesale into
+     both the version snapshot and the export payload, so all nine jobs
+     reach the client's files. "Jobs" matches the "Colour jobs" heading
+     below rather than introducing a second word for the same thing. */
+  return `Reads ${list}, plus how the palette sits together. Your other jobs are saved with the brand — they just don't move this number.`
+})()
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
@@ -66,6 +91,7 @@ export default function DesignView({
   hidePackWatermark = false,
   setActiveView,
   flashToast,
+  offerUndo,
   flashMicro,
   /** One-shot deep link from Review/Deliver readiness — cleared after apply */
   brandEditSectionProp = null,
@@ -140,7 +166,6 @@ export default function DesignView({
   }
   const [deepLinkFocus, setDeepLinkFocus] = useState(null)
   const [brandRoleAssign, setBrandRoleAssign] = useState('cover')
-  const [checkBgIndex, setCheckBgIndex] = useState(0)
   const [hexDrafts, setHexDrafts] = useState({})
   const [extractingPins, setExtractingPins] = useState(false)
   const [showPassPairs, setShowPassPairs] = useState(false)
@@ -163,11 +188,7 @@ export default function DesignView({
   const [loadingTemplates, setLoadingTemplates] = useState(false)
 
 
-  useEffect(() => {
-    if (checkBgIndex >= projectPalette.length) {
-      setCheckBgIndex(Math.max(0, projectPalette.length - 1))
-    }
-  }, [projectPalette.length, checkBgIndex])
+
 
   /* Live brand tokens → :root / .app so swatches and previews share one map. */
   useEffect(() => {
@@ -440,24 +461,18 @@ export default function DesignView({
 
   const effectiveRoles = useMemo(() => {
     const o = activeProject?.colorRoles || {}
-    return {
-      cover: normalizeHex(o.cover) || paletteRoles.cover,
-      text: normalizeHex(o.text) || paletteRoles.text,
-      accent: normalizeHex(o.accent) || paletteRoles.accent,
-      quiet: normalizeHex(o.quiet) || paletteRoles.quiet,
+    /* Every job the vocabulary knows, not just the original four. The extra
+       slots (Secondary, further Accents, Neutrals) have NO fallback on
+       purpose: an unassigned job is unanswered, not wrong, and inventing a
+       default for it would put a colour in a role the designer never chose
+       and then measure them against it. `roleContrastPairs` already filters
+       unassigned roles out rather than failing them. */
+    const out = {}
+    for (const key of BRAND_ROLE_KEYS) {
+      out[key] = normalizeHex(o[key]) || paletteRoles[key] || ''
     }
+    return out
   }, [activeProject?.colorRoles, paletteRoles])
-
-  const checkBg =
-    projectPalette[checkBgIndex] ||
-    paletteRoles.background ||
-    projectPalette[0] ||
-    '#FFFFFF'
-
-  const contrastPairs = useMemo(
-    () => buildPairChecks(projectPalette, checkBg),
-    [projectPalette, checkBg]
-  )
 
   const passPairs = useMemo(
     () => buildPassPairs(projectPalette, 4.5).slice(0, 12),
@@ -524,6 +539,39 @@ export default function DesignView({
     }
   }
 
+  /**
+   * Apply one suggested route from a readability row.
+   *
+   * Fixes at ROLE level, never per pair. A colour holds a job, and the same
+   * colour appears in more than one pairing — nudging it for one row silently
+   * rewrites the verdict of the others, which is how a designer ends up
+   * chasing the same problem around the screen. Setting the role keeps the
+   * palette and the export in step, the way `applyAaRoleFix` already does.
+   *
+   * Undo, not a confirmation. CLAUDE.md §2: "every destructive or reordering
+   * action gets a 5-second undo toast rather than a confirmation dialog —
+   * confirmation dialogs are a decision; undo is not." An adjustment that
+   * cannot be taken back is not a suggestion, whatever the button says.
+   */
+  const applyReadabilityRoute = (route) => {
+    if (!route?.role || !route?.to) return
+    const previous = (activeProject?.colorRoles || {})[route.role]
+    setColorRole(route.role, route.to)
+    const nextPal = projectPalette.map((c) =>
+      c?.toLowerCase() === String(route.from).toLowerCase() ? route.to : c
+    )
+    if (nextPal.length >= 2) setProjectPalette(nextPal)
+    offerUndo?.(`${route.role} colour`, () => {
+      if (previous) setColorRole(route.role, previous)
+      setProjectPalette(projectPalette)
+    })
+    flashToast?.(
+      route.newColour
+        ? `${route.role} changed — check it still reads as your brand`
+        : `${route.role} adjusted`
+    )
+  }
+
   const applyAaRoleFix = () => {
     const { roles, changes } = suggestRoleAaFixes(
       projectPalette,
@@ -544,22 +592,13 @@ export default function DesignView({
     )
   }
 
-  const fixPairFg = (fg, bg, index) => {
-    const fix = nudgeHexForContrast(fg, bg, 4.5)
-    if (!fix || !fix.changed) {
-      flashMicro?.('Already AA or cannot fix this pair')
-      return
-    }
-    if (typeof index === 'number' && index >= 0) {
-      updatePaletteColor(index, fix.hex)
-      setHexDrafts((d) => {
-        const next = { ...d }
-        delete next[index]
-        return next
-      })
-    }
-    flashMicro?.(`${fg} → ${fix.hex} · ${formatRatio(fix.ratio)}`)
-  }
+  /* `fixPairFg` lived here: a per-PAIR nudge that rewrote one palette entry.
+     Removed with the pairwise list it served. A colour appears in several
+     pairings, so fixing one silently rewrote the verdict of the others — it
+     could not be idempotent by construction, and the designer's model of
+     "what I already fixed" was destroyed by their own next fix, with nothing
+     on screen recording it. Adjustments now happen at ROLE level via
+     `applyReadabilityRoute`, which settles. */
 
   const fmtDiffVal = (v) => {
     if (v === null || v === undefined) return '—'
@@ -1077,25 +1116,14 @@ export default function DesignView({
                    to open at 20% in red on an untouched project — a mark
                    against you for not having started, which is the exact
                    shape of feedback this app exists to remove. Until there
-                   is something to measure it reads as a dash. */
-                if (health.score === null) {
-                  return (
-                    <div className="palette-health">
-                      <div className="palette-health-head">
-                        <span className="field-label" style={{ margin: 0 }}>
-                          Palette health
-                        </span>
-                        <span className="palette-health-score is-idle">—</span>
-                      </div>
-                    </div>
-                  )
-                }
-                const healthWord =
-                  health.score >= 80
-                    ? 'Solid'
-                    : health.score >= 50
-                      ? 'Getting there'
-                      : 'Tighten roles'
+                   is something to measure it reads as a dash.
+
+                   One panel, two states — not two panels. The scope note has
+                   to appear in both, and the earlier version of this that
+                   returned early duplicated the head markup, which is how a
+                   line ends up on one branch only. */
+                const idle = health.score === null
+                const { word, band } = healthLabel(health)
                 return (
                   <div className="palette-health">
                     <div className="palette-health-head">
@@ -1103,24 +1131,32 @@ export default function DesignView({
                         Palette health
                       </span>
                       <span
-                        className={`palette-health-score${
-                          health.score >= 80
-                            ? ' is-good'
-                            : health.score >= 50
-                              ? ' is-mid'
-                              : ' is-low'
-                        }`}
-                        title={`${health.score}%`}
+                        className={`palette-health-score ${band}`}
+                        title={idle ? undefined : `${health.score}%`}
                       >
-                        {healthWord}
+                        {word}
                       </span>
                     </div>
-                    <div className="palette-health-bar" aria-hidden="true">
-                      <div
-                        className="palette-health-bar-fill"
-                        style={{ width: `${health.score}%` }}
-                      />
-                    </div>
+                    {!idle && (
+                      <div className="palette-health-bar" aria-hidden="true">
+                        <div
+                          className="palette-health-bar-fill"
+                          style={{ width: `${health.score}%` }}
+                        />
+                      </div>
+                    )}
+                    {/* The hue verdict is 20% of the score and was rendered
+                        NOWHERE — the panel named a judgment ("how the whole
+                        palette sits together") that the designer had no way
+                        to see, check or act on. It is already written in the
+                        app's voice; it shows at the one moment it is the
+                        thing to act on, rather than as a permanent row. */}
+                    {health.weakest === 'harmony' && health.harmony?.note && (
+                      <p className="palette-health-scope">
+                        {health.harmony.note}
+                      </p>
+                    )}
+                    <p className="palette-health-scope">{HEALTH_SCOPE_NOTE}</p>
                   </div>
                 )
               })()}
@@ -1327,14 +1363,26 @@ export default function DesignView({
                     Colour jobs
                   </p>
                 </div>
-                <div className="system-role-assign" style={{ marginTop: '0.45rem' }}>
-                  {['cover', 'accent', 'text', 'quiet'].map((role) => (
+                {/* A mode switch, and it must say so. Every subsequent click on
+                    the palette row writes into whichever job is armed, so a
+                    screen-reader user could overwrite Primary while intending
+                    Accent 2 with no feedback at all — the selected state lived
+                    only in a CSS class. Nine jobs multiply the number of wrong
+                    destinations. */}
+                <div
+                  className="system-role-assign"
+                  role="group"
+                  aria-label="Which job to assign next"
+                  style={{ marginTop: '0.45rem' }}
+                >
+                  {BRAND_ROLE_KEYS.map((role) => (
                     <button
                       key={role}
                       type="button"
                       className={`role-pick-chip${brandRoleAssign === role ? ' is-active' : ''}`}
                       onClick={() => setBrandRoleAssign(role)}
-                      title={`${ROLE_LABELS[role]} · ${effectiveRoles[role]}`}
+                      aria-pressed={brandRoleAssign === role}
+                      title={`${ROLE_LABELS[role]} · ${effectiveRoles[role] || 'not chosen yet'}`}
                     >
                       {ROLE_LABELS[role]}
                       <span
@@ -1426,88 +1474,30 @@ export default function DesignView({
                   )
                 })()}
 
+                {/* Four pairings a reader will actually meet, each shown as real type
+                    on real colour. Replaced a Background dropdown of raw hex strings
+                    plus a row per remaining colour — that asked the designer to hold a
+                    swatch-to-hex mapping in their head, then judged mostly combinations
+                    nobody would ever set type in. See ReadabilityRows.jsx. */}
                 <div className="palette-checker" style={{ marginTop: '0.85rem' }}>
-                  <label className="field-label" htmlFor="check-bg">
-                    Background
-                  </label>
-                  <select
-                    id="check-bg"
-                    className="palette-bg-select"
-                    value={checkBgIndex}
-                    onChange={(e) => setCheckBgIndex(Number(e.target.value))}
-                  >
-                    {projectPalette.map((c, i) => (
-                      <option key={`${c}-bg-${i}`} value={i}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                  <div
-                    className="palette-check-preview"
-                    style={{ background: checkBg }}
-                  >
-                    <p
-                      className="palette-check-preview-text"
-                      style={{ color: bestTextOn(checkBg) }}
-                    >
-                      Aa
-                    </p>
-                  </div>
-                  <ul className="palette-check-list">
-                    {contrastPairs.length === 0 ? (
-                      <li className="panel-hint">Need two colours to check</li>
-                    ) : (
-                      contrastPairs.map((pair) => (
-                        <li
-                          key={`${pair.fg}-${pair.bg}`}
-                          className="palette-check-row"
-                        >
-                          <span className="palette-check-pair">
-                            <span
-                              className="palette-check-fg"
-                              style={{
-                                background: pair.fg,
-                                color: bestTextOn(pair.fg),
-                              }}
-                            >
-                              Aa
-                            </span>
-                            <span className="palette-check-on">on</span>
-                            <span className="palette-check-bg-chip"
-                              style={{ background: pair.bg }}
-                            />
-                          </span>
-                          <span className="palette-check-ratio">
-                            {formatRatio(pair.ratio)}
-                          </span>
-                          <span
-                            className={`palette-check-badge ${pair.label.level}`}
-                          >
-                            {pair.label.text}
-                          </span>
-                          <span className="palette-check-detail">
-                            {pair.grade.aaNormal
-                              ? 'OK'
-                              : pair.grade.aaLarge
-                                ? 'Large'
-                                : 'Fail'}
-                          </span>
-                          {(!pair.grade.aaNormal && (
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm palette-fix-pair"
-                              title="Nudge lightness until AA body"
-                              onClick={() =>
-                                fixPairFg(pair.fg, pair.bg, pair.index)
-                              }
-                            >
-                              Fix
-                            </button>
-                          ))}
-                        </li>
-                      ))
-                    )}
-                  </ul>
+                  {/* RAW colorRoles, not effectiveRoles. effectiveRoles fills
+                      the four legacy keys from `mapPaletteRoles`, so passing it
+                      here made a brand-new project open reporting two contrast
+                      failures for roles the designer had never assigned —
+                      white-on-cream at 1.0:1 among them. Worse, each phantom
+                      failure offered an Adjust button that WRITES a real role,
+                      so acting on the illusion created state.
+                      `ReadabilityRows` states the invariant in its own header
+                      ("an unassigned role is absent, never failed") and this
+                      argument was quietly breaking it. The health score two
+                      panels up already passes the raw map, so the same screen
+                      was reporting "0 roles assigned" and two role failures at
+                      the same time. effectiveRoles stays for the chip swatch
+                      previews, which genuinely do want a fallback to show. */}
+                  <ReadabilityRows
+                    roles={activeProject?.colorRoles || {}}
+                    onApply={applyReadabilityRoute}
+                  />
 
                   <div
                     className="palette-pass-pairs"

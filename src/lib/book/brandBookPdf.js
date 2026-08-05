@@ -1150,27 +1150,40 @@ export async function downloadBrandPackVectorPdf(
     const drawColorSection = (s) => {
       sectionOpen(s.num, s.divider, false, s.page)
 
-      // Swatch row — the palette, named and specified
-      const cols = Math.min(4, Math.max(1, colors.length))
+      /* Swatch grid — the palette, named and specified.
+         WRAPS rather than truncating. This was `colors.slice(0, 4)`, so a
+         palette of five or more silently lost the rest: the screen showed six
+         swatches and the client's book printed four, with no indication that
+         anything had been dropped. Worse, it cut by palette INDEX rather than
+         by role, so with the palette reordered the discarded colour could be
+         the Background. The store allows eight palette colours and the role
+         vocabulary now has nine jobs, so passing four is the normal case, not
+         an edge one. */
+      const perRow = Math.min(4, Math.max(1, colors.length))
       const gap = px(14)
-      const swW = (contentW - gap * (cols - 1)) / cols
-      const shown = colors.slice(0, cols)
-      shown.forEach((hex, i) => {
+      const swW = (contentW - gap * (perRow - 1)) / perRow
+      const swH = px(80)
+      const rowH = swH + px(10) + KICKER_PT + px(16)
+      colors.forEach((hex, i) => {
         const rgb = hexToRgb(hex) || [0, 0, 0]
-        const x = margin + i * (swW + gap)
-        box(x, y, swW, px(80), rgb)
+        const col = i % perRow
+        const row = Math.floor(i / perRow)
+        const x = margin + col * (swW + gap)
+        const yy = y + row * rowH
+        box(x, yy, swW, swH, rgb)
         /* Cream on cream is invisible without an edge, exactly as the design
            outlines its lightest swatch. */
-        if (contrastRatio(hex, creamHex) < 1.25) outline(x, y, swW, px(80), mixRgb(INK, CREAM, 0.2), 0.6)
+        if (contrastRatio(hex, creamHex) < 1.25) outline(x, yy, swW, swH, mixRgb(INK, CREAM, 0.2), 0.6)
         const role = colorSys.roleRows.find((r) => r.hex === hex)
         kicker(
-          `${role ? role.role : `Swatch ${i + 1}`} · ${hex.toUpperCase()}`,
+          `${role ? role.label || role.role : `Swatch ${i + 1}`} · ${hex.toUpperCase()}`,
           x,
-          y + px(80) + px(10) + KICKER_PT * 0.82,
+          yy + swH + px(10) + KICKER_PT * 0.82,
           KICKER_CREAM
         )
       })
-      y += px(80) + px(10) + KICKER_PT + px(26)
+      const swatchRows = Math.max(1, Math.ceil(colors.length / perRow))
+      y += swatchRows * rowH + px(10)
 
       // Proportion bar — the roles' shares of a layout
       kicker('Color usage proportion', margin, y + KICKER_PT * 0.82, KICKER_CREAM)
