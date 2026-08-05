@@ -14,7 +14,14 @@
  *
  * What's next (path-rebuild audit): path gap is the primary job; lastView
  * resume only when it opens a *different* place — secondary, never a second
- * equal Continue. Mark done stays secondary next to Open {stop}.
+ * equal Continue.
+ *
+ * The gap card carries ONE button, `Open {stop}`. Already done / Skip this one
+ * are quiet links beside it, not buttons: they are administrative, and putting
+ * them at equal weight made the reader classify the stage before they were
+ * allowed to start it. They cannot move off this card — it is the only route
+ * in the app to either action — so weight does the work deletion would have.
+ * `deskCardWeight.test.js` holds both halves.
  */
 import { labelForView, labelForStepId } from '../lib/journey/journey'
 
@@ -63,6 +70,48 @@ export function deskPickup({ lastView = null, gapView = null } = {}) {
   /* No path gap left → resume is the only pickup (path full / all skipped). */
   if (!gapView) return { showResume: true, resumePrimary: true }
   return { showResume: true, resumePrimary: false }
+}
+
+/**
+ * One sentence naming what you were in the middle of.
+ *
+ * The desk already had a "Back to Identity" control with the subtitle "where
+ * you left off". That names a DESTINATION, and a destination reloads the room
+ * without reloading the thought. Coming back days later, working memory has
+ * nothing to reconstruct from, so the first minutes are spent re-reading your
+ * own work to find the thread — and that re-read is where a session dies
+ * before it starts.
+ *
+ * So this states the situation instead: the stage you were on, and whether the
+ * client owes you anything. Text, never a button — a second clickable pickup
+ * would fork the one initiation path `deskPickup` exists to keep single.
+ *
+ * TONE IS PART OF THE CONTRACT. It never counts elapsed time and never says
+ * how long something has been waiting. "It's been 12 days" is information the
+ * user cannot act on and will read as an accusation; the audience most likely
+ * to have left it 12 days is the audience most likely to close the tab rather
+ * than face the sentence. Name the state, not the gap.
+ *
+ * @param {{ stopLabel?: string, unreadClient?: boolean, waitingOnClient?: boolean }} a
+ * @returns {string} '' when there is nothing worth saying
+ */
+export function lastTouchSentence({
+  stopLabel = '',
+  unreadClient = false,
+  waitingOnClient = false,
+} = {}) {
+  const stop = String(stopLabel || '').trim()
+  // A fresh project has no history to recall; silence beats a sentence that
+  // says nothing, which would just be one more thing on the screen.
+  if (!stop && !unreadClient && !waitingOnClient) return ''
+
+  const where = stop ? `Last time you were in ${stop}.` : ''
+  const client = unreadClient
+    ? 'The client has sent something since.'
+    : waitingOnClient
+      ? 'Nothing from the client since.'
+      : ''
+  return [where, client].filter(Boolean).join(' ')
 }
 
 /** Relative age for mock timestamps — 2h / Yesterday / 2 days / 1 week. */
@@ -230,6 +279,18 @@ export default function DeskView({
   const resumeLabel = pickup.showResume
     ? labelForView(project.lastView)
     : ''
+
+  /* Built only from what is already stored — no new field, no new write.
+     `lastView` is set on navigation; the client rows are already loaded for
+     the activity list below. */
+  const lastTouch = lastTouchSentence({
+    stopLabel: project?.lastView ? labelForView(project.lastView) : '',
+    unreadClient,
+    /* "Nothing since" is only true if there IS a client thread and nothing
+       new arrived in it. With no thread at all the honest answer is silence,
+       not a claim about a conversation that never started. */
+    waitingOnClient: activity.length > 0 && !unreadClient,
+  })
 
   return (
     <div className="desk-view view-enter">
@@ -451,6 +512,10 @@ export default function DeskView({
               </div>
             </div>
 
+            {/* Above the card on purpose: it is context for the decision the
+                card is about to ask for, so it has to be read first. */}
+            {lastTouch && <p className="desk-last-touch">{lastTouch}</p>}
+
             {gapRow && (
               <div className="desk-card">
                 <button
@@ -525,7 +590,11 @@ export default function DeskView({
                 {pickup.resumePrimary
                   ? `Back to ${resumeLabel}`
                   : `Or back to ${resumeLabel}`}
-                <span className="desk-resume-sub">where you left off</span>
+                {/* The "where you left off" subtitle used to sit here. The
+                    sentence above the card now says that, and better — it
+                    names what you were doing rather than only where. Two
+                    surfaces telling the reader the same thing is a cost with
+                    no matching benefit. */}
               </button>
             ) : null}
 

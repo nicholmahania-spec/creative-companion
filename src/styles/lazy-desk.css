@@ -375,13 +375,18 @@
   color: var(--text-primary);
 }
 
-.desk-resume-sub {
+/* One sentence saying what you were in the middle of, above the gap card.
+   Quiet by design: it is context for the decision the card asks for, not a
+   thing to act on. Muted and unclickable — a second pickup control here would
+   fork the single initiation path the card exists to protect. */
+.desk-last-touch {
+  margin: 0 0 var(--space-3);
   font-size: var(--fs-1);
-  font-weight: 500;
   color: var(--text-muted);
+  line-height: 1.45;
 }
 
-/* Gap card — Open {stop} is primary; Mark done secondary */
+/* Gap card — Open {stop} is the one button; done/skip are quiet asides */
 .desk-card {
   display: flex;
   flex-direction: column;
