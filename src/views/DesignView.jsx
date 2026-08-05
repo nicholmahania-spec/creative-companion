@@ -20,6 +20,8 @@ import { messageDayLabel } from '../lib/client/messageDayLabel'
 import AlignmentBars from '../components/AlignmentBars'
 import AxisTagger from '../components/AxisTagger'
 import { strategyProfile } from '../lib/brand/alignment'
+import { axesForPalette, vetoBreaches } from '../lib/brand/colourAxes'
+import { axesForTypeface, missingFonts } from '../lib/brand/typeMetrics'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
   DEFAULT_PALETTE,
@@ -104,6 +106,44 @@ export default function DesignView({
   const typeTags = activeProject?.brandTokenTags?.typeface || {}
   const typeTagged = Object.values(typeTags).some(
     (v) => v !== null && v !== undefined && v !== ''
+  )
+  /* Fonts the project names that this browser cannot render. Everything
+     previewed or exported with one of these is silently substituted, which
+     is how a client ends up looking at a specimen of the wrong typeface. */
+  const absentFonts = useMemo(
+    () => missingFonts(activeProject),
+    [activeProject?.typeHeading, activeProject?.typeBody]
+  )
+  /* Only weight is honestly readable from a font. The rest come back null
+     and remain the designer's to place. */
+  const typeRead = useMemo(() => {
+    const a = axesForTypeface(activeProject?.typeHeading)
+    return a.weight === null ? {} : { weight: a.weight }
+  }, [activeProject?.typeHeading])
+  /* Read from the palette itself rather than from sliders the designer
+     moved. Formality and Era come back null on purpose — nothing in a hex
+     makes a colour formal or retro, and guessing is what made the old panel
+     call a forbidden orange a match. */
+  const paletteAxes = useMemo(
+    () => axesForPalette(projectPalette || []),
+    [projectPalette]
+  )
+  /* The client's own stated vetoes, read back against the palette. The
+     cheapest useful second opinion in the app: no judgement required,
+     because the client already said it. */
+  const colourVetoes = useMemo(
+    () =>
+      vetoBreaches(
+        projectPalette || [],
+        [
+          activeProject?.detective?.avoid,
+          activeProject?.detective?.colorNotes,
+          activeProject?.brief,
+        ]
+          .filter(Boolean)
+          .join('\n')
+      ),
+    [projectPalette, activeProject?.detective?.avoid, activeProject?.brief]
   )
   const setIdentitySubstep = (id) => {
     const next = resolveIdentitySubstep(id)
@@ -631,45 +671,6 @@ export default function DesignView({
                 )
               })}</nav>
 
-            {/* Focus Timer */}
-            <div className="insights-timer" style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-              {isFocusRunning || focusLeft < POMODORO_WORK_MIN * 60
-                ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')}`
-                : 'not started'}
-            </div>
-            <div className="insights-focus-actions" style={{ marginBottom: '1.5rem' }}>
-              <button
-                type="button"
-                onClick={startOrPauseFocus}
-                className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
-                disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
-              >
-                {isFocusRunning ? 'Pause' : focusLeft === 0 ? 'Start' : 'Resume'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setTimerFocusSource?.(null)
-                  resetFocus(25)
-                }}
-                className="btn btn-secondary btn-sm"
-                disabled={!!forcedBreak}
-              >
-                25
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setTimerFocusSource?.(null)
-                  resetFocus(2)
-                }}
-                className="btn btn-ghost btn-sm"
-                disabled={!!forcedBreak}
-              >
-                2
-              </button>
-            </div>
-
             <div className="design-edit-column">
             {identitySubstep === 'logo' && (
             <section
@@ -1055,6 +1056,29 @@ export default function DesignView({
                 <h2 className="design-section-title">Colour</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
+
+              {/* Same loop as Type: the words from Strategy come back here,
+                  at the moment colour is chosen. One component, because a
+                  second way of drawing the same comparison is a second thing
+                  to keep in step. */}
+              {/* Reads the ACTUAL hex values, not sliders. Swapping the
+                  palette moves these bars; that is the whole point. */}
+              <details className="design-align" open>
+                <summary>How this palette compares to your strategy</summary>
+                {colourVetoes.length > 0 && (
+                  <p className="align-veto" role="status">
+                    Your brief says no {[...new Set(colourVetoes.map((v) => v.family))].join(' or ')}.
+                    {' '}
+                    {colourVetoes.map((v) => v.hex).join(', ')} is in the palette.
+                  </p>
+                )}
+                <AlignmentBars
+                  target={strategyProfile(activeProject?.strategyAttributes || [])}
+                  token={paletteAxes}
+                  thingLabel="this palette"
+                  derived
+                />
+              </details>
               {(() => {
                 const health = paletteHealthScore({
                   palette: projectPalette,
@@ -1557,6 +1581,20 @@ export default function DesignView({
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
 
+              {/* The font check comes FIRST and is the useful part here. A
+                  specimen set in a substitute misleads the client rather
+                  than informing them, and it reaches the client-facing
+                  artboard and the PDFs, not just this screen. */}
+              {absentFonts.length > 0 && (
+                <p className="align-veto" role="status">
+                  {absentFonts.join(' and ')}{' '}
+                  {absentFonts.length === 1 ? 'is' : 'are'} not available on
+                  this computer. Previews and exports will substitute another
+                  face, so anything you show a client from here will not be
+                  set in the type you specified.
+                </p>
+              )}
+
               {/* Decision memory, closing the loop: the words set in
                   Strategy reappear HERE, at the moment type is chosen,
                   rather than sitting in a document nobody reopens. It
@@ -1565,11 +1603,22 @@ export default function DesignView({
                 <summary>How this compares to your strategy</summary>
                 <AlignmentBars
                   target={strategyProfile(activeProject?.strategyAttributes || [])}
-                  token={typeTags}
-                  tokenName={activeProject?.typeHeading || 'this typeface'}
+                  token={{ ...typeTags, ...typeRead }}
+                  thingLabel="this pairing"
                 />
+                {/* Letterforms give up far less than hex does. Weight is
+                    measurable from the rendered font; warmth, formality and
+                    era are cultural readings of letterforms, so they stay
+                    the designer's to place rather than being guessed. */}
+                {/* Say which it is. Claiming "Weight is read from the font"
+                    unconditionally was false whenever the font is absent —
+                    which is most of the time, since the specified faces are
+                    usually not installed. A cold-start run found it stating
+                    that while every bar read "not placed yet". */}
                 <p className="align-tag-lead">
-                  Where does {activeProject?.typeHeading || 'this typeface'} sit?
+                  {typeRead.weight === undefined
+                    ? `Nothing here is read from the letterforms — where would you put ${activeProject?.typeHeading || 'this typeface'}?`
+                    : `Weight is read from the font. Where would you put ${activeProject?.typeHeading || 'this typeface'} on the rest?`}
                 </p>
                 <AxisTagger
                   idPrefix="type-axis"

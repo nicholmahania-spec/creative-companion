@@ -228,3 +228,21 @@
 .align-row.is-awaiting .align-read {
   color: var(--text-muted);
 }
+
+.align-basis {
+  margin: 0 0 var(--space-2);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* A stated veto being broken. Firmer than the bars — the client said this
+   out loud — but still not an error colour: the designer may have a reason,
+   and the app does not overrule them. */
+.align-veto {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2);
+  border-left: 2px solid var(--text-secondary);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  background: var(--surface-sunken, rgba(0, 0, 0, 0.04));
+}

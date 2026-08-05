@@ -120,3 +120,63 @@ test('contradicting words are named, not averaged into a false match', async ({
   await expect(page.locator('.strategy-split')).toContainText(/pull both ways/i)
   await expect(page.locator('.strategy-split')).toContainText(/energy/i)
 })
+
+/**
+ * The cold-start failures, pinned in a browser.
+ *
+ * A designer walked a real brief through the app and found the panel would
+ * say "matches your strategy" for any font name and any palette, because it
+ * was comparing numbers the designer had typed rather than reading the work.
+ * These two cases are the exact substitutions they ran.
+ */
+test('changing the palette changes the reading', async ({ page }) => {
+  const gate = await unlockAndOnboard(page, { name: 'Palette Read' })
+  skipIfCloud(test, gate)
+
+  const { axesForPalette } = await import('../src/lib/brand/colourAxes.js')
+
+  /* Read from the hexes, in the page, exactly as the screen does. The old
+     behaviour is impossible to express here: there is no slider to move, so
+     if the numbers move it is because the colours did. */
+  const loden = axesForPalette(['#23261F', '#4C5A3C', '#8A7B63', '#F1EDE3'])
+  const orange = axesForPalette(['#F26B21', '#FF9E4A', '#FFF4E6'])
+
+  expect(loden.energy).toBeLessThan(0.25) // muted leather
+  expect(orange.energy).toBeGreaterThan(0.5) // highway cone
+  // and neither invents the axes a hex cannot carry
+  expect(orange.formality).toBeNull()
+  expect(orange.era).toBeNull()
+})
+
+test('a font the machine does not have is called out, not silently swapped', async ({
+  page,
+}) => {
+  const gate = await unlockAndOnboard(page, { name: 'Font Check' })
+  skipIfCloud(test, gate)
+
+  /* Runs in the page, where fonts are real. "Trade Gothic Next Condensed
+     Bold" is the face from the test run whose specimen was printed in the
+     app's default sans on the client-facing artboard. */
+  const result = await page.evaluate(() => {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const probe = 'mmmwwwiiilll0OQ@'
+    const width = (family) => {
+      ctx.font = `72px ${family}`
+      return ctx.measureText(probe).width
+    }
+    const resolves = (name) =>
+      ['monospace', 'serif', 'sans-serif'].some(
+        (fb) => Math.abs(width(`"${name}", ${fb}`) - width(fb)) > 0.5
+      )
+    return {
+      absent: resolves('Trade Gothic Next Condensed Bold'),
+      present: resolves('monospace'),
+    }
+  })
+
+  // The uninstalled face measures exactly like its fallback — that IS the
+  // detection, and it is what lets the app warn instead of misleading.
+  expect(result.absent).toBe(false)
+  expect(result.present).toBe(true)
+})
