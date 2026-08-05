@@ -2573,6 +2573,17 @@ const useAppStore = create(
         }
         const project = createBlankProject(clientName || 'My project', '')
         project.detective = detective
+        /* BOTH fields, the way setProjectDeadline does it.
+           Creation set only detective.projectDeadline, but the brief's date
+           input reads activeProject.deadline — a different field — so a
+           deadline typed on the New project form vanished the moment the
+           brief opened. A cold-start tester entered 19 Feb 2027, pressed
+           Start project, and had to type it again. Data the designer
+           entered must not disappear between the screen that asked for it
+           and the screen that shows it. */
+        if (intake.projectDeadline) {
+          project.deadline = intake.projectDeadline
+        }
         project.brief = composeBriefFromDetective(detective)
 
         /* Derive the project type ONCE, here, and freeze the stage list with
