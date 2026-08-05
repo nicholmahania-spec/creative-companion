@@ -34,6 +34,12 @@
   --dopamine-soft: #7B6AF5;
   --dopamine-glow: rgba(91, 66, 243, 0.22);
   --dopamine-ink: #3A2A9E;
+  /* The primary button's solid plate, and only that. It exists because the
+     plate is the one place --dopamine sits directly behind white label text,
+     so it carries a contrast obligation the rest of the accent does not.
+     Identical to --dopamine here: light already measures 5.97:1. */
+  --dopamine-plate: #5B42F3;
+  --dopamine-plate-hover: #4330C0;
   --on-dopamine: #FFFFFF;
 
   --bg-canvas: #F5F5F5;
@@ -320,6 +326,18 @@ body:has(.app.deep),
   --dopamine-soft: #A99EFF;
   --dopamine-glow: rgba(139, 124, 247, 0.28);
   --dopamine-ink: #C4BCFF;
+  /* Dark's --dopamine (#8B7CF7) is lightened for visibility against the dark
+     canvas, which is right everywhere EXCEPT under white label text: measured,
+     white on it is 3.32:1, under the 4.5:1 AA floor for normal text. That is
+     why the plate gets its own token rather than --dopamine being darkened —
+     darkening --dopamine would drag every accent, border and glow with it.
+
+     #7060EA measures 4.61:1 against #fff, and stays LIGHTER than the hover
+     plate below so hover still visibly darkens rather than collapsing into
+     rest. Both constraints have to hold at once; there is not much room
+     between them, so check both if you change either. */
+  --dopamine-plate: #7060EA;
+  --dopamine-plate-hover: #5A49D6;
   --on-dopamine: #FFFFFF;
   --glass-bg: #1F1F1F;
   --glass-bg-strong: #252525;
@@ -7288,7 +7306,7 @@ body:has(.app.deep)::after {
 .btn-primary:not(.is-earned) {
   border: 3px solid transparent !important;
   background:
-    linear-gradient(var(--dopamine), var(--dopamine)) padding-box,
+    linear-gradient(var(--dopamine-plate), var(--dopamine-plate)) padding-box,
     conic-gradient(
       from var(--btn-spin, 0deg),
       #ff006e,
@@ -7310,7 +7328,7 @@ body:has(.app.deep)::after {
 /* Guarded so a disabled primary stops repainting on hover. */
 .btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned) {
   background:
-    linear-gradient(var(--dopamine-deep), var(--dopamine-deep)) padding-box,
+    linear-gradient(var(--dopamine-plate-hover), var(--dopamine-plate-hover)) padding-box,
     conic-gradient(
       from var(--btn-spin, 0deg),
       #ff006e,
@@ -7446,7 +7464,7 @@ body,
 .work-path-next.btn-primary:not(.is-earned) {
   border: 3px solid transparent !important;
   background:
-    linear-gradient(var(--dopamine), var(--dopamine)) padding-box,
+    linear-gradient(var(--dopamine-plate), var(--dopamine-plate)) padding-box,
     conic-gradient(
       from var(--btn-spin, 0deg),
       #ff006e,
@@ -7469,7 +7487,7 @@ body,
 .btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned),
 .path-continue-row .btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned) {
   background:
-    linear-gradient(var(--dopamine-deep), var(--dopamine-deep)) padding-box,
+    linear-gradient(var(--dopamine-plate-hover), var(--dopamine-plate-hover)) padding-box,
     conic-gradient(
       from var(--btn-spin, 0deg),
       #ff006e,
