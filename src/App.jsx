@@ -951,17 +951,40 @@ function App() {
     if (showProgress) {
       awardAndBroadcast('step_complete', { label: 'Step done' })
     }
-    setRecentUndo({ id: doneId, title: doneTitle, at: Date.now() })
+    offerUndo(doneTitle, () => {
+      toggleTask(doneId)
+      setStepFocusKey((k) => k + 1)
+    })
     flashToast('Step done', { important: true })
     setStepFocusKey((k) => k + 1)
   }
 
+  /**
+   * Arm the undo chip for any action that can be honestly reversed.
+   *
+   * Was hard-wired to task completion — one action out of the several the app
+   * can do to you. Everything genuinely destructive still went through a
+   * confirmation dialog whose copy had to say "You cannot undo this", which is
+   * the sentence this function exists to delete.
+   *
+   * `restore` must actually restore. If a caller cannot write one truthfully,
+   * it should keep its dialog: an undo that silently fails to put something
+   * back is worse than the dialog, because the user has been told it was safe
+   * and has no reason to check.
+   *
+   * One chip at a time, latest wins — an undo STACK would be a second thing to
+   * hold in mind, which is the opposite of the point.
+   */
+  const offerUndo = (title, restore) => {
+    if (typeof restore !== 'function') return
+    setRecentUndo({ title, restore, at: Date.now() })
+  }
+
   const undoLastComplete = () => {
-    if (!recentUndo?.id) return
-    toggleTask(recentUndo.id)
+    if (typeof recentUndo?.restore !== 'function') return
+    recentUndo.restore()
     flashToast('Undid that')
     setRecentUndo(null)
-    setStepFocusKey((k) => k + 1)
   }
 
   /**
@@ -2958,28 +2981,36 @@ function App() {
     reader.readAsText(file)
   }
 
+  /**
+   * Delete a project — no dialog, an undo instead.
+   *
+   * This used to raise a danger confirm whose copy read "You cannot undo
+   * this." It now can be undone, so it does not need to ask. A confirmation is
+   * a decision; an undo is not, and the difference decides whether a stale
+   * project ever actually gets cleared off the desk.
+   *
+   * The undo restores the view as well as the data. Deleting the last project
+   * bounces the app to Create, and putting the rows back without putting the
+   * user back would leave them somewhere they never chose to be — the restore
+   * has to return the whole situation, not just the state.
+   */
   const handleDeleteProjectById = (id, name) => {
     if (!id) return
     const wasActive = id === activeProjectId
-    const isLast = projects.length <= 1
-    setDeskConfirm({
-      kind: 'delete-project',
-      label: isLast
-        ? `Delete “${name}”? This is your only project — the desk will be empty until you start a new one. You cannot undo this.`
-        : `Delete this project and its steps & pictures? You cannot undo this. (“${name}”)`,
-      confirmLabel: 'Delete',
-      danger: true,
-      onConfirm: () => {
-        const result = deleteProject(id)
-        if (result.ok) {
-          flashToast(result.empty ? 'Project deleted — desk is empty' : 'Project deleted')
-          if (result.empty) setActiveView('create')
-          else if (wasActive) setActiveView('project')
-        } else {
-          flashToast(result.error || 'Could not delete that')
-        }
-        setDeskConfirm(null)
-      },
+    const prevView = activeView
+    const result = deleteProject(id)
+    if (!result.ok) {
+      flashToast(result.error || 'Could not delete that')
+      return
+    }
+    if (result.empty) setActiveView('create')
+    else if (wasActive) setActiveView('project')
+    flashToast(
+      result.empty ? 'Project deleted — desk is empty' : 'Project deleted'
+    )
+    offerUndo(name || 'Project deleted', () => {
+      result.restore?.()
+      setActiveView(prevView)
     })
   }
 
