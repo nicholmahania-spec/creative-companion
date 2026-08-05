@@ -27,6 +27,7 @@ import {
 } from '../lib/book/exportFiles'
 import { weekFromWorkLog, hoursLoggedWords } from '../lib/billing/workWeek'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
+import BrandCheckPanel from '../components/BrandCheckPanel'
 import '../styles/lazy-desk.css'
 
 /**
@@ -125,6 +126,7 @@ export default function DeskView({
   tasks = [],
   clientInbox,
   onOpenView,
+  onOpenSection,
   onOpenClientInbox,
   onToggleTask,
   onToggleNotNeeded,
@@ -382,6 +384,22 @@ export default function DeskView({
               </dl>
             )}
           </section>
+
+          {/* Under the brief on purpose: the check reads the brief's scope,
+              and a gap only means something once you can see what was asked
+              for. Collapsed until pressed — see BrandCheckPanel. */}
+          <BrandCheckPanel
+            project={project}
+            moodItems={pins}
+            palette={palette}
+            onOpenView={(view, section) => {
+              if (view === 'brand' && section && typeof onOpenSection === 'function') {
+                onOpenSection(section)
+                return
+              }
+              onOpenView(view)
+            }}
+          />
         </div>
 
         {/* ── RIGHT COLUMN ── */}

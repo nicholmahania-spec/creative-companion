@@ -356,6 +356,7 @@ export default function MainOutlet(p) {
         tasks={deskTasks}
         clientInbox={clientInbox}
         onOpenView={setActiveView}
+        onOpenSection={goSystemSection}
         onOpenClientInbox={() => setClientInboxOpen(true)}
         onToggleTask={toggleTask}
         onToggleNotNeeded={(stepId) =>

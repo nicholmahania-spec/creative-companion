@@ -764,3 +764,157 @@
 .app.deep .desk-week-bar.is-filled {
   background: var(--text-primary);
 }
+
+/* ── Check my brand ───────────────────────────────────────────────────────
+   Quiet by default. The status line and the three shortcuts are the only
+   thing on screen until the toggle is pressed, so an unfinished brand never
+   sits under the artboard as a wall of things you have not done. */
+.desk-check-status {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.desk-check-short,
+.desk-check-list,
+.desk-check-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-check-short li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.desk-check-gap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.desk-check-gap:hover {
+  color: var(--accent, var(--text-primary));
+}
+
+.desk-check-todo,
+.desk-check-group,
+.desk-check-group-count,
+.desk-check-fact-source {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.desk-check-toggle {
+  align-self: flex-start;
+}
+
+.desk-check-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.desk-check-group-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.desk-check-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.desk-check-group-name {
+  font-size: var(--fs-2);
+  font-weight: 700;
+}
+
+.desk-check-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+/* Done rows recede; only the gaps carry weight and a target. */
+.desk-check-row.is-ok .desk-check-label,
+.desk-check-tick {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.desk-check-brain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.desk-check-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.desk-check-chip {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+  font: inherit;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.desk-check-chip:hover {
+  border-color: var(--border-strong);
+}
+
+.desk-check-ask {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.desk-check-ask .field-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.desk-check-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.desk-check-fact-line {
+  font-size: var(--fs-2);
+  line-height: 1.5;
+}
