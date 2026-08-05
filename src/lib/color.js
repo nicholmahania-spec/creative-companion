@@ -1,4 +1,5 @@
 /** Color helpers for palette builder + WCAG contrast checker */
+import { cssFamily } from './brand/typeMetrics.js'
 
 /** Stone desk defaults — brand color lives on pack, not indigo SaaS */
 export const DEFAULT_PALETTE = ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9']
@@ -178,11 +179,24 @@ export function typePairIdFromLabels(heading, body) {
   return found?.id || null
 }
 
-/** "Plus Jakarta Sans Bold" → CSS font-family stack for specimens */
+/**
+ * "Plus Jakarta Sans Bold" → CSS font-family stack for specimens.
+ *
+ * The family is extracted by `cssFamily`, the SAME function the
+ * missing-font warning uses. They used to disagree, and the disagreement
+ * was invisible and expensive: this regex has no "Book" in it, so
+ * "Freight Text Pro Book" was requested verbatim — a family that resolves
+ * nowhere, even on a machine where Freight Text Pro is installed — while
+ * the warning checked "Freight Text Pro" and reported everything fine.
+ * The renderer asked for one string and the checker vouched for another,
+ * so a designer with the font correctly installed still got a substituted
+ * face in their exports and was told nothing was wrong.
+ *
+ * That was the tester's exact typeface. One extractor, so the thing that
+ * renders and the thing that vouches can never drift apart again.
+ */
 export function fontFamilyFromLabel(label) {
-  const s = String(label || '')
-    .replace(/\s+(Thin|ExtraLight|Light|Regular|Medium|SemiBold|Semibold|Bold|ExtraBold|Black|Italic|Oblique).*$/i, '')
-    .trim()
+  const s = cssFamily(label)
   if (!s) return 'var(--font-sans), system-ui, sans-serif'
   const lower = s.toLowerCase()
   if (lower.includes('system ui') || lower === 'system') {
