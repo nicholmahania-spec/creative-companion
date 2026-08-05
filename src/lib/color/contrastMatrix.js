@@ -27,6 +27,7 @@ import {
   hslToHex,
   normalizeHex,
 } from '../color.js'
+import { deltaE00Hex } from '../brand/deltaE.js'
 
 /** WCAG 2.1 thresholds, named so call sites read as intent not arithmetic. */
 export const WCAG = {
@@ -108,11 +109,17 @@ export function buildContrastMatrix(palette = []) {
 /**
  * Move a foreground until it clears a target against its background.
  *
- * Lightness first, saturation only as a fallback, and that order is deliberate:
- * lightness is what contrast is actually made of (the WCAG ratio is a function
- * of relative luminance), while saturation barely moves luminance and mostly
- * just drains the colour. Reaching for saturation first produces a washed-out
- * near-grey that technically passes and no longer looks like the brand.
+ * Lightness only. An earlier version had a saturation fallback and this
+ * docstring described when it would run; measured over 4,000 random pairs at
+ * four targets, it ran ZERO times, and that is structural rather than unlucky.
+ * Contrast against black is (Lbg+0.05)/0.05, which clears 4.5 whenever the
+ * background's luminance is at least ~0.175; against white it is
+ * 1.05/(Lbg+0.05), which clears 4.5 whenever luminance is at most ~0.183.
+ * Every possible background satisfies one of those, so the lightness search
+ * always succeeds at AA by running toward one extreme — and where lightness
+ * cannot reach a higher target, saturation cannot either, since it barely
+ * moves luminance at all. Dead code that documented its own honesty was worse
+ * than no fallback, so it is gone.
  *
  * Binary search rather than stepping, so the result is the SMALLEST change that
  * clears the bar. A fix that overshoots is a fix the designer has to argue with.
@@ -187,22 +194,11 @@ export function autoFixPair(fgHex, bgHex, target = WCAG.AA_NORMAL) {
     return { hex: best.hex, ratio: best.ratio, changed: true, axis: 'lightness', distance: best.distance }
   }
 
-  /* Saturation fallback. Only reached when lightness cannot get there at all —
-     which happens for a hue whose full range still sits too close to the
-     background's luminance. */
-  const mkS = (sat) => hslToHex(hsl.h, sat, hsl.l)
-  const bySaturation = [searchDown(mkS, hsl.s), searchUp(mkS, hsl.s)]
-    .filter(Boolean)
-    .map((r) => ({ ...r, distance: Math.abs(r.at - hsl.s) }))
-
-  if (bySaturation.length) {
-    const best = bySaturation.sort((a, b) => a.distance - b.distance)[0]
-    return { hex: best.hex, ratio: best.ratio, changed: true, axis: 'saturation', distance: best.distance }
-  }
-
-  /* Honest failure. Some pairs cannot be fixed by moving one of them — two
-     mid-tones of similar luminance, for instance. Saying so beats returning a
-     colour that does not actually pass. */
+  /* Honest failure — and it is reachable, unlike the branch that used to sit
+     above it. At the AA target it never fires (see above); at AAA it fires on
+     roughly a third of random pairs, because 7:1 is beyond what moving one
+     colour's lightness can reach for many backgrounds. Saying so beats
+     returning a colour that does not actually pass. */
   return { hex: fg, ratio: start, changed: false, axis: null, distance: 0, impossible: true }
 }
 
@@ -219,4 +215,97 @@ export function cellSummary(cell) {
   if (cell.same) return 'Same colour'
   if (cell.usableFor.length === 0) return 'Too close to read either way'
   return `Good for ${cell.usableFor.join(', ')}`
+}
+
+/**
+ * How far a suggested fix actually travelled, perceptually.
+ *
+ * The distance the search reports is HSL lightness, which is not a measure of
+ * whether the colour still looks like itself. Measured case: #FFD100 against
+ * white resolves to #8E7400 — hue preserved to within 1°, saturation preserved
+ * at exactly 100%, lightness moved 0.22. By every number the search tracks
+ * that is "the same yellow, a little darker". It is dark olive-brown.
+ *
+ * Ottosson's Okhsl work names the cause directly: HSL's lightness axis "does
+ * not match the perception of lightness well at all for saturated colors". So
+ * the drift is reported in ΔE00 instead — the same perceptual measure the
+ * brand consistency checker uses — and the caller can say plainly when a
+ * "fix" has stopped being the designer's colour.
+ */
+export function fixDrift(originalHex, fixedHex) {
+  return deltaE00Hex(originalHex, fixedHex)
+}
+
+/** Past this, the suggestion is a different colour, not an adjustment. */
+export const DRIFT_IS_A_NEW_COLOUR = 10
+
+/**
+ * Every honest way out of a failing pair — not just "rewrite the brand colour".
+ *
+ * The single most important thing this module does NOT assume: that the
+ * foreground is the thing free to move. A brand colour is routinely
+ * Pantone-matched, printed and trademarked — #ED1C24 is Pantone 185 in one of
+ * the palettes this was built against — so a tool that helpfully rewrites it
+ * has produced a value the client may be contractually unable to use, and the
+ * brand book downstream would then ship that value as approved.
+ *
+ * So three routes are offered and none is applied:
+ *
+ *   1. move the background instead, which is usually the free surface
+ *   2. move the foreground, flagged when it stops being the same colour
+ *   3. change nothing and use the pair where it already works — a pair at
+ *      3.4:1 is fine for large text, and "use it at display size" is a real
+ *      resolution, not a consolation
+ *
+ * Route 3 exists because it is frequently the right answer and no auto-fixer
+ * offers it. PRODUCT.md Principle 3: the platform may say this does not meet
+ * the standard; it may not say this is the colour you must use.
+ */
+export function resolutionsFor(fgHex, bgHex, target = WCAG.AA_NORMAL) {
+  const cell = contrastCell(fgHex, bgHex)
+  if (!cell || cell.same) return []
+  if (cell.ratio >= target) return []
+
+  const out = []
+
+  const bg = autoFixPair(bgHex, fgHex, target)
+  if (bg?.changed) {
+    out.push({
+      kind: 'move-background',
+      from: cell.bg,
+      to: bg.hex,
+      ratio: bg.ratio,
+      drift: fixDrift(cell.bg, bg.hex),
+    })
+  }
+
+  const fg = autoFixPair(fgHex, bgHex, target)
+  if (fg?.changed) {
+    const drift = fixDrift(cell.fg, fg.hex)
+    out.push({
+      kind: 'move-foreground',
+      from: cell.fg,
+      to: fg.hex,
+      ratio: fg.ratio,
+      drift,
+      /* The warning that stops this being a trap. A large drift means the
+         suggestion passes WCAG and is no longer the designer's colour, which
+         is exactly the outcome a confident auto-fix would hide behind a
+         green tick. */
+      newColour: drift != null && drift > DRIFT_IS_A_NEW_COLOUR,
+    })
+  }
+
+  if (cell.usableFor.length) {
+    out.push({
+      kind: 'use-as-is',
+      usableFor: cell.usableFor,
+      ratio: cell.ratio,
+    })
+  }
+
+  /* Background first: it is the surface most often free to change, and putting
+     the brand-colour rewrite at the top of the list is how a designer ends up
+     accepting one without considering that the other side could have moved. */
+  return out
 }

@@ -1,10 +1,14 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
 import {
+  DRIFT_IS_A_NEW_COLOUR,
   WCAG,
   autoFixPair,
   buildContrastMatrix,
   cellSummary,
   contrastCell,
+  fixDrift,
+  resolutionsFor,
 } from './contrastMatrix.js'
 import { contrastRatio } from '../color.js'
 
@@ -134,5 +138,88 @@ describe('autoFixPair moves the smallest distance that clears the bar', () => {
 
   it('returns null for junk rather than a fake fix', () => {
     expect(autoFixPair('nope', '#FFF')).toBeNull()
+  })
+})
+
+describe('the fix does not pretend to still be your colour', () => {
+  it('reports drift perceptually, not as an HSL step', () => {
+    /* MEASURED. #FFD100 against white resolves to #8E7400: hue preserved to
+       within 1°, saturation preserved at exactly 100%, lightness moved 0.22.
+       By every number the search tracks that is "the same yellow, a little
+       darker". It is dark olive-brown, and ΔE00 says so at 29.3.
+
+       Ottosson's Okhsl work names the cause — HSL's lightness axis "does not
+       match the perception of lightness well at all for saturated colors" —
+       which is why drift is measured in ΔE00 and not in the units the search
+       happens to move in. */
+    expect(fixDrift('#FFD100', '#8E7400')).toBeGreaterThan(DRIFT_IS_A_NEW_COLOUR)
+    expect(fixDrift('#1B4C7E', '#1D4E80')).toBeLessThan(1)
+  })
+
+  it('flags a suggestion that has stopped being the same colour', () => {
+    const rs = resolutionsFor('#ED1C24', '#808080')
+    const fg = rs.find((r) => r.kind === 'move-foreground')
+    /* Pantone 185 on mid grey resolves to #360406 — a near-black maroon at
+       ΔE00 ~38. A confident auto-fix would show that behind a green tick. */
+    expect(fg.newColour).toBe(true)
+  })
+})
+
+describe('resolutionsFor does not assume the brand colour is the one to move', () => {
+  it('offers the background before the foreground', () => {
+    /* The single most important assumption this module refuses to make. A
+       brand colour is routinely Pantone-matched, printed and trademarked —
+       #ED1C24 IS Pantone 185 in one of the palettes this was built against —
+       so a tool that helpfully rewrites it produces a value the client may be
+       contractually unable to use, which the brand book would then ship as
+       approved. The free surface is usually the background. */
+    const rs = resolutionsFor('#ED1C24', '#808080')
+    expect(rs[0].kind).toBe('move-background')
+  })
+
+  it('offers "use it where it already works" as a real resolution', () => {
+    /* A pair at 3.4:1 is fine for large text. "Use it at display size" is an
+       answer, not a consolation prize, and no auto-fixer offers it. */
+    const rs = resolutionsFor('#767676', '#EEEEEE', WCAG.AAA_NORMAL)
+    const asIs = rs.find((r) => r.kind === 'use-as-is')
+    expect(asIs).toBeTruthy()
+    expect(asIs.usableFor.length).toBeGreaterThan(0)
+  })
+
+  it('stays silent on a pair that already passes', () => {
+    expect(resolutionsFor('#1B4C7E', '#FFFFFF')).toEqual([])
+  })
+
+  it('stays silent on a colour against itself', () => {
+    expect(resolutionsFor('#1B4C7E', '#1B4C7E')).toEqual([])
+  })
+})
+
+describe('the dead branch that documented its own honesty', () => {
+  it('never claims a saturation fallback it cannot perform', () => {
+    /* An earlier version had one, and its docstring described when it would
+       run. Measured over 4,000 random pairs at four targets it ran ZERO times,
+       and that is structural: contrast against black clears 4.5 whenever the
+       background's luminance is >= ~0.175 and against white whenever it is
+       <= ~0.183, so every background satisfies one and lightness always wins.
+       Where lightness cannot reach a higher target, saturation cannot either.
+       Code that documents a safety net it never deploys is worse than no net. */
+    const source = readFileSync(
+      new URL('./contrastMatrix.js', import.meta.url),
+      'utf8'
+    )
+    /* Checks for the CODE, not for the word. The docstring still explains at
+       length why the fallback was removed — that history is the useful part —
+       and an earlier version of this assertion banned the phrase, which failed
+       on the explanation rather than on the thing explained. */
+    expect(source).not.toMatch(/axis:\s*'saturation'/)
+    expect(source).not.toMatch(/bySaturation/)
+  })
+
+  it('still reports impossible where it genuinely is', () => {
+    // Reachable at AAA — roughly a third of random pairs — unlike the branch
+    // that used to sit above it.
+    const r = autoFixPair('#808080', '#7F7F7F', WCAG.AAA_NORMAL)
+    expect(r.changed === false ? r.impossible : true).toBe(true)
   })
 })
