@@ -1,6 +1,7 @@
 import {
   DELIVERABLE_OPTIONS,
   DETECTIVE_CHAPTERS,
+  isLogoOnlyScope,
   isWrongShapeForField,
 } from '../lib/brief/detectiveBrief'
 import { liftMeasuredRows } from './workLogSeparation'
@@ -15,6 +16,15 @@ import {
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/helper/breakKit'
 import { IDENTITY_FIELDS } from '../lib/journey/identityStamp'
+import {
+  expandProject,
+  projectType,
+  toggleStep,
+  typeFromIntake,
+} from '../lib/journey/projectTypes'
+
+/** The default stage set for a type, as a plain list for the store. */
+const projectTypeSteps = (typeId) => [...projectType(typeId).stepIds]
 import versionService from '../services/versionService'
 
 /**
@@ -2481,6 +2491,34 @@ const useAppStore = create(
          The row moves to the finished area labelled "Not needed" and one
          click puts it back. No new field on old projects: absent reads as
          an empty list. */
+      /* Project type — what are we building? Sets which stages are on by
+         default; the designer can still switch any of them. Absent means a
+         full identity, which is what every project made before types
+         existed already was, so nothing migrates. */
+      /* Changing type is ADDITIVE, never a reset.
+         This replaced stepsOn wholesale, so correcting a mis-derived type
+         silently wiped every stage the designer had toggled — punishing the
+         designer for the derivation being wrong, which is the one moment
+         this action exists for (devil's advocate, 2026-08-05). It now unions
+         like expandProject: changing type can only ever turn stages ON.
+         Turning one off is a separate, deliberate, reversible act. */
+      setProjectType: (projectId, typeId) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId ? { ...p, ...expandProject(p, typeId) } : p
+          ),
+        })),
+
+      /* Switch one stage on or off for this project. Never deletes what is
+         inside the stage — a stage is a view onto the project document, so
+         this is reversible and needs no confirmation. */
+      toggleProjectStep: (projectId, stepId) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId ? { ...p, stepsOn: toggleStep(p, stepId) } : p
+          ),
+        })),
+
       toggleStepNotNeeded: (projectId, stepId) =>
         set((state) => ({
           projects: state.projects.map((p) => {
@@ -2511,6 +2549,24 @@ const useAppStore = create(
         const project = createBlankProject(clientName || 'My project', '')
         project.detective = detective
         project.brief = composeBriefFromDetective(detective)
+
+        /* Derive the project type ONCE, here, and freeze the stage list with
+           it. Never recompute from the brief at read time.
+           `deliverablesPicked` is a live brief field the CLIENT can edit
+           through the portal — a live derivation would let a client tick a
+           checkbox and silently remove stages from the designer's path, a
+           state change with no event to attribute it to. Storing stepsOn
+           explicitly (not just the type id) also means a later edit to
+           PROJECT_TYPES defaults cannot reshape a project already in flight:
+           the path you left is the path you come back to.
+           (adhd-executive-function-advisor, 2026-08-05.) */
+        const typeId = typeFromIntake({
+          engagementType: detective.engagementType,
+          logoOnly: isLogoOnlyScope(detective.deliverablesPicked),
+        })
+        project.projectType = typeId
+        project.stepsOn = projectTypeSteps(typeId)
+
         get().addProject(project)
         return project
       },
