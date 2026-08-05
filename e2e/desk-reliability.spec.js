@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import {
   labelForStep,
+  openDeliverSectionWith,
   pathNav,
   skipIfCloud,
   stepByIdIn,
@@ -11,31 +12,6 @@ import {
  * Desk reliability: local unlock → path → Deliver exports · Esc overlays.
  */
 
-/**
- * Open the Deliver disclosure that CONTAINS a given control.
- *
- * These tests used to click `.deliver-advanced summary` filtered by the text
- * "More formats". That disclosure is now "Extras · print, ZIP, backup", so the
- * click waited on a summary that does not exist and both tests died on a
- * 60s timeout — while the controls they were reaching for were present and
- * working the whole time.
- *
- * Deliver has four `.deliver-advanced` disclosures and their labels are
- * ordinary product copy, which is free to change. What is NOT free to change
- * is that Print lives behind a disclosure — that is the behaviour under test.
- * So find the section by what it holds, not by what it is called.
- *
- * `label` must be matched with a DOM locator, NOT `getByRole`. Role queries
- * resolve against the accessibility tree, and a CLOSED <details> hides its
- * children from that tree — so a role-based filter matches nothing here and
- * the click waits forever on a section that is right there. The children are
- * still in the DOM, which is why a plain `button` locator finds them.
- */
-async function openDeliverSectionWith(page, label) {
-  const control = page.locator('button', { hasText: label })
-  const section = page.locator('.deliver-advanced').filter({ has: control })
-  await section.first().locator('summary').first().click()
-}
 test.describe('Desk reliability', () => {
   test('Deliver shows Brand book PDF and Print under More formats', async ({
     page,

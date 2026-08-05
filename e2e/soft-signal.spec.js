@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
-import { IDENTITY_SUBSTEPS } from '../src/lib/journey/identitySubsteps.js'
 import {
   headingForStep,
   openBriefFieldChapter,
+  openIdentitySubstep,
   openTool,
   pathNav,
   skipIfCloud,
@@ -101,24 +101,13 @@ test.describe('Soft Signal demo', () => {
        simply did not exist and the walk died here.
 
        Sub-screen labels come from IDENTITY_SUBSTEPS rather than being typed,
-       so a rename moves this with it instead of breaking it. */
-    const openIdentitySubstep = async (id) => {
-      const label = IDENTITY_SUBSTEPS.find((s) => s.id === id)?.label
-      if (!label) throw new Error(`No Identity substep with id "${id}"`)
-      const tab = page
-        .getByRole('navigation', { name: /Identity screens/i })
-        .getByRole('button', { name: label, exact: true })
-      if (await tab.count()) {
-        await tab.first().click()
-        await page.waitForTimeout(400)
-      }
-    }
-
-    await openIdentitySubstep('essentials')
+       so a rename moves this with it instead of breaking it. The helper is
+       shared — process-walk hit the same wall on `#brand-tagline`. */
+    await openIdentitySubstep(page, 'essentials')
     await expect(page.locator('#msg-promise')).toHaveValue(/.{10,}/, {
       timeout: 5000,
     })
-    await openIdentitySubstep('preview')
+    await openIdentitySubstep(page, 'preview')
     await expect(page.locator('#img-style')).toHaveValue(/.{5,}/, {
       timeout: 5000,
     })
