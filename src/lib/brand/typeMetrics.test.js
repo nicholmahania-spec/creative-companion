@@ -169,3 +169,36 @@ describe('cssFamily digs the real family out of a human label', () => {
     expect(fontAvailable('System UI — native', undefined)).toBe(true)
   })
 })
+
+describe('one family extractor, so renderer and checker cannot drift', () => {
+  /* Found by review, and it inverted the whole picture.
+     `fontFamilyFromLabel` (what actually renders specimens and stationery)
+     had its own regex with no "Book" in it, so it requested "Freight Text
+     Pro Book" verbatim — a family that resolves NOWHERE, even on a machine
+     where Freight Text Pro is installed. Meanwhile the missing-font warning
+     checked "Freight Text Pro" and reported all well. The renderer asked
+     for one string; the checker vouched for another. A designer with the
+     font correctly installed got a substituted face and was told nothing
+     was wrong — and it was the tester's exact typeface. */
+  it('the rendered family matches the family the warning checks', async () => {
+    const { fontFamilyFromLabel } = await import('../color.js')
+    const labels = [
+      'Freight Text Pro Book',
+      'Trade Gothic Bold Condensed No. 20',
+      'Source Sans 3 Regular',
+      'Plus Jakarta Sans Bold',
+      'Playfair Display SemiBold',
+      'Comic Sans MS',
+    ]
+    for (const label of labels) {
+      const rendered = fontFamilyFromLabel(label).split(',')[0].replace(/"/g, '')
+      expect(rendered, label).toBe(cssFamily(label))
+    }
+  })
+
+  it('still resolves the generic stack rather than a bogus family', async () => {
+    const { fontFamilyFromLabel } = await import('../color.js')
+    expect(fontFamilyFromLabel('System UI Bold')).toMatch(/system-ui/)
+    expect(fontFamilyFromLabel('')).toMatch(/var\(--font-sans\)/)
+  })
+})
