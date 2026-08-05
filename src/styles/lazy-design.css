@@ -519,9 +519,21 @@
   color: #686868;
 }
 
+/* A contrast shortfall is a fact about a colour PAIR, not a verdict on the
+   designer. It is stated in the depth of the ink, the same way the overdue
+   chip is — `#B91C1C` was living here, which is the exact literal
+   `nonPunitiveState.test.js` names as "the red that actually shipped here".
+   It survived only because that guard's selector pattern matched lateness
+   words and not `fail`. The pattern now covers this too.
+
+   Not softened into invisibility: the row still states the ratio and the bar
+   it owes ("2.4:1 — body text needs 4.5:1"), which is strictly more
+   actionable than a colour. Hiding the number would be soft-pedalling;
+   declining to shout it is not. */
 .palette-check-badge.fail {
-  background: rgba(220, 38, 38, 0.12);
-  color: #B91C1C;
+  background: rgba(120, 120, 120, 0.16);
+  color: #3F3F3F;
+  font-weight: 700;
 }
 
 .palette-check-detail {

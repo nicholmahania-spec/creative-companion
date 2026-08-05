@@ -35,8 +35,23 @@ import { dirname, resolve, join } from 'node:path'
 
 const stylesDir = resolve(dirname(fileURLToPath(import.meta.url)), '../styles')
 
-/** Selectors that describe "you are late" or "you are waiting" states. */
-const LATENESS = /urgency-|overdue|waiting|behind|late\b/i
+/**
+ * Selectors describing a state the user might read as a verdict on themselves.
+ *
+ * Widened from lateness alone to include `fail`, after the guard was found to
+ * be missing a live case: `.palette-check-badge.fail` was painted #B91C1C —
+ * this file's own canary value, the literal named below as "the red that
+ * actually shipped here" — and passed, because the pattern matched lateness
+ * words only. A guard whose canary is loose in the product is not a guard.
+ *
+ * A contrast shortfall differs from lateness in one way that matters: it is a
+ * property of a colour PAIR, not of the person's pace, so it can be stated
+ * flatly. But red buys nothing the statement does not already carry — "2.4:1,
+ * body text needs 4.5:1" names the gap AND the bar, which a red swatch never
+ * does. And red spent on ordinary design decisions is how someone learns to
+ * ignore it where it is true.
+ */
+const LATENESS = /urgency-|overdue|waiting|behind|late\b|\bfail/i
 
 /**
  * A colour that reads as alarm rather than emphasis.
