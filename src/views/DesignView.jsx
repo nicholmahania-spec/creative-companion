@@ -1649,9 +1649,15 @@ export default function DesignView({
                     measurable from the rendered font; warmth, formality and
                     era are cultural readings of letterforms, so they stay
                     the designer's to place rather than being guessed. */}
+                {/* Say which it is. Claiming "Weight is read from the font"
+                    unconditionally was false whenever the font is absent —
+                    which is most of the time, since the specified faces are
+                    usually not installed. A cold-start run found it stating
+                    that while every bar read "not placed yet". */}
                 <p className="align-tag-lead">
-                  Weight is read from the font. Where would you put{' '}
-                  {activeProject?.typeHeading || 'this typeface'} on the rest?
+                  {typeRead.weight === undefined
+                    ? `Nothing here is read from the letterforms — where would you put ${activeProject?.typeHeading || 'this typeface'}?`
+                    : `Weight is read from the font. Where would you put ${activeProject?.typeHeading || 'this typeface'} on the rest?`}
                 </p>
                 <AxisTagger
                   idPrefix="type-axis"

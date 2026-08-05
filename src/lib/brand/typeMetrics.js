@@ -31,6 +31,63 @@
  * certain, and fixes a real defect, so it is the headline here.
  */
 
+/**
+ * The CSS family inside a human label.
+ *
+ * The app stores what a designer types — "Trade Gothic Bold Condensed
+ * No. 20", "Plus Jakarta Sans Bold", "System UI — native". None of those is
+ * a CSS family, so asking the browser for them by name always failed and
+ * the missing-font warning fired on the app's OWN presets. A cold-start run
+ * caught it saying "System UI Bold and System UI Regular are not available",
+ * which teaches the designer the warning is noise — and a warning nobody
+ * reads is worse than none, because this one is right about real fonts.
+ */
+const STYLE_WORD =
+  /^((?:extra|ultra|semi|demi)?(?:thin|light|bold|black|heavy)|book|regular|normal|medium|italic|oblique|condensed|compressed|extended|expanded|narrow|wide|no\.?)$/i
+
+export function cssFamily(label) {
+  let name = String(label || '').trim()
+  if (!name) return ''
+  // "System UI — native" and friends: take the part before a dash note.
+  name = name.split(/\s+[—–-]\s+/)[0]
+
+  /* Strip style words only from the END. Stripping them anywhere removed
+     real parts of family names — "Freight Text Pro Book" became "Freight
+     Pro", because Text and Pro are the family here and only Book is the
+     weight. Weight and width always trail the family in these labels. */
+  const parts = name.split(/\s+/)
+  const isStyle = (tok) => STYLE_WORD.test(tok)
+  let changed = true
+  while (changed && parts.length > 1) {
+    changed = false
+    const last = parts[parts.length - 1]
+    /* A bare number is only dropped when an explicit "No." precedes it.
+       Stripping digits outright turned "Source Sans 3 Regular" into
+       "Source Sans" — the 3 IS the family, the way Univers 55 is. */
+    if (/^\d+$/.test(last) && parts.length > 2 && /^no\.?$/i.test(parts[parts.length - 2])) {
+      parts.pop()
+      parts.pop()
+      changed = true
+    } else if (isStyle(last) && !/^no\.?$/i.test(last)) {
+      parts.pop()
+      changed = true
+    }
+  }
+  return parts.join(' ')
+}
+
+/** Families the browser resolves without any font file. */
+const GENERIC = new Set([
+  'system ui',
+  'system-ui',
+  'ui-sans-serif',
+  'sans-serif',
+  'serif',
+  'monospace',
+  'cursive',
+  'fantasy',
+])
+
 /** Fonts the browser is guaranteed to resolve, used as measuring sticks. */
 const FALLBACKS = ['monospace', 'serif', 'sans-serif']
 
@@ -57,8 +114,11 @@ function measureWidth(ctx, family, px = 72) {
  * @returns {boolean|null} null when it cannot be determined at all
  */
 export function fontAvailable(family, doc = globalThis.document) {
-  const name = String(family || '').trim()
+  const name = cssFamily(family)
   if (!name) return null
+  // A generic family is always resolvable; asking by its label is not a
+  // question about whether a font file exists.
+  if (GENERIC.has(name.toLowerCase())) return true
   if (!doc || typeof doc.createElement !== 'function') return null
 
   const canvas = doc.createElement('canvas')
@@ -90,7 +150,7 @@ export function fontAvailable(family, doc = globalThis.document) {
  * @returns {number|null} 0–1, or null if it cannot be measured
  */
 export function inkWeight(family, doc = globalThis.document) {
-  const name = String(family || '').trim()
+  const name = cssFamily(family)
   if (!name || !doc || typeof doc.createElement !== 'function') return null
   const canvas = doc.createElement('canvas')
   const ctx = canvas.getContext && canvas.getContext('2d')

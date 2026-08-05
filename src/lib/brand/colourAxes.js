@@ -162,16 +162,35 @@ function inRange(h, [lo, hi]) {
   return lo <= hi ? h >= lo && h <= hi : h >= lo || h <= hi
 }
 
-/** Which families a hex belongs to (a dark orange is also brown). */
+/**
+ * Which families a hex belongs to.
+ *
+ * Gated on ABSOLUTE chroma, not HSL saturation — the same inflation trap
+ * that was already fixed for warmth and had been left here. A cold-start
+ * run flagged an oatmeal cream (#EFE7D8) as ORANGE on a brief that said no
+ * orange: its channels span 23/255, plainly a near-white, but HSL calls it
+ * 35% saturated because saturation is normalised by lightness.
+ *
+ * Brown also swallows orange. The same run flagged a saddle brown
+ * (#7A5230) as orange — technically a dark orange hue, but nobody who says
+ * "no orange" means their leather brown. A warning that fires on a leather
+ * brand's own leather colour is one the designer stops reading, and then it
+ * is worthless on the day it is right.
+ */
 export function familiesFor(hex) {
   const hsl = hexToHsl(hex)
-  if (!hsl) return []
-  return FAMILIES.filter(
+  const rgb = hexToRgb(hex)
+  if (!hsl || !rgb) return []
+  const span = (Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b)) / 255
+  if (span < 0.14) return [] // a near-neutral belongs to no family
+  const hit = FAMILIES.filter(
     (f) =>
       hsl.s >= f.minSat &&
       inRange(hsl.h, f.hue) &&
       (f.maxLight === undefined || hsl.l <= f.maxLight)
   ).map((f) => f.name)
+  // The more specific reading wins.
+  return hit.includes('brown') ? hit.filter((n) => n !== 'orange') : hit
 }
 
 /**
@@ -196,13 +215,29 @@ export function vetoedFamilies(text) {
   if (!t) return []
   const found = new Set()
   for (const f of FAMILIES) {
-    // "no orange", "not orange", "avoid orange", "no more orange",
-    // "nothing orange", "hates orange", "anything but orange"
     const re = new RegExp(
-      `\\b(?:no|not|avoid|never|hate[sd]?|dislike[sd]?|nothing|anything but)\\b[^.!?;\\n]{0,24}\\b${f.name}\\b`,
+      `\\b(?:no|not|avoid|never|hate[sd]?|dislike[sd]?|nothing|anything but)\\b([^.!?;\\n]{0,24}?)\\b${f.name}\\b`,
       'i'
     )
-    if (re.test(t)) found.add(f.name)
+    const m = re.exec(t)
+    if (!m) continue
+
+    /* A SHADE veto is not a family veto. The client said "not hunter
+       green — everything in the horse world is hunter green", and the app
+       banned green outright, on a Vermont leather brand whose whole palette
+       is green. She objected to one shade; we cannot reliably tell hunter
+       green from lichen green from a hex, so the honest move is to stay
+       quiet rather than ban the family she is actually going to use.
+       Detected by an adjective sitting immediately before the colour. */
+    const before = m[1].trim().split(/\s+/).filter(Boolean)
+    const last = (before[before.length - 1] || '').toLowerCase()
+    const GENERIC = new Set([
+      'no', 'not', 'any', 'all', 'the', 'that', 'more', 'of', 'it', 'is',
+      'too', 'very', 'really', 'and', 'or', 'a', 'an', 'but', 'just',
+    ])
+    if (last && !GENERIC.has(last)) continue // shade-qualified — say nothing
+
+    found.add(f.name)
   }
   return [...found]
 }

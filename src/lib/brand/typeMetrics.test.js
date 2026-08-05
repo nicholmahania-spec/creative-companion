@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   axesForTypeface,
+  cssFamily,
   fontAvailable,
   missingFonts,
   specifiedFonts,
@@ -132,5 +133,39 @@ describe('missingFonts', () => {
     expect(
       specifiedFonts({ typeHeading: 'Inter', typeBody: 'Inter' })
     ).toEqual(['Inter'])
+  })
+})
+
+describe('cssFamily digs the real family out of a human label', () => {
+  /* The app stores what a designer types, which is never a CSS family. So
+     every lookup failed and the missing-font warning fired on the app's own
+     presets — "System UI Bold and System UI Regular are not available" —
+     which teaches the designer the warning is noise. It is not noise about
+     real fonts, so that mattered. */
+  it('strips weight and width from the end', () => {
+    expect(cssFamily('Trade Gothic Bold Condensed No. 20')).toBe('Trade Gothic')
+    expect(cssFamily('Plus Jakarta Sans Bold')).toBe('Plus Jakarta Sans')
+    expect(cssFamily('Playfair Display SemiBold')).toBe('Playfair Display')
+  })
+
+  it('strips from the END only, never the middle', () => {
+    // "Freight Text Pro Book" became "Freight Pro" when style words were
+    // stripped anywhere: Text and Pro are the family, only Book is weight.
+    expect(cssFamily('Freight Text Pro Book')).toBe('Freight Text Pro')
+  })
+
+  it('keeps a number that is part of the family name', () => {
+    // Source Sans 3 and Univers 55 are families; the digits are not weights.
+    expect(cssFamily('Source Sans 3 Regular')).toBe('Source Sans 3')
+    expect(cssFamily('Univers 55')).toBe('Univers 55')
+  })
+
+  it('leaves a name with no style suffix alone', () => {
+    expect(cssFamily('Comic Sans MS')).toBe('Comic Sans MS')
+  })
+
+  it('treats a generic family as always present', () => {
+    // "System UI — native" is a preset label, not a missing font.
+    expect(fontAvailable('System UI — native', undefined)).toBe(true)
   })
 })

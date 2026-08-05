@@ -69,7 +69,12 @@ export default function AlignmentBars({
         {rows.map((r) => {
           /* An axis the strategy set but this candidate has not been tagged
              for is NOT the same as one nobody mentioned. Say which. */
-          const awaiting = r.target !== null && r.value === null
+          /* A split row must never also render as awaiting: both were
+             truthy at once and the two labels concatenated on screen into
+             "strategy setstrategy is split". Split wins — it is a fact
+             about the strategy, and it outranks anything about the work. */
+          const awaiting =
+            r.state !== 'split' && r.target !== null && r.value === null
           return (
           <li
             key={r.axis}
@@ -110,7 +115,7 @@ export default function AlignmentBars({
               {r.high}
             </span>
             <span className="align-read">
-              {awaiting && 'strategy set'}
+              {awaiting && (derived ? 'not in the colours' : 'strategy set')}
               {!awaiting && r.state === 'unset' && 'not said'}
               {r.state === 'close' && 'matches'}
               {r.state === 'split' && 'strategy is split'}
@@ -122,7 +127,14 @@ export default function AlignmentBars({
             <span className="sr-only">
               {r.label}:{' '}
               {awaiting
-                ? `your strategy asks for ${r.target > 0.5 ? r.high : r.low}; ${thingLabel} is not placed yet`
+                ? derived
+                  ? /* Do NOT say "not placed yet" here. On the colour panel
+                       there is no slider to place anything with, so that
+                       phrasing sends the designer hunting for a control
+                       that does not exist — reported in a cold-start run.
+                       The truth is simpler: a hex cannot carry this. */
+                    `your strategy asks for ${r.target > 0.5 ? r.high : r.low}; a colour cannot say`
+                  : `your strategy asks for ${r.target > 0.5 ? r.high : r.low}; ${thingLabel} is not placed yet`
                 : r.state === 'unset'
                 ? 'not said'
                 : r.state === 'split'

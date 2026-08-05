@@ -98,7 +98,44 @@ describe('the brief reads its own vetoes back', () => {
     expect(vetoedFamilies('no orange — my last employer had orange trucks')).toContain('orange')
     expect(vetoedFamilies('please avoid orange')).toContain('orange')
     expect(vetoedFamilies('she hates orange')).toContain('orange')
-    expect(vetoedFamilies('not hunter green, everyone does that')).toContain('green')
+  })
+
+  it('a SHADE veto does not ban the whole family', () => {
+    /* Found in a cold-start run and it mattered: the client said "not
+       hunter green — everything in the horse world is hunter green", and
+       the app banned green outright, on a Vermont leather brand whose
+       palette is green. It then flagged the designer's own lichen green.
+       We cannot tell hunter from lichen by hex, so the honest move is
+       silence rather than a warning that is wrong about the colour the
+       designer is actually going to use. */
+    expect(vetoedFamilies('not hunter green, everyone does that')).toEqual([])
+    expect(vetoedFamilies('no forest green please')).toEqual([])
+    // but the unqualified family veto still lands
+    expect(vetoedFamilies('no green at all')).toContain('green')
+  })
+
+  it('a near-neutral belongs to no colour family', () => {
+    /* The oatmeal cream #EFE7D8 was reported as ORANGE on a brief saying
+       no orange — its channels span 23/255, plainly a near-white, but HSL
+       saturation inflates at high lightness. Same trap already fixed for
+       warmth and missed here. */
+    expect(familiesFor('#EFE7D8')).toEqual([])
+    expect(familiesFor('#F5F2EC')).toEqual([])
+  })
+
+  it('a saddle brown is brown, not orange', () => {
+    // Nobody who says "no orange" means their leather brown, and a warning
+    // that fires on a leather brand's leather is one you stop reading.
+    expect(familiesFor('#7A5230')).toEqual(['brown'])
+  })
+
+  it("does not fire on the designer's own leather palette", () => {
+    expect(
+      vetoBreaches(
+        ['#3A4A33', '#7A5230', '#221E1A', '#EFE7D8'],
+        'not hunter green. NO ORANGE — my last employer had orange trucks.'
+      )
+    ).toEqual([])
   })
 
   it('does not invent a veto from a plain mention', () => {
