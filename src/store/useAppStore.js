@@ -15,6 +15,14 @@ import {
 import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/helper/breakKit'
 import { IDENTITY_FIELDS } from '../lib/journey/identityStamp'
+import {
+  expandProject,
+  projectType,
+  toggleStep,
+} from '../lib/journey/projectTypes'
+
+/** The default stage set for a type, as a plain list for the store. */
+const projectTypeSteps = (typeId) => [...projectType(typeId).stepIds]
 import versionService from '../services/versionService'
 
 /**
@@ -2481,6 +2489,38 @@ const useAppStore = create(
          The row moves to the finished area labelled "Not needed" and one
          click puts it back. No new field on old projects: absent reads as
          an empty list. */
+      /* Project type — what are we building? Sets which stages are on by
+         default; the designer can still switch any of them. Absent means a
+         full identity, which is what every project made before types
+         existed already was, so nothing migrates. */
+      setProjectType: (projectId, typeId) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId
+              ? { ...p, projectType: typeId, stepsOn: projectTypeSteps(typeId) }
+              : p
+          ),
+        })),
+
+      /* Switch one stage on or off for this project. Never deletes what is
+         inside the stage — a stage is a view onto the project document, so
+         this is reversible and needs no confirmation. */
+      toggleProjectStep: (projectId, stepId) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId ? { ...p, stepsOn: toggleStep(p, stepId) } : p
+          ),
+        })),
+
+      /* Grow into a bigger type — Logo → Logo package → Brand identity —
+         keeping everything already done and every stage already on. */
+      expandProjectType: (projectId, nextTypeId) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId ? { ...p, ...expandProject(p, nextTypeId) } : p
+          ),
+        })),
+
       toggleStepNotNeeded: (projectId, stepId) =>
         set((state) => ({
           projects: state.projects.map((p) => {
