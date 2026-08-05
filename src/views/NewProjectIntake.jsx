@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { DELIVERABLE_OPTIONS, isLogoOnlyScope } from '../lib/brief/detectiveBrief'
+import { activeStepIds, typeFromIntake } from '../lib/journey/projectTypes'
 import { createDiscoveryShare, discoveryShareUrl } from '../lib/client/discoveryShare'
 import '../styles/lazy-create.css'
 
@@ -55,16 +56,63 @@ export default function NewProjectIntake({
     []
   )
 
+  /**
+   * Tick a deliverable.
+   *
+   * An empty list means "the full brand package" — that is the honest
+   * default for an untouched brief and it is what progressItemInScope
+   * relies on. But the first tick silently flips the meaning from
+   * everything to only-this, and that trapped a tester: they ticked three
+   * items from QUOTED SEPARATELY, intending to ADD them, and the scope line
+   * changed from "full brand package · 5 stops" to "3 deliverables" — a
+   * full identity job now scoped with no logo, no colour and no type. They
+   * only caught it by reading the summary line.
+   *
+   * Extras are by definition additions to the package, never a replacement
+   * for it. So ticking an extra FIRST materialises the included set that
+   * was already implied, and the extra lands on top. Ticking an included
+   * item first is a genuine narrowing and still behaves exactly as before.
+   */
   const togglePick = (id) =>
-    setPicked((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
+    setPicked((s) => {
+      if (s.includes(id)) return s.filter((x) => x !== id)
+      const isExtra = !!DELIVERABLE_OPTIONS.find((o) => o.id === id)?.extra
+      if (s.length === 0 && isExtra) {
+        const core = DELIVERABLE_OPTIONS.filter((o) => !o.extra).map((o) => o.id)
+        return [...core, id]
+      }
+      return [...s, id]
+    })
 
-  /* Empty picks = full brand package (progressItemInScope). Surface that. */
-  const scopeLabel =
+  /* Empty picks = full brand package (progressItemInScope). Surface that.
+   *
+   * The chip also names the CONSEQUENCE, in stops. The project type is
+   * derived from these answers rather than asked as a fourth question, and
+   * a derivation nobody witnesses becomes a "where did this come from?"
+   * surprise weeks later. Cause and effect share one line, at the instant
+   * the answer is given.
+   *
+   * It reacts to engagement too, not just the checkboxes — engagement is
+   * the input that changes the path MOST (adding to an existing brand drops
+   * two stops), and it is a pre-selected radio designed to be skimmed past.
+   * A chip blind to it would explain the smaller change and stay silent on
+   * the bigger one. (adhd-executive-function-advisor, 2026-08-05.)
+   *
+   * Stops, not type names: "3 stops" is information the designer can act
+   * on; "Brand expansion" is a taxonomy they would have to decode first. */
+  const logoOnly = isLogoOnlyScope(picked)
+  const stopCount = activeStepIds({
+    projectType: typeFromIntake({ engagementType: engagement, logoOnly }),
+  }).length
+  const scopeWords =
     picked.length === 0
-      ? 'Scope: full brand package'
-      : isLogoOnlyScope(picked)
+      ? engagement === 'extend'
+        ? 'Adding to an existing brand'
+        : 'Scope: full brand package'
+      : logoOnly
         ? 'Scope: logo only'
         : `Scope: ${picked.length} deliverable${picked.length === 1 ? '' : 's'}`
+  const scopeLabel = `${scopeWords} · ${stopCount} stops on the path`
 
   const create = () =>
     useAppStore.getState().createProjectFromIntake({

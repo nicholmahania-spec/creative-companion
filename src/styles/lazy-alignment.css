@@ -1,0 +1,248 @@
+/* Alignment bars — informational, never alarming.
+   Nothing here is red. A difference between a typeface and the strategy is
+   something to look at, not a mistake to be scolded for, and the audience
+   this app is built for reads alert colour as "you did it wrong". */
+
+.align-block {
+  margin-top: 0.75rem;
+}
+
+.align-note {
+  margin: 0 0 var(--space-2);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.align-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.align-row {
+  display: grid;
+  grid-template-columns: 5.5rem 4.5rem 1fr 4.5rem 8rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.align-axis {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.align-poles {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.align-poles:last-of-type {
+  text-align: right;
+}
+
+.align-track {
+  position: relative;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken, rgba(0, 0, 0, 0.06));
+}
+
+/* The strategy's position: a line, because it is a target rather than a
+   value the candidate possesses. */
+.align-target {
+  position: absolute;
+  top: -0.25rem;
+  width: 2px;
+  height: 0.8rem;
+  transform: translateX(-50%);
+  background: var(--text-muted);
+}
+
+/* The candidate: a filled dot. */
+.align-value {
+  position: absolute;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  /* translate rather than negative margins: centring by offsetting half the
+     size is two more raw spacing values the scale ratchet would count. */
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--text-primary);
+}
+
+/* A split strategy is a band across the whole track, not a point — the mean
+   of two attributes that disagree is not a target. */
+.align-band {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-pill);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--surface-sunken, rgba(0, 0, 0, 0.06)),
+    var(--surface-sunken, rgba(0, 0, 0, 0.06)) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.align-read {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.align-row.is-differs .align-read,
+.align-row.is-split .align-read {
+  color: var(--text-secondary);
+}
+
+.align-row.is-unset .align-track {
+  opacity: 0.45;
+}
+
+.align-empty {
+  margin: var(--space-2) 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 700px) {
+  .align-row {
+    grid-template-columns: 5rem 1fr 7rem;
+  }
+  /* The pole words are the readable part on a narrow screen too, so they
+     move under the axis name rather than being dropped. */
+  .align-poles {
+    display: none;
+  }
+}
+
+/* Tagger — placing a word or a typeface on the five rulers. */
+.tagger-rows {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.tagger-row {
+  display: grid;
+  grid-template-columns: 5.5rem 4.5rem 1fr 4.5rem 4.5rem 3rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+.tagger-axis {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.tagger-pole {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.tagger-pole-high {
+  text-align: right;
+}
+.tagger-range {
+  width: 100%;
+}
+.tagger-state {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.tagger-clear {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.tagger-clear:disabled {
+  opacity: 0.35;
+  cursor: default;
+  text-decoration: none;
+}
+@media (max-width: 700px) {
+  .tagger-row {
+    grid-template-columns: 5rem 1fr 4rem 3rem;
+  }
+  .tagger-pole {
+    display: none;
+  }
+}
+
+.design-align {
+  margin-bottom: 1rem;
+}
+.design-align > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.align-tag-lead {
+  margin: var(--space-3) 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.define-strategy {
+  margin-top: 1rem;
+}
+.strategy-add-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.strategy-add-row .field-input {
+  flex: 1;
+}
+.strategy-list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.strategy-item-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.strategy-item-head strong {
+  flex: 1;
+}
+.strategy-split {
+  margin: var(--space-3) 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Strategy set, candidate not yet placed — the target is real, the dot is
+   simply not there yet. Muted, because it is a prompt and not a problem. */
+.align-row.is-awaiting .align-read {
+  color: var(--text-muted);
+}
+
+.align-basis {
+  margin: 0 0 var(--space-2);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* A stated veto being broken. Firmer than the bars — the client said this
+   out loud — but still not an error colour: the designer may have a reason,
+   and the app does not overrule them. */
+.align-veto {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2);
+  border-left: 2px solid var(--text-secondary);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  background: var(--surface-sunken, rgba(0, 0, 0, 0.04));
+}

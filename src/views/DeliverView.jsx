@@ -146,44 +146,6 @@ export default function DeliverView({
           <p className="assets-status" role="status">
             {statusLine}
           </p>
-          {/* Focus Timer */}
-          <div className="insights-timer" style={{ marginTop: '1rem' }}>
-            {isFocusRunning || focusLeft < POMODORO_WORK_MIN * 60
-              ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')}`
-              : 'not started'}
-          </div>
-          <div className="insights-focus-actions" style={{ marginTop: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={startOrPauseFocus}
-              className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
-              disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
-            >
-              {isFocusRunning ? 'Pause' : focusLeft === 0 ? 'Start' : 'Resume'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTimerFocusSource?.(null)
-                resetFocus(25)
-              }}
-              className="btn btn-secondary btn-sm"
-              disabled={!!forcedBreak}
-            >
-              25
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTimerFocusSource?.(null)
-                resetFocus(2)
-              }}
-              className="btn btn-ghost btn-sm"
-              disabled={!!forcedBreak}
-            >
-              2
-            </button>
-          </div>
       </div>
       </div>
 
@@ -236,6 +198,19 @@ export default function DeliverView({
         {lastExportNote ? (
           <p className="pack-export-confirm" role="status">
             {lastExportNote}
+            {/* A failed export must offer the way out, next to the button
+                that failed. Without this the note states a problem and
+                leaves the designer to work out the remedy — and the remedy
+                (press the same button and hope) is not discoverable. */}
+            {/^Not saved/.test(lastExportNote) ? (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm pack-export-retry"
+                onClick={() => runExport('pdf', { direct: true })}
+              >
+                Download it now
+              </button>
+            ) : null}
           </p>
         ) : null}
 

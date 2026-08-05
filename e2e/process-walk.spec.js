@@ -4,6 +4,7 @@ import {
   headingForStep,
   labelForStep,
   openBriefFieldChapter,
+  openIdentitySubstep,
   openTool,
   pathNav,
   stepByIdIn,
@@ -112,7 +113,16 @@ test.describe('Process walk (artifacts)', () => {
     // 5 Design — tagline (craft) + version bump
     await stepByIdIn(path, 'design').click()
     await expect(headingForStep(page, 'design').first()).toBeVisible()
+    /* Tagline lives on Identity's Words sub-screen, which is mounted only
+       while open — `#brand-tagline` does not exist on arrival at Design.
+       Same wall soft-signal hit on `#msg-promise` after 20d21a1 split
+       Identity into Mark → Words → Colour → Type → Preview. */
+    await openIdentitySubstep(page, 'essentials')
     await page.locator('#brand-tagline').fill('Calm direction you can hand over')
+    /* Bump is on Preview, not Words — the two fields this test touches live on
+       different Identity sub-screens, so filling the tagline leaves you one
+       screen away from the control that versions it. */
+    await openIdentitySubstep(page, 'preview')
     /* The bump button carries its action in visible text now ("Bump · v1"),
        not just the version readout. */
     await page.getByRole('button', { name: /^Bump · v1$/ }).click()

@@ -1047,3 +1047,8 @@
   display: flex;
   gap: var(--space-2);
 }
+
+/* The way out of a failed export, beside the note that reports it. */
+.pack-export-retry {
+  margin-left: var(--space-2);
+}

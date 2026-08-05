@@ -67,10 +67,33 @@ async function mountProbes(page, { dark }) {
  */
 const SETTLE_MS = 320
 
-/** Background of a probe at rest, under the cursor, and while held down. */
+/**
+ * Background of a probe at rest, under the cursor, and while held down.
+ *
+ * Reads `background-image` AS WELL AS `background-color`, and that is the
+ * whole point rather than a detail. Primary and secondary are painted with a
+ * gradient plate plus a conic-gradient border ring, so their fill lives
+ * entirely in `background-image` and their `background-color` is
+ * `rgba(0, 0, 0, 0)` in every state. Reading colour alone therefore reported
+ * "never repaints" for the two most-used buttons in the app while they were
+ * demonstrably changing — measured: primary goes rgb(91,66,243) →
+ * rgb(67,48,192) on hover, secondary white → rgb(235,235,235).
+ *
+ * Ghost hid the bug, because it is the one variant filled with a plain colour,
+ * so it alone kept passing.
+ *
+ * This makes the guard STRONGER, not looser: it now sees repaints it was blind
+ * to, and the disabled assertions below still hold against the fuller reading.
+ * The file's own docstring already said "only the painted result distinguishes
+ * the two" — it was just reading a partial view of the painted result.
+ */
 async function paintStates(page, probe) {
   const el = page.locator(`[data-probe="${probe}"]`)
-  const bg = () => el.evaluate((n) => getComputedStyle(n).backgroundColor)
+  const bg = () =>
+    el.evaluate((n) => {
+      const c = getComputedStyle(n)
+      return `${c.backgroundColor} | ${c.backgroundImage}`
+    })
 
   const rest = await bg()
 
