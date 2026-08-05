@@ -280,16 +280,40 @@ the thesis holds.
 Cheap, no dependencies, disproportionate benefit. Each goes past
 `adhd-executive-function-advisor` before it is built.
 
-- **Frictionless capture** — global quick-add into a project Inbox, filed later.
-- **"Where you left off"** — one sentence on project open, not a dashboard.
-- **Non-punitive waiting language** — muted grey, never alert red.
-- **Undo everywhere** — a 5-second undo instead of a confirmation dialog.
-- **Focus Mode** — collapse to the current stage.
-- **Next card** — one action, one button, never a list.
+**Status 2026-08-05: done — and it was mostly repair, not construction.**
 
-**Done when:** each is on screen and doing its real job.
+The advisor's finding, confirmed in the code: five of the six already existed
+in some form. What shipped:
 
-**Risk: low.**
+| Item | What it actually was |
+| --- | --- |
+| **Next card** | Existed with **three** near-equal buttons. `Open` keeps the button; `Already done` / `Skip this one` demoted to quiet links. NOT deleted — this card is the only route in the app to either action, and the gap card is never empty, so removing them would strand an unwanted stop with no way to clear it. |
+| **Non-punitive language** | Already true everywhere except **one** rule: a red-tinted border on `.deadline-list-item.urgency-overdue`. Fixed; locked by `nonPunitiveState.test.js`, which judges the colour rather than the token name. |
+| **Undo everywhere** | The chip existed, wired to exactly one action. Generalised to any honestly-reversible action; delete-project's "You cannot undo this" dialog is gone. Restores are whole-neighbourhood — deleting a project also drops its tasks and pins, removing a step also drops sub-steps. |
+| **Frictionless capture** | Existed, but `N` **navigated to Flow**, paying the exact context switch capture exists to avoid, and the half-typed line was lost on reload. Both fixed. No new Inbox: the app already has four places a captured thing can live, and a fifth adds "which one did I use?". |
+| **"Where you left off"** | Existed as a destination label. Now a sentence naming what you were doing, with tone rules enforced by test — no elapsed counts, no "ago"/"overdue", no alarm words. |
+| **Focus Mode** | **Not built, deliberately.** A focus mask already ships that de-emphasises without hiding. A persisted collapse state is itself a thing to remember, and when the app is wrong about the current stage it hides your work. No credible expert opposition to this call was found. |
+
+**Two things this phase found that were not on the list, and mattered more:**
+
+1. **The Flow view was rendering nearly empty.** `SketchView` reads its whole
+   contents from props and declares 56; `MainOutlet` passed 6. No crash, clean
+   build, every test green — nothing in vitest renders these views. Auditing
+   the rest found **five more views** in the same state, three of them still
+   rendering a dead focus timer whose buttons threw a TypeError on click. Now
+   guarded by `propContract.test.js`.
+2. **A stale status table in this very file** sent a careful reader off to fix
+   a defect that had been green for weeks. See the Phase 0 note.
+
+**On the "one button" rationale:** deliberately NOT argued from Hick's Law.
+Liu et al. (CHI 2020, *How Relevant is Hick's Law for HCI?*) argue it "speaks
+against, not for, the popular principle that less is better", and that the
+stimulus-response paradigm rarely applies to HCI tasks. The case here is task
+initiation under executive dysfunction, which that paper does not address —
+so it is made in those terms rather than borrowed from a law that does not
+support it.
+
+**Risk: low** — as predicted. The incidental findings were not.
 
 ---
 
