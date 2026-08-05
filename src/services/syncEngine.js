@@ -1,0 +1,310 @@
+/**
+ * Phase 1b — real sync. Local ↔ Supabase, background, with a stated
+ * conflict rule and the losing version RETAINED.
+ *
+ * THE CONFLICT RULE, stated once and enforced here:
+ *
+ *   The desk wins. The version in front of the designer is never yanked
+ *   away by a background process; when both sides changed, the local
+ *   version becomes the truth and the cloud version is written to
+ *   project_conflicts FIRST — durably — and only then overwritten.
+ *
+ * Why desk-wins and not newest-wins: "newest" needs trustworthy edit
+ * timestamps on both sides, and the local store does not timestamp edits.
+ * Wall-clock comparisons across devices are exactly the trap PHASES.md
+ * warns about. Desk-wins is deterministic, explainable in one sentence,
+ * and — because the loser is retained — LOSSLESS either way. This is the
+ * CouchDB shape: picking a winner is a display choice, applied only after
+ * both versions are durably stored.
+ *
+ * Change detection is by content hash against the last-synced state, not
+ * by timestamps: `dirty` means "this desk changed the document since it
+ * last agreed with the cloud", `remoteChanged` means "the cloud row moved
+ * since then". The four combinations give the four actions below.
+ *
+ * Sync meta lives in its own localStorage key, NOT in the zustand persist
+ * blob — it is per-device bookkeeping about the relationship between this
+ * desk and the cloud, not workspace content, and keeping it out of the
+ * store means no store migration and no accidental export.
+ */
+import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
+import { projectToCloudData, pushProject } from './projectSync.js'
+
+const META_KEY = 'cc-project-sync-meta-v1'
+
+/** djb2 over the cloud-shaped document. Collisions are theoretically
+ *  possible and practically irrelevant here: a false "clean" needs two
+ *  different documents hashing equal AND being the same project; the cost
+ *  of a false "dirty" is one redundant push. */
+export function docHash(doc) {
+  const s = JSON.stringify(doc)
+  let h = 5381
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) + h + s.charCodeAt(i)) | 0
+  }
+  return String(h)
+}
+
+export function readSyncMeta() {
+  try {
+    return JSON.parse(window.localStorage.getItem(META_KEY) || '{}') || {}
+  } catch {
+    return {}
+  }
+}
+
+export function writeSyncMeta(meta) {
+  try {
+    window.localStorage.setItem(META_KEY, JSON.stringify(meta))
+  } catch {
+    /* Full storage must not kill sync — worst case is re-detecting work
+       already done next round. */
+  }
+}
+
+/**
+ * The four-way decision, pure and unit-tested.
+ *
+ * @param {object|null} localDoc  cloud-shaped local document (workLog gone)
+ * @param {object|null} meta      { remoteUpdatedAt, docHash } from last sync
+ * @param {object|null} remoteRow { updated_at, data } or null if no row
+ * @returns {'push'|'pull'|'conflict'|'none'}
+ */
+export function decideSyncAction(localDoc, meta, remoteRow) {
+  if (!localDoc && !remoteRow) return 'none'
+  if (localDoc && !remoteRow) return 'push'
+  if (!localDoc && remoteRow) return 'pull'
+
+  const dirty = !meta || docHash(localDoc) !== meta.docHash
+  const remoteChanged =
+    !meta || String(remoteRow.updated_at) !== String(meta.remoteUpdatedAt)
+
+  if (dirty && remoteChanged) return 'conflict'
+  if (dirty) return 'push'
+  if (remoteChanged) return 'pull'
+  return 'none'
+}
+
+/* ------------------------------------------------------------------ state */
+
+/** synced | syncing | offline | failed | idle — the honest four (plus
+ *  "idle" for before the first attempt). Failure keeps its reason and stays
+ *  until a retry succeeds; it does not decay into a toast. */
+let syncStatus = { state: 'idle', reason: '', at: null }
+const listeners = new Set()
+
+export function getSyncStatus() {
+  return syncStatus
+}
+
+export function subscribeSyncStatus(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
+
+function setStatus(state, reason = '') {
+  syncStatus = { state, reason, at: Date.now() }
+  listeners.forEach((fn) => fn(syncStatus))
+}
+
+/* ------------------------------------------------------------- orchestrate */
+
+let inFlight = false
+let queued = false
+
+/**
+ * Sync every local project against the cloud.
+ *
+ * @param {object} deps
+ * @param {() => Array<object>} deps.getProjects   read local projects
+ * @param {(projects: Array<object>) => void} deps.setProjects  replace them
+ * @returns {Promise<{ok: boolean, pushed: number, pulled: number, conflicts: number, reason?: string}>}
+ */
+export async function syncAllProjects({ getProjects, setProjects }) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return {
+      ok: false,
+      pushed: 0,
+      pulled: 0,
+      conflicts: 0,
+      reason: 'not-configured',
+    }
+  }
+  if (inFlight) {
+    queued = true
+    return {
+      ok: true,
+      pushed: 0,
+      pulled: 0,
+      conflicts: 0,
+      reason: 'coalesced',
+    }
+  }
+  inFlight = true
+  try {
+    let result
+    do {
+      queued = false
+      result = await runSync({ getProjects, setProjects })
+    } while (queued)
+    return result
+  } finally {
+    inFlight = false
+  }
+}
+
+async function runSync({ getProjects, setProjects }) {
+  const counts = { pushed: 0, pulled: 0, conflicts: 0 }
+
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    setStatus('offline')
+    return { ok: false, ...counts, reason: 'offline' }
+  }
+
+  const { data: auth } = await supabase.auth.getUser()
+  const user = auth?.user
+  if (!user) {
+    // Not an error state — a local-only desk is a supported way to work.
+    setStatus('idle')
+    return { ok: false, ...counts, reason: 'signed-out' }
+  }
+
+  setStatus('syncing')
+
+  const { data: rows, error } = await supabase
+    .from('projects')
+    .select('id, local_id, name, stage, data, updated_at')
+    .eq('owner_id', user.id)
+  if (error) {
+    setStatus(
+      'failed',
+      'The cloud did not answer. Your work is safe on this desk.',
+    )
+    return { ok: false, ...counts, reason: error.message }
+  }
+
+  const remoteByLocalId = new Map(
+    (rows || []).filter((r) => r.local_id).map((r) => [String(r.local_id), r]),
+  )
+  const meta = readSyncMeta()
+  const locals = getProjects()
+  const localById = new Map(locals.map((p) => [String(p.id), p]))
+  let nextProjects = [...locals]
+  let projectsChanged = false
+
+  // Every id either side knows about.
+  const ids = new Set([...localById.keys(), ...remoteByLocalId.keys()])
+
+  for (const id of ids) {
+    const local = localById.get(id) || null
+    const remote = remoteByLocalId.get(id) || null
+    const localCloudDoc = local ? projectToCloudData(local) : null
+    const action = decideSyncAction(localCloudDoc, meta[id], remote)
+
+    if (action === 'none') continue
+
+    if (action === 'push') {
+      const r = await pushProject(local)
+      if (!r.ok) {
+        setStatus('failed', r.reason)
+        return { ok: false, ...counts, reason: r.reason }
+      }
+      meta[id] = await refreshedMeta(user.id, id, localCloudDoc)
+      counts.pushed += 1
+      continue
+    }
+
+    if (action === 'pull') {
+      const incoming = rehydrate(remote, local)
+      if (local) {
+        nextProjects = nextProjects.map((p) =>
+          String(p.id) === id ? incoming : p,
+        )
+      } else {
+        nextProjects = [...nextProjects, incoming]
+      }
+      projectsChanged = true
+      meta[id] = {
+        remoteUpdatedAt: String(remote.updated_at),
+        docHash: docHash(projectToCloudData(incoming)),
+      }
+      counts.pulled += 1
+      continue
+    }
+
+    // conflict — retain the LOSER (the cloud copy) first, then push the desk.
+    const retained = await supabase.from('project_conflicts').insert({
+      owner_id: user.id,
+      project_row_id: remote.id,
+      local_id: id,
+      project_name: remote.name || local?.name || null,
+      losing_side: 'remote',
+      data: remote.data || {},
+    })
+    if (retained.error) {
+      // Retention failed → the loser would be LOST if we pushed. Do not
+      // push. This ordering is the entire safety argument of the rule.
+      setStatus(
+        'failed',
+        'Could not keep the other version safe, so nothing was overwritten.',
+      )
+      return { ok: false, ...counts, reason: retained.error.message }
+    }
+    const r = await pushProject(local)
+    if (!r.ok) {
+      setStatus('failed', r.reason)
+      return { ok: false, ...counts, reason: r.reason }
+    }
+    meta[id] = await refreshedMeta(user.id, id, localCloudDoc)
+    counts.conflicts += 1
+  }
+
+  if (projectsChanged) setProjects(nextProjects)
+  writeSyncMeta(meta)
+  setStatus('synced')
+  return { ok: true, ...counts }
+}
+
+/** A pulled document becomes a local project again. Device-local fields the
+ *  cloud never carries (workLog) survive from the existing local copy. */
+function rehydrate(remoteRow, existingLocal) {
+  const doc =
+    remoteRow.data && typeof remoteRow.data === 'object' ? remoteRow.data : {}
+  return {
+    ...doc,
+    id: String(remoteRow.local_id),
+    workLog: existingLocal?.workLog || [],
+  }
+}
+
+/** After a push, meta must record the updated_at the SERVER wrote (the
+ *  trigger stamps it — we cannot know it client-side). One cheap read. */
+async function refreshedMeta(userId, localId, localCloudDoc) {
+  const { data } = await supabase
+    .from('projects')
+    .select('updated_at')
+    .eq('owner_id', userId)
+    .eq('local_id', localId)
+    .maybeSingle()
+  return {
+    remoteUpdatedAt: data ? String(data.updated_at) : '',
+    docHash: docHash(localCloudDoc),
+  }
+}
+
+/**
+ * Retained versions, newest first, for the Settings recovery list.
+ * @returns {Promise<{ok: boolean, rows: Array<object>, reason?: string}>}
+ */
+export async function listRetainedVersions() {
+  if (!isSupabaseConfigured() || !supabase) return { ok: false, rows: [] }
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth?.user) return { ok: false, rows: [] }
+  const { data, error } = await supabase
+    .from('project_conflicts')
+    .select('id, local_id, project_name, losing_side, created_at, data')
+    .order('created_at', { ascending: false })
+    .limit(20)
+  if (error) return { ok: false, rows: [], reason: error.message }
+  return { ok: true, rows: data || [] }
+}

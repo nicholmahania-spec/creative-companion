@@ -87,7 +87,7 @@ export async function pushProject(project, opts = {}) {
      the fallback because for most single-brand work they are the same words,
      and a wrong-but-editable grouping beats a blocked push. */
   const clientName = String(
-    opts.clientName || project.clientName || project.name || 'My client'
+    opts.clientName || project.clientName || project.name || 'My client',
   ).trim()
 
   // 1. Client row, by (owner, name). Select-then-insert rather than upsert:
@@ -100,7 +100,12 @@ export async function pushProject(project, opts = {}) {
     .eq('name', clientName)
     .limit(1)
     .maybeSingle()
-  if (clientErr) return { ok: false, reason: friendlyReason(clientErr), detail: clientErr.message }
+  if (clientErr)
+    return {
+      ok: false,
+      reason: friendlyReason(clientErr),
+      detail: clientErr.message,
+    }
 
   if (!client) {
     const ins = await supabase
@@ -108,7 +113,12 @@ export async function pushProject(project, opts = {}) {
       .insert({ owner_id: user.id, name: clientName })
       .select('id')
       .single()
-    if (ins.error) return { ok: false, reason: friendlyReason(ins.error), detail: ins.error.message }
+    if (ins.error)
+      return {
+        ok: false,
+        reason: friendlyReason(ins.error),
+        detail: ins.error.message,
+      }
     client = ins.data
   }
 
@@ -120,7 +130,12 @@ export async function pushProject(project, opts = {}) {
     .eq('client_id', client.id)
     .limit(1)
     .maybeSingle()
-  if (brandErr) return { ok: false, reason: friendlyReason(brandErr), detail: brandErr.message }
+  if (brandErr)
+    return {
+      ok: false,
+      reason: friendlyReason(brandErr),
+      detail: brandErr.message,
+    }
 
   if (!brand) {
     const ins = await supabase
@@ -128,7 +143,12 @@ export async function pushProject(project, opts = {}) {
       .insert({ owner_id: user.id, client_id: client.id, name: clientName })
       .select('id')
       .single()
-    if (ins.error) return { ok: false, reason: friendlyReason(ins.error), detail: ins.error.message }
+    if (ins.error)
+      return {
+        ok: false,
+        reason: friendlyReason(ins.error),
+        detail: ins.error.message,
+      }
     brand = ins.data
   }
 
@@ -152,7 +172,12 @@ export async function pushProject(project, opts = {}) {
     .upsert(row, { onConflict: 'owner_id,local_id' })
     .select('id')
     .single()
-  if (up.error) return { ok: false, reason: friendlyReason(up.error), detail: up.error.message }
+  if (up.error)
+    return {
+      ok: false,
+      reason: friendlyReason(up.error),
+      detail: up.error.message,
+    }
 
   return { ok: true, projectRowId: up.data.id }
 }

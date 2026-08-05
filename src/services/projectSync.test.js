@@ -36,8 +36,7 @@ vi.mock('../lib/supabase.js', () => {
     isSupabaseConfigured: () => mockState.configured,
     supabase: {
       auth: {
-        getUser: () =>
-          Promise.resolve({ data: { user: mockState.user } }),
+        getUser: () => Promise.resolve({ data: { user: mockState.user } }),
       },
       from: (table) => builder(table),
     },

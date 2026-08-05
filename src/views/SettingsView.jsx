@@ -1,6 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { pushProject } from '../services/projectSync'
+import {
+  getSyncStatus,
+  listRetainedVersions,
+  subscribeSyncStatus,
+  syncAllProjects,
+} from '../services/syncEngine'
 import '../styles/lazy-settings.css'
 
 /**
@@ -57,6 +63,49 @@ export default function SettingsView(props) {
   const activeProjectId = useAppStore((s) => s.activeProjectId)
   const projects = useAppStore((s) => s.projects)
   const [projectPushBusy, setProjectPushBusy] = useState(false)
+
+  /* Phase 1b: the honest sync state — synced / syncing / offline / failed.
+     A failure stays on screen with a Retry until a sync succeeds; it does
+     not vanish into a toast. */
+  const [projSync, setProjSync] = useState(getSyncStatus)
+  useEffect(() => subscribeSyncStatus(setProjSync), [])
+  const retrySync = () =>
+    syncAllProjects({
+      getProjects: () => useAppStore.getState().projects,
+      setProjects: (next) => useAppStore.setState({ projects: next }),
+    })
+
+  /* Retained versions — the losing side of every conflict, recoverable.
+     Loaded on demand behind a disclosure so Settings stays quiet. */
+  const [retained, setRetained] = useState(null)
+  const loadRetained = async () => {
+    const r = await listRetainedVersions()
+    setRetained(r.ok ? r.rows : [])
+  }
+  const bringBack = (row) => {
+    const doc = row?.data
+    if (!doc || typeof doc !== 'object') return
+    const localId = String(row.local_id || doc.id || '')
+    if (!localId) return
+    ask(
+      `Bring back this version of “${row.project_name || 'project'}”? The current version stays in the cloud until the next sync.`,
+      () => {
+        const cur = useAppStore.getState().projects
+        const restored = { ...doc, id: localId }
+        const exists = cur.some((p) => String(p.id) === localId)
+        useAppStore.setState({
+          projects: exists
+            ? cur.map((p) => {
+                if (String(p.id) !== localId) return p
+                // device-local fields survive a restore, same as a pull
+                return { ...restored, workLog: p.workLog || [] }
+              })
+            : [...cur, restored],
+        })
+        flashToast('Version brought back — it will sync as the newest edit')
+      },
+    )
+  }
   const sendActiveProject = async () => {
     const project = projects.find((p) => p.id === activeProjectId)
     if (!project) {
@@ -97,10 +146,7 @@ export default function SettingsView(props) {
             type="button"
             className="btn btn-secondary btn-sm"
             onClick={() =>
-              setPref(
-                'toastMode',
-                prefs.toastMode === 'all' ? 'quiet' : 'all'
-              )
+              setPref('toastMode', prefs.toastMode === 'all' ? 'quiet' : 'all')
             }
           >
             {prefs.toastMode === 'all' ? 'Quiet' : 'All'}
@@ -211,11 +257,70 @@ export default function SettingsView(props) {
               e.target.value = ''
               if (!file) return
               ask('Replace all data with backup?', () =>
-                handleImportBackup(file)
+                handleImportBackup(file),
               )
             }}
           />
         </div>
+        {CLOUD && projSync.state !== 'idle' ? (
+          <p className="settings-meta" role="status">
+            {projSync.state === 'synced' && 'Projects: synced'}
+            {projSync.state === 'syncing' && 'Projects: syncing…'}
+            {projSync.state === 'offline' &&
+              'Projects: offline — will catch up when the connection returns'}
+            {projSync.state === 'failed' && (
+              <>
+                {`Projects: ${projSync.reason || 'sync did not finish'} `}
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={retrySync}
+                >
+                  Retry
+                </button>
+              </>
+            )}
+          </p>
+        ) : null}
+        {CLOUD ? (
+          <details
+            className="settings-retained"
+            onToggle={(e) => {
+              if (e.currentTarget.open && retained === null) void loadRetained()
+            }}
+          >
+            <summary>Retained versions</summary>
+            {retained === null ? (
+              <p className="settings-meta">Loading…</p>
+            ) : retained.length === 0 ? (
+              <p className="settings-meta">
+                Nothing here. When two copies of a project disagree, the one
+                that loses is kept on this list instead of being thrown away.
+              </p>
+            ) : (
+              <ul className="settings-retained-list">
+                {retained.map((row) => (
+                  <li key={row.id}>
+                    <span>
+                      {row.project_name || 'Project'} ·{' '}
+                      {row.losing_side === 'remote'
+                        ? 'cloud copy'
+                        : 'desk copy'}{' '}
+                      · {new Date(row.created_at).toLocaleString()}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => bringBack(row)}
+                    >
+                      Bring back
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </details>
+        ) : null}
         {!CLOUD ? (
           <div className="settings-pw-block">
             <label className="field-label" htmlFor="pw-current">
@@ -299,11 +404,14 @@ export default function SettingsView(props) {
               type="button"
               className="btn btn-ghost settings-danger btn-sm"
               onClick={() => {
-                ask('Wipe every project? The desk will be empty until you start a new one.', () => {
-                  clearToEmpty()
-                  setActiveView('create')
-                  flashToast('Cleared — no projects')
-                })
+                ask(
+                  'Wipe every project? The desk will be empty until you start a new one.',
+                  () => {
+                    clearToEmpty()
+                    setActiveView('create')
+                    flashToast('Cleared — no projects')
+                  },
+                )
               }}
             >
               Clear all projects

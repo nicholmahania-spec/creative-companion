@@ -137,6 +137,7 @@ import {
   changeAccessPassword,
 } from './lib/auth'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import { syncAllProjects } from './services/syncEngine'
 
 import {
   pullWorkspace,
@@ -2258,6 +2259,36 @@ function App() {
     onboarded,
     exportAllData,
   ])
+
+  /* Phase 1b: background sync of projects through the structured path
+     (clients → brands → projects), alongside the blob push above. Longer
+     debounce than the blob — this one does per-project network work.
+     Offline is fine: the engine reports it as a state, not a failure, and
+     the 'online' listener below runs a catch-up sync when the connection
+     returns. Local storage remains the working copy throughout. */
+  useEffect(() => {
+    if (!CLOUD || !unlocked || !cloudUser || cloudHydrating) return undefined
+    const t = window.setTimeout(() => {
+      void syncAllProjects({
+        getProjects: () => useAppStore.getState().projects,
+        setProjects: (next) => useAppStore.setState({ projects: next }),
+      })
+    }, 3000)
+    return () => window.clearTimeout(t)
+  }, [CLOUD, unlocked, cloudUser, cloudHydrating, projects])
+
+  useEffect(() => {
+    if (!CLOUD) return undefined
+    const onBack = () => {
+      if (!unlocked || !cloudUser) return
+      void syncAllProjects({
+        getProjects: () => useAppStore.getState().projects,
+        setProjects: (next) => useAppStore.setState({ projects: next }),
+      })
+    }
+    window.addEventListener('online', onBack)
+    return () => window.removeEventListener('online', onBack)
+  }, [CLOUD, unlocked, cloudUser])
 
   /* First unlock: no modal gate. Home (+ New project → intake) is enough.
      The old New project dialog duplicated create intake and blocked the desk. */
