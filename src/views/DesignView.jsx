@@ -1069,7 +1069,7 @@ export default function DesignView({
                 <AlignmentBars
                   target={strategyProfile(activeProject?.strategyAttributes || [])}
                   token={colourTags}
-                  tokenName="this palette"
+                  thingLabel="this palette"
                 />
                 <p className="align-tag-lead">Where does this palette sit?</p>
                 <AxisTagger
@@ -1591,7 +1591,7 @@ export default function DesignView({
                 <AlignmentBars
                   target={strategyProfile(activeProject?.strategyAttributes || [])}
                   token={typeTags}
-                  tokenName={activeProject?.typeHeading || 'this typeface'}
+                  thingLabel="this pairing"
                 />
                 <p className="align-tag-lead">
                   Where does {activeProject?.typeHeading || 'this typeface'} sit?

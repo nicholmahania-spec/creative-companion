@@ -228,3 +228,9 @@
 .align-row.is-awaiting .align-read {
   color: var(--text-muted);
 }
+
+.align-basis {
+  margin: 0 0 var(--space-2);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}

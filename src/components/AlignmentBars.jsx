@@ -15,7 +15,7 @@ import '../styles/lazy-alignment.css'
  * and nothing is coloured as an error — a difference is information, not a
  * mistake, and the designer is the one who decides.
  */
-export default function AlignmentBars({ target, token, tokenName = '' }) {
+export default function AlignmentBars({ target, token, thingLabel = 'this' }) {
   const rows = compareToTarget(target, token)
   const note = alignmentNote(rows)
 
@@ -38,6 +38,19 @@ export default function AlignmentBars({ target, token, tokenName = '' }) {
 
   return (
     <div className="align-block">
+      {/* Say what this actually knows, because a cold-start test proved the
+          old framing lied. It read the axis values the designer had typed,
+          then printed the TYPEFACE NAME into the verdict — so renaming the
+          font to Comic Sans left it saying "Comic Sans MS matches your
+          strategy", and swapping a palette to the client's explicitly
+          forbidden orange changed nothing. It reads no font file and no
+          hex. Comparing your own two readings is still worth something —
+          it catches you drifting from your own brief — but only if it is
+          not dressed up as the app judging the work. */}
+      <p className="align-basis">
+        Comparing where you placed {thingLabel} against where you placed your
+        words. It does not look at the {thingLabel === 'this palette' ? 'colours' : 'letterforms'} themselves.
+      </p>
       {note ? (
         <p className="align-note" role="status">
           {note}
@@ -100,14 +113,14 @@ export default function AlignmentBars({ target, token, tokenName = '' }) {
             <span className="sr-only">
               {r.label}:{' '}
               {awaiting
-                ? `your strategy asks for ${r.target > 0.5 ? r.high : r.low}; this typeface is not placed yet`
+                ? `your strategy asks for ${r.target > 0.5 ? r.high : r.low}; ${thingLabel} is not placed yet`
                 : r.state === 'unset'
                 ? 'not said'
                 : r.state === 'split'
                   ? `your strategy is split between ${r.low} and ${r.high}`
                   : r.state === 'close'
-                    ? `${tokenName || 'this'} matches your strategy`
-                    : `${tokenName || 'this'} leans ${r.direction} of your strategy`}
+                    ? 'where you placed it matches your strategy'
+                    : `where you placed it leans ${r.direction} of your strategy`}
             </span>
           </li>
           )
