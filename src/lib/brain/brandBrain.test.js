@@ -4,6 +4,7 @@ import {
   buildBrandBrain,
   factLine,
   recall,
+  recallWithFallback,
   suggestedQuestions,
   tokens,
   topicsFor,
@@ -159,5 +160,28 @@ describe('presentation', () => {
     const qs = suggestedQuestions(brain)
     expect(qs).toContain('Why this typeface?')
     expect(suggestedQuestions(buildBrandBrain({ project: {} }))).toEqual([])
+  })
+})
+
+describe('a miss degrades to a browse, never to a denial', () => {
+  it('returns what the project remembers when the words do not match', () => {
+    /* The vocabulary problem: "why is it so round" names nothing in
+       TOPIC_WORDS, but the type rationale it is reaching for is on record. */
+    const r = recallWithFallback(brain, 'why is it so round')
+    expect(r.fellBack).toBe(true)
+    expect(r.matches.length).toBeGreaterThan(0)
+    expect(r.matches[0].why).toBeTruthy()
+  })
+
+  it('does not claim to have fallen back when it actually answered', () => {
+    const r = recallWithFallback(brain, 'why this typeface?')
+    expect(r.fellBack).toBe(false)
+    expect(r.matches[0].topic).toBe('type')
+  })
+
+  it('reports an empty project as empty rather than as a failed search', () => {
+    const r = recallWithFallback(buildBrandBrain({ project: {} }), 'anything')
+    expect(r.fellBack).toBe(true)
+    expect(r.matches).toEqual([])
   })
 })

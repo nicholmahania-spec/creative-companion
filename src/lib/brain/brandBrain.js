@@ -393,6 +393,31 @@ export function recall(brain, query, { limit = 8 } = {}) {
   return { matches: scored.slice(0, limit).map((r) => r.fact), topics, why }
 }
 
+/**
+ * Recall, but never a dead end.
+ *
+ * `recall` answers the question asked. This answers the question the designer
+ * was TRYING to ask, which is not the same thing and is the whole difficulty
+ * of keyword access: two people pick the same word for a thing less than a
+ * fifth of the time (Furnas, Landauer, Gomez & Dumais, CACM 1987), so “why is
+ * it so round?” can miss a type rationale that is sitting right there.
+ *
+ * Missing it is survivable. Announcing it is not: “nothing on record about
+ * that yet” tells the designer their own decision was never written down,
+ * which on a project where it WAS is a confident lie, and it is the sort of
+ * lie that stops anyone asking a second question. So a miss degrades to a
+ * browse — what this project remembers, reasons first — and says which of
+ * the two happened.
+ *
+ * @returns {{ matches: Array<object>, topics: string[], why: boolean, fellBack: boolean }}
+ */
+export function recallWithFallback(brain, query, opts = {}) {
+  const hit = recall(brain, query, opts)
+  if (hit.matches.length) return { ...hit, fellBack: false }
+  const browse = recall(brain, '', opts)
+  return { ...browse, topics: hit.topics, why: hit.why, fellBack: true }
+}
+
 /** One line for a fact — “Body face: Plus Jakarta Sans — because …”. */
 export function factLine(f) {
   if (!f) return ''

@@ -24,7 +24,7 @@ import { clearLine, looseEnds } from '../lib/brain/looseEnds'
 import {
   buildBrandBrain,
   factLine,
-  recall,
+  recallWithFallback,
   suggestedQuestions,
 } from '../lib/brain/brandBrain'
 
@@ -56,7 +56,7 @@ export default function BrandCheckPanel({
     [project, moodItems]
   )
   const answer = useMemo(
-    () => (asked ? recall(brain, asked) : null),
+    () => (asked ? recallWithFallback(brain, asked) : null),
     [brain, asked]
   )
   const questions = useMemo(() => suggestedQuestions(brain), [brain])
@@ -71,11 +71,14 @@ export default function BrandCheckPanel({
 
   return (
     <section className="desk-panel desk-check" aria-label="Check my brand">
+      {/* No count in the head. "29 things not documented yet" is the
+          magnitude of undone work with no plan attached — a backlog line,
+          which is the one thing DEVELOPMENT.md says turns "I'm working" into
+          "I'm behind". The three rows below are the same information WITH a
+          plan and a route, which is what makes them usable. The full tally
+          appears once you deliberately open the check. */}
       <div className="desk-panel-head">
         <span className="desk-eyebrow">Check my brand</span>
-        <span className="desk-check-status" role="status">
-          {completenessHeadline(check)}
-        </span>
       </div>
 
       <div
@@ -119,6 +122,85 @@ export default function BrandCheckPanel({
         </ul>
       )}
 
+      <div className="desk-check-brain">
+        <div className="desk-panel-head">
+          <span className="desk-eyebrow">What did we decide?</span>
+        </div>
+
+        {questions.length > 0 && (
+          <div
+            className="desk-check-chips"
+            role="group"
+            aria-label="Questions this project can answer"
+          >
+            {questions.map((q) => (
+              <button
+                key={q}
+                type="button"
+                className="desk-check-chip"
+                onClick={() => ask(q)}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <form
+          className="desk-check-ask"
+          onSubmit={(e) => {
+            e.preventDefault()
+            setAsked(query)
+          }}
+        >
+          <label className="field-label sr-only" htmlFor="brand-brain-ask">
+            Ask this project a question
+          </label>
+          <input
+            id="brand-brain-ask"
+            type="text"
+            className="field-input"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Why did we choose this?"
+          />
+          <button type="submit" className="btn btn-secondary">
+            Ask
+          </button>
+        </form>
+
+        {answer && (
+          <div className="desk-check-answer" aria-live="polite">
+            {/* A miss degrades to a browse, never to a denial. Saying
+                "nothing on record" when the words simply did not match
+                tells the designer their own decision was never written
+                down — false on any project where it was, and the kind of
+                false that stops anyone asking a second question. */}
+            {answer.fellBack && (
+              <p className="desk-empty">
+                {answer.matches.length
+                  ? 'Nothing matched those words — here is what this project remembers.'
+                  : 'This project has not recorded anything yet.'}
+              </p>
+            )}
+            {answer.matches.length > 0 && (
+              <ul className="desk-check-facts">
+                {answer.matches.map((f) => (
+                  <li key={f.id} className="desk-check-fact">
+                    <span className="desk-check-fact-line">
+                      {factLine(f)}
+                    </span>
+                    <span className="desk-check-fact-source">
+                      {f.source}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+
       <button
         type="button"
         className="btn btn-secondary desk-check-toggle"
@@ -130,6 +212,9 @@ export default function BrandCheckPanel({
 
       {open && (
         <div className="desk-check-body">
+          <p className="desk-check-status" role="status">
+            {completenessHeadline(check)}
+          </p>
           {check.groups.map((g) => (
             <div key={g.id} className="desk-check-group-block">
               <div className="desk-check-group-head">
@@ -165,77 +250,6 @@ export default function BrandCheckPanel({
             </div>
           ))}
 
-          <div className="desk-check-brain">
-            <div className="desk-panel-head">
-              <span className="desk-eyebrow">What did we decide?</span>
-            </div>
-
-            {questions.length > 0 && (
-              <div
-                className="desk-check-chips"
-                role="group"
-                aria-label="Questions this project can answer"
-              >
-                {questions.map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    className="desk-check-chip"
-                    onClick={() => ask(q)}
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <form
-              className="desk-check-ask"
-              onSubmit={(e) => {
-                e.preventDefault()
-                setAsked(query)
-              }}
-            >
-              <label className="field-label sr-only" htmlFor="brand-brain-ask">
-                Ask this project a question
-              </label>
-              <input
-                id="brand-brain-ask"
-                type="text"
-                className="field-input"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Why did we choose this?"
-              />
-              <button type="submit" className="btn btn-secondary">
-                Ask
-              </button>
-            </form>
-
-            {answer && (
-              <div className="desk-check-answer" aria-live="polite">
-                {answer.matches.length === 0 ? (
-                  <p className="desk-empty">
-                    Nothing on record about that yet. The memory only repeats
-                    what is written down somewhere in this project.
-                  </p>
-                ) : (
-                  <ul className="desk-check-facts">
-                    {answer.matches.map((f) => (
-                      <li key={f.id} className="desk-check-fact">
-                        <span className="desk-check-fact-line">
-                          {factLine(f)}
-                        </span>
-                        <span className="desk-check-fact-source">
-                          {f.source}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
         </div>
       )}
     </section>
