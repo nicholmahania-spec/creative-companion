@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
+  calibratedPalette,
+  calibrationDrift,
   COVERAGE_FLOOR,
   chromaOf,
   dominantColours,
@@ -345,5 +347,60 @@ describe('intruderColours — graded, not binary, and measured on real files', (
 
   it('says nothing when there is no palette to judge against', () => {
     expect(intruderColours(tableCards, [])).toEqual([])
+  })
+})
+
+describe('calibratedPalette — comparing like with like', () => {
+  /* Real, measured numbers from the owner's own files. The Sparrow's Promise
+     logo renders its red as #ff2e17; the brand guidelines specify #ED1C24.
+     Same ink, two converters, ΔE00 6.14 apart — enough for the checker to call
+     a correct logo off-brand, on every CMYK asset. */
+  const SPARROW = [
+    { spec: '#ED1C24', rendered: '#ff2e17' },
+    { spec: '#32C1D6', rendered: '#45cbdb' },
+  ]
+  const loggedRed = { hex: '#ff2e17', coverage: 0.57 }
+  const loggedCyan = { hex: '#45cbdb', coverage: 0.27 }
+
+  it('the uncalibrated comparison calls a correct logo off-brand', () => {
+    const spec = SPARROW.map((e) => e.spec)
+    const { found, missing } = paletteCoverage([loggedRed, loggedCyan], spec)
+    expect(missing, 'the red is reported as absent from its own logo').toContain(
+      '#ED1C24'
+    )
+    expect(found.find((f) => f.brandHex === '#32C1D6')?.drifted).toBe(true)
+  })
+
+  it('calibrated, the same logo matches exactly', () => {
+    const { compare } = calibratedPalette(SPARROW)
+    const { found, missing } = paletteCoverage([loggedRed, loggedCyan], compare)
+    expect(missing).toEqual([])
+    expect(found).toHaveLength(2)
+    for (const f of found) {
+      expect(f.delta).toBeCloseTo(0, 5)
+      expect(f.drifted).toBeUndefined()
+    }
+  })
+
+  it('still shows the designer the hex they know', () => {
+    /* The renderer's private value is not the brand's colour, and putting
+       #ff2e17 in front of a designer whose guidelines say #ED1C24 would be its
+       own kind of lie. */
+    const { label } = calibratedPalette(SPARROW)
+    expect(label('#ff2e17')).toBe('#ED1C24')
+    expect(label('#45CBDB')).toBe('#32C1D6')
+  })
+
+  it('degrades to the spec when there is no calibration', () => {
+    const { compare, label } = calibratedPalette([{ spec: '#1B4C7E' }])
+    expect(compare).toEqual(['#1B4C7E'])
+    expect(label('#1B4C7E')).toBe('#1B4C7E')
+  })
+
+  it('reports the drift it removed, as a number', () => {
+    // 6.14 is past the close band — proof the uncalibrated check was wrong,
+    // not merely imprecise.
+    expect(calibrationDrift(SPARROW)).toBeCloseTo(6.14, 1)
+    expect(calibrationDrift([{ spec: '#1B4C7E', rendered: '#1B4C7E' }])).toBe(0)
   })
 })

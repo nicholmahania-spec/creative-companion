@@ -339,3 +339,70 @@ export function intruderColours(
     })
     .map((c) => ({ hex: c.hex, coverage: c.coverage }))
 }
+
+/**
+ * Compare like with like — the fix for the colour-management problem that
+ * nearly sank this feature.
+ *
+ * MEASURED. The owner's own Sparrow's Promise logo, rendered from their own
+ * .ai, reports its red as #ff2e17 against a brand specification of #ED1C24.
+ * That is ΔE00 6.14 — far enough that the checker would have told them their
+ * own logo was off-brand, on every CMYK asset they ever uploaded. The cyan was
+ * 3.07 out. Nothing was wrong with the artwork or with the maths.
+ *
+ * The cause is that the two sides came through different converters. The .ai
+ * declares CMYK (C0 M100 Y100 K0); the renderer converts that to #ff2e17;
+ * Adobe converts the identical CMYK to #ED1C24, and that is the number that
+ * ends up written in the brand guidelines. Same ink, two answers.
+ *
+ * Reading the PDF's declared colour operators does NOT help — checked, and the
+ * renderer has already converted by the time it emits them.
+ *
+ * So calibrate instead: run the brand's OWN reference artwork through the same
+ * renderer, and compare everything in that space. Measured on the owner's
+ * files, the guidelines document renders its swatches to exactly #ff2e17 and
+ * #45cbdb — ΔE00 0.00 against the logo, from 6.14 and 3.07. The drift is not
+ * reduced, it is eliminated, because it never existed between two things
+ * measured the same way.
+ *
+ * `spec` is kept for DISPLAY — a designer thinks in #ED1C24 and should be
+ * shown #ED1C24 — while `rendered` is what comparisons use. Showing the
+ * renderer's private value to a human would be its own kind of lie.
+ *
+ * @param {Array<{spec: string, rendered?: string}>} entries
+ * @returns {{ compare: string[], label: (hex: string) => string }}
+ */
+export function calibratedPalette(entries = []) {
+  const rows = entries
+    .map((e) => ({
+      spec: e?.spec,
+      rendered: e?.rendered || e?.spec,
+    }))
+    .filter((r) => hexToLab(r.rendered))
+
+  const bySpec = new Map(rows.map((r) => [r.rendered.toLowerCase(), r.spec]))
+  return {
+    compare: rows.map((r) => r.rendered),
+    /* Given a colour used for comparison, hand back the value the designer
+       knows it by. Falls through unchanged when there is no calibration, so
+       an uncalibrated palette still reads correctly. */
+    label: (hex) => bySpec.get(String(hex || '').toLowerCase()) || hex,
+  }
+}
+
+/**
+ * Is calibration doing enough to be worth its complexity?
+ *
+ * Answers with the worst drift it removed, so the decision is a number rather
+ * than a feeling. Anything at or above the close band means the uncalibrated
+ * comparison was reporting correct work as wrong.
+ */
+export function calibrationDrift(entries = []) {
+  let worst = 0
+  for (const e of entries) {
+    if (!e?.spec || !e?.rendered) continue
+    const d = deltaE00Hex(e.spec, e.rendered)
+    if (d != null && d > worst) worst = d
+  }
+  return worst
+}
