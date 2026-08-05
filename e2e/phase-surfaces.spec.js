@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, skipIfCloud } from './helpers.js'
+import {
+  headingForStep,
+  pathNav,
+  skipIfCloud,
+  stepByIdIn,
+  unlockAndOnboard,
+} from './helpers.js'
 
 /**
  * The surfaces the research phases added, driven in a real browser.
@@ -130,14 +136,28 @@ test.describe('phase surfaces render and respond', () => {
     ).toBeVisible()
   })
 
-  test('Ideate carries the layout pattern reference, closed', async ({
+  test('Touchpoints carries the layout pattern reference, closed', async ({
     page,
   }) => {
-    const gate = await unlockAndOnboard(page, { name: 'Ideate Project' })
+    const gate = await unlockAndOnboard(page, { name: 'Touchpoints Project' })
     skipIfCloud(test, gate)
-    /* Layout patterns live under Tools · Ideate — not on path Touchpoints */
-    await page.getByRole('button', { name: /Tools/i }).click()
-    await page.getByRole('menuitem', { name: /Ideate/i }).click()
+
+    /* Layout patterns live on Touchpoints, NOT under Tools · Ideate.
+     *
+     * This moved twice. bf8e35c ("layout patterns → Ideate") took them off
+     * Touchpoints and this test was updated with it. b90e24e moved them back
+     * the next day and wrote a rationale in SketchView for doing so — "next
+     * to the drafts it informs", because "what shape should this be" is the
+     * question that stalls a sketch. That comment is new in b90e24e, not
+     * restored text, so it is a deliberate reversal and it is the standing
+     * decision; the test simply never followed.
+     *
+     * Pointed at the app rather than the app pointed back at the test: the
+     * later call wins, and making Ideate render the reference again would
+     * undo a merged decision to satisfy a stale expectation. */
+    const path = await pathNav(page)
+    await stepByIdIn(path, 'sketch').click()
+    await expect(headingForStep(page, 'sketch').first()).toBeVisible()
 
     const ref = page.locator('.layout-patterns')
     await expect(ref).toBeVisible()
