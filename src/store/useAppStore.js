@@ -229,6 +229,18 @@ export function brandIdentityDefaults() {
   touchpointApps: {},
   /** Why the chosen type pair fits the Define brand words */
   typeWhy: '',
+  /* Typography as INFORMATION. A commercial font licence almost never lets
+     the designer hand the files on, so the package documents the faces and
+     only ships files when `fontFilesLicensed` says the licence allows it —
+     see lib/deliver/packagePlan.js. Blank is the honest default: the sheet
+     prints "not recorded" rather than inventing terms. */
+  typeSource: '',
+  typeLicenceNote: '',
+  fontFilesLicensed: false,
+  /* Finished work made elsewhere and brought in for the client package —
+     [{ id, name, dataUrl, group, item, variant, rights, addedAt }]. `rights`
+     decides whether it may be handed over at all (USAGE_RIGHTS). */
+  packageAssets: [],
   /** data URL mark for pack cover */
   logoImage: '',
   /**
@@ -1087,6 +1099,59 @@ const useAppStore = create(
           projects: state.projects.map((p) => {
             if (p.id !== state.currentProjectId) return p
             return { ...p, contacts: (p.contacts || []).filter((c) => c.id !== id) }
+          }),
+        })),
+
+      /* ── Client package assets ──────────────────────────────────────
+         Finished work made in Illustrator, InDesign, Figma or anywhere else,
+         brought in so the handoff can be assembled in one place. Stored as a
+         data URL like the mark already is.
+
+         `rights` defaults to clientOwned because that is what a piece made
+         for this job is; anything else is a deliberate mark by the designer
+         and holds the file back from the package. */
+      addPackageAsset: (asset = {}) => {
+        const row = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: String(asset.name || 'asset').slice(0, 120),
+          dataUrl: asset.dataUrl || '',
+          group: asset.group || 'application',
+          item: asset.item || asset.name || 'asset',
+          variant: asset.variant || '',
+          rights: asset.rights || 'clientOwned',
+          addedAt: new Date().toISOString(),
+        }
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId
+              ? { ...p, packageAssets: [...(p.packageAssets || []), row] }
+              : p
+          ),
+        }))
+        return row
+      },
+
+      updatePackageAsset: (id, patch = {}) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              packageAssets: (p.packageAssets || []).map((a) =>
+                a.id === id ? { ...a, ...patch, id: a.id } : a
+              ),
+            }
+          }),
+        })),
+
+      removePackageAsset: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              packageAssets: (p.packageAssets || []).filter((a) => a.id !== id),
+            }
           }),
         })),
 

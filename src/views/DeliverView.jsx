@@ -6,6 +6,7 @@
 import { Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
 import CaseStudyExport from '../components/CaseStudyExport'
+import ClientPackagePanel from '../components/ClientPackagePanel'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey/journey'
 import { packReadiness, packBriefMarkdown } from '../lib/book/exportFiles'
 import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
@@ -237,6 +238,16 @@ export default function DeliverView({
             {lastExportNote}
           </p>
         ) : null}
+
+        {/* The organized handoff — folders, names, rights, and whether the
+            client is getting what they bought. Below the one-click download
+            on purpose: the fast path stays one press, and the package is
+            there when the job is bigger than a PDF. */}
+        <ClientPackagePanel
+          pack={packSnap}
+          onExport={runExport}
+          flashToast={flashToast}
+        />
 
         {coreGaps.length > 1 && (
           <div className="deliver-gaps assets-gaps">

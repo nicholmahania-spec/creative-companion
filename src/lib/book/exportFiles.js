@@ -24,6 +24,7 @@ import {
   progressItemInScope,
 } from '../brief/detectiveBrief'
 import { OVERVIEW_FIELD_PREFIX } from '../overviewOcr'
+import { packageFiles } from '../deliver/packageFiles'
 import {
   appendSystemMarkdown,
   buildColorSystem,
@@ -372,6 +373,13 @@ export function buildBrandPackSnapshot({
     /* The pairing rationale. Reaches the book's type page; omitted there when
        blank. Empty string not a default face name — this is free text. */
     typeWhy: p.typeWhy || '',
+    /* Font licensing + the assets made elsewhere. The package planner reads
+       these off the pack, so they have to travel with it — a field the pack
+       does not carry is a field the export cannot honour. */
+    typeSource: p.typeSource || '',
+    typeLicenceNote: p.typeLicenceNote || '',
+    fontFilesLicensed: p.fontFilesLicensed === true,
+    packageAssets: Array.isArray(p.packageAssets) ? p.packageAssets : [],
     doUse: p.doUse || '',
     dontUse: p.dontUse || '',
     deadline: p.deadline || '',
@@ -1956,5 +1964,85 @@ export async function downloadMarkPack(pack, handlePromise = null) {
     return { ...r, hasMark }
   } catch (e) {
     return { ok: false, error: e?.message || 'Logo pack export failed' }
+  }
+}
+
+
+/**
+ * Build and save the organized client package.
+ *
+ * The thin browser layer over packageFiles() — that decides the folders, the
+ * names and the contents (pure, tested); this one zips, fills in the book PDF
+ * it could not build, and saves. Same JSZip + downloadBlobReliable path the
+ * brand kit and the mark pack already use.
+ *
+ * Returns what was left out as well as whether it saved, because the panel
+ * has to be able to say "shipped 11 files, held back 2" — a package that
+ * quietly contains less than the plan promised is the failure this whole
+ * module exists to prevent.
+ *
+ * @param {object} pack
+ * @param {{ assets?: Array<object>, includeBook?: boolean, briefMarkdown?: string, hideWatermark?: boolean, book?: object }} [opts]
+ * @param {Promise|null} handlePromise
+ * @returns {Promise<{ok: boolean, error?: string, cancelled?: boolean, written?: number, missing?: Array<object>, excluded?: Array<object>}>}
+ */
+export async function downloadClientPackage(
+  pack,
+  opts = {},
+  handlePromise = null
+) {
+  try {
+    const { plan, files, missing } = packageFiles(pack, {
+      assets: opts.assets || [],
+      includeBook: opts.includeBook !== false,
+      briefMarkdown: opts.briefMarkdown ?? packBriefMarkdown(pack),
+    })
+    const JSZip = (await import('jszip')).default
+    const zip = new JSZip()
+    const slug = slugifyFilename(pack?.projectName, 'brand-package')
+    const root = zip.folder(slug) || zip
+
+    const left = [...missing]
+    let written = 0
+    for (const f of files) {
+      if (f.pdf) {
+        /* The book is the one file this cannot make itself. If the PDF engine
+           fails, the package still ships — with the book named as missing
+           rather than present and broken. */
+        const pdfResult = await downloadBrandPackVectorPdf(pack, null, {
+          hideWatermark: !!opts.hideWatermark,
+          book: opts.book,
+          returnBlobOnly: true,
+        })
+        if (pdfResult?.blob) {
+          root.file(f.path, pdfResult.blob)
+          written += 1
+        } else {
+          left.push({ path: f.path, reason: 'the brand book PDF could not be built' })
+        }
+        continue
+      }
+      root.file(f.path, f.content, f.base64 ? { base64: true } : undefined)
+      written += 1
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const zipName = `${slug}-brand-package.zip`
+    const result = handlePromise
+      ? await writeToSaveHandle(handlePromise, blob)
+      : null
+    if (result && (result.ok || result.cancelled)) {
+      return {
+        ...result,
+        method: 'file-picker',
+        written,
+        missing: left,
+        excluded: plan.excluded,
+      }
+    }
+    const r = await downloadBlobReliable(blob, zipName, null)
+    return { ...r, written, missing: left, excluded: plan.excluded }
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Package export failed' }
   }
 }
