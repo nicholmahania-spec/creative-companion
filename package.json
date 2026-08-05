@@ -12,6 +12,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "lint": "eslint .",
+    "lint:ratchet": "node scripts/lint-ratchet.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:perf": "node scripts/perf-budget.mjs",
@@ -43,9 +45,14 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.49.0",
     "@vitejs/plugin-react": "^6.0.4",
+    "eslint": "^10.8.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
     "gh-pages": "^6.3.0",
+    "globals": "^17.9.0",
     "rollup-plugin-visualizer": "^7.0.1",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
