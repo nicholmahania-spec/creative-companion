@@ -56,8 +56,33 @@ export default function NewProjectIntake({
     []
   )
 
+  /**
+   * Tick a deliverable.
+   *
+   * An empty list means "the full brand package" — that is the honest
+   * default for an untouched brief and it is what progressItemInScope
+   * relies on. But the first tick silently flips the meaning from
+   * everything to only-this, and that trapped a tester: they ticked three
+   * items from QUOTED SEPARATELY, intending to ADD them, and the scope line
+   * changed from "full brand package · 5 stops" to "3 deliverables" — a
+   * full identity job now scoped with no logo, no colour and no type. They
+   * only caught it by reading the summary line.
+   *
+   * Extras are by definition additions to the package, never a replacement
+   * for it. So ticking an extra FIRST materialises the included set that
+   * was already implied, and the extra lands on top. Ticking an included
+   * item first is a genuine narrowing and still behaves exactly as before.
+   */
   const togglePick = (id) =>
-    setPicked((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
+    setPicked((s) => {
+      if (s.includes(id)) return s.filter((x) => x !== id)
+      const isExtra = !!DELIVERABLE_OPTIONS.find((o) => o.id === id)?.extra
+      if (s.length === 0 && isExtra) {
+        const core = DELIVERABLE_OPTIONS.filter((o) => !o.extra).map((o) => o.id)
+        return [...core, id]
+      }
+      return [...s, id]
+    })
 
   /* Empty picks = full brand package (progressItemInScope). Surface that.
    *
