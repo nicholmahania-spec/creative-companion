@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { pushProject } from '../services/projectSync'
 import {
+  discardRetainedVersion,
   getSyncStatus,
   listRetainedVersions,
   subscribeSyncStatus,
@@ -78,10 +79,28 @@ export default function SettingsView(props) {
   /* Retained versions — the losing side of every conflict, recoverable.
      Loaded on demand behind a disclosure so Settings stays quiet. */
   const [retained, setRetained] = useState(null)
-  const loadRetained = async () => {
-    const r = await listRetainedVersions()
+  const [retainedPage, setRetainedPage] = useState(0)
+  const [retainedMore, setRetainedMore] = useState(false)
+  const loadRetained = async (page = 0) => {
+    const r = await listRetainedVersions({ page })
     setRetained(r.ok ? r.rows : [])
+    setRetainedMore(!!r.hasMore)
+    setRetainedPage(page)
   }
+  /* Discarding goes through the RPC, never a delete — see syncEngine. */
+  const discard = (row) =>
+    ask(
+      `Discard this kept version of “${row.project_name || 'project'}”? It is the only copy.`,
+      async () => {
+        const r = await discardRetainedVersion(row.id)
+        if (!r.ok) {
+          flashToast('Could not discard that version')
+          return
+        }
+        await loadRetained(retainedPage)
+        flashToast('Discarded')
+      },
+    )
   const bringBack = (row) => {
     const doc = row?.data
     if (!doc || typeof doc !== 'object') return
@@ -286,7 +305,7 @@ export default function SettingsView(props) {
           <details
             className="settings-retained"
             onToggle={(e) => {
-              if (e.currentTarget.open && retained === null) void loadRetained()
+              if (e.currentTarget.open && retained === null) void loadRetained(0)
             }}
           >
             <summary>Retained versions</summary>
@@ -315,10 +334,37 @@ export default function SettingsView(props) {
                     >
                       Bring back
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => discard(row)}
+                    >
+                      Discard
+                    </button>
                   </li>
                 ))}
               </ul>
             )}
+            {retained && (retainedPage > 0 || retainedMore) ? (
+              <div className="settings-actions">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  disabled={retainedPage === 0}
+                  onClick={() => loadRetained(retainedPage - 1)}
+                >
+                  Newer
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  disabled={!retainedMore}
+                  onClick={() => loadRetained(retainedPage + 1)}
+                >
+                  Older
+                </button>
+              </div>
+            ) : null}
           </details>
         ) : null}
         {!CLOUD ? (

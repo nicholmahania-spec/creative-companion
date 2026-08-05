@@ -292,19 +292,61 @@ async function refreshedMeta(userId, localId, localCloudDoc) {
   }
 }
 
+/** How many retained versions the recovery list asks for at a time. */
+export const RETAINED_PAGE = 20
+
 /**
  * Retained versions, newest first, for the Settings recovery list.
- * @returns {Promise<{ok: boolean, rows: Array<object>, reason?: string}>}
+ *
+ * Ordered by (created_at desc, seq desc), NOT created_at alone: created_at
+ * comes from now(), which is transaction-start time, so versions retained in
+ * the same transaction share a timestamp and their order is undefined. With
+ * an unstable order a paged window can return a different subset per call —
+ * a retained version appearing, vanishing and reappearing, in the one list
+ * whose whole job is recovery. `seq` is the monotonic tie-break.
+ *
+ * @param {{ page?: number }} [opts]
+ * @returns {Promise<{ok: boolean, rows: Array<object>, hasMore: boolean, reason?: string}>}
  */
-export async function listRetainedVersions() {
-  if (!isSupabaseConfigured() || !supabase) return { ok: false, rows: [] }
+export async function listRetainedVersions(opts = {}) {
+  const empty = { ok: false, rows: [], hasMore: false }
+  if (!isSupabaseConfigured() || !supabase) return empty
   const { data: auth } = await supabase.auth.getUser()
-  if (!auth?.user) return { ok: false, rows: [] }
+  if (!auth?.user) return empty
+  const page = Math.max(0, Number(opts.page) || 0)
+  const from = page * RETAINED_PAGE
   const { data, error } = await supabase
     .from('project_conflicts')
-    .select('id, local_id, project_name, losing_side, created_at, data')
+    .select('id, seq, local_id, project_name, losing_side, created_at, data')
     .order('created_at', { ascending: false })
-    .limit(20)
-  if (error) return { ok: false, rows: [], reason: error.message }
-  return { ok: true, rows: data || [] }
+    .order('seq', { ascending: false })
+    // One extra row is the cheapest "is there more?" — no count query.
+    .range(from, from + RETAINED_PAGE)
+  if (error) return { ...empty, reason: error.message }
+  const rows = data || []
+  return {
+    ok: true,
+    rows: rows.slice(0, RETAINED_PAGE),
+    hasMore: rows.length > RETAINED_PAGE,
+  }
+}
+
+/**
+ * Discard ONE retained version.
+ *
+ * Goes through an RPC rather than a delete, because this table has no delete
+ * policy on purpose: a table-level delete grant means one unfiltered request
+ * can wipe the entire safety net, which is the first thing a stolen token
+ * would reach for before overwriting projects. The RPC can only ever remove
+ * a single row, scoped to the caller. (Audit 2026-08-05.)
+ *
+ * @returns {Promise<{ok: boolean, reason?: string}>}
+ */
+export async function discardRetainedVersion(id) {
+  if (!isSupabaseConfigured() || !supabase) return { ok: false }
+  const { data, error } = await supabase.rpc('discard_retained_version', {
+    p_id: id,
+  })
+  if (error) return { ok: false, reason: error.message }
+  return { ok: data === true }
 }
