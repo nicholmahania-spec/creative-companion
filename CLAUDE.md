@@ -1379,3 +1379,204 @@ And the completed brand system remains available after the project is finished.
 That is the product.
 
 **You're building a connected brand-development ecosystem rather than another isolated design tool.**
+
+---
+---
+
+# Brand Platform — Expansion Spec
+### Turning the 8 improvement areas into build-ready detail
+
+---
+
+## 1. The Connection Mechanism (the actual differentiator)
+
+The core insight from Section 37 only works if there's a real data structure behind it. Here's the mechanism:
+
+### Tag every entity with the same vocabulary
+
+Every strategy attribute, typeface, color, and asset gets scored against a shared set of dimensions — not free text, but a small fixed vocabulary so things are actually comparable:
+
+| Dimension | Scale |
+|---|---|
+| Formality | casual ←→ formal |
+| Energy | calm ←→ energetic |
+| Warmth | cold ←→ warm |
+| Weight | light ←→ bold |
+| Era | classic ←→ modern |
+
+A strategy attribute like "warm, playful, approachable" gets translated (by the designer, with the system suggesting defaults) into target values on these five scales. Every typeface, color, and pattern in the system carries the same five values — either pre-tagged in a reference library (fonts especially — this is very doable for a curated starter set of ~200 fonts) or manually tagged when uploaded.
+
+### The nudge, computed
+
+```
+similarity_score = 1 - (euclidean_distance(strategy_target, asset_tags) / max_distance)
+```
+
+When a designer selects a typeface, the system shows:
+
+> This choice scores 82% aligned with your strategy attributes (warm, playful). Weight leans slightly more formal than your target — worth a second look, not a blocker.
+
+That's it. No AI needed for v1 — it's a distance calculation over five numbers. This is the mechanism that makes Decision Memory *active* instead of a static log.
+
+### Schema (Supabase/Postgres)
+
+```sql
+create table strategy_attributes (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references projects(id),
+  label text not null,               -- "warm", "playful"
+  formality numeric(3,2),            -- 0.00–1.00
+  energy numeric(3,2),
+  warmth numeric(3,2),
+  weight numeric(3,2),
+  era numeric(3,2),
+  created_at timestamptz default now()
+);
+
+create table brand_tokens (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references projects(id),
+  token_type text not null,          -- 'typeface' | 'color' | 'pattern' | 'imagery'
+  name text not null,
+  formality numeric(3,2),
+  energy numeric(3,2),
+  warmth numeric(3,2),
+  weight numeric(3,2),
+  era numeric(3,2),
+  source text,                       -- upload path, font name, hex, etc.
+  created_at timestamptz default now()
+);
+
+create table decisions (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references projects(id),
+  stage text not null,               -- 'typography' | 'color' | 'logo' | etc.
+  decision_label text not null,      -- "Primary typeface"
+  selected_token_id uuid references brand_tokens(id),
+  rationale text,
+  alignment_score numeric(3,2),      -- computed at time of decision
+  status text default 'proposed',    -- proposed | approved | revised
+  approved_by text,
+  approved_at timestamptz,
+  created_at timestamptz default now()
+);
+```
+
+`decisions` is the join table everything else hangs off — get this one right early, since consistency checking (item 4 below) and the brand book auto-population both read from it.
+
+---
+
+## 2. Executive-Function Support — concrete features, not principles
+
+| Principle from the doc | Concrete feature |
+|---|---|
+| Reduce choices | **Focus Mode** — a view toggle that collapses the sidebar to only the current stage; everything else greys out and requires a deliberate click to expand |
+| Clear next action | A single persistent "Next" card pinned to the top of every project view — one action, one button, never a list |
+| Preserve decisions | Decision Memory (above) surfaced as a small pill next to any relevant field: "You said warm/playful — see how this compares" |
+| Prevent forgotten steps | A stage can't be marked complete with required fields empty, but *incomplete is never blocking* — designer can jump ahead and a soft badge follows the gap |
+| Pause and resume | **"Where you left off"** — on project open, one line: *"You were reviewing Logo Concept 3 — client hasn't responded yet."* Not a dashboard, a sentence. |
+| — (new) | **Frictionless capture** — a global quick-add (keyboard shortcut, floating button) that takes an unstructured note/image/link from anywhere in the app and drops it in an "Inbox" attached to the project. Designer files it into the right stage later, when they have bandwidth — capturing the thought costs zero categorization effort in the moment. |
+| — (new) | **Non-punitive overdue language** — no red badges/exclamation marks for waiting-on-client items. Use neutral, low-arousal copy: *"Still waiting on: logo approval (5 days)"* in muted grey, not alert red. Anxiety-provoking UI actively works against the exact audience this product serves. |
+| — (new) | **Undo everywhere** — every destructive or reordering action gets a 5-second undo toast rather than a confirmation dialog. Confirmation dialogs are a decision; undo is not. |
+
+---
+
+## 3. Bridge to Existing Creative Tools
+
+Manual upload-only is the weak point given Principle 1 explicitly says "don't replace Illustrator/Photoshop/Figma."
+
+**Given your existing Adobe MCP access, the fastest real bridge:**
+
+- An "Add to Brand Project" action inside Adobe apps (via the Adobe for Creativity connector you already use) that pushes a selected asset straight to the Asset Library with category + basic metadata pre-filled from the file (dimensions, type, source app).
+- For Figma: a lightweight plugin that does the same — select frame → push to project → auto-tagged as "Digital Application."
+- Both write directly into the `brand_tokens` / asset table with `source_app` recorded, so later consistency checks know provenance.
+
+This turns the platform from "one more tab" into "the place things land automatically while I keep working where I already work" — which is the actual promise in Section 1.
+
+---
+
+## 4. Consistency Checking — move to Phase 2, it's just a diff
+
+No AI required for the first version. Given the `decisions` and `brand_tokens` tables above, this is a rules pass that runs whenever a new asset is uploaded:
+
+```sql
+-- Pseudocode logic, run on asset upload
+1. Extract dominant colors from uploaded asset (simple pixel sampling)
+2. Compare against approved decisions.selected_token_id where token_type = 'color'
+3. If distance > threshold → flag: "Color X doesn't match your approved palette"
+4. Extract embedded font metadata if available (PDF/vector files carry this)
+5. Compare against approved typography decisions
+6. If contrast between any flagged color pair fails WCAG AA → flag with the ratio
+```
+
+Output is a non-blocking banner on the asset card:
+
+> ⚠ This business card uses #2E5C8A — your approved primary is #1B4C7E. Close, but not a match.
+
+Same "second set of eyes, not an autonomous designer" framing the doc already commits to in Section 23 — this is just making it cheap enough to ship early instead of deferring to Phase 3's AI-assisted version.
+
+---
+
+## 5. Trimmed MVP
+
+The original MVP (Section 28) is nearly the full product. A ruthless first slice that still proves the core thesis:
+
+**Cut to this:**
+
+1. Create project + basic client info
+2. One collapsed workflow: **Strategy → Typography → Color → Logo** (skip the full 10-stage sequence for v1)
+3. Decision Log (the `decisions` table, populated manually through simple forms)
+4. Color tool: palette + contrast checker only (skip variation generation for v1)
+5. Auto-populated brand book from just those four stages, one template
+6. Client portal: view + single approve/reject button (skip granular commenting for v1)
+
+**Explicitly deferred to Phase 1.5:**
+
+- Full questionnaire builder (start with one fixed intake form)
+- Asset Library categories beyond "Logo / Color / Type / Applications"
+- Multiple brand book templates
+
+The goal of this slice: prove that a decision made in Strategy visibly and usefully shows up again in Typography and Color. If that loop doesn't feel valuable in the smallest possible version, no amount of additional stages fixes it.
+
+---
+
+## 6. Business Model — options to decide between
+
+| Model | Who pays | Fits when |
+|---|---|---|
+| Per-seat subscription | Designer | Simple, predictable, standard SaaS — good default |
+| Per-project fee | Designer, per active project | Matches freelance cash flow (pay when you land a client) better than a flat monthly fee |
+| Tiered by project count | Designer | Studios with many concurrent projects pay more; solo freelancers stay cheap |
+| White-label portal upcharge | Designer, optional add-on | Client-facing portal branded to the designer's studio instead of the platform — premium tier, meaningfully increases perceived professionalism for the designer's own clients |
+
+**Recommendation given the target user (freelancers/small studios with executive-function challenges):** per-project pricing with unlimited seats removes a second recurring bill to track, which matters for exactly the audience this product is trying to reduce cognitive load for. White-label as a $X/mo add-on is the natural upsell once a studio has repeat volume.
+
+This decision also determines whether the client portal shows "Powered by [Platform]" — worth locking down before building the portal's visual chrome.
+
+---
+
+## 7. The Delivery Moment — designed, not defaulted
+
+Currently: a status flips to "Completed" and the portal updates. For a designer, this is the moment referrals get decided and the client's felt experience of the whole engagement peaks or falls flat.
+
+**Concrete delivery flow:**
+
+1. Designer marks brand book "Ready to Deliver" — triggers a *preview* state, not immediate publish
+2. A short designer-written note field: "A message to include with delivery" (pre-filled with a warm default the designer can edit/skip)
+3. Client receives a dedicated reveal page — not just an updated portal tab — with the brand book presented full-screen, a short intro animation/transition (not gimmicky, just: don't dump them straight into a static PDF-like view)
+4. After viewing, client sees a simple prompt: "Anything else you'd like the designer to know?" — captures a testimonial/reaction in the same moment, which the designer can later reuse for their own marketing (with permission)
+5. Designer gets a notification the moment the client views it — the reveal is witnessed, not silent
+
+This costs relatively little to build (mostly a dedicated route + a transition) but directly serves the emotional high point of the relationship, which the current spec treats as incidental.
+
+---
+
+## Summary — priority order if built sequentially
+
+1. **Decision/token schema** (Section 1) — everything else depends on this existing correctly
+2. **Trimmed MVP** (Section 5) — smallest loop that proves the schema is worth having
+3. **Executive-function features** (Section 2) — cheap, high-impact, no dependencies
+4. **Consistency checking** (Section 4) — near-free once the schema exists
+5. **Creative tool bridge** (Section 3) — bigger lift, biggest retention driver
+6. **Delivery moment** (Section 7) — polish, but disproportionately high emotional ROI
+7. **Business model** (Section 6) — decide early even if implementation comes later, since it shapes the portal UI
