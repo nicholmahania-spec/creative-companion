@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import {
+  JOURNEY_STEPS,
   labelForStep,
   pathNav,
   skipIfCloud,
@@ -21,7 +22,7 @@ test.describe('Brand book PDF', () => {
     const path = await pathNav(page)
     await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
+      page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
 
     await expect(
@@ -31,13 +32,27 @@ test.describe('Brand book PDF', () => {
     // G key jumps to the earliest process gap from any path view
     await page.keyboard.press('g')
     await page.waitForTimeout(300)
-    await expect(page.locator('h1.page-title').first()).toBeVisible()
+    /* Which stop `g` lands on depends on where the earliest gap is, so the
+       name cannot be a literal — but it is not unconstrained either: it must
+       be one of the journey's own stop labels. Derived from JOURNEY_STEPS so
+       a rename cannot leave this asserting a stale word. */
+    await expect(
+      page
+        .getByRole('heading', {
+          level: 1,
+          name: new RegExp(
+            `^(${JOURNEY_STEPS.map((s) => s.label).join('|')})$`,
+            'i'
+          ),
+        })
+        .first()
+    ).toBeVisible()
 
     // Back to Deliver for PDF
     const path2 = await pathNav(page)
     await stepByIdIn(path2, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
+      page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
 
     const downloadBtn = page.getByRole('button', {

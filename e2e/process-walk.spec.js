@@ -140,7 +140,7 @@ test.describe('Process walk (artifacts)', () => {
     // from a Tool (Review), so no rail.
     await goToStepByKey(page, 'deliver')
     await expect(
-      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
+      page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
     await page
       .locator('#handoff-note')

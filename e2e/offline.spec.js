@@ -36,7 +36,7 @@ test.describe('Offline desk', () => {
     await expect(headingForStep(page, 'define').first()).toBeVisible()
     await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
+      page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
     ).toBeVisible({ timeout: 10000 })
 
     await context.setOffline(true)
@@ -51,7 +51,7 @@ test.describe('Offline desk', () => {
 
     await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.locator('h1.page-title', { hasText: labelForStep('deliver') })
+      page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
     ).toBeVisible()
     await expect(
       page.getByRole('button', {
