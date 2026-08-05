@@ -4569,6 +4569,44 @@ body.cc-printing-page button {
   color: var(--text-secondary);
 }
 
+/* Quick capture — a field over the work, not a trip to another screen.
+   Anchored high rather than centred: it should read as something laid on top
+   of what you were doing, which is still visible behind it, so returning to
+   the task does not require re-finding it. */
+.quick-capture-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.quick-capture-panel {
+  width: min(34rem, calc(100vw - 2rem));
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-2);
+}
+
+.quick-capture-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.quick-capture-hint {
+  margin: var(--space-2) 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 .undo-chip {
   position: fixed;
   bottom: 1.25rem;

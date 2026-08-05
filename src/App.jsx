@@ -30,6 +30,7 @@ import {
   deadlineUrgency,
   daysUntil,
 } from './lib/dates'
+import { loadCapturePad, saveCapturePad } from './lib/capturePad'
 import {
   APP_BUILD,
   APP_BUILD_DATE,
@@ -403,7 +404,11 @@ function App() {
     },
     [setActiveView]
   )
-  const [quickInput, setQuickInput] = useState('')
+  /* Seeded from storage, so a thought half-typed before a reload or a
+     navigation is still there. See lib/capturePad.js for why this lives
+     beside the workspace payload rather than inside it. */
+  const [quickInput, setQuickInput] = useState(() => loadCapturePad())
+  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false)
   const [captureEnergy, setCaptureEnergy] = useState('med')
   const [focusLeft, setFocusLeft] = useState(POMODORO_WORK_MIN * 60)
   const [isFocusRunning, setIsFocusRunning] = useState(false)
@@ -1095,6 +1100,21 @@ function App() {
     const t = window.setTimeout(() => setRecentUndo(null), 6000)
     return () => window.clearTimeout(t)
   }, [recentUndo])
+
+  /* Keep the half-typed capture line. Written on every keystroke rather than
+     debounced: the interruption this protects against — closing the tab, the
+     browser being killed, wandering off — gives no warning and would land
+     inside any debounce window. A short string to localStorage is cheap
+     enough that buying certainty with it is the right trade. */
+  useEffect(() => {
+    saveCapturePad(quickInput)
+  }, [quickInput])
+
+  const quickCaptureRef = useRef(null)
+  useModalFocus(quickCaptureOpen, () => quickCaptureRef.current, {
+    initialSelector: '#quick-capture-input',
+    onClose: () => setQuickCaptureOpen(false),
+  })
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
   const archivedProjects = (projects || []).filter((p) => p.archived)
@@ -1813,12 +1833,19 @@ function App() {
         completeCurrentStep()
         return
       }
-      // N — jump Sketch + focus capture
+      /* N — capture WITHOUT leaving the screen.
+         This used to jump to Flow and focus its capture field, which defeated
+         the point: the whole reason quick capture exists is to let an
+         intrusive thought be put down without derailing what you are doing,
+         and navigating away pays the full context switch the capture was
+         meant to avoid — you lose the view you were in and have to rebuild
+         where you were. That made pressing N a worse deal than not capturing
+         at all. It now opens a single field over whatever is on screen. */
       if (k === 'n') {
         e.preventDefault()
-        setActiveView('flow')
+        setQuickCaptureOpen(true)
         window.setTimeout(() => {
-          document.getElementById('desk-capture')?.focus?.()
+          document.getElementById('quick-capture-input')?.focus?.()
         }, 60)
         return
       }
@@ -4462,6 +4489,62 @@ function App() {
       {actionToast && (
         <div className="action-toast" role="status" aria-live="polite">
           {actionToast}
+        </div>
+      )}
+
+      {/* Quick capture, over whatever you were doing.
+          One field and one button, no category picker and no project picker:
+          choosing where a thought belongs is a decision, and asking for it at
+          the moment of interruption is the cost this feature exists to avoid.
+          It lands in the same desk task list the Flow view already shows —
+          somewhere already visible, not a fifth holding pen that ages into a
+          second backlog. Filing happens later, with bandwidth. */}
+      {quickCaptureOpen && (
+        <div
+          className="quick-capture-overlay no-print-hide"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Quick capture"
+          ref={quickCaptureRef}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setQuickCaptureOpen(false)
+          }}
+        >
+          <div className="quick-capture-panel">
+            <label className="quick-capture-label" htmlFor="quick-capture-input">
+              Put it down, sort it later
+            </label>
+            <div className="capture-row">
+              <input
+                id="quick-capture-input"
+                value={quickInput}
+                onChange={(e) => setQuickInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    addQuickTask({ navigate: false })
+                    setQuickCaptureOpen(false)
+                  }
+                }}
+                placeholder="Whatever just came to mind"
+                aria-label="Quick capture"
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  addQuickTask({ navigate: false })
+                  setQuickCaptureOpen(false)
+                }}
+              >
+                Add
+              </button>
+            </div>
+            {/* Closing keeps the text — it is already saved. Escape here is
+                "not now", never "throw that away". */}
+            <p className="quick-capture-hint">
+              Esc to close. Anything typed is kept.
+            </p>
+          </div>
         </div>
       )}
 
