@@ -41,12 +41,38 @@ async function contrastOf(page, selector) {
       }
       return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b)
     }
+    /* An element's own painted fill first, INCLUDING a gradient.
+     *
+     * Primary and secondary buttons are painted with a gradient plate plus a
+     * conic-gradient border ring, so their `background-color` is transparent
+     * and their real fill lives in `background-image`. Walking straight past
+     * that to the nearest solid ancestor measured the wrong surface entirely:
+     * on the brief footer it resolved white text against the footer's
+     * rgb(245,245,245) and reported ~1.07:1, when the button actually paints
+     * white on rgb(91,66,243) — about 5.9:1, comfortably over the floor.
+     *
+     * The plate is a solid two-stop linear-gradient, so its first colour IS
+     * the fill. Reading it is what makes this measure the button rather than
+     * whatever happens to sit behind the button. */
+    const ownFill = (node) => {
+      const img = getComputedStyle(node).backgroundImage
+      if (!img || img === 'none') return null
+      const m = img.match(/rgba?\([^)]+\)/)
+      return m ? parse(m[0]) : null
+    }
+
     let node = el
-    let bg = null
+    let bg = ownFill(el)
+    if (bg && bg.a >= 1) node = null
     while (node && node !== document.documentElement) {
       const c = parse(getComputedStyle(node).backgroundColor)
       if (c && c.a > 0) {
         bg = bg ? over(bg, c) : c
+        if (bg.a >= 1) break
+      }
+      const g = ownFill(node)
+      if (g && g.a > 0) {
+        bg = bg ? over(bg, g) : g
         if (bg.a >= 1) break
       }
       node = node.parentElement
@@ -75,6 +101,15 @@ test.describe('Define page regressions', () => {
     })
     skipIfCloud(test, gate)
     await openDefine(page)
+
+    /* Actually switch to dark. This test has been asserting in LIGHT mode
+       since it was written — measured — so the dark-mode regression named in
+       its own title was never guarded. `.app.deep` is how the app themes
+       itself, and it is the same toggle button-states uses. */
+    await page.evaluate(() => {
+      document.querySelector('.app')?.classList.add('deep')
+    })
+    await page.waitForTimeout(320)
 
     // Shipped at 1.10:1 — background was themed via --ts-ink while the label
     // stayed a hard-coded #FFFFFF, so in .app.deep it was white on white.
