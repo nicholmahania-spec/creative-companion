@@ -32,6 +32,28 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
  *  promise until the owner decides otherwise. */
 const LOCAL_ONLY_FIELDS = ['workLog']
 
+/**
+ * Postgres/PostgREST errors are for us, not for the designer. "new row
+ * violates row-level security policy" on screen reads as the app accusing
+ * the user of something; what actually happened is a sign-in or sync bug.
+ * Map what we can act on to plain words and keep the raw message in the
+ * returned object for a console, never for a toast. (Audit 2026-08-05.)
+ */
+function friendlyReason(error) {
+  const code = error?.code || ''
+  const msg = String(error?.message || '')
+  if (code === '42501' || /row-level security/i.test(msg)) {
+    return 'The cloud refused this save. Sign out and back in, then try again.'
+  }
+  if (code === '23514' || /check constraint/i.test(msg)) {
+    return 'This project is too large to send right now.'
+  }
+  if (/fetch|network|failed to/i.test(msg)) {
+    return 'No connection to the cloud right now. Your work is safe on this desk.'
+  }
+  return 'The cloud could not take this save. Your work is safe on this desk.'
+}
+
 export function projectToCloudData(project) {
   const data = { ...project }
   for (const f of LOCAL_ONLY_FIELDS) delete data[f]
@@ -78,7 +100,7 @@ export async function pushProject(project, opts = {}) {
     .eq('name', clientName)
     .limit(1)
     .maybeSingle()
-  if (clientErr) return { ok: false, reason: clientErr.message }
+  if (clientErr) return { ok: false, reason: friendlyReason(clientErr), detail: clientErr.message }
 
   if (!client) {
     const ins = await supabase
@@ -86,7 +108,7 @@ export async function pushProject(project, opts = {}) {
       .insert({ owner_id: user.id, name: clientName })
       .select('id')
       .single()
-    if (ins.error) return { ok: false, reason: ins.error.message }
+    if (ins.error) return { ok: false, reason: friendlyReason(ins.error), detail: ins.error.message }
     client = ins.data
   }
 
@@ -98,7 +120,7 @@ export async function pushProject(project, opts = {}) {
     .eq('client_id', client.id)
     .limit(1)
     .maybeSingle()
-  if (brandErr) return { ok: false, reason: brandErr.message }
+  if (brandErr) return { ok: false, reason: friendlyReason(brandErr), detail: brandErr.message }
 
   if (!brand) {
     const ins = await supabase
@@ -106,18 +128,23 @@ export async function pushProject(project, opts = {}) {
       .insert({ owner_id: user.id, client_id: client.id, name: clientName })
       .select('id')
       .single()
-    if (ins.error) return { ok: false, reason: ins.error.message }
+    if (ins.error) return { ok: false, reason: friendlyReason(ins.error), detail: ins.error.message }
     brand = ins.data
   }
 
-  // 3. Project row, keyed by the local id. This one CAN upsert: the partial
-  //    unique index on (owner_id, local_id) gives it a real conflict target.
+  // 3. Project row, keyed by the local id. This one CAN upsert: the TOTAL
+  //    unique index on (owner_id, local_id) is a real conflict target.
+  //    (It must stay total — PostgREST cannot repeat a partial index's
+  //    predicate, so upsert against a partial index dies with 42P10.)
+  const stage = String(project.lastView || '')
   const row = {
     owner_id: user.id,
     brand_id: brand.id,
     local_id: String(project.id),
-    name: project.name || 'My project',
-    stage: project.lastView || null,
+    name: (project.name || 'My project').slice(0, 200),
+    // stage is a slug column with a check constraint; anything that is not
+    // slug-shaped is dropped rather than allowed to fail the whole push.
+    stage: /^[a-z0-9][a-z0-9_-]{0,39}$/.test(stage) ? stage : null,
     data: projectToCloudData(project),
   }
   const up = await supabase
@@ -125,7 +152,7 @@ export async function pushProject(project, opts = {}) {
     .upsert(row, { onConflict: 'owner_id,local_id' })
     .select('id')
     .single()
-  if (up.error) return { ok: false, reason: up.error.message }
+  if (up.error) return { ok: false, reason: friendlyReason(up.error), detail: up.error.message }
 
   return { ok: true, projectRowId: up.data.id }
 }

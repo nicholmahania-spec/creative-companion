@@ -83,13 +83,35 @@ describe('pushProject failure paths', () => {
     expect(r.reason).toMatch(/sign in/i)
   })
 
-  it('surfaces a database error as a reason, not a throw', async () => {
+  it('translates a database error instead of showing raw driver text', async () => {
     mockState.tables = {
-      clients: [{ data: null, error: { message: 'boom' } }],
+      clients: [{ data: null, error: { message: 'boom', code: 'XX000' } }],
     }
     const r = await pushProject({ id: 'p1', name: 'X' })
     expect(r.ok).toBe(false)
-    expect(r.reason).toBe('boom')
+    // The toast gets plain words; the raw message rides along as detail.
+    expect(r.reason).not.toMatch(/boom/)
+    expect(r.reason).toMatch(/work is safe/i)
+    expect(r.detail).toBe('boom')
+  })
+
+  it('turns an RLS denial into a sign-in nudge, not an accusation', async () => {
+    mockState.tables = {
+      clients: [
+        { data: null, error: null },
+        {
+          data: null,
+          error: {
+            message: 'new row violates row-level security policy',
+            code: '42501',
+          },
+        },
+      ],
+    }
+    const r = await pushProject({ id: 'p1', name: 'X' })
+    expect(r.ok).toBe(false)
+    expect(r.reason).toMatch(/sign out and back in/i)
+    expect(r.reason).not.toMatch(/row-level security/i)
   })
 })
 
