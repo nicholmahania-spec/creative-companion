@@ -181,11 +181,25 @@ export default function StationeryKit({
                 )}
               </div>
               <div className="stationery-letterhead-body" />
-              <div className="stationery-letterhead-footer" style={{ borderColor: accent }}>
-                {[activeProject.orgAddress, activeProject.orgPhone, activeProject.orgEmail, activeProject.orgWebsite]
+              {(() => {
+                const line = [
+                  activeProject.orgAddress,
+                  activeProject.orgPhone,
+                  activeProject.orgEmail,
+                  activeProject.orgWebsite,
+                ]
                   .filter(Boolean)
-                  .join('   ·   ') || 'Address · Phone · Email · Website'}
-              </div>
+                  .join('   ·   ')
+                return (
+                  <div
+                    className="stationery-letterhead-footer"
+                    style={{ borderColor: accent }}
+                    data-placeholder={line ? undefined : 'true'}
+                  >
+                    {line || 'Address · Phone · Email · Website'}
+                  </div>
+                )
+              })()}
             </div>
           </div>
         </div>
@@ -233,10 +247,19 @@ export default function StationeryKit({
                 className="stationery-card-face"
                 style={{ background: cover, color: bestTextOn(cover), fontFamily: bodyFont }}
               >
-                <div style={{ fontFamily: headingFont }} className="stationery-card-name">
+                <div
+                  style={{ fontFamily: headingFont }}
+                  className="stationery-card-name"
+                  data-placeholder={activeContact?.name ? undefined : 'true'}
+                >
                   {activeContact?.name || 'Name'}
                 </div>
-                <div className="stationery-card-title">{activeContact?.title || 'Title'}</div>
+                <div
+                  className="stationery-card-title"
+                  data-placeholder={activeContact?.title ? undefined : 'true'}
+                >
+                  {activeContact?.title || 'Title'}
+                </div>
                 <div className="stationery-card-contact">
                   {[activeContact?.phone, activeContact?.email].filter(Boolean).join('  ·  ')}
                 </div>
