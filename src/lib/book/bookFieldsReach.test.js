@@ -115,9 +115,12 @@ const EXEMPT = {
   deliverWordsChecked: 'optional ship polish checkboxes, not a deliverable',
   /* UI resume only — which Mark/Words/Colour/Type/Preview screen was last. */
   identitySubstep: 'resume position on Identity, not a deliverable field',
-  /* Touchpoints application notes — path gate + designer working notes.
-     Full book application mocks still read brief surfaces, not these notes. */
-  touchpointApps: 'Touchpoints working notes / path gate, not a pack field yet',
+  /* `touchpointApps` was exempted here until 2026-08-05. It is no longer
+     written through `updateBrandField` at all — it is plain project state read
+     by journeyProgress — so it never reaches this check, and the exemption was
+     documentation for a decision that no longer applies. Removed rather than
+     kept "just in case": that is precisely the stale-exemption case the last
+     test in this file exists to catch, and it was failing on it. */
   /* Studio approval fact on Mark — object permanence for “which route they
      picked.” Not printed in the client book (internal recovery). */
   logoClientChose: 'studio approval note, not a pack field',

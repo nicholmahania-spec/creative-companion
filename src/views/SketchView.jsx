@@ -18,6 +18,53 @@ import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
 
+/** Title Case for a surface id ('website' → 'Website'). */
+const surfaceLabel = (id) =>
+  String(id || '').replace(/^./, (c) => c.toUpperCase())
+
+/** 'a', 'a and b', 'a, b and c' — no digits, by design (see below). */
+function joinWords(list) {
+  if (list.length <= 1) return list[0] || ''
+  return `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`
+}
+
+/**
+ * Touchpoints progress as words, never "1 of 3".
+ *
+ * `touchpointsStatus.test.js` has specified this since before it existed —
+ * the test imported it, the function never did, and that is why `main`'s unit
+ * job has been red. Implemented to the spec the test already fixes, including
+ * its explicit assertion that the line must NOT match /\d+ of \d+/: raw counts
+ * are the representation this product is built to avoid, and a fraction on a
+ * progress line reads as a score to fall short of.
+ *
+ * NOT wired into the render. Where this line belongs on the Touchpoints
+ * screen, and whether it replaces anything already there, is a layout decision
+ * that belongs to the owner — so this exports the behaviour the test demands
+ * and changes nothing on screen.
+ *
+ * A surface counts as checked when its proof is explicitly done, or carries a
+ * note — a note is the evidence that someone actually looked at it.
+ */
+export function touchpointsStatusLine({
+  hasBriefSurfaces = false,
+  apps = [],
+  proofs = {},
+} = {}) {
+  const list = Array.isArray(apps) ? apps.filter(Boolean) : []
+  if (!list.length) return hasBriefSurfaces ? 'No mocks yet' : 'No surfaces yet'
+
+  const checked = list.filter((id) => {
+    const proof = proofs?.[id]
+    if (!proof) return false
+    return proof.done === true || String(proof.note || '').trim().length > 0
+  })
+
+  if (!checked.length) return 'No mocks checked yet'
+  if (checked.length === list.length) return 'All mocks checked'
+  return `${joinWords(checked.map(surfaceLabel))} checked — enough for the path`
+}
+
 export default function SketchView(props) {
   const {
     navDir = 'none',
