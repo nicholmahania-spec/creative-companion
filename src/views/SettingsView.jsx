@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import useAppStore from '../store/useAppStore'
+import { pushProject } from '../services/projectSync'
 import '../styles/lazy-settings.css'
 
 /**
@@ -44,6 +47,29 @@ export default function SettingsView(props) {
   const ask = (label, onConfirm) => {
     if (typeof requestConfirm === 'function') requestConfirm(label, onConfirm)
     else if (window.confirm(label)) onConfirm?.()
+  }
+
+  /* Phase 1a walking skeleton: send ONE project, one direction, on demand.
+     Separate from the Sync button above it on purpose — that one pushes the
+     whole workspace blob to user_workspaces; this writes the active project
+     through the new clients → brands → projects tables, and its result needs
+     to be observable on its own while the new path is being proven. */
+  const activeProjectId = useAppStore((s) => s.activeProjectId)
+  const projects = useAppStore((s) => s.projects)
+  const [projectPushBusy, setProjectPushBusy] = useState(false)
+  const sendActiveProject = async () => {
+    const project = projects.find((p) => p.id === activeProjectId)
+    if (!project) {
+      flashToast('Open a project first')
+      return
+    }
+    setProjectPushBusy(true)
+    try {
+      const r = await pushProject(project)
+      flashToast(r.ok ? `Sent “${project.name}” to the cloud` : r.reason)
+    } finally {
+      setProjectPushBusy(false)
+    }
   }
 
   return (
@@ -148,6 +174,16 @@ export default function SettingsView(props) {
               }}
             >
               {syncState === 'syncing' ? 'Syncing…' : 'Sync'}
+            </button>
+          ) : null}
+          {CLOUD ? (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={projectPushBusy}
+              onClick={sendActiveProject}
+            >
+              {projectPushBusy ? 'Sending…' : 'Send project'}
             </button>
           ) : null}
           <button

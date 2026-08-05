@@ -98,8 +98,11 @@ function… it need not use the final architecture, but it should link together
 the main architectural components." None of "tiny" described the original.
 
 **In scope — the thinnest thing that proves the whole path works**
-- A `projects` table with RLS, audited by `backend-security-auditor` before
-  anything writes to it.
+- `clients` → `brands` → `projects` tables with RLS, audited by
+  `backend-security-auditor` before anything writes to them. (Widened from a
+  single `projects` table on 2026-08-05 — PRODUCT.md §26.2, owner's call: a
+  brand outlives the project that created it. One brand per client is a
+  sync-layer simplification in 1a, not the model.)
 - Sync **one** project, **one** direction, **manually triggered**. No
   background loop, no conflict handling, no indicator states.
 - Auth + RLS + the round trip, proven end to end.

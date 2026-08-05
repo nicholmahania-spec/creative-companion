@@ -441,11 +441,19 @@ set for *Brand Identity*). **Recommend: §06 wins, Phase 2 is rewritten as
 "modular stages with per-project-type defaults".** Not actioned without
 confirmation.
 
-### 26.2 Client → Brand → Project vs the planned projects table
+### 26.2 Client → Brand → Project vs the planned projects table — **RESOLVED 2026-08-05**
 
 Phase 1a plans a `projects` table. §05/§15 require **Brand as an entity that
 outlives projects**, owned by a client. That is a three-table hierarchy, not
 one. Cheaper to get right before Phase 1a than to migrate afterwards.
+
+**Owner chose the hierarchy** ("Same brand, many projects"): a client owns
+brands, a brand collects projects over years, and colour/type/decisions live
+on the brand so later jobs already know them. Implemented in
+`supabase/migrations/20260805120000_clients_brands_projects.sql`. Phase 1a
+syncs through all three tables from day one; the UI keeps its flat project
+list for now (one brand per client is a sync-layer simplification, not the
+model).
 
 ### 26.3 Progress percentages vs the no-numbers constraint
 
