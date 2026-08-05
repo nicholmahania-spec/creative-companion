@@ -3611,8 +3611,17 @@ html[data-reduce-motion='true'] *::after {
   font-weight: 500;
 }
 
+/* Overdue reads as MORE PRESENT, not as an alarm: a deeper grey border, the
+   same move `.deadline-chip.urgency-overdue` already makes with its text
+   colour. This rule used to carry a red-tinted border, and it was the single
+   place in the app that broke its own rule — everywhere else a late item is
+   stated in muted grey (`dates.js:81-98` words the label rather than counting
+   down; `lazy-desk.css:74-81` keeps the whole waiting row muted). A designer
+   who is already late does not need the interface to raise its voice; they
+   need to be able to look at the list without flinching away from it. Two
+   visual languages for one state is its own load. */
 .deadline-list-item.urgency-overdue {
-  border-color: rgba(185, 28, 28, 0.3);
+  border-color: rgba(104, 104, 104, 0.5);
   background: rgba(234, 234, 234, 0.45);
 }
 
@@ -4558,6 +4567,44 @@ body.cc-printing-page button {
   font-size: 0.95rem;
   line-height: 1.5;
   color: var(--text-secondary);
+}
+
+/* Quick capture — a field over the work, not a trip to another screen.
+   Anchored high rather than centred: it should read as something laid on top
+   of what you were doing, which is still visible behind it, so returning to
+   the task does not require re-finding it. */
+.quick-capture-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.quick-capture-panel {
+  width: min(34rem, calc(100vw - 2rem));
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-2);
+}
+
+.quick-capture-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.quick-capture-hint {
+  margin: var(--space-2) 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
 
 .undo-chip {

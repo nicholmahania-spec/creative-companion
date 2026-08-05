@@ -30,6 +30,7 @@ import {
   deadlineUrgency,
   daysUntil,
 } from './lib/dates'
+import { loadCapturePad, saveCapturePad } from './lib/capturePad'
 import {
   APP_BUILD,
   APP_BUILD_DATE,
@@ -403,7 +404,11 @@ function App() {
     },
     [setActiveView]
   )
-  const [quickInput, setQuickInput] = useState('')
+  /* Seeded from storage, so a thought half-typed before a reload or a
+     navigation is still there. See lib/capturePad.js for why this lives
+     beside the workspace payload rather than inside it. */
+  const [quickInput, setQuickInput] = useState(() => loadCapturePad())
+  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false)
   const [captureEnergy, setCaptureEnergy] = useState('med')
   const [focusLeft, setFocusLeft] = useState(POMODORO_WORK_MIN * 60)
   const [isFocusRunning, setIsFocusRunning] = useState(false)
@@ -951,17 +956,40 @@ function App() {
     if (showProgress) {
       awardAndBroadcast('step_complete', { label: 'Step done' })
     }
-    setRecentUndo({ id: doneId, title: doneTitle, at: Date.now() })
+    offerUndo(doneTitle, () => {
+      toggleTask(doneId)
+      setStepFocusKey((k) => k + 1)
+    })
     flashToast('Step done', { important: true })
     setStepFocusKey((k) => k + 1)
   }
 
+  /**
+   * Arm the undo chip for any action that can be honestly reversed.
+   *
+   * Was hard-wired to task completion — one action out of the several the app
+   * can do to you. Everything genuinely destructive still went through a
+   * confirmation dialog whose copy had to say "You cannot undo this", which is
+   * the sentence this function exists to delete.
+   *
+   * `restore` must actually restore. If a caller cannot write one truthfully,
+   * it should keep its dialog: an undo that silently fails to put something
+   * back is worse than the dialog, because the user has been told it was safe
+   * and has no reason to check.
+   *
+   * One chip at a time, latest wins — an undo STACK would be a second thing to
+   * hold in mind, which is the opposite of the point.
+   */
+  const offerUndo = (title, restore) => {
+    if (typeof restore !== 'function') return
+    setRecentUndo({ title, restore, at: Date.now() })
+  }
+
   const undoLastComplete = () => {
-    if (!recentUndo?.id) return
-    toggleTask(recentUndo.id)
+    if (typeof recentUndo?.restore !== 'function') return
+    recentUndo.restore()
     flashToast('Undid that')
     setRecentUndo(null)
-    setStepFocusKey((k) => k + 1)
   }
 
   /**
@@ -1072,6 +1100,21 @@ function App() {
     const t = window.setTimeout(() => setRecentUndo(null), 6000)
     return () => window.clearTimeout(t)
   }, [recentUndo])
+
+  /* Keep the half-typed capture line. Written on every keystroke rather than
+     debounced: the interruption this protects against — closing the tab, the
+     browser being killed, wandering off — gives no warning and would land
+     inside any debounce window. A short string to localStorage is cheap
+     enough that buying certainty with it is the right trade. */
+  useEffect(() => {
+    saveCapturePad(quickInput)
+  }, [quickInput])
+
+  const quickCaptureRef = useRef(null)
+  useModalFocus(quickCaptureOpen, () => quickCaptureRef.current, {
+    initialSelector: '#quick-capture-input',
+    onClose: () => setQuickCaptureOpen(false),
+  })
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
   const archivedProjects = (projects || []).filter((p) => p.archived)
@@ -1790,12 +1833,19 @@ function App() {
         completeCurrentStep()
         return
       }
-      // N — jump Sketch + focus capture
+      /* N — capture WITHOUT leaving the screen.
+         This used to jump to Flow and focus its capture field, which defeated
+         the point: the whole reason quick capture exists is to let an
+         intrusive thought be put down without derailing what you are doing,
+         and navigating away pays the full context switch the capture was
+         meant to avoid — you lose the view you were in and have to rebuild
+         where you were. That made pressing N a worse deal than not capturing
+         at all. It now opens a single field over whatever is on screen. */
       if (k === 'n') {
         e.preventDefault()
-        setActiveView('flow')
+        setQuickCaptureOpen(true)
         window.setTimeout(() => {
-          document.getElementById('desk-capture')?.focus?.()
+          document.getElementById('quick-capture-input')?.focus?.()
         }, 60)
         return
       }
@@ -2958,28 +3008,36 @@ function App() {
     reader.readAsText(file)
   }
 
+  /**
+   * Delete a project — no dialog, an undo instead.
+   *
+   * This used to raise a danger confirm whose copy read "You cannot undo
+   * this." It now can be undone, so it does not need to ask. A confirmation is
+   * a decision; an undo is not, and the difference decides whether a stale
+   * project ever actually gets cleared off the desk.
+   *
+   * The undo restores the view as well as the data. Deleting the last project
+   * bounces the app to Create, and putting the rows back without putting the
+   * user back would leave them somewhere they never chose to be — the restore
+   * has to return the whole situation, not just the state.
+   */
   const handleDeleteProjectById = (id, name) => {
     if (!id) return
     const wasActive = id === activeProjectId
-    const isLast = projects.length <= 1
-    setDeskConfirm({
-      kind: 'delete-project',
-      label: isLast
-        ? `Delete “${name}”? This is your only project — the desk will be empty until you start a new one. You cannot undo this.`
-        : `Delete this project and its steps & pictures? You cannot undo this. (“${name}”)`,
-      confirmLabel: 'Delete',
-      danger: true,
-      onConfirm: () => {
-        const result = deleteProject(id)
-        if (result.ok) {
-          flashToast(result.empty ? 'Project deleted — desk is empty' : 'Project deleted')
-          if (result.empty) setActiveView('create')
-          else if (wasActive) setActiveView('project')
-        } else {
-          flashToast(result.error || 'Could not delete that')
-        }
-        setDeskConfirm(null)
-      },
+    const prevView = activeView
+    const result = deleteProject(id)
+    if (!result.ok) {
+      flashToast(result.error || 'Could not delete that')
+      return
+    }
+    if (result.empty) setActiveView('create')
+    else if (wasActive) setActiveView('project')
+    flashToast(
+      result.empty ? 'Project deleted — desk is empty' : 'Project deleted'
+    )
+    offerUndo(name || 'Project deleted', () => {
+      result.restore?.()
+      setActiveView(prevView)
     })
   }
 
@@ -3928,6 +3986,34 @@ function App() {
           projectPalette={projectPalette}
           deskMood={deskMood}
           deskTasks={deskTasks}
+          doneTasks={doneTasks}
+          queueTasks={queueTasks}
+          stepFocusKey={stepFocusKey}
+          setStepFocusKey={setStepFocusKey}
+          hideHowItWorks={hideHowItWorks}
+          openBreakdown={openBreakdown}
+          quickInput={quickInput}
+          setQuickInput={setQuickInput}
+          captureEnergy={captureEnergy}
+          setCaptureEnergy={setCaptureEnergy}
+          captureDue={captureDue}
+          setCaptureDue={setCaptureDue}
+          captureOptionsOpen={captureOptionsOpen}
+          setCaptureOptionsOpen={setCaptureOptionsOpen}
+          addQuickTask={addQuickTask}
+          queueOpen={queueOpen}
+          setQueueOpen={setQueueOpen}
+          doneOpen={doneOpen}
+          setDoneOpen={setDoneOpen}
+          updateTaskTitle={updateTaskTitle}
+          updateTaskWhy={updateTaskWhy}
+          removeTask={removeTask}
+          breakIntoSteps={breakIntoSteps}
+          setTaskDueDate={setTaskDueDate}
+          stepDueOpen={stepDueOpen}
+          setStepDueOpen={setStepDueOpen}
+          completeCurrentStep={completeCurrentStep}
+          startVoice={startVoice}
           setActiveView={setActiveView}
           flashToast={flashToast}
           flashMicro={flashMicro}
@@ -4403,6 +4489,62 @@ function App() {
       {actionToast && (
         <div className="action-toast" role="status" aria-live="polite">
           {actionToast}
+        </div>
+      )}
+
+      {/* Quick capture, over whatever you were doing.
+          One field and one button, no category picker and no project picker:
+          choosing where a thought belongs is a decision, and asking for it at
+          the moment of interruption is the cost this feature exists to avoid.
+          It lands in the same desk task list the Flow view already shows —
+          somewhere already visible, not a fifth holding pen that ages into a
+          second backlog. Filing happens later, with bandwidth. */}
+      {quickCaptureOpen && (
+        <div
+          className="quick-capture-overlay no-print-hide"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Quick capture"
+          ref={quickCaptureRef}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setQuickCaptureOpen(false)
+          }}
+        >
+          <div className="quick-capture-panel">
+            <label className="quick-capture-label" htmlFor="quick-capture-input">
+              Put it down, sort it later
+            </label>
+            <div className="capture-row">
+              <input
+                id="quick-capture-input"
+                value={quickInput}
+                onChange={(e) => setQuickInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    addQuickTask({ navigate: false })
+                    setQuickCaptureOpen(false)
+                  }
+                }}
+                placeholder="Whatever just came to mind"
+                aria-label="Quick capture"
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  addQuickTask({ navigate: false })
+                  setQuickCaptureOpen(false)
+                }}
+              >
+                Add
+              </button>
+            </div>
+            {/* Closing keeps the text — it is already saved. Escape here is
+                "not now", never "throw that away". */}
+            <p className="quick-capture-hint">
+              Esc to close. Anything typed is kept.
+            </p>
+          </div>
         </div>
       )}
 

@@ -71,18 +71,6 @@ export default function DesignView({
   brandEditSectionProp = null,
   setBrandEditSectionProp = null,
   // Focus timer props
-  forcedBreak,
-  setSessionComplete,
-  startOrPauseFocus,
-  resetFocus,
-  isFocusRunning,
-  focusLeft,
-  setFocusLeft,
-  setPomodoroWorkStartedAt,
-  setIsFocusRunning,
-  setTimerFocusSource,
-  sessionLabel,
-  sessionComplete,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const setBrandTokenTags = useAppStore((s) => s.setBrandTokenTags)

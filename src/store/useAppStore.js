@@ -1914,12 +1914,51 @@ const useAppStore = create(
 
       /** Delete a project and its tasks/pins. Last project may be removed
        *  (empty workspace is allowed — create again from + / New project). */
+      /**
+       * Delete a project and everything hanging off it.
+       *
+       * Returns a `restore` closure alongside the result, and that is what
+       * lets the caller offer an undo instead of a confirmation dialog. The
+       * distinction matters for this app's audience: a dialog is a decision
+       * made under uncertainty with no way back, which is why its copy has to
+       * shout ("You cannot undo this"). For a user who is rejection-sensitive,
+       * that turns routine tidying into a stakes moment — so the tidying does
+       * not happen, dead projects pile up on the desk, and every later scan of
+       * the desk costs more. Undo inverts it: the choice becomes cheap, so it
+       * gets made.
+       *
+       * The restore is honest rather than approximate, which is the condition
+       * for offering it at all. Deletion touches exactly three slices —
+       * `projects`, `tasks`, `moodItems` — so putting those three back, at the
+       * original index and with the original selection, returns the workspace
+       * to precisely its prior state. If deletion ever grows to touch a fourth,
+       * this closure must grow with it: a restore that silently drops data is
+       * worse than the dialog it replaced, because the user has been told it
+       * was safe.
+       */
       deleteProject: (id) => {
         const { projects, tasks, moodItems, currentProjectId } = get()
         const remaining = projects.filter((p) => p.id !== id)
         if (remaining.length === projects.length) {
           return { ok: false, error: 'Project not found' }
         }
+
+        // Captured BEFORE the set() below, so the closure holds the real prior
+        // state rather than re-deriving it from a store that has moved on.
+        const prevProjects = projects
+        const prevTasks = tasks
+        const prevMoodItems = moodItems
+        const prevCurrentId = currentProjectId
+        const restore = () => {
+          set({
+            projects: prevProjects,
+            tasks: prevTasks,
+            moodItems: prevMoodItems,
+            currentProjectId: prevCurrentId,
+          })
+          return { ok: true }
+        }
+
         if (remaining.length === 0) {
           set({
             projects: [],
@@ -1927,7 +1966,7 @@ const useAppStore = create(
             tasks: tasks.filter((t) => t.projectId !== id),
             moodItems: moodItems.filter((m) => m.projectId !== id),
           })
-          return { ok: true, empty: true }
+          return { ok: true, empty: true, restore }
         }
         const nextId =
           currentProjectId === id
@@ -1942,7 +1981,7 @@ const useAppStore = create(
           tasks: tasks.filter((t) => t.projectId !== id),
           moodItems: moodItems.filter((m) => m.projectId !== id),
         })
-        return { ok: true, empty: false }
+        return { ok: true, empty: false, restore }
       },
 
       /** Soft-archive: hide from default lists, keep data. Last active project
@@ -2065,10 +2104,29 @@ const useAppStore = create(
           ),
         })),
 
-      removeTask: (id) =>
-        set((state) => ({
-          tasks: state.tasks.filter((t) => t.id !== id && t.parentId !== id),
-        })),
+      /**
+       * Remove a step and any sub-steps hanging off it.
+       *
+       * Returns `{ ok, restore }` so the caller can offer an undo rather than
+       * a "Cannot undo" confirmation. Note that this deletes CHILDREN too —
+       * a restore that put back only the named row would quietly lose the
+       * sub-steps, and the user would have been told the removal was
+       * reversible. Snapshotting the whole list is the cheap way to be exactly
+       * right instead of nearly right.
+       */
+      removeTask: (id) => {
+        const prevTasks = get().tasks
+        const next = prevTasks.filter((t) => t.id !== id && t.parentId !== id)
+        if (next.length === prevTasks.length) return { ok: false }
+        set({ tasks: next })
+        return {
+          ok: true,
+          restore: () => {
+            set({ tasks: prevTasks })
+            return { ok: true }
+          },
+        }
+      },
 
       breakIntoSteps: (taskId) => {
         const { tasks, currentProjectId } = get()

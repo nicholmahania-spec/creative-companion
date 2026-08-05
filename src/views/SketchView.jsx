@@ -14,9 +14,24 @@ import {
   chosenDirection,
 } from '../lib/decisionLog'
 import LayoutPatterns from '../components/LayoutPatterns'
+import TouchpointMockThumb from '../components/TouchpointMockThumb'
+import {
+  touchpointsFor,
+  touchpointLabel,
+  touchpointCheckHint,
+} from '../lib/journey/touchpoints'
 import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
+
+/** One-tap surfaces, so a thin brief is not stuck bouncing back to Strategy. */
+const QUICK_SURFACES = [
+  { id: 'website', label: 'Website' },
+  { id: 'social', label: 'Social' },
+  { id: 'print', label: 'Print' },
+  { id: 'app', label: 'App' },
+]
+
 
 /** Title Case for a surface id ('website' → 'Website'). */
 const surfaceLabel = (id) =>
@@ -31,20 +46,23 @@ function joinWords(list) {
 /**
  * Touchpoints progress as words, never "1 of 3".
  *
- * `touchpointsStatus.test.js` has specified this since before it existed —
- * the test imported it, the function never did, and that is why `main`'s unit
- * job has been red. Implemented to the spec the test already fixes, including
- * its explicit assertion that the line must NOT match /\d+ of \d+/: raw counts
- * are the representation this product is built to avoid, and a fraction on a
- * progress line reads as a score to fall short of.
- *
- * NOT wired into the render. Where this line belongs on the Touchpoints
- * screen, and whether it replaces anything already there, is a layout decision
- * that belongs to the owner — so this exports the behaviour the test demands
- * and changes nothing on screen.
+ * `touchpointsStatus.test.js` specified this before it existed — the test
+ * imported it, the function did not, and that is why main's unit job was red.
+ * Implemented to the spec the test already fixes, including its explicit
+ * assertion that the line must NOT match /\d+ of \d+/: a fraction on a
+ * progress line reads as a score to fall short of, and this stop needs only
+ * ONE surface noted, so a count would misreport the ask and leave a visible
+ * remainder to finish.
  *
  * A surface counts as checked when its proof is explicitly done, or carries a
  * note — a note is the evidence that someone actually looked at it.
+ *
+ * NOW WIRED. It previously said it was deliberately not rendered, because
+ * where the line belonged was a layout decision for the owner. That decision
+ * has been made (owner, 2026-08-05: restore the Touchpoints screen), so it
+ * heads the restored block. The function survived b90e24e; the UI that called
+ * it did not — which is why a status line sat here for weeks with nothing to
+ * describe, and why `surfaceLabel` and `joinWords` were still imported.
  */
 export function touchpointsStatusLine({
   hasBriefSurfaces = false,
@@ -69,6 +87,12 @@ export default function SketchView(props) {
   const {
     navDir = 'none',
     activeProject = null,
+    /* Needed by the Touchpoints mocks so they preview in the brand's own
+       colours rather than a generic grey. Was absent from this file's props
+       and present in the version b90e24e overwrote — restoring the block
+       without it threw `projectPalette is not defined` at render, which the
+       build and 905 unit tests both reported as fine. */
+    projectPalette = [],
     projectDeadline = '',
     completedCount = 0,
     deskTasks = [],
@@ -128,6 +152,52 @@ export default function SketchView(props) {
 
   const addTask = useAppStore((s) => s.addTask)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
+  const updateDetective = useAppStore((s) => s.updateDetective)
+
+  /* Touchpoints — derived from the brief, so the surfaces offered are the
+     ones this project actually has, not a fixed four for every brand. */
+  const touchpointSurfaces = activeProject?.detective?.brandSurfaces
+  const touchpointDeliverables = activeProject?.detective?.deliverablesPicked
+  const touchpointApps = touchpointsFor(
+    touchpointSurfaces,
+    touchpointDeliverables
+  )
+  const touchpointProofs = activeProject?.touchpointApps || {}
+  const hasBriefSurfaces =
+    (Array.isArray(touchpointSurfaces) && touchpointSurfaces.length > 0) ||
+    (Array.isArray(touchpointDeliverables) &&
+      touchpointDeliverables.length > 0)
+  const statusLine = touchpointsStatusLine({
+    hasBriefSurfaces,
+    apps: hasBriefSurfaces ? touchpointApps : [],
+    proofs: touchpointProofs,
+  })
+
+  /* Reads the CURRENT row out of the store rather than closing over the
+     render's copy: two edits in quick succession (tick "mock is good", then
+     type a note) would otherwise resolve against the same stale object and
+     the first would be silently dropped. */
+  const setTouchpointApp = (id, patch) => {
+    const state = useAppStore.getState()
+    const projectId = activeProject?.id || state.currentProjectId
+    const prev =
+      state.projects.find((p) => p.id === projectId)?.touchpointApps || {}
+    updateBrandField('touchpointApps', {
+      ...prev,
+      [id]: { ...(prev[id] || {}), ...patch },
+    })
+  }
+
+  const addQuickSurface = (id) => {
+    const prev = Array.isArray(touchpointSurfaces) ? [...touchpointSurfaces] : []
+    if (prev.includes(id)) {
+      flashMicro?.(`${touchpointLabel(id)} · already on the list`)
+      return
+    }
+    updateDetective('brandSurfaces', [...prev, id])
+    flashMicro?.(`${touchpointLabel(id)} · added`)
+  }
+
   const captureStep = handleCapture || addQuickTaskProp
   const bumpStepFocus = () => {
     if (typeof setStepFocusKey === 'function') setStepFocusKey((k) => k + 1)
@@ -406,44 +476,14 @@ export default function SketchView(props) {
             the eight patterns turns it into a one-second decision. */}
         <LayoutPatterns />
 
-        {/* Focus Timer */}
-        <div className="insights-timer" style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-          {isFocusRunning || focusLeft < POMODORO_WORK_MIN * 60
-            ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')}`
-            : 'not started'}
-        </div>
-        <div className="insights-focus-actions" style={{ marginBottom: '1.5rem' }}>
-          <button
-            type="button"
-            onClick={startOrPauseFocus}
-            className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
-            disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
-          >
-            {isFocusRunning ? 'Pause' : focusLeft === 0 ? 'Start' : 'Resume'}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTimerFocusSource?.(null)
-              resetFocus(25)
-            }}
-            className="btn btn-secondary btn-sm"
-            disabled={!!forcedBreak}
-          >
-            25
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTimerFocusSource?.(null)
-              resetFocus(2)
-            }}
-            className="btn btn-ghost btn-sm"
-            disabled={!!forcedBreak}
-          >
-            2
-          </button>
-        </div>
+        {/* The focus timer used to be duplicated here, and it was the loudest
+            thing on the screen: a "not started" readout set at display size,
+            dominating a work page while the designer was demonstrably working.
+            Removed rather than kept — the real Timer lives on Tools, and a
+            second copy of a running clock is a second clock to reconcile.
+            Same fix already applied to Identity, Assets, Spark, Review and
+            Research; this was the last copy. Found by opening the app, not by
+            a test: every check was green with it on screen. */}
 
         {/* The brand book's handoff page reads this — used to be writable
             only in off-path Review, so the numbered path alone could never
@@ -647,6 +687,125 @@ export default function SketchView(props) {
           </section>
         )}
       </div>
+
+      {/* ── Touchpoints ──────────────────────────────────────────────────
+          The reason this stop exists, restored.
+
+          `journey.js` declares this stop as "Touchpoints — where the brand
+          shows up, one note per surface from the brief", and says what enough
+          looks like: "one surface noted or marked looks right." None of that
+          was on the screen. b90e24e overwrote this file — its parent version
+          WAS the Touchpoints screen — with a general step view, and the
+          heading kept reading "Touchpoints" because it comes from
+          `labelForStepId`, so the page named a job it no longer did.
+
+          The consequence was not cosmetic. `touchpointApps` had no writer
+          anywhere in src/, and `journeyProgress.js` gates this stop on it, so
+          the stop could NEVER complete — and the brand book's applications
+          page reads the same field, so it had nothing to draw from. Every
+          check stayed green throughout: no test renders this view, and an
+          empty object is a valid empty object.
+
+          Restored as an addition rather than a revert. The old file predates
+          the layout-pattern reference and the current-step panel, both of
+          which are pinned by e2e (`phase-surfaces`, `offline`), so putting it
+          back wholesale would have traded one loss for another. */}
+      <section className="touchpoints-block" aria-label="Applications">
+        <div className="touchpoints-head">
+          <h2 className="touchpoints-heading">Where the brand shows up</h2>
+          <p className="touchpoints-status" role="status">
+            {statusLine}
+          </p>
+        </div>
+
+        {!hasBriefSurfaces ? (
+          <div className="touchpoints-empty">
+            <p className="touchpoints-empty-title">
+              Name where the brand appears
+            </p>
+            {/* One tap each, so a thin brief is not stuck bouncing back to
+                Strategy to become completable. */}
+            <div
+              className="touchpoints-quick"
+              role="group"
+              aria-label="Add a surface"
+            >
+              {QUICK_SURFACES.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => addQuickSurface(s.id)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <ul className="touchpoints-list">
+            {touchpointApps.map((id) => {
+              const row = touchpointProofs[id] || {}
+              const note = row.note || ''
+              const done = !!row.done
+              const ready = done || String(note).trim().length > 0
+              return (
+                <li
+                  key={id}
+                  className={`touchpoints-card${ready ? ' is-ready' : ''}`}
+                >
+                  <div className="touchpoints-card-layout">
+                    <TouchpointMockThumb
+                      id={id}
+                      project={activeProject}
+                      palette={
+                        Array.isArray(projectPalette) && projectPalette.length
+                          ? projectPalette
+                          : activeProject?.palette || []
+                      }
+                    />
+                    <div className="touchpoints-card-body">
+                      <div className="touchpoints-card-head">
+                        <h3 className="touchpoints-card-title">
+                          {touchpointLabel(id)}
+                        </h3>
+                        <button
+                          type="button"
+                          className={`btn btn-sm${done ? ' btn-secondary' : ' btn-ghost'}`}
+                          aria-pressed={done}
+                          onClick={() => {
+                            setTouchpointApp(id, { done: !done })
+                            flashMicro?.(
+                              !done
+                                ? `${touchpointLabel(id)} · mock is good`
+                                : `${touchpointLabel(id)} · open again`
+                            )
+                          }}
+                        >
+                          {done ? 'Mock is good' : 'This mock is good'}
+                        </button>
+                      </div>
+                      <label className="field-label" htmlFor={`tp-note-${id}`}>
+                        How it shows up
+                      </label>
+                      <textarea
+                        id={`tp-note-${id}`}
+                        className="field-textarea"
+                        rows={2}
+                        value={note}
+                        onChange={(e) =>
+                          setTouchpointApp(id, { note: e.target.value })
+                        }
+                        placeholder={touchpointCheckHint(id)}
+                      />
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
 
       <div className="path-continue-row">
         <button
