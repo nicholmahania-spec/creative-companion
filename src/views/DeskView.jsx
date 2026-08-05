@@ -404,7 +404,10 @@ export default function DeskView({
             {activity.length > 0 && (
               <ul className="desk-activity">
                 {activity.map((a) => {
-                  const when = a.sortAt ? relativeAgeLabel(a.sortAt) : ''
+                  /* `at`, not `sortAt`. Only rows with a real per-event time
+                     carry `at`; `sortAt` is portal-level ordering data that
+                     clientInbox marks "never shown to the user". */
+                  const when = a.at ? relativeAgeLabel(a.at) : ''
                   return (
                     <li
                       key={a.id}
