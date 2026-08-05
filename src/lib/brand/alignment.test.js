@@ -6,6 +6,7 @@ import {
   alignmentNote,
   axisValue,
   compareToTarget,
+  strategyProfile,
   strategyTarget,
 } from './alignment.js'
 
@@ -149,5 +150,67 @@ describe('alignmentNote is a prompt, never a verdict', () => {
   it('never tells the designer what to choose', () => {
     const note = alignmentNote(compareToTarget(target, { warmth: 0.1 }))
     expect(note).not.toMatch(/should|instead|use |try |better|wrong/i)
+  })
+})
+
+describe('disagreement is surfaced, not averaged away', () => {
+  /* Found by review. strategyTarget handled SILENCE carefully — an attribute
+     that says nothing about an axis must not drag it to the middle — but
+     collapsed CONTRADICTION into a confident midpoint by the same route.
+     "playful" (0.9) and "trustworthy" (0.25) averaged to 0.575, so a
+     typeface at 0.575, matching NEITHER, reported 'close' and the note said
+     nothing: a false negative in exactly the direction this feature exists
+     to prevent. */
+  const pull = [
+    { label: 'playful', energy: 0.9 },
+    { label: 'trustworthy', energy: 0.25 },
+  ]
+
+  it('flags the axis as split rather than reporting a false match', () => {
+    const rows = compareToTarget(strategyProfile(pull), { energy: 0.575 })
+    const energy = rows.find((r) => r.axis === 'energy')
+    expect(energy.state).toBe('split')
+    expect(energy.state).not.toBe('close')
+  })
+
+  it('stays split whatever the candidate does — the strategy is the problem', () => {
+    for (const v of [0, 0.25, 0.575, 0.9, 1]) {
+      const rows = compareToTarget(strategyProfile(pull), { energy: v })
+      expect(rows.find((r) => r.axis === 'energy').state, `energy ${v}`).toBe(
+        'split'
+      )
+    }
+  })
+
+  it('names the two attributes in the designer own words, low pole first', () => {
+    const rows = compareToTarget(strategyProfile(pull), { energy: 0.5 })
+    const note = alignmentNote(rows)
+    expect(note).toMatch(/pulls both ways on energy/i)
+    expect(note).toMatch(/trustworthy vs playful/) // 0.25 before 0.9
+    expect(note).not.toMatch(/0\.5|0\.575/) // words, not numbers
+  })
+
+  it('a split outranks an ordinary difference in the note', () => {
+    // Until the strategy settles, there is nothing to compare against.
+    const attrs = [...pull, { label: 'warm', warmth: 0.95 }]
+    const rows = compareToTarget(strategyProfile(attrs), {
+      energy: 0.5,
+      warmth: 0.05,
+    })
+    expect(alignmentNote(rows)).toMatch(/pulls both ways/i)
+  })
+
+  it('attributes that agree are not called a split', () => {
+    const agree = [
+      { label: 'warm', warmth: 0.9 },
+      { label: 'approachable', warmth: 0.8 },
+    ]
+    const profile = strategyProfile(agree)
+    expect(profile.warmth.split).toBe(false)
+    expect(profile.warmth.target).toBeCloseTo(0.85)
+  })
+
+  it('strategyTarget still returns plain means for the snapshot path', () => {
+    expect(strategyTarget(pull).energy).toBeCloseTo(0.575)
   })
 })

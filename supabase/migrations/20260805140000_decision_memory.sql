@@ -11,7 +11,9 @@
 -- "Contested claims"): Shaikh & Chaparro recover three CORRELATED factors
 -- from font-personality ratings, not five independent ones, so Euclidean
 -- distance over five hand-drawn axes silently double-weights whichever pairs
--- co-vary (Weight/Energy, Formality/Era). Worse, a scalar hides the axis that
+-- co-vary. (WHICH pairs is unverified — the factor-loadings table was not
+-- retrievable, so do not repeat any specific pairing as fact; the structural
+-- argument does not depend on it.) Worse, a scalar hides the axis that
 -- carried the brief — a font wrong on Warmth alone still scores ~78%, read as
 -- "worth a second look", when Warmth *was* the brief. Five bars, never one
 -- number. There is no alignment_score column and adding one is a decision to
@@ -37,6 +39,10 @@ create table public.strategy_attributes (
   weight public.axis_value,
   era public.axis_value,
   created_at timestamptz not null default now(),
+  -- Mutable (it has an UPDATE policy), so it needs a mutation timestamp:
+  -- without one an edited attribute is invisible to any comparator, and
+  -- decisions.target_* cannot tell that the brief it snapshotted moved.
+  updated_at timestamptz not null default now(),
   constraint strategy_attributes_project_owner_fkey
     foreign key (project_id, owner_id)
     references public.projects (id, owner_id) on delete cascade
@@ -64,7 +70,10 @@ create table public.brand_tokens (
   source text check (source is null or length(source) <= 500),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint brand_tokens_id_owner_key unique (id, owner_id),
+  -- Owner AND project, because a decision must only ever reference a token
+  -- from its own project — see the FK on decisions for what goes wrong
+  -- otherwise.
+  constraint brand_tokens_id_project_owner_key unique (id, project_id, owner_id),
   constraint brand_tokens_project_owner_fkey
     foreign key (project_id, owner_id)
     references public.projects (id, owner_id) on delete cascade
@@ -103,19 +112,38 @@ create table public.decisions (
   status text not null default 'proposed'
     check (status in ('proposed', 'approved', 'revised', 'rejected')),
   approved_by text check (approved_by is null or length(approved_by) <= 200),
+  -- Writer-supplied, unlike created_at/updated_at. Owner-only data, so a
+  -- backdated approval is self-deception rather than an attack — but §17
+  -- wants approvals to end confusion about what was approved when, and a
+  -- freely-backdatable one cannot. Kept coherent with status at least.
   approved_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  constraint decisions_approved_coherent
+    check ((status = 'approved') = (approved_at is not null)),
   constraint decisions_project_owner_fkey
     foreign key (project_id, owner_id)
     references public.projects (id, owner_id) on delete cascade,
-  constraint decisions_token_owner_fkey
-    foreign key (selected_token_id, owner_id)
-    references public.brand_tokens (id, owner_id) on delete set null (selected_token_id)
+  /* Aligned on PROJECT as well as owner. Owner alignment alone let a
+     decision in project TWO reference a token from project ONE — and then
+     deleting project ONE cascade-deleted its tokens, whose SET NULL wiped
+     the chosen-token record on a decision in the surviving project the
+     designer never touched. Verified live during audit. That is precisely
+     the "log that forgets" this SET NULL exists to prevent, so the
+     alignment is now structural. The column list stays a valid subset, so
+     SET NULL semantics are unchanged. */
+  constraint decisions_token_project_owner_fkey
+    foreign key (selected_token_id, project_id, owner_id)
+    references public.brand_tokens (id, project_id, owner_id)
+    on delete set null (selected_token_id)
 );
 
 create index if not exists decisions_project_idx
   on public.decisions (owner_id, project_id, created_at desc);
+-- The referencing side of the token FK. Without it every brand_tokens
+-- delete sequentially scans decisions and takes a row lock per match.
+create index if not exists decisions_selected_token_idx
+  on public.decisions (owner_id, project_id, selected_token_id);
 
 -- --------------------------------------------------------------------- RLS ---
 alter table public.strategy_attributes enable row level security;
@@ -127,10 +155,13 @@ revoke all on public.strategy_attributes, public.brand_tokens, public.decisions
 revoke truncate on public.strategy_attributes, public.brand_tokens, public.decisions
   from authenticated;
 
--- Owner-scoped, with the parent check on write. The composite FKs above make
--- cross-tenant linkage structurally impossible; these are belt and braces,
--- and they are what stops a row being created for someone else's project in
--- the first place rather than merely failing later.
+-- Owner-scoped. NOTE which mechanism does which job, because the previous
+-- wording here had it backwards and that is the sentence a future editor
+-- reads before deciding the FK is redundant: these policies check ONLY
+-- auth.uid() = owner_id. The composite FKs above are the ONLY parent
+-- enforcement on these three tables — they are what makes a row for
+-- someone else's project impossible (verified: 23503, not merely a later
+-- failure). Do not remove them on the assumption a policy covers it.
 create policy "strategy_attributes_select_own" on public.strategy_attributes
   for select to authenticated using (auth.uid() = owner_id);
 create policy "strategy_attributes_write_own" on public.strategy_attributes
@@ -158,10 +189,30 @@ create policy "decisions_write_own" on public.decisions
 create policy "decisions_update_own" on public.decisions
   for update to authenticated
   using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
--- Decisions ARE the record. Deleting one is allowed (a mistake typed in is
--- not history), but the app never offers it in bulk.
-create policy "decisions_delete_own" on public.decisions
-  for delete to authenticated using (auth.uid() = owner_id);
+-- NO delete policy on decisions. The previous version had an unfiltered
+-- one defended as "the app never offers it in bulk" — which puts the trust
+-- boundary in the client, on the one table whose entire thesis is that it
+-- must not forget. One DELETE with no filter would wipe the whole log.
+-- 1a gated deletes behind archived_at and 1b refused a table-level grant
+-- outright; this follows 1b, since a mistyped decision is a single row.
+create or replace function public.discard_decision(p_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  removed int;
+begin
+  delete from public.decisions
+  where id = p_id and owner_id = auth.uid();
+  get diagnostics removed = row_count;
+  return removed > 0;
+end;
+$$;
+
+revoke all on function public.discard_decision(uuid) from public;
+grant execute on function public.discard_decision(uuid) to authenticated;
 
 -- Timestamps pinned server-side, same reasoning as every other table here.
 create trigger brand_tokens_stamp_row_times
@@ -172,6 +223,90 @@ create trigger decisions_stamp_row_times
   before insert or update on public.decisions
   for each row execute function public.stamp_row_times();
 
-create trigger strategy_attributes_pin_created_at
+create trigger strategy_attributes_stamp_row_times
   before insert or update on public.strategy_attributes
-  for each row execute function public.pin_row_times();
+  for each row execute function public.stamp_row_times();
+
+-- ------------------------------------------------- referential-only edits ---
+-- When a brand_token is deleted, the FK's SET NULL performs a real UPDATE on
+-- every decision that referenced it, which fires stamp_row_times and moves
+-- updated_at. The sync engine treats ANY updated_at change as a remote edit
+-- (syncEngine.js: remoteChanged), so cleaning up one candidate font would
+-- manufacture a phantom conflict per affected decision — each one retaining a
+-- version and putting a recovery card in front of the designer for an edit
+-- they made themselves. Skip the stamp when the only thing that moved was the
+-- reference being nulled.
+create or replace function public.stamp_decision_times()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.created_at = now();
+    new.updated_at = now();
+    return new;
+  end if;
+  new.created_at = old.created_at;
+  if new.selected_token_id is null
+     and old.selected_token_id is not null
+     and (to_jsonb(new) - 'selected_token_id' - 'updated_at')
+       = (to_jsonb(old) - 'selected_token_id' - 'updated_at')
+  then
+    -- referential cleanup only: keep the timestamp the designer earned
+    new.updated_at = old.updated_at;
+    return new;
+  end if;
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+revoke all on function public.stamp_decision_times() from public;
+
+drop trigger if exists decisions_stamp_row_times on public.decisions;
+create trigger decisions_stamp_row_times
+  before insert or update on public.decisions
+  for each row execute function public.stamp_decision_times();
+
+-- ---------------------------------------------------------- per-owner cap ---
+-- project_conflicts got a prune for exactly this reason. These tables cannot
+-- prune — a decision log that drops its oldest entries is not a log — so the
+-- cap REJECTS instead, and sits far above any real project so it is a
+-- backstop against an automated writer, never a limit a designer meets.
+create or replace function public.cap_rows_per_project()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  n bigint;
+  cap int := tg_argv[0]::int;
+begin
+  execute format(
+    'select count(*) from public.%I where owner_id = $1 and project_id = $2',
+    tg_table_name
+  ) into n using new.owner_id, new.project_id;
+  if n > cap then
+    raise exception 'too many % rows for one project (limit %)', tg_table_name, cap
+      using errcode = 'check_violation';
+  end if;
+  return null;
+end;
+$$;
+
+revoke all on function public.cap_rows_per_project() from public;
+
+create trigger strategy_attributes_cap after insert on public.strategy_attributes
+  for each row execute function public.cap_rows_per_project(200);
+create trigger brand_tokens_cap after insert on public.brand_tokens
+  for each row execute function public.cap_rows_per_project(2000);
+create trigger decisions_cap after insert on public.decisions
+  for each row execute function public.cap_rows_per_project(5000);
+
+-- Carried over from the 1a audit: TRUNCATE ignores RLS entirely, and 1a
+-- never revoked it (1b did for its own table). One line, closes it.
+revoke truncate on public.clients, public.brands, public.projects
+  from authenticated;
