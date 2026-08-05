@@ -40,6 +40,7 @@ import {
   suggestRoleAaFixes,
   mergeRolesIntoPalette,
   paletteHealthScore,
+  healthScopeLabels,
   suggestRoleColor,
 } from '../lib/color'
 import { loadTypePairFont, loadBrandFamilies } from '../lib/book/fontLoader'
@@ -54,6 +55,20 @@ import '../styles/lazy-design.css'
    apart from the store's own whitelist — a role could be offered in the UI and
    silently rejected on save. One list, one set of names. */
 const ROLE_LABELS = BRAND_ROLE_LABELS
+
+/* What the health meter reads, said out loud. The palette offers nine jobs
+   and the score looks at four of them; without this line, filling in the
+   other five and seeing the number not move reads as the meter being
+   broken. Written once and shown in both states — a scored panel and an
+   unscored one need the same explanation. */
+const HEALTH_SCOPE_NOTE = (() => {
+  const names = healthScopeLabels()
+  const list =
+    names.length > 1
+      ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+      : names[0]
+  return `Reads ${list}, plus how the whole palette sits together. Your other colours don't count against it.`
+})()
 
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
@@ -1091,19 +1106,13 @@ export default function DesignView({
                    to open at 20% in red on an untouched project — a mark
                    against you for not having started, which is the exact
                    shape of feedback this app exists to remove. Until there
-                   is something to measure it reads as a dash. */
-                if (health.score === null) {
-                  return (
-                    <div className="palette-health">
-                      <div className="palette-health-head">
-                        <span className="field-label" style={{ margin: 0 }}>
-                          Palette health
-                        </span>
-                        <span className="palette-health-score is-idle">—</span>
-                      </div>
-                    </div>
-                  )
-                }
+                   is something to measure it reads as a dash.
+
+                   One panel, two states — not two panels. The scope note has
+                   to appear in both, and the earlier version of this that
+                   returned early duplicated the head markup, which is how a
+                   line ends up on one branch only. */
+                const idle = health.score === null
                 const healthWord =
                   health.score >= 80
                     ? 'Solid'
@@ -1118,23 +1127,28 @@ export default function DesignView({
                       </span>
                       <span
                         className={`palette-health-score${
-                          health.score >= 80
-                            ? ' is-good'
-                            : health.score >= 50
-                              ? ' is-mid'
-                              : ' is-low'
+                          idle
+                            ? ' is-idle'
+                            : health.score >= 80
+                              ? ' is-good'
+                              : health.score >= 50
+                                ? ' is-mid'
+                                : ' is-low'
                         }`}
-                        title={`${health.score}%`}
+                        title={idle ? undefined : `${health.score}%`}
                       >
-                        {healthWord}
+                        {idle ? '—' : healthWord}
                       </span>
                     </div>
-                    <div className="palette-health-bar" aria-hidden="true">
-                      <div
-                        className="palette-health-bar-fill"
-                        style={{ width: `${health.score}%` }}
-                      />
-                    </div>
+                    {!idle && (
+                      <div className="palette-health-bar" aria-hidden="true">
+                        <div
+                          className="palette-health-bar-fill"
+                          style={{ width: `${health.score}%` }}
+                        />
+                      </div>
+                    )}
+                    <p className="palette-health-scope">{HEALTH_SCOPE_NOTE}</p>
                   </div>
                 )
               })()}

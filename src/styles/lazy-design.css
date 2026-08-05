@@ -415,6 +415,15 @@
   transition: width var(--transition);
 }
 
+/* What the meter reads. Quiet by design — it explains a number, it is not
+   another thing to act on. */
+.palette-health-scope {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 .palette-suggest-btn {
   font-size: 0.8rem;
 }

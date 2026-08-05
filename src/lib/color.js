@@ -901,6 +901,25 @@ export function roleContrastPairs(colorRoles = {}) {
 }
 
 /**
+ * The jobs the health score actually looks at, in the designer's words.
+ *
+ * The palette can hold nine jobs; the score reads four of them. That is
+ * deliberate — widening the denominator is how "measurement that punished
+ * use" got in last time, and a test pins it. But an undisclosed denominator
+ * is its own defect: a designer who assigns Secondary, two more accents and
+ * both neutrals, and writes a reason for every one, watches the meter sit
+ * still and has no way to learn why. So the panel says what it reads.
+ *
+ * Derived from HEALTH_ROLE_KEYS rather than typed out, so the sentence
+ * cannot describe a denominator the scorer stopped using.
+ *
+ * @returns {string[]} e.g. ['Primary', 'Text', 'Accent', 'Background']
+ */
+export function healthScopeLabels() {
+  return HEALTH_ROLE_KEYS.map((k) => BRAND_ROLE_LABELS[k] || k)
+}
+
+/**
  * One combined 0–100 signal for the Colors tab: role justification +
  * contrast on the pairs that matter + hue harmony.
  *

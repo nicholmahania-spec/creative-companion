@@ -24,6 +24,9 @@
 
 import { describe, it, expect } from 'vitest'
 import {
+  BRAND_ROLE_KEYS,
+  BRAND_ROLE_LABELS,
+  healthScopeLabels,
   HEALTH_ROLE_KEYS,
   checkPaletteHarmony,
   mergeRolesIntoPalette,
@@ -205,5 +208,55 @@ describe('applying a contrast fix does not silently drop it', () => {
     )
     expect(lost.length).toBeGreaterThan(0)
     expect(lost.map((c) => c.toLowerCase())).not.toContain('#e2e6f3')
+  })
+})
+
+describe('the meter discloses what it reads', () => {
+  /* The palette offers NINE jobs and the score reads four. Keeping the
+     denominator narrow is deliberate — widening it is how "measurement that
+     punished use" got in last time, and `brandRoles.test.js:115` pins it. The
+     defect was disclosure: assign Secondary, both extra accents and both
+     neutrals, write a reason for every one, and the number does not move,
+     with nothing on screen to say why. A meter that ignores your work
+     without saying so reads as broken. */
+  const PAIR = ['#1C1917', '#FAFAF9']
+  const score = (roles, why) =>
+    paletteHealthScore({
+      palette: PAIR,
+      colorRoles: roles,
+      colorRoleWhy: why,
+    }).score
+
+  it('names exactly the jobs that can move the number', () => {
+    /* The real check: the sentence is not compared to the constant it is
+       derived from — it is compared to BEHAVIOUR, one role at a time. Naming
+       a job it does not read, or reading a job it does not name, fails here.
+       Mutating HEALTH_ROLE_KEYS moves both sides together and this test
+       stays green, which is why the literal pin below exists as well. */
+    const named = new Set(healthScopeLabels())
+    const base = score({}, {})
+    for (const key of BRAND_ROLE_KEYS) {
+      const moved =
+        score({ [key]: '#0F766E' }, { [key]: 'warm, and the client owns it' }) !==
+        base
+      expect(
+        moved,
+        `${BRAND_ROLE_LABELS[key]} (${key}) — ${
+          moved ? 'moves the score but is not named' : 'is named but changes nothing'
+        }`
+      ).toBe(named.has(BRAND_ROLE_LABELS[key]))
+    }
+  })
+
+  it('says it in the words a designer uses, not the stored keys', () => {
+    // `cover` and `quiet` are storage. Nobody has ever called a background
+    // "quiet" out loud, and the panel must not be the first place they read it.
+    expect(healthScopeLabels()).toEqual([
+      'Primary',
+      'Text',
+      'Accent',
+      'Background',
+    ])
+    expect(BRAND_ROLE_KEYS).toHaveLength(9)
   })
 })
