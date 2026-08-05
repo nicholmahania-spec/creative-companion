@@ -12,10 +12,24 @@
  * Why desk-wins and not newest-wins: "newest" needs trustworthy edit
  * timestamps on both sides, and the local store does not timestamp edits.
  * Wall-clock comparisons across devices are exactly the trap PHASES.md
- * warns about. Desk-wins is deterministic, explainable in one sentence,
- * and — because the loser is retained — LOSSLESS either way. This is the
- * CouchDB shape: picking a winner is a display choice, applied only after
- * both versions are durably stored.
+ * warns about. Desk-wins is explainable in one sentence and — because the
+ * loser is retained — LOSSLESS either way.
+ *
+ * The part borrowed from CouchDB is narrow and worth stating precisely: that
+ * picking a winner is a DISPLAY choice, valid only once both versions are
+ * durably stored. The rest of CouchDB's model is NOT what this is —
+ * CouchDB picks its winner by a deterministic function of the revisions, so
+ * every replica independently agrees. Desk-wins is per-replica: the winner
+ * is whichever device happens to sync last. That is fine for one designer on
+ * their own two devices, and it would NOT be fine with real concurrent
+ * writers.
+ *
+ * Known limit, recorded rather than hidden: the sync unit is the whole
+ * project document, so a conflict resolves wholesale even when the two sides
+ * touched unrelated sections. A merge-based model (Automerge/CRDT) would
+ * resolve those without a loser at all. That is a rewrite of the store, and
+ * the honest trigger for it is measurement — if real conflicts turn out to
+ * be common rather than rare, this rule is the wrong one.
  *
  * Change detection is by content hash against the last-synced state, not
  * by timestamps: `dirty` means "this desk changed the document since it
@@ -90,7 +104,7 @@ export function decideSyncAction(localDoc, meta, remoteRow) {
 /** synced | syncing | offline | failed | idle — the honest four (plus
  *  "idle" for before the first attempt). Failure keeps its reason and stays
  *  until a retry succeeds; it does not decay into a toast. */
-let syncStatus = { state: 'idle', reason: '', at: null }
+let syncStatus = { state: 'idle', reason: '', at: null, conflicts: 0 }
 const listeners = new Set()
 
 export function getSyncStatus() {
@@ -102,8 +116,8 @@ export function subscribeSyncStatus(fn) {
   return () => listeners.delete(fn)
 }
 
-function setStatus(state, reason = '') {
-  syncStatus = { state, reason, at: Date.now() }
+function setStatus(state, reason = '', conflicts = 0) {
+  syncStatus = { state, reason, at: Date.now(), conflicts }
   listeners.forEach((fn) => fn(syncStatus))
 }
 
@@ -261,7 +275,9 @@ async function runSync({ getProjects, setProjects }) {
 
   if (projectsChanged) setProjects(nextProjects)
   writeSyncMeta(meta)
-  setStatus('synced')
+  /* A kept version that nobody is told about is a version nobody recovers.
+     The count rides on the status so the UI can say so without polling. */
+  setStatus('synced', '', counts.conflicts)
   return { ok: true, ...counts }
 }
 
@@ -329,6 +345,47 @@ export async function listRetainedVersions(opts = {}) {
     rows: rows.slice(0, RETAINED_PAGE),
     hasMore: rows.length > RETAINED_PAGE,
   }
+}
+
+/**
+ * Retain the CURRENT version of a project before something replaces it.
+ *
+ * Exists because "Bring back" was the one operation in the app with no
+ * safety net (devil's advocate, 2026-08-05): restoring a retained version
+ * makes the local copy dirty while the remote is unchanged, so the next sync
+ * decides `push` — not `conflict` — and the winning copy was overwritten
+ * with nothing kept. The recovery path was destroying a version, which
+ * inverts the entire argument the conflict rule rests on.
+ *
+ * This is what `losing_side: 'local'` is for: the desk copy is the one about
+ * to be replaced, so it is the loser this time.
+ *
+ * @returns {Promise<{ok: boolean, reason?: string}>}
+ */
+export async function retainCurrentVersion(project) {
+  if (!isSupabaseConfigured() || !supabase) return { ok: false }
+  if (!project?.id) return { ok: false }
+  const { data: auth } = await supabase.auth.getUser()
+  const user = auth?.user
+  if (!user) return { ok: false, reason: 'signed-out' }
+
+  const { data: row } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('owner_id', user.id)
+    .eq('local_id', String(project.id))
+    .maybeSingle()
+
+  const { error } = await supabase.from('project_conflicts').insert({
+    owner_id: user.id,
+    project_row_id: row?.id || null,
+    local_id: String(project.id),
+    project_name: project.name || null,
+    losing_side: 'local',
+    data: projectToCloudData(project),
+  })
+  if (error) return { ok: false, reason: error.message }
+  return { ok: true }
 }
 
 /**

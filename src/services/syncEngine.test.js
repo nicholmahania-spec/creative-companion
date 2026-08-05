@@ -295,3 +295,40 @@ describe('syncAllProjects', () => {
     expect(r.reason).toBe('offline')
   })
 })
+
+describe('retainCurrentVersion — the recovery path has a safety net too', () => {
+  /* Regression guard for a defect found by review on 2026-08-05.
+     "Bring back" replaces the local copy, which makes it dirty while the
+     remote is unchanged — so the next sync decides `push`, not `conflict`,
+     and the version being replaced was overwritten with NOTHING retained.
+     The one operation offered as recovery was the only one with no safety
+     net, which inverts the argument the whole conflict rule rests on. */
+  it('keeps the current version as the local-side loser', async () => {
+    mockState.tables = {
+      projects: [{ data: { id: 'row-1' }, error: null }],
+      project_conflicts: [{ data: null, error: null }],
+    }
+    const { retainCurrentVersion } = await import('./syncEngine.js')
+    const r = await retainCurrentVersion({
+      id: 'p1',
+      name: 'About to be replaced',
+      workLog: [{ min: 10 }],
+    })
+    expect(r.ok).toBe(true)
+    const kept = mockState.inserts.find((i) => i.table === 'project_conflicts')
+    expect(kept.body.losing_side).toBe('local')
+    expect(kept.body.project_row_id).toBe('row-1')
+    // the private work log is not uploaded, even onto the safety net
+    expect(kept.body.data.workLog).toBeUndefined()
+  })
+
+  it('reports failure so the caller can refuse to replace anything', async () => {
+    mockState.tables = {
+      projects: [{ data: { id: 'row-1' }, error: null }],
+      project_conflicts: [{ data: null, error: { message: 'denied' } }],
+    }
+    const { retainCurrentVersion } = await import('./syncEngine.js')
+    const r = await retainCurrentVersion({ id: 'p1', name: 'X' })
+    expect(r.ok).toBe(false)
+  })
+})

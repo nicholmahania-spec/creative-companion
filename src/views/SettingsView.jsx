@@ -3,6 +3,7 @@ import useAppStore from '../store/useAppStore'
 import { pushProject } from '../services/projectSync'
 import {
   discardRetainedVersion,
+  retainCurrentVersion,
   getSyncStatus,
   listRetainedVersions,
   subscribeSyncStatus,
@@ -107,9 +108,24 @@ export default function SettingsView(props) {
     const localId = String(row.local_id || doc.id || '')
     if (!localId) return
     ask(
-      `Bring back this version of “${row.project_name || 'project'}”? The current version stays in the cloud until the next sync.`,
-      () => {
+      `Bring back this version of “${row.project_name || 'project'}”? The version you have now gets kept on this list too, so nothing is lost either way.`,
+      async () => {
         const cur = useAppStore.getState().projects
+        /* Keep the version we are about to replace FIRST. Restoring makes
+           the local copy dirty while the remote is unchanged, so the next
+           sync decides `push`, not `conflict` — without this, the recovery
+           button would be the one operation in the app that destroys a
+           version with no safety net. */
+        const current = cur.find((p) => String(p.id) === localId)
+        if (current) {
+          const kept = await retainCurrentVersion(current)
+          if (!kept.ok) {
+            flashToast(
+              'Could not keep your current version, so nothing changed',
+            )
+            return
+          }
+        }
         const restored = { ...doc, id: localId }
         const exists = cur.some((p) => String(p.id) === localId)
         useAppStore.setState({
@@ -122,6 +138,7 @@ export default function SettingsView(props) {
             : [...cur, restored],
         })
         flashToast('Version brought back — it will sync as the newest edit')
+        await loadRetained(0)
       },
     )
   }
@@ -283,7 +300,10 @@ export default function SettingsView(props) {
         </div>
         {CLOUD && projSync.state !== 'idle' ? (
           <p className="settings-meta" role="status">
-            {projSync.state === 'synced' && 'Projects: synced'}
+            {projSync.state === 'synced' &&
+              (projSync.conflicts > 0
+                ? `Projects: synced · ${projSync.conflicts} other ${projSync.conflicts === 1 ? 'version was' : 'versions were'} kept — see Retained versions below`
+                : 'Projects: synced')}
             {projSync.state === 'syncing' && 'Projects: syncing…'}
             {projSync.state === 'offline' &&
               'Projects: offline — will catch up when the connection returns'}
@@ -305,7 +325,8 @@ export default function SettingsView(props) {
           <details
             className="settings-retained"
             onToggle={(e) => {
-              if (e.currentTarget.open && retained === null) void loadRetained(0)
+              if (e.currentTarget.open && retained === null)
+                void loadRetained(0)
             }}
           >
             <summary>Retained versions</summary>
