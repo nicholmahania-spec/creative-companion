@@ -4,6 +4,8 @@ import {
   chromaOf,
   dominantColours,
   filterBrandColours,
+  INTRUDER_MIN_DELTA,
+  intruderColours,
   isBackgroundTint,
   isSubstrate,
   mergeNearDuplicates,
@@ -276,5 +278,73 @@ describe('measured fixes from the real PDFs', () => {
   it('does not treat a pale brand accent as background', () => {
     // Same lightness, ordinary coverage — an accent, not a page tint.
     expect(isBackgroundTint({ hex: '#dae7f6', coverage: 0.08 })).toBe(false)
+  })
+})
+
+describe('intruderColours — graded, not binary, and measured on real files', () => {
+  /* Real extractor output from Table_Cards_for_linktree.pdf, which uses the
+     100 Families gradient mark. Six of these eight are gradient midpoints. */
+  const tableCards = [
+    { hex: '#292961', coverage: 0.353 },
+    { hex: '#b92233', coverage: 0.234 },
+    { hex: '#473376', coverage: 0.067 },
+    { hex: '#673d8c', coverage: 0.058 },
+    { hex: '#a82846', coverage: 0.054 },
+    { hex: '#923060', coverage: 0.046 },
+    { hex: '#7b387a', coverage: 0.038 },
+    { hex: '#b3243b', coverage: 0.034 },
+  ]
+  const anchors = ['#292961', '#b92233']
+
+  it('the BINARY rule fired five times on this correct file', () => {
+    /* Kept as the record of why the rule is graded. Distance alone, with no
+       coverage floor, is unusable on real brand work. */
+    const binary = intruderColours(tableCards, anchors, {
+      minDelta: 5,
+      minCoverage: 0,
+    })
+    expect(binary.length).toBe(5)
+  })
+
+  it('the graded rule is silent on the same file', () => {
+    expect(intruderColours(tableCards, anchors)).toEqual([])
+  })
+
+  it('coverage alone does most of the work', () => {
+    // The midpoints are suppressed for being SMALL, not for being close —
+    // which is why detection survives instead of being abandoned.
+    expect(
+      intruderColours(tableCards, anchors, { minDelta: 5, minCoverage: 0.1 })
+    ).toEqual([])
+  })
+
+  it('still catches a dominant colour that is nowhere near the palette', () => {
+    /* The defect PRODUCT.md §23 actually names. This is what the inverted
+       check could not express: `paletteCoverage` reports "found" here, because
+       the correct navy IS present — the wrong green simply sits beside it. */
+    const wrong = [
+      { hex: '#292961', coverage: 0.3 },
+      { hex: '#00A651', coverage: 0.5 },
+    ]
+    const found = intruderColours(wrong, anchors)
+    expect(found).toHaveLength(1)
+    expect(found[0].hex).toBe('#00A651')
+
+    /* The precise gap, stated accurately. `paletteCoverage` is not blind here
+       — it notices the red is absent — but it never NAMES the green, because
+       it only ever reports on palette entries. "Your red is missing" and
+       "there is a large green in this that belongs to no one" are different
+       findings, and only the second one tells the designer what to look at.
+       Asserting that paletteCoverage returned nothing at all would have been
+       an overstatement; it returns the wrong thing, which is the real point. */
+    const cov = paletteCoverage(wrong, anchors)
+    const named = [...cov.found.map((f) => f.as), ...cov.missing]
+    expect(named, 'paletteCoverage never names the intruder').not.toContain(
+      '#00A651'
+    )
+  })
+
+  it('says nothing when there is no palette to judge against', () => {
+    expect(intruderColours(tableCards, [])).toEqual([])
   })
 })

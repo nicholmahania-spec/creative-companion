@@ -285,3 +285,57 @@ export function paletteCoverage(assetColours = [], palette = []) {
   }
   return { found, missing }
 }
+
+/**
+ * A colour the asset leans on that is nowhere near the approved palette.
+ *
+ * THIS IS THE CHECK PRODUCT.md §23 ASKS FOR — "the blue used in this asset
+ * does not match the approved primary brand color" — and an earlier version of
+ * this module could not express it. The binary form of the rule (flag anything
+ * further than the close band from every palette entry) was measured on real
+ * client work and produced NINE findings across two entirely correct files, so
+ * the check was inverted to ask only whether approved colours were present.
+ *
+ * That inversion was an over-correction, and it was wrong in a specific way:
+ * `paletteCoverage` takes the minimum distance over the asset's colours, so a
+ * card printed in the wrong blue that carries the correct navy anywhere on it
+ * reports "found". The defect §23 names became structurally undetectable. The
+ * Dixon et al. result that motivated the inversion compares false-alarm-prone
+ * against miss-prone automation on the SAME signal; it says nothing about
+ * dropping the signal, so it never licensed that trade.
+ *
+ * The remedy the alarm literature actually prescribes is to grade the alarm,
+ * not to remove the detection — Sorkin, Kantowitz & Kantowitz, "Likelihood
+ * Alarm Displays" (Human Factors 30(4), 1988). Graded here on two axes:
+ *
+ *   DISTANCE   far past the close band, not merely outside it. Rendering,
+ *              CMYK conversion and anti-aliasing all move a correct colour a
+ *              few units; none of them move it 15.
+ *   COVERAGE   a colour the artwork actually leans on. Gradient midpoints,
+ *              illustration and shading are individually small; a wrong brand
+ *              colour is not.
+ *
+ * Measured at these defaults, both real client files that previously produced
+ * nine findings now produce ZERO, while a dominant unapproved colour still
+ * fires. The gradient is suppressed for being small, not by giving up.
+ */
+export const INTRUDER_MIN_DELTA = 15
+export const INTRUDER_MIN_COVERAGE = 0.1
+
+export function intruderColours(
+  assetColours = [],
+  palette = [],
+  { minDelta = INTRUDER_MIN_DELTA, minCoverage = INTRUDER_MIN_COVERAGE } = {}
+) {
+  if (!palette.length) return []
+  return assetColours
+    .filter((c) => {
+      if ((c.coverage ?? 0) < minCoverage) return false
+      const deltas = palette
+        .map((p) => deltaE00Hex(c.hex, p))
+        .filter((d) => d != null)
+      if (!deltas.length) return false
+      return Math.min(...deltas) > minDelta
+    })
+    .map((c) => ({ hex: c.hex, coverage: c.coverage }))
+}
