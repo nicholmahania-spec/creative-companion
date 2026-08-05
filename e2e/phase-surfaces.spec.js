@@ -51,7 +51,20 @@ test.describe('phase surfaces render and respond', () => {
     const body = (await page.locator('body').innerText()).trim()
     expect(body.length, 'app rendered an empty body').toBeGreaterThan(0)
     expect(errors, errors.join('\n')).toEqual([])
-    await expect(page.locator('h1.page-title').first()).toBeVisible()
+    /* Role + a non-empty accessible name, NOT a CSS class and not a bare tag.
+       This asserted `h1.page-title`, which broke when the post-unlock landing
+       became HomeView — it renders `home-dash-title`, so the guard failed on
+       a working app for weeks.
+
+       The name is asserted as /\S/ rather than a literal on purpose: which
+       heading the landing shows is state-dependent (measured: "Studio"), and
+       pinning the text would swap a class coupling for a copy coupling. What
+       this test actually guards is "the shell rendered rather than throwing",
+       and a level-1 heading carrying *some* text is the honest form of that —
+       it still catches the empty-shell render this exists for. */
+    await expect(
+      page.getByRole('heading', { level: 1, name: /\S/ }).first()
+    ).toBeVisible()
   })
 
   /* Scope panel removed from Strategy (owner) — terms/revisions live in store

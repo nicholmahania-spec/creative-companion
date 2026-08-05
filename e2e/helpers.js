@@ -71,6 +71,36 @@ export async function unlockAndOnboard(
     await page.waitForTimeout(500)
   }
 
+  /* Land INSIDE a project, not on Home.
+   *
+   * Onboarding creates the project and then leaves you on HomeView, which has
+   * no `.step-rail` — so `pathNav()` could never match, and the 8 specs that
+   * call it all failed on a working app. That was the single cause of most of
+   * a 17-red suite, and it was invisible for a while because the e2e job gates
+   * on `unit`, which was also red, so e2e was SKIPPED rather than failing.
+   *
+   * `.home-dash-primary` is Home's own "carry on with this project" action, so
+   * this is the route a real user takes rather than a test-only shortcut. For
+   * a freshly created project it resolves to switchProjectAndContinue — the
+   * client-inbox and pack-ready branches need state a new project does not
+   * have yet.
+   *
+   * Best-effort on purpose: a caller that genuinely wants to stay on Home
+   * still gets a working app, and specs that never touch the path are
+   * unaffected. Waiting on the rail rather than a fixed timeout keeps this
+   * honest — if the project did not open, the spec fails on its own assertion
+   * instead of on a helper that silently swallowed it.
+   */
+  const enterProject = page.locator('.home-dash-primary').first()
+  if (await enterProject.count()) {
+    await enterProject.click()
+    await page
+      .locator('.step-rail')
+      .first()
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .catch(() => {})
+  }
+
   return { skipped: false }
 }
 

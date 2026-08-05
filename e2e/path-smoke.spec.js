@@ -79,7 +79,7 @@ test.describe('Creative Companion path smoke', () => {
     const last = JOURNEY_STEPS[JOURNEY_STEPS.length - 1]
     await stepByIdIn(path, last.id).click()
     await expect(
-      page.locator('h1.page-title', { hasText: last.label })
+      page.getByRole('heading', { level: 1, name: last.label })
     ).toBeVisible({ timeout: 10000 })
     // The Deliver chip names the state, not a fraction ("Ready · 4/8" was a
     // number on a job whose scope made half the checks irrelevant).
