@@ -17,6 +17,9 @@ import versionService, {
   versionKindLabel,
 } from '../services/versionService'
 import { messageDayLabel } from '../lib/client/messageDayLabel'
+import AlignmentBars from '../components/AlignmentBars'
+import AxisTagger from '../components/AxisTagger'
+import { strategyProfile } from '../lib/brand/alignment'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
   DEFAULT_PALETTE,
@@ -80,6 +83,7 @@ export default function DesignView({
   sessionComplete,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
+  const setBrandTokenTags = useAppStore((s) => s.setBrandTokenTags)
   const updateDirection = useAppStore((s) => s.updateDirection)
   const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
@@ -94,6 +98,13 @@ export default function DesignView({
 
   /* Resume from project; sub-nav / Next / deep link all write identitySubstep. */
   const identitySubstep = resolveIdentitySubstep(activeProject?.identitySubstep)
+  /* Tags for the typeface being chosen. Open the comparison by default once
+     it has been tagged — before that it is an empty box asking for work, and
+     an empty box that opens itself is a chore, not help. */
+  const typeTags = activeProject?.brandTokenTags?.typeface || {}
+  const typeTagged = Object.values(typeTags).some(
+    (v) => v !== null && v !== undefined && v !== ''
+  )
   const setIdentitySubstep = (id) => {
     const next = resolveIdentitySubstep(id)
     if (next === identitySubstep) return
@@ -1545,6 +1556,29 @@ export default function DesignView({
                 <h2 className="design-section-title">Type</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
+
+              {/* Decision memory, closing the loop: the words set in
+                  Strategy reappear HERE, at the moment type is chosen,
+                  rather than sitting in a document nobody reopens. It
+                  states and never advises — the designer decides. */}
+              <details className="design-align" open={typeTagged}>
+                <summary>How this compares to your strategy</summary>
+                <AlignmentBars
+                  target={strategyProfile(activeProject?.strategyAttributes || [])}
+                  token={typeTags}
+                  tokenName={activeProject?.typeHeading || 'this typeface'}
+                />
+                <p className="align-tag-lead">
+                  Where does {activeProject?.typeHeading || 'this typeface'} sit?
+                </p>
+                <AxisTagger
+                  idPrefix="type-axis"
+                  value={typeTags}
+                  onChange={(next) =>
+                    setBrandTokenTags(activeProject?.id, 'typeface', next)
+                  }
+                />
+              </details>
               <div className="field-block" style={{ marginBottom: '1rem' }}>
                 <label className="field-label" htmlFor="type-pair">
                   Type pair

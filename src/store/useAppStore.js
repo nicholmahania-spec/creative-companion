@@ -2502,6 +2502,31 @@ const useAppStore = create(
          this action exists for (devil's advocate, 2026-08-05). It now unions
          like expandProject: changing type can only ever turn stages ON.
          Turning one off is a separate, deliberate, reversible act. */
+      /* Strategy attributes: the designer's own words, each placed on the
+         five rulers. Lives on the project document so it works offline and
+         rides the existing sync; the Supabase tables are provisioned for the
+         structured lift and are not written yet. */
+      setStrategyAttributes: (projectId, attributes) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId
+              ? { ...p, strategyAttributes: attributes }
+              : p
+          ),
+        })),
+
+      /* A tagged candidate — today only the chosen typeface. Keyed by a
+         stable slot name rather than an array, because there is exactly one
+         "the typeface for this project" and a list would invite a second. */
+      setBrandTokenTags: (projectId, slot, tags) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId
+              ? { ...p, brandTokenTags: { ...(p.brandTokenTags || {}), [slot]: tags } }
+              : p
+          ),
+        })),
+
       setProjectType: (projectId, typeId) =>
         set((state) => ({
           projects: state.projects.map((p) =>
