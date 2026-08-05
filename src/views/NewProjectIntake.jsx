@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { DELIVERABLE_OPTIONS, isLogoOnlyScope } from '../lib/brief/detectiveBrief'
+import { activeStepIds, typeFromIntake } from '../lib/journey/projectTypes'
 import { createDiscoveryShare, discoveryShareUrl } from '../lib/client/discoveryShare'
 import '../styles/lazy-create.css'
 
@@ -58,13 +59,35 @@ export default function NewProjectIntake({
   const togglePick = (id) =>
     setPicked((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
 
-  /* Empty picks = full brand package (progressItemInScope). Surface that. */
-  const scopeLabel =
+  /* Empty picks = full brand package (progressItemInScope). Surface that.
+   *
+   * The chip also names the CONSEQUENCE, in stops. The project type is
+   * derived from these answers rather than asked as a fourth question, and
+   * a derivation nobody witnesses becomes a "where did this come from?"
+   * surprise weeks later. Cause and effect share one line, at the instant
+   * the answer is given.
+   *
+   * It reacts to engagement too, not just the checkboxes — engagement is
+   * the input that changes the path MOST (adding to an existing brand drops
+   * two stops), and it is a pre-selected radio designed to be skimmed past.
+   * A chip blind to it would explain the smaller change and stay silent on
+   * the bigger one. (adhd-executive-function-advisor, 2026-08-05.)
+   *
+   * Stops, not type names: "3 stops" is information the designer can act
+   * on; "Brand expansion" is a taxonomy they would have to decode first. */
+  const logoOnly = isLogoOnlyScope(picked)
+  const stopCount = activeStepIds({
+    projectType: typeFromIntake({ engagementType: engagement, logoOnly }),
+  }).length
+  const scopeWords =
     picked.length === 0
-      ? 'Scope: full brand package'
-      : isLogoOnlyScope(picked)
+      ? engagement === 'extend'
+        ? 'Adding to an existing brand'
+        : 'Scope: full brand package'
+      : logoOnly
         ? 'Scope: logo only'
         : `Scope: ${picked.length} deliverable${picked.length === 1 ? '' : 's'}`
+  const scopeLabel = `${scopeWords} · ${stopCount} stops on the path`
 
   const create = () =>
     useAppStore.getState().createProjectFromIntake({

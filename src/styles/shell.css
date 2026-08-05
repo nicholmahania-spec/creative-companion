@@ -10339,6 +10339,31 @@ textarea.artboard-brief-input {
     background: var(--bg-elevated);
     border-bottom: 1px solid var(--border-subtle);
   }
+  /* Off stages: muted, factual, not an alert. This is object permanence
+     for a stop that is simply absent, and the audience this app is for
+     reads red-and-loud as "you did something wrong". Neutral grey, the
+     same register as "still waiting on". */
+  .step-rail-off {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+  }
+  .step-rail-off-on {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--text-secondary);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .step-rail-off-on:hover {
+    color: var(--text-primary);
+  }
   .step-rail-list {
     display: flex;
     align-items: center;

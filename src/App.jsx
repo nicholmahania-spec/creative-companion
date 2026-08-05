@@ -172,6 +172,10 @@ function App() {
     (...a) => useAppStore.getState().updateProjectBrief(...a),
     []
   )
+  const toggleProjectStep = useCallback(
+    (...a) => useAppStore.getState().toggleProjectStep(...a),
+    []
+  )
   const updateDetective = useCallback(
     (...a) => useAppStore.getState().updateDetective(...a),
     []
@@ -1463,6 +1467,13 @@ function App() {
     () => stepsForProject(activeProject),
     [activeProject?.projectType, activeProject?.stepsOn]
   )
+  /* Stages switched off for this project — object permanence for the rail:
+     a stop that is simply absent is invisible, and invisible is how a
+     designer ends up wondering whether the app lost something. */
+  const offSteps = useMemo(() => {
+    const on = new Set(pathSteps.map((s) => s.id))
+    return JOURNEY_STEPS.filter((s) => !on.has(s.id))
+  }, [pathSteps])
   const [workIdle, setWorkIdle] = useState(false)
   const workRunning =
     STAGE_VIEWS.includes(String(activeView || '')) && !workIdle && !forcedBreak
@@ -3439,6 +3450,32 @@ function App() {
               )
             })}
           </ol>
+          {/* Stages this project has switched off, and the way back.
+              At the rail's TAIL because that is where the absence is felt —
+              you reach the end and notice a stop that was never there. In
+              Settings it would be a per-project fact wearing an app-preference
+              coat, findable only by remembering it exists rather than by
+              looking. One muted line naming them together, not a row each: a
+              list of off-stages is a list of decisions.
+              (adhd-executive-function-advisor, 2026-08-05.) */}
+          {offSteps.length > 0 && (
+            <p className="step-rail-off">
+              <span className="step-rail-off-text">
+                {offSteps.map((s) => s.label).join(' and ')}{' '}
+                {offSteps.length === 1 ? 'is' : 'are'} off
+              </span>
+              {offSteps.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="step-rail-off-on"
+                  onClick={() => toggleProjectStep(activeProject?.id, s.id)}
+                >
+                  {offSteps.length > 1 ? `turn on ${s.label}` : 'turn on'}
+                </button>
+              ))}
+            </p>
+          )}
           {/* Sequential forward. On Identity, same advance as footer Next
               (sub-screens then Touchpoints) — never skip craft screens.
               Elsewhere: next path stop. Home still uses pathNextGap. */}

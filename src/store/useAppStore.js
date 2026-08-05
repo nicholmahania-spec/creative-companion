@@ -1,6 +1,7 @@
 import {
   DELIVERABLE_OPTIONS,
   DETECTIVE_CHAPTERS,
+  isLogoOnlyScope,
   isWrongShapeForField,
 } from '../lib/brief/detectiveBrief'
 import { liftMeasuredRows } from './workLogSeparation'
@@ -19,6 +20,7 @@ import {
   expandProject,
   projectType,
   toggleStep,
+  typeFromIntake,
 } from '../lib/journey/projectTypes'
 
 /** The default stage set for a type, as a plain list for the store. */
@@ -2493,12 +2495,17 @@ const useAppStore = create(
          default; the designer can still switch any of them. Absent means a
          full identity, which is what every project made before types
          existed already was, so nothing migrates. */
+      /* Changing type is ADDITIVE, never a reset.
+         This replaced stepsOn wholesale, so correcting a mis-derived type
+         silently wiped every stage the designer had toggled — punishing the
+         designer for the derivation being wrong, which is the one moment
+         this action exists for (devil's advocate, 2026-08-05). It now unions
+         like expandProject: changing type can only ever turn stages ON.
+         Turning one off is a separate, deliberate, reversible act. */
       setProjectType: (projectId, typeId) =>
         set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === projectId
-              ? { ...p, projectType: typeId, stepsOn: projectTypeSteps(typeId) }
-              : p
+            p.id === projectId ? { ...p, ...expandProject(p, typeId) } : p
           ),
         })),
 
@@ -2509,15 +2516,6 @@ const useAppStore = create(
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === projectId ? { ...p, stepsOn: toggleStep(p, stepId) } : p
-          ),
-        })),
-
-      /* Grow into a bigger type — Logo → Logo package → Brand identity —
-         keeping everything already done and every stage already on. */
-      expandProjectType: (projectId, nextTypeId) =>
-        set((state) => ({
-          projects: state.projects.map((p) =>
-            p.id === projectId ? { ...p, ...expandProject(p, nextTypeId) } : p
           ),
         })),
 
@@ -2551,6 +2549,24 @@ const useAppStore = create(
         const project = createBlankProject(clientName || 'My project', '')
         project.detective = detective
         project.brief = composeBriefFromDetective(detective)
+
+        /* Derive the project type ONCE, here, and freeze the stage list with
+           it. Never recompute from the brief at read time.
+           `deliverablesPicked` is a live brief field the CLIENT can edit
+           through the portal — a live derivation would let a client tick a
+           checkbox and silently remove stages from the designer's path, a
+           state change with no event to attribute it to. Storing stepsOn
+           explicitly (not just the type id) also means a later edit to
+           PROJECT_TYPES defaults cannot reshape a project already in flight:
+           the path you left is the path you come back to.
+           (adhd-executive-function-advisor, 2026-08-05.) */
+        const typeId = typeFromIntake({
+          engagementType: detective.engagementType,
+          logoOnly: isLogoOnlyScope(detective.deliverablesPicked),
+        })
+        project.projectType = typeId
+        project.stepsOn = projectTypeSteps(typeId)
+
         get().addProject(project)
         return project
       },

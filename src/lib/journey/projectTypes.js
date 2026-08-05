@@ -137,6 +137,49 @@ export function toggleStep(project, stepId) {
 }
 
 /**
+ * Work out the type from what intake already asked.
+ *
+ * The new-project screen does NOT ask "what are we building?" — it already
+ * asks engagement and deliverables, and a fourth decision at task
+ * initiation is the friction the intake was explicitly designed to remove.
+ * Ruled by adhd-executive-function-advisor, 2026-08-05: derive, don't ask.
+ *
+ * ORDER MATTERS, and this is the bug that ruling caught before it shipped.
+ * Checking engagement first meant "adding to a brand that already works"
+ * plus logo-only deliverables resolved to `expansion` — whose stages are
+ * define/sketch/deliver, with NO Identity stop. A logo job with nowhere to
+ * draw the logo. And because stepsForProject renumbers, the path would
+ * have read 1-2-3 with no gap to notice: the stage would simply be absent,
+ * and absence is invisible. Scope is therefore checked FIRST.
+ *
+ * NOT EVERY TYPE IS REACHABLE THIS WAY, and that is recorded rather than
+ * hidden (devil's advocate, 2026-08-05):
+ *   - `logo-package` — isLogoOnlyScope is strict (mark deliverables only),
+ *     so ticking a colour palette lands on `identity` and skips the tier.
+ *   - `refresh` — intake offers new/rebrand/extend, so a refresh derives as
+ *     `rebrand`. Their stage sets are identical today; they differ only in
+ *     `startsFromExisting`, which nothing reads yet.
+ *   - `custom` — by definition; it means "the designer picked the stages",
+ *     which is what toggling a stage already produces.
+ * Each stays in the catalogue because it is the right model for when the
+ * finer stages land. Unreachable-by-derivation is not unreachable-forever;
+ * changing type is additive and always available.
+ *
+ * One deliberate collision: a rebrand of just the mark derives `logo`, not
+ * `rebrand`, because scope is checked first. That is the right answer — it
+ * is a logo job — and it keeps the Identity stop, which the alternative
+ * ordering would have dropped.
+ *
+ * @param {{engagementType?: string, logoOnly?: boolean}} intake
+ */
+export function typeFromIntake({ engagementType, logoOnly } = {}) {
+  if (logoOnly) return 'logo'
+  if (engagementType === 'extend') return 'expansion'
+  if (engagementType === 'rebrand') return 'rebrand'
+  return DEFAULT_PROJECT_TYPE
+}
+
+/**
  * Grow a project into a bigger type without starting over.
  *
  * Logo → Logo package → Brand identity. The new type's stages are UNIONED

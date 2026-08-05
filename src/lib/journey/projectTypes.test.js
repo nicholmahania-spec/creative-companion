@@ -9,6 +9,7 @@ import {
   projectType,
   stepsForProject,
   toggleStep,
+  typeFromIntake,
 } from './projectTypes.js'
 
 describe('the type catalogue is derived, not restated', () => {
@@ -126,5 +127,38 @@ describe('expandProject', () => {
     const after = expandProject(before, 'logo')
     expect(after.stepsOn).toContain('sketch') // not in the logo defaults
     expect(after.stepsOn).toContain('design') // added by the logo defaults
+  })
+})
+
+describe('typeFromIntake — derived, and in the order that matters', () => {
+  it('a logo-only job is a logo job even when adding to an existing brand', () => {
+    /* The bug this pins, caught in review before it shipped: checking
+       engagement first sent extend + logo-only to `expansion`, whose stages
+       are define/sketch/deliver — no Identity stop. A logo job with nowhere
+       to draw the logo, and because stepsForProject renumbers, the path
+       would read 1-2-3 with no gap to notice. */
+    const t = typeFromIntake({ engagementType: 'extend', logoOnly: true })
+    expect(t).toBe('logo')
+    expect(activeStepIds({ projectType: t })).toContain('design')
+  })
+
+  it('every derivable type keeps the Identity stop except a pure expansion', () => {
+    const cases = [
+      { engagementType: 'new' },
+      { engagementType: 'rebrand' },
+      { engagementType: 'new', logoOnly: true },
+    ]
+    cases.forEach((c) => {
+      const ids = activeStepIds({ projectType: typeFromIntake(c) })
+      expect(ids, JSON.stringify(c)).toContain('design')
+    })
+  })
+
+  it('maps the plain cases', () => {
+    expect(typeFromIntake({ engagementType: 'new' })).toBe('identity')
+    expect(typeFromIntake({ engagementType: 'rebrand' })).toBe('rebrand')
+    expect(typeFromIntake({ engagementType: 'extend' })).toBe('expansion')
+    expect(typeFromIntake({})).toBe(DEFAULT_PROJECT_TYPE)
+    expect(typeFromIntake()).toBe(DEFAULT_PROJECT_TYPE)
   })
 })
