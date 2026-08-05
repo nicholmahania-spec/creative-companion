@@ -20,6 +20,7 @@ import {
   completenessHeadline,
   topGaps,
 } from '../lib/brain/completeness'
+import { clearLine, looseEnds } from '../lib/brain/looseEnds'
 import {
   buildBrandBrain,
   factLine,
@@ -31,12 +32,21 @@ export default function BrandCheckPanel({
   project = null,
   moodItems = [],
   palette = [],
+  tasks = [],
+  clientRows = [],
   onOpenView,
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [asked, setAsked] = useState('')
 
+  /* Answered first because it is the question being asked at the end of a
+     session, and because it is the only one that can come back "nothing".
+     Undocumented work is NOT counted here — see looseEnds for why. */
+  const ends = useMemo(
+    () => looseEnds({ project, tasks, clientRows }),
+    [project, tasks, clientRows]
+  )
   const check = useMemo(
     () => brandCompleteness({ project, moodItems, palette }),
     [project, moodItems, palette]
@@ -66,6 +76,30 @@ export default function BrandCheckPanel({
         <span className="desk-check-status" role="status">
           {completenessHeadline(check)}
         </span>
+      </div>
+
+      <div
+        className={`desk-clear${ends.clear ? ' is-clear' : ''}`}
+        role="status"
+      >
+        <span className="desk-clear-head">{ends.headline}</span>
+        {ends.clear ? (
+          <span className="desk-clear-line">{clearLine(ends)}</span>
+        ) : (
+          <ul className="desk-clear-list">
+            {ends.ends.map((e) => (
+              <li key={e.id}>
+                <button
+                  type="button"
+                  className="desk-check-gap"
+                  onClick={() => onOpenView?.(e.view)}
+                >
+                  {e.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {!open && short.length > 0 && (

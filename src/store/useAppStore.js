@@ -303,6 +303,18 @@ export function brandIdentityDefaults() {
   learnings: '',
   /** Deliver: per brand-word confirmation that the final piece delivers on it */
   deliverWordsChecked: {},
+  /* Ideas that are not ready and must not become work. A thought with
+     nowhere to go either gets forced into the workflow as a task — where it
+     is now a thing you are failing to do — or it is lost. The parking lot is
+     the third option, and nothing in the app ever nags about its contents.
+     [{ id, text, at }] */
+  parkingLot: [],
+  /* The designer's own notes. Private by default and structurally private:
+     buildBrandPackSnapshot copies named fields only, so this cannot reach a
+     client export, the portal, or the brand book. Somewhere to write "client
+     is attached to the old blue even though it fights the new direction"
+     without it becoming a deliverable. */
+  privateNotes: '',
   /** Define: Design Detective Sheet */
   detective: blankDetective(),
   }
@@ -1151,6 +1163,39 @@ const useAppStore = create(
             return {
               ...p,
               packageAssets: (p.packageAssets || []).filter((a) => a.id !== id),
+            }
+          }),
+        })),
+
+      /* ── Parking lot ────────────────────────────────────────────────
+         Park it, and it stops taking up room. Deliberately NOT a task: no
+         due date, no completion, no counter anywhere that goes up when you
+         add one. The only two operations are park and unpark. */
+      parkIdea: (raw) => {
+        const t = String(raw || '').trim()
+        if (!t) return null
+        const row = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          text: t.slice(0, 400),
+          at: new Date().toISOString(),
+        }
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId
+              ? { ...p, parkingLot: [row, ...(p.parkingLot || [])] }
+              : p
+          ),
+        }))
+        return row
+      },
+
+      unparkIdea: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              parkingLot: (p.parkingLot || []).filter((i) => i.id !== id),
             }
           }),
         })),

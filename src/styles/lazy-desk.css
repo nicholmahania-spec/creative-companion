@@ -918,3 +918,82 @@
   font-size: var(--fs-2);
   line-height: 1.5;
 }
+
+/* ── Loose ends ───────────────────────────────────────────────────────────
+   The clear state is quiet, not loud. It is a status the designer can trust
+   because it never celebrates — see lib/brain/looseEnds.js. */
+.desk-clear {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-left: 2px solid var(--border-subtle);
+}
+
+.desk-clear.is-clear {
+  border-left-color: var(--text-primary);
+}
+
+.desk-clear-head {
+  font-size: var(--fs-2);
+  font-weight: 700;
+}
+
+.desk-clear-line {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.desk-clear-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── Yours only ─────────────────────────────────────────────────────────── */
+.desk-yours-note {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.desk-park-form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.desk-park-form .field-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.desk-park-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-park-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--fs-2);
+}
+
+.desk-park-text {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.desk-private-notes {
+  min-height: 4.5rem;
+  resize: vertical;
+}
