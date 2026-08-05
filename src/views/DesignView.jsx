@@ -21,6 +21,7 @@ import AlignmentBars from '../components/AlignmentBars'
 import AxisTagger from '../components/AxisTagger'
 import { strategyProfile } from '../lib/brand/alignment'
 import { axesForPalette, vetoBreaches } from '../lib/brand/colourAxes'
+import { axesForTypeface, missingFonts } from '../lib/brand/typeMetrics'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
   DEFAULT_PALETTE,
@@ -106,6 +107,19 @@ export default function DesignView({
   const typeTagged = Object.values(typeTags).some(
     (v) => v !== null && v !== undefined && v !== ''
   )
+  /* Fonts the project names that this browser cannot render. Everything
+     previewed or exported with one of these is silently substituted, which
+     is how a client ends up looking at a specimen of the wrong typeface. */
+  const absentFonts = useMemo(
+    () => missingFonts(activeProject),
+    [activeProject?.typeHeading, activeProject?.typeBody]
+  )
+  /* Only weight is honestly readable from a font. The rest come back null
+     and remain the designer's to place. */
+  const typeRead = useMemo(() => {
+    const a = axesForTypeface(activeProject?.typeHeading)
+    return a.weight === null ? {} : { weight: a.weight }
+  }, [activeProject?.typeHeading])
   /* Read from the palette itself rather than from sliders the designer
      moved. Formality and Era come back null on purpose — nothing in a hex
      makes a colour formal or retro, and guessing is what made the old panel
@@ -1606,6 +1620,20 @@ export default function DesignView({
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
 
+              {/* The font check comes FIRST and is the useful part here. A
+                  specimen set in a substitute misleads the client rather
+                  than informing them, and it reaches the client-facing
+                  artboard and the PDFs, not just this screen. */}
+              {absentFonts.length > 0 && (
+                <p className="align-veto" role="status">
+                  {absentFonts.join(' and ')}{' '}
+                  {absentFonts.length === 1 ? 'is' : 'are'} not available on
+                  this computer. Previews and exports will substitute another
+                  face, so anything you show a client from here will not be
+                  set in the type you specified.
+                </p>
+              )}
+
               {/* Decision memory, closing the loop: the words set in
                   Strategy reappear HERE, at the moment type is chosen,
                   rather than sitting in a document nobody reopens. It
@@ -1614,11 +1642,16 @@ export default function DesignView({
                 <summary>How this compares to your strategy</summary>
                 <AlignmentBars
                   target={strategyProfile(activeProject?.strategyAttributes || [])}
-                  token={typeTags}
+                  token={{ ...typeTags, ...typeRead }}
                   thingLabel="this pairing"
                 />
+                {/* Letterforms give up far less than hex does. Weight is
+                    measurable from the rendered font; warmth, formality and
+                    era are cultural readings of letterforms, so they stay
+                    the designer's to place rather than being guessed. */}
                 <p className="align-tag-lead">
-                  Where does {activeProject?.typeHeading || 'this typeface'} sit?
+                  Weight is read from the font. Where would you put{' '}
+                  {activeProject?.typeHeading || 'this typeface'} on the rest?
                 </p>
                 <AxisTagger
                   idPrefix="type-axis"
