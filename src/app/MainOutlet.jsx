@@ -240,6 +240,7 @@ export default function MainOutlet(p) {
       <SketchView
         navDir={navDir}
         activeProject={activeProject}
+        projectPalette={projectPalette}
         projectDeadline={projectDeadline}
         completedCount={completedCount}
         deskTasks={deskTasks}

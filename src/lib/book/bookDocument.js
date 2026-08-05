@@ -53,6 +53,10 @@ export function bookInputs(packIn) {
      alone, so dropping that fallback would empty its Applications section. */
   const surfaces = pack.brandSurfaces?.length ? pack.brandSurfaces : d.brandSurfaces
   const touchpoints = touchpointsFor(surfaces, d.deliverablesPicked)
+  const touchpointApps =
+    pack.touchpointApps && typeof pack.touchpointApps === 'object'
+      ? pack.touchpointApps
+      : {}
 
   return {
     pack,
@@ -60,6 +64,7 @@ export function bookInputs(packIn) {
     colors,
     pins,
     touchpoints,
+    touchpointApps,
     tagline: clean(pack.tagline),
     /* No `brief` fallback. `brief` is auto-composed from the answers on every
        keystroke, so it is the run-on summary rather than prose anyone wrote —
