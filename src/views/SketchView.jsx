@@ -1,145 +1,115 @@
 /**
- * Sketch — fold owns the step; capture secondary; queue/done collapsed.
- * Tech-Studio ADHD: one primary (Done), sticky Next, focus isolation.
+ * Touchpoints — apply the identity on real surfaces from the brief.
+ * One job: check the book mock + note / mark good.
  */
-import { Suspense, lazy, useState, useRef, useEffect } from 'react'
+import { useMemo, useCallback, lazy, Suspense } from 'react'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
-import { getProcessPhase } from '../lib/journey/processGuide'
-import { formatShortDate, urgencyLabel } from '../lib/dates'
-import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
+import { focusPathGapTarget } from '../lib/journey/journeyProgress'
+import TouchpointMockThumb from '../components/TouchpointMockThumb'
 import {
-  formatDecisionLine,
-  latestDecision,
-  chosenDirection,
-} from '../lib/decisionLog'
-import LayoutPatterns from '../components/LayoutPatterns'
+  touchpointsFor,
+  touchpointLabel,
+  touchpointCheckHint,
+} from '../lib/journey/touchpoints'
 import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
 
-export default function SketchView(props) {
-  const {
-    navDir = 'none',
-    activeProject = null,
-    projectDeadline = '',
-    completedCount = 0,
-    deskTasks = [],
-    doneTasks = [],
-    queueTasks = [],
-    nextTask = null,
-    stepFocusKey = 0,
-    setStepFocusKey,
-    showHowItWorks = false,
-    hideHowItWorks,
-    openBreakdown,
-    journeyNext = null,
-    setActiveView,
-    flashToast,
-    flashMicro,
-    notifyAction,
-    quickInput = '',
-    setQuickInput,
-    captureEnergy = 'med',
-    setCaptureEnergy,
-    captureDue = '',
-    setCaptureDue,
-    captureOptionsOpen = false,
-    setCaptureOptionsOpen,
-    handleCapture,
-    addQuickTask: addQuickTaskProp,
-    queueCollapsed = false,
-    queueOpen = false,
-    setQueueOpen,
-    doneOpen = false,
-    setDoneOpen,
-    toggleTask,
-    updateTaskTitle,
-    updateTaskWhy,
-    removeTask,
-    breakIntoSteps,
-    setTaskDueDate,
-    stepDueOpen = false,
-    setStepDueOpen,
-    completeCurrentStep,
-    startVoice,
-    setDeskConfirm,
-    // Focus timer props
-    forcedBreak,
-    setSessionComplete,
-    startOrPauseFocus,
-    resetFocus,
-    isFocusRunning,
-    focusLeft,
-    setFocusLeft,
-    setPomodoroWorkStartedAt,
-    setIsFocusRunning,
-    setTimerFocusSource,
-    sessionLabel,
-    sessionComplete,
-  } = props
+/** One-tap surfaces so a thin job isn’t stuck bouncing to Strategy. */
+const QUICK_SURFACES = [
+  { id: 'website', label: 'Website' },
+  { id: 'social', label: 'Social' },
+  { id: 'print', label: 'Print' },
+  { id: 'app', label: 'App' },
+]
 
-  const addTask = useAppStore((s) => s.addTask)
-  const updateBrandField = useAppStore((s) => s.updateBrandField)
-  const captureStep = handleCapture || addQuickTaskProp
-  const bumpStepFocus = () => {
-    if (typeof setStepFocusKey === 'function') setStepFocusKey((k) => k + 1)
+/** Word status — never N of M (numbers don’t register for this user). */
+export function touchpointsStatusLine({ hasBriefSurfaces, apps, proofs }) {
+  if (!hasBriefSurfaces) return 'No surfaces yet'
+  const notedIds = (apps || []).filter((id) => {
+    const row = proofs?.[id]
+    return !!(row?.done || String(row?.note || '').trim())
+  })
+  if (notedIds.length === 0) return 'Check each mock the book will show'
+  if (notedIds.length >= apps.length) return 'All mocks checked'
+  const first = touchpointLabel(notedIds[0])
+  if (notedIds.length === 1) {
+    return `${first} checked · enough for the path · rest optional`
   }
+  return `${first} and more checked · enough for the path · rest optional`
+}
 
+export default function SketchView({
+  navDir = 'none',
+  activeProject = null,
+  projectPalette = [],
+  journeyNext = null,
+  setActiveView,
+  flashMicro,
+}) {
+  const updateBrandField = useAppStore((s) => s.updateBrandField)
+  const updateDetective = useAppStore((s) => s.updateDetective)
 
-  const dec =
-    latestDecision(activeProject?.decisionLog, 'direction') ||
-    latestDecision(activeProject?.decisionLog)
-  const fromChosen = chosenDirection(activeProject)
-  const decisionLine =
-    formatDecisionLine(dec) ||
-    (fromChosen
-      ? formatDecisionLine({
-          label: fromChosen.label,
-          title: fromChosen.title,
-          why: fromChosen.note,
-        })
-      : '')
+  const surfaces = activeProject?.detective?.brandSurfaces
+  const deliverables = activeProject?.detective?.deliverablesPicked
+  const apps = useMemo(
+    () => touchpointsFor(surfaces, deliverables),
+    [surfaces, deliverables]
+  )
+  const proofs = activeProject?.touchpointApps || {}
+  const palette =
+    Array.isArray(projectPalette) && projectPalette.length
+      ? projectPalette
+      : activeProject?.palette || []
 
-  const ideateDirs = (activeProject?.directions || []).filter((d) =>
-    String(d.title || '').trim()
+  const setApp = useCallback(
+    (id, patch) => {
+      const prev =
+        useAppStore.getState().projects.find(
+          (p) =>
+            p.id ===
+            (activeProject?.id || useAppStore.getState().currentProjectId)
+        )?.touchpointApps || {}
+      const cur = { ...(prev[id] || {}), ...patch }
+      updateBrandField('touchpointApps', {
+        ...prev,
+        [id]: cur,
+      })
+    },
+    [activeProject?.id, updateBrandField]
   )
 
-  const queueDraft = (d) => {
-    addTask({
-      id: Date.now() + Math.random(),
-      title: `Draft ${d.label}: ${d.title}`,
-      energy: 'med',
-      meta: 'Direction option',
-      why: d.note || '',
-      completed: false,
-      seeded: false,
-      projectId:
-        activeProject?.id || useAppStore.getState().currentProjectId,
-      dueDate: '',
-    })
-    flashToast?.(`Draft added · ${d.label}`)
+  const hasBriefSurfaces =
+    (Array.isArray(surfaces) && surfaces.length > 0) ||
+    (Array.isArray(deliverables) && deliverables.length > 0)
+
+  const statusLine = touchpointsStatusLine({
+    hasBriefSurfaces,
+    apps: hasBriefSurfaces ? apps : [],
+    proofs,
+  })
+
+  const openSurfacesInStrategy = () => {
+    setActiveView?.('project')
+    focusPathGapTarget(
+      '#detective-brandSurfaces, #detective-field-brandSurfaces, #detective-deliverablesPicked, #detective-goal'
+    )
   }
 
-  const confirmRemove = (id, label) => {
-    if (typeof setDeskConfirm === 'function') {
-      setDeskConfirm({
-        kind: 'remove-step',
-        label,
-        onConfirm: () => {
-          removeTask(id)
-          flashToast?.('Step removed')
-          setDeskConfirm(null)
-        },
-      })
+  const addQuickSurface = (id) => {
+    const prev = Array.isArray(surfaces) ? [...surfaces] : []
+    if (prev.includes(id)) {
+      flashMicro?.(`${touchpointLabel(id)} · already on the list`)
       return
     }
-    removeTask(id)
+    updateDetective('brandSurfaces', [...prev, id])
+    flashMicro?.(`${touchpointLabel(id)} · added`)
   }
 
   return (
     <div
-      className="flow-view surface-desk view-enter sketch-studio"
+      className="flow-view surface-desk view-enter sketch-studio touchpoints-studio"
       data-nav-dir={navDir}
     >
       <div className="flow-top flow-top-compact sketch-studio-top">
@@ -147,469 +117,120 @@ export default function SketchView(props) {
           <h1 className="page-title work-page-title">
             {labelForStepId('sketch')}
           </h1>
-          <p className="work-context-line">
-            <strong>{activeProject?.name || 'Project'}</strong>
-            {projectDeadline ? ` · ${formatShortDate(projectDeadline)}` : ''}
-            {deskTasks.length > 0 && (
-              <span className="work-context-progress">
-                {' '}
-                · {completedCount}/{deskTasks.length}
-              </span>
-            )}
+          <p className="touchpoints-status" role="status">
+            {statusLine}
           </p>
         </div>
       </div>
 
-      {/* Fold: current step owns attention (redesign brief Work AOF) */}
-      <section
-        className="panel step-focus-panel sketch-now"
-        key={stepFocusKey}
-        id="current-step"
-      >
-        <div className="step-focus-head">
-          <div className="brand-section-label" style={{ margin: 0 }}>
-            Current step
-          </div>
-        </div>
-        {!nextTask ? (
-          <div className="empty-state empty-state-craft sketch-empty">
-            <Suspense fallback={null}>
-              <EmptyIllustration variant="desk" />
-            </Suspense>
-            <p className="empty-state-title">
-              {doneTasks.length === 0
-                ? 'No step yet'
-                : `All done here (${doneTasks.length} ${
-                    doneTasks.length === 1 ? 'step' : 'steps'
-                  } completed)`}
-            </p>
-            <p className="empty-state-subtitle">
-              {doneTasks.length === 0
-                ? 'Ready to start your first step?'
-                : "What's next?"}
-            </p>
-            <div className="step-focus-actions step-focus-actions-empty">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() =>
-                  document.getElementById('desk-capture')?.focus()
-                }
-              >
-                Add step
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="step-focus">
-            <div className="step-focus-meta">
-              <span className="task-badge">Now</span>
-              <span className="task-meta">
-                {({ high: 'H', med: 'M', low: 'L' }[nextTask.energy || 'med'] ||
-                  'M')}
-                {nextTask.parentId ? ' · micro' : ''}
-                {nextTask.dueDate
-                  ? ` · ${urgencyLabel(nextTask.dueDate)}`
-                  : ''}
-              </span>
-            </div>
-            <input
-              className="step-focus-title"
-              value={nextTask.title}
-              onChange={(e) => updateTaskTitle(nextTask.id, e.target.value)}
-              aria-label="Edit current step"
-            />
-            <label className="field-label" htmlFor="step-why">
-              Why
-            </label>
-            <input
-              id="step-why"
-              className="field-input"
-              value={nextTask.why || ''}
-              onChange={(e) => updateTaskWhy(nextTask.id, e.target.value)}
-              placeholder="Why this step"
-              aria-label="Why this step"
-            />
-            <div className="step-focus-actions">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={completeCurrentStep}
-              >
-                Complete step
-              </button>
-              {!nextTask.parentId && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    breakIntoSteps(nextTask.id)
-                    notifyAction?.('Split into 3', 'micro_steps', {
-                      label: 'Split step',
-                    })
-                    bumpStepFocus()
-                  }}
-                >
-                  Split if too big
-                </button>
-              )}
-              <details className="step-more-details">
-                <summary>More</summary>
-                <div className="step-more-panel">
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => setStepDueOpen((o) => !o)}
-                    aria-expanded={stepDueOpen}
-                  >
-                    {nextTask.dueDate
-                      ? `Due ${formatShortDate(nextTask.dueDate)}`
-                      : 'Due'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() =>
-                      confirmRemove(
-                        nextTask.id,
-                        'Remove this step? Cannot undo.'
-                      )
-                    }
-                  >
-                    Remove
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={openBreakdown}
-                  >
-                    Break down project
-                  </button>
-                </div>
-              </details>
-            </div>
-            {stepDueOpen && (
-              <div className="step-due-row">
-                <label className="field-label" htmlFor="step-due">
-                  Due
-                </label>
-                <input
-                  id="step-due"
-                  type="date"
-                  className="field-input step-due-input"
-                  value={nextTask.dueDate || ''}
-                  onChange={(e) =>
-                    setTaskDueDate(nextTask.id, e.target.value)
-                  }
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      <div className="sketch-below">
-        {decisionLine ? (
-          <p className="sketch-decision-line" role="status">
-            {decisionLine}{' '}
-            <button
-              type="button"
-              className="text-link"
-              onClick={() => {
-                setActiveView?.('spark')
-              }}
-            >
-              Edit
-            </button>
+      {!hasBriefSurfaces ? (
+        <section className="panel touchpoints-empty" aria-label="No surfaces">
+          <Suspense fallback={null}>
+            <EmptyIllustration variant="desk" />
+          </Suspense>
+          <p className="touchpoints-empty-title">
+            Name where the brand appears
           </p>
-        ) : null}
-
-        {ideateDirs.length > 0 && (
-          <details className="sketch-ideate-details">
-            <summary>From Ideate ({ideateDirs.length})</summary>
-            <div className="sketch-ideate-strip" aria-label="From Ideate">
-              {ideateDirs.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  className={`sketch-dir-chip${d.chosen ? ' is-chosen' : ''}`}
-                  onClick={() => queueDraft(d)}
-                >
-                  {d.label}
-                  {d.chosen ? ' ·' : ''} {d.title}
-                </button>
-              ))}
-              {ideateDirs.length > 1 && (
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => {
-                    ideateDirs.forEach(queueDraft)
-                  }}
-                >
-                  Queue all
-                </button>
-              )}
-            </div>
-          </details>
-        )}
-
-        {/* Closed reference, next to the drafts it informs. "What shape
-            should this be" is the question that stalls a sketch, and naming
-            the eight patterns turns it into a one-second decision. */}
-        <LayoutPatterns />
-
-        {/* Focus Timer */}
-        <div className="insights-timer" style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-          {isFocusRunning || focusLeft < POMODORO_WORK_MIN * 60
-            ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')}`
-            : 'not started'}
-        </div>
-        <div className="insights-focus-actions" style={{ marginBottom: '1.5rem' }}>
-          <button
-            type="button"
-            onClick={startOrPauseFocus}
-            className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
-            disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
+          <div
+            className="touchpoints-quick"
+            role="group"
+            aria-label="Add a surface"
           >
-            {isFocusRunning ? 'Pause' : focusLeft === 0 ? 'Start' : 'Resume'}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTimerFocusSource?.(null)
-              resetFocus(25)
-            }}
-            className="btn btn-secondary btn-sm"
-            disabled={!!forcedBreak}
-          >
-            25
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTimerFocusSource?.(null)
-              resetFocus(2)
-            }}
-            className="btn btn-ghost btn-sm"
-            disabled={!!forcedBreak}
-          >
-            2
-          </button>
-        </div>
-
-        {/* The brand book's handoff page reads this — used to be writable
-            only in off-path Review, so the numbered path alone could never
-            produce it. One quiet field, no pressure to fill it. */}
-        <div className="field-block sketch-feedback-block">
-          <label className="field-label" htmlFor="sketch-feedback-notes">
-            Feedback so far
-            {/* Same field as Review's "Notes" — named differently in each
-                place, which reads as two separate logs unless you notice
-                text from one showing up in the other. */}
-            <span className="sketch-feedback-shared-hint"> (shared with Review)</span>
-          </label>
-          <textarea
-            id="sketch-feedback-notes"
-            className="field-input"
-            rows={3}
-            value={activeProject?.feedbackNotes || ''}
-            onChange={(e) => updateBrandField('feedbackNotes', e.target.value)}
-            placeholder="Change · why · keep — optional"
-          />
-        </div>
-
-        <section className="capture-strip sketch-capture" aria-label="Capture">
-          <div className="capture-row capture-row-compact">
-            <input
-              id="desk-capture"
-              value={quickInput}
-              onChange={(e) => setQuickInput(e.target.value)}
-              onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                captureStep?.();
-              }
-            }}
-              placeholder="Next step"
-              aria-label="Add to desk"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                captureStep?.();
-              }}
-              className="btn btn-primary"
-            >
-              Add
-            </button>
+            {QUICK_SURFACES.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => addQuickSurface(s.id)}
+              >
+                {s.label}
+              </button>
+            ))}
           </div>
-          <div className="capture-desk-meta">
-            <button
-              type="button"
-              className="text-link capture-options-toggle"
-              onClick={() => setCaptureOptionsOpen((o) => !o)}
-              aria-expanded={captureOptionsOpen}
-            >
-              {captureOptionsOpen ? 'Hide' : 'Options'}
-            </button>
-            {captureOptionsOpen && (
-              <>
-                <select
-                  className="capture-energy"
-                  value={captureEnergy}
-                  onChange={(e) => setCaptureEnergy(e.target.value)}
-                  aria-label="Energy"
-                >
-                  <option value="high">H</option>
-                  <option value="med">M</option>
-                  <option value="low">L</option>
-                </select>
-                <label className="capture-due-label">
-                  Due
-                  <input
-                    type="date"
-                    className="capture-due-input"
-                    value={captureDue}
-                    onChange={(e) => setCaptureDue(e.target.value)}
-                    aria-label="Due date"
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="voice-link"
-                  onClick={startVoice}
-                >
-                  Voice
-                </button>
-              </>
-            )}
-          </div>
+          <button
+            type="button"
+            className="btn btn-primary touchpoints-empty-cta"
+            onClick={openSurfacesInStrategy}
+          >
+            {`Open ${labelForStepId('define')} · surfaces`}
+          </button>
         </section>
-
-        {showHowItWorks && (
-          <section
-            className="product-card product-card-quiet"
-            aria-label="How this desk works"
-          >
-            <div className="product-card-top">
-              <p className="product-card-eyebrow">Desk</p>
-              <button
-                type="button"
-                className="product-card-dismiss"
-                onClick={hideHowItWorks}
+      ) : (
+        <ul className="touchpoints-list" aria-label="Applications">
+          {apps.map((id) => {
+            const row = proofs[id] || {}
+            const note = row.note || ''
+            const done = !!row.done
+            const hasNote = String(note).trim().length > 0
+            const ready = done || hasNote
+            return (
+              <li
+                key={id}
+                className={`touchpoints-card${ready ? ' is-ready' : ''}`}
               >
-                Got it
-              </button>
-            </div>
-            <p className="product-card-title" style={{ marginBottom: 0 }}>
-              Five path stops: Strategy → Research → Identity → Touchpoints →
-              Assets. Ideate and Review live under Tools.
-            </p>
-          </section>
-        )}
-
-        {queueTasks.length > 0 && (
-          <section className="panel brand-section sketch-queue-panel">
-            <button
-              type="button"
-              className="section-toggle"
-              onClick={() => setQueueOpen((o) => !o)}
-              aria-expanded={queueCollapsed ? queueOpen : true}
-            >
-              <span className="brand-section-label" style={{ margin: 0 }}>
-                Queue · {queueTasks.length}
-              </span>
-              <span className="section-toggle-hint">
-                {queueCollapsed && !queueOpen ? 'Show' : 'Hide'}
-              </span>
-            </button>
-            {(queueCollapsed ? queueOpen : true) && (
-              <div className="desk-list" style={{ marginTop: '0.75rem' }}>
-                {queueTasks.map((task, i) => (
-                  <div key={task.id} className="task-row">
-                    <label className="task-row-label">
-                      <input
-                        type="checkbox"
-                        checked={false}
-                        onChange={() => {
-                toggleTask(task.id);
-              }}
-                      />
-                      <span className="task-row-body">
-                        <span className="task-step-num">{i + 2}</span>
-                        <span className="task-title">{task.title}</span>
-                        <span className="task-meta">
-                          {({ high: 'H', med: 'M', low: 'L' }[
-                            task.energy || 'med'
-                          ] || 'M')}
-                          {task.dueDate
-                            ? ` · ${formatShortDate(task.dueDate)}`
-                            : ''}
-                        </span>
-                      </span>
+                <div className="touchpoints-card-layout">
+                  <TouchpointMockThumb
+                    id={id}
+                    project={activeProject}
+                    palette={palette}
+                  />
+                  <div className="touchpoints-card-body">
+                    <div className="touchpoints-card-head">
+                      <h2 className="touchpoints-card-title">
+                        {touchpointLabel(id)}
+                      </h2>
+                      <button
+                        type="button"
+                        className={`btn btn-sm${done ? ' btn-secondary' : ' btn-ghost'}`}
+                        aria-pressed={done}
+                        onClick={() => {
+                          setApp(id, { done: !done })
+                          flashMicro?.(
+                            !done
+                              ? `${touchpointLabel(id)} · mock is good`
+                              : `${touchpointLabel(id)} · open again`
+                          )
+                        }}
+                      >
+                        {done ? 'Mock is good' : 'This mock is good'}
+                      </button>
+                    </div>
+                    <label className="field-label" htmlFor={`tp-note-${id}`}>
+                      How it shows up
                     </label>
+                    <textarea
+                      id={`tp-note-${id}`}
+                      className="field-textarea"
+                      rows={2}
+                      value={note}
+                      onChange={(e) => setApp(id, { note: e.target.value })}
+                      placeholder={touchpointCheckHint(id)}
+                    />
                   </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
-        {doneTasks.length > 0 && (
-          <section className="panel brand-section">
-            <button
-              type="button"
-              className="section-toggle"
-              onClick={() => setDoneOpen((o) => !o)}
-              aria-expanded={doneOpen}
-            >
-              <span className="brand-section-label" style={{ margin: 0 }}>
-                Done · {doneTasks.length}
-              </span>
-              <span className="section-toggle-hint">
-                {doneOpen ? 'Hide' : 'Show'}
-              </span>
-            </button>
-            {doneOpen ? (
-              <ul className="done-list" style={{ marginTop: '0.75rem' }}>
-                {doneTasks.map((t) => (
-                  <li key={t.id}>
-                    <button
-                      type="button"
-                      className="done-undo"
-                      onClick={() => toggleTask(t.id)}
-                      title="Undo"
-                    >
-                      ✓
-                    </button>
-                    <span className="done-title">{t.title}</span>
-                    <button
-                      type="button"
-                      className="text-link"
-                      style={{ marginTop: 0 }}
-                      onClick={() =>
-                        confirmRemove(t.id, 'Delete this step permanently?')
-                      }
-                    >
-                      Delete
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </section>
-        )}
-      </div>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
 
       <div className="path-continue-row">
         <button
           type="button"
           className="btn btn-primary work-path-next"
-          onClick={() =>
-            setActiveView?.(journeyNext?.view || 'brand')
-          }
+          onClick={() => setActiveView?.(journeyNext?.view || 'finish')}
         >
           {`Next · ${journeyNext?.label || labelForStepId('deliver')}`}
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => {
+            const hub = 'desk'
+            setActiveView?.(hub)
+          }}
+        >
+          Back to the desk
         </button>
       </div>
     </div>

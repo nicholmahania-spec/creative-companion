@@ -43,6 +43,7 @@ export default function ResearchView({
   const addMoodPin = useAppStore((s) => s.addMoodPin)
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
   const updateMoodPinNote = useAppStore((s) => s.updateMoodPinNote)
+  const updateMoodPinVisual = useAppStore((s) => s.updateMoodPinVisual)
   const toggleMoodPinInPack = useAppStore((s) => s.toggleMoodPinInPack)
   const movePackPin = useAppStore((s) => s.movePackPin)
   const setMoodPinFocal = useAppStore((s) => s.setMoodPinFocal)
@@ -242,7 +243,7 @@ export default function ResearchView({
        Say nothing, add nothing. */
     const note = boardNote.trim()
     if (!note) {
-      flashToast?.('Write a note first')
+      flashToast?.('Type a note, then add')
       return
     }
     const pin = {
@@ -305,9 +306,11 @@ export default function ResearchView({
                 <p className="research-status" role="status">
                   {starred > 0
                     ? starred >= 6
-                      ? '★ pack full'
-                      : `★ ${starred} in pack · room for ${6 - starred}`
-                    : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
+                      ? '★ Client shortlist full (6)'
+                      : `★ ${starred} for the client (room for ${6 - starred})`
+                    : deskMood.length === 0
+                      ? 'Nothing on the wall yet'
+                      : `${deskMood.length} on the wall`}
                 </p>
                 {/* One button, never two, and only when it does something.
                     Showing both leaves one inert in most states, which is a
@@ -344,7 +347,7 @@ export default function ResearchView({
                         const r = toggleMoodPinInPack(p.id)
                         if (r.ok && r.inPack) added++
                       }
-                      if (!added) flashToast('Client pack is full (6 pictures max)')
+                      if (!added) flashToast('Client shortlist is full (6 max)')
                     }}
                   >
                     Star the rest
@@ -654,7 +657,7 @@ export default function ResearchView({
                                 if (!r.ok)
                                   flashToast(
                                     r.error ||
-                                      'Client pack is full (6 pictures max)'
+                                      'Client shortlist is full (6 max)'
                                   )
                                 else
                                   flashMicro(r.inPack ? '★ pack' : '☆ pack')
@@ -696,16 +699,35 @@ export default function ResearchView({
                                 <input
                                   type="color"
                                   className="research-pin-color-input"
-                                  value={/^#([0-9a-f]{3}){1,2}$/i.test(item.visual) ? item.visual : '#000000'}
-                                  disabled
-                                  aria-label="Pin color (read-only — no color editor yet)"
+                                  value={
+                                    /^#([0-9a-f]{3}){1,2}$/i.test(item.visual)
+                                      ? item.visual
+                                      : '#000000'
+                                  }
+                                  onChange={(e) =>
+                                    updateMoodPinVisual(item.id, e.target.value)
+                                  }
+                                  aria-label="Pin color"
                                 />
                                 <input
                                   type="text"
                                   className="field-input research-pin-hex-input"
                                   value={item.visual || ''}
-                                  readOnly
-                                  aria-label="Pin hex value (read-only — no color editor yet)"
+                                  onChange={(e) => {
+                                    const v = e.target.value.trim()
+                                    updateMoodPinVisual(item.id, v)
+                                  }}
+                                  onBlur={(e) => {
+                                    const v = e.target.value.trim()
+                                    if (
+                                      v &&
+                                      !/^#([0-9a-f]{3}){1,2}$/i.test(v)
+                                    ) {
+                                      /* Keep draft if incomplete; color input still works */
+                                    }
+                                  }}
+                                  spellCheck={false}
+                                  aria-label="Pin hex value"
                                 />
                               </div>
                             )}
@@ -997,7 +1019,7 @@ export default function ResearchView({
                   onClick={() => {
                     const r = toggleMoodPinInPack(boardLightbox.id)
                     if (!r.ok)
-                      flashToast(r.error || 'Client pack is full (6 pictures max)')
+                      flashToast(r.error || 'Client shortlist is full (6 max)')
                     else {
                       setBoardLightbox((p) =>
                         p ? { ...p, inPack: r.inPack } : null
