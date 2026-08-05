@@ -143,11 +143,20 @@ test.describe('Define page regressions', () => {
     // Title → form → footer. No CSS `order` scramble — visual top must
     // match DOM top (WCAG 2.4.3).
     const orders = await page.evaluate(() => {
-      const sel =
-        '.define-brief-title, .define-chapters, .define-brief-footer'
-      const nodes = [...document.querySelectorAll(sel)]
-      const name = (n) =>
-        (n.className || '').toString().split(/\s+/).find(Boolean) || n.tagName
+      const parts = [
+        'define-brief-title',
+        'define-chapters',
+        'define-brief-footer',
+      ]
+      const nodes = [...document.querySelectorAll(parts.map((c) => `.${c}`).join(', '))]
+      /* Name a node by WHICH of the three it matched, not by its first class
+         token. The old helper took `className.split(/\s+/)[0]`, so the title —
+         `<h1 class="page-title define-brief-title">` — reported as
+         "page-title" and the test failed on a page whose reading order was
+         perfectly correct. Nothing guarantees the order of class attributes,
+         so identifying an element by its first one is a coin flip that this
+         test lost when a shared `page-title` class was added in front. */
+      const name = (n) => parts.find((c) => n.classList.contains(c)) || n.tagName
       const dom = nodes.map(name)
       const visual = [...nodes]
         .sort(
