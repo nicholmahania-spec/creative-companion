@@ -37,21 +37,54 @@ gets lost quietly.
 - Re-run the full suite, fix whatever remains, one cause at a time.
 - Land PR #124 (heading selectors by role + name).
 
-- **A "download my data" escape hatch, before Phase 2 destroys anything.**
-  Added after review. Decision 2 says existing projects are disposable, and no
-  source disputes that — but the whole store is already one JSON blob under
-  `creative-companion-storage`, so dumping it to a file is minutes of work. It
-  removes the entire class of "I said it didn't matter and I was wrong", which
-  is worth more than the time it costs.
+- ~~A "download my data" escape hatch~~ — **already exists, nothing to build.**
+  Review recommended adding one before Phase 2 destroys anything. Checked
+  before building: Settings and Deliver both carry a **Backup** button wired to
+  `downloadDataBackup`, and `src/store/workspaceRoundTrip.test.js` proves an
+  export → import cycle loses no state. The escape hatch decision 2 needs is
+  therefore already met. Recorded rather than deleted, so the next person does
+  not re-derive the same recommendation and build a second one.
 
 **Not in scope**
 - Any `src/` behaviour change. If a check fails because the app is genuinely
-  wrong, that is reported, not silently fixed here.
+  wrong, that is **reported, not silently fixed here** — see the findings
+  below, which are real app defects surfaced by getting this far.
 
-**Done when:** `npm test` and the full e2e suite are green on `main`, and the
-current workspace can be exported to a file.
+**Done when:** `npm test` and the full e2e suite are green on `main`.
 
-**Risk:** low. Test-only, plus one read-only export.
+**Status 2026-08-05: partly done. 18 failures → 11.**
+
+*Numbers are from CI, which is authoritative. A local run of the same commit
+reported 14 failed / 10 passed across only 24 tests, against CI's 11 / 19
+across 31 — this container's Chromium is build 1194 while the pinned
+`@playwright/test` wants 1234. **Do not diagnose an e2e failure from a local
+run alone**; confirm it in CI first, or you will chase a browser difference.*
+
+Fixed and merged (#124): heading assertions moved to role + accessible name,
+and `unlockAndOnboard` now lands inside a project instead of on Home, where
+`.step-rail` does not exist. That one helper change cleared 7 specs —
+`a11y-path` (both), `axe-path`, `brand-book-pdf`, `offline`, and two
+`phase-surfaces`.
+
+**The 11 that remain, and they are NOT all stale tests.** At least the first
+group looks like genuine app defects:
+
+| Spec | Reads like |
+| --- | --- |
+| `button-states` (light + dark) — "primary must repaint on hover" | **App defect.** The primary button measures identical on hover and at rest, so the most-used control in the app gives no feedback that it is interactive. Worse than cosmetic for this audience: a control that looks dead invites the second and third click. |
+| `define-regressions` — primary buttons legible in dark | Likely the same defect seen from another angle. |
+| `define-regressions` — brief chrome reading order matches focus order | Accessibility: focus order diverging from visual order. |
+| `desk-reliability` ×2 — Deliver formats, Esc closes overlay | Unknown; needs diagnosis. |
+| `path-smoke`, `process-walk` | Long walks — likely one blocker part-way through. |
+| `phase-surfaces` — "Ideate carries the layout pattern reference" | Names a stage the app no longer has. Probably a genuinely stale test. |
+| `reachable-controls` — every preference switch has a clickable body | Unknown; possibly real. |
+| `soft-signal` — demo loads | Unknown. |
+
+Each needs its own diagnosis before anyone decides whether the test or the app
+is wrong. Do not assume "stale test" — that assumption is what produced the
+wrong first hypothesis on this very suite.
+
+**Risk:** low. Test-only so far.
 
 ---
 
