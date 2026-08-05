@@ -21,24 +21,12 @@ export default function ResearchView({
   activeProjectId = null,
   brandWords = '',
   projectPalette = [],
-  forcedBreak = null,
   setActiveView,
   flashToast,
   flashMicro,
   notifyAction,
-  setSessionComplete,
-  setFocusLeft,
-  setPomodoroWorkStartedAt,
-  setIsFocusRunning,
-  setTimerFocusSource,
   onAddPinModeChange,
   // Focus timer props
-  startOrPauseFocus,
-  resetFocus,
-  isFocusRunning,
-  focusLeft,
-  sessionLabel,
-  sessionComplete,
 }) {
   const addMoodPin = useAppStore((s) => s.addMoodPin)
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
@@ -358,44 +346,14 @@ export default function ResearchView({
                 ) : null}
               </div>
               <div className="research-studio-actions">
-            {/* Focus Timer */}
-            <div className="insights-timer" style={{ marginTop: '1rem' }}>
-              {isFocusRunning || focusLeft < POMODORO_WORK_MIN * 60
-                ? `${Math.floor(focusLeft / 60)}:${String(focusLeft % 60).padStart(2, '0')}`
-                : 'not started'}
-            </div>
-            <div className="insights-focus-actions" style={{ marginTop: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={startOrPauseFocus}
-                className={`btn ${!!forcedBreak || (focusLeft === 0 && !isFocusRunning) ? 'btn-secondary' : 'btn-primary'}`}
-                disabled={!!forcedBreak || (focusLeft === 0 && !isFocusRunning)}
-              >
-                {isFocusRunning ? 'Pause' : focusLeft === 0 ? 'Start' : 'Resume'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setTimerFocusSource?.(null)
-                  resetFocus(25)
-                }}
-                className="btn btn-secondary btn-sm"
-                disabled={!!forcedBreak}
-              >
-                25
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setTimerFocusSource?.(null)
-                  resetFocus(2)
-                }}
-                className="btn btn-ghost btn-sm"
-                disabled={!!forcedBreak}
-              >
-                2
-              </button>
-            </div>
+            {/* The focus timer used to be duplicated here. It never worked on
+                this screen: MainOutlet passes it none of the timer props, so
+                `resetFocus` was undefined and the two unlabelled buttons threw a
+                TypeError on click, while the readout showed a permanent "not
+                started" beside a designer who was demonstrably working. Removed
+                rather than wired: the real Timer lives on Tools, and a second
+                copy of a running clock is a second thing to reconcile. Same fix
+                already applied to Identity and Assets — see no-dead-timer.spec.js. */}
               </div>
             </div>
 

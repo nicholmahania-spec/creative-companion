@@ -69,18 +69,6 @@ export default function DeliverView({
   CLOUD = false,
   lastExportNote = '',
   // Focus timer props
-  forcedBreak,
-  setSessionComplete,
-  startOrPauseFocus,
-  resetFocus,
-  isFocusRunning,
-  focusLeft,
-  setFocusLeft,
-  setPomodoroWorkStartedAt,
-  setIsFocusRunning,
-  setTimerFocusSource,
-  sessionLabel,
-  sessionComplete,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const addContact = useAppStore((s) => s.addContact)
