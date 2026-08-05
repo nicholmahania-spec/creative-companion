@@ -12,6 +12,7 @@ import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
 import { getRequiredEmpty } from '../lib/brief/detectiveBrief'
 import { relativeDeadlineLabel } from '../lib/dates'
+import StrategyWords from '../components/StrategyWords'
 import '../styles/lazy-define.css'
 
 const DetectiveSheet = lazy(() => import('../features/brief/DetectiveSheet'))
@@ -153,6 +154,19 @@ export default function DefineView(props) {
           </Suspense>
         </div>
       </div>
+
+      {/* Decision memory starts here. These words are what reappear later,
+          as bars, at the moment type and colour are chosen — the connection
+          the product is actually for. */}
+      <section
+        className="panel brand-section define-strategy"
+        aria-label="Brand feel"
+      >
+        <StrategyWords
+          projectId={activeProject?.id}
+          attributes={activeProject?.strategyAttributes}
+        />
+      </section>
 
       <div
         className="define-brief-footer"
