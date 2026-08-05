@@ -435,6 +435,52 @@
   gap: var(--space-2);
 }
 
+/* The two administrative actions, kept reachable and made quiet.
+   They are the only route in the app to "done" and "declined", so they cannot
+   leave this card — but they are not the work, so they must not compete with
+   the one button that is. Muted, no fill, no border: they read as a second
+   thought, which is what they are. */
+.desk-card-aside {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.desk-card-aside-link {
+  position: relative;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+/* Quiet is not the same as small to hit. The visual stays a text link; the
+   touch target reaches the 44px floor via a centred pseudo-element, the same
+   move `.brief-attach-remove` and `.done-undo` already make in shell.css. */
+.desk-card-aside-link::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  min-width: var(--tap-min);
+  height: var(--tap-min);
+  transform: translate(-50%, -50%);
+}
+
+.desk-card-aside-link:hover,
+.desk-card-aside-link:focus-visible {
+  color: var(--text-primary);
+}
+
 /* Lists */
 .desk-list {
   list-style: none;

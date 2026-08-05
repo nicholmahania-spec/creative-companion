@@ -461,6 +461,27 @@ export default function DeskView({
                   <span className="desk-card-tag">{gapRow.label}</span>
                   <span className="desk-card-title">{gapTitle}</span>
                 </button>
+                {/* One button, then two quiet asides.
+                    This card is read at the coldest moment in the app — a
+                    project opened after days away — and its whole job is to
+                    make starting a single unconsidered act. It used to offer
+                    three controls of near-equal weight: Open, Mark done, Not
+                    needed. Two of those are ADMINISTRATIVE, and putting them
+                    beside the work action asks the reader to classify the
+                    stage ("is this a thing I do, a thing I already did, or a
+                    thing I skip?") before they are allowed to do any of it.
+
+                    They are not removed, and that was the tempting mistake.
+                    This card is the ONLY place in the app where a step can be
+                    marked done or declined — `setStepDone` and
+                    `toggleStepNotNeeded` have no other route in — and the gap
+                    card is never empty, so deleting them would leave an
+                    unwanted stop permanently parked on the cold-start
+                    surface with no way to clear it. Stage-page Mark done was
+                    also tried and deliberately removed (a056d3d, "mark done
+                    stays on desk"), so that is not the escape hatch either.
+
+                    Weight alone does the work. */}
                 <div className="desk-card-actions">
                   <button
                     type="button"
@@ -469,21 +490,23 @@ export default function DeskView({
                   >
                     {`Open ${gapRow.label}`}
                   </button>
+                </div>
+                <div className="desk-card-aside">
                   {typeof onMarkStepDone === 'function' && (
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="desk-card-aside-link"
                       onClick={() => onMarkStepDone(gapRow.id, true)}
                     >
-                      Mark done
+                      Already done
                     </button>
                   )}
                   <button
                     type="button"
-                    className="btn btn-ghost"
+                    className="desk-card-aside-link"
                     onClick={() => onToggleNotNeeded(gapRow.id)}
                   >
-                    Not needed
+                    Skip this one
                   </button>
                 </div>
               </div>
