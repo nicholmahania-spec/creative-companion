@@ -361,6 +361,49 @@ flip.
 
 **Risk: low.** Mostly a route and a transition.
 
+**Status 2026-08-06: built. Migration not yet applied to the live project —
+see "What has not been observed" below.**
+
+What shipped:
+
+| Piece | Where |
+| --- | --- |
+| **Preview before publish** | `DeliverToClient.jsx`. Three states: draft → preview → delivered. The preview is **local only** — nothing is written server-side until Send, so backing out costs nothing. There is deliberately no `'preview'` value in `delivery_status`: a preview you had to publish to look at is the thing this state exists to prevent. |
+| **The designer's note** | Pre-filled with a warm default (`defaultDeliveryNote`) rather than a blank box. A blank field at the end of a project, when the tank is empty, produces no note at all. Editable, and deletable. |
+| **The reveal page** | `/d/:portalId` → `PublicBrandReveal.jsx`. Third public no-login surface. Same portal id as `/c/`, on purpose — a fourth link is a fourth "which one was that". A short curtain (instant under `prefers-reduced-motion`), then the note, then the **real book**, rendered by the same component the studio previews with, so the two cannot drift. |
+| **The reaction** | One question, single-use server-side, drafted to localStorage like the other two public surfaces. Arrives in the client inbox as a quoted row. |
+| **"They opened it"** | `delivery_viewed_at`, written once by the WHERE clause rather than by read-then-write. Reaches the designer as an inbox row and as a live status line on Deliver, which polls only while there is something left to learn. |
+
+Three things worth recording that were not on the phase's list:
+
+1. **The delivered pack is not the designer's pack.** `buildDeliveryPack`
+   strips twelve fields before anything reaches a client-readable row —
+   the open to-do list, the feedback log, the revision rounds, the decision
+   log, the scope that got argued about. `deliveryPackPrivacy.test.js` asserts
+   the premise that makes that safe: nothing under `src/lib/book/` reads any
+   stripped field, so the client's book is byte-for-byte the one previewed. If
+   a future page starts printing one, that test stops the drift rather than
+   letting the two copies quietly diverge.
+2. **Size is handled honestly.** Over 3 MB, moodboard images are dropped, then
+   logo artwork — and what was dropped is *said*, on screen, next to the link.
+   Silence there means previewing a book with a moodboard and delivering one
+   without.
+3. **The grid ate the new section.** `.assets-studio` places every child
+   explicitly at ≥1100px, so the unplaced `deliver-send` auto-flowed to the
+   bottom of the left column — below Extras and Leave, a screen and a half from
+   the ship ticket it belongs to. Caught by looking at it, not by a test.
+   Placed explicitly now, with a comment saying why.
+
+**What has not been observed working, and must be before this is called done:**
+the delivered path end to end. The unit tests cover the pack, the envelope,
+the state machine and the inbox rows; the e2e spec covers the route existing
+and failing honestly. But `20260806120000_delivery_moment.sql` has **not been
+applied** to the live Supabase project — applying it is the owner's call, not
+an agent's — so no real portal row has ever carried a delivery. Apply it, send
+one real book to one real client link, and confirm three things: the reveal
+renders the book, the view stamps once and only once, and the reaction comes
+back into the inbox.
+
 ---
 
 ## Open, not yet decided

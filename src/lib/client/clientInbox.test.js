@@ -166,3 +166,76 @@ describe('displayable timestamps', () => {
     }
   })
 })
+
+/**
+ * The delivery moment's two events.
+ *
+ * "They opened it" is the only row in this inbox that nobody typed. It earns
+ * its place because it is the fact a designer most wants at the end of a job
+ * and has no other way to get — the alternative is asking the client whether
+ * they looked at it, which nobody does.
+ */
+describe('delivery rows', () => {
+  const delivered = {
+    ...portal,
+    step_status: {},
+    delivery_status: 'delivered',
+    delivery_viewed_at: '2026-08-06T09:00:00Z',
+  }
+
+  it('adds a row when the client opens the brand book', () => {
+    const { rows } = buildInboxRows([delivered], [], {}, projects)
+    const row = rows.find((r) => r.kind === 'delivery')
+    expect(row).toBeTruthy()
+    expect(row.title).toBe('Acme opened the brand book')
+    expect(row.unread).toBe(true)
+  })
+
+  /* Unlike a step row, this one has a real per-event timestamp, so it is
+     allowed to say when — see "displayable timestamps" above. */
+  it('carries the real view time as a displayable `at`', () => {
+    const { rows } = buildInboxRows([delivered], [], {}, projects)
+    const row = rows.find((r) => r.kind === 'delivery')
+    expect(row.at).toBe('2026-08-06T09:00:00Z')
+  })
+
+  it('goes quiet once seen, and does not come back', () => {
+    const seen = { p1: portalSeenSnapshot(delivered, []) }
+    const { rows } = buildInboxRows([delivered], [], seen, projects)
+    expect(rows.find((r) => r.kind === 'delivery').unread).toBe(false)
+  })
+
+  it('surfaces what the client wrote back, and quotes their words', () => {
+    const replied = {
+      ...delivered,
+      delivery_reaction: 'Honestly? I teared up a bit.',
+      delivery_reaction_at: '2026-08-06T09:05:00Z',
+    }
+    const { rows } = buildInboxRows([replied], [], {}, projects)
+    const row = rows.find((r) => r.kind === 'reaction')
+    expect(row.preview).toBe('Honestly? I teared up a bit.')
+    expect(row.body).toBe('Honestly? I teared up a bit.')
+    expect(row.unread).toBe(true)
+  })
+
+  /* The detail panel's fallback action renders "Go to {stepLabel}". A row
+     without one offers "Go to undefined". */
+  it('names a real destination for both rows', () => {
+    const replied = {
+      ...delivered,
+      delivery_reaction: 'Lovely.',
+      delivery_reaction_at: '2026-08-06T09:05:00Z',
+    }
+    const { rows } = buildInboxRows([replied], [], {}, projects)
+    for (const kind of ['delivery', 'reaction']) {
+      const row = rows.find((r) => r.kind === kind)
+      expect(row.targetView).toBeTruthy()
+      expect(row.stepLabel).toBe(labelForStepId('deliver'))
+    }
+  })
+
+  it('adds nothing at all until something has actually been delivered', () => {
+    const { rows } = buildInboxRows([{ ...portal, step_status: {} }], [], {}, projects)
+    expect(rows.filter((r) => ['delivery', 'reaction'].includes(r.kind))).toEqual([])
+  })
+})

@@ -286,6 +286,10 @@ export async function fetchClientPortal(portalId) {
     surveyQuestions: Array.isArray(row.survey_questions)
       ? row.survey_questions
       : [],
+    /* Status only. The note and the book itself are fetched by the reveal page
+       (/d/) from its own RPC, so an undelivered portal cannot be used to read
+       a brand book that has not been handed over yet. */
+    deliveryStatus: row.delivery_status || 'not_delivered',
   }
 }
 

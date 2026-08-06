@@ -564,6 +564,8 @@ export default function MainOutlet(p) {
         notifyAction={notifyAction}
         CLOUD={CLOUD}
         lastExportNote={lastExportNote}
+        offerUndo={offerUndo}
+        openPortalPanel={() => setOverviewSharePanelOpen(true)}
       />
     )
   }

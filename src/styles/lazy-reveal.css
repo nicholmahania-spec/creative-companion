@@ -1,0 +1,164 @@
+/* The reveal (/d/:portalId) — the one page in this app a client is meant to
+   enjoy looking at.
+
+   Wider and quieter than /f/ and /c/: those are forms, this is a document
+   being presented. Everything here uses the shared spacing and type ramps
+   (--space-*, --fs-*) and the semantic colour tokens, so it inherits the
+   same corrections the rest of the system gets.
+
+   Per-view sheets are all loaded eagerly (see DEVELOPMENT.md), so every class
+   here is prefixed `reveal-` and none of them names anything another view's
+   root carries. */
+
+.reveal-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-7) var(--space-4);
+  background: var(--bg-muted, #f4f4f4);
+  color: var(--text-primary, #1c1917);
+}
+
+.reveal-main {
+  width: 100%;
+  max-width: 52rem;
+}
+
+/* Loading and dead-link states. A bare sentence on an empty canvas reads as a
+   broken page, which is the exact wrong impression for someone who was sent a
+   link and does not know what to expect — so these sit on a card, like the
+   other two public surfaces. */
+.reveal-notice {
+  width: 100%;
+  max-width: 42rem;
+  align-self: flex-start;
+  padding: var(--space-6) var(--space-5);
+  background: var(--bg-elevated, #fff);
+  border: 1px solid var(--border-subtle, #e7e7e7);
+  border-radius: var(--radius);
+}
+
+/* ── The curtain ───────────────────────────────────────────────────────────
+   Not a loading screen and not a gate: the page underneath is fully rendered
+   and fully readable the whole time. This lifts on a timer, and lifts
+   instantly for anyone who has asked for less motion (handled in the
+   component, so it is never merely invisible-but-still-there).
+
+   pointer-events go first, on the same transition, so a fast reader is never
+   clicking through a pane that is halfway through fading. */
+.reveal-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  text-align: center;
+  transition:
+    opacity 0.7s ease,
+    visibility 0s linear 0.7s;
+}
+
+.reveal-curtain.is-up {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.reveal-curtain-text {
+  font-size: var(--fs-6);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  max-width: 20ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-curtain {
+    transition: none;
+  }
+}
+
+/* ── The note ──────────────────────────────────────────────────────────── */
+
+.reveal-head {
+  border-top: 0.25rem solid var(--border-subtle, #e7e7e7);
+  padding-top: var(--space-5);
+  margin-bottom: var(--space-7);
+}
+
+.reveal-eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.reveal-title {
+  margin: 0 0 var(--space-5);
+  font-size: var(--fs-6);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* The designer wrote this by hand at the end of a long project. It gets the
+   room a letter gets, not the room a caption gets. */
+.reveal-note {
+  margin: 0;
+  max-width: 65ch;
+  white-space: pre-wrap;
+  font-size: var(--fs-3);
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+/* ── The book ──────────────────────────────────────────────────────────── */
+
+.reveal-book {
+  margin-bottom: var(--space-6);
+}
+
+.reveal-download {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-7);
+}
+
+.reveal-download-hint {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--text-secondary);
+}
+
+/* ── The reply ─────────────────────────────────────────────────────────── */
+
+.reveal-reaction {
+  border-top: 1px solid var(--border-subtle, #e7e7e7);
+  padding-top: var(--space-6);
+}
+
+.reveal-reaction-label {
+  display: block;
+  margin-bottom: var(--space-3);
+  font-size: var(--fs-3);
+  font-weight: 600;
+}
+
+.reveal-reaction-input {
+  width: 100%;
+  margin-bottom: var(--space-4);
+}
+
+.reveal-status {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-2);
+}
+
+.reveal-error {
+  margin: 0 0 var(--space-3);
+  color: var(--danger);
+  font-size: var(--fs-2);
+}
