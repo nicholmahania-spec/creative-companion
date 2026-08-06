@@ -22,7 +22,15 @@ measurable, and measure before trusting it.
 
 ## Commands
 
+**`npm install` first, at the start of every new session.** Owner instruction,
+2026-08-06. A fresh container clones the repo without `node_modules`, so the
+first command anyone runs fails with `sh: 1: vitest: not found` — which reads
+like a broken script or a missing dependency in `package.json` and invites a
+diagnosis of a problem that does not exist. It is a 20-second install. Do it
+before running anything, not after the first confusing failure.
+
 ```sh
+npm install     # FIRST, every new session — nothing below works without it
 npm run build   # production build (do NOT call `vite build` directly — vite is not on $PATH)
 npm run dev     # dev server
 npm test        # vitest unit tests

@@ -177,8 +177,13 @@ marked BUILT / PART / OPEN) — currently on PR #126, not on `main`.
 
 ## 5. Verify before you believe
 
+**`npm install` is step one of every new session, not a one-off setup step.**
+A fresh container has no `node_modules`, so whatever you run first fails with
+`sh: 1: vitest: not found` — which looks like a broken script rather than an
+empty install directory, and costs a diagnosis before it costs 20 seconds.
+
 ```sh
-npm install
+npm install           # FIRST — every session, before anything else
 npm test              # unit — 1220 passing / 125 files on main @ 2acc109
 npm run lint:ratchet  # must land exactly at budget
 npm run build:check   # build + perf budget
