@@ -1,5 +1,19 @@
 name: Cloud Node Checker
-on: [push, pull_request]
+# Push only, and never main. This used to be `[push, pull_request]`, which on
+# a PR branch is the SAME event twice: one push produced two byte-identical
+# builds of one commit, on top of CI's own run. On 2026-08-06 the duplicate
+# was the run that died — it queued 16 minutes and was cancelled while its
+# twin passed in 11, and a cancelled job reports as a red X indistinguishable
+# from a real failure.
+#
+# Nothing stops being verified. ci.yml already runs npm ci, the lint ratchet,
+# the full suite, the build AND the perf budget on every pull request and on
+# every push to main — a strict superset of the npm ci + build below. What is
+# left here is the one case ci.yml does not cover: a push to a branch with no
+# pull request open yet.
+on:
+  push:
+    branches-ignore: [main]
 
 jobs:
   verify-project:
