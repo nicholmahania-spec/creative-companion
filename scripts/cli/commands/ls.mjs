@@ -122,8 +122,12 @@ export async function run(argv) {
     )
   )
   console.log('')
+  /* Labelled as a key. Unlabelled, this line is styled and worded exactly like
+     a status — so on a workspace whose pack is NOT ready it still read
+     "✓ pack ready", which is the one thing a readiness column exists to say
+     truthfully. */
   console.log(
-    c.grey(`${tick()} pack ready   ${gap()} still has gaps   ▸ the current project`)
+    c.grey(`Key: ${tick()} pack ready   ${gap()} still has gaps   ▸ current project`)
   )
   console.log(c.grey('cc check --project "<name>" for what is missing'))
   return 0
