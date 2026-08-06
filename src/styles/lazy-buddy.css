@@ -1512,7 +1512,7 @@
 }
 
 .game-hud-studio .game-hud-xp-fill {
-  background: #606060 !important;
+  background: var(--dopamine) !important;
   border-radius: var(--radius);
 }
 

@@ -5225,7 +5225,7 @@ body.cc-printing-page button {
 .sketch-now .field-label {
   margin-top: 0.55rem;
   font-size: 0.75rem;
-  color: #A1A1A1;
+  color: var(--text-muted);
 }
 
 .sketch-now .step-focus-title:focus,
@@ -5239,7 +5239,7 @@ body.cc-printing-page button {
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #A1A1A1;
+  color: var(--text-muted);
   list-style: none;
 }
 
@@ -7157,7 +7157,7 @@ body:has(.app.deep)::after {
   height: 1.4rem;
   border: none;
   background: transparent;
-  color: #A1A1A1;
+  color: var(--text-muted);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
@@ -7907,7 +7907,7 @@ select:focus {
 .command-studio .command-empty {
   margin: 0.5rem 0;
   font-size: 0.85rem;
-  color: #A1A1A1;
+  color: var(--text-muted);
 }
 
 /* ============================================================
@@ -8420,7 +8420,7 @@ select:focus {
   background: var(--ts-panel, #FFFFFF) !important;
   color: var(--ts-ink, #1A1A1A) !important;
   border: 1px solid var(--ts-border, #E7E7E7) !important;
-  border-left: 2px solid #606060 !important;
+  border-left: 2px solid var(--dopamine) !important;
   box-shadow: none !important;
   font-weight: 700 !important;
 }
@@ -8436,11 +8436,11 @@ select:focus {
 }
 .journey-sidebar .journey-num {
   opacity: 1 !important;
-  color: #A1A1A1 !important;
+  color: var(--text-muted) !important;
   font-weight: 700 !important;
 }
 .journey-sidebar .journey-step.is-active .journey-num {
-  color: #606060 !important;
+  color: var(--dopamine) !important;
 }
 .journey-sidebar .journey-step.is-done:not(.is-active) .journey-num {
   color: #565656 !important;
@@ -8472,7 +8472,7 @@ select:focus {
     max-width: 200px !important;
     height: 100% !important;
     flex-direction: column !important;
-    border-right: 1px solid #E7E7E7 !important;
+    border-right: 1px solid var(--ts-border) !important;
     border-bottom: none !important;
     overflow-x: visible !important;
     box-shadow: none !important;
@@ -8870,7 +8870,7 @@ select:focus {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #A1A1A1;
+  color: var(--text-muted);
 }
 
 .journey-projects-add {
@@ -9072,7 +9072,7 @@ select:focus {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #A1A1A1;
+  color: var(--text-muted);
   margin: 0.4rem 0 0.25rem;
 }
 
@@ -9147,7 +9147,7 @@ select:focus {
   height: 1.4rem;
   border: none;
   background: transparent;
-  color: #A1A1A1;
+  color: var(--text-muted);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
@@ -9689,7 +9689,7 @@ select:focus {
   background: var(--ts-panel, #FFFFFF);
   color: var(--ts-ink, #1A1A1A);
   border: 1px solid var(--ts-border, #E7E7E7);
-  border-left: 2px solid #606060;
+  border-left: 2px solid var(--dopamine);
   font-weight: 700;
 }
 
@@ -9720,7 +9720,7 @@ select:focus {
 
 /* Divider under the Projects section */
 .journey-sidebar .journey-bar-list {
-  border-top: 1px solid #E7E7E7;
+  border-top: 1px solid var(--border-hairline);
   padding-top: 0.5rem !important;
   margin-top: 0.15rem;
 }

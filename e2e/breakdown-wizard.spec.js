@@ -11,11 +11,12 @@ import { unlockAndOnboard, skipIfCloud, pathNav, stepByIdIn } from './helpers.js
  * safely move. It passes identically against both shapes — that is the point.
  */
 /**
- * Reaching the wizard is itself awkward, and the test has to mirror it: the
- * "Break down project" button lives inside a per-step "More" <details>, inside
- * the current-step card, which only renders when a step already exists. On an
- * empty project — the state where breaking a project down is most useful —
- * there is no way in at all. Noted, not changed here.
+ * Reaching the wizard from a project that already has steps is still awkward,
+ * and this helper mirrors it: the "Break down project" button lives inside a
+ * per-step "More" <details>, inside the current-step card. That entry point
+ * used to be the ONLY one, which left the wizard unreachable on an empty
+ * project — the state where breaking a project down is most useful. The empty
+ * state now carries its own trigger; see the reachability test below.
  */
 const goToSketch = async (page) => {
   const path = await pathNav(page)
@@ -138,4 +139,27 @@ test('reopening starts a clean run, and Escape closes', async ({ page }) => {
   await expect(dialog.getByRole('button', { name: /^Start$/ })).toBeVisible()
   await dialog.getByRole('button', { name: /^Start$/ }).click()
   await expect(page.locator('#bd-goal')).toHaveValue(seeded)
+})
+
+test('the wizard is reachable on an empty project', async ({ page }) => {
+  const gate = await unlockAndOnboard(page, { name: 'Breakdown Empty' })
+  skipIfCloud(test, gate)
+
+  await goToSketch(page)
+
+  /* The state under test: no step has ever been added, so the current-step
+     card renders its empty state and the per-step "More" <details> — the
+     wizard's only previous entry point — does not exist at all. */
+  await expect(page.locator('.sketch-empty')).toBeVisible({ timeout: 10000 })
+  await expect(page.locator('.step-more-details')).toHaveCount(0)
+
+  /* No <details> to open first: the trigger is on screen and directly
+     clickable, which is the whole point of the fix. */
+  const trigger = page.getByRole('button', { name: /Break down project/i })
+  await expect(trigger).toBeVisible()
+  await trigger.click()
+
+  await expect(
+    page.getByRole('dialog', { name: /Break project into micro-steps/i })
+  ).toBeVisible({ timeout: 10000 })
 })

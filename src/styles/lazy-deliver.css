@@ -926,7 +926,7 @@
 
 .export-studio .export-open-work .kicker {
   font-size: 0.7rem;
-  color: #A1A1A1;
+  color: var(--text-muted);
 }
 
 .export-studio .export-more-formats > summary {

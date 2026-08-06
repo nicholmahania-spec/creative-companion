@@ -359,6 +359,17 @@ export default function SketchView(props) {
               >
                 Add step
               </button>
+              {/* Breakdown is project-scoped, but its only other entry point
+                  is the per-step "More" menu, which needs a step to exist —
+                  so the tool for "big job, no idea where to start" was
+                  unreachable at exactly that moment. */}
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={openBreakdown}
+              >
+                Break down project
+              </button>
             </div>
           </div>
         ) : (
