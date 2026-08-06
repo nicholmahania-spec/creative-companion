@@ -448,7 +448,7 @@
   margin: 1rem 0 0;
   text-align: center;
   font-size: 0.7rem;
-  color: #A1A1A1;
+  color: var(--text-muted);
 }
 
 /* Login solo densify */
@@ -537,7 +537,7 @@
 .settings-range {
   width: 100%;
   max-width: 12rem;
-  accent-color: #606060;
+  accent-color: var(--dopamine);
 }
 .settings-row-stack {
   flex-direction: column;
