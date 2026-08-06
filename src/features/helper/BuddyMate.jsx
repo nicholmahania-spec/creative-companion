@@ -29,13 +29,6 @@ import {
   whatTimeLine,
 } from '../../lib/helper/buddy'
 import {
-  awardAndBroadcast,
-  BADGES,
-  gameSummaryLine,
-  loadGame,
-  xpProgress,
-} from '../../lib/helper/buddyGame'
-import {
   BREAK_KINDS,
   isBreakItemOpen,
   kindMeta,
@@ -99,7 +92,6 @@ export default function BuddyMate({
   reduceMotion = false,
   pulseWin = 0,
   activity = {},
-  showProgress = false,
   helperQuiet = false,
   onNavigate,
   /** When true, open Break care + a calm scripted line (Pomodoro ownership). */
@@ -158,8 +150,6 @@ export default function BuddyMate({
   const [recentWin, setRecentWin] = useState(false)
   const [spot, setSpot] = useState(() => defaultBuddySpot('fab'))
   const [hop, setHop] = useState(0)
-  const [game, setGame] = useState(() => loadGame())
-  const [levelBurst, setLevelBurst] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
   const [aiBusy, setAiBusy] = useState(false)
   const listRef = useRef(null)
@@ -327,36 +317,6 @@ export default function BuddyMate({
     setMessages((m) => [...m.slice(-14), { id, from: 'you', text }])
   }, [])
 
-  const applyGameResult = useCallback(
-    (result) => {
-      if (!result?.game) return
-      setGame(result.game)
-      if (result.levelUp) {
-        setLevelBurst(true)
-        setMood('cheer')
-        window.setTimeout(() => setLevelBurst(false), 2800)
-      }
-      // At most 2 short pings (level/badge + xp) — never a lecture stack
-      const msgs = (result.messages || []).slice(0, 2)
-      msgs.forEach((msg, i) => {
-        window.setTimeout(() => {
-          pushBuddy(msg, {
-            move: i === 0 && result.levelUp,
-            expand: false,
-          })
-        }, i * 180)
-      })
-    },
-    [pushBuddy]
-  )
-
-  useEffect(() => {
-    const onGame = (e) => applyGameResult(e.detail)
-    window.addEventListener('cc-buddy-game', onGame)
-    setGame(loadGame())
-    return () => window.removeEventListener('cc-buddy-game', onGame)
-  }, [applyGameResult])
-
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 15000)
     return () => window.clearInterval(t)
@@ -430,11 +390,11 @@ export default function BuddyMate({
       buddyMood({
         overdue,
         isFocusRunning,
-        recentWin: recentWin || levelBurst,
+        recentWin,
         hyperfocus: hyper,
       })
     )
-  }, [overdue, isFocusRunning, recentWin, hyper, levelBurst])
+  }, [overdue, isFocusRunning, recentWin, hyper])
 
   // New page → FAB ping only (never hop/repark/expand). Skip when quiet.
   useEffect(() => {
@@ -589,9 +549,6 @@ export default function BuddyMate({
     const next = markWellness(kind)
     setWellness(next)
     pushBuddy(confirmLine(kind))
-    const action =
-      kind === 'water' ? 'water' : kind === 'food' ? 'food' : 'bathroom'
-    applyGameResult(awardAndBroadcast(action, { label }))
   }
 
   const logBreak = () => {
@@ -600,9 +557,6 @@ export default function BuddyMate({
     setWellness(next)
     lastHyperLevel.current = null
     pushBuddy(confirmLine('break'))
-    applyGameResult(
-      awardAndBroadcast('break_complete', { label: 'Self-logged break' })
-    )
   }
 
   /** Live AI coach when VITE_XAI_API_KEY is set; scripted fallback otherwise. */
@@ -868,18 +822,11 @@ export default function BuddyMate({
 
   const markKitDone = (item) => {
     completeBreakKitItem(item.id)
-    applyGameResult(awardAndBroadcast('break_kit', { label: item.title }))
     pushYou(`Done · ${item.title}`)
     pushBuddy(`✓ ${item.title}`, { move: false })
   }
 
   const posStyle = spotStyle(spot) || spotStyle(defaultBuddySpot('fab'))
-  const xp = xpProgress(game.xp || 0)
-  const badgeList = (game.badges || [])
-    .map((id) => BADGES[id])
-    .filter(Boolean)
-    .slice(-6)
-
   const PROCESS_STEMS = [
     ['research', 'Res'],
     ['define', 'Str'],
@@ -895,7 +842,7 @@ export default function BuddyMate({
         type="button"
         className={`buddy-fab buddy-float buddy-studio-fab${
           hyper === 'hard' || hyper === 'strong' || hasUnread ? ' is-alert' : ''
-        }${levelBurst ? ' is-levelup' : ''}${
+        }${
           hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''
         }${hasUnread ? ' has-unread' : ''}`}
         style={posStyle}
@@ -904,9 +851,7 @@ export default function BuddyMate({
           e.stopPropagation()
           openPanel()
         }}
-        aria-label={`Open Helper${
-          showProgress ? `, band ${xp.level}` : ''
-        }${hasUnread ? ', new message' : ''}`}
+        aria-label={`Open Helper${hasUnread ? ', new message' : ''}`}
         title={hasUnread ? 'New tip' : 'Helper'}
       >
         <HelperCharacterLottie
@@ -917,9 +862,6 @@ export default function BuddyMate({
           shape="circle"
           fallbackSrc={HELPER_FALLBACK}
         />
-        {showProgress && (
-          <span className="buddy-fab-level">{xp.level}</span>
-        )}
         {(overdue.length > 0 ||
           hyper === 'hard' ||
           hyper === 'strong' ||
@@ -948,8 +890,8 @@ export default function BuddyMate({
       className={`buddy-shell buddy-float is-compact-dock buddy-studio${
         isFocusRunning ? ' is-focus' : ''
       }${hyper === 'hard' || hyper === 'strong' ? ' is-hyper' : ''}${
-        levelBurst ? ' is-levelup' : ''
-      }${hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''}`}
+        hop > 0 && !reduceMotion ? ' buddy-hop-in' : ''
+      }`}
       style={posStyle}
       key={`panel-${spot?.id || 'br'}-${hop}`}
       role="complementary"
@@ -973,9 +915,6 @@ export default function BuddyMate({
               <div className="buddy-compact-titles">
                 <div className="buddy-compact-name-row">
                   <strong className="bf-name">Helper</strong>
-                  {showProgress && (
-                    <span className="buddy-compact-lv">{xp.level}</span>
-                  )}
                   <span
                     className={`helper-ai-badge is-${
                       aiStatus.observed === 'failing' ? 'degraded' : aiStatus.mode
@@ -1016,27 +955,6 @@ export default function BuddyMate({
               </button>
             </div>
           </header>
-
-          {showProgress && (
-            <div
-              className="buddy-compact-xp"
-              aria-label={`Band ${xp.level}`}
-              title={gameSummaryLine(game)}
-            >
-              <div className="buddy-xp-bar">
-                <div
-                  className="buddy-xp-fill"
-                  style={{ width: `${xp.percent}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          {showProgress && levelBurst && (
-            <p className="buddy-levelup-banner bf-levelup" role="status">
-              Band {xp.level}
-            </p>
-          )}
 
           {(hyper === 'strong' || hyper === 'hard') && (
             <div className={`buddy-hyper-banner bf-hyper level-${hyper}`}>
@@ -1351,20 +1269,6 @@ export default function BuddyMate({
                   Progress
                 </button>
               </div>
-
-              {showProgress && badgeList.length > 0 && (
-                <div className="buddy-badges" aria-label="Marks">
-                  {badgeList.map((b) => (
-                    <span
-                      key={b.id}
-                      className="buddy-badge"
-                      title={b.name}
-                    >
-                      {b.icon}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
           )}
         </div>

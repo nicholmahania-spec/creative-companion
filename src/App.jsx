@@ -38,7 +38,6 @@ const BuddyMate = lazy(() => import('./features/helper/BuddyMate'))
 const ForcedBreakOverlay = lazy(() => import('./features/helper/ForcedBreakOverlay'))
 const BrandArtboard = lazy(() => import('./components/BrandArtboard'))
 const TaskBreakdown = lazy(() => import('./features/breakdown/TaskBreakdown'))
-const GameHUD = lazy(() => import('./features/helper/GameHUD'))
 import {
   breakMinutesForWork,
   POMODORO_WORK_MIN,
@@ -57,7 +56,6 @@ import {
   tickForcedBreak,
   focusPathGapField,
 } from './lib/helper/sessionResume'
-import { awardAndBroadcast } from './lib/helper/buddyGame'
 import {
   JOURNEY_STEPS,
   PATH_STEP_COUNT,
@@ -536,7 +534,6 @@ function App() {
   const reduceMotion = prefs.reduceMotion ?? osReduceMotion
   /** Pomodoro desk lock — default on; user can disable */
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
-  const showProgress = !!prefs.showProgress
   /* One value governs every client-facing surface. Empty is the normal
      state: the footer then reads project name and date. */
   const studioName = String(prefs.studioName || '').trim()
@@ -916,24 +913,19 @@ function App() {
   /** Micro feedback — only when user enables “All toasts” */
   const flashMicro = (msg) => flashToast(msg, { micro: true })
 
-  /** Award progress in background; only append band points when strip is on */
-  const notifyAction = (baseMsg, action, meta = {}) => {
-    let g = null
-    if (action) {
-      try {
-        g = awardAndBroadcast(action, meta)
-      } catch {
-        g = null
-      }
-    }
-    if (showProgress && g?.levelUp) {
-      flashToast(`${baseMsg} · band ${g.newLevel}`)
-    } else if (showProgress && g?.gained) {
-      flashToast(`${baseMsg} · +${g.gained}`)
-    } else {
-      flashToast(baseMsg)
-    }
-    return g
+  /**
+   * Say what happened, once.
+   *
+   * This used to award XP as a side effect and append "· +12" or "· band 4"
+   * to the message. The `action` and `meta` arguments are still accepted
+   * because ~30 call sites pass them and they read as documentation of what
+   * just happened — but nothing accumulates now. PRODUCT.md §21 bans XP,
+   * levels and streaks, and the ledger did nothing for task initiation that
+   * this toast does not already do.
+   */
+  const notifyAction = (baseMsg) => {
+    flashToast(baseMsg)
+    return null
   }
 
 
@@ -944,10 +936,6 @@ function App() {
     toggleTask(doneId)
     setStepDueOpen(false)
     setBuddyWinPulse((n) => n + 1)
-    // Quiet complete: award silently if progress bar on; never lead with XP
-    if (showProgress) {
-      awardAndBroadcast('step_complete', { label: 'Step done' })
-    }
     offerUndo(doneTitle, () => {
       toggleTask(doneId)
       setStepFocusKey((k) => k + 1)
@@ -1389,14 +1377,6 @@ function App() {
     const isFallback = String(item.id).startsWith('_')
     if (!isFallback) {
       completeBreakKitItem(item.id)
-      awardAndBroadcast('break_kit', { label: item.title })
-    } else {
-      // Generic body fallbacks still count as tiny care XP
-      if (item.id === '_water') {
-        awardAndBroadcast('water', { label: 'Break water' })
-      } else {
-        awardAndBroadcast('break_kit', { label: item.title })
-      }
     }
     setForcedBreak((fb) => {
       if (!fb) return null
@@ -1419,8 +1399,6 @@ function App() {
     setFocusLeft(POMODORO_WORK_MIN * 60)
     setSessionComplete(false)
     if (!emergency) {
-      awardAndBroadcast('break_complete', { label: 'Pomodoro break' })
-      awardAndBroadcast('pomodoro_work', { label: 'Focus cycle' })
     }
     if (resume) {
       setActiveView(resume)
@@ -2379,7 +2357,6 @@ function App() {
     const pack = buildCurrentBrandPack()
     const slug = slugifyFilename(pack.projectName, 'brand-pack')
     const finishOk = (label) => {
-      awardAndBroadcast('export_pack', { label })
       const when = new Date().toLocaleTimeString([], {
         hour: 'numeric',
         minute: '2-digit',
@@ -2613,7 +2590,6 @@ function App() {
             ? printElementById(el.id)
             : { ok: false, error: 'Nothing to print yet' }
           if (r.ok) {
-            awardAndBroadcast('export_pack', { label: 'Print / PDF' })
             const when = new Date().toLocaleTimeString([], {
               hour: 'numeric',
               minute: '2-digit',
@@ -2667,9 +2643,6 @@ function App() {
     setDoneOpen(false)
     setActiveView('flow')
     setStepFocusKey((k) => k + 1)
-    awardAndBroadcast('breakdown', {
-      label: `${n} micro-steps`,
-    })
     flashToast(
       n === 1
         ? 'One tiny step is ready — do only that one'
@@ -3377,11 +3350,6 @@ function App() {
           shipped as its own shape. If activity is wanted later, the honest
           source is already on hand: workLog, tasks and projects hold real
           history that no table needs to be invented for. */}
-      {showProgress && (
-        <Suspense fallback={null}>
-          <GameHUD />
-        </Suspense>
-      )}
       <nav
         className={`journey-sidebar${journeyActive ? '' : ' is-tools'}`}
         aria-label="Your path in Creative Companion"
@@ -3894,7 +3862,6 @@ function App() {
           reduceMotion={reduceMotion}
           soundEnabled={soundEnabled}
           showHowItWorks={showHowItWorks}
-          showProgress={showProgress}
           queueCollapsed={queueCollapsed}
           pwCurrent={pwCurrent}
           setPwCurrent={setPwCurrent}
@@ -4537,7 +4504,6 @@ function App() {
           nextTaskTitle={nextTask?.title || ''}
           reduceMotion={reduceMotion}
           pulseWin={buddyWinPulse}
-          showProgress={showProgress}
           helperQuiet={!!prefs.helperQuiet}
           forceBreakCare={
             !!(helperBreakCare.open || forcedBreak)

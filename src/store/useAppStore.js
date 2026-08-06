@@ -399,8 +399,6 @@ export function blankWorkspaceState() {
       forceBreaksConsented: false,
       queueCollapsed: true,
       showHowItWorks: false,
-      /** Optional quiet progress strip — off by default (Tech-Studio) */
-      showProgress: false,
       /** ADHD: no timed Helper pings — open Helper for Coach */
       helperQuiet: true,
       /**

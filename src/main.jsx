@@ -9,6 +9,17 @@ import { routePath } from './lib/appPaths'
 import './index.css'
 import { versionLabel, APP_BUILD_DATE } from './lib/version'
 
+/* The XP ledger is gone (PRODUCT.md §21 bans XP, levels and streaks) and its
+   key would otherwise sit in localStorage forever, holding a day streak that
+   nothing reads. Removed rather than left orphaned: the streak is the one
+   mechanic here that punished a day away from the desk, and leaving the
+   number on disk keeps open the possibility of something surfacing it later. */
+try {
+  localStorage.removeItem('cc-buddy-game-v1')
+} catch {
+  /* Private mode or a blocked store — nothing to clean up in either case. */
+}
+
 /** Public client-fill link (/f/:shareId) — no auth, no app shell. Checked
  *  before anything else boots so a client never needs an account.
  *  routePath() strips the deploy base ('/creative-companion/' on GitHub

@@ -193,7 +193,6 @@ export default function MainOutlet(p) {
     reduceMotion,
     soundEnabled,
     showHowItWorks,
-    showProgress,
     queueCollapsed,
     pwCurrent,
     setPwCurrent,
