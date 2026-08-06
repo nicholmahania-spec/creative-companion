@@ -19,6 +19,7 @@ import {
   submitClientPortalForm,
   submitClientPortalSurvey,
 } from '../../lib/client/clientPortal'
+import { brandRevealUrl } from '../../lib/client/brandDelivery'
 import { SURVEY_SCALE } from '../../lib/client/clientSurvey'
 import '../../styles/lazy-clients.css'
 import '../../styles/lazy-define.css'
@@ -314,6 +315,20 @@ export default function PublicClientPortal({ portalId }) {
           Here's what's ready for you to look at. Approve a step, or leave a note if you'd
           like something changed.
         </p>
+
+        {/* The finished brand book, once it has been sent. First thing on the
+            page, because it is the thing they came back for — and a link out
+            to /d/ rather than the book inline: the reveal is its own page, and
+            burying it under the approval admin is what that page exists to
+            avoid. */}
+        {portal.deliveryStatus === 'delivered' && (
+          <div className="client-portal-delivery">
+            <h2 className="client-portal-subhead">Your brand book is ready</h2>
+            <a className="btn btn-primary" href={brandRevealUrl(portalId)}>
+              Open it
+            </a>
+          </div>
+        )}
 
         {visibleSteps.length === 0 ? (
           <p className="public-fill-status">

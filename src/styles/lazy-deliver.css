@@ -151,7 +151,7 @@
   .assets-studio.deliver-studio.pack-view {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(22rem, 32rem);
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto;
     column-gap: var(--space-6);
     row-gap: var(--space-4);
     align-items: start;
@@ -162,7 +162,11 @@
     margin-bottom: 0;
   }
 
-  /* DOM order: top → ship → preview → secondary → footer */
+  /* DOM order: top → ship → send-to-client → preview → secondary → footer.
+     Every child is placed explicitly, because an unplaced one auto-flows to
+     the bottom of the left column — which is where "Send it to your client"
+     landed on its first run, below Extras and Leave, a screen and a half away
+     from the ship ticket it belongs to. */
   .assets-studio > .assets-ship {
     grid-column: 2;
     grid-row: 2;
@@ -170,9 +174,17 @@
     max-width: none;
   }
 
+  /* The other half of shipping, directly under the ship ticket. */
+  .assets-studio > .deliver-send {
+    grid-column: 2;
+    grid-row: 3;
+    margin: 0;
+    max-width: none;
+  }
+
   .assets-studio > .assets-preview-panel {
     grid-column: 1;
-    grid-row: 2 / span 2;
+    grid-row: 2 / span 3;
     margin: 0;
     max-width: none;
     width: 100%;
@@ -180,7 +192,7 @@
 
   .assets-studio > .assets-secondary {
     grid-column: 2;
-    grid-row: 3;
+    grid-row: 4;
     margin: 0;
     max-width: none;
   }
@@ -928,4 +940,44 @@
 /* The way out of a failed export, beside the note that reports it. */
 .pack-export-retry {
   margin-left: var(--space-2);
+}
+
+/* ── Send it to your client ───────────────────────────────────────────────
+   The delivery moment's studio half. Sits between the ship ticket and the
+   book preview, so it reads as the other way of shipping rather than as a
+   settings block. Semantic tokens only — nothing here introduces a colour
+   that would need its own dark-mode story. */
+.deliver-send {
+  margin: var(--space-6) 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle, #E7E7E7);
+}
+
+.deliver-send .panel-hint {
+  max-width: 65ch;
+}
+
+.deliver-send .field-block {
+  margin-bottom: var(--space-4);
+}
+
+/* What the client wrote back, given the weight of a quote rather than of a
+   log line. This is the sentence a designer reuses in their own marketing. */
+.deliver-reaction {
+  margin: var(--space-4) 0;
+  padding: var(--space-4) var(--space-5);
+  border-left: 0.25rem solid var(--accent-primary, #5B42F3);
+  background: var(--bg-muted, #F4F4F4);
+  max-width: 65ch;
+}
+
+.deliver-reaction p {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-3);
+  line-height: 1.6;
+}
+
+.deliver-reaction footer {
+  color: var(--text-secondary);
+  font-size: var(--fs-2);
 }

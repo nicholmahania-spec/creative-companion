@@ -13,6 +13,7 @@ import { JOURNEY_STEPS } from '../../lib/journey/journey'
 import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../../lib/brief/detectiveBrief'
 import { downloadProjectOverviewPdf } from '../../lib/book/exportFiles'
 import { groupMessagesByDay } from '../../lib/client/messageDayLabel'
+import { copyText } from '../../lib/client/copyText'
 import { ocrOverviewForm, ocrOverviewPdf, readOverviewPdfForm } from '../../lib/overviewOcr'
 import {
   clientPortalUrl,
@@ -37,19 +38,6 @@ import '../../styles/lazy-clients.css'
 
 const ALL_FIELDS = DETECTIVE_CHAPTERS.flatMap((c) => c.fields)
 const fieldLabel = (id) => ALL_FIELDS.find((f) => f.id === id)?.label || id
-
-/** Clipboard writes fail silently in non-secure contexts and on permission
- *  denial. Reporting "copied" when nothing was copied is worse than saying
- *  nothing — the user pastes stale content into a client email. */
-async function copyText(text) {
-  try {
-    if (!navigator.clipboard?.writeText) return false
-    await navigator.clipboard.writeText(text)
-    return true
-  } catch {
-    return false
-  }
-}
 
 export function ProjectOverviewSharePanel({
   open,
