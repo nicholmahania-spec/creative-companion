@@ -109,6 +109,8 @@ wrong first hypothesis on this very suite.
 
 ## Phase 1a — The walking skeleton
 
+**Status 2026-08-05: DONE — shipped in #130.**
+
 Split out of Phase 1 after review. The original Phase 1 bundled a table, RLS,
 an audit, bidirectional background sync, a conflict rule and a four-state
 indicator — and delivered no product function. Cockburn's walking skeleton is
@@ -140,6 +142,9 @@ workspace rows.
 ---
 
 ## Phase 1b — Real sync
+
+**Status 2026-08-05: DONE — shipped in #130 alongside 1a.** The conflict rule
+is still unstated; see *Open, not yet decided*.
 
 Only after 1a is green. May be re-ordered after Phase 4 on the strength of
 what 1a measures.
@@ -185,6 +190,19 @@ the one that least needs any of this machinery.
 ---
 
 ## Phase 2 — The 10-stage journey
+
+**Status 2026-08-05: I MARKED THIS DONE AND IT WAS NOT.** Retracted 2026-08-06
+— see the correction at the end of this section, which is right and this line
+was wrong.
+
+What I actually verified was that `#131` shipped modular project types: the
+stops a project shows are derived from what is being built, so a logo-only job
+walks a shorter path. That is real and useful, and it is NOT the ten-stage
+redeclaration this phase asks for. I read the commit title, matched it to the
+phase number, and wrote DONE against work that had not been done.
+
+This is the third stale status block in this file to send a reader at the
+wrong thing, and this one I added while explicitly fixing the other two.
 
 **In scope**
 - Redeclare the stops in `src/lib/journey/journey.js` as the spec's ten:
@@ -246,6 +264,8 @@ Never show all ten as an unfinished list; show where you are and what is next.
 
 ## Phase 3 — Decision memory, with bars
 
+**Status 2026-08-05: DONE — shipped in #132.** Five bars, never one score.
+
 **In scope**
 - `strategy_attributes`, `brand_tokens`, `decisions` in Supabase, with RLS,
   audited before use.
@@ -271,6 +291,8 @@ feel useless in practice, that is a real finding and cheap to learn here.
 ---
 
 ## Phase 4 — Prove the loop
+
+**Status 2026-08-05: DONE — shipped in #133.**
 
 The spec's own advice, and the point of everything above: *"prove that a
 decision made in Strategy visibly and usefully shows up again in Typography
@@ -356,6 +378,238 @@ photographic mockup and one outlined logo — run through it, and the
 false-positive rate is judged acceptable against your own eye.
 
 **Risk: medium.** A checker that cries wolf is worse than none for this user.
+
+### Status 2026-08-06: the colour half is DONE and measured (#137 + this)
+
+**The acceptance run.** Six real client files — five CMYK print PDFs and one
+11-artboard Illustrator logo — rendered page by page and sampled through the
+production path (160px longest edge, smoothing off), giving **22 real
+renderings**. Three of those are honestly reported unreadable: they are blank
+artboards, and the checker says so rather than calling them clean.
+
+| test | what it checks | result |
+|---|---|---|
+| A | one brand's artwork vs the palette **typed from its own brand guide** (`#ED1C24` / `#32C1D6`) | **0 findings / 9** |
+| B | the same artwork vs a palette **calibrated through the same renderer** | **0 findings / 9** |
+| C | every page of a piece vs that document's own colours | **0 / 16 — and worthless, see below** |
+| D | every piece vs a **different project's** palette — these *should* fire | **68 fired / 68 that can fire** |
+
+**The honest headline: 0 false alarms on one brand's correct work, and every
+check that could fire, did.**
+
+### What an adversarial pass took off that headline
+
+The first version of this section claimed *"0 false positives in 34 checks,
+89% detection"*. Both halves were overstated and the correction is recorded
+rather than edited away, because the inflated version is the one a reader
+would otherwise trust.
+
+- **Test C cannot fail.** It builds each palette out of the very colours it
+  then checks — deduped at ΔE00 < 5, compared at > 15. Swept across
+  thresholds it fires zero at anything above 3. So 16 of the 34 "checks"
+  carried no information, and the real false-positive evidence is A and B:
+  **nine renderings of ONE brand**, measured twice.
+- **The sample is pseudoreplicated.** 22 renderings hold only **18 distinct
+  colour payloads**; three pages of one document are byte-identical. Test A's
+  "n=9" is one brand sheet plus eight artboards of one logo — n=1 brand, and
+  the same two inks nine times. (Hurlbert 1984 is the canonical statement of
+  this error: inference where "replicates are not statistically independent".)
+- **The "8 misses" were 2 renderings, not 8 failures.** Each was checked
+  against four foreign palettes. Both are *structurally mute* — their
+  strongest colour covers 2.3% and 7.7%, under the 10% floor — so they cannot
+  fire against any palette at any threshold. Blaming the checker for artwork
+  with no dominant colour was wrong; restricted to what can fire it is 68/68.
+- **The threshold is validated as a BAND, not as 15.** Every value from 12 to
+  15 gives an identical result on this data. Below 12 false alarms appear; at
+  16 detection starts to fall. Choosing 15 inside that band buys headroom
+  against colour-management drift at the cost of a wider blind spot — a
+  judgement, not a measurement.
+- **This is a large-error detector, and should be described as one.** The
+  median distance at which it fires is ~50 ΔE00; anything 5–15 from the
+  nearest brand colour is reported by nothing at all. For scale, ISO 12647-7
+  treats a spot colour as out of tolerance at roughly ΔE00 2.5. That gap is
+  deliberate — the sampler's own noise floor on a JPEG is 4.17 — but it means
+  the realistic professional error, a *slightly* wrong shade, is invisible
+  here.
+
+**The CMYK worry turned out not to matter here, and that is a measured
+result, not an assumption.** Their brand guide prints `#ED1C24`; the same ink
+renders as `#ff2e17`, a drift of ΔE00 6.14 (the cyan drifts 3.07). Test A
+compares across that gap and still fires nothing, because the intruder
+threshold is 15 and the divergence is 6. `calibratedPalette` remains correct
+and remains unused — it solves a problem this pipeline does not have, and the
+mark-upload path takes already-converted raster (PNG/JPEG/WebP/SVG) so it
+never rasterises vector art at all.
+
+**One protocol flaw worth recording**, because it produced the only findings
+in the whole run and they were mine, not the checker's: test C first derived
+each document's palette from its *first readable page*. Artboard 1 of the
+logo is blank and artboard 2 carries only the red, so the cyan — a real brand
+colour — was flagged on six later artboards. A designer's palette holds both.
+Notably the app's response in that situation was still the right one: it
+offered **Add to palette**.
+
+**The frozen run protects less than "acceptance" suggests.** It replays
+stored hex/coverage vectors through `markColourReading`, so it never
+re-executes the sampling stage that produced them. An audit mutated six
+sampling constants and the acceptance tests stayed green for all six. Two of
+those holes are now closed by tests that fail when mutated — bucketing
+(`STEP`, which had no coverage: defeating it entirely left all 175 tests
+passing) and `imageSmoothingEnabled` (an e2e that uploads fine red/teal bands;
+with smoothing on the panel reports `#8e3230` and `#395f59`, colours present
+nowhere in the artwork). `SAMPLE_MAX_EDGE` and `isBackgroundTint` remain
+uncovered.
+
+**The font half is now DONE, on a surface that was there all along.** It read
+as blocked because uploads accept `image/*` and no PDF reaches the app — but
+that reasoning assumed the check needs a PDF. **SVG is an image format**, it
+is in the accepted set, and it is exactly where the distinction lives: live
+type carries `font-family`, outlined type is paths and carries nothing. So
+the case the phase names is answerable today:
+
+| the mark | what the panel says |
+|---|---|
+| SVG, outlined | *"Type here is outlined, so there are no font names to check."* |
+| SVG, live type in a brand face | *"Live text in Brandon Grotesque — your brand typeface."* |
+| SVG, live type outside the brand | *"…which your brand typefaces do not include — it will substitute on a machine without it."* |
+| SVG, live text, no family named | *"…it will render in whatever the viewer has."* |
+| PNG / JPEG / WebP | **nothing** |
+
+Silence on a raster is deliberate and is not the failure the phase warns
+about: a raster carries no type information of any kind, so there is no claim
+being made either way, and repeating "cannot check" on every PNG is the noise
+that teaches a designer to stop reading the panel. Families are compared
+through `cssFamily`, the same extractor the renderer and the missing-font
+warning use, so "Brandon Grotesque" and "Brandon Grotesque Bold" are one
+typeface. Proven in a browser, because the SVG source only survives upload
+while the mark is under the stored-image cap — over it, `downscaleDataUrl`
+rasterises and the type information is gone before any of this sees it.
+
+### The check now reaches real work, and it did not need an Asset Library
+
+**The blocked note was wrong in the same shape as the font one.** It read:
+*"the banner lives on one asset, not an asset library. There is no Asset
+Library in this codebase; the mark is the only brand asset with an upload."*
+That assumed the check needs somewhere to **file** assets. It does not — it
+needs somewhere the deliverables are **already named**, and the Touchpoints
+screen has been exactly that since 2026-08-05: a short list derived from the
+brief (Business card, Social, Print, Signage), one card each, already
+attached to the project. The slot an Asset Library would have made the
+designer create was already on screen.
+
+So the drop target is the row, and there is nothing to categorise, name, tag
+or file. A designer exports a business card from Illustrator and drops the
+PDF on the Business card row; the app reads it and says one sentence.
+
+| what lands on the row | what the card says |
+|---|---|
+| PDF/PNG in the brand colour | *"Uses your Primary."* |
+| PDF carrying an unapproved colour | *"Leans on #1E9E4A, which is not in your palette — your nearest is Primary (#B91C1C)."* |
+| a mono piece | *"Black and white — nothing here to compare against your palette."* |
+| a file that will not open | *"This file didn't open for a colour check."* |
+| anything else | *"Colour check reads PNG, JPEG, WebP, SVG and PDF."* |
+
+**PDF was a door, not a trap, and the reason is measured rather than hoped.**
+`pdfjs-dist` was already dynamically imported twice in `src/`, so reading one
+here adds a lazy chunk and **zero eager bytes** — the perf gate reads 341 KB
+main / 749 KB eager against budgets of 440 / 900, unchanged. And the
+colour-management fear was already answered above: the renderer moves a CMYK
+ink ~6 ΔE00 while the intruder threshold is 15, so the drift is ~40% of the
+distance needed to fire a false alarm. The same headroom that makes this safe
+is why it will never catch a *slightly* wrong colour.
+
+**Nothing of the deliverable is stored.** Only the reading is kept — five
+hexes with their coverages plus the file name — **measured at 128 bytes** for
+a four-page brochure carrying one colour, and bounded by the five-colour cap
+at roughly 300. Asserted under 600 by an e2e that also asserts no `data:`
+ever reaches localStorage. The artwork stays in the designer's own tools,
+which is the product thesis rather than a storage trick; storing it would
+have made this a filing system with two sources of truth. Because the SAMPLE
+is stored rather than the sentence, the reading recomputes against the
+CURRENT palette — change a role colour and every checked piece re-reads
+without re-uploading.
+
+**Both sides of a business card are read.** Up to six pages are sampled
+individually at full sample resolution and merged in ΔE00, averaged over
+readable pages only. Mutating `MAX_PDF_PAGES` to 1 makes a card whose back is
+printed entirely off-brand report *"Uses your #b91c1c"* — a silent miss, and
+the e2e catches it.
+
+**Where the wording deliberately differs from the Mark screen.** On the Mark
+screen a finding means the palette is behind the logo, so it says "isn't in
+your palette **yet**" and offers **Add to palette**. On a finished deliverable
+that runs backwards: the palette was approved weeks ago. Offering to add
+every stray colour would let the brand drift a little wider each time someone
+checked their own work, so the application line carries **no action at all**
+and pins the nearest approved colour instead — the sentence PRODUCT.md §23
+actually asks for.
+
+**A checked file now completes the stop on its own.** `journeyProgress`
+previously required a typed note or a ticked box. A designer who dropped the
+finished card has produced stronger evidence than a sentence; making them
+also write the sentence is the duplicate admin §33 exists to remove.
+
+### The application check, run on real client work 2026-08-06
+
+The generated-PDF tests were a weaker claim than the phase's own bar, so the
+five real client PDFs went through the actual UI path — palette set through
+the screen, file dropped on a Touchpoints row, sentence read off the panel.
+Palette: the two colours printed in Sparrow's Promise's own brand guide,
+`#ED1C24` and `#32C1D6`.
+
+| file | what the panel said |
+|---|---|
+| their own brand sheet | `Uses your #32c1d6.` |
+| table cards *(other client)* | `Leans on #292961 — nearest is #ed1c24` |
+| birth plan *(other client)* | `Leans on #018081 — nearest is #32c1d6` |
+| celebration *(other client)* | `None of your palette colours turn up in this one.` |
+| infographic *(other client)* | `Leans on #24285c, #429592, #18255e and #4f3791` |
+
+**No false alarm on the client's own work; every foreign piece caught.**
+
+**And the run exposed the limit better than any argument had.** Look at row
+one: it names the cyan and says NOTHING about the red — which is 59% of that
+page. Their red renders ΔE00 6.14 from the specified `#ED1C24`: past the band
+that confirms a match (5), far short of the band that reports a stranger
+(15). Neither confirmed nor flagged. Silent.
+
+That gap is not closable at this fidelity — below 15 the sampler's own JPEG
+noise floor is 4.17, so a slightly-wrong colour and a correctly-printed one
+are genuinely indistinguishable. What was not acceptable was a clean sentence
+reading as approval while the check cannot see the most common professional
+error. **The panel now says so, in every result state including the clean
+one:**
+
+> Only catches a colour well away from yours — a near-miss reads the same as
+> a match here.
+
+**What is NOT done, stated plainly rather than quietly rolled up:**
+- **Only surfaces the brief names can be checked.** A deliverable that is not
+  on the Touchpoints list has nowhere to land. That is the deliberate trade:
+  the surface costs zero filing precisely because it does not accept
+  arbitrary files. One tap adds a missing surface (`.touchpoints-quick`), and
+  an Asset Library — if it is ever built — inherits the check unchanged.
+- **The white paper fill under a rendered PDF page is uncovered by any test.**
+  Coverage is measured against ink pixels rather than the whole image, so
+  deleting the `fillRect` leaves every test green. It is kept because it makes
+  `substrateShare` mean what its name says, and it is recorded here rather
+  than described in the code as load-bearing.
+- **`SAMPLE_MAX_EDGE` and `isBackgroundTint` are still uncovered** by the
+  mutation-resistant tests, unchanged from the audit above.
+- **No new real-client acceptance run.** The six client files were replayed
+  through the frozen fixture, not through this new path. The evidence that a
+  PDF renders and samples correctly is the generated-fixture e2e, which is a
+  weaker claim than "twenty real assets" and should not be read as more.
+- ~~No photographic mockup was in the sample.~~ **Wrong, and checkable:**
+  reading the operator lists of the real files shows **11 of the 22
+  renderings carry embedded raster images**. Photography was half the sample.
+  The real gap was that A and B — the only false-positive tests — run on the
+  two files with no embedded images. Now measured by leave-one-out across the
+  photographic documents (palette from one page, a *different* page checked
+  against it): **1 finding in 18 checks**, and the one is a darker navy
+  flagged against a palette derived from a page that held only the brighter
+  blue. Same brand, same document — the palette was incomplete, not the
+  artwork.
 
 ---
 
@@ -474,8 +728,17 @@ flip.
 
 **Risk: low.** Mostly a route and a transition.
 
-**Status 2026-08-06: built. Migration not yet applied to the live project —
-see "What has not been observed" below.**
+**Status 2026-08-06: built, and the migration IS applied.** This header used
+to read "migration not yet applied" while the gate table lower down in this
+same section already recorded it as applied — the section contradicted itself.
+Re-verified against `shzkqbtoepqqdkjgupry` before correcting: `delivery_moment`
+(`20260806015944`) is in the migration list, all seven `delivery_*` columns
+exist on `client_portals` with `delivery_status` NOT NULL defaulting to
+`not_delivered`, and all three RPCs — `get_brand_delivery`,
+`mark_brand_delivery_viewed`, `submit_brand_delivery_reaction` — exist as
+`SECURITY DEFINER`.
+
+What has NOT been observed is still the path through the actual UI; see below.
 
 What shipped:
 
@@ -544,13 +807,40 @@ password protection is off in Auth.
 
 ---
 
+## Decided
+
+- **Business model / portal chrome** (spec §6), owner's call 2026-08-06:
+  **the client-facing side carries the designer's own studio branding, which
+  they will add themselves when ready. Not "Powered by".**
+
+  Two consequences, neither built yet:
+
+  1. There must be somewhere to put a studio name and mark, and every
+     client-facing surface — portal, brand book, artboard, exports — has to
+     read it from that one place.
+  2. It has to look finished with nothing set. A designer who has not added
+     their branding yet is the normal state, not an error state, so the
+     absence must read as clean rather than as a gap waiting to be filled.
+
+  **A default needs flipping and has deliberately not been flipped yet.**
+  `prefs.hidePackWatermark` defaults to `false`, so client-facing output
+  currently carries a "Creative Companion" credit unless the designer finds
+  the toggle in Deliver. That contradicts the decision above. It changes what
+  goes out to real clients, so it is left for the owner to confirm rather
+  than changed quietly.
+
 ## Open, not yet decided
 
-- **Business model** (spec §6). Decide before the portal's visual chrome is
-  built, since it determines whether the portal carries "Powered by".
 - **Whether the six drifted views should share a heading class** —
   `home-dash-title`, `login-h1`, `clients-view-title`, `client-record-name`,
   `create-title`, `bbb-panel__title`. A design-system call, deliberately not
   forced by a test selector.
-- **Conflict rule for sync** (Phase 1b). Needs stating explicitly before it is
-  implemented.
+- ~~**Conflict rule for sync** (Phase 1b). Needs stating explicitly before it
+  is implemented.~~ **Resolved — it was already stated and this entry was
+  stale.** `src/services/syncEngine.js:5` declares it: *"The desk wins. The
+  version in front of the designer is never yanked away by a background
+  process; when both sides changed, the local version becomes the truth and
+  the cloud version is written to `project_conflicts` FIRST — durably — and
+  only then overwritten."* The reasoning is there too: newest-wins would need
+  trustworthy edit timestamps on both sides, and the local store does not
+  timestamp edits.

@@ -257,6 +257,7 @@ export default function MainOutlet(p) {
         setActiveView={setActiveView}
         flashToast={flashToast}
         flashMicro={flashMicro}
+        offerUndo={offerUndo}
         notifyAction={notifyAction}
         quickInput={quickInput}
         setQuickInput={setQuickInput}

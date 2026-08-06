@@ -2,7 +2,15 @@
  * Sketch — fold owns the step; capture secondary; queue/done collapsed.
  * Tech-Studio ADHD: one primary (Done), sticky Next, focus isolation.
  */
-import { Suspense, lazy, useState, useRef, useEffect } from 'react'
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+} from 'react'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/journey/processGuide'
@@ -15,6 +23,12 @@ import {
 } from '../lib/decisionLog'
 import LayoutPatterns from '../components/LayoutPatterns'
 import TouchpointMockThumb from '../components/TouchpointMockThumb'
+import ApplicationCheck from '../features/brand/ApplicationCheck'
+import {
+  BRAND_ROLE_KEYS,
+  BRAND_ROLE_LABELS,
+  paletteIsUntouched,
+} from '../lib/color'
 import {
   touchpointsFor,
   touchpointLabel,
@@ -108,6 +122,7 @@ export default function SketchView(props) {
     setActiveView,
     flashToast,
     flashMicro,
+    offerUndo,
     notifyAction,
     quickInput = '',
     setQuickInput,
@@ -187,6 +202,35 @@ export default function SketchView(props) {
       [id]: { ...(prev[id] || {}), ...patch },
     })
   }
+
+  /* THE PALETTE THE DESIGNER ACTUALLY CHOSE, which is not the same as "the
+     palette". Every project is created carrying DEFAULT_PALETTE's four stone
+     values and App.jsx substitutes them again when a project has none, so
+     `palette.length` is never 0 and an untouched project looks identical to a
+     decided one. Checking a business card against four colours nobody picked
+     reports the designer's own correct work as off-brand — verified on the
+     Mark screen before this guard existed there, and the same trap is one
+     line away here. */
+  const checkPalette = useMemo(() => {
+    const chosen =
+      Array.isArray(projectPalette) && projectPalette.length
+        ? projectPalette
+        : activeProject?.palette || []
+    return paletteIsUntouched(chosen) ? [] : chosen
+  }, [projectPalette, activeProject?.palette])
+
+  const roleLabelForHex = useCallback(
+    (hex) => {
+      const want = String(hex || '').toLowerCase()
+      if (!want) return null
+      const key = BRAND_ROLE_KEYS.find(
+        (k) =>
+          String(activeProject?.colorRoles?.[k] || '').toLowerCase() === want
+      )
+      return key ? BRAND_ROLE_LABELS[key] : null
+    },
+    [activeProject?.colorRoles]
+  )
 
   const addQuickSurface = (id) => {
     const prev = Array.isArray(touchpointSurfaces) ? [...touchpointSurfaces] : []
@@ -797,6 +841,36 @@ export default function SketchView(props) {
                           setTouchpointApp(id, { note: e.target.value })
                         }
                         placeholder={touchpointCheckHint(id)}
+                      />
+                      {/* ── The finished piece, checked ────────────────────
+                          Phase 6 recorded this half as structurally blocked:
+                          "the banner lives on one asset, not an asset
+                          library". The blocked reasoning assumed the check
+                          needs somewhere to FILE assets. It does not — it
+                          needs somewhere the deliverables are already named,
+                          and this list is exactly that, derived from the
+                          brief. A business card exported from Illustrator
+                          lands on the Business card row because that is the
+                          row the designer is standing on. */}
+                      <ApplicationCheck
+                        check={row.check || null}
+                        palette={checkPalette}
+                        labelFor={roleLabelForHex}
+                        label={touchpointLabel(id).toLowerCase()}
+                        onChecked={(check) => {
+                          setTouchpointApp(id, { check })
+                          flashMicro?.(`${touchpointLabel(id)} · colours read`)
+                        }}
+                        onClear={() => {
+                          const before = row.check
+                          setTouchpointApp(id, { check: null })
+                          /* Undo, not a confirmation dialog. A dialog is a
+                             decision; undo is not — and the reading cost a
+                             file-picker trip to produce. */
+                          offerUndo?.('Check cleared', () =>
+                            setTouchpointApp(id, { check: before })
+                          )
+                        }}
                       />
                     </div>
                   </div>

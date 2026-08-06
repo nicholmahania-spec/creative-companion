@@ -13,7 +13,7 @@ import {
   paletteCoverage,
   rgbToHex,
 } from './dominantColour.js'
-import { hexToRgb } from './deltaE.js'
+import { deltaE00Hex, hexToRgb } from './deltaE.js'
 
 /** Build RGBA pixel data from a list of [hex, count] pairs. */
 function pixels(spec, { alpha = 255 } = {}) {
@@ -154,6 +154,48 @@ describe('quantisation survives compression', () => {
     const { colours } = dominantColours(new Uint8ClampedArray(smear))
     expect(colours).toHaveLength(1)
     expect(colours[0].coverage).toBeCloseTo(1, 5)
+  })
+
+  it('survives a smear too wide for near-duplicate merging to rescue', () => {
+    /* The test above passes even with bucketing switched OFF, and an audit
+       proved it: setting STEP to 1 left all 175 tests green. Its smear has
+       only five distinct values, so `mergeNearDuplicates` folds them back
+       together afterwards and the bucketing never mattered.
+
+       A real photographic smear has hundreds of values, and the ORDER of
+       operations is what makes bucketing load-bearing: the coverage floor is
+       applied BEFORE merging, so without buckets every one of those hundreds
+       is individually too small to survive and there is nothing left to
+       merge. The checker would then go silent on exactly the assets it
+       exists to read — and silence here reads as "clean".
+
+       Deterministic jitter, no Math.random: the same input every run. */
+    const base = hexToRgb('#1B4C7E')
+    const wide = []
+    let seed = 7
+    const next = () => {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff
+      return seed
+    }
+    const jitter = () => (next() % 25) - 12
+    for (let i = 0; i < 6000; i++) {
+      wide.push(
+        base.r + jitter(),
+        base.g + jitter(),
+        base.b + jitter(),
+        255
+      )
+    }
+    const { colours, readable } = dominantColours(new Uint8ClampedArray(wide))
+    expect(readable, 'a smeared flat colour must still be readable').toBe(true)
+    expect(colours.length).toBeGreaterThan(0)
+    // And what comes back is still that colour, not a drifted average.
+    expect(deltaE00Hex(colours[0].hex, '#1B4C7E')).toBeLessThan(3)
+    /* 0.49 measured: a ±12 smear straddles two 24-wide buckets, so the
+       leading one holds just under half. The point is that it CLEARS THE
+       FLOOR at all — with bucketing off, every value is individually far
+       below it and nothing survives to be merged. */
+    expect(colours[0].coverage).toBeGreaterThan(0.4)
   })
 })
 
