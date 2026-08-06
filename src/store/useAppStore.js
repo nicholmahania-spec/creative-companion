@@ -240,6 +240,18 @@ export function brandIdentityDefaults() {
   touchpointApps: {},
   /** Why the chosen type pair fits the Define brand words */
   typeWhy: '',
+  /* Typography as INFORMATION. A commercial font licence almost never lets
+     the designer hand the files on, so the package documents the faces and
+     only ships files when `fontFilesLicensed` says the licence allows it —
+     see lib/deliver/packagePlan.js. Blank is the honest default: the sheet
+     prints "not recorded" rather than inventing terms. */
+  typeSource: '',
+  typeLicenceNote: '',
+  fontFilesLicensed: false,
+  /* Finished work made elsewhere and brought in for the client package —
+     [{ id, name, dataUrl, group, item, variant, rights, addedAt }]. `rights`
+     decides whether it may be handed over at all (USAGE_RIGHTS). */
+  packageAssets: [],
   /** data URL mark for pack cover */
   logoImage: '',
   /**
@@ -302,6 +314,18 @@ export function brandIdentityDefaults() {
   learnings: '',
   /** Deliver: per brand-word confirmation that the final piece delivers on it */
   deliverWordsChecked: {},
+  /* Ideas that are not ready and must not become work. A thought with
+     nowhere to go either gets forced into the workflow as a task — where it
+     is now a thing you are failing to do — or it is lost. The parking lot is
+     the third option, and nothing in the app ever nags about its contents.
+     [{ id, text, at }] */
+  parkingLot: [],
+  /* The designer's own notes. Private by default and structurally private:
+     buildBrandPackSnapshot copies named fields only, so this cannot reach a
+     client export, the portal, or the brand book. Somewhere to write "client
+     is attached to the old blue even though it fights the new direction"
+     without it becoming a deliverable. */
+  privateNotes: '',
   /** Define: Design Detective Sheet */
   detective: blankDetective(),
   }
@@ -1098,6 +1122,92 @@ const useAppStore = create(
           projects: state.projects.map((p) => {
             if (p.id !== state.currentProjectId) return p
             return { ...p, contacts: (p.contacts || []).filter((c) => c.id !== id) }
+          }),
+        })),
+
+      /* ── Client package assets ──────────────────────────────────────
+         Finished work made in Illustrator, InDesign, Figma or anywhere else,
+         brought in so the handoff can be assembled in one place. Stored as a
+         data URL like the mark already is.
+
+         `rights` defaults to clientOwned because that is what a piece made
+         for this job is; anything else is a deliberate mark by the designer
+         and holds the file back from the package. */
+      addPackageAsset: (asset = {}) => {
+        const row = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: String(asset.name || 'asset').slice(0, 120),
+          dataUrl: asset.dataUrl || '',
+          group: asset.group || 'application',
+          item: asset.item || asset.name || 'asset',
+          variant: asset.variant || '',
+          rights: asset.rights || 'clientOwned',
+          addedAt: new Date().toISOString(),
+        }
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId
+              ? { ...p, packageAssets: [...(p.packageAssets || []), row] }
+              : p
+          ),
+        }))
+        return row
+      },
+
+      updatePackageAsset: (id, patch = {}) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              packageAssets: (p.packageAssets || []).map((a) =>
+                a.id === id ? { ...a, ...patch, id: a.id } : a
+              ),
+            }
+          }),
+        })),
+
+      removePackageAsset: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              packageAssets: (p.packageAssets || []).filter((a) => a.id !== id),
+            }
+          }),
+        })),
+
+      /* ── Parking lot ────────────────────────────────────────────────
+         Park it, and it stops taking up room. Deliberately NOT a task: no
+         due date, no completion, no counter anywhere that goes up when you
+         add one. The only two operations are park and unpark. */
+      parkIdea: (raw) => {
+        const t = String(raw || '').trim()
+        if (!t) return null
+        const row = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          text: t.slice(0, 400),
+          at: new Date().toISOString(),
+        }
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId
+              ? { ...p, parkingLot: [row, ...(p.parkingLot || [])] }
+              : p
+          ),
+        }))
+        return row
+      },
+
+      unparkIdea: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            return {
+              ...p,
+              parkingLot: (p.parkingLot || []).filter((i) => i.id !== id),
+            }
           }),
         })),
 

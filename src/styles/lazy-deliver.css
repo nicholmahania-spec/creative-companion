@@ -937,6 +937,129 @@
 }
 
 
+/* ── Client package ───────────────────────────────────────────────────────
+   The tree is read, not scanned: monospace names so a client-facing file
+   name is legible as a file name, and the note beside each one says what it
+   is for rather than leaving the reader to infer it from the extension. */
+.package-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.package-count,
+.package-file-note,
+.package-check-missing,
+.package-tick {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.package-subhead {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.package-tree,
+.package-files,
+.package-held-list,
+.package-check-list,
+.package-asset-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.package-tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.package-folder-name {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: var(--fs-2);
+  font-weight: 700;
+}
+
+.package-files {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: var(--space-4);
+  margin-top: var(--space-1);
+}
+
+.package-file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.package-file-name {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: var(--fs-1);
+  word-break: break-all;
+}
+
+.package-held-list,
+.package-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--fs-2);
+}
+
+.package-check-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.package-check-list li.is-ok .package-check-label {
+  color: var(--text-muted);
+}
+
+.package-asset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.package-asset-name {
+  flex: 1 1 12ch;
+  min-width: 0;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.package-rights {
+  flex: 0 1 20ch;
+}
+
+.package-licence-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-2);
+  font-weight: 600;
+}
+
+.package-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
 /* The way out of a failed export, beside the note that reports it. */
 .pack-export-retry {
   margin-left: var(--space-2);
