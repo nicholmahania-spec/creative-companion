@@ -12,15 +12,43 @@
 --
 -- THREE SHAPE DECISIONS, each of which had a cheaper wrong answer:
 --
--- 1. METADATA IS A ROW, THE FILE IS AN OBJECT. Every existing image in this
---    app is a data URL inside the localStorage blob, and the store already
---    ships a "Browser storage is full — changes are NOT being saved" message
---    (useAppStore.js:552) against a 3.5 MB per-image cap (moodPins.js). A
---    print-ready PDF is routinely larger than that entire budget. Putting
---    real deliverables through the same path would not degrade, it would
---    detonate — and the failure lands on the designer as lost work, silently,
---    which is the exact failure mode Phase 1b exists to prevent. Rows here,
---    bytes in Storage, and the row is what syncs.
+-- 1. METADATA IS A ROW, THE FILE IS AN OBJECT — because browser storage is
+--    EVICTABLE, not because it is too small.
+--
+--    That distinction is a correction, and the first version of this header
+--    got it wrong in a way worth preserving as a warning. It argued: every
+--    image in this app is a data URL in the localStorage blob, the store
+--    already ships "Browser storage is full — changes are NOT being saved"
+--    (useAppStore.js:552) against a 3.5 MB cap (moodPins.js), a print-ready
+--    PDF exceeds that whole budget, therefore bytes must live remotely.
+--
+--    The first three clauses are true. The "therefore" does not follow, and a
+--    devil's-advocate pass caught it: that is an argument against
+--    LOCALSTORAGE, and localStorage is not the only local store. IndexedDB
+--    holds Blobs natively with no base64 inflation, and its quota is a share
+--    of free disk — Chrome up to 60% of it — against Web Storage's hard
+--    10 MiB ceiling. A 50 MB PDF fits locally without difficulty. Nothing in
+--    this repo had ever evaluated it; `indexedDB`, `OPFS` and `caches.`
+--    appear nowhere in src/ or the phase docs.
+--
+--    The real reason to keep durable bytes server-side is eviction, not size.
+--    Best-effort browser storage is cleared LRU under disk pressure,
+--    all-or-nothing per origin, and Safari proactively deletes script-created
+--    data for origins unvisited for 7 days. `navigator.storage.persist()`
+--    helps and does not settle it — the user can still clear it at will. A
+--    designer's only copy of a client's deliverable living there is a
+--    data-loss headline waiting to be written.
+--
+--    So: durable copy remote, and — see the note on PHASES.md Phase 1b — a
+--    local cache in front of it, because remote-only reads break the app's
+--    own stated offline guarantee. Rows here, bytes in Storage, cache in
+--    IndexedDB, and the row is what syncs.
+--
+--    Do NOT re-justify this with "To BLOB or Not To BLOB" (Sears/van Ingen/
+--    Gray, MSR-TR-2006-45). It was checked. It compares SQL Server BLOBs to
+--    NTFS in 2006, reports database-wins under ~256 KB, and nobody here
+--    proposed putting bytes in a Postgres column. Citing it would be
+--    cargo-culting an unrelated result into a browser/object-store setting.
 --
 -- 2. VERSIONS ACCUMULATE, THEY DO NOT OVERWRITE. A bridge makes re-pushing
 --    cheap — that is its whole point — so the same artboard will arrive from

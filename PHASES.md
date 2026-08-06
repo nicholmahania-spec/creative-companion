@@ -386,6 +386,50 @@ So the bridge is not the first work here; the destination is. Landed:
 - `src/lib/assets/assetLibrary.js` + 32 tests — vocabulary, storage keys,
   ingest normalisation, version chaining.
 
+**Reviewed by `devils-advocate`, twice — a broad pass over all three calls and
+a deep pass on the storage split. All three schema calls survive. Two things
+it found were real, and one of them was that my own stated reasoning was
+wrong.**
+
+1. **The version chain could fork.** Nothing stopped two rows pointing at the
+   same predecessor, so a forked chain was reachable at the database level —
+   the outcome `findVersionTarget`'s own comment names as the bad one. The
+   client-side guard did not close it: under a fork, `heads[0]` resolves by
+   array order rather than by anything anyone chose. Fixed by
+   `assets_one_successor_idx`, which turns the race into a catchable 23505.
+2. **The rationale for remote bytes was defeated, though the decision stands.**
+   The original header argued against *localStorage* and concluded against
+   *local*. IndexedDB was never evaluated — it appears nowhere in `src/` or
+   these docs — and it holds Blobs natively against a quota that is a share of
+   free disk (Chrome up to 60%) rather than Web Storage's 10 MiB ceiling. A
+   50 MB PDF fits locally without difficulty, so "local can't hold it" was
+   simply false. The real reason is **eviction**: best-effort browser storage
+   is cleared LRU under pressure, all-or-nothing per origin, and Safari drops
+   script-created data after seven days without a visit. Header corrected.
+3. **Remote-only reads broke Phase 1b's own promise** — "the app must still
+   open, read and write projects with no network and no sign-in". A private
+   bucket needs a signed URL, which needs a session and a network, so offline
+   the library would have rendered cards with names, categories and version
+   numbers and no images. Every value resolving except the one the designer
+   opened the panel for, and visually identical to a failed upload. Fixed by
+   `src/lib/assets/assetBytes.js`: an IndexedDB cache keyed on the stable
+   object path, cache-before-network reads, and four honest card states
+   instead of a blank rectangle. Built now because it is free before the UI
+   exists and expensive after.
+
+**Still owed, both from the same review, both deferred deliberately:**
+
+- **Orphaned bytes.** `on delete cascade` drops asset rows and leaves their
+  objects in the bucket — still stored, still billed, still reachable by any
+  signed URL already minted. Sears/van Ingen/Gray name this exact hazard.
+  Needs a reaping path; there is none yet.
+- **Signed-URL caching.** Supabase's Smart CDN docs: the first request with
+  any given signed URL is always a cache miss, and only that exact URL hits
+  afterwards. A grid minting fresh URLs per mount is permanently cold, and an
+  `<img src>` on a signed URL blanks silently once it expires. Needs a
+  memoised URL per object path with refresh-before-expiry — but it belongs
+  with the read path in the UI, which does not exist yet.
+
 **Three calls made here, cheap to reverse now and expensive later:**
 
 1. **The bucket is private**, unlike both existing buckets. Those are
