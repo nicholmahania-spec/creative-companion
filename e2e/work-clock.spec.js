@@ -27,9 +27,13 @@ import {
  * drops anything under a minute as "noise from a page you passed through"
  * (useAppStore logWorkedTime), so observing a single banked segment costs a
  * 60s wait against a 60s per-test timeout. Idle detection is worse — a ten
- * minute threshold. Both are unit-testable against the extracted hook in a
- * way they were not against App.jsx, which is a reason to extract, not a gap
- * this spec can close.
+ * minute threshold. Neither is reachable from App.jsx at any speed, and this
+ * spec cannot close that gap.
+ *
+ * What the extraction did close: sessionLabel's formatting rule is now a pure
+ * exported function with its own unit tests (src/lib/useWorkClock.test.js).
+ * The ticking and banking still need a DOM to test, and the suite runs in
+ * `node` with none, so those stay covered only from here.
  */
 
 const goToStage = async (page, id) => {
