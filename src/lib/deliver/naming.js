@@ -30,7 +30,7 @@ const fold = (s) =>
     .toLowerCase()
     /* Non-ASCII only — the ASCII split below handles the rest, and folding
        the whole string would eat the separators it depends on. */
-    .replace(/[^\u0000-\u007F]/g, (ch) => FOLD[ch] ?? ' ')
+    .replace(/[\u0080-\uFFFF]/g, (ch) => FOLD[ch] ?? ' ')
 
 /**
  * One name part in PascalCase — "Sparrow's Promise" → "SparrowsPromise".

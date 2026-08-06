@@ -353,7 +353,7 @@ export function brandCompleteness({ project = null, moodItems = [], palette } = 
   const groups = COMPLETENESS_GROUPS.filter((g) => groupInScope(g, picked)).map(
     (g) => {
       const rows = g.checks.map((c) => {
-        let ok = false
+        let ok
         try {
           ok = !!c.ok(ctx)
         } catch {
