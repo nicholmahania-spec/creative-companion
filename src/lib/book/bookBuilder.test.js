@@ -48,9 +48,21 @@ describe('bookBuilderFor', () => {
        onto legacy partial saves that never chose a stop. */
     expect(got.grid.margin).toBe(blankBookBuilder().grid.margin)
     expect(got.grid.edge).toBeUndefined()
-    expect(got.grid.show).toBe(true)
+    expect(got.grid.show).toBe(blankBookBuilder().grid.show)
     // Untouched sections still complete.
     expect(got.running.showPageNumbers).toBe(true)
+  })
+
+  it('leaves grid guides off by default', () => {
+    /* Guides draw over interior pages in the exported PDF, so a book handed to
+       a client would carry them unless the designer asked for them. */
+    expect(blankBookBuilder().grid.show).toBe(false)
+    expect(bookBuilderFor(null).grid.show).toBe(false)
+    expect(bookBuilderFor({}).grid.show).toBe(false)
+  })
+
+  it('still honours a saved opt-in', () => {
+    expect(bookBuilderFor({ bookBuilder: { grid: { show: true } } }).grid.show).toBe(true)
   })
 })
 
