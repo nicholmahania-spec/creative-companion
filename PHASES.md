@@ -109,6 +109,8 @@ wrong first hypothesis on this very suite.
 
 ## Phase 1a — The walking skeleton
 
+**Status 2026-08-05: DONE — shipped in #130.**
+
 Split out of Phase 1 after review. The original Phase 1 bundled a table, RLS,
 an audit, bidirectional background sync, a conflict rule and a four-state
 indicator — and delivered no product function. Cockburn's walking skeleton is
@@ -140,6 +142,9 @@ workspace rows.
 ---
 
 ## Phase 1b — Real sync
+
+**Status 2026-08-05: DONE — shipped in #130 alongside 1a.** The conflict rule
+is still unstated; see *Open, not yet decided*.
 
 Only after 1a is green. May be re-ordered after Phase 4 on the strength of
 what 1a measures.
@@ -186,6 +191,10 @@ the one that least needs any of this machinery.
 
 ## Phase 2 — The 10-stage journey
 
+**Status 2026-08-05: DONE — shipped in #131**, and subsumed by modular project
+types: the stops a project shows are derived from what is actually being built,
+so a logo-only job walks a shorter path than a full identity.
+
 **In scope**
 - Redeclare the stops in `src/lib/journey/journey.js` as the spec's ten:
   Client Discovery, Brand Strategy, Creative Direction, Logo Development,
@@ -226,6 +235,8 @@ Never show all ten as an unfinished list; show where you are and what is next.
 
 ## Phase 3 — Decision memory, with bars
 
+**Status 2026-08-05: DONE — shipped in #132.** Five bars, never one score.
+
 **In scope**
 - `strategy_attributes`, `brand_tokens`, `decisions` in Supabase, with RLS,
   audited before use.
@@ -251,6 +262,8 @@ feel useless in practice, that is a real finding and cheap to learn here.
 ---
 
 ## Phase 4 — Prove the loop
+
+**Status 2026-08-05: DONE — shipped in #133.**
 
 The spec's own advice, and the point of everything above: *"prove that a
 decision made in Strategy visibly and usefully shows up again in Typography
@@ -337,6 +350,56 @@ false-positive rate is judged acceptable against your own eye.
 
 **Risk: medium.** A checker that cries wolf is worse than none for this user.
 
+### Status 2026-08-06: the colour half is DONE and measured (#137 + this)
+
+**The acceptance run.** Six real client files — five CMYK print PDFs and one
+11-artboard Illustrator logo — rendered page by page and sampled through the
+production path (160px longest edge, smoothing off), giving **22 real
+renderings**. Three of those are honestly reported unreadable: they are blank
+artboards, and the checker says so rather than calling them clean.
+
+| test | what it checks | result |
+|---|---|---|
+| A | Sparrow's Promise artwork vs the palette **typed from their own brand guide** (`#ED1C24` / `#32C1D6`) | **0 findings / 9** |
+| B | the same artwork vs a palette **calibrated through the same renderer** | **0 findings / 9** |
+| C | every later page of a multi-page piece vs that document's own colours | **0 findings / 16** |
+| D | every piece vs a **different project's** palette — these *should* fire | **68 fired / 76**, 11% miss |
+
+**0 false positives in 34 checks on correct client work, while still catching
+89% of genuinely foreign colour.** That is the bar this phase was gated on.
+
+**The CMYK worry turned out not to matter here, and that is a measured
+result, not an assumption.** Their brand guide prints `#ED1C24`; the same ink
+renders as `#ff2e17`, a drift of ΔE00 6.14 (the cyan drifts 3.07). Test A
+compares across that gap and still fires nothing, because the intruder
+threshold is 15 and the divergence is 6. `calibratedPalette` remains correct
+and remains unused — it solves a problem this pipeline does not have, and the
+mark-upload path takes already-converted raster (PNG/JPEG/WebP/SVG) so it
+never rasterises vector art at all.
+
+**One protocol flaw worth recording**, because it produced the only findings
+in the whole run and they were mine, not the checker's: test C first derived
+each document's palette from its *first readable page*. Artboard 1 of the
+logo is blank and artboard 2 carries only the red, so the cyan — a real brand
+colour — was flagged on six later artboards. A designer's palette holds both.
+Notably the app's response in that situation was still the right one: it
+offered **Add to palette**.
+
+**What is NOT done, stated plainly rather than quietly rolled up:**
+
+- **The font half.** This phase's scope says *"type converted to outlines
+  carries no font name, and that is the normal delivery format for brand
+  work — so silence must not read as 'clean'."* Nothing checks fonts. The
+  surface it would need does not exist either: uploads accept `image/*`, so
+  no PDF ever reaches the app to have its fonts read.
+- **The banner lives on one asset, not an asset library.** There is no Asset
+  Library in this codebase yet; the mark is the only brand asset with an
+  upload. The check is wired there and nowhere else.
+- **No photographic mockup was in the sample.** The acceptance bar names one
+  and the six real files did not include one, so the false-positive rate is
+  unmeasured against photography — the case most likely to produce colour
+  the designer never chose.
+
 ---
 
 ## Phase 7 — Creative tool bridge
@@ -363,10 +426,30 @@ flip.
 
 ---
 
+## Decided
+
+- **Business model / portal chrome** (spec §6), owner's call 2026-08-06:
+  **the client-facing side carries the designer's own studio branding, which
+  they will add themselves when ready. Not "Powered by".**
+
+  Two consequences, neither built yet:
+
+  1. There must be somewhere to put a studio name and mark, and every
+     client-facing surface — portal, brand book, artboard, exports — has to
+     read it from that one place.
+  2. It has to look finished with nothing set. A designer who has not added
+     their branding yet is the normal state, not an error state, so the
+     absence must read as clean rather than as a gap waiting to be filled.
+
+  **A default needs flipping and has deliberately not been flipped yet.**
+  `prefs.hidePackWatermark` defaults to `false`, so client-facing output
+  currently carries a "Creative Companion" credit unless the designer finds
+  the toggle in Deliver. That contradicts the decision above. It changes what
+  goes out to real clients, so it is left for the owner to confirm rather
+  than changed quietly.
+
 ## Open, not yet decided
 
-- **Business model** (spec §6). Decide before the portal's visual chrome is
-  built, since it determines whether the portal carries "Powered by".
 - **Whether the six drifted views should share a heading class** —
   `home-dash-title`, `login-h1`, `clients-view-title`, `client-record-name`,
   `create-title`, `bbb-panel__title`. A design-system call, deliberately not
