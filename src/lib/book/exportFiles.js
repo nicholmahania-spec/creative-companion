@@ -1508,14 +1508,58 @@ function hexToRgb(hex) {
 }
 
 /** Full workspace backup */
-export function downloadWorkspaceBackup(workspace) {
+/**
+ * The workspace backup — the only copy of the designer's work outside one
+ * browser's localStorage, and so the one export that must not lie about
+ * having saved.
+ *
+ * Takes `handlePromise` like every other export. It did not, and that produced
+ * an EMPTY backup file: `runExport` captures a File System Access handle for
+ * every kind including this one, Chrome creates the file the instant the Save
+ * dialog is confirmed, and this function then ignored the handle and did an
+ * anchor download instead. What was left on disk was the picker's 0-byte
+ * placeholder — and because the anchor call returned ok, the app flashed
+ * "Backup saved" over it. Verified in the wild: a 0-byte
+ * creative-companion-backup-2026-08-06.json.
+ *
+ * `downloadBlobReliable` writes through the handle when there is one, falls
+ * back to the anchor when there is not, and reports `cancelled` distinctly —
+ * so a dismissed dialog now reads as cancelled rather than as success.
+ *
+ * @param {object} workspace  the exportAllData() payload
+ * @param {Promise|null} handlePromise  from captureSaveHandle, during the gesture
+ * @returns {Promise<{ok: boolean, error?: string, cancelled?: boolean, method?: string}>}
+ */
+export async function downloadWorkspaceBackup(workspace, handlePromise = null) {
   const day = toISODate()
-  return downloadJson(
-    {
-      ...workspace,
-      exportedAt: workspace?.exportedAt || new Date().toISOString(),
-    },
-    `creative-companion-backup-${day}.json`
+  const payload = {
+    ...workspace,
+    exportedAt: workspace?.exportedAt || new Date().toISOString(),
+  }
+
+  /* Refuse rather than write a backup with nothing in it. A file named like a
+     backup, containing no projects, is worse than no file: it is the thing
+     someone reaches for after losing the original. */
+  if (!Array.isArray(payload.projects) || payload.projects.length === 0) {
+    return {
+      ok: false,
+      error: 'Nothing to back up yet — this workspace has no projects.',
+    }
+  }
+
+  let text
+  try {
+    text = JSON.stringify(payload, null, 2)
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Could not read the workspace' }
+  }
+  if (!text) return { ok: false, error: 'Could not read the workspace' }
+
+  const blob = new Blob([text], { type: 'application/json;charset=utf-8' })
+  return downloadBlobReliable(
+    blob,
+    `creative-companion-backup-${day}.json`,
+    handlePromise
   )
 }
 
