@@ -255,6 +255,13 @@ export function findVersionTarget(assets, { source_app: sourceApp, source_ref: s
   // row, but two pushes racing on a flaky connection can land out of order,
   // and chaining onto a superseded version forks the history into two heads —
   // after which the library shows the same asset twice and neither is wrong.
+  //
+  // This is the first line of defence, NOT the only one, and it is the weaker
+  // one: `assets_one_successor_idx` makes a fork impossible at the database
+  // level. That ordering matters. Picking the head here is a best effort over
+  // whatever this client happens to have loaded; the constraint is what turns
+  // a genuine race into a 23505 the caller can catch and retry against the
+  // new head. Do not read this function as sufficient on its own.
   const heads = currentAssets(matches)
   return heads[0] || null
 }

@@ -141,6 +141,28 @@ create index if not exists assets_replaces_idx
   on public.assets (owner_id, project_id, replaces_id)
   where replaces_id is not null;
 
+-- ONE SUCCESSOR PER VERSION. A chain, not a tree.
+--
+-- Added after a devil's-advocate pass found the hole: without this, two rows
+-- may legally point at the same predecessor, so a fork is reachable at the
+-- database level. That is the precise outcome `findVersionTarget`'s own
+-- comment names as the bad one — the library shows the same asset twice and
+-- neither entry is wrong.
+--
+-- The client-side mitigation does NOT close it, which is why the constraint
+-- has to be here. `currentAssets()` returns filter order and
+-- `findVersionTarget` takes `heads[0]`, so under a fork the "current" version
+-- is decided by array order rather than by anything anyone chose. Two pushes
+-- of the same artboard racing on a flaky connection is not exotic; it is the
+-- normal behaviour of a bridge that makes re-pushing free.
+--
+-- As a constraint the race becomes a 23505 the bridge can catch and retry
+-- against the new head, which is a recoverable event with a correct outcome.
+-- As array order it is a silent duplicate the designer has to notice.
+create unique index if not exists assets_one_successor_idx
+  on public.assets (replaces_id)
+  where replaces_id is not null;
+
 -- "Has this artboard been pushed before?" — the bridge's hot path, run on
 -- every push to find the version to chain onto.
 create index if not exists assets_source_ref_idx

@@ -100,6 +100,17 @@ describe('the migration and this module agree', () => {
     expect(schema).toContain("(storage.foldername(name))[1] = (auth.uid())::text")
   })
 
+  it('lets the database, not array order, decide a version race', () => {
+    /* currentAssets() returns filter order and findVersionTarget takes
+       heads[0], so a forked chain resolves by array position rather than by
+       anything anyone chose. The partial unique index is what makes the fork
+       unreachable in the first place — losing it turns a catchable 23505 into
+       a silent duplicate in the library. */
+    expect(schema).toMatch(
+      /create unique index[^;]*on public\.assets \(replaces_id\)[^;]*where replaces_id is not null/s
+    )
+  })
+
   it('derives current-ness in the view instead of storing a flag', () => {
     // If someone adds an is_current column, this module's currentAssets()
     // becomes a second source of truth for the same question.
