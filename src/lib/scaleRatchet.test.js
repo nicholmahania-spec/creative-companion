@@ -41,13 +41,13 @@ const STYLES = new URL('../styles', import.meta.url).pathname
 
 /** Seeded at the measured state on 2026-08-01. Only ever revise downward. */
 const BUDGET = {
-  fontSize: 74,
+  fontSize: 73,
   /* 317 -> 312 on 2026-08-05. Five near-ramp one-offs converted to tokens
      (0.22/0.28/0.3/0.45rem pairs, drift <=0.05rem, all single-use), which is
      what got the count back under a budget it had drifted past. Lowered in the
      same change that earned it — leaving it at 313 would bank slack the next
      freehand value refills silently. */
-  spacing: 312,
+  spacing: 305,
 }
 
 function allCss() {

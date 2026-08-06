@@ -843,34 +843,6 @@ h3 {
   font-size: 1.02rem;
 }
 
-.app.deep .game-hud-level {
-  color: var(--accent-soft);
-}
-
-@media (min-width: 640px) {
-.game-hud-panel-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.game-hud-quest-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-  min-width: 0;
-}
-
-.game-hud-quest-body strong {
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.game-hud-quest-body span {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
 .forced-break-body {
   margin: 0 0 0.5rem;
   font-size: 0.92rem;
@@ -2267,7 +2239,6 @@ h3 {
   display: none;
 }
 
-
 /* Global version footer — every view */
 
 .app-footer {
@@ -3305,7 +3276,6 @@ html[data-reduce-motion='true'] *::after {
   height: var(--tap-min);
 }
 
-
 .done-undo:hover {
   background: rgba(106, 106, 106, 0.22);
 }
@@ -3812,14 +3782,6 @@ html[data-reduce-motion='true'] *::after {
   opacity: 0.95;
 }
 
-.bf-levelup {
-  margin: 0 0 0.25rem;
-  border-radius: var(--radius);
-  border: none;
-  padding: 0.25rem 0.4rem;
-  font-size: 0.68rem;
-}
-
 .bf-hyper {
   margin: 0 0 0.3rem;
   border-radius: var(--radius);
@@ -3966,10 +3928,6 @@ html[data-reduce-motion='true'] *::after {
 
 .app.deep .buddy-game-level {
   color: #BFBFBF;
-}
-
-.app.deep .buddy-levelup-banner {
-  color: #D0D0D0;
 }
 
 .app.deep .buddy-check:hover {
@@ -4120,7 +4078,6 @@ body.cc-printing-pack .direction-foot {
 
 body.cc-printing-pack .buddy-shell,
   body.cc-printing-pack .buddy-fab,
-  body.cc-printing-pack .game-hud,
   body.cc-printing-pack .header,
   body.cc-printing-pack .app-footer,
   body.cc-printing-pack .journey-bar,
@@ -4169,7 +4126,6 @@ body.cc-printing-page .journey-sidebar,
   body.cc-printing-page .nav-backdrop,
   body.cc-printing-page .buddy-shell,
   body.cc-printing-page .buddy-fab,
-  body.cc-printing-page .game-hud,
   body.cc-printing-page .app-footer,
   body.cc-printing-page .todo-fab,
   body.cc-printing-page .no-print {
@@ -4279,8 +4235,6 @@ body.cc-printing-page button {
   font-weight: 700;
   letter-spacing: -0.03em;
 }
-
-
 
 /* Single source of truth for step progress — lives in the header, not the workspace */
 
@@ -5260,13 +5214,6 @@ body.cc-printing-page button {
   font-weight: 600;
 }
 
-/* ——— v0.2.58 pack presentation, lightbox, mobile journey ——— */
-
-@media (max-width: 800px) {
-
-}
-
-
 @media (max-width: 640px) {
 /* See the note at the 720px block — wrap rather than clip. */
 .journey-bar-item {
@@ -5339,10 +5286,6 @@ body.cc-printing-page button {
 .journey-step.is-done:not(.is-active) .journey-num {
   background: color-mix(in srgb, var(--accent-growth) 22%, var(--bg-muted));
   color: var(--accent-growth);
-}
-
-@media (max-width: 860px) {
-
 }
 
 .pack-view .pack-meta {
@@ -5446,8 +5389,7 @@ select:focus {
 
 html[data-reduce-motion="true"] .view-enter,
 html[data-reduce-motion="true"] .action-toast,
-html[data-reduce-motion="true"] .buddy-hop-in,
-html[data-reduce-motion="true"] .game-hud-burst {
+html[data-reduce-motion="true"] .buddy-hop-in {
   animation: none !important;
   transition: none !important;
   transform: none !important;
@@ -6219,10 +6161,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   grid-area: header;
 }
 
-.app-shell > .game-hud {
-  grid-area: hud;
-}
-
 .app-shell > .journey-sidebar {
   grid-area: sidebar;
 }
@@ -6441,29 +6379,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   }
 }
 
-.game-hud-quest .game-hud-quest-body strong {
-  position: relative;
-  transition: color 0.3s ease;
-}
-
-.game-hud-quest.is-done .game-hud-quest-body strong {
-  color: var(--text-muted);
-}
-
-.game-hud-quest.is-done .game-hud-quest-body strong::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 55%;
-  height: 2px;
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--accent-growth) 70%, var(--text-muted));
-  transform: scaleX(1);
-  transform-origin: left center;
-  animation: strikeThrough 0.45s var(--ease-out) both;
-}
-
 .step-focus-actions .btn-primary {
   border-radius: var(--radius-organic);
   padding: 0.85rem 1.45rem;
@@ -6613,7 +6528,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   .journey-bar-flow .journey-step.is-active,
   .step-focus-actions .btn-primary,
   .task-row,
-  .game-hud-quest-check,
   .journey-gap-strip-btn,
   .progress-ring-fill {
     transition: none !important;
@@ -6621,8 +6535,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
     transform: none !important;
   }
 
-.task-row.is-done .task-title::after,
-  .game-hud-quest.is-done .game-hud-quest-body strong::after {
+.task-row.is-done .task-title::after {
     animation: none;
   }
 }
@@ -7037,7 +6950,6 @@ body:has(.app.deep)::after {
   }
 }
 
-
 /* Asset audit — existing brand-file inventory, tagged usable/outdated/missing */
 
 .asset-audit {
@@ -7188,10 +7100,6 @@ body:has(.app.deep)::after {
   flex: 1;
 }
 
-
-@media (prefers-reduced-motion: reduce) {
-}
-
 /* ============================================================
    Define dashboard — 60/40 split + dopamine timeline
    ============================================================ */
@@ -7200,36 +7108,6 @@ body:has(.app.deep)::after {
   max-width: min(1440px, 94vw);
   padding-top: 1.5rem;
 }
-
-
-
-@media (max-width: 600px) {
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* Wide tablet+: keep real split so board never leaves the glance */
 
@@ -8313,8 +8191,6 @@ select:focus {
     gap: 0.35rem;
     min-width: 0;
   }
-
-
 
 .sync-error-chip {
     flex: 1 1 100%;
@@ -9807,7 +9683,6 @@ select:focus {
   text-overflow: ellipsis;
 }
 
-
 .project-menu-item {
   display: block;
   width: 100%;
@@ -9852,8 +9727,6 @@ select:focus {
 .client-row-body {
   flex: 1;
 }
-
-
 
 .more-menu-group-label {
   margin: 0.5rem 0.5rem 0.25rem;
@@ -10948,8 +10821,6 @@ textarea.artboard-brief-input {
 /* Unsaved edits are the state worth noticing, so it gets the weight — but
    never colour alone, since colour cannot be the only carrier of a state. The
    sentence itself already differs. */
-
-
 
 /* Done reads as a settled state, not a highlight competing with the next
    action. The ✓ is decorative; the word "done" carries the meaning. */
