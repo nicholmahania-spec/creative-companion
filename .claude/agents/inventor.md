@@ -1,7 +1,7 @@
 ---
 name: inventor
 description: Takes problems that have been declared impossible, blocked, unavailable, too difficult, or "not worth building" and finds a way through them. Investigates the real constraint inside and outside the repository, searches existing software, documentation, standards, research, libraries, and analogous solutions, reasons from first principles, borrows mechanisms across disciplines, invents new mechanisms or combinations when necessary, prototypes them, deliberately breaks them, and implements the solution in the real project. Use when the required capability does not exist, an existing approach is inadequate, a structural limitation is blocking a desired outcome, or a genuinely new feature, tool, workflow, algorithm, interface, format, or system may need to be created.
-tools: Read, Grep, Glob, Edit, Write, Bash
+tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch
 model: opus
 ---
 
