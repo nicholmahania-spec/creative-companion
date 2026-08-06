@@ -3611,8 +3611,17 @@ html[data-reduce-motion='true'] *::after {
   font-weight: 500;
 }
 
+/* Overdue reads as MORE PRESENT, not as an alarm: a deeper grey border, the
+   same move `.deadline-chip.urgency-overdue` already makes with its text
+   colour. This rule used to carry a red-tinted border, and it was the single
+   place in the app that broke its own rule — everywhere else a late item is
+   stated in muted grey (`dates.js:81-98` words the label rather than counting
+   down; `lazy-desk.css:74-81` keeps the whole waiting row muted). A designer
+   who is already late does not need the interface to raise its voice; they
+   need to be able to look at the list without flinching away from it. Two
+   visual languages for one state is its own load. */
 .deadline-list-item.urgency-overdue {
-  border-color: rgba(185, 28, 28, 0.3);
+  border-color: rgba(104, 104, 104, 0.5);
   background: rgba(234, 234, 234, 0.45);
 }
 
@@ -3770,7 +3779,7 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .app.deep .palette-check-badge.fail {
-  color: #FCA5A5;
+  color: #E4E4E4;
 }
 
 .brand-type-body {
@@ -4560,6 +4569,44 @@ body.cc-printing-page button {
   color: var(--text-secondary);
 }
 
+/* Quick capture — a field over the work, not a trip to another screen.
+   Anchored high rather than centred: it should read as something laid on top
+   of what you were doing, which is still visible behind it, so returning to
+   the task does not require re-finding it. */
+.quick-capture-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.quick-capture-panel {
+  width: min(34rem, calc(100vw - 2rem));
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-2);
+}
+
+.quick-capture-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.quick-capture-hint {
+  margin: var(--space-2) 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 .undo-chip {
   position: fixed;
   bottom: 1.25rem;
@@ -4692,6 +4739,23 @@ body.cc-printing-page button {
   border-radius: var(--radius);
   padding: 1.6rem 1.55rem;
   box-shadow: var(--shadow-3);
+}
+
+/* The breakdown wizard's step-editing screen lists every generated micro-step,
+   so it is the one .export-panel whose height is driven by data. At ten steps
+   it measured 1311px tall in a 720px viewport, running off BOTH ends — and
+   .export-overlay is position:fixed with no scroll, so nothing could bring the
+   rest back. "+ Step", "Back" and "Add N to Sketch" — the button the entire
+   wizard exists to reach — sat below the fold with no sign they were there.
+   `.breakdown-panel` and `.breakdown-studio` had no rules at all; the panel was
+   plain .export-panel, which caps width but never height.
+
+   Same remedy as the Tools menu above, and the same lesson: a box that
+   overflows without saying so reads as a box with nothing more in it. */
+.export-panel.breakdown-panel {
+  max-height: min(88vh, 40rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .export-panel-header {
@@ -5106,6 +5170,52 @@ body.cc-printing-page button {
   color: var(--accent-growth);
 }
 
+/* Configured for live AI, but the last real attempt did not get through.
+   Deliberately not the alarm colour: nothing is broken in the user's work,
+   the Helper is simply answering from its scripted lines. Muted, but visibly
+   NOT the green "Live" — the whole point is that it stops claiming a success
+   it has not had. */
+.helper-ai-badge.is-degraded {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+/* Deploy annunciator — which copy of the app is this?
+   Renders only on a non-production copy (see components/DeployNotice.jsx), so
+   these rules are invisible on the host people actually use. Low-arousal by
+   instruction: no red, no icon, no exclamation. */
+
+.deploy-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-subtle, transparent);
+}
+
+.deploy-notice-text {
+  min-width: 0;
+}
+
+.deploy-notice-link {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+/* A copy nobody deploys to any more is a stronger claim than "not
+   production", so it gets weight rather than colour. */
+.deploy-notice.is-retired .deploy-notice-text {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 @media (max-width: 720px) {
 .ideate-directions {
     grid-template-columns: 1fr;
@@ -5115,7 +5225,7 @@ body.cc-printing-page button {
 .sketch-now .field-label {
   margin-top: 0.55rem;
   font-size: 0.75rem;
-  color: #A1A1A1;
+  color: var(--text-muted);
 }
 
 .sketch-now .step-focus-title:focus,
@@ -5129,7 +5239,7 @@ body.cc-printing-page button {
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #A1A1A1;
+  color: var(--text-muted);
   list-style: none;
 }
 
@@ -7047,7 +7157,7 @@ body:has(.app.deep)::after {
   height: 1.4rem;
   border: none;
   background: transparent;
-  color: #A1A1A1;
+  color: var(--text-muted);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
@@ -7797,7 +7907,7 @@ select:focus {
 .command-studio .command-empty {
   margin: 0.5rem 0;
   font-size: 0.85rem;
-  color: #A1A1A1;
+  color: var(--text-muted);
 }
 
 /* ============================================================
@@ -8310,7 +8420,7 @@ select:focus {
   background: var(--ts-panel, #FFFFFF) !important;
   color: var(--ts-ink, #1A1A1A) !important;
   border: 1px solid var(--ts-border, #E7E7E7) !important;
-  border-left: 2px solid #606060 !important;
+  border-left: 2px solid var(--dopamine) !important;
   box-shadow: none !important;
   font-weight: 700 !important;
 }
@@ -8326,11 +8436,11 @@ select:focus {
 }
 .journey-sidebar .journey-num {
   opacity: 1 !important;
-  color: #A1A1A1 !important;
+  color: var(--text-muted) !important;
   font-weight: 700 !important;
 }
 .journey-sidebar .journey-step.is-active .journey-num {
-  color: #606060 !important;
+  color: var(--dopamine) !important;
 }
 .journey-sidebar .journey-step.is-done:not(.is-active) .journey-num {
   color: #565656 !important;
@@ -8362,7 +8472,7 @@ select:focus {
     max-width: 200px !important;
     height: 100% !important;
     flex-direction: column !important;
-    border-right: 1px solid #E7E7E7 !important;
+    border-right: 1px solid var(--ts-border) !important;
     border-bottom: none !important;
     overflow-x: visible !important;
     box-shadow: none !important;
@@ -8760,7 +8870,7 @@ select:focus {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #A1A1A1;
+  color: var(--text-muted);
 }
 
 .journey-projects-add {
@@ -8962,7 +9072,7 @@ select:focus {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #A1A1A1;
+  color: var(--text-muted);
   margin: 0.4rem 0 0.25rem;
 }
 
@@ -9037,7 +9147,7 @@ select:focus {
   height: 1.4rem;
   border: none;
   background: transparent;
-  color: #A1A1A1;
+  color: var(--text-muted);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
@@ -9579,7 +9689,7 @@ select:focus {
   background: var(--ts-panel, #FFFFFF);
   color: var(--ts-ink, #1A1A1A);
   border: 1px solid var(--ts-border, #E7E7E7);
-  border-left: 2px solid #606060;
+  border-left: 2px solid var(--dopamine);
   font-weight: 700;
 }
 
@@ -9610,7 +9720,7 @@ select:focus {
 
 /* Divider under the Projects section */
 .journey-sidebar .journey-bar-list {
-  border-top: 1px solid #E7E7E7;
+  border-top: 1px solid var(--border-hairline);
   padding-top: 0.5rem !important;
   margin-top: 0.15rem;
 }
@@ -9760,7 +9870,19 @@ select:focus {
   color: var(--text-muted);
 }
 
-.more-menu-group-label:first-child {
+/* Each heading now names a role="group" wrapping its items, because a loose
+   <p> is not something role="menu" may own. The wrapper matches the menu's
+   own column so the items stack exactly as they did as direct children. */
+.more-menu-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Was `.more-menu-group-label:first-child`. Every label is the first child of
+   its own group now, so that selector would have closed the gap ABOVE every
+   heading, not just the top one — flattening the split between "Go to" and
+   "This project". Only the menu's first group sits flush. */
+.more-menu-group:first-child > .more-menu-group-label {
   margin-top: 0.25rem;
 }
 

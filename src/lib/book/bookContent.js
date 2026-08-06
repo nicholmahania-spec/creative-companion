@@ -139,8 +139,25 @@ function blocksFor(id, x) {
     case 'apps': {
       /* The mocks the book will actually draw, named the way the PDF names
          them — so the page on screen lists what the reader will see, rather
-         than the raw brief answer that only implies it. Derived, not typed. */
-      const items = x.touchpoints.map(touchpointLabel).filter(Boolean)
+         than the raw brief answer that only implies it. Derived, not typed.
+
+         Each surface now carries the note the designer wrote about it on the
+         Touchpoints screen. The page used to print bare labels, so "how it
+         shows up" — the one sentence that makes an applications page worth
+         reading — was written into the project and reached nobody.
+         "Business card" tells a client nothing that "logo at 12mm, never on
+         the reverse" does not tell them better. A surface with no note still
+         appears: the list of where the brand lives is useful on its own, and
+         omitting the unnoted ones would misrepresent the scope. */
+      const apps = x.touchpointApps || {}
+      const items = x.touchpoints
+        .map((id) => {
+          const label = touchpointLabel(id)
+          if (!label) return null
+          const note = String(apps[id]?.note || '').trim()
+          return note ? `${label} — ${note}` : label
+        })
+        .filter(Boolean)
       return items.length ? [{ kind: 'list', items }] : []
     }
 

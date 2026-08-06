@@ -11,6 +11,8 @@ import {
   contrastRatio,
   formatRatio,
   bestTextOn,
+  BRAND_ROLE_KEYS,
+  BRAND_ROLE_LABELS,
 } from './color'
 import { formatDecisionLine, latestDecision } from './decisionLog'
 
@@ -37,8 +39,13 @@ export const TYPE_SCALE = [
 
 export const ROLE_JOBS = {
   cover: 'Hero surfaces, pack covers, dark fields',
+  secondary: 'Supporting brand surfaces and secondary emphasis',
   text: 'Body and heading text on quiet surfaces',
   accent: 'Links, CTAs, key UI emphasis',
+  accent2: 'Second accent — charts, tags, category marks',
+  accent3: 'Third accent — used sparingly',
+  neutral: 'Rules, dividers, muted panels, secondary type',
+  neutral2: 'Second neutral — deeper greys and fills',
   quiet: 'Page backgrounds, cards, breathing room',
 }
 
@@ -82,6 +89,11 @@ export function colorSpec(hex, meta = {}) {
   return {
     hex: h,
     role: meta.role || '',
+    /* The name the DESIGNER was shown. `role` is the storage key, and a client
+       token file that says "cover" where the app says "Primary" is speaking
+       the app's private language at someone who never saw it. Falls back to
+       the label table so callers that pass no label still get the right word. */
+    label: meta.label || BRAND_ROLE_LABELS[meta.role] || meta.role || '',
     job: meta.job || ROLE_JOBS[meta.role] || '',
     rgb: rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '',
     rgbChannels: rgb,
@@ -98,9 +110,29 @@ export function colorSpec(hex, meta = {}) {
 export function buildColorSystem(palette = [], colorRoles = null) {
   const colors = (palette || []).map(normalizeHex).filter(Boolean)
   const roles = { ...mapPaletteRoles(colors), ...(colorRoles || {}) }
-  const roleRows = ['cover', 'text', 'accent', 'quiet'].map((role) => {
+  /* Every job the vocabulary knows, not a private copy of the old four.
+     This list was hardcoded, so when the vocabulary grew to nine the five new
+     jobs reached NO client deliverable: tokens.css, tokens.json, brand.md and
+     the PDF's swatch labels all feed from here. A designer could assign a
+     Secondary and the client would never learn which hex it was — the colour
+     still shipped, anonymously, as a numbered swatch.
+
+     Unassigned roles are SKIPPED, not emitted blank. An unanswered job is not
+     an answer, and printing `secondary: ""` in a client's token file would be
+     worse than omitting it (`brandRoles.test.js` pins that rule).
+
+     Human-facing text uses BRAND_ROLE_LABELS. The client's brand.md said
+     "cover" and "quiet" — the app's own internal keys — where the designer had
+     been shown "Primary" and "Background". */
+  const roleRows = BRAND_ROLE_KEYS.filter((role) =>
+    normalizeHex(roles[role])
+  ).map((role) => {
     const hex = normalizeHex(roles[role]) || roles[role]
-    return colorSpec(hex, { role, job: ROLE_JOBS[role] })
+    return colorSpec(hex, {
+      role,
+      label: BRAND_ROLE_LABELS[role] || role,
+      job: ROLE_JOBS[role],
+    })
   }).filter(Boolean)
 
   const swatches = colors.map((hex, i) =>

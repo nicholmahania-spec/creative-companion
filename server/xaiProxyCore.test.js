@@ -6,6 +6,7 @@ import {
   sessionAuthConfigured,
   verifySupabaseSession,
 } from './xaiProxyCore.mjs'
+import { firstPartyOrigins } from '../src/lib/deploy/deployTargets.js'
 
 const prev = { ...process.env }
 
@@ -172,5 +173,82 @@ describe('xaiProxyCore', () => {
     expect(
       isOriginAllowed('https://creative-companion-ten.vercel.app')
     ).toBe(true)
+  })
+})
+
+/**
+ * The GitHub Pages mirror is static, so its Helper calls this proxy from a
+ * different origin. That request is gated by the same verified Supabase
+ * session as any other — but it also has to survive the origin check, which
+ * only ever knew about the platform's own env vars.
+ */
+describe('xaiProxyCore first-party origins', () => {
+  it('allows this project\'s other copies with no env configuration at all', () => {
+    for (const origin of firstPartyOrigins()) {
+      expect(isOriginAllowed(origin)).toBe(true)
+    }
+  })
+
+  it('refuses a hostname that merely starts with an allowed one', () => {
+    /* Origins extend to the RIGHT, so prefix matching is not a match at all:
+       `github.io.attacker.test` begins with `github.io`. This was latent while
+       the allowlist held only Vercel URLs; adding a github.io origin is what
+       would have made it reachable. */
+    expect(
+      isOriginAllowed('https://nicholmahania-spec.github.io.attacker.test')
+    ).toBe(false)
+    process.env.VERCEL_URL = 'creative-companion-ten.vercel.app'
+    expect(
+      isOriginAllowed('https://creative-companion-ten.vercel.app.evil.test')
+    ).toBe(false)
+  })
+
+  it('still refuses an origin nobody listed', () => {
+    expect(isOriginAllowed('https://not-ours.example')).toBe(false)
+    expect(isOriginAllowed('')).toBe(false)
+  })
+
+  it('an explicit XAI_PROXY_ORIGINS list still overrides everything', () => {
+    process.env.XAI_PROXY_ORIGINS = 'https://only-this.example'
+    expect(isOriginAllowed('https://only-this.example')).toBe(true)
+    expect(isOriginAllowed(firstPartyOrigins()[0])).toBe(false)
+  })
+
+  it('answers the mirror\'s CORS preflight with the mirror\'s own origin', async () => {
+    /* Without this a cross-origin POST never even reaches the auth check —
+       the browser refuses it at the preflight. */
+    const mirror = 'https://nicholmahania-spec.github.io'
+    const r = await handleXaiProxy({ method: 'OPTIONS', headers: { origin: mirror } })
+    expect(r.statusCode).toBe(204)
+    expect(r.headers['Access-Control-Allow-Origin']).toBe(mirror)
+    expect(r.headers['Access-Control-Allow-Headers']).toMatch(/Authorization/)
+  })
+
+  it('a signed-in session from the mirror is not refused for its origin', async () => {
+    process.env.SUPABASE_URL = 'https://proj.supabase.co'
+    process.env.SUPABASE_ANON_KEY = 'anon-key'
+    process.env.XAI_API_KEY = 'test-key'
+    const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+      if (String(url).includes('/auth/v1/user')) return { status: 200 }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ choices: [{ message: { content: 'ok' } }] }),
+      }
+    })
+    try {
+      const r = await handleXaiProxy({
+        method: 'POST',
+        headers: {
+          origin: 'https://nicholmahania-spec.github.io',
+          authorization: 'Bearer good-token',
+        },
+        body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] }),
+        ip: 'mirror-test-ip',
+      })
+      expect(r.statusCode).toBe(200)
+    } finally {
+      spy.mockRestore()
+    }
   })
 })

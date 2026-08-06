@@ -11,6 +11,7 @@
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { ANSWERS_TOO_LARGE_MESSAGE, answersTooLarge } from './answerPayload'
 import { publicUrl } from '../appPaths'
+import { CLOUD_REQUIRED } from './cloudRequired.js'
 
 /** Build the client-facing URL for a share id. */
 export function discoveryShareUrl(shareId) {
@@ -24,7 +25,7 @@ export function discoveryShareUrl(shareId) {
  */
 export async function createDiscoveryShare({ projectLocalId, clientName, answers }) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
+    return { ok: false, error: CLOUD_REQUIRED }
   }
   const { data: userData } = await supabase.auth.getUser()
   const ownerId = userData?.user?.id
@@ -58,7 +59,7 @@ export async function createDiscoveryShare({ projectLocalId, clientName, answers
  */
 export async function revokeDiscoveryShare(shareId) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
+    return { ok: false, error: CLOUD_REQUIRED }
   }
   const { error } = await supabase
     .from('discovery_shares')
@@ -77,7 +78,7 @@ export async function revokeDiscoveryShare(shareId) {
  */
 export async function fetchDiscoveryShare(shareId) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
+    return { ok: false, error: CLOUD_REQUIRED }
   }
   const { data, error } = await supabase.rpc('get_discovery_share', {
     share_id: shareId,
@@ -99,7 +100,7 @@ export async function fetchDiscoveryShare(shareId) {
  */
 export async function submitDiscoveryShare(shareId, answers) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
+    return { ok: false, error: CLOUD_REQUIRED }
   }
   /* Before the round trip, not after: the RPC signals "too large" and "already
      submitted" the same way (false), so an oversize payload that reaches it

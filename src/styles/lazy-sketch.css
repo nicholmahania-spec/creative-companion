@@ -75,6 +75,33 @@
   }
 }
 
+/* The restored Touchpoints block, sitting under the step panel on this stop.
+   Everything below `.touchpoints-card` already existed and had been orphaned
+   since b90e24e removed the markup that used it — these three rules are the
+   only new ones, and they exist because the block now has a heading of its
+   own where the old screen used the page title. */
+.touchpoints-block {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.touchpoints-head {
+  margin-bottom: var(--space-4);
+}
+
+/* Deliberately quieter than the page title. Left at the browser default it
+   rendered LARGER than the h1 above it, so the section shouted over the
+   screen it belongs to — a heading hierarchy that reads backwards is a small
+   thing that makes a page feel unowned. */
+.touchpoints-heading {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-4);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
 .touchpoints-card {
   margin: 0;
   padding: var(--space-4);
@@ -350,5 +377,60 @@
 
 .sketch-feedback-shared-hint {
   font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* ── The finished piece, checked against the palette ──────────────────────
+   Deliberately the quietest block on the card. There is no red, no badge and
+   no icon anywhere in here: a finding is a sentence in the same colour as
+   every other sentence, because this is a second set of eyes on work the
+   designer has already finished, not a defect report. */
+.app-check {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.app-check-line {
+  margin: 0;
+  font-size: var(--fs-1, 0.85rem);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.app-check-swatches {
+  display: flex;
+  gap: 4px;
+  margin-top: var(--space-2);
+}
+
+.app-check-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+}
+
+.app-check-file {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-1, 0.8rem);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.app-check-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* What the check cannot see. Quiet by design — it qualifies a sentence, it
+   is not another thing to act on. Present in every result state, including
+   the clean one, which is the state most likely to be read as approval. */
+.app-check-scope {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
   color: var(--text-muted);
 }

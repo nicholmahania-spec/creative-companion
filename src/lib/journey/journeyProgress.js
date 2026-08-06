@@ -143,12 +143,20 @@ export function pathStepMeetsCondition(stepId, ctx = {}) {
     case 'sketch': {
       /* Touchpoints = application notes on this stop (touchpointApps), not
          Strategy checklists and not mere open desk tasks. At least one
-         application from the brief list has a note or “looks right”. */
+         application from the brief list has a note or “looks right”.
+
+         A CHECKED FILE COUNTS TOO, and that is the point of counting it.
+         Dropping the finished business card on the row runs the colour check
+         and is strictly stronger evidence that the designer looked at the
+         surface than a typed sentence is. Asking them to then also write a
+         note about the thing they just proved is the redundant admin this
+         product exists to remove — "can the system remember this for the
+         designer" (PRODUCT.md §33). */
       const apps = project.touchpointApps || {}
       const any = Object.keys(apps).some((id) => {
         const row = apps[id]
         if (!row || typeof row !== 'object') return false
-        return !!(row.done || String(row.note || '').trim())
+        return !!(row.done || String(row.note || '').trim() || row.check)
       })
       return any
     }

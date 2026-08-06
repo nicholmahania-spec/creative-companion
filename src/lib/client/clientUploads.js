@@ -15,6 +15,7 @@
  * NOTE in detectiveBrief.js on why field shapes don't change after ship.
  */
 import { supabase, isSupabaseConfigured } from '../supabase'
+import { CLOUD_REQUIRED } from './cloudRequired.js'
 
 const BUCKET = 'client-uploads'
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
@@ -27,7 +28,7 @@ export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
  */
 export async function uploadClientFile(targetId, file) {
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Client links need a cloud account. Sign in (or set up sync in Settings), then try again.' }
+    return { ok: false, error: CLOUD_REQUIRED }
   }
   if (!file || !file.type?.startsWith('image/')) {
     return { ok: false, error: 'Only images can be attached' }

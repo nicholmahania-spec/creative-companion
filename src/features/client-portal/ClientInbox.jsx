@@ -22,6 +22,8 @@ const KIND_GLYPH = {
   notes: '✎',
   message: '💬',
   form: '📋',
+  delivery: '📖',
+  reaction: '❞',
 }
 
 /**
@@ -283,7 +285,35 @@ export function ClientInboxPanel({
 
             {status === 'not-configured' && (
               <div className="client-inbox-empty">
-                <p>Client links need a cloud account. Open Settings and sign in, then come back.</p>
+                {/* Do NOT send anyone to Settings here.
+                    This state means the desk was built WITHOUT cloud
+                    credentials, so there is no sign-in anywhere in the app —
+                    a cold-start tester followed this instruction, found
+                    Settings has no such control, and concluded the product
+                    was broken. Naming a remedy that does not exist is worse
+                    than naming none: it costs the designer the hunt and then
+                    the doubt. Say what is true, and point at the thing that
+                    does work. */}
+                <p>
+                  This desk works on its own, with no account — so client
+                  links and approvals are not available here.
+                </p>
+                <p className="client-inbox-note">
+                  You can still send work to a client yourself: export the
+                  brief or the pack from Assets and email it.
+                </p>
+                {onGoToView ? (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      onGoToView('finish')
+                      onClose?.()
+                    }}
+                  >
+                    Open Assets
+                  </button>
+                ) : null}
               </div>
             )}
 

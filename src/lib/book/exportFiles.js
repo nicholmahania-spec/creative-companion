@@ -345,6 +345,16 @@ export function buildBrandPackSnapshot({
     technical: d.technical || '',
     accessibilityNeeds: d.accessibilityNeeds || '',
     brandSurfaces: Array.isArray(d.brandSurfaces) ? d.brandSurfaces : [],
+    /* The per-surface notes from Touchpoints — "how it shows up" on a business
+       card, a shopfront, an app icon. The book previously printed only the
+       LIST of surfaces, so the sentence the designer wrote about each one
+       reached nobody: it was written into the project and stopped there. That
+       note is the useful half — "Business card" tells a client nothing that
+       "logo at 12mm, never on the reverse" does not tell them better. */
+    touchpointApps:
+      p.touchpointApps && typeof p.touchpointApps === 'object'
+        ? p.touchpointApps
+        : {},
     feedbackNotes: p.feedbackNotes || '',
     /* Scope travels with the pack because it is what the work was measured
        against. `scopeOutOf` in particular is the half of a scope that gets

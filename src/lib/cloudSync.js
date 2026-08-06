@@ -1,4 +1,8 @@
 import { supabase, isSupabaseConfigured } from './supabase'
+/* Used by resetPasswordForEmail below. The call was there and this import was
+   not, so requesting a password reset threw `appUrl is not defined` — found by
+   the first run of eslint, which had never been executed in this repo. */
+import { appUrl } from './appPaths'
 
 /**
  * Load the signed-in user's workspace from Supabase.

@@ -64,6 +64,11 @@ export function portalSeenSnapshot(portal, messages) {
     steps,
     formStatus: portal?.form_status || 'not_sent',
     lastClientMessageId: lastClient?.id || null,
+    /* Both are write-once server-side, so the timestamp itself is the
+       fingerprint — no content diff needed. Stored even when null, so the
+       first time either lands it reads as new rather than as "already seen". */
+    deliveryViewedAt: portal?.delivery_viewed_at || null,
+    deliveryReactionAt: portal?.delivery_reaction_at || null,
   }
 }
 
@@ -122,6 +127,50 @@ export function buildInboxRows(portals, messages, seen, projects) {
         body: v?.note || '',
       })
     })
+
+    /* ── The delivery was opened ──
+       The one event in this inbox that is not something the client typed. It
+       is here because it is the thing a designer most wants to know at the end
+       of a project and has no other way to find out — the alternative is
+       asking, which nobody does.
+
+       It carries a real per-event timestamp (`delivery_viewed_at`), so unlike
+       the step rows it gets an `at` and can honestly say when. */
+    if (portal.delivery_viewed_at) {
+      rows.push({
+        ...base,
+        id: `${portal.id}:delivery-viewed`,
+        kind: 'delivery',
+        unread: !prev || prev.deliveryViewedAt !== portal.delivery_viewed_at,
+        at: portal.delivery_viewed_at,
+        sortAt: portal.delivery_viewed_at,
+        targetView: 'finish',
+        /* The detail panel's fallback action reads "Go to {stepLabel}", so a
+           row without one offers "Go to undefined". Taken from the journey,
+           never typed out — see journeySingleSource.test.js. */
+        stepLabel: labelForStepId('deliver'),
+        title: `${who} opened the brand book`,
+        preview: 'They have seen it.',
+        body: '',
+      })
+    }
+
+    // ── What they wrote back after the reveal ──
+    if (portal.delivery_reaction) {
+      rows.push({
+        ...base,
+        id: `${portal.id}:delivery-reaction`,
+        kind: 'reaction',
+        unread: !prev || prev.deliveryReactionAt !== portal.delivery_reaction_at,
+        at: portal.delivery_reaction_at || '',
+        sortAt: portal.delivery_reaction_at || base.sortAt,
+        targetView: 'finish',
+        stepLabel: labelForStepId('deliver'),
+        title: `${who} wrote back about the brand book`,
+        preview: firstLine(portal.delivery_reaction),
+        body: portal.delivery_reaction,
+      })
+    }
 
     // ── Form submission ──
     if (portal.form_status === 'submitted') {

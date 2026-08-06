@@ -1,10 +1,34 @@
 /** Color helpers for palette builder + WCAG contrast checker */
+import { cssFamily } from './brand/typeMetrics.js'
 
 /** Stone desk defaults — brand color lives on pack, not indigo SaaS */
 export const DEFAULT_PALETTE = ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9']
 
 /** @deprecated alias — same as DEFAULT_PALETTE */
 export const STONE_PALETTE = DEFAULT_PALETTE
+
+/**
+ * Has the designer actually chosen these colours, or is this still the
+ * factory setting?
+ *
+ * Every project is CREATED with `defaultProjectPalette` (the same four stone
+ * values as DEFAULT_PALETTE), so "no palette yet" can never be expressed as
+ * an empty array — `palette.length` is never 0 for a real project. Anything
+ * that needs to know whether colour work has started has to ask this instead,
+ * and code that asks the wrong question here does not misbehave, it silently
+ * never runs. That has now happened three times in this area: the health
+ * meter's "nothing measured yet" state, the mark check's offer to start a
+ * palette from the logo, and the palette-empty branch each looked correct in
+ * a unit test and was unreachable in the app.
+ *
+ * @param {string[]} palette
+ * @returns {boolean} true when it is still the untouched default
+ */
+export function paletteIsUntouched(palette = []) {
+  const p = (palette || []).map((c) => String(c || '').toUpperCase())
+  if (p.length !== DEFAULT_PALETTE.length) return false
+  return DEFAULT_PALETTE.every((d, i) => p[i] === d.toUpperCase())
+}
 
 export function normalizeHex(input) {
   if (!input) return null
@@ -178,11 +202,24 @@ export function typePairIdFromLabels(heading, body) {
   return found?.id || null
 }
 
-/** "Plus Jakarta Sans Bold" → CSS font-family stack for specimens */
+/**
+ * "Plus Jakarta Sans Bold" → CSS font-family stack for specimens.
+ *
+ * The family is extracted by `cssFamily`, the SAME function the
+ * missing-font warning uses. They used to disagree, and the disagreement
+ * was invisible and expensive: this regex has no "Book" in it, so
+ * "Freight Text Pro Book" was requested verbatim — a family that resolves
+ * nowhere, even on a machine where Freight Text Pro is installed — while
+ * the warning checked "Freight Text Pro" and reported everything fine.
+ * The renderer asked for one string and the checker vouched for another,
+ * so a designer with the font correctly installed still got a substituted
+ * face in their exports and was told nothing was wrong.
+ *
+ * That was the tester's exact typeface. One extractor, so the thing that
+ * renders and the thing that vouches can never drift apart again.
+ */
 export function fontFamilyFromLabel(label) {
-  const s = String(label || '')
-    .replace(/\s+(Thin|ExtraLight|Light|Regular|Medium|SemiBold|Semibold|Bold|ExtraBold|Black|Italic|Oblique).*$/i, '')
-    .trim()
+  const s = cssFamily(label)
   if (!s) return 'var(--font-sans), system-ui, sans-serif'
   const lower = s.toLowerCase()
   if (lower.includes('system ui') || lower === 'system') {
@@ -670,10 +707,25 @@ export async function extractPaletteFromPins(
 /** Ensure AA-fixed role hexes exist on the palette (append if missing). */
 export function mergeRolesIntoPalette(palette = [], roles = {}, max = 8) {
   const base = (palette || []).map(normalizeHex).filter(Boolean)
-  const extra = ['text', 'cover', 'accent', 'quiet']
-    .map((k) => normalizeHex(roles[k]))
-    .filter(Boolean)
-  return dedupePalette([...base, ...extra], { max, minDistance: 18 })
+  /* Every job, not a private copy of the old four. */
+  const roleHexes = BRAND_ROLE_KEYS.map((k) => normalizeHex(roles[k])).filter(
+    Boolean
+  )
+  /* ROLE COLOURS GO FIRST, and that ordering is the whole fix.
+     `dedupePalette` fills from the front and stops at `max`, so appending role
+     hexes after a full palette meant they were the ones evicted — silently.
+     Measured on a full 8-colour palette: `suggestRoleAaFixes` returned three
+     fixes, `applyAaRoleFix` wrote all three roles, this function returned an
+     array IDENTICAL to its input, and the toast still said "Fixed contrast on
+     text, accent, cover." The roles then pointed at hexes present nowhere in
+     the palette, and since a role can only be re-picked by clicking a palette
+     swatch, the designer could not even see the colour their brand now used.
+     It started at six distinct colours, not eight.
+
+     Putting them first means a role colour can never be the one dropped. What
+     gets evicted instead is an unassigned palette member, which is the correct
+     thing to lose when something has to go. */
+  return dedupePalette([...roleHexes, ...base], { max, minDistance: 18 })
 }
 
 /**
@@ -771,6 +823,69 @@ export function checkPaletteHarmony(palette = []) {
 export const HEALTH_ROLE_KEYS = ['cover', 'text', 'accent', 'quiet']
 
 /**
+ * The jobs a colour can hold in a brand, in the vocabulary designers use.
+ *
+ * The STORED keys are deliberately unchanged. `cover` and `quiet` are what
+ * every existing project already has on disk and what the brand book and
+ * exports already read; renaming them would have meant a migration for a
+ * change that is really about labels. So the rename is what you SEE, and the
+ * keys stay put:
+ *
+ *   cover     → "Primary"      the main brand colour
+ *   secondary → "Secondary"    NEW — the second brand colour
+ *   accent    → "Accent"       supporting colour
+ *   accent2   → "Accent 2"     NEW — brands routinely have more than one
+ *   accent3   → "Accent 3"     NEW
+ *   neutral   → "Neutral"      NEW — greys, rules, muted panels
+ *   neutral2  → "Neutral 2"    NEW
+ *   text      → "Text"         was "Ink"
+ *   quiet     → "Background"   was "Paper"
+ *
+ * Adding `secondary` also unpicks the knot that prompted this: with only one
+ * brand colour and one text colour, `text` had to serve as ink on the light
+ * surface AND on the dark one, which no real brand does. A default palette
+ * therefore opened showing white-on-cream at 1.09:1 — a failure the designer
+ * had not caused.
+ */
+export const BRAND_ROLE_KEYS = [
+  'cover',
+  'secondary',
+  'accent',
+  'accent2',
+  'accent3',
+  'neutral',
+  'neutral2',
+  'text',
+  'quiet',
+]
+
+/** What each job is called on screen. Display only — see above. */
+export const BRAND_ROLE_LABELS = {
+  cover: 'Primary',
+  secondary: 'Secondary',
+  accent: 'Accent',
+  accent2: 'Accent 2',
+  accent3: 'Accent 3',
+  neutral: 'Neutral',
+  neutral2: 'Neutral 2',
+  text: 'Text',
+  quiet: 'Background',
+}
+
+/** The accent slots, in order. Brands routinely use more than one. */
+export const ACCENT_KEYS = ['accent', 'accent2', 'accent3']
+
+/**
+ * Neutral slots — greys, warm stocks, the quiet middle of a palette.
+ *
+ * Separate from `quiet` (the background) on purpose. A neutral is a colour in
+ * the system: rules, dividers, secondary type, a muted panel. The background is
+ * the surface everything else sits on. Collapsing them is why a palette ends up
+ * with one grey doing five jobs badly.
+ */
+export const NEUTRAL_KEYS = ['neutral', 'neutral2']
+
+/**
  * The color pairs a reader actually sees, with the ratio each one owes.
  *
  * The score used to compare EVERY palette color against the quiet
@@ -809,6 +924,25 @@ export function roleContrastPairs(colorRoles = {}) {
 }
 
 /**
+ * The jobs the health score actually looks at, in the designer's words.
+ *
+ * The palette can hold nine jobs; the score reads four of them. That is
+ * deliberate — widening the denominator is how "measurement that punished
+ * use" got in last time, and a test pins it. But an undisclosed denominator
+ * is its own defect: a designer who assigns Secondary, two more accents and
+ * both neutrals, and writes a reason for every one, watches the meter sit
+ * still and has no way to learn why. So the panel says what it reads.
+ *
+ * Derived from HEALTH_ROLE_KEYS rather than typed out, so the sentence
+ * cannot describe a denominator the scorer stopped using.
+ *
+ * @returns {string[]} e.g. ['Primary', 'Text', 'Accent', 'Background']
+ */
+export function healthScopeLabels() {
+  return HEALTH_ROLE_KEYS.map((k) => BRAND_ROLE_LABELS[k] || k)
+}
+
+/**
  * One combined 0–100 signal for the Colors tab: role justification +
  * contrast on the pairs that matter + hue harmony.
  *
@@ -823,6 +957,20 @@ export function roleContrastPairs(colorRoles = {}) {
  *    now `null` until there is something to measure; render it as "—",
  *    never as 0%.
  *
+ *    That fix was WRITTEN BUT NOT WIRED, and stayed broken for as long as
+ *    it looked fixed. `started` also accepted a palette on its own, and
+ *    `App.jsx` substitutes DEFAULT_PALETTE whenever a project has none — so
+ *    `palette.length` is never 0 in the running app and the "—" state was
+ *    unreachable. Measured on a fresh project with no roles assigned: 33%,
+ *    red, "Tighten roles". It went from 20% to 33%; it did not go away.
+ *    Every project opened on a failing grade for work not yet begun, which
+ *    is the single worst moment to put one — task initiation.
+ *
+ *    A palette alone is not something this can measure. Three of the four
+ *    HEALTH_ROLE_KEYS have to be READ against each other to mean anything,
+ *    and none of them exist until a role is assigned. So the trigger is an
+ *    assigned role, not a colour on screen.
+ *
  * @param {{ palette: string[], colorRoles: object, colorRoleWhy: object }} args
  */
 export function paletteHealthScore({
@@ -835,7 +983,7 @@ export function paletteHealthScore({
   )
   const justified = assigned.filter((k) => String(colorRoleWhy[k] || '').trim())
 
-  const started = (palette || []).length > 0 || assigned.length > 0
+  const started = assigned.length > 0
   const harmony = checkPaletteHarmony(palette)
   const pairs = roleContrastPairs(colorRoles)
 
@@ -843,8 +991,8 @@ export function paletteHealthScore({
     return {
       score: null,
       started: false,
-      roleScore: 0,
-      contrastScore: 0,
+      roleScore: null,
+      contrastScore: null,
       harmony,
       pairs,
       assignedCount: 0,
@@ -865,9 +1013,18 @@ export function paletteHealthScore({
   const harmonyScore = harmony.ok === null ? null : harmony.ok ? 1 : 0.4
 
   const terms = [
-    { value: roleScore, weight: 0.4 },
-    { value: contrastScore, weight: 0.4 },
-    { value: harmonyScore, weight: 0.2 },
+    /* `id` is not decoration. The score is a weighted blend of three
+       incommensurable things, and the low band used to be labelled
+       "Tighten roles" — a cause it had never checked. Measured: four roles
+       assigned AND justified, with failing contrast and clashing hues,
+       scored 48 and told the designer to go tighten the one part they had
+       finished. Meanwhile writing NO rationales at all scored 60, because
+       roles carry 0.4 and the other two carry 0.6 between them, so a
+       rationale gap alone cannot reach the low band. Carrying the ids lets
+       the label name the term that is actually dragging. */
+    { id: 'roles', value: roleScore, weight: 0.4 },
+    { id: 'contrast', value: contrastScore, weight: 0.4 },
+    { id: 'harmony', value: harmonyScore, weight: 0.2 },
   ].filter((t) => t.value !== null)
 
   const totalWeight = terms.reduce((s, t) => s + t.weight, 0)
@@ -877,15 +1034,78 @@ export function paletteHealthScore({
       )
     : null
 
+  /* The measured term losing the most points — except that a failing
+     contrast pair is a floor, not a points gap, and jumps the queue.
+     Measured case that settled this: hues merely "unevenly spaced" lose
+     0.12 while a genuine AA failure at 1.86:1 lost only 0.10, so pure
+     arithmetic told a designer to go look at their hues while a text pair
+     was unreadable. Everything else here is taste; this one reaches the
+     client as a page they cannot read.
+
+     A term that was WITHHELD can never be named. That is the whole point:
+     the label may only accuse something the scorer actually measured. */
+  const order = { contrast: 0, roles: 1, harmony: 2 }
+  const weakest = pairs.some((p) => !p.ok)
+    ? 'contrast'
+    : terms
+        .map((t) => ({ id: t.id, shortfall: (1 - t.value) * t.weight }))
+        .filter((t) => t.shortfall > 0)
+        .sort(
+          (a, b) => b.shortfall - a.shortfall || order[a.id] - order[b.id]
+        )[0]?.id || null
+
   return {
     score,
     started: true,
     roleScore,
-    contrastScore: contrastScore ?? 0,
+    /* NOT `?? 0`. Flattening a withheld term to zero contradicted this
+       function's own "unmeasurable is not failing" rule three lines up, and
+       made an unmeasured contrast term read as the weakest one to anybody
+       reading the result. Null means not measured. */
+    contrastScore,
     harmony,
     pairs,
+    weakest,
     assignedCount: assigned.length,
     justifiedCount: justified.length,
+  }
+}
+
+/**
+ * The word and colour band the meter shows, kept out of the view.
+ *
+ * This lived in `DesignView` as a nested ternary, which meant the only
+ * incorrect thing about it — a low band that named a cause the scorer had
+ * never checked — could not be tested without rendering, and nothing in
+ * this suite renders views. The band words are a product decision; they
+ * belong where they can be measured.
+ *
+ * The three low-band words are NOUNS, matching "Solid" and "Getting there".
+ * "Tighten roles" was an instruction, so the low state read as a telling-off
+ * rather than a reading — and it was frequently a wrong instruction.
+ *
+ * @param {ReturnType<typeof paletteHealthScore>} health
+ * @returns {{ word: string, band: string, reason: string | null }}
+ */
+export function healthLabel(health) {
+  if (!health || health.score === null) {
+    return { word: '—', band: 'is-idle', reason: null }
+  }
+  if (health.score >= 80) return { word: 'Solid', band: 'is-good', reason: null }
+  if (health.score >= 50) {
+    return { word: 'Getting there', band: 'is-mid', reason: null }
+  }
+  const word = {
+    contrast: 'Contrast to fix',
+    harmony: 'Hues to check',
+    roles: 'Roles to name',
+  }[health.weakest]
+  // No weakest term means nothing measured is short, which cannot produce a
+  // sub-50 score — but a band word is not the place to assert that.
+  return {
+    word: word || 'Early days',
+    band: 'is-low',
+    reason: health.weakest || null,
   }
 }
 
@@ -893,7 +1113,7 @@ export function paletteHealthScore({
  * Suggest a hex for a role that has no color assigned yet, derived from
  * the existing palette rather than a random pick.
  * @param {string[]} palette
- * @param {'cover'|'text'|'accent'|'quiet'} role
+ * @param {string} role — any key in BRAND_ROLE_KEYS role
  */
 export function suggestRoleColor(palette = [], role) {
   const base = (palette || []).map(normalizeHex).filter(Boolean)[0]
@@ -912,6 +1132,25 @@ export function suggestRoleColor(palette = [], role) {
       return hslToHex(hsl.h, Math.min(hsl.s * 0.8, 0.3), 0.14)
     case 'text':
       return bestTextOn(hslToHex(hsl.h, hsl.s, 0.96))
+    /* The five jobs added with the wider vocabulary. Without these they all
+       fell to `default` and returned `palette[0]` — which `mapPaletteRoles`
+       also computes as Primary, so "Suggest Secondary", "Suggest Accent 2",
+       "Suggest Neutral" and the rest all proposed the SAME hex, and the same
+       hex the Primary already held. Five buttons, one answer, and the answer
+       was a colour already spoken for. */
+    case 'secondary':
+      // A neighbouring hue, darker than the accent so the two do not compete.
+      return hslToHex(hsl.h + 150, Math.max(hsl.s * 0.85, 0.35), 0.38)
+    case 'accent2':
+      return hslToHex(hsl.h + 210, Math.max(hsl.s, 0.45), 0.5)
+    case 'accent3':
+      return hslToHex(hsl.h + 60, Math.max(hsl.s, 0.4), 0.55)
+    case 'neutral':
+      // Neutrals carry a trace of the brand hue rather than being dead grey —
+      // a warm brand with a cold grey in it reads as two brands.
+      return hslToHex(hsl.h, 0.06, 0.62)
+    case 'neutral2':
+      return hslToHex(hsl.h, 0.08, 0.34)
     default:
       return base || '#0F766E'
   }

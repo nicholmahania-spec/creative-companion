@@ -23,6 +23,9 @@ const BrandBookPreview = lazy(
   () => import('../components/BrandBookPreview')
 )
 const StationeryKit = lazy(() => import('../components/StationeryKit'))
+const DeliverToClient = lazy(
+  () => import('../features/client-portal/DeliverToClient')
+)
 
 /**
  * A row of named stops. Options come from brandBookSetup so the labels here
@@ -69,19 +72,9 @@ export default function DeliverView({
   notifyAction,
   CLOUD = false,
   lastExportNote = '',
+  offerUndo,
+  openPortalPanel,
   // Focus timer props
-  forcedBreak,
-  setSessionComplete,
-  startOrPauseFocus,
-  resetFocus,
-  isFocusRunning,
-  focusLeft,
-  setFocusLeft,
-  setPomodoroWorkStartedAt,
-  setIsFocusRunning,
-  setTimerFocusSource,
-  sessionLabel,
-  sessionComplete,
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const addContact = useAppStore((s) => s.addContact)
@@ -243,6 +236,23 @@ export default function DeliverView({
           </div>
         )}
       </section>
+
+      {/* The delivery moment. Sits directly under the ship ticket because it
+          is the other half of shipping: the download is the designer's copy,
+          this is the client's. */}
+      <Suspense fallback={<div className="panel-hint">Loading…</div>}>
+        <DeliverToClient
+          project={activeProject}
+          portalId={activeProject?.clientPortalId || ''}
+          pack={packSnap}
+          book={bookSetup}
+          hideWatermark={hidePackWatermark}
+          cloud={CLOUD}
+          onOpenPortalPanel={openPortalPanel}
+          flashToast={flashToast}
+          offerUndo={offerUndo}
+        />
+      </Suspense>
 
       {/* Preview — real book; ship ticket stays sticky on wide */}
       <section

@@ -6,17 +6,21 @@ import {
   mapPaletteRoles,
   normalizeHex,
 } from '../lib/color'
+import { BRAND_ROLE_KEYS, BRAND_ROLE_LABELS } from '../lib/color'
 import { colorSpec } from '../lib/brandSystem'
 import { downscaleDataUrl, pinFaceStyle } from '../lib/moodPins'
 
 const formatCmyk = (hex) => colorSpec(hex)?.cmyk || ''
 
-const ROLE_KEYS = [
-  { id: 'cover', label: 'Cover' },
-  { id: 'text', label: 'Text' },
-  { id: 'accent', label: 'Accent' },
-  { id: 'quiet', label: 'Quiet' },
-]
+/* The vocabulary, not a private copy. This listed four jobs with the OLD
+   wording — the client's leave-behind sheet (captured by both the raster
+   preview and Print/Save-as-PDF) said "Cover" and "Quiet" where the designer
+   had been shown "Primary" and "Background", and a Secondary or Neutral they
+   had assigned appeared nowhere on it at all. */
+const ROLE_KEYS = BRAND_ROLE_KEYS.map((id) => ({
+  id,
+  label: BRAND_ROLE_LABELS[id] || id,
+}))
 
 /**
  * Shared brand leave-behind artboard — Design preview, Review/Deliver, PDF capture.

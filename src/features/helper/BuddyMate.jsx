@@ -178,7 +178,14 @@ export default function BuddyMate({
   activityRef.current = activityLive
 
   const overdue = useMemo(() => overdueKinds(wellness), [wellness])
-  const aiStatus = useMemo(() => helperAiStatus(), [])
+  /* State, not a mount-time useMemo. The badge used to be computed once from
+     configuration and never revisited, so it went on reading "Live" for the
+     whole session while every reply came from the scripted table — the exact
+     shape of failure that cost an evening on a copy with no live path.
+     `refreshAiStatus` is called after every round trip, where the answer is
+     known for real. */
+  const [aiStatus, setAiStatus] = useState(() => helperAiStatus())
+  const refreshAiStatus = useCallback(() => setAiStatus(helperAiStatus()), [])
   const deskMs = now - sessionStart
   const sinceBreak = minutesSinceBreak(wellness, sessionStart, now)
   const hyper = hyperfocusLevel(sinceBreak)
@@ -644,9 +651,10 @@ export default function BuddyMate({
         })
       } finally {
         if (req === aiReqRef.current) setAiBusy(false)
+        refreshAiStatus()
       }
     },
-    [pushBuddy, pushYou]
+    [pushBuddy, pushYou, refreshAiStatus]
   )
 
   /**
@@ -700,8 +708,9 @@ export default function BuddyMate({
       })
     } finally {
       if (req === aiReqRef.current) setAiBusy(false)
+      refreshAiStatus()
     }
-  }, [askText, aiBusy, pushBuddy, pushYou])
+  }, [askText, aiBusy, pushBuddy, pushYou, refreshAiStatus])
 
   /**
    * Run one proposal, because the user pressed it.
@@ -968,7 +977,9 @@ export default function BuddyMate({
                     <span className="buddy-compact-lv">{xp.level}</span>
                   )}
                   <span
-                    className={`helper-ai-badge is-${aiStatus.mode}`}
+                    className={`helper-ai-badge is-${
+                      aiStatus.observed === 'failing' ? 'degraded' : aiStatus.mode
+                    }`}
                     title={aiStatus.detail}
                   >
                     {aiStatus.short}

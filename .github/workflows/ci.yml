@@ -16,6 +16,13 @@ jobs:
           node-version: '26'
           cache: npm
       - run: npm ci
+      # Lint before the suite, because it catches a class the suite cannot:
+      # a free identifier crashes at render, and nothing in vitest renders the
+      # views. `projectPalette is not defined` shipped past a clean build and
+      # 905 green tests; `appUrl is not defined` had been breaking password
+      # reset for who knows how long. Ratcheted rather than zero — see
+      # scripts/lint-ratchet.mjs for why, and for how to satisfy it.
+      - run: npm run lint:ratchet
       - run: npm test
       - run: npm run build
         env:

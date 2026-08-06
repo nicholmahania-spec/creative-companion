@@ -18,6 +18,7 @@ import { bookSectionIds, bookPlan, FOUNDATION_PAGES, SECTION_PAGES } from '../li
 import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/book/fontCatalog'
 import { monogramFor, logoDontsList, DEFAULT_LOGO_CLEARSPACE, DEFAULT_LOGO_MIN_SIZE } from '../lib/brandSystem'
 import { loadBrandFamilies } from '../lib/book/fontLoader'
+import { useModalFocus } from '../lib/useModalFocus'
 import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
 import {
   touchpointsFor,
@@ -648,6 +649,18 @@ function PageNum({ showPageNumbers, alternate, pageIndex }) {
    same sheet (that was the "mirror image" bug). Cover opens on the right
    alone, like a real book. Pages are still the canvas elements, re-keyed. */
 function Flipbook({ open, onClose, pages, index, setIndex }) {
+  /* Hooks run before the early returns below — an overlay that mounts and
+     unmounts must not change hook order on the way. */
+  const overlayRef = useRef(null)
+  /* The only way out used to be finding the Close button with a mouse: no
+     Escape, no focus management, while claiming aria-modal to a screen
+     reader. This is a genuine modal (it covers the builder), so it gets the
+     real pattern rather than the label for it. */
+  useModalFocus(open, () => overlayRef.current, {
+    initialSelector: '.bbb-flip-close-btn',
+    onClose,
+  })
+
   if (!open) return null
   const total = pages.length
   if (!total) return null
@@ -665,6 +678,7 @@ function Flipbook({ open, onClose, pages, index, setIndex }) {
 
   return (
     <div
+      ref={overlayRef}
       className="bbb-flip-overlay bbb-flip-overlay--show"
       role="dialog"
       aria-modal="true"
