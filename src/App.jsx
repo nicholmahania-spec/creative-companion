@@ -96,6 +96,7 @@ import {
   downloadBrandPackPdf,
   downloadBrandPackPdfRaster,
   downloadBrandKitZip,
+  downloadClientPackage,
   downloadMarkPack,
   downloadWorkspaceBackup,
   packReadiness,
@@ -2405,6 +2406,8 @@ function App() {
           ? `${slug}-brand-kit.zip`
           : kind === 'mark'
             ? `${slug}-logo-files.zip`
+          : kind === 'package'
+            ? `${slug}-brand-package.zip`
           : kind === 'html'
             ? `${slug}-brand-direction.html`
             : kind === 'md'
@@ -2447,6 +2450,41 @@ function App() {
           flashToast(
             result.error || 'Download did not finish — try again?'
           )
+        }
+        return result
+      })().finally(clearBusy)
+    }
+
+    if (kind === 'package') {
+      /* The organized client handoff: numbered folders, named files, fonts
+         documented rather than redistributed, and anything the rights say is
+         not the client's held back. The toast reports what was left out —
+         a package that quietly ships less than the plan promised is the one
+         failure this whole path exists to prevent. */
+      flashToast('Building the client package…', { important: true })
+      return (async () => {
+        const result = await downloadClientPackage(
+          pack,
+          {
+            hideWatermark: hidePackWatermark,
+            book: bookSetup,
+            assets: pack.packageAssets || [],
+          },
+          handlePromise
+        )
+        if (result.ok) {
+          const held = (result.excluded?.length || 0) + (result.missing?.length || 0)
+          finishOk('Client package (zip)')
+          if (held > 0) {
+            flashToast(
+              `${result.written} file${result.written === 1 ? '' : 's'} packaged · ${held} left out — see the package panel`,
+              { important: true }
+            )
+          }
+        } else if (result.cancelled) {
+          flashToast('Save cancelled')
+        } else {
+          flashToast(result.error || 'Download did not finish — try again?')
         }
         return result
       })().finally(clearBusy)
