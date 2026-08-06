@@ -2018,7 +2018,7 @@ export async function downloadMarkPack(pack, handlePromise = null) {
  * module exists to prevent.
  *
  * @param {object} pack
- * @param {{ assets?: Array<object>, includeBook?: boolean, briefMarkdown?: string, hideWatermark?: boolean, book?: object }} [opts]
+ * @param {{ assets?: Array<object>, includeBook?: boolean, briefMarkdown?: string, book?: object }} [opts]
  * @param {Promise|null} handlePromise
  * @returns {Promise<{ok: boolean, error?: string, cancelled?: boolean, written?: number, missing?: Array<object>, excluded?: Array<object>}>}
  */
@@ -2045,8 +2045,11 @@ export async function downloadClientPackage(
         /* The book is the one file this cannot make itself. If the PDF engine
            fails, the package still ships — with the book named as missing
            rather than present and broken. */
+        /* No `hideWatermark`: the book inside a client package now carries
+           the studio's own credit from `pack.studio`, like every other
+           surface. Passing a boolean the generator no longer reads would be
+           a control that looks live and is not. */
         const pdfResult = await downloadBrandPackVectorPdf(pack, null, {
-          hideWatermark: !!opts.hideWatermark,
           book: opts.book,
           returnBlobOnly: true,
         })

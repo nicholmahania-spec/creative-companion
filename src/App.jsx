@@ -2445,7 +2445,13 @@ function App() {
         const result = await downloadClientPackage(
           pack,
           {
-            hideWatermark: hidePackWatermark,
+            /* No `hideWatermark` any more. The credit is now the studio's own
+               name, carried on the pack itself as `pack.studio`, so every
+               surface reads one value instead of a boolean only the book PDF
+               honoured. This call site arrived from #126 while that change
+               was in flight: the two merged with no textual conflict and left
+               a free identifier that would have thrown at render — caught by
+               the ratchet's zero-tolerance no-undef rule, not by review. */
             book: bookSetup,
             assets: pack.packageAssets || [],
           },
