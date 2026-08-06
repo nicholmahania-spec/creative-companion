@@ -537,7 +537,9 @@ function App() {
   /** Pomodoro desk lock — default on; user can disable */
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
   const showProgress = !!prefs.showProgress
-  const hidePackWatermark = !!prefs.hidePackWatermark
+  /* One value governs every client-facing surface. Empty is the normal
+     state: the footer then reads project name and date. */
+  const studioName = String(prefs.studioName || '').trim()
   /** Brand book page setup — sticky prefs, honoured by the vector generator */
   const bookSetup = {
     pageSize: prefs.bookPageSize,
@@ -2336,6 +2338,7 @@ function App() {
       tasks: deskTasks,
       moodItems: deskMood,
       palette: projectPalette,
+      studioName,
     })
 
   const openExportPanel = () => {
@@ -2430,7 +2433,6 @@ function App() {
       })
       return (async () => {
         const result = await downloadBrandKitZip(pack, handlePromise, {
-          hideWatermark: hidePackWatermark,
           book: bookSetup,
         })
         if (result.ok) {
@@ -2485,7 +2487,6 @@ function App() {
       flashToast('Making your brand book PDF…', { important: true })
       return (async () => {
         const result = await downloadBrandPackPdf(pack, handlePromise, {
-          hideWatermark: hidePackWatermark,
           mode: 'vector',
           book: bookSetup,
         })
@@ -2609,7 +2610,7 @@ function App() {
             document.getElementById('system-artboard') ||
             document.getElementById('pack-preview-artboard')
           const r = el
-            ? printElementById(el.id, { hideWatermark: hidePackWatermark })
+            ? printElementById(el.id)
             : { ok: false, error: 'Nothing to print yet' }
           if (r.ok) {
             awardAndBroadcast('export_pack', { label: 'Print / PDF' })
@@ -3863,7 +3864,7 @@ function App() {
           projectsSummary={projectsSummary}
           setIntakeClientName={setIntakeClientName}
           intakeClientName={intakeClientName}
-          hidePackWatermark={hidePackWatermark}
+          studioName={studioName}
           brandEditSection={brandEditSection}
           setBrandEditSection={setBrandEditSection}
           pathDoneCount={pathDoneCount}

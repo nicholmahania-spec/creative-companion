@@ -418,13 +418,17 @@ export function blankWorkspaceState() {
       hideNavUntilBlur: false,
       /** Legacy: tips UI removed; kept default true so old prefs hydrate quietly */
       hideTips: true,
-      /** Pack / PDF: hide Creative Companion footer watermark */
-      /* Client work goes out clean unless the designer chooses otherwise.
-         This defaulted to false, so the tool's own credit was printed on a
-         paying freelancer's deliverable unless they noticed a checkbox and
-         turned it off — the default put someone else's name on work they were
-         being paid for. The control stays; only the default flips. */
-      hidePackWatermark: true,
+      /* The studio's own name, printed on every client-facing surface —
+         book footer, markdown pack, direction sheet, overview PDF. Empty is
+         the NORMAL state, not an unfinished one: with nothing set the footer
+         reads project name and date, which is what an unbranded professional
+         deliverable looks like. Nothing anywhere nags for it.
+
+         One value, not a per-surface map. "Should my name be on client work?"
+         has one answer per studio; five toggles would be a 32-state space the
+         designer then has to remember the position of. Empty IS the off
+         state, so there is nothing to toggle either. */
+      studioName: '',
       /* Brand book page setup. Sticky across projects rather than per-project:
          a studio's paper size and print habits don't change per client, and
          re-deciding them on every project is a recurring toll. Shown as text

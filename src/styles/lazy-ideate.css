@@ -186,9 +186,6 @@
   font-weight: 600;
 }
 
-.brand-artboard.hide-watermark .direction-foot {
-  display: none;
-}
 
 .direction-pin.is-hero-pin {
   outline: 2px solid var(--text-primary);

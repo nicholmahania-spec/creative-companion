@@ -31,7 +31,6 @@ export default function DeliverToClient({
   portalId = '',
   pack = null,
   book = null,
-  hideWatermark = false,
   cloud = false,
   onOpenPortalPanel,
   flashToast,
@@ -102,7 +101,6 @@ export default function DeliverToClient({
       note,
       pack,
       book,
-      hideWatermark,
     })
     setBusy(false)
     if (!r.ok) {

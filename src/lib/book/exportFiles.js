@@ -259,6 +259,30 @@ function esc(s) {
 }
 
 /**
+ * One footer line, from the segments that actually have something to say.
+ *
+ * Every client-facing surface used to hardcode "Creative Companion" here, and
+ * exactly one of the six honoured the checkbox that claimed to remove it — so
+ * a designer who found the control, understood it and ticked it still shipped
+ * the platform's name on their client's direction sheet. This is the one
+ * place that decision is now made.
+ *
+ * Empty segments are dropped rather than rendered blank or placeheld. With no
+ * studio name set the footer reads `Sparrow's Promise · 6 Aug 2026`, which is
+ * a finished deliverable rather than one with a gap in it — that is what makes
+ * "no studio name yet" a normal state instead of a task.
+ *
+ * @param {Array<string|false|null|undefined>} parts
+ * @returns {string}
+ */
+export function creditedFooter(parts = []) {
+  return parts
+    .map((p) => String(p || '').trim())
+    .filter(Boolean)
+    .join(' · ')
+}
+
+/**
  * Snapshot of brand/work for exports (from app state pieces).
  */
 /**
@@ -285,6 +309,7 @@ export function buildBrandPackSnapshot({
   tasks = [],
   moodItems = [],
   palette = [],
+  studioName = '',
 } = {}) {
   const p = project || {}
   const openTasks = (tasks || []).filter((t) => !t.completed)
@@ -313,7 +338,12 @@ export function buildBrandPackSnapshot({
     bookGrid: resolvedGrid(p),
     bookRunning: resolvedRunning(p),
     exportedAt: new Date().toISOString(),
-    app: 'Creative Companion',
+    /* Whose name goes on the client's copy. This replaced `app`, which
+       carried the platform's name into every export — PRODUCT.md §20 is
+       explicit that a client's materials say "Designed by <studio>", never
+       "Powered by <SaaS>". Empty means the credit segment is simply absent;
+       see `creditedFooter`. */
+    studio: String(studioName || '').trim(),
     projectName: p.name || 'Untitled project',
     brief: p.brief || '',
     tagline: p.tagline || '',
@@ -556,7 +586,7 @@ export function brandPackToMarkdown(pack) {
     // No tagline yet means no tagline line — never a placeholder. This is a
     // document the client reads, and invented copy reads as a real answer.
     ...(pack.tagline?.trim() ? [`> ${pack.tagline.trim()}`, ''] : []),
-    `_Exported ${new Date(pack.exportedAt).toLocaleString()} · Creative Companion_`,
+    `_${creditedFooter([`Exported ${new Date(pack.exportedAt).toLocaleString()}`, pack.studio])}_`,
     '',
     '## Positioning',
     '',
@@ -716,7 +746,7 @@ export function packBriefMarkdown(pack = {}) {
     })
     lines.push('')
   }
-  lines.push('_Creative Companion · brand pack_')
+  lines.push(`_${creditedFooter([pack.studio, 'brand pack'])}_`)
   return lines.join('\n')
 }
 
@@ -922,7 +952,7 @@ export function brandPackToHtml(pack) {
       }
       <div class="kicker">Open work</div>
       <ul class="direction-tasks">${tasksHtml || '<li>Desk clear for this project</li>'}</ul>
-      <footer class="direction-foot">Creative Companion · Brand identity · ${new Date(pack.exportedAt).toLocaleDateString()}</footer>
+      <footer class="direction-foot">${esc(creditedFooter([pack.studio, 'Brand identity', new Date(pack.exportedAt).toLocaleDateString()]))}</footer>
     </article>
   </div>
 </body>
@@ -1038,7 +1068,6 @@ export async function downloadBrandKitZip(
     // Vector brand book PDF into zip — same page setup as the standalone
     // download, or the two copies of "the brand book" would differ.
     const pdfResult = await downloadBrandPackVectorPdf(pack, null, {
-      hideWatermark: !!options.hideWatermark,
       book: options.book,
       returnBlobOnly: true,
     })
@@ -1203,7 +1232,7 @@ export function buildDirectionSheetMarkup(pack) {
     ${pinsHtml}
     <div class="kicker">Open work</div>
     <ul class="direction-tasks">${tasksHtml}</ul>
-    <footer class="direction-foot">Creative Companion · Brand identity · ${esc(date)}</footer>
+    <footer class="direction-foot">${esc(creditedFooter([pack.studio, 'Brand identity', date]))}</footer>
   </article>`
 }
 
@@ -1560,16 +1589,12 @@ export async function downloadBrandPackPreviewPdf(
  * Print only a DOM node (opens print dialog for PDF).
  * Uses body.cc-printing-pack + print CSS for multi-page paper layout.
  * @param {string} elementId
- * @param {{ hideWatermark?: boolean }} [options]
  */
-export function printElementById(elementId, options = {}) {
+export function printElementById(elementId) {
   const el = document.getElementById(elementId)
   if (!el) return { ok: false, error: 'Nothing to print' }
   try {
     document.body.classList.add('cc-printing-pack')
-    if (options.hideWatermark) {
-      document.body.classList.add('cc-print-no-watermark')
-    }
     const prevTitle = document.title
     const name =
       el.querySelector('.direction-title')?.textContent?.trim() ||
@@ -1579,12 +1604,10 @@ export function printElementById(elementId, options = {}) {
     document.title = prevTitle
     window.setTimeout(() => {
       document.body.classList.remove('cc-printing-pack')
-      document.body.classList.remove('cc-print-no-watermark')
     }, 500)
     return { ok: true }
   } catch (e) {
     document.body.classList.remove('cc-printing-pack')
-    document.body.classList.remove('cc-print-no-watermark')
     return { ok: false, error: e?.message || 'Print failed' }
   }
 }
@@ -1809,7 +1832,10 @@ export async function downloadProjectOverviewPdf(project, options = {}) {
       pdf.setFontSize(8)
       pdf.setTextColor(150, 150, 150)
       pdf.text(
-        pdfSafeText('Creative Companion · Project overview'),
+        pdfSafeText(
+          creditedFooter([options.studioName, 'Project overview']) ||
+            'Project overview'
+        ),
         margin,
         pageH - 24
       )

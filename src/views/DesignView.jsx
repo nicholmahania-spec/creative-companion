@@ -97,7 +97,7 @@ export default function DesignView({
   activeProject = null,
   deskMood = [],
   projectPalette = [],
-  hidePackWatermark = false,
+  studioName = '',
   setActiveView,
   flashToast,
   offerUndo,
@@ -1808,7 +1808,7 @@ export default function DesignView({
                   palette={projectPalette}
                   pins={deskMood.filter((m) => m.inPack)}
                   editable={false}
-                  hideWatermark={hidePackWatermark}
+                  studio={studioName}
                 />
               </Suspense>
             </div>

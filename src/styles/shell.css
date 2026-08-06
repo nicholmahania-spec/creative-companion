@@ -4114,10 +4114,7 @@ body.cc-printing-pack .direction-pins,
     page-break-inside: avoid;
   }
 
-body.cc-printing-pack .direction-foot,
-  body.cc-printing-pack.hide-watermark .direction-foot,
-  body.cc-print-no-watermark .direction-foot,
-  body.cc-printing-pack .brand-artboard.hide-watermark .direction-foot {
+body.cc-printing-pack .direction-foot {
     display: none !important;
   }
 
@@ -5269,9 +5266,6 @@ body.cc-printing-page button {
 
 }
 
-.pack-watermark-toggle input {
-  margin-top: 0.15rem;
-}
 
 @media (max-width: 640px) {
 /* See the note at the 720px block — wrap rather than clip. */
