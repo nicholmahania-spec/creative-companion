@@ -5170,6 +5170,52 @@ body.cc-printing-page button {
   color: var(--accent-growth);
 }
 
+/* Configured for live AI, but the last real attempt did not get through.
+   Deliberately not the alarm colour: nothing is broken in the user's work,
+   the Helper is simply answering from its scripted lines. Muted, but visibly
+   NOT the green "Live" — the whole point is that it stops claiming a success
+   it has not had. */
+.helper-ai-badge.is-degraded {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+/* Deploy annunciator — which copy of the app is this?
+   Renders only on a non-production copy (see components/DeployNotice.jsx), so
+   these rules are invisible on the host people actually use. Low-arousal by
+   instruction: no red, no icon, no exclamation. */
+
+.deploy-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-subtle, transparent);
+}
+
+.deploy-notice-text {
+  min-width: 0;
+}
+
+.deploy-notice-link {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+/* A copy nobody deploys to any more is a stronger claim than "not
+   production", so it gets weight rather than colour. */
+.deploy-notice.is-retired .deploy-notice-text {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 @media (max-width: 720px) {
 .ideate-directions {
     grid-template-columns: 1fr;

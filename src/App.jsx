@@ -114,6 +114,7 @@ import HeaderIcon from './components/HeaderIcon'
 import AccountMenu from './components/AccountMenu'
 import PullToRefresh from './components/PullToRefresh'
 import HighlightExplain from './components/HighlightExplain'
+import DeployNotice from './components/DeployNotice'
 import { RunningTodoAddModal, RunningTodoPanel } from './features/billing/RunningTodo'
 import { HoursInvoicePanel } from './features/billing/HoursInvoice'
 import { WorkLogPanel } from './features/billing/WorkLogPanel'
@@ -3044,6 +3045,9 @@ function App() {
   if (!unlocked) {
     return (
       <div className={`app ${theme} login-shell`}>
+        {/* Before the header exists there is still a copy to name — and the
+            sign-in screen is where a wrong copy is cheapest to leave. */}
+        <DeployNotice />
         <LoginView
           cloud={CLOUD}
           onUnlocked={(result) => {
@@ -3445,6 +3449,11 @@ function App() {
 
           </div>
         </div>
+        {/* Which copy of the app is this? Renders nothing on production and
+            nothing locally — see components/DeployNotice.jsx. Inside <header>
+            deliberately: the header is the one region present on every screen,
+            and this answer has to be un-missable without being an alarm. */}
+        <DeployNotice />
       </header>
 
       {/* Step rail — desktop only (CSS-hidden below 768px, where the drawer

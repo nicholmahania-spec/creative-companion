@@ -23,6 +23,8 @@ import {
 import { HELPER_ASK_SYSTEM_PROMPT, HELPER_SYSTEM_PROMPT } from './helperPersona'
 import { actionCatalogueForPrompt, parseProposals } from './helperActions'
 import { supabase } from '../supabase'
+import { currentDeploy, currentHelperProxyBase } from '../deploy/currentDeploy'
+import { primaryDeploy } from '../deploy/deployTargets'
 
 const DEFAULT_MODEL = 'grok-4.5'
 
@@ -71,11 +73,15 @@ export function usesHelperProxy() {
     ) {
       return true
     }
-    // Production SPA at site root (Vercel/Netlify) — same-origin /api/xai.
-    // GitHub Pages uses base `/creative-companion/` and has no serverless.
+    /* Production: ask the deploy registry, do not infer from the build.
+       This used to read `BASE_URL === '/'` as a stand-in for "this host runs
+       serverless functions". That inference was wrong in both directions —
+       the dead Netlify copy also builds with base '/', and GitHub Pages was
+       written off as having no live path when it simply has no live path OF
+       ITS OWN. It can call the primary's proxy cross-origin, which is what
+       `currentHelperProxyBase()` returns there. */
     if (import.meta.env?.PROD) {
-      const viteBase = String(import.meta.env?.BASE_URL || '/')
-      if (viteBase === '/' || viteBase === '') return true
+      return Boolean(currentHelperProxyBase())
     }
   } catch {
     /* ignore */
@@ -91,7 +97,9 @@ export function getHelperApiBase() {
     }
     const vite = String(import.meta.env?.VITE_XAI_BASE_URL || '').trim()
     if (vite) return vite.replace(/\/$/, '')
-    if (usesHelperProxy()) return '/api/xai'
+    /* Same-origin '/api/xai' on a host that serves one; the primary's absolute
+       URL on a static mirror that does not. */
+    if (usesHelperProxy()) return currentHelperProxyBase() || '/api/xai'
   } catch {
     /* ignore */
   }
@@ -99,37 +107,109 @@ export function getHelperApiBase() {
 }
 
 /**
- * Honest mode for UI: Live only when a real path is configured.
- * GH Pages without proxy → scripted (no failed network spam).
+ * What the last real attempt actually did — `null` until one has been made.
+ *
+ * Configuration says what SHOULD happen. This says what DID. The gap between
+ * the two is precisely the failure that cannot be debugged from outside: a
+ * badge reading "Live AI" while every reply quietly comes from the lookup
+ * table looks identical to a working Helper.
+ *
+ * @type {{ ok: boolean, error?: string } | null}
+ */
+let observedOutcome = null
+
+/**
+ * Record the outcome of one Helper round trip.
+ * Called by `coachWithHelper` / `askHelper`; exported for tests.
+ * @param {{ source: 'ai'|'scripted', error?: string }} result
+ */
+export function noteHelperOutcome(result) {
+  if (!result) return
+  if (result.source === 'ai') {
+    observedOutcome = { ok: true }
+    return
+  }
+  /* A scripted reply with no error is ordinary offline mode, not a fault —
+     it says nothing about whether the live path works, so it must not
+     overwrite what we know. */
+  if (result.error) observedOutcome = { ok: false, error: result.error }
+}
+
+/** Forget the observed state (tests, and a deliberate retry from the UI). */
+export function resetHelperOutcome() {
+  observedOutcome = null
+}
+
+/**
+ * Honest mode for UI.
+ *
+ * `mode` stays the CONFIGURED capability — a transient 502 must not switch the
+ * Helper permanently to scripted, or one bad minute costs the rest of the
+ * session. `observed` carries the measured truth alongside it, so the badge
+ * can stop claiming success it has not had, and `detail` names the copy you
+ * are on rather than leaving it to be inferred from the URL bar.
+ *
+ * @returns {{ mode: 'live'|'scripted', label: string, short: string,
+ *   detail: string, observed: 'ok'|'failing'|null, deploy: string }}
  */
 export function helperAiStatus() {
+  const deploy = (() => {
+    try {
+      return currentDeploy()
+    } catch {
+      return null
+    }
+  })()
+  const where = deploy && deploy.id !== 'local' ? ` You are on ${deploy.label}.` : ''
+  const observed = observedOutcome
+    ? observedOutcome.ok
+      ? 'ok'
+      : 'failing'
+    : null
+
   try {
     const k = getHelperApiKey()
     const hasDirectKey = Boolean(k && k !== 'proxy')
-    if (hasDirectKey) {
-      return {
-        mode: 'live',
-        label: 'Live AI',
-        short: 'Live',
-        detail: 'Replies use the configured model; falls back if offline.',
+    if (hasDirectKey || usesHelperProxy()) {
+      const via = hasDirectKey
+        ? 'Replies use the configured model'
+        : deploy && deploy.helperProxy === 'primary'
+          ? `Replies go through ${primaryDeploy().label}'s signed-in proxy`
+          : 'Replies go through this copy\'s signed-in proxy'
+      if (observed === 'failing') {
+        return {
+          mode: 'live',
+          label: 'Live AI — not answering',
+          short: 'No answer',
+          detail: `${via}, but the last try did not get through: ${observedOutcome.error}. You are getting scripted tips until it does.${where}`,
+          observed,
+          deploy: deploy?.id || 'unknown',
+        }
       }
-    }
-    if (usesHelperProxy()) {
       return {
         mode: 'live',
         label: 'Live AI',
         short: 'Live',
-        detail: 'Via same-origin proxy when available; scripted fallback if it fails.',
+        detail: `${via}; scripted tips if it fails.${where}`,
+        observed,
+        deploy: deploy?.id || 'unknown',
       }
     }
   } catch {
     /* ignore */
   }
+  /* An error observed while nothing live is configured is an anomaly worth
+     saying out loud rather than swallowing — it means something tried a path
+     this copy does not claim to have. */
+  const anomaly =
+    observed === 'failing' ? ` Last attempt failed: ${observedOutcome.error}.` : ''
   return {
     mode: 'scripted',
     label: 'Scripted desk coach',
     short: 'Scripted',
-    detail: 'Local craft tips on this host — no live model configured.',
+    detail: `Local craft tips — no live model on this copy.${where}${anomaly}`,
+    observed,
+    deploy: deploy?.id || 'unknown',
   }
 }
 
@@ -353,11 +433,19 @@ export async function askHelper(question, history = [], activity = {}) {
   if (!q) return { text: '', source: 'scripted' }
 
   if (!isHelperAiConfigured()) {
-    /* Not "your connection" — GitHub Pages and any host without a proxy/key
-       have no live model. Blaming the network made a static deploy look
-       broken when the app was honest about everything else. */
+    /* Not "your connection" — a host without a proxy/key has no live model.
+       Blaming the network made a static deploy look broken when the app was
+       honest about everything else. Now it also names WHICH copy, so the
+       answer to "why is it different here" is on screen instead of being
+       reconstructed from the URL bar. */
+    let where = 'this copy'
+    try {
+      where = currentDeploy().label
+    } catch {
+      /* keep the generic wording */
+    }
     return {
-      text: "Typed questions need live AI, and this copy does not have it. The tips under the buttons still work.",
+      text: `Typed questions need live AI, and ${where} does not have it. The tips under the buttons still work.`,
       source: 'scripted',
     }
   }
@@ -378,13 +466,16 @@ export async function askHelper(question, history = [], activity = {}) {
       maxTokens: 320,
     })
     const { text, proposals } = parseProposals(raw)
+    noteHelperOutcome({ source: 'ai' })
     return { text, proposals, source: 'ai' }
   } catch (e) {
-    return {
+    const out = {
       text: activityTip(activity),
       source: 'scripted',
       error: e?.message || 'AI unavailable',
     }
+    noteHelperOutcome(out)
+    return out
   }
 }
 
@@ -404,12 +495,15 @@ export async function coachWithHelper(intent, activity = {}, extra = {}) {
   try {
     const user = intentUserPrompt(intent, activity, extra)
     const text = await callXaiChat({ user })
+    noteHelperOutcome({ source: 'ai' })
     return { text, source: 'ai' }
   } catch (e) {
-    return {
+    const out = {
       text: fallback,
       source: 'scripted',
       error: e?.message || 'AI unavailable',
     }
+    noteHelperOutcome(out)
+    return out
   }
 }
