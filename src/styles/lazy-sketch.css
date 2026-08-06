@@ -379,3 +379,48 @@
   font-weight: 500;
   color: var(--text-muted);
 }
+
+/* ── The finished piece, checked against the palette ──────────────────────
+   Deliberately the quietest block on the card. There is no red, no badge and
+   no icon anywhere in here: a finding is a sentence in the same colour as
+   every other sentence, because this is a second set of eyes on work the
+   designer has already finished, not a defect report. */
+.app-check {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.app-check-line {
+  margin: 0;
+  font-size: var(--fs-1, 0.85rem);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.app-check-swatches {
+  display: flex;
+  gap: 4px;
+  margin-top: var(--space-2);
+}
+
+.app-check-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+}
+
+.app-check-file {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-1, 0.8rem);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.app-check-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}

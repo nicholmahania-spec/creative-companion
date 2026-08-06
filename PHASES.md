@@ -456,10 +456,87 @@ typeface. Proven in a browser, because the SVG source only survives upload
 while the mark is under the stored-image cap — over it, `downscaleDataUrl`
 rasterises and the type information is gone before any of this sees it.
 
+### The check now reaches real work, and it did not need an Asset Library
+
+**The blocked note was wrong in the same shape as the font one.** It read:
+*"the banner lives on one asset, not an asset library. There is no Asset
+Library in this codebase; the mark is the only brand asset with an upload."*
+That assumed the check needs somewhere to **file** assets. It does not — it
+needs somewhere the deliverables are **already named**, and the Touchpoints
+screen has been exactly that since 2026-08-05: a short list derived from the
+brief (Business card, Social, Print, Signage), one card each, already
+attached to the project. The slot an Asset Library would have made the
+designer create was already on screen.
+
+So the drop target is the row, and there is nothing to categorise, name, tag
+or file. A designer exports a business card from Illustrator and drops the
+PDF on the Business card row; the app reads it and says one sentence.
+
+| what lands on the row | what the card says |
+|---|---|
+| PDF/PNG in the brand colour | *"Uses your Primary."* |
+| PDF carrying an unapproved colour | *"Leans on #1E9E4A, which is not in your palette — your nearest is Primary (#B91C1C)."* |
+| a mono piece | *"Black and white — nothing here to compare against your palette."* |
+| a file that will not open | *"This file didn't open for a colour check."* |
+| anything else | *"Colour check reads PNG, JPEG, WebP, SVG and PDF."* |
+
+**PDF was a door, not a trap, and the reason is measured rather than hoped.**
+`pdfjs-dist` was already dynamically imported twice in `src/`, so reading one
+here adds a lazy chunk and **zero eager bytes** — the perf gate reads 341 KB
+main / 749 KB eager against budgets of 440 / 900, unchanged. And the
+colour-management fear was already answered above: the renderer moves a CMYK
+ink ~6 ΔE00 while the intruder threshold is 15, so the drift is ~40% of the
+distance needed to fire a false alarm. The same headroom that makes this safe
+is why it will never catch a *slightly* wrong colour.
+
+**Nothing of the deliverable is stored.** Only the reading is kept — five
+hexes with their coverages plus the file name — **measured at 128 bytes** for
+a four-page brochure carrying one colour, and bounded by the five-colour cap
+at roughly 300. Asserted under 600 by an e2e that also asserts no `data:`
+ever reaches localStorage. The artwork stays in the designer's own tools,
+which is the product thesis rather than a storage trick; storing it would
+have made this a filing system with two sources of truth. Because the SAMPLE
+is stored rather than the sentence, the reading recomputes against the
+CURRENT palette — change a role colour and every checked piece re-reads
+without re-uploading.
+
+**Both sides of a business card are read.** Up to six pages are sampled
+individually at full sample resolution and merged in ΔE00, averaged over
+readable pages only. Mutating `MAX_PDF_PAGES` to 1 makes a card whose back is
+printed entirely off-brand report *"Uses your #b91c1c"* — a silent miss, and
+the e2e catches it.
+
+**Where the wording deliberately differs from the Mark screen.** On the Mark
+screen a finding means the palette is behind the logo, so it says "isn't in
+your palette **yet**" and offers **Add to palette**. On a finished deliverable
+that runs backwards: the palette was approved weeks ago. Offering to add
+every stray colour would let the brand drift a little wider each time someone
+checked their own work, so the application line carries **no action at all**
+and pins the nearest approved colour instead — the sentence PRODUCT.md §23
+actually asks for.
+
+**A checked file now completes the stop on its own.** `journeyProgress`
+previously required a typed note or a ticked box. A designer who dropped the
+finished card has produced stronger evidence than a sentence; making them
+also write the sentence is the duplicate admin §33 exists to remove.
+
 **What is NOT done, stated plainly rather than quietly rolled up:**
-- **The banner lives on one asset, not an asset library.** There is no Asset
-  Library in this codebase yet; the mark is the only brand asset with an
-  upload. The check is wired there and nowhere else.
+- **Only surfaces the brief names can be checked.** A deliverable that is not
+  on the Touchpoints list has nowhere to land. That is the deliberate trade:
+  the surface costs zero filing precisely because it does not accept
+  arbitrary files. One tap adds a missing surface (`.touchpoints-quick`), and
+  an Asset Library — if it is ever built — inherits the check unchanged.
+- **The white paper fill under a rendered PDF page is uncovered by any test.**
+  Coverage is measured against ink pixels rather than the whole image, so
+  deleting the `fillRect` leaves every test green. It is kept because it makes
+  `substrateShare` mean what its name says, and it is recorded here rather
+  than described in the code as load-bearing.
+- **`SAMPLE_MAX_EDGE` and `isBackgroundTint` are still uncovered** by the
+  mutation-resistant tests, unchanged from the audit above.
+- **No new real-client acceptance run.** The six client files were replayed
+  through the frozen fixture, not through this new path. The evidence that a
+  PDF renders and samples correctly is the generated-fixture e2e, which is a
+  weaker claim than "twenty real assets" and should not be read as more.
 - ~~No photographic mockup was in the sample.~~ **Wrong, and checkable:**
   reading the operator lists of the real files shows **11 of the 22
   renderings carry embedded raster images**. Photography was half the sample.
