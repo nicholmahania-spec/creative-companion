@@ -54,10 +54,19 @@ export function assetCard(assets, asset, { cachedKeys, loadingKeys, online } = {
     storagePath: asset.storage_path || null,
     approved: !!asset.approved_at,
     versions,
-    /* Only said when there IS history. "Version 1 of 1" on every card is
-       noise that teaches the eye to skip the line that matters on the one
-       card where it says 4. */
-    versionLabel: versions > 1 ? `Version ${versions}` : null,
+    /* WORDS, not the number. "Version 3" is a pointer to two things that are
+       not on screen — to read meaning off it the designer has to reconstruct
+       what 1 and 2 were, from a card showing neither, which is a memory
+       demand dressed as information. PRODUCT.md §26.3 records the owner's
+       standing constraint that numbers do not register, and DESIGN_GRAMMAR
+       G2 puts "words for status" against fractions as the primary readout.
+       What is actually needed at shelf level is object permanence: nothing
+       you made was destroyed. That is a yes/no fact and a phrase carries it.
+
+       `versions` stays as data for the history panel, where the versions are
+       visible and the count is redundant anyway. Still gated on > 1: the
+       line on every card teaches the eye to skip the one card it matters on. */
+    versionLabel: versions > 1 ? 'Earlier versions kept' : null,
     bytes,
   }
 }
@@ -93,7 +102,23 @@ export function assetShelf(assets = [], opts = {}) {
     else groups.push({ id: 'other', label: categoryLabel('other'), cards: strays })
   }
 
-  return { groups, total: cards.length }
+  /* One heading over the only content on screen labels a distinction that
+     does not exist yet — reading cost with no navigational payoff, which is
+     what DESIGN_GRAMMAR G3's "one map" rule forbids. Decided here so the view
+     has no judgement to make. */
+  const showHeadings = groups.length > 1
+
+  /* When EVERY card is remote, the per-card label stops being information and
+     becomes a wall: one sentence read twenty times to learn one fact, each
+     over an empty image well — a picture of a missing picture. Repetition of
+     an absence reads as accumulation, and a screen that looks broken is one
+     the designer stops opening. The view says it once above the shelf instead
+     and drops the per-card labels. In the MIXED case each label carries real
+     information (this one, not that one), so it earns its space there. */
+  const allRemote =
+    cards.length > 0 && cards.every((c) => c.bytes.state === 'remote')
+
+  return { groups, total: cards.length, showHeadings, allRemote }
 }
 
 /**
@@ -111,8 +136,13 @@ export function shelfEmptyState({ total, cloud } = {}) {
       kind: 'local',
       /* States what this desk does, not what the designer failed to set up.
          No "sign in to…" — cloudRequired.js records a cold-start tester being
-         sent to hunt for a sign-in that does not exist on a local-only desk. */
-      line: 'Finished files live here once this desk is set up to sync. Everything else about the brand works without it.',
+         sent to hunt for a sign-in that does not exist on a local-only desk.
+
+         The second sentence ("everything else about the brand works without
+         it") is deliberately GONE. It defended against an accusation nobody
+         made, on an otherwise blank screen, which is where unprompted
+         reassurance lands hardest — it plants the doubt it answers. */
+      line: 'Finished files live here once this desk is set up to sync.',
     }
   }
   return {

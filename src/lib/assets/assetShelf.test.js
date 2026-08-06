@@ -38,7 +38,11 @@ describe('the shelf groups what is current', () => {
       asset({ id: 'v3', replaces_id: 'v2' }),
     ]).groups[0].cards[0]
     expect(three.versions).toBe(3)
-    expect(three.versionLabel).toBe('Version 3')
+    /* Words, not the number — PRODUCT.md §26.3 records that numbers do not
+       register for this owner, and "Version 3" points at two things the card
+       does not show. The count survives as data for the history panel. */
+    expect(three.versionLabel).toBe('Earlier versions kept')
+    expect(three.versionLabel).not.toMatch(/\d/)
   })
 
   it('follows the declared category order and draws no empty headings', () => {
@@ -101,6 +105,41 @@ describe('each card knows what it can show', () => {
   })
 })
 
+describe('what the shelf tells the view to draw', () => {
+  it('draws no heading when there is only one group to head', () => {
+    /* A heading over the only content on screen labels a distinction that
+       does not exist yet. */
+    const one = assetShelf([asset({ id: 'a' })])
+    expect(one.showHeadings).toBe(false)
+    const two = assetShelf([
+      asset({ id: 'a' }),
+      asset({ id: 'b', category: 'application' }),
+    ])
+    expect(two.showHeadings).toBe(true)
+  })
+
+  it('flags the all-remote case so the absence is said once, not per card', () => {
+    /* Twenty cards each saying "not on this device yet" is one sentence read
+       twenty times, and repetition of an absence reads as breakage. */
+    const allOut = assetShelf([asset({ id: 'a' }), asset({ id: 'b' })], {
+      online: true,
+    })
+    expect(allOut.allRemote).toBe(true)
+
+    const mixed = assetShelf([asset({ id: 'a' }), asset({ id: 'b' })], {
+      cachedKeys: new Set(['own/proj/a1.svg']),
+      online: true,
+    })
+    /* Mixed: the per-card label carries real information — THIS one, not that
+       one — so it keeps earning its space. */
+    expect(mixed.allRemote).toBe(false)
+  })
+
+  it('is not all-remote when there is nothing at all', () => {
+    expect(assetShelf([]).allRemote).toBe(false)
+  })
+})
+
 describe('the three different nothings', () => {
   it('tells a local-only desk what it does, never what it lacks', () => {
     const state = shelfEmptyState({ total: 0, cloud: false })
@@ -109,6 +148,10 @@ describe('the three different nothings', () => {
        that does not exist on a desk built without cloud credentials. */
     expect(state.line.toLowerCase()).not.toContain('sign in')
     expect(state.line.toLowerCase()).not.toContain('log in')
+    /* One sentence. The second ("everything else works without it") defended
+       against an accusation nobody made, on an otherwise blank screen — which
+       is exactly where unprompted reassurance plants the doubt it answers. */
+    expect(state.line.split('.').filter((x) => x.trim()).length).toBe(1)
   })
 
   it('invites rather than explains once the desk can hold files', () => {
