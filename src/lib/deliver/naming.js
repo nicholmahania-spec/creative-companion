@@ -29,7 +29,18 @@ const fold = (s) =>
   String(s || '')
     .toLowerCase()
     /* Non-ASCII only — the ASCII split below handles the rest, and folding
-       the whole string would eat the separators it depends on. */
+       the whole string would eat the separators it depends on.
+
+       NO `u` FLAG — the class is the exact complement of ASCII only over
+       16-bit code units. With `u` it stops matching anything above U+FFFF, so
+       an astral character would reach `namePart`'s split instead of being
+       folded to a space here.
+
+       That is an intent note, not a live hazard, and the distinction is worth
+       stating so nobody hardens against the wrong thing: the only caller
+       immediately splits on `[^a-z0-9]+`, an ASCII allowlist, so an emoji is
+       eaten either way and the output is identical. Checked by execution, not
+       by reading — adding `u` leaves every test in this file green. */
     .replace(/[\u0080-\uFFFF]/g, (ch) => FOLD[ch] ?? ' ')
 
 /**

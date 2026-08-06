@@ -18,6 +18,16 @@ describe('name parts', () => {
     expect(namePart('   ')).toBe('')
     expect(namePart(null)).toBe('')
   })
+
+  /* An emoji in a business name is ordinary, and a filename headed for a
+     printer's FTP drop must not carry one. Stated plainly so this is not
+     mistaken for a guard: it is NOT mutation-proof — adding `u` to the fold
+     regex leaves it green, because the ASCII split in `namePart` absorbs the
+     difference. It documents the behaviour; the split is what enforces it. */
+  it('reduces characters above the basic plane to nothing, like any other punctuation', () => {
+    expect(namePart('Brand \u{1F600} Co')).toBe('BrandCo')
+    expect(namePart('\u{20BB7} Studio')).toBe('Studio')
+  })
 })
 
 describe('file names', () => {
