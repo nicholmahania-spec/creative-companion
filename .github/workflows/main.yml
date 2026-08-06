@@ -1,16 +1,6 @@
 name: Cloud Node Checker
 on: [push, pull_request]
 
-# Runs pile up otherwise. Neither workflow had a concurrency group, so four
-# pushes to a branch left four live runs of each workflow competing for the
-# same runners — and a job that waits too long for one is cancelled, which
-# reports as a red X indistinguishable from a real failure. Two such
-# cancellations on 2026-08-06 (main's e2e, this branch's verify-project) were
-# each ~15 minutes of queueing, zero failed jobs.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   verify-project:
     runs-on: ubuntu-latest
