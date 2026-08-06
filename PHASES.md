@@ -191,9 +191,18 @@ the one that least needs any of this machinery.
 
 ## Phase 2 — The 10-stage journey
 
-**Status 2026-08-05: DONE — shipped in #131**, and subsumed by modular project
-types: the stops a project shows are derived from what is actually being built,
-so a logo-only job walks a shorter path than a full identity.
+**Status 2026-08-05: I MARKED THIS DONE AND IT WAS NOT.** Retracted 2026-08-06
+— see the correction at the end of this section, which is right and this line
+was wrong.
+
+What I actually verified was that `#131` shipped modular project types: the
+stops a project shows are derived from what is being built, so a logo-only job
+walks a shorter path. That is real and useful, and it is NOT the ten-stage
+redeclaration this phase asks for. I read the commit title, matched it to the
+phase number, and wrote DONE against work that had not been done.
+
+This is the third stale status block in this file to send a reader at the
+wrong thing, and this one I added while explicitly fixing the other two.
 
 **In scope**
 - Redeclare the stops in `src/lib/journey/journey.js` as the spec's ten:
@@ -817,5 +826,12 @@ password protection is off in Auth.
   `home-dash-title`, `login-h1`, `clients-view-title`, `client-record-name`,
   `create-title`, `bbb-panel__title`. A design-system call, deliberately not
   forced by a test selector.
-- **Conflict rule for sync** (Phase 1b). Needs stating explicitly before it is
-  implemented.
+- ~~**Conflict rule for sync** (Phase 1b). Needs stating explicitly before it
+  is implemented.~~ **Resolved — it was already stated and this entry was
+  stale.** `src/services/syncEngine.js:5` declares it: *"The desk wins. The
+  version in front of the designer is never yanked away by a background
+  process; when both sides changed, the local version becomes the truth and
+  the cloud version is written to `project_conflicts` FIRST — durably — and
+  only then overwritten."* The reasoning is there too: newest-wins would need
+  trustworthy edit timestamps on both sides, and the local store does not
+  timestamp edits.
