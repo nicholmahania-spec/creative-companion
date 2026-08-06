@@ -46,7 +46,12 @@ export default defineConfig([
 
   /* Tests run in Node under vitest and legitimately touch process/Buffer. */
   {
-    files: ['**/*.test.{js,jsx}', 'e2e/**/*.js', 'scripts/**/*.{js,mjs}'],
+    files: [
+      '**/*.test.{js,jsx,mjs}',
+      'e2e/**/*.js',
+      'scripts/**/*.{js,mjs}',
+      'bin/**/*.mjs',
+    ],
     extends: [js.configs.recommended],
     languageOptions: {
       globals: { ...globals.node, ...globals.browser },
