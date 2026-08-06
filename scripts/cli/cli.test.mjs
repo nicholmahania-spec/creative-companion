@@ -191,6 +191,47 @@ describe('contrast', () => {
     expect(lines.join('\n')).toContain('Below')
   }, 30_000)
 
+  /**
+   * The phantom pass.
+   *
+   * Roles are assigned separately from the palette and can point at hexes in no
+   * palette at all. A matrix over the bare palette therefore reported "every
+   * pairing clears AA" for a real workspace whose Text #737373 on Background
+   * #FFB8B8 was 2.89:1 — below AA for body text, below even the 3:1 floor for
+   * large text. Both readings must include the roles.
+   */
+  it('sees role colours that are absent from the palette', async () => {
+    const { load, MOD } = await import('./runtime.mjs')
+    const [contrastMod, brandSystem, colorMod] = await Promise.all([
+      load(MOD.contrastMatrix),
+      load(MOD.brandSystem),
+      load(MOD.color),
+    ])
+    const { rolePairings, paletteWithRoles } = await import('./roles.mjs')
+
+    const palette = ['#1C1917', '#FFB8B8']
+    const colorRoles = { text: '#737373', accent: '#97908C' }
+    const sys = brandSystem.buildColorSystem(palette, colorRoles)
+
+    // The bare palette on its own looks spotless — that is the trap.
+    const bare = contrastMod.buildContrastMatrix(palette)
+    expect(bare.failing).toHaveLength(0)
+
+    const pairs = rolePairings(contrastMod, sys.roles)
+    const body = pairs.find((p) => p.id === 'text-on-quiet')
+    expect(body).toBeTruthy()
+    expect(body.ratio).toBeLessThan(3)
+    expect(body.ok).toBe(false)
+    expect(body.need).toBe(4.5)
+
+    // And the grid must now contain the role hexes, so the fix is findable.
+    const merged = contrastMod.buildContrastMatrix(
+      paletteWithRoles(colorMod, palette, sys.roles)
+    )
+    expect(merged.colours).toContain('#737373')
+    expect(merged.failing.length).toBeGreaterThan(0)
+  }, 30_000)
+
   it('refuses something that is not a colour', async () => {
     const { run } = await import('./commands/contrast.mjs')
     await expect(run(['#zzzzzz'])).rejects.toThrow(/Not a colour/)

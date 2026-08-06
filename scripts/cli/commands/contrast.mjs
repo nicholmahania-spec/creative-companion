@@ -15,6 +15,7 @@ import { load, MOD } from '../runtime.mjs'
 import { readWorkspace, resolveProject, scopeTo } from '../workspace.mjs'
 import { c, heading, swatch, table, tick, gap, pad } from '../ui.mjs'
 import { UserError } from '../errors.mjs'
+import { rolePairings, paletteWithRoles } from '../roles.mjs'
 
 export const help = `
 ${c.bold('cc contrast')} — WCAG reading of a brand palette
@@ -46,6 +47,7 @@ export async function run(argv) {
 
   let palette = opts.hexes
   let roleRows = []
+  let pairings = []
   let title = 'Palette'
 
   if (!palette.length) {
@@ -53,8 +55,13 @@ export async function run(argv) {
     const project = resolveProject(workspace, opts.project)
     const { tasks, moodItems } = scopeTo(workspace, project)
     const pack = exportFiles.buildBrandPackSnapshot({ project, tasks, moodItems })
-    palette = pack.palette || []
-    roleRows = brandSystem.buildColorSystem(palette, pack.colorRoles).roleRows
+    const sys = brandSystem.buildColorSystem(pack.palette, pack.colorRoles)
+    roleRows = sys.roleRows
+    pairings = rolePairings(contrastMod, sys.roles)
+    /* The grid covers the role colours too. A role can point at a hex that is
+       in no palette, so a matrix over the bare palette can report "nothing to
+       fix" about a brand whose actual text-on-background is unreadable. */
+    palette = paletteWithRoles(colorMod, pack.palette, sys.roles)
     title = pack.projectName
     console.log(c.grey(label))
   } else {
@@ -77,6 +84,10 @@ export async function run(argv) {
         {
           palette: matrix.colours,
           target: opts.target,
+          rolePairings: pairings.map((x) => ({
+            id: x.id, label: x.label, fg: x.fg, bg: x.bg,
+            ratio: Number(x.ratio.toFixed(2)), need: x.need, ok: x.ok,
+          })),
           pairs: matrix.pairs.length,
           failing: below.map((p) => ({
             fg: p.fg,
@@ -110,6 +121,33 @@ export async function run(argv) {
         ])
       )
     )
+    console.log('')
+  }
+
+  /* First, because these are the pairings that actually reach a reader. The
+     grid below is for locating a problem; this is for knowing you have one. */
+  if (pairings.length) {
+    console.log(`  ${c.bold('In use')}  ${c.grey('the pairings your roles produce')}`)
+    console.log(
+      table(
+        [],
+        pairings.map((p) => [
+          `    ${p.ok ? tick() : gap()}`,
+          `${swatch(p.fg)}${swatch(p.bg)}`,
+          p.ok ? p.label : c.yellow(p.label),
+          (p.ok ? c.grey : p.ratio < 3 ? c.red : c.yellow)(`${p.ratio.toFixed(1)}:1`),
+          c.grey(p.ok ? `clears ${p.need}` : `needs ${p.need}:1`),
+        ])
+      )
+    )
+    const broken = pairings.filter((p) => !p.ok)
+    if (broken.length) {
+      console.log(
+        c.grey(
+          `    ${broken.length} of ${pairings.length} assigned pairings fall short — fixes below.`
+        )
+      )
+    }
     console.log('')
   }
 

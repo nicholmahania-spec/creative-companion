@@ -20,6 +20,7 @@ import {
   progressStateFor,
 } from '../workspace.mjs'
 import { c, heading, tick, gap, bar, orMissing, table } from '../ui.mjs'
+import { rolePairings, paletteWithRoles } from '../roles.mjs'
 import { UserError } from '../errors.mjs'
 
 export const help = `
@@ -42,13 +43,15 @@ export async function run(argv) {
   }
 
   const { workspace, path, label } = readWorkspace(opts.workspace)
-  const [exportFiles, projectTypes, journeyProgress, detectiveBrief, contrastMatrix] =
+  const [exportFiles, projectTypes, journeyProgress, detectiveBrief, contrastMatrix, brandSystem, colorMod] =
     await Promise.all([
       load(MOD.exportFiles),
       load(MOD.projectTypes),
       load(MOD.journeyProgress),
       load(MOD.detectiveBrief),
       load(MOD.contrastMatrix),
+      load(MOD.brandSystem),
+      load(MOD.color),
     ])
 
   const targets = opts.allProjects
@@ -71,7 +74,15 @@ export async function run(argv) {
       project.deadline || ''
     )
 
-    const matrix = contrastMatrix.buildContrastMatrix(pack.palette || [])
+    /* Over palette AND roles, and reporting the assigned pairings separately.
+       A matrix over the bare palette reported "every pairing clears AA" for a
+       project whose Text on Background was 2.89:1, because neither role hex
+       was in the palette. See scripts/cli/roles.mjs. */
+    const sys = brandSystem.buildColorSystem(pack.palette, pack.colorRoles)
+    const pairings = rolePairings(contrastMatrix, sys.roles)
+    const matrix = contrastMatrix.buildContrastMatrix(
+      paletteWithRoles(colorMod, pack.palette, sys.roles)
+    )
 
     return {
       project,
@@ -82,6 +93,7 @@ export async function run(argv) {
       brief,
       requiredEmpty,
       matrix,
+      pairings,
       type: projectTypes.projectType(project.projectType),
     }
   })
@@ -98,7 +110,7 @@ export async function run(argv) {
 }
 
 function print(r) {
-  const { readiness, stages, brief, requiredEmpty, matrix, type } = r
+  const { readiness, stages, brief, requiredEmpty, matrix, pairings, type } = r
   console.log(heading(`${r.pack.projectName}  ${c.grey(`· ${type.label}`)}`))
 
   const verdict = readiness.allDone
@@ -144,10 +156,25 @@ function print(r) {
      can be a deliberate decorative choice, and the designer is the one who
      decides — the same line the app takes. */
   console.log(`\n  ${c.bold('Colour')}`)
+
+  /* The assigned pairings first and on their own terms. The grid is every
+     combination the palette COULD make; these four are the ones the brand
+     actually uses, and they are the reason this section exists. */
+  for (const p of pairings.filter((x) => !x.ok)) {
+    console.log(
+      `    ${gap()} ${c.yellow(p.label)} ${c.grey(`${p.fg} on ${p.bg}`)} ` +
+        `${(p.ratio < 3 ? c.red : c.yellow)(`${p.ratio.toFixed(1)}:1`)}` +
+        c.grey(` — needs ${p.need}:1`)
+    )
+  }
+  if (pairings.length && pairings.every((p) => p.ok)) {
+    console.log(`    ${tick()} ${c.grey('every assigned role pairing is readable')}`)
+  }
+
   if (!matrix.colours.length) {
     console.log(`    ${gap()} ${c.yellow('no palette yet')}`)
   } else if (!matrix.failing.length) {
-    console.log(`    ${tick()} ${c.grey('every pairing clears AA for body text')}`)
+    console.log(`    ${tick()} ${c.grey('every palette pairing clears AA for body text')}`)
   } else {
     console.log(
       c.grey(
@@ -192,6 +219,8 @@ function toJson(r) {
     },
     colour: {
       palette: r.matrix.colours,
+      rolePairings: r.pairings.map((x) => ({ id: x.id, fg: x.fg, bg: x.bg, ratio: Number(x.ratio.toFixed(2)), need: x.need, ok: x.ok })),
+      rolePairingsFailing: r.pairings.filter((x) => !x.ok).length,
       failingPairs: r.matrix.failing.length,
       unusablePairs: r.matrix.unusable.length,
       worstRatio: r.matrix.worst ? Number(r.matrix.worst.ratio.toFixed(2)) : null,
