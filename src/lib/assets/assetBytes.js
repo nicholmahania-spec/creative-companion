@@ -258,7 +258,9 @@ export async function loadAssetBytes({ db, key, fetchBytes, online = true } = {}
     return { blob: null, fromCache: false }
   }
 
-  let blob = null
+  // Declared without an initialiser: both branches below assign it, so a
+  // `= null` here is dead and the lint ratchet counts it.
+  let blob
   try {
     blob = await fetchBytes(key)
   } catch {
