@@ -45,6 +45,7 @@ import {
   buildColorSystem,
   decisionLineFromPack,
   logoDontsList,
+  logoDefaultsNote,
   DEFAULT_LOGO_CLEARSPACE,
   DEFAULT_LOGO_MIN_SIZE,
   TYPE_SCALE,
@@ -1118,8 +1119,23 @@ export async function downloadBrandPackVectorPdf(
       const spec = [clean(pack?.logoClearspace) || DEFAULT_LOGO_CLEARSPACE, clean(pack?.logoMinSize) || DEFAULT_LOGO_MIN_SIZE]
         .filter(Boolean)
         .join(' ')
+      /* Say which of these rules nobody chose. The fallbacks are deliberate —
+         a book should not be blank where a rule belongs — but without this the
+         page reads the same whether a rule was decided or defaulted, and the
+         client has no way to tell. Set smaller and muted: it is a footnote to
+         the rules, not a warning about them. */
+      const defaultsNote = logoDefaultsNote(pack)
       const specH = paraH(spec, specW, px(14), 1.6)
-      para(spec, specX, y + (BOXW - specH) / 2, specW, { size: px(14), lh: 1.6 })
+      const noteH = defaultsNote ? paraH(defaultsNote, specW, px(10), 1.5) + px(8) : 0
+      const blockTop = y + (BOXW - (specH + noteH)) / 2
+      para(spec, specX, blockTop, specW, { size: px(14), lh: 1.6 })
+      if (defaultsNote) {
+        para(defaultsNote, specX, blockTop + specH + px(8), specW, {
+          size: px(10),
+          lh: 1.5,
+          rgb: MUTE_CREAM,
+        })
+      }
       y += BOXW + px(22)
 
       // Don't — pill tags, from the project's own list
