@@ -34,6 +34,8 @@ import {
 } from '../lib/book/exportFiles'
 import { weekFromWorkLog, hoursLoggedWords } from '../lib/billing/workWeek'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
+import BrandCheckPanel from '../components/BrandCheckPanel'
+import YoursOnlyPanel from '../components/YoursOnlyPanel'
 import '../styles/lazy-desk.css'
 
 /**
@@ -174,6 +176,7 @@ export default function DeskView({
   tasks = [],
   clientInbox,
   onOpenView,
+  onOpenSection,
   onOpenClientInbox,
   onToggleTask,
   onToggleNotNeeded,
@@ -443,6 +446,24 @@ export default function DeskView({
               </dl>
             )}
           </section>
+
+          {/* Under the brief on purpose: the check reads the brief's scope,
+              and a gap only means something once you can see what was asked
+              for. Collapsed until pressed — see BrandCheckPanel. */}
+          <BrandCheckPanel
+            project={project}
+            moodItems={pins}
+            palette={palette}
+            tasks={tasks}
+            clientRows={clientInbox?.rows || []}
+            onOpenView={(view, section) => {
+              if (view === 'brand' && section && typeof onOpenSection === 'function') {
+                onOpenSection(section)
+                return
+              }
+              onOpenView(view)
+            }}
+          />
         </div>
 
         {/* ── RIGHT COLUMN ── */}
@@ -676,6 +697,10 @@ export default function DeskView({
               </div>
             )}
           </section>
+
+          {/* Somewhere for what is not work. In the rail, under what's next,
+              because it must be reachable without being in the way. */}
+          <YoursOnlyPanel project={project} />
 
           <section className="desk-panel desk-week" aria-label="This week">
             <div className="desk-panel-head">
