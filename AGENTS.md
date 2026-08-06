@@ -19,6 +19,16 @@ the other way.
 
 When an advisor conflicts with a standing owner decision, **state the tension once**, keep the owner’s decision, and only change course if the owner says so.
 
+**Two advisors are not optional** (owner, 2026-08-06 — full rules in `DEVELOPMENT.md` → Design Principles):
+
+| Agent | When |
+|---|---|
+| `adhd-executive-function-advisor` | before finalizing any UI, UX, workflow or gating decision — does this serve the user? |
+| `devils-advocate` | after **every** significant decision, especially the obvious ones — is this decision right? |
+| `inventor` | before reporting anything as blocked, impossible or not worth building |
+
+Neither `devils-advocate` nor `inventor` overrides the rule above: they inform the owner’s decision, they do not reopen it.
+
 ---
 
 ## Define is form-only (owner decision — do not reintroduce Refs)

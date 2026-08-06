@@ -277,6 +277,74 @@ elsewhere.
 problem for ADHD (which mechanism it hits), the solution, and why that solution
 actually helps. A finding without its "why" is incomplete.
 
+### Every decision goes to `devils-advocate` — including the obvious ones
+
+**Owner instruction, 2026-08-06.** The ADHD advisor tells you whether a
+decision serves the user. This tells you whether the decision is *right*. Run
+both; they answer different questions.
+
+Applies to every significant call — technical, product, design, process — and
+**especially to the ones that felt obvious**, because a decision nobody argued
+with is a decision nobody checked. The order is: consult the advisors, take the
+decision, then attack it. Attacking it before it exists gives the agent nothing
+to bite.
+
+The rules that already govern this agent still hold and are not softened by
+running it more often:
+
+- **It may never invent an expert, quote or citation.** A fabricated authority
+  gets acted on and repeated, which is worse than silence.
+- **"No credible opposition found" is a valid, useful verdict** — and it is the
+  expected one often enough that treating it as a failed run is how you get
+  invented sources.
+- It is capped at two objections, each with who / what they'd say / where it
+  bites / what would change your mind, and a confidence rating it may not round
+  up.
+
+**A surviving decision is the normal outcome, not a wasted pass.** What the run
+buys is the record of *what was argued and why it lost* — which is what stops
+the same question being reopened every session. Where an objection lands, the
+correction goes in the same place as the decision it corrects, and the original
+claim stays visible rather than being edited away. `PHASES.md` §6 is the
+worked example: the inflated headline is still there above its retraction,
+because the inflated version is the one a reader would otherwise trust.
+
+**It ranks below `adhd-executive-function-advisor`**, on the same terms as
+`editorial-layout-director`: if a well-sourced objection and the advisor
+disagree, the advisor wins, and the tension gets stated once rather than
+re-litigated. And per `AGENTS.md`, neither agent overrides a decision the owner
+has already made — advisors inform, they do not veto.
+
+### When you are stuck, call `inventor` before reporting a dead end
+
+**Owner instruction, 2026-08-06.** "Blocked", "impossible", "not available",
+"would need X we don't have" and "not worth building" are hypotheses, not
+findings. Before any of them reaches the owner as a conclusion, put the problem
+to the `inventor` agent: it investigates the real constraint inside and outside
+the repo, searches existing software, standards and research, reasons from
+first principles, borrows mechanisms across disciplines, and prototypes.
+
+This repo has an unusually strong track record of blocks dissolving on
+inspection, which is why the rule exists rather than being left to judgement:
+
+- *"GitHub Pages structurally cannot run the Helper"* — it can. It needed a
+  function *somewhere* holding the key, not on that origin.
+- *"The font check is blocked until uploads accept PDFs"* — SVG is an image
+  format, was already accepted, and is exactly where live-vs-outlined type is
+  distinguishable.
+- *"The consistency check needs an Asset Library that doesn't exist"* — it
+  needed somewhere deliverables are already *named*, and Touchpoints had been
+  that for a day.
+- *"Asset bytes can't live locally"* — that argued against localStorage and
+  concluded against local. IndexedDB was never evaluated and holds Blobs
+  against a quota that is a share of free disk.
+
+Each of those was written down as a structural limit by someone who had
+checked, and each was one wrong assumption wide. **Say what you tried and what
+the real constraint turned out to be** — a dead end that survives the agent is
+worth recording precisely so it is not re-derived; one that doesn't should
+never have been reported.
+
 ### Icon Rule — an icon leads, a word follows
 
 **Icon-only is permitted for six patterns. The list is closed.** Anything not
@@ -322,6 +390,10 @@ covered by this rule.
 
 ### Devil's advocate — `devils-advocate`
 
+**Run on every decision — see the standing rule under Design Principles.** This
+entry describes the agent; that rule says when to reach for it, which is now
+"always" rather than "when it feels warranted".
+
 Attacks a decision that has just been made and finds a named, real, citable
 source who disagrees. **It may never invent an expert, quote or citation** — a
 fabricated authority gets acted on and repeated, which is worse than silence.
@@ -340,6 +412,21 @@ test.
 disagree, the advisor wins and the layout gets reworked. It must justify every
 asymmetry in one sentence, and it inherits the container/typography
 constraints rather than being exempt from them.
+
+### Unblocking — `inventor`
+
+**Run before reporting any dead end — see the standing rule under Design
+Principles.**
+
+Takes a problem that has been called impossible, blocked, unavailable or not
+worth building, and looks for the way through: the real constraint, prior art
+in existing software and standards, first-principles reasoning, mechanisms
+borrowed from other disciplines, and a prototype it then deliberately tries to
+break. It implements in the real project rather than sketching.
+
+It is not a second opinion on a decision — that is `devils-advocate`. Reach for
+this one when the answer is *"this cannot be done"* rather than *"this is the
+wrong thing to do"*.
 
 ### Audit — `five-w-one-h-auditor`
 
