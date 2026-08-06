@@ -9807,7 +9807,19 @@ select:focus {
   color: var(--text-muted);
 }
 
-.more-menu-group-label:first-child {
+/* Each heading now names a role="group" wrapping its items, because a loose
+   <p> is not something role="menu" may own. The wrapper matches the menu's
+   own column so the items stack exactly as they did as direct children. */
+.more-menu-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Was `.more-menu-group-label:first-child`. Every label is the first child of
+   its own group now, so that selector would have closed the gap ABOVE every
+   heading, not just the top one — flattening the split between "Go to" and
+   "This project". Only the menu's first group sits flush. */
+.more-menu-group:first-child > .more-menu-group-label {
   margin-top: 0.25rem;
 }
 

@@ -69,7 +69,12 @@ test.describe('Account menu keyboard', () => {
     /* Move focus deeper in first. Without this the assertion below passes
        vacuously against the old markup, which never moved focus off the
        trigger at all — so "focus returned" and "focus never left" are
-       indistinguishable. */
+       indistinguishable. Wait for the opening focus to land before pressing:
+       an arrow that arrives while activeElement is still outside the list
+       resolves to the FIRST item, not the second. */
+    await expect(
+      page.locator('#account-menu [role="menuitem"]').first()
+    ).toBeFocused()
     await page.keyboard.press('ArrowDown')
     await expect(
       page.locator('#account-menu [role="menuitem"]').nth(1)

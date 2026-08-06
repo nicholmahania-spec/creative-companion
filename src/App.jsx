@@ -130,6 +130,7 @@ import {
 import { guessRunningTodoStage } from './lib/billing/runningTodoStages'
 import { installAutoGrow } from './lib/autoGrow'
 import { useModalFocus } from './lib/useModalFocus'
+import { useMenuKeyboard } from './lib/useMenuKeyboard'
 import useIsMobile from './lib/useIsMobile'
 import {
   isSessionOpen,
@@ -466,6 +467,14 @@ function App() {
   const prevJourneyIdx = useRef(0)
   const [savePulse, setSavePulse] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  /* Tools is a menu hung off a button, not a modal — see useMenuKeyboard. */
+  const toolsMenuRef = useRef(null)
+  const toolsButtonRef = useRef(null)
+  const closeMore = useCallback(() => setMoreOpen(false), [])
+  const { onKeyDown: onToolsKeyDown, dismiss: dismissTools } = useMenuKeyboard(
+    moreOpen,
+    { menuRef: toolsMenuRef, triggerRef: toolsButtonRef, onClose: closeMore }
+  )
   const [accountOpen, setAccountOpen] = useState(false)
   const [openProjectMenuId, setOpenProjectMenuId] = useState(null)
   const [restoreSelect, setRestoreSelect] = useState('')
@@ -3698,6 +3707,7 @@ function App() {
               // closed.
               aria-controls={moreOpen ? 'tools-menu' : undefined}
               id="tools-menu-button"
+              ref={toolsButtonRef}
               onClick={() => {
                 setMoreOpen(true)
                 setNavOpen(false)
@@ -4247,15 +4257,18 @@ function App() {
       {/* Tools — centered overlay (dialogs front-and-center). Pruned 2026-08:
           Print lives on Assets / Export; Archive/Delete live on each project
           row ⋯ (one door each — a long Tools list was decision fatigue).
-          Go-to first (off-path rooms), then project actions by frequency. */}
+          Go-to first (off-path rooms), then project actions by frequency.
+
+          Not role="dialog"/aria-modal: the trigger declares
+          aria-haspopup="menu" and this is a menu. It used to claim both —
+          promising a focus trap it never implemented, over a role="menu"
+          whose arrow keys it also never implemented. */}
       {moreOpen && (
         <div
           className="export-overlay tools-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="tools-menu-title"
+          role="presentation"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setMoreOpen(false)
+            if (e.target === e.currentTarget) dismissTools()
           }}
         >
           <div className="export-panel tools-panel">
@@ -4267,16 +4280,34 @@ function App() {
                 type="button"
                 className="btn btn-ghost btn-sm"
                 aria-label="Close tools"
-                onClick={() => setMoreOpen(false)}
+                onClick={dismissTools}
               >
                 ×
               </button>
             </div>
-            <div className="more-menu" role="menu" id="tools-menu" aria-labelledby="tools-menu-title">
-              <p className="more-menu-group-label">Go to</p>
+            <div
+              ref={toolsMenuRef}
+              className="more-menu"
+              role="menu"
+              id="tools-menu"
+              aria-labelledby="tools-menu-button"
+              onKeyDown={onToolsKeyDown}
+            >
+              {/* role="menu" may only own menuitem, group and separator, so
+                  each heading names a role="group" instead of sitting loose
+                  in the menu where AT could drop or misread it. */}
+              <div
+                className="more-menu-group"
+                role="group"
+                aria-labelledby="tools-group-goto"
+              >
+                <p className="more-menu-group-label" id="tools-group-goto">
+                  Go to
+                </p>
               <button
                 type="button"
                 role="menuitem"
+                tabIndex={-1}
                 className="more-menu-item"
                 onClick={() => {
                   setActiveView('book')
@@ -4288,6 +4319,7 @@ function App() {
               <button
                 type="button"
                 role="menuitem"
+                tabIndex={-1}
                 className="more-menu-item"
                 onClick={() => {
                   setActiveView('insights')
@@ -4299,6 +4331,7 @@ function App() {
               <button
                 type="button"
                 role="menuitem"
+                tabIndex={-1}
                 className="more-menu-item"
                 onClick={() => {
                   setActiveView('spark')
@@ -4310,6 +4343,7 @@ function App() {
               <button
                 type="button"
                 role="menuitem"
+                tabIndex={-1}
                 className="more-menu-item"
                 onClick={() => {
                   setActiveView('review')
@@ -4318,10 +4352,19 @@ function App() {
               >
                 <span aria-hidden="true">◎</span> Review
               </button>
-              <p className="more-menu-group-label">This project</p>
+              </div>
+              <div
+                className="more-menu-group"
+                role="group"
+                aria-labelledby="tools-group-project"
+              >
+                <p className="more-menu-group-label" id="tools-group-project">
+                  This project
+                </p>
               <button
                 type="button"
                 role="menuitem"
+                tabIndex={-1}
                 className="more-menu-item"
                 onClick={() => {
                   setOverviewSharePanelOpen(true)
@@ -4333,6 +4376,7 @@ function App() {
               <button
                 type="button"
                 role="menuitem"
+                tabIndex={-1}
                 className="more-menu-item"
                 onClick={() => {
                   openExportPanel()
@@ -4344,6 +4388,7 @@ function App() {
               <button
                 type="button"
                 role="menuitem"
+                tabIndex={-1}
                 className="more-menu-item"
                 onClick={() => {
                   setHoursPanelOpen(true)
@@ -4355,6 +4400,7 @@ function App() {
               <button
                 type="button"
                 role="menuitem"
+                tabIndex={-1}
                 className="more-menu-item"
                 onClick={() => {
                   setDiscoveryPanelOpen(true)
@@ -4363,6 +4409,7 @@ function App() {
               >
                 <span aria-hidden="true">?</span> Discovery brief
               </button>
+              </div>
             </div>
           </div>
         </div>
