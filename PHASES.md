@@ -394,15 +394,40 @@ Three things worth recording that were not on the phase's list:
    the ship ticket it belongs to. Caught by looking at it, not by a test.
    Placed explicitly now, with a comment saying why.
 
-**What has not been observed working, and must be before this is called done:**
-the delivered path end to end. The unit tests cover the pack, the envelope,
-the state machine and the inbox rows; the e2e spec covers the route existing
-and failing honestly. But `20260806120000_delivery_moment.sql` has **not been
-applied** to the live Supabase project — applying it is the owner's call, not
-an agent's — so no real portal row has ever carried a delivery. Apply it, send
-one real book to one real client link, and confirm three things: the reveal
-renders the book, the view stamps once and only once, and the reaction comes
-back into the inbox.
+**Migration applied 2026-08-06** to `shzkqbtoepqqdkjgupry` on the owner's
+instruction, and the server gates were then verified *against the live
+database* rather than assumed:
+
+| Gate | Result |
+| --- | --- |
+| Undelivered portal → reveal RPC | 0 rows. The URL cannot be used to watch a book being assembled. |
+| Undelivered portal → view stamp / reaction | both refused, 0 rows mutated |
+| Delivered portal → reveal RPC | returns the payload |
+| View stamp, twice | first `true`, second `false`, **and the timestamp did not move** |
+| Reaction, twice | first `true`, second `false`, stored text unchanged — no overwrite |
+| Blank reaction | refused |
+| Revoked link → reveal RPC | 0 rows |
+
+All five existing portals defaulted cleanly to `not_delivered`; no live row was
+altered. The delivered-path checks needed a delivered row, and `owner_id` has a
+foreign key to `auth.users`, so rather than manufacture an account the whole
+sequence ran inside a transaction ended with a deliberate `RAISE` — the results
+come back in the error message and the row is *incapable* of surviving. Verified
+afterwards: 5 portals, 0 strays.
+
+**What still has not been observed:** the path through the actual UI. The
+server behaves; nobody has yet pressed *Ready to send it* on a real project,
+opened the resulting `/d/` link as the client, and watched the book render and
+the row appear in the inbox. That is one real send away, and it is the last
+thing between this phase and done.
+
+The Supabase advisor flags the three new RPCs under
+`anon_security_definer_function_executable`. That is the design, not a
+regression: every pre-existing portal RPC carries the identical warning,
+because a no-login client surface is what they are for. No new *category* of
+advisory appeared. Two unrelated pre-existing items remain and are not this
+phase's to fix — `public.records` has RLS enabled with no policy, and leaked
+password protection is off in Auth.
 
 ---
 
