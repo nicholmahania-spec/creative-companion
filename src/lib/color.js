@@ -7,6 +7,29 @@ export const DEFAULT_PALETTE = ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9']
 /** @deprecated alias — same as DEFAULT_PALETTE */
 export const STONE_PALETTE = DEFAULT_PALETTE
 
+/**
+ * Has the designer actually chosen these colours, or is this still the
+ * factory setting?
+ *
+ * Every project is CREATED with `defaultProjectPalette` (the same four stone
+ * values as DEFAULT_PALETTE), so "no palette yet" can never be expressed as
+ * an empty array — `palette.length` is never 0 for a real project. Anything
+ * that needs to know whether colour work has started has to ask this instead,
+ * and code that asks the wrong question here does not misbehave, it silently
+ * never runs. That has now happened three times in this area: the health
+ * meter's "nothing measured yet" state, the mark check's offer to start a
+ * palette from the logo, and the palette-empty branch each looked correct in
+ * a unit test and was unreachable in the app.
+ *
+ * @param {string[]} palette
+ * @returns {boolean} true when it is still the untouched default
+ */
+export function paletteIsUntouched(palette = []) {
+  const p = (palette || []).map((c) => String(c || '').toUpperCase())
+  if (p.length !== DEFAULT_PALETTE.length) return false
+  return DEFAULT_PALETTE.every((d, i) => p[i] === d.toUpperCase())
+}
+
 export function normalizeHex(input) {
   if (!input) return null
   let h = String(input).trim()

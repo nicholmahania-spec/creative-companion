@@ -1979,3 +1979,26 @@
   font-weight: 700;
   color: var(--text-secondary);
 }
+
+/* What colours the uploaded mark is made of. One slot, one sentence — the
+   heading stays put so an unusual sentence reads as a different fact rather
+   than as the panel breaking. Deliberately no warning colour: the Mark
+   screen is not a place anything should be flagged as wrong. */
+.mark-colour-check {
+  margin: 0.85rem 0 0;
+  padding: 0.75rem 0.9rem;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.mark-colour-line {
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.mark-colour-check .btn {
+  margin-top: 0.6rem;
+}
