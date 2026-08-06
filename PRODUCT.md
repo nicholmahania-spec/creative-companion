@@ -472,6 +472,14 @@ report 80–90% failure for single-term matching), its empty state asserts a
 false negative, and its completeness headline renders a persistent count of
 undone work. See the review on #126 and `DEVELOPMENT.md` "Contested claims".
 
+**Update 2026-08-06: all three were fixed the same day, in `6b1934e`.** The
+empty state degrades a miss to a browse (`recallWithFallback`), and the
+headline count moved inside the opened check. This entry described them as
+live defects for a day after they were closed, and was read as current — so
+it is corrected here rather than left. The vocabulary objection itself still
+stands as a limit on recall: the 15–20 naive-question validation the review
+asked for has never been run.
+
 ### 26.5 Production, packaging and attribution have no schema yet
 
 §14, §19 and §20 imply asset-level metadata (usage rights, production specs,

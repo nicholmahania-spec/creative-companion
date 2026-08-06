@@ -73,8 +73,10 @@ reasoning. It is not a list of what is left. These are:
 - **Pomodoro → Helper** link.
 - **~12 cosmetic Research findings** — `#e7e5e4` fallback, note-input box vs
   underline, dead hero ring.
-- **Research phases 3–7** — not started. Spec in `docs/RESEARCH_PHASES.md`;
-  read it before picking any of them up.
+- ~~**Research phases 3–7** — not started.~~ **Wrong — checked 2026-08-06.**
+  `docs/RESEARCH_PHASES.md` records 3, 4, 6 and 7 as DONE and 5 as partial
+  (contract e-sign still waiting on a key). This entry predates that work and
+  contradicts the file it points at; trust that file, not this line.
 - **Client contract signing** — scoped and ready to build (see below).
 - **Font packs** — real typefaces beyond the built-in pairs (see below).
 - **Gap 1, logo-only path** — specced 2026-08-01, not built.
