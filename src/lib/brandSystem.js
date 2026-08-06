@@ -226,6 +226,48 @@ export function logoDontsList(pack = {}) {
   return [...DEFAULT_LOGO_DONTS]
 }
 
+/**
+ * Which logo rules on the page are the built-in defaults rather than answers.
+ *
+ * Clearspace, minimum size and the don'ts all fall back to sensible defaults
+ * when the designer has not set them — deliberately, so a book is never blank
+ * where a rule belongs. The cost is that the delivered page reads identically
+ * whether a rule was decided or merely defaulted, and the client cannot tell
+ * which. On a project with all three unset the book still states a clearspace
+ * ratio, a minimum size in px and inches, and three prohibitions, in the same
+ * voice as the parts that were actually chosen.
+ *
+ * This does not remove the defaults. It only lets the surfaces say which is
+ * which, so "not yet decided" stops looking like "decided".
+ */
+export function logoRuleDefaults(pack = {}) {
+  const unset = (v) => !String(v || '').trim()
+  return {
+    clearspace: unset(pack.logoClearspace),
+    minSize: unset(pack.logoMinSize),
+    donts: unset(pack.logoDonts),
+  }
+}
+
+/**
+ * One plain sentence naming the defaulted rules, or '' when everything shown
+ * was chosen. Shared so the PDF and the markdown cannot word it differently.
+ */
+export function logoDefaultsNote(pack = {}) {
+  const d = logoRuleDefaults(pack)
+  const which = [
+    d.clearspace && 'clearspace',
+    d.minSize && 'minimum size',
+    d.donts && 'the don’ts',
+  ].filter(Boolean)
+  if (!which.length) return ''
+  const list =
+    which.length === 1
+      ? which[0]
+      : `${which.slice(0, -1).join(', ')} and ${which[which.length - 1]}`
+  return `Standard practice shown for ${list} — not yet set for this brand.`
+}
+
 export function decisionLineFromPack(pack = {}) {
   if (pack.decisionLine) return String(pack.decisionLine)
   const fromLog = formatDecisionLine(
@@ -339,10 +381,11 @@ export function appendSystemMarkdown(lines, pack) {
   out.push(
     `- **Clearspace:** ${pack.logoClearspace || DEFAULT_LOGO_CLEARSPACE}`,
     `- **Min size:** ${pack.logoMinSize || DEFAULT_LOGO_MIN_SIZE}`,
-    '',
-    '### Logo don’ts',
     ''
   )
+  const defaultsNote = logoDefaultsNote(pack)
+  if (defaultsNote) out.push(`_${defaultsNote}_`, '')
+  out.push('### Logo don’ts', '')
   for (const d of logoDontsList(pack)) {
     out.push(`- ${d}`)
   }

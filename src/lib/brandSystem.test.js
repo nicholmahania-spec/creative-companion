@@ -7,6 +7,8 @@ import {
   buildJsonTokens,
   logoDontsList,
   appendSystemMarkdown,
+  logoDefaultsNote,
+  logoRuleDefaults,
   DEFAULT_LOGO_DONTS,
 } from './brandSystem'
 
@@ -142,5 +144,52 @@ describe('every assigned colour job reaches the client', () => {
       { secondary: '#7C3AED', neutral: '#A8A29E' }
     )
     for (const r of sys.roleRows) expect(r.job, r.role).toBeTruthy()
+  })
+})
+
+/**
+ * Clearspace, minimum size and the don'ts all fall back to built-in defaults.
+ * That is deliberate — a book should not be blank where a rule belongs — but
+ * the delivered page then reads identically whether a rule was decided or
+ * merely defaulted, and the client cannot tell which. These pin the sentence
+ * that tells them apart, and pin that it disappears entirely once the rules
+ * are answered.
+ */
+describe('logo rules say which are defaults', () => {
+  it('names every defaulted rule when nothing was set', () => {
+    const note = logoDefaultsNote({})
+    expect(note).toContain('clearspace')
+    expect(note).toContain('minimum size')
+    expect(note).toContain('not yet set for this brand')
+  })
+
+  it('says nothing at all once all three are answered', () => {
+    expect(
+      logoDefaultsNote({ logoClearspace: 'a', logoMinSize: 'b', logoDonts: 'c' })
+    ).toBe('')
+  })
+
+  it('names only the rule that is actually missing', () => {
+    const note = logoDefaultsNote({ logoClearspace: 'a', logoDonts: 'c' })
+    expect(note).toContain('minimum size')
+    expect(note).not.toContain('clearspace')
+  })
+
+  it('treats whitespace as unset, because a space is not a decision', () => {
+    expect(logoRuleDefaults({ logoMinSize: '   ' }).minSize).toBe(true)
+    expect(logoRuleDefaults({ logoMinSize: '24px' }).minSize).toBe(false)
+  })
+
+  it('reaches the client markdown, and only when it should', () => {
+    const withDefaults = appendSystemMarkdown([], { palette: ['#111111'] }).join('\n')
+    expect(withDefaults).toContain('not yet set for this brand')
+
+    const answered = appendSystemMarkdown([], {
+      palette: ['#111111'],
+      logoClearspace: 'Half the mark height',
+      logoMinSize: '24px',
+      logoDonts: 'Do not rotate',
+    }).join('\n')
+    expect(answered).not.toContain('not yet set for this brand')
   })
 })
