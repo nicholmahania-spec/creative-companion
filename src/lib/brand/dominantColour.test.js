@@ -322,6 +322,38 @@ describe('measured fixes from the real PDFs', () => {
     // Same lightness, ordinary coverage — an accent, not a page tint.
     expect(isBackgroundTint({ hex: '#dae7f6', coverage: 0.08 })).toBe(false)
   })
+
+  /* The two cases above both use ONE colour, so between them they pin the
+     coverage half of the rule and leave the lightness half free: mutating
+     `lab.L > 85` all the way down to `lab.L > 0` kept both of them green.
+     A rule with one of its two conditions unguarded is the shape this repo
+     calls a guardrail that cannot fail. */
+  it('does not treat a saturated brand colour as background, however dominant', () => {
+    // A logo filling most of its own artboard is not the paper.
+    expect(isBackgroundTint({ hex: '#b91c1c', coverage: 0.93 })).toBe(false)
+    expect(isBackgroundTint({ hex: '#1b4c7e', coverage: 0.99 })).toBe(false)
+  })
+
+  it('holds the lightness line where the substrate argument put it', () => {
+    /* #dae7f6 sits at L 91.1 and is the real page tint this rule was written
+       against; #9fb8d4 is materially darker at roughly L 73 and is ink, not
+       paper, even when it covers the page. */
+    expect(isBackgroundTint({ hex: '#9fb8d4', coverage: 0.95 })).toBe(false)
+    expect(isBackgroundTint({ hex: '#dae7f6', coverage: 0.95 })).toBe(true)
+  })
+
+  /* And the coverage line, for the same reason. The accent case above sits at
+     0.08, so lowering the threshold from 0.5 to 0.1 left every test green.
+     A third of a page is a large block of a pale brand colour; it is not the
+     substrate, and the rule has to keep saying so. */
+  it('needs real dominance, not merely a lot, before calling a tint the page', () => {
+    expect(isBackgroundTint({ hex: '#dae7f6', coverage: 0.3 })).toBe(false)
+    expect(isBackgroundTint({ hex: '#dae7f6', coverage: 0.49 })).toBe(false)
+    /* And from above, or the threshold is only pinned on one side: every
+       positive case in this file sits past 0.9, so raising the line from 0.5
+       to 0.9 also went unnoticed. */
+    expect(isBackgroundTint({ hex: '#dae7f6', coverage: 0.6 })).toBe(true)
+  })
 })
 
 describe('intruderColours — graded, not binary, and measured on real files', () => {
