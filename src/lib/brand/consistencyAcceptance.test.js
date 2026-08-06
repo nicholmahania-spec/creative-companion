@@ -23,7 +23,7 @@ import { describe, it, expect } from 'vitest'
 import { ACCEPTANCE_RENDERINGS } from './acceptanceFixture.js'
 import { markColourReading } from './markColourCheck.js'
 import { deltaE00Hex } from './deltaE.js'
-import { filterBrandColours } from './dominantColour.js'
+import { intruderColours } from './dominantColour.js'
 
 const readable = ACCEPTANCE_RENDERINGS.filter((r) => r.readable)
 const identity = readable.filter((r) => r.piece === 'identity')
@@ -72,38 +72,23 @@ describe('Phase 6 acceptance: it must not cry wolf on real work', () => {
     expect(flagged.map((r) => `${r.kind} p${r.page}`)).toEqual([])
   })
 
-  it('C — fires nothing across pages of one internally consistent piece', () => {
-    /* Palette = the whole document's leading colours, which is what a
-       designer would hold. Deriving it from page 1 alone was a flaw in the
-       original harness and produced the only findings in the entire run:
-       artboard 1 of the logo is blank and artboard 2 carries only the red,
-       so the cyan was reported as an intruder on six later artboards. */
-    const byPiece = new Map()
-    for (const r of readable) {
-      if (!byPiece.has(r.piece)) byPiece.set(r.piece, [])
-      byPiece.get(r.piece).push(r)
-    }
-    let checked = 0
-    const flagged = []
-    for (const [piece, pages] of byPiece) {
-      if (pages.length < 2) continue
-      const seen = []
-      for (const p of pages) {
-        for (const c of p.colours) {
-          if (c.coverage < 0.1) continue
-          if (!seen.some((h) => deltaE00Hex(h, c.hex) < 5)) seen.push(c.hex)
-        }
-      }
-      const palette = filterBrandColours(seen)
-      if (!palette.length) continue
-      for (const p of pages) {
-        checked++
-        if (findings(p, palette).length) flagged.push(`${piece} p${p.page}`)
-      }
-    }
-    expect(checked).toBeGreaterThanOrEqual(16)
-    expect(flagged).toEqual([])
+  it('C — WAS TAUTOLOGICAL, and is kept only as the record of that', () => {
+    /* This used to assert "0 findings across 16 checks" and it was counted
+       toward the headline. An adversarial pass showed it cannot fail: the
+       palette is built from the document's own colours, deduped at ΔE00 < 5,
+       and then those same colours are checked at > 15. Swept across every
+       threshold, C fires ZERO at anything above 3 — so at the real threshold
+       of 15 it was 16 of the 34 "checks" contributing no information at all.
+
+       It is not deleted, because the honest headline depends on knowing the
+       denominator was inflated. The false-positive evidence is tests A and B:
+       nine renderings of ONE brand. Not thirty-four. */
+    const identityFindings = identity.filter(
+      (r) => findings(r, AS_SPECIFIED).length
+    )
+    expect(identityFindings).toEqual([])
   })
+
 })
 
 describe('Phase 6 acceptance: it must still speak up', () => {
@@ -118,24 +103,71 @@ describe('Phase 6 acceptance: it must still speak up', () => {
     info: ['#24275c', '#429592'],
   }
 
-  it('D — catches foreign colour in the large majority of cases', () => {
+  it('D — catches foreign colour in every check that CAN fire', () => {
+    /* Originally reported as "68 of 76, an 11% miss rate", and that framing
+       was wrong in a way worth keeping on the record. The 8 "misses" are not
+       eight independent failures: they are TWO renderings, each checked
+       against four foreign palettes. Both are structurally mute — their
+       strongest colour covers 2.3% and 7.7%, under the 10% floor — so they
+       cannot fire against any palette at any threshold. Counting them as
+       detection failures blamed the checker for artwork with no dominant
+       colour in it. */
+    const mute = readable.filter(
+      (r) => Math.max(...r.colours.map((c) => c.coverage)) < 0.1
+    )
+    expect(mute.map((r) => `${r.piece} p${r.page}`)).toEqual([
+      'plan p1',
+      'anniv p3',
+    ])
+
     let total = 0
     let fired = 0
+    let couldFire = 0
     for (const r of readable) {
       for (const [piece, palette] of Object.entries(PALETTES)) {
         if (piece === r.piece) continue
         total++
+        if (mute.includes(r)) continue
+        couldFire++
         if (findings(r, palette).length) fired++
       }
     }
     expect(total).toBe(76)
-    /* Measured 68/76. Pinned as a floor rather than an equality so a genuine
-       improvement is not a failure — but it cannot fall. The 8 misses are
-       real and expected: this check is deliberately miss-prone (a 10%
-       coverage floor, a ΔE00 15 band), and two navy-led brands sit inside
-       that band of each other. */
-    expect(fired).toBeGreaterThanOrEqual(68)
-    expect(fired / total).toBeGreaterThan(0.85)
+    expect(couldFire).toBe(68)
+    // Every check that could fire, did.
+    expect(fired).toBe(68)
+  })
+
+  it('D — the threshold is validated as a BAND, not as the value 15', () => {
+    /* Swept over the fixture, every threshold from 12 to 15 gives an
+       identical result: no false alarms on correct work, all 68 detections.
+       Below 12 false alarms appear; at 16 detection starts falling. So this
+       run supports "somewhere in 12–15", and picking 15 out of that band is
+       a judgement the data does not make for us — it buys headroom against
+       colour-management drift at the cost of a wider blind spot.
+
+       Recording the band rather than the point is the difference between
+       evidence and a number that merely happens to be in the code. */
+    const sweep = (t) => {
+      let fp = 0
+      for (const r of identity) {
+        if (intruderColours(r.colours, AS_SPECIFIED, { minDelta: t }).length) fp++
+      }
+      let fired = 0
+      for (const r of readable) {
+        for (const [piece, palette] of Object.entries(PALETTES)) {
+          if (piece === r.piece) continue
+          if (intruderColours(r.colours, palette, { minDelta: t }).length) fired++
+        }
+      }
+      return { fp, fired }
+    }
+    for (const t of [12, 13, 14, 15]) {
+      expect(sweep(t), `threshold ${t}`).toEqual({ fp: 0, fired: 68 })
+    }
+    // Outside the band it degrades, in both directions.
+    expect(sweep(10).fp, 'below the band, correct work gets flagged').toBeGreaterThan(0)
+    expect(sweep(18).fired, 'above the band, detection falls').toBeLessThan(68)
   })
 
   it('D — a wholly foreign brand is caught, not merely usually caught', () => {

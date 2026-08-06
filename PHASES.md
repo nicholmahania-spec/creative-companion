@@ -360,13 +360,48 @@ artboards, and the checker says so rather than calling them clean.
 
 | test | what it checks | result |
 |---|---|---|
-| A | Sparrow's Promise artwork vs the palette **typed from their own brand guide** (`#ED1C24` / `#32C1D6`) | **0 findings / 9** |
+| A | one brand's artwork vs the palette **typed from its own brand guide** (`#ED1C24` / `#32C1D6`) | **0 findings / 9** |
 | B | the same artwork vs a palette **calibrated through the same renderer** | **0 findings / 9** |
-| C | every later page of a multi-page piece vs that document's own colours | **0 findings / 16** |
-| D | every piece vs a **different project's** palette — these *should* fire | **68 fired / 76**, 11% miss |
+| C | every page of a piece vs that document's own colours | **0 / 16 — and worthless, see below** |
+| D | every piece vs a **different project's** palette — these *should* fire | **68 fired / 68 that can fire** |
 
-**0 false positives in 34 checks on correct client work, while still catching
-89% of genuinely foreign colour.** That is the bar this phase was gated on.
+**The honest headline: 0 false alarms on one brand's correct work, and every
+check that could fire, did.**
+
+### What an adversarial pass took off that headline
+
+The first version of this section claimed *"0 false positives in 34 checks,
+89% detection"*. Both halves were overstated and the correction is recorded
+rather than edited away, because the inflated version is the one a reader
+would otherwise trust.
+
+- **Test C cannot fail.** It builds each palette out of the very colours it
+  then checks — deduped at ΔE00 < 5, compared at > 15. Swept across
+  thresholds it fires zero at anything above 3. So 16 of the 34 "checks"
+  carried no information, and the real false-positive evidence is A and B:
+  **nine renderings of ONE brand**, measured twice.
+- **The sample is pseudoreplicated.** 22 renderings hold only **18 distinct
+  colour payloads**; three pages of one document are byte-identical. Test A's
+  "n=9" is one brand sheet plus eight artboards of one logo — n=1 brand, and
+  the same two inks nine times. (Hurlbert 1984 is the canonical statement of
+  this error: inference where "replicates are not statistically independent".)
+- **The "8 misses" were 2 renderings, not 8 failures.** Each was checked
+  against four foreign palettes. Both are *structurally mute* — their
+  strongest colour covers 2.3% and 7.7%, under the 10% floor — so they cannot
+  fire against any palette at any threshold. Blaming the checker for artwork
+  with no dominant colour was wrong; restricted to what can fire it is 68/68.
+- **The threshold is validated as a BAND, not as 15.** Every value from 12 to
+  15 gives an identical result on this data. Below 12 false alarms appear; at
+  16 detection starts to fall. Choosing 15 inside that band buys headroom
+  against colour-management drift at the cost of a wider blind spot — a
+  judgement, not a measurement.
+- **This is a large-error detector, and should be described as one.** The
+  median distance at which it fires is ~50 ΔE00; anything 5–15 from the
+  nearest brand colour is reported by nothing at all. For scale, ISO 12647-7
+  treats a spot colour as out of tolerance at roughly ΔE00 2.5. That gap is
+  deliberate — the sampler's own noise floor on a JPEG is 4.17 — but it means
+  the realistic professional error, a *slightly* wrong shade, is invisible
+  here.
 
 **The CMYK worry turned out not to matter here, and that is a measured
 result, not an assumption.** Their brand guide prints `#ED1C24`; the same ink
@@ -384,6 +419,17 @@ logo is blank and artboard 2 carries only the red, so the cyan — a real brand
 colour — was flagged on six later artboards. A designer's palette holds both.
 Notably the app's response in that situation was still the right one: it
 offered **Add to palette**.
+
+**The frozen run protects less than "acceptance" suggests.** It replays
+stored hex/coverage vectors through `markColourReading`, so it never
+re-executes the sampling stage that produced them. An audit mutated six
+sampling constants and the acceptance tests stayed green for all six. Two of
+those holes are now closed by tests that fail when mutated — bucketing
+(`STEP`, which had no coverage: defeating it entirely left all 175 tests
+passing) and `imageSmoothingEnabled` (an e2e that uploads fine red/teal bands;
+with smoothing on the panel reports `#8e3230` and `#395f59`, colours present
+nowhere in the artwork). `SAMPLE_MAX_EDGE` and `isBackgroundTint` remain
+uncovered.
 
 **What is NOT done, stated plainly rather than quietly rolled up:**
 
