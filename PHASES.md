@@ -520,6 +520,40 @@ previously required a typed note or a ticked box. A designer who dropped the
 finished card has produced stronger evidence than a sentence; making them
 also write the sentence is the duplicate admin §33 exists to remove.
 
+### The application check, run on real client work 2026-08-06
+
+The generated-PDF tests were a weaker claim than the phase's own bar, so the
+five real client PDFs went through the actual UI path — palette set through
+the screen, file dropped on a Touchpoints row, sentence read off the panel.
+Palette: the two colours printed in Sparrow's Promise's own brand guide,
+`#ED1C24` and `#32C1D6`.
+
+| file | what the panel said |
+|---|---|
+| their own brand sheet | `Uses your #32c1d6.` |
+| table cards *(other client)* | `Leans on #292961 — nearest is #ed1c24` |
+| birth plan *(other client)* | `Leans on #018081 — nearest is #32c1d6` |
+| celebration *(other client)* | `None of your palette colours turn up in this one.` |
+| infographic *(other client)* | `Leans on #24285c, #429592, #18255e and #4f3791` |
+
+**No false alarm on the client's own work; every foreign piece caught.**
+
+**And the run exposed the limit better than any argument had.** Look at row
+one: it names the cyan and says NOTHING about the red — which is 59% of that
+page. Their red renders ΔE00 6.14 from the specified `#ED1C24`: past the band
+that confirms a match (5), far short of the band that reports a stranger
+(15). Neither confirmed nor flagged. Silent.
+
+That gap is not closable at this fidelity — below 15 the sampler's own JPEG
+noise floor is 4.17, so a slightly-wrong colour and a correctly-printed one
+are genuinely indistinguishable. What was not acceptable was a clean sentence
+reading as approval while the check cannot see the most common professional
+error. **The panel now says so, in every result state including the clean
+one:**
+
+> Only catches a colour well away from yours — a near-miss reads the same as
+> a match here.
+
 **What is NOT done, stated plainly rather than quietly rolled up:**
 - **Only surfaces the brief names can be checked.** A deliverable that is not
   on the Touchpoints list has nowhere to land. That is the deliberate trade:

@@ -424,3 +424,13 @@
   gap: var(--space-2);
   margin-top: var(--space-2);
 }
+
+/* What the check cannot see. Quiet by design — it qualifies a sentence, it
+   is not another thing to act on. Present in every result state, including
+   the clean one, which is the state most likely to be read as approval. */
+.app-check-scope {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}

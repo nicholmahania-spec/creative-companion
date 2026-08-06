@@ -116,6 +116,27 @@ const list = (items) =>
  * @param {ReturnType<typeof applicationColourReading>} reading
  * @returns {{ line: string, tone?: 'note' }}
  */
+/**
+ * What this check can and cannot see, said on the panel rather than left in
+ * a commit message.
+ *
+ * MEASURED ON REAL CLIENT WORK, which is why the wording is this blunt.
+ * Sparrow's Promise's own brand sheet, checked against the two colours
+ * printed in their own guide, returned "Uses your #32c1d6" — and said
+ * nothing at all about the red, which is 59% of the page. Their red renders
+ * ΔE00 6.14 from the specified #ED1C24: past the band that confirms a match
+ * (5) and far short of the band that reports a stranger (15). Neither
+ * confirmed nor flagged. Silent.
+ *
+ * That gap is deliberate and is not closable at this fidelity — below 15 the
+ * sampler's own noise floor on a JPEG is 4.17, so a slightly-wrong colour and
+ * a correctly-printed one are genuinely indistinguishable here. What is NOT
+ * acceptable is letting a clean sentence read as approval when the check
+ * cannot see the most common professional error. So the panel says so.
+ */
+export const CHECK_SCOPE_NOTE =
+  'Only catches a colour well away from yours — a near-miss reads the same as a match here.'
+
 export function applicationColourLine(reading) {
   const state = reading?.state
 

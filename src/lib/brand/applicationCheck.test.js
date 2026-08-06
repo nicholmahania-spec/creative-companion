@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
 import {
   applicationColourLine,
+  CHECK_SCOPE_NOTE,
   applicationColourReading,
 } from './applicationCheck.js'
 import { mergePageSamples } from './checkFile.js'
@@ -243,5 +247,46 @@ describe('mergePageSamples', () => {
     ])
     expect(merged.readable).toBe(false)
     expect(merged.reason).toBe('page-failed')
+  })
+})
+
+describe('the panel admits what it cannot see', () => {
+  /* Measured on real client work, which is why this exists. Sparrow's
+     Promise's own brand sheet, checked against the two colours printed in
+     their own guide, returned "Uses your #32c1d6" and said NOTHING about the
+     red — 59% of the page. Their red renders ΔE00 6.14 from the specified
+     #ED1C24: past the band that confirms a match, short of the band that
+     reports a stranger. Neither confirmed nor flagged.
+
+     A clean sentence in that situation reads as approval, and the designer
+     has no way to tell a miss from a pass. The gap is not closable at this
+     fidelity — below 15, the sampler's own JPEG noise floor of 4.17 makes a
+     slightly-wrong colour indistinguishable from a correct one — so the
+     honest move is to say so on the panel. */
+
+  it('states the limit in plain words, not in hedges', () => {
+    expect(CHECK_SCOPE_NOTE).toMatch(/near-miss/i)
+    expect(CHECK_SCOPE_NOTE).toBeTruthy()
+    // One sentence, no alarm punctuation, no jargon a designer would have to
+    // look up — no ΔE, no thresholds, no percentages.
+    expect(CHECK_SCOPE_NOTE).not.toMatch(/[!⚠✗]/)
+    expect(CHECK_SCOPE_NOTE).not.toMatch(/ΔE|delta|threshold|coverage|CIEDE/i)
+  })
+
+  it('does not promise the thing it cannot do', () => {
+    // It must never read as a guarantee, because a miss and a pass produce
+    // identical output.
+    expect(CHECK_SCOPE_NOTE).not.toMatch(/all|every|guarantee|ensures|verified/i)
+  })
+
+  it('is the ONLY place the limit is worded, so it cannot drift', () => {
+    /* The failure this repo keeps repeating is a second private copy of a
+       string. The panel renders this constant; nothing re-types it. */
+    const view = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), '../../features/brand/ApplicationCheck.jsx'),
+      'utf8'
+    )
+    expect(view).toContain('CHECK_SCOPE_NOTE')
+    expect(view).not.toContain('near-miss')
   })
 })

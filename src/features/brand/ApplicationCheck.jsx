@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { sampleFileColours, CHECKABLE_TYPES } from '../../lib/brand/checkFile'
 import {
   applicationColourLine,
+  CHECK_SCOPE_NOTE,
   applicationColourReading,
 } from '../../lib/brand/applicationCheck'
 
@@ -119,6 +120,9 @@ export default function ApplicationCheck({
       {check && !busy && (
         <div className="app-check-result">
           <p className="app-check-line">{line}</p>
+          {/* Always, in every result state — including the clean one, which is
+              the state most likely to be read as approval. */}
+          <p className="app-check-scope">{CHECK_SCOPE_NOTE}</p>
           {swatches.length > 0 && (
             <div className="app-check-swatches" aria-hidden="true">
               {swatches.map((c) => (
