@@ -33,9 +33,11 @@ import {
   checkPaletteHarmony,
   mergeRolesIntoPalette,
   paletteHealthScore,
+  paletteIsUntouched,
   roleContrastPairs,
   suggestRoleAaFixes,
 } from './color.js'
+import { defaultProjectPalette } from '../store/useAppStore.js'
 
 const PALETTE = ['#123456', '#abcdef', '#0F766E', '#FFFFFF']
 const ROLES = {
@@ -402,5 +404,45 @@ describe('the low band names the thing that is actually wrong', () => {
         /^(Tighten|Fix|Add|Write|Choose|Check|Pick|Improve)\b/
       )
     }
+  })
+})
+
+describe('"no palette yet" cannot be asked as "is the palette empty"', () => {
+  /* Third time this shape has bitten in one area, so it is pinned here.
+     Every project is CREATED carrying `defaultProjectPalette`, and App.jsx
+     substitutes DEFAULT_PALETTE on top of that, so `palette.length` is never
+     0 in the running app. Code that tests for an empty palette does not
+     misbehave — it silently never runs, which is far harder to notice.
+
+     Measured in a browser: uploading a red mark to a brand-new project
+     reported "Leans on #b91c1c, which isn't in your palette yet" — against
+     four stone colours the designer had never seen, let alone chosen. */
+  it('recognises the untouched factory palette', () => {
+    expect(paletteIsUntouched(DEFAULT_PALETTE)).toBe(true)
+    expect(paletteIsUntouched([...DEFAULT_PALETTE])).toBe(true)
+    // Case is storage noise, not a decision.
+    expect(paletteIsUntouched(DEFAULT_PALETTE.map((c) => c.toLowerCase()))).toBe(
+      true
+    )
+  })
+
+  it('treats any real change as a decision', () => {
+    expect(paletteIsUntouched([...DEFAULT_PALETTE, '#B91C1C'])).toBe(false)
+    expect(paletteIsUntouched(DEFAULT_PALETTE.slice(0, 3))).toBe(false)
+    expect(
+      paletteIsUntouched(['#B91C1C', ...DEFAULT_PALETTE.slice(1)])
+    ).toBe(false)
+    expect(paletteIsUntouched([])).toBe(false)
+  })
+
+  it('matches what the store actually creates a project with', () => {
+    /* The one that would catch a drift between the two constants. If the
+       store's default and color.js's default ever diverge, every project
+       would look "decided" from birth and the offer to start a palette from
+       the mark would go unreachable again. */
+    expect(defaultProjectPalette.map((c) => c.toUpperCase())).toEqual(
+      DEFAULT_PALETTE.map((c) => c.toUpperCase())
+    )
+    expect(paletteIsUntouched(defaultProjectPalette)).toBe(true)
   })
 })

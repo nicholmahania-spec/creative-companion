@@ -3,7 +3,14 @@
  * Mark → Words → Colour → Type → Preview.
  * Stationery lives on Assets; ★ pack pins stay on Research.
  */
-import { useState, useEffect, useMemo, Suspense, lazy } from 'react'
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  Suspense,
+  lazy,
+} from 'react'
 import { labelForStepId } from '../lib/journey/journey'
 import {
   IDENTITY_SUBSTEPS,
@@ -40,6 +47,7 @@ import {
   suggestRoleAaFixes,
   mergeRolesIntoPalette,
   paletteHealthScore,
+  paletteIsUntouched,
   healthLabel,
   healthScopeLabels,
   suggestRoleColor,
@@ -48,6 +56,7 @@ import { loadTypePairFont, loadBrandFamilies } from '../lib/book/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
 import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
 import ReadabilityRows from '../features/palette/ReadabilityRows'
+import MarkColourCheck from '../features/brand/MarkColourCheck'
 import '../styles/lazy-design.css'
 
 /** User-facing labels for palette role chips (store keys stay cover/text/…). */
@@ -459,6 +468,23 @@ export default function DesignView({
     [projectPalette]
   )
 
+  /* hex → the job that hex holds, so the mark check can say "Uses your
+     Primary" rather than "Uses your #1B4C7E". Memoised because it is passed
+     as a prop into a memo dependency — rebuilt on every render it would
+     recompute the reading on every keystroke elsewhere on the screen. */
+  const roleLabelForHex = useCallback(
+    (hex) => {
+      const want = String(hex || '').toLowerCase()
+      if (!want) return null
+      const key = BRAND_ROLE_KEYS.find(
+        (k) =>
+          String(activeProject?.colorRoles?.[k] || '').toLowerCase() === want
+      )
+      return key ? ROLE_LABELS[key] : null
+    },
+    [activeProject?.colorRoles]
+  )
+
   const effectiveRoles = useMemo(() => {
     const o = activeProject?.colorRoles || {}
     /* Every job the vocabulary knows, not just the original four. The extra
@@ -829,6 +855,47 @@ export default function DesignView({
                   </div>
                 </div>
               ) : null}
+              <MarkColourCheck
+                logoImage={activeProject?.logoImage}
+                /* THE COLOURS THE DESIGNER HAS ACTUALLY CHOSEN — which is not
+                   the same as "the palette", twice over. App.jsx substitutes
+                   DEFAULT_PALETTE when a project has none, AND every project
+                   is created carrying those same four stone values, so
+                   `palette.length` is never 0 and an untouched project looks
+                   identical to a decided one.
+
+                   Checking a mark against four colours nobody picked would
+                   report the designer's own logo as an intruder in their
+                   brand. Verified in a browser: before this, uploading a red
+                   mark to a brand-new project said "Leans on #b91c1c, which
+                   isn't in your palette yet" — against a palette they had
+                   never seen, let alone chosen. */
+                palette={
+                  paletteIsUntouched(activeProject?.palette)
+                    ? []
+                    : activeProject?.palette || []
+                }
+                paletteFull={(activeProject?.palette || []).length >= 8}
+                labelFor={roleLabelForHex}
+                onUsePalette={(hexes) => {
+                  const before = activeProject?.palette || []
+                  const owner = activeProject?.id
+                  setProjectPalette(hexes, owner)
+                  offerUndo?.('Palette from mark', () =>
+                    setProjectPalette(before, owner)
+                  )
+                  flashMicro('Palette started from your mark')
+                }}
+                onAddColour={(hex) => {
+                  const before = activeProject?.palette || []
+                  const owner = activeProject?.id
+                  addPaletteColor(hex)
+                  offerUndo?.('Colour added', () =>
+                    setProjectPalette(before, owner)
+                  )
+                  flashMicro(`${hex} added to palette`)
+                }}
+              />
               <div className="finish-secondary-row" style={{ marginTop: '0.85rem' }}>
                 <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
                   {activeProject?.logoImage ? 'Replace mark image' : 'Upload mark image'}
