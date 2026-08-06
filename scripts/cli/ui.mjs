@@ -48,7 +48,14 @@ export function heading(text) {
   return `\n${c.bold(text)}\n${c.grey('─'.repeat(Math.min(text.length, 60)))}`
 }
 
-/** Visible width, ignoring the escape codes so columns still line up. */
+/**
+ * Visible width, ignoring the escape codes so columns still line up.
+ *
+ * The control character is the point: this strips SGR sequences, and those are
+ * defined as starting with ESC. `no-control-regex` is right in general and
+ * wrong here, so it is silenced at the single line it applies to.
+ */
+// eslint-disable-next-line no-control-regex -- matching ESC is the whole job
 const width = (s) => String(s).replace(/\u001b\[[0-9;]*m/g, '').length
 
 export function pad(s, n, align = 'left') {

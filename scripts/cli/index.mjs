@@ -93,7 +93,7 @@ export async function main(argv) {
 }
 
 export async function cli(argv) {
-  let code = 0
+  let code
   try {
     code = await main(argv)
   } catch (err) {

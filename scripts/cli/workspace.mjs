@@ -29,7 +29,7 @@ export class WorkspaceError extends UserError {}
  * printed back.
  */
 function discoverWorkspacePath(cwd) {
-  let entries = []
+  let entries
   try {
     entries = readdirSync(cwd)
   } catch {
