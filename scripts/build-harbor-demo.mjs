@@ -1,10 +1,28 @@
 /**
- * Rebuild Harbor & Hearth demo assets as real PNGs (jsPDF cannot embed SVG)
- * and regenerate the sample brand book into Downloads.
+ * Rebuild the Harbor & Hearth demo's assets as real PNGs — jsPDF cannot embed
+ * SVG, so the demo workspace has to carry raster data URLs — and rewrite
+ * `public/demos/harbor-hearth-workspace.json`.
+ *
+ *   node scripts/build-harbor-demo.mjs [--dry-run] [--pdf <path>]
+ *
+ * The brand book itself is no longer built here: `node bin/cc.mjs export harbor`
+ * does that, from the same functions, for any workspace. `--pdf` keeps a
+ * one-command check that the regenerated assets still render.
+ *
+ * This used to import `../src/lib/exportFiles.js`, a path that stopped existing
+ * when exports moved to `src/lib/book/`. Nothing ran the script, so nothing
+ * reported it — and it would have failed even with the path corrected, because
+ * `src/` uses extensionless imports that plain Node cannot resolve. It now goes
+ * through the CLI's Vite runtime, which is the thing that can.
  */
 import zlib from 'node:zlib'
 import { writeFileSync, readFileSync } from 'node:fs'
-import { buildBrandPackSnapshot, downloadBrandPackVectorPdf } from '../src/lib/exportFiles.js'
+import { resolve } from 'node:path'
+import { load, MOD, closeRuntime } from './cli/runtime.mjs'
+
+const args = process.argv.slice(2)
+const dryRun = args.includes('--dry-run')
+const pdfPath = args.includes('--pdf') ? args[args.indexOf('--pdf') + 1] : null
 
 function crc32(buf) {
   let c = ~0
@@ -178,21 +196,35 @@ const outPath = new URL(
   '../public/demos/harbor-hearth-workspace.json',
   import.meta.url
 )
-writeFileSync(outPath, JSON.stringify(ws, null, 2))
-console.log('wrote workspace', outPath.pathname)
-
-const project = ws.projects[0]
-const pack = buildBrandPackSnapshot({
-  project,
-  tasks: ws.tasks,
-  moodItems: ws.moodItems,
-})
-const r = await downloadBrandPackVectorPdf(pack, null, { returnBlobOnly: true })
-if (!r.ok) {
-  console.error(r)
-  process.exit(1)
+if (dryRun) {
+  console.log('dry run — workspace NOT written', outPath.pathname)
+} else {
+  writeFileSync(outPath, JSON.stringify(ws, null, 2))
+  console.log('wrote workspace', outPath.pathname)
 }
-const buf = Buffer.from(await r.blob.arrayBuffer())
-const dest = '/Users/macadmin/Downloads/harbor-hearth-brand-book.pdf'
-writeFileSync(dest, buf)
-console.log('pages', r.pages, 'bytes', buf.length, '→', dest)
+
+/* Only when asked. The old version always wrote a PDF to a hardcoded
+   /Users/macadmin/Downloads path, which is not a path that exists on anyone
+   else's machine or in CI. */
+if (pdfPath) {
+  const { buildBrandPackSnapshot, downloadBrandPackVectorPdf } = await load(
+    MOD.exportFiles
+  )
+  const pack = buildBrandPackSnapshot({
+    project: ws.projects[0],
+    tasks: ws.tasks,
+    moodItems: ws.moodItems,
+  })
+  const r = await downloadBrandPackVectorPdf(pack, null, { returnBlobOnly: true })
+  if (!r?.ok || !r.blob) {
+    console.error('brand book failed:', r?.error || r)
+    await closeRuntime()
+    process.exit(1)
+  }
+  const buf = Buffer.from(await r.blob.arrayBuffer())
+  const dest = resolve(process.cwd(), pdfPath)
+  writeFileSync(dest, buf)
+  console.log('pages', r.pages, 'bytes', buf.length, '→', dest)
+}
+
+await closeRuntime()
