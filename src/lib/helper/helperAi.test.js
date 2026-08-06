@@ -1,9 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   scriptedCoachReply,
   isHelperAiConfigured,
   helperAiStatus,
   askHelper,
+  noteHelperOutcome,
+  resetHelperOutcome,
 } from './helperAi'
 
 describe('helperAi scripted fallback', () => {
@@ -50,6 +52,16 @@ describe('helperAi scripted fallback', () => {
     expect(scriptedCoachReply('stuck', activity).length).toBeGreaterThan(10)
   })
 
+  it('status names which copy of the app you are on', () => {
+    /* The badge used to describe a capability without saying where. Two copies
+       that look identical and behave differently is only debuggable if the app
+       says which one it is. */
+    const status = helperAiStatus()
+    expect(typeof status.deploy).toBe('string')
+    expect(status.deploy.length).toBeGreaterThan(0)
+    expect(status.detail.length).toBeGreaterThan(10)
+  })
+
   it('process phases return design process tips', () => {
     for (const phase of [
       'define',
@@ -63,5 +75,53 @@ describe('helperAi scripted fallback', () => {
       const t = scriptedCoachReply(phase, activity)
       expect(t.length).toBeGreaterThan(15)
     }
+  })
+})
+
+/**
+ * Configuration says what SHOULD happen; these lock the app to reporting what
+ * DID. A badge reading "Live" while every reply comes from the lookup table is
+ * the one Helper failure that cannot be seen from outside — it does not look
+ * like a failure, it looks like a bad answer.
+ */
+describe('helperAi observed state', () => {
+  afterEach(() => resetHelperOutcome())
+
+  it('starts with nothing observed', () => {
+    resetHelperOutcome()
+    expect(helperAiStatus().observed).toBeNull()
+  })
+
+  it('a real model reply is recorded as ok', () => {
+    noteHelperOutcome({ source: 'ai' })
+    expect(helperAiStatus().observed).toBe('ok')
+  })
+
+  it('a scripted reply WITH an error means the live path failed', () => {
+    noteHelperOutcome({ source: 'scripted', error: 'xAI 503: no capacity' })
+    const status = helperAiStatus()
+    expect(status.observed).toBe('failing')
+    expect(status.detail).toContain('503')
+  })
+
+  it('ordinary scripted mode does not overwrite what we know', () => {
+    /* A host with no live model returns scripted replies and no error. That
+       says nothing about whether a live path works, so it must not be
+       mistaken for a fault — or every offline copy would permanently accuse
+       an API that was never called. */
+    noteHelperOutcome({ source: 'ai' })
+    noteHelperOutcome({ source: 'scripted' })
+    expect(helperAiStatus().observed).toBe('ok')
+  })
+
+  it('a failure downgrades the badge but never the capability', () => {
+    /* mode must stay `live` through a transient error, or one bad minute
+       silently costs the rest of the session: isHelperAiConfigured() gates
+       whether the next call is even attempted. */
+    const before = helperAiStatus().mode
+    noteHelperOutcome({ source: 'scripted', error: 'network' })
+    const after = helperAiStatus()
+    expect(after.mode).toBe(before)
+    if (before === 'live') expect(after.short).not.toBe('Live')
   })
 })
