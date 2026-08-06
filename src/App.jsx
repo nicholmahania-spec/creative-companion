@@ -2614,13 +2614,18 @@ function App() {
         .finally(clearBusy)
     }
     if (kind === 'backup') {
-      const result = downloadWorkspaceBackup(exportAllData())
-      if (result.ok) finishOk('Workspace backup')
-      else {
-        flashToast(result.error || 'Download did not finish — try again?')
-      }
-      clearBusy()
-      return Promise.resolve(result)
+      /* handlePromise, like every other kind. Without it the picker's 0-byte
+         placeholder was the whole backup — see downloadWorkspaceBackup. */
+      return downloadWorkspaceBackup(exportAllData(), handlePromise)
+        .then((result) => {
+          if (result.ok) finishOk('Workspace backup')
+          else if (result.cancelled) flashToast('Save cancelled')
+          else {
+            flashToast(result.error || 'Download did not finish — try again?')
+          }
+          return result
+        })
+        .finally(clearBusy)
     }
     if (kind === 'print') {
       if (!exportPanel) openExportPanel()
