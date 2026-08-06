@@ -4741,6 +4741,23 @@ body.cc-printing-page button {
   box-shadow: var(--shadow-3);
 }
 
+/* The breakdown wizard's step-editing screen lists every generated micro-step,
+   so it is the one .export-panel whose height is driven by data. At ten steps
+   it measured 1311px tall in a 720px viewport, running off BOTH ends — and
+   .export-overlay is position:fixed with no scroll, so nothing could bring the
+   rest back. "+ Step", "Back" and "Add N to Sketch" — the button the entire
+   wizard exists to reach — sat below the fold with no sign they were there.
+   `.breakdown-panel` and `.breakdown-studio` had no rules at all; the panel was
+   plain .export-panel, which caps width but never height.
+
+   Same remedy as the Tools menu above, and the same lesson: a box that
+   overflows without saying so reads as a box with nothing more in it. */
+.export-panel.breakdown-panel {
+  max-height: min(88vh, 40rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
 .export-panel-header {
   display: flex;
   justify-content: space-between;

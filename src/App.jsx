@@ -22,10 +22,6 @@ import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
-  BREAKDOWN_DEPTHS,
-  generateProjectMicrosteps,
-} from './lib/microsteps'
-import {
   toISODate,
   deadlineUrgency,
   daysUntil,
@@ -40,6 +36,7 @@ const LoginView = lazy(() => import('./views/LoginView'))
 const BuddyMate = lazy(() => import('./features/helper/BuddyMate'))
 const ForcedBreakOverlay = lazy(() => import('./features/helper/ForcedBreakOverlay'))
 const BrandArtboard = lazy(() => import('./components/BrandArtboard'))
+const TaskBreakdown = lazy(() => import('./features/breakdown/TaskBreakdown'))
 const GameHUD = lazy(() => import('./features/helper/GameHUD'))
 import {
   breakMinutesForWork,
@@ -481,13 +478,10 @@ function App() {
   const [navOpen, setNavOpen] = useState(false)
   const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
-  const [breakdownStep, setBreakdownStep] = useState(0)
-  const [bdGoal, setBdGoal] = useState('')
-  const [bdDone, setBdDone] = useState('')
-  const [bdDepth, setBdDepth] = useState('standard')
-  const [bdEnergy, setBdEnergy] = useState('low')
-  const [bdSteps, setBdSteps] = useState([])
-  const [breakdownAdded, setBreakdownAdded] = useState(0)
+  /* The wizard's own seven fields live in TaskBreakdown. This counter is the
+     whole of what App still needs: bumping it remounts the wizard, which is
+     how a run resets — see the note in that file on why not an effect. */
+  const [breakdownRunId, setBreakdownRunId] = useState(0)
   const [captureDue, setCaptureDue] = useState('')
   const [calCursor, setCalCursor] = useState(() => {
     const n = new Date()
@@ -1751,13 +1745,6 @@ function App() {
       ),
     []
   )
-  const getBreakdownRoot = useCallback(
-    () =>
-      document
-        .querySelector('.export-overlay .breakdown-panel')
-        ?.closest('.export-overlay') || null,
-    []
-  )
   const getDeskConfirmRoot = useCallback(
     () => document.querySelector('.desk-confirm-modal'),
     []
@@ -1767,9 +1754,6 @@ function App() {
     []
   )
   useModalFocus(!!exportPanel && !showBreakdown, getExportRoot, {
-    initialSelector: '.export-panel-header button, button',
-  })
-  useModalFocus(!!showBreakdown, getBreakdownRoot, {
     initialSelector: '.export-panel-header button, button',
   })
   // Destructive/blocking confirm: land focus on Cancel (safe default), trap Tab
@@ -2854,48 +2838,19 @@ function App() {
     recognition.start()
   }
 
+  /* Bumping the run id remounts the wizard, so "open" and "More" are the same
+     action — a fresh run either way. */
   const openBreakdown = () => {
-    setBdGoal(activeProject?.name || '')
-    setBdDone(activeProject?.brief?.slice(0, 120) || '')
-    setBdDepth('standard')
-    setBdEnergy('low')
-    setBdSteps([])
-    setBreakdownStep(0)
-    setBreakdownAdded(0)
+    setBreakdownRunId((n) => n + 1)
     setShowBreakdown(true)
     setMoreOpen(false)
   }
 
-  const buildBreakdownPreview = () => {
-    const steps = generateProjectMicrosteps({
-      goal: bdGoal || activeProject?.name || 'this project',
-      doneLooksLike: bdDone,
-      depth: bdDepth,
-    })
-    setBdSteps(steps)
-    setBreakdownStep(3)
-  }
-
-  const updateBdStepLine = (index, value) => {
-    setBdSteps((rows) => rows.map((r, i) => (i === index ? value : r)))
-  }
-
-  const removeBdStepLine = (index) => {
-    setBdSteps((rows) => rows.filter((_, i) => i !== index))
-  }
-
-  const addBdStepLine = () => {
-    setBdSteps((rows) => [...rows, 'New micro-step…'])
-  }
-
-  const commitBreakdown = () => {
-    const n = addMicroStepsBatch({
-      steps: bdSteps,
-      energy: bdEnergy,
-      goalLabel: bdGoal || activeProject?.name || 'Project',
-    })
-    setBreakdownAdded(n)
-    setBreakdownStep(4)
+  /* Commits the wizard's steps and returns how many landed, which is all the
+     wizard needs back. Everything after the batch write is App's: the queue,
+     the view switch, the award and the toast all outlive the panel. */
+  const commitBreakdown = ({ steps, energy, goalLabel }) => {
+    const n = addMicroStepsBatch({ steps, energy, goalLabel })
     setPref('queueCollapsed', true)
     setQueueOpen(false)
     setDoneOpen(false)
@@ -2909,6 +2864,7 @@ function App() {
         ? 'One tiny step is ready — do only that one'
         : `${n} tiny steps ready — only do #1 right now`
     )
+    return n
   }
 
   const finishBreakdownToStep = () => {
@@ -4804,232 +4760,17 @@ function App() {
       )}
 
       {showBreakdown && (
-        <div
-          className="export-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Break project into micro-steps"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowBreakdown(false)
-          }}
-        >
-          <div className="export-panel breakdown-panel breakdown-studio">
-            <div className="export-panel-header">
-              <div>
-                <h3 style={{ margin: 0 }}>
-                  Break down · {activeProject?.name || 'Project'}
-                </h3>
-              </div>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                aria-label="Close step breakdown"
-                onClick={() => setShowBreakdown(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="breakdown-progress" aria-hidden="true">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <span
-                  key={i}
-                  className={`breakdown-dot${
-                    breakdownStep >= i ? ' is-on' : ''
-                  }`}
-                />
-              ))}
-            </div>
-
-            {breakdownStep === 0 && (
-              <div className="breakdown-step">
-                <p className="breakdown-lead">
-                  Big job → small steps.
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setBreakdownStep(1)}
-                >
-                  Start
-                </button>
-              </div>
-            )}
-
-            {breakdownStep === 1 && (
-              <div className="breakdown-step">
-                <label className="field-label" htmlFor="bd-goal">
-                  Goal
-                </label>
-                <input
-                  id="bd-goal"
-                  className="field-input"
-                  value={bdGoal}
-                  onChange={(e) => setBdGoal(e.target.value)}
-                  placeholder="What we’re making"
-                />
-                <label
-                  className="field-label"
-                  htmlFor="bd-done"
-                  style={{ marginTop: '0.65rem' }}
-                >
-                  Done enough
-                </label>
-                <textarea
-                  id="bd-done"
-                  className="field-textarea"
-                  rows={2}
-                  value={bdDone}
-                  onChange={(e) => setBdDone(e.target.value)}
-                  placeholder={'What “done” looks like'}
-                />
-                <div className="breakdown-nav">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setBreakdownStep(0)}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    disabled={!bdGoal.trim()}
-                    onClick={() => setBreakdownStep(2)}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {breakdownStep === 2 && (
-              <div className="breakdown-step">
-                <p className="field-label">Depth</p>
-                <div className="breakdown-depth-list">
-                  {BREAKDOWN_DEPTHS.map((d) => (
-                    <button
-                      key={d.id}
-                      type="button"
-                      className={`breakdown-depth${
-                        bdDepth === d.id ? ' is-active' : ''
-                      }`}
-                      onClick={() => setBdDepth(d.id)}
-                    >
-                      <strong>{d.label}</strong>
-                    </button>
-                  ))}
-                </div>
-                <label className="field-label" htmlFor="bd-energy">
-                  Energy
-                </label>
-                <select
-                  id="bd-energy"
-                  className="palette-bg-select"
-                  value={bdEnergy}
-                  onChange={(e) => setBdEnergy(e.target.value)}
-                >
-                  <option value="low">Low</option>
-                  <option value="med">Med</option>
-                  <option value="high">High</option>
-                </select>
-                <div className="breakdown-nav">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setBreakdownStep(1)}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={buildBreakdownPreview}
-                  >
-                    Generate
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {breakdownStep === 3 && (
-              <div className="breakdown-step">
-                <p className="field-label">Edit steps</p>
-                <ul className="breakdown-edit-list">
-                  {bdSteps.map((line, i) => (
-                    <li key={i}>
-                      <span className="breakdown-edit-num">{i + 1}</span>
-                      <input
-                        className="field-input"
-                        value={line}
-                        onChange={(e) =>
-                          updateBdStepLine(i, e.target.value)
-                        }
-                        aria-label={`Micro-step ${i + 1}`}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => removeBdStepLine(i)}
-                        aria-label={`Remove step ${i + 1}`}
-                      >
-                        ×
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={addBdStepLine}
-                >
-                  + Step
-                </button>
-                <div className="breakdown-nav">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setBreakdownStep(2)}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    disabled={!bdSteps.some((s) => s.trim())}
-                    onClick={commitBreakdown}
-                  >
-                    Add {bdSteps.filter((s) => s.trim()).length} to Sketch
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {breakdownStep === 4 && (
-              <div className="breakdown-step">
-                <p className="session-done" style={{ marginTop: 0 }}>
-                  +{breakdownAdded} steps · do #1 only
-                </p>
-                <div className="breakdown-nav">
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={openBreakdown}
-                  >
-                    More
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={finishBreakdownToStep}
-                  >
-                    Start #1
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <Suspense fallback={null}>
+        <TaskBreakdown
+          key={breakdownRunId}
+          projectName={activeProject?.name}
+          projectBrief={activeProject?.brief}
+          onClose={() => setShowBreakdown(false)}
+          onCommit={commitBreakdown}
+          onFinish={finishBreakdownToStep}
+          onRestart={openBreakdown}
+        />
+        </Suspense>
       )}
     </div>
   )
