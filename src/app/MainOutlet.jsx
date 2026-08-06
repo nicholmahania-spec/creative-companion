@@ -35,6 +35,7 @@ const {
   desk: DeskView,
   create: NewProjectIntake,
   book: BrandBookBuilderView,
+  assets: AssetLibraryView,
   review: ReviewView,
   settings: SettingsView,
 } = lazyViews
@@ -487,6 +488,10 @@ export default function MainOutlet(p) {
 
   if (activeView === 'book') {
     return wrap('book', <BrandBookBuilderView />)
+  }
+
+  if (activeView === 'assets') {
+    return wrap('assets', <AssetLibraryView navDir={navDir} cloud={CLOUD} />)
   }
 
   if (activeView === 'brand') {

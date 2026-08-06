@@ -113,6 +113,8 @@ export function toolsLabelForView(view) {
       return 'Clients'
     case 'book':
       return 'Brand book'
+    case 'assets':
+      return 'Asset library'
     case 'settings':
       return 'Settings'
     case 'concept':
@@ -131,6 +133,13 @@ export const TOOLS_MENU_VIEWS = [
   'review',
   'insights',
   'book',
+  /* A Tool, deliberately not a sixth path stop. Every stop carries a
+     completion tick, and a library is never finished — a tick on it would be
+     a permanent open loop in the one place a designer stores finished work.
+     It is also a reference surface entered with a question rather than a
+     stage you pass through, and it is the mid-project return point, so it
+     must be reachable from anywhere rather than sitting at the end. */
+  'assets',
   'concept',
 ]
 

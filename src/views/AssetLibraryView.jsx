@@ -1,0 +1,159 @@
+/**
+ * Asset library — the finished files, filed loosely, kept forever.
+ *
+ * A TOOL, not a path stop. Every stop carries a completion tick and a library
+ * is never finished; a tick here would be a permanent open loop in the one
+ * place a designer stores work that IS done. It is also a reference surface
+ * entered with a question rather than a stage walked through, and it is where
+ * someone returns mid-project — so it must be reachable from anywhere, and it
+ * must not greet a designer three weeks from delivery with "ship it", which
+ * is what putting it on Deliver would have done.
+ *
+ * FILING IS DEFERRED, AND THIS SCREEN MUST NOT UNDO THAT. `normaliseIngest`
+ * accepts anything and files the unknown as Unfiled on purpose: a designer
+ * pushing a mark from Illustrator is mid-flow, and a taxonomy question at
+ * that moment is how the whole feature becomes something they route around.
+ * The natural way to draw a grouped shelf breaks this by geometry rather than
+ * by a form — so, four rules, each load-bearing:
+ *
+ *   1. ONE drop plane for the whole shelf. Never per group. A per-group
+ *      target is a five-way aim decision at the instant of capture.
+ *   2. No "file it as…" prompt after arrival. Same tax with a fuse, and
+ *      because it expires, ignoring it leaves a residue of having missed
+ *      something — worse than being asked.
+ *   3. No count and no badge on Unfiled. That turns deferred filing into a
+ *      visible debt and punishes the designer for using the escape hatch.
+ *   4. Filing later is a menu on the card. No dialog, no navigation. If
+ *      refiling is expensive the deferral is a lie and people will file at
+ *      capture out of dread.
+ */
+import { useMemo, useRef, useState } from 'react'
+import useAppStore from '../store/useAppStore'
+import { assetShelf, shelfEmptyState } from '../lib/assets/assetShelf'
+import { ASSET_CATEGORIES, categoryLabel } from '../lib/assets/assetLibrary'
+import '../styles/lazy-assets.css'
+
+export default function AssetLibraryView({ navDir = 'none', cloud = false }) {
+  const assets = useAppStore((s) => s.assets)
+  const currentProjectId = useAppStore((s) => s.currentProjectId)
+  const dropRef = useRef(null)
+  const [dropActive, setDropActive] = useState(false)
+  const [openMenu, setOpenMenu] = useState(null)
+
+  const mine = useMemo(
+    () => (assets || []).filter((a) => a && a.project_id === currentProjectId),
+    [assets, currentProjectId]
+  )
+
+  /* Every display judgement is made in the view model, so this component has
+     none to make and none to get subtly wrong per render. */
+  const { groups, total, showHeadings, allRemote } = useMemo(
+    () => assetShelf(mine, { online: typeof navigator === 'undefined' || navigator.onLine }),
+    [mine]
+  )
+  const empty = shelfEmptyState({ total, cloud })
+
+  return (
+    <div className="assets-library view-enter" data-nav-dir={navDir}>
+      <div className="flow-top">
+        <h1 className="page-title work-page-title">Asset library</h1>
+      </div>
+
+      {/* Said ONCE, above the shelf, when it is true of everything. Twenty
+          cards each carrying the same sentence is one fact read twenty times,
+          and repetition of an absence reads as breakage rather than as a
+          statement about this device. */}
+      {allRemote && (
+        <p className="assets-lib-note" role="status">
+          Files aren’t on this device. Names, versions and sources are.
+        </p>
+      )}
+
+      {/* THE one drop plane. Rule 1. */}
+      <div
+        ref={dropRef}
+        className={`assets-lib-drop${dropActive ? ' is-active' : ''}`}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setDropActive(true)
+        }}
+        onDragLeave={() => setDropActive(false)}
+        onDrop={(e) => {
+          e.preventDefault()
+          setDropActive(false)
+        }}
+      >
+        <p className="assets-lib-drop-line">Drop finished files here</p>
+      </div>
+
+      {empty ? (
+        <p className="assets-lib-empty">{empty.line}</p>
+      ) : (
+        groups.map((g) => (
+          <section key={g.id} className="assets-lib-group">
+            {/* A single heading over the only content on screen labels a
+                distinction that does not exist yet. */}
+            {showHeadings && (
+              <h2 className="assets-lib-group-title">
+                {g.label}
+                {/* No count. Rule 3 — a number here turns deferred filing
+                    into a debt the designer is shown every visit. */}
+              </h2>
+            )}
+            <ul className="assets-lib-grid">
+              {g.cards.map((c) => (
+                <li key={c.id} className={`assets-lib-card is-${c.bytes.state}`}>
+                  <div className="assets-lib-face" aria-hidden="true" />
+                  <p className="assets-lib-name">{c.name}</p>
+                  <p className="assets-lib-meta">
+                    {c.source}
+                    {c.versionLabel ? ` · ${c.versionLabel}` : ''}
+                  </p>
+                  {/* Per-card state ONLY in the mixed case, where it says
+                      something true of this file and not that one. */}
+                  {!allRemote && c.bytes.label && (
+                    <p className="assets-lib-state">{c.bytes.label}</p>
+                  )}
+
+                  {/* Rule 4: refiling is a menu on the card. */}
+                  <div className="assets-lib-file">
+                    <button
+                      type="button"
+                      className="assets-lib-file-btn"
+                      aria-expanded={openMenu === c.id}
+                      onClick={() =>
+                        setOpenMenu(openMenu === c.id ? null : c.id)
+                      }
+                    >
+                      {categoryLabel(c.category)}
+                    </button>
+                    {openMenu === c.id && (
+                      <ul className="assets-lib-file-menu">
+                        {ASSET_CATEGORIES.map((cat) => (
+                          <li key={cat.id}>
+                            <button
+                              type="button"
+                              className="assets-lib-file-option"
+                              onClick={() => {
+                                useAppStore
+                                  .getState()
+                                  .setAssetCategory?.(c.id, cat.id)
+                                setOpenMenu(null)
+                              }}
+                            >
+                              {cat.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      )}
+    </div>
+  )
+}

@@ -4064,6 +4064,18 @@ function App() {
                 tabIndex={-1}
                 className="more-menu-item"
                 onClick={() => {
+                  setActiveView('assets')
+                  setMoreOpen(false)
+                }}
+              >
+                <HeaderIcon name="print" /> {toolsLabelForView('assets')}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                tabIndex={-1}
+                className="more-menu-item"
+                onClick={() => {
                   setActiveView('insights')
                   setMoreOpen(false)
                 }}
