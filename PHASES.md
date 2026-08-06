@@ -209,6 +209,26 @@ name them correctly, and no module holds its own copy of the list.
 **Risk: medium-high.** Wide blast radius — historically nine modules held
 private copies of this list and exactly one got updated.
 
+**Status 2026-08-06: NOT DONE. Read this before trusting the phase numbers.**
+
+`src/lib/journey/journey.js` still declares **five** stops — Strategy →
+Research → Identity → Touchpoints → Assets. The ten-stage redeclaration in
+this section has not happened.
+
+The commit titled *"Phase 2: project types"* (`e6c8995`) shipped a different
+piece of work under this phase's number: project types, which switch stages on
+and off per what is being built. Useful, and genuinely Phase-2-adjacent — but
+it is not the redeclaration, and the two got conflated by the commit title.
+`decisions.stage` in `20260805140000` still documents the five ids, which is
+the honest tell.
+
+So phases 3, 4, 5 and part of 6 were built **on the five-stop journey**, not on
+the ten. That is not necessarily wrong — it is what "prove the loop" was
+proven against — but anyone reading this file top to bottom will assume ten
+stops exist and plan against a journey the app does not have. This is the
+second time a stale status block in this file has sent a careful reader at the
+wrong work (see the Phase 0 note). Fix the status, not just the code.
+
 **One constraint carried in from review.** No evidence was found that more
 stages is worse for this audience — the one peer-reviewed source retrieved,
 Weick's *Small Wins* (American Psychologist, 1984), argues the opposite: large
@@ -348,6 +368,99 @@ from Figma into the Asset Library, with `source_app` recorded.
 without a manual upload.
 
 **Risk: medium.** Biggest lift, biggest retention payoff.
+
+**Status 2026-08-06: started. The destination did not exist.**
+
+This phase is written as "push an asset into the Asset Library". Checked before
+building: **there is no Asset Library.** `source_app` appeared nowhere in the
+tree, there was no assets table, and Brand Applications — the stage meant to
+hold finished work — stores `touchpointApps: { [id]: { note, done } }`. A note
+and a checkbox. There was no column a business card could land in.
+
+So the bridge is not the first work here; the destination is. Landed:
+
+- `supabase/migrations/20260806120000_asset_library.sql` — `assets` table with
+  `source_app`, a `replaces_id` version chain, the `assets_current` view
+  (`security_invoker`), and a **private** `brand-assets` bucket with
+  owner-scoped policies.
+- `src/lib/assets/assetLibrary.js` + 32 tests — vocabulary, storage keys,
+  ingest normalisation, version chaining.
+
+**Reviewed by `devils-advocate`, twice — a broad pass over all three calls and
+a deep pass on the storage split. All three schema calls survive. Two things
+it found were real, and one of them was that my own stated reasoning was
+wrong.**
+
+1. **The version chain could fork.** Nothing stopped two rows pointing at the
+   same predecessor, so a forked chain was reachable at the database level —
+   the outcome `findVersionTarget`'s own comment names as the bad one. The
+   client-side guard did not close it: under a fork, `heads[0]` resolves by
+   array order rather than by anything anyone chose. Fixed by
+   `assets_one_successor_idx`, which turns the race into a catchable 23505.
+2. **The rationale for remote bytes was defeated, though the decision stands.**
+   The original header argued against *localStorage* and concluded against
+   *local*. IndexedDB was never evaluated — it appears nowhere in `src/` or
+   these docs — and it holds Blobs natively against a quota that is a share of
+   free disk (Chrome up to 60%) rather than Web Storage's 10 MiB ceiling. A
+   50 MB PDF fits locally without difficulty, so "local can't hold it" was
+   simply false. The real reason is **eviction**: best-effort browser storage
+   is cleared LRU under pressure, all-or-nothing per origin, and Safari drops
+   script-created data after seven days without a visit. Header corrected.
+3. **Remote-only reads broke Phase 1b's own promise** — "the app must still
+   open, read and write projects with no network and no sign-in". A private
+   bucket needs a signed URL, which needs a session and a network, so offline
+   the library would have rendered cards with names, categories and version
+   numbers and no images. Every value resolving except the one the designer
+   opened the panel for, and visually identical to a failed upload. Fixed by
+   `src/lib/assets/assetBytes.js`: an IndexedDB cache keyed on the stable
+   object path, cache-before-network reads, and four honest card states
+   instead of a blank rectangle. Built now because it is free before the UI
+   exists and expensive after.
+
+**Still owed, both from the same review, both deferred deliberately:**
+
+- **Orphaned bytes.** `on delete cascade` drops asset rows and leaves their
+  objects in the bucket — still stored, still billed, still reachable by any
+  signed URL already minted. Sears/van Ingen/Gray name this exact hazard.
+  Needs a reaping path; there is none yet.
+- **Signed-URL caching.** Supabase's Smart CDN docs: the first request with
+  any given signed URL is always a cache miss, and only that exact URL hits
+  afterwards. A grid minting fresh URLs per mount is permanently cold, and an
+  `<img src>` on a signed URL blanks silently once it expires. Needs a
+  memoised URL per object path with refresh-before-expiry — but it belongs
+  with the read path in the UI, which does not exist yet.
+
+**Three calls made here, cheap to reverse now and expensive later:**
+
+1. **The bucket is private**, unlike both existing buckets. Those are
+   `public: true`, which serves object URLs without consulting RLS at all
+   (see `20260731120000`). This one holds unreleased client identity work, and
+   an unannounced rebrand leaking via a guessable URL is career-grade harm for
+   the designer. Cost is paid in app code: reads need signed URLs, so
+   `getPublicUrl` does not work against this bucket.
+2. **Metadata is a row; bytes are a Storage object.** Every image in the app
+   today is a data URL inside the localStorage blob, against a 3.5 MB cap that
+   already ships a "storage is full" error. A print-ready PDF exceeds that
+   whole budget — this path would not degrade, it would detonate, as silent
+   lost work.
+3. **Re-pushes chain, they do not overwrite.** A bridge makes re-pushing free,
+   so the same artboard arrives repeatedly. Upsert-on-`source_ref` keeps the
+   library tidy by discarding every earlier version; PRD §17 asks for the
+   opposite, because the argument a designer has with a client is about which
+   version was approved.
+
+**Still to build:** store slice, the library UI (it belongs on the existing
+**Assets** stop — `deliver` — which already exists), and the bridge itself.
+
+**One open question, owner's call, stated rather than guessed:** the phase's
+done-when names Illustrator specifically. A true in-app panel is a UXP plugin
+needing Adobe developer distribution — writable here, but not installable or
+verifiable in CI, so it would ship unproven. An in-app "Import from Creative
+Cloud" over the existing Adobe connector is verifiable end to end but is a
+pull from the platform, not a push from the app, so it does not literally meet
+the wording above. Recommendation: build the verifiable one first and let the
+plugin become a thin client over an ingest surface already exercised with real
+files.
 
 ---
 
