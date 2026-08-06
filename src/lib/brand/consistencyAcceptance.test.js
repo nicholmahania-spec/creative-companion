@@ -23,7 +23,7 @@ import { describe, it, expect } from 'vitest'
 import { ACCEPTANCE_RENDERINGS } from './acceptanceFixture.js'
 import { markColourReading } from './markColourCheck.js'
 import { deltaE00Hex } from './deltaE.js'
-import { intruderColours } from './dominantColour.js'
+import { filterBrandColours, intruderColours } from './dominantColour.js'
 
 const readable = ACCEPTANCE_RENDERINGS.filter((r) => r.readable)
 const identity = readable.filter((r) => r.piece === 'identity')
@@ -70,6 +70,50 @@ describe('Phase 6 acceptance: it must not cry wolf on real work', () => {
   it('B — fires nothing when the palette is calibrated instead', () => {
     const flagged = identity.filter((r) => findings(r, AS_RENDERED).length)
     expect(flagged.map((r) => `${r.kind} p${r.page}`)).toEqual([])
+  })
+
+  it('E — photography, held out, and the one finding it produces', () => {
+    /* The acceptance bar names "one photographic mockup" and the first pass
+       claimed none was in the sample. That was wrong and checkable: reading
+       the operator lists of the real files shows ELEVEN of the 22 renderings
+       carry embedded raster images. Photography was half the sample.
+
+       The real gap was different — tests A and B, the only false-positive
+       tests, run on the two files that have NO embedded images. So this is
+       the missing measurement: leave-one-out across the pages of the
+       photographic documents. The palette comes from one page; a DIFFERENT
+       page is then checked against it, so unlike C the colours being judged
+       were never used to build the thing judging them.
+
+       Result: 1 finding in 18 checks. The one is `#022d79`, a darker navy on
+       one page of the anniversary piece, checked against a palette derived
+       from a page that held only `#045cc1`. Same brand, same document — the
+       PALETTE was incomplete, not the artwork, which is the same shape as
+       the six findings the original harness produced on the logo artboards.
+       A designer's real palette holds both blues. Pinned as an exact number
+       so a threshold change has to move it. */
+    const holdout = (piece) => {
+      const pages = readable.filter((r) => r.piece === piece)
+      let checks = 0
+      const found = []
+      for (const src of pages) {
+        const palette = filterBrandColours(
+          src.colours.filter((c) => c.coverage >= 0.1).map((c) => c.hex)
+        )
+        if (!palette.length) continue
+        for (const p of pages) {
+          if (p === src) continue
+          checks++
+          const hits = findings(p, palette)
+          if (hits.length) found.push(`${piece} p${p.page} vs p${src.page}`)
+        }
+      }
+      return { checks, found }
+    }
+    const plan = holdout('plan')
+    const anniv = holdout('anniv')
+    expect(plan.checks + anniv.checks).toBe(18)
+    expect([...plan.found, ...anniv.found]).toEqual(['anniv p2 vs p4'])
   })
 
   it('C — WAS TAUTOLOGICAL, and is kept only as the record of that', () => {

@@ -431,20 +431,45 @@ with smoothing on the panel reports `#8e3230` and `#395f59`, colours present
 nowhere in the artwork). `SAMPLE_MAX_EDGE` and `isBackgroundTint` remain
 uncovered.
 
-**What is NOT done, stated plainly rather than quietly rolled up:**
+**The font half is now DONE, on a surface that was there all along.** It read
+as blocked because uploads accept `image/*` and no PDF reaches the app — but
+that reasoning assumed the check needs a PDF. **SVG is an image format**, it
+is in the accepted set, and it is exactly where the distinction lives: live
+type carries `font-family`, outlined type is paths and carries nothing. So
+the case the phase names is answerable today:
 
-- **The font half.** This phase's scope says *"type converted to outlines
-  carries no font name, and that is the normal delivery format for brand
-  work — so silence must not read as 'clean'."* Nothing checks fonts. The
-  surface it would need does not exist either: uploads accept `image/*`, so
-  no PDF ever reaches the app to have its fonts read.
+| the mark | what the panel says |
+|---|---|
+| SVG, outlined | *"Type here is outlined, so there are no font names to check."* |
+| SVG, live type in a brand face | *"Live text in Brandon Grotesque — your brand typeface."* |
+| SVG, live type outside the brand | *"…which your brand typefaces do not include — it will substitute on a machine without it."* |
+| SVG, live text, no family named | *"…it will render in whatever the viewer has."* |
+| PNG / JPEG / WebP | **nothing** |
+
+Silence on a raster is deliberate and is not the failure the phase warns
+about: a raster carries no type information of any kind, so there is no claim
+being made either way, and repeating "cannot check" on every PNG is the noise
+that teaches a designer to stop reading the panel. Families are compared
+through `cssFamily`, the same extractor the renderer and the missing-font
+warning use, so "Brandon Grotesque" and "Brandon Grotesque Bold" are one
+typeface. Proven in a browser, because the SVG source only survives upload
+while the mark is under the stored-image cap — over it, `downscaleDataUrl`
+rasterises and the type information is gone before any of this sees it.
+
+**What is NOT done, stated plainly rather than quietly rolled up:**
 - **The banner lives on one asset, not an asset library.** There is no Asset
   Library in this codebase yet; the mark is the only brand asset with an
   upload. The check is wired there and nowhere else.
-- **No photographic mockup was in the sample.** The acceptance bar names one
-  and the six real files did not include one, so the false-positive rate is
-  unmeasured against photography — the case most likely to produce colour
-  the designer never chose.
+- ~~No photographic mockup was in the sample.~~ **Wrong, and checkable:**
+  reading the operator lists of the real files shows **11 of the 22
+  renderings carry embedded raster images**. Photography was half the sample.
+  The real gap was that A and B — the only false-positive tests — run on the
+  two files with no embedded images. Now measured by leave-one-out across the
+  photographic documents (palette from one page, a *different* page checked
+  against it): **1 finding in 18 checks**, and the one is a darker navy
+  flagged against a palette derived from a page that held only the brighter
+  blue. Same brand, same document — the palette was incomplete, not the
+  artwork.
 
 ---
 
