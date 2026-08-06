@@ -728,8 +728,17 @@ flip.
 
 **Risk: low.** Mostly a route and a transition.
 
-**Status 2026-08-06: built. Migration not yet applied to the live project —
-see "What has not been observed" below.**
+**Status 2026-08-06: built, and the migration IS applied.** This header used
+to read "migration not yet applied" while the gate table lower down in this
+same section already recorded it as applied — the section contradicted itself.
+Re-verified against `shzkqbtoepqqdkjgupry` before correcting: `delivery_moment`
+(`20260806015944`) is in the migration list, all seven `delivery_*` columns
+exist on `client_portals` with `delivery_status` NOT NULL defaulting to
+`not_delivered`, and all three RPCs — `get_brand_delivery`,
+`mark_brand_delivery_viewed`, `submit_brand_delivery_reaction` — exist as
+`SECURITY DEFINER`.
+
+What has NOT been observed is still the path through the actual UI; see below.
 
 What shipped:
 
