@@ -91,48 +91,37 @@ src/
   lib/journey.js          # five-stop path
 ```
 
-## Deploy (GitHub Pages)
+## Deploy — where this app actually lives
 
-CI workflow: `.github/workflows/deploy-pages.yml` builds on every push to `main` and publishes to Pages.
+The single source of truth is **`src/lib/deploy/deployTargets.js`**, which the
+app and the serverless proxy both read. Change a deploy there first; the rest
+of the repo follows.
 
-**Live URL (after first successful run):**  
-https://nicholmahania-spec.github.io/creative-companion/
+| Copy | URL | Role |
+|---|---|---|
+| **Vercel** | https://creative-companion-ten.vercel.app | **Production.** Serves `/api/xai` itself. |
+| GitHub Pages | https://nicholmahania-spec.github.io/creative-companion/ | Mirror of `main`. Static; borrows the primary's `/api/xai` for the Helper. |
+| Netlify | ~~creativecompanion.netlify.app~~ | **Retired** — last deploy errored 2026-07-19. Do not deploy here. |
 
-> Private repos: GitHub Pages may require a **public** repo or a paid plan. If the workflow fails on “Pages is disabled,” make the repo public or use Vercel/Netlify instead.
+Every non-production copy says so in the header (`src/components/DeployNotice.jsx`).
+Production says nothing, which is how you know it is production.
 
-## Deploy (Vercel or Netlify)
+### Deploying
 
-Configs are already in the repo (`vercel.json`, `netlify.toml`). SPA rewrites send all routes to `index.html`.
+**Merging to `main` is the deploy.** It triggers Vercel and the Pages workflow
+(`.github/workflows/deploy-pages.yml`) together.
 
-### Vercel (recommended)
+> **Never run `vercel deploy --prod` (or `vercel --prod`) from the CLI here.**
+> It uploads the local working directory and overrides the Git build. On
+> 2026-08-01 that silently shipped a pre-merge bundle to production three
+> times, making an already-fixed bug look unfixed.
 
-1. Sign in at [vercel.com](https://vercel.com) with **GitHub**.
-2. **Add New… → Project** → import **`nicholmahania-spec/creative-companion`**.
-3. If the repo is **private**, grant Vercel access to private repos when prompted.
-4. Framework: **Vite** (auto-detected). Build: `npm run build` · Output: `dist`.
-5. **Helper AI (optional):** set `XAI_API_KEY` + `XAI_PROXY_SECRET` (server) and the same value as `VITE_XAI_PROXY_SECRET` (build). Route: `/api/xai/chat/completions` — see **[docs/DEPLOY_AI.md](docs/DEPLOY_AI.md)**.
-6. Deploy. Every push to `main` redeploys.
+### Helper AI keys
 
-CLI (after `npx vercel login`):
-
-```bash
-npx vercel link
-npx vercel --prod
-```
-
-### Netlify
-
-1. Sign in at [netlify.com](https://netlify.com) with **GitHub**.
-2. **Add new site → Import an existing project** → pick **`creative-companion`**.
-3. Build command: `npm run build` · Publish directory: `dist` (from `netlify.toml`).
-4. Deploy. Pushes to `main` redeploy.
-
-CLI (after `npx netlify login`):
-
-```bash
-npx netlify init
-npx netlify deploy --prod
-```
+Server-side only: `XAI_API_KEY` in Vercel, plus `SUPABASE_URL` /
+`SUPABASE_ANON_KEY` (no `VITE_` prefix) so the proxy can verify the caller's
+session. Never a `VITE_*` secret — Vite inlines those into the shipped bundle.
+See **[docs/DEPLOY_AI.md](docs/DEPLOY_AI.md)**.
 
 ## License
 

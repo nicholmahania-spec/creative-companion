@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import PublicDiscoveryFill from './features/client-portal/PublicDiscoveryFill.jsx'
 import PublicClientPortal from './features/client-portal/PublicClientPortal.jsx'
+import PublicBrandReveal from './features/client-portal/PublicBrandReveal.jsx'
 import ErrorBoundary from './components/error/ErrorBoundary.jsx'
 import { routePath } from './lib/appPaths'
 import './index.css'
@@ -16,6 +17,10 @@ const path = routePath()
 const publicFormMatch = /^\/f\/([^/]+)\/?$/.exec(path)
 /** Public client-dashboard link (/c/:portalId) — same no-auth pattern. */
 const publicPortalMatch = /^\/c\/([^/]+)\/?$/.exec(path)
+/** Public brand-book reveal (/d/:portalId) — the delivery moment. Same portal
+ *  id as /c/, on purpose: the client already has that link, and a fourth id to
+ *  keep track of is a fourth thing to lose. */
+const publicRevealMatch = /^\/d\/([^/]+)\/?$/.exec(path)
 // Sentry initialization
 if (import.meta.env.VITE_SENTRY_DSN) {
   import('@sentry/react').then(({ init }) => {
@@ -42,6 +47,8 @@ createRoot(document.getElementById('root')).render(
         <PublicDiscoveryFill shareId={publicFormMatch[1]} />
       ) : publicPortalMatch ? (
         <PublicClientPortal portalId={publicPortalMatch[1]} />
+      ) : publicRevealMatch ? (
+        <PublicBrandReveal portalId={publicRevealMatch[1]} />
       ) : (
         <App />
       )}

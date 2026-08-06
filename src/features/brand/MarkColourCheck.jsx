@@ -4,6 +4,7 @@ import {
   markColourLine,
   markColourReading,
 } from '../../lib/brand/markColourCheck'
+import { markFontLine, markFontReading } from '../../lib/brand/markFontCheck'
 
 /**
  * What colours the uploaded mark is actually made of, against the palette.
@@ -35,6 +36,8 @@ export default function MarkColourCheck({
   onUsePalette,
   onAddColour,
   paletteFull = false,
+  typeHeading,
+  typeBody,
 }) {
   /* ONLY THE SAMPLING IS ASYNC. The reading is pure and cheap, so it is
      derived at render rather than computed inside the effect — otherwise
@@ -75,6 +78,16 @@ export default function MarkColourCheck({
     [fresh, palette, labelFor]
   )
 
+  /* The FONT half of the same check, and it reads the file rather than the
+     pixels — so it needs no sampling and is available immediately. An SVG
+     names its typefaces; outlined type names nothing, and saying that out
+     loud is the specific thing Phase 6 asks for. A raster mark produces no
+     line at all. */
+  const fontLine = useMemo(
+    () => markFontLine(markFontReading({ logoImage, typeHeading, typeBody })),
+    [logoImage, typeHeading, typeBody]
+  )
+
   if (!logoImage) return null
   // Nothing yet: no skeleton, no spinner. Sampling is milliseconds, and a
   // placeholder that flashes is more noticeable than the sentence arriving.
@@ -88,6 +101,7 @@ export default function MarkColourCheck({
         In this mark
       </span>
       <p className="mark-colour-line">{line}</p>
+      {fontLine && <p className="mark-colour-line">{fontLine}</p>}
       {action === 'use-palette' && onUsePalette && (
         <button
           type="button"

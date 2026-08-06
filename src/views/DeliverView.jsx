@@ -6,6 +6,7 @@
 import { Suspense, lazy } from 'react'
 import useAppStore from '../store/useAppStore'
 import CaseStudyExport from '../components/CaseStudyExport'
+import ClientPackagePanel from '../components/ClientPackagePanel'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey/journey'
 import { packReadiness, packBriefMarkdown } from '../lib/book/exportFiles'
 import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
@@ -22,6 +23,9 @@ const BrandBookPreview = lazy(
   () => import('../components/BrandBookPreview')
 )
 const StationeryKit = lazy(() => import('../components/StationeryKit'))
+const DeliverToClient = lazy(
+  () => import('../features/client-portal/DeliverToClient')
+)
 
 /**
  * A row of named stops. Options come from brandBookSetup so the labels here
@@ -68,6 +72,8 @@ export default function DeliverView({
   notifyAction,
   CLOUD = false,
   lastExportNote = '',
+  offerUndo,
+  openPortalPanel,
   // Focus timer props
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
@@ -201,6 +207,16 @@ export default function DeliverView({
           </p>
         ) : null}
 
+        {/* The organized handoff — folders, names, rights, and whether the
+            client is getting what they bought. Below the one-click download
+            on purpose: the fast path stays one press, and the package is
+            there when the job is bigger than a PDF. */}
+        <ClientPackagePanel
+          pack={packSnap}
+          onExport={runExport}
+          flashToast={flashToast}
+        />
+
         {coreGaps.length > 1 && (
           <div className="deliver-gaps assets-gaps">
             <p className="field-label assets-gaps-label">Also open</p>
@@ -220,6 +236,23 @@ export default function DeliverView({
           </div>
         )}
       </section>
+
+      {/* The delivery moment. Sits directly under the ship ticket because it
+          is the other half of shipping: the download is the designer's copy,
+          this is the client's. */}
+      <Suspense fallback={<div className="panel-hint">Loading…</div>}>
+        <DeliverToClient
+          project={activeProject}
+          portalId={activeProject?.clientPortalId || ''}
+          pack={packSnap}
+          book={bookSetup}
+          hideWatermark={hidePackWatermark}
+          cloud={CLOUD}
+          onOpenPortalPanel={openPortalPanel}
+          flashToast={flashToast}
+          offerUndo={offerUndo}
+        />
+      </Suspense>
 
       {/* Preview — real book; ship ticket stays sticky on wide */}
       <section

@@ -6,6 +6,8 @@
  * rate limit (best-effort in-memory), max_tokens / body caps.
  */
 
+import { firstPartyOrigins } from '../src/lib/deploy/deployTargets.js'
+
 const XAI_URL = 'https://api.x.ai/v1/chat/completions'
 const MAX_TOKENS_CAP = 512
 const MAX_MESSAGES = 24
@@ -104,25 +106,51 @@ function siteUrls() {
   push(process.env.VERCEL_PROJECT_PRODUCTION_URL)
   push(process.env.VERCEL_URL)
   push(process.env.VERCEL_BRANCH_URL)
+  /* This project's other copies, from the deploy registry.
+     WHY: the GitHub Pages mirror is static and cannot serve a function of its
+     own, so its Helper calls this proxy cross-origin. Those calls carry a
+     browser-set Origin of github.io, which the platform env vars above never
+     mention — so without this the mirror is refused 403 by an allowlist that
+     was only ever meant to keep OTHER people's sites out, not ours.
+     This does not loosen the real gate: every request still has to present a
+     verified Supabase session (see verifySupabaseSession). The origin check is
+     defence in depth, and adding a first-party origin is what an allowlist is
+     for. Anything not in the registry is still refused. */
+  for (const origin of firstPartyOrigins()) push(origin)
   return urls
+}
+
+/**
+ * An Origin header is `scheme://host[:port]` and nothing else — no path, no
+ * trailing slash. Only the trailing slash people write in config needs
+ * forgiving; anything beyond that is a different origin.
+ */
+function normalizeOrigin(value) {
+  return String(value || '').trim().replace(/\/+$/, '').toLowerCase()
 }
 
 export function isOriginAllowed(origin) {
   if (!origin) return false
+  /* Exact match, not `startsWith`.
+     The previous version allowed any origin that merely BEGAN with an allowed
+     one, and hostnames extend to the right: with `https://example.github.io`
+     trusted, `https://example.github.io.attacker.test` passed. Nobody had
+     noticed because the allowlist only ever held Vercel URLs nobody could
+     prefix usefully — adding a first-party github.io origin below is exactly
+     what would have made it reachable. */
+  const candidate = normalizeOrigin(origin)
   const raw = (process.env.XAI_PROXY_ORIGINS || '').trim()
   if (!raw) {
-    for (const site of siteUrls()) {
-      if (origin === site || origin.startsWith(site)) return true
+    if (siteUrls().some((site) => normalizeOrigin(site) === candidate)) {
+      return true
     }
-    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) {
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(candidate)) {
       return true
     }
     return false
   }
-  const list = raw.split(',').map((s) => s.trim()).filter(Boolean)
-  return list.some(
-    (o) => origin === o || origin.startsWith(o.replace(/\/$/, ''))
-  )
+  const list = raw.split(',').map(normalizeOrigin).filter(Boolean)
+  return list.includes(candidate)
 }
 
 function corsHeaders(origin) {

@@ -23,16 +23,39 @@ reasoning. It is not a list of what is left. These are:
   undo. `helperActions.test.js` fails if that list grows, so widening it is a
   deliberate act. Worth revisiting only with a permission model, not by
   adding an action.
-- **Three live copies of this app, and only one works.**
-  - Vercel `creative-companion-ten.vercel.app` — production. The Helper works
-    here and nowhere else.
-  - GitHub Pages `nicholmahania-spec.github.io/creative-companion/` — builds
-    from main, looks identical, and structurally CANNOT run the Helper: it is
-    static hosting with no serverless functions. Cost most of an evening on
-    2026-08-01, twice, because nothing on screen says which copy you are on.
-  - Netlify `creativecompanion.netlify.app` — last deploy errored 2026-07-19,
-    404s. ~~CLAUDE.md still called it primary~~ → fixed: Vercel is primary.
-  Pick one, retire the others, or at minimum make each say which it is.
+- ~~**Three live copies of this app, and only one works.**~~ **Fixed
+  2026-08-06** — both halves of it.
+  - ~~GitHub Pages structurally CANNOT run the Helper~~ — it can, and now
+    does. "Static hosting has no serverless functions" is true and was read as
+    one word too strong: the Helper does not need a function on *that* origin,
+    it needs one *somewhere* holding `XAI_API_KEY`. The mirror now calls the
+    primary's `/api/xai` cross-origin. The proxy authenticates the caller's
+    Supabase session, not the page that loaded the script, so a call from the
+    mirror is gated exactly as one from production, and no key reaches any
+    browser. `src/lib/deploy/helperProxyRouting.test.js` pins it.
+  - ~~nothing on screen says which copy you are on~~ — every non-production
+    copy now carries one line in the header naming itself and linking to the
+    main copy (`src/components/DeployNotice.jsx`). Production shows nothing,
+    which is how you know it is production. Verified in a real browser against
+    all four hostnames.
+  - **Netlify is retired, in writing.** `netlify.toml` said "Netlify is the
+    primary deploy target" in a comment; README listed all three deploys as
+    peers and told you to run `vercel --prod` (the command four lines below
+    forbids). Both corrected. The config files stay — reviving the host is a
+    decision, not a cleanup.
+  - The durable part: `src/lib/deploy/deployTargets.js` is now the one place
+    that knows what copies exist. The app and the serverless proxy both import
+    it. The old code *inferred* "this host has functions" from
+    `BASE_URL === '/'`, which was wrong in both directions — the dead Netlify
+    copy also builds with base `/`. Facts about deploys belong in a list of
+    deploys.
+  - Also closed on the way through: the proxy's origin allowlist matched by
+    `startsWith`, and hostnames extend rightwards, so trusting
+    `example.github.io` would have trusted `example.github.io.attacker.test`.
+    Exact match now, with a test.
+  - **Still owner-side:** nothing is required for the mirror to work, but if
+    `XAI_PROXY_ORIGINS` is ever set in Vercel it *replaces* the built-in list
+    — include every origin in the registry if you set it.
 - ~~**The Pages Helper blames your connection.**~~ Fixed: free-text without
   live AI names the missing live path, not the network.
 - **Never `vercel deploy --prod` from the CLI on this project.** It uploads
@@ -63,9 +86,9 @@ reasoning. It is not a list of what is left. These are:
   442, 2026-08 prune: removed duplicate mobile journey lock /
   `width:max-content` that clipped stages). Keep ratcheting down by fixing
   base rules; never raise the budget.
-- **Netlify is dead** — last deploy errored 2026-07-19 and
-  `creativecompanion.netlify.app` 404s. Production is Vercel.
-  ~~CLAUDE.md called Netlify primary~~ → docs fixed.
+- ~~**Netlify is dead**~~ — folded into the three-copies entry above
+  (2026-08-06). It is recorded as `role: 'retired'` in the deploy registry,
+  which is what the app and the proxy read, rather than only in prose.
 
 ---
 

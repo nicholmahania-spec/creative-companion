@@ -47,11 +47,18 @@ const rgb = (hex) => [
  * substrate filter — the white must be discarded as paper, leaving the block
  * as the only colour reported.
  *
+ * `stripes` makes a different shape on purpose: fine alternating bands of the
+ * two colours, in an image large enough that sampling must downscale it. That
+ * is the only way to catch `imageSmoothingEnabled` being switched on — with
+ * smoothing the bands average into a third colour present nowhere in the
+ * artwork, which is the invented-colour failure `sampleImage.js` warns about
+ * in its own header and which nothing else in the suite can see.
+ *
  * @param {string} hex e.g. '#B91C1C'
- * @param {{ size?: number, coverage?: number, second?: string }} [opts]
+ * @param {{ size?: number, coverage?: number, second?: string, stripes?: number }} [opts]
  * @returns {Buffer} PNG bytes
  */
-export function markPng(hex, { size = 64, coverage = 0.5, second } = {}) {
+export function markPng(hex, { size = 64, coverage = 0.5, second, stripes } = {}) {
   const [r, g, b] = rgb(hex)
   const [r2, g2, b2] = second ? rgb(second) : [r, g, b]
   const inkRows = Math.max(1, Math.round(size * coverage))
@@ -62,8 +69,11 @@ export function markPng(hex, { size = 64, coverage = 0.5, second } = {}) {
     for (let x = 0; x < size; x++) {
       const i = 1 + x * 3
       if (y < inkRows) {
-        // Split the ink band between the two colours when a second is given.
-        const useSecond = second && x >= size / 2
+        // Split the ink band between the two colours when a second is given —
+        // in halves normally, in fine bands when `stripes` is set.
+        const useSecond = second && (stripes
+          ? Math.floor(x / stripes) % 2 === 1
+          : x >= size / 2)
         row[i] = useSecond ? r2 : r
         row[i + 1] = useSecond ? g2 : g
         row[i + 2] = useSecond ? b2 : b

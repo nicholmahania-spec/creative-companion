@@ -5,12 +5,17 @@
   functions = "netlify/functions"
 
 [build.environment]
+  # NETLIFY IS RETIRED. Its last successful deploy was 2026-07-19 and
+  # creativecompanion.netlify.app now 404s. Production is Vercel — see the
+  # deploy registry, src/lib/deploy/deployTargets.js, which is what the app
+  # and the proxy both read. This file is kept only so the config does not
+  # have to be rebuilt if the host is ever revived; it is not a live target.
+  #
   # Stays at 24 deliberately. Node 26 is proven green on GitHub Actions (unit,
   # e2e, verify-project) but nothing exercises Netlify's build image on a pull
   # request, so raising this is only ever verified in production — and Vercel
   # rejected 26 outright ("invalid or discontinued Node.js Version"), so the
-  # failure mode is real, not hypothetical. Netlify is the primary deploy
-  # target; confirm it offers 26 before bumping this.
+  # failure mode is real, not hypothetical.
   NODE_VERSION = "24"
 
 # Helper AI proxy (set XAI_API_KEY in Netlify env — not VITE_*)

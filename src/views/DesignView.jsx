@@ -876,6 +876,8 @@ export default function DesignView({
                     : activeProject?.palette || []
                 }
                 paletteFull={(activeProject?.palette || []).length >= 8}
+                typeHeading={activeProject?.typeHeading}
+                typeBody={activeProject?.typeBody}
                 labelFor={roleLabelForHex}
                 onUsePalette={(hexes) => {
                   const before = activeProject?.palette || []

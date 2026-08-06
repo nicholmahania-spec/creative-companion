@@ -307,7 +307,7 @@
 }
 
 .ideate-directions.is-locked-3 .ideate-dir-card.is-chosen {
-  border-color: #606060;
+  border-color: var(--dopamine);
   border-width: 1.5px;
 }
 
@@ -335,7 +335,7 @@
 
 .ideate-directions:focus-within .ideate-dir-card:focus-within {
   opacity: 1 !important;
-  border-color: #606060 !important;
+  border-color: var(--ts-focus) !important;
   box-shadow: none !important;
 }
 

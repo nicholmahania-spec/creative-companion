@@ -257,6 +257,7 @@ export default function MainOutlet(p) {
         setActiveView={setActiveView}
         flashToast={flashToast}
         flashMicro={flashMicro}
+        offerUndo={offerUndo}
         notifyAction={notifyAction}
         quickInput={quickInput}
         setQuickInput={setQuickInput}
@@ -435,6 +436,7 @@ export default function MainOutlet(p) {
         tasks={deskTasks}
         clientInbox={clientInbox}
         onOpenView={setActiveView}
+        onOpenSection={goSystemSection}
         onOpenClientInbox={() => setClientInboxOpen(true)}
         onToggleTask={toggleTask}
         onToggleNotNeeded={(stepId) =>
@@ -564,6 +566,8 @@ export default function MainOutlet(p) {
         notifyAction={notifyAction}
         CLOUD={CLOUD}
         lastExportNote={lastExportNote}
+        offerUndo={offerUndo}
+        openPortalPanel={() => setOverviewSharePanelOpen(true)}
       />
     )
   }

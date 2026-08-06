@@ -137,6 +137,20 @@ describe('pathStepHasContent', () => {
         },
       })
     ).toBe(true)
+    /* A checked finished file counts on its own. The designer who dropped
+       their business card PDF on the row has produced stronger evidence than
+       a typed note, and making them also type the note would be exactly the
+       duplicate admin this product exists to remove. Drop `row.check` from
+       the condition and this fails. */
+    expect(
+      pathStepHasContent('sketch', {
+        project: {
+          touchpointApps: {
+            print: { check: { readable: true, colours: [{ hex: '#B91C1C' }] } },
+          },
+        },
+      })
+    ).toBe(true)
   })
 
   it('design ignores stock default palette alone', () => {

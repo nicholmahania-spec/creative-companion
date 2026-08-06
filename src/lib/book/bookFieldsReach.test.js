@@ -108,6 +108,19 @@ const CLIENT_ARTIFACTS = [
 ]
 
 const EXEMPT = {
+  /* The designer's private notes. NEVER printed — that is the entire point of
+     the field, and privacy here is structural rather than promised:
+     buildBrandPackSnapshot copies named fields only, so nothing that reaches a
+     client can pick it up. If this ever appears in a client artifact, the bug
+     is the artifact, not this exemption. */
+  privateNotes: 'private by design — must never reach a client artifact',
+  /* Where the client buys the fonts and what the licence permits. These DO
+     reach the client, through the typography sheet in the package
+     (lib/deliver/packageFiles.js) rather than through the book — the package
+     is a client artifact this list predates. */
+  typeSource: 'printed in the package typography sheet, not the book',
+  typeLicenceNote: 'printed in the package typography sheet, not the book',
+  fontFilesLicensed: 'decides whether the package ships font files at all',
   /* Drives the Identity completion gate (journeyProgress.js) and the palette
      health read. Internal rationale — deliberately not printed. */
   colorRoleWhy: 'feeds a completion gate, not a deliverable',
