@@ -27,7 +27,51 @@ npm run build   # production build (do NOT call `vite build` directly — vite i
 npm run dev     # dev server
 npm test        # vitest unit tests
 npm run bump    # increment version in src/lib/version.js
+npm run cc      # the CLI (see below) — `npm run cc -- export harbor`
 ```
+
+### `cc` — the command line
+
+```sh
+node bin/cc.mjs <command> [workspace] [options]
+```
+
+A **workspace** is the app's own backup payload: what Settings → Backup
+downloads, what cloud sync pushes, what `public/demos/*.json` are. Pass a path,
+a demo name (`harbor`, `soft-signal`), or nothing — with no argument `cc` uses
+the newest `creative-companion-backup-*.json` in the working directory.
+
+| Command | Does |
+|---|---|
+| `cc ls` | every project: type, client, stages done, pack readiness, deadline |
+| `cc info` | one project in full — brief, direction, system, work, client, decisions |
+| `cc check` | what the pack is still missing. **Exits 1 when not ready**, so it gates CI |
+| `cc contrast` | WCAG reading of a palette, with the smallest fix for each failure. Takes bare hex codes too |
+| `cc export` | the brand book PDF, markdown, HTML, tokens, mark files and zip, to a directory |
+
+Every command takes `--json`; `check` and `contrast` take `--strict` /
+`--warn-only` to choose the exit code.
+
+**How it runs `src/`.** `src/` is Vite code — extensionless relative imports,
+the `@` alias, `import.meta.env` — and plain Node resolves none of it.
+`scripts/cli/runtime.mjs` asks Vite itself via `ssrLoadModule`, applying the
+real `vite.config.js`. So the CLI and the app call the *same* functions and
+cannot drift into two answers about what a brand pack contains. No new
+dependency; the server runs in `middlewareMode` and never binds port 5274.
+
+**What it deliberately does not touch.** Not the zustand store — that is a
+browser object with a `localStorage` adapter, and a CLI that needed one would
+need a fake browser. The backup payload is the seam the app already exports
+through, and `buildBrandPackSnapshot` is the function every exporter reads.
+
+**The one honest limitation.** `rasterizeToPngDataUrl` needs a canvas and
+returns `''` without one, so images that are not already PNG/JPEG data URLs are
+dropped from a headless PDF. `cc export` counts them and says so rather than
+shipping a book with silent holes.
+
+`scripts/cli/cli.test.mjs` builds the demo book end to end and asserts the PDF's
+page count — `scripts/build-harbor-demo.mjs` imported a path that had stopped
+existing and nothing noticed for months, because nothing ran it.
 
 ## Git Workflow
 

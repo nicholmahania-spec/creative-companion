@@ -17,6 +17,20 @@ npm run preview
 npm test         # smoke tests (export, process, blank defaults, Helper fallback)
 ```
 
+### Command line
+
+The pack, without opening a browser. A **workspace** is the JSON that
+Settings → Backup downloads — pass a path, a demo name, or nothing at all.
+
+```bash
+node bin/cc.mjs ls harbor                      # projects, progress, deadlines
+node bin/cc.mjs check harbor                   # what the pack is missing (exit 1 if not ready)
+node bin/cc.mjs contrast '#1C1917' '#0F766E'   # WCAG, with the smallest fix for each failure
+node bin/cc.mjs export harbor --out ./delivery # brand book PDF, markdown, tokens, kit zip
+```
+
+Details and design notes: **[DEVELOPMENT.md](DEVELOPMENT.md#cc--the-command-line)**
+
 ### Optional: Supabase backend
 
 1. Create a project at [supabase.com](https://supabase.com)  
