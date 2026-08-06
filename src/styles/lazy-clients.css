@@ -761,3 +761,11 @@
   flex-direction: column;
   gap: 0.5rem;
 }
+/* The finished brand book, announced on the portal the client already has.
+   First block on the page and visually the loudest thing on it — everything
+   else there is admin. */
+.client-portal-delivery {
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}

@@ -22,6 +22,8 @@ const KIND_GLYPH = {
   notes: '✎',
   message: '💬',
   form: '📋',
+  delivery: '📖',
+  reaction: '❞',
 }
 
 /**
