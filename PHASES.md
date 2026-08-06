@@ -209,6 +209,26 @@ name them correctly, and no module holds its own copy of the list.
 **Risk: medium-high.** Wide blast radius — historically nine modules held
 private copies of this list and exactly one got updated.
 
+**Status 2026-08-06: NOT DONE. Read this before trusting the phase numbers.**
+
+`src/lib/journey/journey.js` still declares **five** stops — Strategy →
+Research → Identity → Touchpoints → Assets. The ten-stage redeclaration in
+this section has not happened.
+
+The commit titled *"Phase 2: project types"* (`e6c8995`) shipped a different
+piece of work under this phase's number: project types, which switch stages on
+and off per what is being built. Useful, and genuinely Phase-2-adjacent — but
+it is not the redeclaration, and the two got conflated by the commit title.
+`decisions.stage` in `20260805140000` still documents the five ids, which is
+the honest tell.
+
+So phases 3, 4, 5 and part of 6 were built **on the five-stop journey**, not on
+the ten. That is not necessarily wrong — it is what "prove the loop" was
+proven against — but anyone reading this file top to bottom will assume ten
+stops exist and plan against a journey the app does not have. This is the
+second time a stale status block in this file has sent a careful reader at the
+wrong work (see the Phase 0 note). Fix the status, not just the code.
+
 **One constraint carried in from review.** No evidence was found that more
 stages is worse for this audience — the one peer-reviewed source retrieved,
 Weick's *Small Wins* (American Psychologist, 1984), argues the opposite: large
@@ -348,6 +368,55 @@ from Figma into the Asset Library, with `source_app` recorded.
 without a manual upload.
 
 **Risk: medium.** Biggest lift, biggest retention payoff.
+
+**Status 2026-08-06: started. The destination did not exist.**
+
+This phase is written as "push an asset into the Asset Library". Checked before
+building: **there is no Asset Library.** `source_app` appeared nowhere in the
+tree, there was no assets table, and Brand Applications — the stage meant to
+hold finished work — stores `touchpointApps: { [id]: { note, done } }`. A note
+and a checkbox. There was no column a business card could land in.
+
+So the bridge is not the first work here; the destination is. Landed:
+
+- `supabase/migrations/20260806120000_asset_library.sql` — `assets` table with
+  `source_app`, a `replaces_id` version chain, the `assets_current` view
+  (`security_invoker`), and a **private** `brand-assets` bucket with
+  owner-scoped policies.
+- `src/lib/assets/assetLibrary.js` + 32 tests — vocabulary, storage keys,
+  ingest normalisation, version chaining.
+
+**Three calls made here, cheap to reverse now and expensive later:**
+
+1. **The bucket is private**, unlike both existing buckets. Those are
+   `public: true`, which serves object URLs without consulting RLS at all
+   (see `20260731120000`). This one holds unreleased client identity work, and
+   an unannounced rebrand leaking via a guessable URL is career-grade harm for
+   the designer. Cost is paid in app code: reads need signed URLs, so
+   `getPublicUrl` does not work against this bucket.
+2. **Metadata is a row; bytes are a Storage object.** Every image in the app
+   today is a data URL inside the localStorage blob, against a 3.5 MB cap that
+   already ships a "storage is full" error. A print-ready PDF exceeds that
+   whole budget — this path would not degrade, it would detonate, as silent
+   lost work.
+3. **Re-pushes chain, they do not overwrite.** A bridge makes re-pushing free,
+   so the same artboard arrives repeatedly. Upsert-on-`source_ref` keeps the
+   library tidy by discarding every earlier version; PRD §17 asks for the
+   opposite, because the argument a designer has with a client is about which
+   version was approved.
+
+**Still to build:** store slice, the library UI (it belongs on the existing
+**Assets** stop — `deliver` — which already exists), and the bridge itself.
+
+**One open question, owner's call, stated rather than guessed:** the phase's
+done-when names Illustrator specifically. A true in-app panel is a UXP plugin
+needing Adobe developer distribution — writable here, but not installable or
+verifiable in CI, so it would ship unproven. An in-app "Import from Creative
+Cloud" over the existing Adobe connector is verifiable end to end but is a
+pull from the platform, not a push from the app, so it does not literally meet
+the wording above. Recommendation: build the verifiable one first and let the
+plugin become a thin client over an ingest surface already exercised with real
+files.
 
 ---
 
