@@ -48,7 +48,9 @@ export function blankBookBuilder() {
       gutter: 3,
       margin: 9.4,
       edge: 'roomy',
-      show: true,
+      /* Guides are a working aid, not artwork: off unless the designer turns
+         them on. A client book with the grid printed on it is a mistake. */
+      show: false,
     },
     running: {
       show: true,
