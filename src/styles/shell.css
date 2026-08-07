@@ -3173,21 +3173,9 @@ h3 {
   max-width: min(92vw, 28rem);
   padding: 0.55rem 1rem;
   border-radius: var(--radius);
-  /* Soft plate + static rainbow ring (same stops as secondary buttons). */
-  border: 2px solid transparent;
-  background:
-    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
-    conic-gradient(
-      from 0deg,
-      #ff006e,
-      #8338ec,
-      #3a86ff,
-      #00ddeb,
-      #06d6a0,
-      #ffbe0b,
-      #ff006e
-    )
-      border-box;
+  /* Soft plate + hairline. A save confirmation is ambient, not an event. */
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
   color: var(--text-primary);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -3199,19 +3187,8 @@ h3 {
 }
 
 .app.deep .action-toast {
-  background:
-    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
-    conic-gradient(
-      from 0deg,
-      #ff6bcb,
-      #c084fc,
-      #8b7cf7,
-      #2dd4e0,
-      #5eead4,
-      #fbbf24,
-      #ff6bcb
-    )
-      border-box;
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
   color: var(--text-primary);
   box-shadow: none;
 }
@@ -7283,48 +7260,21 @@ body:has(.app.deep)::after {
   font-weight: 600 !important;
 }
 
-/* Chromatic primary + spinning rainbow border (owner: Button-85 chrome).
-   Fill stays solid for label contrast; motion is the ring only. */
-.btn-primary:not(.is-earned) {
-  border: 3px solid transparent !important;
-  background:
-    linear-gradient(var(--dopamine-plate), var(--dopamine-plate)) padding-box,
-    conic-gradient(
-      from var(--btn-spin, 0deg),
-      #ff006e,
-      #8338ec,
-      #3a86ff,
-      #00ddeb,
-      #06d6a0,
-      #ffbe0b,
-      #ff006e
-    )
-      border-box !important;
-  color: var(--on-dopamine) !important;
-  border-radius: var(--radius-sm) !important;
-  box-shadow: none !important;
-  font-family: inherit !important;
-  animation: btn-spin-chrome 2.4s linear infinite;
-}
+/* Chromatic primary — flat solid plate, no ring, no motion.
+   The spinning conic-gradient chrome that used to live here painted every
+   button variant in the app (primary, secondary AND outline) from four
+   separate declarations at four different speeds, so buttons on one screen
+   spun permanently out of phase. It also contradicted this file's own
+   "no gradients, no glow" rule and DESIGN_GRAMMAR G4.1. The reward ring now
+   belongs to .is-earned alone, which is what the rarity comment always said.
 
-/* Guarded so a disabled primary stops repainting on hover. */
+   The plate itself is declared once, in the "Primary law" block below — this
+   used to be a second copy of the same fill, which is exactly the duplication
+   that made the ring so expensive to remove. Only the lift resets live here,
+   and they exist to switch off a hover transform declared earlier. */
 .btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned) {
-  background:
-    linear-gradient(var(--dopamine-plate-hover), var(--dopamine-plate-hover)) padding-box,
-    conic-gradient(
-      from var(--btn-spin, 0deg),
-      #ff006e,
-      #8338ec,
-      #3a86ff,
-      #00ddeb,
-      #06d6a0,
-      #ffbe0b,
-      #ff006e
-    )
-      border-box !important;
   filter: none !important;
   transform: none !important;
-  box-shadow: none !important;
 }
 
 .btn,
@@ -7440,73 +7390,36 @@ body,
 /* .is-earned is exempt: the earned gradient ring (end of file) must own
    background/border there, and the ratchet forbids out-shouting a lock —
    narrow the base rule instead. */
-/* Primary law — purple plate + spinning rainbow chrome (see @property block). */
+/* Primary law — solid dopamine plate. One filled primary per region (G4.1). */
 .btn-primary:not(.is-earned),
 .path-continue-row .btn-primary:not(.is-earned),
 .work-path-next.btn-primary:not(.is-earned) {
-  border: 3px solid transparent !important;
-  background:
-    linear-gradient(var(--dopamine-plate), var(--dopamine-plate)) padding-box,
-    conic-gradient(
-      from var(--btn-spin, 0deg),
-      #ff006e,
-      #8338ec,
-      #3a86ff,
-      #00ddeb,
-      #06d6a0,
-      #ffbe0b,
-      #ff006e
-    )
-      border-box !important;
+  border: 1px solid var(--dopamine-plate) !important;
+  background: var(--dopamine-plate) !important;
   color: var(--on-dopamine) !important;
   border-radius: var(--ts-radius) !important;
   box-shadow: none !important;
   min-height: 40px;
   font-weight: 600;
-  animation: btn-spin-chrome 2.4s linear infinite;
 }
 
 .btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned),
 .path-continue-row .btn-primary:hover:not(:disabled):not([aria-disabled='true']):not(.is-earned) {
-  background:
-    linear-gradient(var(--dopamine-plate-hover), var(--dopamine-plate-hover)) padding-box,
-    conic-gradient(
-      from var(--btn-spin, 0deg),
-      #ff006e,
-      #8338ec,
-      #3a86ff,
-      #00ddeb,
-      #06d6a0,
-      #ffbe0b,
-      #ff006e
-    )
-      border-box !important;
+  background: var(--dopamine-plate-hover) !important;
+  border-color: var(--dopamine-plate-hover) !important;
 }
 
-/* Secondary / outline — rainbow chrome for findability (ADHD advisor hybrid).
-   Soft plate + ink label; NOT solid dopamine. Primary stays the only solid CTA.
-   Ghost stays quiet (dense chrome). Ring is slightly thinner / slower than primary. */
+/* Secondary / outline — hairline + ink label. Findability comes from placement
+   and label, not from a coloured ring: when every button carried chrome, none
+   of them read as more important than any other. Primary stays the only fill. */
 .btn-secondary:not(.is-earned),
 .btn-outline:not(.is-earned) {
-  border: 2px solid transparent !important;
-  background:
-    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
-    conic-gradient(
-      from var(--btn-spin, 0deg),
-      #ff006e,
-      #8338ec,
-      #3a86ff,
-      #00ddeb,
-      #06d6a0,
-      #ffbe0b,
-      #ff006e
-    )
-      border-box !important;
+  border: 1px solid var(--border-strong) !important;
+  background: var(--bg-elevated) !important;
   color: var(--ts-ink) !important;
   border-radius: var(--ts-radius) !important;
   box-shadow: none !important;
   min-height: 40px;
-  animation: btn-spin-chrome 3.2s linear infinite;
 }
 
 .btn-ghost {
@@ -7546,55 +7459,20 @@ body,
    the interior press feedback comes from the base :active rules. */
 .btn-primary:active:not(:disabled):not([aria-disabled='true']):not(.is-earned),
 .path-continue-row .btn-primary:active:not(:disabled):not([aria-disabled='true']):not(.is-earned) {
-  background:
-    linear-gradient(var(--dopamine-ink), var(--dopamine-ink)) padding-box,
-    conic-gradient(
-      from var(--btn-spin, 0deg),
-      #ff006e,
-      #8338ec,
-      #3a86ff,
-      #00ddeb,
-      #06d6a0,
-      #ffbe0b,
-      #ff006e
-    )
-      border-box !important;
+  background: var(--dopamine-ink) !important;
+  border-color: var(--dopamine-ink) !important;
 }
 
 .btn-secondary:hover:not(:disabled):not([aria-disabled='true']),
 .btn-outline:hover:not(:disabled):not([aria-disabled='true']) {
-  background:
-    linear-gradient(var(--bg-muted), var(--bg-muted)) padding-box,
-    conic-gradient(
-      from var(--btn-spin, 0deg),
-      #ff006e,
-      #8338ec,
-      #3a86ff,
-      #00ddeb,
-      #06d6a0,
-      #ffbe0b,
-      #ff006e
-    )
-      border-box !important;
-  border-color: transparent !important;
+  background: var(--bg-muted) !important;
+  border-color: var(--border-strong) !important;
 }
 
 .btn-secondary:active:not(:disabled):not([aria-disabled='true']),
 .btn-outline:active:not(:disabled):not([aria-disabled='true']) {
-  background:
-    linear-gradient(var(--border-strong), var(--border-strong)) padding-box,
-    conic-gradient(
-      from var(--btn-spin, 0deg),
-      #ff006e,
-      #8338ec,
-      #3a86ff,
-      #00ddeb,
-      #06d6a0,
-      #ffbe0b,
-      #ff006e
-    )
-      border-box !important;
-  border-color: transparent !important;
+  background: var(--border-subtle) !important;
+  border-color: var(--border-strong) !important;
 }
 
 .btn-ghost:active:not(:disabled):not([aria-disabled='true']) {
@@ -10749,82 +10627,26 @@ textarea.artboard-brief-input {
   white-space: nowrap;
 }
 
-/* Spinning rainbow chrome (owner-requested Button-85).
-   Custom property animation; reduced-motion falls back to a static ring. */
-@property --btn-spin {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
-
-@keyframes btn-spin-chrome {
-  to {
-    --btn-spin: 360deg;
-  }
-}
-
-.btn-primary:disabled,
-.btn-primary[aria-disabled='true'],
-.btn-primary:disabled:not(.is-earned),
-.btn-primary[aria-disabled='true']:not(.is-earned),
-.btn-secondary:disabled,
-.btn-secondary[aria-disabled='true'],
-.btn-outline:disabled,
-.btn-outline[aria-disabled='true'] {
-  animation: none;
-}
-
-/* Earned Continue — same spinning chrome, thicker ring as the reward state. */
+/* Earned Continue — the one reward state, and the only button that differs
+   from the primary law. It marks "this stop is filled, you may move on", so
+   it borrows the growth token G4 already reserves for done states rather than
+   a colour of its own. Static: a permanent animation on the highest-attention
+   element of a screen is noise, not delight, for this audience especially. */
 .btn.step-rail-cta.is-earned {
-  border: 3px solid transparent;
-  background:
-    linear-gradient(var(--dopamine), var(--dopamine)) padding-box,
-    conic-gradient(
-      from var(--btn-spin, 0deg),
-      #ff006e,
-      #8338ec,
-      #3a86ff,
-      #00ddeb,
-      #06d6a0,
-      #ffbe0b,
-      #ff006e
-    )
-      border-box;
+  border: 2px solid var(--accent-growth);
+  background: var(--dopamine);
   color: var(--on-dopamine);
   border-radius: var(--ts-radius);
   box-shadow: none;
   min-height: 40px;
   font-weight: 600;
   font-family: inherit;
-  animation: btn-spin-chrome 2s linear infinite;
 }
 
 .app.deep .btn.step-rail-cta.is-earned {
-  background:
-    linear-gradient(var(--dopamine), var(--dopamine)) padding-box,
-    conic-gradient(
-      from var(--btn-spin, 0deg),
-      #ff6bcb,
-      #c084fc,
-      #8b7cf7,
-      #2dd4e0,
-      #5eead4,
-      #fbbf24,
-      #ff6bcb
-    )
-      border-box;
+  background: var(--dopamine);
+  border-color: var(--accent-growth);
   color: var(--on-dopamine);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .btn-primary:not(.is-earned),
-  .path-continue-row .btn-primary:not(.is-earned),
-  .work-path-next.btn-primary:not(.is-earned),
-  .btn.step-rail-cta.is-earned,
-  .btn-secondary:not(.is-earned),
-  .btn-outline:not(.is-earned) {
-    animation: none;
-  }
 }
 
 /* ── Identity version stamp + manual Mark done ──────────────────────────────
