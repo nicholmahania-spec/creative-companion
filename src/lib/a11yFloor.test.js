@@ -134,15 +134,19 @@ describe('the running to-do panel is a drawer, not a false modal', () => {
   })
 })
 
-describe('the progress HUD carries meaning off `title`', () => {
-  const src = read('features/helper/GameHUD.jsx')
+/* The progress HUD this guarded is deleted, along with the XP ledger behind
+   it — PRODUCT.md §21 bans XP, levels and streaks by name. Replaced with a
+   guard against the whole thing coming back rather than dropped silently:
+   the mechanic was reachable through the Helper's chat pings even while the
+   HUD itself sat behind a flag nothing could set, so "it is off by default"
+   was not the protection it looked like. */
+describe('the XP ledger stays gone', () => {
+  const roots = ['App.jsx', 'features/helper/BuddyMate.jsx']
 
-  it('the summary is a real accessible name, not a title', () => {
-    // `title` is dead on touch and keyboard. The whole summary lives on the
-    // button's aria-label; the chips are decorative and hidden from AT.
-    expect(src).toMatch(/aria-label=\{hudLabel\}/)
-    expect(src).not.toMatch(/\btitle=/)
-    // Meaningful badge emoji announce their name as images.
-    expect(src).toMatch(/role="img"\s*\n?\s*aria-label=\{b\.name\}/)
+  it('no source awards points, levels, badges or a day streak', () => {
+    for (const rel of roots) {
+      const src = read(rel)
+      expect(src).not.toMatch(/awardAndBroadcast|buddyGame|dayStreak|DAILY_XP_GOAL/)
+    }
   })
 })

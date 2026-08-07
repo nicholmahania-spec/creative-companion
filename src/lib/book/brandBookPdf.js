@@ -53,7 +53,12 @@ import {
 } from '../brandSystem'
 import { filledDetectiveChapters } from '../brief/detectiveBrief'
 import { touchpointsFor, touchpointsBlurb, touchpointLabel } from '../journey/touchpoints'
-import { slugifyFilename, downloadBlob, writeToSaveHandle } from './exportFiles'
+import {
+  slugifyFilename,
+  downloadBlob,
+  writeToSaveHandle,
+  creditedFooter,
+} from './exportFiles'
 import { resolveBookSetup } from './brandBookSetup'
 import { bookPlan } from './bookDocument'
 import { registerBookFonts, FACE, FALLBACK_FACE } from './bookFonts'
@@ -197,7 +202,7 @@ const has = (v) => !!clean(v)
  * Application-first multi-page brand book.
  * @param {object} packIn
  * @param {Promise|null} handlePromise
- * @param {{ hideWatermark?: boolean, returnBlobOnly?: boolean, book?: object }} [options]
+ * @param {{ returnBlobOnly?: boolean, book?: object }} [options]
  */
 export async function downloadBrandPackVectorPdf(
   packIn,
@@ -208,7 +213,10 @@ export async function downloadBrandPackVectorPdf(
     const jsPdfMod = await import('jspdf')
     const { jsPDF } = jsPdfMod
     const pack = (await preparePackRasters(packIn)) || packIn || {}
-    const hideWatermark = !!options.hideWatermark
+    /* The studio's own name, or nothing. This used to be a `hideWatermark`
+       boolean naming the platform, honoured here and nowhere else — see
+       `creditedFooter` in exportFiles.js for what that cost. */
+    const studio = String(pack?.studio || '').trim()
 
     /* Page geometry comes from the shared setup rather than being written out
        here, so the three controls on Deliver and this generator can never
@@ -540,20 +548,13 @@ export async function downloadBrandPackVectorPdf(
      */
     const footerAll = () => {
       const total = pdf.getNumberOfPages()
-      const left = hideWatermark
-        ? projectName
-        : `${projectName} · Creative Companion`
       /* The Builder's "Running elements" govern this footer rather than
-         drawing a second one beside it. Its own footer text replaces the
-         left-hand line when set; the Creative Companion attribution still
-         follows unless the watermark is off, because that is a licence
-         matter and not a styling choice. */
-      const leftText =
-        running.showFooter && running.footerText
-          ? hideWatermark
-            ? running.footerText
-            : `${running.footerText} · Creative Companion`
-          : left
+         drawing a second one beside it: its own footer text replaces the
+         left-hand line when set, and the studio credit follows either way. */
+      const leftText = creditedFooter([
+        (running.showFooter && running.footerText) || projectName,
+        studio,
+      ])
 
       sheetFoots.forEach(({ page, dark }) => {
         if (page === 0) return

@@ -8,7 +8,11 @@ import useAppStore from '../store/useAppStore'
 import CaseStudyExport from '../components/CaseStudyExport'
 import ClientPackagePanel from '../components/ClientPackagePanel'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey/journey'
-import { packReadiness, packBriefMarkdown } from '../lib/book/exportFiles'
+import {
+  packReadiness,
+  packBriefMarkdown,
+  creditedFooter,
+} from '../lib/book/exportFiles'
 import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
 import { focusPathGapTarget } from '../lib/journey/journeyProgress'
 import {
@@ -56,7 +60,7 @@ export default function DeliverView({
   navDir = 'none',
   activeProject = null,
   projectPalette = [],
-  hidePackWatermark = false,
+  studioName = '',
   bookSetup = { pageSize: 'letter', edgeSpace: 'standard', printShop: false },
   setActiveView,
   goToProcessStep,
@@ -76,6 +80,13 @@ export default function DeliverView({
   openPortalPanel,
   // Focus timer props
 }) {
+  /* Built with the same helper the exports use, so the preview cannot
+     drift from what actually prints. */
+  const packFooterPreview = creditedFooter([
+    activeProject?.name || 'Untitled project',
+    studioName,
+  ])
+
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const addContact = useAppStore((s) => s.addContact)
   const updateContact = useAppStore((s) => s.updateContact)
@@ -246,7 +257,7 @@ export default function DeliverView({
           portalId={activeProject?.clientPortalId || ''}
           pack={packSnap}
           book={bookSetup}
-          hideWatermark={hidePackWatermark}
+          studio={studioName}
           cloud={CLOUD}
           onOpenPortalPanel={openPortalPanel}
           flashToast={flashToast}
@@ -266,7 +277,7 @@ export default function DeliverView({
             <BrandBookPreview
               pack={packSnap}
               book={bookSetup}
-              hideWatermark={hidePackWatermark}
+              studio={studioName}
             />
           </Suspense>
         </div>
@@ -298,14 +309,27 @@ export default function DeliverView({
               <span>Going to a print shop</span>
             </label>
             <p className="book-setup-state">{bookSetupSummary(bookSetup)}</p>
-            <label className="pack-watermark-toggle">
-              <input
-                type="checkbox"
-                checked={hidePackWatermark}
-                onChange={(e) => setPref('hidePackWatermark', e.target.checked)}
-              />
-              <span>Hide Creative Companion credit</span>
+            {/* Replaced a "Hide Creative Companion credit" checkbox that only
+                worked on one of seven surfaces. A name is also the thing the
+                designer actually wants on their client's book — the checkbox
+                could only ever take something away. Prefilled from the invoice
+                identity, which is where most studios have already typed it. */}
+            <label className="field-label" htmlFor="studio-name">
+              Footer credit
             </label>
+            <input
+              id="studio-name"
+              className="field-input"
+              type="text"
+              value={studioName}
+              placeholder="Your studio name"
+              onChange={(e) => setPref('studioName', e.target.value)}
+            />
+            {/* The state is read, not remembered: this is the line that will
+                print, not a description of a setting. */}
+            <p className="book-setup-state">
+              Footer reads: {packFooterPreview}
+            </p>
           </div>
         </details>
 

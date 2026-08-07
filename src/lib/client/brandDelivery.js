@@ -165,11 +165,11 @@ export function deliveryStatusLine(portal) {
  * chose and checked.
  *
  * @param {string} portalId
- * @param {{ note?: string, pack?: object, book?: object, hideWatermark?: boolean }} payload
+ * @param {{ note?: string, pack?: object, book?: object }} payload
  */
 export async function publishDelivery(
   portalId,
-  { note = '', pack = null, book = null, hideWatermark = false } = {}
+  { note = '', pack = null, book = null } = {}
 ) {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: CLOUD_REQUIRED }
@@ -191,7 +191,6 @@ export async function publishDelivery(
         v: 1,
         pack: built.pack,
         book: book || null,
-        hideWatermark: !!hideWatermark,
       },
       delivered_at: now,
       updated_at: now,
@@ -271,16 +270,15 @@ export async function fetchBrandDelivery(portalId) {
  */
 export function readDeliveryEnvelope(stored) {
   if (!stored || typeof stored !== 'object') {
-    return { pack: null, book: null, hideWatermark: false }
+    return { pack: null, book: null }
   }
   if (stored.pack && typeof stored.pack === 'object') {
     return {
       pack: stored.pack,
       book: stored.book || null,
-      hideWatermark: !!stored.hideWatermark,
     }
   }
-  return { pack: stored, book: null, hideWatermark: false }
+  return { pack: stored, book: null }
 }
 
 /**

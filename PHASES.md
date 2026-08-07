@@ -6,6 +6,19 @@ what it deliberately does **not**, and how we know it is done.
 Rule for every phase: **it ships only when the checks are green and the thing
 was actually observed working.** A phase that "should" work is not done.
 
+> **This file is not the authority on what exists.** Its value is the
+> reasoning — what was decided, what was rejected, what a measurement showed.
+> Its DONE / NOT DONE claims have sent careful readers at the wrong work five
+> separate times, once in a note added while fixing two others, because a
+> status line is a second copy of something the code already says and the two
+> drift.
+>
+> Check the code, then the tests, then CI. `journeySingleSource.test.js` and
+> `projectTypes.js` are authoritative about the journey; this file is not.
+> Where a status claim below is known wrong it is struck through in place
+> rather than deleted, so a reader who half-remembers it is corrected instead
+> of merely finding it gone.
+
 ## The decisions this plan is built on
 
 | # | Decision | Consequence |
@@ -227,11 +240,22 @@ name them correctly, and no module holds its own copy of the list.
 **Risk: medium-high.** Wide blast radius — historically nine modules held
 private copies of this list and exactly one got updated.
 
-**Status 2026-08-06: NOT DONE. Read this before trusting the phase numbers.**
+**~~Status 2026-08-06: NOT DONE.~~ SUPERSEDED — do not do this work.**
 
-`src/lib/journey/journey.js` still declares **five** stops — Strategy →
-Research → Identity → Touchpoints → Assets. The ten-stage redeclaration in
-this section has not happened.
+The five stops are still there and the ten-stage redeclaration still has not
+happened, and that is now the correct state rather than a gap. PRODUCT.md
+§26.1 records the conflict and the owner resolving it on 2026-08-05 in favour
+of **modular project types**, which subsume the ten: the full stage set is
+simply the Brand Identity default. `src/lib/journey/projectTypes.js` says so
+in its own header and implements it.
+
+What IS still open is finer-grained: four of the seven types resolve to the
+same five stops today, and `startsFromExisting` is set on Refresh and Rebrand
+with nothing consuming it. That is the work — not the redeclaration below.
+
+The struck-through claim is kept because it is the fifth stale status block in
+this file to send someone at the wrong work, and deleting it quietly would
+lose the only evidence of why the header above now exists.
 
 The commit titled *"Phase 2: project types"* (`e6c8995`) shipped a different
 piece of work under this phase's number: project types, which switch stages on

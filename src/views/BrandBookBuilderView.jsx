@@ -1106,7 +1106,6 @@ export default function BrandBookBuilderView() {
       html.bbb-printing .journey-sidebar,
       html.bbb-printing .step-rail,
       html.bbb-printing .app-footer,
-      html.bbb-printing .game-hud,
       html.bbb-printing .todo-fab{display:none!important}
       html.bbb-printing body,
       html.bbb-printing .app,

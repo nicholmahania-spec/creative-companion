@@ -162,7 +162,7 @@ export default function MainOutlet(p) {
     setIntakeClientName,
     intakeClientName,
     // design / review / deliver
-    hidePackWatermark,
+    studioName,
     brandEditSection,
     setBrandEditSection,
     pathDoneCount,
@@ -193,7 +193,6 @@ export default function MainOutlet(p) {
     reduceMotion,
     soundEnabled,
     showHowItWorks,
-    showProgress,
     queueCollapsed,
     pwCurrent,
     setPwCurrent,
@@ -500,7 +499,7 @@ export default function MainOutlet(p) {
         activeProject={activeProject}
         deskMood={deskMood}
         projectPalette={projectPalette}
-        hidePackWatermark={hidePackWatermark}
+        studioName={studioName}
         setActiveView={setActiveView}
         flashToast={flashToast}
         offerUndo={offerUndo}
@@ -523,7 +522,7 @@ export default function MainOutlet(p) {
         pathDoneCount={pathDoneCount}
         pathMissingLabelsList={pathMissingLabelsList}
         pathNextGap={pathNextGap}
-        hidePackWatermark={hidePackWatermark}
+        studioName={studioName}
         setActiveView={setActiveView}
         goToProcessStep={goToProcessStep}
         goSystemSection={goSystemSection}
@@ -550,7 +549,7 @@ export default function MainOutlet(p) {
         pathMissingLabelsList={pathMissingLabelsList}
         pathNextGap={pathNextGap}
         leaveBehindThin={leaveBehindThin}
-        hidePackWatermark={hidePackWatermark}
+        studioName={studioName}
         bookSetup={bookSetup}
         setActiveView={setActiveView}
         goToProcessStep={goToProcessStep}

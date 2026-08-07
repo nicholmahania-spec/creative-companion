@@ -9,6 +9,7 @@ import {
 import { BRAND_ROLE_KEYS, BRAND_ROLE_LABELS } from '../lib/color'
 import { colorSpec } from '../lib/brandSystem'
 import { downscaleDataUrl, pinFaceStyle } from '../lib/moodPins'
+import { creditedFooter } from '../lib/book/exportFiles'
 
 const formatCmyk = (hex) => colorSpec(hex)?.cmyk || ''
 
@@ -33,8 +34,9 @@ export default function BrandArtboard({
   pins = [],
   editable = false,
   compact = false,
-  /** Hide tool footer watermark (client handoff / print) */
-  hideWatermark = false,
+  /** The studio's own name for the sheet footer. Empty prints project +
+   *  date and no platform credit — see `creditedFooter` in exportFiles.js. */
+  studio = '',
   onTaglineChange,
   onBriefChange,
   onVoiceChange,
@@ -78,9 +80,7 @@ export default function BrandArtboard({
     <article
       className={`direction-sheet system-artboard brand-artboard${
         compact ? ' is-compact' : ''
-      }${editable ? ' is-editable' : ''}${
-        hideWatermark ? ' hide-watermark' : ''
-      }`}
+      }${editable ? ' is-editable' : ''}`}
       id={id}
     >
       <div
@@ -510,12 +510,13 @@ export default function BrandArtboard({
         </div>
       )}
 
-      {!hideWatermark && (
-        <footer className="direction-foot">
-          Creative Companion · Direction sheet ·{' '}
-          {new Date().toLocaleDateString()}
-        </footer>
-      )}
+      <footer className="direction-foot">
+        {creditedFooter([
+          studio,
+          'Direction sheet',
+          new Date().toLocaleDateString(),
+        ])}
+      </footer>
     </article>
   )
 }
