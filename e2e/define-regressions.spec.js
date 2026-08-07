@@ -210,6 +210,78 @@ test.describe('Define page regressions', () => {
     )
   })
 
+  /**
+   * The phone counterpart of the test above, and the reason it is needed:
+   * `.define-chapter-rail` renders on neither surface here — the brief passes
+   * showChapterRail={false}, and DetectiveSheet gates it on `!isMobile` as
+   * well — so at 390px the chapter head is the ONLY thing on the page that
+   * says which chapter you are in. The brief measures 5563px at this width,
+   * so an unpinned head is off screen for 5 of the 6.6 screenfuls.
+   *
+   * Asserted on geometry rather than on `position: sticky` in the cascade:
+   * the declaration existing proves nothing. `overflow-x: hidden` on an
+   * ancestor silently turns every sticky child into a static one (four
+   * declarations in shell.css were dead this way — see its comment at the
+   * html/body rule), and that failure reads as a correct stylesheet.
+   */
+  test('the chapter you are in stays named on a phone', async ({ page }) => {
+    const gate = await unlockAndOnboard(page, {
+      name: 'Sticky Project',
+      testerName: 'Sticky Tester',
+    })
+    skipIfCloud(test, gate)
+    await page.setViewportSize({ width: 390, height: 844 })
+    await openDefine(page)
+
+    // Park in the middle of a chapter, far below its own heading.
+    await page.evaluate(() =>
+      document
+        .getElementById('detective-field-spectrumHighEndAffordable')
+        ?.scrollIntoView({ block: 'center', behavior: 'auto' })
+    )
+    await page.waitForTimeout(400)
+
+    const state = await page.evaluate(() => {
+      const field = document
+        .getElementById('detective-field-spectrumHighEndAffordable')
+        .getBoundingClientRect()
+      const owner = document
+        .getElementById('detective-field-spectrumHighEndAffordable')
+        .closest('.define-chapter')
+      const head = owner.querySelector('.define-chapter-head').getBoundingClientRect()
+      const headerH =
+        document.querySelector('.header')?.getBoundingClientRect().height ?? 0
+      return {
+        title: owner.querySelector('.define-chapter-title').textContent.trim(),
+        headTop: Math.round(head.top),
+        headBottom: Math.round(head.bottom),
+        fieldTop: Math.round(field.top),
+        headerH: Math.round(headerH),
+        viewportH: window.innerHeight,
+        scrollY: Math.round(window.scrollY),
+      }
+    })
+
+    expect(state.scrollY, 'the page actually scrolled').toBeGreaterThan(600)
+    expect(
+      state.fieldTop,
+      'the field is well below its own chapter heading in the document'
+    ).toBeGreaterThan(0)
+    expect(
+      state.headBottom,
+      `"${state.title}" scrolled off screen — nothing on this page names the ` +
+        `chapter any more, and the rail does not render at 390px`
+    ).toBeGreaterThan(0)
+    expect(
+      state.headTop,
+      'the chapter heading is pinned below the app header, not floating over it'
+    ).toBeGreaterThanOrEqual(state.headerH - 2)
+    expect(
+      state.headTop,
+      'the chapter heading is pinned near the top, not merely still on screen'
+    ).toBeLessThan(state.headerH + 8)
+  })
+
   test('focus mask never dims answers below the legibility floor', async ({ page }) => {
     const gate = await unlockAndOnboard(page, {
       name: 'Mask Project',
