@@ -10,6 +10,7 @@ import { BRAND_ROLE_KEYS, BRAND_ROLE_LABELS } from '../lib/color'
 import { colorSpec } from '../lib/brandSystem'
 import { downscaleDataUrl, pinFaceStyle } from '../lib/moodPins'
 import { creditedFooter } from '../lib/book/exportFiles'
+import { hasAnswer } from '../lib/brand/directionValue'
 
 const formatCmyk = (hex) => colorSpec(hex)?.cmyk || ''
 
@@ -22,6 +23,35 @@ const ROLE_KEYS = BRAND_ROLE_KEYS.map((id) => ({
   id,
   label: BRAND_ROLE_LABELS[id] || id,
 }))
+
+/**
+ * A direction-sheet line: the answer, or an em-dash while there isn't one.
+ *
+ * An unanswered line is a real state — "nobody has decided this yet" — and it
+ * should read as waiting rather than as content. The dash was previously set
+ * in the same ink as a real answer, so a sheet of five dashes looked like a
+ * sheet with five things written on it.
+ *
+ * NO animation on the dash being replaced, though the roadmap asked for one.
+ * The audit's Phase 5 #20 assumed the direction sheet sits beside the fields
+ * that feed it, so a designer would watch strategy turn into the brand. It
+ * does not: all three call sites pass `editable={false}`, and the artboard
+ * only renders on Identity's Preview sub-screen, on Review, and in the export
+ * panel — never next to the Words fields where Positioning and Voice are
+ * written. The transition therefore always happens on a screen nobody is
+ * looking at, and firing it on arrival instead would flutter every line of a
+ * project finished last week, which is the exact noise the idea was meant to
+ * avoid. An animation nothing can see is not delight, it is dead code with a
+ * keyframe. See docs/VISUAL_AUDIT.md Phase 5.
+ */
+function DirectionValue({ value, className = 'direction-brief', empty = '—' }) {
+  const text = String(value ?? '').trim()
+  return (
+    <p className={`${className}${hasAnswer(value) ? '' : ' is-unset'}`}>
+      {text || empty}
+    </p>
+  )
+}
 
 /**
  * Shared brand leave-behind artboard — Design preview, Review/Deliver, PDF capture.
@@ -117,9 +147,17 @@ export default function BrandArtboard({
             aria-label="Tagline"
           />
         ) : (
+          /* Same "unanswered reads as waiting" rule as the lines below, but
+             it cannot use --text-muted: this sits on the brand's own cover
+             colour, and a fixed grey would fight whatever the designer chose.
+             Opacity is relative to the inherited ink, so it holds on any
+             cover. */
           <p
             className="direction-brief"
-            style={{ color: 'inherit', opacity: 0.92 }}
+            style={{
+              color: 'inherit',
+              opacity: hasAnswer(project.tagline) ? 0.92 : 0.6,
+            }}
           >
             {project.tagline?.trim() || '—'}
           </p>
@@ -137,7 +175,7 @@ export default function BrandArtboard({
           aria-label="Positioning"
         />
       ) : (
-        <p className="direction-brief">{project.brief?.trim() || '—'}</p>
+        <DirectionValue value={project.brief} />
       )}
 
       <div className="kicker">Voice</div>
@@ -151,7 +189,7 @@ export default function BrandArtboard({
           aria-label="Voice"
         />
       ) : (
-        <p className="direction-brief">{project.voice?.trim() || '—'}</p>
+        <DirectionValue value={project.voice} />
       )}
 
       <div className="kicker">Palette roles</div>
@@ -470,7 +508,7 @@ export default function BrandArtboard({
               aria-label="Do"
             />
           ) : (
-            <p className="direction-brief">{project.doUse || '—'}</p>
+            <DirectionValue value={project.doUse} />
           )}
         </div>
         <div>
@@ -485,7 +523,7 @@ export default function BrandArtboard({
               aria-label="Don't"
             />
           ) : (
-            <p className="direction-brief">{project.dontUse || '—'}</p>
+            <DirectionValue value={project.dontUse} />
           )}
         </div>
       </div>

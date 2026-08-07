@@ -472,8 +472,8 @@
   max-height: min(70dvh, 40rem);
   object-fit: contain;
   margin-inline: auto;
-  border: 1px solid rgba(26, 26, 26, 0.14);
-  background: #FFFFFF;
+  border: 1px solid var(--paper-edge);
+  background: var(--paper);
   box-shadow:
     0 1px 2px color-mix(in srgb, var(--text-primary) 8%, transparent),
     0 8px 24px color-mix(in srgb, var(--text-primary) 6%, transparent);
