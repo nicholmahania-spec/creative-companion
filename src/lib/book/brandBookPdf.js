@@ -63,6 +63,7 @@ import {
 import { resolveBookSetup } from './brandBookSetup'
 import { bookPlan } from './bookDocument'
 import { registerBookFonts, FACE, FALLBACK_FACE } from './bookFonts'
+import { embedBrandFace, characterSetRows } from './brandFonts'
 
 // ── Shared PDF text / image helpers (WinAnsi-safe + raster only) ─────────
 
@@ -229,6 +230,19 @@ export async function downloadBrandPackVectorPdf(
 
     const embedded = await registerBookFonts(pdf)
     const faces = embedded ? FACE : FALLBACK_FACE
+
+    /* The PROJECT's faces, embedded so the Typography section can show the
+       client their own letterforms instead of a description of them.
+       Registered here, next to the book's own faces, because embedding is
+       async and the section that draws is not.
+       Either entry can come back `{ ok: false, reason }` — a face outside the
+       catalog, a weight nobody publishes, a missing data chunk — and that is a
+       normal outcome, not an error: the type page prints the reason. See
+       `brandFonts.js` for why the refusal matters more than the success. */
+    const brandFaces = {
+      heading: await embedBrandFace(pdf, pack?.typeHeading),
+      body: await embedBrandFace(pdf, pack?.typeBody),
+    }
 
     /* CSS pixels at 96dpi -> PostScript points. Every size below is written as
        the design specifies it so the two can be read side by side. */
@@ -1453,30 +1467,67 @@ export async function downloadBrandPackVectorPdf(
       const headingName = clean(pack?.typeHeading) || 'Heading face'
       const bodyName = clean(pack?.typeBody) || 'Body face'
 
-      /* The specimens are set in the book's own faces and NAME the project's,
-         because the book cannot embed a typeface it was never given. Saying
-         "Heading - Fraunces SemiBold" over a line the reader can see is a
-         specification; silently setting it in Archivo and calling it Fraunces
-         would be a lie in the one document that has to be trusted about type. */
+      /* The specimens used to be set in the book's OWN faces and merely name
+         the project's, because "the book cannot embed a typeface it was never
+         given". It was never given a font file — but it was given a NAME, and
+         every name the app can resolve comes from the closed OFL registry in
+         `fontCatalog.js`, which `scripts/build-brand-fonts.mjs` turns into
+         embeddable subsets. So for a face the catalog knows, the book now
+         shows the client's real letterforms.
+         The old reasoning survives intact for everything else: `typeHeading`
+         is a free-text field, so a project can name a face this book has no
+         file and no licence for. Those still set in the book's face — and now
+         SAY so, which is the half that was missing. Once some books show the
+         real thing, an unmarked specimen in the book's own face reads as the
+         real thing too. `faceNote` is what keeps the two distinguishable. */
+
+      /** A specimen line, in the project's face when the book holds it. */
+      const specimen = (res, text, x, yy, w, { size, lh, face }) => {
+        if (!res.ok) return para(text, x, yy, w, { size, lh, face })
+        pdf.setFont(res.pdfFamily, 'normal')
+        pdf.setFontSize(size)
+        pdf.setTextColor(ON_CREAM[0], ON_CREAM[1], ON_CREAM[2])
+        const lines = pdf.splitTextToSize(pdfSafeText(text), w)
+        pdf.text(lines, x, yy + size * 0.82)
+        return lines.length * size * lh
+      }
+
+      /** What the reader is actually looking at, and under whose licence. */
+      const faceNote = (res, name) => {
+        const text = res.ok
+          ? `Shown in ${res.familyName} ${res.weightLabel} itself, embedded in this document under the SIL Open Font License 1.1.`
+          : `Shown in this book's own typeface, not in ${name} — ${res.reason}. Set the real face from your own licensed copy.`
+        y += para(text, margin, y, contentW * 0.72, {
+          size: px(11),
+          lh: 1.45,
+          rgb: MUTE_CREAM,
+        })
+      }
+
       kicker(`Heading — ${headingName}`, margin, y + KICKER_PT * 0.82, KICKER_CREAM)
       y += KICKER_PT * 0.82 + px(10)
-      y += para('The quick brown fox jumps over the lazy dog.', margin, y, contentW, {
+      y += specimen(brandFaces.heading, 'The quick brown fox jumps over the lazy dog.', margin, y, contentW, {
         size: px(34),
         lh: 1.15,
         face: 'heading',
       })
-      y += px(22)
+      y += px(8)
+      faceNote(brandFaces.heading, headingName)
+      y += px(18)
 
       kicker(`Body — ${bodyName}`, margin, y + KICKER_PT * 0.82, KICKER_CREAM)
       y += KICKER_PT * 0.82 + px(10)
-      y += para(
+      y += specimen(
+        brandFaces.body,
         'Body copy should stay calm and readable. Hierarchy beats decoration. Keep line length comfortable and reserve accent color for actions.',
         margin,
         y,
         contentW * 0.72,
         { size: px(16), lh: 1.6 }
       )
-      y += px(26)
+      y += px(8)
+      faceNote(brandFaces.body, bodyName)
+      y += px(22)
 
       /* The designer's reason for this pairing, when they gave one. Typed on
          the Identity page and, before this, printed nowhere — a write-only
@@ -1510,6 +1561,78 @@ export async function downloadBrandPackVectorPdf(
         y += rowH
       })
       line(margin, y, margin + contentW, y, HAIRLINE)
+
+      /* The character set — the page every published guide devotes to a
+         typeface, and the one thing this book could not do while it had no
+         letterforms to show.
+         Drawn ONLY for a face the book actually holds. Sixty glyphs of Archivo
+         under the client's font name is exactly the lie the specimens above
+         refuse to tell, and a whole page of them would be sixty times the lie,
+         so a face the book cannot embed gets no character set at all — the
+         note beside its specimen says why instead. */
+      const shown = []
+      for (const [role, res, name] of [
+        ['Heading', brandFaces.heading, headingName],
+        ['Body', brandFaces.body, bodyName],
+      ]) {
+        if (!res.ok) continue
+        /* One face doing both jobs gets one alphabet, named for both. The same
+           page twice reads as a printing mistake. */
+        const already = shown.find((f) => f.res.pdfFamily === res.pdfFamily)
+        if (already) already.role += ` & ${role.toLowerCase()}`
+        else shown.push({ role, res, name })
+      }
+      if (shown.length) {
+        const rows = characterSetRows()
+        const head = (sub) => contentPage(`${s.num} — ${s.name}`, 'Character Set', sub)
+        head('Every letterform in the faces above, set in the faces themselves.')
+        for (const f of shown) {
+          const BIG = px(58)
+          const NOTE = px(10)
+          const blockH =
+            KICKER_PT + px(12) + BIG * 0.78 + px(16) + rows.length * px(24) * 1.5 + NOTE * 3
+          if (y + blockH > floorY()) head('Continued.')
+
+          kicker(`${f.role} — ${f.name}`, margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+          y += KICKER_PT * 0.82 + px(12)
+
+          pdf.setFont(f.res.pdfFamily, 'normal')
+          pdf.setFontSize(BIG)
+          pdf.setTextColor(ON_CREAM[0], ON_CREAM[1], ON_CREAM[2])
+          pdf.text('Aa', margin, y + BIG * 0.78)
+          y += BIG * 0.78 + px(16)
+
+          /* One size for the whole block, taken from the widest row. A
+             specimen with the alphabet at one size and the numerals at another
+             reads as a layout accident, and the size that fits depends on the
+             typeface — Oswald's 26 letters and IBM Plex Mono's occupy very
+             different widths at the same point size. Measured off the embedded
+             metrics rather than guessed, which is only possible now that the
+             real face is in the document. */
+          pdf.setFontSize(100)
+          const widest = Math.max(...rows.map((r) => pdf.getTextWidth(r)))
+          const size = widest > 0 ? Math.min(px(24), (contentW * 100) / widest) : px(24)
+          pdf.setFontSize(size)
+          rows.forEach((r) => {
+            pdf.text(pdfSafeText(r), margin, y + size * 0.82)
+            y += size * 1.5
+          })
+          y += px(8)
+
+          /* Attribution travels with the glyphs. The OFL FAQ (Q1.14) asks that
+             an embedded face keep its authorship and licensing even inside a
+             document, and a client who wants this face for themselves needs to
+             know it is theirs to take. */
+          y += para(
+            `${f.res.familyName} ${f.res.weightLabel} — embedded under the SIL Open Font License 1.1, which lets you license and use it yourself.`,
+            margin,
+            y,
+            contentW * 0.72,
+            { size: NOTE, lh: 1.45, rgb: MUTE_CREAM }
+          )
+          y += px(24)
+        }
+      }
     }
 
     const drawImagerySection = (s) => {
