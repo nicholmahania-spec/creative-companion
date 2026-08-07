@@ -182,12 +182,16 @@ Every shadow token is `none`, and `.btn, .panel { box-shadow: none !important }`
 **In light theme this is correct and quietly sophisticated** — the app avoids the "everything
 floats" failure mode entirely, and it should keep doing so.
 
-Two places where the absence hurts:
+One place where the absence hurts:
 - **Deep theme** (C5 above) — nothing separates card from canvas.
-- **The Tools modal** — a white rectangle with no shadow, relying entirely on the scrim. And the
-  scrim is clipped: the left sidebar and header stay at full brightness while only the main
-  column dims, with a white notch at the bottom-left. A partial backdrop reads as a rendering
-  bug, not a design choice.
+
+> **Correction (verified after first publication).** An earlier draft of this audit reported the
+> Tools modal scrim as clipped — sidebar and header undimmed, with a white notch at the bottom.
+> That was an artefact of full-page screenshot capture: `position: fixed` elements only paint the
+> viewport, so a scrim looks truncated in a tall stitched image. Measured at viewport size,
+> `.export-overlay` is `inset: 0` at `z-index: 200` over a header at `z-index: 40`, and covers
+> everything uniformly. **The scrim is correct.** The modal's lack of a shadow is real but reads
+> fine against the scrim in light theme; only the deep-theme border point stands.
 
 ---
 
@@ -381,14 +385,17 @@ the pale toggle switches, and the entire icon situation.
 Mobile (390px) is a **linear stack of the desktop cards** — same six cards, same order, same
 padding, nothing recomposed. Specific defects:
 
-- **A floating "To-do" pill overlaps card content**, sitting on top of and half-covering the word
-  "None" in the "Due soon" card. It is positioned mid-page rather than pinned, so it will collide
-  with whatever scrolls beneath it.
 - **The wordmark disappears entirely on mobile.** The header becomes a bordered hamburger box plus
   "Client" and "Account". The product's identity is absent from the screen a user sees most.
 - **The segmented control wraps 4 + 1**, orphaning "All time" onto its own row.
 - ~300px of dead space below the last card before the footer.
 - The gradient border at this scale reads as a printing misregistration.
+
+> **Correction (verified after first publication).** An earlier draft reported the floating "To-do"
+> pill as overlapping the "Due soon" card. Same full-page capture artefact as the scrim above:
+> `.todo-fab` is `position: fixed; right: 1.1rem; bottom: 1.1rem`, and measured in a 390×844
+> viewport it sits at y=778 — correctly pinned to the bottom-right corner, over nothing.
+> **There is no collision.**
 
 ## Phase 8b · The Brand Book Builder is a different product
 
@@ -517,7 +524,7 @@ Directions 1 and 2 together would give this product a look nothing else has.
 
 | Screen | Score | Working | Biggest problem | Priority |
 |---|---|---|---|---|
-| **Assets / Deliver** | **2/10** | Client package concept is genuinely smart | 45% of screen permanently empty; 20+ ungrouped panels in a 500px column; unreadable artefact previews; `05` missing from file tree | 🔴 Critical |
+| **Assets / Deliver** | **2/10** | Client package concept is genuinely smart | 45% of screen permanently empty; 20+ ungrouped panels in a 500px column; unreadable artefact previews | 🔴 Critical |
 | **Brand Book Builder** | **3/10** | The page preview itself is nicely set | Entirely different design system; raw anchor IDs in UI; every row of "NOT IN BOOK" wraps; truncated hex values | 🔴 Critical |
 | **Lock / Login** | **3/10** | Honest, well-written security copy | Wordmark printed twice; decorative non-functional path chips; everything at 600 weight; rainbow button; 350px card on a 1440px screen | 🔴 Critical |
 | **Strategy** | **4/10** | Excellent question writing; sensible 01–05 grouping | 4,745px unsegmented scroll; 40 identical fields; 3 competing CTAs; whole form 26px off axis | 🔴 Critical |
@@ -527,9 +534,9 @@ Directions 1 and 2 together would give this product a look nothing else has.
 | **Identity** | **5/10** | Clean sub-step nav concept | A *design* stage with no design in it — five text inputs; clipped textarea; grey inputs contradict Strategy's white | 🟠 High |
 | **Research** | **5/10** | Best empty-state copy in the app | The wall isn't a wall — 190px strip, no drop target; two empty states 70px apart; page fills top 60% only | 🟠 High |
 | **Review** | **6/10** | **Direction Sheet is the best thing in the app** | Truncated placeholder; misaligned "Log it"; 460px dead space; underline-link list again | 🟡 Medium |
-| **Tools menu** | **4/10** | Right contents, right grouping | `$` and `?` as icons; duplicate printer icon; clipped scrim; no shadow | 🟡 Medium |
+| **Tools menu** | **4/10** | Right contents, right grouping | `$` and `?` as icons; duplicate printer icon used for two destinations | 🟡 Medium |
 | **Clients (empty)** | **4/10** | Honest empty message | Search + sort chrome rendered for zero items; one grey line on 700px of nothing | 🟡 Medium |
-| **Mobile Home** | **3/10** | Cards do stack cleanly | Floating pill overlaps content; wordmark gone; control wraps 4+1; zero mobile-specific composition | 🟠 High |
+| **Mobile Home** | **3/10** | Cards do stack cleanly; the To-do FAB is correctly pinned | Wordmark gone entirely; control wraps 4+1; zero mobile-specific composition | 🟠 High |
 | **Deep theme** | **4/10** | Token discipline mostly holds | No card/canvas separation; rainbow becomes neon; purple footer text near-illegible | 🟠 High |
 
 ## Phase 29 · Product scores
@@ -567,8 +574,7 @@ these more expensive to fix than it should be.
 as a separate product.
 
 **Prototype-grade, ship-blocking:** `bbb-anchor-1` / `bbb-anchor-4` in the UI · truncated hex
-values · missing `05` in the client file tree · clipped textarea · permanent "Building your
-preview…" · clipped modal scrim.
+values · clipped textarea · clipped placeholder · permanent "Building your preview…".
 
 ## Phase 22 · Would I show this?
 
@@ -594,7 +600,7 @@ client sees the work.
 | 7 | Home states "Strategy is next" in three separate cards | One hero card. Delete the "Up next" panel; reduce "Projects" to a list | Cuts the dashboard's reading load by a third |
 | 8 | No scale contrast anywhere on the path | Promote the Direction Sheet's specimen block to every path stop's header | Gives the product a signature and a rhythm in one move |
 | 9 | `--success` and `--warning` are greys; three unrelated accents | One accent + true semantic green/amber/red. Retire `#5B42F3` or commit to it as *the* brand — not both | Colour starts meaning something |
-| 10 | Mobile is the desktop stack with a floating pill on top of content | Pin the To-do pill; restore the wordmark; let the segmented control scroll rather than wrap | Mobile stops looking like an afterthought |
+| 10 | Mobile is the desktop stack; the header carries no product identity at all | Restore the wordmark mark; let the segmented control scroll rather than wrap | Mobile stops looking like an afterthought |
 
 ## Phase 26 · Prioritised findings
 
@@ -605,7 +611,7 @@ client sees the work.
 4. Duplicate "next" CTA on all five path pages *(global)*
 5. Strategy's 4,745px undifferentiated scroll *(screen)*
 6. Glyphs and emoji as icons *(global)*
-7. Truncated hex values, clipped textarea, clipped placeholder, missing `05` *(mixed)*
+7. Truncated hex values, clipped textarea, clipped placeholder *(mixed)*
 
 **🟠 HIGH** — significantly raises perceived quality
 8. Home's triple restatement *(screen)*
@@ -613,7 +619,7 @@ client sees the work.
 10. Strategy's 26px axis break + two content widths *(screen, but pattern is global)*
 11. Deep theme card/canvas separation *(global)*
 12. Settings — destructive actions quietest, disabled buttons loudest *(screen)*
-13. Mobile pill collision + missing wordmark *(global)*
+13. Missing mobile wordmark *(global)*
 14. Two input styles (white-filled vs grey-filled) across path pages *(global)*
 15. Identity has no design on it *(screen)*
 
@@ -755,7 +761,7 @@ No confetti. No streaks. No scores. This audience is served by calm, not reward 
 |---|---|---|---|
 | 1 | Delete the 8 conic-gradient override rules + `btn-spin-chrome` | Global | Largest single quality gain available |
 | 2 | Remove `bbb-anchor-*` IDs, fix truncated hex, fix `05` gap, fix clipped textarea + placeholder | 4 screens | Removes prototype-grade defects |
-| 3 | Un-clip the modal scrim; pin the mobile To-do pill off content | Global | Removes two artefacts that read as bugs |
+| 3 | Restore the product mark in the mobile header | Global | The screen users see most stops being the one with no identity on it |
 
 *Depends on nothing. #1 must precede all of Phase 2 — the `!important` layer masks whatever else you change.*
 
@@ -788,7 +794,7 @@ No confetti. No streaks. No scores. This audience is served by calm, not reward 
 | 15 | Strategy `01`–`05` as collapsible sections, one open at a time | Screen | The product's biggest promise-vs-delivery gap |
 | 16 | Home: one hero card, not three restatements | Screen | Cuts dashboard reading load by a third |
 | 17 | Make the Research wall an actual drop plane; single empty state | Screen | The visual stage becomes visual |
-| 18 | Mobile: restore wordmark, scroll the segmented control, recompose card order | Global | Mobile stops looking like an afterthought |
+| 18 | Mobile: scroll the segmented control, recompose card order | Global | Mobile stops looking like an afterthought |
 | 19 | Style the four `<details>`; rename/relocate "Leave"; remove `RES/IDE/TOU/ASS` and duplicate counts | Mixed | Removes the last framework-default tells |
 
 *#14 depends on #7 (one card/panel language). #15 is independent — could ship earlier if the ADHD case is prioritised.*

@@ -405,6 +405,11 @@
 .bbb-color-row__hex-input {
   font-family: ui-monospace, monospace;
   font-size: var(--fs-1, 0.75rem);
+  /* `.bbb-color-row input[type="text"]` sets `flex: 1` — i.e. flex-basis 0 —
+     which outranks a plain `width` in a flex line, so this field collapsed
+     and a 7-character hex rendered as "#1". It needs a fixed track, not a
+     share of the row: the name beside it is what should absorb slack. */
+  flex: 0 0 auto;
   width: 6rem;
   min-width: 0;
   border: 1px solid var(--border-subtle, #e7e7e7);

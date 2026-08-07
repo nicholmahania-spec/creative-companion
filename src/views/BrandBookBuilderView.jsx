@@ -100,7 +100,22 @@ function OverflowDetector({ children, onOverflow, id }) {
 /* Headline and body both offer the whole registry — see FONT_GROUPS in
    fontCatalog.js. The two hardcoded lists that used to live here named seven
    of the thirteen families and nothing kept them in step with the registry. */
-const BUILTIN_PAGE_LABELS = { cover: "Front cover", colors: "Color palette", type: "Typography", back: "Back cover" };
+/* Keyed by the element key each builtin page is pushed with (see `inner`
+   below). The section pages take their names from SECTION_PAGES rather than
+   restating them — bookDocument owns the book's chapter names, and a second
+   copy here would drift the first time one was renamed.
+   `logo` and `apps` had no entry at all, so those two rows in "In this book"
+   fell through to the raw `bbb-anchor-N` anchor id and printed it as the page
+   name. Any builtin page pushed with a key needs to resolve here. */
+const sectionLabel = (id) => SECTION_PAGES.find((s) => s.id === id)?.name || id;
+const BUILTIN_PAGE_LABELS = {
+  cover: "Front cover",
+  logo: sectionLabel('logo'),
+  colors: sectionLabel('color'),
+  type: sectionLabel('type'),
+  apps: sectionLabel('apps'),
+  back: "Back cover",
+};
 const PAGE_SIZES = { letter: { w: 8.5, h: 11, label: "Letter (8.5 × 11 in)" }, a4: { w: 8.27, h: 11.69, label: "A4 (210 × 297 mm)" } };
 
 /* ------------------------------------------------------------- helpers */
@@ -1579,11 +1594,13 @@ export default function BrandBookBuilderView() {
               if (!el) return null
 
               const pageEl = el.props.children
+              /* Last resort is a human page number, never the anchor id. An
+                 internal identifier on screen reads as an unfinished build,
+                 and the old chain ended in `|| id` — which is exactly the
+                 `bbb-anchor-4` string the rail was printing. */
               const label = pageEl?.props?.page
                 ? pageEl.props.page.label
-                : BUILTIN_PAGE_LABELS[pageEl?.key] ||
-                  BUILTIN_PAGE_LABELS[String(pageEl?.props?.id || '').replace(/^bbb-anchor-/, '')] ||
-                  id
+                : BUILTIN_PAGE_LABELS[pageEl?.key] || `Page ${index + 1}`
               const isLocked = lockedPages.has(id)
 
               if (index > 0) {

@@ -862,6 +862,11 @@ export default function DesignView({
                 <label className="field-label" htmlFor="logo-donts">
                   Mark mistakes to avoid
                 </label>
+                {/* rows={3} against a four-line placeholder clipped the last
+                    rule in half. The "defaults used if empty" note moved out
+                    to a hint below, where it survives the user typing —
+                    guidance that lives in a placeholder disappears exactly
+                    when it is being acted on. */}
                 <textarea
                   id="logo-donts"
                   className="field-input"
@@ -870,10 +875,14 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('logoDonts', e.target.value)
                   }
+                  aria-describedby="logo-donts-hint"
                   placeholder={
-                    'One rule per line (defaults used if empty):\nDo not stretch or distort\nDo not recolor outside palette roles\nDo not place on low-contrast photos'
+                    'Do not stretch or distort\nDo not recolor outside palette roles\nDo not place on low-contrast photos'
                   }
                 />
+                <p className="field-hint" id="logo-donts-hint">
+                  One rule per line. Leave blank to use these defaults.
+                </p>
               </div>
               {activeProject?.logoImage ? (
                 <div

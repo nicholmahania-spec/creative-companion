@@ -8294,7 +8294,18 @@ select:focus {
     line-height: 1;
     cursor: pointer;
   }
-  .header-content-simple > .brand-block { display: none !important; }
+  /* Mark stays, wordmark goes. Hiding the whole block left the mobile header
+     as [☰] Client Account with no product identity on it at all — the screen
+     the user sees most was the one screen that never said what app this is.
+     The mark alone costs ~22px and the lockup already supports mark-only. */
+  .header-content-simple > .brand-block {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .header-content-simple > .brand-block .logo-lockup-wordmark {
+    display: none;
+  }
   /* The back affordance and project-context span flex-shrink instead of the
      old mobile-title input; flex-basis 0 + width 0 on the context span (in
      its own rule below) keeps an intrinsic text width from widening the app

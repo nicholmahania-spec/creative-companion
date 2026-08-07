@@ -39,10 +39,12 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
  * clean, which is the one place this debt is cheap to not acquire.
  */
 const BUDGET = {
-  // 410 → 404: removing the spinning conic-gradient chrome collapsed two
-  // duplicate primary-plate blocks into one. The ring was declared four times
-  // over, which is why it took a whole block of overrides to hold in place.
-  'src/styles/shell.css': 404,
+  // 410 → 403. -6 removing the spinning conic-gradient chrome, which collapsed
+  // two duplicate primary-plate blocks into one (the ring was declared four
+  // times over, which is why it took a block of overrides to hold in place);
+  // -1 restoring the mobile wordmark, where hiding one child needed no
+  // override at all and the old `display: none !important` on the parent did.
+  'src/styles/shell.css': 403,
   'src/styles/lazy-buddy.css': 40,
   'src/styles/lazy-settings.css': 36,
   'src/styles/lazy-design.css': 18,
