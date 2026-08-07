@@ -721,6 +721,21 @@ so it went to the owner rather than being resolved by an audit. Raised with
 measurements — **nine concurrent infinite animations on one Touchpoints
 screen** — and deliberately retained. No code changed. **Do not reopen.**
 
+**Reaffirmed the same day, against a second attempt.** PR #169 (a parallel
+session's visual audit) reached the opposite conclusion independently and
+shipped the removal — "0 of 33 animating" — reasoning from the same
+`App.jsx:3371` comment. The owner was shown both and ruled again: *keep my
+button*. Flagged on #169 (comment 5217578132) with what that PR needs to
+change before it merges: revert its Phase 1 button work, and hold the
+`!important` budget at 410 rather than 403, since the −7 it removes is exactly
+the chrome's own declarations.
+
+Two independent audits landing on the same recommendation is evidence the
+CSS/JSX contradiction is real and worth resolving — but the resolution the
+owner wants is the CSS, not the comment. If anyone tidies this, the honest fix
+is to correct `App.jsx:3371` so it stops describing a rule the product does
+not follow.
+
 **FAB overlap — shrink while scrolling.** Chosen over reserving a gutter or
 moving the pill. Implemented: 86px at rest, 60px while moving, restored after
 450ms idle, `aria-label` unchanged throughout.
