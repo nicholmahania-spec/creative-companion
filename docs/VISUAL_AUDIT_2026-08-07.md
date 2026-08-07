@@ -682,3 +682,62 @@ literature (Slade-Brooking, Bokhua, d.school) puts verbal identity before the ma
 recorded the tension once; the owner's order stands and nothing above proposes changing
 it. The proposal to surface `PAGE_FIELDS.voice` on Identity → Words works *within* that
 order rather than reversing it.
+
+---
+---
+
+# Implementation log — 2026-08-07
+
+What was built from the revised order, what was measured, and the two things
+the owner ruled on.
+
+## Shipped
+
+| | Finding | Result |
+|---|---|---|
+| ✅ | **`overflow-x: hidden` killing every sticky** | Removed from the whole chain. `.header` sticks (was `top: -2000` at scrollY 2000, now `0`), the brief footer sticks, the Assets ship ticket sticks. **`Next · Research` is now on screen at scroll depth, where the audit measured *zero* forward CTAs** — which is what the duplicate-CTA argument was really about |
+| ✅ | **Mobile clipping (42–85px)** | `.header` / `.header-content-simple` / `.header-actions` get `min-width: 0`, back link ellipsises, step rail's map scrolls while its CTA holds. Clean at 320 / 390 / 430 / 768 / 1440 across twelve views |
+| ✅ | **Project name collapsed to width 0** | `.header-context` holds a `4rem` floor instead of the old `width: 0` workaround. Present on every path stop |
+| ✅ | **Radios/checkboxes at 1.15:1 in deep** | `color-scheme` on `:root` via `:has()`. **1.15:1 → 18.26:1.** Every input, textarea and select across eight views re-scanned in deep: nothing inverted |
+| ✅ | **Refresh losing four screens** | Both hand-maintained lists now derive from `viewRegistry`. Desk, Clients, Asset library and New project all restore |
+| ✅ | **Password rule contradiction** | Gate states the real minimum (6) and the strength guidance separately |
+| ✅ | **`Sparrow's Promise` as fact** | Reads as the example it always was. Sample data and fixed date deliberately unchanged — the file argues for both |
+| ✅ | **Client-facing dead end** | "Try again shortly" → the portal's own recovery line. Two tests that pinned the old wording now assert the intent |
+| ✅ | **`RES` / `IDE` / `TOU` / `ASS`** | Deleted. The keyboard-shortcut alternative was rejected: number keys address `stepsForProject()`, which is renumbered per project, so the hint would advertise a key that does nothing on a reduced-scope project |
+| ✅ | **FAB in the home-indicator area** | `env(safe-area-inset-bottom)` |
+| ✅ | **FAB covering the end of every page** | Mobile views reserve the pill's own footprint |
+
+New regression guard: `e2e/no-horizontal-overflow.spec.js`. It **fails on the
+pre-fix CSS** (435px of content in a 320px shell) and passes after — verified
+by stashing the fix, not assumed.
+
+## Owner decisions
+
+**Button-85 chrome — kept as-is.** `shell.css` tags the spinning rainbow ring
+on every non-earned button `owner: Button-85 chrome`; `App.jsx:3371` records
+the opposite intent, tagged `advisor` ("ring only on `.is-earned`, **Static
+always**, one per screen"). The two comments genuinely contradict each other,
+so it went to the owner rather than being resolved by an audit. Raised with
+measurements — **nine concurrent infinite animations on one Touchpoints
+screen** — and deliberately retained. No code changed. **Do not reopen.**
+
+**FAB overlap — shrink while scrolling.** Chosen over reserving a gutter or
+moving the pill. Implemented: 86px at rest, 60px while moving, restored after
+450ms idle, `aria-label` unchanged throughout.
+
+State this plainly rather than claiming the finding closed: the shrink reduces
+the colliding area but **does not eliminate the measured collisions**.
+Touchpoints' `Next · Assets` and Assets' `Back to the desk` are full-width
+rows, and a bottom-right pill overlaps those at any width — and the pill is
+back to full size on idle, which is exactly when a tap happens. Reserving a
+gutter remains the only option that removes them outright, and it is available
+if the tradeoff ever looks worth it.
+
+## Not done
+
+Everything below item 6 in the revised order — the book's label/id leak and
+overflow-menu reorder, the gap list's jump links and collapse, the Mark
+do/don'ts placeholder, the Research drop plane, the CTA label unification
+(`Continue → X` vs `Next · X`, a clean SC 3.2.4 defect), and the cold-start
+work: saying what the app is on the gate, framing the auto-created project as
+a starter, and the `INCLUDED`-over-unchecked-boxes heading.
