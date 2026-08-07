@@ -45,8 +45,27 @@ describe('the folder structure', () => {
   it('names every file to the convention', () => {
     const plan = packagePlan(pack({ logoImage: SVG }))
     expect(fileNames(plan)).toContain('SparrowsPromise_Logo_Primary.svg')
-    expect(fileNames(plan)).toContain('SparrowsPromise_Colour_Specifications.txt')
+    expect(fileNames(plan)).toContain('SparrowsPromise_Color_Specifications.txt')
     expect(plan.folders.map((f) => f.name)).toContain('02_LOGO')
+  })
+
+  /* The literal above used to read `_Colour_`, which pinned one half of a
+     split: the folder was `03_COLOR`, single-sourced from SECTION_PAGES, and
+     the file names were hardcoded British. A client received both spellings
+     plus `FullColor` in the same folder. Asserting the AGREEMENT rather than
+     either spelling is what stops it drifting again — change SECTION_PAGES and
+     the file names follow, or this fails. */
+  it('spells the word the same way in the folder and in the files', () => {
+    const plan = packagePlan(pack({ logoImage: SVG }))
+    const folder = plan.folders.find((f) => /colou?r/i.test(f.name))
+    expect(folder, 'no colour folder in the plan').toBeTruthy()
+    const word = folder.name.replace(/^\d+_/, '').toLowerCase()
+    for (const file of folder.files) {
+      expect(
+        file.name.toLowerCase(),
+        `${file.name} does not match the folder's spelling (${word})`
+      ).toContain(word)
+    }
   })
 
   it('says a raster mark is raster rather than implying vector', () => {
@@ -153,8 +172,39 @@ describe('fonts are documented, not redistributed', () => {
     expect(info.text).not.toMatch(/NOT included/)
   })
 
-  it('admits when the licence and source were never recorded', () => {
-    expect(fontInformation(pack()).text).toMatch(/not recorded/)
+  /* The intent — admit what you do not know — is unchanged, but the fixture
+     was a catalog face, so "not recorded" was never true of it: fontCatalog is
+     a closed list and every family in it is a free OFL Google font. Telling a
+     client to go and ask about one was the defect, not the coverage. Tested
+     now with a face the app genuinely does not know. */
+  it('admits when the licence and source are genuinely unknown', () => {
+    const text = fontInformation(
+      pack({ typeHeading: 'Gotham Bold', typeBody: 'Gotham Book' })
+    ).text
+    expect(text).toMatch(/not recorded/)
+    expect(text).toMatch(/No source was recorded/)
+  })
+
+  it('fills in what it knows for a face from the catalog, and says it is the app speaking', () => {
+    const text = fontInformation(
+      pack({ typeHeading: 'Fraunces Bold', typeBody: 'Fraunces Regular' })
+    ).text
+    expect(text).toMatch(/Google Fonts/)
+    expect(text).toMatch(/Open Font License/)
+    expect(text).not.toMatch(/not recorded/)
+    // Never passed off as the designer's own note.
+    expect(text).toMatch(/not a note your designer wrote/)
+  })
+
+  it('a designer note always wins over what the app knows', () => {
+    const text = fontInformation(
+      pack({
+        typeHeading: 'Fraunces Bold',
+        typeSource: 'Bought from Klim, 3 desktop seats',
+      })
+    ).text
+    expect(text).toContain('Bought from Klim, 3 desktop seats')
+    expect(text).not.toMatch(/Google Fonts/)
   })
 
   it('warns in the README when fonts are documentation only', () => {

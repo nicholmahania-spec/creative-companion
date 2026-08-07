@@ -33,6 +33,7 @@ import { DELIVERABLE_OPTIONS } from '../brief/detectiveBrief'
 import { SECTION_PAGES } from '../book/bookDocument'
 import { assetFileName, extFromBytes, extFromDataUrl, uniqueNames } from './naming'
 import { markSource, markGapSentence } from './markSource'
+import { familyByName, parseLabel } from '../book/fontCatalog'
 
 /** The extension a URL's own path suggests — a provisional name only, because
  *  the bytes decide once they arrive. */
@@ -128,6 +129,14 @@ export function canDistribute(asset = {}) {
 const sectionName = (id) =>
   SECTION_PAGES.find((s) => s.id === id)?.short || id
 
+/* One spelling per package, taken from the same place the folder name is.
+   A client received `03_COLOR/` containing `..._Colour_Specifications.txt`
+   beside `..._Logo_Primary_FullColor.png` — three spellings of one word in a
+   folder that is meant to read as a single considered object. The folder was
+   single-sourced from SECTION_PAGES and the file names were hardcoded, so they
+   drifted the moment either changed. */
+const COLOUR_WORD = sectionName('color')
+
 export const PACKAGE_FOLDERS = [
   { id: 'guide', num: '01', name: 'Brand_Guide' },
   { id: 'logo', num: '02', name: sectionName('logo') },
@@ -166,8 +175,47 @@ export function fontInformation(pack = {}) {
     `Body face: ${body}`,
   ]
   if (text(pack.typeWhy)) lines.push('', `Why this pairing: ${pack.typeWhy}`)
-  lines.push('', 'Where to get them:', source || '  (not recorded — ask your designer)')
-  lines.push('', 'Licence:', licence || '  (not recorded — ask your designer)')
+  /* The app already knows the answer to both of these for every face it can
+     name. `fontCatalog` is a closed list and #159 established that every
+     family in it is published under the SIL Open Font License in google/fonts
+     — which is why the brand book can embed their letterforms at all.
+     So printing "(not recorded — ask your designer)" sent a client away with a
+     question the app could have answered, about a font that is free. The
+     designer's own note still wins where they wrote one; this only fills a
+     blank, and says it is the app speaking rather than them. */
+  const catalogFace =
+    familyByName(parseLabel(heading).family) ||
+    familyByName(parseLabel(body).family)
+  const known = catalogFace
+    ? {
+        source: `Google Fonts — https://fonts.google.com/?query=${encodeURIComponent(catalogFace.name)}`,
+        licence: 'SIL Open Font License 1.1 — free to use, including commercially',
+      }
+    : null
+
+  lines.push(
+    '',
+    'Where to get them:',
+    source || (known ? `  ${known.source}` : '  (not recorded — ask your designer)')
+  )
+  lines.push(
+    '',
+    'Licence:',
+    licence || (known ? `  ${known.licence}` : '  (not recorded — ask your designer)')
+  )
+  /* Names only what was actually filled. Saying "where this sheet says Google
+     Fonts and the Open Font License" when the designer wrote their own source
+     and only the licence was filled would credit the app for their words. */
+  const filled = [!source && 'where to get them', !licence && 'the licence']
+    .filter(Boolean)
+    .join(' and ')
+  if (known && filled) {
+    lines.push(
+      '',
+      `The line for ${filled} is the app filling in what it knows about these`,
+      'faces — not a note your designer wrote.'
+    )
+  }
   /* "from the source above" only when there IS a source above. With nothing
      recorded, the sheet read "(not recorded — ask your designer)" and then
      told the client to buy from it — a sentence pointing at its own blank. */
@@ -175,8 +223,8 @@ export function fontInformation(pack = {}) {
     '',
     filesIncluded
       ? 'The font files in this folder are included under a licence that permits it.'
-      : source
-        ? 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied — buy or download them from the source above.'
+      : source || known
+        ? 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied — get them from the source above.'
         : 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied. No source was recorded for these faces — ask your designer where to buy them.'
   )
   return { text: lines.join('\n'), filesIncluded }
@@ -269,12 +317,12 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
   // ── 03 Colour ─────────────────────────────────────────────────────────
   if ((pack?.palette || []).length) {
     add('colour', {
-      name: assetFileName({ brand, group: 'colour', item: 'specifications', ext: 'txt' }),
+      name: assetFileName({ brand, group: COLOUR_WORD, item: 'specifications', ext: 'txt' }),
       kind: 'colourSpec',
       note: 'HEX, RGB and CMYK for every colour, with its job',
     })
     add('colour', {
-      name: assetFileName({ brand, group: 'colour', item: 'tokens', ext: 'css' }),
+      name: assetFileName({ brand, group: COLOUR_WORD, item: 'tokens', ext: 'css' }),
       kind: 'tokensCss',
       note: 'Custom properties for whoever builds the site',
     })
