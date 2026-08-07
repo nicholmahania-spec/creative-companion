@@ -580,6 +580,24 @@ Book cover, the client reveal. Why it fits: the product's whole thesis is "your 
 so the brand should be the largest object on every screen, not a 4px swatch strip in a corner.
 Recognisable because *every project looks different in the same frame*.
 
+> **Correction (verified while implementing).** "Each path stop's header" is wrong for three of the
+> five stops. **Strategy** is a form for the client's answers taken *before* any brand exists — the
+> plate would render empty or default, which is worse than absent. **Research** is a wall of
+> reference images the plate would compete with. And the treatment **already exists** on the three
+> screens where a brand is actually being worked on: Desk (`DeskLiveArtboard`), Identity and Review
+> (`BrandArtboard`'s `.export-identity-cover`).
+>
+> The gap was never the path stops — it was **Home**, where the Projects list is identical grey
+> cards told apart only by reading the name. That now carries a specimen edge: a full-bleed strip
+> of the project's own palette. The signature holds; the placement list in this section was too
+> broad.
+>
+> One thing that surfaced in the build and is worth recording: **whichever swatch matches the
+> surface disappears, and it is a different one per theme** — light loses the paper end, deep loses
+> the ink end, because a palette almost always carries both. That is not a bug to fix by dropping
+> or darkening colours. The paper tone *is* the brand, and a specimen that edits the palette to
+> look better is not a specimen. A hairline states the band's extent instead.
+
 **2. The Working Margin**
 A persistent left margin column carrying only the eyebrow label and step number in small tracked
 caps, with content in a generous measure beside it. Turns the current 26px accidental indent (S1)
