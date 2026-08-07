@@ -184,7 +184,7 @@ empty install directory, and costs a diagnosis before it costs 20 seconds.
 
 ```sh
 npm install           # FIRST — every session, before anything else
-npm test              # unit — 1220 passing / 125 files on main @ 2acc109
+npm test              # unit — 1549 passing / 149 files on main @ d900a02
 npm run lint:ratchet  # must land exactly at budget
 npm run build:check   # build + perf budget
 npm run test:e2e      # Playwright — see caveat
@@ -193,9 +193,47 @@ npm run test:e2e      # Playwright — see caveat
 **Do not diagnose an e2e failure from a local run alone.** This container's
 Chromium can differ from the pinned `@playwright/test`, which produces failures
 that do not exist in CI. Confirm in CI first, or you will chase a browser
-difference. As of 2026-08-06 CI's e2e job was *cancelled* at 15 minutes on
-main's own HEAD, so there is currently no green e2e baseline to compare to.
+difference. There **is** a green baseline now: CI's e2e job passed on PR #174
+(2026-08-07, merged as `d900a02`), so a red local run against a green CI is a
+local-environment difference, not a regression.
+
+Live instance of exactly that: `typeface-field` (×2) and `decision-memory`
+(×1) fail on a developer Mac and pass in CI. They assert on font *detection*
+— "a font the machine does not have is called out" — so they are decided by
+which faces the host has installed. Do not chase them.
 
 And the standing rule behind all of it: **a phase ships only when the checks
 are green and the thing was actually observed working.** Something that
 "should" work is not done.
+
+### Measuring layout — the metrics that lie
+
+Recorded after a composition pass (2026-08-07) in which nearly every claim
+derived by reasoning was wrong and every claim derived by direct observation
+held. If you are auditing spacing, width or "dead space", screenshots and
+`getComputedStyle` are the evidence; anything computed from bounding boxes
+needs checking against one of them first.
+
+| Metric | How it lies |
+|---|---|
+| Gap between DOM-consecutive children (`next.top - prev.bottom`) | Meaningless in a CSS grid — siblings sit side by side, not stacked. Produced a phantom "1631px dead zone" on Assets, which is a `grid-row: 2 / span 3` column. |
+| Widest descendant's right edge, as "content width" | Any full-bleed sticky footer saturates it and hides that the real content column is half the width. Reported an 8px gutter on a page with a ~570px one. |
+| Min-left / max-right over all descendants, as "overflow" | Catches drawers parked off-canvas. Use `documentElement.scrollWidth > clientWidth` instead — that is the question you meant. |
+| A `fullPage` screenshot taken too early | The brand-book preview genuinely builds for ~1.5s. Shooting at 700ms captured a loading state and it was read as a permanently empty column. |
+| Field counts read off a schema | `detectiveBrief.js` declares 35 fields but renders ~69 controls — two checklists contribute 23 checkbox rows. Say which you mean. |
+
+**Tools that exist for this, so you do not rebuild them.** `gotoView(page, view)`
+in `e2e/helpers.js` deep-links to any of the 16 `RESTORABLE_VIEWS` at any
+viewport by writing the `cc-active-view` session-restore key and reloading —
+it asserts arrival, because an id the app rejects is silently replaced with
+`home` and would otherwise read as a pass on the wrong screen.
+`e2e/mobile-view-sweep.spec.js` sweeps all of them at 390px and names the
+widest escaping element on failure.
+
+**To seed a realistic project** (empty states are not a layout to judge),
+write `localStorage['creative-companion-storage']` before load, shaped by
+`PERSISTED_KEYS` in `src/store/useAppStore.js`, and build the project with the
+exported `createBlankProject()` / `blankDetective()` rather than hand-rolling
+the shape. Note `palette` is an array of hex **strings**; seeding objects
+throws `e.toUpperCase is not a function` deep inside the preview builder and
+looks exactly like an app bug.
