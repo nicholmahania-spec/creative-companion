@@ -9914,7 +9914,10 @@ select:focus {
 .todo-fab {
   position: fixed;
   right: 1.1rem;
-  bottom: 1.1rem;
+  /* Clear the iOS home indicator. Without the inset the pill sat in the
+     gesture area on every notched phone, where a tap is as likely to dismiss
+     the app as to open the list. */
+  bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
   z-index: 90;
   width: 3rem;
   height: 3rem;
@@ -9937,6 +9940,24 @@ select:focus {
 body:has(input:focus, textarea:focus, select:focus) .todo-fab {
   opacity: 0;
   pointer-events: none;
+}
+
+/* End-of-page clearance. Without it the last row of every scrolling view came
+   to rest underneath the pill and stayed there — the one position where the
+   overlap is permanent rather than a scroll away. Measured against the pill's
+   own footprint (3rem tall + its 1.1rem offset) plus the safe-area inset, so
+   the three numbers cannot drift apart.
+
+   Deliberately NOT paired with a second hiding rule. The FAB already
+   disappears on input focus above; adding an IntersectionObserver would give
+   it two independent, invisible disappearance conditions that a user cannot
+   tell apart, and this is the frictionless-capture entry point from
+   CLAUDE.md §2 — if it is not there when the thought arrives, the thought is
+   gone. Losing the capture is worse than an overlap. */
+@media (max-width: 767px) {
+  .main {
+    padding-block-end: calc(3rem + 1.1rem + 1rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
