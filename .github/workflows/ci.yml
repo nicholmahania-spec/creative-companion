@@ -5,6 +5,43 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Run it by hand, on any branch:  gh workflow run ci.yml --ref <branch>
+  #
+  # Both triggers above depend on webhook delivery, and webhooks are not a
+  # guarantee. On 2026-08-06 GitHub throttled them to ~15% during an Actions
+  # incident: two PRs sat with no CI at all — not queued, not failed, simply
+  # never created — while the code in them was finished and waiting. There was
+  # no way to ask for a run, because a workflow with no `workflow_dispatch` can
+  # only be started by an event someone else decides to deliver.
+  #
+  # `gh run rerun` does not fill this gap: it needs an existing run to repeat,
+  # which is exactly what a dropped event never produced.
+  workflow_dispatch:
+
+# Runs pile up otherwise. Neither workflow had a concurrency group, so four
+# pushes to a branch left four live runs of each workflow competing for the
+# same runners — and a job that waits too long for one is cancelled, which
+# reports as a red X indistinguishable from a real failure. Two such
+# cancellations on 2026-08-06 (main's e2e, this branch's verify-project) were
+# each ~15 minutes of queueing, zero failed jobs.
+#
+# Added in 58738cb, reverted in 3776318 as a suspect when runs stopped being
+# created entirely, and restored here having been cleared: the silence was
+# GitHub throttling webhook delivery to ~15% during that day's Actions
+# incident, which stopped runs for every repo and every workflow, including
+# ones this file never touched. The revert was the right call on the evidence
+# available; the evidence has since arrived.
+#
+# Not cancelled on main, which the original did cancel. Today's merges
+# landed 66 seconds apart (9c76859 at 23:00:56, 514b168 at 23:02:02) and
+# the second one FAILED — a real test failure on main. With blanket
+# cancel-in-progress, a third merge arriving a minute later would have
+# killed that run and main would have gone red-then-silent instead of
+# red. On a branch a superseded run is genuinely worthless; on main every
+# commit is one somebody may later bisect to, so each gets its verdict.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   unit:

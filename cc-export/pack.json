@@ -1,0 +1,295 @@
+{
+  "bookPageBg": {
+    "pageCover": "#ffffff",
+    "pageColors": "#ffffff",
+    "pageType": "#ffffff",
+    "pageBack": "#ffffff"
+  },
+  "bookTypeScale": {
+    "headline": 1,
+    "subhead": 1,
+    "body": 1
+  },
+  "bookTypeColor": {
+    "headline": null,
+    "subhead": null,
+    "body": null
+  },
+  "bookGrid": {
+    "show": false,
+    "columns": 12,
+    "rows": 1,
+    "gutter": 3,
+    "margin": 9.4
+  },
+  "bookRunning": {
+    "show": true,
+    "text": "Harbor & Hearth",
+    "align": "left",
+    "showFooter": false,
+    "footerText": "",
+    "footerAlign": "left",
+    "showPageNumbers": true,
+    "alternate": false
+  },
+  "exportedAt": "2026-08-07T00:52:04.705Z",
+  "studio": "",
+  "projectName": "Harbor & Hearth",
+  "brief": "Who: coastal pantry + roast shop. Feel: calm host. Goal: rebrand that reads craft without trend. Pillars: warmth, honesty, unhurried retail.",
+  "tagline": "BAKERS SINCE 2019",
+  "voice": "Two counters, one oven, and a queue that starts before we open. We bake what the day needs and stop when it is gone.",
+  "logoDirection": "Harbor arc + hearth circle (mark) with Fraunces wordmark. Horizontal primary; mark alone for stamps and stickers. No drop shadows.",
+  "logoWordmark": "Harbor & Hearth",
+  "logoClearspace": "Clearspace ~ half the mark height on all sides. Prefer full-color on cream; reverse on deep green covers.",
+  "designVersion": "v4",
+  "detective": {
+    "clientName": "Harbor & Hearth Co.",
+    "engagementType": "rebrand",
+    "projectDeadline": "2026-09-15",
+    "primaryContact": "Maya Chen, Founder",
+    "clientEmail": "maya@harborandhearth.example",
+    "clientPhone": "(555) 014-2200",
+    "budgetRange": "$8k–$12k brand system",
+    "goal": "Look like a neighborhood staple, not a trend cafe — so locals and visitors both trust the shelves and the pour.",
+    "story": "Started as a weekend farmers-market table; three years later we roast small-batch and stock pantry goods from coastal makers.",
+    "usp": "Small-batch coffee and coastal pantry goods with a calm, host-at-home retail experience.",
+    "brandWords": "Warm, Plain-spoken, A bit old-fashioned",
+    "audience": "Adults 28–55 who cook at home, gift thoughtfully, and prefer quiet shops over loud chains.",
+    "feel": "Welcomed, steady, a little proud of what they picked up.",
+    "audiencePains": "Confused shelves, Instagram-only brands, coffee that tastes like marketing.",
+    "competitors": "Local chain cafes; glossy gift-shop brands; big-box “artisan” lines.",
+    "toneOfVoice": "warm, plain, unhurried",
+    "brandAsPerson": "A generous neighbor who always has a spare mug and never oversells.",
+    "spectrumModernTraditional": 42,
+    "spectrumPlayfulProfessional": 55,
+    "spectrumHighEndAffordable": 48,
+    "spectrumBoldMinimalist": 68,
+    "inspirationLinks": "Quiet retail interiors, linen paper, linen, morning window light, ceramic cups.",
+    "avoid": "Neon, faux-distress, clipart coffee beans, loud hustle slogans.",
+    "deliverablesPicked": [
+      "logoPrimary",
+      "logoVariations",
+      "colourPalette",
+      "typography",
+      "guidelines",
+      "businessCard",
+      "packaging"
+    ],
+    "deliverables": "Shelf talkers, thank-you card, tote mark.",
+    "technical": "AI/PDF for print, PNG/SVG for web and POS.",
+    "existingAssets": "Keep the wooden spoon illustration from year one (redrawn cleaner). Drop the old teal gradient.",
+    "decisionMakers": "Maya Chen (final); Sam Okonkwo (ops, packaging)."
+  },
+  "positioning": "",
+  "story": "Started as a weekend farmers-market table; three years later we roast small-batch and stock pantry goods from coastal makers.",
+  "usp": "Small-batch coffee and coastal pantry goods with a calm, host-at-home retail experience.",
+  "toneOfVoice": "warm, plain, unhurried",
+  "technical": "AI/PDF for print, PNG/SVG for web and POS.",
+  "accessibilityNeeds": "",
+  "brandSurfaces": [],
+  "touchpointApps": {},
+  "feedbackNotes": "Stakeholder review: hierarchy on bags is clear. Keep wordmark quieter than mark on small stamps. Feels like home without cottage cliché.",
+  "scopeRevisionsIncluded": 0,
+  "scopeApprover": "",
+  "scopeOutOf": "",
+  "revisionRounds": [],
+  "feedbackLog": [],
+  "handoffNote": "Ship: logo lockups, roles (cover/text/accent/quiet), type pair, messaging pillars, imagery rules, business card specimen, brand-book PDF + tokens.",
+  "learnings": "What worked: cream field + deep green. Felt honest: retiring the teal gradient. Next: more real shelf photography.",
+  "directions": [
+    {
+      "id": "a",
+      "label": "A",
+      "title": "Harbor quiet",
+      "note": "Deep green field, cream type, gold only for CTA",
+      "chosen": true
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "title": "Market linen",
+      "note": "Lighter cream dominant, more illustration",
+      "chosen": false
+    },
+    {
+      "id": "c",
+      "label": "C",
+      "title": "Bold roast",
+      "note": "High contrast black/gold — rejected as too loud",
+      "chosen": false
+    }
+  ],
+  "typeHeading": "Plus Jakarta Sans Bold",
+  "typeBody": "Plus Jakarta Sans Regular",
+  "typeWhy": "",
+  "typeSource": "",
+  "typeLicenceNote": "",
+  "fontFilesLicensed": false,
+  "packageAssets": [],
+  "doUse": "Deep green + soft gold · cream paper fields · real window light · short CTAs · generous type · photography of hands, cups, shelves",
+  "dontUse": "Neon gradients · faux chalkboard · clipart beans · hustle slogans · dense product grids · more than one accent gold per layout",
+  "deadline": "2026-09-15",
+  "palette": [
+    "#8C4A2F",
+    "#D9A05B",
+    "#4A5D3A",
+    "#F3EBDD",
+    "#221A14"
+  ],
+  "openTasks": [
+    {
+      "id": "demo-t4",
+      "title": "Star the 6 references going in the pack",
+      "dueDate": ""
+    },
+    {
+      "id": "demo-t5",
+      "title": "Build the two strongest logo directions",
+      "dueDate": ""
+    },
+    {
+      "id": "demo-t6",
+      "title": "Lock the palette and type pairing",
+      "dueDate": ""
+    },
+    {
+      "id": "demo-t7",
+      "title": "Apply the system to the shop sign",
+      "dueDate": ""
+    },
+    {
+      "id": "demo-t8",
+      "title": "Packaging labels and a bag",
+      "dueDate": ""
+    },
+    {
+      "id": "demo-t9",
+      "title": "Export the logo pack — SVG, PNG, one-colour",
+      "dueDate": ""
+    },
+    {
+      "id": "demo-t10",
+      "title": "Assemble the brand book and send it",
+      "dueDate": ""
+    }
+  ],
+  "doneCount": 3,
+  "totalCount": 10,
+  "progressPercent": 30,
+  "pins": [
+    {
+      "id": 9201,
+      "note": "Morning counter — window light on cups",
+      "type": "image",
+      "packHero": true,
+      "visual": "[embedded in brand-book.pdf / mood pins]"
+    },
+    {
+      "id": 9202,
+      "note": "Shelf rhythm — cream labels, calm gaps",
+      "type": "image",
+      "packHero": false,
+      "visual": "[embedded in brand-book.pdf / mood pins]"
+    },
+    {
+      "id": 9203,
+      "note": "Ceramic + linen texture study",
+      "type": "image",
+      "packHero": false,
+      "visual": "[embedded in brand-book.pdf / mood pins]"
+    },
+    {
+      "id": 9204,
+      "note": "Quiet exterior — timber door, no neon",
+      "type": "image",
+      "packHero": false,
+      "visual": "[embedded in brand-book.pdf / mood pins]"
+    },
+    {
+      "id": 9205,
+      "note": "Cover green field",
+      "type": "color",
+      "packHero": false,
+      "visual": "#1B3A2F"
+    },
+    {
+      "id": 9206,
+      "note": "Accent gold for CTAs only",
+      "type": "color",
+      "packHero": false,
+      "visual": "#C4A574"
+    }
+  ],
+  "pinsUsedFallback": false,
+  "pinsStarredCount": 6,
+  "colorRoles": {
+    "cover": "#8C4A2F",
+    "text": "#221A14",
+    "accent": "#D9A05B",
+    "quiet": "#F3EBDD"
+  },
+  "logoImage": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAEBUlEQVR42u3cy3FVSwwFUAdNSmTCgCAcAFmYcgIu+9zWr7VWFXOOtLX78gbv7Q0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4Mf+vf/9ePrH9GDBoSsGcPTKABy9MgBHrwzA4SsCcPiKABy+IgCHrwjA8SsBcPiKABy/EgCHrwig1/Fv+PuC4w8+HiUADY/Gd8Gy4/edsPD4fTMsPH7fDwvDbxZKgIWBNxclgJCbjxJAuM1JCXB1sM3LvBBmczM3hNj8zI/rA2yCZojgmqVZIrBmaqZcH1bTM1e8VJgtXinMF+HEnLk3mCZn1niVMG+8SJg5XiPMHS8RZo8QYvYIIHaA8GEHzA2fqdkDXh7sAqHDLvCzE/vAi4OdIGzYCX5uYi8IGvaCoGEvCBr2wrSQCZrd4JXBfhAw7AcBw34QMOwHAcN+EDDsBwHDfhAw7AcBw34QMOwHAcN+EDDsBwHDfugeMCGzG7wy2AuChr0gaNgLgoa9sCBowmYnCBt2wnR/fv8StgsK4HOPJkdaASiBXq+/AkABKAD4eQH4Z8D8n/8KgPQCUAJ9Xn8FgAJQAPCsAJTA7ONXACgABQD5BaAEao5fAXC0APwKmPv6KwBKC0AJ1L7+CoAjBeBXwMzXXwFQXgBKoO71VwAcK4BXw2mqscf/1d6gvACUQNzxKwBSCsCvgL6vvwKgfQEogbjXXwGQUgBKoOfxKwDSCkAJ9Dt+BcCoAtheAhHzUwCkFYAS6HX8CoDQAlAC845fATCiADYUQfScFAAlBaAE6o9fAVBaAEqgfi4KgPACyCyB6UWQOYun+4LjgTod/GlFUPH9CoA2BRB1BN2LoPKbFQBpBVBdAt2KoPo7T+wKQkIVeRyVZdDpuxQAbQsg61gyyqDrdygA0gugcwmcKIUpf9/Te4KwYFUe1ZQ/HfYE3wrW03A59DO/UiJ3hAIIDZejf/2/WygAygvg1YA5/N77QQGEB8zxKwAGF8CpkDn8vrtBAaQFzeH33AtKIDVsDt/xs7gAJhfBzftACZSFbtvRO36UQOMy2Dx/FECbEN529JNmjxJoG8TJ/88Bx48SMGuzRjDN2IwRULM1W6aGVFDNFWEVWLNEcAXXDFkf4K0hNjeEeWmYzQvBXhhs80EJLAy6maAEFobeHFACy45g63dD2kF0O4oN3wjtDqTqWG77HrjmcE4f0cS/MyiBgX+kA0Xg8EEROHxQBA4flIGjB0Xg8EEZOHpQCA4eyC8E04aLC8K0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgEr/AUrT8x26Uj82AAAAAElFTkSuQmCC",
+  "orgEmail": "hello@harborandhearth.example",
+  "orgWebsite": "harborandhearth.example",
+  "orgPhone": "(555) 014-2200",
+  "contacts": [],
+  "logoMinSize": "28px digital · 0.6\" print (mark height)",
+  "logoDonts": "Do not stretch or rotate the mark\nDo not recolor outside green / gold / cream / near-black\nDo not place the mark on busy photography without a quiet field",
+  "messagingPromise": "Bread made this morning",
+  "messagingProof": "Small-batch roast, coastal makers, and labels you can read at arm’s length.",
+  "messagingPersonality": "Host energy: warm, clear, never pushy.",
+  "messagingPlan": "",
+  "messagingCta": "",
+  "writingCase": "sentence",
+  "writingCaps": "sparing",
+  "writingNotes": "",
+  "printPantone": "",
+  "printStock": "",
+  "printFinish": "",
+  "imageryStyle": "Morning window light · timber and linen · documentary retail calm · cream fields · people unhurried at the counter",
+  "imageryDo": "Hands pouring, shelf order, ceramic texture, soft shadows, real packaging in use",
+  "imageryDont": "Neon cafe neon, staged “hustle” laptops, stock diversity handshakes, oversaturated beans",
+  "decisionLog": [
+    {
+      "id": 91011,
+      "at": 1785125044175,
+      "kind": "direction",
+      "directionId": "a",
+      "label": "A",
+      "title": "Harbor quiet",
+      "why": "Protects calm retail pace; B felt gift-shop, C felt nightclub coffee."
+    }
+  ],
+  "discoveryAnswers": {
+    "projectTitle": "Harbor & Hearth rebrand",
+    "clientName": "Harbor & Hearth Co.",
+    "primaryContact": "Maya Chen, Founder",
+    "startDeadline": "Start Aug 1 · Launch Sep 15 2026",
+    "budgetRange": "$8,000–$12,000",
+    "story": "Harbor & Hearth began as a market table selling small-batch coffee and pantry goods from coastal makers. The name is about home (hearth) and the harbor town that supplies the goods.",
+    "offering": "Small-batch roasted coffee, pantry staples, and a calm neighborhood retail shop with a short pour menu.",
+    "problem": "The old identity felt like a trendy pop-up. Regulars still came, but visitors could not tell if we were serious about craft or just cute packaging.",
+    "coreValues": "Warmth · honesty · craft · neighborhood · unhurried",
+    "usp": "Coastal pantry + roast quality with host-at-home hospitality — never loud, never disposable.",
+    "fiveYearVision": "Two shops, a tight wholesale line for cafes that share our pace, and a brand book that staff can use without a designer on call.",
+    "targetAudience": "Home cooks and gift-givers 28–55 in coastal towns and nearby cities; design-aware but allergy to hype.",
+    "audiencePains": "Hard-to-read labels, brands that feel like ads, coffee that overpromises.",
+    "desiredFeeling": "Calm confidence — “I can take this home and it will fit.”",
+    "competitors": "Regional cafe chains (too loud); lifestyle gift brands (too glossy); commodity grocery “artisan” (too cheap).",
+    "brandAsPerson": "Warm neighbor, soft voice, never showy.",
+    "spectrumModernTraditional": "Slightly traditional with modern clarity",
+    "spectrumPlayfulProfessional": "Professional with a smile",
+    "spectrumHighEndAffordable": "Accessible premium",
+    "spectrumBoldMinimalist": "Minimal, not sparse",
+    "toneOfVoice": "Warm, plain, unhurried",
+    "visualStyleKeywords": "Linen, timber, cream paper, deep green, soft gold",
+    "inspirationLinks": "Quiet Scandinavian grocery, Japanese stationery packaging, coastal pottery studios.",
+    "admiredBrands": "Aesop (restraint), Blue Bottle early packaging (clarity), local ceramic studios (hand feel).",
+    "elementsToAvoid": "Neon gradients, faux chalkboard, stock bean photos, aggressive FOMO language.",
+    "mustHaveDeliverables": "Logo system, palette, type, guidelines PDF, business cards, bag/label system.",
+    "existingAssets": "Wooden spoon mark (keep idea), customer photo library of shop windows, old teal #2A9D8F (retire).",
+    "fileFormats": "AI, PDF, PNG, SVG, brand-book PDF",
+    "launchDate": "2026-09-15",
+    "decisionMakers": "Maya Chen; Sam Okonkwo"
+  }
+}

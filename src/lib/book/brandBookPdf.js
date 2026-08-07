@@ -40,18 +40,20 @@ import {
   contrastRatio,
   formatRatio,
   nudgeHexForContrast,
+  tintsAndShades,
 } from '../color'
 import {
   buildColorSystem,
   decisionLineFromPack,
   logoDontsList,
+  logoDefaultsNote,
   DEFAULT_LOGO_CLEARSPACE,
   DEFAULT_LOGO_MIN_SIZE,
   TYPE_SCALE,
   monogramFor,
 } from '../brandSystem'
 import { filledDetectiveChapters } from '../brief/detectiveBrief'
-import { touchpointsFor, touchpointsBlurb, touchpointLabel } from '../journey/touchpoints'
+import { touchpointsFor, touchpointsBlurb, touchpointLabel, TOUCHPOINT_SPECS } from '../journey/touchpoints'
 import {
   slugifyFilename,
   downloadBlob,
@@ -519,7 +521,12 @@ export async function downloadBrandPackVectorPdf(
       const bandH = px(104)
       // Full-bleed to the top edge, including the bleed area.
       box(0, 0, pageW, bandH + bleed, bandBg)
-      let by = bleed + px(34)
+      /* Clear of the running header, which is drawn last and lands at
+         `bleed + px(26)` flush left — 8px from this number at 10px type, so
+         the two overprinted each other on every section page. The band is
+         104px tall and this pushes its content to ~85px, so there is room to
+         move rather than needing to move the header into the bleed. */
+      let by = bleed + px(running.show && running.text ? 46 : 34)
       setFace('display', px(14), bandAccent)
       pdf.text(pdfSafeText(`${num} /`), margin, by)
       const BT = px(30)
@@ -1089,45 +1096,202 @@ export async function downloadBrandPackVectorPdf(
       })
       y += cellH * 2 + gap + px(24)
 
-      // Construction: the real artwork if there is any, else the monogram
-      const BOXW = px(110)
-      outline(margin, y, BOXW, BOXW, INK, 0.75, [2, 2])
+      /* Clear space as a DIAGRAM, and minimum size shown at size.
+         Both were prose. "Clearspace ~ half the mark height on all sides" is a
+         sentence a printer cannot measure, and "28px digital · 0.6in print" is
+         a number nobody can picture — every published guide draws both, because
+         both are spatial facts. The app is the one place in the chain that
+         knows the mark's real bounding box, so it is the one place that can
+         draw them without the designer redrawing them by hand. */
       const src = pack?.logoImage
       const fmt = imageFormatFromDataUrl(src)
-      let drewArtwork = false
-      if (fmt && src) {
-        try {
-          const inset = px(24)
-          pdf.addImage(src, fmt, margin + inset, y + inset, BOXW - inset * 2, BOXW - inset * 2)
-          drewArtwork = true
-        } catch {
-          /* fall through to the monogram */
+
+      /** The mark if there is one, else the monogram — at any size. */
+      const drawMark = (mx, my, w, h) => {
+        if (fmt && src) {
+          try {
+            pdf.addImage(src, fmt, mx, my, w, h)
+            return
+          } catch {
+            /* fall through to the monogram */
+          }
         }
-      }
-      if (!drewArtwork) {
-        setFace('heading', px(26), ON_CREAM)
-        pdf.text(pdfSafeText(monogram), margin + BOXW / 2, y + BOXW / 2 + px(26) * 0.36, {
+        const fs = Math.min(h * 0.7, w * 0.7)
+        setFace('heading', fs, ON_CREAM)
+        pdf.text(pdfSafeText(monogram), mx + w / 2, my + h / 2 + fs * 0.36, {
           align: 'center',
         })
       }
+
+      const BOXW = px(110)
+      /* X is the module every guide uses: the clear space is expressed as a
+         multiple of it, so the rule survives the mark being scaled. Half the
+         mark height is the app's own default and what the copy already says. */
+      const X = BOXW * 0.22
+      const inner = BOXW - X * 2
+
+      outline(margin, y, BOXW, BOXW, INK, 0.75, [2, 2])
+      drawMark(margin + X, y + X, inner, inner)
+
+      // The mark's own bounding box, so the gap being measured is visible.
       pdf.setLineDashPattern([1, 2], 0)
-      outline(margin + px(20), y + px(20), BOXW - px(40), BOXW - px(40), mixRgb(INK, CREAM, 0.4), 0.5)
+      outline(margin + X, y + X, inner, inner, mixRgb(INK, CREAM, 0.4), 0.5)
       pdf.setLineDashPattern([], 0)
+
+      /* One X label per side, in the gap it measures. Without these the two
+         boxes are decoration — the label is what turns them into a rule. */
+      setFace('label', px(8), mixRgb(INK, CREAM, 0.35))
+      const midX = margin + BOXW / 2
+      const midY = y + BOXW / 2
+      pdf.text('X', midX, y + X / 2 + px(3), { align: 'center' })
+      pdf.text('X', midX, y + BOXW - X / 2 + px(3), { align: 'center' })
+      pdf.text('X', margin + X / 2, midY + px(3), { align: 'center' })
+      pdf.text('X', margin + BOXW - X / 2, midY + px(3), { align: 'center' })
 
       const specW = contentW - BOXW - px(24)
       const specX = margin + BOXW + px(24)
       const spec = [clean(pack?.logoClearspace) || DEFAULT_LOGO_CLEARSPACE, clean(pack?.logoMinSize) || DEFAULT_LOGO_MIN_SIZE]
         .filter(Boolean)
         .join(' ')
+      /* Say which of these rules nobody chose. The fallbacks are deliberate —
+         a book should not be blank where a rule belongs — but without this the
+         page reads the same whether a rule was decided or defaulted, and the
+         client has no way to tell. Set smaller and muted: it is a footnote to
+         the rules, not a warning about them. */
+      const defaultsNote = logoDefaultsNote(pack)
       const specH = paraH(spec, specW, px(14), 1.6)
-      para(spec, specX, y + (BOXW - specH) / 2, specW, { size: px(14), lh: 1.6 })
+      const noteH = defaultsNote ? paraH(defaultsNote, specW, px(10), 1.5) + px(8) : 0
+      const blockTop = y + (BOXW - (specH + noteH)) / 2
+      para(spec, specX, blockTop, specW, { size: px(14), lh: 1.6 })
+      if (defaultsNote) {
+        para(defaultsNote, specX, blockTop + specH + px(8), specW, {
+          size: px(10),
+          lh: 1.5,
+          rgb: MUTE_CREAM,
+        })
+      }
       y += BOXW + px(22)
 
-      // Don't — pill tags, from the project's own list
+      /* Minimum size, drawn at descending sizes rather than stated.
+         "28px digital · 0.6in print" tells a client a number; the ladder tells
+         them what it looks like when the mark stops working, which is the
+         judgement the rule exists to support. The last step is the smallest
+         the rule permits, labelled as the floor. */
+      {
+        const steps = [
+          { w: px(78), label: 'Full size' },
+          { w: px(52), label: 'Reduced' },
+          { w: px(34), label: 'Small' },
+          { w: px(22), label: 'Minimum' },
+        ]
+        const rowH = px(78)
+        if (y + rowH + px(34) < floorY()) {
+          kicker('Minimum size', margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+          y += KICKER_PT * 0.82 + px(12)
+          let sx = margin
+          const gapX = px(22)
+          for (const step of steps) {
+            // Baseline-aligned, so the ladder reads as one descending row.
+            drawMark(sx, y + (rowH - step.w), step.w, step.w)
+            setFace('label', px(8), mixRgb(INK, CREAM, 0.35))
+            pdf.text(pdfSafeText(step.label), sx, y + rowH + px(11), { align: 'left' })
+            sx += step.w + gapX
+          }
+          const floorNote = clean(pack?.logoMinSize) || DEFAULT_LOGO_MIN_SIZE
+          setFace('body', px(10), MUTE_CREAM)
+          pdf.text(
+            pdfSafeText(`Never below: ${floorNote}`),
+            margin + contentW,
+            y + rowH + px(11),
+            { align: 'right' }
+          )
+          y += rowH + px(30)
+        }
+      }
+
+      /* Misuse, shown rather than listed.
+         A client who has read "do not distort" still distorts it; one who has
+         seen it next to the correct mark does not. Every reference guide draws
+         this, and the pills below stay as the written rule — the pictures are
+         what make the rule land.
+
+         The four are chosen to work for a monogram as well as real artwork,
+         which rules out recolouring (an embedded image cannot be recoloured
+         here). Each is the wrong thing actually done, struck through, and
+         captioned with what is wrong. */
+      let drewDontVisuals = false
+      {
+        const cells = [
+          { id: 'stretch', caption: 'Never stretch or squash' },
+          { id: 'crowd', caption: 'Never crowd the clear space' },
+          { id: 'busy', caption: 'Never on a busy field' },
+          { id: 'lowcontrast', caption: 'Never on a low-contrast colour' },
+        ]
+        const gapX = px(14)
+        const cw = (contentW - gapX * 3) / 4
+        const ch = px(64)
+        if (y + ch + px(30) < floorY()) {
+          kicker("Don't", margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+          y += KICKER_PT * 0.82 + px(10)
+          cells.forEach((cell, i) => {
+            const cx = margin + i * (cw + gapX)
+            const pad = px(10)
+            const inner = ch - pad * 2
+
+            if (cell.id === 'busy') {
+              // A stand-in for photography: enough visual noise to make the point.
+              box(cx, y, cw, ch, mixRgb(INK, CREAM, 0.55))
+              pdf.setDrawColor(...mixRgb(INK, CREAM, 0.15))
+              pdf.setLineWidth(0.6)
+              /* Clamped to the cell rather than clipped. Each stripe runs
+                 (cx+s, y+ch) → (cx+s+ch, y); drawn unclamped the negative
+                 starts hang left into the previous cell, which they did —
+                 the "crowd the clear space" panel came out hatched. */
+              for (let s = -ch; s < cw; s += px(7)) {
+                const t0 = Math.max(0, -s)
+                const t1 = Math.min(ch, cw - s)
+                if (t1 <= t0) continue
+                pdf.line(cx + s + t0, y + ch - t0, cx + s + t1, y + ch - t1)
+              }
+              drawMark(cx + (cw - inner) / 2, y + pad, inner, inner)
+            } else if (cell.id === 'lowcontrast') {
+              box(cx, y, cw, ch, GOLD)
+              drawMark(cx + (cw - inner) / 2, y + pad, inner, inner)
+            } else if (cell.id === 'stretch') {
+              outline(cx, y, cw, ch, mixRgb(INK, CREAM, 0.2), 0.6)
+              // Deliberately wrong aspect — the distortion IS the illustration.
+              drawMark(cx + pad, y + pad + inner * 0.2, cw - pad * 2, inner * 0.6)
+            } else {
+              outline(cx, y, cw, ch, mixRgb(INK, CREAM, 0.2), 0.6)
+              // Flush to the edge: no clear space at all.
+              drawMark(cx, y + ch - inner, inner, inner)
+            }
+
+            /* Struck through, so a cell skimmed out of context cannot be read
+               as an example to follow. */
+            pdf.setDrawColor(...INK)
+            pdf.setLineWidth(1)
+            pdf.line(cx, y + ch, cx + cw, y)
+
+            setFace('body', px(8), MUTE_CREAM)
+            for (const [li, l] of wrap(cell.caption, cw).entries()) {
+              pdf.text(pdfSafeText(l), cx, y + ch + px(11) + li * px(9))
+            }
+          })
+          y += ch + px(30)
+          drewDontVisuals = true
+        }
+      }
+
+      /* Don't — the written rule, directly under the pictures that show it.
+         The heading is not repeated over both; the page printed "DON'T" twice
+         in a row the first time these were drawn. */
       const donts = logoDontsList(pack)
       if (donts.length) {
-        kicker("Don't", margin, y + KICKER_PT * 0.82, KICKER_CREAM)
-        y += KICKER_PT * 0.82 + px(10)
+        if (!drewDontVisuals) {
+          kicker("Don't", margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+          y += KICKER_PT * 0.82 + px(10)
+        }
         setFace('body', px(12), MUTE_CREAM)
         let px0 = margin
         const pillH = px(26)
@@ -1185,6 +1349,52 @@ export async function downloadBrandPackVectorPdf(
       })
       const swatchRows = Math.max(1, Math.ceil(colors.length / perRow))
       y += swatchRows * rowH + px(10)
+
+      /* Tints and shades — a screen-only feature until now.
+         `tintsAndShades` has existed in color.js all along and DesignView has
+         drawn these on the designer's screen at src/views/DesignView.jsx.
+         The client's book has never contained them, so a system the designer
+         built and reviewed as five steps was delivered as one flat chip. That
+         is the same screen-only gap the page backgrounds had.
+
+         Every printed brand guide worth copying carries this: a client needs
+         the lighter step for a hover state or a table stripe, and inventing
+         one themselves is how a palette drifts. Drawn as a continuous ramp per
+         brand colour, labelled with the hexes so they can be used, not just
+         admired. */
+      const ramps = colors
+        .map((hex) => ({ hex, steps: tintsAndShades(hex, { steps: 2 }) }))
+        .filter((r) => r.steps.length > 1)
+      if (ramps.length) {
+        kicker('Tints and shades', margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+        y += KICKER_PT * 0.82 + px(12)
+        const chipH = px(26)
+        const labelH = px(9)
+        for (const ramp of ramps) {
+          const n = ramp.steps.length
+          const chipW = contentW / n
+          ramp.steps.forEach((step, i) => {
+            const rgb = hexToRgb(step) || [0, 0, 0]
+            box(margin + i * chipW, y, chipW, chipH, rgb)
+            if (contrastRatio(step, creamHex) < 1.25) {
+              outline(margin + i * chipW, y, chipW, chipH, mixRgb(INK, CREAM, 0.2), 0.5)
+            }
+          })
+          /* Ends only. Labelling all five at this size sets 30-odd hexes in
+             8pt across one page, which is a wall rather than a reference —
+             the ramp between two named ends is readable without them. */
+          setFace('body', labelH, MUTE_CREAM)
+          pdf.text(pdfSafeText(ramp.steps[0].toUpperCase()), margin, y + chipH + labelH * 1.3)
+          pdf.text(
+            pdfSafeText(ramp.steps[n - 1].toUpperCase()),
+            margin + contentW,
+            y + chipH + labelH * 1.3,
+            { align: 'right' }
+          )
+          y += chipH + labelH * 1.3 + px(10)
+        }
+        y += px(6)
+      }
 
       // Proportion bar — the roles' shares of a layout
       kicker('Color usage proportion', margin, y + KICKER_PT * 0.82, KICKER_CREAM)
@@ -1411,6 +1621,21 @@ export async function downloadBrandPackVectorPdf(
           }
           setFace('heading', px(17), fg)
           pdf.text(pdfSafeText(wordmark), cx + px(20), ty)
+
+          /* The trim size, top-right of the mock.
+             Every reference guide specifies its stationery — "3.5 × 2 in",
+             "A4", "M–XL–XXL" — because a mock without a size is a picture and
+             a mock with one is a brief a printer can quote from. These are the
+             standard sizes for each surface, so they are stated as the common
+             specification rather than as this project's decision; anything
+             genuinely bespoke belongs in the designer's own note. */
+          const spec = TOUCHPOINT_SPECS[t]
+          if (spec) {
+            setFace('label', px(8), kick)
+            pdf.text(pdfSafeText(spec), cx + cellW - px(20), cy + px(20) + px(6), {
+              align: 'right',
+            })
+          }
         })
         y += cellH * rows + gap * (rows - 1) + px(16)
         para('Mocks are direction proofs only - not production die-lines.', margin, y, contentW, {
@@ -1456,6 +1681,55 @@ export async function downloadBrandPackVectorPdf(
         cy += px(18)
         setFace('bodyItalic', px(18), GOLD)
         pdf.text(pdfSafeText(tagline), margin, cy + px(18) * 0.82)
+      }
+
+      /* Who to ask. Every printed brand guide ends on a contact page, and this
+         one ended on a headline — while the project already held orgPhone,
+         orgAddress and a whole `contacts` array of named people with titles,
+         none of which the book had ever printed. The client is left holding a
+         document with no way to reach whoever made it.
+
+         Right column, so it sits opposite the headline rather than pushing it
+         off the page. Placeholder addresses are filtered the same way
+         `contactLine` already filters them — a demo value in a real handoff is
+         worse than a blank. */
+      const people = Array.isArray(pack?.contacts) ? pack.contacts : []
+      const isReal = (v) =>
+        clean(v) && !/\.example\b|example\.com|brand\.example|you@example/i.test(v)
+      const orgRows = [
+        clean(pack?.orgEmail),
+        clean(pack?.orgWebsite),
+        clean(pack?.orgPhone),
+        clean(pack?.orgAddress),
+      ].filter(isReal)
+      const peopleRows = people
+        .filter((c) => isReal(c?.name) || isReal(c?.email))
+        .slice(0, 3)
+        .map((c) =>
+          [clean(c.name), clean(c.title)].filter(Boolean).join(' · ') +
+          (isReal(c.email) ? `\n${clean(c.email)}` : '')
+        )
+
+      if (orgRows.length || peopleRows.length) {
+        const colX = margin + contentW * 0.58
+        const colW = contentW * 0.42
+        let ky = pageH - bleed - px(48) - blockH
+        kicker('Get in touch', colX, ky + KICKER_PT * 0.82, GOLD)
+        ky += KICKER_PT * 0.82 + px(14)
+        setFace('body', px(11), ON_INK)
+        for (const row of orgRows) {
+          for (const l of wrap(row, colW)) {
+            pdf.text(pdfSafeText(l), colX, ky + px(11) * 0.82)
+            ky += px(11) * 1.5
+          }
+        }
+        for (const block of peopleRows) {
+          ky += px(8)
+          for (const l of block.split('\n')) {
+            pdf.text(pdfSafeText(l), colX, ky + px(11) * 0.82)
+            ky += px(11) * 1.5
+          }
+        }
       }
     }
 

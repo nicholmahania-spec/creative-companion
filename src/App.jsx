@@ -21,6 +21,7 @@ import versionService from './services/versionService'
 
 import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
+import { resolveStudioName } from './lib/studio/studioIdentity'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
   toISODate,
@@ -536,8 +537,15 @@ function App() {
   /** Pomodoro desk lock — default on; user can disable */
   const forceBreaksEnabled = prefs.forceBreaksEnabled !== false
   /* One value governs every client-facing surface. Empty is the normal
-     state: the footer then reads project name and date. */
-  const studioName = String(prefs.studioName || '').trim()
+     state: the footer then reads project name and date.
+
+     Falls back to the invoice identity, which is the fix for a real defect:
+     the app already asks for the studio's name in Invoice (`prefs.invoiceFrom`)
+     and used to ignore it here, so a designer who had typed it once still
+     shipped uncredited client work. A comment on the Deliver field claimed
+     this prefill existed; nothing implemented it. Now it does. */
+  const studioName = resolveStudioName(prefs)
+  const studioLogo = String(prefs.studioLogo || '').trim()
   /** Brand book page setup — sticky prefs, honoured by the vector generator */
   const bookSetup = {
     pageSize: prefs.bookPageSize,
@@ -2614,13 +2622,18 @@ function App() {
         .finally(clearBusy)
     }
     if (kind === 'backup') {
-      const result = downloadWorkspaceBackup(exportAllData())
-      if (result.ok) finishOk('Workspace backup')
-      else {
-        flashToast(result.error || 'Download did not finish — try again?')
-      }
-      clearBusy()
-      return Promise.resolve(result)
+      /* handlePromise, like every other kind. Without it the picker's 0-byte
+         placeholder was the whole backup — see downloadWorkspaceBackup. */
+      return downloadWorkspaceBackup(exportAllData(), handlePromise)
+        .then((result) => {
+          if (result.ok) finishOk('Workspace backup')
+          else if (result.cancelled) flashToast('Save cancelled')
+          else {
+            flashToast(result.error || 'Download did not finish — try again?')
+          }
+          return result
+        })
+        .finally(clearBusy)
     }
     if (kind === 'print') {
       if (!exportPanel) openExportPanel()
@@ -3877,6 +3890,7 @@ function App() {
           setIntakeClientName={setIntakeClientName}
           intakeClientName={intakeClientName}
           studioName={studioName}
+          studioLogo={studioLogo}
           brandEditSection={brandEditSection}
           setBrandEditSection={setBrandEditSection}
           pathDoneCount={pathDoneCount}

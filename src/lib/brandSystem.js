@@ -9,6 +9,7 @@ import {
   mapPaletteRoles,
   buildPassPairs,
   contrastRatio,
+  contrastGrade,
   formatRatio,
   bestTextOn,
   BRAND_ROLE_KEYS,
@@ -226,6 +227,99 @@ export function logoDontsList(pack = {}) {
   return [...DEFAULT_LOGO_DONTS]
 }
 
+/**
+ * The four pairings the brand actually puts in front of a reader.
+ *
+ * `buildContrastMatrix` reads a PALETTE. Roles are assigned separately and can
+ * point at hexes in no palette at all — `mergeRolesIntoPalette` exists because
+ * that drift is known. So a reading taken over the palette alone can look
+ * spotless while the pairing the designer assigned is unreadable.
+ *
+ * Measured on a real project: palette [#1C1917, #FFB8B8] produced a clean
+ * matrix and a client file listing one passing pair, while the assigned Text
+ * #737373 on Background #FFB8B8 was 2.89:1 — under AA for body text and under
+ * the 3:1 floor for large text as well.
+ *
+ * The pairings and their targets are the same ones `suggestRoleAaFixes` fixes,
+ * so what is reported and what the auto-fix repairs cannot disagree.
+ *
+ * @returns {{id,label,fg,bg,fgRole,bgRole,ratio,need,ok,usableFor}[]}
+ */
+export function roleReadability(palette = [], colorRoles = null) {
+  const roles = { ...mapPaletteRoles(palette), ...(colorRoles || {}) }
+  const PAIRS = [
+    { id: 'text-on-quiet', fg: 'text', bg: 'quiet', need: 4.5, label: 'Body text on background' },
+    { id: 'accent-on-quiet', fg: 'accent', bg: 'quiet', need: 3, label: 'Accent on background' },
+    { id: 'text-on-cover', fg: 'text', bg: 'cover', need: 3, label: 'Text on primary' },
+    { id: 'accent-on-cover', fg: 'accent', bg: 'cover', need: 3, label: 'Accent on primary' },
+  ]
+  return PAIRS.map((p) => {
+    const fg = normalizeHex(roles[p.fg])
+    const bg = normalizeHex(roles[p.bg])
+    if (!fg || !bg || fg.toLowerCase() === bg.toLowerCase()) return null
+    const ratio = contrastRatio(fg, bg)
+    const grade = contrastGrade(ratio)
+    const usableFor = []
+    if (grade.aaNormal) usableFor.push('body text')
+    if (grade.aaLarge) usableFor.push('large text')
+    if (grade.ui) usableFor.push('UI shapes')
+    return {
+      id: p.id,
+      label: p.label,
+      fg,
+      bg,
+      fgRole: BRAND_ROLE_LABELS[p.fg] || p.fg,
+      bgRole: BRAND_ROLE_LABELS[p.bg] || p.bg,
+      ratio,
+      need: p.need,
+      ok: ratio >= p.need,
+      usableFor,
+    }
+  }).filter(Boolean)
+}
+
+/**
+ * Which logo rules on the page are the built-in defaults rather than answers.
+ *
+ * Clearspace, minimum size and the don'ts all fall back to sensible defaults
+ * when the designer has not set them — deliberately, so a book is never blank
+ * where a rule belongs. The cost is that the delivered page reads identically
+ * whether a rule was decided or merely defaulted, and the client cannot tell
+ * which. On a project with all three unset the book still states a clearspace
+ * ratio, a minimum size in px and inches, and three prohibitions, in the same
+ * voice as the parts that were actually chosen.
+ *
+ * This does not remove the defaults. It only lets the surfaces say which is
+ * which, so "not yet decided" stops looking like "decided".
+ */
+export function logoRuleDefaults(pack = {}) {
+  const unset = (v) => !String(v || '').trim()
+  return {
+    clearspace: unset(pack.logoClearspace),
+    minSize: unset(pack.logoMinSize),
+    donts: unset(pack.logoDonts),
+  }
+}
+
+/**
+ * One plain sentence naming the defaulted rules, or '' when everything shown
+ * was chosen. Shared so the PDF and the markdown cannot word it differently.
+ */
+export function logoDefaultsNote(pack = {}) {
+  const d = logoRuleDefaults(pack)
+  const which = [
+    d.clearspace && 'clearspace',
+    d.minSize && 'minimum size',
+    d.donts && 'the don’ts',
+  ].filter(Boolean)
+  if (!which.length) return ''
+  const list =
+    which.length === 1
+      ? which[0]
+      : `${which.slice(0, -1).join(', ')} and ${which[which.length - 1]}`
+  return `Standard practice shown for ${list} — not yet set for this brand.`
+}
+
 export function decisionLineFromPack(pack = {}) {
   if (pack.decisionLine) return String(pack.decisionLine)
   const fromLog = formatDecisionLine(
@@ -339,10 +433,11 @@ export function appendSystemMarkdown(lines, pack) {
   out.push(
     `- **Clearspace:** ${pack.logoClearspace || DEFAULT_LOGO_CLEARSPACE}`,
     `- **Min size:** ${pack.logoMinSize || DEFAULT_LOGO_MIN_SIZE}`,
-    '',
-    '### Logo don’ts',
     ''
   )
+  const defaultsNote = logoDefaultsNote(pack)
+  if (defaultsNote) out.push(`_${defaultsNote}_`, '')
+  out.push('### Logo don’ts', '')
   for (const d of logoDontsList(pack)) {
     out.push(`- ${d}`)
   }

@@ -9,7 +9,7 @@
  *
  * PDF IS THE POINT, AND IT IS ALREADY PAID FOR. Brand deliverables leave
  * Illustrator and InDesign as PDF; that is the format the work exists in.
- * `pdfjs-dist` is already a dependency and is already dynamically imported
+ * `pdfjs-dist` is a runtime dependency and is already dynamically imported
  * twice in src/ (`BrandBookPreview.jsx`, `overviewOcr.js`), so the cost of
  * reading one here is a lazy chunk that only loads when someone actually
  * drops a PDF. Nothing eager grows.

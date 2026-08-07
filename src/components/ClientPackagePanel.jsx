@@ -53,8 +53,27 @@ export default function ClientPackagePanel({
     setReading(true)
     for (const file of files) {
       if (file.size > MAX_ASSET_BYTES) {
+        /* Recorded, not dropped.
+           This was a `continue` and a toast. The file was never added, so it
+           could not appear in the panel, the plan, `missing`, the README or
+           the zip — and the only notice was one transient message that
+           `toastMode: 'quiet'` is entitled to swallow. A designer adds a 6MB
+           press-ready card, sees nothing, and finds out when the client asks
+           where it is. Deliverables out of Illustrator and InDesign are
+           routinely over 4MB, so this is the common path, not the edge.
+
+           The row carries no data URL and is held back by the same machinery
+           that holds back a third-party asset, so it is named in the panel and
+           in the client's README instead of vanishing. */
+        addPackageAsset({
+          name: file.name.replace(/\.[^.]+$/, ''),
+          dataUrl: '',
+          heldBack: 'tooLarge',
+          sizeBytes: file.size,
+        })
         flashToast?.(
-          `${file.name} is over 4MB — add it to the folder by hand after the download`
+          `${file.name} is over 4MB — listed as held back; add it to the folder by hand`,
+          { important: true }
         )
         continue
       }
@@ -193,7 +212,21 @@ export default function ClientPackagePanel({
           <ul className="package-asset-list">
             {assets.map((a) => (
               <li key={a.id} className="package-asset">
-                <span className="package-asset-name">{a.name}</span>
+                <span className="package-asset-name">
+                  {a.name}
+                  {a.heldBack === 'tooLarge' && (
+                    /* The row exists so this file is not forgotten; it carries
+                       no data, so a usage-rights choice would be theatre. */
+                    <span className="package-asset-note">
+                      {' '}
+                      — too large to store
+                      {a.sizeBytes
+                        ? ` (${(a.sizeBytes / 1024 / 1024).toFixed(1)}MB)`
+                        : ''}
+                      , add it to the folder by hand
+                    </span>
+                  )}
+                </span>
                 <label className="sr-only" htmlFor={`rights-${a.id}`}>
                   Usage rights for {a.name}
                 </label>
@@ -201,6 +234,7 @@ export default function ClientPackagePanel({
                   id={`rights-${a.id}`}
                   className="field-input package-rights"
                   value={a.rights || 'clientOwned'}
+                  disabled={!!a.heldBack}
                   onChange={(e) =>
                     updatePackageAsset(a.id, { rights: e.target.value })
                   }

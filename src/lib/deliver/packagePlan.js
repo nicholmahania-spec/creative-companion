@@ -31,7 +31,7 @@
 
 import { DELIVERABLE_OPTIONS } from '../brief/detectiveBrief'
 import { SECTION_PAGES } from '../book/bookDocument'
-import { assetFileName, extFromDataUrl, uniqueNames } from './naming'
+import { assetFileName, extFromBytes, extFromDataUrl, uniqueNames } from './naming'
 
 /**
  * What the designer is allowed to hand over.
@@ -136,11 +136,16 @@ export function fontInformation(pack = {}) {
   if (text(pack.typeWhy)) lines.push('', `Why this pairing: ${pack.typeWhy}`)
   lines.push('', 'Where to get them:', source || '  (not recorded — ask your designer)')
   lines.push('', 'Licence:', licence || '  (not recorded — ask your designer)')
+  /* "from the source above" only when there IS a source above. With nothing
+     recorded, the sheet read "(not recorded — ask your designer)" and then
+     told the client to buy from it — a sentence pointing at its own blank. */
   lines.push(
     '',
     filesIncluded
       ? 'The font files in this folder are included under a licence that permits it.'
-      : 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied — buy or download them from the source above.'
+      : source
+        ? 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied — buy or download them from the source above.'
+        : 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied. No source was recorded for these faces — ask your designer where to buy them.'
   )
   return { text: lines.join('\n'), filesIncluded }
 }
@@ -175,7 +180,7 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
   }
 
   // ── 02 Logo ───────────────────────────────────────────────────────────
-  const markExt = extFromDataUrl(pack?.logoImage)
+  const markExt = extFromBytes(pack?.logoImage) || extFromDataUrl(pack?.logoImage)
   if (markExt) {
     add('logo', {
       name: assetFileName({
@@ -227,11 +232,31 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
     if (!a) continue
     const rights = rightsFor(a.rights)
     const label = text(a.name) || 'asset'
+    /* Held back by the app rather than by the licence, but the client needs
+       the same thing said either way: this exists and is not in the folder. */
+    if (a.heldBack) {
+      const mb = a.sizeBytes ? ` (${(a.sizeBytes / 1024 / 1024).toFixed(1)}MB)` : ''
+      excluded.push({
+        name: label,
+        reason:
+          a.heldBack === 'tooLarge'
+            ? `Too large to store in the app${mb} — ask your designer for it directly`
+            : 'Held back by the app',
+      })
+      continue
+    }
     if (!rights.ship) {
       excluded.push({ name: label, reason: rights.note })
       continue
     }
-    const ext = extFromDataUrl(a.dataUrl) || text(a.ext) || 'png'
+    /* Bytes first, mime second, the caller's claim third — and `bin` rather
+       than a guess when all three are silent. This used to end in `|| 'png'`,
+       which is how a package shipped two files named `.png` whose first four
+       bytes were `%PDF`: the mime was unrecognised, so the extension was
+       asserted. A wrong extension is worse than an unfamiliar one, because the
+       client's machine acts on it. */
+    const ext =
+      extFromBytes(a.dataUrl) || extFromDataUrl(a.dataUrl) || text(a.ext) || 'bin'
     add(a.folder && bucket[a.folder] ? a.folder : 'applications', {
       name: assetFileName({
         brand,
@@ -283,7 +308,7 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
  * rights — the client should never have to guess which of the three a missing
  * thing is.
  */
-export function packageReadme(pack = {}, plan = null) {
+export function packageReadme(pack = {}, plan = null, missing = []) {
   const p = plan || packagePlan(pack)
   const lines = [
     `${p.brand} — brand package`,
@@ -293,9 +318,21 @@ export function packageReadme(pack = {}, plan = null) {
     '',
     'Contents:',
   ]
+  /* Contents lists what was PLANNED, and not everything planned survives. A
+     line naming a file that is not in the folder sends the client looking for
+     it, so absence is marked where they read the name — not only in a list
+     further down. */
+  const gapByPath = new Map((missing || []).filter(Boolean).map((m) => [m.path, m.reason]))
   for (const f of p.folders) {
     lines.push(`  ${f.name}/`)
-    for (const file of f.files) lines.push(`    ${file.name} — ${file.note}`)
+    for (const file of f.files) {
+      const gap = gapByPath.get(`${f.name}/${file.name}`)
+      lines.push(
+        gap
+          ? `    ${file.name} — NOT INCLUDED (${gap})`
+          : `    ${file.name} — ${file.note}`
+      )
+    }
   }
   const fonts = fontInformation(pack)
   if (!fonts.filesIncluded) {
@@ -310,13 +347,39 @@ export function packageReadme(pack = {}, plan = null) {
     lines.push('', 'Not included:')
     for (const x of p.excluded) lines.push(`  ${x.name} — ${x.reason}`)
   }
-  lines.push(
-    '',
-    'A full logo handoff usually also includes a one-colour and a reverse',
-    'version of the mark. Those are shown in the app as previews; ask your',
-    'designer if you need them as separate files.',
-    ''
-  )
+  /* Planned but not written. A package once shipped a logo folder holding
+     nothing but a usage sheet, and the README's contents list said only what
+     WAS there — so the absence of the mark itself was the one fact the
+     document did not mention. A missing file the client is not told about is
+     indistinguishable from one they lost. */
+  const gaps = (missing || []).filter(Boolean)
+  if (gaps.length) {
+    lines.push('', 'Planned but not in this package:')
+    for (const g of gaps) lines.push(`  ${g.path} — ${g.reason}`)
+  }
+
+  /* Only when a mark actually shipped. Offering the "usually also includes"
+     footnote for a package with no logo at all implies a primary was
+     supplied. */
+  const hasMark = p.folders.some((f) => f.files.some((x) => x.kind === 'mark'))
+  const markShipped =
+    hasMark && !gaps.some((g) => /logo/i.test(g.path) && /mark/i.test(g.reason))
+  if (markShipped) {
+    lines.push(
+      '',
+      'A full logo handoff usually also includes a one-colour and a reverse',
+      'version of the mark. Those are shown in the app as previews; ask your',
+      'designer if you need them as separate files.'
+    )
+  } else {
+    lines.push(
+      '',
+      'No logo file is included in this package — there is no stored mark on',
+      'the project yet. The usage sheet describes the rules; ask your designer',
+      'for the artwork itself.'
+    )
+  }
+  lines.push('')
   return lines.join('\n')
 }
 

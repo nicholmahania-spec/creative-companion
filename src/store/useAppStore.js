@@ -458,6 +458,14 @@ export function blankWorkspaceState() {
          designer then has to remember the position of. Empty IS the off
          state, so there is nothing to toggle either. */
       studioName: '',
+      /* The studio's mark, as a data URL, for surfaces that can carry an
+         image. Always written through `prepareStudioLogo`, which downscales
+         and hard-caps it at 100KB of string — never straight from a file
+         picker. `prefs` rides inside the single localStorage write that
+         carries the whole workspace, so an uncapped logo here would fail the
+         save of every project, not just its own. See src/lib/studio/
+         studioIdentity.js for the full reasoning. */
+      studioLogo: '',
       /* Brand book page setup. Sticky across projects rather than per-project:
          a studio's paper size and print habits don't change per client, and
          re-deciding them on every project is a recurring toll. Shown as text
@@ -1195,6 +1203,12 @@ const useAppStore = create(
           item: asset.item || asset.name || 'asset',
           variant: asset.variant || '',
           rights: asset.rights || 'clientOwned',
+          /* A file the app could not take — today only 'tooLarge'. Kept as a
+             row rather than refused at the door, so the panel and the client's
+             README can name it. A file silently not added is indistinguishable
+             from one the designer forgot. */
+          heldBack: asset.heldBack || '',
+          sizeBytes: Number(asset.sizeBytes) || 0,
           addedAt: new Date().toISOString(),
         }
         set((state) => ({

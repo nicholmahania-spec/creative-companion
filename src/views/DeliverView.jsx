@@ -3,7 +3,7 @@
  * One job: handoff note and one primary download. Setup, stationery,
  * formats, and leave live below as secondary work.
  */
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import CaseStudyExport from '../components/CaseStudyExport'
 import ClientPackagePanel from '../components/ClientPackagePanel'
@@ -61,6 +61,7 @@ export default function DeliverView({
   activeProject = null,
   projectPalette = [],
   studioName = '',
+  prefs = {},
   bookSetup = { pageSize: 'letter', edgeSpace: 'standard', printShop: false },
   setActiveView,
   goToProcessStep,
@@ -86,6 +87,12 @@ export default function DeliverView({
     activeProject?.name || 'Untitled project',
     studioName,
   ])
+
+  /* The value as typed, not as resolved. `studioName` may have come from the
+     invoice identity, and putting an inherited value into the input would show
+     the designer editing a field they never filled in. */
+  const studioNameRaw = String(prefs?.studioName || '')
+  const [creditOpen, setCreditOpen] = useState(!studioName)
 
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const addContact = useAppStore((s) => s.addContact)
@@ -174,6 +181,58 @@ export default function DeliverView({
             Core pack looks ready — download when you want
           </p>
         )}
+
+        {/* The credit, next to the button that sends it — the only moment it
+            is ever visible. It used to live inside the collapsed "Page setup ·
+            print size" block below, labelled "Footer credit", where the owner
+            of this app never found it and shipped uncredited client work
+            without ever being told.
+
+            Two states, one rule: the line that will print is always shown.
+            Once there is something to credit this is read-only and Settings
+            owns the value, so there is one writer and no drift. While there is
+            nothing to credit the field is offered right here — the value is
+            visible, the answer is in mind, and sending someone to Settings to
+            fix a gap they just spotted is a working-memory carry across two
+            screens for two seconds of typing.
+
+            No warning, no badge, no blocking dialog. The gap speaks for
+            itself: the designer's name is plainly not in the string. */}
+        <div className="deliver-credit">
+          <p className="book-setup-state">
+            Every page you send says: {packFooterPreview}
+          </p>
+          {creditOpen ? (
+            <>
+              <label className="field-label" htmlFor="studio-name">
+                Your studio
+              </label>
+              {/* Held open by state rather than keyed on `studioName`. Keyed on
+                  the value, the first character typed makes it truthy, the
+                  branch swaps the input for a button mid-keystroke, and focus
+                  is lost with one letter saved. It closes on blur instead. */}
+              <input
+                id="studio-name"
+                className="field-input"
+                type="text"
+                value={studioNameRaw}
+                placeholder="Your studio name"
+                onChange={(e) => setPref('studioName', e.target.value)}
+                onBlur={() => {
+                  if (studioNameRaw.trim()) setCreditOpen(false)
+                }}
+              />
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setActiveView?.('settings')}
+            >
+              Change in Settings
+            </button>
+          )}
+        </div>
 
         <div className="path-continue-row deliver-primary-ship">
           <button
@@ -309,27 +368,6 @@ export default function DeliverView({
               <span>Going to a print shop</span>
             </label>
             <p className="book-setup-state">{bookSetupSummary(bookSetup)}</p>
-            {/* Replaced a "Hide Creative Companion credit" checkbox that only
-                worked on one of seven surfaces. A name is also the thing the
-                designer actually wants on their client's book — the checkbox
-                could only ever take something away. Prefilled from the invoice
-                identity, which is where most studios have already typed it. */}
-            <label className="field-label" htmlFor="studio-name">
-              Footer credit
-            </label>
-            <input
-              id="studio-name"
-              className="field-input"
-              type="text"
-              value={studioName}
-              placeholder="Your studio name"
-              onChange={(e) => setPref('studioName', e.target.value)}
-            />
-            {/* The state is read, not remembered: this is the line that will
-                print, not a description of a setting. */}
-            <p className="book-setup-state">
-              Footer reads: {packFooterPreview}
-            </p>
           </div>
         </details>
 
