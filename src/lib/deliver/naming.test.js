@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   assetFileName,
+  extFromBytes,
   extFromDataUrl,
   namePart,
   uniqueNames,
@@ -89,5 +90,46 @@ describe('data urls', () => {
     expect(extFromDataUrl('https://example.com/a.png')).toBe(null)
     expect(extFromDataUrl('')).toBe(null)
     expect(extFromDataUrl(null)).toBe(null)
+  })
+})
+
+/**
+ * A real package shipped two files named `.png` whose first four bytes were
+ * `%PDF`. The mime in the data URL was unrecognised, so the extension fell
+ * through to a hardcoded `'png'` — a guess, asserted to the client, that their
+ * machine then acts on.
+ */
+describe('extFromBytes reads the bytes, not the label', () => {
+  const b64 = (s) => Buffer.from(s, 'binary').toString('base64')
+
+  it('calls a PDF a PDF however the data URL is labelled', () => {
+    const pdf = b64('%PDF-1.6\r%\xe2\xe3\xcf\xd3\r\n1 0 obj')
+    expect(extFromBytes(pdf)).toBe('pdf')
+    expect(extFromBytes(`data:image/png;base64,${pdf}`)).toBe('pdf')
+    // The mime alone — the old path — gets it wrong.
+    expect(extFromDataUrl(`data:image/png;base64,${pdf}`)).toBe('png')
+  })
+
+  it('recognises the raster formats by signature', () => {
+    expect(extFromBytes(b64('\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'))).toBe('png')
+    expect(extFromBytes(b64('\xff\xd8\xff\xe0\x00\x10JFIF'))).toBe('jpg')
+    expect(extFromBytes(b64('GIF89a.......'))).toBe('gif')
+  })
+
+  it('only claims webp when the RIFF container actually says WEBP', () => {
+    expect(extFromBytes(b64('RIFF\x24\x00\x00\x00WEBPVP8 '))).toBe('webp')
+    expect(extFromBytes(b64('RIFF\x24\x00\x00\x00WAVEfmt '))).toBe(null)
+  })
+
+  it('finds SVG past a declaration or leading space', () => {
+    expect(extFromBytes(b64('<svg xmlns="x"></svg>'))).toBe('svg')
+    expect(extFromBytes(b64('<?xml version="1.0"?><svg/>'))).toBe('svg')
+    expect(extFromBytes(b64('   <svg/>'))).toBe('svg')
+  })
+
+  it('says nothing rather than guessing', () => {
+    expect(extFromBytes(b64('hello world, not a known format'))).toBe(null)
+    expect(extFromBytes('')).toBe(null)
+    expect(extFromBytes(null)).toBe(null)
   })
 })

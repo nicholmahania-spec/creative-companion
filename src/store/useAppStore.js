@@ -1144,6 +1144,12 @@ const useAppStore = create(
           item: asset.item || asset.name || 'asset',
           variant: asset.variant || '',
           rights: asset.rights || 'clientOwned',
+          /* A file the app could not take — today only 'tooLarge'. Kept as a
+             row rather than refused at the door, so the panel and the client's
+             README can name it. A file silently not added is indistinguishable
+             from one the designer forgot. */
+          heldBack: asset.heldBack || '',
+          sizeBytes: Number(asset.sizeBytes) || 0,
           addedAt: new Date().toISOString(),
         }
         set((state) => ({
