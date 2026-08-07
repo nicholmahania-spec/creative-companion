@@ -474,6 +474,25 @@ nowhere else in the application and as no token anywhere. The app's own light si
 directly against the builder's black panel with no transition. Two design systems, adjacent, in
 one product — and this is the headline output the whole workflow builds toward.
 
+> **Refinement (verified after first publication).** The sharpest cause is not colour — it is
+> **type**, and this section missed it. `.bbb-root` set `font-family: "Inter Local", "Inter",
+> sans-serif`, borrowing one of the `@font-face` options declared above it. Those are the *brand*
+> fonts a designer picks for the client's book, not interface fonts. And it did not resolve: they
+> are `src: local(...)` faces, so on any machine without Inter installed **the entire builder fell
+> through to the browser's default sans** while every other screen rendered Plus Jakarta Sans.
+> Measured in a running build: `document.fonts.check('"Inter Local"')` → `false`,
+> `'Plus Jakarta Sans'` → `true`. It was also non-deterministic *between users* — a designer with
+> Inter installed saw a different application from one without.
+>
+> This is the same bug `shell.css` records fixing in its `--font-sans` note; this file missed it.
+>
+> **The dark panel should stay.** This section implied it was part of the problem. On reflection
+> it is the opposite: dark tool chrome around a paper canvas is how document editors have always
+> separated workspace from artefact, and it is the clearest existing expression of the
+> **Ink and Paper** signature proposed in Phase 12. What had no defence was the font, the orphan
+> `#c77b4b` accent, and ten `var(--radius, Npx)` fallbacks carrying five different values in a
+> one-radius system. Those are fixed; the chrome is not a defect.
+
 Inside it: the "IN THIS BOOK" reorder list puts labels *to the right* of their buttons, misaligns
 them, leaves two rows unlabelled, and prints raw anchor IDs where page names belong. The "NOT IN
 THE BOOK YET" table right-aligns italic grey body copy against left labels so narrow that **every
