@@ -111,6 +111,7 @@ export async function closeRuntime() {
 export const MOD = {
   exportFiles: '/src/lib/book/exportFiles.js',
   brandSystem: '/src/lib/brandSystem.js',
+  studioIdentity: '/src/lib/studio/studioIdentity.js',
   color: '/src/lib/color.js',
   contrastMatrix: '/src/lib/contrast/contrastMatrix.js',
   detectiveBrief: '/src/lib/brief/detectiveBrief.js',

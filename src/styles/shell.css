@@ -10849,3 +10849,51 @@ textarea.artboard-brief-input {
 
 /* The brief — hide mark-done on this writing surface. Journey bar already
    shows path state; a fourth "what do I do" control above Send was clutter. */
+
+/* Studio identity — the designer's own name and mark.
+ *
+ * In shell.css, not lazy-settings.css, deliberately. This block renders in
+ * Settings today and on the signup route next, and dialogChrome.test.js
+ * records what happens when base rules for a shared component live in a
+ * React.lazy chunk: everything using it before that chunk loads renders
+ * unstyled, which for a file input and an image preview is not a cosmetic
+ * failure but an unusable control. */
+.studio-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.studio-logo-preview {
+  max-width: 12rem;
+  /* Capped so a wide wordmark and a square mark occupy the same band and the
+     block does not change height when the logo is replaced. */
+  max-height: 3rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  /* A logo may be white artwork with transparency, which is invisible on a
+     light panel and looks like a failed upload. The checker square is the
+     conventional answer and shows transparency as transparency. */
+  background-image:
+    linear-gradient(45deg, rgba(128, 128, 128, 0.18) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(128, 128, 128, 0.18) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(128, 128, 128, 0.18) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(128, 128, 128, 0.18) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+}
+
+/* The credit line beside the download button. Not a banner, not an alert —
+   ordinary body text stating what will print. PRODUCT.md §21 rules out the
+   red/badge version of this. */
+.deliver-credit {
+  margin: 0.5rem 0 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+}

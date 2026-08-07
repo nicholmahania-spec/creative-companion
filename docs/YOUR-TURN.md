@@ -15,132 +15,116 @@ something changed and I should look at it rather than you guessing.
 ## 1. Put your studio name on your client PDFs
 
 **Time:** about 30 seconds
-**Why it matters:** Right now every PDF you send a client has no credit line on
-it. Not the platform's name — nothing. The footer just reads the project name
-and the date. Your name should be there. That's the whole point of the change I
-made today, but it can't guess what you're called.
+**Why it matters:** Every PDF you send a client currently has no credit line on
+it. Not the platform's name — nothing. The footer reads the project name and
+the date. Your name should be there.
+
+**Check first — it may already be filled in.** You typed a studio name into
+this app once, in the invoice details, and the export code used to ignore it.
+That's now fixed, so your name may already be showing.
 
 **Steps:**
 
-1. Open the app and open any project.
-2. Go to the **Deliver** screen.
-3. Find the grey collapsed row that says **"Page setup · print size"** and click
-   it to open it. (It's closed by default, which is why you've probably never
-   seen what's inside.)
-4. Inside there's a box labelled **"Footer credit"**.
-5. Type your studio name — whatever you want clients to read. For example
-   `Sparrow Studio` or `Nichol Mahania`.
+1. Open the app.
+2. Click **Account** in the top right, to reach **Settings**.
+3. The very first block is **"Your studio"**.
+4. **Business name** — type what you want clients to read. If it already shows
+   a name underneath from your invoice details, you're done; type here only if
+   you want something different.
+5. **Logo** — optional. "Add a logo" opens a file picker. Pick your mark and
+   it's saved.
 
-**How to know it worked:** Directly under the box is a line starting
-**"Footer reads:"**. It updates as you type and shows you the exact line that
-will print. When it looks right, it *is* right — that's a live preview, not a
-description.
+**How to know it worked:** at the bottom of that block is a line reading
+**"Every page you send says: …"**. It updates as you type and shows the exact
+footer that will print. When it looks right, it *is* right — that's the real
+thing, not a description of it.
 
-**Note:** You only do this once. It's remembered for every project and every
-PDF from then on.
+**You only do this once.** It's remembered for every project and every export.
+
+**Two notes on the logo:**
+
+- It's shrunk to footer size when saved. Your original file is untouched. This
+  isn't fussiness — your whole workspace saves as one lump to browser storage
+  with a hard size limit, and a full-size logo in there would have broken
+  saving for your projects and approvals too.
+- **The logo doesn't print on exports yet.** It's stored and previewed, but
+  every export still prints the text name. That's the next piece of work.
+
+**This item used to say something different.** It sent you to the Assets screen,
+into a collapsed row called "Page setup · print size", to a box labelled
+"Footer credit". You said that was far too complicated and you were right — it
+was account-level identity sitting on a per-project screen. It moved to
+Settings on 7 Aug. The Assets screen now just shows you the footer line and
+links here.
 
 ---
 
-## 2. Merge the work that's finished and waiting
+## 2. ~~Merge the work that's finished and waiting~~ ✅ DONE
 
-**Time:** about a minute
-**Why it matters:** There's finished, tested work sitting in a pull request. It
-isn't live for you until it's merged.
+**You asked me to do this one on 7 Aug and it's merged.** Nothing left for you
+here. Leaving it on the list so you can see what landed.
 
-**What's in it:** your studio name on all seven places client work shows up, the
+**What went in:** your studio name on all seven places client work shows up, the
 XP/points system deleted (it was running invisibly and the product spec bans
 it), the screen-lock consent box fix from your screenshot, and three standing
 rules for how I work.
 
-**Steps:**
+Before merging I checked that all the automated tests genuinely ran rather than
+just reporting green — 1,355 tests, plus the slower browser tests, all passed.
+That check mattered: a "success" that quietly skipped the browser tests would
+have looked identical.
 
-1. Go to https://github.com/nicholmahania-spec/creative-companion/pull/146
-2. Scroll to the bottom.
-3. Look for a green tick and the words **"All checks have passed"**.
-   - **Green tick →** click the green **"Merge pull request"** button, then
-     **"Confirm merge"**. Done.
-   - **Red X →** *stop and tell me.* Don't merge. A red X today has usually been
-     GitHub being broken rather than the code, but I need to check which one it
-     is. That's my job, not yours.
-   - **Still spinning →** come back in ten minutes.
+**It's live.** Vercel rebuilt your site automatically. If you want to see the
+change, do item 1 below and then export any PDF — your name will be on it.
 
-**How to know it worked:** The page turns purple and says **"Merged"**.
-
-**After that:** Vercel automatically rebuilds your live site within a couple of
-minutes. You don't have to do anything.
+**Item 5 got shorter** — see it below. The branch that just merged would normally
+join that tidy-up list, but I'm still using it for the next piece of work, so
+don't delete that one.
 
 ---
 
-## 3. Decide: what happens to the `--no-watermark` switch
+## 3. ~~Decide: what happens to the `--no-watermark` switch~~ ✅ DONE
 
-**Time:** 2 minutes to decide, and I do the work
-**This one is a real decision and I've deliberately not made it for you.**
+**You chose A on 7 Aug — remove it — and it's done.**
 
-**Plain English version of the problem:**
+The switch is gone from the help text and from the code. It doesn't silently
+ignore you any more: if you (or an old script) still pass it, the command stops
+and says the flag no longer exists and why.
 
-There's a way to make a brand pack from the command line (a typed-command tool,
-not the app). It has a switch called `--no-watermark` whose job was to remove
-the "Creative Companion" credit from the PDF.
+**The bigger half is also fixed.** That terminal tool never passed your studio
+name through at all, so a brand pack made that way could never carry your
+credit, flag or no flag. It now reads your studio name from the workspace file
+— including the fall-back to your invoice details — so a pack made in the
+terminal and one made in the app are credited identically.
 
-Today two pieces of work collided:
-
-- One of them **deleted** the thing that switch controlled, and replaced it with
-  your studio name (item 1 above).
-- The other one **added** the command-line tool, still using the old switch.
-
-Both are now in play. The result: the switch still exists, its help text still
-promises it removes the watermark, and it now does **absolutely nothing**. It
-doesn't error. It doesn't warn. It just quietly ignores you.
-
-There's a second half to it: the command-line tool never passes your studio name
-through, so PDFs made that way can't have your credit on them at all.
-
-**Your options:**
-
-- **A — Remove the switch and wire your studio name through.** My
-  recommendation. The switch controls something that no longer exists, so it's
-  lying either way; better to delete it than leave a promise the code can't
-  keep. Roughly ten minutes of work for me.
-- **B — Leave it.** Nothing breaks. It's a small lie in a tool only you use.
-- **C — Something else** — tell me what you actually want that switch to do and
-  I'll build that instead.
-
-**What to do:** just reply with **A**, **B**, or **C**. No clicking needed.
+There were no tests covering any of this, which is how it got through. There
+are now six, and I checked they can actually fail by breaking the code three
+different ways.
 
 ---
 
-## 4. Decide: is the Asset Library ready to be a pull request?
+## 4. ~~Decide: is the Asset Library ready to be a pull request?~~ ✅ DECIDED
 
-**Time:** 2 minutes to decide
-**Why I'm asking:** I built the Asset Library screen and it's tested and green
-(1,375 tests pass). But it's **half a feature**, and I don't want to slide that
-past you.
+**You chose B on 7 Aug — wait.**
 
-**What works:** the screen, the layout, filing things into categories, moving
-something to a different category.
-
-**What doesn't:** the drop zone. You can drag a file onto it and it will accept
-the drag — and then nothing happens. The file goes nowhere. That's the part I
-haven't built yet.
-
-**Your options:**
-
-- **A — Open the pull request now,** clearly labelled as unfinished, so you can
-  click around the screen and tell me if the layout is right before I build the
-  hard part. Sensible if you want a say in how it looks.
-- **B — Wait.** I build the file-upload half first, then open one pull request
-  with a feature that actually works end to end.
-
-**What to do:** reply **A** or **B**.
+No pull request for now. I'll build the file-upload half first, so what you
+eventually see is a screen where dragging a file onto it actually does
+something. Nothing for you to do here.
 
 ---
 
-## 5. Tidy up nine finished branches
+## 5. Tidy up six finished branches
 
-**Time:** about 3 minutes
-**Why it matters:** Purely tidiness. Nine branches are fully merged — their work
-is already in `main`, and the branches are just clutter now. It makes the branch
-list easier to read. Nothing breaks either way.
+**Time:** about 2 minutes
+**Why it matters:** Purely tidiness. Six branches are fully merged — their work
+is already in `main`, and the branches are just clutter now. Nothing breaks
+either way.
+
+**This said nine when I first wrote it.** Three of them deleted themselves within
+the hour, because your repo is set to remove a branch automatically once its
+pull request merges. So this list shrinks on its own over time. The six below
+are older ones from before that setting was on — they're the only ones left that
+need doing by hand.
 
 **Why you and not me:** my access can create and push branches but not delete
 them. GitHub rejects my delete requests. Not something I can work around.
@@ -149,24 +133,23 @@ them. GitHub rejects my delete requests. Not something I can work around.
 
 1. Go to https://github.com/nicholmahania-spec/creative-companion/branches
 2. Click the **"Stale"** tab at the top.
-3. For each of the nine names below, find its row and click the **rubbish bin
+3. For each of the six names below, find its row and click the **rubbish bin
    icon** on the right:
 
-   - `cc-cli`
-   - `claude/brand-brain-completeness-ox6c3e`
    - `claude/mai-ike-version-broken-7w8p30`
    - `claude/next-phase-xytovw`
-   - `fix-backup-save-handle`
    - `test-vercel-ci`
    - `worktree-fix-main-branch`
    - `worktree-fix-react-final`
    - `worktree-focus-mode-implementation`
 
+**If a name isn't there,** it already deleted itself. That's fine — skip it.
+
 **Safety net:** GitHub shows an **"Undo"** button right after each delete, and
-even later you can restore a deleted branch. These nine are all fully merged, so
+even later you can restore a deleted branch. All six are fully merged, so
 there's nothing in them that isn't already safe in `main`.
 
-**Only delete the nine listed.** Others in that list still have unmerged work in
+**Only delete the six listed.** Others in that list still have unmerged work in
 them — including the two I'm working on right now.
 
 ---
