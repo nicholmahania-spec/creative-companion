@@ -932,7 +932,21 @@ No confetti. No streaks. No scores. This audience is served by calm, not reward 
 
 *Depends on #1. #6 and #8 are independent of each other and can run in parallel.*
 
-### Phase 3 — DIFFERENTIATE
+### Phase 3 — DIFFERENTIATE ✅ *complete*
+
+> **Shipped, with two of the four narrowed on contact with the code.**
+> **#10 Specimen Block** — placed on the Home project card, not "every path stop's header": three
+> of the five stops run before a brand exists or would compete with a reference wall, and
+> Desk/Identity/Review already carry the treatment.
+> **#11 Brand Book Builder** — the break turned out to be *type*, not chrome: it declared a font
+> that never loaded and rendered in the browser default sans, differing between users. The dark
+> panel was kept and is now argued *for* — it is how document editors separate workspace from
+> artefact, which is #13's thesis.
+> **#13 Ink and Paper** — the rule the artefact previews already followed, given tokens
+> (`--paper`), a grammar line (G4.4) and a guard.
+> **#12 Working Margin** — the reserved gutter became a real margin carrying the chapter numbers
+> as folios. Measured: one content axis at both widths, five numbers on one left edge.
+
 | # | Change | Scope | Impact |
 |---|---|---|---|
 | 10 | Build the Specimen Block from the Review Direction Sheet; place it on every path stop header, Desk, Home project card, Brand Book cover, client reveal | Global | The product becomes recognisable |

@@ -88,7 +88,7 @@
    settled. The header now shares the chapters' axis instead of the chapters
    being pulled off the header's. */
 .define-brief .define-brief-head {
-  padding-left: calc(var(--space-5) + 2px);
+  padding-left: calc(var(--define-margin, var(--space-5)) + 2px);
 }
 
 .define-brief-status {
@@ -716,12 +716,40 @@
    surface; the rest are separated by space, not by a box. */
 /* No card. Chapters are separated by space and by the weight of their titles,
    not by a rectangle each. */
+/* ── The working margin ────────────────────────────────────────────────────
+   The brief is set the way a brand manual is set: a narrow left margin
+   carrying the chapter number, and the content in a measure beside it.
+
+   The gutter already existed — `.define-chapter` reserved `2px + --space-5`
+   so the `.is-current` hairline could appear without shoving the fields
+   sideways. That reserved strip was doing one job and standing empty the rest
+   of the time, while the number it could have held sat inline in the heading
+   row instead, where it read as a word rather than a folio.
+
+   The width is --space-7 off the ramp, not a hand-picked figure: the scale
+   ratchet rejects new one-off spacing values, and it was right to — 3.25rem
+   was a number I liked rather than a step anyone else could reuse.
+
+   Widening it to --define-margin and moving the number into it costs nothing
+   but alignment and gives the page a structure: five numbers down a common
+   left edge, each title starting on the same axis as every field under it.
+   The marker keeps its lane — the number sits inboard of it.
+
+   Declared on .define-brief, not on .define-chapters, because the page header
+   above the chapters has to sit on the same axis and cannot inherit from a
+   sibling. One value, one place: the header and the chapters drifting apart
+   is precisely how the axis broke before. */
+.define-brief {
+  --define-margin: var(--space-7);
+}
+
 .define-chapter {
+  position: relative;
   border-radius: var(--radius-none);
   background: none;
   border: none;
   border-left: 2px solid transparent;
-  padding: 0 0 0 var(--space-5);
+  padding: 0 0 0 var(--define-margin, var(--space-5));
   box-shadow: none;
   animation: defineChapterIn 0.35s var(--ease-out, ease);
 }
@@ -744,13 +772,49 @@
   border-bottom: none;
 }
 
+/* Lifted out of the heading row and into the margin. Tracked caps at the
+   ramp floor rather than --fs-3 display type: in the margin it is a folio,
+   not a heading — it marks where you are, it does not compete with the title
+   it labels. `line-height` matches the title's line box so the number sits on
+   the title's own line rather than being eyeballed with a magic `top`. */
 .define-chapter-badge {
+  position: absolute;
+  left: var(--space-2);
+  top: 0;
+  width: calc(var(--define-margin, var(--space-5)) - var(--space-4));
   font-family: var(--font-display);
-  font-size: var(--fs-3);
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  color: var(--define-ch-1);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: calc(var(--fs-5) * var(--leading-heading, 1.2));
+  color: var(--text-muted);
   text-shadow: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Below the fold of a phone the margin is a luxury the measure cannot pay
+   for: 3.25rem off a 390px screen is a tenth of the line. The number goes
+   back inline and the gutter narrows.
+
+   --space-3, not --space-5, because shell.css already halves `.define-chapter`
+   to `var(--space-3)` at this width ("Keep the mark, halve the indent") and
+   the token has to say what actually renders. Measured before this line: the
+   header derived 26px from the token while the chapter rendered 12px, so the
+   H1 sat 12px right of every field under it — the same axis break this margin
+   exists to close, surviving at one breakpoint because two rules disagreed
+   about one number. It predates this change; it is fixed here because this is
+   the change that made the token the source of truth. */
+@media (max-width: 640px) {
+  .define-brief {
+    --define-margin: var(--space-3);
+  }
+
+  .define-chapter-badge {
+    position: static;
+    width: auto;
+    font-size: var(--fs-2);
+    line-height: inherit;
+  }
 }
 
 /* Carries the section break now that the card doesn't.
