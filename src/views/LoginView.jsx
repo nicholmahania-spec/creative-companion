@@ -333,9 +333,17 @@ export default function LoginView({ onUnlocked, cloud = false }) {
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
+            {/* Two different things, said separately, because as one line it
+                was neither. It read as the requirement, but the actual minimum
+                is 6 (lib/auth.js) — so the first screen stated a rule stricter
+                than it enforced, and the error you got for failing it said "at
+                least 6 characters", a third answer. Settings' own "New (6+)"
+                placeholder disagreed with it too. 8+ and the character classes
+                are what the strength meter below scores: guidance, not a gate. */}
             {(mode === 'setup' || mode === 'signup') && (
               <p className="login-pw-hint">
-                8+ characters, mixing upper/lowercase, numbers or symbols.
+                At least 6 characters. Longer is better — 8 or more, mixing
+                upper and lowercase, numbers or symbols.
               </p>
             )}
             {(mode === 'setup' || mode === 'signup') && (
