@@ -1096,30 +1096,57 @@ export async function downloadBrandPackVectorPdf(
       })
       y += cellH * 2 + gap + px(24)
 
-      // Construction: the real artwork if there is any, else the monogram
-      const BOXW = px(110)
-      outline(margin, y, BOXW, BOXW, INK, 0.75, [2, 2])
+      /* Clear space as a DIAGRAM, and minimum size shown at size.
+         Both were prose. "Clearspace ~ half the mark height on all sides" is a
+         sentence a printer cannot measure, and "28px digital · 0.6in print" is
+         a number nobody can picture — every published guide draws both, because
+         both are spatial facts. The app is the one place in the chain that
+         knows the mark's real bounding box, so it is the one place that can
+         draw them without the designer redrawing them by hand. */
       const src = pack?.logoImage
       const fmt = imageFormatFromDataUrl(src)
-      let drewArtwork = false
-      if (fmt && src) {
-        try {
-          const inset = px(24)
-          pdf.addImage(src, fmt, margin + inset, y + inset, BOXW - inset * 2, BOXW - inset * 2)
-          drewArtwork = true
-        } catch {
-          /* fall through to the monogram */
+
+      /** The mark if there is one, else the monogram — at any size. */
+      const drawMark = (mx, my, w, h) => {
+        if (fmt && src) {
+          try {
+            pdf.addImage(src, fmt, mx, my, w, h)
+            return
+          } catch {
+            /* fall through to the monogram */
+          }
         }
-      }
-      if (!drewArtwork) {
-        setFace('heading', px(26), ON_CREAM)
-        pdf.text(pdfSafeText(monogram), margin + BOXW / 2, y + BOXW / 2 + px(26) * 0.36, {
+        const fs = Math.min(h * 0.7, w * 0.7)
+        setFace('heading', fs, ON_CREAM)
+        pdf.text(pdfSafeText(monogram), mx + w / 2, my + h / 2 + fs * 0.36, {
           align: 'center',
         })
       }
+
+      const BOXW = px(110)
+      /* X is the module every guide uses: the clear space is expressed as a
+         multiple of it, so the rule survives the mark being scaled. Half the
+         mark height is the app's own default and what the copy already says. */
+      const X = BOXW * 0.22
+      const inner = BOXW - X * 2
+
+      outline(margin, y, BOXW, BOXW, INK, 0.75, [2, 2])
+      drawMark(margin + X, y + X, inner, inner)
+
+      // The mark's own bounding box, so the gap being measured is visible.
       pdf.setLineDashPattern([1, 2], 0)
-      outline(margin + px(20), y + px(20), BOXW - px(40), BOXW - px(40), mixRgb(INK, CREAM, 0.4), 0.5)
+      outline(margin + X, y + X, inner, inner, mixRgb(INK, CREAM, 0.4), 0.5)
       pdf.setLineDashPattern([], 0)
+
+      /* One X label per side, in the gap it measures. Without these the two
+         boxes are decoration — the label is what turns them into a rule. */
+      setFace('label', px(8), mixRgb(INK, CREAM, 0.35))
+      const midX = margin + BOXW / 2
+      const midY = y + BOXW / 2
+      pdf.text('X', midX, y + X / 2 + px(3), { align: 'center' })
+      pdf.text('X', midX, y + BOXW - X / 2 + px(3), { align: 'center' })
+      pdf.text('X', margin + X / 2, midY + px(3), { align: 'center' })
+      pdf.text('X', margin + BOXW - X / 2, midY + px(3), { align: 'center' })
 
       const specW = contentW - BOXW - px(24)
       const specX = margin + BOXW + px(24)
@@ -1144,6 +1171,43 @@ export async function downloadBrandPackVectorPdf(
         })
       }
       y += BOXW + px(22)
+
+      /* Minimum size, drawn at descending sizes rather than stated.
+         "28px digital · 0.6in print" tells a client a number; the ladder tells
+         them what it looks like when the mark stops working, which is the
+         judgement the rule exists to support. The last step is the smallest
+         the rule permits, labelled as the floor. */
+      {
+        const steps = [
+          { w: px(78), label: 'Full size' },
+          { w: px(52), label: 'Reduced' },
+          { w: px(34), label: 'Small' },
+          { w: px(22), label: 'Minimum' },
+        ]
+        const rowH = px(78)
+        if (y + rowH + px(34) < floorY()) {
+          kicker('Minimum size', margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+          y += KICKER_PT * 0.82 + px(12)
+          let sx = margin
+          const gapX = px(22)
+          for (const step of steps) {
+            // Baseline-aligned, so the ladder reads as one descending row.
+            drawMark(sx, y + (rowH - step.w), step.w, step.w)
+            setFace('label', px(8), mixRgb(INK, CREAM, 0.35))
+            pdf.text(pdfSafeText(step.label), sx, y + rowH + px(11), { align: 'left' })
+            sx += step.w + gapX
+          }
+          const floorNote = clean(pack?.logoMinSize) || DEFAULT_LOGO_MIN_SIZE
+          setFace('body', px(10), MUTE_CREAM)
+          pdf.text(
+            pdfSafeText(`Never below: ${floorNote}`),
+            margin + contentW,
+            y + rowH + px(11),
+            { align: 'right' }
+          )
+          y += rowH + px(30)
+        }
+      }
 
       // Don't — pill tags, from the project's own list
       const donts = logoDontsList(pack)
