@@ -425,6 +425,18 @@ function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [runningTodoPromptOpen, setRunningTodoPromptOpen] = useState(false)
   const [runningTodoPanelOpen, setRunningTodoPanelOpen] = useState(false)
+  /* The To-do pill collapses to a circle while the page is moving, so the
+     area that can land on a control shrinks from ~86px to 48px, then returns
+     to its labelled shape the moment you stop. Owner's call (2026-08-07) over
+     reserving a gutter or moving it; hiding it was ruled out, since it is the
+     frictionless-capture entry point and a pill that is absent when the
+     thought arrives loses the thought.
+
+     Idle timer, not scroll direction: direction flips on every small
+     correction, which would make the pill flicker between two shapes. The
+     shrink is visual only — aria-label carries the accessible name and never
+     changes, so nothing moves for a screen reader. */
+  const [fabCompact, setFabCompact] = useState(false)
   /** True when the add popup was opened by an explicit "Add to list" click,
    *  so it skips the "Anything to add?" yes/no gate. */
   const [runningTodoAddDirect, setRunningTodoAddDirect] = useState(false)
@@ -1891,6 +1903,32 @@ function App() {
     // dialog's own focus-restore-to-opener — the guard above reads the current
     // dialog state at nav time, which is all it needs.
   }, [activeView])
+
+  /* Collapse the To-do pill while the page is moving; restore it on idle.
+     rAF-coalesced so a fast flick sets the flag once per frame rather than
+     once per scroll event, and the 450ms idle window is long enough that
+     momentum scrolling does not re-expand it mid-glide. The transition (and
+     its prefers-reduced-motion opt-out) lives in CSS beside the pill. */
+  useEffect(() => {
+    let idleTimer = 0
+    let frame = 0
+    const onScroll = () => {
+      if (!frame) {
+        frame = requestAnimationFrame(() => {
+          frame = 0
+          setFabCompact(true)
+        })
+      }
+      clearTimeout(idleTimer)
+      idleTimer = window.setTimeout(() => setFabCompact(false), 450)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      clearTimeout(idleTimer)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [])
 
   // Close sidebar project ⋯ menus on outside click / Escape. (The Tools
   // menu is a centered overlay now — its backdrop and the global Esc chain
@@ -4523,7 +4561,7 @@ function App() {
 
       <button
         type="button"
-        className="todo-fab"
+        className={`todo-fab${fabCompact ? ' is-compact' : ''}`}
         onClick={() => setRunningTodoPanelOpen(true)}
         title="To-do list"
         aria-label={

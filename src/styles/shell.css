@@ -9961,7 +9961,12 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .todo-fab { transition: none; }
+  /* The label is covered too, or the pill still animated its width on every
+     scroll for someone who asked for no motion. The shrink itself is kept —
+     it is what stops the pill covering a control — it just snaps rather than
+     glides. */
+  .todo-fab,
+  .todo-fab__label { transition: none; }
 }
 
 .todo-fab:hover {
@@ -10909,6 +10914,44 @@ textarea.artboard-brief-input {
   font-size: var(--fs-1);
   font-weight: 500;
   white-space: nowrap;
+}
+
+/* Compact while the page is moving (owner's call, 2026-08-07). The pill wins
+   the tap at z-index 90 over whatever sits at the bottom-right, and mid-scroll
+   overlap is inherent to a fixed control over flow content — padding only ever
+   fixed the end-of-page case. Shrinking to the 3rem circle while scrolling
+   cuts the colliding area from ~86px to 48px and gives the label back the
+   moment you stop, so the pill is never absent and never unlabelled at rest.
+   Hiding it was ruled out: it is the frictionless-capture entry point, and one
+   that is missing when the thought arrives loses the thought.
+   `max-width` rather than `display: none` so the label can transition, and it
+   stays in the DOM either way — the accessible name comes from aria-label on
+   the button, which does not change, so a screen reader sees nothing move. */
+.todo-fab {
+  transition:
+    opacity 0.15s ease,
+    min-width 0.18s ease,
+    padding 0.18s ease;
+}
+
+.todo-fab.is-compact {
+  padding: 0;
+  /* Without this the flex gap survives the collapsed label and the circle
+     renders lopsided, with the icon pushed left of centre. */
+  gap: 0;
+}
+
+.todo-fab__label {
+  max-width: 6rem;
+  overflow: hidden;
+  transition:
+    max-width 0.18s ease,
+    opacity 0.12s ease;
+}
+
+.todo-fab.is-compact .todo-fab__label {
+  max-width: 0;
+  opacity: 0;
 }
 
 /* Spinning rainbow chrome (owner-requested Button-85).
