@@ -120,7 +120,42 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  /* var(--space-3) between seven blocks as unalike as page setup, a case
+     study, the stationery kit and three disclosures read as one
+     undifferentiated stack — the "20+ ungrouped panels" the audit measured at
+     ~3,700px deep. The blocks are heterogeneous enough that space alone can't
+     group them, so each gets a boundary as well (G6: border when space cannot
+     carry the hierarchy). */
+  gap: 0;
+}
+
+.assets-secondary > * + * {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* .deliver-advanced brings its own margin/border-top for the runs where it
+   appears on its own. Inside this column the rule above already draws the
+   boundary, so its copy would double the line and halve the space. */
+.assets-secondary > .deliver-advanced {
+  margin-top: var(--space-5);
+  border-top: none;
+  padding-top: var(--space-5);
+}
+
+/* .assets-stationery carries its own `margin: var(--space-2) 0 0`, declared
+   later in this file and at equal specificity, so it won the cascade and sat
+   16px closer than every other block in the column. Named explicitly rather
+   than reordered, so moving either rule later cannot silently re-break it. */
+.assets-secondary > .assets-stationery {
+  margin-top: var(--space-5);
+}
+
+.assets-secondary > *:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .assets-secondary-title {

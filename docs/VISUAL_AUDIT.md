@@ -322,9 +322,16 @@ Address · Contacts · Letterhead · Business card · Envelope · Email signatur
 That is a settings dump, not a delivery moment.
 
 Two more things in that column:
-- **The document previews are unreadable.** Letterhead, Envelope and Email signature — the actual
-  artefacts this product exists to produce — render as ~130px grey thumbnails where the body copy
-  is a 2px smear.
+- **The document previews are small.** Letterhead, Envelope and Email signature — the actual
+  artefacts this product exists to produce — render as 220×285px scale models.
+
+  > **Correction (verified after first publication).** An earlier draft called these "~130px grey
+  > thumbnails where the body copy is a 2px smear". Measured at 1:1 they are **220×285px**, with
+  > 8px body type and a 6.4px footer, and each sits beside its own *Download PDF*. The "130px" was
+  > this audit's own full-page screenshot being displayed at roughly half scale — the same
+  > capture-reading error behind the scrim, FAB and sticky-column corrections. They are legitimate
+  > thumbnails, not broken ones. Whether 220px is *enough* to judge a letterhead by is a fair design
+  > question; "unreadable" was not a fair description.
 - **The file tree skips a number.** `01_BRAND_GUIDE` `02_LOGO` `03_COLOR` `04_TYPE` `06_PROJECT`.
   There is no `05`. In the one artefact the client actually receives.
 
@@ -630,7 +637,7 @@ Directions 1 and 2 together would give this product a look nothing else has.
 
 | Screen | Score | Working | Biggest problem | Priority |
 |---|---|---|---|---|
-| **Assets / Deliver** | **4/10** | Client package concept is genuinely smart; the sticky preview column is a sound idea | 20+ ungrouped panels stacked 3,700px deep in one column; bare `<details>` hiding real actions; unreadable artefact previews | 🔴 Critical |
+| **Assets / Deliver** | **4/10** | Client package concept is genuinely smart; the sticky preview column is a sound idea | 20+ ungrouped panels stacked 3,700px deep in one column; disclosure markers set as characters; artefact previews small at 220px | 🔴 Critical |
 | **Brand Book Builder** | **3/10** | The page preview itself is nicely set | Entirely different design system; raw anchor IDs in UI; every row of "NOT IN BOOK" wraps; truncated hex values | 🔴 Critical |
 | **Lock / Login** | **3/10** | Honest, well-written security copy | Wordmark printed twice; decorative non-functional path chips; everything at 600 weight; rainbow button; 350px card on a 1440px screen | 🔴 Critical |
 | **Strategy** | **5/10** | Excellent question writing; sensible 01–05 grouping; flat-not-accordion is the right call for this audience | 40 typographically identical fields make chapter boundaries hard to find; two same-weight secondaries stacked in the header | 🟠 High |
@@ -896,7 +903,7 @@ No confetti. No streaks. No scores. This audience is served by calm, not reward 
 ### Phase 4 — POLISH
 | # | Change | Scope | Impact |
 |---|---|---|---|
-| 14 | Group the Assets ship column into three sections; enlarge artefact previews | Screen | Turns the most overloaded screen into a showable one |
+| 14 | Give the Assets ship column a real rhythm — boundaries and space between its seven unlike blocks | Screen | Turns the most overloaded screen into a readable one |
 | 15 | Strengthen Strategy's section boundaries with scale and space (NOT collapse — see Phase 5b correction) | Screen | Chapters become findable in a 4,700px scroll |
 | 16 | Home: one hero card, not three restatements | Screen | Cuts dashboard reading load by a third |
 | 17 | Make the Research wall an actual drop plane; single empty state | Screen | The visual stage becomes visual |
