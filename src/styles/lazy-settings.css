@@ -485,6 +485,28 @@
   max-width: 28ch;
 }
 
+/* The one thing on this screen that tells a stranger what they are looking
+   at, so it reads as prose rather than as chrome — measured, centred, and
+   ahead of the path chips it explains. */
+.login-what {
+  margin: 0 auto var(--space-3);
+  max-width: 34ch;
+  font-size: var(--fs-2);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Names the chips below as a path rather than leaving five product words to
+   be decoded cold. Quiet — it is a caption, not a heading. */
+.login-path-lead {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 .login-path-mini {
   list-style: none;
   margin: 0 0 var(--space-4);
