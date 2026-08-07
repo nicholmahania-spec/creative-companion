@@ -207,17 +207,40 @@
   color: var(--text-primary);
 }
 
+/* ── No overflow-x: hidden on the shell ancestor chain ─────────────────
+   html / body / #root / .app all carried `overflow-x: hidden`. Two costs,
+   both measured (docs/VISUAL_AUDIT_2026-08-07.md):
+
+   1. It silently DISABLED every `position: sticky` in the app. `overflow-x:
+      hidden` with `overflow-y: visible` computes overflow-y to `auto`, which
+      makes the element a scroll container. Sticky children then stick to
+      *that* container — which never scrolls, because the window does. Four
+      declarations were dead code as a result: `.header`, `.path-continue-row`,
+      `.assets-preview-frame`, `.assets-ship`. Measured: at scrollY 2000 the
+      header sat at top -2000; clearing the chain put it at 0.
+
+   2. It hid its own symptom. The header set a min-content floor of up to
+      475px at a 390px viewport, and 42-85px of every mobile path stop was
+      amputated with no scroll to recover it — invisible to every test,
+      because documentElement.scrollWidth stayed at 390.
+
+   The chain is cumulative: clearing `.app` + `#root` alone does nothing, and
+   clearing `body` alone does nothing. All of them have to go.
+
+   Nothing replaces it as a backstop, deliberately. The containment fix below
+   is what keeps the header from overflowing; if something else ever does, a
+   visible horizontal scrollbar is the correct failure — it is obvious in dev
+   and caught by e2e/no-horizontal-overflow.spec.js, where silent clipping was
+   neither. */
 html {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
 }
 
 body {
   margin: 0;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
   font-family: var(--font-sans);
   background-color: var(--bg-canvas);
   color: var(--text-primary);
@@ -232,7 +255,39 @@ body {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: hidden;
+}
+
+/* ── Native controls have to follow the theme ──────────────────────────
+   `color-scheme` was declared nowhere in the app, so in deep mode every
+   native control kept light UA styling on a #151515 canvas. Measured on the
+   brief: radio and checkbox borders came out at 1.15:1 against the canvas
+   (#000 on #151515) where 3:1 is the floor — the four brand-personality
+   spectrum rows (20 radios) and all 24 deliverable checkboxes were, in
+   practice, invisible. The same controls measure 19.26:1 in light.
+
+   On :root, not on .app.deep. Per MDN the canvas and the document scrollbar
+   follow the ROOT element's used scheme, and .app is a div three levels down,
+   so declaring it there would have left the page scrollbar rendering light in
+   dark mode. The theme class lives on .app, hence :has() — the same shape the
+   background rule below already uses.
+
+   Note this flips the UA default `background-color` as well as `color`, so
+   anything that sets only one of the pair can invert. Surfaces that are
+   deliberately white paper in BOTH themes opt back out just below. */
+:root {
+  color-scheme: light;
+}
+
+:root:has(.app.deep) {
+  color-scheme: dark;
+}
+
+/* Paper stays paper. These render a printed page and keep a white background
+   in deep mode by design, so a dark scheme here would put light UA text on
+   white. */
+.book-preview-sheet,
+.bbb-page {
+  color-scheme: light;
 }
 /* Links */
 a {
@@ -270,7 +325,7 @@ body:has(.app.deep),
   flex-direction: column;
   /* Not transparent — overflow gaps were showing body/canvas as a white strip */
   background: var(--bg-canvas);
-  overflow-x: hidden;
+  /* No overflow-x here either — see the note on html/body above. */
 }
 
 .app.view-flow,
@@ -703,6 +758,13 @@ h3 {
   position: sticky;
   top: 0;
   z-index: 40;
+  /* The header used to establish a min-content floor the shell grid could not
+     go below — `min-width: auto` (the default on a grid/flex item) plus a row
+     of nowrap chips that refused to shrink. At 390px that floor reached 475px
+     and the difference was clipped, not scrolled. These two lines are what
+     stop the chrome from ever widening the app again. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 .app.deep .header {
@@ -751,6 +813,10 @@ h3 {
   justify-content: flex-end;
   gap: 0.2rem 0.55rem;
   flex-wrap: wrap;
+  /* Without this the group reports the sum of its chips as its own minimum
+     and refuses to give back a pixel — 257px of nowrap chips on a 390px
+     phone, which is half of how the header came to be wider than the screen. */
+  min-width: 0;
 }
 
 .header-actions .text-action {
@@ -961,6 +1027,10 @@ h3 {
   align-items: center;
   gap: 0.5rem;
   max-width: 1120px;
+  /* Without this the flex container inherits `min-width: auto` and reports the
+     sum of its children's intrinsic widths as its own minimum — which is how
+     a 390px viewport ended up with a 475px header. */
+  min-width: 0;
 }
 
 .header-content-simple > .header-actions {
@@ -8421,8 +8491,17 @@ select:focus {
      old mobile-title input; flex-basis 0 + width 0 on the context span (in
      its own rule below) keeps an intrinsic text width from widening the app
      grid at 360px — the same bug the old input had. */
+  /* `flex: 0 0 auto` here was the second half of the overflow: the group is
+     70 + 77 + 99 + gaps = 257px of nowrap chips that refused, as a group, to
+     give back a single pixel. Allowing it to shrink does NOT strip any label
+     — the chips keep their text and ellipsis only if the viewport genuinely
+     cannot hold them. Icon-only was considered and rejected: NN/g's icon
+     usability work is explicit that labels must stay visible, and Client and
+     Account would have become two adjacent unlabelled person glyphs. The
+     duplicate To-do pill is already hidden at this width (see below), which
+     is where most of the room comes from. */
   .header-actions {
-    flex: 0 0 auto !important;
+    flex: 0 1 auto !important;
     display: flex !important;
     flex-wrap: nowrap !important;
     align-items: center;
@@ -8442,10 +8521,21 @@ select:focus {
      the chip still opens the full record. */
   .work-clock-chip-detail { display: none; }
   .header-actions .work-clock-chip {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* Last resort, and only at widths where the row genuinely cannot hold the
+     labels. Both keep their text; `min-width: 0` just permits an ellipsis
+     instead of pushing the shell wider than the screen. The clock above gives
+     way first, so in practice these two rarely truncate at all. */
+  .header-actions .client-inbox-chip,
+  .header-actions .header-account-pill {
+    min-width: 0;
+    overflow: hidden;
   }
 
   /* .autosave-chip is `position: fixed; top: 1rem; right: 1rem` — independent
@@ -9784,6 +9874,12 @@ select:focus {
 .header-status-slot {
   display: flex;
   align-items: center;
+  /* Shrinkable. The clock is a readout, not a destination, so it is the right
+     thing to give way when the row is tight — and it already ellipsises. Its
+     children keep `min-width: auto` by default, which is what stopped the
+     whole actions group giving back a pixel and left the header 13px wider
+     than a 390px phone even after the group itself was allowed to shrink. */
+  min-width: 0;
   /* No min-width. A reserved 110px would stop the header jumping when a
      status appears — but this slot is conditionally rendered, so it arrives
      and leaves as a whole either way and there is no jump to hold space
@@ -9818,7 +9914,10 @@ select:focus {
 .todo-fab {
   position: fixed;
   right: 1.1rem;
-  bottom: 1.1rem;
+  /* Clear the iOS home indicator. Without the inset the pill sat in the
+     gesture area on every notched phone, where a tap is as likely to dismiss
+     the app as to open the list. */
+  bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
   z-index: 90;
   width: 3rem;
   height: 3rem;
@@ -9843,8 +9942,37 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
   pointer-events: none;
 }
 
+/* End-of-page clearance. Without it the last row of every scrolling view came
+   to rest underneath the pill and stayed there — the one position where the
+   overlap is permanent rather than a scroll away. Measured against the pill's
+   own footprint (3rem tall + its 1.1rem offset) plus the safe-area inset, so
+   the three numbers cannot drift apart.
+
+   Deliberately NOT paired with a second hiding rule. The FAB already
+   disappears on input focus above; adding an IntersectionObserver would give
+   it two independent, invisible disappearance conditions that a user cannot
+   tell apart, and this is the frictionless-capture entry point from
+   CLAUDE.md §2 — if it is not there when the thought arrives, the thought is
+   gone. Losing the capture is worse than an overlap.
+
+   Still needed, and no longer the whole answer: this reserves the tail of the
+   document, and mid-page clearance is now handled by the pill moving instead
+   of the page padding (--todo-fab-lift, src/lib/fabClearance.js). Keeping both
+   because they solve different halves — padding means the last row of a view
+   is reachable without the pill having to step aside for it at all. */
+@media (max-width: 767px) {
+  .main {
+    padding-block-end: calc(3rem + 1.1rem + 1rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .todo-fab { transition: none; }
+  /* The label is covered too, or the pill still animated its width on every
+     scroll for someone who asked for no motion. The shrink itself is kept —
+     it is what stops the pill covering a control — it just snaps rather than
+     glides. */
+  .todo-fab,
+  .todo-fab__label { transition: none; }
 }
 
 .todo-fab:hover {
@@ -10070,6 +10198,17 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
   color: var(--text-muted);
   white-space: nowrap;
   cursor: pointer;
+  /* Shrinks before anything else in this row, and ellipsises rather than
+     holding its intrinsic width. This label is the one genuinely redundant
+     item in the header on a path stop — the step rail directly below already
+     names every stop, including this one. The project name beside it is not
+     redundant: it is the only place the project is named on mobile, which is
+     why .header-context gets a floor and this does not. The ‹ chevron is
+     outside the text run, so the affordance survives any truncation. */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-back:hover {
@@ -10077,12 +10216,20 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
 }
 
 /* Which project am I in — read-only context beside the back affordance.
-   flex-basis 0 + width 0 keeps its intrinsic text width from widening the
-   app grid at narrow viewports (the old mobile-title input's bug). */
+
+   This used to be `flex: 1 1 0%; width: 0; min-width: 0` — a workaround for
+   the header widening the app grid at narrow viewports. It worked by letting
+   the span collapse to nothing, which meant the project name simply did not
+   render on any mobile path view: the one answer to "which project am I in"
+   was absent exactly where losing your place is most likely. The widening is
+   now fixed at its source (`.header` min-width: 0, and the actions group and
+   back link both able to shrink), so this can hold a floor instead. The back
+   link gives way first — it names the previous stop, which the step rail
+   directly below already shows. */
 .header-context {
-  flex: 1 1 0%;
-  width: 0;
-  min-width: 0;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 4rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -10442,6 +10589,11 @@ textarea.artboard-brief-input {
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
+    /* The rail was the second thing widening the shell past the viewport:
+       four dots + the active label + a full-text CTA on a nowrap row needs
+       ~395px, which does not fit a 320px phone and only just misses at 390.
+       It has to be able to shrink; what gives way is set below. */
+    min-width: 0;
   }
   /* The desktop .step-rail-list reset (list-style/margin/padding) lives in
      the min-width:768px block, since mobile never rendered this <ol> before
@@ -10502,9 +10654,30 @@ textarea.artboard-brief-input {
     white-space: nowrap;
     padding: 0 var(--space-1);
   }
+  /* The map scrolls, the action does not. The dots + active label are the
+     "where am I" answer and read fine partially scrolled; the CTA is a
+     control and must stay whole and tappable, so it holds its width and the
+     list gives way. Nothing is clipped either way now that the shell no
+     longer hides its overflow. */
+  .step-rail-list {
+    flex: 0 1 auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .step-rail-list::-webkit-scrollbar {
+    display: none;
+  }
+
   .step-rail-cta {
     font-size: 0.8rem;
     padding: 0.4rem 0.7rem;
+    /* Shrinks only after the list has, and ellipsises rather than pushing the
+       shell wider than the screen. */
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -10747,6 +10920,72 @@ textarea.artboard-brief-input {
   font-size: var(--fs-1);
   font-weight: 500;
   white-space: nowrap;
+}
+
+/* Compact while the page is moving (owner's call, 2026-08-07). The pill wins
+   the tap at z-index 90 over whatever sits at the bottom-right, and mid-scroll
+   overlap is inherent to a fixed control over flow content — padding only ever
+   fixed the end-of-page case. Shrinking to the 3rem circle while scrolling
+   cuts the colliding area from ~86px to 48px and gives the label back the
+   moment you stop, so the pill is never absent and never unlabelled at rest.
+   Hiding it was ruled out: it is the frictionless-capture entry point, and one
+   that is missing when the thought arrives loses the thought.
+   `max-width` rather than `display: none` so the label can transition, and it
+   stays in the DOM either way — the accessible name comes from aria-label on
+   the button, which does not change, so a screen reader sees nothing move. */
+.todo-fab {
+  /* Clearance offset, written by settleTodoFab() in App.jsx the moment the page
+     stops moving. `transform` and not `bottom`, so a re-seat is paint-only:
+     nothing in the page reflows because the pill decided to sit one shelf
+     higher, and that is the whole reason this is safe to do at all.
+
+     NOT TRANSITIONED, deliberately, and this was tried the other way first. A
+     0.2s glide looks better and quietly reopens the exact hole this mechanism
+     exists to close: for those 200ms the pill is a live target sliding across
+     live controls, so a tap that lands mid-flight is precisely the stolen tap.
+     Making it pointer-inert while travelling trades that for a window where the
+     capture affordance is dead — the one thing it may never be. So it steps.
+     It steps at the same moment the label comes back, which reads as the pill
+     settling rather than as a jump. See src/lib/fabClearance.js. */
+  transform: translateY(calc(-1 * var(--todo-fab-lift, 0px)));
+  transition:
+    opacity 0.15s ease,
+    min-width 0.18s ease,
+    padding 0.18s ease;
+}
+
+.todo-fab.is-compact {
+  padding: 0;
+  /* Without this the flex gap survives the collapsed label and the circle
+     renders lopsided, with the icon pushed left of centre. */
+  gap: 0;
+}
+
+.todo-fab__label {
+  max-width: 6rem;
+  overflow: hidden;
+  transition:
+    max-width 0.18s ease,
+    opacity 0.12s ease;
+}
+
+.todo-fab.is-compact .todo-fab__label {
+  max-width: 0;
+  opacity: 0;
+}
+
+/* This has to sit AFTER the two transitions above, not with the other
+   reduced-motion rule further up the file — those are `.todo-fab` and
+   `.todo-fab__label` at the same specificity, declared later, so the earlier
+   opt-out simply lost the cascade and the pill has been animating for people
+   who asked it not to. Cosmetic while the only animation was a width tween;
+   not cosmetic now that the pill can also change position. Everything still
+   ends up in the same place, it just gets there instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .todo-fab,
+  .todo-fab__label {
+    transition: none;
+  }
 }
 
 /* Spinning rainbow chrome (owner-requested Button-85).

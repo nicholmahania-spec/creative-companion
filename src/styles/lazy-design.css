@@ -2002,3 +2002,32 @@
 .mark-colour-check .btn {
   margin-top: 0.6rem;
 }
+
+/* ── Mark do/don'ts: the defaults, visible while you write ──────────────
+   These lines used to live in the textarea's placeholder, so they were only
+   readable while the field was empty — and they had drifted from the real
+   DEFAULT_LOGO_DONTS the handoff actually writes into 02_LOGO/. They render
+   from the constant now, below the field, where they stay legible while you
+   type your own. Quiet by construction: this is reference, not an alert. */
+.logo-donts-defaults {
+  margin-top: 0.45rem;
+}
+
+.logo-donts-defaults .field-hint {
+  margin: 0 0 0.3rem;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.logo-donts-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: var(--fs-1);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.logo-donts-use {
+  margin-top: 0.45rem;
+  font-size: var(--fs-1);
+}
