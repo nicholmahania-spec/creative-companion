@@ -49,7 +49,17 @@ export function packHandoffStatus({ thin, pathFull }) {
   return 'Pack has a core'
 }
 
-const stopTag = (label = '') => label.slice(0, 3).toUpperCase()
+/* `stopTag` used to render label.slice(0,3).toUpperCase() beside each stop in
+   "What's next" — RES, IDE, TOU and, for Assets, ASS. It carried no
+   information the full label on the same line did not already carry, it read
+   as a code with a meaning to learn, and on mobile the narrower row made it
+   more prominent rather than less.
+   Showing the keyboard shortcut here instead was considered and rejected: the
+   number keys address `stepsForProject(activeProject)`, which is renumbered
+   per project, while these rows come from the full JOURNEY_STEPS — so on a
+   reduced-scope project the hint would advertise a key that does nothing.
+   `.desk-row-tag` survives for the skipped-stop "Not needed" label, which is
+   a real word rather than an abbreviation of one. */
 
 /**
  * Desk dual-resume: one initiation path for "What's next".
@@ -217,7 +227,7 @@ export default function DeskView({
     ...doneStops.map((r) => ({
       key: `s-${r.id}`,
       label: r.label,
-      tag: stopTag(r.label),
+      tag: '',
       isTask: false,
     })),
   ].slice(0, 8)
@@ -640,7 +650,6 @@ export default function DeskView({
                   >
                     {r.label}
                   </button>
-                  <span className="desk-row-tag">{stopTag(r.label)}</span>
                 </li>
               ))}
             </ul>
