@@ -125,6 +125,12 @@
   letter-spacing: -0.01em;
   text-transform: none;
   color: var(--text-primary);
+  /* Several labels are full sentences ("If a customer described you in three
+     words, what would they be?"). The column is 68rem, so uncapped they run
+     past the 80-character ceiling in WCAG 1.4.8 and roughly double the 66ch
+     Bringhurst/Rutter ideal this repo's typography rules already cite. The
+     cap costs nothing: a label shorter than the measure is unaffected. */
+  max-width: var(--measure);
 }
 
 .define-brief .define-field-needed {
@@ -166,6 +172,17 @@
   width: 100%;
   max-width: none;
 }
+
+/* Controls are deliberately NOT capped here — they fill the column.
+   Two attempts at capping were made and both reverted, for the record:
+     1. 32rem inputs + 65ch textareas — alternated between two widths and
+        read as ragged down the page.
+     2. 65ch for both — uniform among themselves, but then the text fields
+        stopped ~330px short of the spectrum rows, checklists and chapter
+        rules, which size to the column. One straight right edge across
+        every control matters more here than sizing each box to its answer,
+        and capping is what breaks it.
+   The column itself (--define-col) is the width control on this page. */
 
 @media (min-width: 640px) {
   .define-brief .define-fields {
@@ -762,13 +779,44 @@
   border-left-color: var(--text-primary);
 }
 
+/* Pinned, because the page is 6.59 screens tall on a phone and every other
+   answer to "where am I" has been ruled out.
+
+   Measured, not assumed: at 390px the brief is 5563px, of which 4598px is the
+   form and 3869px of THAT is field boxes — 84%. The 33 ordinary fields average
+   81px each, which is a 22px label over a 48px control whose floor is the 44px
+   target WCAG 2.5.8 requires. There is no dead space left to reclaim, so the
+   page cannot be made materially shorter without rendering fewer controls.
+   The accordion that used to hide them is gone on purpose and is not coming
+   back, and the chapter rail is off on this surface (showChapterRail={false})
+   and never rendered on mobile at all. So on a phone the brief had NO position
+   indicator whatsoever past the first screen.
+
+   Length is not the cost — losing your place in it is. This changes which one
+   you pay: the chapter you are inside stays named on screen for as long as you
+   are inside it, and hands over to the next one at its boundary. Sticky scope
+   is the article, so it is a place marker, not a fourth bar of chrome.
+
+   Net zero height: the 16px that was all margin is now 8px padding (so the
+   pinned band covers what slides under it) plus 8px margin. Verified — the
+   document measured 5563px before and after.
+
+   `top` clears the app header, which is `position: sticky; top: 0` at 61px in
+   every theme. z-index stays well under the header's 40 so content passes
+   under the header, not over it. --bg-canvas, not --bg-card: the page behind
+   the chapters is the canvas (#f5f5f5 in warm), and a #fff band would read as
+   a card that isn't there. */
 .define-chapter-head {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--space-3) var(--space-4);
-  margin-bottom: var(--space-4);
-  padding-bottom: 0;
+  position: sticky;
+  top: var(--header-h, 61px);
+  z-index: 5;
+  background: var(--bg-canvas);
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
   border-bottom: none;
 }
 
@@ -1150,6 +1198,18 @@
     grid-template-rows: 1fr;
     column-gap: var(--space-6);
     align-items: start;
+  }
+
+  /* The 260px track is the chapter rail's. The rail is currently switched
+     off (DefineView.jsx, showChapterRail={false}), and a reserved track for
+     an element that never renders is 260px + a --space-6 gap of dead width
+     down the whole page — measured at ~292px of the ~570px gutter on a
+     1728px screen, which widening --define-col alone cannot reach.
+     Keyed off the rail's actual presence rather than a second flag, so
+     turning the rail back on restores its track with no CSS change. */
+  .define-split-form:not(:has(.define-chapter-rail)) {
+    grid-template-columns: minmax(0, var(--define-col));
+    column-gap: 0;
   }
   .define-split-form .define-chapters {
     grid-column: 1;

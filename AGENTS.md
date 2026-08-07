@@ -143,6 +143,26 @@ Define. Do not re-learn these by shipping the same bugs again.
 | Long fields / primary content **full width** of the main column | Half-empty 2-col grids where every field is `gridSpan: half` |
 | Short pairs only where real (e.g. email/phone, date/contact) | Two-column for long questions on a wide page |
 
+**Reserved tracks count as dead width** (owner reopened the reading-measure
+rule, 2026-08-07). The brief's `.define-split-form` held
+`minmax(0, var(--define-col)) 260px` while the chapter rail it reserved the
+260px for was switched off — ~292px of the measured ~570px gutter was a track
+for an element that never rendered. `--define-col` went 56rem → 68rem and the
+rail track is now dropped via `:not(:has(.define-chapter-rail))`, so it
+returns automatically if the rail does.
+
+**What that did and did not buy, measured:** horizontal dead space 570px →
+377px; vertical scroll **4.37 screens → 4.37 screens, unchanged**. The page is
+long because it holds 69 fields, not because the column was narrow — widening
+does not shorten it. Do not expect a width change to fix a scroll complaint.
+
+**One shared right edge beats sizing each control to its answer.** Capping
+brief inputs was tried twice and reverted both times: 32rem inputs + 65ch
+textareas alternated and read ragged; 65ch for both left the text fields
+~330px short of the spectrum rows and checklists, which size to the column and
+cannot be capped without reflowing their options. The column is the width
+control on that page.
+
 Check: `src/styles/shell.css` `.app:has(.define-brief) .main` is the pattern — each
 path view needs its own full-width main rule (or a shared `.path-view` class)
 when you rebuild it.

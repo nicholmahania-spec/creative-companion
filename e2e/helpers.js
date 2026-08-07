@@ -1,6 +1,7 @@
 import { JOURNEY_STEPS } from '../src/lib/journey/journey.js'
 import { DETECTIVE_CHAPTERS } from '../src/lib/brief/detectiveBrief.js'
 import { IDENTITY_SUBSTEPS } from '../src/lib/journey/identitySubsteps.js'
+import { RESTORABLE_VIEWS } from '../src/app/viewRegistry.js'
 
 /**
  * Shared Playwright unlock + onboard for local desk gate.
@@ -263,6 +264,63 @@ export async function openDeliverSectionWith(page, label) {
   const section = page.locator('.deliver-advanced').filter({ has: control })
   await section.first().locator('summary').first().click()
 }
+
+/**
+ * Open ANY view, at ANY viewport, without clicking a visible label.
+ *
+ * Every click-based route into a view goes through chrome that changes shape
+ * with the viewport: the sidebar collapses behind `.header-menu-toggle` below
+ * 768px, the step rail only renders on path stops, and Ideate/Review live
+ * behind the Tools menu. A sweep that walks the UI therefore reaches the five
+ * path stops on a phone and none of the other eleven — the buttons are in the
+ * DOM but not visible, so `getByRole('button', { name: 'Calendar' })` resolves
+ * and then hangs until the test times out. That is exactly how a mobile
+ * measurement pass ends up with zero coverage of Home, Desk, Calendar,
+ * Clients, Settings, Ideate and Review.
+ *
+ * There is no router in this app — `activeView` is React state in App.jsx and
+ * nothing reads `location.hash` (checked). But the state is MIRRORED to
+ * localStorage under `cc-active-view` so a reload does not lose your place
+ * (App.jsx:347-385), and App re-reads it on mount against `RESTORABLE_VIEWS`.
+ * So the deep link already exists; it is just spelled "write the key, reload".
+ * `e2e/no-horizontal-overflow.spec.js` was already doing this by hand for the
+ * five journey stages. This is the same move, named, list-checked and — the
+ * part that was missing — asserted on arrival.
+ *
+ * Arrival is checked against `.app.view-<id>`, the class the shell already
+ * writes from `activeView` (App.jsx:3157). That matters: a view id App does
+ * not accept is silently replaced with `home`, so without the check a typo or
+ * a removed view reads as a pass on the wrong screen. It is also viewport- and
+ * label-independent, which is the whole point.
+ *
+ * Production behaviour is untouched — this writes the key the app itself
+ * writes, and takes the path a user takes by refreshing the tab.
+ *
+ * `clientRecord` is intentionally not restorable (it renders one specific
+ * client and cannot say which), so it is not reachable this way and this
+ * helper says so rather than quietly landing you on Home. Open it from the
+ * Clients list.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} view a `RESTORABLE_VIEWS` id
+ */
+export async function gotoView(page, view) {
+  if (!RESTORABLE_VIEWS.includes(view)) {
+    throw new Error(
+      `"${view}" is not a restorable view. Reload cannot land on it, so nor ` +
+        `can this helper. Restorable: ${RESTORABLE_VIEWS.join(', ')}`
+    )
+  }
+  await page.evaluate((v) => localStorage.setItem('cc-active-view', v), view)
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page
+    .locator(`.app.view-${view}`)
+    .waitFor({ state: 'attached', timeout: 15_000 })
+  return page.locator('#main-content')
+}
+
+export { RESTORABLE_VIEWS }
 
 /**
  * Jump to a path stop by its keyboard shortcut.

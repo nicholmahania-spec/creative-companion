@@ -1878,6 +1878,17 @@
   padding: var(--space-2) var(--space-3);
 }
 
+/* Identity's fields ran the full ~1450px column — a wordmark ("Fen & Thistle")
+   got the same box as a multi-line rules list. One measure for both, matching
+   the brief, so the right edge is one straight line.
+   Two widths (32rem inputs, 65ch textareas) was tried on the brief first and
+   reverted: it alternated and read as ragged. Kept identical here so the two
+   form pages do not disagree about how wide a field is. */
+.design-edit-column .field-input,
+.design-edit-column .field-textarea {
+  max-width: var(--measure);
+}
+
 .design-edit-column .field-input:focus,
 .design-edit-column .field-textarea:focus {
   border-color: var(--text-primary);

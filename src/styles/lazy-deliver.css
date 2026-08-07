@@ -206,7 +206,15 @@
 @media (min-width: 1100px) {
   .assets-studio.deliver-studio.pack-view {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(22rem, 32rem);
+    /* Control column widened 32rem -> 40rem. Every control on this page —
+       studio name, package listing, fonts, licence, stationery, exports —
+       lives in this track, and at 32rem it measured ~460px against a ~880px
+       preview: the page's work crammed beside its illustration. The preview
+       keeps the larger share because it is the primary object here; this
+       only narrows the gap. Track sizes stay fixed and content-independent
+       on purpose — a column that resized when the first asset landed would
+       move every control the designer had already learned the position of. */
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 40rem);
     grid-template-rows: auto auto auto auto auto;
     column-gap: var(--space-6);
     row-gap: var(--space-4);

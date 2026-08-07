@@ -211,8 +211,13 @@
   /* Measure and rhythm, per the typography rules in CLAUDE.md. */
   --measure: 65ch;
   /* Brief builder content column. Two field columns plus a gap, at a width
-     where a label stays adjacent to its own input. */
-  --define-col: 56rem;
+     where a label stays adjacent to its own input.
+     Widened 56rem -> 68rem (owner reopened the reading-measure decision,
+     2026-08-07): at 56rem the brief left a ~570px dead gutter for the full
+     page height on a 1728px screen. Not widened further on purpose — prose
+     inside is capped at --measure, so a column much past this buys empty
+     pixels rather than composition. */
+  --define-col: 68rem;
   --leading-body: 1.55;
   --leading-heading: 1.2;
 
