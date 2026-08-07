@@ -1,0 +1,157 @@
+/* Asset library — a Tool, and a reference surface.
+   Quiet by construction: no counts, no badges, no per-group drop targets. */
+.assets-library {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.assets-lib-note,
+.assets-lib-empty {
+  color: var(--text-secondary);
+  font-size: var(--fs-2);
+  margin: 0;
+  max-width: var(--read-max);
+}
+
+/* THE one drop plane. Never per group — a per-group target is a five-way aim
+   decision at the moment of capture, which is what deferred filing exists to
+   avoid. */
+.assets-lib-drop {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  text-align: center;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.assets-lib-drop.is-active {
+  background: var(--bg-muted);
+  border-color: var(--accent-growth);
+}
+
+.assets-lib-drop-line {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.assets-lib-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.assets-lib-group-title {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  margin: 0;
+}
+
+.assets-lib-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.assets-lib-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+}
+
+/* A remote card is text-first: no empty image well, because a picture of a
+   missing picture is what makes a working library look broken. */
+.assets-lib-face {
+  background: var(--bg-muted);
+  border-radius: var(--radius);
+  aspect-ratio: 4 / 3;
+}
+
+.assets-lib-card.is-remote .assets-lib-face,
+.assets-lib-card.is-missing .assets-lib-face {
+  display: none;
+}
+
+.assets-lib-name {
+  font-weight: 600;
+  margin: 0;
+}
+
+.assets-lib-meta,
+.assets-lib-state {
+  color: var(--text-secondary);
+  font-size: var(--fs-1);
+  margin: 0;
+}
+
+.assets-lib-file {
+  position: relative;
+}
+
+.assets-lib-file-btn {
+  background: none;
+  border: 0;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--fs-1);
+  min-height: 44px;
+  padding: 0;
+  text-align: left;
+}
+
+.assets-lib-file-btn:hover {
+  color: var(--text-primary);
+}
+
+.assets-lib-file-menu {
+  background: var(--bg-surface, var(--bg-muted));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  list-style: none;
+  margin: 0;
+  padding: var(--space-1);
+  position: absolute;
+  z-index: 2;
+}
+
+.assets-lib-file-option {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  display: block;
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  text-align: left;
+  width: 100%;
+}
+
+.assets-lib-file-option:hover {
+  background: var(--bg-muted);
+}
+
+/* Files that were not filed. Deliberately not styled as an alert: no red, no
+ * icon, no border that reads as a warning box. PRODUCT.md §21 — the content is
+ * already the bad news, and dressing it as an alarm adds arousal without
+ * adding information. It stays on screen because a toast leaves before someone
+ * has finished reading a list of five. */
+.assets-lib-refused {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #666);
+}
+
+.assets-lib-refused strong {
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+}

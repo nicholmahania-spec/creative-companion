@@ -21,12 +21,40 @@
  *
  * WHY THE BYTES ARE STILL DURABLE REMOTELY. Not size — that was the original
  * mistaken reasoning, see the migration header. IndexedDB would hold a 50 MB
- * PDF without difficulty. It is eviction: best-effort browser storage is
- * cleared LRU under disk pressure, all-or-nothing per origin, and Safari
- * proactively deletes script-created data for origins unvisited for seven
- * days. navigator.storage.persist() improves the odds and does not settle it,
- * because the user can still clear it deliberately. A designer's only copy of
- * a client's deliverable must not live here.
+ * PDF without difficulty. It is eviction.
+ *
+ * That claim used to be stated harder than the vendors state it, and the
+ * correction matters because it was the whole case: "Safari deletes
+ * script-created data for origins unvisited for seven days" is WebKit's ITP
+ * rule, and WebKit documents an exemption in the same breath — the
+ * first-party domain of a Home Screen web app is exempt from the seven-day
+ * cap. MDN says the same of LRU eviction: it "skips over origins that have
+ * been granted data persistence", and persistent data is then only removed
+ * if the user chooses to. This app ships `display: standalone` and registers
+ * a service worker, so an INSTALLED Creative Companion is precisely the case
+ * those exemptions cover. `requestPersistence` below has named the Safari
+ * half of this since it was written, 200 lines from a paragraph that ignored
+ * it.
+ *
+ * So the honest residue, which is still enough: the grant is discretionary
+ * (Chrome on engagement heuristics, Firefox on bookmarking, WebKit on
+ * installed status), it is revocable, a browsing-data clear takes it
+ * regardless, and NONE of it applies to a plain tab — which is how most
+ * people will first use this. That is a bad bet for the one class of object
+ * a client could sue over. A designer's only copy of a deliverable must not
+ * live here.
+ *
+ * NOT MEASURED, and it would settle this: install the PWA, call
+ * `navigator.storage.persist()` behind a gesture, log the boolean, leave it
+ * a fortnight and re-read a key. Nothing in this tree records that being run.
+ *
+ * THE ASSUMPTION UNDER ALL OF THIS, written down because the bridge can
+ * break it. "Losing the cache costs a download" holds because a working
+ * designer's asset already exists somewhere else — the Illustrator working
+ * folder, Dropbox, the client folder. The library is an index over files they
+ * own. A push straight from Illustrator or Figma (Phase 7's bridge) could
+ * produce an asset that exists NOWHERE but the bucket, and at that point this
+ * paragraph stops being true and the storage question has to be reopened.
  *
  * So this is a CACHE, and the word is load-bearing. Losing it costs a
  * download. It must never be the only copy of anything, and nothing in this

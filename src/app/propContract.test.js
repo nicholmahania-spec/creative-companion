@@ -67,6 +67,7 @@ const VIEWS = [
   'DeskView',
   'ReviewView',
   'SettingsView',
+  'AssetLibraryView',
 ]
 
 /** The names a component destructures out of its props. */

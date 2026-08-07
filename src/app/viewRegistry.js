@@ -23,6 +23,7 @@ export const lazyViews = {
   desk: lazy(() => import('../views/DeskView')),
   create: lazy(() => import('../views/NewProjectIntake')),
   book: lazy(() => import('../views/BrandBookBuilderView')),
+  assets: lazy(() => import('../views/AssetLibraryView')),
   review: lazy(() => import('../views/ReviewView')),
   settings: lazy(() => import('../views/SettingsView')),
 }
@@ -45,6 +46,7 @@ export function skeletonLabelForView(view) {
   if (view === 'desk') return 'Loading this project…'
   if (view === 'create' || view === 'spark') return 'Loading…'
   if (view === 'book') return 'Loading brand book…'
+  if (view === 'assets') return 'Loading asset library…'
   if (view === 'review') return 'Loading Review…'
   if (view === 'settings') return 'Loading settings…'
   const label = labelForView(view)

@@ -542,6 +542,10 @@ export const PERSISTED_KEYS = [
   'sparksTried',
   'currentSpark',
   'prefs',
+  /* Metadata is small and must survive a reload, or a designer who files ten
+     assets and refreshes has filed nothing. The bytes are held separately and
+     are NOT in this payload. */
+  'assets',
   'portalSeen',
   'templates',
   /* Client memory. Listed here BEFORE it was needed anywhere else, because
@@ -559,6 +563,7 @@ const PERSIST_DEFAULTS = {
   sparksTried: 0,
   portalSeen: {},
   clientRecords: {},
+  assets: [],
 }
 
 export function pickPersisted(state) {
@@ -641,6 +646,14 @@ const useAppStore = create(
          the normal state — see lib/client/clientRecord.js for why this is
          name-keyed rather than pointed at the clients table. */
       clientRecords: {},
+      /* Asset METADATA only — names, categories, versions, storage paths.
+         The bytes never live here: they go to IndexedDB (lib/assets/
+         assetBytes.js) and, when signed in, a private bucket. A 50 MB
+         deliverable in this object would be written into the single
+         localStorage blob that carries the entire workspace and take every
+         project down with it, which is the same trap the studio logo's size
+         cap exists to avoid. */
+      assets: [],
       theme: deviceTheme(),
       themeSource: 'auto',
       bodyDoubling: false,
@@ -1891,6 +1904,45 @@ const useAppStore = create(
           state.themeSource === 'user' ? {} : { theme: deviceTheme() }
         ),
 
+      /* ── Asset library ────────────────────────────────────────────────
+         Metadata actions only. Bytes are written to IndexedDB by the ingest
+         path before these are called, so a row in this list always means a
+         file that landed somewhere — never a placeholder for one that
+         didn't. */
+
+      /** Append normalised rows. Ingest has already validated them. */
+      addAssets: (rows) =>
+        set((state) => {
+          const incoming = (Array.isArray(rows) ? rows : [rows]).filter(Boolean)
+          if (!incoming.length) return {}
+          /* Guard against a double-fire of the same drop — a dropped file that
+             appears twice reads as a duplicate upload the designer has to
+             reason about and clean up. */
+          const seen = new Set((state.assets || []).map((a) => a.id))
+          const fresh = incoming.filter((a) => a.id && !seen.has(a.id))
+          if (!fresh.length) return {}
+          return { assets: [...(state.assets || []), ...fresh] }
+        }),
+
+      /** Refile one asset. The view has called this since it was written; it
+          was never defined, and the call site used `?.()` so the miss was
+          silent rather than a crash. */
+      setAssetCategory: (assetId, category) =>
+        set((state) => ({
+          assets: (state.assets || []).map((a) =>
+            String(a.id) === String(assetId)
+              ? { ...a, category: String(category || 'other') }
+              : a
+          ),
+        })),
+
+      removeAsset: (assetId) =>
+        set((state) => ({
+          assets: (state.assets || []).filter(
+            (a) => String(a.id) !== String(assetId)
+          ),
+        })),
+
       toggleBodyDoubling: () =>
         set((state) => ({ bodyDoubling: !state.bodyDoubling })),
 
@@ -1967,6 +2019,12 @@ const useAppStore = create(
              every saved template. Anything in `partialize` has to be in the
              payload too, or the round-trip is lossy by construction. */
           templates: s.templates || [],
+          /* Metadata only — the bytes live in IndexedDB and do not travel in
+             a JSON backup. An import on another device therefore restores the
+             shelf with every file marked as not on this device, which is the
+             truth, rather than cards pointing at bytes that were never
+             carried. */
+          assets: s.assets || [],
           portalSeen: s.portalSeen || {},
           themeSource: s.themeSource,
           clientRecords: s.clientRecords || {},
