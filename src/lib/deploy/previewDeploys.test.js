@@ -1,71 +1,94 @@
 import { describe, expect, it } from 'vitest'
-import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 
 /**
- * Preview builds are off; the production build must stay on.
+ * Preview deploys are off; production must keep deploying.
  *
- * The owner asked to always skip preview deploys, after a night of frequent
+ * The owner asked to always skip preview deploys after a night of frequent
  * pushes hit Vercel's free-plan ceiling ("more than 100, code:
- * api-deployments-free-per-day") and painted a red X on a green pull request.
+ * api-deployments-free-per-day"), painting a red X on a pull request whose
+ * code was entirely green.
  *
- * `ignoreCommand` runs before every build: exit 0 skips it, exit 1 runs it.
- * The expression is therefore inverted from how it reads — it must SUCCEED for
- * previews and FAIL for production. That inversion is the whole risk. Get it
- * backwards and nothing looks broken in review, no test fails, and the live
- * site silently stops updating on every merge to main. The symptom would
- * appear days later as "my changes aren't live", with no error anywhere.
+ * THE FIRST ATTEMPT AT THIS USED `ignoreCommand` AND WOULD NOT HAVE WORKED.
+ * That command runs at BUILD time. The evidence that killed it is in the
+ * commit status on #156: Vercel reported "Deployment rate limited" against the
+ * commit before any build began — the deployment is created first, and the
+ * daily cap counts deployments, not builds. A build-time hook cannot prevent
+ * something that already happened.
  *
- * So this executes the real string from the real config against the real
- * values of VERCEL_ENV, rather than asserting the text matches a pattern.
+ * `git.deploymentEnabled` acts earlier: it stops the deployment being created
+ * at all. Wildcards are supported, and the documented rule for a branch
+ * matching several patterns is that it deploys "if at least one matching rule
+ * is set to true". So `"*": false` with `"main": true` disables everything and
+ * re-enables production, which is the whole requirement in two lines.
  *
- * `git.deploymentEnabled` was the alternative and was rejected: it maps only
- * NAMED branches and defaults unnamed ones to enabled, so it would quietly
- * stop working the first time a branch had a new name. `ignoreCommand` does
- * not know or care what a branch is called.
+ * THE SAFE FAILURE MODE IS WHY THIS SHAPE WAS CHOSEN. If Vercel ever treated
+ * "*" as a literal branch name rather than a pattern, nothing would be
+ * disabled — the old behaviour, harmless. `"main": true` is explicit either
+ * way, so no misreading of the wildcard can take production down.
  */
 const config = JSON.parse(
   readFileSync(new URL('../../../vercel.json', import.meta.url).pathname, 'utf8')
 )
 
-/** @returns true when Vercel would SKIP the build for this environment. */
-function skipsBuild(vercelEnv) {
-  try {
-    execFileSync('sh', ['-c', config.ignoreCommand], {
-      env: { ...process.env, VERCEL_ENV: vercelEnv },
-      stdio: 'ignore',
-    })
-    return true // exit 0 — ignored
-  } catch {
-    return false // non-zero — build proceeds
-  }
+const rules = config.git?.deploymentEnabled
+
+/**
+ * Vercel's documented resolution: a branch deploys if ANY matching rule is
+ * true. Unmatched branches default to enabled.
+ */
+function deploys(branch) {
+  const matching = Object.entries(rules).filter(([pattern]) =>
+    new RegExp(`^${pattern.split('*').map(escape).join('.*')}$`).test(branch)
+  )
+  if (!matching.length) return true // unspecified branches default to true
+  return matching.some(([, enabled]) => enabled === true)
 }
 
+const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
 describe('vercel preview deploys', () => {
-  it('declares an ignoreCommand at all', () => {
-    expect(typeof config.ignoreCommand).toBe('string')
-    expect(config.ignoreCommand.length).toBeGreaterThan(0)
+  it('declares branch rules at all', () => {
+    expect(rules, 'git.deploymentEnabled is missing').toBeTruthy()
+    expect(typeof rules).toBe('object')
   })
 
-  it('BUILDS production — the live site must keep deploying', () => {
-    // The one that matters. If this ever passes as `true`, the site is frozen.
-    expect(skipsBuild('production')).toBe(false)
+  /* The load-bearing one. If this ever fails, merging to main stops updating
+     the live site and nothing else reports an error — the symptom arrives days
+     later as "my changes aren't live". */
+  it('DEPLOYS main — the live site must keep updating', () => {
+    expect(rules.main).toBe(true)
+    expect(deploys('main')).toBe(true)
   })
 
-  it('skips preview builds', () => {
-    expect(skipsBuild('preview')).toBe(true)
+  it('disables everything else by default', () => {
+    expect(rules['*']).toBe(false)
   })
 
-  it('skips anything that is not production, including an unset value', () => {
-    // An empty VERCEL_ENV must not be treated as production and burn a build.
-    for (const env of ['development', '', 'Production', 'PRODUCTION', 'prod']) {
-      expect(skipsBuild(env), `VERCEL_ENV=${JSON.stringify(env)}`).toBe(true)
+  it('does not deploy the branches work actually happens on', () => {
+    for (const branch of [
+      'claude/remaining-features-xvw0l7',
+      'claude/asset-library',
+      'cc-cli',
+      'book-default-marker',
+      'some-branch-nobody-has-created-yet',
+    ]) {
+      expect(deploys(branch), branch).toBe(false)
     }
   })
 
-  it('still builds the app when it does build', () => {
-    // Guards against "fixing" the rate limit by breaking the build itself.
+  it('keeps the build itself intact', () => {
+    // Guards against "fixing" the deploy cap by breaking the build.
     expect(config.buildCommand).toBe('npm run build')
     expect(config.outputDirectory).toBe('dist')
+    expect(config.framework).toBe('vite')
+  })
+
+  it('does not also carry the build-time hook that could not work', () => {
+    /* `ignoreCommand` was the first attempt. Leaving it alongside this would
+       imply it contributes, and it would additionally skip the build of a
+       deliberate manual `vercel deploy`. Named so it is not re-added as a
+       belt-and-braces measure that is neither. */
+    expect(config.ignoreCommand).toBeUndefined()
   })
 })
