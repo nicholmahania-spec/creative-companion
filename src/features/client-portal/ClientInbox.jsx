@@ -16,14 +16,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { fetchOwnerPortals, fetchMessagesForPortals, postStudioMessage } from '../../lib/client/clientPortal'
 import { buildInboxRows, portalSeenSnapshot } from '../../lib/client/clientInbox'
+import HeaderIcon from '../../components/HeaderIcon'
 
-const KIND_GLYPH = {
-  approval: '✓',
-  notes: '✎',
-  message: '💬',
-  form: '📋',
-  delivery: '📖',
-  reaction: '❞',
+/* HeaderIcon names, not characters. Three of these were emoji, which render
+   as colourful platform glyphs and break the flat grayscale icon system —
+   the rule HeaderIcon's own header states. */
+const KIND_ICON = {
+  approval: 'check',
+  notes: 'pencil',
+  message: 'message',
+  form: 'form',
+  delivery: 'book',
+  reaction: 'quote',
 }
 
 /**
@@ -398,7 +402,7 @@ function InboxRow({ row, onOpen }) {
       onClick={() => onOpen(row)}
     >
       <span className="client-inbox-row-glyph" aria-hidden="true">
-        {KIND_GLYPH[row.kind] || '•'}
+        <HeaderIcon name={KIND_ICON[row.kind] || 'list'} />
       </span>
       <span className="client-inbox-row-main">
         <span className="client-inbox-row-title">{row.title}</span>

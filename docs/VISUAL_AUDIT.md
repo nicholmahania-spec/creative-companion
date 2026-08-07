@@ -224,6 +224,24 @@ baselines from each other and from the real icons above them.
 The sidebar has the same split: Home, Calendar, Clients and Tools get real stroke icons; Settings
 gets `⚙` and Desk gets `▦`. Two of seven nav items are typography pretending to be iconography.
 
+> **Correction (verified after first publication).** Two parts of this finding were overstated,
+> and the recommended fix was wrong.
+>
+> **The count.** Of the 154 glyph uses, most are legitimate typography, not fake icons: `→` (75)
+> is a separator inside prose and labels ("Strategy → Research"), `✓` (18) is a checkmark in text,
+> `★`/`☆` (19) are star ratings. The genuine icon-substitutes were the chrome glyphs — `⚙ ▦ ✦ ◎ ↗
+> ⬇ ☰ ✕` plus ASCII `$` and `?` in the Tools menu and sidebar, and three emoji in the client
+> inbox. About 14 sites, not 154 — but they were the *visible* ones, on the two surfaces a user
+> touches most.
+>
+> **The fix.** The recommendation to adopt `lucide-react` was wrong. The app already has a
+> coherent house icon set in `components/HeaderIcon.jsx` — custom-drawn, 24-box, 1.75 stroke,
+> round caps — whose own header states the rule this finding is about ("Real icons, not emoji").
+> Importing lucide would have introduced a *second* icon style beside it, which is the problem,
+> not the cure. The set has been extended in the same idiom instead, and `lucide-react`,
+> `@radix-ui/react-icons` and `@radix-ui/react-navigation-menu` — all three imported zero times —
+> have been removed from the dependency tree.
+
 ---
 
 # PART III — COMPOSITION AND HIERARCHY
@@ -617,7 +635,7 @@ client sees the work.
 | 3 | Every path page has two "next" CTAs in two visual languages | One nav affordance per page. Keep the bottom `Next · <stop>`, delete the top duplicate | Fixes 5 screens with one change; restores G1.3 |
 | 4 | Brand Book Builder is a visually separate product with an orphan orange accent | Bring it onto the app's surfaces and accent; keep the cream *page* canvas (correct — that's paper) | Removes the "two products" break at the workflow's climax |
 | 5 | Strategy is one 4,745px scroll of 40 identical fields | Make `01`–`05` real collapsible sections, one open at a time, with the section rule as the boundary | Directly serves the stated primary user; the product's biggest promise-vs-delivery gap |
-| 6 | 154 typographic glyphs and 4 emoji used as icons; two icon libraries installed and unused | Adopt `lucide-react` (already a dependency) across all 154 sites | Removes the most concrete "unfinished" signal; costs nothing in bundle |
+| 6 | Chrome glyphs and emoji used as icons; three unused UI libraries in the tree | Extend the house `HeaderIcon` set (see correction below); drop the unused libraries | Removes the most concrete "unfinished" signal |
 | 7 | Home states "Strategy is next" in three separate cards | One hero card. Delete the "Up next" panel; reduce "Projects" to a list | Cuts the dashboard's reading load by a third |
 | 8 | No scale contrast anywhere on the path | Promote the Direction Sheet's specimen block to every path stop's header | Gives the product a signature and a rhythm in one move |
 | 9 | `--success` and `--warning` are greys; three unrelated accents | One accent + true semantic green/amber/red. Retire `#5B42F3` or commit to it as *the* brand — not both | Colour starts meaning something |
@@ -662,7 +680,7 @@ client sees the work.
 | Fix | Screens repaired |
 |---|---|
 | Delete gradient overrides | **All 14** |
-| Adopt lucide across the app | All (26 files) |
+| Extend HeaderIcon over chrome glyphs | Sidebar, Tools menu, client inbox |
 | One CTA per page | 5 path pages + Desk |
 | Weight-hierarchy pass | All |
 | Single input style | Strategy, Identity, Settings, Review, Desk, Brand Book |
@@ -790,7 +808,7 @@ No confetti. No streaks. No scores. This audience is served by calm, not reward 
 | # | Change | Scope | Impact |
 |---|---|---|---|
 | 4 | One CTA per page: delete the top duplicate on all five path pages | Global | Restores hierarchy on the product's core surface |
-| 5 | Adopt `lucide-react` across all 154 glyph sites; delete emoji | Global | Removes the clearest unfinished signal |
+| 5 | Extend `HeaderIcon` over the chrome glyph sites; delete emoji | Global | Removes the clearest unfinished signal |
 | 6 | Collapse 84 font sizes onto `--fs-1`…`--fs-6`; eliminate all 244 sub-floor uses; body copy to weight 500 | Global | Hierarchy appears without new elements |
 | 7 | One input style; one segmented-control selected state; retire underline-link rows | Global | Fixes 6+ screens |
 | 8 | Single content axis and single content width per page (start with Strategy) | Global pattern | The app "tightens" with no new pixels |
