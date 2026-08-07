@@ -43,7 +43,14 @@ describe('every planned file gets contents', () => {
 
   it('names the asset it could not reach, with what to do about it', () => {
     const r = packageFiles(pack(), {
-      assets: [{ id: 7, name: 'shop sign', dataUrl: 'https://example.com/x.png' }],
+      assets: [
+        {
+          id: 7,
+          name: 'shop sign',
+          dataUrl: 'https://example.com/x.png',
+          rights: 'clientOwned',
+        },
+      ],
     })
     expect(r.missing[0].reason).toMatch(/outside the app/)
   })

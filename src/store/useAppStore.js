@@ -1216,6 +1216,11 @@ const useAppStore = create(
           item: asset.item || asset.name || 'asset',
           variant: asset.variant || '',
           rights: asset.rights || 'clientOwned',
+          /* Which bought item from the brief this file IS, once the designer
+             says. Empty until then — an unattributed file ticks nothing on
+             the deliverables checklist, which is what stops one upload from
+             vouching for every item at once. */
+          deliverable: asset.deliverable || '',
           /* A file the app could not take — today only 'tooLarge'. Kept as a
              row rather than refused at the door, so the panel and the client's
              README can name it. A file silently not added is indistinguishable
