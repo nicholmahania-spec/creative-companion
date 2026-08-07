@@ -161,11 +161,25 @@ describe('the package tells the client the bad news too', () => {
     ).not.toContain('not yet set for this brand')
   })
 
-  it('does not point at a font source that was never recorded', () => {
-    const { files } = packageFiles(drifted, {})
-    const fonts = files.find((f) => f.path.includes('Typography')).content
+  /* Same correction as in packagePlan.test.js: the fixture's faces are in the
+     catalog, so the app knows their source and licence and saying otherwise
+     was the bug. The sentence must still never point at a blank — that is the
+     part being protected, and it is asserted both ways below. */
+  it('never points at a source it does not have', () => {
+    const unknown = packageFiles(
+      { ...drifted, typeHeading: 'Gotham Bold', typeBody: 'Gotham Book' },
+      {}
+    )
+    const fonts = unknown.files.find((f) => f.path.includes('Typography')).content
     expect(fonts).not.toContain('from the source above')
     expect(fonts).toContain('No source was recorded')
+  })
+
+  it('points at the source when the app knows one', () => {
+    const { files } = packageFiles(drifted, {})
+    const fonts = files.find((f) => f.path.includes('Typography')).content
+    expect(fonts).toContain('from the source above')
+    expect(fonts).not.toContain('No source was recorded')
   })
 
   it('says in the README that no logo file is included', () => {

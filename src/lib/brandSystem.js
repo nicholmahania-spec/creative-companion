@@ -136,9 +136,23 @@ export function buildColorSystem(palette = [], colorRoles = null) {
     })
   }).filter(Boolean)
 
-  const swatches = colors.map((hex, i) =>
-    colorSpec(hex, { role: `swatch-${i + 1}`, job: 'Palette member' })
-  ).filter(Boolean)
+  /* A palette colour with no job is a real state, and "SWATCH 3 · Palette
+     member" describes it to a client as though that were its purpose. It is
+     not — it is a colour nobody has assigned yet, which is a different and
+     more useful thing to say. Colours that DO hold a role are named by it. */
+  const assigned = new Map(
+    BRAND_ROLE_KEYS.map((role) => [normalizeHex(roles[role]), role]).filter(
+      ([hex]) => hex
+    )
+  )
+  const swatches = colors.map((hex, i) => {
+    const role = assigned.get(hex)
+    return colorSpec(hex, {
+      role: role || `swatch-${i + 1}`,
+      label: role ? BRAND_ROLE_LABELS[role] || role : `Swatch ${i + 1}`,
+      job: role ? ROLE_JOBS[role] : 'In the palette, no job assigned yet',
+    })
+  }).filter(Boolean)
 
   const passPairs = buildPassPairs(colors, 4.5).slice(0, 12).map((p) => ({
     fg: p.fg,
