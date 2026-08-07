@@ -40,6 +40,7 @@ import {
   contrastRatio,
   formatRatio,
   nudgeHexForContrast,
+  tintsAndShades,
 } from '../color'
 import {
   buildColorSystem,
@@ -520,7 +521,12 @@ export async function downloadBrandPackVectorPdf(
       const bandH = px(104)
       // Full-bleed to the top edge, including the bleed area.
       box(0, 0, pageW, bandH + bleed, bandBg)
-      let by = bleed + px(34)
+      /* Clear of the running header, which is drawn last and lands at
+         `bleed + px(26)` flush left — 8px from this number at 10px type, so
+         the two overprinted each other on every section page. The band is
+         104px tall and this pushes its content to ~85px, so there is room to
+         move rather than needing to move the header into the bleed. */
+      let by = bleed + px(running.show && running.text ? 46 : 34)
       setFace('display', px(14), bandAccent)
       pdf.text(pdfSafeText(`${num} /`), margin, by)
       const BT = px(30)
@@ -1202,6 +1208,52 @@ export async function downloadBrandPackVectorPdf(
       const swatchRows = Math.max(1, Math.ceil(colors.length / perRow))
       y += swatchRows * rowH + px(10)
 
+      /* Tints and shades — a screen-only feature until now.
+         `tintsAndShades` has existed in color.js all along and DesignView has
+         drawn these on the designer's screen at src/views/DesignView.jsx.
+         The client's book has never contained them, so a system the designer
+         built and reviewed as five steps was delivered as one flat chip. That
+         is the same screen-only gap the page backgrounds had.
+
+         Every printed brand guide worth copying carries this: a client needs
+         the lighter step for a hover state or a table stripe, and inventing
+         one themselves is how a palette drifts. Drawn as a continuous ramp per
+         brand colour, labelled with the hexes so they can be used, not just
+         admired. */
+      const ramps = colors
+        .map((hex) => ({ hex, steps: tintsAndShades(hex, { steps: 2 }) }))
+        .filter((r) => r.steps.length > 1)
+      if (ramps.length) {
+        kicker('Tints and shades', margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+        y += KICKER_PT * 0.82 + px(12)
+        const chipH = px(26)
+        const labelH = px(9)
+        for (const ramp of ramps) {
+          const n = ramp.steps.length
+          const chipW = contentW / n
+          ramp.steps.forEach((step, i) => {
+            const rgb = hexToRgb(step) || [0, 0, 0]
+            box(margin + i * chipW, y, chipW, chipH, rgb)
+            if (contrastRatio(step, creamHex) < 1.25) {
+              outline(margin + i * chipW, y, chipW, chipH, mixRgb(INK, CREAM, 0.2), 0.5)
+            }
+          })
+          /* Ends only. Labelling all five at this size sets 30-odd hexes in
+             8pt across one page, which is a wall rather than a reference —
+             the ramp between two named ends is readable without them. */
+          setFace('body', labelH, MUTE_CREAM)
+          pdf.text(pdfSafeText(ramp.steps[0].toUpperCase()), margin, y + chipH + labelH * 1.3)
+          pdf.text(
+            pdfSafeText(ramp.steps[n - 1].toUpperCase()),
+            margin + contentW,
+            y + chipH + labelH * 1.3,
+            { align: 'right' }
+          )
+          y += chipH + labelH * 1.3 + px(10)
+        }
+        y += px(6)
+      }
+
       // Proportion bar — the roles' shares of a layout
       kicker('Color usage proportion', margin, y + KICKER_PT * 0.82, KICKER_CREAM)
       y += KICKER_PT * 0.82 + px(10)
@@ -1472,6 +1524,55 @@ export async function downloadBrandPackVectorPdf(
         cy += px(18)
         setFace('bodyItalic', px(18), GOLD)
         pdf.text(pdfSafeText(tagline), margin, cy + px(18) * 0.82)
+      }
+
+      /* Who to ask. Every printed brand guide ends on a contact page, and this
+         one ended on a headline — while the project already held orgPhone,
+         orgAddress and a whole `contacts` array of named people with titles,
+         none of which the book had ever printed. The client is left holding a
+         document with no way to reach whoever made it.
+
+         Right column, so it sits opposite the headline rather than pushing it
+         off the page. Placeholder addresses are filtered the same way
+         `contactLine` already filters them — a demo value in a real handoff is
+         worse than a blank. */
+      const people = Array.isArray(pack?.contacts) ? pack.contacts : []
+      const isReal = (v) =>
+        clean(v) && !/\.example\b|example\.com|brand\.example|you@example/i.test(v)
+      const orgRows = [
+        clean(pack?.orgEmail),
+        clean(pack?.orgWebsite),
+        clean(pack?.orgPhone),
+        clean(pack?.orgAddress),
+      ].filter(isReal)
+      const peopleRows = people
+        .filter((c) => isReal(c?.name) || isReal(c?.email))
+        .slice(0, 3)
+        .map((c) =>
+          [clean(c.name), clean(c.title)].filter(Boolean).join(' · ') +
+          (isReal(c.email) ? `\n${clean(c.email)}` : '')
+        )
+
+      if (orgRows.length || peopleRows.length) {
+        const colX = margin + contentW * 0.58
+        const colW = contentW * 0.42
+        let ky = pageH - bleed - px(48) - blockH
+        kicker('Get in touch', colX, ky + KICKER_PT * 0.82, GOLD)
+        ky += KICKER_PT * 0.82 + px(14)
+        setFace('body', px(11), ON_INK)
+        for (const row of orgRows) {
+          for (const l of wrap(row, colW)) {
+            pdf.text(pdfSafeText(l), colX, ky + px(11) * 0.82)
+            ky += px(11) * 1.5
+          }
+        }
+        for (const block of peopleRows) {
+          ky += px(8)
+          for (const l of block.split('\n')) {
+            pdf.text(pdfSafeText(l), colX, ky + px(11) * 0.82)
+            ky += px(11) * 1.5
+          }
+        }
       }
     }
 
