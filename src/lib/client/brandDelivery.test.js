@@ -77,21 +77,24 @@ describe('buildDeliveryPack', () => {
 
 describe('readDeliveryEnvelope', () => {
   it('unwraps what publishDelivery stores', () => {
+    /* `hideWatermark` is still present on rows delivered before the credit
+       became a studio name rather than a boolean. It is deliberately IGNORED
+       rather than migrated: the pack itself now carries `studio`, and an old
+       row simply has none, so its footer prints project name and date. No
+       stored row is rewritten and no delivered book changes meaning. */
     const stored = { v: 1, pack: { projectName: 'X' }, book: { pageSize: 'a4' }, hideWatermark: true }
     expect(readDeliveryEnvelope(stored)).toEqual({
       pack: { projectName: 'X' },
       book: { pageSize: 'a4' },
-      hideWatermark: true,
     })
   })
 
   /* A row written before the envelope existed must still render a book, not an
      empty page whose whole job is to look finished. */
   it('accepts a bare pack', () => {
-    const { pack, book, hideWatermark } = readDeliveryEnvelope({ projectName: 'X' })
+    const { pack, book } = readDeliveryEnvelope({ projectName: 'X' })
     expect(pack).toEqual({ projectName: 'X' })
     expect(book).toBeNull()
-    expect(hideWatermark).toBe(false)
   })
 
   it('degrades to an empty envelope on junk', () => {

@@ -70,8 +70,50 @@ describe('buildBrandPackSnapshot', () => {
     expect(pack.progressPercent).toBe(50)
     expect(pack.palette).toEqual(['#4F46E5', '#0D9488'])
     expect(pack.pins[0].note).toBe('Indigo calm')
-    expect(pack.app).toBe('Creative Companion')
+    expect(pack.studio).toBe('')
     expect(pack.exportedAt).toMatch(/^\d{4}-/)
+  })
+
+  /**
+   * The bug this exists for: "Creative Companion" was hardcoded on five
+   * client-facing surfaces and honoured on a sixth, so the checkbox claiming
+   * to remove it worked on the book PDF and nowhere else. A designer could
+   * find the control, understand it, tick it, and still ship the platform's
+   * name on their client's direction sheet.
+   *
+   * Asserted per surface rather than on the shared helper, because the helper
+   * was never the thing that was wrong — the call sites were, and four of them
+   * did not call anything at all.
+   */
+  const surfaces = (studioName) => {
+    const pack = buildBrandPackSnapshot({
+      project: { name: 'Sparrow', palette: ['#111111'] },
+      studioName,
+    })
+    return [brandPackToMarkdown(pack), packBriefMarkdown(pack), brandPackToHtml(pack)]
+  }
+
+  it('prints the studio name on every client-facing surface, never the app name', () => {
+    for (const out of surfaces('Nichol Mahania Design')) {
+      expect(out).toContain('Nichol Mahania Design')
+      expect(out).not.toContain('Creative Companion')
+    }
+  })
+
+  it('omits the credit segment entirely when no studio name is set', () => {
+    const [md, brief, html] = surfaces('')
+    for (const out of [md, brief, html]) {
+      expect(out).not.toContain('Creative Companion')
+      expect(out).not.toContain('·  ·')
+    }
+    /* No dangling separator where the credit used to be. Asserted against the
+       footers specifically rather than the whole document — a first pass
+       scanned every line for a leading "·" and caught the typography meta
+       row (" · Plus Jakarta Sans Regular"), which is a legitimate separator
+       and nothing to do with attribution. */
+    expect(html).toContain('<footer class="direction-foot">Brand identity · ')
+    expect(md).toMatch(/_Exported [^_]*[^ ·]_/)
+    expect(brief).toContain('_brand pack_')
   })
 
   it('does not invent fake client names when empty', () => {

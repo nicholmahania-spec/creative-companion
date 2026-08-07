@@ -18,6 +18,31 @@ on:
   # which is exactly what a dropped event never produced.
   workflow_dispatch:
 
+# Runs pile up otherwise. Neither workflow had a concurrency group, so four
+# pushes to a branch left four live runs of each workflow competing for the
+# same runners — and a job that waits too long for one is cancelled, which
+# reports as a red X indistinguishable from a real failure. Two such
+# cancellations on 2026-08-06 (main's e2e, this branch's verify-project) were
+# each ~15 minutes of queueing, zero failed jobs.
+#
+# Added in 58738cb, reverted in 3776318 as a suspect when runs stopped being
+# created entirely, and restored here having been cleared: the silence was
+# GitHub throttling webhook delivery to ~15% during that day's Actions
+# incident, which stopped runs for every repo and every workflow, including
+# ones this file never touched. The revert was the right call on the evidence
+# available; the evidence has since arrived.
+#
+# Not cancelled on main, which the original did cancel. Today's merges
+# landed 66 seconds apart (9c76859 at 23:00:56, 514b168 at 23:02:02) and
+# the second one FAILED — a real test failure on main. With blanket
+# cancel-in-progress, a third merge arriving a minute later would have
+# killed that run and main would have gone red-then-silent instead of
+# red. On a branch a superseded run is genuinely worthless; on main every
+# commit is one somebody may later bisect to, so each gets its verdict.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   unit:
     runs-on: ubuntu-latest

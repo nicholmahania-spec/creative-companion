@@ -185,8 +185,20 @@ streaks · "you haven't worked today!" · constant badges · artificial urgency.
 > small thing → I can see it moved the project forward → I feel competent →
 > I know what to do next → eventually: I'm done.
 
-**Conflict on record:** the app currently ships four of the eight banned
-items. `src/features/helper/GameHUD.jsx` renders an XP ring, a numeric level,
+**Conflict RESOLVED 2026-08-06** — the paragraph below is kept as the record
+of what was found, because its central claim was wrong in a way worth
+preserving. It said the HUD was gated off by default and therefore dormant.
+Only the HUD and the level pip were gated: `applyGameResult` listened on the
+`cc-buddy-game` event with no gate at all, so XP pings, band-ups and badge
+unlocks — including `day_streak_3` and `day_streak_7` — were reaching anyone
+who opened the Helper. The single mechanic §21 forbids most specifically was
+live in the UI, not sleeping behind a flag. The whole ledger is now deleted,
+`cc-buddy-game-v1` is cleared on boot, and what remains is the completion
+toast and win pulse — the immediate reinforcement the literature actually
+supports, without the accumulating half.
+
+**Conflict as originally recorded:** the app currently ships four of the eight
+banned items. `src/features/helper/GameHUD.jsx` renders an XP ring, a numeric level,
 a daily XP goal (`DAILY_XP_GOAL`, with a "goal met" state) and a day streak,
 and `App.jsx` awards XP through `awardAndBroadcast` on actions including
 exports. A day streak is the most damaging of these for this audience: it
@@ -204,7 +216,7 @@ Whose name is on the work.
 
 | # | Addition | Status | Notes |
 |---|---|---|---|
-| 10.1 | **The platform must not brand the client's materials** | **OPEN — and currently violated** | `brandBookPdf.js` prints "Creative Companion" in the book footer; `exportFiles.js` prints it in the markdown export, the direction sheet HTML and the project-overview PDF. These are pages a client reads. Every one should carry the designer's line or nothing. |
+| 10.1 | **The platform must not brand the client's materials** | **DONE 2026-08-06** | Was "OPEN — and currently violated", and the count was low: SEVEN surfaces carried the hardcoded name, not four — `BrandArtboard`'s on-screen footer was missed because the audit grepped `lib/book/` and the portal but not `components/`. All seven now compose through one `creditedFooter` reading `prefs.studioName`; empty prints project name and date, which is a finished deliverable rather than one with a gap. The old checkbox was honoured by the book PDF and nothing else. |
 | 10.2 | **"Brand identity designed by …" on the book** | **OPEN** | Designed, not built: a `designerProfile` in prefs (name, studio, website, social, email, roles) plus a per-surface toggle map. |
 | 10.3 | **A designed credit page, not a software watermark** | **OPEN** | Closing page: designed for *client* by *studio*, with the roles worked and contact. |
 | 10.4 | **Credit surfaces are an explicit list** | **OPEN** | Allowed: book, portal, presentation, package README. Never: the logo, the business card, packaging. A credit printed on the client's stationery is not attribution. Package and production default **off**; documentation defaults **on**. |

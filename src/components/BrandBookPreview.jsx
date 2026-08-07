@@ -31,7 +31,6 @@ const THUMB_W = 560
 export default function BrandBookPreview({
   pack,
   book,
-  hideWatermark = false,
   /** Bump to force a rebuild even when nothing else changed. */
   refreshKey = 0,
 }) {
@@ -52,7 +51,7 @@ export default function BrandBookPreview({
      Nothing on the page is rendered from it; the cover's date is taken from
      the clock inside the generator. */
   const { exportedAt: _ignored, ...packForKey } = pack || {}
-  const signature = JSON.stringify([packForKey, book || null, hideWatermark])
+  const signature = JSON.stringify([packForKey, book || null])
 
   useEffect(() => {
     const runId = runIdRef.current + 1
@@ -64,7 +63,6 @@ export default function BrandBookPreview({
       try {
         const res = await downloadBrandPackVectorPdf(pack, null, {
           returnBlobOnly: true,
-          hideWatermark,
           book,
         })
         if (cancelled || runIdRef.current !== runId) return

@@ -29,7 +29,7 @@ export default function ReviewView({
   activeProject = null,
   deskMood = [],
   projectPalette = [],
-  hidePackWatermark = false,
+  studioName = '',
   setActiveView,
   goSystemSection,
   buildCurrentBrandPack,
@@ -207,7 +207,7 @@ export default function ReviewView({
                 palette={projectPalette}
                 pins={deskMood.filter((m) => m.inPack)}
                 editable={false}
-                hideWatermark={hidePackWatermark}
+                studio={studioName}
               />
             </Suspense>
           </div>

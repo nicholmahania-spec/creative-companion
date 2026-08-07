@@ -338,21 +338,6 @@
   color: var(--accent-growth);
 }
 
-.pack-watermark-toggle {
-  display: flex;
-  /* Centred, with a 24px floor: the label IS the target, and at 0.8rem text
-     it rendered 19px tall — under the WCAG 2.5.8 AA minimum, and out of step
-     with every other checkbox row here (.define-check-row, .brief-spectrum-step
-     both take a 44px row). */
-  align-items: center;
-  min-height: 24px;
-  padding-block: 0.15rem;
-  gap: 0.45rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
 
 /* ——— v1.1 Pack presentation ——— */
 
@@ -584,10 +569,6 @@
   justify-content: center;
 }
 
-.pack-watermark-toggle {
-  font-size: 0.78rem;
-  color: var(--ts-mute);
-}
 
 /* ============================================================
    Deliver ADHD — notes 55% left · sticky preview 45% right

@@ -40,7 +40,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
  */
 const BUDGET = {
   'src/styles/shell.css': 410,
-  'src/styles/lazy-buddy.css': 55,
+  'src/styles/lazy-buddy.css': 40,
   'src/styles/lazy-settings.css': 36,
   'src/styles/lazy-design.css': 18,
   'src/styles/lazy-sketch.css': 0,

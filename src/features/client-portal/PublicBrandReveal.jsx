@@ -146,7 +146,6 @@ export default function PublicBrandReveal({ portalId }) {
          project name, so the client's copy and the designer's are the same
          file with the same name. */
       const res = await downloadBrandPackVectorPdf(pack, null, {
-        hideWatermark: delivery?.hideWatermark,
         book: delivery?.book,
       })
       if (!res?.ok) setError('That didn’t download. Try again, or ask your designer to email it.')
@@ -216,7 +215,6 @@ export default function PublicBrandReveal({ portalId }) {
               <BrandBookPreview
                 pack={pack}
                 book={delivery?.book}
-                hideWatermark={delivery?.hideWatermark}
               />
             </Suspense>
           ) : (

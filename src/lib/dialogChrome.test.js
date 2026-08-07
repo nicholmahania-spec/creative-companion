@@ -123,3 +123,83 @@ describe('shared dialog chrome', () => {
     expect(base.index).toBeLessThan(override.index)
   })
 })
+
+/**
+ * Re-skinning a centred dialog into an edge-anchored bar is a whole-geometry
+ * change, not a partial one.
+ *
+ * .desk-confirm-banner is a centred dialog. .force-break-consent-studio reuses
+ * it as a full-width bottom strip — its own comment says "bottom strip, never
+ * mid-canvas over work". It set left/right/bottom and stopped there, so three
+ * of the base rule's geometry declarations survived and each did damage:
+ * `width: min(92vw, 26rem)` stopped left:0/right:0 from stretching the box,
+ * `transform: translate(-50%, -50%)` then shoved that box half off the left
+ * edge, and `top: 50%` floated it at the vertical centre — the exact placement
+ * the comment forbids. Measured in Chromium at 1000x800: left: -208px.
+ *
+ * It reached production, on a consent dialog, where the question was
+ * unreadable and the On button sat under the sidebar.
+ *
+ * Overriding one property at a time is what failed, so this test does not
+ * hardcode the three fixes. It reads the geometry the base rule declares and
+ * requires the strip to answer all of it — so adding a new centring property
+ * to the base fails here too, instead of silently half-applying.
+ */
+describe('force-break consent strip', () => {
+  const GEOMETRY = ['top', 'bottom', 'left', 'right', 'width', 'transform']
+
+  /* Comments are stripped before anything is matched. These rules carry long
+     explanations that quote the very declarations under test — the note on
+     .force-break-consent-studio spells out `top: 50%` as the bug it fixes — so
+     a regex over the raw block reads prose as CSS and reports the opposite of
+     the truth. That is not hypothetical: it made the bottom-anchoring
+     assertion fail against the corrected stylesheet. */
+  const decls = (block) => block.replace(/\/\*[\s\S]*?\*\//g, '')
+
+  /** Declarations of interest inside a base rule, by property name. */
+  function geometryIn(block) {
+    return GEOMETRY.filter((prop) =>
+      new RegExp(`(^|;)\\s*${prop}\\s*:`, 'm').test(decls(block))
+    )
+  }
+
+  function blockFor(selector) {
+    const m = new RegExp(`^\\${selector}\\s*\\{([^}]*)\\}`, 'm').exec(shell)
+    return decls(m?.[1] || '')
+  }
+
+  const banner = decls(
+    [...shell.matchAll(/^\.desk-confirm-banner\s*\{([^}]*)\}/gm)].find((m) =>
+      /position:\s*fixed/.test(m[1])
+    )?.[1] || ''
+  )
+  const strip = blockFor('.force-break-consent-studio')
+
+  it('finds both rules in the always-on shell', () => {
+    expect(banner).toBeTruthy()
+    expect(strip).toBeTruthy()
+  })
+
+  it('answers every geometry property the centred base declares', () => {
+    const required = geometryIn(banner)
+    // Guards the guard: if the base ever stops positioning itself, the
+    // assertion below would pass vacuously and prove nothing.
+    expect(required).toContain('transform')
+    expect(required.length).toBeGreaterThanOrEqual(4)
+    expect(geometryIn(strip)).toEqual(expect.arrayContaining(required))
+  })
+
+  it('cancels the centring transform rather than re-aiming it', () => {
+    expect(/transform:\s*none/.test(strip)).toBe(true)
+  })
+
+  it('is anchored to the bottom, not floated at the vertical centre', () => {
+    expect(/bottom:\s*0/.test(strip)).toBe(true)
+    expect(/top:\s*auto/.test(strip)).toBe(true)
+    expect(/top:\s*50%/.test(strip)).toBe(false)
+  })
+
+  it('lets left/right set the width instead of an explicit box', () => {
+    expect(/width:\s*auto/.test(strip)).toBe(true)
+  })
+})
