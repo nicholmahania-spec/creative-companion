@@ -59,9 +59,9 @@ have looked identical.
 **It's live.** Vercel rebuilt your site automatically. If you want to see the
 change, do item 1 below and then export any PDF — your name will be on it.
 
-**Item 5 is unchanged** — still the same nine branches. The one that just merged
-would normally join that list, but I'm still using it for the next piece of
-work, so don't delete it.
+**Item 5 got shorter** — see it below. The branch that just merged would normally
+join that tidy-up list, but I'm still using it for the next piece of work, so
+don't delete that one.
 
 ---
 
@@ -162,7 +162,7 @@ them. GitHub rejects my delete requests. Not something I can work around.
 **If a name isn't there,** it already deleted itself. That's fine — skip it.
 
 **Safety net:** GitHub shows an **"Undo"** button right after each delete, and
-even later you can restore a deleted branch. These nine are all fully merged, so
+even later you can restore a deleted branch. All six are fully merged, so
 there's nothing in them that isn't already safe in `main`.
 
 **Only delete the six listed.** Others in that list still have unmerged work in
