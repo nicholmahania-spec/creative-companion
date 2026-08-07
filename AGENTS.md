@@ -2,6 +2,20 @@
 
 **Product requirements:** `docs/PRD.md` (five-stop path, Helper verbs, non-goals).
 
+## Before you commit — bump the version
+
+`npm run bump:major` for breaking · `bump:minor` for a `feat:` · `npm run bump`
+otherwise. Stage `package.json` **and** `package-lock.json` in that same
+commit. The git hook that used to do this is disabled and must not be
+re-enabled — in this environment a hook that stages during a commit lands its
+changes in the *next* commit's tree.
+
+Full shipping rules: `docs/ONBOARDING.md` and `docs/PRD.md`.
+
+This lived only in those two docs, and this file — the one an agent actually
+reads for rules — was silent on it. Three PRs merged on 2026-08-07 (#170,
+#171, #172) shipped with no bump as a result. No test or CI job checks it.
+
 ## Owner decisions are final — advisors inform, they do not override
 
 **Stated by the owner 2026-08-03:** never reverse, quietly re-decide, or
