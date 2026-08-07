@@ -9,6 +9,7 @@ import {
   subscribeSyncStatus,
   syncAllProjects,
 } from '../services/syncEngine'
+import StudioIdentityBlock from '../features/studio/StudioIdentityBlock'
 import '../styles/lazy-settings.css'
 
 /**
@@ -162,6 +163,17 @@ export default function SettingsView(props) {
       <div className="flow-top">
         <h1 className="page-title">Settings</h1>
       </div>
+
+      {/* First block on the page, deliberately. This is the one setting whose
+          absence silently degrades work already sent to a client: with nothing
+          here, every export prints "<Project> · <date>" and the designer's name
+          appears nowhere. Everything below it is a preference about how the app
+          behaves; this is about what leaves the building. */}
+      <StudioIdentityBlock
+        prefs={prefs}
+        setPref={setPref}
+        flashToast={flashToast}
+      />
 
       <section className="panel brand-section" id="settings-calm">
         <div className="brand-section-label">Calm</div>
