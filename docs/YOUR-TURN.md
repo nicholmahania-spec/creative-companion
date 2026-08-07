@@ -22,14 +22,22 @@ made today, but it can't guess what you're called.
 
 **Steps:**
 
-1. Open the app and open any project.
-2. Go to the **Deliver** screen.
-3. Find the grey collapsed row that says **"Page setup · print size"** and click
-   it to open it. (It's closed by default, which is why you've probably never
-   seen what's inside.)
-4. Inside there's a box labelled **"Footer credit"**.
+1. Open the app and **open a project** — any project. You can't get there from
+   the home screen; the left sidebar says *"Open a project to see its path"*
+   until you do.
+2. In the left sidebar, under **THIS PROJECT**, click the last stop on the
+   path — **5 · Assets**.
+3. On that screen, scroll down to a grey collapsed row labelled
+   **"Page setup · print size"**. Click it to open it. (It's shut by default,
+   which is why you've probably never seen what's inside.)
+4. Inside is a box labelled **"Footer credit"**.
 5. Type your studio name — whatever you want clients to read. For example
    `Sparrow Studio` or `Nichol Mahania`.
+
+**A correction to my own instructions:** this originally said "go to the
+**Deliver** screen". There is no screen called Deliver. *Deliver* is the name
+in the code; the button you actually click says **Assets**. Sorry — that would
+have had you hunting for a word that isn't on screen.
 
 **How to know it worked:** Directly under the box is a line starting
 **"Footer reads:"**. It updates as you type and shows you the exact line that
