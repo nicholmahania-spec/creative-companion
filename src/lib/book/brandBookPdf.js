@@ -53,7 +53,7 @@ import {
   monogramFor,
 } from '../brandSystem'
 import { filledDetectiveChapters } from '../brief/detectiveBrief'
-import { touchpointsFor, touchpointsBlurb, touchpointLabel } from '../journey/touchpoints'
+import { touchpointsFor, touchpointsBlurb, touchpointLabel, TOUCHPOINT_SPECS } from '../journey/touchpoints'
 import {
   slugifyFilename,
   downloadBlob,
@@ -1209,11 +1209,89 @@ export async function downloadBrandPackVectorPdf(
         }
       }
 
-      // Don't — pill tags, from the project's own list
+      /* Misuse, shown rather than listed.
+         A client who has read "do not distort" still distorts it; one who has
+         seen it next to the correct mark does not. Every reference guide draws
+         this, and the pills below stay as the written rule — the pictures are
+         what make the rule land.
+
+         The four are chosen to work for a monogram as well as real artwork,
+         which rules out recolouring (an embedded image cannot be recoloured
+         here). Each is the wrong thing actually done, struck through, and
+         captioned with what is wrong. */
+      let drewDontVisuals = false
+      {
+        const cells = [
+          { id: 'stretch', caption: 'Never stretch or squash' },
+          { id: 'crowd', caption: 'Never crowd the clear space' },
+          { id: 'busy', caption: 'Never on a busy field' },
+          { id: 'lowcontrast', caption: 'Never on a low-contrast colour' },
+        ]
+        const gapX = px(14)
+        const cw = (contentW - gapX * 3) / 4
+        const ch = px(64)
+        if (y + ch + px(30) < floorY()) {
+          kicker("Don't", margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+          y += KICKER_PT * 0.82 + px(10)
+          cells.forEach((cell, i) => {
+            const cx = margin + i * (cw + gapX)
+            const pad = px(10)
+            const inner = ch - pad * 2
+
+            if (cell.id === 'busy') {
+              // A stand-in for photography: enough visual noise to make the point.
+              box(cx, y, cw, ch, mixRgb(INK, CREAM, 0.55))
+              pdf.setDrawColor(...mixRgb(INK, CREAM, 0.15))
+              pdf.setLineWidth(0.6)
+              /* Clamped to the cell rather than clipped. Each stripe runs
+                 (cx+s, y+ch) → (cx+s+ch, y); drawn unclamped the negative
+                 starts hang left into the previous cell, which they did —
+                 the "crowd the clear space" panel came out hatched. */
+              for (let s = -ch; s < cw; s += px(7)) {
+                const t0 = Math.max(0, -s)
+                const t1 = Math.min(ch, cw - s)
+                if (t1 <= t0) continue
+                pdf.line(cx + s + t0, y + ch - t0, cx + s + t1, y + ch - t1)
+              }
+              drawMark(cx + (cw - inner) / 2, y + pad, inner, inner)
+            } else if (cell.id === 'lowcontrast') {
+              box(cx, y, cw, ch, GOLD)
+              drawMark(cx + (cw - inner) / 2, y + pad, inner, inner)
+            } else if (cell.id === 'stretch') {
+              outline(cx, y, cw, ch, mixRgb(INK, CREAM, 0.2), 0.6)
+              // Deliberately wrong aspect — the distortion IS the illustration.
+              drawMark(cx + pad, y + pad + inner * 0.2, cw - pad * 2, inner * 0.6)
+            } else {
+              outline(cx, y, cw, ch, mixRgb(INK, CREAM, 0.2), 0.6)
+              // Flush to the edge: no clear space at all.
+              drawMark(cx, y + ch - inner, inner, inner)
+            }
+
+            /* Struck through, so a cell skimmed out of context cannot be read
+               as an example to follow. */
+            pdf.setDrawColor(...INK)
+            pdf.setLineWidth(1)
+            pdf.line(cx, y + ch, cx + cw, y)
+
+            setFace('body', px(8), MUTE_CREAM)
+            for (const [li, l] of wrap(cell.caption, cw).entries()) {
+              pdf.text(pdfSafeText(l), cx, y + ch + px(11) + li * px(9))
+            }
+          })
+          y += ch + px(30)
+          drewDontVisuals = true
+        }
+      }
+
+      /* Don't — the written rule, directly under the pictures that show it.
+         The heading is not repeated over both; the page printed "DON'T" twice
+         in a row the first time these were drawn. */
       const donts = logoDontsList(pack)
       if (donts.length) {
-        kicker("Don't", margin, y + KICKER_PT * 0.82, KICKER_CREAM)
-        y += KICKER_PT * 0.82 + px(10)
+        if (!drewDontVisuals) {
+          kicker("Don't", margin, y + KICKER_PT * 0.82, KICKER_CREAM)
+          y += KICKER_PT * 0.82 + px(10)
+        }
         setFace('body', px(12), MUTE_CREAM)
         let px0 = margin
         const pillH = px(26)
@@ -1543,6 +1621,21 @@ export async function downloadBrandPackVectorPdf(
           }
           setFace('heading', px(17), fg)
           pdf.text(pdfSafeText(wordmark), cx + px(20), ty)
+
+          /* The trim size, top-right of the mock.
+             Every reference guide specifies its stationery — "3.5 × 2 in",
+             "A4", "M–XL–XXL" — because a mock without a size is a picture and
+             a mock with one is a brief a printer can quote from. These are the
+             standard sizes for each surface, so they are stated as the common
+             specification rather than as this project's decision; anything
+             genuinely bespoke belongs in the designer's own note. */
+          const spec = TOUCHPOINT_SPECS[t]
+          if (spec) {
+            setFace('label', px(8), kick)
+            pdf.text(pdfSafeText(spec), cx + cellW - px(20), cy + px(20) + px(6), {
+              align: 'right',
+            })
+          }
         })
         y += cellH * rows + gap * (rows - 1) + px(16)
         para('Mocks are direction proofs only - not production die-lines.', margin, y, contentW, {
