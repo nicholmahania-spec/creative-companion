@@ -41,33 +41,27 @@ PDF from then on.
 
 ---
 
-## 2. Merge the work that's finished and waiting
+## 2. ~~Merge the work that's finished and waiting~~ ✅ DONE
 
-**Time:** about a minute
-**Why it matters:** There's finished, tested work sitting in a pull request. It
-isn't live for you until it's merged.
+**You asked me to do this one on 7 Aug and it's merged.** Nothing left for you
+here. Leaving it on the list so you can see what landed.
 
-**What's in it:** your studio name on all seven places client work shows up, the
+**What went in:** your studio name on all seven places client work shows up, the
 XP/points system deleted (it was running invisibly and the product spec bans
 it), the screen-lock consent box fix from your screenshot, and three standing
 rules for how I work.
 
-**Steps:**
+Before merging I checked that all the automated tests genuinely ran rather than
+just reporting green — 1,355 tests, plus the slower browser tests, all passed.
+That check mattered: a "success" that quietly skipped the browser tests would
+have looked identical.
 
-1. Go to https://github.com/nicholmahania-spec/creative-companion/pull/146
-2. Scroll to the bottom.
-3. Look for a green tick and the words **"All checks have passed"**.
-   - **Green tick →** click the green **"Merge pull request"** button, then
-     **"Confirm merge"**. Done.
-   - **Red X →** *stop and tell me.* Don't merge. A red X today has usually been
-     GitHub being broken rather than the code, but I need to check which one it
-     is. That's my job, not yours.
-   - **Still spinning →** come back in ten minutes.
+**It's live.** Vercel rebuilt your site automatically. If you want to see the
+change, do item 1 below and then export any PDF — your name will be on it.
 
-**How to know it worked:** The page turns purple and says **"Merged"**.
-
-**After that:** Vercel automatically rebuilds your live site within a couple of
-minutes. You don't have to do anything.
+**Item 5 is unchanged** — still the same nine branches. The one that just merged
+would normally join that list, but I'm still using it for the next piece of
+work, so don't delete it.
 
 ---
 
