@@ -489,7 +489,10 @@ export default function MainOutlet(p) {
   }
 
   if (activeView === 'book') {
-    return wrap('book', <BrandBookBuilderView />)
+    /* The builder's "not in the book yet" list names the stop each gap is
+       waiting on. It could say so but not take you there, which made it a
+       list of things you cannot act on. */
+    return wrap('book', <BrandBookBuilderView setActiveView={setActiveView} />)
   }
 
   if (activeView === 'assets') {

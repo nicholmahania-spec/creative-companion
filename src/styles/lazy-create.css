@@ -132,6 +132,16 @@
   border: 1px solid var(--border-subtle);
 }
 
+/* Quieter than the scope chip above it — the chip is the answer, this is the
+   rule behind it. Plain text rather than a second boxed thing, so the eye
+   does not read two competing statements. */
+.create-scope-rule {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  max-width: 60ch;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
 .create-deliverables {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
