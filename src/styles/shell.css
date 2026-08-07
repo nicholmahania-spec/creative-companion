@@ -1530,8 +1530,26 @@ h3 {
 
 .home-dash-hours-ranges {
   display: flex;
-  flex-wrap: wrap;
+  /* Scrolls, never wraps. At 390px the five ranges wrapped 4 + 1, orphaning
+     "All time" on a row of its own — which reads as a mistake rather than a
+     control, because a segmented control IS the statement that these options
+     are one row of peers. No media query needed: on a wide screen they fit
+     and nothing scrolls. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   gap: var(--space-1);
+}
+
+.home-dash-hours-ranges::-webkit-scrollbar {
+  display: none;
+}
+
+.home-dash-hours-ranges > .home-dash-hours-range {
+  /* Without this the buttons are shrunk by the flex line before the container
+     ever scrolls, and "All time" loses its label instead of its position. */
+  flex: 0 0 auto;
 }
 
 .home-dash-hours-range {
