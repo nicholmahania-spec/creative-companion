@@ -248,15 +248,22 @@
 
 .desk-live-swatches {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
   border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
   border-radius: var(--radius);
   overflow: hidden;
 }
 
+/* `min-width: max-content`, not `0`.
+   These swatches carry a hex value, and a hex is the one string that is
+   either complete or worthless: `#1C1…` can be neither read nor copied, and
+   at 390px four equal columns truncated all four. Sized to their own text
+   they keep the full seven characters and wrap to a second row instead of
+   clipping — the wrap is why the rule above sets `flex-wrap`. */
 .desk-live-swatch {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: max-content;
   height: 3.5rem;
   display: flex;
   align-items: flex-end;
@@ -266,11 +273,20 @@
   letter-spacing: 0.03em;
 }
 
+/* Kept as a floor, not the mechanism — if a value ever exceeds its swatch
+   despite the sizing above, ellipsis beats overlap. */
 .desk-live-swatch span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+}
+
+.desk-live-pal-note {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  opacity: 0.7;
 }
 
 .desk-live-empty-pal {
@@ -790,6 +806,20 @@
   color: var(--text-muted);
 }
 
+.desk-week-date {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* Today is the only column anyone looks for first. */
+.desk-week-col.is-today .desk-week-day,
+.desk-week-col.is-today .desk-week-date {
+  color: var(--text-primary);
+  opacity: 1;
+}
+
 .desk-week-total {
   margin: 0;
   font-size: var(--fs-1);
@@ -925,6 +955,13 @@
   gap: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border-subtle);
+}
+
+/* Sits directly under the section head, so it cancels the parent's gap. */
+.desk-check-brain-lede {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
 }
 
 .desk-check-chips {

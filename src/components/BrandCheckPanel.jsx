@@ -124,8 +124,17 @@ export default function BrandCheckPanel({
 
       <div className="desk-check-brain">
         <div className="desk-panel-head">
-          <span className="desk-eyebrow">What did we decide?</span>
+          <span className="desk-eyebrow">Decisions on record</span>
         </div>
+        {/* Name the mechanism in the section, not in the prompt.
+            The heading was the question the feature answers ("What did we
+            decide?"), which reads as the app asking the user — and on an
+            empty project it asked about a typeface they had not chosen. A
+            stranger could not tell whether the box below was AI, search, or
+            a note field. One line saying what this IS, once, above it. */}
+        <p className="desk-check-brain-lede">
+          Search what you have already settled, so you don’t decide it twice.
+        </p>
 
         {questions.length > 0 && (
           <div
@@ -154,7 +163,7 @@ export default function BrandCheckPanel({
           }}
         >
           <label className="field-label sr-only" htmlFor="brand-brain-ask">
-            Ask this project a question
+            Search this project’s decisions
           </label>
           <input
             id="brand-brain-ask"
@@ -164,8 +173,11 @@ export default function BrandCheckPanel({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Why did we choose this?"
           />
+          {/* `Ask` promised an answerer. This searches what the project has
+              already recorded and falls back to browsing on a miss — say
+              that, so nobody waits for a reply that was never coming. */}
           <button type="submit" className="btn btn-secondary">
-            Ask
+            Search
           </button>
         </form>
 
@@ -207,7 +219,8 @@ export default function BrandCheckPanel({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? 'Hide the full check' : `Check all ${check.total}`}
+        {/* `Check all 21` counted 21 of something it never named. */}
+        {open ? 'Hide the full check' : `Check all ${check.total} brand items`}
       </button>
 
       {open && (

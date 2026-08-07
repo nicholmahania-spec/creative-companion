@@ -566,3 +566,37 @@ Ordered by *"how much does this change whether a stranger can use the product."*
 - **Layout, contrast, touch targets, clipping.** Covered in `VISUAL_AUDIT_2026-08-07.md`;
   not repeated here.
 - **The `Helper` / mascot feature.** Off by default; a cold user never meets it.
+
+---
+
+# Part 4 — Status
+
+Against Part 3's priority list. Written after implementation, not predicted from it.
+
+| # | Item | State |
+|---|---|---|
+| 1 | Say what the app is on the gate | **Done.** A positioning sentence plus a caption naming the five chips as a path; the chips' accessible name now comes from that visible caption via `aria-labelledby` rather than an `aria-label` only assistive tech received |
+| 1b | `Look around first` via the samples | **Deferred, deliberately.** Pre-auth access to the samples means rendering the app read-only before a password exists — an auth-surface change, not a copy fix |
+| 2 | Password rule contradiction | **Done.** The gate states the real minimum and the strength guidance separately |
+| 3 | Public-route error copy + studio identity | **Done.** "Try again shortly" → the portal's own recovery line; the Settings preview reads as the example it always was |
+| 4 | Four missing ids in the `activeView` allow-list | **Done.** Both hand-maintained lists derive from `viewRegistry` now, so a new view cannot be forgotten by one of them |
+| 5 | `Sparrow's Promise` out of the Settings preview | **Done** |
+| 6 | Frame the auto-created project as a starter | **Done.** Tagged `Starter — rename it or start your own`, via a shared `isStarterProject` predicate the migration also asks — `'My project'` is a sentinel and could not simply be renamed |
+| 6b | Name the project field on intake | **Done, by labelling rather than by adding a field.** The client name silently *became* the project name; it now says so, with the truthful escape hatch (`renameProject` is wired). A second optional text box was rejected: the screen's own header records the advisor ruling that the client name is the only thing worth typing here |
+| 7 | `RES` / `IDE` / `TOU` / `ASS` | **Done.** Deleted |
+| 7b | Placeholder colours presented as the user's brand | **Done.** Labelled while the palette is still the factory four, via the existing `paletteIsUntouched` — `color.js` records three features already broken by asking this question the wrong way. Hexes also stopped truncating at 390px |
+| 7c | `1 loose end` / `5 brief answers` | **Done.** The headline counted *categories* while each row counted *items*; it sums the rows now. `nobody has given` → `not filled in yet` |
+| 8 | `INCLUDED` over unchecked boxes | **Done — and the finding was wrong.** The heading was accurate; the real defect is that blank means full scope, so ticking *narrows*. The rule now sits next to the boxes, in the state it is about |
+| 8b | Two exits with nothing to choose between them | **Done.** Stacked, not side by side: one primary, one subordinate sentence |
+| 9 | Decisions panel comprehension | **Done.** `What did we decide?` → `Decisions on record` with a line saying what it is; `Ask` → `Search`; `Check all 21` → `Check all 21 brand items` |
+| 9b | Ideate / Review naming, Tools menu, glossary | **Not done.** A glossary mechanism exists (`lookupGlossaryTerm`) but these names are untouched |
+| 10 | Remaining C2s | **Partly.** `Pack still thin for handoff`, the dateless `S M T W T F S` strip and the mobile hex truncation are done. The duplicate `Open Strategy` primaries and the two near-identical `YOURS ONLY` note fields are not |
+
+## Findings that were wrong
+
+Recorded because an audit that never marks its own misses trains no one.
+
+- **`INCLUDED` as a false heading.** It was true. See item 8.
+- **The mobile drawer as one undifferentiated 15-item scroll.** It was already
+  grouped under three visible headings — `Studio`, `Projects`, `This project`
+  — with 14 interactive rows across them. Verified at 390px; no change made.

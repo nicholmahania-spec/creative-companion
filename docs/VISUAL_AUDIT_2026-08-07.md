@@ -750,9 +750,29 @@ if the tradeoff ever looks worth it.
 
 ## Not done
 
-Everything below item 6 in the revised order — the book's label/id leak and
-overflow-menu reorder, the gap list's jump links and collapse, the Mark
-do/don'ts placeholder, the Research drop plane, the CTA label unification
-(`Continue → X` vs `Next · X`, a clean SC 3.2.4 defect), and the cold-start
-work: saying what the app is on the gate, framing the auto-created project as
-a starter, and the `INCLUDED`-over-unchecked-boxes heading.
+**Nothing from this audit's own list.** Items 6 and below shipped after this
+section was first written — the book's label/id leak and overflow-menu
+reorder, the gap list's jump links and collapse, and the Mark do/don'ts
+placeholder are all in. The cold-start items it also listed (gate positioning,
+starter framing, the `INCLUDED` heading) are recorded in
+`COLD_START_AUDIT_2026-08-07.md`, which now carries its own status table.
+
+Two entries came off this list without being built, because both were wrong:
+
+- **The Research drop plane.** Reported as missing. `ResearchView` already has
+  a real `onDrop` handler and an empty state that names the target
+  (*"Drop an image here, or use Upload, URL or Note above"*). Nothing to do.
+- **The CTA label unification** (`Continue → X` vs `Next · X`). Withdrawn —
+  `DESIGN_GRAMMAR` G1.3 documents the pair as deliberate, and the SC 3.2.4
+  citation was overstated: that criterion governs consistency *across* pages,
+  which these already have. Raised by PR #169 and conceded.
+
+Standing deferrals, both owner-facing rather than unfinished:
+
+- **The "look around first" pre-auth sample route.** The samples live behind
+  the gate, so offering them before sign-in means rendering the app read-only
+  with no password set — a change to the product's one security-shaped
+  surface, not a copy fix.
+- **The FAB gutter.** The shrink-while-scrolling behaviour reduces the
+  measured collisions; it does not remove them. Reserving a gutter is the only
+  option that does, and it remains available.

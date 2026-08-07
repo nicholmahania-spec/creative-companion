@@ -43,10 +43,18 @@ import '../styles/lazy-desk.css'
  * Real signals only: packReadiness.thin + path-all-done (same formula as
  * App brandBookReady = pathStepsFull && !leaveBehindThin).
  */
+/* Plain words, because this is ambient — nobody clicks it to find out what it
+   meant. "Pack still thin for handoff" put three pieces of studio jargon in
+   five words ("pack", "thin", "handoff"), and a first-time reader cannot tell
+   whether it is a warning, a status, or a thing they broke.
+
+   The state names change; the discipline does not. No second person, no
+   percentage, no version number, no "incomplete" — the same shame-free
+   constraints the test below pins, which is why it still checks them. */
 export function packHandoffStatus({ thin, pathFull }) {
-  if (thin) return 'Pack still thin for handoff'
-  if (pathFull) return 'Pack ready for handoff'
-  return 'Pack has a core'
+  if (thin) return 'Not enough here to send yet'
+  if (pathFull) return 'Ready to send to the client'
+  return 'Has the basics, not ready to send'
 }
 
 /* `stopTag` used to render label.slice(0,3).toUpperCase() beside each stop in
@@ -717,13 +725,19 @@ export default function DeskView({
             </div>
             <div className="desk-week-bars" role="img" aria-label="Hours this week">
               {week.days.map((d, i) => (
-                <div key={`${d.day}-${i}`} className="desk-week-col">
+                <div
+                  key={`${d.day}-${i}`}
+                  className={`desk-week-col${d.isToday ? ' is-today' : ''}`}
+                >
                   <div
                     className={`desk-week-bar${d.fill ? ' is-filled' : ''}`}
                     style={{ height: `${d.hPx}px` }}
                     title={d.fill ? `${d.hours}h` : undefined}
                   />
                   <span className="desk-week-day">{d.day}</span>
+                  {/* Which week, and which column is now. Seven bare letters
+                      with two repeated pairs identified neither. */}
+                  <span className="desk-week-date">{d.date}</span>
                 </div>
               ))}
             </div>
