@@ -3538,16 +3538,22 @@ function App() {
               }`}
               onClick={() => advancePathOrIdentity()}
             >
-              {/* "Next · X", matching the in-page footer primary rather than
-                  the "Continue → X" this used to say. Same destination, same
-                  handler, same label content — only the verb differed, which
-                  is a WCAG 2.2 SC 3.2.4 Consistent Identification defect: one
-                  function must carry one name. It also cost working memory,
-                  since two names for one place is a question the user has to
-                  answer ("are these different?") before they can act.
-                  The footer form won because it is the one used in five views
-                  and because AGENTS.md puts the path-continue primary there. */}
-              Next · {stepRailContinueLabel}
+              {/* "Continue → X" is deliberate, and this was briefly renamed to
+                  "Next · X" on a bad reading of two things.
+
+                  DESIGN_GRAMMAR G1.3 is explicit: "One primary CTA per page
+                  job; path Next solid; rail Continue secondary." The pair is
+                  the rule, and the two names are how the rule distinguishes
+                  them — the footer is the solid primary, this is the quiet
+                  second route to the same stop.
+
+                  The WCAG argument for renaming was also wrong. SC 3.2.4
+                  Consistent Identification governs the same component named
+                  differently ACROSS a set of pages; both of these are already
+                  internally consistent across every path stop. Two distinct
+                  controls on one page carrying different labels is not that
+                  criterion, and citing it here overstated the case. */}
+              Continue → {stepRailContinueLabel}
             </button>
           )}
         </nav>
