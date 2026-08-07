@@ -24,6 +24,7 @@ import {
   DEFAULT_LOGO_MIN_SIZE,
 } from '../brandSystem'
 import { packagePlan, packageReadme, fontInformation } from './packagePlan'
+import { markSource } from './markSource'
 
 const text = (v) => String(v ?? '').trim()
 
@@ -159,9 +160,18 @@ export function packageFiles(pack = {}, opts = {}) {
           files.push({ path, pdf: true })
           break
         case 'mark': {
-          const b64 = base64Of(pack.logoImage)
-          if (b64) files.push({ path, content: b64, base64: true })
-          else missing.push({ path, reason: 'the mark is not a stored image' })
+          /* Same decision the plan made, not a second opinion about it — see
+             markSource.js. Re-splitting the raw string here is how a mark the
+             planner had already accepted could still fail to be written. */
+          const mark = markSource(pack.logoImage)
+          if (mark.state === 'ready') {
+            files.push({ path, content: mark.base64, base64: true })
+          } else {
+            missing.push({
+              path,
+              reason: mark.reason || 'the mark is not a stored image',
+            })
+          }
           break
         }
         case 'asset': {

@@ -32,6 +32,7 @@
 import { DELIVERABLE_OPTIONS } from '../brief/detectiveBrief'
 import { SECTION_PAGES } from '../book/bookDocument'
 import { assetFileName, extFromBytes, extFromDataUrl, uniqueNames } from './naming'
+import { markSource, markGapSentence } from './markSource'
 
 /**
  * What the designer is allowed to hand over.
@@ -180,21 +181,31 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
   }
 
   // ── 02 Logo ───────────────────────────────────────────────────────────
-  const markExt = extFromBytes(pack?.logoImage) || extFromDataUrl(pack?.logoImage)
-  if (markExt) {
+  /* Three outcomes, not two. "I cannot read this string" used to fall through
+     the same branch as "there is no mark", so a project WITH artwork shipped a
+     logo folder with no logo, and every report — this plan, the README, the
+     panel, the export toast — described the package as complete. The mark was
+     in the brand book PDF in the same zip. See markSource.js. */
+  const mark = markSource(pack?.logoImage)
+  if (mark.state === 'ready') {
     add('logo', {
       name: assetFileName({
         brand,
         group: 'logo',
         item: 'primary',
-        variant: markExt === 'svg' ? '' : 'FullColor',
-        ext: markExt,
+        variant: mark.ext === 'svg' ? '' : 'FullColor',
+        ext: mark.ext,
       }),
       kind: 'mark',
       note:
-        markExt === 'svg'
+        mark.ext === 'svg'
           ? 'Vector — scales to any size'
           : 'Raster, not vector — fine for screen and known print sizes',
+    })
+  } else if (mark.state === 'held') {
+    excluded.push({
+      name: 'The logo artwork',
+      reason: markGapSentence(mark.reason),
     })
   }
   add('logo', {
@@ -371,12 +382,23 @@ export function packageReadme(pack = {}, plan = null, missing = []) {
       'version of the mark. Those are shown in the app as previews; ask your',
       'designer if you need them as separate files.'
     )
-  } else {
+  } else if (markSource(pack?.logoImage).state === 'none') {
     lines.push(
       '',
       'No logo file is included in this package — there is no stored mark on',
       'the project yet. The usage sheet describes the rules; ask your designer',
       'for the artwork itself.'
+    )
+  } else {
+    /* There IS a mark, and this package could not write it. The sentence above
+       would tell the client the designer never made one — a confident claim,
+       false, and about the wrong person. */
+    lines.push(
+      '',
+      'No logo file is included in this package, but the mark does exist —',
+      'the app could not write it into the folder from how it is stored.',
+      'The usage sheet describes the rules; ask your designer for the',
+      'artwork itself.'
     )
   }
   lines.push('')
@@ -408,10 +430,23 @@ export function deliverableChecklist(pack = {}, planIn = null) {
     typography: () => kinds.has('fontInfo'),
     guidelines: () => kinds.has('book'),
   }
+  /* "No mark uploaded yet" sent a designer to the Identity page to look at the
+     mark that was already there. When one is stored but unusable, say which
+     problem it is. */
+  const markState = markSource(pack?.logoImage)
+  const noMarkLine =
+    markState.state === 'held'
+      ? `The mark is on the project but could not go in the package — ${markState.reason}`
+      : 'No mark uploaded yet — add it on Identity'
   const MISSING = {
-    logoPrimary: 'No mark uploaded yet — add it on Identity',
+    logoPrimary: noMarkLine,
+    /* "Only the primary mark is in the package" is true when a primary
+       shipped. In the held case none did, and printing it directly under the
+       line that says so read as the panel contradicting itself. */
     logoVariations:
-      'Only the primary mark is in the package — variations are supplied by hand',
+      markState.state === 'held'
+        ? noMarkLine
+        : 'Only the primary mark is in the package — variations are supplied by hand',
     colourPalette: 'No palette set yet',
     typography: 'Typography not documented yet',
     guidelines: 'The brand book is not being included',

@@ -57,11 +57,14 @@ export async function run(argv) {
 
   const { workspace, path, label } = readWorkspace(opts.workspace)
 
-  const [exportFiles, brandSystem, studioIdentity] = await Promise.all([
-    load(MOD.exportFiles),
-    load(MOD.brandSystem),
-    load(MOD.studioIdentity),
-  ])
+  const [exportFiles, brandSystem, studioIdentity, markSourceMod] =
+    await Promise.all([
+      load(MOD.exportFiles),
+      load(MOD.brandSystem),
+      load(MOD.studioIdentity),
+      load(MOD.markSource),
+    ])
+  const { markSource, markGapSentence } = markSourceMod
 
   /* One studio per workspace, so this is resolved once rather than per
      project. `resolveStudioName` is the app's own, which means the fallback to
@@ -123,7 +126,18 @@ export async function run(argv) {
       for (const f of files) {
         put(f.name, f.base64 ? Buffer.from(f.content, 'base64') : f.content)
       }
-      if (!hasMark) notes.push('No mark uploaded — logo file skipped, README explains.')
+      if (!hasMark) {
+        /* "No mark uploaded" is a claim, and it was made without checking. A
+           mark stored as a link (cloud sync offloads images to Storage URLs)
+           is a mark that exists — saying it was never uploaded sends the
+           designer to look at artwork that is already there. */
+        const mark = markSource(pack.logoImage)
+        notes.push(
+          mark.state === 'held'
+            ? `Mark not written — ${mark.reason}. README explains.`
+            : 'No mark uploaded — logo file skipped, README explains.'
+        )
+      }
     }
 
     let pdfBuffer = null
@@ -159,6 +173,8 @@ export async function run(argv) {
         pdfBuffer,
         exportFiles,
         brandSystem,
+        markSource,
+        markGapSentence,
       })
       put(zipName, buf)
     }
@@ -198,7 +214,15 @@ function shortPath(p) {
  * beside it are byte-identical — the app takes the same care for the same
  * reason.
  */
-async function buildKitZip({ pack, slug, pdfBuffer, exportFiles, brandSystem }) {
+async function buildKitZip({
+  pack,
+  slug,
+  pdfBuffer,
+  exportFiles,
+  brandSystem,
+  markSource,
+  markGapSentence,
+}) {
   const JSZip = (await import('jszip')).default
   const zip = new JSZip()
   const folder = zip.folder(slug) || zip
@@ -208,22 +232,22 @@ async function buildKitZip({ pack, slug, pdfBuffer, exportFiles, brandSystem }) 
   folder.file('tokens.json', JSON.stringify(brandSystem.buildJsonTokens(pack), null, 2))
   folder.file('pack.json', JSON.stringify(slimPack(pack), null, 2))
 
-  const m = String(pack.logoImage || '').match(
-    /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/
-  )
-  if (m) folder.file(`logo.${extFor(m[1])}`, m[2], { base64: true })
+  /* One decision about the mark, shared with the app — see
+     src/lib/deliver/markSource.js. This was a private regex whose only failure
+     mode was writing nothing and saying nothing. */
+  const mark = markSource(pack.logoImage)
+  if (mark.state === 'ready') {
+    folder.file(`logo.${mark.ext}`, mark.base64, { base64: true })
+  } else if (mark.state === 'held') {
+    folder.file(
+      'logo-NOT-INCLUDED.txt',
+      `The mark is on the project but is not in this kit.\n\n${markGapSentence(mark.reason)}.\n`
+    )
+  }
 
   if (pdfBuffer) folder.file('brand-book.pdf', pdfBuffer)
 
   return zip.generateAsync({ type: 'nodebuffer' })
-}
-
-function extFor(mime) {
-  if (mime.includes('png')) return 'png'
-  if (mime.includes('jpeg') || mime.includes('jpg')) return 'jpg'
-  if (mime.includes('webp')) return 'webp'
-  if (mime.includes('svg')) return 'svg'
-  return 'png'
 }
 
 /** pack.json without the pin binaries, matching what the app's zip writes. */
