@@ -962,11 +962,24 @@ No confetti. No streaks. No scores. This audience is served by calm, not reward 
 | 14 | Give the Assets ship column a real rhythm — boundaries and space between its seven unlike blocks | Screen | Turns the most overloaded screen into a readable one |
 | 15 | Strengthen Strategy's section boundaries with scale and space (NOT collapse — see Phase 5b correction) | Screen | Chapters become findable in a 4,700px scroll |
 | 16 | Home: one hero card, not three restatements | Screen | Cuts dashboard reading load by a third |
-| 17 | Make the Research wall an actual drop plane; single empty state | Screen | The visual stage becomes visual |
+| 17 | ~~Make the Research wall an actual drop plane; single empty state~~ | — | **Already built.** `ResearchView` has a real `onDrop` and an empty state naming the target. Verified in the running app, not inferred |
 | 18 | Mobile: scroll the segmented control, recompose card order | Global | Mobile stops looking like an afterthought |
-| 19 | Style the four `<details>`; rename/relocate "Leave"; remove `RES/IDE/TOU/ASS` and duplicate counts | Mixed | Removes the last framework-default tells |
+| 19 | Style the four `<details>`; rename/relocate "Leave" | Mixed | Removes the last framework-default tells |
 
 *#14 depends on #7 (one card/panel language). #15 is independent.*
+
+> **Two items were removed from #19, and #17 struck out, because they were
+> already done — by the other session.** `RES/IDE/TOU/ASS` shipped in #164;
+> the duplicate Desk counts (`1 loose end` above `5 brief answers`) were fixed
+> by summing the rows rather than counting categories. Both were still listed
+> here as pending.
+>
+> **#16 (Home) and the Desk half of #19 now belong to the cold-start session**
+> — see the ownership table in `AGENTS.md`. Two sessions merge straight to
+> `main` and both had Desk and Home in scope; the split is by screen.
+>
+> Check the code before starting any item in this roadmap. Some of it is
+> already in the product.
 
 ### Phase 5 — DELIGHT
 

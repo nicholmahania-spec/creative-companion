@@ -2,6 +2,31 @@
 
 **Product requirements:** `docs/PRD.md` (five-stop path, Helper verbs, non-goals).
 
+## Two sessions are working this repo — stay in your lane
+
+**Owner decision, 2026-08-07.** Two audits are being implemented in parallel
+and both merge straight to `main`. They collided once already: `RES/IDE/TOU/ASS`
+and the duplicate Desk counts appear as work items in *both* backlogs, and were
+built by the cold-start session while still listed as pending in the visual
+roadmap's Phase 4.
+
+Split by **screen**, not by layer. Layer-splitting (one session owns CSS, the
+other owns JSX) was rejected because it does not survive contact: a copy fix
+routinely needs the stylesheet next to it.
+
+| Area | Owner | Files |
+|---|---|---|
+| Global visual system, path stops (Research · Strategy/Define · Identity/Design · Touchpoints · Assets/Deliver), the direction sheet | **Visual-design audit** (`docs/VISUAL_AUDIT.md`, Phases 4–5) | `src/styles/shell.css`, `lazy-{define,design,deliver,ideate,mood,review}.css`, `BrandArtboard.jsx`, `DESIGN_GRAMMAR.md` |
+| Desk, Home, the password gate, New project intake, Brand book builder, client-facing routes | **Cold-start audit** (`docs/COLD_START_AUDIT_2026-08-07.md`, `docs/VISUAL_AUDIT_2026-08-07.md`) | `DeskView.jsx`, `HomeView.jsx`, `LoginView.jsx`, `NewProjectIntake.jsx`, `BrandBookBuilderView.jsx`, `DeskLiveArtboard.jsx`, `BrandCheckPanel.jsx`, `src/lib/brain/**`, `src/lib/billing/**`, `lazy-create.css`, `lazy-desk.css` |
+
+`shell.css` and `useAppStore.js` are shared and cannot be assigned. Touch them
+in the smallest possible edit, and `git fetch origin main` immediately before
+you do.
+
+**Before starting any backlog item, check it is not already built.** Both
+roadmaps contain items that shipped from the other session. Read the code, not
+the checklist.
+
 ## Before you commit — bump the version
 
 `npm run bump:major` for breaking · `bump:minor` for a `feat:` · `npm run bump`
