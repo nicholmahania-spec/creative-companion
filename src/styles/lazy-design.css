@@ -1048,8 +1048,8 @@
 .stationery-letterhead {
   width: 220px;
   aspect-ratio: 8.5 / 11;
-  background: #ffffff;
-  color: #1A1A1A;
+  background: var(--paper);
+  color: var(--paper-ink);
   display: flex;
   flex-direction: column;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
@@ -1105,8 +1105,8 @@
 .stationery-envelope {
   width: 300px;
   aspect-ratio: 9.5 / 4.125;
-  background: #ffffff;
-  color: #1A1A1A;
+  background: var(--paper);
+  color: var(--paper-ink);
   padding: 0.6rem;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
   display: flex;
@@ -1121,8 +1121,8 @@
 
 .stationery-signature {
   width: 280px;
-  background: #ffffff;
-  color: #1A1A1A;
+  background: var(--paper);
+  color: var(--paper-ink);
   padding: 0.75rem;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
   border-radius: var(--radius);

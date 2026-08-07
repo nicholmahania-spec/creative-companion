@@ -48,6 +48,27 @@
   --bg-elevated: #FFFFFF;
   --bg-muted: #EBEBEB;
 
+  /* ---- Ink and paper -------------------------------------------------
+     Two surfaces, and the difference is meaning, not decoration.
+
+     Everything above is WORKSPACE: it is the app, it follows the theme, and
+     it goes dark when the designer does. `--paper` is ARTEFACT — the
+     letterhead, the envelope, the email signature, the book sheet. Those are
+     pictures of something the client will receive, and a client's letterhead
+     is white at 2am. Paper does not follow the theme, and a preview that
+     inverted in deep mode would be lying about what gets printed.
+
+     That rule was already being followed in practice — .stationery-* and
+     .book-preview-sheet each hardcoded #ffffff and #1A1A1A, and .app.deep
+     deliberately restyles only the sheet's BORDER, never its fill. But it was
+     written nowhere, so it read as four unthemed literals somebody had missed
+     rather than a rule. Naming it makes it survive the next tidy: these are
+     the tokens to reach for, and they are intentionally absent from .app.deep.
+     See DESIGN_GRAMMAR G4.4. */
+  --paper: #FFFFFF;
+  --paper-ink: #1A1A1A;
+  --paper-edge: rgba(26, 26, 26, 0.14);
+
   --text-primary: #1A1A1A;
   --text-secondary: rgba(26, 26, 26, 0.68);
   /* Was #A1A1A1, which scored 2.58:1 on white and 2.37:1 on the canvas grey

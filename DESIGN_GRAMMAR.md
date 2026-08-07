@@ -81,6 +81,15 @@ Icon-only is a **closed list** (close, nav, arrows when paged thing is named, se
 **G4.2 Deep theme** — `.app.deep`. Every color change needs a deep audit (AGENTS.md). Prefer semantic tokens.  
 **G4.3 No light-only hex** on dark without override.
 
+**G4.4 Ink and paper** — two surfaces, and the difference is meaning.
+*Workspace* is the app: canvas, cards, panels, chrome. Themed; it goes dark when the designer does.
+*Paper* is a picture of what the client receives: letterhead, envelope, email signature, book sheet.
+**Not themed** — a client's letterhead is white at 2am, and a preview that inverted in deep mode
+would be lying about what gets printed. Use `--paper` / `--paper-ink` / `--paper-edge`; they are
+intentionally absent from `.app.deep`. What a sheet *casts* is workspace and may theme (the book
+sheet's shadow does). If a preview needs a dark ground, theme the surface **around** the sheet —
+`.assets-preview-frame` — never the sheet. Guarded by `paperSurfaces.test.js`.
+
 Helpers: `src/lib/color.js` (`contrastRatio`, `contrastGrade`).
 
 ---
