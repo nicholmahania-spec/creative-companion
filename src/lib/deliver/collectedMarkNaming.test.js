@@ -129,6 +129,21 @@ describe('the client package names a collected mark from its bytes', () => {
     expect(mark).toMatch(/\.png$/)
   })
 
+  /* Not just the extension. `_FullColor` tells a raster export apart from its
+     one-colour and reverse siblings, and a vector has none — so a URL that
+     said `.png` over SVG bytes has to lose the suffix as well, or the same
+     mark is named two ways depending on whether it happened to be synced. */
+  it('rebuilds the whole name for a vector, not only the extension', async () => {
+    stubFetch(SVG_BYTES)
+    const held = captureHandle()
+    await downloadClientPackage(pack(), { includeBook: false }, held.promise)
+
+    const paths = await pathsIn(held.blob)
+    expect(paths.some((p) => p.endsWith('02_LOGO/HarborHearth_Logo_Primary.svg'))).toBe(true)
+    expect(paths.some((p) => /FullColor/.test(p))).toBe(false)
+    expect(await readmeIn(held.blob)).toContain('HarborHearth_Logo_Primary.svg')
+  })
+
   it('keeps the planned name when the bytes say nothing, rather than guessing', async () => {
     stubFetch(AVIF_BYTES)
     const held = captureHandle()

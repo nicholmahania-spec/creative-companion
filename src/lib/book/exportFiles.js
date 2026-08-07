@@ -27,7 +27,12 @@ import { OVERVIEW_FIELD_PREFIX } from '../overviewOcr'
 import { packageFiles } from '../deliver/packageFiles'
 import { packageReadme } from '../deliver/packagePlan'
 import { markSource, markGapSentence } from '../deliver/markSource'
-import { extFromRawBytes, extFromUrlPath, withExt } from '../deliver/naming'
+import {
+  extFromRawBytes,
+  extFromUrlPath,
+  markFileName,
+  withExt,
+} from '../deliver/naming'
 import {
   appendSystemMarkdown,
   buildColorSystem,
@@ -2139,9 +2144,17 @@ export async function downloadClientPackage(
           if (!res.ok) throw new Error(`${res.status}`)
           /* The plan named this from the URL's path and called that extension
              provisional. This is where the promise is kept: the bytes arrive,
-             and if they disagree with the name the plan guessed, they win. */
+             and if they disagree with the name the plan guessed, they win.
+             The whole name is rebuilt rather than just its extension, because
+             `markFileName` drops the `FullColor` suffix for a vector — patching
+             the three letters after the dot would leave `_FullColor.svg`. */
           const buf = new Uint8Array(await res.arrayBuffer())
-          const path = withExt(f.path, extFromRawBytes(buf))
+          const ext = extFromRawBytes(buf)
+          const dir = f.path.slice(0, f.path.indexOf('/') + 1)
+          const path =
+            ext && f.markBrand
+              ? `${dir}${markFileName({ brand: f.markBrand, ext })}`
+              : withExt(f.path, ext)
           if (path !== f.path) renamed.push({ from: f.path, to: path })
           root.file(path, buf)
           written += 1

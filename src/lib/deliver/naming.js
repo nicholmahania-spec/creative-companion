@@ -50,17 +50,98 @@ const fold = (s) =>
  * "Sparrow S Promise" is not a thing anyone would call that business.
  */
 export function namePart(raw) {
+  return wordsOf(raw).map(cap).join('')
+}
+
+const cap = (w) => w[0].toUpperCase() + w.slice(1)
+
+/** The words a name part is built from, in order. */
+function wordsOf(raw) {
   /* Split camelCase before folding, so a part that arrives already joined
      ("FullColor", "businessCard") keeps its word boundaries instead of
      flattening to "Fullcolor". Callers pass both shapes and neither is
      wrong. */
   const split = String(raw || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-  const cleaned = fold(split).replace(/['’]/g, '')
-  return cleaned
+  return fold(split)
+    .replace(/['’]/g, '')
     .split(/[^a-z0-9]+/)
     .filter(Boolean)
-    .map((w) => w[0].toUpperCase() + w.slice(1))
-    .join('')
+}
+
+/* Words that describe the FILE rather than the thing it shows. The convention
+   already carries the format in the extension and the colour treatment in the
+   variant slot, so repeating them inside the item is noise the client reads
+   past. Version and generation counters are the designer's working history and
+   were never meant to leave the desk. */
+const ITEM_NOISE = new Set([
+  'final', 'finals', 'copy', 'draft', 'new', 'old', 'latest', 'edit', 'edited',
+  'vector', 'raster', 'outline', 'outlined', 'outlines', 'flat', 'export',
+  'exported', 'artboard', 'asset', 'file', 'untitled', 'image', 'version',
+  'rgb', 'cmyk', 'hires', 'lores', 'print', 'web', 'screen',
+])
+
+/* A counter rather than a fact: `v2`, `rev3`, `2generation`, a bare `1`.
+   Four or more digits are left alone, because that is a year and a client
+   reading `Poster2024` is better served than one reading `Poster`. */
+const ITEM_COUNTER = /^(v\d+|rev\d*|copy\d+|\d{1,3}(st|nd|rd|th)?(gen|generation)?)$/
+
+/**
+ * The item slot of a handoff name, derived from whatever the file was called
+ * on the designer's desk.
+ *
+ * `Rectangle_Vector_FullColor_2generation_Logo` became
+ * `RectangleVectorFullColor2generationLogo` — thirty-eight characters of which
+ * roughly a third told the client nothing. The whole point of the convention
+ * (see the header) is a folder someone can use in a year; a run-on that has
+ * swallowed the designer's export history is the same problem as
+ * `logo-final-final-2.ai`, wearing the convention's clothes.
+ *
+ * So: drop the words that describe the file, then keep the leading few of what
+ * is left. NOTHING IS LOST SILENTLY — `shortened` is true whenever a word was
+ * dropped, and the caller puts the original where the client can still read it.
+ * Every word being noise means the designer named it entirely in noise, and
+ * the original words are kept rather than reducing the name to nothing.
+ *
+ * @param {string} raw
+ * @param {{ maxWords?: number, maxChars?: number }} [limits]
+ * @returns {{ item: string, shortened: boolean }}
+ */
+/* Four words, not three. `wordsOf` splits camelCase, so a designer's single
+   token `FullColor` costs two of the budget — a three-word cap ate the word
+   that said what the thing actually was. */
+export function shortItem(raw, { maxWords = 4, maxChars = 28 } = {}) {
+  const all = wordsOf(raw)
+  const meaningful = all.filter((w) => !ITEM_NOISE.has(w) && !ITEM_COUNTER.test(w))
+  const source = meaningful.length ? meaningful : all
+  const kept = source.slice(0, maxWords)
+  while (kept.length > 1 && kept.map(cap).join('').length > maxChars) kept.pop()
+  return { item: kept.map(cap).join(''), shortened: kept.length < all.length }
+}
+
+/**
+ * The mark's file name, from the extension its bytes turned out to be.
+ *
+ * One rule, three readers: the plan's data-URL branch knows the extension up
+ * front, the plan's fetch branch guesses it from the storage URL, and the
+ * writer learns the truth when the bytes land. They disagreed — the identical
+ * mark was named `_FullColor.svg` when it had been synced to the cloud and
+ * `_Primary.svg` when it had not, decided by something the designer never
+ * chose.
+ *
+ * A vector mark carries no colour variant: `FullColor` exists to tell a raster
+ * export apart from its one-colour and reverse siblings, and an SVG has none.
+ *
+ * @param {{ brand?: string, ext?: string }} parts
+ * @returns {string}
+ */
+export function markFileName({ brand, ext } = {}) {
+  return assetFileName({
+    brand,
+    group: 'logo',
+    item: 'primary',
+    variant: ext === 'svg' ? '' : 'FullColor',
+    ext,
+  })
 }
 
 /**

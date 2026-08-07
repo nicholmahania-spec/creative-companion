@@ -36,6 +36,9 @@ import {
   extFromBytes,
   extFromDataUrl,
   extFromUrlPath,
+  markFileName,
+  namePart,
+  shortItem,
   uniqueNames,
 } from './naming'
 import { markSource, markGapSentence } from './markSource'
@@ -267,13 +270,7 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
   const mark = markSource(pack?.logoImage)
   if (mark.state === 'ready') {
     add('logo', {
-      name: assetFileName({
-        brand,
-        group: 'logo',
-        item: 'primary',
-        variant: mark.ext === 'svg' ? '' : 'FullColor',
-        ext: mark.ext,
-      }),
+      name: markFileName({ brand, ext: mark.ext }),
       kind: 'mark',
       note:
         mark.ext === 'svg'
@@ -290,22 +287,12 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
        shipped. Same shape as the brand book, which is planned as a file and
        filled in by the writer.
        The extension is provisional — the bytes decide when they arrive. */
-    const urlExt = extFromUrlPath(pack?.logoImage) || 'png'
     add('logo', {
-      name: assetFileName({
-        brand,
-        group: 'logo',
-        item: 'primary',
-        /* Same rule as the data-URL branch above, applied to what the URL
-           says. Without it the identical mark was named `_FullColor.svg` when
-           it had been synced and `_Primary.svg` when it had not — one project,
-           two names, decided by something the designer never chose. The writer
-           corrects a wrong EXTENSION but not a wrong variant, so a URL that
-           lies about an SVG still keeps the suffix; that is a worse guess than
-           this one, not a reason to keep making it everywhere. */
-        variant: urlExt === 'svg' ? '' : 'FullColor',
-        ext: urlExt,
-      }),
+      /* Named by the same rule as the branch above, from what the URL says.
+         The writer re-runs that rule on the real bytes, so a URL that lies
+         about an SVG is corrected in the zip AND in the README rather than
+         keeping a suffix the format does not take. */
+      name: markFileName({ brand, ext: extFromUrlPath(pack?.logoImage) || 'png' }),
       kind: 'mark',
       note: 'Collected from your cloud storage when the package is built',
     })
@@ -388,16 +375,23 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
       })
       continue
     }
+    /* An `item` the caller SET is a decision and is used whole. A label is the
+       filename off the designer's desk, which is not — see `shortItem`. */
+    const named = a.item ? { item: namePart(a.item), shortened: false } : shortItem(label)
     add(a.folder || 'applications', {
       name: assetFileName({
         brand,
         group: a.group || 'application',
-        item: a.item || label,
+        item: named.item,
         variant: a.variant || '',
         ext,
       }),
       kind: 'asset',
-      note: rights.label,
+      /* The original travels with it. Shortening a name to make the folder
+         usable must not cost the client the ability to match a file back to
+         what the designer called it — that trade would be the convention
+         taking more than it gives. */
+      note: named.shortened ? `${rights.label} — from "${label}"` : rights.label,
       assetId: a.id,
       /* Which bought item this file IS. Carried into the plan so the
          checklist can be computed from the plan alone, the way every other
