@@ -14,6 +14,7 @@ import {
   clientMonogram,
   monogramTone,
 } from '../lib/client/clientDirectory'
+import { clientKey, clientRecordFor } from '../lib/client/clientRecord'
 import { relativeDeadlineLabel } from '../lib/dates'
 import useAppStore from '../store/useAppStore'
 import '../styles/lazy-clients.css'
@@ -30,9 +31,7 @@ export default function ClientRecordView({
   const client = useMemo(() => {
     const groups = buildClientGroups(projects)
     return (
-      groups.find(
-        (g) => g.name.toLowerCase() === String(clientName).toLowerCase()
-      ) || null
+      groups.find((g) => clientKey(g.name) === clientKey(clientName)) || null
     )
   }, [projects, clientName])
 
@@ -43,6 +42,19 @@ export default function ClientRecordView({
      title: Enter/blur-on-Save commits, an emptied field reverts. */
   const [renamingId, setRenamingId] = useState(null)
   const [draft, setDraft] = useState('')
+
+  /* Client memory. Read straight from the store rather than passed down: it
+     belongs to the client, not to any project, and threading it through the
+     project props would put it back inside the thing it exists to outlive. */
+  const clientRecords = useAppStore((st) => st.clientRecords)
+  const record = clientRecordFor(clientRecords, clientName)
+  const [prefDraft, setPrefDraft] = useState('')
+  const addPref = () => {
+    const line = prefDraft.trim()
+    if (!line) return
+    useAppStore.getState().addClientPreference(clientName, line)
+    setPrefDraft('')
+  }
   const commitRename = (project) => {
     const next = String(draft || '').trim()
     setRenamingId(null)
@@ -167,6 +179,68 @@ export default function ClientRecordView({
           )
         })}
       </ul>
+
+      {/* What you know about them, as opposed to about the job.
+          No count, no badge, no "0 notes" — empty is the ordinary state for a
+          client you have just met, and marking it would turn meeting someone
+          into an outstanding task. */}
+      <h2 className="client-record-section">What I know about them</h2>
+      <div className="client-memory">
+        <label className="field-label" htmlFor="client-notes">
+          Notes
+        </label>
+        <textarea
+          id="client-notes"
+          className="field-textarea client-memory-notes"
+          rows={3}
+          value={record.notes}
+          placeholder="Anything worth remembering next time"
+          onChange={(e) =>
+            useAppStore.getState().setClientNotes(clientName, e.target.value)
+          }
+        />
+
+        <ul className="client-memory-prefs">
+          {record.preferences.map((pref) => (
+            <li key={pref} className="client-memory-pref">
+              <span>{pref}</span>
+              <button
+                type="button"
+                className="client-memory-drop"
+                onClick={() =>
+                  useAppStore
+                    .getState()
+                    .removeClientPreference(clientName, pref)
+                }
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        <div className="client-memory-add">
+          <label className="field-label" htmlFor="client-pref">
+            Add a line
+          </label>
+          <input
+            id="client-pref"
+            className="field-input"
+            value={prefDraft}
+            placeholder="Prefers email"
+            onChange={(e) => setPrefDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addPref()
+              }
+            }}
+          />
+          <button type="button" className="btn btn-secondary" onClick={addPref}>
+            Add
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

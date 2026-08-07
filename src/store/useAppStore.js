@@ -27,6 +27,13 @@ import {
 /** The default stage set for a type, as a plain list for the store. */
 const projectTypeSteps = (typeId) => [...projectType(typeId).stepIds]
 import versionService from '../services/versionService'
+import {
+  clientKey,
+  renameClientRecord,
+  setClientNotes as setClientNotesIn,
+  addPreference as addPreferenceIn,
+  removePreference as removePreferenceIn,
+} from '../lib/client/clientRecord'
 
 /**
  * The patch that records "the identity moved just now".
@@ -537,6 +544,13 @@ export const PERSISTED_KEYS = [
   'prefs',
   'portalSeen',
   'templates',
+  /* Client memory. Listed here BEFORE it was needed anywhere else, because
+     this list's own header records what happens when a key is persisted in
+     one place and forgotten in another: `templates` was in partialize and
+     absent from the payload, so every backup and every cloud sync wrote back
+     a workspace without them. Notes about a client are exactly the kind of
+     thing nobody notices is gone until they need it. */
+  'clientRecords',
 ]
 
 const PERSIST_DEFAULTS = {
@@ -544,6 +558,7 @@ const PERSIST_DEFAULTS = {
   oppositeIndex: 0,
   sparksTried: 0,
   portalSeen: {},
+  clientRecords: {},
 }
 
 export function pickPersisted(state) {
@@ -622,6 +637,10 @@ const useAppStore = create(
       tasks: [],
       moodItems: [],
       breakKit: [],
+      /* Client-level memory, keyed by normalised client name. Empty is
+         the normal state — see lib/client/clientRecord.js for why this is
+         name-keyed rather than pointed at the clients table. */
+      clientRecords: {},
       theme: deviceTheme(),
       themeSource: 'auto',
       bodyDoubling: false,
@@ -705,13 +724,45 @@ const useAppStore = create(
 
       /** Partial update Design Detective Sheet fields */
       updateDetective: (field, value) =>
-        set((state) => ({
-          projects: state.projects.map((p) => {
+        set((state) => {
+          const projects = state.projects.map((p) => {
             if (p.id !== state.currentProjectId) return p
             const det = { ...blankDetective(), ...(p.detective || {}), [field]: value }
             const brief = composeBriefFromDetective(det)
             return { ...p, detective: det, brief: brief || p.brief }
-          }),
+          })
+          if (field !== 'clientName') return { projects }
+
+          /* Renaming the client moves its memory with it. Without this, the
+             first time someone fixes a typo in a client's name their notes
+             and preferences would be silently orphaned under the old key —
+             the worst failure available to a feature whose whole promise is
+             that you do not have to remember. Runs per keystroke, and is a
+             no-op unless the normalised key actually moved. */
+          const before = state.projects.find((p) => p.id === state.currentProjectId)
+          const from = before?.detective?.clientName || ''
+          if (clientKey(from) === clientKey(value)) return { projects }
+          return {
+            projects,
+            clientRecords: renameClientRecord(state.clientRecords || {}, from, value),
+          }
+        }),
+
+      /** Free notes about a client — private, never client-facing. */
+      setClientNotes: (name, notes) =>
+        set((state) => ({
+          clientRecords: setClientNotesIn(state.clientRecords || {}, name, notes),
+        })),
+
+      /** One short line: "prefers email", "likes warm colours". */
+      addClientPreference: (name, text) =>
+        set((state) => ({
+          clientRecords: addPreferenceIn(state.clientRecords || {}, name, text),
+        })),
+
+      removeClientPreference: (name, text) =>
+        set((state) => ({
+          clientRecords: removePreferenceIn(state.clientRecords || {}, name, text),
         })),
 
       /* Milestones UI removed (owner). detective.milestones may still exist
@@ -1918,6 +1969,7 @@ const useAppStore = create(
           templates: s.templates || [],
           portalSeen: s.portalSeen || {},
           themeSource: s.themeSource,
+          clientRecords: s.clientRecords || {},
         }
       },
 
@@ -2005,6 +2057,9 @@ const useAppStore = create(
             : {}),
           ...(data.themeSource === 'auto' || data.themeSource === 'user'
             ? { themeSource: data.themeSource }
+            : {}),
+          ...(data.clientRecords && typeof data.clientRecords === 'object'
+            ? { clientRecords: data.clientRecords }
             : {}),
         })
         return { ok: true }
