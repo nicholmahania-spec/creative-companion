@@ -4050,6 +4050,17 @@ function App() {
         onMarkSeen={markPortalSeen}
         onGoToView={goToInboxTarget}
         onOpenPortal={openInboxPortal}
+        currentProjectName={activeProject?.name || ''}
+        onAttachPortal={(portalId) => {
+          /* `setClientPortalId` writes to the CURRENT project, which is
+             exactly the promise the button makes — the label names the
+             project it will attach to. */
+          setClientPortalId(portalId)
+          flashToast(
+            `Linked to ${activeProject?.name || 'this project'} — their answers are on the Project screen`,
+            { important: true }
+          )
+        }}
         flashToast={flashToast}
         flashMicro={flashMicro}
       />
