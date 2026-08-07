@@ -90,11 +90,24 @@ export function buildInboxRows(portals, messages, seen, projects) {
   ;(portals || []).forEach((portal) => {
     const prev = seen?.[portal.id] || null
     const who = portal.client_name || 'Your client'
-    const project = projectName.get(String(portal.project_local_id)) || 'Another project'
+    /* `project_local_id` is a LOCAL id, and the only link back to a project
+       lives in that project's `clientPortalId` — in localStorage, on one
+       device. Clear the cache, work on a second machine, or import a workspace
+       (which replaces `projects` wholesale) and the link is gone while the
+       portal, the client's submitted questionnaire and their approvals all
+       survive on the server. clientPortal.js:206 already names this: "a cleared
+       cache or a second machine orphans a portal permanently."
+
+       It used to fall through to the literal string 'Another project' and stop
+       there — the client's completed work visible, unattributable, and with no
+       way to reconnect it. Flagged now so the panel can offer that. */
+    const known = projectName.get(String(portal.project_local_id))
+    const orphaned = !known
     const base = {
       portalId: portal.id,
       projectLocalId: portal.project_local_id,
-      projectName: project,
+      projectName: known || 'Not linked to a project on this device',
+      orphaned,
       clientName: who,
       // Approximate only — used for coarse ordering between portals, never
       // shown to the user. Per-event times don't exist server-side.

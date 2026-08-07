@@ -110,6 +110,7 @@ export async function closeRuntime() {
    loudly here rather than in five command files. */
 export const MOD = {
   exportFiles: '/src/lib/book/exportFiles.js',
+  markSource: '/src/lib/deliver/markSource.js',
   brandSystem: '/src/lib/brandSystem.js',
   studioIdentity: '/src/lib/studio/studioIdentity.js',
   color: '/src/lib/color.js',

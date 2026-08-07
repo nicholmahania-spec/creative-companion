@@ -101,6 +101,8 @@ export function ClientInboxPanel({
   onMarkSeen,
   onGoToView,
   onOpenPortal,
+  onAttachPortal,
+  currentProjectName = '',
   flashToast,
   flashMicro,
 }) {
@@ -222,6 +224,32 @@ export function ClientInboxPanel({
               {openRow.projectName}
               {openRow.stepLabel ? ` · ${openRow.stepLabel}` : ''}
             </p>
+
+            {/* The reconnect. Every piece of this already existed —
+                `fetchOwnerPortals` finds the orphan, this panel displays it,
+                and `setClientPortalId` can attach a portal to the current
+                project. Nothing joined them, so a client's finished
+                questionnaire sat one function call away from being usable.
+
+                Offered, never automatic: only the designer knows which project
+                this client belongs to, and guessing wrong would attach someone
+                else's answers to the wrong job. */}
+            {openRow.orphaned && currentProjectName && (
+              <div className="client-inbox-attach">
+                <p className="client-inbox-attach-note">
+                  This came from a portal that isn’t linked to any project on
+                  this device — usually after importing a workspace or working
+                  on another machine. Their answers are safe on the server.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => onAttachPortal?.(openRow.portalId)}
+                >
+                  {`Link it to “${currentProjectName}”`}
+                </button>
+              </div>
+            )}
 
             {openRow.body ? (
               <p className="client-inbox-detail-body">{openRow.body}</p>

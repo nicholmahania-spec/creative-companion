@@ -3,9 +3,61 @@ import {
   assetFileName,
   extFromBytes,
   extFromDataUrl,
+  markFileName,
   namePart,
+  shortItem,
   uniqueNames,
 } from './naming'
+
+describe('the item slot, from a filename off the designer‘s desk', () => {
+  /* The name a real package shipped. Thirty-eight characters, of which
+     `Vector` and `2generation` describe the designer's export and not the
+     thing the client is looking at. */
+  it('drops the words that describe the file rather than the work', () => {
+    const r = shortItem('Rectangle_Vector_FullColor_2generation_Logo')
+    expect(r.item).toBe('RectangleFullColorLogo')
+    expect(r.shortened).toBe(true)
+  })
+
+  it('leaves a name that was already short alone, and says it did', () => {
+    expect(shortItem('Business Card')).toEqual({
+      item: 'BusinessCard',
+      shortened: false,
+    })
+  })
+
+  it('caps a long name rather than running it together', () => {
+    const r = shortItem('spring campaign launch poster east region')
+    expect(r.item).toBe('SpringCampaignLaunchPoster')
+    expect(r.shortened).toBe(true)
+  })
+
+  /* Four digits is a year and belongs to the client; one to three is the
+     designer counting revisions and does not. */
+  it('keeps a year and drops a revision counter', () => {
+    expect(shortItem('Poster 2024').item).toBe('Poster2024')
+    expect(shortItem('Poster v3 copy').item).toBe('Poster')
+    expect(shortItem('Logo 2').item).toBe('Logo')
+  })
+
+  /* A designer who names everything in noise still gets a file name — an
+     empty item would collapse to `Harbor_Application.pdf` for every one of
+     them, and `uniqueNames` would number files nobody can tell apart. */
+  it('keeps the words when every word is noise', () => {
+    expect(shortItem('final copy v2').item).toBe('FinalCopyV2')
+  })
+})
+
+describe('the mark is named by one rule, wherever it came from', () => {
+  it('drops the colour variant for a vector and keeps it for a raster', () => {
+    expect(markFileName({ brand: 'Harbor & Hearth', ext: 'svg' })).toBe(
+      'HarborHearth_Logo_Primary.svg'
+    )
+    expect(markFileName({ brand: 'Harbor & Hearth', ext: 'png' })).toBe(
+      'HarborHearth_Logo_Primary_FullColor.png'
+    )
+  })
+})
 
 describe('name parts', () => {
   it('reads a business name the way the business writes it', () => {

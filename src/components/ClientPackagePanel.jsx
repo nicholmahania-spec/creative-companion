@@ -12,6 +12,7 @@
 import { useMemo, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import {
+  attachableDeliverables,
   deliverableChecklist,
   packagePlan,
   USAGE_RIGHTS,
@@ -20,6 +21,29 @@ import {
 
 /** Big enough for a print-ready card, small enough to survive localStorage. */
 const MAX_ASSET_BYTES = 4 * 1024 * 1024
+
+/**
+ * A file's own picture, where the browser can already draw it.
+ *
+ * The whole point is recognition rather than recall: a package once shipped
+ * three files belonging to a different client, and the panel showed them as
+ * three monospaced filenames identical in weight to the legitimate rows. The
+ * designer would have had to REMEMBER what they uploaded to spot the odd one.
+ * The intruders were red and purple; the brand was deep green. A thumbnail
+ * ends that comparison in a glance and costs the designer no decision, no
+ * click and no reading.
+ *
+ * PDFs cannot be drawn without a renderer, so they get their type instead of a
+ * fake preview — an honest 'PDF' beats a generic document glyph that implies
+ * the app looked inside and found it fine.
+ */
+function assetThumb(dataUrl = '') {
+  const m = /^data:([^;,]+)[;,]/.exec(String(dataUrl || ''))
+  const mime = m ? m[1].toLowerCase() : ''
+  if (mime.startsWith('image/')) return { src: dataUrl, kind: '' }
+  const sub = mime.split('/')[1] || ''
+  return { src: '', kind: (sub.split(/[-+]/).pop() || 'file').toUpperCase().slice(0, 4) }
+}
 
 export default function ClientPackagePanel({
   pack = {},
@@ -45,6 +69,7 @@ export default function ClientPackagePanel({
   )
   const fonts = fontInformation(pack)
   const shortfall = checklist.filter((r) => !r.ok)
+  const attachable = useMemo(() => attachableDeliverables(pack), [pack])
 
   const onPick = async (e) => {
     const files = Array.from(e.target.files || [])
@@ -133,10 +158,15 @@ export default function ClientPackagePanel({
 
       {checklist.length > 0 && (
         <div className="package-checklist">
+          {/* Named, never counted. "3 of 8 bought items not in the package
+              yet" is a grade — it reads as a score, and it withholds the one
+              thing that would resolve the worry it creates, so the designer
+              has to read the list anyway to learn WHICH three. Three nouns are
+              three objects a person can act on; a fraction is not. */}
           <div className="package-subhead">
             {shortfall.length === 0
               ? 'Everything the brief asked for is in here'
-              : `${shortfall.length} of ${checklist.length} bought items not in the package yet`}
+              : `Not in the package yet: ${shortfall.map((r) => r.label.toLowerCase()).join(', ')}`}
           </div>
           <ul className="package-check-list">
             {checklist.map((row) => (
@@ -210,50 +240,93 @@ export default function ClientPackagePanel({
           </p>
         ) : (
           <ul className="package-asset-list">
-            {assets.map((a) => (
-              <li key={a.id} className="package-asset">
-                <span className="package-asset-name">
-                  {a.name}
-                  {a.heldBack === 'tooLarge' && (
-                    /* The row exists so this file is not forgotten; it carries
-                       no data, so a usage-rights choice would be theatre. */
-                    <span className="package-asset-note">
-                      {' '}
-                      — too large to store
-                      {a.sizeBytes
-                        ? ` (${(a.sizeBytes / 1024 / 1024).toFixed(1)}MB)`
-                        : ''}
-                      , add it to the folder by hand
+            {assets.map((a) => {
+              const thumb = assetThumb(a.dataUrl)
+              return (
+                <li key={a.id} className="package-asset">
+                  {a.heldBack ? null : thumb.src ? (
+                    <img
+                      className="package-asset-thumb"
+                      src={thumb.src}
+                      alt=""
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <span className="package-asset-thumb is-type" aria-hidden="true">
+                      {thumb.kind}
                     </span>
                   )}
-                </span>
-                <label className="sr-only" htmlFor={`rights-${a.id}`}>
-                  Usage rights for {a.name}
-                </label>
-                <select
-                  id={`rights-${a.id}`}
-                  className="field-input package-rights"
-                  value={a.rights || 'clientOwned'}
-                  disabled={!!a.heldBack}
-                  onChange={(e) =>
-                    updatePackageAsset(a.id, { rights: e.target.value })
-                  }
-                >
-                  {USAGE_RIGHTS.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => removePackageAsset(a.id)}
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
+                  <span className="package-asset-name">
+                    {a.name}
+                    {a.heldBack === 'tooLarge' && (
+                      /* The row exists so this file is not forgotten; it carries
+                         no data, so a usage-rights choice would be theatre. */
+                      <span className="package-asset-note">
+                        {' '}
+                        — too large to store
+                        {a.sizeBytes
+                          ? ` (${(a.sizeBytes / 1024 / 1024).toFixed(1)}MB)`
+                          : ''}
+                        , add it to the folder by hand
+                      </span>
+                    )}
+                  </span>
+                  {/* Which bought item this file is. A matching question —
+                      "which of these is this file?" — not an audit: it is
+                      answerable from the thumbnail beside it, and it is what
+                      stops one upload from ticking every item at once. Shown
+                      only when the brief bought something the app cannot make
+                      itself, so it never appears with nothing to offer. */}
+                  {attachable.length > 0 && !a.heldBack && (
+                    <>
+                      <label className="sr-only" htmlFor={`deliverable-${a.id}`}>
+                        Which bought item {a.name} is
+                      </label>
+                      <select
+                        id={`deliverable-${a.id}`}
+                        className="field-input package-deliverable"
+                        value={a.deliverable || ''}
+                        onChange={(e) =>
+                          updatePackageAsset(a.id, { deliverable: e.target.value })
+                        }
+                      >
+                        <option value="">Which item is this?</option>
+                        {attachable.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.label}
+                          </option>
+                        ))}
+                      </select>
+                    </>
+                  )}
+                  <label className="sr-only" htmlFor={`rights-${a.id}`}>
+                    Usage rights for {a.name}
+                  </label>
+                  <select
+                    id={`rights-${a.id}`}
+                    className="field-input package-rights"
+                    value={a.rights || 'clientOwned'}
+                    disabled={!!a.heldBack}
+                    onChange={(e) =>
+                      updatePackageAsset(a.id, { rights: e.target.value })
+                    }
+                  >
+                    {USAGE_RIGHTS.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => removePackageAsset(a.id)}
+                  >
+                    Remove
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         )}
         {/* Visually hidden, but still a real control in the accessibility
@@ -280,13 +353,21 @@ export default function ClientPackagePanel({
       </div>
 
       <div className="package-actions">
+        {/* The consequence rides on the button, not in a paragraph above it,
+            so the outcome and the commit gesture land in the same glance. When
+            nothing is held back it says nothing extra and the designer is
+            right to just press it — no review step to perform. */}
         <button
           type="button"
           className="btn btn-primary"
           disabled={exportBusy}
           onClick={() => onExport?.('package')}
         >
-          {exportBusy ? 'Building…' : 'Build the client package'}
+          {exportBusy
+            ? 'Building…'
+            : plan.excluded.length > 0
+              ? `Build the client package · ${plan.excluded.length} held back`
+              : 'Build the client package'}
         </button>
       </div>
     </section>

@@ -25,6 +25,14 @@ import {
 } from '../brief/detectiveBrief'
 import { OVERVIEW_FIELD_PREFIX } from '../overviewOcr'
 import { packageFiles } from '../deliver/packageFiles'
+import { packageReadme } from '../deliver/packagePlan'
+import { markSource, markGapSentence } from '../deliver/markSource'
+import {
+  extFromRawBytes,
+  extFromUrlPath,
+  markFileName,
+  withExt,
+} from '../deliver/naming'
 import {
   appendSystemMarkdown,
   buildColorSystem,
@@ -1046,31 +1054,39 @@ export async function downloadBrandKitZip(
       )
     )
 
-    // Logo as separate file when data URL
-    if (
-      pack?.logoImage &&
-      String(pack.logoImage).startsWith('data:image')
-    ) {
+    /* The mark as its own file. A third private regex used to live here and it
+       failed the same way as the other two: an unrecognised string meant no
+       file and no note, so a kit went out missing the logo with nothing said.
+       One decision now, and the gap is written down when there is one. */
+    const kitMark = markSource(pack?.logoImage)
+    if (kitMark.state === 'ready') {
+      folder.file(`logo.${kitMark.ext}`, kitMark.base64, { base64: true })
+    } else if (kitMark.state === 'fetch') {
+      /* Async here, so it can be collected — and it must be, or the kit and
+         the client package would disagree about whether the same project has
+         a logo, which is the whole failure this decision exists to end. */
       try {
-        const m = String(pack.logoImage).match(
-          /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/
+        const res = await fetch(kitMark.url)
+        if (!res.ok) throw new Error(`${res.status}`)
+        /* `logo.png` was hardcoded here, and the bucket accepts jpeg, webp, gif
+           and svg — so a designer whose mark is any of those got a .png holding
+           something else. That is the same defect as the two `%PDF` files named
+           .png, reintroduced on the one path that had no bytes to check at
+           planning time. It has them now. */
+        const buf = new Uint8Array(await res.arrayBuffer())
+        const ext = extFromRawBytes(buf) || extFromUrlPath(kitMark.url) || 'png'
+        folder.file(`logo.${ext}`, buf)
+      } catch (e) {
+        folder.file(
+          'logo-NOT-INCLUDED.txt',
+          `The mark is on the project but could not be collected from storage.\n\n${e?.message || 'network error'}\n`
         )
-        if (m) {
-          const ext =
-            m[1].includes('png')
-              ? 'png'
-              : m[1].includes('jpeg') || m[1].includes('jpg')
-                ? 'jpg'
-                : m[1].includes('webp')
-                  ? 'webp'
-                  : m[1].includes('svg')
-                    ? 'svg'
-                    : 'png'
-          folder.file(`logo.${ext}`, m[2], { base64: true })
-        }
-      } catch {
-        /* skip logo file */
       }
+    } else if (kitMark.state === 'held') {
+      folder.file(
+        'logo-NOT-INCLUDED.txt',
+        `The mark is on the project but is not in this kit.\n\n${markGapSentence(kitMark.reason)}.\n`
+      )
     }
 
     // Vector brand book PDF into zip — same page setup as the standalone
@@ -1080,7 +1096,12 @@ export async function downloadBrandKitZip(
       returnBlobOnly: true,
     })
     if (pdfResult?.blob) {
-      folder.file('brand-book.pdf', pdfResult.blob)
+      /* Bytes, not the Blob itself. JSZip reads a Blob through `FileReader`,
+         which exists only in a browser — so this one line was why the kit
+         writer could not be run by a test at all, and why the mark it writes
+         went unchecked long enough to ship `logo.png` holding an SVG. Identical
+         output either way; the zip already had to hold the bytes. */
+      folder.file('brand-book.pdf', await pdfResult.blob.arrayBuffer())
     }
 
     const zipBlob = await zip.generateAsync({ type: 'blob' })
@@ -1975,25 +1996,27 @@ export function markPackFiles(pack = {}) {
   let hasMark = false
   let markLine = 'No mark has been uploaded yet — add one on the Identity page.'
 
-  const src = String(pack.logoImage || '')
-  const m = src.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/)
-  if (m) {
-    const mime = m[1]
-    const ext = mime.includes('png')
-      ? 'png'
-      : mime.includes('jpeg') || mime.includes('jpg')
-        ? 'jpg'
-        : mime.includes('svg')
-          ? 'svg'
-          : mime.includes('webp')
-            ? 'webp'
-            : 'png'
-    files.push({ name: `logo.${ext}`, content: m[2], base64: true })
+  const mark = markSource(pack.logoImage)
+  if (mark.state === 'ready') {
+    files.push({ name: `logo.${mark.ext}`, content: mark.base64, base64: true })
     hasMark = true
-    const isVector = ext === 'svg'
-    markLine = isVector
-      ? 'logo.svg — vector, scales to any size.'
-      : `logo.${ext} — raster (not vector). Fine for screen and known print sizes; ask for a redraw if you need it at billboard scale.`
+    markLine =
+      mark.ext === 'svg'
+        ? 'logo.svg — vector, scales to any size.'
+        : `logo.${mark.ext} — raster (not vector). Fine for screen and known print sizes; ask for a redraw if you need it at billboard scale.`
+  } else if (mark.state === 'fetch') {
+    /* This builder is synchronous and cannot go to the network, while the
+       client package can and does. So the mark exists, is not here, and the
+       honest thing is to say where it IS rather than repeat "no mark" — the
+       false statement about the designer that started all of this. */
+    markLine =
+      'The mark is stored as a link in your cloud storage, so it is not in ' +
+      'this quick pack — the full client package collects it.'
+  } else if (mark.state === 'held') {
+    /* A mark exists. Telling the client "no mark has been uploaded yet" would
+       be a false statement about the designer — the same defect that shipped a
+       client package with an empty logo folder. See deliver/markSource.js. */
+    markLine = `The mark is not in this pack — ${mark.reason}.`
   }
 
   const readme = [
@@ -2083,6 +2106,12 @@ export async function downloadClientPackage(
     const root = zip.folder(slug) || zip
 
     const left = [...missing]
+    /* Renames this walk makes after the plan was fixed. The README ships
+       INSIDE the zip and lists what the PLAN named, so a rename it does not
+       know about points the client at a file that is not there — the exact
+       failure `packageReadme` marks absence for. Folded back before the zip
+       closes. */
+    const renamed = []
     let written = 0
     for (const f of files) {
       if (f.pdf) {
@@ -2105,8 +2134,67 @@ export async function downloadClientPackage(
         }
         continue
       }
+      if (f.fetchUrl) {
+        /* The mark lives in cloud storage because the sync offload put it
+           there. Collected at export time so the client actually receives it —
+           a failure is reported, never silently downgraded to a package that
+           looks complete. */
+        try {
+          const res = await fetch(f.fetchUrl)
+          if (!res.ok) throw new Error(`${res.status}`)
+          /* The plan named this from the URL's path and called that extension
+             provisional. This is where the promise is kept: the bytes arrive,
+             and if they disagree with the name the plan guessed, they win.
+             The whole name is rebuilt rather than just its extension, because
+             `markFileName` drops the `FullColor` suffix for a vector — patching
+             the three letters after the dot would leave `_FullColor.svg`. */
+          const buf = new Uint8Array(await res.arrayBuffer())
+          const ext = extFromRawBytes(buf)
+          const dir = f.path.slice(0, f.path.indexOf('/') + 1)
+          const path =
+            ext && f.markBrand
+              ? `${dir}${markFileName({ brand: f.markBrand, ext })}`
+              : withExt(f.path, ext)
+          if (path !== f.path) renamed.push({ from: f.path, to: path })
+          root.file(path, buf)
+          written += 1
+        } catch (e) {
+          left.push({
+            path: f.path,
+            reason: `the artwork could not be collected from storage (${e?.message || 'network error'}) — ask your designer for the file`,
+          })
+        }
+        continue
+      }
       root.file(f.path, f.content, f.base64 ? { base64: true } : undefined)
       written += 1
+    }
+
+    /* The README is written a second time now that the walk is done, for the
+       same reason `packageFiles` deferred it past its own loop: it is the one
+       file that has to describe the others, and it cannot until they exist.
+       That deferral fixed the pure stage and left this one. Everything decided
+       HERE — a mark renamed to match its bytes, a fetch that 403s, a brand
+       book the engine could not build — happened after the first README was
+       generated, so the copy the client opened still described all three as
+       present under names it had guessed. */
+    if (renamed.length || left.length !== missing.length) {
+      /* Found through the plan, not through `files` — `packageFiles` strips
+         its own `readme: true` marker once it has filled the content in
+         (`delete readme.readme`), so the written entry is indistinguishable
+         from any other text file by then. */
+      let readmePath = ''
+      for (const d of plan.folders) {
+        const entry = d.files.find((x) => x.kind === 'readme')
+        if (entry) readmePath = `${d.name}/${entry.name}`
+      }
+      for (const { from, to } of renamed) {
+        const cut = from.indexOf('/')
+        const folder = plan.folders.find((d) => d.name === from.slice(0, cut))
+        const entry = folder?.files.find((x) => x.name === from.slice(cut + 1))
+        if (entry) entry.name = to.slice(cut + 1)
+      }
+      if (readmePath) root.file(readmePath, packageReadme(pack, plan, left))
     }
 
     const blob = await zip.generateAsync({ type: 'blob' })

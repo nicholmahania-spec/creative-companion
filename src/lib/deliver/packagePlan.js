@@ -31,7 +31,18 @@
 
 import { DELIVERABLE_OPTIONS } from '../brief/detectiveBrief'
 import { SECTION_PAGES } from '../book/bookDocument'
-import { assetFileName, extFromBytes, extFromDataUrl, uniqueNames } from './naming'
+import {
+  assetFileName,
+  extFromBytes,
+  extFromDataUrl,
+  extFromUrlPath,
+  markFileName,
+  namePart,
+  shortItem,
+  uniqueNames,
+} from './naming'
+import { markSource, markGapSentence } from './markSource'
+import { familyByName, parseLabel } from '../book/fontCatalog'
 
 /**
  * What the designer is allowed to hand over.
@@ -75,9 +86,33 @@ export const USAGE_RIGHTS = [
 
 const RIGHTS_BY_ID = Object.fromEntries(USAGE_RIGHTS.map((r) => [r.id, r]))
 
-/** Unknown or missing rights read as the safe default: it is the client's. */
+/* Not in USAGE_RIGHTS: it is not a choice the designer can make, it is the
+   absence of one. Kept out of the list so it never appears in the dropdown. */
+const RIGHTS_UNSET = {
+  id: 'unset',
+  label: 'Rights not set',
+  ship: false,
+  note: 'Rights were never set on this file — say whose it is and it ships',
+}
+
+/**
+ * Unknown or missing rights hold the file BACK, and say so.
+ *
+ * This used to return `clientOwned` for anything unrecognised, with a comment
+ * calling that "the safe default". It is the unsafe one in both directions at
+ * once: `clientOwned` is `ship: true`, so the file went in the package, AND
+ * its label — "Client owns it" — was printed next to the file in the client's
+ * README. The app asserted ownership on the client's behalf about a file it
+ * knew nothing about. Rule 3 in this module's header already forbids that;
+ * this line was the exception that quietly disagreed with it.
+ *
+ * Files added through the panel are stamped `clientOwned` at the door
+ * (`addPackageAsset`), so this path is not the ordinary one — it catches
+ * assets that arrive by any other route, and it fails loud rather than open:
+ * held back, named in the panel, named in the README.
+ */
 export function rightsFor(id) {
-  return RIGHTS_BY_ID[id] || RIGHTS_BY_ID.clientOwned
+  return RIGHTS_BY_ID[id] || RIGHTS_UNSET
 }
 
 export function canDistribute(asset = {}) {
@@ -95,6 +130,14 @@ export function canDistribute(asset = {}) {
    book has no section for itself or for the brief. */
 const sectionName = (id) =>
   SECTION_PAGES.find((s) => s.id === id)?.short || id
+
+/* One spelling per package, taken from the same place the folder name is.
+   A client received `03_COLOR/` containing `..._Colour_Specifications.txt`
+   beside `..._Logo_Primary_FullColor.png` — three spellings of one word in a
+   folder that is meant to read as a single considered object. The folder was
+   single-sourced from SECTION_PAGES and the file names were hardcoded, so they
+   drifted the moment either changed. */
+const COLOUR_WORD = sectionName('color')
 
 export const PACKAGE_FOLDERS = [
   { id: 'guide', num: '01', name: 'Brand_Guide' },
@@ -134,8 +177,47 @@ export function fontInformation(pack = {}) {
     `Body face: ${body}`,
   ]
   if (text(pack.typeWhy)) lines.push('', `Why this pairing: ${pack.typeWhy}`)
-  lines.push('', 'Where to get them:', source || '  (not recorded — ask your designer)')
-  lines.push('', 'Licence:', licence || '  (not recorded — ask your designer)')
+  /* The app already knows the answer to both of these for every face it can
+     name. `fontCatalog` is a closed list and #159 established that every
+     family in it is published under the SIL Open Font License in google/fonts
+     — which is why the brand book can embed their letterforms at all.
+     So printing "(not recorded — ask your designer)" sent a client away with a
+     question the app could have answered, about a font that is free. The
+     designer's own note still wins where they wrote one; this only fills a
+     blank, and says it is the app speaking rather than them. */
+  const catalogFace =
+    familyByName(parseLabel(heading).family) ||
+    familyByName(parseLabel(body).family)
+  const known = catalogFace
+    ? {
+        source: `Google Fonts — https://fonts.google.com/?query=${encodeURIComponent(catalogFace.name)}`,
+        licence: 'SIL Open Font License 1.1 — free to use, including commercially',
+      }
+    : null
+
+  lines.push(
+    '',
+    'Where to get them:',
+    source || (known ? `  ${known.source}` : '  (not recorded — ask your designer)')
+  )
+  lines.push(
+    '',
+    'Licence:',
+    licence || (known ? `  ${known.licence}` : '  (not recorded — ask your designer)')
+  )
+  /* Names only what was actually filled. Saying "where this sheet says Google
+     Fonts and the Open Font License" when the designer wrote their own source
+     and only the licence was filled would credit the app for their words. */
+  const filled = [!source && 'where to get them', !licence && 'the licence']
+    .filter(Boolean)
+    .join(' and ')
+  if (known && filled) {
+    lines.push(
+      '',
+      `The line for ${filled} is the app filling in what it knows about these`,
+      'faces — not a note your designer wrote.'
+    )
+  }
   /* "from the source above" only when there IS a source above. With nothing
      recorded, the sheet read "(not recorded — ask your designer)" and then
      told the client to buy from it — a sentence pointing at its own blank. */
@@ -143,8 +225,8 @@ export function fontInformation(pack = {}) {
     '',
     filesIncluded
       ? 'The font files in this folder are included under a licence that permits it.'
-      : source
-        ? 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied — buy or download them from the source above.'
+      : source || known
+        ? 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied — get them from the source above.'
         : 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied. No source was recorded for these faces — ask your designer where to buy them.'
   )
   return { text: lines.join('\n'), filesIncluded }
@@ -180,21 +262,44 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
   }
 
   // ── 02 Logo ───────────────────────────────────────────────────────────
-  const markExt = extFromBytes(pack?.logoImage) || extFromDataUrl(pack?.logoImage)
-  if (markExt) {
+  /* Three outcomes, not two. "I cannot read this string" used to fall through
+     the same branch as "there is no mark", so a project WITH artwork shipped a
+     logo folder with no logo, and every report — this plan, the README, the
+     panel, the export toast — described the package as complete. The mark was
+     in the brand book PDF in the same zip. See markSource.js. */
+  const mark = markSource(pack?.logoImage)
+  if (mark.state === 'ready') {
     add('logo', {
-      name: assetFileName({
-        brand,
-        group: 'logo',
-        item: 'primary',
-        variant: markExt === 'svg' ? '' : 'FullColor',
-        ext: markExt,
-      }),
+      name: markFileName({ brand, ext: mark.ext }),
       kind: 'mark',
       note:
-        markExt === 'svg'
+        mark.ext === 'svg'
           ? 'Vector — scales to any size'
           : 'Raster, not vector — fine for screen and known print sizes',
+    })
+  } else if (mark.state === 'fetch') {
+    /* A mark stored as a link is a file the package CAN carry — it just has to
+       be collected. Reporting it as held back was honest and still lost the
+       client their logo.
+       Planned here, synchronously, so the panel and the zip keep reading ONE
+       decision: the panel says it will be downloaded, the writer downloads it,
+       and a fetch that fails is reported rather than quietly changing what
+       shipped. Same shape as the brand book, which is planned as a file and
+       filled in by the writer.
+       The extension is provisional — the bytes decide when they arrive. */
+    add('logo', {
+      /* Named by the same rule as the branch above, from what the URL says.
+         The writer re-runs that rule on the real bytes, so a URL that lies
+         about an SVG is corrected in the zip AND in the README rather than
+         keeping a suffix the format does not take. */
+      name: markFileName({ brand, ext: extFromUrlPath(pack?.logoImage) || 'png' }),
+      kind: 'mark',
+      note: 'Collected from your cloud storage when the package is built',
+    })
+  } else if (mark.state === 'held') {
+    excluded.push({
+      name: 'The logo artwork',
+      reason: markGapSentence(mark.reason),
     })
   }
   add('logo', {
@@ -206,12 +311,12 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
   // ── 03 Colour ─────────────────────────────────────────────────────────
   if ((pack?.palette || []).length) {
     add('colour', {
-      name: assetFileName({ brand, group: 'colour', item: 'specifications', ext: 'txt' }),
+      name: assetFileName({ brand, group: COLOUR_WORD, item: 'specifications', ext: 'txt' }),
       kind: 'colourSpec',
       note: 'HEX, RGB and CMYK for every colour, with its job',
     })
     add('colour', {
-      name: assetFileName({ brand, group: 'colour', item: 'tokens', ext: 'css' }),
+      name: assetFileName({ brand, group: COLOUR_WORD, item: 'tokens', ext: 'css' }),
       kind: 'tokensCss',
       note: 'Custom properties for whoever builds the site',
     })
@@ -257,17 +362,41 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
        client's machine acts on it. */
     const ext =
       extFromBytes(a.dataUrl) || extFromDataUrl(a.dataUrl) || text(a.ext) || 'bin'
-    add(a.folder && bucket[a.folder] ? a.folder : 'applications', {
+    /* A folder the app does not recognise is held back, not redirected. An
+       unset folder still means Applications — that is the ordinary path for
+       everything added through the panel — but a folder that was SET to
+       something unknown is a disagreement between caller and plan, and
+       quietly filing it under Applications resolves that disagreement by
+       guessing. The client cannot tell a guess from a decision. */
+    if (a.folder && !bucket[a.folder]) {
+      excluded.push({
+        name: label,
+        reason: `Meant for a folder this package does not have (${a.folder}) — add it to the folder by hand`,
+      })
+      continue
+    }
+    /* An `item` the caller SET is a decision and is used whole. A label is the
+       filename off the designer's desk, which is not — see `shortItem`. */
+    const named = a.item ? { item: namePart(a.item), shortened: false } : shortItem(label)
+    add(a.folder || 'applications', {
       name: assetFileName({
         brand,
         group: a.group || 'application',
-        item: a.item || label,
+        item: named.item,
         variant: a.variant || '',
         ext,
       }),
       kind: 'asset',
-      note: rights.label,
+      /* The original travels with it. Shortening a name to make the folder
+         usable must not cost the client the ability to match a file back to
+         what the designer called it — that trade would be the convention
+         taking more than it gives. */
+      note: named.shortened ? `${rights.label} — from "${label}"` : rights.label,
       assetId: a.id,
+      /* Which bought item this file IS. Carried into the plan so the
+         checklist can be computed from the plan alone, the way every other
+         reader of this module works. Empty means the designer has not said. */
+      deliverable: text(a.deliverable),
     })
   }
 
@@ -371,16 +500,61 @@ export function packageReadme(pack = {}, plan = null, missing = []) {
       'version of the mark. Those are shown in the app as previews; ask your',
       'designer if you need them as separate files.'
     )
-  } else {
+  } else if (markSource(pack?.logoImage).state === 'none') {
     lines.push(
       '',
       'No logo file is included in this package — there is no stored mark on',
       'the project yet. The usage sheet describes the rules; ask your designer',
       'for the artwork itself.'
     )
+  } else {
+    /* There IS a mark, and this package could not write it. The sentence above
+       would tell the client the designer never made one — a confident claim,
+       false, and about the wrong person. */
+    lines.push(
+      '',
+      'No logo file is included in this package, but the mark does exist —',
+      'the app could not write it into the folder from how it is stored.',
+      'The usage sheet describes the rules; ask your designer for the',
+      'artwork itself.'
+    )
   }
   lines.push('')
   return lines.join('\n')
+}
+
+/**
+ * The bought items the app produces itself from project data. Everything else
+ * the brief picked is the designer's own file to add and attribute.
+ */
+export const GENERATED_DELIVERABLES = [
+  'logoPrimary',
+  'logoVariations',
+  'colourPalette',
+  'typography',
+  'guidelines',
+]
+
+/**
+ * The bought items an uploaded file can be attributed to — what the panel
+ * offers on each asset row.
+ *
+ * Only items the brief actually picked, minus the ones the app makes itself.
+ * An empty result means every bought item is app-generated, and the row's
+ * attribution control has nothing to ask about, so it is not shown.
+ *
+ * @param {object} pack
+ * @returns {Array<{ id: string, label: string }>}
+ */
+export function attachableDeliverables(pack = {}) {
+  const picked = Array.isArray(pack?.detective?.deliverablesPicked)
+    ? pack.detective.deliverablesPicked
+    : []
+  return picked
+    .filter((id) => !GENERATED_DELIVERABLES.includes(id))
+    .map((id) => DELIVERABLE_OPTIONS.find((o) => o.id === id))
+    .filter(Boolean)
+    .map((o) => ({ id: o.id, label: o.label }))
 }
 
 /**
@@ -397,10 +571,34 @@ export function packageReadme(pack = {}, plan = null, missing = []) {
 export function deliverableChecklist(pack = {}, planIn = null) {
   const plan = planIn || packagePlan(pack)
   const kinds = new Set(plan.folders.flatMap((f) => f.files.map((x) => x.kind)))
+  /* Which bought items the uploaded files have actually been ATTRIBUTED to.
+     This used to be `plan.folders.some(f => f.files.some(x => x.kind ===
+     'asset'))` — one shared boolean meaning "the package contains at least one
+     file of any kind", reused as the answer for every deliverable the app
+     cannot generate itself. So a single upload ticked business cards AND
+     packaging AND shelf talkers AND the tote at once, and the panel printed
+     "Everything the brief asked for is in here."
+
+     It did exactly that on a real package whose only uploads were three files
+     belonging to a different client entirely. The checklist was not merely
+     failing to catch the error, it was affirmatively vouching for it, at the
+     moment the designer was looking for a reason to stop checking. A checklist
+     that can be wrong in the reassuring direction is worse than none.
+
+     Attribution also does the catching for free: a file that belongs to no
+     bought item has nothing to tick, so it cannot vouch for anything. */
+  const attributed = new Set(
+    plan.folders
+      .flatMap((f) => f.files)
+      .filter((x) => x.kind === 'asset' && x.deliverable)
+      .map((x) => x.deliverable)
+  )
   const picked = Array.isArray(pack?.detective?.deliverablesPicked)
     ? pack.detective.deliverablesPicked
     : []
 
+  /* One entry per id in GENERATED_DELIVERABLES — that list is what
+     `attachableDeliverables` subtracts, so the two cannot drift. */
   const SATISFIED = {
     logoPrimary: () => kinds.has('mark'),
     logoVariations: () => kinds.has('mark'),
@@ -408,10 +606,25 @@ export function deliverableChecklist(pack = {}, planIn = null) {
     typography: () => kinds.has('fontInfo'),
     guidelines: () => kinds.has('book'),
   }
+  /* "No mark uploaded yet" sent a designer to the Identity page to look at the
+     mark that was already there. When one is stored but unusable, say which
+     problem it is. */
+  const markState = markSource(pack?.logoImage)
+  /* `fetch` is not a gap — the mark ships, it is just collected on the way.
+     Only 'held' and 'none' belong in a MISSING line. */
+  const noMarkLine =
+    markState.state === 'held'
+      ? `The mark is on the project but could not go in the package — ${markState.reason}`
+      : 'No mark uploaded yet — add it on Identity'
   const MISSING = {
-    logoPrimary: 'No mark uploaded yet — add it on Identity',
+    logoPrimary: noMarkLine,
+    /* "Only the primary mark is in the package" is true when a primary
+       shipped. In the held case none did, and printing it directly under the
+       line that says so read as the panel contradicting itself. */
     logoVariations:
-      'Only the primary mark is in the package — variations are supplied by hand',
+      markState.state === 'held'
+        ? noMarkLine
+        : 'Only the primary mark is in the package — variations are supplied by hand',
     colourPalette: 'No palette set yet',
     typography: 'Typography not documented yet',
     guidelines: 'The brand book is not being included',
@@ -423,20 +636,16 @@ export function deliverableChecklist(pack = {}, planIn = null) {
       if (!option) return null
       const check = SATISFIED[id]
       /* A deliverable this app cannot produce (packaging, signage, a website)
-         is the designer's own file to add, so it is listed as an item to
-         attach rather than silently ticked or silently failed. */
-      const ok = check
-        ? check()
-        : plan.folders.some((f) =>
-            f.files.some((x) => x.kind === 'asset')
-          )
+         is the designer's own file to add, so it is ticked only by a file
+         attributed to it — never by the presence of files in general. */
+      const ok = check ? check() : attributed.has(id)
       return {
         id,
         label: option.label,
         ok,
         missing: ok
           ? ''
-          : MISSING[id] || `Attach the ${option.label.toLowerCase()} file`,
+          : MISSING[id] || `Add the ${option.label.toLowerCase()} file, or mark which file it is`,
       }
     })
     .filter(Boolean)

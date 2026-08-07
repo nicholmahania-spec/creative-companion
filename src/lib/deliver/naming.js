@@ -50,17 +50,98 @@ const fold = (s) =>
  * "Sparrow S Promise" is not a thing anyone would call that business.
  */
 export function namePart(raw) {
+  return wordsOf(raw).map(cap).join('')
+}
+
+const cap = (w) => w[0].toUpperCase() + w.slice(1)
+
+/** The words a name part is built from, in order. */
+function wordsOf(raw) {
   /* Split camelCase before folding, so a part that arrives already joined
      ("FullColor", "businessCard") keeps its word boundaries instead of
      flattening to "Fullcolor". Callers pass both shapes and neither is
      wrong. */
   const split = String(raw || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-  const cleaned = fold(split).replace(/['’]/g, '')
-  return cleaned
+  return fold(split)
+    .replace(/['’]/g, '')
     .split(/[^a-z0-9]+/)
     .filter(Boolean)
-    .map((w) => w[0].toUpperCase() + w.slice(1))
-    .join('')
+}
+
+/* Words that describe the FILE rather than the thing it shows. The convention
+   already carries the format in the extension and the colour treatment in the
+   variant slot, so repeating them inside the item is noise the client reads
+   past. Version and generation counters are the designer's working history and
+   were never meant to leave the desk. */
+const ITEM_NOISE = new Set([
+  'final', 'finals', 'copy', 'draft', 'new', 'old', 'latest', 'edit', 'edited',
+  'vector', 'raster', 'outline', 'outlined', 'outlines', 'flat', 'export',
+  'exported', 'artboard', 'asset', 'file', 'untitled', 'image', 'version',
+  'rgb', 'cmyk', 'hires', 'lores', 'print', 'web', 'screen',
+])
+
+/* A counter rather than a fact: `v2`, `rev3`, `2generation`, a bare `1`.
+   Four or more digits are left alone, because that is a year and a client
+   reading `Poster2024` is better served than one reading `Poster`. */
+const ITEM_COUNTER = /^(v\d+|rev\d*|copy\d+|\d{1,3}(st|nd|rd|th)?(gen|generation)?)$/
+
+/**
+ * The item slot of a handoff name, derived from whatever the file was called
+ * on the designer's desk.
+ *
+ * `Rectangle_Vector_FullColor_2generation_Logo` became
+ * `RectangleVectorFullColor2generationLogo` — thirty-eight characters of which
+ * roughly a third told the client nothing. The whole point of the convention
+ * (see the header) is a folder someone can use in a year; a run-on that has
+ * swallowed the designer's export history is the same problem as
+ * `logo-final-final-2.ai`, wearing the convention's clothes.
+ *
+ * So: drop the words that describe the file, then keep the leading few of what
+ * is left. NOTHING IS LOST SILENTLY — `shortened` is true whenever a word was
+ * dropped, and the caller puts the original where the client can still read it.
+ * Every word being noise means the designer named it entirely in noise, and
+ * the original words are kept rather than reducing the name to nothing.
+ *
+ * @param {string} raw
+ * @param {{ maxWords?: number, maxChars?: number }} [limits]
+ * @returns {{ item: string, shortened: boolean }}
+ */
+/* Four words, not three. `wordsOf` splits camelCase, so a designer's single
+   token `FullColor` costs two of the budget — a three-word cap ate the word
+   that said what the thing actually was. */
+export function shortItem(raw, { maxWords = 4, maxChars = 28 } = {}) {
+  const all = wordsOf(raw)
+  const meaningful = all.filter((w) => !ITEM_NOISE.has(w) && !ITEM_COUNTER.test(w))
+  const source = meaningful.length ? meaningful : all
+  const kept = source.slice(0, maxWords)
+  while (kept.length > 1 && kept.map(cap).join('').length > maxChars) kept.pop()
+  return { item: kept.map(cap).join(''), shortened: kept.length < all.length }
+}
+
+/**
+ * The mark's file name, from the extension its bytes turned out to be.
+ *
+ * One rule, three readers: the plan's data-URL branch knows the extension up
+ * front, the plan's fetch branch guesses it from the storage URL, and the
+ * writer learns the truth when the bytes land. They disagreed — the identical
+ * mark was named `_FullColor.svg` when it had been synced to the cloud and
+ * `_Primary.svg` when it had not, decided by something the designer never
+ * chose.
+ *
+ * A vector mark carries no colour variant: `FullColor` exists to tell a raster
+ * export apart from its one-colour and reverse siblings, and an SVG has none.
+ *
+ * @param {{ brand?: string, ext?: string }} parts
+ * @returns {string}
+ */
+export function markFileName({ brand, ext } = {}) {
+  return assetFileName({
+    brand,
+    group: 'logo',
+    item: 'primary',
+    variant: ext === 'svg' ? '' : 'FullColor',
+    ext,
+  })
 }
 
 /**
@@ -126,7 +207,23 @@ export function uniqueNames(names = []) {
  * @returns {string|null}
  */
 export function extFromBytes(base64) {
-  const b = headBytes(base64, 16)
+  return extFromRawBytes(headBytes(base64, 16))
+}
+
+/**
+ * The same question asked of bytes already in hand.
+ *
+ * A mark offloaded to cloud storage arrives as a downloaded blob, not as a data
+ * URL, and re-encoding it to base64 just to ask what it is would be work done
+ * to fit the shape of the older caller. Both entry points read ONE signature
+ * table, for the same reason `markSource` exists: two copies of "what kind of
+ * file is this?" is how a package ends up with a name its bytes disagree with.
+ *
+ * @param {ArrayLike<number>|null} bytes  at least the first 16 bytes
+ * @returns {string|null}
+ */
+export function extFromRawBytes(bytes) {
+  const b = bytes && bytes.length ? Array.from(bytes).slice(0, 16) : null
   if (!b) return null
   const at = (i, ...sig) => sig.every((v, k) => b[i + k] === v)
 
@@ -189,4 +286,34 @@ export function extFromDataUrl(url) {
   if (mime.includes('gif')) return 'gif'
   if (mime.includes('pdf')) return 'pdf'
   return null
+}
+
+/** The extension a URL's own path suggests — a provisional name only, because
+ *  the bytes decide once they arrive (see `withExt`). */
+export function extFromUrlPath(url) {
+  const m = String(url || '')
+    .split(/[?#]/)[0]
+    .match(/\.([a-z0-9]{2,5})$/i)
+  return m ? m[1].toLowerCase() : ''
+}
+
+/**
+ * A planned path, renamed to the extension its bytes actually turned out to be.
+ *
+ * The plan names a collected mark from the URL's own path, which is a claim
+ * made by whoever wrote the key. Usually a true one — the offload derives the
+ * key from the bytes — but "usually" is exactly the confidence that shipped two
+ * `.png` files holding `%PDF`. When the bytes say something else, the bytes
+ * win; when they say nothing (an AVIF, say, which has no entry in the
+ * signature table) the planned name stands rather than being downgraded to a
+ * guess.
+ *
+ * @param {string} path  the planned path, e.g. `02_LOGO/Harbor_Logo_Primary.png`
+ * @param {string|null} ext  the extension the bytes imply, or null
+ * @returns {string} the path to actually write
+ */
+export function withExt(path, ext) {
+  const p = String(path || '')
+  if (!ext || !p) return p
+  return /\.[a-z0-9]{2,5}$/i.test(p) ? p.replace(/\.[a-z0-9]{2,5}$/i, `.${ext}`) : `${p}.${ext}`
 }

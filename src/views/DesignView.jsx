@@ -24,6 +24,7 @@ import versionService, {
   versionKindLabel,
 } from '../services/versionService'
 import { messageDayLabel } from '../lib/client/messageDayLabel'
+import { familyByName, parseLabel } from '../lib/book/fontCatalog'
 import AlignmentBars from '../components/AlignmentBars'
 import AxisTagger from '../components/AxisTagger'
 import { strategyProfile } from '../lib/brand/alignment'
@@ -529,6 +530,50 @@ export default function DesignView({
       return next
     })
   }
+
+  /* A typeface name is typed one letter at a time, and every letter used to be
+     a saved brand decision. A designer who typed half of "Plus Jakarta Sans"
+     and moved on had `Plus Jakart` in the project, on the type page of the
+     brand book, and quoted back to their client on the handoff sheet. The
+     store is not where a half-finished word belongs.
+
+     Same shape as the hex fields above: the draft lives here while the field
+     has focus, the store keeps the last settled value, and blur commits. Blur
+     fires on unmount too, so nothing is lost by navigating away. */
+  const [faceDrafts, setFaceDrafts] = useState({})
+
+  const commitFace = (field) => {
+    const draft = faceDrafts[field]
+    setFaceDrafts((d) => {
+      const next = { ...d }
+      delete next[field]
+      return next
+    })
+    if (draft == null) return
+    /* Blank means "put it back", not "the brand has no heading face". The
+       field shows a default when empty and committing the empty string would
+       persist a decision the designer did not make. */
+    if (draft.trim()) updateBrandField(field, draft.trim())
+  }
+
+  const headingFace =
+    faceDrafts.typeHeading ?? (activeProject?.typeHeading || 'Plus Jakarta Sans Bold')
+  const bodyFace =
+    faceDrafts.typeBody ?? (activeProject?.typeBody || 'Plus Jakarta Sans Regular')
+
+  /* A face the catalogue does not know still works — a designer may have
+     licensed something the app has never heard of — so this is a note and
+     nothing is blocked. The cost is specific and worth naming: the typography
+     sheet in the client package takes its source and licence line from the
+     catalogue, so an unrecognised name ships without one. It also catches a
+     name that is simply half-typed, which is how `Plus Jakart` reached a
+     client sheet. */
+  const unknownFace = (label) => {
+    const family = parseLabel(label).family
+    return family && !familyByName(family) ? family : ''
+  }
+  const unknownHeading = unknownFace(headingFace)
+  const unknownBody = unknownFace(bodyFace)
 
   const applyFromPins = async () => {
     if (!pinCount) {
@@ -1760,23 +1805,30 @@ export default function DesignView({
                   <input
                     id="type-heading"
                     className="field-input"
-                    value={
-                      activeProject?.typeHeading || 'Plus Jakarta Sans Bold'
-                    }
+                    value={headingFace}
                     onChange={(e) =>
-                      updateBrandField('typeHeading', e.target.value)
+                      setFaceDrafts((d) => ({
+                        ...d,
+                        typeHeading: e.target.value,
+                      }))
                     }
+                    onBlur={() => commitFace('typeHeading')}
                   />
+                  {unknownHeading && (
+                    <p className="panel-hint">
+                      No match for “{unknownHeading}” in the app’s font list,
+                      so the handoff won’t say where to get it. Fine if it’s a
+                      font you own.
+                    </p>
+                  )}
                   <div
                     className="brand-type-display"
                     style={{
                       marginTop: '0.65rem',
-                      fontFamily: fontFamilyFromLabel(
-                        activeProject?.typeHeading || 'Plus Jakarta Sans Bold'
-                      ),
+                      fontFamily: fontFamilyFromLabel(headingFace),
                     }}
                   >
-                    {activeProject?.typeHeading || 'Plus Jakarta Sans Bold'}
+                    {headingFace}
                   </div>
                 </div>
                 <div className="field-block" style={{ marginBottom: 0 }}>
@@ -1786,24 +1838,27 @@ export default function DesignView({
                   <input
                     id="type-body"
                     className="field-input"
-                    value={
-                      activeProject?.typeBody || 'Plus Jakarta Sans Regular'
-                    }
+                    value={bodyFace}
                     onChange={(e) =>
-                      updateBrandField('typeBody', e.target.value)
+                      setFaceDrafts((d) => ({ ...d, typeBody: e.target.value }))
                     }
+                    onBlur={() => commitFace('typeBody')}
                   />
+                  {unknownBody && (
+                    <p className="panel-hint">
+                      No match for “{unknownBody}” in the app’s font list, so
+                      the handoff won’t say where to get it. Fine if it’s a
+                      font you own.
+                    </p>
+                  )}
                   <div
                     className="brand-type-body"
                     style={{
                       marginTop: '0.65rem',
-                      fontFamily: fontFamilyFromLabel(
-                        activeProject?.typeBody || 'Plus Jakarta Sans Regular'
-                      ),
+                      fontFamily: fontFamilyFromLabel(bodyFace),
                     }}
                   >
-                    {activeProject?.typeBody || 'Plus Jakarta Sans Regular'} —
-                    The quick brown fox keeps the brief honest.
+                    {bodyFace} — The quick brown fox keeps the brief honest.
                   </div>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  attachableDeliverables,
   canDistribute,
   deliverableChecklist,
   fontInformation,
@@ -44,8 +45,27 @@ describe('the folder structure', () => {
   it('names every file to the convention', () => {
     const plan = packagePlan(pack({ logoImage: SVG }))
     expect(fileNames(plan)).toContain('SparrowsPromise_Logo_Primary.svg')
-    expect(fileNames(plan)).toContain('SparrowsPromise_Colour_Specifications.txt')
+    expect(fileNames(plan)).toContain('SparrowsPromise_Color_Specifications.txt')
     expect(plan.folders.map((f) => f.name)).toContain('02_LOGO')
+  })
+
+  /* The literal above used to read `_Colour_`, which pinned one half of a
+     split: the folder was `03_COLOR`, single-sourced from SECTION_PAGES, and
+     the file names were hardcoded British. A client received both spellings
+     plus `FullColor` in the same folder. Asserting the AGREEMENT rather than
+     either spelling is what stops it drifting again — change SECTION_PAGES and
+     the file names follow, or this fails. */
+  it('spells the word the same way in the folder and in the files', () => {
+    const plan = packagePlan(pack({ logoImage: SVG }))
+    const folder = plan.folders.find((f) => /colou?r/i.test(f.name))
+    expect(folder, 'no colour folder in the plan').toBeTruthy()
+    const word = folder.name.replace(/^\d+_/, '').toLowerCase()
+    for (const file of folder.files) {
+      expect(
+        file.name.toLowerCase(),
+        `${file.name} does not match the folder's spelling (${word})`
+      ).toContain(word)
+    }
   })
 
   it('says a raster mark is raster rather than implying vector', () => {
@@ -68,10 +88,25 @@ describe('the folder structure', () => {
 })
 
 describe('usage rights', () => {
-  it('defaults an unmarked asset to the client’s', () => {
-    expect(rightsFor(undefined).id).toBe('clientOwned')
-    expect(rightsFor('nonsense').id).toBe('clientOwned')
-    expect(canDistribute({})).toBe(true)
+  /* This test used to assert the opposite, and the behaviour it pinned put
+     three files belonging to another client into a package, each labelled
+     "Client owns it" in the README. Unknown rights are not a default, they
+     are a question nobody answered — the package says so instead of
+     answering it on the client's behalf. */
+  it('holds back an asset whose rights were never set, rather than claiming it', () => {
+    expect(rightsFor(undefined).id).toBe('unset')
+    expect(rightsFor('nonsense').id).toBe('unset')
+    expect(canDistribute({})).toBe(false)
+    expect(rightsFor(undefined).label).not.toMatch(/client owns/i)
+  })
+
+  it('keeps "rights not set" out of the pickable list', () => {
+    expect(USAGE_RIGHTS.map((r) => r.id)).not.toContain('unset')
+  })
+
+  it('still ships a file the designer marked as the client’s', () => {
+    expect(rightsFor('clientOwned').ship).toBe(true)
+    expect(canDistribute({ rights: 'clientOwned' })).toBe(true)
   })
 
   it('holds back everything that is not the client’s to hold', () => {
@@ -84,12 +119,33 @@ describe('usage rights', () => {
     const plan = packagePlan(pack(), {
       assets: [
         { id: 1, name: 'hero mockup', dataUrl: PNG, rights: 'thirdParty' },
-        { id: 2, name: 'business card', dataUrl: PNG },
+        { id: 2, name: 'business card', dataUrl: PNG, rights: 'clientOwned' },
       ],
     })
     expect(fileNames(plan)).toContain('SparrowsPromise_Application_BusinessCard.png')
     expect(plan.excluded).toEqual([
       { name: 'hero mockup', reason: expect.stringMatching(/licence is yours/i) },
+    ])
+  })
+
+  it('names an asset with no rights in held-back, so it is not silently dropped', () => {
+    const plan = packagePlan(pack(), {
+      assets: [{ id: 1, name: 'mystery file', dataUrl: PNG }],
+    })
+    expect(fileNames(plan)).not.toContain('SparrowsPromise_Application_MysteryFile.png')
+    expect(plan.excluded).toEqual([
+      { name: 'mystery file', reason: expect.stringMatching(/never set/i) },
+    ])
+  })
+
+  it('holds back a file bound for a folder the package does not have', () => {
+    const plan = packagePlan(pack(), {
+      assets: [
+        { id: 1, name: 'odd one', dataUrl: PNG, rights: 'clientOwned', folder: 'motion' },
+      ],
+    })
+    expect(plan.excluded).toEqual([
+      { name: 'odd one', reason: expect.stringMatching(/does not have \(motion\)/i) },
     ])
   })
 
@@ -116,8 +172,39 @@ describe('fonts are documented, not redistributed', () => {
     expect(info.text).not.toMatch(/NOT included/)
   })
 
-  it('admits when the licence and source were never recorded', () => {
-    expect(fontInformation(pack()).text).toMatch(/not recorded/)
+  /* The intent — admit what you do not know — is unchanged, but the fixture
+     was a catalog face, so "not recorded" was never true of it: fontCatalog is
+     a closed list and every family in it is a free OFL Google font. Telling a
+     client to go and ask about one was the defect, not the coverage. Tested
+     now with a face the app genuinely does not know. */
+  it('admits when the licence and source are genuinely unknown', () => {
+    const text = fontInformation(
+      pack({ typeHeading: 'Gotham Bold', typeBody: 'Gotham Book' })
+    ).text
+    expect(text).toMatch(/not recorded/)
+    expect(text).toMatch(/No source was recorded/)
+  })
+
+  it('fills in what it knows for a face from the catalog, and says it is the app speaking', () => {
+    const text = fontInformation(
+      pack({ typeHeading: 'Fraunces Bold', typeBody: 'Fraunces Regular' })
+    ).text
+    expect(text).toMatch(/Google Fonts/)
+    expect(text).toMatch(/Open Font License/)
+    expect(text).not.toMatch(/not recorded/)
+    // Never passed off as the designer's own note.
+    expect(text).toMatch(/not a note your designer wrote/)
+  })
+
+  it('a designer note always wins over what the app knows', () => {
+    const text = fontInformation(
+      pack({
+        typeHeading: 'Fraunces Bold',
+        typeSource: 'Bought from Klim, 3 desktop seats',
+      })
+    ).text
+    expect(text).toContain('Bought from Klim, 3 desktop seats')
+    expect(text).not.toMatch(/Google Fonts/)
   })
 
   it('warns in the README when fonts are documentation only', () => {
@@ -162,7 +249,59 @@ describe('the deliverable checklist', () => {
       pack({ detective: { deliverablesPicked: ['packaging'] } })
     )
     expect(rows[0].ok).toBe(false)
-    expect(rows[0].missing).toMatch(/attach/i)
+    expect(rows[0].missing).toMatch(/packaging/i)
+  })
+
+  /* The bug this file now guards, stated as the client experienced it: one
+     upload — in the real case, a file belonging to somebody else entirely —
+     ticked every bought item the app cannot generate, and the panel reported
+     "Everything the brief asked for is in here." */
+  it('does not let one unattributed upload tick every bought item', () => {
+    const rows = deliverableChecklist(
+      pack({
+        detective: {
+          deliverablesPicked: ['businessCard', 'packaging', 'signage'],
+        },
+      }),
+      packagePlan(pack(), {
+        assets: [{ id: 1, name: 'a file', dataUrl: PNG, rights: 'clientOwned' }],
+      })
+    )
+    expect(rows.every((r) => !r.ok)).toBe(true)
+  })
+
+  it('ticks only the item a file is attributed to', () => {
+    const p = pack({
+      detective: { deliverablesPicked: ['businessCard', 'packaging'] },
+    })
+    const rows = deliverableChecklist(
+      p,
+      packagePlan(p, {
+        assets: [
+          {
+            id: 1,
+            name: 'the card',
+            dataUrl: PNG,
+            rights: 'clientOwned',
+            deliverable: 'businessCard',
+          },
+        ],
+      })
+    )
+    expect(rows.find((r) => r.id === 'businessCard').ok).toBe(true)
+    expect(rows.find((r) => r.id === 'packaging').ok).toBe(false)
+  })
+
+  it('offers only bought items the app cannot make itself for attribution', () => {
+    expect(
+      attachableDeliverables(
+        pack({
+          detective: {
+            deliverablesPicked: ['logoPrimary', 'guidelines', 'packaging'],
+          },
+        })
+      ).map((d) => d.id)
+    ).toEqual(['packaging'])
   })
 
   it('ignores a deliverable id it does not recognise', () => {

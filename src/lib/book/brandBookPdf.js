@@ -53,6 +53,7 @@ import {
   monogramFor,
 } from '../brandSystem'
 import { filledDetectiveChapters } from '../brief/detectiveBrief'
+import { hasStoredMark } from '../deliver/markSource'
 import { touchpointsFor, touchpointsBlurb, touchpointLabel, TOUCHPOINT_SPECS } from '../journey/touchpoints'
 import {
   slugifyFilename,
@@ -835,7 +836,20 @@ export async function downloadBrandPackVectorPdf(
       setFace('label', px(13), GOLD)
       tracked('Visual Identity System', margin, top + px(13) * 0.82, px(13) * track(0.16))
       setFace('body', px(13), MUTE_INK)
-      pdf.text(pdfSafeText(day), pageW - margin, top + px(13) * 0.82, { align: 'right' })
+      /* The cover says what the book IS.
+         `journey.js` has declared the bar for this stop all along — "a mark or
+         wordmark, plus words or colour that feel real" — and nothing at export
+         ever read it, so a book with no mark in it presented itself exactly
+         like a finished one. A client cannot be expected to infer the
+         difference from an absence.
+         Dated line, right-aligned, same weight as the date: a statement of
+         status, not a warning. */
+      const coverStatus = hasStoredMark(pack?.logoImage)
+        ? day
+        : `${day}  ·  Working document — mark to come`
+      pdf.text(pdfSafeText(coverStatus), pageW - margin, top + px(13) * 0.82, {
+        align: 'right',
+      })
 
       /* Mark, title and tagline are one block, centred in the space between
          the top row and the contents row — the middle child of the design's
@@ -1137,6 +1151,38 @@ export async function downloadBrandPackVectorPdf(
         })
       }
 
+      /* Everything below this line is a MEASUREMENT OF THE MARK, and there is
+         no honest way to measure one that does not exist.
+         With no artwork stored, `drawMark` falls through to a monogram built
+         from the project name — so a clearspace diagram, a minimum-size ladder
+         and four misuse panels were all being drawn from a placeholder and
+         printed as specification. A wide horizontal lockup and a compact icon
+         do not share a minimum size; a rule derived from a stand-in cannot be
+         right, and the client reads it as a promise they will later be told
+         was wrong.
+         The lockups above stay: a wordmark set in type is a real thing to
+         show. The geometry does not. */
+      const markIsReal = hasStoredMark(pack?.logoImage)
+      if (!markIsReal) {
+        para(
+          'The mark is not in the system yet. Clearspace, minimum size and the ' +
+            'misuse rules are measured from the artwork, so they arrive with it — ' +
+            'the shapes above are the wordmark set in type, not the final mark.',
+          margin,
+          y,
+          contentW,
+          { size: px(12), lh: 1.55, rgb: MUTE_CREAM }
+        )
+        y += paraH(
+          'The mark is not in the system yet. Clearspace, minimum size and the ' +
+            'misuse rules are measured from the artwork, so they arrive with it — ' +
+            'the shapes above are the wordmark set in type, not the final mark.',
+          contentW,
+          px(12),
+          1.55
+        ) + px(20)
+      }
+
       const BOXW = px(110)
       /* X is the module every guide uses: the clear space is expressed as a
          multiple of it, so the rule survives the mark being scaled. Half the
@@ -1144,6 +1190,7 @@ export async function downloadBrandPackVectorPdf(
       const X = BOXW * 0.22
       const inner = BOXW - X * 2
 
+      if (markIsReal) {
       outline(margin, y, BOXW, BOXW, INK, 0.75, [2, 2])
       drawMark(margin + X, y + X, inner, inner)
 
@@ -1161,6 +1208,7 @@ export async function downloadBrandPackVectorPdf(
       pdf.text('X', midX, y + BOXW - X / 2 + px(3), { align: 'center' })
       pdf.text('X', margin + X / 2, midY + px(3), { align: 'center' })
       pdf.text('X', margin + BOXW - X / 2, midY + px(3), { align: 'center' })
+      }
 
       const specW = contentW - BOXW - px(24)
       const specX = margin + BOXW + px(24)
@@ -1199,7 +1247,7 @@ export async function downloadBrandPackVectorPdf(
           { w: px(22), label: 'Minimum' },
         ]
         const rowH = px(78)
-        if (y + rowH + px(34) < floorY()) {
+        if (markIsReal && y + rowH + px(34) < floorY()) {
           kicker('Minimum size', margin, y + KICKER_PT * 0.82, KICKER_CREAM)
           y += KICKER_PT * 0.82 + px(12)
           let sx = margin
@@ -1244,7 +1292,7 @@ export async function downloadBrandPackVectorPdf(
         const gapX = px(14)
         const cw = (contentW - gapX * 3) / 4
         const ch = px(64)
-        if (y + ch + px(30) < floorY()) {
+        if (markIsReal && y + ch + px(30) < floorY()) {
           kicker("Don't", margin, y + KICKER_PT * 0.82, KICKER_CREAM)
           y += KICKER_PT * 0.82 + px(10)
           cells.forEach((cell, i) => {

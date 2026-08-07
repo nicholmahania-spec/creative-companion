@@ -124,6 +124,7 @@ export const DETECTIVE_CHAPTERS = [
         label: 'Email',
         tip: 'e.g. you@studio.com',
         area: false,
+        clientPrivate: true,
         required: false,
         gridSpan: 'half',
       },
@@ -132,6 +133,7 @@ export const DETECTIVE_CHAPTERS = [
         label: 'Phone',
         tip: 'Optional — for quick questions',
         area: false,
+        clientPrivate: true,
         required: false,
         gridSpan: 'half',
       },
@@ -141,6 +143,7 @@ export const DETECTIVE_CHAPTERS = [
         tip: 'A range is fine',
         area: false,
         designerOnly: true,
+        clientPrivate: true,
         required: false,
         gridSpan: 'full',
       },
@@ -484,8 +487,27 @@ export function formatDetectiveAnswer(field, raw) {
   const s = String(raw).trim()
   if (!s) return ''
   if (field?.type === 'spectrum') {
-    const hit = spectrumChoices(field.poles || []).find((c) => c.value === s)
+    const choices = spectrumChoices(field.poles || [])
+    const hit = choices.find((c) => c.value === s)
     if (hit) return hit.label
+    /* An unrecognised spectrum value NEVER falls through to the raw string.
+       These fields were once a 0-100 slider, and projects created then still
+       hold numbers. Returning `s` printed "42" and "68" as answers in a
+       client's brand book — under a question whose two poles are words, with
+       no key anywhere in the document saying which end 42 was near. One of
+       them landed alone at the top of a page, orphaned from its question by a
+       page break, which is how it was found.
+
+       A number is still an answer, so it is read rather than discarded: five
+       equal buckets across 0-100, matching the five choices the field offers
+       now. Anything genuinely unreadable yields '' and the row is dropped by
+       `filledDetectiveChapters` — an empty row is recoverable, a raw token on
+       a client page is not. */
+    const n = Number(s)
+    if (Number.isFinite(n) && n >= 0 && n <= 100) {
+      return choices[Math.min(4, Math.floor(n / 20))]?.label || ''
+    }
+    return ''
   }
   if ((field?.type === 'choice' || field?.type === 'select') && field.options) {
     const hit = field.options.find((o) => o.id === s || o.value === s)
@@ -499,12 +521,29 @@ export function formatDetectiveAnswer(field, raw) {
  * `tip` carries the field's worked example — the Agreed Brief PDF section
  * renders it as the example line beneath the question, per the "a question
  * is never asked bare" pattern (see todo.md's brief-PDF reference notes).
+ *
+ * `clientPrivate` fields are omitted by default, because every caller of this
+ * function writes a file the CLIENT receives — the brand book's appendix, the
+ * agreed-brief markdown in the package, the handoff PDF. It is a different
+ * predicate from `designerOnly`, which means "do not ASK the client this" and
+ * governs the intake form: `clientEmail` and `clientPhone` are answered by the
+ * client quite legitimately, and still must not be printed back to them in the
+ * document they forward to a printer. `budgetRange` needs both flags for the
+ * same reason from both directions.
+ *
+ * A designer-facing surface that genuinely needs the whole brief passes
+ * `includePrivate` — nothing does today, and the default is the safe one so a
+ * new caller cannot leak by omission.
+ *
  * @param {Record<string, unknown>} detective
+ * @param {{ includePrivate?: boolean }} [opts]
  * @returns {Array<{ num: string, title: string, rows: Array<{ label: string, answer: string, tip: string }> }>}
  */
-export function filledDetectiveChapters(detective = {}) {
+export function filledDetectiveChapters(detective = {}, opts = {}) {
+  const includePrivate = opts?.includePrivate === true
   return DETECTIVE_CHAPTERS.map((ch) => {
     const rows = (ch.fields || [])
+      .filter((f) => includePrivate || !f.clientPrivate)
       .map((f) => {
         const answer = formatDetectiveAnswer(f, detective?.[f.id])
         return answer ? { label: f.label, answer, tip: f.tip || '' } : null
