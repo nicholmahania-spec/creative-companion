@@ -256,6 +256,39 @@ body {
   max-width: 100%;
   min-width: 0;
 }
+
+/* ── Native controls have to follow the theme ──────────────────────────
+   `color-scheme` was declared nowhere in the app, so in deep mode every
+   native control kept light UA styling on a #151515 canvas. Measured on the
+   brief: radio and checkbox borders came out at 1.15:1 against the canvas
+   (#000 on #151515) where 3:1 is the floor — the four brand-personality
+   spectrum rows (20 radios) and all 24 deliverable checkboxes were, in
+   practice, invisible. The same controls measure 19.26:1 in light.
+
+   On :root, not on .app.deep. Per MDN the canvas and the document scrollbar
+   follow the ROOT element's used scheme, and .app is a div three levels down,
+   so declaring it there would have left the page scrollbar rendering light in
+   dark mode. The theme class lives on .app, hence :has() — the same shape the
+   background rule below already uses.
+
+   Note this flips the UA default `background-color` as well as `color`, so
+   anything that sets only one of the pair can invert. Surfaces that are
+   deliberately white paper in BOTH themes opt back out just below. */
+:root {
+  color-scheme: light;
+}
+
+:root:has(.app.deep) {
+  color-scheme: dark;
+}
+
+/* Paper stays paper. These render a printed page and keep a white background
+   in deep mode by design, so a dark scheme here would put light UA text on
+   white. */
+.book-preview-sheet,
+.bbb-page {
+  color-scheme: light;
+}
 /* Links */
 a {
   color: var(--dopamine);
