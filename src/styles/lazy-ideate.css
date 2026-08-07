@@ -88,6 +88,14 @@
   font-size: 0.95rem;
 }
 
+/* An unanswered line is quieter than an answered one. The em-dash is a real
+   state — "nobody has decided this yet" — and it should read as waiting
+   rather than as content. */
+.direction-brief.is-unset {
+  color: var(--text-muted);
+}
+
+
 .direction-palette {
   display: flex;
   height: 52px;
