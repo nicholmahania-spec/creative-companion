@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, afterAll } from 'vitest'
-import { mkdtempSync, readFileSync, existsSync } from 'node:fs'
+import { mkdtempSync, readFileSync, existsSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { closeRuntime, PROJECT_ROOT } from './runtime.mjs'
@@ -146,6 +146,86 @@ describe('export', () => {
     await expect(run(['harbor', '--only', 'pdf,banana'])).rejects.toThrow(
       /banana/
     )
+  })
+
+  /**
+   * The studio credit, which this command could not produce at all.
+   *
+   * `--no-watermark` existed to strip a hardcoded "Creative Companion" credit.
+   * That credit was replaced by the designer's own studio name, and the option
+   * the flag set was deleted from `downloadBrandPackVectorPdf` — but the flag
+   * stayed, still documented in `--help`, silently doing nothing. Meanwhile
+   * `buildBrandPackSnapshot` was called without `studioName`, so a CLI export
+   * printed the project and date and there was no way to add a name.
+   *
+   * `grep -c watermark scripts/cli/cli.test.mjs` returned 0 when that shipped.
+   * These are the tests whose absence let it through.
+   */
+  const workspaceWith = (prefs) => {
+    const file = join(tmpdir(), `cc-studio-${process.pid}-${Math.random()}.json`)
+    const demo = JSON.parse(
+      readFileSync(join(PROJECT_ROOT, 'public/demos/harbor-hearth-workspace.json'), 'utf8')
+    )
+    writeFileSync(file, JSON.stringify({ ...demo, prefs }))
+    return file
+  }
+
+  it('puts the studio name from the workspace into the pack', async () => {
+    const { run } = await import('./commands/export.mjs')
+    const out = mkdtempSync(join(tmpdir(), 'cc-studio-'))
+    const file = workspaceWith({ studioName: 'Mahania Studio' })
+
+    expect(await run([file, '--out', out, '--only', 'json', '--quiet'])).toBe(0)
+
+    const pack = JSON.parse(readFileSync(join(out, 'pack.json'), 'utf8'))
+    expect(pack.studio).toBe('Mahania Studio')
+  })
+
+  it('falls back to the invoice identity, same as the app', async () => {
+    const { run } = await import('./commands/export.mjs')
+    const out = mkdtempSync(join(tmpdir(), 'cc-studio-inv-'))
+    const file = workspaceWith({
+      studioName: '',
+      invoiceFrom: 'Mahania Studio\n12 Fore Street',
+    })
+
+    expect(await run([file, '--out', out, '--only', 'json', '--quiet'])).toBe(0)
+
+    const pack = JSON.parse(readFileSync(join(out, 'pack.json'), 'utf8'))
+    expect(pack.studio).toBe('Mahania Studio')
+  })
+
+  it('credits nothing when the workspace has no studio, rather than a platform name', async () => {
+    const { run } = await import('./commands/export.mjs')
+    const out = mkdtempSync(join(tmpdir(), 'cc-studio-none-'))
+    const file = workspaceWith({})
+
+    expect(await run([file, '--out', out, '--only', 'json', '--quiet'])).toBe(0)
+
+    const pack = JSON.parse(readFileSync(join(out, 'pack.json'), 'utf8'))
+    expect(pack.studio).toBe('')
+    expect(JSON.stringify(pack)).not.toContain('Creative Companion')
+  })
+
+  it('says --no-watermark is gone instead of ignoring it', async () => {
+    const { run } = await import('./commands/export.mjs')
+    /* The point of the test: a flag someone has in a script must not silently
+       change nothing. Accepting it quietly is worse than the old behaviour,
+       because the PDF changes and nothing explains why. */
+    await expect(run(['harbor', '--no-watermark'])).rejects.toThrow(
+      /--no-watermark no longer exists/
+    )
+  })
+
+  it('no longer advertises a flag it does not have', async () => {
+    const help = readFileSync(
+      join(PROJECT_ROOT, 'scripts/cli/commands/export.mjs'),
+      'utf8'
+    )
+    /* Help text that promises an option the command rejects is the defect
+       this whole block exists for, in its most direct form. */
+    const helpBlock = help.slice(help.indexOf('Options'), help.indexOf('Artefacts'))
+    expect(helpBlock).not.toContain('--no-watermark')
   })
 })
 

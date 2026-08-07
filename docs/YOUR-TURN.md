@@ -15,37 +15,47 @@ something changed and I should look at it rather than you guessing.
 ## 1. Put your studio name on your client PDFs
 
 **Time:** about 30 seconds
-**Why it matters:** Right now every PDF you send a client has no credit line on
-it. Not the platform's name — nothing. The footer just reads the project name
-and the date. Your name should be there. That's the whole point of the change I
-made today, but it can't guess what you're called.
+**Why it matters:** Every PDF you send a client currently has no credit line on
+it. Not the platform's name — nothing. The footer reads the project name and
+the date. Your name should be there.
+
+**Check first — it may already be filled in.** You typed a studio name into
+this app once, in the invoice details, and the export code used to ignore it.
+That's now fixed, so your name may already be showing.
 
 **Steps:**
 
-1. Open the app and **open a project** — any project. You can't get there from
-   the home screen; the left sidebar says *"Open a project to see its path"*
-   until you do.
-2. In the left sidebar, under **THIS PROJECT**, click the last stop on the
-   path — **5 · Assets**.
-3. On that screen, scroll down to a grey collapsed row labelled
-   **"Page setup · print size"**. Click it to open it. (It's shut by default,
-   which is why you've probably never seen what's inside.)
-4. Inside is a box labelled **"Footer credit"**.
-5. Type your studio name — whatever you want clients to read. For example
-   `Sparrow Studio` or `Nichol Mahania`.
+1. Open the app.
+2. Click **Account** in the top right, to reach **Settings**.
+3. The very first block is **"Your studio"**.
+4. **Business name** — type what you want clients to read. If it already shows
+   a name underneath from your invoice details, you're done; type here only if
+   you want something different.
+5. **Logo** — optional. "Add a logo" opens a file picker. Pick your mark and
+   it's saved.
 
-**A correction to my own instructions:** this originally said "go to the
-**Deliver** screen". There is no screen called Deliver. *Deliver* is the name
-in the code; the button you actually click says **Assets**. Sorry — that would
-have had you hunting for a word that isn't on screen.
+**How to know it worked:** at the bottom of that block is a line reading
+**"Every page you send says: …"**. It updates as you type and shows the exact
+footer that will print. When it looks right, it *is* right — that's the real
+thing, not a description of it.
 
-**How to know it worked:** Directly under the box is a line starting
-**"Footer reads:"**. It updates as you type and shows you the exact line that
-will print. When it looks right, it *is* right — that's a live preview, not a
-description.
+**You only do this once.** It's remembered for every project and every export.
 
-**Note:** You only do this once. It's remembered for every project and every
-PDF from then on.
+**Two notes on the logo:**
+
+- It's shrunk to footer size when saved. Your original file is untouched. This
+  isn't fussiness — your whole workspace saves as one lump to browser storage
+  with a hard size limit, and a full-size logo in there would have broken
+  saving for your projects and approvals too.
+- **The logo doesn't print on exports yet.** It's stored and previewed, but
+  every export still prints the text name. That's the next piece of work.
+
+**This item used to say something different.** It sent you to the Assets screen,
+into a collapsed row called "Page setup · print size", to a box labelled
+"Footer credit". You said that was far too complicated and you were right — it
+was account-level identity sitting on a per-project screen. It moved to
+Settings on 7 Aug. The Assets screen now just shows you the footer line and
+links here.
 
 ---
 
@@ -73,67 +83,33 @@ don't delete that one.
 
 ---
 
-## 3. Decide: what happens to the `--no-watermark` switch
+## 3. ~~Decide: what happens to the `--no-watermark` switch~~ ✅ DONE
 
-**Time:** 2 minutes to decide, and I do the work
-**This one is a real decision and I've deliberately not made it for you.**
+**You chose A on 7 Aug — remove it — and it's done.**
 
-**Plain English version of the problem:**
+The switch is gone from the help text and from the code. It doesn't silently
+ignore you any more: if you (or an old script) still pass it, the command stops
+and says the flag no longer exists and why.
 
-There's a way to make a brand pack from the command line (a typed-command tool,
-not the app). It has a switch called `--no-watermark` whose job was to remove
-the "Creative Companion" credit from the PDF.
+**The bigger half is also fixed.** That terminal tool never passed your studio
+name through at all, so a brand pack made that way could never carry your
+credit, flag or no flag. It now reads your studio name from the workspace file
+— including the fall-back to your invoice details — so a pack made in the
+terminal and one made in the app are credited identically.
 
-Today two pieces of work collided:
-
-- One of them **deleted** the thing that switch controlled, and replaced it with
-  your studio name (item 1 above).
-- The other one **added** the command-line tool, still using the old switch.
-
-Both are now in play. The result: the switch still exists, its help text still
-promises it removes the watermark, and it now does **absolutely nothing**. It
-doesn't error. It doesn't warn. It just quietly ignores you.
-
-There's a second half to it: the command-line tool never passes your studio name
-through, so PDFs made that way can't have your credit on them at all.
-
-**Your options:**
-
-- **A — Remove the switch and wire your studio name through.** My
-  recommendation. The switch controls something that no longer exists, so it's
-  lying either way; better to delete it than leave a promise the code can't
-  keep. Roughly ten minutes of work for me.
-- **B — Leave it.** Nothing breaks. It's a small lie in a tool only you use.
-- **C — Something else** — tell me what you actually want that switch to do and
-  I'll build that instead.
-
-**What to do:** just reply with **A**, **B**, or **C**. No clicking needed.
+There were no tests covering any of this, which is how it got through. There
+are now six, and I checked they can actually fail by breaking the code three
+different ways.
 
 ---
 
-## 4. Decide: is the Asset Library ready to be a pull request?
+## 4. ~~Decide: is the Asset Library ready to be a pull request?~~ ✅ DECIDED
 
-**Time:** 2 minutes to decide
-**Why I'm asking:** I built the Asset Library screen and it's tested and green
-(1,375 tests pass). But it's **half a feature**, and I don't want to slide that
-past you.
+**You chose B on 7 Aug — wait.**
 
-**What works:** the screen, the layout, filing things into categories, moving
-something to a different category.
-
-**What doesn't:** the drop zone. You can drag a file onto it and it will accept
-the drag — and then nothing happens. The file goes nowhere. That's the part I
-haven't built yet.
-
-**Your options:**
-
-- **A — Open the pull request now,** clearly labelled as unfinished, so you can
-  click around the screen and tell me if the layout is right before I build the
-  hard part. Sensible if you want a say in how it looks.
-- **B — Wait.** I build the file-upload half first, then open one pull request
-  with a feature that actually works end to end.
-
-**What to do:** reply **A** or **B**.
+No pull request for now. I'll build the file-upload half first, so what you
+eventually see is a screen where dragging a file onto it actually does
+something. Nothing for you to do here.
 
 ---
 
