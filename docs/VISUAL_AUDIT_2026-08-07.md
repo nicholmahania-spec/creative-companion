@@ -388,3 +388,297 @@ already full-width-eligible under the path-page rule in `AGENTS.md`.
 | 5 | P1 duplicate CTA + gradient scope | Restores hierarchy; no new components |
 | 6 | P1 book ids/reorder, P1 scoreboard | Contained to the book builder |
 | 7 | P2 | Polish |
+
+---
+---
+
+# Addendum — advisor review, and what it changed
+
+Three advisors reviewed the proposed fixes: `adhd-executive-function-advisor`,
+`devils-advocate`, and `design-process-professor`. Their pushback was substantive and
+**five of my proposals were wrong**. Two of those were wrong on facts I could have checked
+and hadn't; one fails an accessibility conformance requirement outright.
+
+I re-verified every disputed claim in the running app rather than taking either my own
+original reading or an advisor's on trust. The corrections below are the result.
+
+---
+
+## The big one: a single root cause sits under four separate findings
+
+**`overflow-x: hidden` on the app's ancestor chain silently disables every
+`position: sticky` in the product.**
+
+Proven by direct experiment — scroll to y=2000 on Strategy, measure `.header`:
+
+| | `.header` top | Sticking? |
+|---|---|---|
+| As shipped | **−2000** | no |
+| After `html,body,#root,.app,.app-shell { overflow-x: visible }` | **0** | **yes** |
+
+Nothing else was changed. `overflow-x: hidden` with `overflow-y: visible` computes
+`overflow-y` to `auto`, which makes `.app` / `.app-shell` scroll containers. Sticky
+children then stick to *those* containers — which never scroll, because the **window** is
+what scrolls. So the sticky is inert.
+
+Four declarations are affected, all of them currently dead code:
+
+| Element | Declared | Actual |
+|---|---|---|
+| `.header` (`shell.css:703`) | `sticky; top: 0` | scrolls away |
+| `.assets-preview-frame` | `sticky` | off-screen by scrollY 1200 |
+| `.assets-ship` (ship ticket) | `sticky` | off-screen by scrollY 2400 |
+| `.path-continue-row` (`shell.css:7619`) | `sticky; bottom: 0` | computes `static`; absent entirely on Strategy |
+
+**This reframes three of my own findings:**
+
+- **The duplicate-CTA debate dissolves.** I measured Strategy at scrollY 2200:
+  `forwardCTAsOnScreen: []`. Not one, not two — **zero** forward affordances on screen.
+  The top `Continue →` has scrolled away, the footer `Next ·` is 2,400px below, and the
+  sticky that was supposed to keep one in view is inert. The problem was never
+  redundancy. It was that neither copy is reachable where you actually are.
+- **P2 "make the Assets preview sticky" was already implemented** — and is broken for
+  the same reason. My proposal was to add something that is already in the CSS.
+- **The 2,900px empty left column on Assets** is the visible symptom of the dead sticky,
+  not an independent layout problem.
+
+**Revised fix.** Repair the header's `min-width` first (P0-A) so nothing overflows, *then*
+remove `overflow-x: hidden` from the chain. Four findings resolve at once, and the
+`overflow-x: hidden` that was masking the mobile clipping goes with them.
+
+---
+
+## Proposals that were wrong
+
+### ✗ Icon-only header actions on mobile — **withdrawn**
+
+`devils-advocate` cites Aurora Harley, [*Icon Usability*](https://www.nngroup.com/articles/icon-usability/)
+(NN/g, 2014): *"Icon labels should be visible at all times, without any interaction from
+the user."* Her granted exceptions are home, print and search — not "work clock." Worse,
+`Client` and `Account` would both render as unlabelled person glyphs, adjacent, meaning
+different things. `aria-label` serves assistive tech and does nothing for the sighted
+touch user; there is no hover on a phone.
+
+`adhd-executive-function-advisor` independently reached the same conclusion and quoted the
+codebase back at me — the `.todo-fab` comment already says *"a bare list glyph is an
+invented private code."*
+
+**Replaced with:** drop the **duplicate** To-do pill from the mobile header entirely — the
+FAB already carries To-do and its count, so the header copy is pure duplication and
+removing it recovers most of the 257px in one move. Keep `Client` and the work clock
+labelled; shorten the clock to the elapsed time rather than unlabelling it. Combined with
+`min-width: 0`, back-link truncation and dropping `flex-shrink: 0`, that should clear the
+overflow without stripping a single label.
+
+### ✗ Drag-to-reorder in the brand book — **fails conformance**
+
+`devils-advocate` is right and this is not a matter of taste. **WCAG 2.2 SC 2.5.7 Dragging
+Movements (Level AA)** requires that all drag functionality be achievable with a single
+pointer without dragging. The Understanding document explicitly forecloses my proposed
+keyboard fallback: *"achieving keyboard equivalence … does not automatically meet this
+success criterion, unless that equivalent keyboard operation also provides controls that
+can be clicked or tapped."* It then names the exact control I proposed deleting as the
+compliant remedy — adjacent up/down controls. The failure has a catalogue number,
+[F108](https://www.w3.org/WAI/WCAG22/Techniques/failures/F108).
+
+`adhd-executive-function-advisor` reached the same place from motor variability: dragging a
+17–22px row on a coarse pointer is a precision task that fails silently.
+
+**Replaced with:** keep pointer-operable move controls, but collapse the two text buttons
+into one trailing overflow menu (`⋯` → Move up / down / to top / to bottom). That still
+removes most of the 21 controls, gives a 44px target instead of two 20px ones, and
+satisfies 2.5.7. Drag becomes a desktop *enhancement*, never the only path. Label-first
+ordering and the undo toast stand unchanged.
+
+### ✗ Removing the top `Continue → X` — **withdrawn**
+
+Hoa Loranger, [*The Same Link Twice on the Same Page*](https://www.nngroup.com/articles/duplicate-links/)
+(NN/g, 2016), is broadly against duplication but carves out exactly this case:
+*"Duplicating links is usually not necessary if your pages are 2–3 screens long"* and
+*"Place redundant links far apart."* Strategy's two CTAs are 4,600px apart — 5.5 screens.
+`CLAUDE.md` §2 also names *"a single persistent 'Next' card pinned to the top of every
+project view"* as a stated executive-function accommodation, which outranks tidiness.
+
+And my own measurement settles it: zero CTAs on screen at depth.
+
+**Replaced with:** don't delete either. Fix the sticky (above) so exactly one is in view at
+any scroll position. **Unify the label regardless** — `Continue → Research` vs
+`Next · Research` for one destination is a clean [WCAG SC 3.2.4 Consistent
+Identification](https://www.w3.org/WAI/WCAG22/Understanding/consistent-identification.html)
+defect and that half of the finding stands.
+
+### ✗ `::after` hit areas using a bare `summary` selector — **amended**
+
+`devils-advocate` verified a collision in this repo that my proposal would have created.
+`inset-block: -11px` extends the overlay 11px *below* the summary, and these `<summary>`
+elements sit directly above buttons inside their `<details>`:
+
+- `src/views/DeliverView.jsx:432` (`Extras…` → export button at :435), `:504` (`Leave` → :506)
+- `src/views/SketchView.jsx:429`, `:501`
+- `src/App.jsx:4524` (`More` → HTML / MD / JSON / Print at :4526–4529)
+
+That is FAB-style hit-stealing reintroduced by the fix for a different finding.
+
+**Amended:** enumerate selectors explicitly instead of bare `summary`; use asymmetric
+insets (`inset-block-start` only) wherever content sits directly below; check for
+`overflow: hidden` ancestors that would clip the overlay. The step rail is unaffected —
+`--space-5` is 24px, so ±11px overlays leave a 2px gap.
+
+### ✗ `color-scheme: dark` on `.app.deep` — **amended**
+
+Per [MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme), the canvas and
+document scrollbar follow the **root** element's scheme. `.app` is a `div` under `#root`
+under `body`, so my version would not have fixed scrollbars — that claim was wrong and is
+withdrawn. Also, `color-scheme: dark` flips the UA default `color` *and*
+`background-color`, so any control setting only one inverts;
+`src/styles/lazy-deliver.css:426` keeps `.book-preview-sheet` as a light "paper" surface in
+deep mode, which is the collateral risk.
+
+**Amended:** declare on the root, driven by the theme class, and add an explicit
+`color-scheme: light` on the paper-sheet subtree. Verify with a deep-mode screenshot diff
+hunting native controls on light surfaces. The core fix — radios and checkboxes at
+1.15:1 — is unaffected and still correct.
+
+---
+
+## Proposals that survived, with changes
+
+### Gradient scope — the real finding is worse than I reported
+
+I screenshotted with `animations: 'disabled'`, so I missed this entirely.
+`adhd-executive-function-advisor` caught it and I confirmed it with
+`document.getAnimations()` on Touchpoints:
+
+```
+total: 9   running: 9   — all btn-spin-chrome, linear infinite
+Continue → Assets · Add step · Break down project · Add ·
+Website · Social · Print · App · Next · Assets
+```
+
+Both `.btn-primary:not(.is-earned)` (`shell.css:7466`, 2.4s) and
+`.btn-secondary/.btn-outline:not(.is-earned)` (`:7509`, 3.2s) animate forever. **Nine
+independently rotating objects in peripheral vision on one screen**, for an audience whose
+core difficulty is sustaining attention.
+
+The codebase already holds the right rule, at `App.jsx:3372-3378`: *"the gradient ring
+fires ONLY when the stop you are on is complete — a reward you caused, not standing
+chrome… rarity is the mechanism."* It is exactly inverted in the CSS: `is-earned` is the
+quiet case and everything else spins.
+
+**Revised fix:** motion belongs to `.is-earned` only. Everything else is a static plate.
+That is restoring the codebase's own stated doctrine, not a new opinion.
+
+On *which* button gets the accent: `devils-advocate` found no credible opposition to
+"one primary per screen" as a principle — the [GOV.UK Design System](https://design-system.service.gov.uk/components/button/)
+states it with a research trail. But it ties the primary to *the page's own main call to
+action*, and my rule hard-assigned it to the footer `Next`. On Touchpoints the page job is
+capturing touchpoints, so `Add` is the primary and `Next · Assets` is navigation away from
+unfinished work. **Assignment is per view, not always the footer.**
+
+### "NOT IN THE BOOK YET" — collapse, but the rows must do something
+
+Both advisors converged on a defect I missed. `adhd-executive-function-advisor` read
+`BrandBookBuilderView.jsx:1666-1678`: the rows are `<span>` + `<span>`. **They are not
+clickable.** There is no route from the gap to the thing that fills it. Collapsing as-is
+converts an unactionable deficit list into a *hidden* unactionable deficit list.
+
+`design-process-professor` adds the cost of hiding it: it is currently the only place in
+the app that enumerates what a complete brand system contains — positioning, tagline,
+promise, proof, personality, tone of voice, story, audience, imagery, usage. Strip it and
+the app's implicit definition of a brand narrows to *a logo, some colours and some fonts.*
+
+`devils-advocate` cites [Wang, *Accordions on Desktop*](https://www.nngroup.com/articles/accordions-on-desktop/)
+(NN/g, 2023) — *"valuable content hidden under an accordion may be missed altogether"* —
+while noting the owner's §2 low-arousal ruling governs here.
+
+**Revised fix:** collapse by default, and make each expanded row a **link to the stop that
+fills it**. The `omitted` entries already carry `id`, `label` and `needs`
+(`src/lib/book/bookContent.js:302-307`); this needs one id→view map. Reframe the summary
+as inventory, not shortfall: `12 of 19 sections in the book`, not `7 sections not in the
+book yet`. Same information; a progress statement is also a stronger expand-trigger than a
+deficit count.
+
+### FAB — pad and move it, never hide it
+
+`adhd-executive-function-advisor` found that `.todo-fab` **already** disappears under one
+invisible rule (`shell.css:9841` — hidden whenever any input has focus). Adding an
+IntersectionObserver would give it two independent, indistinguishable disappearance
+conditions. It is also the frictionless-capture entry point from `CLAUDE.md` §2: if it
+isn't there when the thought arrives, the thought is gone.
+
+**Revised fix:** keep the bottom padding and `env(safe-area-inset-bottom)`. Resolve the
+Touchpoints overlap by **shifting** the FAB up by the action bar's height, not hiding it.
+Same control, same place in memory, always present.
+
+---
+
+## What the professor added that isn't a visual issue at all
+
+Two findings outside this audit's scope, recorded because they are higher-value than most
+of what is in it.
+
+**1. The verbal half of the identity is authorable only downstream of the mark.**
+`PAGE_FIELDS.voice` in `src/lib/book/bookContent.js` declares tagline, positioning,
+promise, proof, personality, tone of voice — and the only place to type them is the Brand
+Book builder, a Tool, after Identity is done. So at the concept presentation the rationale
+available is about the *direction*, not the brand. Marks defended on direction get chosen
+on taste, and taste-chosen marks come back for a second round.
+
+Suggested single next move: render `PAGE_FIELDS.voice` on **Identity → Words**. The fields
+already exist and are typed; nothing new to design. It also makes the gap-list collapse
+free, because those items stop being introduced for the first time as things missing.
+
+**2. `packagePlan.js:405-406` can report a sold deliverable as delivered when it isn't.**
+
+```js
+logoPrimary:    () => kinds.has('mark'),
+logoVariations: () => kinds.has('mark'),
+```
+
+One uploaded file satisfies both. `deliverableChecklist` is the only mechanism connecting
+what was *sold* to what *shipped*, and everything else in that file is scrupulous about not
+overclaiming. The professor also notes the package is short of current handoff convention:
+no mono/reverse/greyscale versions as files, no lockups, no SVG **and** PDF vector, no
+favicon set or social avatar. (Not shipping font files, and saying so in the README, is
+correct and better than most freelance practice.)
+
+Both belong in their own issue, not this one.
+
+---
+
+## Revised order
+
+Changed from the original: the root-cause fix now leads and resolves four findings; the
+button animation moves up because it is a CSS-only change with a continuous cost; and the
+professor's ranking correction moves two "P2" items up, because they change the *work*
+rather than the chrome.
+
+| | Item | Why here |
+|---|---|---|
+| 1 | Header `min-width: 0` + drop duplicate mobile To-do pill | Unblocks #2; content currently unreachable |
+| 2 | **Remove `overflow-x: hidden` from the chain** | Fixes clipping + four dead stickies + the CTA problem at once |
+| 3 | `color-scheme` at root (+ paper-sheet exception) | 1.15:1 controls; the brief's adjectives are the input to concept work |
+| 4 | Kill `btn-spin-chrome`; scope the ring to `.is-earned` | Nine spinners on every screen; restores the codebase's own rule |
+| 5 | FAB padding + shift (never hide) | A tap does the wrong thing today |
+| 6 | Touch targets, explicit selectors, asymmetric insets | Mechanical; the step rail is the main mobile nav |
+| 7 | Mark do/don'ts out of the placeholder | Guidance that vanishes ships to the client in `02_LOGO/` |
+| 8 | Research framed drop plane | Reinstates the friction the one-wall decision removed |
+| 9 | Book: labels, id leak, overflow-menu reorder, gap links + collapse | Contained to the builder |
+| 10 | Unify CTA label (SC 3.2.4); remaining P2 | Polish |
+
+## Where the advisors disagreed with each other
+
+Only one place, and it is worth recording. On the gradient accent,
+`devils-advocate` (via GOV.UK) wants the primary assigned to the *page-job* action;
+`adhd-executive-function-advisor` wants motion reserved for `.is-earned` and everything
+else static. These are compatible — the first decides *which* button is solid, the second
+decides that *nothing* animates unless earned. The revised fix takes both.
+
+## Standing owner decisions — untouched
+
+Define is form-only, no chapter rail on the brief, five stops, board-primary on Research,
+Identity ordered Mark → Words → Colour → Type → Preview. The professor noted the
+literature (Slade-Brooking, Bokhua, d.school) puts verbal identity before the mark and
+recorded the tension once; the owner's order stands and nothing above proposes changing
+it. The proposal to surface `PAGE_FIELDS.voice` on Identity → Words works *within* that
+order rather than reversing it.
