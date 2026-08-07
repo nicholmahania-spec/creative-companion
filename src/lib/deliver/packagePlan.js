@@ -290,13 +290,21 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
        shipped. Same shape as the brand book, which is planned as a file and
        filled in by the writer.
        The extension is provisional — the bytes decide when they arrive. */
+    const urlExt = extFromUrlPath(pack?.logoImage) || 'png'
     add('logo', {
       name: assetFileName({
         brand,
         group: 'logo',
         item: 'primary',
-        variant: 'FullColor',
-        ext: extFromUrlPath(pack?.logoImage) || 'png',
+        /* Same rule as the data-URL branch above, applied to what the URL
+           says. Without it the identical mark was named `_FullColor.svg` when
+           it had been synced and `_Primary.svg` when it had not — one project,
+           two names, decided by something the designer never chose. The writer
+           corrects a wrong EXTENSION but not a wrong variant, so a URL that
+           lies about an SVG still keeps the suffix; that is a worse guess than
+           this one, not a reason to keep making it everywhere. */
+        variant: urlExt === 'svg' ? '' : 'FullColor',
+        ext: urlExt,
       }),
       kind: 'mark',
       note: 'Collected from your cloud storage when the package is built',

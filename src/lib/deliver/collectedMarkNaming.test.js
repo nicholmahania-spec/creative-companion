@@ -89,6 +89,14 @@ async function bytesAt(blob, path) {
   return zip.file(path).async('uint8array')
 }
 
+/** The README the client actually opens, from inside the written zip. */
+async function readmeIn(blob) {
+  const path = (await pathsIn(blob)).find((p) => /README/i.test(p))
+  const JSZip = (await import('jszip')).default
+  const zip = await JSZip.loadAsync(await blob.arrayBuffer())
+  return zip.file(path).async('string')
+}
+
 afterEach(() => {
   vi.unstubAllGlobals()
 })
@@ -133,6 +141,36 @@ describe('the client package names a collected mark from its bytes', () => {
     /* The URL's own extension is the best thing left, and it is right here —
        the offload wrote the key from the very bytes that came back. */
     expect(mark).toMatch(/\.avif$/)
+  })
+
+  /* The README travels INSIDE the zip and is what the client reads to find
+     things. It is built from the plan, and the plan is fixed before any of
+     this happens — so every late decision has to be folded back into it or the
+     client is sent looking for a file under a name nothing wrote. */
+  it('names the mark in its own README the way the zip actually names it', async () => {
+    stubFetch(JPEG_BYTES)
+    const held = captureHandle()
+    await downloadClientPackage(pack(), { includeBook: false }, held.promise)
+
+    const mark = (await pathsIn(held.blob)).find((p) => /02_LOGO\/.*Logo_Primary/.test(p))
+    const readme = await readmeIn(held.blob)
+    expect(mark).toMatch(/\.jpg$/)
+    expect(readme).toContain(mark.split('/').pop())
+    expect(readme).not.toMatch(/Logo_Primary_FullColor\.png/)
+  })
+
+  /* Not caused by the rename — the same gap swallowed a failed collection and
+     a brand book the engine could not build, both decided after the first
+     README was generated. The contents list called all three present. */
+  it('marks a refused collection as NOT INCLUDED in the README, not as present', async () => {
+    stubFetch(PNG_BYTES, { ok: false, status: 403 })
+    const held = captureHandle()
+    await downloadClientPackage(pack(), { includeBook: false }, held.promise)
+
+    const readme = await readmeIn(held.blob)
+    expect(readme).toMatch(/Logo_Primary_FullColor\.png — NOT INCLUDED/)
+    expect(readme).toMatch(/403/)
+    expect(readme).not.toMatch(/Logo_Primary_FullColor\.png — Collected from/)
   })
 
   /* The property the collect-at-export change exists to protect. Renaming must

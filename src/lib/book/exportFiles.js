@@ -25,6 +25,7 @@ import {
 } from '../brief/detectiveBrief'
 import { OVERVIEW_FIELD_PREFIX } from '../overviewOcr'
 import { packageFiles } from '../deliver/packageFiles'
+import { packageReadme } from '../deliver/packagePlan'
 import { markSource, markGapSentence } from '../deliver/markSource'
 import { extFromRawBytes, extFromUrlPath, withExt } from '../deliver/naming'
 import {
@@ -2100,6 +2101,12 @@ export async function downloadClientPackage(
     const root = zip.folder(slug) || zip
 
     const left = [...missing]
+    /* Renames this walk makes after the plan was fixed. The README ships
+       INSIDE the zip and lists what the PLAN named, so a rename it does not
+       know about points the client at a file that is not there — the exact
+       failure `packageReadme` marks absence for. Folded back before the zip
+       closes. */
+    const renamed = []
     let written = 0
     for (const f of files) {
       if (f.pdf) {
@@ -2134,7 +2141,9 @@ export async function downloadClientPackage(
              provisional. This is where the promise is kept: the bytes arrive,
              and if they disagree with the name the plan guessed, they win. */
           const buf = new Uint8Array(await res.arrayBuffer())
-          root.file(withExt(f.path, extFromRawBytes(buf)), buf)
+          const path = withExt(f.path, extFromRawBytes(buf))
+          if (path !== f.path) renamed.push({ from: f.path, to: path })
+          root.file(path, buf)
           written += 1
         } catch (e) {
           left.push({
@@ -2146,6 +2155,33 @@ export async function downloadClientPackage(
       }
       root.file(f.path, f.content, f.base64 ? { base64: true } : undefined)
       written += 1
+    }
+
+    /* The README is written a second time now that the walk is done, for the
+       same reason `packageFiles` deferred it past its own loop: it is the one
+       file that has to describe the others, and it cannot until they exist.
+       That deferral fixed the pure stage and left this one. Everything decided
+       HERE — a mark renamed to match its bytes, a fetch that 403s, a brand
+       book the engine could not build — happened after the first README was
+       generated, so the copy the client opened still described all three as
+       present under names it had guessed. */
+    if (renamed.length || left.length !== missing.length) {
+      /* Found through the plan, not through `files` — `packageFiles` strips
+         its own `readme: true` marker once it has filled the content in
+         (`delete readme.readme`), so the written entry is indistinguishable
+         from any other text file by then. */
+      let readmePath = ''
+      for (const d of plan.folders) {
+        const entry = d.files.find((x) => x.kind === 'readme')
+        if (entry) readmePath = `${d.name}/${entry.name}`
+      }
+      for (const { from, to } of renamed) {
+        const cut = from.indexOf('/')
+        const folder = plan.folders.find((d) => d.name === from.slice(0, cut))
+        const entry = folder?.files.find((x) => x.name === from.slice(cut + 1))
+        if (entry) entry.name = to.slice(cut + 1)
+      }
+      if (readmePath) root.file(readmePath, packageReadme(pack, plan, left))
     }
 
     const blob = await zip.generateAsync({ type: 'blob' })
