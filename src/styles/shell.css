@@ -11076,6 +11076,33 @@ textarea.artboard-brief-input {
   }
 }
 
+/* Press has its own movement (owner, 2026-08-07).
+ *
+ * The ring already spins at rest — that is the Button-85 chrome, kept
+ * deliberately because always-on rings make buttons easy to find. But it spun
+ * at exactly the same rate when pressed, so the only press feedback was the
+ * fill darkening to --dopamine-ink. The one moment the button is actually
+ * answering you looked the same as the moment it was idle.
+ *
+ * The ring races on press: same colours, five times the speed, so the rainbow
+ * visibly rips round the edge and settles back. Duration only — no new
+ * gradient, so this adds nothing to the !important budget and cannot drift
+ * from the four places the ring's colours are declared.
+ *
+ * Inside `no-preference` rather than relying on the reduce block above: these
+ * selectors carry :active and would out-specify its `animation: none`, so
+ * someone who asked for less motion would have been given more. Scoped this
+ * way the rule simply does not exist for them.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .btn-primary:active:not(:disabled):not([aria-disabled='true']):not(.is-earned),
+  .btn-secondary:active:not(:disabled):not([aria-disabled='true']):not(.is-earned),
+  .btn-outline:active:not(:disabled):not([aria-disabled='true']):not(.is-earned),
+  .btn.step-rail-cta.is-earned:active:not(:disabled):not([aria-disabled='true']) {
+    animation-duration: 0.45s;
+  }
+}
+
 /* ── Identity version stamp + manual Mark done ──────────────────────────────
    Both live in the chip band at the top of every journey stop, alongside the
    before/after and client-state chips. They sit in shell.css rather than a
