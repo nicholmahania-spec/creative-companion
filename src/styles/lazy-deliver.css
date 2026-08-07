@@ -788,23 +788,42 @@
 
 .deliver-advanced > summary {
   cursor: pointer;
-  font-size: 0.8rem;
+  /* --fs-2, not the off-ramp 0.8rem. These summaries are the only label on a
+     control that hides real actions behind it, "Leave" among them, so they
+     read at body-adjacent size and in --text-secondary rather than muted. */
+  font-size: var(--fs-2);
   font-weight: 600;
-  color: var(--ts-mute, #A1A1A1);
+  color: var(--text-secondary);
   list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
 }
 
 .deliver-advanced > summary::-webkit-details-marker {
   display: none;
 }
 
+/* A drawn chevron, not a `▸` character. The glyph carried the font's weight
+   and baseline instead of the icon set's stroke, and sat optically high
+   against its own label — the same character-as-icon problem the Tools menu
+   had. Two borders on a rotated square is a real chevron with no glyph and
+   no asset. */
 .deliver-advanced > summary::before {
-  content: '▸ ';
-  font-size: 0.7rem;
+  content: '';
+  flex: 0 0 auto;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transform-origin: center;
+  transition: transform var(--transition);
 }
 
 .deliver-advanced[open] > summary::before {
-  content: '▾ ';
+  transform: rotate(45deg);
 }
 
 .deliver-leave {

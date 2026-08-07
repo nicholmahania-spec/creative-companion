@@ -296,11 +296,24 @@ destructive actions in the application are its quietest controls.**
 
 ## Phase 5b · Information density and the empty-space problem
 
-**Assets is the worst layout in the product**, and it is the last screen before a client handoff.
-On a 1440px canvas the left column is a ~660px-wide box containing the text "Building your
-preview…" and then roughly **3,500px of empty white**, while the entire page — twenty-plus stacked
-panels — is crammed into a ~500px right column. Approximately **45% of the delivery screen is a
-permanently empty rectangle.**
+**Assets is the most overloaded screen in the product**, and it is the last one before a client
+handoff. Twenty-plus panels stack in a ~500px right column that runs about **3,700px** long, with
+no grouping and no rhythm.
+
+> **Correction (verified after first publication).** An earlier draft said the left column was "a
+> permanently empty rectangle" showing "Building your preview…" — roughly 45% of the screen wasted.
+> That was wrong on both counts. The preview *does* resolve (8 pages, 8 rendered images); it simply
+> takes longer than the 1.2s this audit's first screenshot pass waited before capturing. And the
+> left column is deliberately `position: sticky` — the book preview is meant to stay in view while
+> the ship column scrolls past it, which is a sound idea, well executed. In a stitched full-page
+> screenshot a sticky element paints once and leaves blank space below it, which is what the draft
+> mistook for an empty layout. **The two-column split is correct and should stay.**
+>
+> This is the third finding in this audit that turned out to be a screenshot artifact rather than a
+> defect (see also the modal scrim and the mobile FAB). All three came from reading full-page
+> captures as if they were what a user sees. The lesson for anyone extending this audit: `position:
+> fixed`, `position: sticky` and anything async **must** be checked at viewport size, with a real
+> wait, before being called broken.
 
 Inside that 500px column, with no grouping or rhythm: Still thin · Your studio · Download brand
 book PDF · Handoff · Client package tree · Fonts · Licence · Files made elsewhere · Build client
@@ -563,7 +576,7 @@ Directions 1 and 2 together would give this product a look nothing else has.
 
 | Screen | Score | Working | Biggest problem | Priority |
 |---|---|---|---|---|
-| **Assets / Deliver** | **2/10** | Client package concept is genuinely smart | 45% of screen permanently empty; 20+ ungrouped panels in a 500px column; unreadable artefact previews | 🔴 Critical |
+| **Assets / Deliver** | **4/10** | Client package concept is genuinely smart; the sticky preview column is a sound idea | 20+ ungrouped panels stacked 3,700px deep in one column; bare `<details>` hiding real actions; unreadable artefact previews | 🔴 Critical |
 | **Brand Book Builder** | **3/10** | The page preview itself is nicely set | Entirely different design system; raw anchor IDs in UI; every row of "NOT IN BOOK" wraps; truncated hex values | 🔴 Critical |
 | **Lock / Login** | **3/10** | Honest, well-written security copy | Wordmark printed twice; decorative non-functional path chips; everything at 600 weight; rainbow button; 350px card on a 1440px screen | 🔴 Critical |
 | **Strategy** | **4/10** | Excellent question writing; sensible 01–05 grouping | 4,745px unsegmented scroll; 40 identical fields; 3 competing CTAs; whole form 26px off axis | 🔴 Critical |
@@ -618,8 +631,8 @@ values · clipped textarea · clipped placeholder · permanent "Building your pr
 ## Phase 22 · Would I show this?
 
 **Show proudly:** the Review Direction Sheet. Alone.
-**Would not show:** Assets, Brand Book Builder, the lock screen, mobile.
-**Needs most attention:** Assets — it is both the worst-composed screen and the last one before a
+**Would not show:** Brand Book Builder, the lock screen, mobile.
+**Needs most attention:** Assets — it is the most overloaded screen and the last one before a
 client sees the work.
 
 ---
@@ -631,7 +644,7 @@ client sees the work.
 | # | Current problem | Change | Expected impact |
 |---|---|---|---|
 | 1 | Every button carries an infinitely spinning 7-colour conic gradient at 4 different speeds | Delete the 8 gradient override rules. Primary = solid ink fill, secondary = 1px hairline, ghost = text | **The single largest jump in perceived quality available.** Removes the one thing that reads as unfinished before anything else is noticed |
-| 2 | Assets wastes 45% of the canvas on an empty box; 20+ panels in a 500px column | Rebuild as two real columns: preview left at 60%, actions right at 40%, panels grouped into Package / Stationery / Extras | Turns the worst screen into a credible delivery moment |
+| 2 | Assets stacks 20+ ungrouped panels 3,700px deep in its ship column | Keep the sticky two-column split — group the right column into Package / Stationery / Extras | Turns the most overloaded screen into a credible delivery moment |
 | 3 | Every path page has two "next" CTAs in two visual languages | One nav affordance per page. Keep the bottom `Next · <stop>`, delete the top duplicate | Fixes 5 screens with one change; restores G1.3 |
 | 4 | Brand Book Builder is a visually separate product with an orphan orange accent | Bring it onto the app's surfaces and accent; keep the cream *page* canvas (correct — that's paper) | Removes the "two products" break at the workflow's climax |
 | 5 | Strategy is one 4,745px scroll of 40 identical fields | Make `01`–`05` real collapsible sections, one open at a time, with the section rule as the boundary | Directly serves the stated primary user; the product's biggest promise-vs-delivery gap |
@@ -829,7 +842,7 @@ No confetti. No streaks. No scores. This audience is served by calm, not reward 
 ### Phase 4 — POLISH
 | # | Change | Scope | Impact |
 |---|---|---|---|
-| 14 | Rebuild Assets as a real two-column delivery screen; group the 20+ panels into three sections; enlarge artefact previews | Screen | Turns the worst screen into a showable one |
+| 14 | Group the Assets ship column into three sections; enlarge artefact previews | Screen | Turns the most overloaded screen into a showable one |
 | 15 | Strategy `01`–`05` as collapsible sections, one open at a time | Screen | The product's biggest promise-vs-delivery gap |
 | 16 | Home: one hero card, not three restatements | Screen | Cuts dashboard reading load by a third |
 | 17 | Make the Research wall an actual drop plane; single empty state | Screen | The visual stage becomes visual |
