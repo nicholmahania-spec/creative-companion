@@ -1301,7 +1301,9 @@ h3 {
   gap: var(--space-1);
   width: 100%;
   margin: 0 0 var(--space-2);
-  padding: var(--space-3);
+  /* Padding moved to an inner offset so the specimen edge can bleed to the
+     card's corners; the top padding is re-added below the strip. */
+  padding: 0 var(--space-3) var(--space-3);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   background: var(--bg-canvas);
@@ -1309,6 +1311,44 @@ h3 {
   font: inherit;
   cursor: pointer;
   color: var(--text-primary);
+  overflow: hidden;
+}
+
+/* Specimen edge — the project's palette as a full-bleed strip on its own
+   card. Not decoration: with several projects open the list is otherwise
+   identical grey cards told apart only by reading, and this is the one place
+   the brand can identify its own project before a word is read.
+   4px, no gap, no radius of its own — it reads as an edge of the card, not
+   as a row of swatches sitting on it. */
+.home-dash-project-spectrum {
+  display: flex;
+  width: calc(100% + var(--space-3) * 2);
+  margin: 0 calc(var(--space-3) * -1) var(--space-3);
+  height: 4px;
+  flex: 0 0 auto;
+  /* Whichever swatch matches the surface disappears, and it is a different
+     one per theme: a palette almost always carries both a paper tone and an
+     ink tone (the default set is #1C1917 / #0F766E / #A8A29E / #FAFAF9), so
+     light loses the paper end and deep loses the ink end. Measured: the strip
+     is the card's full 552px with four equal 138px swatches — nothing is
+     mis-sized, one of them is simply the colour of what it sits on.
+     The hairline states the band's extent so it still reads as a full-width
+     palette rather than appearing to stop early. Deliberately NOT solved by
+     dropping near-surface colours or darkening them: the paper tone IS the
+     brand, and a specimen that edits the palette to look better is not a
+     specimen. A colour receding into the surface it matches is honest. */
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.home-dash-project-spectrum > i {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* No palette yet: the card keeps its own top padding so nothing shifts when
+   the strip appears. */
+.home-dash-project-card > .home-dash-project-card-top:first-child {
+  margin-top: var(--space-3);
 }
 
 .home-dash-project-card:hover {

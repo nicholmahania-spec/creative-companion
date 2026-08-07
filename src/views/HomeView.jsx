@@ -175,6 +175,23 @@ export default function HomeView({
                       }
                     }}
                   >
+                    {/* Specimen edge — the project's own palette, on the card
+                        that represents it. With more than one project open,
+                        the dashboard is otherwise five identical grey cards
+                        distinguished only by reading the name; this makes each
+                        one recognisable by its brand before it is read, which
+                        is the whole premise of "your brand lives here".
+                        Costs 4px of height and no new reading. */}
+                    {Array.isArray(p.palette) && p.palette.length > 0 ? (
+                      <span
+                        className="home-dash-project-spectrum"
+                        aria-hidden="true"
+                      >
+                        {p.palette.slice(0, 5).map((hex, i) => (
+                          <i key={`${p.id}-sw-${i}`} style={{ background: hex }} />
+                        ))}
+                      </span>
+                    ) : null}
                     <span className="home-dash-project-card-top">
                       <span className="home-dash-project-name">{p.name}</span>
                       {unread ? (
