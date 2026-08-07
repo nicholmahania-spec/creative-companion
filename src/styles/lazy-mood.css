@@ -263,6 +263,38 @@
 /* Plane handles drop chrome via .research-artboard.is-drop-active */
 .research-grid-wrap {
   border-radius: 0;
+  /* `.research-empty` is `position: absolute; inset: 0`. Without a positioned
+     ancestor here it resolved against a distant one and rendered at the full
+     1440x900 of the viewport — which is why the empty copy appeared to float
+     on bare canvas rather than sitting on the wall. */
+  position: relative;
+}
+
+/* ── The drop plane has to exist to be dropped on ───────────────────────
+   With nothing on the wall this wrap had no content, so it collapsed to 0px
+   tall (measured) — while the hint directly above it said "Drop an image
+   anywhere below". There was no "below": the invitation pointed at nothing,
+   and the only visible frame was the 62px strip holding the hint itself.
+
+   AGENTS.md asks for a framed drop plane on Research and warns specifically
+   against "Research empty prose without a framed drop plane". This is that,
+   applied to the element that actually renders — the older `.research-artboard`
+   rules further up this file are dead CSS for a component the view no longer
+   builds, which is why the requirement looked satisfied and was not.
+
+   Dashed only while empty: a drop invitation when there is somewhere to drop,
+   and no cage around the pins once they arrive. */
+.research-grid-wrap:has(.research-empty) {
+  min-height: min(46vh, 26rem);
+  border: 1px dashed var(--border-strong, var(--border-subtle));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--text-primary) 3%, transparent);
+}
+
+@media (max-width: 640px) {
+  .research-grid-wrap:has(.research-empty) {
+    min-height: min(32vh, 15rem);
+  }
 }
 
 .research-grid {
