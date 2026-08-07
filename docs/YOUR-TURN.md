@@ -129,12 +129,18 @@ haven't built yet.
 
 ---
 
-## 5. Tidy up nine finished branches
+## 5. Tidy up six finished branches
 
-**Time:** about 3 minutes
-**Why it matters:** Purely tidiness. Nine branches are fully merged — their work
-is already in `main`, and the branches are just clutter now. It makes the branch
-list easier to read. Nothing breaks either way.
+**Time:** about 2 minutes
+**Why it matters:** Purely tidiness. Six branches are fully merged — their work
+is already in `main`, and the branches are just clutter now. Nothing breaks
+either way.
+
+**This said nine when I first wrote it.** Three of them deleted themselves within
+the hour, because your repo is set to remove a branch automatically once its
+pull request merges. So this list shrinks on its own over time. The six below
+are older ones from before that setting was on — they're the only ones left that
+need doing by hand.
 
 **Why you and not me:** my access can create and push branches but not delete
 them. GitHub rejects my delete requests. Not something I can work around.
@@ -143,24 +149,23 @@ them. GitHub rejects my delete requests. Not something I can work around.
 
 1. Go to https://github.com/nicholmahania-spec/creative-companion/branches
 2. Click the **"Stale"** tab at the top.
-3. For each of the nine names below, find its row and click the **rubbish bin
+3. For each of the six names below, find its row and click the **rubbish bin
    icon** on the right:
 
-   - `cc-cli`
-   - `claude/brand-brain-completeness-ox6c3e`
    - `claude/mai-ike-version-broken-7w8p30`
    - `claude/next-phase-xytovw`
-   - `fix-backup-save-handle`
    - `test-vercel-ci`
    - `worktree-fix-main-branch`
    - `worktree-fix-react-final`
    - `worktree-focus-mode-implementation`
 
+**If a name isn't there,** it already deleted itself. That's fine — skip it.
+
 **Safety net:** GitHub shows an **"Undo"** button right after each delete, and
 even later you can restore a deleted branch. These nine are all fully merged, so
 there's nothing in them that isn't already safe in `main`.
 
-**Only delete the nine listed.** Others in that list still have unmerged work in
+**Only delete the six listed.** Others in that list still have unmerged work in
 them — including the two I'm working on right now.
 
 ---
