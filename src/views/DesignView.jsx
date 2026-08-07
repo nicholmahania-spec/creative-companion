@@ -28,6 +28,7 @@ import { familyByName, parseLabel } from '../lib/book/fontCatalog'
 import AlignmentBars from '../components/AlignmentBars'
 import AxisTagger from '../components/AxisTagger'
 import { strategyProfile } from '../lib/brand/alignment'
+import { DEFAULT_LOGO_DONTS } from '../lib/brandSystem'
 import { axesForPalette, vetoBreaches } from '../lib/brand/colourAxes'
 import { axesForTypeface, missingFonts } from '../lib/brand/typeMetrics'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
@@ -862,27 +863,58 @@ export default function DesignView({
                 <label className="field-label" htmlFor="logo-donts">
                   Mark mistakes to avoid
                 </label>
-                {/* rows={3} against a four-line placeholder clipped the last
-                    rule in half. The "defaults used if empty" note moved out
-                    to a hint below, where it survives the user typing —
-                    guidance that lives in a placeholder disappears exactly
-                    when it is being acted on. */}
+                {/* The rules used to live in this field's PLACEHOLDER, which
+                    was wrong twice over.
+
+                    They vanish on the first keystroke — guidance you can only
+                    read while you have written nothing is guidance you cannot
+                    consult while you write. And the placeholder's copy had
+                    drifted from the real defaults it claimed to show: it said
+                    "Do not stretch or distort" where DEFAULT_LOGO_DONTS says
+                    "Do not stretch, skew, or distort the mark". Those real
+                    lines are what ship to the client in 02_LOGO/, so the field
+                    was describing rules the handoff does not contain. The
+                    third line was also sliced in half by the fixed height,
+                    before any of that mattered.
+
+                    Now: the defaults are rendered from the constant, so they
+                    cannot drift again, and a button writes them in rather than
+                    asking anyone to retype what the app already knows. */}
                 <textarea
                   id="logo-donts"
-                  className="field-input"
+                  className="field-input field-textarea"
                   rows={3}
                   value={activeProject?.logoDonts || ''}
                   onChange={(e) =>
                     updateBrandField('logoDonts', e.target.value)
                   }
-                  aria-describedby="logo-donts-hint"
-                  placeholder={
-                    'Do not stretch or distort\nDo not recolor outside palette roles\nDo not place on low-contrast photos'
-                  }
+                  placeholder="One rule per line"
+                  aria-describedby="logo-donts-defaults"
                 />
-                <p className="field-hint" id="logo-donts-hint">
-                  One rule per line. Leave blank to use these defaults.
-                </p>
+                <div className="logo-donts-defaults" id="logo-donts-defaults">
+                  <p className="field-hint">
+                    Leave this blank and the handoff uses these:
+                  </p>
+                  <ul className="logo-donts-list">
+                    {DEFAULT_LOGO_DONTS.map((rule) => (
+                      <li key={rule}>{rule}</li>
+                    ))}
+                  </ul>
+                  {!String(activeProject?.logoDonts || '').trim() && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost logo-donts-use"
+                      onClick={() =>
+                        updateBrandField(
+                          'logoDonts',
+                          DEFAULT_LOGO_DONTS.join('\n')
+                        )
+                      }
+                    >
+                      Start from these
+                    </button>
+                  )}
+                </div>
               </div>
               {activeProject?.logoImage ? (
                 <div

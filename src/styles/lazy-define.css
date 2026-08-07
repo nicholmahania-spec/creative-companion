@@ -220,6 +220,12 @@
   bottom: 0;
   z-index: 5;
   margin-top: var(--space-4);
+  /* Full-bleed: the negative margin cancels the content column's padding so
+     the bar reaches the edges. That only works while the padding being
+     cancelled is at least this big — at narrow widths the column's padding is
+     smaller than --space-4, and the surplus pushed the footer 8px past the
+     right edge of a 390px screen (measured). The bleed is neutralised at
+     mobile widths below rather than guessed at here. */
   margin-inline: calc(-1 * var(--space-4, 1rem));
   padding: var(--space-2) var(--space-4);
   padding-bottom: max(var(--space-2), env(safe-area-inset-bottom, 0px));
@@ -263,6 +269,13 @@
   .define-brief-still-blank {
     flex: 1 1 100%;
     text-align: left;
+  }
+
+  /* No full-bleed at this width — the column padding the negative margin is
+     cancelling is smaller than --space-4 here, so the bleed went outward and
+     put the footer 8px past the right edge of the screen. */
+  .define-brief-footer {
+    margin-inline: 0;
   }
 }
 
@@ -367,6 +380,45 @@
 
 .brief-spectrum-pole:last-of-type {
   text-align: right;
+}
+
+/* Very narrow phones: two 5.5rem poles plus the five-dot ladder need ~372px
+   and overflowed a 320px screen.
+
+   Shrinking the shared min-width was tried first and rejected — at 4rem the
+   longer poles ("Professional", "Traditional") size to their own text again
+   and the ladders drift apart by up to 5px, which is precisely the failure
+   the rule above exists to prevent. Measured, then reverted.
+
+   Stacking instead: poles share a row, ladder spans beneath. Every scale gets
+   the same structure, so the ladders stay identical by construction rather
+   than by a min-width that has to be big enough for the longest word.
+
+   A grid was tried and rejected too: the steps are direct siblings of the
+   poles with no ladder wrapper, so a shared `grid-area` stacked all five
+   radios in one cell at the same x. Flex `order` needs no wrapper and does
+   not depend on how many choices a scale has — `choices` is a prop, so
+   anything that hardcodes five would break the next scale that isn't. */
+@media (max-width: 360px) {
+  .brief-spectrum-scale {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    row-gap: var(--space-1);
+  }
+  /* 48% each leaves no room for a step to sneak onto the poles' row, so the
+     ladder always starts a clean second line. */
+  .brief-spectrum-pole {
+    order: 1;
+    flex: 1 1 48%;
+    min-width: 0;
+    white-space: normal;
+  }
+  .brief-spectrum-pole:last-of-type {
+    order: 2;
+  }
+  .brief-spectrum-step {
+    order: 3;
+  }
 }
 
 /* The chosen point, in words. Quiet — it confirms, it does not compete with

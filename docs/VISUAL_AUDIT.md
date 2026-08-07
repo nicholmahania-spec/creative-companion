@@ -390,6 +390,31 @@ The one exception proves it is achievable — see Phase 12.
 
 ### 🔴 The spinning rainbow — the single biggest visual mistake
 
+> **OWNER RULING — this stays. Do not reopen.** (2026-08-07)
+>
+> Everything in this section is accurate and none of it is withdrawn. It is also **not the
+> decision**. The chrome was raised independently in PR #164 with its own measurements — *nine
+> concurrent infinite animations on one Touchpoints screen* — and the owner chose to keep it. This
+> audit then reached the same conclusion from the other direction and shipped the removal. The
+> owner was shown both and ruled again: **keep it.**
+>
+> `shell.css:7355` tags the rule `owner: Button-85 chrome`, and `AGENTS.md` is explicit that
+> advisors inform owner decisions rather than override them. Two independent audits landing on the
+> same recommendation is evidence the contradiction below is real; it is not evidence the owner is
+> wrong. This is a product call about how the owner wants their product to feel, and that is
+> theirs to make.
+>
+> The removal has been reverted on this branch. What remains genuinely unresolved is the
+> *contradiction*, not the chrome: `App.jsx:3371` still describes a rule the CSS does not follow
+> ("the gradient ring fires ONLY when the stop you are on is complete … Static always, one per
+> screen"). The honest tidy is to correct that comment so it stops describing a product that does
+> not exist — but that is a separate change from this one, and it is not a licence to re-litigate
+> the ring.
+>
+> **Anyone reading this section as a to-do item: it is not one.** The scores below were assigned
+> before the ruling and are left as written, because rewriting them would hide that two audits
+> and the owner disagreed — which is the useful part of the record.
+
 Every button variant in the application (`.btn-primary`, `.btn-secondary`, `.btn-outline`) is
 overridden by an `!important` layer that applies a 7-stop conic gradient border and animates it:
 
@@ -467,11 +492,28 @@ padding, nothing recomposed. Specific defects:
 - ~300px of dead space below the last card before the footer.
 - The gradient border at this scale reads as a printing misregistration.
 
-> **Correction (verified after first publication).** An earlier draft reported the floating "To-do"
-> pill as overlapping the "Due soon" card. Same full-page capture artefact as the scrim above:
-> `.todo-fab` is `position: fixed; right: 1.1rem; bottom: 1.1rem`, and measured in a 390×844
-> viewport it sits at y=778 — correctly pinned to the bottom-right corner, over nothing.
-> **There is no collision.**
+> **Correction, and then a correction to the correction.**
+>
+> An earlier draft reported the floating "To-do" pill as overlapping the "Due soon" card. That
+> specific claim was a full-page capture artefact — `.todo-fab` is `position: fixed; right: 1.1rem;
+> bottom: 1.1rem` and sits at y=778 in a 390×844 viewport, so it is not floating mid-page over the
+> Due soon card.
+>
+> **But "correctly pinned" and "occludes nothing" are different claims, and this audit conflated
+> them.** PR #164 hit-tested it rather than reading position off a screenshot:
+> `document.elementsFromPoint()` returns the pill above `Next · Assets` on Touchpoints and above
+> `Back to the desk` on Assets — and `Back to the desk` is underneath it at *every* scroll offset,
+> because it lives in `.path-continue-row`, which is `position: sticky; bottom: 0`. A fixed control
+> and a sticky control both anchored to the bottom-right will collide by construction.
+>
+> So the original finding was right for the wrong reason, my correction was wrong for a better one,
+> and neither was measured the way the question deserved. #164 has since shipped the fix (the pill
+> shrinks to a 48px circle while scrolling and restores its label on idle) plus a regression spec
+> that names the exact occluded control when the fix is stubbed out.
+>
+> **The transferable lesson is narrower than "check at viewport size":** position tells you where
+> something is, hit-testing tells you what it covers. For anything `fixed` or `sticky`, only the
+> second one answers the question.
 
 ## Phase 8b · The Brand Book Builder is a different product
 
@@ -649,7 +691,7 @@ Directions 1 and 2 together would give this product a look nothing else has.
 | **Review** | **6/10** | **Direction Sheet is the best thing in the app** | Truncated placeholder; misaligned "Log it"; 460px dead space; underline-link list again | 🟡 Medium |
 | **Tools menu** | **4/10** | Right contents, right grouping | `$` and `?` as icons; duplicate printer icon used for two destinations | 🟡 Medium |
 | **Clients (empty)** | **4/10** | Honest empty message | Search + sort chrome rendered for zero items; one grey line on 700px of nothing | 🟡 Medium |
-| **Mobile Home** | **3/10** | Cards do stack cleanly; the To-do FAB is correctly pinned | Wordmark gone entirely; control wraps 4+1; zero mobile-specific composition | 🟠 High |
+| **Mobile Home** | **3/10** | Cards do stack cleanly | Wordmark gone entirely; control wraps 4+1; the To-do FAB occludes the sticky path CTA (hit-test verified, fixed in #164); zero mobile-specific composition | 🟠 High |
 | **Deep theme** | **4/10** | Token discipline mostly holds | No card/canvas separation; rainbow becomes neon; purple footer text near-illegible | 🟠 High |
 
 ## Phase 29 · Product scores

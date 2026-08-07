@@ -263,31 +263,50 @@
 /* Plane handles drop chrome via .research-artboard.is-drop-active */
 .research-grid-wrap {
   border-radius: 0;
+  /* `.research-empty` is `position: absolute; inset: 0`. Without a positioned
+     ancestor here it resolved against a distant one and rendered at the full
+     1440x900 of the viewport — which is why the empty copy appeared to float
+     on bare canvas rather than sitting on the wall. */
   position: relative;
 }
 
-/* The wall is a drop target and had no drop state. ResearchView toggles
-   `is-drop-active` on THIS element, but the only rules for that class are
-   scoped to `.research-artboard` — a different element — so dragging a file
-   over the wall changed nothing on screen. The class was styling nothing.
-   Same visual language as the artboard's version, on the element that
-   actually receives the drop. */
-.research-grid-wrap.is-drop-active {
-  border-color: var(--text-primary);
-  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+/* ── The drop plane has to exist to be dropped on ───────────────────────
+   With nothing on the wall this wrap had no content, so it collapsed to 0px
+   tall (measured) — while the hint directly above it said "Drop an image
+   anywhere below". There was no "below": the invitation pointed at nothing,
+   and the only visible frame was the 62px strip holding the hint itself.
+
+   AGENTS.md asks for a framed drop plane on Research and warns specifically
+   against "Research empty prose without a framed drop plane". This is that,
+   applied to the element that actually renders — the older `.research-artboard`
+   rules further up this file are dead CSS for a component the view no longer
+   builds, which is why the requirement looked satisfied and was not.
+
+   Dashed only while empty: a drop invitation when there is somewhere to drop,
+   and no cage around the pins once they arrive. */
+.research-grid-wrap:has(.research-empty) {
+  min-height: min(46vh, 26rem);
+  border: 1px dashed var(--border-strong, var(--border-subtle));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--text-primary) 3%, transparent);
 }
 
-/* Empty, the wall was a bare strip with a sentence floating on it — no
-   boundary, no target, no invitation. `.research-empty` is `inset: 0`, so it
-   only ever fills what this element already has. Giving the plane a real
-   height and a dashed edge is what makes it read as somewhere to drop
-   something. `:has()` keeps it to the empty case: once pins are on the wall
-   they are the boundary, and a dashed box around them would be noise. */
-.research-grid-wrap:has(.research-empty) {
-  min-height: 22rem;
-  border: 1.5px dashed var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--bg-card);
+@media (max-width: 640px) {
+  .research-grid-wrap:has(.research-empty) {
+    min-height: min(32vh, 15rem);
+  }
+}
+
+/* ...and it has to answer when something is dragged over it.
+   ResearchView toggles `is-drop-active` on `.research-grid-wrap`, but the only
+   rules for that class are the `.research-artboard` ones further up — which
+   the comment above correctly identifies as dead CSS for a component the view
+   no longer builds. So the class was styling nothing: the plane now exists,
+   and dragging a file onto it still changed nothing on screen.
+   Solid border while dragging, because "dashed" is the resting invitation and
+   the state worth signalling is that the drop will land. */
+.research-grid-wrap.is-drop-active {
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
 }
 
 .research-grid-wrap:has(.research-empty).is-drop-active {
