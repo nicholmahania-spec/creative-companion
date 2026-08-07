@@ -76,9 +76,33 @@ export const USAGE_RIGHTS = [
 
 const RIGHTS_BY_ID = Object.fromEntries(USAGE_RIGHTS.map((r) => [r.id, r]))
 
-/** Unknown or missing rights read as the safe default: it is the client's. */
+/* Not in USAGE_RIGHTS: it is not a choice the designer can make, it is the
+   absence of one. Kept out of the list so it never appears in the dropdown. */
+const RIGHTS_UNSET = {
+  id: 'unset',
+  label: 'Rights not set',
+  ship: false,
+  note: 'Rights were never set on this file — say whose it is and it ships',
+}
+
+/**
+ * Unknown or missing rights hold the file BACK, and say so.
+ *
+ * This used to return `clientOwned` for anything unrecognised, with a comment
+ * calling that "the safe default". It is the unsafe one in both directions at
+ * once: `clientOwned` is `ship: true`, so the file went in the package, AND
+ * its label — "Client owns it" — was printed next to the file in the client's
+ * README. The app asserted ownership on the client's behalf about a file it
+ * knew nothing about. Rule 3 in this module's header already forbids that;
+ * this line was the exception that quietly disagreed with it.
+ *
+ * Files added through the panel are stamped `clientOwned` at the door
+ * (`addPackageAsset`), so this path is not the ordinary one — it catches
+ * assets that arrive by any other route, and it fails loud rather than open:
+ * held back, named in the panel, named in the README.
+ */
 export function rightsFor(id) {
-  return RIGHTS_BY_ID[id] || RIGHTS_BY_ID.clientOwned
+  return RIGHTS_BY_ID[id] || RIGHTS_UNSET
 }
 
 export function canDistribute(asset = {}) {
@@ -268,7 +292,20 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
        client's machine acts on it. */
     const ext =
       extFromBytes(a.dataUrl) || extFromDataUrl(a.dataUrl) || text(a.ext) || 'bin'
-    add(a.folder && bucket[a.folder] ? a.folder : 'applications', {
+    /* A folder the app does not recognise is held back, not redirected. An
+       unset folder still means Applications — that is the ordinary path for
+       everything added through the panel — but a folder that was SET to
+       something unknown is a disagreement between caller and plan, and
+       quietly filing it under Applications resolves that disagreement by
+       guessing. The client cannot tell a guess from a decision. */
+    if (a.folder && !bucket[a.folder]) {
+      excluded.push({
+        name: label,
+        reason: `Meant for a folder this package does not have (${a.folder}) — add it to the folder by hand`,
+      })
+      continue
+    }
+    add(a.folder || 'applications', {
       name: assetFileName({
         brand,
         group: a.group || 'application',
@@ -279,6 +316,10 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
       kind: 'asset',
       note: rights.label,
       assetId: a.id,
+      /* Which bought item this file IS. Carried into the plan so the
+         checklist can be computed from the plan alone, the way every other
+         reader of this module works. Empty means the designer has not said. */
+      deliverable: text(a.deliverable),
     })
   }
 
@@ -406,6 +447,40 @@ export function packageReadme(pack = {}, plan = null, missing = []) {
 }
 
 /**
+ * The bought items the app produces itself from project data. Everything else
+ * the brief picked is the designer's own file to add and attribute.
+ */
+export const GENERATED_DELIVERABLES = [
+  'logoPrimary',
+  'logoVariations',
+  'colourPalette',
+  'typography',
+  'guidelines',
+]
+
+/**
+ * The bought items an uploaded file can be attributed to — what the panel
+ * offers on each asset row.
+ *
+ * Only items the brief actually picked, minus the ones the app makes itself.
+ * An empty result means every bought item is app-generated, and the row's
+ * attribution control has nothing to ask about, so it is not shown.
+ *
+ * @param {object} pack
+ * @returns {Array<{ id: string, label: string }>}
+ */
+export function attachableDeliverables(pack = {}) {
+  const picked = Array.isArray(pack?.detective?.deliverablesPicked)
+    ? pack.detective.deliverablesPicked
+    : []
+  return picked
+    .filter((id) => !GENERATED_DELIVERABLES.includes(id))
+    .map((id) => DELIVERABLE_OPTIONS.find((o) => o.id === id))
+    .filter(Boolean)
+    .map((o) => ({ id: o.id, label: o.label }))
+}
+
+/**
  * Did the client get what they bought?
  *
  * One row per deliverable the brief actually picked — no invented rows, and
@@ -419,10 +494,34 @@ export function packageReadme(pack = {}, plan = null, missing = []) {
 export function deliverableChecklist(pack = {}, planIn = null) {
   const plan = planIn || packagePlan(pack)
   const kinds = new Set(plan.folders.flatMap((f) => f.files.map((x) => x.kind)))
+  /* Which bought items the uploaded files have actually been ATTRIBUTED to.
+     This used to be `plan.folders.some(f => f.files.some(x => x.kind ===
+     'asset'))` — one shared boolean meaning "the package contains at least one
+     file of any kind", reused as the answer for every deliverable the app
+     cannot generate itself. So a single upload ticked business cards AND
+     packaging AND shelf talkers AND the tote at once, and the panel printed
+     "Everything the brief asked for is in here."
+
+     It did exactly that on a real package whose only uploads were three files
+     belonging to a different client entirely. The checklist was not merely
+     failing to catch the error, it was affirmatively vouching for it, at the
+     moment the designer was looking for a reason to stop checking. A checklist
+     that can be wrong in the reassuring direction is worse than none.
+
+     Attribution also does the catching for free: a file that belongs to no
+     bought item has nothing to tick, so it cannot vouch for anything. */
+  const attributed = new Set(
+    plan.folders
+      .flatMap((f) => f.files)
+      .filter((x) => x.kind === 'asset' && x.deliverable)
+      .map((x) => x.deliverable)
+  )
   const picked = Array.isArray(pack?.detective?.deliverablesPicked)
     ? pack.detective.deliverablesPicked
     : []
 
+  /* One entry per id in GENERATED_DELIVERABLES — that list is what
+     `attachableDeliverables` subtracts, so the two cannot drift. */
   const SATISFIED = {
     logoPrimary: () => kinds.has('mark'),
     logoVariations: () => kinds.has('mark'),
@@ -458,20 +557,16 @@ export function deliverableChecklist(pack = {}, planIn = null) {
       if (!option) return null
       const check = SATISFIED[id]
       /* A deliverable this app cannot produce (packaging, signage, a website)
-         is the designer's own file to add, so it is listed as an item to
-         attach rather than silently ticked or silently failed. */
-      const ok = check
-        ? check()
-        : plan.folders.some((f) =>
-            f.files.some((x) => x.kind === 'asset')
-          )
+         is the designer's own file to add, so it is ticked only by a file
+         attributed to it — never by the presence of files in general. */
+      const ok = check ? check() : attributed.has(id)
       return {
         id,
         label: option.label,
         ok,
         missing: ok
           ? ''
-          : MISSING[id] || `Attach the ${option.label.toLowerCase()} file`,
+          : MISSING[id] || `Add the ${option.label.toLowerCase()} file, or mark which file it is`,
       }
     })
     .filter(Boolean)

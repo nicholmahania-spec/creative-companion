@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  attachableDeliverables,
   canDistribute,
   deliverableChecklist,
   fontInformation,
@@ -68,10 +69,25 @@ describe('the folder structure', () => {
 })
 
 describe('usage rights', () => {
-  it('defaults an unmarked asset to the client’s', () => {
-    expect(rightsFor(undefined).id).toBe('clientOwned')
-    expect(rightsFor('nonsense').id).toBe('clientOwned')
-    expect(canDistribute({})).toBe(true)
+  /* This test used to assert the opposite, and the behaviour it pinned put
+     three files belonging to another client into a package, each labelled
+     "Client owns it" in the README. Unknown rights are not a default, they
+     are a question nobody answered — the package says so instead of
+     answering it on the client's behalf. */
+  it('holds back an asset whose rights were never set, rather than claiming it', () => {
+    expect(rightsFor(undefined).id).toBe('unset')
+    expect(rightsFor('nonsense').id).toBe('unset')
+    expect(canDistribute({})).toBe(false)
+    expect(rightsFor(undefined).label).not.toMatch(/client owns/i)
+  })
+
+  it('keeps "rights not set" out of the pickable list', () => {
+    expect(USAGE_RIGHTS.map((r) => r.id)).not.toContain('unset')
+  })
+
+  it('still ships a file the designer marked as the client’s', () => {
+    expect(rightsFor('clientOwned').ship).toBe(true)
+    expect(canDistribute({ rights: 'clientOwned' })).toBe(true)
   })
 
   it('holds back everything that is not the client’s to hold', () => {
@@ -84,12 +100,33 @@ describe('usage rights', () => {
     const plan = packagePlan(pack(), {
       assets: [
         { id: 1, name: 'hero mockup', dataUrl: PNG, rights: 'thirdParty' },
-        { id: 2, name: 'business card', dataUrl: PNG },
+        { id: 2, name: 'business card', dataUrl: PNG, rights: 'clientOwned' },
       ],
     })
     expect(fileNames(plan)).toContain('SparrowsPromise_Application_BusinessCard.png')
     expect(plan.excluded).toEqual([
       { name: 'hero mockup', reason: expect.stringMatching(/licence is yours/i) },
+    ])
+  })
+
+  it('names an asset with no rights in held-back, so it is not silently dropped', () => {
+    const plan = packagePlan(pack(), {
+      assets: [{ id: 1, name: 'mystery file', dataUrl: PNG }],
+    })
+    expect(fileNames(plan)).not.toContain('SparrowsPromise_Application_MysteryFile.png')
+    expect(plan.excluded).toEqual([
+      { name: 'mystery file', reason: expect.stringMatching(/never set/i) },
+    ])
+  })
+
+  it('holds back a file bound for a folder the package does not have', () => {
+    const plan = packagePlan(pack(), {
+      assets: [
+        { id: 1, name: 'odd one', dataUrl: PNG, rights: 'clientOwned', folder: 'motion' },
+      ],
+    })
+    expect(plan.excluded).toEqual([
+      { name: 'odd one', reason: expect.stringMatching(/does not have \(motion\)/i) },
     ])
   })
 
@@ -162,7 +199,59 @@ describe('the deliverable checklist', () => {
       pack({ detective: { deliverablesPicked: ['packaging'] } })
     )
     expect(rows[0].ok).toBe(false)
-    expect(rows[0].missing).toMatch(/attach/i)
+    expect(rows[0].missing).toMatch(/packaging/i)
+  })
+
+  /* The bug this file now guards, stated as the client experienced it: one
+     upload — in the real case, a file belonging to somebody else entirely —
+     ticked every bought item the app cannot generate, and the panel reported
+     "Everything the brief asked for is in here." */
+  it('does not let one unattributed upload tick every bought item', () => {
+    const rows = deliverableChecklist(
+      pack({
+        detective: {
+          deliverablesPicked: ['businessCard', 'packaging', 'signage'],
+        },
+      }),
+      packagePlan(pack(), {
+        assets: [{ id: 1, name: 'a file', dataUrl: PNG, rights: 'clientOwned' }],
+      })
+    )
+    expect(rows.every((r) => !r.ok)).toBe(true)
+  })
+
+  it('ticks only the item a file is attributed to', () => {
+    const p = pack({
+      detective: { deliverablesPicked: ['businessCard', 'packaging'] },
+    })
+    const rows = deliverableChecklist(
+      p,
+      packagePlan(p, {
+        assets: [
+          {
+            id: 1,
+            name: 'the card',
+            dataUrl: PNG,
+            rights: 'clientOwned',
+            deliverable: 'businessCard',
+          },
+        ],
+      })
+    )
+    expect(rows.find((r) => r.id === 'businessCard').ok).toBe(true)
+    expect(rows.find((r) => r.id === 'packaging').ok).toBe(false)
+  })
+
+  it('offers only bought items the app cannot make itself for attribution', () => {
+    expect(
+      attachableDeliverables(
+        pack({
+          detective: {
+            deliverablesPicked: ['logoPrimary', 'guidelines', 'packaging'],
+          },
+        })
+      ).map((d) => d.id)
+    ).toEqual(['packaging'])
   })
 
   it('ignores a deliverable id it does not recognise', () => {
