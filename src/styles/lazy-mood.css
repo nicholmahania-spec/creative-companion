@@ -297,6 +297,23 @@
   }
 }
 
+/* ...and it has to answer when something is dragged over it.
+   ResearchView toggles `is-drop-active` on `.research-grid-wrap`, but the only
+   rules for that class are the `.research-artboard` ones further up — which
+   the comment above correctly identifies as dead CSS for a component the view
+   no longer builds. So the class was styling nothing: the plane now exists,
+   and dragging a file onto it still changed nothing on screen.
+   Solid border while dragging, because "dashed" is the resting invitation and
+   the state worth signalling is that the drop will land. */
+.research-grid-wrap.is-drop-active {
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.research-grid-wrap:has(.research-empty).is-drop-active {
+  border-style: solid;
+  border-color: var(--text-primary);
+}
+
 .research-grid {
   display: grid;
   /* Slightly larger min so wide main doesn't produce a thin pin sea */

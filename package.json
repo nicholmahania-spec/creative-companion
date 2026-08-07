@@ -28,8 +28,6 @@
     "analyze": "ANALYZE=1 npm run build"
   },
   "dependencies": {
-    "@radix-ui/react-icons": "^1.3.2",
-    "@radix-ui/react-navigation-menu": "^1.2.20",
     "@sentry/react": "^10.67.0",
     "@sentry/tracing": "^7.120.4",
     "@supabase/supabase-js": "^2.110.7",
@@ -38,7 +36,6 @@
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "lottie-web": "^5.12.2",
-    "lucide-react": "^1.26.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.2.108",
     "react": "^19.2.8",

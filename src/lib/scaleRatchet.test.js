@@ -41,7 +41,16 @@ const STYLES = new URL('../styles', import.meta.url).pathname
 
 /** Seeded at the measured state on 2026-08-01. Only ever revise downward. */
 const BUDGET = {
-  fontSize: 73,
+  /* 73 -> 72 on 2026-08-07. The five remaining sub-floor sizes in shell.css
+     that were real interface text — .buddy-kit-meta, .bf-status, .role-rgb /
+     .role-cmyk, .progress-ring-label at 0.58rem (9.3px) and mobile .cal-event
+     at 0.55rem (8.8px) — went to var(--fs-1), retiring both values. The token
+     block calls --fs-1 the floor; these were reading below it.
+     The sub-floor sizes left in the tree are all inside scale-model previews
+     (the 220px letterhead thumbnail, the brand-book lockup cell), where small
+     type is representing small type at reduced scale. Those are a preview
+     SIZE problem, not a ramp problem, and bumping them would break the model. */
+  fontSize: 72,
   /* 317 -> 312 on 2026-08-05. Five near-ramp one-offs converted to tokens
      (0.22/0.28/0.3/0.45rem pairs, drift <=0.05rem, all single-use), which is
      what got the count back under a budget it had drifted past. Lowered in the

@@ -1172,6 +1172,9 @@
 }
 
 .design-advanced > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 600;
@@ -1184,12 +1187,19 @@
 }
 
 .design-advanced > summary::before {
-  content: '▸ ';
-  font-size: 0.7rem;
+  content: '';
+  flex: 0 0 auto;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transform-origin: center;
+  transition: transform var(--transition);
 }
 
 .design-advanced[open] > summary::before {
-  content: '▾ ';
+  transform: rotate(45deg);
 }
 
 .design-rail-label,

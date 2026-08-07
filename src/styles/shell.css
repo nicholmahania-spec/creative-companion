@@ -61,9 +61,17 @@
   --border-accent: #A1A1A1; /* hover-emphasis border, used by .field-input:hover */
   --highlight-inset: none;
 
-  /* Status colors for form validation */
-  --success: #808080;
-  --warning: #A7A7A7;
+  /* Status colors for form validation.
+     --success and --warning used to be #808080 and #A7A7A7 — two neutral
+     greys standing in for the two states whose whole job is to be legible at
+     a glance. The cost was real in both directions: `.header-saved-dot` asks
+     for `var(--success, #1d6b3f)`, so its green fallback was dead and the
+     saved dot rendered grey; and the minor-version badge asked for --warning
+     and got a 2.41:1 grey that fails AA outright.
+     --success is now an alias of --positive so the app has ONE green, not a
+     grey one for forms and a green one everywhere else. --warning is amber at
+     5.02:1 on white and 4.61:1 on canvas. Deep values follow at .app.deep. */
+  --warning: #B45309;
   --error: #EF4444;
 
   /* Semantic status pair for approve / changes-requested badges. Previously
@@ -72,6 +80,8 @@
   --danger: #B91C1C;
   --accent-danger: var(--danger);
   --positive: #15803D;
+  /* One green in the app. Declared after --positive so it can alias it. */
+  --success: var(--positive);
 
   /* Aliases some later rules reference with hardcoded light fallbacks
      (var(--ts-x, #hex)) — defining them here makes those rules follow the
@@ -370,6 +380,12 @@ body:has(.app.deep),
   --danger: #F87171;
   --accent-danger: var(--danger);
   --positive: #4ADE80;
+  /* Deep counterparts to the light semantic pair. Both are measured against
+     the deep card (#141414): green 10.57:1, amber 8.58:1. Without these the
+     light values inherit into dark, which is the exact failure the
+     --border-hairline and --ts-focus notes above already record twice. */
+  --success: var(--positive);
+  --warning: #F59E0B;
   /* Chromatic CTAs on deep — lighter purple for ≥4.5:1 white label */
   --accent-primary: #8B7CF7;
   --accent-deep: #6B5CE6;
@@ -976,7 +992,7 @@ h3 {
 }
 
 .buddy-kit-meta {
-  font-size: 0.58rem;
+  font-size: var(--fs-1);
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -1355,7 +1371,9 @@ h3 {
   gap: var(--space-1);
   width: 100%;
   margin: 0 0 var(--space-2);
-  padding: var(--space-3);
+  /* Padding moved to an inner offset so the specimen edge can bleed to the
+     card's corners; the top padding is re-added below the strip. */
+  padding: 0 var(--space-3) var(--space-3);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   background: var(--bg-canvas);
@@ -1363,6 +1381,44 @@ h3 {
   font: inherit;
   cursor: pointer;
   color: var(--text-primary);
+  overflow: hidden;
+}
+
+/* Specimen edge — the project's palette as a full-bleed strip on its own
+   card. Not decoration: with several projects open the list is otherwise
+   identical grey cards told apart only by reading, and this is the one place
+   the brand can identify its own project before a word is read.
+   4px, no gap, no radius of its own — it reads as an edge of the card, not
+   as a row of swatches sitting on it. */
+.home-dash-project-spectrum {
+  display: flex;
+  width: calc(100% + var(--space-3) * 2);
+  margin: 0 calc(var(--space-3) * -1) var(--space-3);
+  height: 4px;
+  flex: 0 0 auto;
+  /* Whichever swatch matches the surface disappears, and it is a different
+     one per theme: a palette almost always carries both a paper tone and an
+     ink tone (the default set is #1C1917 / #0F766E / #A8A29E / #FAFAF9), so
+     light loses the paper end and deep loses the ink end. Measured: the strip
+     is the card's full 552px with four equal 138px swatches — nothing is
+     mis-sized, one of them is simply the colour of what it sits on.
+     The hairline states the band's extent so it still reads as a full-width
+     palette rather than appearing to stop early. Deliberately NOT solved by
+     dropping near-surface colours or darkening them: the paper tone IS the
+     brand, and a specimen that edits the palette to look better is not a
+     specimen. A colour receding into the surface it matches is honest. */
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.home-dash-project-spectrum > i {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* No palette yet: the card keeps its own top padding so nothing shifts when
+   the strip appears. */
+.home-dash-project-card > .home-dash-project-card-top:first-child {
+  margin-top: var(--space-3);
 }
 
 .home-dash-project-card:hover {
@@ -1554,8 +1610,26 @@ h3 {
 
 .home-dash-hours-ranges {
   display: flex;
-  flex-wrap: wrap;
+  /* Scrolls, never wraps. At 390px the five ranges wrapped 4 + 1, orphaning
+     "All time" on a row of its own — which reads as a mistake rather than a
+     control, because a segmented control IS the statement that these options
+     are one row of peers. No media query needed: on a wide screen they fit
+     and nothing scrolls. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   gap: var(--space-1);
+}
+
+.home-dash-hours-ranges::-webkit-scrollbar {
+  display: none;
+}
+
+.home-dash-hours-ranges > .home-dash-hours-range {
+  /* Without this the buttons are shrunk by the flex line before the container
+     ever scrolls, and "All time" loses its label instead of its position. */
+  flex: 0 0 auto;
 }
 
 .home-dash-hours-range {
@@ -1606,50 +1680,6 @@ h3 {
 .home-dash-hours-range-note {
   font-weight: 500;
   color: var(--text-muted);
-}
-
-/* Home: single up-next card (not a second full path map) */
-.home-dash-up-next-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
-  width: 100%;
-  margin: 0 0 var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--text-primary);
-  border-radius: var(--radius);
-  background: var(--bg-card);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.home-dash-up-next-card:hover {
-  background: var(--bg-muted);
-}
-
-.home-dash-up-next-kicker {
-  font-size: var(--fs-1);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.home-dash-up-next-title {
-  font-size: var(--fs-4);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-}
-
-.home-dash-up-next-plain {
-  font-size: var(--fs-2);
-  font-weight: 500;
-  line-height: 1.35;
-  color: var(--text-muted);
-  max-width: 40ch;
 }
 
 /* Home: next few dues only — month grid stays on Deadlines */
@@ -2212,6 +2242,9 @@ h3 {
 }
 
 .finish-more-formats > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 700;
@@ -2225,12 +2258,19 @@ h3 {
 }
 
 .finish-more-formats > summary::before {
-  content: '▸ ';
-  opacity: 0.7;
+  content: '';
+  flex: 0 0 auto;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transform-origin: center;
+  transition: transform var(--transition);
 }
 
 .finish-more-formats[open] > summary::before {
-  content: '▾ ';
+  transform: rotate(45deg);
 }
 
 .finish-more-formats-list {
@@ -3687,7 +3727,7 @@ html[data-reduce-motion='true'] *::after {
   }
 
 .cal-event {
-    font-size: 0.55rem;
+    font-size: var(--fs-1);
   }
 }
 
@@ -3699,7 +3739,10 @@ html[data-reduce-motion='true'] *::after {
   border-bottom: 1.5px solid var(--border-strong);
   border-radius: 0;
   font: inherit;
-  font-size: 0.95rem;
+  /* --fs-3 (1rem), not the off-ramp 0.95rem. It was the last difference
+     between a field on Strategy and the same class on Identity, and 16px is
+     also the value that stops iOS zooming the page on focus. */
+  font-size: var(--fs-3);
   font-weight: 500;
   background: transparent;
   color: var(--text-primary);
@@ -3851,7 +3894,7 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .bf-status {
-  font-size: 0.58rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   color: #858585;
   line-height: 1.25;
@@ -4907,7 +4950,7 @@ body.cc-printing-page button {
 
 .role-rgb,
 .role-cmyk {
-  font-size: 0.58rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   opacity: 0.55;
   margin-left: 0.1rem;
@@ -5992,7 +6035,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .progress-ring-label {
   position: relative;
   z-index: 1;
-  font-size: 0.58rem;
+  font-size: var(--fs-1);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -7413,8 +7456,10 @@ body:has(.app.deep)::after {
   box-shadow: none !important;
 }
 
-.field-input,
-.define-input,
+/* .field-input and .define-input used to be squared here and then re-rounded
+   a few rules below for define-studio only, which is how one class ended up
+   with two radii. They are boxed at var(--radius) now; only the lock screen's
+   onboard field is still a rule-line control. */
 .onboard-input {
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -7427,18 +7472,28 @@ body:has(.app.deep)::after {
   box-shadow: none;
 }
 
-.define-input.field-input,
-.define-studio .field-input {
+.field-input,
+.define-input {
   /* Boxed per the 2026 dressing. Same lock, new chrome: --field-line for
    * the border, not --ts-border — the divider grey measured 1.13:1 against
-   * the canvas, and a control boundary needs the 3:1 non-text floor. */
+   * the canvas, and a control boundary needs the 3:1 non-text floor.
+   *
+   * Promoted from `.define-input.field-input, .define-studio .field-input`
+   * to every field-input. The fix was right and the reasoning above applies
+   * everywhere a control has a boundary — it was just scoped to one view, so
+   * measured in the running app the SAME class rendered four different ways:
+   *   Strategy  #FFFFFF fill · #8A8A8A border · 4px radius · 16px
+   *   Identity  #F5F5F5 fill · #E7E7E7 border · 0px radius · 15.2px
+   * Identity's #E7E7E7 on #F5F5F5 is the 1.13:1 boundary this comment says
+   * it fixed. One control, one appearance. */
   background: var(--bg-card) !important;
   border: 1px solid var(--field-line) !important;
   border-radius: var(--radius) !important;
   color: var(--ts-ink, #1A1A1A) !important;
 }
 
-.define-input.field-input:focus {
+.field-input:focus,
+.define-input:focus {
   /* Theme token, not a literal: the hardcoded light-grey failed 3:1 in dark
    * mode. Whole-box focus now that fields are boxed — the ring has to be
    * findable on a 30-field form. */
@@ -7449,7 +7504,8 @@ body:has(.app.deep)::after {
 }
 
 /* Keyboard focus must survive the outline suppression above. */
-.define-input.field-input:focus-visible {
+.field-input:focus-visible,
+.define-input:focus-visible {
   outline: 2px solid var(--dopamine) !important;
   outline-offset: 2px;
 }
@@ -8496,7 +8552,18 @@ select:focus {
     line-height: 1;
     cursor: pointer;
   }
-  .header-content-simple > .brand-block { display: none !important; }
+  /* Mark stays, wordmark goes. Hiding the whole block left the mobile header
+     as [☰] Client Account with no product identity on it at all — the screen
+     the user sees most was the one screen that never said what app this is.
+     The mark alone costs ~22px and the lockup already supports mark-only. */
+  .header-content-simple > .brand-block {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .header-content-simple > .brand-block .logo-lockup-wordmark {
+    display: none;
+  }
   /* The back affordance and project-context span flex-shrink instead of the
      old mobile-title input; flex-basis 0 + width 0 on the context span (in
      its own rule below) keeps an intrinsic text width from widening the app
