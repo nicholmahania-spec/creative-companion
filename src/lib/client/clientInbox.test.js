@@ -125,9 +125,26 @@ describe('buildInboxRows', () => {
     expect(shown).not.toMatch(/\d{4}-\d{2}-\d{2}|\d+\s*(ago|unread|new)/i)
   })
 
-  it('falls back gracefully when the project is gone locally', () => {
+  /* The behaviour this protects is that a portal whose project is gone locally
+     still produces a usable row rather than crashing. That is unchanged.
+
+     What changed is the label and one new field. 'Another project' was a dead
+     end: it read as "some other job of yours", when the truth is that the only
+     link back — the project's `clientPortalId` — lives in localStorage on one
+     device and does not survive a cache clear, a second machine, or a
+     workspace import. The client's submitted questionnaire was sitting on the
+     server, visible in this panel, and unreachable. `orphaned` is what lets
+     the panel offer to reconnect it. */
+  it('flags a portal whose project is gone locally, and says so plainly', () => {
     const { rows } = buildInboxRows([portal], [], {}, [])
-    expect(rows[0].projectName).toBe('Another project')
+    expect(rows[0].orphaned).toBe(true)
+    expect(rows[0].projectName).toBe('Not linked to a project on this device')
+  })
+
+  it('does not flag a portal whose project is present', () => {
+    const { rows } = buildInboxRows([portal], [], {}, projects)
+    expect(rows[0].orphaned).toBe(false)
+    expect(rows[0].projectName).not.toMatch(/not linked/i)
   })
 })
 
