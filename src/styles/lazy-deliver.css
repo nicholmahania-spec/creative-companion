@@ -1043,6 +1043,17 @@
   word-break: break-all;
 }
 
+/* Held back, not failed. Muted and a step lighter than the file name, so it
+   reads as a note attached to the file rather than an alarm about it — the
+   same reason nothing else waiting on someone else is coloured red.
+
+   500, not 400: the type system ships three weights and `typography.test.js`
+   holds it at three. A fourth would mean another font file for one line. */
+.package-asset-note {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
 .package-rights {
   flex: 0 1 20ch;
 }

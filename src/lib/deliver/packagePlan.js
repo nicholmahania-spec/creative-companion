@@ -232,6 +232,19 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
     if (!a) continue
     const rights = rightsFor(a.rights)
     const label = text(a.name) || 'asset'
+    /* Held back by the app rather than by the licence, but the client needs
+       the same thing said either way: this exists and is not in the folder. */
+    if (a.heldBack) {
+      const mb = a.sizeBytes ? ` (${(a.sizeBytes / 1024 / 1024).toFixed(1)}MB)` : ''
+      excluded.push({
+        name: label,
+        reason:
+          a.heldBack === 'tooLarge'
+            ? `Too large to store in the app${mb} — ask your designer for it directly`
+            : 'Held back by the app',
+      })
+      continue
+    }
     if (!rights.ship) {
       excluded.push({ name: label, reason: rights.note })
       continue

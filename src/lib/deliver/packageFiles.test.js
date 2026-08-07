@@ -183,3 +183,46 @@ describe('the package tells the client the bad news too', () => {
     expect(readme).not.toContain('No logo file is included')
   })
 })
+
+/**
+ * A file over 4MB used to be dropped at the door — `continue` plus a toast the
+ * user's own `toastMode: 'quiet'` is entitled to swallow. It was never added,
+ * so it could not appear in the panel, the plan, `missing`, the README or the
+ * zip. Deliverables out of Illustrator and InDesign are routinely over 4MB, so
+ * that was the common path, not the edge.
+ */
+describe('a file too large to store is named, not forgotten', () => {
+  const base = {
+    projectName: 'My project',
+    palette: ['#1C1917', '#FAFAF9'],
+    detective: {},
+  }
+  const oversize = {
+    id: 'big', name: 'Press ready card', dataUrl: '',
+    heldBack: 'tooLarge', sizeBytes: 6.2 * 1024 * 1024, rights: 'clientOwned',
+  }
+
+  it('holds it back with the size, rather than shipping a broken entry', () => {
+    const { plan, files } = packageFiles(base, { assets: [oversize] })
+    const row = plan.excluded.find((x) => x.name === 'Press ready card')
+    expect(row).toBeTruthy()
+    expect(row.reason).toMatch(/Too large to store in the app \(6\.2MB\)/)
+    // ...and no file is planned for it at all.
+    expect(files.some((f) => /PressReadyCard/i.test(f.path))).toBe(false)
+  })
+
+  it('says so in the README the client reads', () => {
+    const { files } = packageFiles(base, { assets: [oversize] })
+    const readme = files.find((f) => f.path.includes('README')).content
+    expect(readme).toContain('Not included:')
+    expect(readme).toContain('Press ready card')
+    expect(readme).toMatch(/Too large to store/)
+  })
+
+  it('still ships an asset that is merely large but stored', () => {
+    const ok = { id: 'ok', name: 'Card', dataUrl: PNG, rights: 'clientOwned' }
+    const { plan, files } = packageFiles(base, { assets: [ok] })
+    expect(plan.excluded).toHaveLength(0)
+    expect(files.some((f) => /Card/i.test(f.path))).toBe(true)
+  })
+})
