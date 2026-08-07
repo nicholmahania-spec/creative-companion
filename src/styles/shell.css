@@ -9953,7 +9953,13 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
    it two independent, invisible disappearance conditions that a user cannot
    tell apart, and this is the frictionless-capture entry point from
    CLAUDE.md §2 — if it is not there when the thought arrives, the thought is
-   gone. Losing the capture is worse than an overlap. */
+   gone. Losing the capture is worse than an overlap.
+
+   Still needed, and no longer the whole answer: this reserves the tail of the
+   document, and mid-page clearance is now handled by the pill moving instead
+   of the page padding (--todo-fab-lift, src/lib/fabClearance.js). Keeping both
+   because they solve different halves — padding means the last row of a view
+   is reachable without the pill having to step aside for it at all. */
 @media (max-width: 767px) {
   .main {
     padding-block-end: calc(3rem + 1.1rem + 1rem + env(safe-area-inset-bottom, 0px));
@@ -10928,17 +10934,24 @@ textarea.artboard-brief-input {
    stays in the DOM either way — the accessible name comes from aria-label on
    the button, which does not change, so a screen reader sees nothing move. */
 .todo-fab {
-  /* Clearance offset, written by settleTodoFab() in App.jsx once the page has
-     come to rest. `transform` and not `bottom`, so a re-seat is paint-only:
+  /* Clearance offset, written by settleTodoFab() in App.jsx the moment the page
+     stops moving. `transform` and not `bottom`, so a re-seat is paint-only:
      nothing in the page reflows because the pill decided to sit one shelf
-     higher, and the whole reason this is safe to do at all is that it costs
-     the layout nothing. See src/lib/fabClearance.js for why it moves. */
+     higher, and that is the whole reason this is safe to do at all.
+
+     NOT TRANSITIONED, deliberately, and this was tried the other way first. A
+     0.2s glide looks better and quietly reopens the exact hole this mechanism
+     exists to close: for those 200ms the pill is a live target sliding across
+     live controls, so a tap that lands mid-flight is precisely the stolen tap.
+     Making it pointer-inert while travelling trades that for a window where the
+     capture affordance is dead — the one thing it may never be. So it steps.
+     It steps at the same moment the label comes back, which reads as the pill
+     settling rather than as a jump. See src/lib/fabClearance.js. */
   transform: translateY(calc(-1 * var(--todo-fab-lift, 0px)));
   transition:
     opacity 0.15s ease,
     min-width 0.18s ease,
-    padding 0.18s ease,
-    transform 0.2s ease;
+    padding 0.18s ease;
 }
 
 .todo-fab.is-compact {

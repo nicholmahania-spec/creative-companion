@@ -1920,26 +1920,66 @@ function App() {
    * activate a control. So there is no per-frame work here and nothing moves
    * while you are moving.
    *
-   * The measurement is taken against the pill's WIDEST footprint, not its
-   * current one: this fires on the same tick that ends the compact state, so
-   * `getBoundingClientRect` is mid-transition and would report the 48px circle
-   * while the pill is on its way back to the 86px labelled shape. Testing the
-   * narrower box would seat it somewhere that stops being clear 180ms later. */
+   * The home footprint is reconstructed from `bottom`/`right`/`offsetHeight`
+   * rather than read off `getBoundingClientRect`, and that is not fussiness —
+   * it is the bug this shipped with first. Both the lift and the compact width
+   * are CSS transitions, so a rect read here is mid-flight, and deriving home
+   * as "where it is now, plus the lift I asked for" compounded that error into
+   * itself on every settle: measured over a 60px-step walk the pill climbed
+   * 60px per stop until it ran out of room, and seated itself on top of inputs
+   * on the way. Offsets and `offsetHeight` are layout, which no transform or
+   * transition touches. `offsetWidth` is not — the compact state really does
+   * narrow the box — so the width keeps the widest value ever seen, because
+   * seating the 48px circle somewhere the 86px pill will not fit is the same
+   * bug 180ms later. */
   const settleTodoFab = useCallback(() => {
     const fab = todoFabRef.current
     if (!fab) return
-    const rect = fab.getBoundingClientRect()
+    const height = fab.offsetHeight
     // Desktop hides the pill entirely (header pill instead) — 0x0, nothing to do.
-    if (rect.width < 1 || rect.height < 1) return
+    if (!height || !fab.offsetWidth) return
 
-    const lift = fabLiftRef.current
-    const width = Math.max(rect.width, fabWidthRef.current)
+    const own = fab.getBoundingClientRect()
+    /* Something is over the pill — a dialog backdrop, the print overlay, or the
+       pill itself stood down because a field has focus. Freeze the seat rather
+       than measure through it: an overlay reads as "nothing interactive under
+       here", so re-seating now would send the pill home to sit on whatever the
+       overlay is hiding, and there is no event to correct it when the overlay
+       goes. Keeping the last good seat is both safer and free — this is also
+       what stops a settle running on every keystroke, since the pill steps
+       aside for a focused field and so bails here. */
+    const atCentre = document.elementFromPoint(
+      Math.round(own.left + own.width / 2),
+      Math.round(own.top + own.height / 2)
+    )
+    if (!atCentre || (atCentre !== fab && !fab.contains(atCentre))) return
+
+    const cs = window.getComputedStyle(fab)
+    const width = Math.max(fab.offsetWidth, fabWidthRef.current)
     fabWidthRef.current = width
-    const bottom = rect.bottom + lift
+    /* The count badge is absolutely positioned outside the button's box, so the
+       pill's tappable area is bigger than the pill. Measured off the children
+       rather than restated from the CSS: both rects carry the same transform,
+       so the difference is the true overhang whatever the pill is doing, and it
+       cannot drift if the badge is restyled. */
+    let over = { top: 0, right: 0, bottom: 0, left: 0 }
+    for (const child of fab.children) {
+      const cr = child.getBoundingClientRect()
+      if (!cr.width || !cr.height) continue
+      over = {
+        top: Math.max(over.top, own.top - cr.top),
+        right: Math.max(over.right, cr.right - own.right),
+        bottom: Math.max(over.bottom, cr.bottom - own.bottom),
+        left: Math.max(over.left, own.left - cr.left),
+      }
+    }
+    const bottom = window.innerHeight - (parseFloat(cs.bottom) || 0) + over.bottom
+    const right = window.innerWidth - (parseFloat(cs.right) || 0) + over.right
+    const lift = fabLiftRef.current
     const column = {
-      left: rect.right - width,
-      right: rect.right,
-      top: bottom - rect.height,
+      left: right - width - over.left - over.right,
+      right,
+      top: bottom - height - over.top - over.bottom,
       bottom,
       maxLift: maxLiftFor(window.innerHeight),
     }
@@ -1967,6 +2007,7 @@ function App() {
      its prefers-reduced-motion opt-out) lives in CSS beside the pill. */
   useEffect(() => {
     let idleTimer = 0
+    let seatTimer = 0
     let frame = 0
     const onScroll = () => {
       if (!frame) {
@@ -1976,6 +2017,14 @@ function App() {
         })
       }
       clearTimeout(idleTimer)
+      clearTimeout(seatTimer)
+      /* Re-seat on a much shorter fuse than the 450ms expand. Momentum scroll
+         fires events every frame, so 90ms of silence already means the page
+         has stopped — and everything between "stopped" and "re-seated" is time
+         the pill spends on top of whatever it landed over. Waiting for the
+         450ms expand left a third of a second where a tap could still be
+         taken. Seating and expanding are separate concerns on separate fuses. */
+      seatTimer = window.setTimeout(settleTodoFab, 90)
       idleTimer = window.setTimeout(() => {
         setFabCompact(false)
         settleTodoFab()
@@ -1985,6 +2034,7 @@ function App() {
     return () => {
       window.removeEventListener('scroll', onScroll)
       clearTimeout(idleTimer)
+      clearTimeout(seatTimer)
       if (frame) cancelAnimationFrame(frame)
     }
   }, [settleTodoFab])

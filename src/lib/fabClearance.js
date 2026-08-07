@@ -38,10 +38,17 @@
  *   - make part of the pill pointer-transparent — a live-looking flank that
  *     silently fires the button underneath is worse than an overlap.
  *
+ * WHAT THIS CANNOT DO, stated plainly because it is a property of the problem
+ * and not of this code. A stable seat and a clear seat are the same thing only
+ * if some region of the viewport is reserved from the page — and reserving one
+ * is the option the owner rejected. So on a surface whose column really is
+ * tiled with live controls, `chooseLift` returns null and the pill goes home
+ * and overlaps. Across 147 rest positions on Touchpoints, Assets and Strategy
+ * that never happened; it is a fallback, not a plan.
+ *
  * The geometry is pure and lives here so it can be tested without a DOM; the
- * one DOM-reading function is `collectBlockers`, and it uses the same
- * predicate as the regression test (`elementsFromPoint`) so search and proof
- * cannot drift apart.
+ * one DOM-reading function is `collectBlockers`, and it asks the same question
+ * as e2e/todo-fab-clearance.spec.js, so search and proof cannot drift apart.
  */
 
 /** What counts as "a tap that could be stolen". Wider than the button/a/input
@@ -52,10 +59,6 @@ export const INTERACTIVE_SELECTOR =
 /** Breathing room between the pill and the control it rests on. Purely so the
  *  rest position reads as deliberate rather than as a near miss. */
 export const CLEARANCE_GAP = 6
-
-/** Don't re-seat the pill for a difference this small — a control that shifts
- *  a few pixels between two rests should not make the pill twitch. */
-export const CLEARANCE_HOLD = 24
 
 /**
  * Does the pill, lifted by `d`, hold any blocked band?
@@ -94,7 +97,6 @@ export function chooseLift({
   maxLift,
   currentLift = 0,
   gap = CLEARANCE_GAP,
-  hold = CLEARANCE_HOLD,
 }) {
   const candidates = [0]
   for (const bl of blockers) {
@@ -116,13 +118,17 @@ export function chooseLift({
   // every frame it spends elsewhere is a frame the user has to look for it.
   if (min === 0) return 0
 
-  // Otherwise prefer where it already is, so a page whose rows shift slightly
-  // between two rests does not make the pill hop between two near-identical
-  // shelves.
+  /* Otherwise stay put for as long as that is still honest, and this is the
+     single most important line here. "Always take the lowest clear seat" looks
+     obviously right and behaves terribly: a control drifting up the column
+     drags the pill with it, because the lowest clear seat is always just above
+     that control and rises by exactly the scroll delta. Walked down Strategy in
+     60px steps the pill took 44 positions in 80 stops and moved 286px in one
+     go. Holding a seat until it is actually taken cuts that to a handful of
+     moves — the pill steps aside once, then lets the page slide past under it. */
   if (
     currentLift > 0 &&
     currentLift <= maxLift &&
-    Math.abs(currentLift - min) <= hold &&
     clearAt(top, bottom, blockers, currentLift)
   ) {
     return currentLift
@@ -131,13 +137,50 @@ export function chooseLift({
 }
 
 /**
- * The interactive rows that overlap the pill's column within climbing reach.
+ * What would take the tap at this point if the pill were not there.
  *
- * Two passes on purpose. A rect test is cheap but too generous — it counts
- * elements that are clipped away by an ancestor's overflow, or made
- * pointer-transparent, neither of which can actually take a tap. So every
- * survivor is confirmed with `elementsFromPoint`, which is the same hit test
- * the browser runs on touch and the same one the regression test asserts on.
+ * This is the predicate the whole mechanism turns on, and the obvious version
+ * of it is wrong. "Is there an interactive element under the pill" — which is
+ * what `elementsFromPoint(...).some(isInteractive)` asks — is not the same
+ * question as "can the pill steal a tap", because `elementsFromPoint` returns
+ * the entire stack, including elements that some *third* element already
+ * covers. Measured on the brief form: `.define-brief-footer` is
+ * `position: sticky; z-index: 5` with an opaque background, and live inputs
+ * scroll behind it. The stack test called those a collision; they are not
+ * reachable by a finger at all, with or without the pill, so there is nothing
+ * there to steal. Chasing them drove the pill 286px up a page where it was
+ * already sitting somewhere honest.
+ *
+ * So: take the topmost element that is not the pill, and ask what control
+ * would receive its click. `closest()` because a tap on the label inside a
+ * button is a tap on the button.
+ */
+function tapOwnerAt(doc, fab, x, y) {
+  const stack = doc.elementsFromPoint(x, y)
+  const top = stack.find((el) => el !== fab && !fab.contains(el))
+  return top ? top.closest(INTERACTIVE_SELECTOR) : null
+}
+
+/**
+ * The controls that would take a tap anywhere in the pill's column, within
+ * climbing reach of home.
+ *
+ * Two passes. A rect sweep over the interactive elements is cheap (measured at
+ * 0.1–0.5ms for the 49–74 candidates a real view carries) and narrows the
+ * field; each survivor is then hit-tested with `tapOwnerAt`, which is the only
+ * thing that gets a vote.
+ *
+ * The hit test walks a grid across each candidate rather than sampling a
+ * couple of points, and that is not belt-and-braces either. Three points
+ * missed a full-width `Add` button on Touchpoints by about a pixel: the
+ * sticky continue row covers its lower half, so two of the three probes
+ * returned the row, and the third landed exactly on the row's top border.
+ * The pill then seated itself 11px into a live primary. Sampling has to be
+ * fine enough that "covered here" cannot be mistaken for "covered".
+ *
+ * What is recorded is the OWNER's rect, not the candidate's — the owner is the
+ * thing a finger would actually land on, so it is the thing the pill has to
+ * stay off.
  *
  * @param {Element} fab
  * @param {{left:number,right:number,top:number,bottom:number,maxLift:number}} column
@@ -148,7 +191,16 @@ export function collectBlockers(fab, column) {
   const win = doc.defaultView
   if (!win) return []
   const bandTop = column.top - column.maxLift
+  const owners = new Set()
   const out = []
+
+  const record = (owner) => {
+    if (!owner || owners.has(owner)) return false
+    owners.add(owner)
+    const or = owner.getBoundingClientRect()
+    out.push({ top: or.top, bottom: or.bottom })
+    return true
+  }
 
   for (const el of doc.querySelectorAll(INTERACTIVE_SELECTOR)) {
     if (el === fab || fab.contains(el)) continue
@@ -156,35 +208,26 @@ export function collectBlockers(fab, column) {
     if (r.width < 1 || r.height < 1) continue
     if (r.right <= column.left || r.left >= column.right) continue
     if (r.bottom <= bandTop || r.top >= column.bottom) continue
-    // `checkVisibility` covers display/visibility/opacity/content-visibility in
-    // one call; both the old and the current option names are passed because
-    // engines shipped them at different times and ignore the ones they lack.
-    if (
-      typeof el.checkVisibility === 'function' &&
-      !el.checkVisibility({
-        checkOpacity: true,
-        checkVisibilityCSS: true,
-        opacityProperty: true,
-        visibilityProperty: true,
-        contentVisibilityAuto: true,
-      })
-    ) {
-      continue
+
+    const x0 = Math.max(r.left, column.left)
+    const x1 = Math.min(r.right, column.right)
+    const y0 = Math.max(r.top, bandTop)
+    const y1 = Math.min(r.bottom, column.bottom)
+    // ~6px vertical resolution, capped so a very tall candidate cannot turn
+    // this into a scan of the whole page.
+    const rows = Math.min(16, Math.max(2, Math.ceil((y1 - y0) / 6) + 1))
+    let found = false
+    for (let i = 0; i < rows && !found; i++) {
+      const py = clamp(y0 + ((y1 - y0) * i) / (rows - 1), 0, win.innerHeight - 1)
+      for (const f of [0.5, 0.15, 0.85]) {
+        const px = clamp(x0 + (x1 - x0) * f, 0, win.innerWidth - 1)
+        const owner = tapOwnerAt(doc, fab, px, py)
+        record(owner)
+        // The candidate itself owns a pixel here: nothing more to learn from
+        // it, and this is the ordinary case, so the grid usually costs one probe.
+        if (owner === el) found = true
+      }
     }
-
-    const px = clamp(
-      (Math.max(r.left, column.left) + Math.min(r.right, column.right)) / 2,
-      0,
-      win.innerWidth - 1
-    )
-    const py = clamp(
-      (Math.max(r.top, bandTop) + Math.min(r.bottom, column.bottom)) / 2,
-      0,
-      win.innerHeight - 1
-    )
-    if (!doc.elementsFromPoint(px, py).includes(el)) continue
-
-    out.push({ top: r.top, bottom: r.bottom })
   }
   return out
 }
