@@ -166,6 +166,12 @@ export function packageFiles(pack = {}, opts = {}) {
           const mark = markSource(pack.logoImage)
           if (mark.state === 'ready') {
             files.push({ path, content: mark.base64, base64: true })
+          } else if (mark.state === 'fetch') {
+            /* Left for the writer, exactly like the brand book's `pdf: true`.
+               This module stays pure and browser-free — the CLI loads it in
+               Node — so the network call belongs to whoever is writing the
+               zip, not to the decision about what belongs in it. */
+            files.push({ path, fetchUrl: mark.url })
           } else {
             missing.push({
               path,

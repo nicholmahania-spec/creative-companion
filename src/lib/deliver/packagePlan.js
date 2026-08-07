@@ -34,6 +34,13 @@ import { SECTION_PAGES } from '../book/bookDocument'
 import { assetFileName, extFromBytes, extFromDataUrl, uniqueNames } from './naming'
 import { markSource, markGapSentence } from './markSource'
 
+/** The extension a URL's own path suggests — a provisional name only, because
+ *  the bytes decide once they arrive. */
+function extFromUrlPath(url) {
+  const m = String(url || '').split(/[?#]/)[0].match(/\.([a-z0-9]{2,5})$/i)
+  return m ? m[1].toLowerCase() : ''
+}
+
 /**
  * What the designer is allowed to hand over.
  *
@@ -225,6 +232,27 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
         mark.ext === 'svg'
           ? 'Vector — scales to any size'
           : 'Raster, not vector — fine for screen and known print sizes',
+    })
+  } else if (mark.state === 'fetch') {
+    /* A mark stored as a link is a file the package CAN carry — it just has to
+       be collected. Reporting it as held back was honest and still lost the
+       client their logo.
+       Planned here, synchronously, so the panel and the zip keep reading ONE
+       decision: the panel says it will be downloaded, the writer downloads it,
+       and a fetch that fails is reported rather than quietly changing what
+       shipped. Same shape as the brand book, which is planned as a file and
+       filled in by the writer.
+       The extension is provisional — the bytes decide when they arrive. */
+    add('logo', {
+      name: assetFileName({
+        brand,
+        group: 'logo',
+        item: 'primary',
+        variant: 'FullColor',
+        ext: extFromUrlPath(pack?.logoImage) || 'png',
+      }),
+      kind: 'mark',
+      note: 'Collected from your cloud storage when the package is built',
     })
   } else if (mark.state === 'held') {
     excluded.push({
@@ -533,6 +561,8 @@ export function deliverableChecklist(pack = {}, planIn = null) {
      mark that was already there. When one is stored but unusable, say which
      problem it is. */
   const markState = markSource(pack?.logoImage)
+  /* `fetch` is not a gap — the mark ships, it is just collected on the way.
+     Only 'held' and 'none' belong in a MISSING line. */
   const noMarkLine =
     markState.state === 'held'
       ? `The mark is on the project but could not go in the package — ${markState.reason}`

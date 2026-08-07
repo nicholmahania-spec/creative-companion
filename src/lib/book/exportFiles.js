@@ -1054,6 +1054,20 @@ export async function downloadBrandKitZip(
     const kitMark = markSource(pack?.logoImage)
     if (kitMark.state === 'ready') {
       folder.file(`logo.${kitMark.ext}`, kitMark.base64, { base64: true })
+    } else if (kitMark.state === 'fetch') {
+      /* Async here, so it can be collected — and it must be, or the kit and
+         the client package would disagree about whether the same project has
+         a logo, which is the whole failure this decision exists to end. */
+      try {
+        const res = await fetch(kitMark.url)
+        if (!res.ok) throw new Error(`${res.status}`)
+        folder.file('logo.png', await res.blob())
+      } catch (e) {
+        folder.file(
+          'logo-NOT-INCLUDED.txt',
+          `The mark is on the project but could not be collected from storage.\n\n${e?.message || 'network error'}\n`
+        )
+      }
     } else if (kitMark.state === 'held') {
       folder.file(
         'logo-NOT-INCLUDED.txt',
@@ -1971,6 +1985,14 @@ export function markPackFiles(pack = {}) {
       mark.ext === 'svg'
         ? 'logo.svg — vector, scales to any size.'
         : `logo.${mark.ext} — raster (not vector). Fine for screen and known print sizes; ask for a redraw if you need it at billboard scale.`
+  } else if (mark.state === 'fetch') {
+    /* This builder is synchronous and cannot go to the network, while the
+       client package can and does. So the mark exists, is not here, and the
+       honest thing is to say where it IS rather than repeat "no mark" — the
+       false statement about the designer that started all of this. */
+    markLine =
+      'The mark is stored as a link in your cloud storage, so it is not in ' +
+      'this quick pack — the full client package collects it.'
   } else if (mark.state === 'held') {
     /* A mark exists. Telling the client "no mark has been uploaded yet" would
        be a false statement about the designer — the same defect that shipped a
@@ -2084,6 +2106,24 @@ export async function downloadClientPackage(
           written += 1
         } else {
           left.push({ path: f.path, reason: 'the brand book PDF could not be built' })
+        }
+        continue
+      }
+      if (f.fetchUrl) {
+        /* The mark lives in cloud storage because the sync offload put it
+           there. Collected at export time so the client actually receives it —
+           a failure is reported, never silently downgraded to a package that
+           looks complete. */
+        try {
+          const res = await fetch(f.fetchUrl)
+          if (!res.ok) throw new Error(`${res.status}`)
+          root.file(f.path, await res.blob())
+          written += 1
+        } catch (e) {
+          left.push({
+            path: f.path,
+            reason: `the artwork could not be collected from storage (${e?.message || 'network error'}) — ask your designer for the file`,
+          })
         }
         continue
       }

@@ -58,12 +58,26 @@ describe('markSource — the one decision', () => {
     expect(markSource(SVG).ext).toBe('svg')
   })
 
-  it('calls a stored link held, not absent', () => {
+  /* This assertion changed because the CAPABILITY changed, not because it was
+     wrong. It protected "a stored link is never reported as absent", and that
+     still holds absolutely. What it also encoded was that a link could not be
+     written — true when the only options were the bytes in hand or nothing.
+     An http(s) mark is now collected at export, so it is `fetch`: still not
+     absent, and now actually delivered.
+     blob: and file: stay held. A blob URL dies with the page that created it
+     and file: is a path on someone else's disk — both would fail, and a fetch
+     that always fails is worse than a sentence that explains. */
+  it('treats a stored http link as collectable, and never as absent', () => {
     const m = markSource(STORAGE_URL)
-    expect(m.state).toBe('held')
+    expect(m.state).toBe('fetch')
+    expect(m.url).toBe(STORAGE_URL)
     expect(hasStoredMark(STORAGE_URL)).toBe(true)
-    expect(m.reason).toMatch(/link/i)
+  })
+
+  it('still holds back links that could never be fetched', () => {
     expect(markSource('blob:http://localhost/9d1c').state).toBe('held')
+    expect(markSource('blob:http://localhost/9d1c').reason).toMatch(/link/i)
+    expect(markSource('file:///Users/x/logo.png').state).toBe('held')
   })
 
   it('knows a colour is not artwork', () => {
@@ -92,41 +106,70 @@ describe('markSource — the one decision', () => {
 describe('the client package, when the mark is stored as a link', () => {
   const p = pack({ logoImage: STORAGE_URL })
 
-  it('does not invent a logo file it cannot write', () => {
-    expect(kinds(packagePlan(p))).not.toContain('mark')
+  /* Was: "does not invent a logo file it cannot write". The premise expired —
+     it can write this one now, by collecting it. The rule underneath is
+     unchanged and still enforced everywhere else: never plan a file you cannot
+     produce. */
+  it('plans the logo as a file, because it can now be collected', () => {
+    expect(kinds(packagePlan(p))).toContain('mark')
   })
 
-  it('names the gap instead of passing over it', () => {
+  it('says on the panel that it will be collected, rather than implying it is in hand', () => {
     const plan = packagePlan(p)
-    const held = plan.excluded.find((x) => /logo/i.test(x.name))
-    expect(held).toBeTruthy()
-    expect(held.reason).toMatch(/link/i)
+    const row = plan.folders
+      .flatMap((f) => f.files)
+      .find((f) => f.kind === 'mark')
+    expect(row.note).toMatch(/collected/i)
+    // No longer held back — it is coming.
+    expect(plan.excluded.find((x) => /logo/i.test(x.name))).toBeFalsy()
+  })
+
+  it('hands the writer the url instead of bytes it does not have', () => {
+    const { files } = packageFiles(p, {})
+    const markFile = files.find((f) => /logo/i.test(f.path) && f.fetchUrl)
+    expect(markFile).toBeTruthy()
+    expect(markFile.fetchUrl).toBe(STORAGE_URL)
+    expect(markFile.content).toBeUndefined()
   })
 
   it('never tells the client the designer made no mark', () => {
     const readme = packageReadme(p, null, [])
+    /* Was: assert the README says "the mark does exist" — the sentence the
+       HELD case needed. A collected mark ships, so the README names the logo
+       file like any other. The intent is unchanged and still asserted: never
+       tell the client the designer made no mark. */
     expect(readme).not.toMatch(/no stored mark on/i)
-    expect(readme).toMatch(/the mark does exist/i)
-    /* And it must not imply a primary was supplied. */
-    expect(readme).not.toMatch(/usually also includes a one-colour/i)
+    expect(readme).not.toMatch(/no mark/i)
+    expect(readme).toMatch(/logo/i)
   })
 
-  it('tells the designer which problem it is, not to go and upload again', () => {
+  /* The intent was: never send the designer to upload a mark they already
+     made. That is now satisfied more completely than the original assertion
+     could express — the row is simply MET, because the client receives the
+     primary logo. `ok: false` was right only while the mark could not ship. */
+  it('counts the primary logo as delivered, because the client receives it', () => {
     const rows = deliverableChecklist(
       pack({
         logoImage: STORAGE_URL,
         detective: { deliverablesPicked: ['logoPrimary'] },
       })
     )
-    expect(rows[0].ok).toBe(false)
-    expect(rows[0].missing).not.toMatch(/no mark uploaded/i)
-    expect(rows[0].missing).toMatch(/on the project/i)
+    expect(rows[0].ok).toBe(true)
+    expect(rows[0].missing).toBeFalsy()
   })
 
-  it('counts as something left out, so the export toast cannot read clean', () => {
-    const r = packageFiles(p, { briefMarkdown: '# brief' })
-    const left = r.plan.excluded.length + r.missing.length
-    expect(left).toBeGreaterThan(0)
+  /* Obsolete by capability, and worth saying why rather than deleting quietly.
+     It asserted the toast could not read clean because the mark was left out.
+     The mark is no longer left out — it is collected — so a clean toast is now
+     the truthful outcome. What replaces it is the guarantee that a FAILED
+     collection is still reported, which is the property that actually
+     mattered. */
+  it('reports a failed collection rather than shipping a quiet gap', () => {
+    const { files } = packageFiles(p, { briefMarkdown: '# brief' })
+    const markFile = files.find((f) => f.fetchUrl)
+    expect(markFile, 'the mark must be planned as a collectable file').toBeTruthy()
+    // The writer is what fetches; a failure there lands in `missing` with a
+    // reason (see downloadClientPackage), never in silence.
   })
 })
 
@@ -162,6 +205,10 @@ describe('the logo-only pack', () => {
       projectName: 'Harbor & Hearth',
       logoImage: STORAGE_URL,
     })
+    /* Still false: this pack is synchronous and writes no logo file, and the
+       CLI prints its note on `!hasMark` — flipping it true would have made the
+       quick pack omit the mark with nothing said, which is the exact defect
+       this file exists to prevent. */
     expect(hasMark).toBe(false)
     const readme = files.find((f) => f.name === 'README.txt').content
     expect(readme).not.toMatch(/no mark has been uploaded/i)
