@@ -28,6 +28,27 @@ export const lazyViews = {
   settings: lazy(() => import('../views/SettingsView')),
 }
 
+/**
+ * Views a reload is allowed to put you back on.
+ *
+ * Derived from `lazyViews`, never restated. Two hand-maintained copies of this
+ * list had drifted from it — App.jsx's `allowed` set and sessionResume's
+ * ALL_VIEWS — and between them Desk, Clients, Asset library and New project
+ * were missing from both. Refreshing on any of those silently returned you to
+ * Home, and a part-filled New project intake was discarded with it. Verified
+ * by hashing screenshots: all four rendered byte-identical to Home.
+ * `CLAUDE.md` §21 lists "pause and resume" as a core principle, and it was
+ * failing on the two screens a newcomer uses most.
+ *
+ * `clientRecord` is the one deliberate exclusion: it renders a specific
+ * client, and restoring it without knowing which one lands on an empty screen
+ * with no way back. Clients (the list) is the correct place to return to, and
+ * it is included.
+ */
+export const RESTORABLE_VIEWS = Object.freeze(
+  Object.keys(lazyViews).filter((id) => id !== 'clientRecord')
+)
+
 /** Path stops prefetched after unlock (not Tools). */
 export const PATH_WARM_VIEWS = [
   'project',

@@ -16,7 +16,7 @@ import {
   showClientHeadings as showClientHeadingsFor,
 } from './lib/projectGrouping'
 import MainOutlet from './app/MainOutlet'
-import { warmPathViewChunks } from './app/viewRegistry'
+import { warmPathViewChunks, RESTORABLE_VIEWS } from './app/viewRegistry'
 import versionService from './services/versionService'
 
 import { DEFAULT_PALETTE } from './lib/color'
@@ -345,23 +345,11 @@ function App() {
   const [activeView, setActiveViewRaw] = useState(() => {
     try {
       const raw = localStorage.getItem('cc-active-view')
-      const allowed = new Set([
-        'home',
-        'flow',
-        'project',
-        'studio',
-        'brand',
-        'review',
-        'finish',
-        'spark',
-        'insights',
-        'calendar',
-        'settings',
-        'book',
-        /* 'clients' is deliberately absent upstream — noted, not fixed here:
-           refreshing on Clients drops you to Home, and the same id is missing
-           from sessionResume's ALL_VIEWS. Separate one-line fix. */
-      ])
+      /* Derived from the view registry, not restated. The hand-written list
+         that used to live here had drifted: desk, clients, assets and create
+         were all missing, so a refresh on any of them dropped you on Home —
+         and mid-intake it took a part-filled form with it. */
+      const allowed = new Set(RESTORABLE_VIEWS)
       // Legacy concept pipeline removed — never blank main
       if (raw === 'concept') return 'flow'
       if (raw && allowed.has(raw)) return raw

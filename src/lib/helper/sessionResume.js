@@ -9,6 +9,7 @@ import {
   PATH_VIEWS as JOURNEY_PATH_VIEWS,
 } from '../journey/journey'
 import { pathGapFocusSelector } from '../journey/journeyProgress'
+import { RESTORABLE_VIEWS } from '../../app/viewRegistry'
 
 export const DESK_SESSION_KEY = 'cc-desk-session-v1'
 
@@ -19,15 +20,12 @@ export const DESK_SESSION_KEY = 'cc-desk-session-v1'
    path stops. */
 const PATH_VIEWS = new Set(JOURNEY_PATH_VIEWS)
 
-const ALL_VIEWS = new Set([
-  ...PATH_VIEWS,
-  'spark',
-  'review',
-  'insights',
-  'calendar',
-  'settings',
-  'book',
-])
+/* Derived from the view registry rather than restated. This literal was the
+   second of two hand-maintained copies of the same list, and it had drifted
+   the same way App.jsx's had — desk, clients, assets and create were absent
+   from both, so neither the reload restore nor the resume banner could bring
+   you back to them. */
+const ALL_VIEWS = new Set([...PATH_VIEWS, ...RESTORABLE_VIEWS])
 
 /**
  * @typedef {{
