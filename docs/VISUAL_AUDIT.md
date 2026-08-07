@@ -969,6 +969,36 @@ No confetti. No streaks. No scores. This audience is served by calm, not reward 
 *#14 depends on #7 (one card/panel language). #15 is independent.*
 
 ### Phase 5 — DELIGHT
+
+> **#20 does not have a home in this product, and that is the finding.**
+>
+> The item read: *"Direction-sheet `—` placeholders fill live as the brief is answered, so the
+> designer sees strategy becoming the brand — the product's entire thesis, rendered."* It assumed
+> the direction sheet sits beside the fields that feed it. **It never does.**
+>
+> All three `BrandArtboard` call sites pass `editable={false}`, and the sheet renders only on
+> Identity's *Preview* sub-screen, on Review, and inside the export panel — never beside the *Words*
+> sub-screen where Positioning and Voice are actually written. So the empty→filled moment always
+> happens on a screen nobody is looking at. Firing it on arrival instead would flutter every line
+> of a project finished last week, which is precisely the noise the idea was meant to avoid.
+>
+> An animation nothing can see is not delight; it is dead code with a keyframe. It was built,
+> measured in a running build, found unreachable, and removed.
+>
+> **What shipped instead is the half that was always true:** an unanswered line now reads as
+> *waiting* rather than as content. The em-dash was set in the same ink as a real answer, so a
+> sheet of five dashes looked like a sheet with five things written on it. It is muted now — and on
+> the cover plate, where a fixed grey would fight the brand's own colour, by opacity against the
+> inherited ink instead.
+>
+> **A related discovery worth acting on separately:** `BrandArtboard`'s entire `editable` branch is
+> unreachable. `onTaglineChange`, `onBriefChange`, `onVoiceChange`, `onDoChange`, `onDontChange`,
+> `onRoleAssign`, `onLogoImage` and `onClearLogoImage` are declared, wired to inputs, and **never
+> passed by any caller**. Either the artboard was meant to be editable somewhere and that screen
+> was never built, or the capability was moved and the branch left behind. Until that is decided,
+> #20 has nowhere to live — and if the artboard *does* become editable beside its own fields, the
+> item becomes worth building for real.
+
 | # | Change | Scope |
 |---|---|---|
 | 20 | Direction-sheet `—` placeholders fill live as the brief is answered | Global |
