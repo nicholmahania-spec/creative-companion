@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Regenerate `src/lib/bookFontData.js` — the brand book's embedded typefaces.
+ * Regenerate `src/lib/book/bookFontData.js` — the brand book's embedded typefaces.
  *
  * jsPDF ships only the PDF base-14 (Helvetica / Times / Courier), so anything
  * else has to travel inside the file as TrueType data. The book is designed in
@@ -31,6 +31,10 @@ import { fileURLToPath } from 'node:url'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const REPO = path.resolve(HERE, '..')
+
+/* Named once. Three copies of this path string is how it drifted: the file
+   moved to src/lib/book/ and only some of them followed. */
+const OUT = path.join(REPO, 'src/lib/book/bookFontData.js')
 const GF = 'https://raw.githubusercontent.com/google/fonts/main'
 
 /* The range `pdfSafeText()` folds everything else down into. Asking for more
@@ -112,6 +116,22 @@ const header = `/**
 
 `
 
-fs.writeFileSync(path.join(REPO, 'src/lib/bookFontData.js'), header + chunks.join('\n'))
+/* The file this REGENERATES must already exist, and that check is the point.
+   This script wrote to `src/lib/bookFontData.js` for months after the data
+   moved to `src/lib/book/`. Nothing failed: it cheerfully created an orphan at
+   the old path while the file `bookFonts.js` actually imports went stale, and
+   a regeneration that silently updates nothing is worse than one that crashes.
+   Same rot that had killed build-harbor-demo.mjs — a path nobody executes. */
+if (!fs.existsSync(OUT)) {
+  console.error(
+    `\nRefusing to write: ${path.relative(REPO, OUT)} does not exist.\n` +
+      'This script regenerates that file, so a missing target means the path\n' +
+      'has drifted again. Check where bookFonts.js imports its data from.'
+  )
+  fs.rmSync(work, { recursive: true, force: true })
+  process.exit(1)
+}
+
+fs.writeFileSync(OUT, header + chunks.join('\n'))
 fs.rmSync(work, { recursive: true, force: true })
-console.log('\nwrote src/lib/bookFontData.js')
+console.log(`\nwrote ${path.relative(REPO, OUT)}`)
