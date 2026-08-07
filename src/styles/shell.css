@@ -3612,7 +3612,10 @@ html[data-reduce-motion='true'] *::after {
   border-bottom: 1.5px solid var(--border-strong);
   border-radius: 0;
   font: inherit;
-  font-size: 0.95rem;
+  /* --fs-3 (1rem), not the off-ramp 0.95rem. It was the last difference
+     between a field on Strategy and the same class on Identity, and 16px is
+     also the value that stops iOS zooming the page on focus. */
+  font-size: var(--fs-3);
   font-weight: 500;
   background: transparent;
   color: var(--text-primary);
@@ -7299,8 +7302,10 @@ body:has(.app.deep)::after {
   box-shadow: none !important;
 }
 
-.field-input,
-.define-input,
+/* .field-input and .define-input used to be squared here and then re-rounded
+   a few rules below for define-studio only, which is how one class ended up
+   with two radii. They are boxed at var(--radius) now; only the lock screen's
+   onboard field is still a rule-line control. */
 .onboard-input {
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -7313,18 +7318,28 @@ body:has(.app.deep)::after {
   box-shadow: none;
 }
 
-.define-input.field-input,
-.define-studio .field-input {
+.field-input,
+.define-input {
   /* Boxed per the 2026 dressing. Same lock, new chrome: --field-line for
    * the border, not --ts-border — the divider grey measured 1.13:1 against
-   * the canvas, and a control boundary needs the 3:1 non-text floor. */
+   * the canvas, and a control boundary needs the 3:1 non-text floor.
+   *
+   * Promoted from `.define-input.field-input, .define-studio .field-input`
+   * to every field-input. The fix was right and the reasoning above applies
+   * everywhere a control has a boundary — it was just scoped to one view, so
+   * measured in the running app the SAME class rendered four different ways:
+   *   Strategy  #FFFFFF fill · #8A8A8A border · 4px radius · 16px
+   *   Identity  #F5F5F5 fill · #E7E7E7 border · 0px radius · 15.2px
+   * Identity's #E7E7E7 on #F5F5F5 is the 1.13:1 boundary this comment says
+   * it fixed. One control, one appearance. */
   background: var(--bg-card) !important;
   border: 1px solid var(--field-line) !important;
   border-radius: var(--radius) !important;
   color: var(--ts-ink, #1A1A1A) !important;
 }
 
-.define-input.field-input:focus {
+.field-input:focus,
+.define-input:focus {
   /* Theme token, not a literal: the hardcoded light-grey failed 3:1 in dark
    * mode. Whole-box focus now that fields are boxed — the ring has to be
    * findable on a 30-field form. */
@@ -7335,7 +7350,8 @@ body:has(.app.deep)::after {
 }
 
 /* Keyboard focus must survive the outline suppression above. */
-.define-input.field-input:focus-visible {
+.field-input:focus-visible,
+.define-input:focus-visible {
   outline: 2px solid var(--dopamine) !important;
   outline-offset: 2px;
 }
