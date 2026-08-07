@@ -3207,7 +3207,7 @@ function App() {
             aria-expanded={navOpen}
             onClick={() => setNavOpen((v) => !v)}
           >
-            <span aria-hidden="true">{navOpen ? '✕' : '☰'}</span>
+            <HeaderIcon name={navOpen ? 'close' : 'menu'} />
           </button>
           {/* Back affordance (2026 design chrome). On Home there is no back —
               the wordmark stands where it would be, as a mark, not a button
@@ -3667,7 +3667,7 @@ function App() {
                 setNavOpen(false)
               }}
             >
-              <span aria-hidden="true">⚙</span>
+              <HeaderIcon name="settings" />
               {toolsLabelForView('settings')}
             </button>
             <button
@@ -3843,7 +3843,7 @@ function App() {
                   setNavOpen(false)
                 }}
               >
-                <span aria-hidden="true">▦</span>
+                <HeaderIcon name="desk" />
                 Desk
               </button>
             ) : (
@@ -4298,7 +4298,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <HeaderIcon name="print" /> {toolsLabelForView('book')}
+                <HeaderIcon name="book" /> {toolsLabelForView('book')}
               </button>
               <button
                 type="button"
@@ -4310,7 +4310,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <HeaderIcon name="print" /> {toolsLabelForView('assets')}
+                <HeaderIcon name="library" /> {toolsLabelForView('assets')}
               </button>
               <button
                 type="button"
@@ -4334,7 +4334,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">✦</span> Ideate
+                <HeaderIcon name="ideate" /> Ideate
               </button>
               <button
                 type="button"
@@ -4346,7 +4346,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">◎</span> Review
+                <HeaderIcon name="review" /> Review
               </button>
               </div>
               <div
@@ -4367,7 +4367,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">↗</span> Share Strategy form
+                <HeaderIcon name="share" /> Share Strategy form
               </button>
               <button
                 type="button"
@@ -4379,7 +4379,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">⬇</span> Export
+                <HeaderIcon name="download" /> Export
               </button>
               <button
                 type="button"
@@ -4391,7 +4391,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">$</span> Hours &amp; invoice
+                <HeaderIcon name="invoice" /> Hours &amp; invoice
               </button>
               <button
                 type="button"
@@ -4403,7 +4403,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">?</span> Discovery brief
+                <HeaderIcon name="question" /> Discovery brief
               </button>
               </div>
             </div>

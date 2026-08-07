@@ -63,8 +63,18 @@ test.describe('Creative Companion path smoke', () => {
 
     await stepByIdIn(path, 'research').click()
     await expect(headingForStep(page, 'research').first()).toBeVisible()
-    // Empty board: upload affordance, no second still-thin lecture
-    await expect(page.getByText(/0 pins|Upload images/i).first()).toBeVisible()
+    /* Empty board: a status, an upload affordance, and no second still-thin
+       lecture.
+
+       Anchored on the elements, not on their words. This used to match
+       /0 pins|Upload images/ and broke when the empty status stopped saying
+       "0 pins" — a zero scoreboard the status line's own comment argues
+       against ("say what is still open, or say it is done"). The literal was
+       never the point; the point is that an empty wall still tells you where
+       you are and offers a way in. Checking the status region and the control
+       says exactly that, and survives the next copy edit. */
+    await expect(page.locator('.research-status')).toBeVisible()
+    await expect(page.getByRole('button', { name: /upload/i }).first()).toBeVisible()
     await expect(page.locator('.research-still-thin')).toHaveCount(0)
 
     /* The middle stops, whichever they are — Ideate and Review used to sit

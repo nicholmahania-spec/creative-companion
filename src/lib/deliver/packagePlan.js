@@ -412,6 +412,11 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
     note: 'What is in this package, and what is not',
   })
 
+  /* Numbers stay bound to the folder, not to its position after filtering, so
+     03 means colour in every package a client ever receives from this studio.
+     A package that ships no applications therefore reads 01 02 03 04 06 — the
+     gap is deliberate, and packageReadme lists what is and is not included so
+     the client is never left hunting for a folder that was never made. */
   const folders = PACKAGE_FOLDERS.filter((f) => bucket[f.id].length).map((f) => {
     const files = bucket[f.id]
     const names = uniqueNames(files.map((x) => x.name))

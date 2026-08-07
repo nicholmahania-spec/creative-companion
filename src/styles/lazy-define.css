@@ -78,6 +78,19 @@
   margin: 0;
 }
 
+/* One content axis for the whole page.
+   `.define-chapter` reserves `2px border + var(--space-5)` on its left so the
+   `.is-current` hairline can appear without shifting the fields sideways —
+   correct technique, and the marker has to live somewhere. But the page header
+   above it had no such inset, so the H1, the status line, the Send button and
+   the title rule all sat 26px to the LEFT of every label and field beneath
+   them, down a form roughly 4,700px long. Nothing looked broken; it just never
+   settled. The header now shares the chapters' axis instead of the chapters
+   being pulled off the header's. */
+.define-brief .define-brief-head {
+  padding-left: calc(var(--space-5) + 2px);
+}
+
 .define-brief-status {
   margin: 0;
   font-size: var(--fs-2);
@@ -740,14 +753,28 @@
   text-shadow: none;
 }
 
-/* Carries the section break now that the card doesn't. */
+/* Carries the section break now that the card doesn't.
+   --fs-5, not --fs-4. This is the only thing separating five chapters in a
+   ~4,700px flat scroll, and at --fs-4 it was 20px against 14px field labels —
+   a step, but not a landmark you can find while moving. The chapters stay
+   mounted and flat (see the ADHD ruling in DetectiveSheet.jsx: the accordion
+   was tried and deleted); making the boundary FINDABLE is the job here, not
+   making it closeable. */
 .define-chapter-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--fs-4);
+  font-size: var(--fs-5);
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--define-ink);
+}
+
+/* Chapters had no gap between them at all — chapter 02's number sat one
+   field-margin below chapter 01's last input, so five sections read as one
+   undifferentiated river of ~40 identical fields. Space is what groups them
+   now that there is deliberately no card and no border. */
+.define-chapters > .define-chapter + .define-chapter {
+  margin-top: var(--space-7);
 }
 
 /* The design's section rule — a hairline that runs from the title to the
