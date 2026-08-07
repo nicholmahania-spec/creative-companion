@@ -339,9 +339,26 @@ again in a different style and alignment (one boxed and left-aligned, one unboxe
 
 **Strategy is a 4,745px uninterrupted scroll** containing roughly 40 fields, all rendered at the
 same width, height, border and placeholder grey. The `01`–`05` sections are headings in a river,
-not containers — nothing collapses. For a product whose stated primary user has executive-function
-challenges, and whose own Principle 2 promises to "break large projects into smaller steps," this
-is the single largest gap between what the product says and what it does.
+not containers.
+
+> **Correction (verified after first publication).** An earlier draft called this "the single
+> largest gap between what the product says and what it does" and recommended making the sections
+> collapse, one open at a time. **That is wrong, and the codebase already knew why.**
+>
+> `DetectiveSheet.jsx` carries an explicit ADHD-advisor ruling for the 2026 handoff: the accordion
+> *existed* and was deleted. It "billed a five-way chapter decision on every arrival", made four
+> chapters a memory test (*"hidden, not one click away"* — the owner's own words), broke
+> find-in-page on unmounted fields, and needed persisted open-chapter state that raced arrivals.
+> The comment closes the door on the compromise too: *"an expand/collapse control would just bill a
+> decision to undo the layout's default."*
+>
+> Everything mounted, flat, is the correct answer **for this audience** — collapsing is a general
+> UX instinct that happens to be wrong here, and shipping it would reintroduce four documented
+> regressions. The flat scroll stays.
+>
+> What survives is narrower and genuinely visual: the 40 fields are typographically undifferentiated,
+> so the five chapters are hard to find while scrolling. The fix is contrast and space at the
+> section boundaries — not hiding anything.
 
 ---
 
@@ -579,7 +596,7 @@ Directions 1 and 2 together would give this product a look nothing else has.
 | **Assets / Deliver** | **4/10** | Client package concept is genuinely smart; the sticky preview column is a sound idea | 20+ ungrouped panels stacked 3,700px deep in one column; bare `<details>` hiding real actions; unreadable artefact previews | 🔴 Critical |
 | **Brand Book Builder** | **3/10** | The page preview itself is nicely set | Entirely different design system; raw anchor IDs in UI; every row of "NOT IN BOOK" wraps; truncated hex values | 🔴 Critical |
 | **Lock / Login** | **3/10** | Honest, well-written security copy | Wordmark printed twice; decorative non-functional path chips; everything at 600 weight; rainbow button; 350px card on a 1440px screen | 🔴 Critical |
-| **Strategy** | **4/10** | Excellent question writing; sensible 01–05 grouping | 4,745px unsegmented scroll; 40 identical fields; 3 competing CTAs; whole form 26px off axis | 🔴 Critical |
+| **Strategy** | **5/10** | Excellent question writing; sensible 01–05 grouping; flat-not-accordion is the right call for this audience | 40 typographically identical fields make chapter boundaries hard to find; two same-weight secondaries stacked in the header | 🟠 High |
 | **Home / Studio** | **4/10** | Clear next action exists | Same fact in 3 cards; orphaned card + empty grid cell; no weight hierarchy; "Studio"/"Home"/"Studio" name collision | 🟠 High |
 | **Settings** | **4/10** | Sensible grouping; good danger-zone concept | 11 rainbow buttons incl. a disabled one; destructive actions are the quietest; two input styles; 320px dead gutter | 🟠 High |
 | **Desk** | **5/10** | Genuinely useful density; artboard idea is right | 6 rainbow buttons; duplicate primary CTA; `RES/IDE/TOU/ASS` noise column; empty rail block | 🟠 High |
@@ -617,8 +634,8 @@ Directions 1 and 2 together would give this product a look nothing else has.
 **Cosmetic:** 84 font sizes · 26 radii · `Working· just started` missing space · truncated
 placeholder · footer version in purple · misaligned "Log it" · duplicate printer icon.
 
-**Structural:** Assets and Review column imbalance · Strategy's 4,745px scroll · Strategy's 26px
-axis break · Settings' width cap · duplicate CTAs across all five path pages · Home's triple
+**Structural:** Review column imbalance · Strategy's undifferentiated chapter boundaries ·
+Settings' width cap · duplicate CTAs across all five path pages · Home's triple
 restatement · mobile's uncomposed stack · 420 `!important` declarations that make every one of
 these more expensive to fix than it should be.
 
@@ -647,7 +664,7 @@ client sees the work.
 | 2 | Assets stacks 20+ ungrouped panels 3,700px deep in its ship column | Keep the sticky two-column split — group the right column into Package / Stationery / Extras | Turns the most overloaded screen into a credible delivery moment |
 | 3 | Every path page has two "next" CTAs in two visual languages | One nav affordance per page. Keep the bottom `Next · <stop>`, delete the top duplicate | Fixes 5 screens with one change; restores G1.3 |
 | 4 | Brand Book Builder is a visually separate product with an orphan orange accent | Bring it onto the app's surfaces and accent; keep the cream *page* canvas (correct — that's paper) | Removes the "two products" break at the workflow's climax |
-| 5 | Strategy is one 4,745px scroll of 40 identical fields | Make `01`–`05` real collapsible sections, one open at a time, with the section rule as the boundary | Directly serves the stated primary user; the product's biggest promise-vs-delivery gap |
+| 5 | Strategy's 40 fields are typographically undifferentiated, so the five chapters are hard to find while scrolling | Strengthen the section boundaries with scale and space. **Do not collapse them** — see the correction in Phase 5b | Chapters become findable without hiding a single field |
 | 6 | Chrome glyphs and emoji used as icons; three unused UI libraries in the tree | Extend the house `HeaderIcon` set (see correction below); drop the unused libraries | Removes the most concrete "unfinished" signal |
 | 7 | Home states "Strategy is next" in three separate cards | One hero card. Delete the "Up next" panel; reduce "Projects" to a list | Cuts the dashboard's reading load by a third |
 | 8 | No scale contrast anywhere on the path | Promote the Direction Sheet's specimen block to every path stop's header | Gives the product a signature and a rhythm in one move |
@@ -661,7 +678,7 @@ client sees the work.
 2. Assets column imbalance *(screen)*
 3. Brand Book Builder's separate design system + raw anchor IDs *(screen)*
 4. Duplicate "next" CTA on all five path pages *(global)*
-5. Strategy's 4,745px undifferentiated scroll *(screen)*
+5. Strategy's 40 visually identical fields — chapter boundaries need contrast, not collapse *(screen)*
 6. Glyphs and emoji as icons *(global)*
 7. Truncated hex values, clipped textarea, clipped placeholder *(mixed)*
 
@@ -843,13 +860,13 @@ No confetti. No streaks. No scores. This audience is served by calm, not reward 
 | # | Change | Scope | Impact |
 |---|---|---|---|
 | 14 | Group the Assets ship column into three sections; enlarge artefact previews | Screen | Turns the most overloaded screen into a showable one |
-| 15 | Strategy `01`–`05` as collapsible sections, one open at a time | Screen | The product's biggest promise-vs-delivery gap |
+| 15 | Strengthen Strategy's section boundaries with scale and space (NOT collapse — see Phase 5b correction) | Screen | Chapters become findable in a 4,700px scroll |
 | 16 | Home: one hero card, not three restatements | Screen | Cuts dashboard reading load by a third |
 | 17 | Make the Research wall an actual drop plane; single empty state | Screen | The visual stage becomes visual |
 | 18 | Mobile: scroll the segmented control, recompose card order | Global | Mobile stops looking like an afterthought |
 | 19 | Style the four `<details>`; rename/relocate "Leave"; remove `RES/IDE/TOU/ASS` and duplicate counts | Mixed | Removes the last framework-default tells |
 
-*#14 depends on #7 (one card/panel language). #15 is independent — could ship earlier if the ADHD case is prioritised.*
+*#14 depends on #7 (one card/panel language). #15 is independent.*
 
 ### Phase 5 — DELIGHT
 | # | Change | Scope |
