@@ -25,6 +25,7 @@ import {
 } from '../brief/detectiveBrief'
 import { OVERVIEW_FIELD_PREFIX } from '../overviewOcr'
 import { packageFiles } from '../deliver/packageFiles'
+import { markSource, markGapSentence } from '../deliver/markSource'
 import {
   appendSystemMarkdown,
   buildColorSystem,
@@ -1046,31 +1047,18 @@ export async function downloadBrandKitZip(
       )
     )
 
-    // Logo as separate file when data URL
-    if (
-      pack?.logoImage &&
-      String(pack.logoImage).startsWith('data:image')
-    ) {
-      try {
-        const m = String(pack.logoImage).match(
-          /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/
-        )
-        if (m) {
-          const ext =
-            m[1].includes('png')
-              ? 'png'
-              : m[1].includes('jpeg') || m[1].includes('jpg')
-                ? 'jpg'
-                : m[1].includes('webp')
-                  ? 'webp'
-                  : m[1].includes('svg')
-                    ? 'svg'
-                    : 'png'
-          folder.file(`logo.${ext}`, m[2], { base64: true })
-        }
-      } catch {
-        /* skip logo file */
-      }
+    /* The mark as its own file. A third private regex used to live here and it
+       failed the same way as the other two: an unrecognised string meant no
+       file and no note, so a kit went out missing the logo with nothing said.
+       One decision now, and the gap is written down when there is one. */
+    const kitMark = markSource(pack?.logoImage)
+    if (kitMark.state === 'ready') {
+      folder.file(`logo.${kitMark.ext}`, kitMark.base64, { base64: true })
+    } else if (kitMark.state === 'held') {
+      folder.file(
+        'logo-NOT-INCLUDED.txt',
+        `The mark is on the project but is not in this kit.\n\n${markGapSentence(kitMark.reason)}.\n`
+      )
     }
 
     // Vector brand book PDF into zip — same page setup as the standalone
@@ -1975,25 +1963,19 @@ export function markPackFiles(pack = {}) {
   let hasMark = false
   let markLine = 'No mark has been uploaded yet — add one on the Identity page.'
 
-  const src = String(pack.logoImage || '')
-  const m = src.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/)
-  if (m) {
-    const mime = m[1]
-    const ext = mime.includes('png')
-      ? 'png'
-      : mime.includes('jpeg') || mime.includes('jpg')
-        ? 'jpg'
-        : mime.includes('svg')
-          ? 'svg'
-          : mime.includes('webp')
-            ? 'webp'
-            : 'png'
-    files.push({ name: `logo.${ext}`, content: m[2], base64: true })
+  const mark = markSource(pack.logoImage)
+  if (mark.state === 'ready') {
+    files.push({ name: `logo.${mark.ext}`, content: mark.base64, base64: true })
     hasMark = true
-    const isVector = ext === 'svg'
-    markLine = isVector
-      ? 'logo.svg — vector, scales to any size.'
-      : `logo.${ext} — raster (not vector). Fine for screen and known print sizes; ask for a redraw if you need it at billboard scale.`
+    markLine =
+      mark.ext === 'svg'
+        ? 'logo.svg — vector, scales to any size.'
+        : `logo.${mark.ext} — raster (not vector). Fine for screen and known print sizes; ask for a redraw if you need it at billboard scale.`
+  } else if (mark.state === 'held') {
+    /* A mark exists. Telling the client "no mark has been uploaded yet" would
+       be a false statement about the designer — the same defect that shipped a
+       client package with an empty logo folder. See deliver/markSource.js. */
+    markLine = `The mark is not in this pack — ${mark.reason}.`
   }
 
   const readme = [
