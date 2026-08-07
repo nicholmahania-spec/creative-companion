@@ -126,7 +126,23 @@ export function uniqueNames(names = []) {
  * @returns {string|null}
  */
 export function extFromBytes(base64) {
-  const b = headBytes(base64, 16)
+  return extFromRawBytes(headBytes(base64, 16))
+}
+
+/**
+ * The same question asked of bytes already in hand.
+ *
+ * A mark offloaded to cloud storage arrives as a downloaded blob, not as a data
+ * URL, and re-encoding it to base64 just to ask what it is would be work done
+ * to fit the shape of the older caller. Both entry points read ONE signature
+ * table, for the same reason `markSource` exists: two copies of "what kind of
+ * file is this?" is how a package ends up with a name its bytes disagree with.
+ *
+ * @param {ArrayLike<number>|null} bytes  at least the first 16 bytes
+ * @returns {string|null}
+ */
+export function extFromRawBytes(bytes) {
+  const b = bytes && bytes.length ? Array.from(bytes).slice(0, 16) : null
   if (!b) return null
   const at = (i, ...sig) => sig.every((v, k) => b[i + k] === v)
 
@@ -189,4 +205,34 @@ export function extFromDataUrl(url) {
   if (mime.includes('gif')) return 'gif'
   if (mime.includes('pdf')) return 'pdf'
   return null
+}
+
+/** The extension a URL's own path suggests — a provisional name only, because
+ *  the bytes decide once they arrive (see `withExt`). */
+export function extFromUrlPath(url) {
+  const m = String(url || '')
+    .split(/[?#]/)[0]
+    .match(/\.([a-z0-9]{2,5})$/i)
+  return m ? m[1].toLowerCase() : ''
+}
+
+/**
+ * A planned path, renamed to the extension its bytes actually turned out to be.
+ *
+ * The plan names a collected mark from the URL's own path, which is a claim
+ * made by whoever wrote the key. Usually a true one — the offload derives the
+ * key from the bytes — but "usually" is exactly the confidence that shipped two
+ * `.png` files holding `%PDF`. When the bytes say something else, the bytes
+ * win; when they say nothing (an AVIF, say, which has no entry in the
+ * signature table) the planned name stands rather than being downgraded to a
+ * guess.
+ *
+ * @param {string} path  the planned path, e.g. `02_LOGO/Harbor_Logo_Primary.png`
+ * @param {string|null} ext  the extension the bytes imply, or null
+ * @returns {string} the path to actually write
+ */
+export function withExt(path, ext) {
+  const p = String(path || '')
+  if (!ext || !p) return p
+  return /\.[a-z0-9]{2,5}$/i.test(p) ? p.replace(/\.[a-z0-9]{2,5}$/i, `.${ext}`) : `${p}.${ext}`
 }

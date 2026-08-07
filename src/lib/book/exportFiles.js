@@ -26,6 +26,7 @@ import {
 import { OVERVIEW_FIELD_PREFIX } from '../overviewOcr'
 import { packageFiles } from '../deliver/packageFiles'
 import { markSource, markGapSentence } from '../deliver/markSource'
+import { extFromRawBytes, extFromUrlPath, withExt } from '../deliver/naming'
 import {
   appendSystemMarkdown,
   buildColorSystem,
@@ -1061,7 +1062,14 @@ export async function downloadBrandKitZip(
       try {
         const res = await fetch(kitMark.url)
         if (!res.ok) throw new Error(`${res.status}`)
-        folder.file('logo.png', await res.blob())
+        /* `logo.png` was hardcoded here, and the bucket accepts jpeg, webp, gif
+           and svg — so a designer whose mark is any of those got a .png holding
+           something else. That is the same defect as the two `%PDF` files named
+           .png, reintroduced on the one path that had no bytes to check at
+           planning time. It has them now. */
+        const buf = new Uint8Array(await res.arrayBuffer())
+        const ext = extFromRawBytes(buf) || extFromUrlPath(kitMark.url) || 'png'
+        folder.file(`logo.${ext}`, buf)
       } catch (e) {
         folder.file(
           'logo-NOT-INCLUDED.txt',
@@ -1082,7 +1090,12 @@ export async function downloadBrandKitZip(
       returnBlobOnly: true,
     })
     if (pdfResult?.blob) {
-      folder.file('brand-book.pdf', pdfResult.blob)
+      /* Bytes, not the Blob itself. JSZip reads a Blob through `FileReader`,
+         which exists only in a browser — so this one line was why the kit
+         writer could not be run by a test at all, and why the mark it writes
+         went unchecked long enough to ship `logo.png` holding an SVG. Identical
+         output either way; the zip already had to hold the bytes. */
+      folder.file('brand-book.pdf', await pdfResult.blob.arrayBuffer())
     }
 
     const zipBlob = await zip.generateAsync({ type: 'blob' })
@@ -2117,7 +2130,11 @@ export async function downloadClientPackage(
         try {
           const res = await fetch(f.fetchUrl)
           if (!res.ok) throw new Error(`${res.status}`)
-          root.file(f.path, await res.blob())
+          /* The plan named this from the URL's path and called that extension
+             provisional. This is where the promise is kept: the bytes arrive,
+             and if they disagree with the name the plan guessed, they win. */
+          const buf = new Uint8Array(await res.arrayBuffer())
+          root.file(withExt(f.path, extFromRawBytes(buf)), buf)
           written += 1
         } catch (e) {
           left.push({

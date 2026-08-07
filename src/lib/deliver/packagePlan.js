@@ -31,16 +31,15 @@
 
 import { DELIVERABLE_OPTIONS } from '../brief/detectiveBrief'
 import { SECTION_PAGES } from '../book/bookDocument'
-import { assetFileName, extFromBytes, extFromDataUrl, uniqueNames } from './naming'
+import {
+  assetFileName,
+  extFromBytes,
+  extFromDataUrl,
+  extFromUrlPath,
+  uniqueNames,
+} from './naming'
 import { markSource, markGapSentence } from './markSource'
 import { familyByName, parseLabel } from '../book/fontCatalog'
-
-/** The extension a URL's own path suggests — a provisional name only, because
- *  the bytes decide once they arrive. */
-function extFromUrlPath(url) {
-  const m = String(url || '').split(/[?#]/)[0].match(/\.([a-z0-9]{2,5})$/i)
-  return m ? m[1].toLowerCase() : ''
-}
 
 /**
  * What the designer is allowed to hand over.
