@@ -1386,6 +1386,16 @@ h3 {
   font-weight: 700;
 }
 
+/* Quiet, and deliberately not a badge. This says "the app made this one",
+   which is information — not a warning, not something done wrong, and not a
+   count. CLAUDE.md §2 rules out the red/alert register for exactly this kind
+   of state, and the audience reads a coloured pill as a problem to solve. */
+.home-dash-project-starter {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
 .home-dash-project-client {
   font-size: var(--fs-1);
   font-weight: 500;

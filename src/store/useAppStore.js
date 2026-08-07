@@ -348,8 +348,40 @@ export function blankDirections() {
   ]
 }
 
+/**
+ * The name a blank workspace's one project is created with.
+ *
+ * It is a SENTINEL as well as a label: `hasRealProjects` in the migration
+ * decides a workspace is untouched partly by testing this exact string, so
+ * changing it silently changes who gets their legacy data imported. Anything
+ * that wants to present this project differently must do so in the view —
+ * see `isStarterProject`.
+ */
+export const STARTER_PROJECT_NAME = 'My project'
+
+/**
+ * True while this is still the project the app made for you, not one you made.
+ *
+ * A blank workspace opens on a project called "My project" that the user never
+ * created, presented exactly like one they did — so the cold-start audit found
+ * newcomers unable to tell whether it was theirs, a sample, or someone else's,
+ * and `+ New project` competing with something that looked already underway.
+ *
+ * Exported rather than restated because the migration already asks this same
+ * question by hand, and two copies of a predicate drift — the `activeView`
+ * allow-list lost four ids exactly that way.
+ */
+export function isStarterProject(p) {
+  if (!p) return false
+  return (
+    p.name === STARTER_PROJECT_NAME &&
+    !String(p.brief || '').trim() &&
+    !(Array.isArray(p.decisionLog) && p.decisionLog.length > 0)
+  )
+}
+
 /** Fresh real desk — no sample clients or fake tasks */
-export function createBlankProject(name = 'My project', brief = '') {
+export function createBlankProject(name = STARTER_PROJECT_NAME, brief = '') {
   /* Date.now() alone collides for anything created inside the same
      millisecond, and every store action selects with `p.id === id` — so two
      projects sharing an id means a write to one silently writes to both.
@@ -3216,11 +3248,11 @@ const useAppStore = create(
           if (Array.isArray(data.moodItems) && data.moodItems.length && !state.moodItems?.length) {
             state.moodItems = data.moodItems
           }
+          /* Same question `isStarterProject` answers, asked the same way, so
+             the migration and the UI label can never disagree about whether a
+             workspace has been touched. */
           const hasRealProjects = (state.projects || []).some(
-            (p) =>
-              (p.name && p.name !== 'My project') ||
-              String(p.brief || '').trim() ||
-              (Array.isArray(p.decisionLog) && p.decisionLog.length > 0)
+            (p) => (p.name && !isStarterProject(p)) || String(p.brief || '').trim()
           )
           if (
             Array.isArray(data.projects) &&

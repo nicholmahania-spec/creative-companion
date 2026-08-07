@@ -11,6 +11,7 @@ import {
   HOURS_RANGES,
 } from "../lib/billing/workWeek";
 import { relativeDeadlineLabel, formatShortDate } from "../lib/dates";
+import { isStarterProject } from "../store/useAppStore";
 
 export default function HomeView({
   activeProjects,
@@ -177,6 +178,19 @@ export default function HomeView({
                   >
                     <span className="home-dash-project-card-top">
                       <span className="home-dash-project-name">{p.name}</span>
+                      {/* Says whose project this is. A blank workspace opens
+                          on one the app made, named and styled exactly like
+                          one you made — so a newcomer cannot tell whether it
+                          is theirs, a sample, or somebody else's, and the real
+                          "+ New project" competes with something that looks
+                          already underway. The tag disappears the moment the
+                          project is renamed or written in, so it costs a
+                          returning user nothing. */}
+                      {isStarterProject(p) ? (
+                        <span className="home-dash-project-starter">
+                          Starter — rename it or start your own
+                        </span>
+                      ) : null}
                       {unread ? (
                         <span
                           className="home-md-row-badge"

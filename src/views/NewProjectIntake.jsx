@@ -26,9 +26,14 @@ const ENGAGEMENT = [
   { id: 'rebrand', label: 'Rebranding — replacing what exists now' },
   { id: 'extend', label: 'Adding to a brand that already works' },
 ]
+/* Legends name a CATEGORY, not a state. "Included" over a column of empty
+   boxes read as a claim the boxes contradicted — and the boxes mean the
+   opposite of what an empty box normally means, since blank is full scope
+   (see `togglePick`). "In the package" / "Costs extra" describe what the
+   items ARE, which is true whatever is ticked. */
 const DELIVERABLE_GROUPS = [
-  { key: 'included', legend: 'Included', items: DELIVERABLE_OPTIONS.filter((o) => !o.extra) },
-  { key: 'extra', legend: 'Quoted separately', items: DELIVERABLE_OPTIONS.filter((o) => o.extra) },
+  { key: 'included', legend: 'In the package', items: DELIVERABLE_OPTIONS.filter((o) => !o.extra) },
+  { key: 'extra', legend: 'Costs extra', items: DELIVERABLE_OPTIONS.filter((o) => o.extra) },
 ]
 
 export default function NewProjectIntake({
@@ -203,6 +208,20 @@ export default function NewProjectIntake({
           <legend className="create-legend">What do they need made?</legend>
           <p className="create-scope-chip" role="status">
             {scopeLabel}
+          </p>
+          {/* Says the rule where the boxes are.
+              Blank means full scope, so an untouched column of empty boxes is
+              "all of these" — the exact opposite of what an empty checkbox
+              normally means. The scope chip above already carries the answer,
+              but it is a separate line in a different register, and the
+              tester `togglePick` describes read the boxes and not the chip:
+              they ticked three extras meaning to ADD them and silently scoped
+              a full identity job down to three deliverables. One sentence,
+              next to the thing it is about, in the state it is about. */}
+          <p className="create-scope-rule">
+            {picked.length === 0
+              ? 'Everything below is in. Tick only to narrow the job, or to add an extra.'
+              : 'Only the ticked items are in.'}
           </p>
           <div className="create-deliverables">
             {DELIVERABLE_GROUPS.map((g) => (
