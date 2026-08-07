@@ -133,9 +133,11 @@ export async function run(argv) {
            designer to look at artwork that is already there. */
         const mark = markSource(pack.logoImage)
         notes.push(
-          mark.state === 'held'
-            ? `Mark not written — ${mark.reason}. README explains.`
-            : 'No mark uploaded — logo file skipped, README explains.'
+          mark.state === 'fetch'
+            ? 'Mark is in cloud storage — the client package collects it; this quick pack does not.'
+            : mark.state === 'held'
+              ? `Mark not written — ${mark.reason}. README explains.`
+              : 'No mark uploaded — logo file skipped, README explains.'
         )
       }
     }

@@ -35,10 +35,14 @@
  * So this is the single decision every writer now asks. It has three answers,
  * and the third is the one that was missing:
  *
- *   none    nothing is stored — saying so is honest
- *   ready   here are the bytes and the extension to write
- *   held    THERE IS ARTWORK AND THIS WRITER CANNOT USE IT — say that,
- *           name it, and never claim the project has no mark
+ *   none     nothing is stored — saying so is honest
+ *   ready    here are the bytes and the extension to write
+ *   fetch    the artwork lives at a URL. The PLAN says so synchronously and
+ *            the writer goes and gets it, the same shape the brand book
+ *            already uses (`{ pdf: true }`, filled in by the writer). Panel
+ *            and zip stay in agreement because both read this one decision.
+ *   held     THERE IS ARTWORK AND THIS WRITER CANNOT USE IT — say that,
+ *            name it, and never claim the project has no mark
  *
  * Pure and browser-free at import time, because packagePlan/packageFiles run
  * in the CLI through Vite with no DOM (`node bin/cc.mjs export …`).
@@ -64,7 +68,7 @@ const HELD_REASON = {
  * What the package can do with `project.logoImage`.
  *
  * @param {unknown} raw  a project's stored mark
- * @returns {{ state: 'none'|'ready'|'held', ext: string, base64: string, reason: string }}
+ * @returns {{ state: 'none'|'ready'|'fetch'|'held', ext: string, base64: string, reason: string, url?: string }}
  *   `ext`/`base64` are only meaningful when state is 'ready'. Writers must use
  *   the returned `base64` rather than re-splitting the raw string — that is
  *   what makes the surrounding whitespace case work end to end instead of
@@ -95,7 +99,19 @@ export function markSource(raw) {
     return held('unreadable')
   }
 
-  if (/^(https?|blob|file):/i.test(src)) return held('link')
+  /* An http(s) mark is not a dead end — it is a download. Reporting it as
+     held was honest but still lost the client their logo; the offload that
+     put it there exists to keep the SYNCED row small, and re-inflating local
+     storage to undo that would trade one cost for another. Fetching at export
+     time costs nothing until someone exports.
+
+     blob: and file: stay held. A blob URL dies with the page that made it and
+     a file: URL is a path on someone else's disk — both would fail, and a
+     fetch that always fails is worse than a sentence that explains. */
+  if (/^https?:/i.test(src)) {
+    return { state: 'fetch', ext: '', base64: '', reason: '', url: src }
+  }
+  if (/^(blob|file):/i.test(src)) return held('link')
   if (/^(#|rgb|hsl|linear-gradient|radial-gradient)/i.test(src)) return held('colour')
   return held('unreadable')
 }
