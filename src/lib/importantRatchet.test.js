@@ -39,12 +39,16 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
  * clean, which is the one place this debt is cheap to not acquire.
  */
 const BUDGET = {
-  // 410 → 403. -6 removing the spinning conic-gradient chrome, which collapsed
-  // two duplicate primary-plate blocks into one (the ring was declared four
-  // times over, which is why it took a block of overrides to hold in place);
-  // -1 restoring the mobile wordmark, where hiding one child needed no
-  // override at all and the old `display: none !important` on the parent did.
-  'src/styles/shell.css': 403,
+  /* 410 → 409. The Button-85 chrome is staying (owner's call, reaffirmed
+     2026-08-07 on #164 and again on #169), so the −6 that its removal would
+     have earned is back where it was. The remaining −1 is unrelated to that
+     decision: restoring the mobile wordmark replaced a `display: none
+     !important` on `.brand-block` with a plain rule on its child, because
+     hiding one child needed no override and hiding the parent did.
+     Not held at 410 — the "budgets are not padded" case below fails on a
+     budget above the real count, and banking a spare override is exactly the
+     silent refill this ratchet exists to prevent. */
+  'src/styles/shell.css': 409,
   'src/styles/lazy-buddy.css': 40,
   'src/styles/lazy-settings.css': 36,
   'src/styles/lazy-design.css': 18,

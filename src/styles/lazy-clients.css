@@ -603,10 +603,22 @@
 
 .client-inbox-chip.has-new {
   color: var(--text-primary);
-  /* Dopamine hairline + dopamine dot — findable, number-free, no red.
-     The dot is the signal; the ring only needs to agree with it. */
-  border: 1px solid var(--dopamine);
-  background: var(--bg-elevated, var(--surface));
+  /* Static rainbow ring (no spin) + dopamine dot — findable, number-free, no red. */
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--bg-elevated, var(--surface)), var(--bg-elevated, var(--surface)))
+      padding-box,
+    conic-gradient(
+      from 0deg,
+      #ff006e,
+      #8338ec,
+      #3a86ff,
+      #00ddeb,
+      #06d6a0,
+      #ffbe0b,
+      #ff006e
+    )
+      border-box;
 }
 
 .client-inbox-chip-dot {
@@ -623,8 +635,20 @@
 }
 
 .app.deep .client-inbox-chip.has-new {
-  background: var(--bg-elevated, var(--surface));
-  border-color: var(--dopamine-soft);
+  background:
+    linear-gradient(var(--bg-elevated, var(--surface)), var(--bg-elevated, var(--surface)))
+      padding-box,
+    conic-gradient(
+      from 0deg,
+      #ff6bcb,
+      #c084fc,
+      #8b7cf7,
+      #2dd4e0,
+      #5eead4,
+      #fbbf24,
+      #ff6bcb
+    )
+      border-box;
 }
 
 .client-inbox-panel {
