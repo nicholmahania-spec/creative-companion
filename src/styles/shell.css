@@ -61,9 +61,17 @@
   --border-accent: #A1A1A1; /* hover-emphasis border, used by .field-input:hover */
   --highlight-inset: none;
 
-  /* Status colors for form validation */
-  --success: #808080;
-  --warning: #A7A7A7;
+  /* Status colors for form validation.
+     --success and --warning used to be #808080 and #A7A7A7 — two neutral
+     greys standing in for the two states whose whole job is to be legible at
+     a glance. The cost was real in both directions: `.header-saved-dot` asks
+     for `var(--success, #1d6b3f)`, so its green fallback was dead and the
+     saved dot rendered grey; and the minor-version badge asked for --warning
+     and got a 2.41:1 grey that fails AA outright.
+     --success is now an alias of --positive so the app has ONE green, not a
+     grey one for forms and a green one everywhere else. --warning is amber at
+     5.02:1 on white and 4.61:1 on canvas. Deep values follow at .app.deep. */
+  --warning: #B45309;
   --error: #EF4444;
 
   /* Semantic status pair for approve / changes-requested badges. Previously
@@ -72,6 +80,8 @@
   --danger: #B91C1C;
   --accent-danger: var(--danger);
   --positive: #15803D;
+  /* One green in the app. Declared after --positive so it can alias it. */
+  --success: var(--positive);
 
   /* Aliases some later rules reference with hardcoded light fallbacks
      (var(--ts-x, #hex)) — defining them here makes those rules follow the
@@ -315,6 +325,12 @@ body:has(.app.deep),
   --danger: #F87171;
   --accent-danger: var(--danger);
   --positive: #4ADE80;
+  /* Deep counterparts to the light semantic pair. Both are measured against
+     the deep card (#141414): green 10.57:1, amber 8.58:1. Without these the
+     light values inherit into dark, which is the exact failure the
+     --border-hairline and --ts-focus notes above already record twice. */
+  --success: var(--positive);
+  --warning: #F59E0B;
   /* Chromatic CTAs on deep — lighter purple for ≥4.5:1 white label */
   --accent-primary: #8B7CF7;
   --accent-deep: #6B5CE6;
@@ -910,7 +926,7 @@ h3 {
 }
 
 .buddy-kit-meta {
-  font-size: 0.58rem;
+  font-size: var(--fs-1);
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -3584,7 +3600,7 @@ html[data-reduce-motion='true'] *::after {
   }
 
 .cal-event {
-    font-size: 0.55rem;
+    font-size: var(--fs-1);
   }
 }
 
@@ -3748,7 +3764,7 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .bf-status {
-  font-size: 0.58rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   color: #858585;
   line-height: 1.25;
@@ -4804,7 +4820,7 @@ body.cc-printing-page button {
 
 .role-rgb,
 .role-cmyk {
-  font-size: 0.58rem;
+  font-size: var(--fs-1);
   font-weight: 600;
   opacity: 0.55;
   margin-left: 0.1rem;
@@ -5889,7 +5905,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .progress-ring-label {
   position: relative;
   z-index: 1;
-  font-size: 0.58rem;
+  font-size: var(--fs-1);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;

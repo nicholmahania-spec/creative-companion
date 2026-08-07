@@ -3380,7 +3380,10 @@ function App() {
               }`}
               onClick={() => advancePathOrIdentity()}
             >
-              Continue → {stepRailContinueLabel}
+              {/* `·`, not `→`: the in-page Next beside it reads "Next · X"
+                  and the Home hero reads "Continue · X". One separator for
+                  one relationship — the arrow was a third spelling. */}
+              Continue · {stepRailContinueLabel}
             </button>
           )}
         </nav>

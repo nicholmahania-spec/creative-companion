@@ -111,8 +111,18 @@ and `0.8125rem` are three sizes that are visually identical and mathematically d
 
 **T2 · 244 uses of type below the stated floor.** The token block says "`--fs-1` is the floor and
 nothing should go below it." Shipping today, below 0.75rem: `0.72` `0.7` `0.68` `0.65` `0.62`
-`0.6` `0.58` `0.55` `0.5` `0.5625` `0.4375` **`0.4rem`** — that last one is **6.4px**. There is
-6.4px and 7px type in the production stylesheet.
+`0.6` `0.58` `0.55` `0.5` `0.5625` `0.4375` **`0.4rem`** — that last one is **6.4px**.
+
+> **Refinement (verified after first publication).** The very smallest of these are not interface
+> text. `0.4rem` and `0.4375rem` live in `.stationery-letterhead-footer` and `.bbb-lockup__mark` —
+> inside a 220px letterhead thumbnail and a brand-book lockup cell, where small type is
+> *representing* small type at reduced scale. That is a legitimate scale model, and raising it
+> would break the model. The real defect there is that **the preview is too small**, which is a
+> layout problem (Phase 5b, and roadmap Phase 4 #14), not a type-ramp problem.
+>
+> Genuinely sub-floor **interface** text was narrower and has been fixed: `.buddy-kit-meta`,
+> `.bf-status`, `.role-rgb` / `.role-cmyk` and `.progress-ring-label` at 0.58rem (9.3px), plus
+> mobile `.cal-event` at 0.55rem (8.8px). All now resolve to `--fs-1`.
 
 **T3 · Everything is bold.** On the lock screen, the H1, the section labels, the body copy
 ("Work stays on this device…"), the field labels and the hint text are all 600–700. There is no
@@ -235,10 +245,21 @@ G3 bans exactly this ("second map of the same chapters"), and the product's own 
 | Identity | `Continue → Words` | `Next · Words` |
 | Review | — | `Next · Assets` |
 
-Same destination, two labels, two separators (`→` vs `·`), two treatments. G1.3 requires one
-primary CTA per page job. Strategy actually carries **three** competing calls — `Continue →
-Research`, `Send the brief`, and `Next · Research` — with the two top ones stacked 70px apart at
-near-identical weight, so neither wins.
+> **Correction (verified after first publication).** An earlier draft called this a G1.3
+> violation and recommended deleting the top CTA. That misread the grammar: G1.3 says *"One
+> primary CTA per page job; path Next solid; **rail Continue secondary**"* — the pairing is
+> deliberate and documented, and `App.jsx` carries a comment saying so ("Secondary: in-page Next
+> is the solid primary"). The rail Continue should stay.
+>
+> What was actually wrong is that the rainbow ring made the secondary shout as loudly as the
+> primary, so the intended hierarchy never landed. With the ring gone the solid primary clearly
+> wins and the pairing reads correctly. The remaining defect is narrower and real: **the two
+> controls use different separators for the same relationship** — `Continue → Research` against
+> `Next · Research`. One vocabulary, one glyph.
+
+Strategy additionally stacks `Send the brief` 70px below `Continue → Research`, both hairline
+secondaries at near-identical weight. These are different kinds of action — one navigates, one
+sends work to a client — and nothing in their treatment says so.
 
 **Desk — two identical primaries.** "Open Strategy" appears as the artboard CTA *and* as the
 rail's "What's next" CTA, both solid purple, both on screen simultaneously.
