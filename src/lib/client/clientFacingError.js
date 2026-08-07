@@ -15,17 +15,31 @@
 
 import { CLOUD_REQUIRED } from './cloudRequired.js'
 
+/*
+ * "Try again shortly" used to end each of these. It was wrong twice over: the
+ * conditions it covers are configuration, not weather, so nothing changes by
+ * waiting — and it left the client with no action but to keep reloading a link
+ * that will never work. Worse, it OVERRODE the good fallback the portal
+ * already had ("ask your contact to send a fresh one"), because that fallback
+ * only renders when `error` is empty.
+ *
+ * This is a client's first impression of the designer, so it now ends with the
+ * same recovery path the fallback uses. The studio's own name would be better
+ * than "your contact", but the portal has not loaded when this renders, so
+ * there is no name to use.
+ */
+
 /** Internal-only messages, and what the client should see instead. */
 const CLIENT_SAFE = new Map([
-  ['Cloud sync isn’t configured', 'This link isn’t working right now. Try again shortly.'],
-  ["Cloud sync isn't configured", 'This link isn’t working right now. Try again shortly.'],
-  [CLOUD_REQUIRED, 'This link isn’t working right now. Try again shortly.'],
+  ['Cloud sync isn’t configured', 'This link isn’t working right now — ask your contact to send a fresh one.'],
+  ["Cloud sync isn't configured", 'This link isn’t working right now — ask your contact to send a fresh one.'],
+  [CLOUD_REQUIRED, 'This link isn’t working right now — ask your contact to send a fresh one.'],
 ])
 
 /** Anything mentioning these is studio plumbing, not the client's problem. */
 const INTERNAL_HINTS = [/\bcloud sync\b/i, /\bsign in\b/i, /\bsupabase\b/i]
 
-const GENERIC = 'This link isn’t working right now. Try again shortly.'
+const GENERIC = 'This link isn’t working right now — ask your contact to send a fresh one.'
 
 export function clientFacingError(error) {
   const msg = String(error || '').trim()

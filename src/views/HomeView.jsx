@@ -11,6 +11,7 @@ import {
   HOURS_RANGES,
 } from "../lib/billing/workWeek";
 import { relativeDeadlineLabel, formatShortDate } from "../lib/dates";
+import { isStarterProject } from "../store/useAppStore";
 
 export default function HomeView({
   activeProjects,
@@ -175,8 +176,38 @@ export default function HomeView({
                       }
                     }}
                   >
+                    {/* Specimen edge — the project's own palette, on the card
+                        that represents it. With more than one project open,
+                        the dashboard is otherwise five identical grey cards
+                        distinguished only by reading the name; this makes each
+                        one recognisable by its brand before it is read, which
+                        is the whole premise of "your brand lives here".
+                        Costs 4px of height and no new reading. */}
+                    {Array.isArray(p.palette) && p.palette.length > 0 ? (
+                      <span
+                        className="home-dash-project-spectrum"
+                        aria-hidden="true"
+                      >
+                        {p.palette.slice(0, 5).map((hex, i) => (
+                          <i key={`${p.id}-sw-${i}`} style={{ background: hex }} />
+                        ))}
+                      </span>
+                    ) : null}
                     <span className="home-dash-project-card-top">
                       <span className="home-dash-project-name">{p.name}</span>
+                      {/* Says whose project this is. A blank workspace opens
+                          on one the app made, named and styled exactly like
+                          one you made — so a newcomer cannot tell whether it
+                          is theirs, a sample, or somebody else's, and the real
+                          "+ New project" competes with something that looks
+                          already underway. The tag disappears the moment the
+                          project is renamed or written in, so it costs a
+                          returning user nothing. */}
+                      {isStarterProject(p) ? (
+                        <span className="home-dash-project-starter">
+                          Starter — rename it or start your own
+                        </span>
+                      ) : null}
                       {unread ? (
                         <span
                           className="home-md-row-badge"
@@ -215,42 +246,18 @@ export default function HomeView({
           </ul>
         </section>
 
-        {/* One next stop only — full path lives in nav / Desk (audit dual-map). */}
-        <section
-          className="home-dash-panel home-dash-up-next"
-          aria-label="Up next on focus project"
-        >
-          <div className="home-dash-panel-head">
-            <h2 className="home-dash-panel-title">Up next</h2>
-            <span className="home-dash-panel-meta">{focus.project.name}</span>
-          </div>
-          {pathFull ? (
-            <p className="home-dash-panel-empty">Path complete.</p>
-          ) : focus.nextGap ? (
-            <button
-              type="button"
-              className="home-dash-up-next-card"
-              onClick={() => {
-                setCurrentProject(focus.project.id);
-                setActiveView(focus.nextGap.view);
-              }}
-            >
-              <span className="home-dash-up-next-kicker">Continue</span>
-              <span className="home-dash-up-next-title">
-                {focus.nextGap.label}
-              </span>
-            </button>
-          ) : (
-            <p className="home-dash-panel-empty">Nothing open on the path.</p>
-          )}
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm home-dash-panel-cta"
-            onClick={() => openProjectWhereLeftOff(focus.project.id)}
-          >
-            Open desk
-          </button>
-        </section>
+        {/* The "Up next" panel used to sit here and it said nothing new. It
+            read the same focus.project.name, the same focus.nextGap.label and
+            navigated to the same focus.nextGap.view as the pick-up card above
+            — so Home stated "Strategy is next" three times over: once in the
+            hero, once in the Projects row's "Next: …", and once here. Its
+            "Open desk" duplicated the hero's "Desk" button too, so nothing was
+            lost by removing it.
+
+            A previous pass already deleted a dual *map* of the path from this
+            screen (see the Projects panel comment); this was the dual
+            *statement* of the same fact, which costs the same reading and
+            offers the same nothing. G3 bans both. */}
 
         {/* Due soon — deadlines only, not a full month (ADHD: no second map). */}
         <section

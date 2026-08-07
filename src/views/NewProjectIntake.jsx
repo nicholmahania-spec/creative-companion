@@ -26,9 +26,14 @@ const ENGAGEMENT = [
   { id: 'rebrand', label: 'Rebranding — replacing what exists now' },
   { id: 'extend', label: 'Adding to a brand that already works' },
 ]
+/* Legends name a CATEGORY, not a state. "Included" over a column of empty
+   boxes read as a claim the boxes contradicted — and the boxes mean the
+   opposite of what an empty box normally means, since blank is full scope
+   (see `togglePick`). "In the package" / "Costs extra" describe what the
+   items ARE, which is true whatever is ticked. */
 const DELIVERABLE_GROUPS = [
-  { key: 'included', legend: 'Included', items: DELIVERABLE_OPTIONS.filter((o) => !o.extra) },
-  { key: 'extra', legend: 'Quoted separately', items: DELIVERABLE_OPTIONS.filter((o) => o.extra) },
+  { key: 'included', legend: 'In the package', items: DELIVERABLE_OPTIONS.filter((o) => !o.extra) },
+  { key: 'extra', legend: 'Costs extra', items: DELIVERABLE_OPTIONS.filter((o) => o.extra) },
 ]
 
 export default function NewProjectIntake({
@@ -171,6 +176,7 @@ export default function NewProjectIntake({
             id="create-client"
             type="text"
             className="create-input"
+            aria-describedby="create-client-hint"
             /* eslint-disable-next-line jsx-a11y/no-autofocus -- the one field
                worth typing on this screen; autofocus removes a click at the
                highest-friction moment (advisor). */
@@ -179,6 +185,21 @@ export default function NewProjectIntake({
             onChange={(e) => setClientName(e.target.value)}
             placeholder="Business or client name"
           />
+          {/* This name silently BECOMES the project name (see
+              `createProjectFromIntake`, which calls `createBlankProject` with
+              it). A cold reader looking for "project name" does not find one
+              here and never learns where the project's name came from.
+
+              Say it, rather than adding a second field: the header above
+              records the advisor's ruling that the client name is the only
+              thing worth typing on this screen, and a second optional text box
+              is exactly the task-initiation friction that ruling forbids. The
+              escape hatch is real — `renameProject` is wired to the client
+              record and the brand book — so the sentence is not a promise the
+              product cannot keep. */}
+          <p className="create-hint" id="create-client-hint">
+            This names the project too. You can rename it later.
+          </p>
         </div>
 
         <fieldset className="create-section">
@@ -203,6 +224,27 @@ export default function NewProjectIntake({
           <legend className="create-legend">What do they need made?</legend>
           <p className="create-scope-chip" role="status">
             {scopeLabel}
+          </p>
+          {/* The chip is a boxed, bordered, non-interactive statement sitting
+              directly above a column of things that ARE pressable, and it
+              reads as a commitment. Say it is reversible, once, next to it —
+              the words the chip uses ("scope", "stops") are the product's own
+              and appear on every path screen, so the fix is the missing
+              reassurance, not a second vocabulary. */}
+          <p className="create-scope-note">You can change any of this later.</p>
+          {/* Says the rule where the boxes are.
+              Blank means full scope, so an untouched column of empty boxes is
+              "all of these" — the exact opposite of what an empty checkbox
+              normally means. The scope chip above already carries the answer,
+              but it is a separate line in a different register, and the
+              tester `togglePick` describes read the boxes and not the chip:
+              they ticked three extras meaning to ADD them and silently scoped
+              a full identity job down to three deliverables. One sentence,
+              next to the thing it is about, in the state it is about. */}
+          <p className="create-scope-rule">
+            {picked.length === 0
+              ? 'Everything below is in. Tick only to narrow the job, or to add an extra.'
+              : 'Only the ticked items are in.'}
           </p>
           <div className="create-deliverables">
             {DELIVERABLE_GROUPS.map((g) => (
@@ -234,7 +276,7 @@ export default function NewProjectIntake({
 
         <div className="create-field create-field-narrow">
           <label className="create-label" htmlFor="create-deadline">
-            Is there a date it has to be done by?
+            Any deadline?
           </label>
           <input
             id="create-deadline"
@@ -245,6 +287,18 @@ export default function NewProjectIntake({
           />
         </div>
 
+        {/* One primary, one subordinate — not two exits side by side.
+            Both buttons were `.btn` at the same size on one row, so the screen
+            ended on a choice with nothing to choose between: neither said what
+            the other did, and the second was a sentence where the first was a
+            label. AGENTS.md bans exactly this shape ("Equal-weight dual
+            primaries (Send + Interview + Start + Next)").
+
+            The alternative stays a `.btn-ghost` rather than becoming an
+            `<a>`: ghost is the one variant the chrome system deliberately
+            leaves quiet ("Ghost stays quiet", shell.css), so demoting by
+            LAYOUT keeps it a real button — focusable, 44px, and still the
+            thing that mints the client's link. */}
         <div className="create-actions">
           <button
             type="button"
@@ -254,14 +308,16 @@ export default function NewProjectIntake({
           >
             Start project
           </button>
-          <button
-            type="button"
-            className="btn btn-ghost create-send"
-            onClick={sendBrief}
-            disabled={busy}
-          >
-            {busy ? 'Creating…' : 'Send them the brief to fill in'}
-          </button>
+          <p className="create-alt">
+            <button
+              type="button"
+              className="btn btn-ghost create-send"
+              onClick={sendBrief}
+              disabled={busy}
+            >
+              {busy ? 'Creating…' : 'Or send the client a form to fill in first'}
+            </button>
+          </p>
         </div>
       </div>
     </div>

@@ -1,3 +1,30 @@
+> ## Read before you commit
+>
+> **This file is the product spec — what to build and why. It says nothing
+> about how to ship it, and everything below is easy to satisfy while still
+> getting the commit wrong.** The working rules live elsewhere and are not
+> optional:
+>
+> | Read | For |
+> |---|---|
+> | `AGENTS.md` | Owner decisions are final; the two mandatory advisors; copy and layout rules |
+> | `docs/ONBOARDING.md` | **How to ship a change** — the version bump, the CSS layout (`shell.css` + `lazy-*.css`, all loaded eagerly), deploy targets |
+> | `docs/PRD.md` | The same shipping rules in more detail, plus agent rank order |
+> | `DESIGN_GRAMMAR.md` | Settled naming/chrome decisions — check before renaming any label |
+>
+> **The one that gets missed:** *version bumps are manual and belong in the
+> same commit* — `npm run bump:major` for breaking, `bump:minor` for a
+> `feat:`, `npm run bump` otherwise, then stage `package.json` and
+> `package-lock.json` **with** that commit. The git hook that used to do this
+> is disabled and must not be re-enabled: in this environment a hook that
+> stages during a commit lands its changes in the *next* commit's tree.
+>
+> This has been missed repeatedly, including across three merged PRs on
+> 2026-08-07 (#170, #171, #172), all of which shipped without a bump. Nothing
+> in CI catches it, so the only guard is reading this.
+
+---
+
 **Document Version:** 1.0
 **Product Type:** SaaS / Web Application
 **Primary Users:** Graphic Designers / Brand Designers

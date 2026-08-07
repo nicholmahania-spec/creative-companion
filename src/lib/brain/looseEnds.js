@@ -92,7 +92,10 @@ export function looseEnds({ project = null, tasks = [], clientRows = [] } = {}) 
   if (missingBrief.length) {
     ends.push({
       id: 'brief',
-      label: `${missingBrief.length} brief answer${missingBrief.length === 1 ? '' : 's'} nobody has given`,
+      /* "nobody has given" was written for a two-party project, but the
+         solo designer reading it IS the only person who could have given
+         them — so it lands as an accusation from the tool. State the fact. */
+      label: `${missingBrief.length} brief answer${missingBrief.length === 1 ? '' : 's'} not filled in yet`,
       count: missingBrief.length,
       view: 'project',
     })
@@ -106,12 +109,22 @@ export function looseEnds({ project = null, tasks = [], clientRows = [] } = {}) 
     'required brief answers',
   ]
 
+  /* Count THINGS, not kinds of thing.
+     The headline counted `ends.length` — the number of categories — while
+     each row below it counted the items inside one category. On a fresh
+     project that rendered as "1 loose end" stacked directly above
+     "5 brief answers…", two numbers in the same box, both true, neither
+     reconcilable by the reader: is there one problem here or five?
+     Summing the rows makes the headline the total of what is listed under
+     it, which is the only reading anyone attempts. */
+  const openCount = ends.reduce((n, e) => n + (e.count || 0), 0)
+
   return {
     ends,
     clear: ends.length === 0,
     checked,
     headline: ends.length
-      ? `${ends.length} loose end${ends.length === 1 ? '' : 's'}`
+      ? `${openCount} loose end${openCount === 1 ? '' : 's'}`
       : 'You’re clear',
   }
 }

@@ -89,6 +89,8 @@ export function weekFromWorkLog(workLog = [], now = new Date()) {
     total,
     days: buckets.map((b) => ({
       day: b.label,
+      date: b.date,
+      isToday: b.isToday,
       hours: b.hours,
       hPx: b.hPx,
       fill: b.fill,
@@ -163,7 +165,25 @@ export function hoursForRange(workLog = [], range = 'week', now = new Date()) {
       hours[r.d.getDay()] += r.hours
     }
     const shaped = bucketsFromHours(hours, WEEKDAY_LETTERS)
-    return { ...shaped, rangeLabel: 'This week' }
+    /* Carry the actual date of each column.
+       `S M T W T F S` alone is not a week — it is the same seven letters
+       every week of the year, with two identical `T`s and two identical
+       `S`s, so nothing on the strip said WHICH week or which column was
+       today. The letters stay (they fit the 340px rail); the date rides
+       alongside so the column can be identified. */
+    return {
+      ...shaped,
+      rangeLabel: 'This week',
+      buckets: shaped.buckets.map((b, i) => {
+        const d = new Date(start)
+        d.setDate(d.getDate() + i)
+        return {
+          ...b,
+          date: d.getDate(),
+          isToday: startOfLocalDay(d) === startOfLocalDay(now),
+        }
+      }),
+    }
   }
 
   if (range === 'month') {

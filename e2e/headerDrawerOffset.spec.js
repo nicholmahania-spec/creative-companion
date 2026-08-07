@@ -59,40 +59,34 @@ test.describe('mobile drawer clears the header', () => {
     })
 
     /**
-     * KNOWN FAILURE — the header does not stay on screen at these widths.
+     * FIXED 2026-08-07 — this was a `test.fail()` marker and it paid out.
      *
-     * This is `test.fail()`, not a comment and not a deletion. It RUNS on
-     * every CI pass and is green while the bug exists; the moment someone
-     * fixes the header it flips to failing and says so. A prose note cannot
-     * do that — it just quietly becomes untrue. The suite stays green either
-     * way, so this costs nothing today and pays out on the day it matters.
+     * The diagnosis it carried was exactly right: a sticky element sticks to
+     * its nearest ancestor that is a scroll container, four ancestors
+     * qualified (`html`, `body`, `#root`, `.app`), each declaring
+     * `overflow-x: hidden` which COMPUTES to `hidden auto`, none of them ever
+     * scrolled, so the document scrolled instead and the header rode off the
+     * top with it. All four did need changing, as the note said.
      *
-     * The bug: a sticky element sticks to its nearest ancestor that is a
-     * scroll container. Four ancestors qualify here — `html` (shell.css:213),
-     * `body` (:220), `#root` (:235) and `.app` (:273) — each declaring
-     * `overflow-x: hidden`, which COMPUTES to `hidden auto`, because a
-     * two-value overflow turns a `visible` axis into `auto` when the other
-     * axis is not visible. None of them ever scrolls: each is as tall as its
-     * content (~5300px at 390px wide). So the DOCUMENT scrolls instead, and
-     * the header — sticky relative to a box that never moves — rides off the
-     * top with it, taking the hamburger that opens the drawer.
+     * It also predicted its own outcome — "the moment someone fixes the
+     * header it flips to failing and says so" — and that is precisely how
+     * this surfaced: the fix landed, CI went red here, and the failure read
+     * `Expected to fail, but passed.` A prose note could not have done that.
      *
-     * Grepping for `hidden auto` finds nothing; it is computed, never
-     * declared. And fixing only `.app` leaves `#root` as the next scrolling
-     * ancestor, so the header still will not stick — all four need changing.
+     * The repair avoided the trap the note flagged. `hidden` → `clip` would
+     * have forbidden programmatic scrolling on those boxes, which
+     * `sessionResume.js` and `journeyProgress.js` both depend on; removing
+     * the property outright leaves programmatic scrolling intact.
      *
-     * Not fixed here on purpose. The obvious repair is `hidden` → `clip`,
-     * but `clip` also forbids programmatic scrolling on those boxes, and the
-     * app has scroll call sites that serve its founding executive-function
-     * features — `sessionResume.js` ("where you left off") and
-     * `journeyProgress.js` (`focusPathGapTarget`) among them. That is a
-     * global layout change with real blast radius, and it does not belong in
-     * a commit that repairs tests.
+     * `test.fail()` is gone and the assertion stays. It is a live regression
+     * guard now rather than a marker — if anything reintroduces a scroll
+     * container above the header, this fails again, in the right direction.
+     * Wider coverage of the same class of defect lives in
+     * no-horizontal-overflow.spec.js.
      */
     test(`the header stays on screen while scrolling at ${width}px`, async ({
       page,
     }) => {
-      test.fail()
       test.setTimeout(120_000)
       const gate = await unlockAndOnboard(page, { name: 'Drawer Offset' })
       skipIfCloud(test, gate)

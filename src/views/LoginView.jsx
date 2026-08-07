@@ -203,7 +203,25 @@ export default function LoginView({ onUnlocked, cloud = false }) {
               than a tax on the gate. */}
           <LogoLockup reduceMotion />
           <h1 className="login-h1">Creative Companion</h1>
-          <ol className="login-path-mini" aria-label="The path">
+          {/* What this actually is.
+              The gate used to say the product's name twice and then show five
+              path chips — Strategy, Research, Identity, Touchpoints, Assets —
+              in the app's own vocabulary, before a stranger had been taught
+              any of it. Nothing on the first screen said what the thing was
+              for, and it asked for a password with no reset in the same
+              breath. A designer landing here could not tell whether this was
+              a project manager, a portfolio, a design tool or a note app.
+              Wording is the product's own, from PRODUCT.md's positioning —
+              not a new claim invented at the door. */}
+          <p className="login-what">
+            Take a brand project from the first client brief to a finished
+            brand book. Your design tools make the work — this is where the
+            brand lives.
+          </p>
+          <p className="login-path-lead" id="login-path-lead">
+            The five stops you’ll move through
+          </p>
+          <ol className="login-path-mini" aria-labelledby="login-path-lead">
             {JOURNEY_STEPS.map((s) => (
               <li key={s.id}>
                 <span className="login-path-num">{s.num}</span>
@@ -333,9 +351,17 @@ export default function LoginView({ onUnlocked, cloud = false }) {
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
+            {/* Two different things, said separately, because as one line it
+                was neither. It read as the requirement, but the actual minimum
+                is 6 (lib/auth.js) — so the first screen stated a rule stricter
+                than it enforced, and the error you got for failing it said "at
+                least 6 characters", a third answer. Settings' own "New (6+)"
+                placeholder disagreed with it too. 8+ and the character classes
+                are what the strength meter below scores: guidance, not a gate. */}
             {(mode === 'setup' || mode === 'signup') && (
               <p className="login-pw-hint">
-                8+ characters, mixing upper/lowercase, numbers or symbols.
+                At least 6 characters. Longer is better — 8 or more, mixing
+                upper and lowercase, numbers or symbols.
               </p>
             )}
             {(mode === 'setup' || mode === 'signup') && (

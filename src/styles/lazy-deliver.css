@@ -45,10 +45,31 @@
   min-width: 0;
 }
 
-/* Ship ticket — always near the CTA; sticky so preview doesn’t bury it */
+/* Ship ticket — always near the CTA.
+ *
+ * This was `position: sticky; top: 0`, and it never once did anything: every
+ * ancestor carried `overflow-x: hidden`, which computes to `hidden auto` and
+ * made each one a scroll container that never scrolls, so sticky resolved
+ * against a box that never moved. Removing that (2026-08-07, see the note on
+ * html/body in shell.css) switched four dormant sticky declarations on at
+ * once — and this is the one that could not survive being switched on.
+ *
+ * A sticky element only "stays visible" while it is SHORTER than the
+ * viewport. This ticket measures 1593px against a 900px viewport, so pinning
+ * it does not keep it in view — it pins it over the top of everything after
+ * it in its own column. Measured at scrollY 1500: the ticket sits at y=76 and
+ * the case study, its own sibling at the same x and width, is underneath it
+ * at y=619. Three e2e specs caught it as "intercepts pointer events", which
+ * is exactly what a real user's click would have done.
+ *
+ * The intent — keep the handoff CTA visible while the tall preview column
+ * scrolls — is good and is NOT abandoned here. It just needs a short pinned
+ * element (the download row alone, say) rather than the whole ticket, and
+ * that is a layout change rather than a containment fix, so it belongs to
+ * whoever designs it. Dropping `sticky` restores precisely the behaviour this
+ * element has had for its entire life.
+ */
 .assets-ship-ticket {
-  position: sticky;
-  top: 0;
   z-index: 3;
   padding: var(--space-3) 0 var(--space-4);
   margin-bottom: var(--space-2);
@@ -120,7 +141,42 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  /* var(--space-3) between seven blocks as unalike as page setup, a case
+     study, the stationery kit and three disclosures read as one
+     undifferentiated stack — the "20+ ungrouped panels" the audit measured at
+     ~3,700px deep. The blocks are heterogeneous enough that space alone can't
+     group them, so each gets a boundary as well (G6: border when space cannot
+     carry the hierarchy). */
+  gap: 0;
+}
+
+.assets-secondary > * + * {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* .deliver-advanced brings its own margin/border-top for the runs where it
+   appears on its own. Inside this column the rule above already draws the
+   boundary, so its copy would double the line and halve the space. */
+.assets-secondary > .deliver-advanced {
+  margin-top: var(--space-5);
+  border-top: none;
+  padding-top: var(--space-5);
+}
+
+/* .assets-stationery carries its own `margin: var(--space-2) 0 0`, declared
+   later in this file and at equal specificity, so it won the cascade and sat
+   16px closer than every other block in the column. Named explicitly rather
+   than reordered, so moving either rule later cannot silently re-break it. */
+.assets-secondary > .assets-stationery {
+  margin-top: var(--space-5);
+}
+
+.assets-secondary > *:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .assets-secondary-title {
@@ -416,8 +472,8 @@
   max-height: min(70dvh, 40rem);
   object-fit: contain;
   margin-inline: auto;
-  border: 1px solid rgba(26, 26, 26, 0.14);
-  background: #FFFFFF;
+  border: 1px solid var(--paper-edge);
+  background: var(--paper);
   box-shadow:
     0 1px 2px color-mix(in srgb, var(--text-primary) 8%, transparent),
     0 8px 24px color-mix(in srgb, var(--text-primary) 6%, transparent);
@@ -788,23 +844,42 @@
 
 .deliver-advanced > summary {
   cursor: pointer;
-  font-size: 0.8rem;
+  /* --fs-2, not the off-ramp 0.8rem. These summaries are the only label on a
+     control that hides real actions behind it, "Leave" among them, so they
+     read at body-adjacent size and in --text-secondary rather than muted. */
+  font-size: var(--fs-2);
   font-weight: 600;
-  color: var(--ts-mute, #A1A1A1);
+  color: var(--text-secondary);
   list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
 }
 
 .deliver-advanced > summary::-webkit-details-marker {
   display: none;
 }
 
+/* A drawn chevron, not a `▸` character. The glyph carried the font's weight
+   and baseline instead of the icon set's stroke, and sat optically high
+   against its own label — the same character-as-icon problem the Tools menu
+   had. Two borders on a rotated square is a real chevron with no glyph and
+   no asset. */
 .deliver-advanced > summary::before {
-  content: '▸ ';
-  font-size: 0.7rem;
+  content: '';
+  flex: 0 0 auto;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transform-origin: center;
+  transition: transform var(--transition);
 }
 
 .deliver-advanced[open] > summary::before {
-  content: '▾ ';
+  transform: rotate(45deg);
 }
 
 .deliver-leave {

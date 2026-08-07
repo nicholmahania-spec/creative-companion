@@ -78,6 +78,19 @@
   margin: 0;
 }
 
+/* One content axis for the whole page.
+   `.define-chapter` reserves `2px border + var(--space-5)` on its left so the
+   `.is-current` hairline can appear without shifting the fields sideways —
+   correct technique, and the marker has to live somewhere. But the page header
+   above it had no such inset, so the H1, the status line, the Send button and
+   the title rule all sat 26px to the LEFT of every label and field beneath
+   them, down a form roughly 4,700px long. Nothing looked broken; it just never
+   settled. The header now shares the chapters' axis instead of the chapters
+   being pulled off the header's. */
+.define-brief .define-brief-head {
+  padding-left: calc(var(--define-margin, var(--space-5)) + 2px);
+}
+
 .define-brief-status {
   margin: 0;
   font-size: var(--fs-2);
@@ -207,6 +220,12 @@
   bottom: 0;
   z-index: 5;
   margin-top: var(--space-4);
+  /* Full-bleed: the negative margin cancels the content column's padding so
+     the bar reaches the edges. That only works while the padding being
+     cancelled is at least this big — at narrow widths the column's padding is
+     smaller than --space-4, and the surplus pushed the footer 8px past the
+     right edge of a 390px screen (measured). The bleed is neutralised at
+     mobile widths below rather than guessed at here. */
   margin-inline: calc(-1 * var(--space-4, 1rem));
   padding: var(--space-2) var(--space-4);
   padding-bottom: max(var(--space-2), env(safe-area-inset-bottom, 0px));
@@ -250,6 +269,13 @@
   .define-brief-still-blank {
     flex: 1 1 100%;
     text-align: left;
+  }
+
+  /* No full-bleed at this width — the column padding the negative margin is
+     cancelling is smaller than --space-4 here, so the bleed went outward and
+     put the footer 8px past the right edge of the screen. */
+  .define-brief-footer {
+    margin-inline: 0;
   }
 }
 
@@ -354,6 +380,45 @@
 
 .brief-spectrum-pole:last-of-type {
   text-align: right;
+}
+
+/* Very narrow phones: two 5.5rem poles plus the five-dot ladder need ~372px
+   and overflowed a 320px screen.
+
+   Shrinking the shared min-width was tried first and rejected — at 4rem the
+   longer poles ("Professional", "Traditional") size to their own text again
+   and the ladders drift apart by up to 5px, which is precisely the failure
+   the rule above exists to prevent. Measured, then reverted.
+
+   Stacking instead: poles share a row, ladder spans beneath. Every scale gets
+   the same structure, so the ladders stay identical by construction rather
+   than by a min-width that has to be big enough for the longest word.
+
+   A grid was tried and rejected too: the steps are direct siblings of the
+   poles with no ladder wrapper, so a shared `grid-area` stacked all five
+   radios in one cell at the same x. Flex `order` needs no wrapper and does
+   not depend on how many choices a scale has — `choices` is a prop, so
+   anything that hardcodes five would break the next scale that isn't. */
+@media (max-width: 360px) {
+  .brief-spectrum-scale {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    row-gap: var(--space-1);
+  }
+  /* 48% each leaves no room for a step to sneak onto the poles' row, so the
+     ladder always starts a clean second line. */
+  .brief-spectrum-pole {
+    order: 1;
+    flex: 1 1 48%;
+    min-width: 0;
+    white-space: normal;
+  }
+  .brief-spectrum-pole:last-of-type {
+    order: 2;
+  }
+  .brief-spectrum-step {
+    order: 3;
+  }
 }
 
 /* The chosen point, in words. Quiet — it confirms, it does not compete with
@@ -651,12 +716,40 @@
    surface; the rest are separated by space, not by a box. */
 /* No card. Chapters are separated by space and by the weight of their titles,
    not by a rectangle each. */
+/* ── The working margin ────────────────────────────────────────────────────
+   The brief is set the way a brand manual is set: a narrow left margin
+   carrying the chapter number, and the content in a measure beside it.
+
+   The gutter already existed — `.define-chapter` reserved `2px + --space-5`
+   so the `.is-current` hairline could appear without shoving the fields
+   sideways. That reserved strip was doing one job and standing empty the rest
+   of the time, while the number it could have held sat inline in the heading
+   row instead, where it read as a word rather than a folio.
+
+   The width is --space-7 off the ramp, not a hand-picked figure: the scale
+   ratchet rejects new one-off spacing values, and it was right to — 3.25rem
+   was a number I liked rather than a step anyone else could reuse.
+
+   Widening it to --define-margin and moving the number into it costs nothing
+   but alignment and gives the page a structure: five numbers down a common
+   left edge, each title starting on the same axis as every field under it.
+   The marker keeps its lane — the number sits inboard of it.
+
+   Declared on .define-brief, not on .define-chapters, because the page header
+   above the chapters has to sit on the same axis and cannot inherit from a
+   sibling. One value, one place: the header and the chapters drifting apart
+   is precisely how the axis broke before. */
+.define-brief {
+  --define-margin: var(--space-7);
+}
+
 .define-chapter {
+  position: relative;
   border-radius: var(--radius-none);
   background: none;
   border: none;
   border-left: 2px solid transparent;
-  padding: 0 0 0 var(--space-5);
+  padding: 0 0 0 var(--define-margin, var(--space-5));
   box-shadow: none;
   animation: defineChapterIn 0.35s var(--ease-out, ease);
 }
@@ -679,23 +772,73 @@
   border-bottom: none;
 }
 
+/* Lifted out of the heading row and into the margin. Tracked caps at the
+   ramp floor rather than --fs-3 display type: in the margin it is a folio,
+   not a heading — it marks where you are, it does not compete with the title
+   it labels. `line-height` matches the title's line box so the number sits on
+   the title's own line rather than being eyeballed with a magic `top`. */
 .define-chapter-badge {
+  position: absolute;
+  left: var(--space-2);
+  top: 0;
+  width: calc(var(--define-margin, var(--space-5)) - var(--space-4));
   font-family: var(--font-display);
-  font-size: var(--fs-3);
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  color: var(--define-ch-1);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: calc(var(--fs-5) * var(--leading-heading, 1.2));
+  color: var(--text-muted);
   text-shadow: none;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Carries the section break now that the card doesn't. */
+/* Below the fold of a phone the margin is a luxury the measure cannot pay
+   for: 3.25rem off a 390px screen is a tenth of the line. The number goes
+   back inline and the gutter narrows.
+
+   --space-3, not --space-5, because shell.css already halves `.define-chapter`
+   to `var(--space-3)` at this width ("Keep the mark, halve the indent") and
+   the token has to say what actually renders. Measured before this line: the
+   header derived 26px from the token while the chapter rendered 12px, so the
+   H1 sat 12px right of every field under it — the same axis break this margin
+   exists to close, surviving at one breakpoint because two rules disagreed
+   about one number. It predates this change; it is fixed here because this is
+   the change that made the token the source of truth. */
+@media (max-width: 640px) {
+  .define-brief {
+    --define-margin: var(--space-3);
+  }
+
+  .define-chapter-badge {
+    position: static;
+    width: auto;
+    font-size: var(--fs-2);
+    line-height: inherit;
+  }
+}
+
+/* Carries the section break now that the card doesn't.
+   --fs-5, not --fs-4. This is the only thing separating five chapters in a
+   ~4,700px flat scroll, and at --fs-4 it was 20px against 14px field labels —
+   a step, but not a landmark you can find while moving. The chapters stay
+   mounted and flat (see the ADHD ruling in DetectiveSheet.jsx: the accordion
+   was tried and deleted); making the boundary FINDABLE is the job here, not
+   making it closeable. */
 .define-chapter-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--fs-4);
+  font-size: var(--fs-5);
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--define-ink);
+}
+
+/* Chapters had no gap between them at all — chapter 02's number sat one
+   field-margin below chapter 01's last input, so five sections read as one
+   undifferentiated river of ~40 identical fields. Space is what groups them
+   now that there is deliberately no card and no border. */
+.define-chapters > .define-chapter + .define-chapter {
+  margin-top: var(--space-7);
 }
 
 /* The design's section rule — a hairline that runs from the title to the

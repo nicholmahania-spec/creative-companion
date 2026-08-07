@@ -197,7 +197,10 @@ export default function RevisionRounds({ activeProject, flashToast }) {
             className="field-input"
             value={decision}
             onChange={(e) => setDecision(e.target.value)}
-            placeholder="What you decided (optional)"
+            /* Was "What you decided (optional)", which did not fit its grid
+               column and rendered as "What you decided (optio". Only the issue
+               field gates the button, so optionality is already visible. */
+            placeholder="What you decided"
             aria-label="Decision"
           />
           <button

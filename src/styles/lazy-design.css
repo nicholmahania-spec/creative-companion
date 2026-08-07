@@ -1048,8 +1048,8 @@
 .stationery-letterhead {
   width: 220px;
   aspect-ratio: 8.5 / 11;
-  background: #ffffff;
-  color: #1A1A1A;
+  background: var(--paper);
+  color: var(--paper-ink);
   display: flex;
   flex-direction: column;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
@@ -1105,8 +1105,8 @@
 .stationery-envelope {
   width: 300px;
   aspect-ratio: 9.5 / 4.125;
-  background: #ffffff;
-  color: #1A1A1A;
+  background: var(--paper);
+  color: var(--paper-ink);
   padding: 0.6rem;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
   display: flex;
@@ -1121,8 +1121,8 @@
 
 .stationery-signature {
   width: 280px;
-  background: #ffffff;
-  color: #1A1A1A;
+  background: var(--paper);
+  color: var(--paper-ink);
   padding: 0.75rem;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
   border-radius: var(--radius);
@@ -1172,6 +1172,9 @@
 }
 
 .design-advanced > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 600;
@@ -1184,12 +1187,19 @@
 }
 
 .design-advanced > summary::before {
-  content: '▸ ';
-  font-size: 0.7rem;
+  content: '';
+  flex: 0 0 auto;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transform-origin: center;
+  transition: transform var(--transition);
 }
 
 .design-advanced[open] > summary::before {
-  content: '▾ ';
+  transform: rotate(45deg);
 }
 
 .design-rail-label,
@@ -2001,4 +2011,33 @@
 
 .mark-colour-check .btn {
   margin-top: 0.6rem;
+}
+
+/* ── Mark do/don'ts: the defaults, visible while you write ──────────────
+   These lines used to live in the textarea's placeholder, so they were only
+   readable while the field was empty — and they had drifted from the real
+   DEFAULT_LOGO_DONTS the handoff actually writes into 02_LOGO/. They render
+   from the constant now, below the field, where they stay legible while you
+   type your own. Quiet by construction: this is reference, not an alert. */
+.logo-donts-defaults {
+  margin-top: 0.45rem;
+}
+
+.logo-donts-defaults .field-hint {
+  margin: 0 0 0.3rem;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.logo-donts-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: var(--fs-1);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.logo-donts-use {
+  margin-top: 0.45rem;
+  font-size: var(--fs-1);
 }

@@ -171,7 +171,11 @@ export function packageFiles(pack = {}, opts = {}) {
                This module stays pure and browser-free — the CLI loads it in
                Node — so the network call belongs to whoever is writing the
                zip, not to the decision about what belongs in it. */
-            files.push({ path, fetchUrl: mark.url })
+            /* `brand` travels with it so the writer can re-run the naming
+               rule on the real bytes rather than patching the extension of a
+               name the plan guessed — an SVG needs the `FullColor` suffix
+               removed too, not just the three letters after the dot. */
+            files.push({ path, fetchUrl: mark.url, markBrand: plan.brand })
           } else {
             missing.push({
               path,

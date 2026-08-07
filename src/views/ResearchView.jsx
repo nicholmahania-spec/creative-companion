@@ -290,12 +290,18 @@ export default function ResearchView({
                     and the Define chapter rail both removed, with the
                     reasoning recorded in each. Say what is still open, or
                     say it is done. */}
+                {/* The empty case used to fall through to `0 pins` — a zero
+                    scoreboard, which is the very thing the note above argues
+                    against for the starred case. Words, per G2, and the live
+                    region stays so the count is still announced as it fills. */}
                 <p className="research-status" role="status">
                   {starred > 0
                     ? starred >= 6
                       ? '★ pack full'
                       : `★ ${starred} in pack · room for ${6 - starred}`
-                    : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
+                    : deskMood.length === 0
+                      ? 'Nothing pinned yet'
+                      : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
                 </p>
                 {/* One button, never two, and only when it does something.
                     Showing both leaves one inert in most states, which is a
@@ -493,10 +499,18 @@ export default function ResearchView({
                   at boardOrder 0). Starring never reorders the wall: the ★
                   pack has its own order (packOrder), kept in the shortlist
                   strip below. */}
-              <p className="research-grid-hint">
-                Newest first. Drop an image anywhere below, or use Upload, URL
-                or Note above.
-              </p>
+              {/* Only once there is something to order. "Newest first" is an
+                  ordering statement, and on an empty wall it described the
+                  arrangement of nothing while the empty state 70px below said
+                  the same "drop or use the buttons" in different words. Two
+                  messages, one fact, two alignments. The empty state carries
+                  the invitation now; this carries the ordering. */}
+              {deskMood.length > 0 && (
+                <p className="research-grid-hint">
+                  Newest first. Drop an image anywhere below, or use Upload,
+                  URL or Note above.
+                </p>
+              )}
               <div
                 className={`research-grid-wrap${boardDropActive ? ' is-drop-active' : ''}`}
                 onDragOver={(e) => {
@@ -531,8 +545,9 @@ export default function ResearchView({
                 {deskMood.length === 0 ? (
                   <div className="empty-state empty-state-craft research-empty">
                     <p className="empty-state-subtitle">
-                      Nothing on the wall yet. Add an image, a colour, a link
-                      or a note — anything the client sent lands here too.
+                      Drop an image here, or use Upload, URL or Note above.
+                      Colours, links and notes live on the wall too — and
+                      anything the client sends lands here.
                     </p>
                   </div>
                 ) : (

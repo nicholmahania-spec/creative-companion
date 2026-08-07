@@ -5,7 +5,13 @@
  * glanceable lockup: wordmark + tagline + palette | type specimens + voice chips.
  */
 import { useMemo } from 'react'
-import { bestTextOn, fontFamilyFromLabel, normalizeHex } from '../lib/color'
+import {
+  bestTextOn,
+  fontFamilyFromLabel,
+  normalizeHex,
+  paletteIsUntouched,
+} from '../lib/color'
+import { labelForStepId } from '../lib/journey/journey'
 
 function voiceChipsFrom(project = {}) {
   const fromWords = String(project.detective?.brandWords || project.brandWords || '')
@@ -58,6 +64,11 @@ export default function DeskLiveArtboard({
     .map((c) => normalizeHex(c) || String(c || '').trim())
     .filter(Boolean)
     .slice(0, 6)
+
+  /* Asked of the palette AS PASSED, not of `swatches` — slicing to 6 and
+     normalising would make a longer real palette that merely starts with the
+     stock four look untouched. */
+  const stockPalette = paletteIsUntouched(palette)
 
   /* Paper + ink from brand when possible — mock uses cream paper / dark ink. */
   const paper =
@@ -112,7 +123,10 @@ export default function DeskLiveArtboard({
           ) : null}
         </div>
         {swatches.length > 0 ? (
-          <div className="desk-live-swatches" aria-label="Palette">
+          <div
+            className="desk-live-swatches"
+            aria-label={stockPalette ? 'Placeholder palette' : 'Palette'}
+          >
             {swatches.map((hex) => (
               <div
                 key={hex}
@@ -130,6 +144,21 @@ export default function DeskLiveArtboard({
         ) : (
           <p className="desk-live-empty-pal">No palette yet — set colours in Identity.</p>
         )}
+        {/* The "no palette" branch below can never fire for a real project —
+            every project is CREATED with the four stone defaults, so
+            `swatches.length` is never 0 (see `paletteIsUntouched`, which
+            exists because three features already made this exact mistake).
+            What a new user actually sees is four hexes presented on their
+            client's artboard with nothing marking them as ours, and the
+            reasonable reading is that the app picked their brand colours.
+
+            Say whose they are, and only while they are still the factory
+            four — the line disappears the moment any colour is set. */}
+        {stockPalette ? (
+          <p className="desk-live-pal-note">
+            Placeholder colours — set real ones on {labelForStepId('design')}.
+          </p>
+        ) : null}
       </div>
 
       <div className="desk-live-right">

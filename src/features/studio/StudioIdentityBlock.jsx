@@ -131,7 +131,16 @@ export default function StudioIdentityBlock({ prefs = {}, setPref, flashToast })
         </p>
       </div>
 
-      <p className="book-setup-state">Every page you send says: {preview}</p>
+      {/* "Every page you send says:" asserted this as fact, and the sample
+          data made that assertion false for a new user — someone who has just
+          set a password, has no studio name and one project called "My
+          project" was told their outgoing pages carry a client they have
+          never heard of. Rendering the outcome is still the point (see the
+          note at the top of this file); it just has to read as the example it
+          is. The sample name and fixed date are deliberate and unchanged. */}
+      <p className="book-setup-state">
+        For example, a page you send reads: {preview}
+      </p>
     </section>
   )
 }

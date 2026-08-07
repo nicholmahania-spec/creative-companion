@@ -24,9 +24,11 @@ import versionService, {
   versionKindLabel,
 } from '../services/versionService'
 import { messageDayLabel } from '../lib/client/messageDayLabel'
+import { familyByName, parseLabel } from '../lib/book/fontCatalog'
 import AlignmentBars from '../components/AlignmentBars'
 import AxisTagger from '../components/AxisTagger'
 import { strategyProfile } from '../lib/brand/alignment'
+import { DEFAULT_LOGO_DONTS } from '../lib/brandSystem'
 import { axesForPalette, vetoBreaches } from '../lib/brand/colourAxes'
 import { axesForTypeface, missingFonts } from '../lib/brand/typeMetrics'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
@@ -530,6 +532,50 @@ export default function DesignView({
     })
   }
 
+  /* A typeface name is typed one letter at a time, and every letter used to be
+     a saved brand decision. A designer who typed half of "Plus Jakarta Sans"
+     and moved on had `Plus Jakart` in the project, on the type page of the
+     brand book, and quoted back to their client on the handoff sheet. The
+     store is not where a half-finished word belongs.
+
+     Same shape as the hex fields above: the draft lives here while the field
+     has focus, the store keeps the last settled value, and blur commits. Blur
+     fires on unmount too, so nothing is lost by navigating away. */
+  const [faceDrafts, setFaceDrafts] = useState({})
+
+  const commitFace = (field) => {
+    const draft = faceDrafts[field]
+    setFaceDrafts((d) => {
+      const next = { ...d }
+      delete next[field]
+      return next
+    })
+    if (draft == null) return
+    /* Blank means "put it back", not "the brand has no heading face". The
+       field shows a default when empty and committing the empty string would
+       persist a decision the designer did not make. */
+    if (draft.trim()) updateBrandField(field, draft.trim())
+  }
+
+  const headingFace =
+    faceDrafts.typeHeading ?? (activeProject?.typeHeading || 'Plus Jakarta Sans Bold')
+  const bodyFace =
+    faceDrafts.typeBody ?? (activeProject?.typeBody || 'Plus Jakarta Sans Regular')
+
+  /* A face the catalogue does not know still works — a designer may have
+     licensed something the app has never heard of — so this is a note and
+     nothing is blocked. The cost is specific and worth naming: the typography
+     sheet in the client package takes its source and licence line from the
+     catalogue, so an unrecognised name ships without one. It also catches a
+     name that is simply half-typed, which is how `Plus Jakart` reached a
+     client sheet. */
+  const unknownFace = (label) => {
+    const family = parseLabel(label).family
+    return family && !familyByName(family) ? family : ''
+  }
+  const unknownHeading = unknownFace(headingFace)
+  const unknownBody = unknownFace(bodyFace)
+
   const applyFromPins = async () => {
     if (!pinCount) {
       flashToast?.('Add Research pins first (color, gradient, or image).')
@@ -818,18 +864,58 @@ export default function DesignView({
                 <label className="field-label" htmlFor="logo-donts">
                   Mark mistakes to avoid
                 </label>
+                {/* The rules used to live in this field's PLACEHOLDER, which
+                    was wrong twice over.
+
+                    They vanish on the first keystroke — guidance you can only
+                    read while you have written nothing is guidance you cannot
+                    consult while you write. And the placeholder's copy had
+                    drifted from the real defaults it claimed to show: it said
+                    "Do not stretch or distort" where DEFAULT_LOGO_DONTS says
+                    "Do not stretch, skew, or distort the mark". Those real
+                    lines are what ship to the client in 02_LOGO/, so the field
+                    was describing rules the handoff does not contain. The
+                    third line was also sliced in half by the fixed height,
+                    before any of that mattered.
+
+                    Now: the defaults are rendered from the constant, so they
+                    cannot drift again, and a button writes them in rather than
+                    asking anyone to retype what the app already knows. */}
                 <textarea
                   id="logo-donts"
-                  className="field-input"
+                  className="field-input field-textarea"
                   rows={3}
                   value={activeProject?.logoDonts || ''}
                   onChange={(e) =>
                     updateBrandField('logoDonts', e.target.value)
                   }
-                  placeholder={
-                    'One rule per line (defaults used if empty):\nDo not stretch or distort\nDo not recolor outside palette roles\nDo not place on low-contrast photos'
-                  }
+                  placeholder="One rule per line"
+                  aria-describedby="logo-donts-defaults"
                 />
+                <div className="logo-donts-defaults" id="logo-donts-defaults">
+                  <p className="field-hint">
+                    Leave this blank and the handoff uses these:
+                  </p>
+                  <ul className="logo-donts-list">
+                    {DEFAULT_LOGO_DONTS.map((rule) => (
+                      <li key={rule}>{rule}</li>
+                    ))}
+                  </ul>
+                  {!String(activeProject?.logoDonts || '').trim() && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost logo-donts-use"
+                      onClick={() =>
+                        updateBrandField(
+                          'logoDonts',
+                          DEFAULT_LOGO_DONTS.join('\n')
+                        )
+                      }
+                    >
+                      Start from these
+                    </button>
+                  )}
+                </div>
               </div>
               {activeProject?.logoImage ? (
                 <div
@@ -1717,23 +1803,30 @@ export default function DesignView({
                   <input
                     id="type-heading"
                     className="field-input"
-                    value={
-                      activeProject?.typeHeading || 'Plus Jakarta Sans Bold'
-                    }
+                    value={headingFace}
                     onChange={(e) =>
-                      updateBrandField('typeHeading', e.target.value)
+                      setFaceDrafts((d) => ({
+                        ...d,
+                        typeHeading: e.target.value,
+                      }))
                     }
+                    onBlur={() => commitFace('typeHeading')}
                   />
+                  {unknownHeading && (
+                    <p className="panel-hint">
+                      No match for “{unknownHeading}” in the app’s font list,
+                      so the handoff won’t say where to get it. Fine if it’s a
+                      font you own.
+                    </p>
+                  )}
                   <div
                     className="brand-type-display"
                     style={{
                       marginTop: '0.65rem',
-                      fontFamily: fontFamilyFromLabel(
-                        activeProject?.typeHeading || 'Plus Jakarta Sans Bold'
-                      ),
+                      fontFamily: fontFamilyFromLabel(headingFace),
                     }}
                   >
-                    {activeProject?.typeHeading || 'Plus Jakarta Sans Bold'}
+                    {headingFace}
                   </div>
                 </div>
                 <div className="field-block" style={{ marginBottom: 0 }}>
@@ -1743,24 +1836,27 @@ export default function DesignView({
                   <input
                     id="type-body"
                     className="field-input"
-                    value={
-                      activeProject?.typeBody || 'Plus Jakarta Sans Regular'
-                    }
+                    value={bodyFace}
                     onChange={(e) =>
-                      updateBrandField('typeBody', e.target.value)
+                      setFaceDrafts((d) => ({ ...d, typeBody: e.target.value }))
                     }
+                    onBlur={() => commitFace('typeBody')}
                   />
+                  {unknownBody && (
+                    <p className="panel-hint">
+                      No match for “{unknownBody}” in the app’s font list, so
+                      the handoff won’t say where to get it. Fine if it’s a
+                      font you own.
+                    </p>
+                  )}
                   <div
                     className="brand-type-body"
                     style={{
                       marginTop: '0.65rem',
-                      fontFamily: fontFamilyFromLabel(
-                        activeProject?.typeBody || 'Plus Jakarta Sans Regular'
-                      ),
+                      fontFamily: fontFamilyFromLabel(bodyFace),
                     }}
                   >
-                    {activeProject?.typeBody || 'Plus Jakarta Sans Regular'} —
-                    The quick brown fox keeps the brief honest.
+                    {bodyFace} — The quick brown fox keeps the brief honest.
                   </div>
                 </div>
               </div>

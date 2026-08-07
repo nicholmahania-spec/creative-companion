@@ -3,10 +3,17 @@
 
 /* No local header here — the app header's back affordance carries the
    cancel/return for this screen. */
+/* Left-aligned, not centred. `margin: 0 auto` with a reading-width cap put a
+   wide empty gutter down the left of this screen while every other screen in
+   the app starts at the same left edge — so moving between them shifted the
+   whole page sideways. AGENTS.md's width checklist names the pattern
+   ("Page root is not `margin-inline: auto` with a reading-width max unless the
+   owner asked for a narrow measure"). The cap stays: the form is a column of
+   short questions and has no business running 1440px wide. */
 .create-body {
   max-width: 45rem;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
   padding: var(--space-7) var(--space-6);
 }
 
@@ -38,15 +45,25 @@
   max-width: 20rem;
 }
 
-/* Micro eyebrow, shared by field labels and section legends. */
+/* Field labels and section legends.
+   Was a tracked all-caps eyebrow. AGENTS.md ("Type and chrome hierarchy")
+   allows that on settings-shaped chrome and bans it on conversational forms —
+   and this form asks "Who's it for?" and "Any deadline?", so it is the
+   conversational case. Shouting a question also flattens it: WHO'S IT FOR?
+   reads as a field name, "Who's it for?" reads as someone asking. */
 .create-label,
 .create-legend,
 .create-deliverable-legend {
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text-primary);
+}
+/* The deliverable group legends stay quiet — they name a category inside an
+   already-labelled section, one level below the questions. */
+.create-deliverable-legend {
   font-size: var(--fs-1);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .create-input {
@@ -132,6 +149,22 @@
   border: 1px solid var(--border-subtle);
 }
 
+.create-scope-note {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-3);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+/* Quieter than the scope chip above it — the chip is the answer, this is the
+   rule behind it. Plain text rather than a second boxed thing, so the eye
+   does not read two competing statements. */
+.create-scope-rule {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  max-width: 60ch;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
 .create-deliverables {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -183,12 +216,33 @@
   background: var(--text-primary);
 }
 
+/* Stacked, not a row: the primary owns the line, the alternative sits under
+   it as a sentence. Side by side at equal size they read as two exits with
+   nothing to choose between them. */
 .create-actions {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-3);
   margin-top: var(--space-7);
   padding-top: var(--space-5);
   border-top: 2px solid var(--text-primary);
+}
+
+.create-alt {
+  margin: 0;
+}
+/* Quiet enough to be clearly second, still a real 44px target. */
+.create-alt .create-send {
+  min-height: 44px;
+  padding-inline: 0;
+  border-color: transparent;
+  background: none;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+.create-alt .create-send:hover:not(:disabled) {
+  color: var(--text-primary);
 }

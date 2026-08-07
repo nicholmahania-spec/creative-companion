@@ -16,7 +16,7 @@ import {
   showClientHeadings as showClientHeadingsFor,
 } from './lib/projectGrouping'
 import MainOutlet from './app/MainOutlet'
-import { warmPathViewChunks } from './app/viewRegistry'
+import { warmPathViewChunks, RESTORABLE_VIEWS } from './app/viewRegistry'
 import versionService from './services/versionService'
 
 import { DEFAULT_PALETTE } from './lib/color'
@@ -129,6 +129,7 @@ import {
 } from './features/client-portal/ClientInbox'
 import { guessRunningTodoStage } from './lib/billing/runningTodoStages'
 import { installAutoGrow } from './lib/autoGrow'
+import { chooseLift, collectBlockers, maxLiftFor } from './lib/fabClearance'
 import { useModalFocus } from './lib/useModalFocus'
 import { useMenuKeyboard } from './lib/useMenuKeyboard'
 import useIsMobile from './lib/useIsMobile'
@@ -346,23 +347,11 @@ function App() {
   const [activeView, setActiveViewRaw] = useState(() => {
     try {
       const raw = localStorage.getItem('cc-active-view')
-      const allowed = new Set([
-        'home',
-        'flow',
-        'project',
-        'studio',
-        'brand',
-        'review',
-        'finish',
-        'spark',
-        'insights',
-        'calendar',
-        'settings',
-        'book',
-        /* 'clients' is deliberately absent upstream — noted, not fixed here:
-           refreshing on Clients drops you to Home, and the same id is missing
-           from sessionResume's ALL_VIEWS. Separate one-line fix. */
-      ])
+      /* Derived from the view registry, not restated. The hand-written list
+         that used to live here had drifted: desk, clients, assets and create
+         were all missing, so a refresh on any of them dropped you on Home —
+         and mid-intake it took a part-filled form with it. */
+      const allowed = new Set(RESTORABLE_VIEWS)
       // Legacy concept pipeline removed — never blank main
       if (raw === 'concept') return 'flow'
       if (raw && allowed.has(raw)) return raw
@@ -438,6 +427,26 @@ function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [runningTodoPromptOpen, setRunningTodoPromptOpen] = useState(false)
   const [runningTodoPanelOpen, setRunningTodoPanelOpen] = useState(false)
+  /* The To-do pill collapses to a circle while the page is moving, so the
+     area that can land on a control shrinks from ~86px to 48px, then returns
+     to its labelled shape the moment you stop. Owner's call (2026-08-07) over
+     reserving a gutter or moving it; hiding it was ruled out, since it is the
+     frictionless-capture entry point and a pill that is absent when the
+     thought arrives loses the thought.
+
+     Idle timer, not scroll direction: direction flips on every small
+     correction, which would make the pill flicker between two shapes. The
+     shrink is visual only — aria-label carries the accessible name and never
+     changes, so nothing moves for a screen reader. */
+  const [fabCompact, setFabCompact] = useState(false)
+  /* Clearance (see src/lib/fabClearance.js for the full reasoning). The pill
+     keeps its column and rests at the lowest offset in it that holds no
+     interactive element, recomputed only when the page is at rest — which is
+     the only time a tap can land. Refs, not state: this writes one CSS custom
+     property on one node and must not re-render the app on every scroll stop. */
+  const todoFabRef = useRef(null)
+  const fabLiftRef = useRef(0)
+  const fabWidthRef = useRef(0)
   /** True when the add popup was opened by an explicit "Add to list" click,
    *  so it skips the "Anything to add?" yes/no gate. */
   const [runningTodoAddDirect, setRunningTodoAddDirect] = useState(false)
@@ -1905,6 +1914,155 @@ function App() {
     // dialog state at nav time, which is all it needs.
   }, [activeView])
 
+  /* Seat the To-do pill where it steals nothing.
+   *
+   * Runs only when the page has come to rest, because that is the only moment
+   * a tap can land — during a scroll a touch stops the page, it does not
+   * activate a control. So there is no per-frame work here and nothing moves
+   * while you are moving.
+   *
+   * The home footprint is reconstructed from `bottom`/`right`/`offsetHeight`
+   * rather than read off `getBoundingClientRect`, and that is not fussiness —
+   * it is the bug this shipped with first. Both the lift and the compact width
+   * are CSS transitions, so a rect read here is mid-flight, and deriving home
+   * as "where it is now, plus the lift I asked for" compounded that error into
+   * itself on every settle: measured over a 60px-step walk the pill climbed
+   * 60px per stop until it ran out of room, and seated itself on top of inputs
+   * on the way. Offsets and `offsetHeight` are layout, which no transform or
+   * transition touches. `offsetWidth` is not — the compact state really does
+   * narrow the box — so the width keeps the widest value ever seen, because
+   * seating the 48px circle somewhere the 86px pill will not fit is the same
+   * bug 180ms later. */
+  const settleTodoFab = useCallback(() => {
+    const fab = todoFabRef.current
+    if (!fab) return
+    const height = fab.offsetHeight
+    // Desktop hides the pill entirely (header pill instead) — 0x0, nothing to do.
+    if (!height || !fab.offsetWidth) return
+
+    const own = fab.getBoundingClientRect()
+    /* Something is over the pill — a dialog backdrop, the print overlay, or the
+       pill itself stood down because a field has focus. Freeze the seat rather
+       than measure through it: an overlay reads as "nothing interactive under
+       here", so re-seating now would send the pill home to sit on whatever the
+       overlay is hiding, and there is no event to correct it when the overlay
+       goes. Keeping the last good seat is both safer and free — this is also
+       what stops a settle running on every keystroke, since the pill steps
+       aside for a focused field and so bails here. */
+    const atCentre = document.elementFromPoint(
+      Math.round(own.left + own.width / 2),
+      Math.round(own.top + own.height / 2)
+    )
+    if (!atCentre || (atCentre !== fab && !fab.contains(atCentre))) return
+
+    const cs = window.getComputedStyle(fab)
+    const width = Math.max(fab.offsetWidth, fabWidthRef.current)
+    fabWidthRef.current = width
+    /* The count badge is absolutely positioned outside the button's box, so the
+       pill's tappable area is bigger than the pill. Measured off the children
+       rather than restated from the CSS: both rects carry the same transform,
+       so the difference is the true overhang whatever the pill is doing, and it
+       cannot drift if the badge is restyled. */
+    let over = { top: 0, right: 0, bottom: 0, left: 0 }
+    for (const child of fab.children) {
+      const cr = child.getBoundingClientRect()
+      if (!cr.width || !cr.height) continue
+      over = {
+        top: Math.max(over.top, own.top - cr.top),
+        right: Math.max(over.right, cr.right - own.right),
+        bottom: Math.max(over.bottom, cr.bottom - own.bottom),
+        left: Math.max(over.left, own.left - cr.left),
+      }
+    }
+    const bottom = window.innerHeight - (parseFloat(cs.bottom) || 0) + over.bottom
+    const right = window.innerWidth - (parseFloat(cs.right) || 0) + over.right
+    const lift = fabLiftRef.current
+    const column = {
+      left: right - width - over.left - over.right,
+      right,
+      top: bottom - height - over.top - over.bottom,
+      bottom,
+      maxLift: maxLiftFor(window.innerHeight),
+    }
+    const next = chooseLift({
+      top: column.top,
+      bottom: column.bottom,
+      blockers: collectBlockers(fab, column),
+      maxLift: column.maxLift,
+      currentLift: lift,
+    })
+    /* null = nothing within reach is clear, which needs the whole column to be
+       tiled with controls. Never seen on any measured surface; home is the
+       honest fallback, since a pill parked halfway up the screen is a worse
+       failure than an overlap the user can see. */
+    const applied = next == null ? 0 : next
+    if (applied === lift) return
+    fabLiftRef.current = applied
+    fab.style.setProperty('--todo-fab-lift', `${applied}px`)
+  }, [])
+
+  /* Collapse the To-do pill while the page is moving; restore it on idle.
+     rAF-coalesced so a fast flick sets the flag once per frame rather than
+     once per scroll event, and the 450ms idle window is long enough that
+     momentum scrolling does not re-expand it mid-glide. The transition (and
+     its prefers-reduced-motion opt-out) lives in CSS beside the pill. */
+  useEffect(() => {
+    let idleTimer = 0
+    let seatTimer = 0
+    let frame = 0
+    const onScroll = () => {
+      if (!frame) {
+        frame = requestAnimationFrame(() => {
+          frame = 0
+          setFabCompact(true)
+        })
+      }
+      clearTimeout(idleTimer)
+      clearTimeout(seatTimer)
+      /* Re-seat on a much shorter fuse than the 450ms expand. Momentum scroll
+         fires events every frame, so 90ms of silence already means the page
+         has stopped — and everything between "stopped" and "re-seated" is time
+         the pill spends on top of whatever it landed over. Waiting for the
+         450ms expand left a third of a second where a tap could still be
+         taken. Seating and expanding are separate concerns on separate fuses. */
+      seatTimer = window.setTimeout(settleTodoFab, 90)
+      idleTimer = window.setTimeout(() => {
+        setFabCompact(false)
+        settleTodoFab()
+      }, 450)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      clearTimeout(idleTimer)
+      clearTimeout(seatTimer)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [settleTodoFab])
+
+  /* The other three moments the pill's footprint can stop being clear without
+     a scroll: arriving on a view, the viewport changing shape, and the page
+     itself growing or shrinking under a stationary pill (a card added, a
+     section opened, an async render landing). Without the last one the pill
+     would be correct on arrival and wrong forever after. */
+  useEffect(() => {
+    let settleTimer = 0
+    const schedule = () => {
+      clearTimeout(settleTimer)
+      settleTimer = window.setTimeout(settleTodoFab, 120)
+    }
+    schedule()
+    window.addEventListener('resize', schedule)
+    const ro =
+      typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null
+    if (ro && document.body) ro.observe(document.body)
+    return () => {
+      clearTimeout(settleTimer)
+      window.removeEventListener('resize', schedule)
+      if (ro) ro.disconnect()
+    }
+  }, [activeView, settleTodoFab])
+
   // Close sidebar project ⋯ menus on outside click / Escape. (The Tools
   // menu is a centered overlay now — its backdrop and the global Esc chain
   // close it, like every other dialog.)
@@ -3049,7 +3207,7 @@ function App() {
             aria-expanded={navOpen}
             onClick={() => setNavOpen((v) => !v)}
           >
-            <span aria-hidden="true">{navOpen ? '✕' : '☰'}</span>
+            <HeaderIcon name={navOpen ? 'close' : 'menu'} />
           </button>
           {/* Back affordance (2026 design chrome). On Home there is no back —
               the wordmark stands where it would be, as a mark, not a button
@@ -3380,6 +3538,21 @@ function App() {
               }`}
               onClick={() => advancePathOrIdentity()}
             >
+              {/* "Continue → X" is deliberate, and this was briefly renamed to
+                  "Next · X" on a bad reading of two things.
+
+                  DESIGN_GRAMMAR G1.3 is explicit: "One primary CTA per page
+                  job; path Next solid; rail Continue secondary." The pair is
+                  the rule, and the two names are how the rule distinguishes
+                  them — the footer is the solid primary, this is the quiet
+                  second route to the same stop.
+
+                  The WCAG argument for renaming was also wrong. SC 3.2.4
+                  Consistent Identification governs the same component named
+                  differently ACROSS a set of pages; both of these are already
+                  internally consistent across every path stop. Two distinct
+                  controls on one page carrying different labels is not that
+                  criterion, and citing it here overstated the case. */}
               Continue → {stepRailContinueLabel}
             </button>
           )}
@@ -3494,7 +3667,7 @@ function App() {
                 setNavOpen(false)
               }}
             >
-              <span aria-hidden="true">⚙</span>
+              <HeaderIcon name="settings" />
               {toolsLabelForView('settings')}
             </button>
             <button
@@ -3670,7 +3843,7 @@ function App() {
                   setNavOpen(false)
                 }}
               >
-                <span aria-hidden="true">▦</span>
+                <HeaderIcon name="desk" />
                 Desk
               </button>
             ) : (
@@ -4125,7 +4298,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <HeaderIcon name="print" /> {toolsLabelForView('book')}
+                <HeaderIcon name="book" /> {toolsLabelForView('book')}
               </button>
               <button
                 type="button"
@@ -4137,7 +4310,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <HeaderIcon name="print" /> {toolsLabelForView('assets')}
+                <HeaderIcon name="library" /> {toolsLabelForView('assets')}
               </button>
               <button
                 type="button"
@@ -4161,7 +4334,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">✦</span> Ideate
+                <HeaderIcon name="ideate" /> Ideate
               </button>
               <button
                 type="button"
@@ -4173,7 +4346,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">◎</span> Review
+                <HeaderIcon name="review" /> Review
               </button>
               </div>
               <div
@@ -4194,7 +4367,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">↗</span> Share Strategy form
+                <HeaderIcon name="share" /> Share Strategy form
               </button>
               <button
                 type="button"
@@ -4206,7 +4379,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">⬇</span> Export
+                <HeaderIcon name="download" /> Export
               </button>
               <button
                 type="button"
@@ -4218,7 +4391,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">$</span> Hours &amp; invoice
+                <HeaderIcon name="invoice" /> Hours &amp; invoice
               </button>
               <button
                 type="button"
@@ -4230,7 +4403,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <span aria-hidden="true">?</span> Discovery brief
+                <HeaderIcon name="question" /> Discovery brief
               </button>
               </div>
             </div>
@@ -4545,8 +4718,9 @@ function App() {
       )}
 
       <button
+        ref={todoFabRef}
         type="button"
-        className="todo-fab"
+        className={`todo-fab${fabCompact ? ' is-compact' : ''}`}
         onClick={() => setRunningTodoPanelOpen(true)}
         title="To-do list"
         aria-label={

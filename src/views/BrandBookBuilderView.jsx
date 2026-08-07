@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import useAppStore from '../store/useAppStore'
+import { labelForView } from '../lib/journey/journey'
 import {
   bookBuilderFor,
   readPaletteTokens,
@@ -100,7 +101,31 @@ function OverflowDetector({ children, onOverflow, id }) {
 /* Headline and body both offer the whole registry — see FONT_GROUPS in
    fontCatalog.js. The two hardcoded lists that used to live here named seven
    of the thirteen families and nothing kept them in step with the registry. */
-const BUILTIN_PAGE_LABELS = { cover: "Front cover", colors: "Color palette", type: "Typography", back: "Back cover" };
+/* Only the two covers live here now. The section pages name themselves from
+   SECTION_PAGES (see `sectionName` where `inner` is built) rather than being
+   looked up by React key in a map that had to be kept in step by hand — and
+   was not: `logo` and `apps` were missing from it, which is how users came to
+   see `bbb-anchor-1` and `bbb-anchor-4` in their own contents list. */
+const BUILTIN_PAGE_LABELS = { cover: "Front cover", back: "Back cover" };
+
+/**
+ * What to call a page in "In this book".
+ *
+ * One function, used by both the row and the collapse-consecutive check, so
+ * the two can never disagree about what a page is called.
+ *
+ * The tail is deliberate: a page with no name is a bug either way, but
+ * "Untitled page" is one a user can report, and `bbb-anchor-4` is one they
+ * cannot.
+ */
+function labelForPageEl(pageEl) {
+  return (
+    pageEl?.props?.pageLabel ||
+    pageEl?.props?.page?.label ||
+    BUILTIN_PAGE_LABELS[pageEl?.key] ||
+    'Untitled page'
+  )
+}
 const PAGE_SIZES = { letter: { w: 8.5, h: 11, label: "Letter (8.5 × 11 in)" }, a4: { w: 8.27, h: 11.69, label: "A4 (210 × 297 mm)" } };
 
 /* ------------------------------------------------------------- helpers */
@@ -777,7 +802,38 @@ function ColorRow({ color, onChange, onRemove, canRemove }) {
 
 /* ============================================================= MAIN */
 
-export default function BrandBookBuilderView() {
+/**
+ * Where a missing page gets filled in.
+ *
+ * `omitted` entries already carry the id of the section they came from, and
+ * `bookContent` already knows what each is waiting for — the only thing
+ * missing was the last hop. Keyed on the section id so a renamed label cannot
+ * break it, and unmatched ids simply render as text rather than a dead
+ * control, which is the honest failure for a page nobody has mapped yet.
+ *
+ * Values are VIEW IDS, never labels. Writing "Identity" here would be a
+ * second copy of a name journey.js owns, free to drift the first time a stop
+ * is renamed — journeySingleSource.test.js greps for exactly that and caught
+ * this map doing it. `labelForView` derives the words at render.
+ */
+const GAP_DESTINATION = {
+  logo: 'brand',
+  color: 'brand',
+  type: 'brand',
+  voice: 'brand',
+  story: 'project',
+  audience: 'project',
+  /* 'brief', not 'agreed' — APPENDIX_PAGES names the page "Agreed brief" but
+     ids it `brief`, and guessing from the label left that row as dead text.
+     Caught by counting actionable rows against omitted rows rather than by
+     reading the map. */
+  brief: 'project',
+  imagery: 'studio',
+  usage: 'flow',
+  handoff: 'finish',
+}
+
+export default function BrandBookBuilderView({ setActiveView }) {
   const activeProject = useAppStore((s) =>
     s.projects.find((p) => p.id === s.currentProjectId)
   )
@@ -1198,6 +1254,20 @@ export default function BrandBookBuilderView() {
   const pushContent = (pg) =>
     inner.push((i) => <ContentPage key={pg.id} page={pg} pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />);
 
+  /* The "In this book" list used to name pages by looking their React key up
+     in a hand-written map of four entries. Two of the pages it has to name —
+     logo and apps — were never in that map, so they fell through to a second
+     lookup that could not match anything (it strips `bbb-anchor-` off the id,
+     leaving a NUMBER, and searches a map keyed by names) and then to the raw
+     id. Users saw `bbb-anchor-1` and `bbb-anchor-4` in their own contents
+     list, which is an internal id in a document they present to a client.
+
+     Carrying the label on the element removes the guess entirely: the name
+     comes from SECTION_PAGES, the same source the page itself is built from,
+     so a new section cannot arrive unnamed and a rename cannot drift. */
+  const sectionName = (id) =>
+    SECTION_PAGES.find((s) => s.id === id)?.name || null;
+
   contentPages.filter((pg) => pg.kind === "foundation").forEach(pushContent);
 
   bookSectionIds(pack).forEach((id) => {
@@ -1205,6 +1275,7 @@ export default function BrandBookBuilderView() {
       inner.push((i) => (
         <ColorsPage
           key="colors"
+          pageLabel={sectionName('color')}
           pageIndex={i}
           kit={{ ...kit, ...bgFor('pageColors') }}
           style={gridMarginVar}
@@ -1216,6 +1287,7 @@ export default function BrandBookBuilderView() {
       inner.push((i) => (
         <TypePage
           key="type"
+          pageLabel={sectionName('type')}
           pageIndex={i}
           kit={{ ...kit, ...bgFor('pageType') }}
           style={gridMarginVar}
@@ -1228,6 +1300,7 @@ export default function BrandBookBuilderView() {
       inner.push((i) => (
         <LogoPage
           key="logo"
+          pageLabel={sectionName('logo')}
           pageIndex={i}
           kit={{ ...kit, ...bgFor('pageType') }}
           style={gridMarginVar}
@@ -1241,6 +1314,7 @@ export default function BrandBookBuilderView() {
       inner.push((i) => (
         <AppsPage
           key="apps"
+          pageLabel={sectionName('apps')}
           pageIndex={i}
           kit={{ ...kit, ...bgFor('pageType') }}
           style={gridMarginVar}
@@ -1579,22 +1653,18 @@ export default function BrandBookBuilderView() {
               if (!el) return null
 
               const pageEl = el.props.children
-              const label = pageEl?.props?.page
-                ? pageEl.props.page.label
-                : BUILTIN_PAGE_LABELS[pageEl?.key] ||
-                  BUILTIN_PAGE_LABELS[String(pageEl?.props?.id || '').replace(/^bbb-anchor-/, '')] ||
-                  id
+              const label = labelForPageEl(pageEl)
               const isLocked = lockedPages.has(id)
 
+              /* Consecutive pages of the same section collapse to one row.
+                 This used to derive the previous label by a DIFFERENT rule
+                 than the current one, so the two could disagree and the
+                 dedupe silently stop working — both go through
+                 labelForPageEl now, so they cannot drift. */
               if (index > 0) {
-                const prevId = effectiveOrder[index - 1]
-                const prevEl = pageElementMap.get(prevId)
-                if (prevEl) {
-                  const prevPageEl = prevEl.props.children
-                  const prevLabel = prevPageEl?.props?.page
-                    ? prevPageEl.props.page.label
-                    : BUILTIN_PAGE_LABELS[prevPageEl?.key]
-                  if (label === prevLabel) return null
+                const prevEl = pageElementMap.get(effectiveOrder[index - 1])
+                if (prevEl && label === labelForPageEl(prevEl.props.children)) {
+                  return null
                 }
               }
 
@@ -1603,49 +1673,26 @@ export default function BrandBookBuilderView() {
                   key={id}
                   className={`bbb-pagelist__in${isLocked ? ' bbb-pagelist__locked' : ''}`}
                 >
+                  {/* Name first, then what you can do to it.
+                      This row used to read [Lock][Move up][Move down][name] —
+                      three controls before the thing they act on, so you had
+                      to read past all of them to learn what you were about to
+                      move. Seven rows made 21 controls, most of them 17-22px.
+                      Now: the page name, then one disclosure holding its
+                      actions.
+
+                      A <details> rather than a popup menu on purpose. It is
+                      pointer- AND keyboard-operable with no focus-trap code to
+                      get wrong, and every action inside stays a real button —
+                      which is what WCAG 2.2 SC 2.5.7 requires. Drag-to-reorder
+                      was considered and rejected for the same criterion:
+                      drag-only fails it (F108), and these rows are far too
+                      short to drag reliably on a touch screen anyway.
+
+                      No undo toast here, deliberately. Reordering is not
+                      destructive and each move is its own inverse — the way
+                      back from "Move up" is "Move down", one row away. */}
                   <div className="bbb-page-controls">
-                    <button
-                      type="button"
-                      className={`bbb-icon-btn${isLocked ? ' bbb-icon-btn--locked' : ''}`}
-                      onClick={() => togglePageLock(id)}
-                      aria-label={isLocked ? 'Unlock page' : 'Lock page'}
-                    >
-                      {isLocked ? 'Unlock' : 'Lock'}
-                    </button>
-                    <button
-                      type="button"
-                      className={`bbb-icon-btn${index === 0 || isLocked ? ' bbb-icon-btn--disabled' : ''}`}
-                      onClick={
-                        index > 0 && !isLocked
-                          ? () => movePageUp(id, effectiveOrder)
-                          : undefined
-                      }
-                      disabled={index === 0 || isLocked}
-                      aria-label={index === 0 || isLocked ? 'Cannot move up' : 'Move up'}
-                    >
-                      Move up
-                    </button>
-                    <button
-                      type="button"
-                      className={`bbb-icon-btn${
-                        index === effectiveOrder.length - 1 || isLocked
-                          ? ' bbb-icon-btn--disabled'
-                          : ''
-                      }`}
-                      onClick={
-                        index < effectiveOrder.length - 1 && !isLocked
-                          ? () => movePageDown(id, effectiveOrder)
-                          : undefined
-                      }
-                      disabled={index === effectiveOrder.length - 1 || isLocked}
-                      aria-label={
-                        index === effectiveOrder.length - 1 || isLocked
-                          ? 'Cannot move down'
-                          : 'Move down'
-                      }
-                    >
-                      Move down
-                    </button>
                     <a
                       href={`#${id}`}
                       onClick={(e) => {
@@ -1658,23 +1705,93 @@ export default function BrandBookBuilderView() {
                     >
                       {label}
                     </a>
+                    <details className="bbb-page-actions">
+                      <summary
+                        className="bbb-page-actions__toggle"
+                        aria-label={`Actions for ${label}`}
+                      >
+                        <span aria-hidden="true">⋯</span>
+                      </summary>
+                      <div className="bbb-page-actions__menu">
+                        <button
+                          type="button"
+                          className="bbb-page-action"
+                          onClick={() => togglePageLock(id)}
+                        >
+                          {isLocked ? 'Unlock page' : 'Lock page'}
+                        </button>
+                        <button
+                          type="button"
+                          className="bbb-page-action"
+                          onClick={() => movePageUp(id, effectiveOrder)}
+                          disabled={index === 0 || isLocked}
+                        >
+                          Move up
+                        </button>
+                        <button
+                          type="button"
+                          className="bbb-page-action"
+                          onClick={() => movePageDown(id, effectiveOrder)}
+                          disabled={index === effectiveOrder.length - 1 || isLocked}
+                        >
+                          Move down
+                        </button>
+                      </div>
+                    </details>
                   </div>
                 </li>
               )
             })}
           </ul>
+          {/* Inventory, not a deficit list.
+              This was ten permanent rows headed "Not in the book yet", each a
+              pair of spans — no link, no button, nothing to press. So it
+              named ten things you had failed to do and gave you no way to do
+              any of them: the worst of both, and exactly the standing
+              scoreboard CLAUDE.md §2 rules out for this audience.
+
+              Three changes. It counts what IS in the book first, because
+              "12 of 19 in" and "7 missing" are the same fact in different
+              registers and only one of them is a state rather than a verdict.
+              It collapses, so the tail is available without being permanent.
+              And every row now goes to the stop that fills it — the entries
+              already carried the id, so this was one map away from working.
+
+              Kept OUT of the count: this is not a progress bar. No percentage,
+              no colour, no dot. */}
           {omittedPages.length > 0 && (
-            <>
-              <p className="bbb-pagelist__head">Not in the book yet</p>
-              <ul className="bbb-pagelist">
-                {omittedPages.map((o) => (
-                  <li key={o.id} className="bbb-pagelist__out">
-                    <span>{o.label}</span>
-                    <span className="bbb-pagelist__needs">needs {o.needs}</span>
-                  </li>
-                ))}
+            <details className="bbb-gaps">
+              <summary className="bbb-gaps__summary">
+                {contentPages.length} of {contentPages.length + omittedPages.length}{' '}
+                sections in the book
+              </summary>
+              <ul className="bbb-pagelist bbb-gaps__list">
+                {omittedPages.map((o) => {
+                  const toView = GAP_DESTINATION[o.id]
+                  return (
+                    <li key={o.id} className="bbb-pagelist__out">
+                      {toView && setActiveView ? (
+                        <button
+                          type="button"
+                          className="bbb-gaps__go"
+                          onClick={() => setActiveView(toView)}
+                        >
+                          <span className="bbb-gaps__label">{o.label}</span>
+                          <span className="bbb-pagelist__needs">
+                            needs {o.needs} — open {labelForView(toView)}
+                          </span>
+                        </button>
+                      ) : (
+                        <>
+                          <span className="bbb-gaps__label">{o.label}</span>
+                          <span className="bbb-pagelist__needs">needs {o.needs}</span>
+                        </>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
-            </>
+            </details>
           )}
         </Section>
         </div>
