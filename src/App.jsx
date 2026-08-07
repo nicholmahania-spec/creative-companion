@@ -128,6 +128,7 @@ import {
 } from './features/client-portal/ClientInbox'
 import { guessRunningTodoStage } from './lib/billing/runningTodoStages'
 import { installAutoGrow } from './lib/autoGrow'
+import { chooseLift, collectBlockers, maxLiftFor } from './lib/fabClearance'
 import { useModalFocus } from './lib/useModalFocus'
 import { useMenuKeyboard } from './lib/useMenuKeyboard'
 import useIsMobile from './lib/useIsMobile'
@@ -437,6 +438,14 @@ function App() {
      shrink is visual only — aria-label carries the accessible name and never
      changes, so nothing moves for a screen reader. */
   const [fabCompact, setFabCompact] = useState(false)
+  /* Clearance (see src/lib/fabClearance.js for the full reasoning). The pill
+     keeps its column and rests at the lowest offset in it that holds no
+     interactive element, recomputed only when the page is at rest — which is
+     the only time a tap can land. Refs, not state: this writes one CSS custom
+     property on one node and must not re-render the app on every scroll stop. */
+  const todoFabRef = useRef(null)
+  const fabLiftRef = useRef(0)
+  const fabWidthRef = useRef(0)
   /** True when the add popup was opened by an explicit "Add to list" click,
    *  so it skips the "Anything to add?" yes/no gate. */
   const [runningTodoAddDirect, setRunningTodoAddDirect] = useState(false)
@@ -1904,6 +1913,53 @@ function App() {
     // dialog state at nav time, which is all it needs.
   }, [activeView])
 
+  /* Seat the To-do pill where it steals nothing.
+   *
+   * Runs only when the page has come to rest, because that is the only moment
+   * a tap can land — during a scroll a touch stops the page, it does not
+   * activate a control. So there is no per-frame work here and nothing moves
+   * while you are moving.
+   *
+   * The measurement is taken against the pill's WIDEST footprint, not its
+   * current one: this fires on the same tick that ends the compact state, so
+   * `getBoundingClientRect` is mid-transition and would report the 48px circle
+   * while the pill is on its way back to the 86px labelled shape. Testing the
+   * narrower box would seat it somewhere that stops being clear 180ms later. */
+  const settleTodoFab = useCallback(() => {
+    const fab = todoFabRef.current
+    if (!fab) return
+    const rect = fab.getBoundingClientRect()
+    // Desktop hides the pill entirely (header pill instead) — 0x0, nothing to do.
+    if (rect.width < 1 || rect.height < 1) return
+
+    const lift = fabLiftRef.current
+    const width = Math.max(rect.width, fabWidthRef.current)
+    fabWidthRef.current = width
+    const bottom = rect.bottom + lift
+    const column = {
+      left: rect.right - width,
+      right: rect.right,
+      top: bottom - rect.height,
+      bottom,
+      maxLift: maxLiftFor(window.innerHeight),
+    }
+    const next = chooseLift({
+      top: column.top,
+      bottom: column.bottom,
+      blockers: collectBlockers(fab, column),
+      maxLift: column.maxLift,
+      currentLift: lift,
+    })
+    /* null = nothing within reach is clear, which needs the whole column to be
+       tiled with controls. Never seen on any measured surface; home is the
+       honest fallback, since a pill parked halfway up the screen is a worse
+       failure than an overlap the user can see. */
+    const applied = next == null ? 0 : next
+    if (applied === lift) return
+    fabLiftRef.current = applied
+    fab.style.setProperty('--todo-fab-lift', `${applied}px`)
+  }, [])
+
   /* Collapse the To-do pill while the page is moving; restore it on idle.
      rAF-coalesced so a fast flick sets the flag once per frame rather than
      once per scroll event, and the 450ms idle window is long enough that
@@ -1920,7 +1976,10 @@ function App() {
         })
       }
       clearTimeout(idleTimer)
-      idleTimer = window.setTimeout(() => setFabCompact(false), 450)
+      idleTimer = window.setTimeout(() => {
+        setFabCompact(false)
+        settleTodoFab()
+      }, 450)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
@@ -1928,7 +1987,30 @@ function App() {
       clearTimeout(idleTimer)
       if (frame) cancelAnimationFrame(frame)
     }
-  }, [])
+  }, [settleTodoFab])
+
+  /* The other three moments the pill's footprint can stop being clear without
+     a scroll: arriving on a view, the viewport changing shape, and the page
+     itself growing or shrinking under a stationary pill (a card added, a
+     section opened, an async render landing). Without the last one the pill
+     would be correct on arrival and wrong forever after. */
+  useEffect(() => {
+    let settleTimer = 0
+    const schedule = () => {
+      clearTimeout(settleTimer)
+      settleTimer = window.setTimeout(settleTodoFab, 120)
+    }
+    schedule()
+    window.addEventListener('resize', schedule)
+    const ro =
+      typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null
+    if (ro && document.body) ro.observe(document.body)
+    return () => {
+      clearTimeout(settleTimer)
+      window.removeEventListener('resize', schedule)
+      if (ro) ro.disconnect()
+    }
+  }, [activeView, settleTodoFab])
 
   // Close sidebar project ⋯ menus on outside click / Escape. (The Tools
   // menu is a centered overlay now — its backdrop and the global Esc chain
@@ -4560,6 +4642,7 @@ function App() {
       )}
 
       <button
+        ref={todoFabRef}
         type="button"
         className={`todo-fab${fabCompact ? ' is-compact' : ''}`}
         onClick={() => setRunningTodoPanelOpen(true)}
