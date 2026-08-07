@@ -3538,7 +3538,16 @@ function App() {
               }`}
               onClick={() => advancePathOrIdentity()}
             >
-              Continue → {stepRailContinueLabel}
+              {/* "Next · X", matching the in-page footer primary rather than
+                  the "Continue → X" this used to say. Same destination, same
+                  handler, same label content — only the verb differed, which
+                  is a WCAG 2.2 SC 3.2.4 Consistent Identification defect: one
+                  function must carry one name. It also cost working memory,
+                  since two names for one place is a question the user has to
+                  answer ("are these different?") before they can act.
+                  The footer form won because it is the one used in five views
+                  and because AGENTS.md puts the path-continue primary there. */}
+              Next · {stepRailContinueLabel}
             </button>
           )}
         </nav>

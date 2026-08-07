@@ -100,7 +100,31 @@ function OverflowDetector({ children, onOverflow, id }) {
 /* Headline and body both offer the whole registry — see FONT_GROUPS in
    fontCatalog.js. The two hardcoded lists that used to live here named seven
    of the thirteen families and nothing kept them in step with the registry. */
-const BUILTIN_PAGE_LABELS = { cover: "Front cover", colors: "Color palette", type: "Typography", back: "Back cover" };
+/* Only the two covers live here now. The section pages name themselves from
+   SECTION_PAGES (see `sectionName` where `inner` is built) rather than being
+   looked up by React key in a map that had to be kept in step by hand — and
+   was not: `logo` and `apps` were missing from it, which is how users came to
+   see `bbb-anchor-1` and `bbb-anchor-4` in their own contents list. */
+const BUILTIN_PAGE_LABELS = { cover: "Front cover", back: "Back cover" };
+
+/**
+ * What to call a page in "In this book".
+ *
+ * One function, used by both the row and the collapse-consecutive check, so
+ * the two can never disagree about what a page is called.
+ *
+ * The tail is deliberate: a page with no name is a bug either way, but
+ * "Untitled page" is one a user can report, and `bbb-anchor-4` is one they
+ * cannot.
+ */
+function labelForPageEl(pageEl) {
+  return (
+    pageEl?.props?.pageLabel ||
+    pageEl?.props?.page?.label ||
+    BUILTIN_PAGE_LABELS[pageEl?.key] ||
+    'Untitled page'
+  )
+}
 const PAGE_SIZES = { letter: { w: 8.5, h: 11, label: "Letter (8.5 × 11 in)" }, a4: { w: 8.27, h: 11.69, label: "A4 (210 × 297 mm)" } };
 
 /* ------------------------------------------------------------- helpers */
@@ -1198,6 +1222,20 @@ export default function BrandBookBuilderView() {
   const pushContent = (pg) =>
     inner.push((i) => <ContentPage key={pg.id} page={pg} pageIndex={i} kit={{ ...kit, ...bgFor("pageType") }} style={gridMarginVar} />);
 
+  /* The "In this book" list used to name pages by looking their React key up
+     in a hand-written map of four entries. Two of the pages it has to name —
+     logo and apps — were never in that map, so they fell through to a second
+     lookup that could not match anything (it strips `bbb-anchor-` off the id,
+     leaving a NUMBER, and searches a map keyed by names) and then to the raw
+     id. Users saw `bbb-anchor-1` and `bbb-anchor-4` in their own contents
+     list, which is an internal id in a document they present to a client.
+
+     Carrying the label on the element removes the guess entirely: the name
+     comes from SECTION_PAGES, the same source the page itself is built from,
+     so a new section cannot arrive unnamed and a rename cannot drift. */
+  const sectionName = (id) =>
+    SECTION_PAGES.find((s) => s.id === id)?.name || null;
+
   contentPages.filter((pg) => pg.kind === "foundation").forEach(pushContent);
 
   bookSectionIds(pack).forEach((id) => {
@@ -1205,6 +1243,7 @@ export default function BrandBookBuilderView() {
       inner.push((i) => (
         <ColorsPage
           key="colors"
+          pageLabel={sectionName('color')}
           pageIndex={i}
           kit={{ ...kit, ...bgFor('pageColors') }}
           style={gridMarginVar}
@@ -1216,6 +1255,7 @@ export default function BrandBookBuilderView() {
       inner.push((i) => (
         <TypePage
           key="type"
+          pageLabel={sectionName('type')}
           pageIndex={i}
           kit={{ ...kit, ...bgFor('pageType') }}
           style={gridMarginVar}
@@ -1228,6 +1268,7 @@ export default function BrandBookBuilderView() {
       inner.push((i) => (
         <LogoPage
           key="logo"
+          pageLabel={sectionName('logo')}
           pageIndex={i}
           kit={{ ...kit, ...bgFor('pageType') }}
           style={gridMarginVar}
@@ -1241,6 +1282,7 @@ export default function BrandBookBuilderView() {
       inner.push((i) => (
         <AppsPage
           key="apps"
+          pageLabel={sectionName('apps')}
           pageIndex={i}
           kit={{ ...kit, ...bgFor('pageType') }}
           style={gridMarginVar}
@@ -1579,22 +1621,18 @@ export default function BrandBookBuilderView() {
               if (!el) return null
 
               const pageEl = el.props.children
-              const label = pageEl?.props?.page
-                ? pageEl.props.page.label
-                : BUILTIN_PAGE_LABELS[pageEl?.key] ||
-                  BUILTIN_PAGE_LABELS[String(pageEl?.props?.id || '').replace(/^bbb-anchor-/, '')] ||
-                  id
+              const label = labelForPageEl(pageEl)
               const isLocked = lockedPages.has(id)
 
+              /* Consecutive pages of the same section collapse to one row.
+                 This used to derive the previous label by a DIFFERENT rule
+                 than the current one, so the two could disagree and the
+                 dedupe silently stop working — both go through
+                 labelForPageEl now, so they cannot drift. */
               if (index > 0) {
-                const prevId = effectiveOrder[index - 1]
-                const prevEl = pageElementMap.get(prevId)
-                if (prevEl) {
-                  const prevPageEl = prevEl.props.children
-                  const prevLabel = prevPageEl?.props?.page
-                    ? prevPageEl.props.page.label
-                    : BUILTIN_PAGE_LABELS[prevPageEl?.key]
-                  if (label === prevLabel) return null
+                const prevEl = pageElementMap.get(effectiveOrder[index - 1])
+                if (prevEl && label === labelForPageEl(prevEl.props.children)) {
+                  return null
                 }
               }
 
