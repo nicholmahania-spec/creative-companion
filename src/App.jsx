@@ -21,6 +21,7 @@ import versionService from './services/versionService'
 
 import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
+import { downscaleDataUrl } from './lib/moodPins'
 import { resolveStudioName } from './lib/studio/studioIdentity'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
@@ -2202,7 +2203,6 @@ function App() {
       flashToast('Could not read that image. Try another file.')
     reader.onload = async () => {
       try {
-        const { downscaleDataUrl } = await import('./lib/moodPins')
         const scaled = await downscaleDataUrl(reader.result, file.type)
         setLogoImage(scaled, ownerProjectId)
         flashMicro('Cover image updated')

@@ -11,6 +11,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
+    // Headed locally so you can watch the run; headless in CI.
+    headless: !!process.env.CI,
   },
   webServer: {
     // Force local auth gate for e2e (ignore .env.local Supabase)
