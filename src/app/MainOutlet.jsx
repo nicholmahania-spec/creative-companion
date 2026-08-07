@@ -164,6 +164,7 @@ export default function MainOutlet(p) {
     intakeClientName,
     // design / review / deliver
     studioName,
+    studioLogo,
     brandEditSection,
     setBrandEditSection,
     pathDoneCount,
@@ -492,7 +493,7 @@ export default function MainOutlet(p) {
   }
 
   if (activeView === 'assets') {
-    return wrap('assets', <AssetLibraryView navDir={navDir} cloud={CLOUD} />)
+    return wrap('assets', <AssetLibraryView navDir={navDir} cloud={CLOUD} flashToast={flashToast} />)
   }
 
   if (activeView === 'brand') {
@@ -555,6 +556,8 @@ export default function MainOutlet(p) {
         pathNextGap={pathNextGap}
         leaveBehindThin={leaveBehindThin}
         studioName={studioName}
+        studioLogo={studioLogo}
+        prefs={prefs}
         bookSetup={bookSetup}
         setActiveView={setActiveView}
         goToProcessStep={goToProcessStep}

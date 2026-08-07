@@ -18,6 +18,8 @@ import {
   buildColorSystem,
   buildCssTokens,
   logoDontsList,
+  logoDefaultsNote,
+  roleReadability,
   DEFAULT_LOGO_CLEARSPACE,
   DEFAULT_LOGO_MIN_SIZE,
 } from '../brandSystem'
@@ -43,6 +45,11 @@ export function logoUsageText(pack = {}) {
     ...logoDontsList(pack).map((d) => `  - ${d}`),
     '',
   ]
+  /* Say which of these nobody chose. The brand book learned to do this; this
+     sheet is a second client-facing copy of the same rules and was still
+     presenting the built-in defaults in the designer's voice. */
+  const defaultsNote = logoDefaultsNote(pack)
+  if (defaultsNote) lines.push(defaultsNote, '')
   if (text(pack.logoWordmark)) {
     lines.splice(2, 0, `Wordmark: ${pack.logoWordmark}`, '')
   }
@@ -67,10 +74,52 @@ export function colourSpecText(pack = {}) {
   if (sys.swatches.length) {
     lines.push('Full palette:')
     for (const s of sys.swatches) lines.push(`  ${s.hex} · ${s.rgb} · ${s.cmyk}`)
+    /* A role can be assigned a colour that is in no palette slot, and then the
+       two lists above silently disagree — four documented roles above a
+       two-colour palette, with no way for the client to reconcile them. */
+    const inPalette = new Set(sys.colors.map((h) => h.toLowerCase()))
+    const strays = sys.roleRows.filter((r) => !inPalette.has(r.hex.toLowerCase()))
+    if (strays.length) {
+      lines.push(
+        '',
+        `Assigned to a job but not in the palette above: ${strays
+          .map((r) => `${r.hex} (${r.label})`)
+          .join(', ')}`
+      )
+    }
     lines.push('')
   }
+
+  /* The pairings the brand actually uses, pass AND fail.
+     This section used to list passing pairs only, under the heading "Text pairs
+     that pass AA" — so a package went out documenting Text #737373 and
+     Background #FFB8B8 as the two roles, listing one unrelated passing pair,
+     and never saying that Text on Background is 2.89:1 and unreadable. Showing
+     only the good news reads as a clearance. */
+  const readability = roleReadability(pack.palette, pack.colorRoles)
+  const failing = readability.filter((r) => !r.ok)
+  if (readability.length) {
+    lines.push('How the roles read against each other:')
+    for (const r of readability) {
+      lines.push(
+        `  ${r.ok ? 'OK  ' : 'FAIL'} ${r.label} — ${r.fg} on ${r.bg} — ${r.ratio.toFixed(2)}:1 (needs ${r.need}:1)`
+      )
+    }
+    if (failing.length) {
+      lines.push(
+        '',
+        failing.length === 1
+          ? 'One of these pairings is below the readable minimum. Ask your'
+          : `${failing.length} of these pairings are below the readable minimum. Ask your`,
+        'designer before using it for body text — it is a contrast problem, not',
+        'a matter of taste.'
+      )
+    }
+    lines.push('')
+  }
+
   if (sys.passPairs.length) {
-    lines.push('Text pairs that pass AA (4.5:1 or better):')
+    lines.push('Palette pairs that pass AA for body text (4.5:1 or better):')
     for (const p of sys.passPairs) lines.push(`  ${p.fg} on ${p.bg} — ${p.label}`)
   } else {
     /* Said out loud rather than left as an empty heading: no passing pair is
@@ -142,12 +191,23 @@ export function packageFiles(pack = {}, opts = {}) {
           else missing.push({ path, reason: 'the brief is empty' })
           break
         case 'readme':
-          files.push({ path, content: packageReadme(pack, plan) })
+          /* Filled after the loop, not here. The README is the one file that
+             has to describe the others, and `missing` is not complete until
+             every folder has been walked — generating it in place meant a
+             package could omit the mark entirely while its own contents list
+             said nothing about it. */
+          files.push({ path, readme: true })
           break
         default:
           missing.push({ path, reason: 'nothing to put in it' })
       }
     }
+  }
+
+  const readme = files.find((f) => f.readme)
+  if (readme) {
+    readme.content = packageReadme(pack, plan, missing)
+    delete readme.readme
   }
 
   return { plan, files, missing }

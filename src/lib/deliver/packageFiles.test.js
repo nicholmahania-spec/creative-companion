@@ -96,3 +96,133 @@ describe('robustness', () => {
     expect(packageFiles().files.length).toBeGreaterThan(0)
   })
 })
+
+/**
+ * Four things a real client package got wrong, each pinned here.
+ *
+ * The package documented Text #737373 and Background #FFB8B8 as its two
+ * working roles, listed one unrelated passing pair under "Text pairs that pass
+ * AA", and never said that Text on Background is 2.89:1 — unreadable for body
+ * copy and below the floor for large text too. It also stated built-in logo
+ * defaults in the designer's voice, named a font source that was blank, and
+ * shipped a logo folder with no logo while its own contents list said nothing
+ * about the absence.
+ */
+describe('the package tells the client the bad news too', () => {
+  const drifted = {
+    projectName: 'My project',
+    palette: ['#1C1917', '#FFB8B8'],
+    colorRoles: { text: '#737373', accent: '#97908C' },
+    typeHeading: 'Plus Jakarta Sans Bold',
+    typeBody: 'Plus Jakarta Sans Regular',
+    detective: {},
+  }
+
+  it('states the failing role pairings, not only the passing palette pairs', () => {
+    const txt = colourSpecText(drifted)
+    expect(txt).toMatch(/FAIL Body text on background .*2\.89:1 \(needs 4\.5:1\)/)
+    expect(txt).toMatch(/FAIL Accent on background .*1\.92:1 \(needs 3:1\)/)
+    expect(txt).toContain('below the readable minimum')
+  })
+
+  it('names role colours that are in no palette slot', () => {
+    const txt = colourSpecText(drifted)
+    expect(txt).toContain('Assigned to a job but not in the palette above')
+    expect(txt).toContain('#97908C')
+    expect(txt).toContain('#737373')
+  })
+
+  it('says nothing about failures when every pairing is readable', () => {
+    const clean = colourSpecText({
+      ...drifted,
+      palette: ['#111111', '#FFFFFF'],
+      colorRoles: { text: '#111111', quiet: '#FFFFFF', accent: '#111111', cover: '#111111' },
+    })
+    expect(clean).not.toContain('below the readable minimum')
+    expect(clean).not.toContain('FAIL')
+  })
+
+  it('marks the logo rules nobody chose, and stays quiet once they are set', () => {
+    expect(logoUsageText(drifted)).toContain('not yet set for this brand')
+    expect(
+      logoUsageText({
+        ...drifted,
+        logoClearspace: 'Half the mark height',
+        logoMinSize: '24px',
+        logoDonts: 'Do not rotate',
+      })
+    ).not.toContain('not yet set for this brand')
+  })
+
+  it('does not point at a font source that was never recorded', () => {
+    const { files } = packageFiles(drifted, {})
+    const fonts = files.find((f) => f.path.includes('Typography')).content
+    expect(fonts).not.toContain('from the source above')
+    expect(fonts).toContain('No source was recorded')
+  })
+
+  it('says in the README that no logo file is included', () => {
+    const { files } = packageFiles(drifted, {})
+    const readme = files.find((f) => f.path.includes('README')).content
+    expect(readme).toContain('No logo file is included in this package')
+    // ...and does not imply a primary was supplied.
+    expect(readme).not.toContain('one-colour and a reverse')
+  })
+
+  it('marks a planned file that did not ship, where its name is read', () => {
+    const { files, missing } = packageFiles(drifted, { briefMarkdown: '' })
+    expect(missing.some((m) => /Brief_Agreed/.test(m.path))).toBe(true)
+    const readme = files.find((f) => f.path.includes('README')).content
+    expect(readme).toMatch(/Brief_Agreed\.md — NOT INCLUDED/)
+  })
+
+  it('keeps the usual-extras note when a mark really did ship', () => {
+    const { files } = packageFiles({ ...drifted, logoImage: PNG }, {})
+    const readme = files.find((f) => f.path.includes('README')).content
+    expect(readme).toContain('one-colour and a reverse')
+    expect(readme).not.toContain('No logo file is included')
+  })
+})
+
+/**
+ * A file over 4MB used to be dropped at the door — `continue` plus a toast the
+ * user's own `toastMode: 'quiet'` is entitled to swallow. It was never added,
+ * so it could not appear in the panel, the plan, `missing`, the README or the
+ * zip. Deliverables out of Illustrator and InDesign are routinely over 4MB, so
+ * that was the common path, not the edge.
+ */
+describe('a file too large to store is named, not forgotten', () => {
+  const base = {
+    projectName: 'My project',
+    palette: ['#1C1917', '#FAFAF9'],
+    detective: {},
+  }
+  const oversize = {
+    id: 'big', name: 'Press ready card', dataUrl: '',
+    heldBack: 'tooLarge', sizeBytes: 6.2 * 1024 * 1024, rights: 'clientOwned',
+  }
+
+  it('holds it back with the size, rather than shipping a broken entry', () => {
+    const { plan, files } = packageFiles(base, { assets: [oversize] })
+    const row = plan.excluded.find((x) => x.name === 'Press ready card')
+    expect(row).toBeTruthy()
+    expect(row.reason).toMatch(/Too large to store in the app \(6\.2MB\)/)
+    // ...and no file is planned for it at all.
+    expect(files.some((f) => /PressReadyCard/i.test(f.path))).toBe(false)
+  })
+
+  it('says so in the README the client reads', () => {
+    const { files } = packageFiles(base, { assets: [oversize] })
+    const readme = files.find((f) => f.path.includes('README')).content
+    expect(readme).toContain('Not included:')
+    expect(readme).toContain('Press ready card')
+    expect(readme).toMatch(/Too large to store/)
+  })
+
+  it('still ships an asset that is merely large but stored', () => {
+    const ok = { id: 'ok', name: 'Card', dataUrl: PNG, rights: 'clientOwned' }
+    const { plan, files } = packageFiles(base, { assets: [ok] })
+    expect(plan.excluded).toHaveLength(0)
+    expect(files.some((f) => /Card/i.test(f.path))).toBe(true)
+  })
+})

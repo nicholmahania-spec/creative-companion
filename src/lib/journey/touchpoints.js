@@ -14,6 +14,27 @@
  */
 
 /** Every mock the book can draw, in the order they should appear. */
+/**
+ * The standard trim size for each surface, for the mock captions in the book.
+ *
+ * A mock without a size is a picture; a mock with one is something a printer
+ * can quote from. These are the common specifications, not this project's
+ * decisions — anything bespoke belongs in the designer's own note beside the
+ * touchpoint. Surfaces with no meaningful fixed size are absent rather than
+ * given an invented one.
+ */
+export const TOUCHPOINT_SPECS = {
+  businessCard: '3.5 × 2 in · 85 × 55 mm',
+  print: 'A4 · 210 × 297 mm',
+  social: '1080 × 1080 px',
+  website: '1440 px wide',
+  app: '1024 px icon',
+  email: '600 px wide',
+  packaging: 'To die-line',
+  merch: 'S – XXL',
+  signage: 'To survey',
+}
+
 export const TOUCHPOINT_ORDER = [
   'businessCard',
   'print',

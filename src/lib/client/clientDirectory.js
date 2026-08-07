@@ -25,7 +25,12 @@ export function buildClientGroups(projects = []) {
   for (const p of projects) {
     const name = String(p.detective?.clientName || '').trim()
     if (!name) continue
-    const key = name.toLowerCase()
+    /* Collapse internal whitespace as well as trimming. Lower-casing alone
+       split "Sparrow's  Promise" (typed with a double space) into a second
+       client card, and the two cards then accumulated separate projects and
+       separate memory. `clientKey` in clientRecord.js normalises identically
+       — they have to agree, or a client shows as one card with two notes. */
+    const key = name.replace(/\s+/g, ' ').toLowerCase()
     if (!groups.has(key)) {
       groups.set(key, {
         name,

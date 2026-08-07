@@ -34,7 +34,6 @@ Options
   --out <dir>        output directory (default: ./cc-export)
   --only <list>      comma-separated: ${ALL_ARTEFACTS.join(', ')}
   --no-zip           skip the zip (it is included by default)
-  --no-watermark     drop the Creative Companion watermark from the PDF
   --quiet            paths only
 
 Artefacts
@@ -58,10 +57,17 @@ export async function run(argv) {
 
   const { workspace, path, label } = readWorkspace(opts.workspace)
 
-  const [exportFiles, brandSystem] = await Promise.all([
+  const [exportFiles, brandSystem, studioIdentity] = await Promise.all([
     load(MOD.exportFiles),
     load(MOD.brandSystem),
+    load(MOD.studioIdentity),
   ])
+
+  /* One studio per workspace, so this is resolved once rather than per
+     project. `resolveStudioName` is the app's own, which means the fallback to
+     the invoice identity behaves identically here — a designer who typed their
+     name into Invoice and nowhere else still gets credited on a CLI export. */
+  const studio = studioIdentity.resolveStudioName(workspace.prefs || {})
 
   const targets = opts.allProjects
     ? workspace.projects
@@ -76,7 +82,17 @@ export async function run(argv) {
 
   for (const project of targets) {
     const { tasks, moodItems } = scopeTo(workspace, project)
-    const pack = exportFiles.buildBrandPackSnapshot({ project, tasks, moodItems })
+    /* `studioName` is why a CLI export used to carry no credit at all: this
+       call omitted it, so every terminal-made book printed the project and
+       date and there was no flag that could add a name. Read from the same
+       workspace prefs the app writes, through the same resolver, so the
+       invoice-identity fallback applies here too. */
+    const pack = exportFiles.buildBrandPackSnapshot({
+      project,
+      tasks,
+      moodItems,
+      studioName: studio,
+    })
     const slug = exportFiles.slugifyFilename(pack.projectName, 'brand-pack')
     const dir = targets.length > 1 ? join(outRoot, slug) : outRoot
     mkdirSync(dir, { recursive: true })
@@ -114,7 +130,6 @@ export async function run(argv) {
     if (want('pdf') || want('zip')) {
       const result = await exportFiles.downloadBrandPackVectorPdf(pack, null, {
         returnBlobOnly: true,
-        hideWatermark: opts.noWatermark,
         book: project.bookBuilder || undefined,
       })
       if (result?.blob) {
@@ -246,7 +261,6 @@ function parseArgs(argv) {
     allProjects: false,
     out: 'cc-export',
     only: [...ALL_ARTEFACTS],
-    noWatermark: false,
     quiet: false,
     help: false,
   }
@@ -271,7 +285,21 @@ function parseArgs(argv) {
       }
       opts.only = list
     } else if (a === '--no-zip') zipOff = true
-    else if (a === '--no-watermark') opts.noWatermark = true
+    else if (a === '--no-watermark') {
+      /* Accepted only to say it is gone. Silently ignoring a flag someone has
+         in a script is worse than the no-op it replaced: the PDF changes and
+         nothing explains why. There is no watermark to drop any more — the
+         footer carries the studio's own name, or nothing. */
+      throw new WorkspaceError(
+        [
+          '--no-watermark no longer exists.',
+          '',
+          'There is no Creative Companion watermark to remove. The footer now',
+          "carries your studio's name, taken from the workspace file (Settings",
+          '→ Your studio). With no name set it prints the project and date.',
+        ].join('\n')
+      )
+    }
     else if (a === '--quiet' || a === '-q') opts.quiet = true
     else if (a.startsWith('-')) throw new WorkspaceError(`Unknown option: ${a}`)
     else if (!opts.workspace) opts.workspace = a

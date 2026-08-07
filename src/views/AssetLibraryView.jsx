@@ -30,15 +30,42 @@
 import { useMemo, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { assetShelf, shelfEmptyState } from '../lib/assets/assetShelf'
-import { ASSET_CATEGORIES, categoryLabel } from '../lib/assets/assetLibrary'
+import { ASSET_CATEGORIES, categoryLabel, ALLOWED_MIME_TYPES } from '../lib/assets/assetLibrary'
+import { ingestFiles, ingestSummary } from '../lib/assets/ingestFiles'
 import '../styles/lazy-assets.css'
 
-export default function AssetLibraryView({ navDir = 'none', cloud = false }) {
+export default function AssetLibraryView({
+  navDir = 'none',
+  cloud = false,
+  flashToast,
+}) {
   const assets = useAppStore((s) => s.assets)
   const currentProjectId = useAppStore((s) => s.currentProjectId)
+  const addAssets = useAppStore((s) => s.addAssets)
   const dropRef = useRef(null)
+  const fileRef = useRef(null)
   const [dropActive, setDropActive] = useState(false)
   const [openMenu, setOpenMenu] = useState(null)
+  const [busy, setBusy] = useState(false)
+  /* Refusals stay on screen. A toast is the wrong home for "this file was not
+     saved" — it leaves before the designer has finished reading a list, and
+     the thing it is reporting is the absence of work they believe they did. */
+  const [refused, setRefused] = useState([])
+
+  async function take(files) {
+    const list = Array.from(files || [])
+    if (!list.length) return
+    setBusy(true)
+    try {
+      const result = await ingestFiles(list, { projectId: currentProjectId })
+      if (result.accepted.length) addAssets?.(result.accepted)
+      setRefused(result.refused)
+      const line = ingestSummary(result)
+      if (line) flashToast?.(line)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const mine = useMemo(
     () => (assets || []).filter((a) => a && a.project_id === currentProjectId),
@@ -81,10 +108,48 @@ export default function AssetLibraryView({ navDir = 'none', cloud = false }) {
         onDrop={(e) => {
           e.preventDefault()
           setDropActive(false)
+          void take(e.dataTransfer?.files)
         }}
       >
-        <p className="assets-lib-drop-line">Drop finished files here</p>
+        <p className="assets-lib-drop-line">
+          {busy ? 'Filing…' : 'Drop finished files here'}
+        </p>
+        {/* A drop plane alone is a mouse-only control: unreachable by
+            keyboard, invisible to a screen reader, and impossible on a tablet.
+            The button is the same action, not a lesser fallback. */}
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          disabled={busy}
+          onClick={() => fileRef.current?.click()}
+        >
+          Choose files
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          accept={ALLOWED_MIME_TYPES.join(',')}
+          className="sr-only"
+          aria-label="Choose files to add to the asset library"
+          onChange={(e) => {
+            const files = e.target.files
+            e.target.value = ''
+            void take(files)
+          }}
+        />
       </div>
+
+      {/* Named, one per file, and not going anywhere until the next drop. */}
+      {refused.length > 0 && (
+        <ul className="assets-lib-refused" aria-label="Files that were not filed">
+          {refused.map((r, i) => (
+            <li key={`${r.name}-${i}`}>
+              <strong>{r.name}</strong> — {r.reason}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {empty ? (
         <p className="assets-lib-empty">{empty.line}</p>

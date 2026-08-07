@@ -106,6 +106,77 @@ export function uniqueNames(names = []) {
   })
 }
 
+/**
+ * The extension the actual BYTES imply, or null when they say nothing.
+ *
+ * The mime type in a data URL is a claim, and it is routinely wrong or absent —
+ * `application/octet-stream` from a file input, a mime the app never mapped.
+ * The bytes are not a claim. A real package shipped two files named `.png`
+ * whose first four bytes were `%PDF`, because the mime was unrecognised and the
+ * caller fell back to guessing `png`; a client double-clicking those gets a
+ * broken image.
+ *
+ * Decoded, not prefix-matched. Comparing leading base64 characters looks
+ * tempting and is wrong: base64 is only stable across whole three-byte groups,
+ * so `<svg ` and `<svgX` diverge mid-signature and a PNG's prefix depends on
+ * the first byte of its IHDR length. Decoding sixteen bytes costs nothing and
+ * has no such edge.
+ *
+ * @param {string} base64  a data URL, or the bare base64 payload of one
+ * @returns {string|null}
+ */
+export function extFromBytes(base64) {
+  const b = headBytes(base64, 16)
+  if (!b) return null
+  const at = (i, ...sig) => sig.every((v, k) => b[i + k] === v)
+
+  if (at(0, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return 'png'
+  if (at(0, 0xff, 0xd8, 0xff)) return 'jpg'
+  if (at(0, 0x25, 0x50, 0x44, 0x46)) return 'pdf' // %PDF
+  if (at(0, 0x47, 0x49, 0x46, 0x38)) return 'gif' // GIF8
+  /* RIFF is a container — WAV and AVI open the same way — so webp is only
+     claimed when the fourth word says so. */
+  if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'webp'
+
+  /* SVG is text, so it has no magic number. Look for the markup that starts
+     one, past any BOM or leading whitespace. */
+  const head = b
+    .map((c) => String.fromCharCode(c))
+    .join('')
+    .replace(/^\uFEFF/, '')
+    .trimStart()
+    .toLowerCase()
+  if (head.startsWith('<svg') || head.startsWith('<?xml') || head.startsWith('<!doctype svg')) {
+    return 'svg'
+  }
+  return null
+}
+
+/** First `n` decoded bytes of a base64 payload, or null if it cannot be read. */
+function headBytes(base64, n) {
+  const s = String(base64 || '')
+    .replace(/^data:[^,]*,/, '')
+    .replace(/\s+/g, '')
+  if (!s) return null
+  // Slice on a 4-character boundary so the chunk decodes on its own.
+  const chunk = s.slice(0, Math.ceil(n / 3) * 4)
+  if (chunk.length < 4) return null
+  /* `atob` only. A `Buffer` fallback was here and was wrong twice over: this is
+     browser code, so it would never have run, and naming a Node global in
+     src/** is the `no-undef` shape the lint ratchet holds at zero because it
+     is a crash that has not happened yet. `atob` is in every browser and in
+     Node since 18; this repo requires Node 24. */
+  if (typeof atob !== 'function') return null
+  try {
+    const bin = atob(chunk)
+    const out = []
+    for (let i = 0; i < Math.min(bin.length, n); i++) out.push(bin.charCodeAt(i) & 0xff)
+    return out.length ? out : null
+  } catch {
+    return null
+  }
+}
+
 /** The extension a data URL's mime type implies, or null when it is not one. */
 export function extFromDataUrl(url) {
   const m = String(url || '').match(/^data:([a-zA-Z0-9.+/-]+);base64,/)
