@@ -263,6 +263,36 @@
 /* Plane handles drop chrome via .research-artboard.is-drop-active */
 .research-grid-wrap {
   border-radius: 0;
+  position: relative;
+}
+
+/* The wall is a drop target and had no drop state. ResearchView toggles
+   `is-drop-active` on THIS element, but the only rules for that class are
+   scoped to `.research-artboard` — a different element — so dragging a file
+   over the wall changed nothing on screen. The class was styling nothing.
+   Same visual language as the artboard's version, on the element that
+   actually receives the drop. */
+.research-grid-wrap.is-drop-active {
+  border-color: var(--text-primary);
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+/* Empty, the wall was a bare strip with a sentence floating on it — no
+   boundary, no target, no invitation. `.research-empty` is `inset: 0`, so it
+   only ever fills what this element already has. Giving the plane a real
+   height and a dashed edge is what makes it read as somewhere to drop
+   something. `:has()` keeps it to the empty case: once pins are on the wall
+   they are the boundary, and a dashed box around them would be noise. */
+.research-grid-wrap:has(.research-empty) {
+  min-height: 22rem;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+
+.research-grid-wrap:has(.research-empty).is-drop-active {
+  border-style: solid;
+  border-color: var(--text-primary);
 }
 
 .research-grid {
