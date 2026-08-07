@@ -11,6 +11,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
+    // Headed locally so you can watch the run; headless in CI.
+    headless: !!process.env.CI,
     /* Opt-in escape hatch for sandboxes that carry a Chromium but not the exact
        build this Playwright pins — the launcher hard-fails on the revision in
        its path rather than using what is there, which makes the whole suite

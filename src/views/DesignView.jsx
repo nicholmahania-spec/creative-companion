@@ -56,6 +56,7 @@ import {
 } from '../lib/color'
 import { loadTypePairFont, loadBrandFamilies } from '../lib/book/fontLoader'
 import { chosenDirection } from '../lib/decisionLog'
+import { downscaleDataUrl } from '../lib/moodPins'
 import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
 import ReadabilityRows from '../features/palette/ReadabilityRows'
 import MarkColourCheck from '../features/brand/MarkColourCheck'
@@ -1012,9 +1013,6 @@ export default function DesignView({
                         flashToast('Could not read that image. Try another file.')
                       reader.onload = async () => {
                         try {
-                          const { downscaleDataUrl } = await import(
-                            '../lib/moodPins'
-                          )
                           const scaled = await downscaleDataUrl(
                             reader.result,
                             file.type
