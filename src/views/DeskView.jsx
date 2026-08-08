@@ -3,7 +3,7 @@
  *
  * Grid matches Studio.dc.html:
  *   main (1fr): artboard → starred pack → brief
- *   right (340px): Client strip (top) → What's next → Done → This week
+ *   right (340px): Client strip (top) → What's next → Workspaces → Yours only
  *
  * Client strip sits above What's next (adhd-executive-function-advisor,
  * 2026-08-03): object permanence — under Done = invisible. Empty = short
@@ -32,7 +32,6 @@ import {
   buildBrandPackSnapshot,
   packReadiness,
 } from '../lib/book/exportFiles'
-import { weekFromWorkLog, hoursLoggedWords } from '../lib/billing/workWeek'
 import { paletteIsUntouched } from '../lib/color'
 import { stopEstablished } from '../lib/journey/stopEstablished'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
@@ -271,7 +270,6 @@ export default function DeskView({
     .slice(0, 3)
   const unreadClient = activity.some((a) => a.unread)
 
-  const week = weekFromWorkLog(project?.workLog || [])
 
   const gapTitle = gapRow ? gapRow.label : ''
 
@@ -358,16 +356,12 @@ export default function DeskView({
                   Edit identity
                 </button>
               ) : null}
-              {typeof onOpenAssets === 'function' &&
-                !(packHandoffReady && !gapRow) && (
-                  <button
-                    type="button"
-                    className="desk-panel-link desk-panel-link-quiet"
-                    onClick={onOpenAssets}
-                  >
-                    Open {labelForStepId('deliver')}
-                  </button>
-                )}
+              {/* The quiet "Open Assets" link was here — a third action in a
+                  row that already carries a primary and a secondary, and now
+                  a duplicate of the Assets workspace card below. One route.
+                  The PRIMARY still becomes "Open Assets — pack ready" when
+                  the pack is ready and there is no gap; that is this state's
+                  next action, not a second way to the same place. */}
             </div>
           </section>
 
@@ -648,32 +642,13 @@ export default function DeskView({
               because it must be reachable without being in the way. */}
           <YoursOnlyPanel project={project} />
 
-          <section className="desk-panel desk-week" aria-label="This week">
-            <div className="desk-panel-head">
-              <span className="desk-eyebrow">This week</span>
-            </div>
-            <div className="desk-week-bars" role="img" aria-label="Hours this week">
-              {week.days.map((d, i) => (
-                <div
-                  key={`${d.day}-${i}`}
-                  className={`desk-week-col${d.isToday ? ' is-today' : ''}`}
-                >
-                  <div
-                    className={`desk-week-bar${d.fill ? ' is-filled' : ''}`}
-                    style={{ height: `${d.hPx}px` }}
-                    title={d.fill ? `${d.hours}h` : undefined}
-                  />
-                  <span className="desk-week-day">{d.day}</span>
-                  {/* Which week, and which column is now. Seven bare letters
-                      with two repeated pairs identified neither. */}
-                  <span className="desk-week-date">{d.date}</span>
-                </div>
-              ))}
-            </div>
-            <p className="desk-week-total">
-              {hoursLoggedWords(week.total)}
-            </p>
-          </section>
+          {/* "This week" hours bars were here. Removed 2026-08-08 (owner).
+              PRD §11 defers the time view outright — "I have no concept of
+              time and numbers mean nothing" — and seven bars of logged hours
+              answer none of the four questions this screen exists for. It is
+              NOT replaced: the space belongs to nothing.
+              `weekFromWorkLog` / `hoursLoggedWords` stay in the module; Home
+              still reads them. */}
         </aside>
       </div>
     </div>

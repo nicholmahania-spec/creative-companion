@@ -60,8 +60,19 @@ workspace on a phone — which is why the fix was to give the Desk real
 navigation, not to keep the duplicate. Verified at 390px: all five cards
 navigate, no horizontal overflow.
 
-**Still open on the dashboard:** the "This week" hours bars (PRD §11 defers
-the time view), and `Open Assets` appears twice in the artboard foot.
+**Both remaining items done (owner, 2026-08-08).** The "This week" hours bars
+are removed — PRD §11 defers the time view, and seven bars of logged hours
+answer none of the four questions this screen exists for. Not replaced; the
+space belongs to nothing. `weekFromWorkLog` / `hoursLoggedWords` stay in
+`billing/workWeek` because Home still reads them.
+
+The artboard foot's quiet "Open Assets" link is gone — a third action in a row
+that already had a primary and a secondary, and a duplicate of the Assets
+workspace card. The primary still becomes "Open Assets — pack ready" when the
+pack is ready and there is no gap; that is that state's next action, not a
+second route.
+
+**The dashboard pass is complete.**
 
 **Deferred by the owner:** Touchpoints' first fold, PRD §12.
 
