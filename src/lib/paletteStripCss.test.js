@@ -4,7 +4,7 @@
  * THE DEFECT THIS PINS, measured in the built app. `.direction-palette` — the
  * row of brand swatches on the artboard, and the row you click to give a color
  * its job on Identity → Color — declared `display: flex` in `lazy-ideate.css`,
- * a sheet only `SparkView` imports. Its children, `.palette-swatch-btn` and
+ * a sheet only `SparkView` imports. Its children, `.palette-swatch-cell` and
  * `.palette-role-swatch-btn`, declared `flex: 1` in `lazy-design.css`.
  *
  * On a cold load of Identity the container was therefore a plain block and the
@@ -47,7 +47,7 @@ const declaredIn = (sel) =>
 describe('the palette strip', () => {
   it('declares the container and its swatches in one sheet', () => {
     const container = declaredIn('.direction-palette')
-    const swatches = declaredIn('.palette-swatch-btn')
+    const swatches = declaredIn('.palette-swatch-cell')
     expect(container.length).toBeGreaterThan(0)
     expect(swatches.length).toBeGreaterThan(0)
     /* Not "both are somewhere" — the same sheet, so a view that has one
@@ -75,5 +75,12 @@ describe('the palette strip', () => {
 
   it('leaves no copy behind in the sheet it came from', () => {
     expect(sheets['lazy-ideate.css']).not.toContain('.direction-palette')
+  })
+
+  it('ships the Color tool’s swatch button from the same sheet', () => {
+    // The one that is actually a control. If it drifts to another sheet it
+    // loses its flex parent the same way the cells did.
+    const [sheet] = declaredIn('.direction-palette')
+    expect(declaredIn('.palette-role-swatch-btn')).toContain(sheet)
   })
 })

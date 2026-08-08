@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { clientFacingName } from './clientRecord'
+import { clientFacingName, wordmarkName } from './clientRecord'
 import { buildBrandPackSnapshot } from '../book/exportFiles'
 
 const pack = (project) =>
@@ -77,5 +77,59 @@ describe('the pack the client receives', () => {
     }
     pack(project)
     expect(project.name).toBe('My project')
+  })
+})
+
+/**
+ * WHOSE NAME GOES ON A WORDMARK LOCKUP.
+ *
+ * The four lockups on the direction sheet read `logoWordmark || project.name`
+ * and consulted `detective.clientName` nowhere, so the sheet's own heading
+ * said the client's name while the four lockups directly under it said the
+ * designer's internal job label — on a sheet the client receives.
+ */
+describe('wordmarkName', () => {
+  it('uses the client’s own answer when there is one', () => {
+    expect(
+      wordmarkName({
+        name: 'My project',
+        logoWordmark: 'EMBER',
+        detective: { clientName: 'Ember & Oak' },
+      })
+    ).toBe('Ember & Oak')
+  })
+
+  it('uses the typed wordmark when the brief has no client name', () => {
+    expect(
+      wordmarkName({ name: 'My project', logoWordmark: 'EMBER', detective: {} })
+    ).toBe('EMBER')
+  })
+
+  it('falls back to the job name when neither exists', () => {
+    // Not ideal, but an empty lockup is worse than an internal one.
+    expect(wordmarkName({ name: 'My project' })).toBe('My project')
+  })
+
+  it('has a last resort, and it can be overridden', () => {
+    expect(wordmarkName({})).toBe('Wordmark')
+    expect(wordmarkName({}, '')).toBe('')
+  })
+
+  it('ignores whitespace-only values at every step', () => {
+    expect(
+      wordmarkName({
+        name: 'My project',
+        logoWordmark: '  ',
+        detective: { clientName: '   ' },
+      })
+    ).toBe('My project')
+  })
+
+  /* The heading and the lockups sit inches apart on one sheet. They resolve
+     through different helpers because a wordmark is a decision of its own,
+     so this pins the case where they must still agree. */
+  it('agrees with the sheet heading when no wordmark was typed', () => {
+    const project = { name: 'My project', detective: { clientName: 'Ember & Oak' } }
+    expect(wordmarkName(project)).toBe(clientFacingName(project))
   })
 })

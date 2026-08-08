@@ -25,6 +25,7 @@ import versionService, {
   versionKindLabel,
 } from '../services/versionService'
 import { messageDayLabel } from '../lib/client/messageDayLabel'
+import { wordmarkName } from '../lib/client/clientRecord'
 import { familyByName, parseLabel } from '../lib/book/fontCatalog'
 import AlignmentBars from '../components/AlignmentBars'
 import AxisTagger from '../components/AxisTagger'
@@ -187,6 +188,12 @@ export default function DesignView({
   const concepts = Array.isArray(activeProject?.logoConcepts)
     ? activeProject.logoConcepts
     : EMPTY_CONCEPTS
+
+  /* What the lockups print when the Wordmark field is blank. */
+  const wordmarkFallback = wordmarkName(
+    { ...(activeProject || {}), logoWordmark: '' },
+    ''
+  )
 
   /* The client's own existing artwork, shown on Mark when it is relevant.
      `existingAssetsFiles` is the array-shaped attachment the brief collects
@@ -1051,9 +1058,15 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('logoWordmark', e.target.value)
                   }
+                  /* Says what the lockups will actually show when this is
+                     blank. It used to promise `project.name` while the lockups
+                     used the same field — both wrong once the client has
+                     answered "Client / company name". `wordmarkFallback` is
+                     `wordmarkName` with this field taken out of the running,
+                     which is exactly what the lockups fall back to. */
                   placeholder={
-                    activeProject?.name
-                      ? `Defaults to “${activeProject.name}”`
+                    wordmarkFallback
+                      ? `Defaults to “${wordmarkFallback}”`
                       : 'Brand wordmark'
                   }
                 />

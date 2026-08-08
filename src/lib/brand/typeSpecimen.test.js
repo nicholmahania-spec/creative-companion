@@ -59,6 +59,45 @@ describe('the copy', () => {
     expect(text).toBe('Untitled')
   })
 
+  /**
+   * THE ONE PLACE AN EMPTY PROJECT WAS DRESSED AS A DECIDED ONE.
+   *
+   * The Display rung resolved `clientName || logoWordmark || name` and marked
+   * whatever won as `own: true`. On a new project that is the internal job
+   * label — "My project" — set at 44px in full ink above four correctly
+   * greyed rungs. `project.name` is how the designer finds the job in a list;
+   * it is not a word the brand chose.
+   */
+  it('does not call the internal job name the brand’s own word', () => {
+    const r = specimenLine('display', { name: 'My project', detective: {} })
+    expect(r.text).toBe('My project')
+    expect(r.own).toBe(false)
+  })
+
+  it('does call the client’s answer and the wordmark the brand’s own', () => {
+    expect(
+      specimenLine('display', {
+        name: 'My project',
+        detective: { clientName: 'Ember & Oak' },
+      })
+    ).toMatchObject({ text: 'Ember & Oak', own: true })
+    expect(
+      specimenLine('display', {
+        name: 'My project',
+        logoWordmark: 'EMBER',
+        detective: {},
+      })
+    ).toMatchObject({ text: 'EMBER', own: true })
+  })
+
+  it('still claims the line, so a lower rung cannot repeat it', () => {
+    // A stand-in is not filler: it is this project's text, and printing it
+    // twice would be the duplicate the bench exists to avoid.
+    const rungs = typeSpecimen({ name: 'Quiet confidence', detective: {} })
+    const texts = rungs.map((x) => x.text)
+    expect(new Set(texts).size).toBe(texts.length)
+  })
+
   it('marks stand-in copy as not the brand’s own', () => {
     // Nothing written yet: every line is filler and must say so, or filler
     // reads as a decision somebody made.

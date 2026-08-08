@@ -728,23 +728,23 @@
   gap: 0;
 }
 
-.palette-swatch-btn,
+/* The sheet's cell and the Color tool's button share every box property and
+   differ only in whether they are a control. The sheet REPORTS the roles —
+   `.palette-swatch-cell` was `.palette-swatch-btn`, a <button> wired to a
+   prop no caller passed, so it looked like the Color tool's picker and did
+   nothing. Keep them in one rule so the strip cannot render at two heights. */
+.palette-swatch-cell,
 .palette-role-swatch-btn {
   flex: 1;
   min-height: 52px;
   border: none;
   padding: 0;
-  cursor: pointer;
   position: relative;
   background: #ccc;
 }
 
-.palette-swatch-btn:disabled {
-  cursor: default;
-}
-
-.artboard-role-hint {
-  margin: 0 0 0.45rem;
+.palette-role-swatch-btn {
+  cursor: pointer;
 }
 
 .pack-view .pack-preview-artboard {

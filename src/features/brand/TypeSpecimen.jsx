@@ -57,8 +57,8 @@ export default function TypeSpecimen({ project = {}, paper, ink }) {
            mixes the brand's own sentences with filler invites reading the
            filler as a decision somebody made. */
         <p className="field-hint type-specimen-note">
-          Greyed lines are stand-in text — they fill in as you write the
-          tagline, promise and positioning on the sheet.
+          Greyed lines are stand-in text — they fill in as the brand gets a
+          name, a tagline, a promise and a positioning line.
         </p>
       )}
     </div>

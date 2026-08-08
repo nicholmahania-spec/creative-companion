@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
   bestTextOn,
   fontFamilyFromLabel,
@@ -12,14 +12,29 @@ import { pinFaceStyle } from '../lib/moodPins'
 import { creditedFooter } from '../lib/book/exportFiles'
 import { hasAnswer } from '../lib/brand/directionValue'
 import { BRIEF_PROVENANCE, effectiveWord } from '../lib/brand/briefWords'
-import { clientFacingName } from '../lib/client/clientRecord'
-/* The artboard's own rules — the palette strip, its swatches, the role hint —
-   live in `lazy-design.css`. Import them here rather than relying on the route:
+import { clientFacingName, wordmarkName } from '../lib/client/clientRecord'
+import { IDENTITY_SUBSTEPS } from '../lib/journey/identitySubsteps'
+/* The artboard's own rules — the palette strip, its swatch cells, the lockup
+   grid — live in `lazy-design.css`. Import them here rather than relying on the route:
    Review and the export modal render this component too, and neither of them
    loads Identity's sheet. */
 import '../styles/lazy-design.css'
 
 const formatCmyk = (hex) => colorSpec(hex)?.cmyk || ''
+
+/**
+ * Where the mark's reasoning is actually written.
+ *
+ * This line used to read "Set logo notes in Edit → Logo". There is no Edit
+ * mode and no Logo substep — Identity is Mark / Color / Type / Handover — and
+ * `logoDirection` is now the chosen concept's `why`, mirrored by the store.
+ * So the sheet was sending the designer to a destination that does not exist,
+ * on all four screens. The substep label comes from `IDENTITY_SUBSTEPS` rather
+ * than being typed, so a rename moves this with it.
+ */
+const MARK_RATIONALE_HINT = `Write it on ${
+  IDENTITY_SUBSTEPS.find((s) => s.id === 'logo')?.label || 'Mark'
+} — it is the reason on your chosen concept.`
 
 /**
  * A kicker that says where the line under it came from.
@@ -143,9 +158,7 @@ export default function BrandArtboard({
   onPromiseChange,
   onProofChange,
   onPersonalityChange,
-  onRoleAssign,
 }) {
-  const [assignRole, setAssignRole] = useState('cover')
   const autoRoles = useMemo(() => mapPaletteRoles(palette), [palette])
   const roles = {
     cover: normalizeHex(project.colorRoles?.cover) || autoRoles.cover,
@@ -270,51 +283,29 @@ export default function BrandArtboard({
         placeholder="How we sound"
       />
 
+      {/* THE SHEET REPORTS THE ROLES. IT DOES NOT ASSIGN THEM.
+          There used to be an arming row here — "Assign role, then click a
+          swatch" plus nine chips — and it did nothing at all: `onRoleAssign`
+          was declared as a prop and passed by no caller, so every click was
+          `undefined?.()`. Measured, it cost 261px at 1440 and 413px at 390 on
+          all four Identity screens, and on Color it put a second, inert set of
+          nine role chips about 900px from the live one, with its own armed
+          state. Assigning a color role happens in one place: the Color tool. */}
       <div className="kicker">Palette roles</div>
-      {editable && (
-        <p className="surface-meta artboard-role-hint">
-          Assign role, then click a swatch:{' '}
-          {ROLE_KEYS.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              className={`role-pick-chip${
-                assignRole === r.id ? ' is-active' : ''
-              }`}
-              onClick={() => setAssignRole(r.id)}
-            >
-              <i style={{ background: roles[r.id] }} />
-              {r.label}
-            </button>
-          ))}
-        </p>
-      )}
-      <div className={`direction-palette${editable ? ' is-clickable' : ''}`}>
+      <div className="direction-palette">
         {(palette || []).map((c, i) => {
           const labels = roleForSwatch(c)
           return (
-            <button
+            <div
               key={`${c}-${i}`}
-              type="button"
-              className="palette-swatch-btn"
+              className="palette-swatch-cell"
               style={{ background: c }}
-              title={
-                editable
-                  ? `Set as ${assignRole}${
-                      labels.length ? ` · now: ${labels.join(', ')}` : ''
-                    }`
-                  : c
-              }
-              disabled={!editable}
-              onClick={() => {
-                if (!editable) return
-                onRoleAssign?.(assignRole, normalizeHex(c) || c)
-              }}
+              title={labels.length ? `${c} · ${labels.join(', ')}` : c}
             >
               {labels.length > 0 && (
                 <span className="swatch-role-badge">{labels[0][0]}</span>
               )}
-            </button>
+            </div>
           )
         })}
       </div>
@@ -404,9 +395,7 @@ export default function BrandArtboard({
               <span className="logo-lockup-mark-fallback" aria-hidden="true" />
             )}
             <strong className="logo-lockup-wordmark">
-              {project.logoWordmark?.trim() ||
-                project.name ||
-                'Wordmark'}
+              {wordmarkName(project)}
             </strong>
           </div>
         ))}
@@ -417,7 +406,7 @@ export default function BrandArtboard({
         <>
           <p className="direction-brief" style={{ marginTop: '0.65rem' }}>
             {project.logoDirection ||
-              (editable ? 'Set logo notes in Edit → Logo' : '—')}
+              (editable ? MARK_RATIONALE_HINT : '—')}
           </p>
           {project.logoClearspace?.trim() ? (
             <p className="surface-meta">{project.logoClearspace}</p>

@@ -64,7 +64,17 @@ const sameLine = (v) => clean(v).toLowerCase().replace(/\s+/g, ' ')
  */
 const RUNG_SOURCES = {
   display: (p) => [
-    clean(p.detective?.clientName) || clean(p.logoWordmark) || clean(p.name),
+    /* The client's own answer, then the wordmark the designer typed: both are
+       brand facts, so a line from either IS the brand's word. */
+    clean(p.detective?.clientName),
+    clean(p.logoWordmark),
+    /* `project.name` is the internal job label — "My project" on a new one.
+       It is still the best thing to show, because an empty display rung is
+       worse than a stand-in, but it is NOT the brand's own word and must not
+       be inked as one. This was the only place in the app where an empty
+       project was dressed as a decided one: 44px of "My project" in full ink
+       above four correctly greyed rungs. */
+    { value: clean(p.name), own: false },
   ],
   heading: (p) => [clean(p.tagline)],
   subhead: (p) => [
@@ -123,16 +133,21 @@ const RUNG_FALLBACK = {
  */
 export function specimenLine(rungId, project = {}, taken) {
   const sources = RUNG_SOURCES[rungId]
-  if (!sources) return { text: '', own: false }
+  if (!sources) return { text: '', own: false, sourced: false }
   const limit = RUNG_CLIP[rungId] || 180
   for (const raw of sources(project || {})) {
-    const v = clean(raw)
+    /* A source may be a bare string — the brand's own word — or
+       `{ value, own: false }` for real project text that is not a brand fact.
+       The distinction only changes the `own` flag; both are real content and
+       both claim their line so a later rung cannot repeat it. */
+    const entry = raw && typeof raw === 'object' ? raw : { value: raw }
+    const v = clean(entry.value)
     if (!v) continue
     const text = clip(v, limit)
     if (taken?.has(sameLine(text))) continue
-    return { text, own: true }
+    return { text, own: entry.own !== false, sourced: true }
   }
-  return { text: RUNG_FALLBACK[rungId] || '', own: false }
+  return { text: RUNG_FALLBACK[rungId] || '', own: false, sourced: false }
 }
 
 /**
@@ -150,7 +165,10 @@ export function typeSpecimen(project = {}) {
   const taken = new Set()
   return TYPE_RUNGS.map((r) => {
     const line = specimenLine(r.id, project, taken)
-    if (line.own) taken.add(sameLine(line.text))
+    /* Claimed on `sourced`, not on `own`: a project's own name shown as a
+       stand-in is still that project's text, and a lower rung repeating it
+       would be the duplicate this set exists to prevent. */
+    if (line.sourced) taken.add(sameLine(line.text))
     return {
       ...r,
       faceLabel: r.face === 'heading' ? heading : body,

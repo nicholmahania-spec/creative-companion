@@ -40,7 +40,11 @@ async function toIdentity(page, name) {
 }
 
 async function expectClickableSwatches(page, tag) {
-  for (const sel of ['.palette-role-swatch-btn', '.palette-swatch-btn']) {
+  /* Both strips must have real width — that is the CSS-ownership bug. Only
+     one of them is a control: the sheet reports the roles, the Color tool
+     assigns them. `.palette-swatch-cell` used to be a <button> wired to a
+     prop no caller passed, which is why the shapes are checked separately. */
+  for (const sel of ['.palette-role-swatch-btn', '.palette-swatch-cell']) {
     const loc = page.locator(sel)
     const n = await loc.count()
     expect(n, `${tag}: no ${sel}`).toBeGreaterThan(0)
@@ -50,6 +54,13 @@ async function expectClickableSwatches(page, tag) {
          Width is what the missing flex parent took away. */
       expect(box?.width, `${tag}: ${sel}[${i}] width`).toBeGreaterThan(8)
     }
+  }
+  const cells = page.locator('.palette-swatch-cell')
+  for (let i = 0; i < (await cells.count()); i += 1) {
+    expect(
+      await cells.nth(i).evaluate((el) => el.tagName),
+      `${tag}: sheet swatch is a control`
+    ).toBe('DIV')
   }
 }
 
@@ -79,6 +90,37 @@ test('a cold load of Identity → Color can assign a role by clicking a swatch',
   expect(JSON.stringify(await rolesInStore(page))).not.toBe(
     JSON.stringify(before)
   )
+})
+
+test('role assignment lives in exactly one place', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await toIdentity(page, 'One Picker')
+  await openIdentitySubstep(page, 'colors')
+  await page.waitForTimeout(500)
+
+  const sheet = page.locator('#system-artboard')
+  // The dead arming row is gone from the sheet, on the screen that had two.
+  expect(await sheet.locator('.role-pick-chip').count()).toBe(0)
+  expect(await sheet.locator('button').count()).toBe(0)
+  // ...and the sheet still reports which job each color holds.
+  expect(await sheet.locator('.palette-swatch-cell').count()).toBeGreaterThan(0)
+
+  // The Color tool keeps its picker, and it is the only one on the page.
+  const tool = page.locator('.design-edit-column')
+  const toolChips = await tool.locator('.role-pick-chip').count()
+  expect(toolChips).toBeGreaterThan(0)
+  expect(await page.locator('.role-pick-chip').count()).toBe(toolChips)
+})
+
+test('the sheet names no destination that does not exist', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await toIdentity(page, 'Live Pointer')
+  for (const id of ['logo', 'colors', 'type', 'handover']) {
+    await openIdentitySubstep(page, id)
+    await page.waitForTimeout(300)
+    const text = await page.locator('#system-artboard').innerText()
+    expect(text, `${id}: dead pointer`).not.toMatch(/Edit\s*(→|->)\s*Logo/)
+  }
 })
 
 test('the swatches survive a phone and a keyboard', async ({ page }) => {
