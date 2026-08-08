@@ -2078,6 +2078,15 @@
   font-style: italic;
 }
 
+/* The route to where a brief-owned line is actually written.
+   A text link, not a button: it is navigation, not a decision, and it must
+   not compete with the design controls in the column beside it. */
+.artboard-word-home {
+  display: inline-block;
+  margin-top: var(--space-1);
+  font-size: var(--fs-1);
+}
+
 .artboard-brief-input,
 .artboard-tagline-input {
   border: 1px solid var(--border-subtle);

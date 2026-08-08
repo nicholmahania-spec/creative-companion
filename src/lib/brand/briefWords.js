@@ -67,6 +67,48 @@ export const BRIEF_WORD_SOURCES = {
      designer's own, and an empty box is the honest state for them. */
 }
 
+/**
+ * The lines Identity READS and does not write.
+ *
+ * `BRIEF_WORD_SOURCES` says where a line can fall back to. That is not the
+ * same question as who OWNS it, and conflating them is what put five
+ * strategic textareas on the direction sheet: the sheet resolved the client's
+ * answer correctly and then presented it inside a box, which says "Identity
+ * decides this" to everyone who looks at it. Worse when nobody had answered —
+ * an empty box on a design workspace asking the designer to write the
+ * client's tone of voice.
+ *
+ * For these five the brief asks the SAME question the sheet was asking. There
+ * is nothing for Identity to add, so the sheet reports them and points at
+ * Strategy. DESIGN_GRAMMAR.md settled this: "Does this already exist in the
+ * brief? → read it, never re-ask it."
+ *
+ * `positioning` is deliberately NOT here even though it has a fallback. The
+ * brief asks "What does your business do?" — `usp`, a description — and a
+ * positioning statement is a synthesis the designer writes from it, which is
+ * why `positioningOwnership.test.js` exists and why `FIELD_HOMES.positioning`
+ * points at the sheet. A fallback is not the same fact.
+ *
+ * `tagline` and `doUse` have no brief source at all and stay the designer's.
+ */
+export const BRIEF_OWNED_WORDS = Object.freeze([
+  'voice',
+  'messagingPromise',
+  'messagingProof',
+  'messagingPersonality',
+  'dontUse',
+])
+
+/** True when Identity reports this line rather than authoring it. */
+export function isBriefOwned(field) {
+  return BRIEF_OWNED_WORDS.includes(field)
+}
+
+/* The NAME of that place is deliberately not here. Path labels have one
+   source — `labelForStepId` — and `journeySingleSource.test.js` fails any
+   module that restates one, which is how this literal was caught. The caller
+   that renders the link resolves the label. */
+
 const clean = (v) => String(v ?? '').trim()
 
 /**

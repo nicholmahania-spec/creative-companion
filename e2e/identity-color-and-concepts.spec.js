@@ -101,7 +101,14 @@ test('role assignment lives in exactly one place', async ({ page }) => {
   const sheet = page.locator('#system-artboard')
   // The dead arming row is gone from the sheet, on the screen that had two.
   expect(await sheet.locator('.role-pick-chip').count()).toBe(0)
-  expect(await sheet.locator('button').count()).toBe(0)
+  /* This used to assert the sheet had NO buttons at all, as a blunt way of
+     saying "no role control here". The sheet now carries "Edit in Strategy"
+     links on the lines the brief owns, which is navigation, not a control
+     over the palette. So the rule is stated properly instead: whatever
+     buttons the sheet has, every one of them is one of those links. */
+  const sheetButtons = sheet.locator('button')
+  const allowed = sheet.locator('button.artboard-word-home')
+  expect(await sheetButtons.count()).toBe(await allowed.count())
   // ...and the sheet still reports which job each color holds.
   expect(await sheet.locator('.palette-swatch-cell').count()).toBeGreaterThan(0)
 
