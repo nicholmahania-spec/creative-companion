@@ -2825,9 +2825,22 @@ const useAppStore = create(
                  "yes, that one" — the app can see it is the only candidate.
                  Adding a second does NOT move the star. */
               const first = list.length === 0
+              /* A project that wrote a direction before concepts existed has
+                 that sentence in `logoDirection` and nowhere the designer can
+                 see it. Adopt it into the first concept rather than leaving it
+                 behind the mirror: once it lives on a concept the mirror can be
+                 exact, and the text is visible and editable instead of being a
+                 value only the brand book knew about. */
+              const inherited = first ? String(p.logoDirection || '').trim() : ''
               const next = [
                 ...list,
-                { id, image: dataUrl || '', label: '', why: '', chosen: first },
+                {
+                  id,
+                  image: dataUrl || '',
+                  label: '',
+                  why: inherited,
+                  chosen: first,
+                },
               ]
               return {
                 ...p,
@@ -2858,12 +2871,17 @@ const useAppStore = create(
                    and no `logoClientChose` text box to keep in step with it. */
                 logoImage: hit.image || '',
                 /* Its reasoning comes with it, so the book's Logo page
-                   describes the mark that actually shipped. Only when the
-                   concept has one — an empty why must not wipe a direction
-                   the designer wrote before concepts existed. */
-                ...(String(hit.why || '').trim()
-                  ? { logoDirection: hit.why }
-                  : null),
+                   describes the mark that actually shipped.
+
+                   UNCONDITIONALLY, including when the new choice has no why.
+                   The old guard skipped empty ones to protect a direction
+                   written before concepts existed, and the cost was worse than
+                   the thing it protected: star A, write "survives a 12mm
+                   stamp", star B, and B shipped carrying A's sentence. Pre-
+                   concept text is now adopted by the first concept in
+                   `addLogoConcept`, so there is nothing left for the guard to
+                   save and the mirror can simply be true. */
+                logoDirection: hit.why || '',
                 ...identityEdit(),
               }
             }),
@@ -2876,10 +2894,21 @@ const useAppStore = create(
       setLogoConcepts: (list, projectId) =>
         set((state) => {
           const owner = projectId ?? state.currentProjectId
+          const next = Array.isArray(list) ? list : []
+          /* The mirror is re-derived here too, so the invariant holds after
+             every write to the list and not only after the per-concept
+             actions. Undoing a removal restores the starred concept; without
+             this the brand book would keep printing the rationale of whichever
+             concept had been promoted in its place. */
+          const chosen = next.find((c) => c?.chosen)
           return {
             projects: state.projects.map((p) =>
               p.id === owner
-                ? { ...p, logoConcepts: Array.isArray(list) ? list : [] }
+                ? {
+                    ...p,
+                    logoConcepts: next,
+                    logoDirection: chosen?.why || '',
+                  }
                 : p
             ),
           }
@@ -2933,6 +2962,11 @@ const useAppStore = create(
                 ...p,
                 logoConcepts: next.map((c, i) => ({ ...c, chosen: i === 0 })),
                 logoImage: promoted?.image || '',
+                /* The promoted concept brings its own reasoning, for the same
+                   reason `chooseLogoConcept` does. Leaving the mirror alone
+                   here would hand the deleted concept's rationale to whichever
+                   mark inherited the star. */
+                logoDirection: promoted?.why || '',
                 ...identityEdit(),
               }
             }),

@@ -14,6 +14,7 @@ import {
   creditedFooter,
 } from '../lib/book/exportFiles'
 import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
+import { clientFacingName } from '../lib/client/clientRecord'
 import { focusPathGapTarget } from '../lib/journey/journeyProgress'
 import {
   BOOK_PAGE_SIZES,
@@ -84,7 +85,7 @@ export default function DeliverView({
   /* Built with the same helper the exports use, so the preview cannot
      drift from what actually prints. */
   const packFooterPreview = creditedFooter([
-    activeProject?.name || 'Untitled project',
+    clientFacingName(activeProject),
     studioName,
   ])
 

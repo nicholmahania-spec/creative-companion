@@ -135,7 +135,7 @@ const list = (items) =>
  * cannot see the most common professional error. So the panel says so.
  */
 export const CHECK_SCOPE_NOTE =
-  'Only catches a colour well away from yours — a near-miss reads the same as a match here.'
+  'Only catches a color well away from yours — a near-miss reads the same as a match here.'
 
 export function applicationColourLine(reading) {
   const state = reading?.state
@@ -151,12 +151,12 @@ export function applicationColourLine(reading) {
     if (reason === 'unsupported-type') {
       /* Names what WOULD work. "Unsupported file" tells the designer they did
          something wrong and leaves them to guess the fix. */
-      return { line: 'Colour check reads PNG, JPEG, WebP, SVG and PDF.' }
+      return { line: 'Color check reads PNG, JPEG, WebP, SVG and PDF.' }
     }
     if (reason === 'no-pages') {
       return { line: "That PDF has no pages to read." }
     }
-    return { line: "This file didn't open for a colour check." }
+    return { line: "This file didn't open for a color check." }
   }
 
   if (state === 'no-palette') {
@@ -195,7 +195,7 @@ export function applicationColourLine(reading) {
        with none of the palette in it is often a mono lockup. A business card
        with none of the brand's colours anywhere on it is the thing the
        designer wants to catch. Still a description, still not an alarm. */
-    return { line: 'None of your palette colours turn up in this one.' }
+    return { line: 'None of your palette colors turn up in this one.' }
   }
   return { line: `Uses your ${list(worn)}.` }
 }

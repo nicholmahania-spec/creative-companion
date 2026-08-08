@@ -1287,7 +1287,7 @@ export async function downloadBrandPackVectorPdf(
           { id: 'stretch', caption: 'Never stretch or squash' },
           { id: 'crowd', caption: 'Never crowd the clear space' },
           { id: 'busy', caption: 'Never on a busy field' },
-          { id: 'lowcontrast', caption: 'Never on a low-contrast colour' },
+          { id: 'lowcontrast', caption: 'Never on a low-contrast color' },
         ]
         const gapX = px(14)
         const cw = (contentW - gapX * 3) / 4

@@ -82,7 +82,7 @@ export const TOUCHPOINT_CHECK = {
   app: 'Icon, splash, readable at small size',
   email: 'Header mark, signature line',
   packaging: 'Front panel, hierarchy at arm’s length',
-  merch: 'Print area, one colour vs full',
+  merch: 'Print area, one color vs full',
   signage: 'Distance read, contrast',
 }
 

@@ -191,6 +191,7 @@ export function buildCssTokens(pack = {}) {
  */
 export function buildJsonTokens(pack = {}) {
   const sys = buildColorSystem(pack.palette, pack.colorRoles)
+  const unsetLogoRules = logoRuleDefaults(pack)
   return {
     name: pack.projectName || 'Brand',
     version: pack.designVersion || 'v1',
@@ -226,6 +227,22 @@ export function buildJsonTokens(pack = {}) {
       clearspace: pack.logoClearspace || DEFAULT_LOGO_CLEARSPACE,
       minSize: pack.logoMinSize || DEFAULT_LOGO_MIN_SIZE,
       donts: logoDontsList(pack),
+      /* WHICH OF THE THREE ABOVE NOBODY CHOSE.
+         The prose exports say this in a sentence — `logoDefaultsNote` — but a
+         token file has nowhere to put a sentence, so `tokens.json` was the one
+         client-facing surface asserting a measurement as a brand
+         specification when the designer had left the field blank. Minimum
+         size is the sharp case: `DesignView` refuses to pre-fill it because a
+         legibility floor is a property of one particular mark, and this file
+         then handed a developer '24px digital · 0.5" print' to implement
+         against with nothing to say it was a stand-in.
+
+         The values stay, so a consumer reading `minSize` still gets a usable
+         string. `logoRuleDefaults` is the source — the same one the sentence
+         reads, so the JSON and the prose cannot disagree about which rules
+         were decided. Empty array means every rule on this object was
+         chosen. */
+      defaults: LOGO_RULE_KEYS.filter((k) => unsetLogoRules[k]),
     },
   }
 }
@@ -306,6 +323,9 @@ export function roleReadability(palette = [], colorRoles = null) {
  * This does not remove the defaults. It only lets the surfaces say which is
  * which, so "not yet decided" stops looking like "decided".
  */
+/** The rules `logoRuleDefaults` reports on, in the order the note lists them. */
+export const LOGO_RULE_KEYS = ['clearspace', 'minSize', 'donts']
+
 export function logoRuleDefaults(pack = {}) {
   const unset = (v) => !String(v || '').trim()
   return {

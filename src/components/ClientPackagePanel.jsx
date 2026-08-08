@@ -189,7 +189,7 @@ export default function ClientPackagePanel({
         <div className="package-subhead">Fonts</div>
         <p className="panel-hint">
           {fonts.filesIncluded
-            ? 'Font files will be included. Only do this when the licence lets you pass them on.'
+            ? 'Font files will be included. Only do this when the license lets you pass them on.'
             : 'The faces are documented — files are not copied into the package.'}
         </p>
         <div className="field-block">

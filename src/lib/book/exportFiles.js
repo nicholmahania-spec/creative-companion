@@ -16,6 +16,7 @@ import {
   resolvedTypeScale,
 } from './bookBuilder'
 import { toISODate } from '../dates'
+import { clientFacingName } from '../client/clientRecord'
 import { mapPaletteRoles, normalizeHex, bestTextOn } from '../color'
 import {
   DETECTIVE_CHAPTERS,
@@ -353,7 +354,11 @@ export function buildBrandPackSnapshot({
        "Powered by <SaaS>". Empty means the credit segment is simply absent;
        see `creditedFooter`. */
     studio: String(studioName || '').trim(),
-    projectName: p.name || 'Untitled project',
+    /* The CLIENT's name, not the internal job name. Everything downstream —
+       the direction sheet's <h1>, the brand book cover, the markdown heading,
+       the running footer and the download filename — reads this one field, so
+       fixing it here fixes all of them at once. See `clientFacingName`. */
+    projectName: clientFacingName(p),
     brief: p.brief || '',
     tagline: p.tagline || '',
     voice: p.voice || '',
@@ -2025,7 +2030,7 @@ export function markPackFiles(pack = {}) {
     'In this pack:',
     `- ${markLine}`,
     '',
-    'A full logo handoff usually also includes a one-colour version and a',
+    'A full logo handoff usually also includes a one-color version and a',
     'reverse (light-on-dark) version. Those are shown as previews in the app;',
     'ask if you need them supplied as separate files.',
   ].join('\n')

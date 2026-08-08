@@ -30,6 +30,8 @@ const current = () => {
 
 const add = (img) => useAppStore.getState().addLogoConcept(img)
 
+const byId = (id) => current().logoConcepts.find((c) => c.id === id)
+
 describe('logo concepts', () => {
   beforeEach(() => {
     fresh()
@@ -95,10 +97,80 @@ describe('logo concepts', () => {
     useAppStore.getState().updateLogoConcept(b.id, { why: 'Reads at 12mm' })
     expect(current().logoDirection).toBe('Reads at 12mm')
 
-    // And an empty why on a newly chosen concept must not wipe a direction
-    // written before concepts existed.
+    // Moving the star to a concept with no reasoning of its own empties the
+    // book field rather than leaving the last concept's sentence behind it.
+    // See the A/B test below for what the old "don't wipe" guard cost.
     useAppStore.getState().chooseLogoConcept(a.id)
-    expect(current().logoDirection).toBe('Reads at 12mm')
+    expect(current().logoDirection).toBe('')
+  })
+
+  /**
+   * ONE CONCEPT → ONE RATIONALE.
+   *
+   * THE BUG. `chooseLogoConcept` only moved `logoDirection` when the newly
+   * starred concept had a `why` of its own, and the card rendered
+   * `logoDirection` rather than `concept.why` for whichever concept was
+   * starred. Both halves point the same way: star A, write a reason, star B,
+   * and B is displayed — and shipped in the brand book — carrying A's
+   * sentence. The designer never typed it and has no way to see where it
+   * came from.
+   */
+  it('never shows or ships one concept’s reasoning under another', () => {
+    add(IMG_A)
+    add(IMG_B)
+    const [a, b] = current().logoConcepts
+    useAppStore
+      .getState()
+      .updateLogoConcept(a.id, { why: 'Survives a 12mm stamp' })
+    useAppStore
+      .getState()
+      .updateLogoConcept(b.id, { why: 'Works at tiny sizes' })
+
+    useAppStore.getState().chooseLogoConcept(a.id)
+    expect(byId(a.id).why).toBe('Survives a 12mm stamp')
+    expect(current().logoDirection).toBe('Survives a 12mm stamp')
+
+    useAppStore.getState().chooseLogoConcept(b.id)
+    expect(byId(b.id).why).toBe('Works at tiny sizes')
+    expect(current().logoDirection).toBe('Works at tiny sizes')
+
+    // Switching the star left A's own reasoning exactly where the designer
+    // wrote it — choosing is not editing.
+    expect(byId(a.id).why).toBe('Survives a 12mm stamp')
+
+    // Back to A, and nothing of B's has followed it.
+    useAppStore.getState().chooseLogoConcept(a.id)
+    expect(current().logoDirection).toBe('Survives a 12mm stamp')
+    expect(byId(b.id).why).toBe('Works at tiny sizes')
+  })
+
+  it('adopts a pre-concept direction into the first concept added', () => {
+    /* Legacy projects wrote `logoDirection` before concepts existed. It used
+       to stay behind the mirror — printed by the brand book, editable
+       nowhere. The first concept takes it, which is what lets the mirror be
+       exact instead of guarded. */
+    useAppStore.getState().setLogoDirection('Written before concepts existed')
+    add(IMG_A)
+    expect(current().logoConcepts[0].why).toBe('Written before concepts existed')
+    expect(current().logoDirection).toBe('Written before concepts existed')
+
+    // A second concept inherits nothing — the adoption is a one-time rescue.
+    add(IMG_B)
+    expect(current().logoConcepts[1].why).toBe('')
+  })
+
+  it('hands the promoted concept its own reasoning when one is removed', () => {
+    add(IMG_A)
+    add(IMG_B)
+    const [a, b] = current().logoConcepts
+    useAppStore.getState().updateLogoConcept(a.id, { why: 'The stamp one' })
+    useAppStore.getState().updateLogoConcept(b.id, { why: 'The tiny one' })
+    useAppStore.getState().chooseLogoConcept(a.id)
+    expect(current().logoDirection).toBe('The stamp one')
+
+    useAppStore.getState().removeLogoConcept(a.id)
+    expect(current().logoConcepts[0].chosen).toBe(true)
+    expect(current().logoDirection).toBe('The tiny one')
   })
 
   it('never leaves logoImage pointing at a removed concept', () => {

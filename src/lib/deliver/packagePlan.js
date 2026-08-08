@@ -62,7 +62,7 @@ export const USAGE_RIGHTS = [
     id: 'licensed',
     label: 'Licensed for handover',
     ship: true,
-    note: 'Licence covers giving it to the client',
+    note: 'License covers giving it to the client',
   },
   {
     id: 'designerOwned',
@@ -74,7 +74,7 @@ export const USAGE_RIGHTS = [
     id: 'thirdParty',
     label: 'Third-party / stock',
     ship: false,
-    note: 'Kept back — the licence is yours, not theirs',
+    note: 'Kept back — the license is yours, not theirs',
   },
   {
     id: 'doNotDistribute',
@@ -202,13 +202,13 @@ export function fontInformation(pack = {}) {
   )
   lines.push(
     '',
-    'Licence:',
+    'License:',
     licence || (known ? `  ${known.licence}` : '  (not recorded — ask your designer)')
   )
   /* Names only what was actually filled. Saying "where this sheet says Google
      Fonts and the Open Font License" when the designer wrote their own source
      and only the licence was filled would credit the app for their words. */
-  const filled = [!source && 'where to get them', !licence && 'the licence']
+  const filled = [!source && 'where to get them', !licence && 'the license']
     .filter(Boolean)
     .join(' and ')
   if (known && filled) {
@@ -224,7 +224,7 @@ export function fontInformation(pack = {}) {
   lines.push(
     '',
     filesIncluded
-      ? 'The font files in this folder are included under a licence that permits it.'
+      ? 'The font files in this folder are included under a license that permits it.'
       : source || known
         ? 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied — get them from the source above.'
         : 'The font files are NOT included. Fonts are licensed to the person who bought them, so they are documented here rather than copied. No source was recorded for these faces — ask your designer where to buy them.'
@@ -313,7 +313,7 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
     add('colour', {
       name: assetFileName({ brand, group: COLOUR_WORD, item: 'specifications', ext: 'txt' }),
       kind: 'colourSpec',
-      note: 'HEX, RGB and CMYK for every colour, with its job',
+      note: 'HEX, RGB and CMYK for every color, with its job',
     })
     add('colour', {
       name: assetFileName({ brand, group: COLOUR_WORD, item: 'tokens', ext: 'css' }),
@@ -328,8 +328,8 @@ export function packagePlan(pack = {}, { assets = [], includeBook = true } = {})
     name: assetFileName({ brand, group: 'typography', item: 'information', ext: 'txt' }),
     kind: 'fontInfo',
     note: fonts.filesIncluded
-      ? 'Families, weights, licence — files included'
-      : 'Families, weights, licence — files not redistributed',
+      ? 'Families, weights, license — files included'
+      : 'Families, weights, license — files not redistributed',
   })
 
   // ── 05 Applications, and anything else uploaded ───────────────────────
@@ -501,7 +501,7 @@ export function packageReadme(pack = {}, plan = null, missing = []) {
   if (markShipped) {
     lines.push(
       '',
-      'A full logo handoff usually also includes a one-colour and a reverse',
+      'A full logo handoff usually also includes a one-color and a reverse',
       'version of the mark. Those are shown in the app as previews; ask your',
       'designer if you need them as separate files.'
     )

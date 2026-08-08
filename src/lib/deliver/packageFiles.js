@@ -61,7 +61,7 @@ export function logoUsageText(pack = {}) {
 export function colourSpecText(pack = {}) {
   const sys = buildColorSystem(pack.palette, pack.colorRoles)
   const why = pack.colorRoleWhy || {}
-  const lines = [`${text(pack.projectName) || 'Brand'} — colour`, '']
+  const lines = [`${text(pack.projectName) || 'Brand'} — color`, '']
   for (const row of sys.roleRows) {
     lines.push(
       `${row.role.toUpperCase()} — ${row.job}`,
@@ -127,7 +127,7 @@ export function colourSpecText(pack = {}) {
        a real finding about the palette, not a gap in the export. */
     lines.push(
       'No pair in this palette reaches AA for body text — set text on white',
-      'or near-black, and treat the brand colours as accents.'
+      'or near-black, and treat the brand colors as accents.'
     )
   }
   lines.push('')

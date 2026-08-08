@@ -51,13 +51,13 @@ const COACHING = {
   },
   design: {
     title: 'Designing identity',
-    plain: 'Mark, words, colour, type, then preview. One screen at a time.',
+    plain: 'Mark, words, color, type, then preview. One screen at a time.',
     prompt:
       'Build the system, then check it holds on the artboard. Name a new version before a big change.',
     checks: [
       'Mark captured (image and/or wordmark rules)',
       'Words that say who this is and how it sounds',
-      'Colour jobs set (cover / text / accent / quiet)',
+      'Color jobs set (cover / text / accent / quiet)',
       'Type pair that can carry real text',
       'Preview: the pieces read as one system',
     ],

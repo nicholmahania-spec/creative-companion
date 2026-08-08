@@ -41,8 +41,8 @@ export const JOURNEY_STEPS = [
     label: 'Identity',
     process: 'Designing identity',
     plain:
-      'Mark, words, colour, type — then preview. One screen at a time.',
-    enough: 'Enough: a mark or wordmark, plus words or colour that feel real.',
+      'Mark, words, color, type — then preview. One screen at a time.',
+    enough: 'Enough: a mark or wordmark, plus words or color that feel real.',
     nextView: 'flow',
     nextLabel: 'Go to Touchpoints',
   },

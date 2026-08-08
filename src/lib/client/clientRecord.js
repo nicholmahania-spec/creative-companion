@@ -162,3 +162,59 @@ export function forgetClientRecord(records, name) {
   delete next[key]
   return next
 }
+
+/**
+ * The name that goes on anything the client sees.
+ *
+ * THE DEFECT THIS CLOSES. `project.name` is the designer's internal job name —
+ * "My project", "Roastery rebrand v2", "Sparrow — round 3". It is chosen for
+ * finding the thing in a list, not for printing. It was nonetheless what the
+ * brand pack put on the cover, in the running footer of every page, in the
+ * markdown heading and in the downloaded filename. A designer who names their
+ * projects the way designers actually name projects shipped files headed with
+ * their own shorthand.
+ *
+ * `detective.clientName` is the client's own answer to "Client / company
+ * name", and is already what the artboard, the client directory and the
+ * discovery brief use. This makes the exports agree with them.
+ *
+ * The internal name remains the fallback, not the default: a project whose
+ * brief has not been started yet has nothing else to print, and an empty
+ * cover is worse than an internal one.
+ *
+ * @param {object} project
+ * @param {string} fallback  used when neither name exists
+ */
+export function clientFacingName(project, fallback = 'Untitled project') {
+  const client = String(project?.detective?.clientName || '').trim()
+  if (client) return client
+  return String(project?.name || '').trim() || fallback
+}
+
+/**
+ * The name a WORDMARK LOCKUP should carry.
+ *
+ * THE LEAK THIS CLOSES. The four lockups on the direction sheet read
+ * `logoWordmark || project.name`, consulting `detective.clientName` nowhere.
+ * `clientFacingName` had already been threaded through the exports and the
+ * sheet's own heading, so the heading said the client's name while the four
+ * lockups directly beneath it said the designer's internal job label — on a
+ * sheet the client receives.
+ *
+ * WHY NOT `clientFacingName` ITSELF. That resolver is `clientName || name`
+ * and knows nothing about `logoWordmark`, which is a real brand decision a
+ * designer may have typed. The order below keeps the client's own answer
+ * first, then the designer's typed wordmark, then the job label as the last
+ * resort — the same order the type specimen's display rung uses, so the two
+ * renderings of the brand's name on one screen cannot disagree.
+ *
+ * @param {object} project
+ * @param {string} fallback  used when the project has no name of any kind
+ */
+export function wordmarkName(project, fallback = 'Wordmark') {
+  const client = String(project?.detective?.clientName || '').trim()
+  if (client) return client
+  const wordmark = String(project?.logoWordmark || '').trim()
+  if (wordmark) return wordmark
+  return String(project?.name || '').trim() || fallback
+}

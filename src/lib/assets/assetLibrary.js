@@ -29,7 +29,7 @@
  */
 export const ASSET_CATEGORIES = [
   { id: 'logo', label: 'Logo' },
-  { id: 'color', label: 'Colour' },
+  { id: 'color', label: 'Color' },
   { id: 'type', label: 'Type' },
   { id: 'application', label: 'Application' },
   { id: 'other', label: 'Unfiled' },
