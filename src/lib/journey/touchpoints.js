@@ -161,3 +161,27 @@ export function touchpointsBlurb(surfaces = [], deliverables = []) {
     ? 'Proof of system — the places you said this brand lives.'
     : 'Proof of system — how the brand shows up in the world.'
 }
+
+/**
+ * Every surface the brand has to appear on: the client's brief answer first,
+ * then anything the designer added at Touchpoints.
+ *
+ * TWO LISTS, ONE VIEW. Touchpoints used to push straight into
+ * `detective.brandSurfaces`, so a designer adding "signage" rewrote the
+ * client's own answer with no record that anyone had. The brief keeps saying
+ * what the client asked for; `designerSurfaces` holds the rest. Both reach the
+ * client's book — who noticed a surface is a question about authorship, not
+ * about whether the brand appears there.
+ *
+ * @param {object} project
+ * @returns {string[]} brief ids first, designer additions after, no repeats
+ */
+export function allBrandSurfaces(project) {
+  const brief = Array.isArray(project?.detective?.brandSurfaces)
+    ? project.detective.brandSurfaces
+    : []
+  const mine = Array.isArray(project?.designerSurfaces)
+    ? project.designerSurfaces
+    : []
+  return [...brief, ...mine.filter((id) => id && !brief.includes(id))]
+}

@@ -375,10 +375,6 @@
   margin-bottom: var(--space-2);
 }
 
-.sketch-feedback-shared-hint {
-  font-weight: 500;
-  color: var(--text-muted);
-}
 
 /* ── The finished piece, checked against the palette ──────────────────────
    Deliberately the quietest block on the card. There is no red, no badge and
@@ -432,5 +428,18 @@
   margin: 0.35rem 0 0;
   font-size: 0.72rem;
   line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* Feedback is READ here and written on Review — one field, one editor. Set as
+   copy rather than a disabled input: a greyed-out textarea reads as broken,
+   and this is not broken, it is somewhere else. */
+.sketch-feedback-read {
+  margin: 0 0 0.35rem;
+  white-space: pre-wrap;
+  color: var(--text-primary);
+}
+
+.sketch-feedback-read.is-empty {
   color: var(--text-muted);
 }
