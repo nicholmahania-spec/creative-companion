@@ -5,9 +5,17 @@
 import { useState, useEffect } from 'react'
 import { labelForStepId } from '../lib/journey/journey'
 import { getProcessPhase } from '../lib/journey/processGuide'
-import useAppStore from '../store/useAppStore'
+import useAppStore, { DIRECTION_SLOTS } from '../store/useAppStore'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import '../styles/lazy-ideate.css'
+
+/* Module scope, not the component body. The React compiler treats `Date.now`
+   and `Math.random` in a component as impure reads — correctly, since a task
+   id must be minted once when the button is pressed and not re-derived on a
+   re-render. */
+function newTaskId() {
+  return Date.now() + Math.random()
+}
 
 export default function SparkView({
   setActiveView,
@@ -27,14 +35,16 @@ export default function SparkView({
   // Focus timer props
 }) {
   const setRoughIdeas = useAppStore((s) => s.setRoughIdeas)
-  const dirs =
-    Array.isArray(directions) && directions.length >= 3
-      ? directions
-      : [
-          { id: 'a', label: 'A', title: '', note: '', chosen: false },
-          { id: 'b', label: 'B', title: '', note: '', chosen: false },
-          { id: 'c', label: 'C', title: '', note: '', chosen: false },
-        ]
+  /* Three cards, always — drawn from the slot list, filled from whatever
+     records exist. The old version swapped the WHOLE array for three blanks
+     whenever fewer than three records came in, so a project holding two real
+     directions displayed as three empty ones and the deleted letter appeared
+     to come back. A slot with no record is drawn empty and stores nothing;
+     typing a title is what creates the record. */
+  const dirs = DIRECTION_SLOTS.map((sl) => {
+    const list = Array.isArray(directions) ? directions : []
+    return list.find((d) => d?.id === sl.id) || { ...sl, title: '', note: '', chosen: false }
+  })
   const filledDirs = dirs.filter((d) => String(d.title || '').trim()).length
   const chosen = dirs.find((d) => d.chosen && String(d.title || '').trim())
   const canSend = !!chosen
@@ -122,7 +132,7 @@ export default function SparkView({
   const queueChosen = () => {
     if (!chosen) return
     addTask?.({
-      id: Date.now() + Math.random(),
+      id: newTaskId(),
       title: `Draft ${chosen.label}: ${chosen.title}`,
       energy: 'med',
       meta: chosen.note || 'Direction option',
@@ -246,7 +256,7 @@ export default function SparkView({
         >
           <div className="brand-section-label">2 · Shortlist · A · B · C</div>
           <div className="ideate-directions is-locked-3">
-            {dirs.slice(0, 3).map((d) => {
+            {dirs.map((d) => {
               const hasTitle = Boolean(String(d.title || '').trim())
               return (
                 <div

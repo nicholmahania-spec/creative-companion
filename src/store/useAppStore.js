@@ -391,13 +391,68 @@ export function brandIdentityDefaults() {
 }
 
 
-/** Three Ideate direction slots (A/B/C) */
+/**
+ * The three Ideate positions — A, B and C.
+ *
+ * THREE SLOTS EXIST. THREE RECORDS DO NOT HAVE TO.
+ *
+ * These are not data. They are the shape of the page: Ideate shows three
+ * places to put a direction, always, whether or not anything has been written
+ * in them. `project.directions` holds only the directions that exist, and it
+ * may hold none.
+ *
+ * The two were the same thing until now, and the cost was that every piece of
+ * code that wanted "three positions" reached for `blankDirections()` and
+ * assigned the WHOLE array — so a project holding two real directions was read
+ * as malformed and replaced with three empty ones. Deleting B did not just
+ * bring B back; it took A and C with it. Slots are a constant here so nothing
+ * has to manufacture records to draw a grid.
+ */
+export const DIRECTION_SLOTS = Object.freeze([
+  Object.freeze({ id: 'a', label: 'A' }),
+  Object.freeze({ id: 'b', label: 'B' }),
+  Object.freeze({ id: 'c', label: 'C' }),
+])
+
+/** True for 'a' | 'b' | 'c' — nothing else may become a direction. */
+export function isDirectionSlot(id) {
+  return DIRECTION_SLOTS.some((sl) => sl.id === String(id || '').toLowerCase())
+}
+
+/**
+ * The three positions with whatever record sits in each — `direction: null`
+ * where nothing has been written or where the designer deleted it.
+ *
+ * The one thing a view needs, so no view has to fall back to blanks. Empty is
+ * a state to draw, not a gap to fill.
+ */
+export function directionSlots(project) {
+  const dirs = Array.isArray(project?.directions) ? project.directions : []
+  return DIRECTION_SLOTS.map((sl) => ({
+    ...sl,
+    direction: dirs.find((d) => d?.id === sl.id) || null,
+  }))
+}
+
+/**
+ * A record for one slot. Only ever written by an explicit act — typing a
+ * title, promoting a rough idea. Never by a loader.
+ */
+export function blankDirection(slotId) {
+  const sl = DIRECTION_SLOTS.find((x) => x.id === slotId)
+  return { id: sl.id, label: sl.label, title: '', note: '', chosen: false }
+}
+
+/**
+ * A fresh project's three empty directions.
+ *
+ * Still three records, because a new project has nothing to lose and every
+ * reader already handles them. This is a SEED — the value a project starts
+ * with. It is not a repair, and no loader may call it on a project that
+ * already has a directions array, however short that array is.
+ */
 export function blankDirections() {
-  return [
-    { id: 'a', label: 'A', title: '', note: '', chosen: false },
-    { id: 'b', label: 'B', title: '', note: '', chosen: false },
-    { id: 'c', label: 'C', title: '', note: '', chosen: false },
-  ]
+  return DIRECTION_SLOTS.map((sl) => blankDirection(sl.id))
 }
 
 /**
@@ -930,18 +985,69 @@ const useAppStore = create(
           ),
         })),
 
-      /** Update one Ideate direction slot (a/b/c) */
+      /**
+       * Remove one Ideate direction. The slot stays; the record does not.
+       *
+       * A deletion has to survive a reload, an import and every future
+       * migration, which is the whole reason the loaders above stopped
+       * treating a short array as damage. Nothing here writes a replacement.
+       *
+       * The decision log keeps its entry on purpose: the log records that a
+       * direction WAS chosen on a date, and that remains true after the card
+       * is gone. Rewriting history to match the present is the opposite of
+       * what a decision log is for.
+       */
+      deleteDirection: (dirId, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          const id = String(dirId || '').toLowerCase()
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const dirs = Array.isArray(p.directions) ? p.directions : []
+              const next = dirs.filter(
+                (d) => String(d?.id || '').toLowerCase() !== id
+              )
+              if (next.length === dirs.length) return p
+              return { ...p, directions: next }
+            }),
+          }
+        }),
+
+      /**
+       * Write one Ideate slot (a/b/c), creating its record if the slot is empty.
+       *
+       * WRITING IS THE EXPLICIT ACT. A slot with no record is a real state — a
+       * direction that was deleted, or one never written — and nothing may
+       * manufacture a record for it on load, on import or on render. Typing a
+       * title is a designer asking for one, so this is where a record may be
+       * born, and the only place. The slot list caps it at three.
+       */
       updateDirection: (dirId, patch) =>
         set((state) => ({
           projects: state.projects.map((p) => {
             if (p.id !== state.currentProjectId) return p
             const dirs = Array.isArray(p.directions)
               ? p.directions.map((d) => ({ ...d }))
-              : blankDirections()
-            const idx = dirs.findIndex(
+              : []
+            let idx = dirs.findIndex(
               (d) => d.id === dirId || d.label?.toLowerCase() === String(dirId).toLowerCase()
             )
-            if (idx < 0) return p
+            if (idx < 0) {
+              const slot = DIRECTION_SLOTS.find(
+                (sl) => sl.id === String(dirId || '').toLowerCase()
+              )
+              if (!slot) return p
+              /* Inserted in slot order so B written after C still reads A·B·C.
+                 Position is the slot's, not the array's. */
+              dirs.push(blankDirection(slot.id))
+              dirs.sort(
+                (a, b) =>
+                  DIRECTION_SLOTS.findIndex((sl) => sl.id === a.id) -
+                  DIRECTION_SLOTS.findIndex((sl) => sl.id === b.id)
+              )
+              idx = dirs.findIndex((d) => d.id === slot.id)
+            }
             dirs[idx] = { ...dirs[idx], ...patch }
             // Choosing one un-chooses others + log decision for Sketch resume
             let decisionLog = Array.isArray(p.decisionLog) ? p.decisionLog : []
@@ -2159,7 +2265,11 @@ const useAppStore = create(
             ...blankDetective(),
             ...(p.detective || {}),
           }
-          if (!Array.isArray(base.directions) || base.directions.length < 3) {
+          /* Only a project that has NO directions array gets the seed. A short
+             array is a designer's state — two directions, or none — and
+             replacing it here discarded the ones that survived a deletion
+             along with the one that was deleted. */
+          if (!Array.isArray(base.directions)) {
             base.directions = blankDirections()
           }
           if (!Array.isArray(base.roughIdeas)) {
@@ -3596,10 +3706,14 @@ const useAppStore = create(
                     p.visualDiscovery && Array.isArray(p.visualDiscovery.choices)
                       ? p.visualDiscovery
                       : { choices: [], verdict: null },
-                  directions:
-                    Array.isArray(p.directions) && p.directions.length >= 3
-                      ? p.directions
-                      : blankDirections(),
+                  /* A migration is one-time compatibility, not a runtime
+                     normalizer. It may add what an old record lacks; it may
+                     not decide that fewer than three directions is damage. An
+                     array of two is a deletion, and this used to replace all
+                     three. */
+                  directions: Array.isArray(p.directions)
+                    ? p.directions
+                    : blankDirections(),
                 }))
               : blank.projects,
         }
