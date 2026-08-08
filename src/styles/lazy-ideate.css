@@ -459,3 +459,78 @@
   font-weight: 600;
   color: var(--text-secondary);
 }
+/* ---- Direction composition strip ----------------------------------------
+   Three rows: what this direction is made of. The parts are references to
+   artifacts that live elsewhere, so every row carries "Open" to the workspace
+   that owns it rather than an editor of its own. */
+.dir-comp {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.dir-slot {
+  display: grid;
+  grid-template-columns: 4rem 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2rem;
+}
+.dir-slot-label {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.dir-slot-body {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.dir-slot-mark {
+  max-height: 2rem;
+  max-width: 6rem;
+  object-fit: contain;
+}
+.dir-slot-swatches {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+.dir-slot-swatches i {
+  width: 1rem;
+  height: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+}
+.dir-slot-text {
+  font-size: var(--fs-2);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dir-slot-text.is-empty {
+  color: var(--text-muted);
+}
+.dir-slot-acts {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-1);
+}
+.dir-slot-pick {
+  font-size: var(--fs-1);
+  max-width: 9rem;
+}
+
+@media (max-width: 640px) {
+  .dir-slot {
+    grid-template-columns: 4rem 1fr;
+  }
+  .dir-slot-acts {
+    grid-column: 2;
+  }
+}

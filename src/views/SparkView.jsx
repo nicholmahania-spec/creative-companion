@@ -7,6 +7,7 @@ import { labelForStepId } from '../lib/journey/journey'
 import { getProcessPhase } from '../lib/journey/processGuide'
 import useAppStore, { DIRECTION_SLOTS } from '../store/useAppStore'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
+import DirectionComposition from '../features/discovery/DirectionComposition'
 import '../styles/lazy-ideate.css'
 
 /* Module scope, not the component body. The React compiler treats `Date.now`
@@ -27,6 +28,7 @@ export default function SparkView({
   notifyAction,
   directions = [],
   updateDirection,
+  project = null,
   flashMicro,
   addTask,
   projectId,
@@ -35,6 +37,8 @@ export default function SparkView({
   // Focus timer props
 }) {
   const setRoughIdeas = useAppStore((s) => s.setRoughIdeas)
+  const captureDirectionFrom = useAppStore((s) => s.captureDirectionFrom)
+  const setDirectionRefs = useAppStore((s) => s.setDirectionRefs)
   /* Three cards, always — drawn from the slot list, filled from whatever
      records exist. The old version swapped the WHOLE array for three blanks
      whenever fewer than three records came in, so a project holding two real
@@ -316,6 +320,23 @@ export default function SparkView({
                       />
                     </>
                   ) : null}
+
+                  {/* THE COMPOSITION. Three references, resolved from wherever
+                      the parts live. Capturing points this direction at what
+                      the project has right now; palette and pairing are
+                      content-addressed snapshots, so editing them later cannot
+                      rewrite what this direction was. Nothing here edits a
+                      mark, a face or a hex — "Open" goes to the workspace that
+                      owns it. */}
+                  <DirectionComposition
+                    project={project}
+                    direction={d}
+                    onCapture={(kind, value) =>
+                      captureDirectionFrom?.(d.id, kind, value)
+                    }
+                    onClear={(kind) => setDirectionRefs?.(d.id, { [kind]: null })}
+                    onOpen={(view) => setActiveView?.(view)}
+                  />
                 </div>
               )
             })}

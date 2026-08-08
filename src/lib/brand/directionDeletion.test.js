@@ -174,7 +174,7 @@ describe('existing projects still load exactly as they did', () => {
   const migrate = (persisted, from = 6) =>
     useAppStore.persist.getOptions().migrate(persisted, from)
 
-  it('keeps a full three-direction project untouched', () => {
+  it('keeps every value a full three-direction project had', () => {
     const dirs = [
       { id: 'a', label: 'A', title: 'Alpha', note: 'why a', chosen: true },
       { id: 'b', label: 'B', title: 'Beta', note: '', chosen: false },
@@ -182,9 +182,15 @@ describe('existing projects still load exactly as they did', () => {
     ]
     const out = migrate({
       moodItems: [],
-      projects: [{ id: 'p1', name: 'Old', directions: dirs }],
+      projects: [{ id: 'p1', name: 'Old', directions: JSON.parse(JSON.stringify(dirs)) }],
     })
-    expect(out.projects[0].directions).toEqual(dirs)
+    /* v8 adds `refs` and nothing else. Every field the designer wrote comes
+       through untouched — the assertion is on what was there, plus the one
+       additive key, so a future migration that quietly drops a field fails
+       here rather than in someone's project. */
+    expect(out.projects[0].directions).toEqual(
+      dirs.map((d) => ({ ...d, refs: {} }))
+    )
   })
 
   it('seeds three only for a project that has no directions key at all', () => {
@@ -223,6 +229,7 @@ describe('existing projects still load exactly as they did', () => {
       title: '',
       note: '',
       chosen: false,
+      refs: {},
     })
   })
 })
