@@ -16,18 +16,27 @@
  * reasonable each time and ruinous cumulatively, which is exactly the shape of
  * problem a comment cannot hold and a test can.
  *
- * WHY THE OTHER TWO ARE STILL ON SCREEN, and why deleting them would be a bug
- * rather than a simplification: this card is the ONLY route in the entire app
- * to marking a step done or declining it. `setStepDone` and
- * `toggleStepNotNeeded` have no other caller — `MainOutlet.jsx` merely wires
- * them into this card. The gap card is also never empty, so removing them
- * would strand an unwanted stop permanently on the cold-start surface with no
- * way to clear it: a worse failure than the one being fixed, and a silent one.
- * Stage-page `Mark done` is not the escape hatch either — it was built and
- * then deliberately removed (a056d3d: "mark done stays on desk").
+ * TWO BECAME ONE (2026-08-08, owner). This file used to argue that both
+ * administrative links had to stay because the card was their only route in.
+ * That was an argument about the CODE, not the product, and the owner said
+ * so: "an implementation dependency is not proof that those controls belong."
  *
- * So they stay, demoted to text links. Weight does the work that deletion
- * would have done, without taking a capability away.
+ * Traced properly, the two were not the same thing:
+ *
+ *   `toggleStepNotNeeded` wrote `stepsNotNeeded`, a field read by exactly one
+ *   file — DeskView — whose only job was pruning the rail's "upcoming stops"
+ *   leftovers list. That list is gone (all five workspaces are always shown
+ *   now), so the field had nothing left to prune. It was an acknowledgement
+ *   invented to maintain a to-do the Desk should not have kept. Deleted, with
+ *   its store action and its prop.
+ *
+ *   `setStepDone` writes `pathDone`, which feeds `pathStepHasContent` and so
+ *   decides WHICH STOP THE APP SUGGESTS NEXT. Every condition behind that is
+ *   a proxy — Identity reads craft signals, Touchpoints reads
+ *   `touchpointApps` — so a mark drawn in Illustrator or a stage signed off
+ *   on the phone is invisible, and without a correction the wrong stop stays
+ *   "next" forever. Real project state. It stays, as one quiet link, worded
+ *   as a correction to the suggestion rather than as a completion tick.
  *
  * HOW TO SATISFY THIS TEST when it fails on you: your new action almost
  * certainly belongs in `.desk-card-aside` as a link, or on the stage page
@@ -81,34 +90,67 @@ describe("the What's next card offers one button", () => {
   })
 })
 
-describe('done and declined stay reachable', () => {
+describe('the gap suggestion can be corrected, exactly once over', () => {
   const block = gapCardBlock()
 
-  /* The failure this guards is the plausible over-correction: reading the
-     rule above as "delete the other two" and shipping a card that cannot be
-     cleared. Both halves have to hold at once, so both are asserted. */
-  it('still offers both administrative actions', () => {
+  it('keeps the correction that stops the wrong stop being suggested forever', () => {
     expect(block).toMatch(/onMarkStepDone\(gapRow\.id, true\)/)
-    expect(block).toMatch(/onToggleNotNeeded\(gapRow\.id\)/)
   })
 
-  it('offers them as quiet links, not as buttons', () => {
+  it('offers it as a quiet link, and only one of them', () => {
+    /* One, not two. A second administrative link is what made the card ask
+       the reader to classify the stage before doing any of it. */
     const links = block.match(/className="desk-card-aside-link"/g) || []
-    expect(links).toHaveLength(2)
+    expect(links).toHaveLength(1)
   })
 
-  it('has no other route to them, which is why they cannot be deleted here', () => {
-    /* If someone ever DOES add a stage-page affordance, this test will fail
-       and should be updated deliberately — at which point stripping the card
-       further becomes a real option rather than a data-loss bug. Reversing
-       a056d3d is a decision, not a refactor. */
+  it('words it as a correction, not as a completion tick', () => {
+    // "Already done" read as the interface asking to be acknowledged. What
+    // the control actually does is tell the app its suggestion is wrong.
+    expect(block).not.toMatch(/Already done/)
+    expect(block).toMatch(/Not next/)
+  })
+
+  it('has retired the skip control and its state entirely', () => {
+    expect(block).not.toMatch(/onToggleNotNeeded/)
+    expect(block).not.toMatch(/Skip this one/)
+    const store = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), '../store/useAppStore.js'),
+      'utf8'
+    )
+    // No action, and no writer for the field it maintained.
+    expect(store).not.toMatch(/toggleStepNotNeeded: \(/)
+    expect(store).not.toMatch(/stepsNotNeeded:\s*cur/)
+  })
+
+  it('still has exactly one route to setStepDone', () => {
     const outlet = readFileSync(
       resolve(dirname(fileURLToPath(import.meta.url)), '../app/MainOutlet.jsx'),
       'utf8'
     )
-    const callers = (outlet.match(/toggleStepNotNeeded|setStepDone/g) || [])
-      .length
-    // Exactly the two wirings that feed this card, and nothing else.
-    expect(callers).toBe(2)
+    const callers = (outlet.match(/setStepDone/g) || []).length
+    expect(callers).toBe(1)
+  })
+})
+
+describe('the Desk is not a checklist', () => {
+  /* The scaffolding the 2026-08-08 audit classified as dashboard-only. Each
+     of these was derived state whose sole consumer was a list of things the
+     app wanted acknowledged. Named individually so a revert is loud. */
+  for (const gone of [
+    'upcomingStops',
+    'doneStops',
+    'skippedStops',
+    'stepsNotNeeded',
+    'progressLabel',
+  ]) {
+    it(`has no ${gone}`, () => {
+      expect(src).not.toMatch(new RegExp(`\\b${gone}\\b`))
+    })
+  }
+
+  it('shows all five workspaces, not the ones left over', () => {
+    expect(src).toMatch(/stopCards/)
+    expect(src).toMatch(/rows\.map/)
   })
 })

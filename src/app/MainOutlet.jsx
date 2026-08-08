@@ -440,13 +440,6 @@ export default function MainOutlet(p) {
         onOpenView={setActiveView}
         onOpenSection={goSystemSection}
         onOpenClientInbox={() => setClientInboxOpen(true)}
-        onToggleTask={toggleTask}
-        onToggleNotNeeded={(stepId) =>
-          activeProject &&
-          useAppStore
-            .getState()
-            .toggleStepNotNeeded(activeProject.id, stepId)
-        }
         onMarkStepDone={(stepId, done) =>
           activeProject &&
           useAppStore.getState().setStepDone(stepId, done, activeProject.id)

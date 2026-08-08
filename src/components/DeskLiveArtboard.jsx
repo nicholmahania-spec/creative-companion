@@ -72,8 +72,13 @@ export default function DeskLiveArtboard({
   palette = [],
   id = 'desk-live-artboard',
 }) {
+  /* The CLIENT's name, not the studio's internal job name. PRD §4.1:
+     `detective.clientName` is the project's identity. This card is a picture
+     of the brand, and it was headed "My project" in the largest type on it —
+     the same defect the direction sheet had. */
   const wordmark =
     String(project.logoWordmark || '').trim() ||
+    String(project.detective?.clientName || '').trim() ||
     String(project.name || '').trim() ||
     'Wordmark'
   const tagline = String(project.tagline || '').trim()

@@ -24,25 +24,46 @@ output surface now, not a fourth place to type the same fact. `competitors`
 reaches Research as a strip that drops a pre-titled note pin per name. The
 Asset library tool is **Library**, ending the "Assets" collision with stop 5.
 
-**Deliberately NOT done, with reasons — do not "finish" these without
-reading why:**
+## The dashboard, reworked (2026-08-08)
 
-- **"Already done" / "Skip this one" on the Desk gap card.** These look like
-  acknowledgement buttons and were on the removal list, but they are the ONLY
-  route into `setStepDone` and `toggleStepNotNeeded`. Deleting them makes an
-  unwanted stop permanently parked on the cold-start surface with no way to
-  clear it — i.e. it makes completion debt *permanent*, which is the opposite
-  of the goal. They are already weighted down to quiet asides.
-- **The Done list.** Same reason: it is the only undo for a task or step
-  marked done.
-- **The rail's upcoming-stops list.** It does duplicate the sidebar path map
-  (G3 bans a second map), but the sidebar is a drawer on mobile and this
-  could be the practical route to a stop from the Desk on a phone. Not
-  removed without measuring that.
-- **Touchpoints' first fold** — owner decision, PRD §12.
-- **`progressLabel` (`2/5`) in the What's next head.** A raw fraction as a
-  readout. Borderline against PRD §2; the duplicate copy of it is gone, the
-  primary one is left for the owner to call.
+The earlier pass kept three things on the argument that the code depended on
+them. The owner rejected that reasoning — *"an implementation dependency is
+not proof that those controls belong in the product"* — and traced properly,
+two of the three were scaffolding.
+
+**The rail's checklist is gone**, replaced by five **workspace cards** — all
+five stops, always, in path order, each saying what is ESTABLISHED there
+("1 starred · 3 pins", the palette and mark themselves on Identity) and
+navigating straight in. No ticks, no fractions, no skipped state.
+
+Deleted: `upcomingStops`, `doneStops`, `skippedStops`, `finished`,
+`progressLabel`, the open-task rows, the Done list, and — end to end —
+`stepsNotNeeded` + `toggleStepNotNeeded`. That field was read by one file and
+existed only to prune the leftovers list.
+
+Also deleted: `pathStepsFull` / `brandBookReady` in `App.jsx`, computed and
+consumed by nothing. Lint ratchet 137 → 136.
+
+**What survived, and why it is not the same argument as before.**
+`setStepDone` writes `pathDone`, which feeds `pathStepHasContent` →
+`pathFirstGap` — i.e. it decides which stop the app *suggests*. Every
+condition behind that is a proxy, so a mark drawn in Illustrator or a stage
+agreed on the phone is invisible and the wrong stop would stay next forever.
+That is real project state. It is one quiet link now, worded as a correction
+("Not next — X is handled") rather than a completion tick.
+
+**The mobile question, answered rather than assumed.** The horizontal step
+rail renders only when `journeyActive` is set, so it never appears on the
+Desk; the sidebar collapses to a centered dialog behind the menu button below
+768px. The leftovers list really was the only Desk-native route to a
+workspace on a phone — which is why the fix was to give the Desk real
+navigation, not to keep the duplicate. Verified at 390px: all five cards
+navigate, no horizontal overflow.
+
+**Still open on the dashboard:** the "This week" hours bars (PRD §11 defers
+the time view), and `Open Assets` appears twice in the artboard foot.
+
+**Deferred by the owner:** Touchpoints' first fold, PRD §12.
 
 ---
 

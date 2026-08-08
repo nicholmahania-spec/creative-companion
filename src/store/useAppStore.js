@@ -3078,19 +3078,20 @@ const useAppStore = create(
           ),
         })),
 
-      toggleStepNotNeeded: (projectId, stepId) =>
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== projectId) return p
-            const cur = Array.isArray(p.stepsNotNeeded) ? p.stepsNotNeeded : []
-            return {
-              ...p,
-              stepsNotNeeded: cur.includes(stepId)
-                ? cur.filter((id) => id !== stepId)
-                : [...cur, stepId],
-            }
-          }),
-        })),
+      /* `toggleStepNotNeeded` and `stepsNotNeeded` were deleted on
+         2026-08-08. The field was read by exactly one file — DeskView — and
+         its only job was pruning the rail's "upcoming stops" leftovers list.
+         That list is gone (replaced by the five workspace cards, which always
+         show all five), so the concept had nothing left to prune: it was an
+         acknowledgement invented to maintain a to-do the Desk should not have
+         kept. No migration — an unread key on an old project costs nothing,
+         and deleting persisted data to tidy a removed feature is the one
+         irreversible move here.
+
+         `pathDone` / `setStepDone` deliberately survive: they feed
+         `pathStepHasContent` → `pathFirstGap`, i.e. which stop the app
+         suggests next. That is real project state, not dashboard scaffolding.
+      */
 
       createProjectFromIntake: (intake = {}) => {
         const clientName = String(intake.clientName || '').trim()

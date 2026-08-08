@@ -31,7 +31,8 @@ import { ESLint } from 'eslint'
 
 /** Measured 2026-08-05. Lowered 140→139 when the readability rewrite removed
     orphaned code. A ceiling, not a target — lower it whenever you gain ground. */
-const BUDGET = 137
+/* 137 → 136: deleting the dead `brandBookReady` chain took one with it. */
+const BUDGET = 136
 
 /** Rules that are never allowed, whatever the budget says. */
 const ZERO_TOLERANCE = new Set([

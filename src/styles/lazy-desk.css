@@ -1104,3 +1104,85 @@
   justify-self: start;
   font-size: var(--fs-1);
 }
+
+/* ── Workspaces ──────────────────────────────────────────────────────────
+   Five cards, always all five, in path order. Orientation + navigation +
+   what is established — not five miniature dashboards, and not a checklist.
+   No ticks, no counts of things undone, no skipped state. */
+
+.desk-stop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.desk-stop {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.desk-stop:hover {
+  background: var(--bg-canvas);
+  border-color: var(--border-subtle);
+}
+
+.desk-stop:focus-visible {
+  outline: 2px solid var(--dopamine);
+  outline-offset: 1px;
+}
+
+/* The one the gap card is pointing at. A hairline, not a badge: it marks
+   where you are being sent, and it is already said in words above. */
+.desk-stop.is-next {
+  border-color: var(--border-strong);
+  background: var(--bg-canvas);
+}
+
+.desk-stop-name {
+  font-weight: 600;
+}
+
+/* What is established there. Never a fraction of things left to do. */
+.desk-stop-line {
+  grid-column: 1;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
+/* Identity earns the visual: the palette and the mark ARE the established
+   thing, and a sentence about them is strictly worse than seeing them. */
+.desk-stop-brand {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.desk-stop-mark {
+  width: 1.25rem;
+  height: 1.25rem;
+  object-fit: contain;
+  margin-right: var(--space-1);
+}
+
+.desk-stop-swatch {
+  width: 0.75rem;
+  height: 1.25rem;
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
+}
