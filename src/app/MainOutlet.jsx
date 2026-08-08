@@ -341,6 +341,7 @@ export default function MainOutlet(p) {
         notifyAction={notifyAction}
         directions={activeProject?.directions}
         updateDirection={updateDirection}
+        project={activeProject}
         roughIdeas={activeProject?.roughIdeas || []}
         decisionLog={activeProject?.decisionLog || []}
         sparksTried={sparksTried || 0}

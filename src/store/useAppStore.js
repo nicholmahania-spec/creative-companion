@@ -11,7 +11,11 @@ import { liftMeasuredRows } from './workLogSeparation'
 import { revisionSummary, roundCharge } from '../lib/revisions'
 import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
 import { create } from 'zustand'
-import { isArtifactKind, makeRef } from '../lib/artifacts/artifactRef'
+import { isArtifactKind, makeRef, refKey } from '../lib/artifacts/artifactRef'
+import {
+  paletteSnapshot,
+  typePairingSnapshot,
+} from '../lib/artifacts/artifactSnapshot'
 import { persist } from 'zustand/middleware'
 import {
   appendDecision,
@@ -440,7 +444,45 @@ export function directionSlots(project) {
  */
 export function blankDirection(slotId) {
   const sl = DIRECTION_SLOTS.find((x) => x.id === slotId)
-  return { id: sl.id, label: sl.label, title: '', note: '', chosen: false }
+  /* `refs` holds refKeys and nothing else. A direction owns its label, title,
+     why, chosen flag and position; every visual it shows belongs to the
+     workspace that authored it, and is read through a reference. */
+  return { id: sl.id, label: sl.label, title: '', note: '', chosen: false, refs: {} }
+}
+
+/**
+ * A project's directions as a mutable copy, with `dirId`'s record guaranteed
+ * to exist — created in slot order when the slot is empty.
+ *
+ * The one place a record can be born, shared by every writer so they cannot
+ * disagree about position. Returns null for an id that is not a slot, and for
+ * a caller that asked not to create. `create: false` is what a CLEAR uses:
+ * removing a reference from a slot that holds nothing must not conjure a
+ * direction to remove it from.
+ */
+export function directionsWithSlot(project, dirId, { create = true } = {}) {
+  const id = String(dirId || '').toLowerCase()
+  const slot = DIRECTION_SLOTS.find((sl) => sl.id === id)
+  if (!slot) return null
+  const dirs = (Array.isArray(project?.directions) ? project.directions : []).map(
+    (d) => ({ ...d })
+  )
+  let idx = dirs.findIndex(
+    (d) => d.id === id || String(d.label || '').toLowerCase() === id
+  )
+  if (idx < 0) {
+    if (!create) return null
+    dirs.push(blankDirection(slot.id))
+    /* Inserted in slot order so B written after C still reads A·B·C.
+       Position belongs to the slot, not to the array. */
+    dirs.sort(
+      (a, b) =>
+        DIRECTION_SLOTS.findIndex((sl) => sl.id === a.id) -
+        DIRECTION_SLOTS.findIndex((sl) => sl.id === b.id)
+    )
+    idx = dirs.findIndex((d) => d.id === slot.id)
+  }
+  return { dirs, idx }
 }
 
 /**
@@ -986,6 +1028,108 @@ const useAppStore = create(
         })),
 
       /**
+       * Point one of a direction's slots at an artifact, or clear it.
+       *
+       * SWAP AND SHUFFLE ARE THIS. "B's mark with C's type" is two calls; no
+       * content moves. Choosing a direction is a different act entirely, and
+       * this never touches `chosen` just as `chosen` never touches these.
+       *
+       * Setting a reference on an empty slot creates the record — pointing a
+       * direction at a mark is a designer asking for one. Clearing does not:
+       * removing a reference from a slot that holds nothing must not conjure a
+       * direction to remove it from.
+       *
+       * @param {string} dirId  'a' | 'b' | 'c'
+       * @param {object} patch  { mark?, typePairing?, palette? } refKey or null
+       */
+      setDirectionRefs: (dirId, patch, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          const entries = Object.entries(patch || {})
+          if (!entries.length) return state
+          const create = entries.some(([, v]) => v != null && v !== '')
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const found = directionsWithSlot(p, dirId, { create })
+              if (!found) return p
+              const { dirs, idx } = found
+              const refs = { ...(dirs[idx].refs || {}) }
+              for (const [k, v] of entries) {
+                if (v == null || v === '') delete refs[k]
+                else refs[k] = String(v)
+              }
+              dirs[idx] = { ...dirs[idx], refs }
+              return { ...p, directions: dirs }
+            }),
+          }
+        }),
+
+      /**
+       * Snapshot what the project currently has and point a direction at it.
+       *
+       * THE SNAPSHOT IS WHY A DIRECTION DOES NOT ROT. Palette and type ids are
+       * derived from content, so editing the palette tomorrow produces a
+       * different id and this direction keeps resolving to the composition it
+       * was actually built from. Nothing is duplicated: the same palette
+       * captured by all three directions is one record in `artifacts`.
+       *
+       * The mark is a plain id into `logoConcepts` — a real record the
+       * designer still owns. Delete that concept and the ref resolves to null,
+       * which is the honest answer rather than a stand-in mark.
+       */
+      captureDirectionFrom: (dirId, kind, value, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          const project = state.projects.find((p) => p.id === owner)
+          if (!project) return state
+
+          let ref = null
+          let artifact = null
+          if (kind === 'mark') {
+            const hit = (project.logoConcepts || []).find((c) => c.id === value)
+            if (hit) ref = refKey(makeRef('markConcept', hit.id))
+          } else if (kind === 'palette' || kind === 'typePairing') {
+            const snap =
+              kind === 'palette'
+                ? paletteSnapshot(project)
+                : typePairingSnapshot(project)
+            /* Nothing made yet is not a composition. An artifact with no
+               colors or no faces would draw a row in three directions that
+               reads as a part somebody decided. */
+            const hasContent =
+              kind === 'palette'
+                ? (snap.hexes || []).length > 0
+                : !!(snap.heading || snap.body)
+            if (hasContent) {
+              artifact = snap
+              ref = refKey(makeRef(kind, snap.id))
+            }
+          }
+          if (!ref) return state
+
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const found = directionsWithSlot(p, dirId)
+              if (!found) return p
+              const { dirs, idx } = found
+              dirs[idx] = {
+                ...dirs[idx],
+                refs: { ...(dirs[idx].refs || {}), [kind]: ref },
+              }
+              return {
+                ...p,
+                artifacts: artifact
+                  ? { ...(p.artifacts || {}), [artifact.id]: artifact }
+                  : p.artifacts || {},
+                directions: dirs,
+              }
+            }),
+          }
+        }),
+
+      /**
        * Remove one Ideate direction. The slot stays; the record does not.
        *
        * A deletion has to survive a reload, an import and every future
@@ -1027,27 +1171,9 @@ const useAppStore = create(
         set((state) => ({
           projects: state.projects.map((p) => {
             if (p.id !== state.currentProjectId) return p
-            const dirs = Array.isArray(p.directions)
-              ? p.directions.map((d) => ({ ...d }))
-              : []
-            let idx = dirs.findIndex(
-              (d) => d.id === dirId || d.label?.toLowerCase() === String(dirId).toLowerCase()
-            )
-            if (idx < 0) {
-              const slot = DIRECTION_SLOTS.find(
-                (sl) => sl.id === String(dirId || '').toLowerCase()
-              )
-              if (!slot) return p
-              /* Inserted in slot order so B written after C still reads A·B·C.
-                 Position is the slot's, not the array's. */
-              dirs.push(blankDirection(slot.id))
-              dirs.sort(
-                (a, b) =>
-                  DIRECTION_SLOTS.findIndex((sl) => sl.id === a.id) -
-                  DIRECTION_SLOTS.findIndex((sl) => sl.id === b.id)
-              )
-              idx = dirs.findIndex((d) => d.id === slot.id)
-            }
+            const found = directionsWithSlot(p, dirId)
+            if (!found) return p
+            const { dirs, idx } = found
             dirs[idx] = { ...dirs[idx], ...patch }
             // Choosing one un-chooses others + log decision for Sketch resume
             let decisionLog = Array.isArray(p.decisionLog) ? p.decisionLog : []
@@ -3622,7 +3748,7 @@ const useAppStore = create(
           }
         },
       },
-      version: 7,
+      version: 8,
       migrate: (persisted, fromVersion) => {
         // Keep real user data; only normalize missing arrays
         if (!persisted || typeof persisted !== 'object') {
@@ -3711,9 +3837,14 @@ const useAppStore = create(
                      not decide that fewer than three directions is damage. An
                      array of two is a deletion, and this used to replace all
                      three. */
-                  directions: Array.isArray(p.directions)
+                  directions: (Array.isArray(p.directions)
                     ? p.directions
-                    : blankDirections(),
+                    : blankDirections()
+                  /* v8: every record that has one gains an empty `refs`. A
+                     direction that was only ever a title keeps being only a
+                     title, and a slot with no record STAYS empty — the
+                     backfill runs over what is there, never over the gaps. */
+                  ).map((d) => (d?.refs ? d : { ...d, refs: {} })),
                 }))
               : blank.projects,
         }
