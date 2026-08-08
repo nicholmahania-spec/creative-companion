@@ -105,6 +105,12 @@ const CLIENT_ARTIFACTS = [
   'lib/brandSystem.js',
   'lib/book/caseStudy.js',
   'components/StationeryKit.jsx',
+  /* Composes the surface list the book prints from. `designerSurfaces` — the
+     surfaces the designer added at Touchpoints rather than the client naming
+     them in the brief — reaches the pack through `allBrandSurfaces` here, so
+     this file is part of the route to a client artifact even though it draws
+     nothing itself. */
+  'lib/journey/touchpoints.js',
 ]
 
 const EXEMPT = {

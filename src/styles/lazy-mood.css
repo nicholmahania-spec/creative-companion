@@ -1090,3 +1090,20 @@
   text-decoration: line-through;
   border-style: dashed;
 }
+
+/* Favorite sits beside the pack star and must not compete with it: the pack
+   is a client-facing commitment, a favorite is a private note to self. Same
+   box, quieter ink until it is on. */
+.research-pin-fav {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
+.research-pin-fav.is-on {
+  color: var(--dopamine, var(--text-primary));
+}

@@ -93,6 +93,13 @@ export const FIELD_HOMES = {
   },
   doUse: { view: 'brand', section: 'words', label: 'the sheet' },
   dontUse: { view: 'brand', section: 'words', label: 'the sheet' },
+  /* The tagline is on the sheet with the rest of the brand's words. The book
+     used to carry its own input for it — an output authoring a decision. */
+  tagline: { view: 'brand', section: 'tagline', label: 'the sheet' },
+  /* The two faces belong to the Type bench. The book's font pickers wrote
+     them, so choosing a face for the document renamed the brand's typeface. */
+  typeHeading: { view: 'brand', section: 'type', label: identityLabel('type') },
+  typeBody: { view: 'brand', section: 'type', label: identityLabel('type') },
   /* Identity: the mark and its handover notes. */
   logoDirection: { view: 'brand', section: 'logo', label: identityLabel('logo') },
   logoWordmark: { view: 'brand', section: 'logo', label: identityLabel('logo') },
