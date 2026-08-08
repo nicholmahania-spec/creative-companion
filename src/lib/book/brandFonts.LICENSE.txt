@@ -24,7 +24,7 @@ addresses this exact act directly:
 
 This is a different act from the one src/lib/deliver/packagePlan.js refuses:
 that guardrail is about putting redistributable font FILES in a client's
-handover folder, which a commercial licence almost never permits. Nothing in
+handover folder, which a commercial license almost never permits. Nothing in
 brandFontData/ is ever written to a client package.
 
 WHY THE SUBSETS ARE RENAMED
@@ -35,9 +35,9 @@ Functional Equivalence -- it fails the first criterion, "supports the same full
 character inventory" -- and so is a Modified Version, which OFL clause 3 bars
 from using the Reserved Font Name. So every subset here is renamed internally
 to an opaque "CC Book Specimen <digest>" that contains no one's reserved words.
-Copyright, trademark, designer, licence and licence-URL records are deliberately
+Copyright, trademark, designer, license and license-URL records are deliberately
 left intact, per OFL FAQ Q1.14, and the brand book prints the true family name
-and this licence beside every specimen.
+and this license beside every specimen.
 
 WHAT IS EMBEDDED IS NOT A USABLE FONT
 

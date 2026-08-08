@@ -16,7 +16,7 @@ describe('JOURNEY_STEPS five-stop path', () => {
       'studio',
       'brand',
       'flow',
-      'finish',
+      'assets',
     ])
   })
 
@@ -54,7 +54,7 @@ describe('JOURNEY_STEPS five-stop path', () => {
       'studio',
       'brand',
       'flow',
-      'finish',
+      'assets',
     ])
   })
 
@@ -63,7 +63,8 @@ describe('JOURNEY_STEPS five-stop path', () => {
     expect(journeyIdForView('flow')).toBe('sketch')
     expect(journeyIdForView('studio')).toBe('research')
     expect(journeyIdForView('brand')).toBe('design')
-    expect(journeyIdForView('finish')).toBe('deliver')
+    expect(journeyIdForView('assets')).toBe('deliver')
+    expect(journeyIdForView('finish')).toBe(null)
     expect(journeyIdForView('spark')).toBe(null)
     expect(journeyIdForView('review')).toBe(null)
     expect(toolsLabelForView('spark')).toBe('Ideate')

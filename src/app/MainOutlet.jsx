@@ -4,7 +4,6 @@
  */
 import { Suspense } from 'react'
 import PathViewSkeleton from '../components/PathViewSkeleton'
-import StepDependencyReminder from '../components/StepDependencyReminder'
 import useAppStore from '../store/useAppStore'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
@@ -18,7 +17,7 @@ import {
 } from '../lib/dates'
 import { APP_BUILD, APP_BUILD_DATE, versionLabel } from '../lib/version'
 import { STORAGE_EXPLAIN } from '../lib/auth'
-import { lazyViews, skeletonLabelForView, pathStepIdForView } from './viewRegistry'
+import { lazyViews, skeletonLabelForView } from './viewRegistry'
 
 const {
   home: HomeView,
@@ -41,10 +40,8 @@ const {
 } = lazyViews
 
 function wrap(view, node) {
-  const stepId = pathStepIdForView(view)
   return (
     <Suspense fallback={<PathViewSkeleton label={skeletonLabelForView(view)} />}>
-      {stepId ? <StepDependencyReminder stepId={stepId} /> : null}
       {node}
     </Suspense>
   )
@@ -210,6 +207,9 @@ export default function MainOutlet(p) {
     setDeskConfirm,
     updateDetective,
     setOverviewSharePanelOpen,
+    archiveProject,
+    unarchiveProject,
+    deleteProject,
   } = p
 
   // Path-title ambient chips removed (owner): identity stamp, client
@@ -421,6 +421,11 @@ export default function MainOutlet(p) {
           setClientRecordName(name)
           setActiveView('clientRecord')
         }}
+        archiveProject={archiveProject}
+        unarchiveProject={unarchiveProject}
+        deleteProject={deleteProject}
+        loadSoftSignalDemo={p.loadSoftSignalDemo}
+        loadHarborHearthDemo={p.loadHarborHearthDemo}
       />
     )
   }
@@ -578,7 +583,8 @@ export default function MainOutlet(p) {
         lastExportNote={lastExportNote}
         offerUndo={offerUndo}
         openPortalPanel={() => setOverviewSharePanelOpen(true)}
-      />
+      />,
+      false
     )
   }
 
@@ -614,10 +620,11 @@ export default function MainOutlet(p) {
         loadHarborHearthDemo={loadHarborHearthDemo}
         versionLabel={versionLabel}
         APP_BUILD_DATE={APP_BUILD_DATE}
-        requestConfirm={(label, onConfirm) =>
+        requestConfirm={(label, onConfirm, confirmLabel) =>
           setDeskConfirm({
             kind: 'settings',
             label,
+            confirmLabel,
             onConfirm: () => {
               onConfirm?.()
               setDeskConfirm(null)

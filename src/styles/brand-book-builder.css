@@ -78,12 +78,7 @@
   background: #efece4;
 }
 
-/* ------------------------------------------------------------ top chrome
-
-   In-view chrome, not the app header (which already carries back
-   navigation) — a slim sticky strip stating the real print setup in one
-   line, plus the two actions that used to live at the bottom of the panel,
-   a full scroll away from where the eye already is. */
+/* ------------------------------------------------------------ top chrome */
 
 .bbb-topbar {
   position: sticky;
@@ -94,19 +89,22 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-sm, 8px);
-  padding: var(--space-xs, 7px) var(--space-lg, 24px);
+  padding: var(--space-md, 14px) var(--space-lg, 24px);
   background: #171614;
   border-bottom: 0.5px solid #3a3936;
   color: #eeece5;
 }
-.bbb-topbar__summary {
-  font-size: 0.75rem;
-  color: #a7a49a;
-  letter-spacing: 0.02em;
+.bbb-topbar__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #eeece5;
 }
 .bbb-topbar__actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: var(--space-sm, 8px);
 }
 .bbb-topbar .bbb-btn {
@@ -132,7 +130,7 @@
 /* ------------------------------------------------------------- panel */
 
 .bbb-panel {
-  width: min(320px, 34vw);
+  width: min(400px, 38vw);
   flex-shrink: 0;
   background: #1f1e1c;
   color: #eeece5;
@@ -143,11 +141,11 @@
 }
 
 .bbb-panel__title {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #a7a49a;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #eeece5;
   margin: 0 0 var(--space-lg, 20px);
 }
 
@@ -400,7 +398,9 @@
   overflow-x: auto;
   overflow-y: auto;
   /* App sidebar ~200px + editor rail ~320px + chrome/padding. */
-  --bbb-avail-w: max(14rem, calc(100vw - 200px - 320px - 4.5rem));
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--space-lg, 24px);
+  --bbb-avail-w: max(14rem, calc(100vw - 200px - 400px - 4.5rem));
   --bbb-avail-h: max(14rem, calc(100dvh - 7.25rem));
 }
 
@@ -418,6 +418,7 @@
   position: relative;
   overflow: hidden;
   padding: var(--space-md, 9%);
+  scroll-snap-align: center;
 }
 
 .bbb-lockup__art {
@@ -596,91 +597,35 @@
   padding: var(--space-lg, 24px);
 }
 .bbb-flip-overlay--show { display: flex; }
-/* Open book: verso (left / back) + recto (right / front). Both faces are
-   upright content — no rotateY mirror of a single sheet. */
 .bbb-flip-stage {
   position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  justify-content: center;
-  width: min(880px, calc(100vw - 48px));
-  max-height: min(78vh, 720px);
-  aspect-ratio: 17 / 11; /* two letter pages side by side */
-  perspective: none;
-}
-.bbb-flip-stage--cover {
-  /* Cover alone sits on the right half, like opening a real book. */
-  aspect-ratio: 8.5 / 11;
-  width: min(440px, calc(100vw - 48px));
-}
-.bbb-flip-stage--cover .bbb-flip-leaf--empty {
-  display: none;
-}
-.bbb-flip-stage--cover .bbb-flip-gutter {
-  display: none;
+  display: grid;
+  place-items: center;
+  width: min(760px, calc(100vw - 48px));
+  height: min(74dvh, 760px);
 }
 .bbb-flip-leaf {
   position: relative;
-  flex: 1 1 50%;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-}
-.bbb-flip-leaf--empty {
-  flex: 1 1 50%;
-  background: transparent;
-}
-.bbb-flip-gutter {
-  flex: 0 0 2px;
-  align-self: stretch;
-  background: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0.22),
-    rgba(0, 0, 0, 0.06) 40%,
-    rgba(0, 0, 0, 0.06) 60%,
-    rgba(0, 0, 0, 0.18)
-  );
-  z-index: 2;
-}
-.bbb-flip-leaf .bbb-page {
+  display: grid;
+  place-items: center;
   width: 100%;
   height: 100%;
-  max-width: none;
-  max-height: none;
-  aspect-ratio: auto;
+}
+.bbb-flip-leaf .bbb-page {
+  width: min(100%, calc(74dvh * 210 / 297));
+  height: auto;
+  max-width: 100%;
+  max-height: 74dvh;
+  aspect-ratio: 210 / 297;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-}
-.bbb-flip-leaf--verso .bbb-page {
-  border-radius: calc(var(--radius) / 2) 0 0 calc(var(--radius) / 2);
-  box-shadow: -4px 8px 28px rgba(0, 0, 0, 0.4);
-}
-.bbb-flip-leaf--recto .bbb-page {
-  border-radius: 0 calc(var(--radius) / 2) calc(var(--radius) / 2) 0;
-  box-shadow: 4px 8px 28px rgba(0, 0, 0, 0.4);
-}
-.bbb-flip-stage--cover .bbb-flip-leaf--recto .bbb-page {
   border-radius: calc(var(--radius) / 2);
 }
 .bbb-flip-leaf .bbb-page-label { display: none; }
 
 @media (max-width: 640px) {
-  /* Narrow screens: one upright page at a time (still no mirror). */
-  .bbb-flip-stage,
-  .bbb-flip-stage--cover {
-    width: min(420px, calc(100vw - 32px));
-    aspect-ratio: 8.5 / 11;
-  }
-  .bbb-flip-stage--spread .bbb-flip-leaf--verso,
-  .bbb-flip-stage--spread .bbb-flip-gutter {
-    display: none;
-  }
-  .bbb-flip-stage--spread .bbb-flip-leaf--recto {
-    flex: 1 1 100%;
-  }
-  .bbb-flip-leaf--recto .bbb-page {
-    border-radius: calc(var(--radius) / 2);
-  }
+  .bbb-flip-stage { width: calc(100vw - 32px); }
+  .bbb-flip-controls { gap: var(--space-sm, 8px); }
+  .bbb-flip-controls button { padding-inline: var(--space-sm, 8px); }
 }
 
 /* Back / "n of m" / Next / Close, one row — Close moved in from the old
@@ -728,6 +673,13 @@
     width: 100%;
     height: auto;
     max-height: min(42dvh, 22rem);
+  }
+  .bbb-topbar {
+    align-items: flex-start;
+  }
+  .bbb-topbar__actions {
+    width: 100%;
+    justify-content: flex-start;
   }
   .bbb-canvas {
     padding: var(--space-lg, 28px) var(--space-md, 16px);

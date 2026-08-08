@@ -81,7 +81,7 @@ describe('markSource — the one decision', () => {
   })
 
   it('knows a colour is not artwork', () => {
-    expect(markSource('#1C1917').reason).toMatch(/colour/i)
+    expect(markSource('#1C1917').reason).toMatch(/color/i)
     expect(markSource('linear-gradient(135deg, #000, #fff)').state).toBe('held')
   })
 
@@ -187,7 +187,7 @@ describe('the honest cases still read honestly', () => {
     expect(mark.content).toBe(PNG.split(',')[1])
     expect(r.missing).toEqual([])
     expect(packageReadme(pack({ logoImage: PNG }), r.plan, r.missing)).toMatch(
-      /usually also includes a one-colour/i
+      /usually also includes a one-color/i
     )
   })
 

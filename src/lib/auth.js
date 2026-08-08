@@ -11,6 +11,7 @@
 
 const ACCESS_KEY = 'cc-access-v1'
 const SESSION_KEY = 'cc-session-v1'
+const PIN_FAILURE_KEY = 'cc-pin-failures-v1'
 
 function bytesToHex(buf) {
   return [...new Uint8Array(buf)]
@@ -67,8 +68,67 @@ export async function verifyAccess(password) {
   if (hash !== record.hash) {
     return { ok: false, error: 'Incorrect password' }
   }
+  localStorage.removeItem(PIN_FAILURE_KEY)
   openSession(record.name)
   return { ok: true, name: record.name }
+}
+
+export function hasPinSetup() {
+  const record = getAccessRecord()
+  return !!(record?.pinSalt && record?.pinHash)
+}
+
+export async function setAccessPin(currentPassword, pin) {
+  const value = String(pin || '')
+  if (!/^\d{4}$/.test(value)) {
+    return { ok: false, error: 'PIN must be exactly 4 digits' }
+  }
+  const check = await verifyAccess(currentPassword)
+  if (!check.ok) return check
+  const record = getAccessRecord()
+  const pinSalt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)))
+  const pinHash = await hashPassword(value, pinSalt)
+  localStorage.setItem(
+    ACCESS_KEY,
+    JSON.stringify({ ...record, pinSalt, pinHash, pinUpdatedAt: new Date().toISOString() })
+  )
+  localStorage.removeItem(PIN_FAILURE_KEY)
+  return { ok: true }
+}
+
+export async function verifyPin(pin) {
+  const record = getAccessRecord()
+  if (!record?.pinSalt || !record?.pinHash) {
+    return { ok: false, error: 'Use your password to sign in' }
+  }
+  let failures = 0
+  try { failures = Number(localStorage.getItem(PIN_FAILURE_KEY) || 0) } catch { /* ignore */ }
+  if (failures >= 5) return { ok: false, locked: true, error: 'Use your password to sign in' }
+  const hash = await hashPassword(String(pin || ''), record.pinSalt)
+  if (hash !== record.pinHash) {
+    const next = failures + 1
+    try { localStorage.setItem(PIN_FAILURE_KEY, String(next)) } catch { /* ignore */ }
+    return {
+      ok: false,
+      locked: next >= 5,
+      error: next >= 5
+        ? 'Use your password to sign in'
+        : 'That PIN didn’t match. Try again or use your password.',
+    }
+  }
+  localStorage.removeItem(PIN_FAILURE_KEY)
+  openSession(record.name)
+  return { ok: true, name: record.name }
+}
+
+export async function removeAccessPin(currentPassword) {
+  const check = await verifyAccess(currentPassword)
+  if (!check.ok) return check
+  const record = getAccessRecord()
+  const { pinSalt, pinHash, pinUpdatedAt, ...next } = record
+  localStorage.setItem(ACCESS_KEY, JSON.stringify(next))
+  localStorage.removeItem(PIN_FAILURE_KEY)
+  return { ok: true }
 }
 
 export async function changeAccessPassword(currentPassword, nextPassword) {
@@ -87,9 +147,13 @@ export async function changeAccessPassword(currentPassword, nextPassword) {
       ...record,
       salt,
       hash,
+      pinSalt: undefined,
+      pinHash: undefined,
+      pinUpdatedAt: undefined,
       updatedAt: new Date().toISOString(),
     })
   )
+  localStorage.removeItem(PIN_FAILURE_KEY)
   openSession(record.name)
   return { ok: true }
 }
@@ -134,6 +198,7 @@ export function closeSession() {
 export function clearAccessRecord() {
   try {
     localStorage.removeItem(ACCESS_KEY)
+    localStorage.removeItem(PIN_FAILURE_KEY)
   } catch {
     /* ignore */
   }

@@ -123,7 +123,7 @@ export default function AssetLibraryView({
           disabled={busy}
           onClick={() => fileRef.current?.click()}
         >
-          Choose files
+          Upload asset
         </button>
         <input
           ref={fileRef}

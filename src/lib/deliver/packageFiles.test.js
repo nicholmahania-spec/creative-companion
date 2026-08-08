@@ -200,7 +200,7 @@ describe('the package tells the client the bad news too', () => {
   it('keeps the usual-extras note when a mark really did ship', () => {
     const { files } = packageFiles({ ...drifted, logoImage: PNG }, {})
     const readme = files.find((f) => f.path.includes('README')).content
-    expect(readme).toContain('one-colour and a reverse')
+    expect(readme).toContain('one-color and a reverse')
     expect(readme).not.toContain('No logo file is included')
   })
 })

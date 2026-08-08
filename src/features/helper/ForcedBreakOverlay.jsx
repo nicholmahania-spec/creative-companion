@@ -151,7 +151,7 @@ export default function ForcedBreakOverlay({
             className="btn btn-ghost btn-sm forced-break-emergency-link"
             onClick={() => setShowEmergency(true)}
           >
-            Emergency unlock
+              End break early
           </button>
         ) : (
           <div className="forced-break-emergency">
@@ -172,7 +172,7 @@ export default function ForcedBreakOverlay({
                 className="btn btn-secondary btn-sm"
                 onClick={tryEmergency}
               >
-                Unlock
+                Return to work
               </button>
             </div>
           </div>

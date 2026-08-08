@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react'
 import {
   hasAccessSetup,
+  hasPinSetup,
   setupAccess,
   verifyAccess,
+  verifyPin,
 } from '../lib/auth'
 import { isSupabaseConfigured } from '../lib/supabase'
 import {
@@ -11,7 +13,6 @@ import {
   resetPasswordForEmail,
 } from '../lib/cloudSync'
 import { versionLabel } from '../lib/version'
-import { JOURNEY_STEPS } from '../lib/journey/journey'
 import LogoLockup from '../components/LogoLockup'
 import '../styles/lazy-settings.css'
 
@@ -79,6 +80,10 @@ export default function LoginView({ onUnlocked, cloud = false }) {
   const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(null)
+  const [authMethod, setAuthMethod] = useState(
+    !useCloud && setupDone && hasPinSetup() ? 'pin' : 'password'
+  )
+  const [pin, setPin] = useState('')
 
   const submit = async (e) => {
     e.preventDefault()
@@ -149,9 +154,13 @@ export default function LoginView({ onUnlocked, cloud = false }) {
         onUnlocked?.({ mode: 'local', name: result.name })
         return
       }
-      const result = await verifyAccess(password)
+      const result = authMethod === 'pin' ? await verifyPin(pin) : await verifyAccess(password)
       if (!result.ok) {
-        setError(result.error || 'Could not unlock')
+        setError(result.error || 'Could not sign in')
+        if (authMethod === 'pin') {
+          setPin('')
+          if (result.locked) setAuthMethod('password')
+        }
         return
       }
       onUnlocked?.({ mode: 'local', name: result.name })
@@ -201,43 +210,10 @@ export default function LoginView({ onUnlocked, cloud = false }) {
               draw a mark next to a password field. The animated version still
               plays in the header after sign-in, where it is a flourish rather
               than a tax on the gate. */}
-          <LogoLockup reduceMotion />
-          <h1 className="login-h1">Creative Companion</h1>
-          {/* What this actually is.
-              The gate used to say the product's name twice and then show five
-              path chips — Strategy, Research, Identity, Touchpoints, Assets —
-              in the app's own vocabulary, before a stranger had been taught
-              any of it. Nothing on the first screen said what the thing was
-              for, and it asked for a password with no reset in the same
-              breath. A designer landing here could not tell whether this was
-              a project manager, a portfolio, a design tool or a note app.
-              Wording is the product's own, from PRODUCT.md's positioning —
-              not a new claim invented at the door. */}
-          <p className="login-what">
-            Take a brand project from the first client brief to a finished
-            brand book. Your design tools make the work — this is where the
-            brand lives.
-          </p>
-          <p className="login-path-lead" id="login-path-lead">
-            The five stops you’ll move through
-          </p>
-          <ol className="login-path-mini" aria-labelledby="login-path-lead">
-            {JOURNEY_STEPS.map((s) => (
-              <li key={s.id}>
-                <span className="login-path-num">{s.num}</span>
-                <span className="login-path-label">{s.label}</span>
-              </li>
-            ))}
-          </ol>
-          <p className="login-lede login-lede-short">
-            {useCloud
-              ? mode === 'login'
-                ? 'Sign in to your studio'
-                : 'Create your studio account'
-              : mode === 'setup'
-                ? 'Set a password for this device'
-                : 'Unlock'}
-          </p>
+          <LogoLockup markOnly reduceMotion className="login-hero-mark" />
+          <h1 className="sr-only">
+            {mode === 'setup' || mode === 'signup' ? 'Create account' : 'Sign in'}
+          </h1>
           {!useCloud && mode === 'setup' && (
             <p className="login-lede login-setup-explain">
               Work stays on this device. There is no password reset — save it
@@ -274,7 +250,7 @@ export default function LoginView({ onUnlocked, cloud = false }) {
                 setInfo('')
               }}
             >
-              Create
+              Create account
             </button>
           </div>
         )}
@@ -296,19 +272,34 @@ export default function LoginView({ onUnlocked, cloud = false }) {
           ) : (
             mode === 'setup' && (
               <label className="onboard-label">
-                Name
+                Name (optional)
                 <input
                   className="onboard-input"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="username"
-                  placeholder="Optional"
                 />
               </label>
             )
           )}
 
-          <label className="onboard-label">
+          {!useCloud && mode === 'login' && authMethod === 'pin' ? (
+            <label className="onboard-label login-pin-label">
+              PIN
+              <input
+                className="onboard-input login-pin-input"
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                autoComplete="one-time-code"
+                autoFocus
+                required
+              />
+            </label>
+          ) : <label className="onboard-label">
             Password
             <div className="login-password-row">
               <input
@@ -360,8 +351,8 @@ export default function LoginView({ onUnlocked, cloud = false }) {
                 are what the strength meter below scores: guidance, not a gate. */}
             {(mode === 'setup' || mode === 'signup') && (
               <p className="login-pw-hint">
-                At least 6 characters. Longer is better — 8 or more, mixing
-                upper and lowercase, numbers or symbols.
+                Use at least 8 characters. A mix of uppercase and lowercase
+                letters, numbers, or symbols is stronger.
               </p>
             )}
             {(mode === 'setup' || mode === 'signup') && (
@@ -392,11 +383,24 @@ export default function LoginView({ onUnlocked, cloud = false }) {
                 </div>
               </div>
             )}
-          </label>
+          </label>}
+
+          {!useCloud && mode === 'login' && hasPinSetup() && (
+            <button
+              type="button"
+              className="text-link login-auth-switch"
+              onClick={() => {
+                setError('')
+                setAuthMethod(authMethod === 'pin' ? 'password' : 'pin')
+              }}
+            >
+              {authMethod === 'pin' ? 'Use password instead' : 'Use PIN instead'}
+            </button>
+          )}
 
           {(mode === 'setup' || mode === 'signup') && (
             <label className="onboard-label">
-              Confirm
+              Confirm password
               <input
                 className="onboard-input"
                 type={showPassword ? 'text' : 'password'}
@@ -432,14 +436,20 @@ export default function LoginView({ onUnlocked, cloud = false }) {
             disabled={busy}
           >
             {busy
-              ? '…'
+              ? useCloud
+                ? mode === 'login'
+                  ? 'Signing in…'
+                  : 'Creating account…'
+                : mode === 'setup'
+                  ? 'Setting password…'
+                  : 'Signing in…'
               : useCloud
                 ? mode === 'login'
                   ? 'Sign in'
-                  : 'Create'
+                  : 'Create account'
                 : mode === 'setup'
-                  ? 'Create'
-                  : 'Open'}
+                  ? 'Set password'
+                  : 'Sign in'}
           </button>
 
           {useCloud && mode === 'login' && (
@@ -450,7 +460,7 @@ export default function LoginView({ onUnlocked, cloud = false }) {
                 onClick={handleForgot}
                 disabled={busy}
               >
-                Forgot
+                Forgot password?
               </button>
               <button
                 type="button"

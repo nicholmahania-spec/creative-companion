@@ -58,7 +58,7 @@ export default function DefineStartHere({
               className="btn btn-secondary"
               onClick={() => jumpToField(first.id)}
             >
-              Start with {first.label}
+        Go to {first.label}
             </button>
           </div>
         </>

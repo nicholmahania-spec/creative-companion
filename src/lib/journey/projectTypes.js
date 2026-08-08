@@ -35,7 +35,7 @@ export const PROJECT_TYPES = [
   {
     id: 'logo-package',
     label: 'Logo package',
-    plain: 'A mark plus variations, basic colour and type, and where it goes.',
+    plain: 'A mark plus variations, basic color and type, and where it goes.',
     stepIds: ALL_STEP_IDS,
   },
   {

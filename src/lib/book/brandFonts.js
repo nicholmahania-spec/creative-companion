@@ -129,7 +129,7 @@ export function resolveBrandFace(label, weightsByFamily) {
     return {
       ok: false,
       familyName: named,
-      reason: 'this typeface is not one the book can carry a licence to embed',
+      reason: 'this typeface is not one the book can carry a license to embed',
     }
   }
   const held = manifest[entry.id]

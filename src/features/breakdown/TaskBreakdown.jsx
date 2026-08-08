@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { BREAKDOWN_DEPTHS, generateProjectMicrosteps } from '../../lib/microsteps'
+import { labelForStepId } from '../../lib/journey/journey'
 import { useModalFocus } from '../../lib/useModalFocus'
 
 /**
@@ -194,7 +195,7 @@ export default function TaskBreakdown({
               onChange={(e) => setEnergy(e.target.value)}
             >
               <option value="low">Low</option>
-              <option value="med">Med</option>
+              <option value="med">Medium</option>
               <option value="high">High</option>
             </select>
             <div className="breakdown-nav">
@@ -210,7 +211,7 @@ export default function TaskBreakdown({
                 className="btn btn-primary"
                 onClick={buildPreview}
               >
-                Generate
+              Build step list
               </button>
             </div>
           </div>
@@ -245,7 +246,7 @@ export default function TaskBreakdown({
               className="btn btn-ghost btn-sm"
               onClick={addLine}
             >
-              + Step
+              Add step
             </button>
             <div className="breakdown-nav">
               <button
@@ -261,7 +262,8 @@ export default function TaskBreakdown({
                 disabled={!steps.some((s) => s.trim())}
                 onClick={commit}
               >
-                Add {steps.filter((s) => s.trim()).length} to Sketch
+            Add {steps.filter((s) => s.trim()).length} to{' '}
+            {labelForStepId('sketch')}
               </button>
             </div>
           </div>
@@ -278,14 +280,14 @@ export default function TaskBreakdown({
                 className="btn btn-secondary btn-sm"
                 onClick={onRestart}
               >
-                More
+            Break down another task
               </button>
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={onFinish}
               >
-                Start #1
+            Start first step
               </button>
             </div>
           </div>

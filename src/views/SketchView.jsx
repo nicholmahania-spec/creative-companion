@@ -545,11 +545,7 @@ export default function SketchView(props) {
             produce it. One quiet field, no pressure to fill it. */}
         <div className="field-block sketch-feedback-block">
           <label className="field-label" htmlFor="sketch-feedback-notes">
-            Feedback so far
-            {/* Same field as Review's "Notes" — named differently in each
-                place, which reads as two separate logs unless you notice
-                text from one showing up in the other. */}
-            <span className="sketch-feedback-shared-hint"> (shared with Review)</span>
+            Project notes
           </label>
           <textarea
             id="sketch-feedback-notes"
@@ -557,7 +553,7 @@ export default function SketchView(props) {
             rows={3}
             value={activeProject?.feedbackNotes || ''}
             onChange={(e) => updateBrandField('feedbackNotes', e.target.value)}
-            placeholder="Change · why · keep — optional"
+            placeholder="What should change, why, and what should stay? Optional."
           />
         </div>
 
@@ -602,9 +598,9 @@ export default function SketchView(props) {
                   onChange={(e) => setCaptureEnergy(e.target.value)}
                   aria-label="Energy"
                 >
-                  <option value="high">H</option>
-                  <option value="med">M</option>
-                  <option value="low">L</option>
+                  <option value="high">High</option>
+                  <option value="med">Medium</option>
+                  <option value="low">Low</option>
                 </select>
                 <label className="capture-due-label">
                   Due
@@ -621,7 +617,7 @@ export default function SketchView(props) {
                   className="voice-link"
                   onClick={startVoice}
                 >
-                  Voice
+                  Dictate
                 </button>
               </>
             )}
@@ -832,12 +828,12 @@ export default function SketchView(props) {
                             setTouchpointApp(id, { done: !done })
                             flashMicro?.(
                               !done
-                                ? `${touchpointLabel(id)} · mock is good`
-                                : `${touchpointLabel(id)} · open again`
+                                ? `${touchpointLabel(id)} · mock marked ready`
+                                : `${touchpointLabel(id)} · mock reopened`
                             )
                           }}
                         >
-                          {done ? 'Mock is good' : 'This mock is good'}
+                          {done ? 'Mock ready' : 'Mark mock ready'}
                         </button>
                       </div>
                       <label className="field-label" htmlFor={`tp-note-${id}`}>
@@ -870,7 +866,7 @@ export default function SketchView(props) {
                         label={touchpointLabel(id).toLowerCase()}
                         onChecked={(check) => {
                           setTouchpointApp(id, { check })
-                          flashMicro?.(`${touchpointLabel(id)} · colours read`)
+                          flashMicro?.(`${touchpointLabel(id)} · colors read`)
                         }}
                         onClear={() => {
                           const before = row.check

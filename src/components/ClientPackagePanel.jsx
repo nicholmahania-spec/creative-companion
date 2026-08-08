@@ -118,11 +118,11 @@ export default function ClientPackagePanel({
   }
 
   return (
-    <section className="panel brand-section package-panel" aria-label="Client package">
+    <section className="panel brand-section package-panel" aria-label="Files included">
       <div className="brand-section-label">
-        Client package
+        Files included
         <span className="package-count">
-          {` ${plan.fileCount} file${plan.fileCount === 1 ? '' : 's'} in ${plan.folders.length} folder${plan.folders.length === 1 ? '' : 's'}`}
+          {` · ${plan.fileCount} file${plan.fileCount === 1 ? '' : 's'} · ${plan.folders.length} folder${plan.folders.length === 1 ? '' : 's'}`}
         </span>
       </div>
 
@@ -189,7 +189,7 @@ export default function ClientPackagePanel({
         <div className="package-subhead">Fonts</div>
         <p className="panel-hint">
           {fonts.filesIncluded
-            ? 'Font files will be included. Only do this when the licence lets you pass them on.'
+            ? 'Font files will be included. Only do this when the license lets you pass them on.'
             : 'The faces are documented — files are not copied into the package.'}
         </p>
         <div className="field-block">
@@ -207,7 +207,7 @@ export default function ClientPackagePanel({
         </div>
         <div className="field-block">
           <label className="field-label" htmlFor="package-font-licence">
-            What the licence says
+            What the license says
           </label>
           <input
             id="package-font-licence"
@@ -215,7 +215,7 @@ export default function ClientPackagePanel({
             className="field-input"
             value={pack.typeLicenceNote || ''}
             onChange={(e) => updateBrandField('typeLicenceNote', e.target.value)}
-            placeholder="e.g. SIL Open Font Licence, or 1 desktop seat"
+            placeholder="e.g. SIL Open Font License, or 1 desktop seat"
           />
         </div>
         <label className="package-licence-check">
@@ -226,19 +226,14 @@ export default function ClientPackagePanel({
               updateBrandField('fontFilesLicensed', e.target.checked)
             }
           />
-          The licence lets me hand the font files over
+          The license lets me hand the font files over
         </label>
       </div>
 
       {/* Work made elsewhere. */}
       <div className="package-assets">
         <div className="package-subhead">Files you made elsewhere</div>
-        {assets.length === 0 ? (
-          <p className="panel-hint">
-            Nothing added. Bring in the card, the signage artwork, the social
-            templates — whatever you built in your own tools.
-          </p>
-        ) : (
+        {assets.length > 0 ? (
           <ul className="package-asset-list">
             {assets.map((a) => {
               const thumb = assetThumb(a.dataUrl)
@@ -322,13 +317,13 @@ export default function ClientPackagePanel({
                     className="btn btn-ghost btn-sm"
                     onClick={() => removePackageAsset(a.id)}
                   >
-                    Remove
+            Remove file
                   </button>
                 </li>
               )
             })}
           </ul>
-        )}
+        ) : null}
         {/* Visually hidden, but still a real control in the accessibility
             tree — `sr-only` hides it from sight, not from a screen reader, so
             without a name it announces as an unlabelled file input (axe rates
@@ -339,7 +334,7 @@ export default function ClientPackagePanel({
           type="file"
           multiple
           className="sr-only"
-          aria-label="Add files to the client package"
+          aria-label="Upload project asset"
           onChange={onPick}
         />
         <button
@@ -348,7 +343,7 @@ export default function ClientPackagePanel({
           disabled={reading}
           onClick={() => fileRef.current?.click()}
         >
-          {reading ? 'Reading…' : 'Add files'}
+          {reading ? 'Reading…' : 'Upload asset'}
         </button>
       </div>
 
@@ -364,10 +359,10 @@ export default function ClientPackagePanel({
           onClick={() => onExport?.('package')}
         >
           {exportBusy
-            ? 'Building…'
+            ? 'Preparing…'
             : plan.excluded.length > 0
-              ? `Build the client package · ${plan.excluded.length} held back`
-              : 'Build the client package'}
+          ? `Download brand package · ${plan.excluded.length} excluded`
+              : 'Download brand package'}
         </button>
       </div>
     </section>

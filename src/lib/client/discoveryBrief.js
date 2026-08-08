@@ -8,7 +8,7 @@
 export const DISCOVERY_SECTIONS = [
   {
     id: 'overview',
-    label: 'Project Overview & Administration',
+    label: 'Project basics',
     fields: [
       { id: 'projectTitle', label: 'Project title', type: 'text' },
       { id: 'clientName', label: 'Client / company name', type: 'text' },
@@ -19,11 +19,11 @@ export const DISCOVERY_SECTIONS = [
   },
   {
     id: 'background',
-    label: 'Company Background & Strategy',
+    label: 'Your business',
     fields: [
       {
         id: 'story',
-        label: 'The story',
+        label: 'What is the story behind the business?',
         prompt: 'How did the business start, and why?',
         type: 'textarea',
       },
@@ -35,7 +35,7 @@ export const DISCOVERY_SECTIONS = [
       },
       {
         id: 'problem',
-        label: 'The problem',
+        label: 'What problem do you solve?',
         prompt: 'Why did you start this business (or what sparked this rebrand)? What commercial challenge or market gap is this identity solving? What is the #1 problem you solve for customers?',
         type: 'textarea',
       },
@@ -60,11 +60,11 @@ export const DISCOVERY_SECTIONS = [
   },
   {
     id: 'audience',
-    label: 'Target Audience & Market',
+    label: 'Your customers',
     fields: [
       {
         id: 'targetAudience',
-        label: 'Target audience',
+        label: 'Who are you trying to reach?',
         prompt: 'Describe your ideal customer: age, location, profession, lifestyle, income, interests.',
         type: 'textarea',
       },
@@ -88,7 +88,7 @@ export const DISCOVERY_SECTIONS = [
   },
   {
     id: 'personality',
-    label: 'Brand Voice & Creative Direction',
+    label: 'Look and feel',
     fields: [
       {
         id: 'brandAsPerson',
@@ -99,8 +99,8 @@ export const DISCOVERY_SECTIONS = [
       { id: 'spectrumPlayfulProfessional', label: 'Playful vs. Professional', type: 'text' },
       { id: 'spectrumHighEndAffordable', label: 'High-end vs. Affordable', type: 'text' },
       { id: 'spectrumBoldMinimalist', label: 'Bold vs. Minimalist', type: 'text' },
-      { id: 'toneOfVoice', label: 'Tone of voice', prompt: 'Playful, serious, formal, casual?', type: 'text' },
-      { id: 'visualStyleKeywords', label: 'Visual style keywords', prompt: 'e.g. minimalist, bold, vintage, modern', type: 'text' },
+      { id: 'toneOfVoice', label: 'How should the brand sound?', prompt: 'Playful, serious, formal, casual?', type: 'text' },
+      { id: 'visualStyleKeywords', label: 'What should the brand feel like?', prompt: 'e.g. minimalist, bold, vintage, modern', type: 'text' },
       { id: 'inspirationLinks', label: 'Inspiration / mood board links', type: 'textarea' },
       { id: 'admiredBrands', label: 'Brands you admire and why', type: 'textarea' },
       {
@@ -112,7 +112,7 @@ export const DISCOVERY_SECTIONS = [
   },
   {
     id: 'scope',
-    label: 'Deliverables & Technical Scope',
+    label: 'What you need',
     fields: [
       {
         id: 'mustHaveDeliverables',
@@ -128,12 +128,12 @@ export const DISCOVERY_SECTIONS = [
       },
       {
         id: 'fileFormats',
-        label: 'File formats you need',
+        label: 'File formats, if you know them',
         prompt: 'Only if you already know — otherwise leave this blank.',
         type: 'text',
       },
       { id: 'launchDate', label: 'Ideal launch date', type: 'text' },
-      { id: 'decisionMakers', label: 'Key decision-makers approving concepts', type: 'text' },
+      { id: 'decisionMakers', label: 'Who gives final approval?', type: 'text' },
     ],
   },
 ]
@@ -148,7 +148,7 @@ export function blankDiscoveryBrief() {
  * lines for unanswered fields, filled in for answered ones. */
 export function discoveryBriefToMarkdown(answers = {}, meta = {}) {
   const lines = [
-    `# Brand Discovery Brief${meta.clientName ? ` — ${meta.clientName}` : ''}`,
+    `# Project brief${meta.clientName ? ` — ${meta.clientName}` : ''}`,
     '',
     '_Fill in each field below. Leave blank if not sure yet._',
     '',

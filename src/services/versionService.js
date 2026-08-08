@@ -19,7 +19,7 @@ export function versionKindLabel(kind) {
     case 'template':
       return 'Template'
     case 'bump':
-      return 'Bump'
+      return 'Named save'
     default:
       return 'Save'
   }
@@ -49,7 +49,7 @@ export function versionIdentityPreview(data) {
     wordmark ||
     direction ||
     tagline ||
-    (palette.length ? 'Colour work' : '') ||
+    (palette.length ? 'Color work' : '') ||
     typeHeading ||
     'Empty identity'
   const lines = []
@@ -449,8 +449,8 @@ class VersionService {
                 : 'Hourly save'
               : kind === 'bump'
                 ? diff.changeCount
-                  ? `Bump · ${diff.summary}`
-                  : 'Bump'
+                  ? `Named save · ${diff.summary}`
+                  : 'Named save'
                 : diff.summary || versionKindLabel(kind),
           kind,
         }

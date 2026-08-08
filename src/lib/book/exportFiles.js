@@ -1785,7 +1785,7 @@ export async function downloadProjectOverviewPdf(project, options = {}) {
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(22)
     pdf.setTextColor(20, 18, 17)
-    pdf.text('Project overview', margin, y + 18)
+    pdf.text('Project brief', margin, y + 18)
     y += 32
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(10)
@@ -1857,7 +1857,7 @@ export async function downloadProjectOverviewPdf(project, options = {}) {
         pdf.setFontSize(11)
         pdf.setTextColor(120, 120, 120)
         const note = pdfSafeText(
-          'No brief answers yet. Fill out Define (Project overview) or send the blank form for the client to complete.'
+          'No brief answers yet. Fill it out in the app or send the blank brief for the client to complete.'
         )
         const noteLines = pdf.splitTextToSize(note, contentW)
         pdf.text(noteLines, margin, y)
@@ -1906,8 +1906,8 @@ export async function downloadProjectOverviewPdf(project, options = {}) {
       pdf.setTextColor(150, 150, 150)
       pdf.text(
         pdfSafeText(
-          creditedFooter([options.studioName, 'Project overview']) ||
-            'Project overview'
+          creditedFooter([options.studioName, 'Project brief']) ||
+            'Project brief'
         ),
         margin,
         pageH - 24
@@ -1964,7 +1964,7 @@ export async function downloadProjectOverviewPdf(project, options = {}) {
   } catch (e) {
     return {
       ok: false,
-      error: e?.message || 'Project overview PDF generation failed',
+      error: e?.message || 'Project brief PDF generation failed',
     }
   }
 }
@@ -2025,7 +2025,7 @@ export function markPackFiles(pack = {}) {
     'In this pack:',
     `- ${markLine}`,
     '',
-    'A full logo handoff usually also includes a one-colour version and a',
+    'A full logo handoff usually also includes a one-color version and a',
     'reverse (light-on-dark) version. Those are shown as previews in the app;',
     'ask if you need them supplied as separate files.',
   ].join('\n')

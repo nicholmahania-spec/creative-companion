@@ -89,10 +89,17 @@ export function ClientInboxChip({ hasUnread, onOpen }) {
       type="button"
       className={`client-inbox-chip${hasUnread ? ' has-new' : ''}`}
       onClick={onOpen}
-      aria-label={hasUnread ? 'Client — new activity' : 'Client'}
+      aria-label={hasUnread ? 'Notifications — new activity' : 'Notifications'}
     >
-      <span className="client-inbox-chip-dot" aria-hidden="true" />
-      <span>Client</span>
+      {hasUnread && <span className="client-inbox-chip-dot" aria-hidden="true" />}
+      <svg
+        className="client-inbox-chip-icon"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path d="M3.5 6.5h17v11h-17z" />
+        <path d="m4.5 7.5 7.5 6 7.5-6" />
+      </svg>
     </button>
   )
 }
@@ -210,7 +217,7 @@ export function ClientInboxPanel({
       <div className="export-panel client-inbox-panel" ref={panelRef}>
         <div className="export-panel-header">
           <h3 id="client-inbox-title" className="client-inbox-title">
-            {openRow ? openRow.title : 'Client'}
+            {openRow ? openRow.title : 'Notifications'}
           </h3>
           <button
             type="button"
@@ -280,7 +287,7 @@ export function ClientInboxPanel({
                   onClick={sendReply}
                   disabled={sending || !reply.trim()}
                 >
-                  {sending ? 'Sending…' : 'Send'}
+            {sending ? 'Sending reply…' : 'Send reply'}
                 </button>
               </div>
             ) : openRow.kind === 'form' ? (
@@ -371,7 +378,7 @@ export function ClientInboxPanel({
                     onClose?.()
                   }}
                 >
-                  Create a client link
+            Create client dashboard
                 </button>
               </div>
             )}

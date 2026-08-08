@@ -27,14 +27,12 @@ import { labelForView, labelForStepId } from '../lib/journey/journey'
 
 import { namedDeadlineLabel } from '../lib/dates'
 import { pinFaceStyle, pinVisualKind } from '../lib/moodPins'
-import { DELIVERABLE_OPTIONS } from '../lib/brief/detectiveBrief'
 import {
   buildBrandPackSnapshot,
   packReadiness,
 } from '../lib/book/exportFiles'
 import { weekFromWorkLog, hoursLoggedWords } from '../lib/billing/workWeek'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
-import BrandCheckPanel from '../components/BrandCheckPanel'
 import YoursOnlyPanel from '../components/YoursOnlyPanel'
 import '../styles/lazy-desk.css'
 
@@ -151,34 +149,6 @@ export function relativeAgeLabel(iso, now = new Date()) {
   return `${Math.floor(days / 7)} weeks`
 }
 
-function briefValue(detective, id) {
-  const raw = detective?.[id]
-  if (Array.isArray(raw)) {
-    if (id === 'deliverablesPicked') {
-      const labels = DELIVERABLE_OPTIONS.reduce((m, o) => {
-        m[o.id] = o.label
-        return m
-      }, {})
-      return raw
-        .map((v) => labels[v] || String(v || '').trim())
-        .filter(Boolean)
-        .join(', ')
-    }
-    return raw.map((v) => String(v || '').trim()).filter(Boolean).join(', ')
-  }
-  return String(raw || '').trim()
-}
-
-/** Mock brief grid order and short labels. */
-const BRIEF_FIELDS = [
-  { id: 'clientName', label: 'Client' },
-  { id: 'goal', label: 'Goal' },
-  { id: 'audience', label: 'Audience' },
-  { id: 'feel', label: 'Feel' },
-  { id: 'deliverablesPicked', label: 'Deliverables' },
-  { id: 'avoid', label: 'Off the table' },
-]
-
 function pinBorder(pin) {
   if (pin?.packHero) return '2px solid var(--text-primary)'
   if (pin?.inPack) return '1px solid var(--border-subtle)'
@@ -194,13 +164,11 @@ export default function DeskView({
   tasks = [],
   clientInbox,
   onOpenView,
-  onOpenSection,
   onOpenClientInbox,
   onToggleTask,
   onToggleNotNeeded,
   onMarkStepDone,
   onEditIdentity,
-  onEditBrief,
   onOpenWall,
   onOpenAssets,
 }) {
@@ -218,9 +186,6 @@ export default function DeskView({
   const progressLabel =
     taskTotal > 0 ? `${taskDone}/${taskTotal}` : null
 
-  const upcomingStops = rows.filter(
-    (r) => !r.done && !skipped(r.id) && r.id !== gapRow?.id
-  )
   const doneStops = rows.filter((r) => r.done)
   const skippedStops = rows.filter((r) => !r.done && skipped(r.id))
 
@@ -277,12 +242,6 @@ export default function DeskView({
     })
     .slice(0, 6)
 
-  const detective = project?.detective || {}
-  const briefRows = BRIEF_FIELDS.map((f) => ({
-    ...f,
-    value: briefValue(detective, f.id),
-  })).filter((f) => f.value)
-
   const projectId = project?.id != null ? String(project.id) : ''
   const activity = (clientInbox?.rows || [])
     .filter((r) => String(r.projectLocalId ?? '') === projectId)
@@ -290,8 +249,6 @@ export default function DeskView({
   const unreadClient = activity.some((a) => a.unread)
 
   const week = weekFromWorkLog(project?.workLog || [])
-
-  const gapTitle = gapRow ? gapRow.label : ''
 
   const pickup = deskPickup({
     lastView: project?.lastView,
@@ -315,6 +272,48 @@ export default function DeskView({
 
   return (
     <div className="desk-view view-enter">
+      <section
+        className={`desk-panel desk-client-strip desk-client-priority${unreadClient ? ' has-unread' : ''}`}
+        aria-label="Client communication"
+      >
+        <div className="desk-panel-head">
+          <span className="desk-eyebrow">Client communication</span>
+          <span className="desk-client-status">
+            {activity.length === 0
+              ? 'No client activity yet'
+              : unreadClient
+                ? 'Needs a look'
+                : 'Up to date'}
+          </span>
+        </div>
+        {activity.length > 0 && (
+          <ul className="desk-activity">
+            {activity.map((a) => {
+              const when = a.at ? relativeAgeLabel(a.at) : ''
+              return (
+                <li
+                  key={a.id}
+                  className={`desk-activity-row${a.unread ? ' is-unread' : ''}`}
+                >
+                  <span className="desk-activity-dot" aria-hidden="true" />
+                  <span className="desk-activity-text">{a.title}</span>
+                  {a.kind === 'approval' && (
+                    <span className="desk-activity-pill">Approved</span>
+                  )}
+                  {when ? <span className="desk-activity-when">{when}</span> : null}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+        <button
+          type="button"
+          className="btn btn-secondary desk-client-cta"
+          onClick={onOpenClientInbox}
+        >
+          Open client inbox
+        </button>
+      </section>
       <div className="desk-grid">
         {/* ── MAIN COLUMN ── */}
         <div className="desk-main">
@@ -386,16 +385,37 @@ export default function DeskView({
                     Open {labelForStepId('deliver')}
                   </button>
                 )}
+              {gapRow && (
+                <details className="desk-path-options">
+                  <summary>Path options</summary>
+                  <div className="desk-path-options-menu">
+                    {typeof onMarkStepDone === 'function' && (
+                      <button
+                        type="button"
+                        onClick={() => onMarkStepDone(gapRow.id, true)}
+                      >
+                        Mark as already done
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onToggleNotNeeded(gapRow.id)}
+                    >
+                      Mark as not needed
+                    </button>
+                  </div>
+                </details>
+              )}
             </div>
           </section>
 
           <section
             className="desk-panel desk-pack"
-            aria-label="Research pack"
+            aria-label="Research shortlist"
           >
             <div className="desk-panel-head">
               <span className="desk-eyebrow">
-                {labelForStepId('research')} · starred for the client shortlist
+                {labelForStepId('research')} · selected for the client shortlist
               </span>
               <button
                 type="button"
@@ -406,7 +426,9 @@ export default function DeskView({
               </button>
             </div>
             {packPins.length === 0 ? (
-              <p className="desk-empty">Nothing starred yet.</p>
+              <p className="desk-empty">
+                Nothing shortlisted yet. Add references from Research.
+              </p>
             ) : (
               <div className="desk-pack-grid">
                 {packPins.map((pin) => {
@@ -438,106 +460,10 @@ export default function DeskView({
             )}
           </section>
 
-          <section className="desk-panel desk-brief" aria-label="Brief">
-            <div className="desk-panel-head">
-              <span className="desk-eyebrow">
-                {labelForStepId('define')} · the brief
-              </span>
-              <button
-                type="button"
-                className="desk-panel-link desk-panel-link-quiet"
-                onClick={onEditBrief}
-              >
-                Edit
-              </button>
-            </div>
-            {briefRows.length === 0 ? (
-              <p className="desk-empty">Nothing in the brief yet.</p>
-            ) : (
-              <dl className="desk-brief-grid">
-                {briefRows.map((row) => (
-                  <div key={row.id} className="desk-brief-item">
-                    <dt>{row.label}</dt>
-                    <dd>{row.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </section>
-
-          {/* Under the brief on purpose: the check reads the brief's scope,
-              and a gap only means something once you can see what was asked
-              for. Collapsed until pressed — see BrandCheckPanel. */}
-          <BrandCheckPanel
-            project={project}
-            moodItems={pins}
-            palette={palette}
-            tasks={tasks}
-            clientRows={clientInbox?.rows || []}
-            onOpenView={(view, section) => {
-              if (view === 'brand' && section && typeof onOpenSection === 'function') {
-                onOpenSection(section)
-                return
-              }
-              onOpenView(view)
-            }}
-          />
         </div>
 
         {/* ── RIGHT COLUMN ── */}
         <aside className="desk-rail" aria-label="Client and what's next">
-          {/* Compact Client strip — always first in the rail (not under Done). */}
-          <section
-            className={`desk-panel desk-client-strip${unreadClient ? ' has-unread' : ''}`}
-            aria-label="Client"
-          >
-            <div className="desk-panel-head">
-              <span className="desk-eyebrow">Client</span>
-              <span className="desk-client-status">
-                {activity.length === 0
-                  ? 'No messages yet'
-                  : unreadClient
-                    ? 'Needs a look'
-                    : 'Up to date'}
-              </span>
-            </div>
-            {activity.length > 0 && (
-              <ul className="desk-activity">
-                {activity.map((a) => {
-                  /* `at`, not `sortAt`. Only rows with a real per-event time
-                     carry `at`; `sortAt` is portal-level ordering data that
-                     clientInbox marks "never shown to the user". */
-                  const when = a.at ? relativeAgeLabel(a.at) : ''
-                  return (
-                    <li
-                      key={a.id}
-                      className={`desk-activity-row${a.unread ? ' is-unread' : ''}`}
-                    >
-                      <span
-                        className="desk-activity-dot"
-                        aria-hidden="true"
-                      />
-                      <span className="desk-activity-text">{a.title}</span>
-                      {a.kind === 'approval' && (
-                        <span className="desk-activity-pill">Approved</span>
-                      )}
-                      {when ? (
-                        <span className="desk-activity-when">{when}</span>
-                      ) : null}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-            <button
-              type="button"
-              className="btn btn-secondary desk-client-cta"
-              onClick={onOpenClientInbox}
-            >
-              Client link &amp; approvals
-            </button>
-          </section>
-
           <section className="desk-panel desk-next" aria-label="What's next">
             <div className="desk-panel-head">
               <span className="desk-eyebrow">What&rsquo;s next</span>
@@ -551,70 +477,7 @@ export default function DeskView({
               </div>
             </div>
 
-            {/* Above the card on purpose: it is context for the decision the
-                card is about to ask for, so it has to be read first. */}
             {lastTouch && <p className="desk-last-touch">{lastTouch}</p>}
-
-            {gapRow && (
-              <div className="desk-card">
-                <button
-                  type="button"
-                  className="desk-card-hit"
-                  onClick={() => onOpenView(gapRow.view)}
-                >
-                  <span className="desk-card-tag">{gapRow.label}</span>
-                  <span className="desk-card-title">{gapTitle}</span>
-                </button>
-                {/* One button, then two quiet asides.
-                    This card is read at the coldest moment in the app — a
-                    project opened after days away — and its whole job is to
-                    make starting a single unconsidered act. It used to offer
-                    three controls of near-equal weight: Open, Mark done, Not
-                    needed. Two of those are ADMINISTRATIVE, and putting them
-                    beside the work action asks the reader to classify the
-                    stage ("is this a thing I do, a thing I already did, or a
-                    thing I skip?") before they are allowed to do any of it.
-
-                    They are not removed, and that was the tempting mistake.
-                    This card is the ONLY place in the app where a step can be
-                    marked done or declined — `setStepDone` and
-                    `toggleStepNotNeeded` have no other route in — and the gap
-                    card is never empty, so deleting them would leave an
-                    unwanted stop permanently parked on the cold-start
-                    surface with no way to clear it. Stage-page Mark done was
-                    also tried and deliberately removed (a056d3d, "mark done
-                    stays on desk"), so that is not the escape hatch either.
-
-                    Weight alone does the work. */}
-                <div className="desk-card-actions">
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => onOpenView(gapRow.view)}
-                  >
-                    {`Open ${gapRow.label}`}
-                  </button>
-                </div>
-                <div className="desk-card-aside">
-                  {typeof onMarkStepDone === 'function' && (
-                    <button
-                      type="button"
-                      className="desk-card-aside-link"
-                      onClick={() => onMarkStepDone(gapRow.id, true)}
-                    >
-                      Already done
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="desk-card-aside-link"
-                    onClick={() => onToggleNotNeeded(gapRow.id)}
-                  >
-                    Skip this one
-                  </button>
-                </div>
-              </div>
-            )}
 
             {pickup.showResume && resumeLabel ? (
               <button
@@ -647,17 +510,6 @@ export default function DeskView({
                     onClick={() => onToggleTask(t.id)}
                   />
                   <span className="desk-row-task">{t.title}</span>
-                </li>
-              ))}
-              {upcomingStops.map((r) => (
-                <li key={r.id} className="desk-row">
-                  <button
-                    type="button"
-                    className="desk-row-open"
-                    onClick={() => onOpenView(r.view)}
-                  >
-                    {r.label}
-                  </button>
                 </li>
               ))}
             </ul>

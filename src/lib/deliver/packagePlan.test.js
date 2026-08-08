@@ -124,7 +124,7 @@ describe('usage rights', () => {
     })
     expect(fileNames(plan)).toContain('SparrowsPromise_Application_BusinessCard.png')
     expect(plan.excluded).toEqual([
-      { name: 'hero mockup', reason: expect.stringMatching(/licence is yours/i) },
+      { name: 'hero mockup', reason: expect.stringMatching(/license is yours/i) },
     ])
   })
 

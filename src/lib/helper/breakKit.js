@@ -4,7 +4,7 @@
  */
 
 export const BREAK_KINDS = [
-  { id: 'med', label: 'Med', icon: '💊', defaultMinutes: 2, recurring: true, hint: 'Pills' },
+  { id: 'med', label: 'Medication', icon: '💊', defaultMinutes: 2, recurring: true, hint: 'Example: pills' },
   { id: 'care', label: 'Care', icon: '♡', defaultMinutes: 3, recurring: true, hint: 'Stretch' },
   { id: 'todo', label: 'To-do', icon: '✓', defaultMinutes: 5, recurring: false, hint: 'One life task' },
   { id: 'task', label: 'Task', icon: '☰', defaultMinutes: 5, recurring: false, hint: 'Quick task' },
@@ -71,8 +71,8 @@ export function pickBreakPlan(items = [], breakMinutes = 5, now = new Date()) {
       empty: true,
       fallback: [
         { id: '_water', title: 'Water', kind: 'care', minutes: 2 },
-        { id: '_stand', title: 'Stand · stretch', kind: 'care', minutes: 1 },
-        { id: '_eyes', title: 'Eyes far', kind: 'care', minutes: 1 },
+        { id: '_stand', title: 'Stand and stretch', kind: 'care', minutes: 1 },
+        { id: '_eyes', title: 'Look into the distance', kind: 'care', minutes: 1 },
       ],
     }
   }
@@ -95,8 +95,8 @@ export function breakPlanCopy(plan, breakMinutes) {
   }
   const n = plan.items.length
   return {
-    headline: n === 1 ? '1 kit item' : `${n} kit items`,
-    sub: `${plan.usedMinutes}/${breakMinutes} min · check off`,
+    headline: n === 1 ? '1 break task' : `${n} break tasks`,
+    sub: 'These fit into this break. Tick them off as you go.',
   }
 }
 

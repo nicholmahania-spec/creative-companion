@@ -81,13 +81,13 @@ export function DiscoveryBriefPanel({
       <div className="export-panel discovery-brief-panel">
         <div className="export-panel-header">
           <h3 id="discovery-brief-title" style={{ margin: 0 }}>
-            Discovery brief
+            Project brief
           </h3>
           <button
             type="button"
             className="btn btn-ghost btn-sm"
             onClick={onClose}
-            aria-label="Close discovery brief"
+            aria-label="Close project brief"
           >
             ×
           </button>
@@ -112,7 +112,7 @@ export function DiscoveryBriefPanel({
         {mode === 'menu' && (
           <div className="discovery-brief-menu">
             <button type="button" className="btn btn-secondary" onClick={() => setMode('fill')}>
-              Fill it out myself
+          Fill in the brief
             </button>
             <button
               type="button"
@@ -125,7 +125,7 @@ export function DiscoveryBriefPanel({
               Run as a call script
             </button>
             <button type="button" className="btn btn-secondary" onClick={() => setMode('handoff')}>
-              Email to client / upload a completed form
+          Send or import a brief
             </button>
           </div>
         )}
@@ -390,7 +390,7 @@ function HandoffMode({
             disabled={creatingLink}
             onClick={handleCreateLink}
           >
-            {creatingLink ? 'Creating link…' : 'Create client link'}
+            {creatingLink ? 'Creating brief link…' : 'Create brief link'}
           </button>
         ) : revoked ? (
           <p className="client-portal-revoked-note">
@@ -414,7 +414,7 @@ function HandoffMode({
                   flashToast?.('Link copied')
                 }}
               >
-                Copy
+                  Copy brief link
               </button>
             </div>
             <div className="discovery-brief-handoff-actions">
@@ -445,7 +445,7 @@ function HandoffMode({
                 {revoking
                   ? 'Revoking…'
                   : revokeArmed
-                    ? 'Tap again to revoke'
+                    ? 'Yes, revoke link'
                     : 'Revoke link'}
               </button>
               {revokeArmed && !revoking ? (
@@ -476,7 +476,7 @@ function HandoffMode({
               )
             }
           >
-            Download fillable form (.md)
+              Download questions (Markdown)
           </button>
           <a className="btn btn-secondary" href={mailtoHref()}>
             Open email draft
@@ -504,7 +504,7 @@ function HandoffMode({
           <div className="discovery-brief-upload-row">
             <span>{upload.name}</span>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => onSetUpload(null)}>
-              Remove
+                  Remove uploaded form
             </button>
           </div>
         ) : (

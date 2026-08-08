@@ -147,7 +147,7 @@ export function WorkLogPanel({ open, onClose, workLog = [], onRemoveEntry }) {
               onClick={() => setShowNumbers((v) => !v)}
               aria-pressed={showNumbers}
             >
-              {showNumbers ? 'Hide numbers' : 'Show numbers'}
+          {showNumbers ? 'Hide exact time' : 'Show exact time'}
             </button>
 
             {showNumbers ? (

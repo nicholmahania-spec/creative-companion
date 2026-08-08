@@ -5,7 +5,6 @@ import {
   prepareStudioLogo,
   resolveStudioName,
 } from '../../lib/studio/studioIdentity'
-import { creditedFooter } from '../../lib/book/exportFiles'
 
 /**
  * Who client work is credited to — the studio's own name and mark.
@@ -37,10 +36,6 @@ export default function StudioIdentityBlock({ prefs = {}, setPref, flashToast })
 
   const name = resolveStudioName(prefs)
   const logo = String(prefs.studioLogo || '').trim()
-  /* Sample date, not today's — this line describes the shape of the footer,
-     and a date that changes daily invites reading it as a live status. */
-  const preview = creditedFooter(['Sparrow’s Promise', name, '7 Aug 2026'])
-
   /* An explicit name overrides; an empty field falls back to the invoice
      identity. Showing the fallback as the input's value would be a lie — the
      designer would edit a field they never set — so it is a placeholder. */
@@ -67,7 +62,7 @@ export default function StudioIdentityBlock({ prefs = {}, setPref, flashToast })
 
   return (
     <section className="panel brand-section" id="settings-studio-identity">
-      <div className="brand-section-label">Your studio</div>
+      <div className="brand-section-label">Business details</div>
 
       <div className="field-block">
         <label className="field-label" htmlFor="studio-identity-name">
@@ -78,13 +73,13 @@ export default function StudioIdentityBlock({ prefs = {}, setPref, flashToast })
           className="field-input"
           type="text"
           value={prefs.studioName || ''}
-          placeholder={inherited ? name : 'Your studio name'}
+          placeholder={inherited ? name : 'Business name'}
           onChange={(e) => setPref('studioName', e.target.value)}
         />
         {inherited ? (
           <p className="book-setup-state">
-            Using “{name}” from your invoice details. Type here to use something
-            else.
+            Using “{name}” from your invoice details. Enter a different
+            business name here.
           </p>
         ) : null}
       </div>
@@ -93,7 +88,7 @@ export default function StudioIdentityBlock({ prefs = {}, setPref, flashToast })
         <span className="field-label">Logo</span>
         {logo ? (
           <div className="studio-logo-row">
-            <img className="studio-logo-preview" src={logo} alt="Your studio logo" />
+            <img className="studio-logo-preview" src={logo} alt="Business logo" />
             <button
               type="button"
               className="btn btn-ghost btn-sm"
@@ -102,17 +97,18 @@ export default function StudioIdentityBlock({ prefs = {}, setPref, flashToast })
                 flashToast?.('Logo removed')
               }}
             >
-              Remove
+              Remove logo
             </button>
           </div>
         ) : null}
         <button
           type="button"
           className="btn btn-secondary btn-sm"
+          aria-label={logo ? 'Replace business logo' : 'Upload business logo'}
           disabled={busy}
           onClick={() => fileRef.current?.click()}
         >
-          {busy ? 'Adding…' : logo ? 'Replace logo' : 'Add a logo'}
+          {busy ? 'Uploading…' : logo ? 'Replace logo' : 'Upload'}
         </button>
         <input
           ref={fileRef}
@@ -123,24 +119,7 @@ export default function StudioIdentityBlock({ prefs = {}, setPref, flashToast })
           onChange={pickLogo}
         />
         {problem ? <p className="book-setup-state">{problem}</p> : null}
-        {/* Says what happens to the file, because "it got smaller" is
-            otherwise a surprise a designer would reasonably read as damage. */}
-        <p className="book-setup-state">
-          Stored at footer size, not print size — the original file on your
-          machine is untouched.
-        </p>
       </div>
-
-      {/* "Every page you send says:" asserted this as fact, and the sample
-          data made that assertion false for a new user — someone who has just
-          set a password, has no studio name and one project called "My
-          project" was told their outgoing pages carry a client they have
-          never heard of. Rendering the outcome is still the point (see the
-          note at the top of this file); it just has to read as the example it
-          is. The sample name and fixed date are deliberate and unchanged. */}
-      <p className="book-setup-state">
-        For example, a page you send reads: {preview}
-      </p>
     </section>
   )
 }

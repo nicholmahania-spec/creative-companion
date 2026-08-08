@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import '../styles/lazy-clients.css'
 
 /** Deadlines — month grid + project due. ADHD: short chrome, no legend essay. */
@@ -9,100 +8,19 @@ export default function CalendarView(props) {
     setCalCursor,
     buildMonthGrid,
     formatMonthYear,
-    formatShortDate,
-    urgencyLabel,
-    deadlineUrgency,
     toISODate,
     calendarEvents,
     selectProject,
     projectDeadline,
-    setProjectDeadline,
-    activeProject,
-    upcomingDeadlines: upcomingProp,
   } = props
-
-  const [pendingDeadline, setPendingDeadline] = useState(null)
-
-  const projectUrgency = projectDeadline
-    ? deadlineUrgency(projectDeadline)
-    : null
-
-  const upcomingDeadlines =
-    upcomingProp ||
-    Object.entries(calendarEvents || {})
-      .flatMap(([date, items]) =>
-        (items || []).map((it) => ({ ...it, date }))
-      )
-      .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-      .slice(0, 24)
 
   return (
     <div className="calendar-view calendar-studio">
       {/* No local back link — the app header's back affordance carries the
           return. */}
       <div className="flow-top">
-        <h1 className="page-title">Deadlines</h1>
+        <h1 className="page-title">Calendar</h1>
       </div>
-
-      {pendingDeadline && (
-        <div
-          className="desk-confirm-banner cal-deadline-confirm"
-          role="status"
-        >
-          <p className="desk-confirm-body">
-            Due {formatShortDate(pendingDeadline)}?
-          </p>
-          <div className="desk-confirm-actions">
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                setProjectDeadline(pendingDeadline)
-                setPendingDeadline(null)
-              }}
-            >
-              Set
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setPendingDeadline(null)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      <section className="panel brand-section">
-        <div className="brand-section-label">
-          {activeProject?.name || 'Project'} · due
-        </div>
-        <div className="deadline-edit-row">
-          <input
-            id="project-deadline"
-            type="date"
-            className="field-input"
-            value={projectDeadline}
-            onChange={(e) => setProjectDeadline(e.target.value)}
-            aria-label="Deadline"
-          />
-          {projectDeadline && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setProjectDeadline('')}
-            >
-              Clear
-            </button>
-          )}
-        </div>
-        {projectDeadline && (
-          <p className={`deadline-chip urgency-${projectUrgency || 'later'}`}>
-            {formatShortDate(projectDeadline)} · {urgencyLabel(projectDeadline)}
-          </p>
-        )}
-      </section>
 
       <section className="panel brand-section">
         <div className="brand-section-label">Month</div>
@@ -173,15 +91,7 @@ export default function CalendarView(props) {
                 }`}
               >
                 {cell.day != null && cell.date && cell.inMonth ? (
-                  <button
-                    type="button"
-                    className="cal-daynum cal-daynum-btn"
-                    title="Set deadline"
-                    onClick={() => setPendingDeadline(cell.date)}
-                    aria-pressed={pendingDeadline === cell.date}
-                  >
-                    {cell.day}
-                  </button>
+                  <span className="cal-daynum">{cell.day}</span>
                 ) : cell.day != null ? (
                   <span className="cal-daynum">{cell.day}</span>
                 ) : null}
@@ -219,48 +129,6 @@ export default function CalendarView(props) {
         </div>
       </section>
 
-      <section className="panel brand-section">
-        <div className="brand-section-label">Upcoming</div>
-        {upcomingDeadlines.length === 0 ? (
-          <p className="settings-meta" style={{ margin: 0 }}>
-            No deadlines yet — tap a day in the grid above to set one for this
-            project.
-          </p>
-        ) : (
-          <ul className="deadline-list">
-            {upcomingDeadlines.map((row) => (
-              <li
-                key={`${row.kind}-${row.id}`}
-                className={`deadline-list-item urgency-${row.urgency}`}
-              >
-                <div>
-                  <strong>
-                    {row.kind === 'project' ? 'Project' : 'Step'}: {row.name}
-                  </strong>
-                  <span>
-                    {formatShortDate(row.date)} · {urgencyLabel(row.date)}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => {
-                    if (row.kind === 'project') {
-                      selectProject(row.id)
-                      setActiveView('project')
-                    } else if (row.projectId != null) {
-                      selectProject(row.projectId)
-                      setActiveView('desk')
-                    }
-                  }}
-                >
-                  Open
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </div>
   )
 }

@@ -192,9 +192,10 @@ export default function SparkView({
 
       {/* Diverge first — messy dump before shortlist */}
       <section className="ideate-rough" aria-label="Rough ideas">
-        <p className="ideate-rough-label">1 · Diverge (rough dump)</p>
+        <p className="ideate-rough-label">1. Make a messy list</p>
         <p className="ideate-rough-hint">
-          Aim for range, not quality. Capture many lines. Promote only when you have options.
+          Aim for range, not quality. Capture many lines. Shortlist only when
+          you have options.
         </p>
         {rough.length > 0 ? (
           <ul className="ideate-rough-list">
@@ -205,9 +206,9 @@ export default function SparkView({
                   type="button"
                   className="btn btn-ghost btn-sm"
                   onClick={() => promoteRough(i)}
-                  title="Promote to next empty A/B/C"
+                  title="Add to next open direction"
                 >
-                  ↑ shortlist
+                  Add to shortlist
                 </button>
                 <button
                   type="button"
@@ -234,7 +235,7 @@ export default function SparkView({
             placeholder="e.g. Quiet type, bold photo crop…"
           />
           <button type="button" className="btn btn-secondary" onClick={addRough}>
-            Add
+            Add idea
           </button>
         </div>
       </section>
@@ -242,9 +243,11 @@ export default function SparkView({
       <div className="ideate-layout">
         <section
           className="panel brand-section ideate-shortlist"
-          aria-label="Three directions A B C"
+          aria-label="Three shortlisted directions"
         >
-          <div className="brand-section-label">2 · Shortlist · A · B · C</div>
+          <div className="brand-section-label">
+            2. Choose up to three directions
+          </div>
           <div className="ideate-directions is-locked-3">
             {dirs.slice(0, 3).map((d) => {
               const hasTitle = Boolean(String(d.title || '').trim())
@@ -327,28 +330,28 @@ export default function SparkView({
               onClick={useSparkAsTitle}
               className="btn btn-secondary"
             >
-              Use as next A/B/C title
+              Use for next open direction
             </button>
             <button
               type="button"
               onClick={nextSpark}
               className="btn btn-ghost"
             >
-              New
+              New prompt
             </button>
             <button
               type="button"
               className="btn btn-ghost"
               onClick={() => oppositeSpark?.()}
             >
-              Opposite
+              Try the opposite
             </button>
             <button
               type="button"
               className="btn btn-ghost"
               onClick={pinSparkStay}
             >
-              Pin to Board
+              Add to Research wall
             </button>
           </div>
         </aside>
@@ -362,9 +365,7 @@ export default function SparkView({
           disabled={!canSend}
           aria-describedby="ideate-send-help"
         >
-          {canSend
-            ? `Send · ${labelForStepId('sketch')}`
-            : 'Keep diverging (or choose A/B/C)'}
+          {`Add chosen directions to ${labelForStepId('sketch')}`}
         </button>
         <p
           id="ideate-send-help"

@@ -96,7 +96,7 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel, skipAsk 
         {!answered ? (
           <div className="running-todo-prompt-actions">
             <button type="button" className="btn btn-secondary" onClick={() => setAnswered(true)}>
-              Yes
+          Add it
             </button>
             <button type="button" className="btn btn-primary" onClick={close}>
               Not now
@@ -115,7 +115,7 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel, skipAsk 
                 aria-label="New to-do item"
               />
               <button type="button" className="btn btn-secondary" onClick={submit} disabled={!text.trim()}>
-                Add
+          Add task
               </button>
             </div>
             {added.length > 0 && (
@@ -127,7 +127,7 @@ export function RunningTodoAddModal({ open, onClose, onAdd, stageLabel, skipAsk 
             )}
             <div className="running-todo-prompt-actions">
               <button type="button" className="btn btn-primary" onClick={close}>
-                Done
+          Close list
               </button>
             </div>
           </>
@@ -241,7 +241,7 @@ export function RunningTodoPanel({
               onClick={onSort}
               disabled={items.length === 0}
             >
-              Sort
+        Sort tasks
             </button>
           )}
         </div>
@@ -257,7 +257,7 @@ function RunningTodoRow({ item, onToggle, onRemove, recommended }) {
         type="button"
         className="running-todo-check"
         aria-pressed={item.completed}
-        aria-label={item.completed ? 'Mark not done' : 'Mark done'}
+            aria-label={item.completed ? 'Mark incomplete' : 'Mark done'}
         onClick={() => onToggle(item.id)}
       >
         {item.completed ? '✓' : ''}

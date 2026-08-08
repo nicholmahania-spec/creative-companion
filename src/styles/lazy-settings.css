@@ -409,6 +409,61 @@
   box-shadow: none !important;
 }
 
+.login-brand {
+  text-align: center;
+  align-items: center;
+}
+
+.login-hero-mark {
+  display: flex;
+  justify-content: center;
+  min-height: 5rem;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.login-hero-mark .logo-lockup-mark {
+  transform: scale(3);
+  transform-origin: center;
+}
+
+.login-pin-input {
+  text-align: center;
+  letter-spacing: 0.8em;
+  font-size: var(--fs-5);
+  font-variant-numeric: tabular-nums;
+}
+
+.login-auth-switch {
+  display: block;
+  margin: 0 auto var(--space-2);
+}
+
+.settings-pin {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.settings-studio .settings-pin .onboard-label {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.settings-studio .settings-pin .onboard-input {
+  min-height: 2.75rem;
+  height: 2.75rem;
+  margin: 0;
+}
+
+.settings-studio .settings-pin > .btn {
+  justify-self: start;
+  width: auto;
+}
+
 .login-h1 {
   margin: 0.5rem 0 0.25rem;
   font-size: 1.25rem;
@@ -891,8 +946,36 @@
   font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1.05;
-  padding-bottom: var(--space-4);
-  border-bottom: 2px solid var(--text-primary);
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.settings-view.settings-studio .flow-top {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.settings-page-tabs {
+  display: flex;
+  gap: var(--space-1);
+  margin: calc(var(--space-3) * -1) 0 var(--space-5);
+}
+
+.settings-page-tabs button {
+  min-height: var(--tap-min, 2.75rem);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settings-page-tabs button.is-active {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .settings-intro {

@@ -163,7 +163,7 @@ export function ProjectOverviewSharePanel({
       <div className="export-panel overview-share-panel" ref={panelRef}>
         <div className="export-panel-header">
           <h3 id="overview-share-title" className="overview-share-title">
-            Share Strategy form
+            Share project brief
           </h3>
           <button
             type="button"
@@ -497,7 +497,7 @@ function PortalMode({
                     flashToast?.(copied ? 'Link copied' : 'Couldn’t copy — select the link and copy it')
                   }}
                 >
-                  Copy
+                Copy dashboard link
                 </button>
               </div>
               <a
@@ -521,7 +521,7 @@ function PortalMode({
                   {revoking
                     ? 'Revoking…'
                     : revokeArmed
-                      ? 'Tap again to revoke'
+                      ? 'Yes, revoke link'
                       : 'Revoke link'}
                 </button>
                 {revokeArmed && !revoking ? (
@@ -577,7 +577,7 @@ function PortalMode({
             </div>
           )}
 
-          <p className="client-portal-subhead">Project overview form</p>
+          <p className="client-portal-subhead">Project brief</p>
           <div className="discovery-brief-handoff-actions">
             <button
               type="button"
@@ -588,8 +588,8 @@ function PortalMode({
               {sendingForm
                 ? 'Sending…'
                 : portal?.form_status === 'not_sent'
-                  ? 'Ask client to fill it out'
-                  : 'Re-send form'}
+                  ? 'Send project brief'
+                  : 'Resend project brief'}
             </button>
             {portal?.form_status === 'submitted' && (
               <button type="button" className="btn btn-primary" onClick={reviewClientAnswers}>
@@ -679,7 +679,7 @@ function PortalMode({
               aria-label="Message"
             />
             <button type="submit" className="btn btn-secondary" disabled={sendingMessage}>
-              {sendingMessage ? 'Sending…' : 'Send'}
+            {sendingMessage ? 'Sending message…' : 'Send message'}
             </button>
           </form>
         </>
@@ -874,7 +874,7 @@ function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
           )
         }
       >
-        Save these answers
+        Apply answers to project brief
       </button>
     </div>
   )

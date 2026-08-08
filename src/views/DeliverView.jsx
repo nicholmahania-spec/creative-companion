@@ -7,7 +7,7 @@ import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import CaseStudyExport from '../components/CaseStudyExport'
 import ClientPackagePanel from '../components/ClientPackagePanel'
-import { labelForStepId, JOURNEY_STEPS } from '../lib/journey/journey'
+import { toolsLabelForView, JOURNEY_STEPS } from '../lib/journey/journey'
 import {
   packReadiness,
   packBriefMarkdown,
@@ -127,21 +127,8 @@ export default function DeliverView({
     else if (c.view) setActiveView(c.view)
   }
 
-  const brandWordList = String(activeProject?.detective?.brandWords || '')
-    .split(',')
-    .map((w) => w.trim())
-    .filter(Boolean)
-  const checked = activeProject?.deliverWordsChecked || {}
-
-  /* Named gap beside ship — download never blocked; hollowness must not feel ready. */
+  /* Named gap beside ship — download never blocked. */
   const firstCoreGap = coreGaps[0] || null
-  const statusLine = ready.allDone
-    ? 'Ready to ship'
-    : firstCoreGap
-      ? `Still to add · ${firstCoreGap.label}`
-      : gaps.length > 0
-        ? 'Add a handoff note when you ship'
-        : 'Preview the book, then download'
   const moreCoreCount = Math.max(0, coreGaps.length - 1)
 
   return (
@@ -152,35 +139,33 @@ export default function DeliverView({
       <div className="flow-top deliver-top">
         <div className="deliver-top-text">
           <h1 className="page-title work-page-title">
-            {labelForStepId('deliver')}
+            {toolsLabelForView('finish')}
           </h1>
-          <p className="assets-status" role="status">
-            {statusLine}
-          </p>
       </div>
       </div>
 
       {/* Ship ticket first in DOM for mobile; sticky on wide (audit P0). */}
-      <section className="assets-ship assets-ship-ticket" aria-label="Ship">
+      <section
+        className="assets-ship assets-ship-ticket"
+        aria-label="Assets and handoff"
+      >
         {firstCoreGap ? (
           <div className="assets-ship-gap" role="status">
             <span className="assets-ship-gap-label">
-              Still thin
-              {moreCoreCount > 0 ? ` · +${moreCoreCount} more` : ''}
+              The core package still needs {firstCoreGap.label}
+              {moreCoreCount > 0
+                ? ` · ${moreCoreCount} more ${moreCoreCount === 1 ? 'item' : 'items'}`
+                : ''}
             </span>
             <button
               type="button"
               className="assets-ship-gap-fix"
               onClick={() => jumpGap(firstCoreGap)}
             >
-              {`Open · ${firstCoreGap.label}`}
+              {`Add ${firstCoreGap.label}`}
             </button>
           </div>
-        ) : (
-          <p className="assets-ship-ready" role="status">
-            Core pack looks ready — download when you want
-          </p>
-        )}
+        ) : null}
 
         {/* The credit, next to the button that sends it — the only moment it
             is ever visible. It used to live inside the collapsed "Page setup ·
@@ -205,7 +190,7 @@ export default function DeliverView({
           {creditOpen ? (
             <>
               <label className="field-label" htmlFor="studio-name">
-                Your studio
+                Business details
               </label>
               {/* Held open by state rather than keyed on `studioName`. Keyed on
                   the value, the first character typed makes it truthy, the
@@ -216,7 +201,7 @@ export default function DeliverView({
                 className="field-input"
                 type="text"
                 value={studioNameRaw}
-                placeholder="Your studio name"
+                placeholder="Business name"
                 onChange={(e) => setPref('studioName', e.target.value)}
                 onBlur={() => {
                   if (studioNameRaw.trim()) setCreditOpen(false)
@@ -240,22 +225,8 @@ export default function DeliverView({
             className="btn btn-primary work-path-next"
             onClick={() => runExport(logoOnly ? 'mark' : 'pdf')}
           >
-            {logoOnly ? 'Download logo files' : 'Download brand book PDF'}
+            {logoOnly ? 'Download logo files' : 'Download brand package'}
           </button>
-        </div>
-
-        <div className="field-block deliver-note-block">
-          <label className="field-label" htmlFor="handoff-note">
-            Handoff
-          </label>
-          <textarea
-            id="handoff-note"
-            className="field-textarea deliver-focus-field deliver-note"
-            rows={2}
-            value={activeProject?.handoffNote || ''}
-            onChange={(e) => updateBrandField('handoffNote', e.target.value)}
-            placeholder="What’s included · how to use it"
-          />
         </div>
 
         {lastExportNote ? (
@@ -271,7 +242,7 @@ export default function DeliverView({
                 className="btn btn-secondary btn-sm pack-export-retry"
                 onClick={() => runExport('pdf', { direct: true })}
               >
-                Download it now
+                Retry PDF download
               </button>
             ) : null}
           </p>
@@ -289,7 +260,7 @@ export default function DeliverView({
 
         {coreGaps.length > 1 && (
           <div className="deliver-gaps assets-gaps">
-            <p className="field-label assets-gaps-label">Also open</p>
+            <p className="field-label assets-gaps-label">Other open items</p>
             <ul className="pack-ready-list deliver-gap-list">
               {coreGaps.slice(1, 6).map((c) => (
                 <li key={c.id} className="is-miss">
@@ -405,136 +376,6 @@ export default function DeliverView({
           </Suspense>
         </section>
 
-        {brandWordList.length > 0 && (
-          <details className="deliver-advanced">
-            <summary>Brand words</summary>
-            <div className="deliver-words-check">
-              {brandWordList.map((w) => (
-                <label key={w} className="deliver-word-check-row">
-                  <input
-                    type="checkbox"
-                    checked={!!checked[w]}
-                    onChange={(e) =>
-                      updateBrandField('deliverWordsChecked', {
-                        ...checked,
-                        [w]: e.target.checked,
-                      })
-                    }
-                  />
-                  {w}
-                </label>
-              ))}
-            </div>
-          </details>
-        )}
-
-        <details className="deliver-advanced">
-          <summary>Extras · print, ZIP, backup</summary>
-          <div className="finish-secondary-row pack-more-row">
-            {logoOnly && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => runExport('pdf')}
-              >
-                Brand book PDF
-              </button>
-            )}
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => runExport('print')}
-            >
-              Print
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => runExport('kit')}
-            >
-              Everything (zip)
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={async () => {
-                try {
-                  const md = packBriefMarkdown(buildCurrentBrandPack())
-                  await navigator.clipboard.writeText(md)
-                  flashToast('Brand summary copied')
-                } catch {
-                  flashToast('Could not copy — try Download instead')
-                }
-              }}
-            >
-              Copy summary
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={openExportPanel}
-            >
-              Preview
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => runExport('pdf-preview')}
-            >
-              Raster
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => runExport('md')}
-            >
-              MD
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={downloadDataBackup}
-            >
-              Backup
-            </button>
-          </div>
-        </details>
-
-        <details className="deliver-advanced deliver-leave">
-          <summary>Leave</summary>
-          <div className="finish-secondary-row" style={{ marginTop: '0.55rem' }}>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => {
-                createNewProject()
-                notifyAction('New project', 'project_create', {
-                  label: 'New project',
-                })
-                setActiveView('project')
-              }}
-            >
-              New project
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={handleSignOut}
-            >
-              {CLOUD ? 'Log out' : 'Log out / lock'}
-            </button>
-          </div>
-        </details>
-      </div>
-
-      <div className="path-continue-row assets-footer">
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => setActiveView?.('desk')}
-        >
-          Back to the desk
-        </button>
       </div>
     </div>
   )

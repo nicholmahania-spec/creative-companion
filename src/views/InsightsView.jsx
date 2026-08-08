@@ -49,10 +49,10 @@ export default function InsightsView(props) {
   }
 
   const startLabel = isFocusRunning
-    ? 'Pause'
+    ? 'Pause timer'
     : focusLeft > 0 && focusLeft < POMODORO_WORK_MIN * 60
-      ? 'Resume'
-      : 'Start 25'
+      ? 'Resume timer'
+      : 'Start focus session'
 
   return (
     <div className="insights-layout insights-studio">
@@ -62,7 +62,7 @@ export default function InsightsView(props) {
         <h1 className="page-title">Timer</h1>
         {nextTask && (
           <p className="insights-now" title={nextTask.title}>
-            Now · {String(nextTask.title).slice(0, 48)}
+            Focusing on {String(nextTask.title).slice(0, 48)}
             {String(nextTask.title).length > 48 ? '…' : ''}
           </p>
         )}
@@ -99,7 +99,7 @@ export default function InsightsView(props) {
             className="btn btn-secondary btn-sm"
             disabled={!!forcedBreak}
           >
-            25
+            Focus session · 25 min
           </button>
           <button
             type="button"
@@ -110,7 +110,7 @@ export default function InsightsView(props) {
             className="btn btn-ghost btn-sm"
             disabled={!!forcedBreak}
           >
-            2
+            Short reset · 2 min
           </button>
         </div>
 
@@ -128,7 +128,7 @@ export default function InsightsView(props) {
                   className="btn btn-secondary"
                   onClick={() => go('spark')}
                 >
-                  {'Next · Ideate'}
+                  Open Ideate
                 </button>
               </div>
             )}
@@ -143,7 +143,7 @@ export default function InsightsView(props) {
             already carries the detail, at the moment it matters. */}
         <div className="settings-row insights-break-row">
           <span className="insights-break-copy">
-            <strong>Break lock</strong>
+            <strong>Lock screen during breaks</strong>
           </span>
           <button
             type="button"
@@ -169,12 +169,16 @@ export default function InsightsView(props) {
                 className="btn btn-secondary"
                 onClick={() => toggleTask(nextTask.id)}
               >
-                Mark done
+                Mark task done
               </button>
             )}
             {(deskTasks.length > 0) && (
               <p className="text-muted insight-hint">
-                {completedCount}/{deskTasks.length} steps
+                {completedCount === 0
+                  ? 'No steps finished yet'
+                  : completedCount === deskTasks.length
+                    ? 'All steps finished'
+                    : 'Some steps finished'}
               </p>
             )}
           </>
@@ -184,7 +188,7 @@ export default function InsightsView(props) {
           className="btn btn-ghost btn-sm"
           onClick={() => toggleBodyDoubling()}
         >
-          {bodyDoubling ? 'Helper on' : 'Helper'}
+          {bodyDoubling ? 'Turn Helper off' : 'Turn Helper on'}
         </button>
       </div>
     </div>

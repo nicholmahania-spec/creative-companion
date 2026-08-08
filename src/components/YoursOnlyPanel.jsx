@@ -53,7 +53,7 @@ export default function YoursOnlyPanel({ project = null }) {
           placeholder="Park an idea for later"
         />
         <button type="submit" className="btn btn-secondary">
-          Park
+          Save private note
         </button>
       </form>
 
@@ -67,7 +67,7 @@ export default function YoursOnlyPanel({ project = null }) {
                 className="btn btn-ghost btn-sm"
                 onClick={() => unparkIdea(i.id)}
               >
-                Clear
+                Remove note
               </button>
             </li>
           ))}

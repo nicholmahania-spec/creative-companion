@@ -19,7 +19,7 @@ describe('identitySubsteps', () => {
   it('walks Mark → … → Preview then null', () => {
     expect(nextIdentitySubstep('logo')?.id).toBe('essentials')
     expect(nextIdentitySubstep('logo')?.label).toBe('Words')
-    expect(nextIdentitySubstep('essentials')?.label).toBe('Colour')
+    expect(nextIdentitySubstep('essentials')?.label).toBe('Color')
     expect(nextIdentitySubstep('preview')).toBe(null)
     expect(prevIdentitySubstep('logo')).toBe(null)
     expect(prevIdentitySubstep('type')?.id).toBe('colors')

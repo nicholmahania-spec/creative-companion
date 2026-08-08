@@ -63,7 +63,7 @@ export default function StrategyWords({ projectId, attributes = [] }) {
             onClick={add}
             disabled={!draft.trim()}
           >
-            Add
+          Add word
           </button>
         </div>
       </div>
@@ -94,14 +94,14 @@ export default function StrategyWords({ projectId, attributes = [] }) {
                     className="btn btn-ghost btn-sm"
                     onClick={() => setOpenId(openId === a.id ? null : a.id)}
                   >
-                    {tagged ? 'Adjust' : 'Place it'}
+            {tagged ? 'Adjust position' : 'Place on axis'}
                   </button>
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
                     onClick={() => commit(list.filter((x) => x.id !== a.id))}
                   >
-                    Remove
+            Remove word
                   </button>
                 </div>
                 {openId === a.id && (

@@ -33,7 +33,7 @@ export const BRAND_SURFACE_OPTIONS = [
 export const DELIVERABLE_OPTIONS = [
   { id: 'logoPrimary', label: 'Primary logo' },
   { id: 'logoVariations', label: 'Logo variations (stacked, horizontal, icon)' },
-  { id: 'colourPalette', label: 'Colour palette' },
+  { id: 'colourPalette', label: 'Color palette' },
   { id: 'typography', label: 'Typefaces' },
   { id: 'guidelines', label: 'Brand guidelines document' },
   { id: 'businessCard', label: 'Business cards' },
@@ -98,7 +98,7 @@ export const DETECTIVE_CHAPTERS = [
         options: [
           { id: 'new', label: 'Starting from scratch — no brand yet' },
           { id: 'rebrand', label: 'Rebranding — replacing what exists now' },
-          { id: 'extend', label: 'Adding to a brand that already works' },
+          { id: 'extend', label: 'Adding to an existing brand' },
         ],
         required: true,
         gridSpan: 'full',
@@ -354,7 +354,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'deliverablesPicked',
         label: 'What do you need made?',
-        tip: 'Core pack first is fine',
+        tip: 'Start with the essentials',
         type: 'checklist',
         options: DELIVERABLE_OPTIONS,
         required: true,
@@ -402,7 +402,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'existingAssets',
         label: 'Any existing logo or artwork?',
-        tip: 'Old logo, colours, or attach it',
+        tip: 'Old logo, colors, or attach it',
         area: true,
         attach: true,
         required: false,

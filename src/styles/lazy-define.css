@@ -1764,3 +1764,7 @@
   color: var(--text-secondary);
   align-self: center;
 }
+.define-brief-back {
+  align-self: flex-start;
+  margin-bottom: var(--space-2);
+}

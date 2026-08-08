@@ -49,6 +49,6 @@ describe('humanize — no legacy 4-step or Figma in Helper voice', () => {
       projectName: 'Demo',
     })
     expect(tip).not.toMatch(/^Queue clear\b/)
-    expect(tip).toMatch(/Queue empty|No step/i)
+    expect(tip).toMatch(/queue is empty|No step/i)
   })
 })

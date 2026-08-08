@@ -198,7 +198,7 @@ export default function DetectiveSheet({
                     the mark further away for work the user had already
                     finished. Reward what the page actually gates on. */}
                 <span className="define-chapter-tab-num" aria-hidden="true">
-                  {st.requiredDone ? '✓' : ch.num}
+                  {ch.num}
                 </span>
                 <span className="define-chapter-tab-label">{ch.railLabel || ch.title}</span>
                 {/* Just the floor, no ratio. "0/5" is a number to decode
@@ -208,10 +208,10 @@ export default function DetectiveSheet({
                 <span className="define-chapter-tab-count">
                   <span className="define-chapter-tab-need">
                     {st.requiredRemaining > 0
-                      ? `${st.requiredRemaining} needed`
+                      ? `${st.requiredRemaining} required`
                       : st.requiredTotal > 0
-                        ? 'needed ones done'
-                        : 'none needed'}
+                        ? 'all required answers are in'
+                        : 'no required answers'}
                   </span>
                 </span>
               </button>
@@ -240,11 +240,6 @@ export default function DetectiveSheet({
               <header className="define-chapter-head">
                 <span className="define-chapter-badge">{ch.num}</span>
                 <h2 className="define-chapter-title">{ch.title}</h2>
-                {st?.requiredDone && (
-                  <span className="define-chapter-done-chip" aria-label="Complete">
-                    ✓
-                  </span>
-                )}
                 {st?.requiredRemaining > 0 && (
                   <span className="define-chapter-head-need">
                     {st.requiredRemaining} needed
@@ -308,11 +303,6 @@ export default function DetectiveSheet({
                             a paid bill. */}
                         {f.required && !filled && (
                           <span className="define-field-needed">Needed</span>
-                        )}
-                        {filled && (
-                          <span className="define-field-check" aria-hidden="true">
-                            ✓
-                          </span>
                         )}
                       </div>
                       <div className="define-field-control">

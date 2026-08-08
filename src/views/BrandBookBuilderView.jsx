@@ -334,7 +334,7 @@ function ColorsPage({ kit, style, pageIndex = 0, id }) {
       <RunningHeader {...running} pageIndex={pageIndex} />
       <p className="bbb-ph-title">Color palette</p>
       {roles.length > 0 && (
-        <div className="bbb-role-swatches" aria-label="Brand colour roles">
+        <div className="bbb-role-swatches" aria-label="Brand color roles">
           {roles.map((r) => {
             const light = isLight(r.hex)
             return (
@@ -669,10 +669,9 @@ function PageNum({ showPageNumbers, alternate, pageIndex }) {
 
 /* ------------------------------------------------------------ Flipbook */
 
-/* Open book: left = verso (back of previous leaf), right = recto (front).
-   Both faces are upright page content — never a CSS rotateY mirror of the
-   same sheet (that was the "mirror image" bug). Cover opens on the right
-   alone, like a real book. Pages are still the canvas elements, re-keyed. */
+/* Preview one complete page at a time. A two-page spread made pages look
+   cropped or docked at common laptop widths, which defeated the preview's
+   only job: showing the whole page before export. */
 function Flipbook({ open, onClose, pages, index, setIndex }) {
   /* Hooks run before the early returns below — an overlay that mounts and
      unmounts must not change hook order on the way. */
@@ -686,19 +685,32 @@ function Flipbook({ open, onClose, pages, index, setIndex }) {
     onClose,
   })
 
+  useEffect(() => {
+    if (!open) return undefined
+    const onKeyDown = (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        setIndex((i) => Math.max(0, i - 1))
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        setIndex((i) => Math.min(pages.length - 1, i + 1))
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open, pages.length, setIndex])
+
   if (!open) return null
   const total = pages.length
   if (!total) return null
-  /* `index` is the right-hand (recto) page. Left is the previous page. */
-  const rightIndex = Math.min(Math.max(0, index), total - 1)
-  const leftIndex = rightIndex > 0 ? rightIndex - 1 : null
-  const leftPage = leftIndex != null ? pages[leftIndex] : null
-  const rightPage = pages[rightIndex]
+  const pageIndex = Math.min(Math.max(0, index), total - 1)
+  const page = pages[pageIndex]
 
-  const clonePage = (el, side, pageI) =>
+  const clonePage = (el, pageI) =>
     React.cloneElement(el, {
-      id: el.props.id ? `flip-${side}-${el.props.id}` : `flip-${side}-${pageI}`,
-      key: `${side}-${pageI}`,
+      id: el.props.id ? `flip-${el.props.id}` : `flip-${pageI}`,
+      key: `preview-${pageI}`,
     })
 
   return (
@@ -709,37 +721,25 @@ function Flipbook({ open, onClose, pages, index, setIndex }) {
       aria-modal="true"
       aria-label="Brand book flip through"
     >
-      <div
-        className={`bbb-flip-stage${leftPage ? ' bbb-flip-stage--spread' : ' bbb-flip-stage--cover'}`}
-      >
-        {leftPage ? (
-          <div className="bbb-flip-leaf bbb-flip-leaf--verso" aria-label={`Page ${leftIndex + 1}`}>
-            {clonePage(leftPage, 'verso', leftIndex)}
-          </div>
-        ) : (
-          <div className="bbb-flip-leaf bbb-flip-leaf--empty" aria-hidden="true" />
-        )}
-        <div className="bbb-flip-gutter" aria-hidden="true" />
-        <div className="bbb-flip-leaf bbb-flip-leaf--recto" aria-label={`Page ${rightIndex + 1}`}>
-          {clonePage(rightPage, 'recto', rightIndex)}
+      <div className="bbb-flip-stage">
+        <div className="bbb-flip-leaf" aria-label={`Page ${pageIndex + 1}`}>
+          {clonePage(page, pageIndex)}
         </div>
       </div>
       <div className="bbb-flip-controls">
         <button
           type="button"
-          disabled={rightIndex === 0}
+          disabled={pageIndex === 0}
           onClick={() => setIndex((i) => Math.max(0, i - 1))}
         >
           &larr; Back
         </button>
         <span className="bbb-flip-controls__count">
-          {leftIndex != null
-            ? `${leftIndex + 1}–${rightIndex + 1} of ${total}`
-            : `${rightIndex + 1} of ${total}`}
+          {pageIndex + 1} of {total}
         </span>
         <button
           type="button"
-          disabled={rightIndex >= total - 1}
+          disabled={pageIndex >= total - 1}
           onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}
         >
           Next &rarr;
@@ -764,13 +764,13 @@ function ColorRow({ color, onChange, onRemove, canRemove }) {
       <input
         type="color"
         value={pickerHex}
-        aria-label={`${color.name || 'Colour'} picker`}
+        aria-label={`${color.name || 'Color'} picker`}
         onChange={(e) => onChange({ ...color, hex: e.target.value })}
       />
       <input
         type="text"
         value={color.name}
-        aria-label="Colour name"
+        aria-label="Color name"
         onChange={(e) => onChange({ ...color, name: e.target.value })}
       />
       <input
@@ -778,7 +778,7 @@ function ColorRow({ color, onChange, onRemove, canRemove }) {
         className="bbb-color-row__hex-input"
         value={String(color.hex || '').toUpperCase()}
         spellCheck={false}
-        aria-label={`${color.name || 'Colour'} hex`}
+        aria-label={`${color.name || 'Color'} hex`}
         onChange={(e) => {
           let v = e.target.value.trim()
           if (!v.startsWith('#')) v = `#${v}`
@@ -1036,12 +1036,6 @@ export default function BrandBookBuilderView({ setActiveView }) {
      back (see bookBuilderFor's no-migration read of grid.edge). */
   const activeEdge = grid.edge || nearestEdgeStop(grid.margin, printSettings.pageSize);
 
-  /* The top-bar setup line, stated from the real settings — never a fixed
-     string. e.g. "A4 · Standard edge · print-shop bleed on". */
-  const setupSummary = `${dims.label.split(' (')[0]} · ${EDGE_STOPS[activeEdge].label} edge · ${
-    printSettings.bleed ? 'print-shop bleed on' : 'no bleed'
-  }`;
-
   const runningProps = { show: running.show, text: (running.text.trim() || brandName), align: running.align,
     showFooter: running.showFooter, footerText: (running.footerText.trim() || tagline), footerAlign: running.footerAlign,
     showPageNumbers: running.showPageNumbers, alternate: running.alternate, bStack };
@@ -1184,28 +1178,6 @@ export default function BrandBookBuilderView({ setActiveView }) {
     }
   `;
 
-  /* Print uses the live canvas + @media print (A4/roomy from Setup chips).
-     Vector PDF remains the high-fidelity download path when the OS print
-     dialog is not enough — same pack, same geometry, one source of truth. */
-  const handlePrint = () => {
-    setExportNote('')
-    /* class on root so print CSS can hide chrome without fighting React. */
-    document.documentElement.classList.add('bbb-printing')
-    const cleanup = () => {
-      document.documentElement.classList.remove('bbb-printing')
-      window.removeEventListener('afterprint', cleanup)
-    }
-    window.addEventListener('afterprint', cleanup)
-    window.setTimeout(() => {
-      try {
-        window.print()
-      } catch {
-        cleanup()
-        setExportNote('Print dialog didn’t open — try again?')
-      }
-    }, 50)
-  }
-
   const handleExport = async () => {
     if (exporting) return
     setExporting(true)
@@ -1223,7 +1195,7 @@ export default function BrandBookBuilderView({ setActiveView }) {
           res.pages ? `Saved · ${res.pages}-page PDF` : 'Saved · brand book PDF'
         )
       } else if (res.cancelled) {
-        setExportNote('Save cancelled')
+        setExportNote('Save canceled')
       } else {
         setExportNote(res.error || 'Export didn’t finish — try again?')
       }
@@ -1403,30 +1375,30 @@ export default function BrandBookBuilderView({ setActiveView }) {
     <div className="bbb-root">
       <style>{printCss}</style>
 
-      {/* In-view chrome, not the app header (which already carries back
-          navigation). Left: nothing. Center-left: the real setup, stated as
-          a sentence rather than left to be inferred from control positions.
-          Right: the two actions that used to sit at the bottom of the
-          panel, a full scroll away — "Flip through it" opens the existing
-          flipbook, "Print / save as PDF" is the existing export. */}
       <div className="bbb-topbar">
-        <span className="bbb-topbar__summary">{setupSummary}</span>
+        <h1 className="bbb-topbar__title">Brand book</h1>
         <div className="bbb-topbar__actions">
           <button type="button" className="bbb-btn" onClick={() => { setFlipIndex(0); setFlipOpen(true); }}>
-            Flip through it
-          </button>
-          <button type="button" className="bbb-btn bbb-btn--primary" onClick={handlePrint}>
-            Print / save as PDF
+            Preview
           </button>
           <button
             type="button"
             className="bbb-btn"
             onClick={handleExport}
             disabled={exporting}
-            title="Download a vector PDF (same live project values)"
+            title="Download the brand book as a PDF"
           >
-            {exporting ? 'Making the PDF…' : 'Download PDF'}
+            {exporting ? 'Preparing PDF…' : 'Download PDF'}
           </button>
+          {setActiveView && (
+            <button
+              type="button"
+              className="bbb-btn bbb-btn--primary"
+              onClick={() => setActiveView('finish')}
+            >
+              Brand package
+            </button>
+          )}
           {exportNote && (
             <span className="bbb-topbar__note" aria-live="polite">{exportNote}</span>
           )}
@@ -1435,7 +1407,7 @@ export default function BrandBookBuilderView({ setActiveView }) {
 
       <div className="bbb-body">
         <div className="bbb-panel">
-        <h1 className="bbb-panel__title">Brand book &mdash; source of truth</h1>
+        <h2 className="bbb-panel__title">Edit your book</h2>
 
         {/* Named for what's inside rather than "Identity": the app's third
             path stop is already called that, and the heading is the only
@@ -1456,13 +1428,13 @@ export default function BrandBookBuilderView({ setActiveView }) {
             free-typed margin percent ("named stops, not number fields"). */}
         <Section title="Setup" defaultOpen>
           <ChipRow
-            label="Sheet"
+            label="Page size"
             value={printSettings.pageSize}
             onChange={(v) => setPrintSettings((p) => ({ ...p, pageSize: v }))}
             options={Object.entries(PAGE_SIZES).map(([id, v]) => ({ id, label: v.label.split(' (')[0] }))}
           />
           <ChipRow
-            label="Edge space"
+            label="Page margins"
             value={activeEdge}
             onChange={(v) => setGrid((g) => ({ ...g, edge: v }))}
             options={EDGE_ORDER.map((id) => ({ id, label: EDGE_STOPS[id].label }))}
@@ -1640,7 +1612,9 @@ export default function BrandBookBuilderView({ setActiveView }) {
           </div>
           <div className="bbb-field bbb-field--checkbox">
             <input id="bbb-alternatePages" type="checkbox" checked={running.alternate} onChange={(e) => setRunning((r) => ({ ...r, alternate: e.target.checked }))} />
-            <label htmlFor="bbb-alternatePages">Alternate for facing pages</label>
+            <label htmlFor="bbb-alternatePages">
+              Mirror alignment on facing pages
+            </label>
           </div>
         </Section>
 
@@ -1726,7 +1700,7 @@ export default function BrandBookBuilderView({ setActiveView }) {
                           onClick={() => movePageUp(id, effectiveOrder)}
                           disabled={index === 0 || isLocked}
                         >
-                          Move up
+                          Move earlier
                         </button>
                         <button
                           type="button"
@@ -1734,7 +1708,7 @@ export default function BrandBookBuilderView({ setActiveView }) {
                           onClick={() => movePageDown(id, effectiveOrder)}
                           disabled={index === effectiveOrder.length - 1 || isLocked}
                         >
-                          Move down
+                          Move later
                         </button>
                       </div>
                     </details>
@@ -1762,8 +1736,7 @@ export default function BrandBookBuilderView({ setActiveView }) {
           {omittedPages.length > 0 && (
             <details className="bbb-gaps">
               <summary className="bbb-gaps__summary">
-                {contentPages.length} of {contentPages.length + omittedPages.length}{' '}
-                sections in the book
+                {contentPages.length} sections included
               </summary>
               <ul className="bbb-pagelist bbb-gaps__list">
                 {omittedPages.map((o) => {
@@ -1778,13 +1751,15 @@ export default function BrandBookBuilderView({ setActiveView }) {
                         >
                           <span className="bbb-gaps__label">{o.label}</span>
                           <span className="bbb-pagelist__needs">
-                            needs {o.needs} — open {labelForView(toView)}
+                            Open {labelForView(toView)} to add {o.needs}
                           </span>
                         </button>
                       ) : (
                         <>
                           <span className="bbb-gaps__label">{o.label}</span>
-                          <span className="bbb-pagelist__needs">needs {o.needs}</span>
+                          <span className="bbb-pagelist__needs">
+                            Add {o.needs}
+                          </span>
                         </>
                       )}
                     </li>

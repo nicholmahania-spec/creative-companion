@@ -245,7 +245,7 @@ export function buildBrandBrain({ project = null, moodItems = [] } = {}) {
   for (const role of Object.keys(roles)) {
     push({
       topic: 'colour',
-      label: `${role.charAt(0).toUpperCase()}${role.slice(1)} colour`,
+      label: `${role.charAt(0).toUpperCase()}${role.slice(1)} color`,
       value: roles[role],
       why: roleWhy[role],
       source: SOURCE.identity,
@@ -436,7 +436,7 @@ export function suggestedQuestions(brain) {
   const out = []
   if (has('direction')) out.push('Why did we choose this direction?')
   if (has('type')) out.push('Why this typeface?')
-  if (has('colour')) out.push('Why these colours?')
+  if (has('colour')) out.push('Why these colors?')
   if (has('rejected')) out.push('What did the client rule out?')
   if (has('feedback')) out.push('What did the client say?')
   if (has('audience')) out.push('Who is this for?')

@@ -2309,14 +2309,15 @@ const useAppStore = create(
 
       /** Wipe all projects — true empty desk (no placeholder project). */
       clearToEmpty: () => {
-        const blank = blankWorkspaceState()
         set({
-          ...blank,
           onboarded: true,
           projects: [],
           currentProjectId: null,
           tasks: [],
           moodItems: [],
+          assets: [],
+          portalSeen: {},
+          clientRecords: {},
         })
       },
 

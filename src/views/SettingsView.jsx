@@ -10,6 +10,7 @@ import {
   syncAllProjects,
 } from '../services/syncEngine'
 import StudioIdentityBlock from '../features/studio/StudioIdentityBlock'
+import { hasPinSetup, setAccessPin, removeAccessPin } from '../lib/auth'
 import '../styles/lazy-settings.css'
 
 /**
@@ -44,17 +45,12 @@ export default function SettingsView(props) {
     downloadDataBackup,
     handleImportBackup,
     importFileRef,
-    clearToEmpty,
-    clearAllData,
-    loadSoftSignalDemo,
-    loadHarborHearthDemo,
-    versionLabel,
-    APP_BUILD_DATE,
     requestConfirm,
   } = props
 
-  const ask = (label, onConfirm) => {
-    if (typeof requestConfirm === 'function') requestConfirm(label, onConfirm)
+  const ask = (label, onConfirm, confirmLabel) => {
+    if (typeof requestConfirm === 'function')
+      requestConfirm(label, onConfirm, confirmLabel)
     else if (window.confirm(label)) onConfirm?.()
   }
 
@@ -66,6 +62,11 @@ export default function SettingsView(props) {
   const activeProjectId = useAppStore((s) => s.activeProjectId)
   const projects = useAppStore((s) => s.projects)
   const [projectPushBusy, setProjectPushBusy] = useState(false)
+  const [pinCurrentPassword, setPinCurrentPassword] = useState('')
+  const [newPin, setNewPin] = useState('')
+  const [confirmPin, setConfirmPin] = useState('')
+  const [pinEnabled, setPinEnabled] = useState(hasPinSetup)
+  const [settingsPage, setSettingsPage] = useState('preferences')
 
   /* Phase 1b: the honest sync state — synced / syncing / offline / failed.
      A failure stays on screen with a Retry until a sync succeeds; it does
@@ -92,7 +93,7 @@ export default function SettingsView(props) {
   /* Discarding goes through the RPC, never a delete — see syncEngine. */
   const discard = (row) =>
     ask(
-      `Discard this kept version of “${row.project_name || 'project'}”? It is the only copy.`,
+      `Delete this conflict copy of “${row.project_name || 'project'}”? This copy cannot be recovered.`,
       async () => {
         const r = await discardRetainedVersion(row.id)
         if (!r.ok) {
@@ -102,6 +103,7 @@ export default function SettingsView(props) {
         await loadRetained(retainedPage)
         flashToast('Discarded')
       },
+      'Delete conflict copy',
     )
   const bringBack = (row) => {
     const doc = row?.data
@@ -109,7 +111,7 @@ export default function SettingsView(props) {
     const localId = String(row.local_id || doc.id || '')
     if (!localId) return
     ask(
-      `Bring back this version of “${row.project_name || 'project'}”? The version you have now gets kept on this list too, so nothing is lost either way.`,
+      `Restore this conflict copy of “${row.project_name || 'project'}”? Your current version will stay here, so nothing is lost.`,
       async () => {
         const cur = useAppStore.getState().projects
         /* Keep the version we are about to replace FIRST. Restoring makes
@@ -141,6 +143,7 @@ export default function SettingsView(props) {
         flashToast('Version brought back — it will sync as the newest edit')
         await loadRetained(0)
       },
+      'Restore conflict copy',
     )
   }
   const sendActiveProject = async () => {
@@ -161,7 +164,13 @@ export default function SettingsView(props) {
   return (
     <div className="settings-view settings-studio">
       <div className="flow-top">
-        <h1 className="page-title">Settings</h1>
+        <h1 className="page-title">
+          {settingsPage === 'preferences' ? 'Preferences' : 'Account settings'}
+        </h1>
+      </div>
+      <div className="settings-page-tabs" role="group" aria-label="Settings pages">
+        <button type="button" aria-pressed={settingsPage === 'preferences'} className={settingsPage === 'preferences' ? 'is-active' : ''} onClick={() => setSettingsPage('preferences')}>Preferences</button>
+        <button type="button" aria-pressed={settingsPage === 'account'} className={settingsPage === 'account' ? 'is-active' : ''} onClick={() => setSettingsPage('account')}>Account settings</button>
       </div>
 
       {/* First block on the page, deliberately. This is the one setting whose
@@ -169,14 +178,17 @@ export default function SettingsView(props) {
           here, every export prints "<Project> · <date>" and the designer's name
           appears nowhere. Everything below it is a preference about how the app
           behaves; this is about what leaves the building. */}
-      <StudioIdentityBlock
-        prefs={prefs}
-        setPref={setPref}
-        flashToast={flashToast}
-      />
+      {settingsPage === 'account' && <div>
+        <StudioIdentityBlock
+          prefs={prefs}
+          setPref={setPref}
+          flashToast={flashToast}
+        />
 
-      <section className="panel brand-section" id="settings-calm">
-        <div className="brand-section-label">Calm</div>
+      </div>}
+
+      {settingsPage === 'preferences' && <section className="panel brand-section" id="settings-preferences">
+        <div className="brand-section-label">Focus and motion</div>
 
         <SettingsSwitch
           label="Hide nav while typing"
@@ -184,7 +196,7 @@ export default function SettingsView(props) {
           onToggle={() => setPref('hideNavUntilBlur', !prefs.hideNavUntilBlur)}
         />
         <SettingsSwitch
-          label="Less motion"
+          label="Reduce motion"
           checked={reduceMotion}
           onToggle={() => setPref('reduceMotion', !reduceMotion)}
         />
@@ -218,21 +230,18 @@ export default function SettingsView(props) {
               className="btn btn-secondary btn-sm"
               onClick={() => openShortcuts()}
             >
-              Show
+              View shortcuts
             </button>
           </div>
         ) : null}
-      </section>
+      </section>}
 
-      <section className="panel brand-section" id="settings-data">
-        <div className="brand-section-label">
-          {CLOUD ? 'Account' : 'Access'} · Data
-        </div>
-        {accessName ? (
+      {settingsPage === 'account' && <section className="panel brand-section" id="settings-workspace">
+        <div className="brand-section-label">App data</div>
+        {CLOUD && accessName ? (
           <p className="settings-meta" role="status">
             {accessName}
-            {CLOUD
-              ? ` · ${
+            {` · ${
                   syncState === 'syncing'
                     ? 'Saving…'
                     : syncState === 'error'
@@ -240,8 +249,7 @@ export default function SettingsView(props) {
                       : syncState === 'ok'
                         ? 'Synced'
                         : 'Idle'
-                }`
-              : ''}
+                }`}
             {syncError ? ` — ${syncError}` : ''}
           </p>
         ) : null}
@@ -251,7 +259,7 @@ export default function SettingsView(props) {
             className="btn btn-secondary btn-sm"
             onClick={handleSignOut}
           >
-            {CLOUD ? 'Sign out' : 'Lock'}
+            {CLOUD ? 'Log out' : 'Go to login screen'}
           </button>
           {CLOUD ? (
             <button
@@ -285,14 +293,14 @@ export default function SettingsView(props) {
             className="btn btn-secondary btn-sm"
             onClick={downloadDataBackup}
           >
-            Backup
+            Download backup
           </button>
           <button
             type="button"
             className="btn btn-secondary btn-sm"
             onClick={() => importFileRef.current?.click()}
           >
-            Import
+            Import backup
           </button>
           <input
             ref={importFileRef}
@@ -310,6 +318,80 @@ export default function SettingsView(props) {
             }}
           />
         </div>
+      </section>}
+
+      {settingsPage === 'account' && <section className="panel brand-section" id="settings-account">
+        <div className="brand-section-label">{CLOUD ? 'Sync and recovery' : 'Login'}</div>
+        {!CLOUD && (
+          <div className="settings-pin">
+            <strong>Quick PIN</strong>
+            <p className="settings-meta">
+              {pinEnabled ? 'Change or remove your four-digit PIN.' : 'Add a four-digit PIN for quicker login.'}
+            </p>
+            <label className="onboard-label">
+              Current password
+              <input
+                className="onboard-input"
+                type="password"
+                value={pinCurrentPassword}
+                onChange={(e) => setPinCurrentPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </label>
+            <label className="onboard-label">
+              New PIN
+              <input className="onboard-input" type="password" autoComplete="new-password" inputMode="numeric" pattern="[0-9]*" maxLength={4} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))} />
+            </label>
+            <label className="onboard-label">
+              Confirm PIN
+              <input className="onboard-input" type="password" autoComplete="new-password" inputMode="numeric" pattern="[0-9]*" maxLength={4} value={confirmPin} onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))} />
+            </label>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              aria-label="Save PIN"
+              disabled={!pinCurrentPassword || newPin.length !== 4 || confirmPin.length !== 4 || newPin !== confirmPin}
+              onClick={async () => {
+                if (newPin !== confirmPin) {
+                  flashToast('PINs do not match')
+                  return
+                }
+                const result = await setAccessPin(pinCurrentPassword, newPin)
+                if (!result.ok) {
+                  flashToast(result.error || 'Could not update PIN')
+                  return
+                }
+                setPinEnabled(true)
+                setPinCurrentPassword('')
+                setNewPin('')
+                setConfirmPin('')
+                flashToast('PIN saved')
+              }}
+            >
+              Save
+            </button>
+            {pinEnabled ? (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={async () => {
+                  const result = await removeAccessPin(pinCurrentPassword)
+                  if (!result.ok) {
+                    flashToast(result.error || 'Could not remove PIN')
+                    return
+                  }
+                  setPinEnabled(false)
+                  setPinCurrentPassword('')
+                  setNewPin('')
+                  setConfirmPin('')
+                  flashToast('PIN removed. Use your password to log in.')
+                }}
+              >
+                Remove PIN
+              </button>
+            ) : null}
+          </div>
+        )}
         {CLOUD && projSync.state !== 'idle' ? (
           <p className="settings-meta" role="status">
             {projSync.state === 'synced' &&
@@ -341,7 +423,7 @@ export default function SettingsView(props) {
                 void loadRetained(0)
             }}
           >
-            <summary>Retained versions</summary>
+            <summary>Conflict copies</summary>
             {retained === null ? (
               <p className="settings-meta">Loading…</p>
             ) : retained.length === 0 ? (
@@ -365,14 +447,14 @@ export default function SettingsView(props) {
                       className="btn btn-ghost btn-sm"
                       onClick={() => bringBack(row)}
                     >
-                      Bring back
+                      Restore this copy
                     </button>
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
                       onClick={() => discard(row)}
                     >
-                      Discard
+                      Delete this copy
                     </button>
                   </li>
                 ))}
@@ -412,7 +494,7 @@ export default function SettingsView(props) {
                 className="field-input"
                 value={pwCurrent}
                 onChange={(e) => setPwCurrent(e.target.value)}
-                placeholder="Current"
+                placeholder="Current password"
                 autoComplete="current-password"
               />
               <input
@@ -421,96 +503,34 @@ export default function SettingsView(props) {
                 className="field-input"
                 value={pwNext}
                 onChange={(e) => setPwNext(e.target.value)}
-                placeholder="New (6+)"
+                placeholder="New password (6+)"
                 autoComplete="new-password"
                 aria-label="New password"
               />
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
+                aria-label="Save password"
                 disabled={!pwCurrent || pwNext.length < 6}
                 onClick={async () => {
                   const result = await changeAccessPassword(pwCurrent, pwNext)
                   if (result.ok) {
                     setPwCurrent('')
                     setPwNext('')
-                    flashToast('Password updated')
+                    setPinEnabled(false)
+                    flashToast('Password updated. Quick PIN removed.')
                   } else {
                     flashToast(result.error || 'Could not update')
                   }
                 }}
               >
-                Update
+                Save
               </button>
             </div>
           </div>
         ) : null}
 
-        <div className="settings-row">
-          <strong>Sample project</strong>
-          <div className="settings-row-actions settings-samples">
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => loadSoftSignalDemo?.()}
-            >
-              Soft Signal
-            </button>
-            {typeof loadHarborHearthDemo === 'function' ? (
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => loadHarborHearthDemo()}
-              >
-                Harbor &amp; Hearth
-              </button>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="settings-row" id="settings-about">
-          <strong>Version</strong>
-          <span className="settings-meta-inline">
-            {versionLabel()}
-            {APP_BUILD_DATE ? ` · ${APP_BUILD_DATE}` : ''}
-          </span>
-        </div>
-
-        <div className="settings-danger-zone">
-          <p className="settings-danger-title">Danger</p>
-          <div className="settings-actions">
-            <button
-              type="button"
-              className="btn btn-ghost settings-danger btn-sm"
-              onClick={() => {
-                ask(
-                  'Wipe every project? The desk will be empty until you start a new one.',
-                  () => {
-                    clearToEmpty()
-                    setActiveView('create')
-                    flashToast('Cleared — no projects')
-                  },
-                )
-              }}
-            >
-              Clear all projects
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost settings-danger btn-sm"
-              onClick={() => {
-                ask('Full reset + setup?', () => {
-                  clearAllData()
-                  setActiveView('home')
-                  flashToast('Reset')
-                })
-              }}
-            >
-              Full reset
-            </button>
-          </div>
-        </div>
-      </section>
+      </section>}
     </div>
   )
 }

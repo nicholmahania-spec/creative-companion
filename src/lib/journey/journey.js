@@ -41,8 +41,8 @@ export const JOURNEY_STEPS = [
     label: 'Identity',
     process: 'Designing identity',
     plain:
-      'Mark, words, colour, type — then preview. One screen at a time.',
-    enough: 'Enough: a mark or wordmark, plus words or colour that feel real.',
+      'Mark, words, color, type — then preview. One screen at a time.',
+    enough: 'Enough: a mark or wordmark, plus words or color that feel real.',
     nextView: 'flow',
     nextLabel: 'Go to Touchpoints',
   },
@@ -55,17 +55,17 @@ export const JOURNEY_STEPS = [
     plain:
       'Where the brand shows up — one note per surface from the brief.',
     enough: 'Enough: one surface noted or marked looks right. Rest is optional.',
-    nextView: 'finish',
+    nextView: 'assets',
     nextLabel: 'Go to Assets',
   },
   {
     id: 'deliver',
-    view: 'finish',
+    view: 'assets',
     num: '5',
     label: 'Assets',
     process: 'Managing assets',
-    plain: 'Preview the pack, write a handoff, download. One ship job.',
-    enough: 'Enough: download the right files; handoff says what is included.',
+    plain: 'Keep the finished files for this project in one place.',
+    enough: 'Enough: add the files you need to keep or send.',
     nextView: null,
     nextLabel: null,
   },
@@ -100,7 +100,7 @@ export function journeyIdForView(view) {
 export function toolsLabelForView(view) {
   switch (view) {
     case 'home':
-      return 'Home'
+      return 'Dashboard'
     case 'spark':
       return 'Ideate'
     case 'review':
@@ -110,11 +110,13 @@ export function toolsLabelForView(view) {
     case 'calendar':
       return 'Calendar'
     case 'clients':
-      return 'Clients'
+      return 'Directory'
     case 'book':
       return 'Brand book'
     case 'assets':
       return 'Asset library'
+    case 'finish':
+      return 'Brand package'
     case 'settings':
       return 'Settings'
     case 'concept':
@@ -133,13 +135,6 @@ export const TOOLS_MENU_VIEWS = [
   'review',
   'insights',
   'book',
-  /* A Tool, deliberately not a sixth path stop. Every stop carries a
-     completion tick, and a library is never finished — a tick on it would be
-     a permanent open loop in the one place a designer stores finished work.
-     It is also a reference surface entered with a question rather than a
-     stage you pass through, and it is the mid-project return point, so it
-     must be reachable from anywhere rather than sitting at the end. */
-  'assets',
   'concept',
 ]
 

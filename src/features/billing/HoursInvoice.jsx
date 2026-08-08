@@ -257,8 +257,10 @@ export function HoursInvoicePanel({
           onClick={() => setShowSettings((v) => !v)}
           aria-expanded={showSettings}
         >
-          {showSettings ? 'Hide invoice details' : 'Invoice details'}
-          {prefs.invoiceFrom && prefs.invoicePaymentMethods ? '' : ' · needed'}
+          {showSettings ? 'Hide invoice details' : 'Add invoice details'}
+          {prefs.invoiceFrom && prefs.invoicePaymentMethods
+            ? ''
+            : ' · required before download'}
         </button>
 
         {showSettings ? (
@@ -371,7 +373,7 @@ export function HoursInvoicePanel({
             onClick={exportInvoice}
             disabled={!timeLog.length || busy}
           >
-            {busy ? 'Exporting…' : 'Download invoice'}
+          {busy ? 'Preparing invoice PDF…' : 'Download invoice PDF'}
           </button>
         </div>
       </aside>

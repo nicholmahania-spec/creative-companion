@@ -210,8 +210,8 @@ export const COMPLETENESS_GROUPS = [
       },
       {
         id: 'roles',
-        label: 'Each colour has a job',
-        todo: 'Assign the colour roles',
+        label: 'Each color has a job',
+        todo: 'Assign the color roles',
         view: 'brand',
         section: 'colors',
         ok: (c) =>
@@ -219,7 +219,7 @@ export const COMPLETENESS_GROUPS = [
       },
       {
         id: 'roleWhy',
-        label: 'Why those colours',
+        label: 'Why those colors',
         todo: 'Say why each role fits the brand words',
         view: 'brand',
         section: 'colors',
@@ -234,7 +234,7 @@ export const COMPLETENESS_GROUPS = [
       {
         id: 'contrast',
         label: 'A text pair that passes AA',
-        todo: 'Check contrast on Identity · colour',
+        todo: 'Check contrast on Identity · color',
         view: 'brand',
         section: 'colors',
         ok: (c) =>
@@ -416,8 +416,8 @@ export function completenessHeadline(result) {
   const total = result?.total || 0
   if (!total) return 'Nothing to check yet'
   const gaps = result.gaps.length
-  if (!gaps) return `Nothing missing · ${result.done}/${total} documented`
-  return `${gaps} thing${gaps === 1 ? '' : 's'} not documented yet · ${result.done}/${total}`
+  if (!gaps) return 'Everything in this check is documented'
+  return `${gaps} ${gaps === 1 ? 'item needs' : 'items need'} attention`
 }
 
 /** Only the deliverable ids the scope filter actually reads (for tests/docs). */

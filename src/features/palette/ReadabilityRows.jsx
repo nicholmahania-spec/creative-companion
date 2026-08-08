@@ -32,9 +32,9 @@ import { readabilityLine, resolutionsFor } from '../../lib/contrast/contrastMatr
 
 const ROW_LABEL = {
   'text-on-quiet': 'Body text on your background',
-  'text-on-cover': 'Body text on your cover colour',
+  'text-on-cover': 'Body text on your cover color',
   'accent-on-quiet': 'Accent on your background',
-  'accent-on-cover': 'Accent on your cover colour',
+  'accent-on-cover': 'Accent on your cover color',
 }
 
 /* The pair ids encode which role is on which side — 'accent-on-quiet' is the
@@ -56,7 +56,7 @@ export default function ReadabilityRows({
   if (!pairs.length) {
     return (
       <p className="panel-hint">
-        Give a colour a job above and its readability shows up here.
+        Give a color a job above and its readability shows up here.
       </p>
     )
   }
@@ -109,7 +109,7 @@ export default function ReadabilityRows({
                           >
                             {r.kind === 'move-background'
                               ? 'Adjust the background'
-                              : 'Adjust the text colour'}
+                              : 'Adjust the text color'}
                           </button>
                           <span className="readability-route-swatches">
                             <i style={{ background: r.from }} aria-hidden="true" />
@@ -123,7 +123,7 @@ export default function ReadabilityRows({
                               a confident auto-fix hides behind a tick. */}
                           {r.newColour && (
                             <span className="readability-route-warn">
-                              this is really a different colour
+                              this is really a different color
                             </span>
                           )}
                         </>

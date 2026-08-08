@@ -23,7 +23,7 @@ describe('version history previews', () => {
     expect(versionKindFromChangeType('hourly')).toBe('hourly')
     expect(versionKindFromChangeType('version bump')).toBe('bump')
     expect(versionKindLabel('hourly')).toBe('Hourly save')
-    expect(versionKindLabel('bump')).toBe('Bump')
+    expect(versionKindLabel('bump')).toBe('Named save')
     expect(versionKindLabel('hourly')).not.toMatch(/\d{1,2}:\d{2}/)
   })
 

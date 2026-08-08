@@ -145,7 +145,7 @@ export default function ApplicationCheck({
               className="btn btn-ghost btn-sm"
               onClick={() => inputRef.current?.click()}
             >
-              Check another
+              Check another file
             </button>
             {onClear && (
               <button
@@ -153,7 +153,7 @@ export default function ApplicationCheck({
                 className="btn btn-ghost btn-sm"
                 onClick={onClear}
               >
-                Clear
+                Clear result
               </button>
             )}
           </div>

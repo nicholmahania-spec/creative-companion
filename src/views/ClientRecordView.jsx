@@ -144,7 +144,7 @@ export default function ClientRecordView({
                     className="btn btn-primary btn-sm"
                     onClick={() => commitRename(p)}
                   >
-                    Save
+              Save project name
                   </button>
                 </>
               ) : (
@@ -171,7 +171,7 @@ export default function ClientRecordView({
                       setDraft(p.name || '')
                     }}
                   >
-                    Rename
+                  Rename project
                   </button>
                 </>
               )}
@@ -213,7 +213,7 @@ export default function ClientRecordView({
                     .removeClientPreference(clientName, pref)
                 }
               >
-                Remove
+                Remove note
               </button>
             </li>
           ))}
@@ -221,7 +221,7 @@ export default function ClientRecordView({
 
         <div className="client-memory-add">
           <label className="field-label" htmlFor="client-pref">
-            Add a line
+            Add detail
           </label>
           <input
             id="client-pref"
@@ -237,7 +237,7 @@ export default function ClientRecordView({
             }}
           />
           <button type="button" className="btn btn-secondary" onClick={addPref}>
-            Add
+            Add detail
           </button>
         </div>
       </div>

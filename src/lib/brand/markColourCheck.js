@@ -144,7 +144,7 @@ export function markColourLine(reading, { paletteFull = false } = {}) {
       return { line: 'Black and white — nothing to compare against your palette.' }
     }
     // A genuine tool failure, said as a fact about the file, not the design.
-    return { line: "This image didn't open for a colour check." }
+    return { line: "This image didn't open for a color check." }
   }
 
   if (state === 'no-palette') {
@@ -179,7 +179,7 @@ export function markColourLine(reading, { paletteFull = false } = {}) {
 
   const worn = (reading.present || []).map((p) => p.label || p.hex)
   if (!worn.length) {
-    return { line: 'None of your palette colours turn up in this mark.' }
+    return { line: 'None of your palette colors turn up in this mark.' }
   }
   return { line: `Uses your ${list(worn)}.` }
 }

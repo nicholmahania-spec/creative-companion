@@ -174,7 +174,7 @@ export default function PublicDiscoveryFill({ shareId }) {
               className="btn btn-primary"
               disabled={submitting}
             >
-              {submitting ? 'Submitting…' : 'Submit'}
+              {submitting ? 'Sending brief…' : 'Send brief'}
             </button>
           </form>
         )}

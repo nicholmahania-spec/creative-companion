@@ -1,6 +1,6 @@
 /**
  * Identity — one job per screen under a single path stop:
- * Mark → Words → Colour → Type → Preview.
+ * Logo → Words → Color → Type → Pack.
  * Stationery lives on Assets; ★ pack pins stay on Research.
  */
 import {
@@ -16,7 +16,6 @@ import {
   IDENTITY_SUBSTEPS,
   resolveIdentitySubstep,
   nextIdentitySubstep,
-  prevIdentitySubstep,
 } from '../lib/journey/identitySubsteps'
 import useAppStore from '../store/useAppStore'
 import versionService, {
@@ -241,7 +240,7 @@ export default function DesignView({
     const ok =
       typeof window !== 'undefined'
         ? window.confirm(
-            `Restore identity to ${label}? Current mark, words, colour and type will be replaced. Use Bump first if you want a save point.`
+            `Restore identity to ${label}? Current mark, words, color and type will be replaced. Use Save version first if you want a named save point.`
           )
         : true
     if (!ok) return
@@ -458,7 +457,6 @@ export default function DesignView({
     IDENTITY_SUBSTEPS.findIndex((s) => s.id === identitySubstep)
   )
   const nextSubstep = nextIdentitySubstep(identitySubstep)
-  const prevSubstep = prevIdentitySubstep(identitySubstep)
 
   // New sub-screen → top of page (avoid landing mid-form from a previous step)
   useEffect(() => {
@@ -634,7 +632,7 @@ export default function DesignView({
       c?.toLowerCase() === String(route.from).toLowerCase() ? route.to : c
     )
     if (nextPal.length >= 2) setProjectPalette(nextPal)
-    offerUndo?.(`${route.role} colour`, () => {
+    offerUndo?.(`${route.role} color`, () => {
       if (previous) setColorRole(route.role, previous)
       setProjectPalette(projectPalette)
     })
@@ -702,20 +700,18 @@ export default function DesignView({
                 <h1 className="page-title">
                   {labelForStepId('design')}
                 </h1>
-                {/* Quiet status only — pack floor, not goal/words scoreboard. */}
-                <p className="design-identity-status" role="status">
-                  {IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}
+                <p className="design-identity-status">
+                  Build the brand system and see each change as you make it.
                 </p>
               </div>
-              {/* Meta chrome only on Preview — craft screens open on the field,
-                  not version/template decisions (ADHD: decision fatigue). */}
-              {identitySubstep === 'preview' && (
+              <details className="identity-utilities">
+                <summary>Versions and templates</summary>
                 <div className="brand-template-actions">
                   <div className="version-controls">
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
-                      title="Bump the design version"
+                      title="Save a named design version"
                       onClick={async () => {
                         const r = bumpDesignVersion()
                         if (r?.ok)
@@ -723,7 +719,7 @@ export default function DesignView({
                         await loadVersionHistory()
                       }}
                     >
-                      Bump · {activeProject?.designVersion || 'v1'}
+                      Save version · {activeProject?.designVersion || 'v1'}
                     </button>
                     <button
                       type="button"
@@ -749,11 +745,32 @@ export default function DesignView({
                     </button>
                   </div>
                 </div>
-              )}
+              </details>
             </div>
 
-            <nav className="identity-subnav" aria-label="Identity screens">
-              {IDENTITY_SUBSTEPS.map((step, i) => {
+            <div className="design-identity-workspace">
+              <div
+                className="design-preview-rail design-live-artboard"
+                tabIndex={0}
+                role="region"
+                aria-label="Live brand preview"
+              >
+                <div className="design-rail-label">Live preview</div>
+                <Suspense fallback={<div className="panel-hint">Loading…</div>}>
+                  <BrandArtboard
+                    id="system-artboard"
+                    project={activeProject || {}}
+                    palette={projectPalette}
+                    pins={deskMood.filter((m) => m.inPack)}
+                    editable={false}
+                    studio={studioName}
+                  />
+                </Suspense>
+              </div>
+
+              <div className="design-identity-editor">
+            <nav className="identity-subnav" aria-label="Identity editors">
+              {IDENTITY_SUBSTEPS.map((step) => {
                 const active = identitySubstep === step.id
                 return (
                   <button
@@ -763,9 +780,6 @@ export default function DesignView({
                     aria-current={active ? 'step' : undefined}
                     onClick={() => setIdentitySubstep(step.id)}
                   >
-                    <span className="identity-subnav-num" aria-hidden="true">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
                     {step.label}
                   </button>
                 )
@@ -781,7 +795,7 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <h2 className="design-section-title">Mark</h2>
+                <h2 className="design-section-title">Logo</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
               <div className="field-block" style={{ marginBottom: '0.85rem' }}>
@@ -979,7 +993,7 @@ export default function DesignView({
                   const before = activeProject?.palette || []
                   const owner = activeProject?.id
                   addPaletteColor(hex)
-                  offerUndo?.('Colour added', () =>
+                  offerUndo?.('Color added', () =>
                     setProjectPalette(before, owner)
                   )
                   flashMicro(`${hex} added to palette`)
@@ -1233,7 +1247,7 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <h2 className="design-section-title">Colour</h2>
+                <h2 className="design-section-title">Color</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
 
@@ -1343,7 +1357,7 @@ export default function DesignView({
                         <div className="palette-row">
                           <label
                             className="palette-swatch-wrap"
-                            title="Pick colour"
+                            title="Pick color"
                           >
                             <input
                               type="color"
@@ -1360,7 +1374,7 @@ export default function DesignView({
                                   })
                                 }
                               }}
-                              aria-label={`Colour ${index + 1} picker`}
+                              aria-label={`Color ${index + 1} picker`}
                             />
                             <span
                               className="palette-swatch"
@@ -1381,7 +1395,7 @@ export default function DesignView({
                               if (e.key === 'Enter') e.currentTarget.blur()
                             }}
                             spellCheck={false}
-                            aria-label={`Colour ${index + 1} hex`}
+                            aria-label={`Color ${index + 1} hex`}
                           />
                           <span
                             className="palette-preview-chip"
@@ -1475,7 +1489,7 @@ export default function DesignView({
                     disabled={projectPalette.length >= 8}
                     onClick={() => addPaletteColor('#888888')}
                   >
-                    Add colour
+                    Add color
                   </button>
                   <button
                     type="button"
@@ -1500,11 +1514,15 @@ export default function DesignView({
                     type="button"
                     className="btn btn-ghost"
                     onClick={() => {
+                      const previousPalette = [...projectPalette]
                       setProjectPalette([...DEFAULT_PALETTE])
                       setHexDrafts({})
+                      offerUndo?.('Palette reset to defaults', () =>
+                        setProjectPalette(previousPalette)
+                      )
                     }}
                   >
-                    Reset to default
+                    Reset palette to defaults
                   </button>
                 </div>
 
@@ -1513,7 +1531,7 @@ export default function DesignView({
               <div className="palette-roles-editor" style={{ marginTop: '1rem' }}>
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
-                    Colour jobs
+                    Color uses
                   </p>
                 </div>
                 {/* A mode switch, and it must say so. Every subsequent click on
@@ -1525,7 +1543,7 @@ export default function DesignView({
                 <div
                   className="system-role-assign"
                   role="group"
-                  aria-label="Which job to assign next"
+                  aria-label="Which color use to assign next"
                   style={{ marginTop: '0.45rem' }}
                 >
                   {BRAND_ROLE_KEYS.map((role) => (
@@ -1576,7 +1594,7 @@ export default function DesignView({
                     title="Nudge text / accent / quiet / cover until AA targets pass"
                     onClick={() => applyAaRoleFix()}
                   >
-                    Fix contrast
+                    Use readable colors
                   </button>
                   {!activeProject?.colorRoles?.[brandRoleAssign] && (
                     <button
@@ -1621,15 +1639,15 @@ export default function DesignView({
                             ...roleWhy,
                             [brandRoleAssign]: e.target.value,
                           })}
-                        placeholder="Why this job fits"
+                    placeholder="Why this color use fits"
                       />
                     </div>
                   )
                 })()}
 
                 {/* Four pairings a reader will actually meet, each shown as real type
-                    on real colour. Replaced a Background dropdown of raw hex strings
-                    plus a row per remaining colour — that asked the designer to hold a
+                    on real color. Replaced a Background dropdown of raw hex strings
+                    plus a row per remaining color — that asked the designer to hold a
                     swatch-to-hex mapping in their head, then judged mostly combinations
                     nobody would ever set type in. See ReadabilityRows.jsx. */}
                 <div className="palette-checker" style={{ marginTop: '0.85rem' }}>
@@ -1885,28 +1903,18 @@ export default function DesignView({
 
 
             {identitySubstep === 'preview' && (
-            <>
-            <div
-              className="design-preview-rail design-artboard-bottom"
-              tabIndex={0}
-              role="region"
-              aria-label="Live brand preview"
-            >
-              <div className="design-rail-label">Artboard</div>
-              <Suspense
-                fallback={<div className="panel-hint">Loading…</div>}
-              >
-                <BrandArtboard
-                  id="system-artboard"
-                  project={activeProject || {}}
-                  palette={projectPalette}
-                  pins={deskMood.filter((m) => m.inPack)}
-                  editable={false}
-                  studio={studioName}
-                />
-              </Suspense>
-            </div>
             <div className="design-preview-notes is-secondary">
+              <div className="design-pack-intro">
+                <h2 className="design-section-title">Pack</h2>
+                <p className="panel-hint">
+                  Choose the guidance that belongs in the brand book. Delivery
+                  files stay in Brand package.
+                </p>
+                <p className="design-preview-pack-hint">
+                  {deskMood.filter((item) => item.inPack).length} selected from
+                  Research
+                </p>
+              </div>
               <h3 className="design-preview-notes-title">Imagery</h3>
               <div className="field-block">
                 <label className="field-label" htmlFor="img-style">
@@ -2043,50 +2051,31 @@ export default function DesignView({
                   onChange={(e) =>
                     updateBrandField('printFinish', e.target.value)
                   }
-                  placeholder="e.g. matt lamination, spot UV"
+                  placeholder="e.g. matte lamination, spot UV"
                 />
               </div>
             </div>
-            </>
             )}
             </div>
 
-            <div className="path-continue-row design-path-footer">
-              <button
-                type="button"
-                className="btn btn-primary work-path-next"
-                onClick={() => {
-                  if (nextSubstep) {
-                    setIdentitySubstep(nextSubstep.id)
-                    return
-                  }
-                  setActiveView?.(journeyNext?.view || 'flow')
-                }}
-              >
-                {nextSubstep
-                  ? `Next · ${nextSubstep.label}`
-                  : `Next · ${journeyNext?.label || labelForStepId('sketch')}`}
-              </button>
-              {prevSubstep ? (
+              <div className="path-continue-row design-path-footer">
                 <button
                   type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setIdentitySubstep(prevSubstep.id)}
-                >
-                  Back · {prevSubstep.label}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-primary work-path-next"
                   onClick={() => {
-                    const hub = 'desk'
-                    setActiveView?.(hub)
+                    if (nextSubstep) {
+                      setIdentitySubstep(nextSubstep.id)
+                      return
+                    }
+                    setActiveView?.(journeyNext?.view || 'flow')
                   }}
                 >
-                  Back to the desk
+                  {nextSubstep
+                    ? `Continue to ${nextSubstep.label}`
+                    : `Continue to ${journeyNext?.label || labelForStepId('sketch')}`}
                 </button>
-              )}
+              </div>
+            </div>
             </div>
 
           </div>
@@ -2113,9 +2102,9 @@ export default function DesignView({
                   ) : versionHistory.length === 0 ? (
                     <div className="dv-tpl-empty">
                       <p>
-                        No saves yet. Work on Identity and the app keeps an
-                        hourly save while the studio is open — or use Bump on
-                        Preview when you want a named point.
+                        No saved versions yet. Autosave runs hourly. Use Save
+                        version under Versions and templates to keep one you
+                        can name.
                       </p>
                     </div>
                   ) : (
@@ -2342,7 +2331,7 @@ export default function DesignView({
                                 }}
                                 className="btn btn-sm btn-primary"
                               >
-                                Apply
+                                Apply template
                               </button>
                               <button
                                 onClick={(e) => {
@@ -2354,7 +2343,7 @@ export default function DesignView({
                                 }}
                                 className="btn btn-sm btn-ghost"
                               >
-                                Edit
+                                Edit template
                               </button>
                               <button
                                 onClick={(e) => {
@@ -2363,7 +2352,7 @@ export default function DesignView({
                                 }}
                                 className="btn btn-sm btn-ghost"
                               >
-                                Delete
+                                Delete template
                               </button>
                             </div>
                           </div>

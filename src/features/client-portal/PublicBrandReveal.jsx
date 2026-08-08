@@ -266,7 +266,7 @@ export default function PublicBrandReveal({ portalId }) {
                 className="btn btn-secondary"
                 disabled={sending || !reaction.trim()}
               >
-                {sending ? 'Sending…' : 'Send it'}
+              {sending ? 'Sending feedback…' : 'Send feedback'}
               </button>
             </form>
           )}

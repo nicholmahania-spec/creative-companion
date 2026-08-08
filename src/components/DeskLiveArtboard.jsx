@@ -142,7 +142,7 @@ export default function DeskLiveArtboard({
             ))}
           </div>
         ) : (
-          <p className="desk-live-empty-pal">No palette yet — set colours in Identity.</p>
+          <p className="desk-live-empty-pal">No palette yet — set colors in Identity.</p>
         )}
         {/* The "no palette" branch below can never fire for a real project —
             every project is CREATED with the four stone defaults, so
@@ -156,7 +156,7 @@ export default function DeskLiveArtboard({
             four — the line disappears the moment any colour is set. */}
         {stockPalette ? (
           <p className="desk-live-pal-note">
-            Placeholder colours — set real ones on {labelForStepId('design')}.
+            Placeholder colors — set real ones on {labelForStepId('design')}.
           </p>
         ) : null}
       </div>

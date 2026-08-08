@@ -41,7 +41,7 @@ export const LAYOUT_PATTERNS = [
   {
     id: 'single-column',
     name: 'Single column',
-    structure: 'One centred column, everything stacked.',
+    structure: 'One centered column, everything stacked.',
     when: 'Long reading, or anything that has to work on a phone first.',
     watch: 'Gets monotonous fast — vary the rhythm with image breaks.',
     scan: 'f',

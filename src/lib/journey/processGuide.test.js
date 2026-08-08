@@ -28,7 +28,7 @@ describe('processGuide — 5 path steps + Tools coaching', () => {
        nobody renamed a stop. */
     const defineStep = JOURNEY_STEPS.find((s) => s.id === 'define')
     expect(getProcessPhase('define').short).toBe(defineStep.label)
-    expect(getProcessPhase('deliver').view).toBe('finish')
+    expect(getProcessPhase('deliver').view).toBe('assets')
   })
 
   it('maps path views to process phases', () => {
@@ -36,7 +36,7 @@ describe('processGuide — 5 path steps + Tools coaching', () => {
     expect(processPhaseForView('flow')?.id).toBe('sketch')
     expect(processPhaseForView('studio')?.id).toBe('research')
     expect(processPhaseForView('brand')?.id).toBe('design')
-    expect(processPhaseForView('finish')?.id).toBe('deliver')
+    expect(processPhaseForView('assets')?.id).toBe('deliver')
   })
 
   it('still coaches Ideate and Review as Tools views', () => {

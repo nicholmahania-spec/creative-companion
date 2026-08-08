@@ -56,13 +56,37 @@ describe('blank workspace defaults', () => {
     expect(useAppStore.getState().currentProjectId).toBe(null)
   })
 
-  it('clearToEmpty leaves no projects', () => {
+  it('clearToEmpty removes project data but keeps workspace settings', () => {
+    useAppStore.setState((state) => ({
+      theme: 'deep',
+      themeSource: 'manual',
+      breakKit: [{ id: 'walk', label: 'Take a walk' }],
+      prefs: { ...state.prefs, reduceMotion: true, studioName: 'North Star' },
+      templates: [{ id: 'saved-template', name: 'My template' }],
+      assets: [{ id: 'asset-1', projectId: 'project-1' }],
+      portalSeen: { 'project-1': true },
+      clientRecords: { 'client-1': { name: 'Ada' } },
+    }))
     useAppStore.getState().createNewProject('A', '')
     useAppStore.getState().createNewProject('B', '')
     useAppStore.getState().clearToEmpty()
-    expect(useAppStore.getState().projects).toEqual([])
-    expect(useAppStore.getState().currentProjectId).toBe(null)
-    expect(useAppStore.getState().onboarded).toBe(true)
+    const state = useAppStore.getState()
+    expect(state.projects).toEqual([])
+    expect(state.currentProjectId).toBe(null)
+    expect(state.tasks).toEqual([])
+    expect(state.moodItems).toEqual([])
+    expect(state.assets).toEqual([])
+    expect(state.portalSeen).toEqual({})
+    expect(state.clientRecords).toEqual({})
+    expect(state.onboarded).toBe(true)
+    expect(state.theme).toBe('deep')
+    expect(state.themeSource).toBe('manual')
+    expect(state.breakKit).toEqual([{ id: 'walk', label: 'Take a walk' }])
+    expect(state.prefs.reduceMotion).toBe(true)
+    expect(state.prefs.studioName).toBe('North Star')
+    expect(state.templates).toEqual([
+      { id: 'saved-template', name: 'My template' },
+    ])
   })
 
   it('createBlankProject has detective sheet + designVersion', () => {

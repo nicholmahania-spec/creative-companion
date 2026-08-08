@@ -77,10 +77,10 @@ describe('question sets', () => {
 
 describe('surveyLine', () => {
   it('names the state and never a date', () => {
-    expect(surveyLine('not_sent')).toBe('Survey — not sent')
-    expect(surveyLine('sent')).toBe('Survey — with the client')
-    expect(surveyLine('submitted')).toBe('Survey — answered')
-    expect(surveyLine(undefined)).toBe('Survey — not sent')
+    expect(surveyLine('not_sent')).toBe('Survey not sent')
+    expect(surveyLine('sent')).toBe('Survey sent — waiting for the client')
+    expect(surveyLine('submitted')).toBe('Client answered the survey')
+    expect(surveyLine(undefined)).toBe('Survey not sent')
   })
 
   it('never counts days', () => {

@@ -11,21 +11,21 @@ const COACHING = {
   research: {
     title: 'Conducting research',
     plain:
-      'Collect pictures, notes, and existing brand cues. Stop after about 20 minutes so you do not drown.',
+      'Collect pictures, notes, and existing brand cues. Set 20 minutes. Keep what helps.',
     prompt:
-      'Look at past work, similar brands, and audience cues. Save refs — not final design yet. Timer is optional.',
+      'Look at past work, similar brands, and audience cues. Save references — not final design yet. Timer is optional.',
     checks: [
       'Looked at past or client materials',
       '2–6 reference pictures on the board',
       'Colors or words that feel right saved',
       'Used a timer so research does not eat the day',
-      'At least one picture starred ★ for the client pack',
+      'At least one picture added to the research shortlist',
     ],
   },
   define: {
     title: 'Clarifying strategy',
     plain:
-      'Answer the basics before you design. One goal sentence. What must be in. What is nice later.',
+      'Answer the basics before you design. Write one goal sentence. Separate what must be included from what can wait.',
     prompt:
       'What are we making? Who is it for? How should they feel? Write the goal in one sentence. Use the goal sheet.',
     checks: [
@@ -40,7 +40,7 @@ const COACHING = {
     title: 'Ideas (Ideate)',
     plain: 'Make lots of ideas. Messy is fine. Keep your best three as A, B, C.',
     prompt:
-      'Push for many messy directions. Try the opposite button. Do not marry the first idea. Keep A/B/C short.',
+      'Push for many messy directions. Try the opposite button. Do not commit to the first idea. Keep A/B/C short.',
     checks: [
       'Tried several idea prompts (messy is fine)',
       'Tried opposite ideas (calm vs bold)',
@@ -51,13 +51,13 @@ const COACHING = {
   },
   design: {
     title: 'Designing identity',
-    plain: 'Mark, words, colour, type, then preview. One screen at a time.',
+    plain: 'Mark, words, color, type, then preview. One screen at a time.',
     prompt:
       'Build the system, then check it holds on the artboard. Name a new version before a big change.',
     checks: [
       'Mark captured (image and/or wordmark rules)',
       'Words that say who this is and how it sounds',
-      'Colour jobs set (cover / text / accent / quiet)',
+      'Color uses set (cover / text / accent / quiet)',
       'Type pair that can carry real text',
       'Preview: the pieces read as one system',
     ],

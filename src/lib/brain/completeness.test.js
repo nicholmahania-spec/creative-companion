@@ -160,13 +160,13 @@ describe('reporting', () => {
   it('states the count rather than grading the brand', () => {
     const r = brandCompleteness({ project: project() })
     const line = completenessHeadline(r)
-    expect(line).toMatch(/not documented yet/)
+    expect(line).toMatch(/need attention/)
     expect(line).not.toMatch(/%/)
   })
 
   it('says nothing is missing only when nothing is', () => {
     expect(completenessHeadline({ total: 3, done: 3, gaps: [] })).toMatch(
-      /Nothing missing/
+      /Everything in this check is documented/
     )
   })
 

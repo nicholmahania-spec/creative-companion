@@ -17,7 +17,7 @@ export const BREAKDOWN_DEPTHS = [
   {
     id: 'full',
     label: 'Full (12 steps)',
-    hint: 'Big client work · when the fog is thick',
+    hint: 'Big client work · when you cannot see the next step',
   },
 ]
 

@@ -212,7 +212,7 @@ export function autoFixPair(fgHex, bgHex, target = WCAG.AA_NORMAL) {
  */
 export function cellSummary(cell) {
   if (!cell) return ''
-  if (cell.same) return 'Same colour'
+  if (cell.same) return 'Same color'
   if (cell.usableFor.length === 0) return 'Too close to read either way'
   return `Good for ${cell.usableFor.join(', ')}`
 }

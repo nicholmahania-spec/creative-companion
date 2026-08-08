@@ -325,7 +325,7 @@ export default function PublicClientPortal({ portalId }) {
           <div className="client-portal-delivery">
             <h2 className="client-portal-subhead">Your brand book is ready</h2>
             <a className="btn btn-primary" href={brandRevealUrl(portalId)}>
-              Open it
+              Open brand book
             </a>
           </div>
         )}
@@ -385,7 +385,7 @@ export default function PublicClientPortal({ portalId }) {
                           {pendingStepId === step.id
                             ? 'Saving…'
                             : armedApproveStepId === step.id
-                              ? 'Tap again to approve'
+                              ? `Yes, approve ${step.label}`
                               : 'Approve'}
                         </button>
                         <button
@@ -429,7 +429,7 @@ export default function PublicClientPortal({ portalId }) {
 
         {portal.formStatus !== 'not_sent' && (
           <div className="client-portal-form-block">
-            <h2 className="client-portal-subhead">Project overview form</h2>
+            <h2 className="client-portal-subhead">Project brief</h2>
             {portal.formStatus === 'submitted' ? (
               <p className="public-fill-status">
                 Thanks — you've already submitted this. Ask your contact to send a fresh
@@ -455,7 +455,7 @@ export default function PublicClientPortal({ portalId }) {
                   <p className="public-fill-error" role="alert">{error}</p>
                 )}
                 <button type="submit" className="btn btn-primary" disabled={formSubmitting}>
-                  {formSubmitting ? 'Submitting…' : 'Submit'}
+                  {formSubmitting ? 'Sending brief…' : 'Send brief'}
                 </button>
               </form>
             )}
@@ -573,7 +573,7 @@ export default function PublicClientPortal({ portalId }) {
               aria-label="Message"
             />
             <button type="submit" className="btn btn-secondary" disabled={sending}>
-              Send
+              Send message
             </button>
           </form>
           {/* Kept even though the thread now refreshes itself: pressing it is

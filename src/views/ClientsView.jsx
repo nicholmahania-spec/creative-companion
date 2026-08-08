@@ -13,7 +13,7 @@
  * client counts). Match the design's look, drop its toggle. (#18)
  */
 import { useMemo, useState } from 'react'
-import { labelForStepId } from '../lib/journey/journey'
+import { labelForStepId, toolsLabelForView } from '../lib/journey/journey'
 import {
   buildClientGroups,
   filterAndSortClients,
@@ -32,15 +32,33 @@ export default function ClientsView({
   selectProject,
   setActiveView,
   openClientRecord,
+  archiveProject,
+  unarchiveProject,
+  deleteProject,
+  loadSoftSignalDemo,
+  loadHarborHearthDemo,
 }) {
   const [query, setQuery] = useState('')
   const [sortMode, setSortMode] = useState('recent')
 
-  const clients = useMemo(() => buildClientGroups(projects), [projects])
+  const openProjects = useMemo(() => projects.filter((p) => !p.archived), [projects])
+  const archivedProjects = useMemo(() => projects.filter((p) => p.archived), [projects])
+  const projectsWithoutClient = useMemo(
+    () => openProjects.filter((p) => !String(p.detective?.clientName || '').trim()),
+    [openProjects]
+  )
+  const clients = useMemo(() => buildClientGroups(openProjects), [openProjects])
   const visible = useMemo(
     () => filterAndSortClients(clients, query, sortMode),
     [clients, query, sortMode]
   )
+  const normalizedQuery = query.trim().toLowerCase()
+  const matchesProject = (project) =>
+    !normalizedQuery ||
+    String(project.name || '').toLowerCase().includes(normalizedQuery) ||
+    String(project.detective?.clientName || '').toLowerCase().includes(normalizedQuery)
+  const visibleProjectsWithoutClient = projectsWithoutClient.filter(matchesProject)
+  const visibleArchivedProjects = archivedProjects.filter(matchesProject)
 
   const openProject = (project) => {
     selectProject(project.id)
@@ -50,7 +68,7 @@ export default function ClientsView({
   return (
     <div className="clients-view view-enter">
       <div className="clients-view-head">
-        <h1 className="clients-view-title">Clients</h1>
+        <h1 className="clients-view-title">{toolsLabelForView('clients')}</h1>
         <div className="clients-view-controls">
           <input
             type="search"
@@ -58,7 +76,7 @@ export default function ClientsView({
             placeholder="Search clients or projects"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search clients"
+            aria-label="Search directory"
           />
           <div
             className="clients-sort"
@@ -80,13 +98,15 @@ export default function ClientsView({
         </div>
       </div>
 
-      {visible.length === 0 ? (
+      {visible.length === 0 && visibleProjectsWithoutClient.length === 0 && visibleArchivedProjects.length === 0 ? (
         <p className="clients-empty">
-          {clients.length === 0
+          {normalizedQuery
+            ? 'No matches.'
+            : clients.length === 0
             ? `No clients yet — add a client name on a project’s ${labelForStepId('define')} step.`
             : 'No matches.'}
         </p>
-      ) : (
+      ) : visible.length > 0 ? (
         <div className="clients-grid">
           {visible.map((c) => (
             <ClientCard
@@ -94,10 +114,52 @@ export default function ClientsView({
               client={c}
               onOpen={openProject}
               onOpenRecord={openClientRecord}
+              onArchive={archiveProject}
+              onDelete={deleteProject}
             />
           ))}
         </div>
+      ) : null}
+
+      {visibleProjectsWithoutClient.length > 0 && (
+        <ProjectDirectorySection
+          title="Projects without a client"
+          projects={visibleProjectsWithoutClient}
+          onOpen={openProject}
+          actionLabel="Archive"
+          onAction={(p) => archiveProject?.(p.id)}
+          onDelete={(p) => deleteProject?.(p.id, p.name)}
+        />
       )}
+
+      {visibleArchivedProjects.length > 0 && (
+        <ProjectDirectorySection
+          title="Archived projects"
+          projects={visibleArchivedProjects}
+          onOpen={(project) => {
+            unarchiveProject?.(project.id)
+            openProject(project)
+          }}
+          actionLabel="Restore"
+          onAction={(p) => unarchiveProject?.(p.id)}
+          onDelete={(p) => deleteProject?.(p.id, p.name)}
+        />
+      )}
+
+      <section className="clients-samples" aria-labelledby="directory-samples-title">
+        <h2 id="directory-samples-title">Sample projects</h2>
+        <p>Add a sample project to explore the workflow.</p>
+        <div className="clients-sample-actions">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => loadSoftSignalDemo?.()}>
+            Add Soft Signal sample
+          </button>
+          {typeof loadHarborHearthDemo === 'function' && (
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => loadHarborHearthDemo()}>
+              Add Harbor &amp; Hearth sample
+            </button>
+          )}
+        </div>
+      </section>
     </div>
   )
 }
@@ -113,7 +175,7 @@ function ClientPhoto({ client }) {
   )
 }
 
-function ClientCard({ client, onOpen, onOpenRecord }) {
+function ClientCard({ client, onOpen, onOpenRecord, onArchive, onDelete }) {
   return (
     <div className="client-card">
       <ClientPhoto client={client} />
@@ -127,7 +189,9 @@ function ClientCard({ client, onOpen, onOpenRecord }) {
         {client.name}
       </button>
       {!client.logoImage && (
-        <p className="client-card-hint">Add a logo to use it here</p>
+        <p className="client-card-hint">
+          Add a client logo to show it on this card
+        </p>
       )}
       <div className="client-card-actions">
         {client.phone && (
@@ -151,9 +215,46 @@ function ClientCard({ client, onOpen, onOpenRecord }) {
             >
               {p.name}
             </button>
+            <button
+              type="button"
+              className="client-card-project-action"
+              onClick={() => onArchive?.(p.id)}
+            >
+              Archive
+            </button>
+            <button
+              type="button"
+              className="client-card-project-action"
+              onClick={() => onDelete?.(p.id, p.name)}
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>
     </div>
+  )
+}
+
+function ProjectDirectorySection({ title, projects, onOpen, actionLabel, onAction, onDelete }) {
+  return (
+    <section className="clients-project-directory" aria-labelledby={`project-directory-${title.replace(/\s+/g, '-').toLowerCase()}`}>
+      <h2 id={`project-directory-${title.replace(/\s+/g, '-').toLowerCase()}`}>{title}</h2>
+      <ul>
+        {projects.map((project) => (
+          <li key={project.id}>
+            <button type="button" onClick={() => onOpen(project)}>
+              {project.name}
+            </button>
+            <button type="button" onClick={() => onAction(project)}>
+              {actionLabel}
+            </button>
+            <button type="button" onClick={() => onDelete(project)}>
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }

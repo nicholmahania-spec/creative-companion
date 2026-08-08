@@ -4,6 +4,12 @@
  * platform glyphs and break the flat grayscale system).
  */
 const ICONS = {
+  home: (
+    <>
+      <path d="M4 11.5 12 4l8 7.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 10v9h12v-9" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
   calendar: (
     <>
       <rect x="4" y="5.5" width="16" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.75" />
@@ -81,14 +87,15 @@ const ICONS = {
      different destinations — were both drawing `print`. */
   settings: (
     <>
-      <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.75" />
-      <path
-        d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-      />
+      <path d="M4 7h6M14 7h6M4 17h10M18 17h2" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <circle cx="12" cy="7" r="2" fill="none" stroke="currentColor" strokeWidth="1.75" />
+      <circle cx="16" cy="17" r="2" fill="none" stroke="currentColor" strokeWidth="1.75" />
+    </>
+  ),
+  directory: (
+    <>
+      <circle cx="12" cy="8" r="3.25" fill="none" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M4.5 19.5c.9-4.3 3.6-6.5 7.5-6.5s6.6 2.2 7.5 6.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
     </>
   ),
   desk: (

@@ -33,7 +33,7 @@ function briefSendStatus(project) {
   }
   return {
     kind: 'not_sent',
-    label: 'Not sent yet.',
+    label: 'Brief not sent yet.',
   }
 }
 
@@ -102,20 +102,18 @@ export default function DefineView(props) {
       data-nav-dir={navDir}
     >
       <header className="define-brief-head">
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm define-brief-back"
+          onClick={() => setActiveView?.('desk')}
+        >
+          ← Back
+        </button>
         <div className="define-brief-head-row">
           <div className="define-brief-head-text">
             <h1 className="page-title define-brief-title">
-              {labelForStepId('define')}
+              Design brief
             </h1>
-            <p className="define-brief-status" data-status={sendStatus.kind}>
-              {sendStatus.label}
-              {deadlineRelative ? (
-                <span className="define-brief-status-due">
-                  {' '}
-                  · {deadlineRelative}
-                </span>
-              ) : null}
-            </p>
           </div>
           {/* Share never competes with path Continue (audit P1). */}
           <button
@@ -138,7 +136,7 @@ export default function DefineView(props) {
           <Suspense
             fallback={
               <div className="define-workbook define-workbook-loading">
-                Loading…
+                Loading brief…
               </div>
             }
           >
@@ -168,40 +166,6 @@ export default function DefineView(props) {
         />
       </section>
 
-      <div
-        className="define-brief-footer"
-        role="region"
-        aria-label="Brief actions"
-      >
-        <div className="define-brief-footer-row">
-          <div className="define-brief-footer-actions">
-            <button
-              type="button"
-              className={`btn work-path-next${
-                showSend && (requiredEmpty?.length || 0) === 0
-                  ? ' btn-secondary'
-                  : ' btn-primary'
-              }`}
-              onClick={() => setActiveView?.(journeyNext?.view || 'studio')}
-            >
-              {`Next · ${journeyNext?.label || labelForStepId('research')}`}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                const hub = 'desk'
-                setActiveView?.(hub)
-              }}
-            >
-              Back to the desk
-            </button>
-          </div>
-          {neededLine ? (
-            <p className="define-brief-still-blank">{neededLine}</p>
-          ) : null}
-        </div>
-      </div>
     </div>
   )
 }

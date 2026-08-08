@@ -1108,7 +1108,7 @@ export default function BuddyMate({
                     }`}
                     onClick={() => logWellness('bathroom', 'Bathroom')}
                   >
-                    Bath
+              Bathroom
                   </button>
                 </div>
                 <button
@@ -1158,7 +1158,7 @@ export default function BuddyMate({
                       className="buddy-kit-add-btn"
                       onClick={submitKitItem}
                     >
-                      Add
+              Add break task
                     </button>
                   </div>
                 </div>
@@ -1243,7 +1243,7 @@ export default function BuddyMate({
                   onClick={() => reply('stuck')}
                   disabled={aiBusy}
                 >
-                  Stuck
+              Help me get unstuck
                 </button>
                 <button
                   type="button"
@@ -1258,7 +1258,7 @@ export default function BuddyMate({
                   className="buddy-quick-btn"
                   onClick={() => reply('time')}
                 >
-                  Time
+              Plan my time
                 </button>
                 <button
                   type="button"
@@ -1266,7 +1266,7 @@ export default function BuddyMate({
                   onClick={() => reply('progress')}
                   disabled={aiBusy}
                 >
-                  Progress
+              Show my progress
                 </button>
               </div>
             </div>

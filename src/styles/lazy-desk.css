@@ -10,6 +10,12 @@
   min-width: 0;
 }
 
+.desk-client-priority {
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
 .desk-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -169,6 +175,37 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
+}
+
+.desk-path-options {
+  position: relative;
+  margin-left: auto;
+}
+
+.desk-path-options summary {
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.desk-path-options-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.desk-path-options-menu button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-1);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .desk-artboard-note {

@@ -2,16 +2,21 @@
  * Home / Studio dashboard — return wall for multi-project pickup.
  * Extracted from App.jsx so the shell is not also the Home page.
  */
-import { JOURNEY_STEPS, labelForStepId } from "../lib/journey/journey";
+import { JOURNEY_STEPS } from "../lib/journey/journey";
 import {
   hoursForRange,
   workLogsFromProjects,
-  formatHoursWorked,
-  hoursLoggedWords,
   HOURS_RANGES,
 } from "../lib/billing/workWeek";
 import { relativeDeadlineLabel, formatShortDate } from "../lib/dates";
 import { isStarterProject } from "../store/useAppStore";
+
+function exactHours(total) {
+  const minutes = Math.max(0, Math.round((Number(total) || 0) * 60));
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
+}
 
 export default function HomeView({
   activeProjects,
@@ -23,7 +28,6 @@ export default function HomeView({
   setActiveView,
   setCurrentProject,
   openProjectWhereLeftOff,
-  switchProjectAndContinue,
   setClientInboxOpen,
   listRowNext,
   upcomingDeadlines = [],
@@ -35,9 +39,8 @@ export default function HomeView({
       ? null
       : orderedFlat.find((s) => s.project.id === homeSelectedProjectId) ||
         orderedFlat[0];
-  const clientOf = (s) => (s.project?.detective?.clientName || "").trim();
   const needsYouList = orderedFlat.filter((s) => s.hasUnreadClient);
-  const readyList = orderedFlat.filter((s) => s.packReady);
+  const visibleProjects = orderedFlat.slice(0, 4);
   const studioHours = hoursForRange(
     workLogsFromProjects(activeProjects),
     homeHoursRange,
@@ -47,7 +50,7 @@ export default function HomeView({
     return (
       <section className="home-dash" aria-label="Home dashboard">
         <header className="home-dash-head">
-          <h1 className="home-dash-title">Home</h1>
+          <h1 className="home-dash-title">Dashboard</h1>
           <button
             type="button"
             className="btn btn-primary"
@@ -68,81 +71,55 @@ export default function HomeView({
   }
 
   if (!focus) return null;
-  const pathFull = !!focus.pathFull;
-  const packReady = !!focus.packReady;
-  const nextLabel = packReady
-    ? "Brand book ready"
-    : pathFull
-      ? "Path full — shortlist still thin"
-      : focus.nextGap
-        ? focus.nextGap.label
-        : "All caught up";
   return (
     <section className="home-dash" aria-label="Home dashboard">
       <header className="home-dash-head">
         <div>
-          <h1 className="home-dash-title">Studio</h1>
+          <h1 className="home-dash-title">Dashboard</h1>
         </div>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => setActiveView("create")}
-        >
-          + New project
-        </button>
       </header>
 
-      {/* Pick-up — one primary action */}
-      <div className="home-dash-pickup">
-        <div className="home-dash-pickup-copy">
-          <p className="home-dash-pickup-project">
-            {clientOf(focus)
-              ? `${clientOf(focus)} · ${focus.project.name}`
-              : focus.project.name}
-            {focus.hasUnreadClient ? (
-              <span className="home-dash-pill">Client waiting</span>
-            ) : null}
-          </p>
-          <p className="home-dash-pickup-kicker">
-            {focus.hasUnreadClient ? "Needs you" : packReady ? "Ready" : "Next"}
-          </p>
-          <h2 className="home-dash-pickup-title">
-            {focus.hasUnreadClient ? "Client inbox" : nextLabel}
-          </h2>
+      {/* Client communication comes first: unread feedback is time-sensitive,
+          while an empty inbox stays quiet. */}
+      <section
+        className="home-dash-panel home-dash-client-priority"
+        aria-label="Notifications"
+      >
+        <div className="home-dash-panel-head">
+          <h2 className="home-dash-panel-title">Notifications</h2>
         </div>
-        <div className="home-dash-pickup-actions">
-          <button
-            type="button"
-            className="btn btn-primary home-dash-primary"
-            onClick={() => {
-              if (focus.hasUnreadClient) {
-                setCurrentProject(focus.project.id);
-                setClientInboxOpen(true);
-                return;
-              }
-              if (pathFull) {
-                setCurrentProject(focus.project.id);
-                setActiveView("finish");
-                return;
-              }
-              switchProjectAndContinue(focus.project.id);
-            }}
-          >
-            {focus.hasUnreadClient
-              ? "Open client inbox"
-              : pathFull
-                ? `Open ${labelForStepId("deliver")}`
-                : `Continue · ${focus.nextGap?.label || "work"}`}
-          </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => openProjectWhereLeftOff(focus.project.id)}
-          >
-            Desk
-          </button>
-        </div>
-      </div>
+        {needsYouList.length === 0 ? (
+          <p className="home-dash-panel-empty">
+            No activity.
+          </p>
+        ) : (
+          <ul className="home-dash-client-list">
+            {needsYouList.map((s) => (
+              <li key={s.project.id}>
+                <button
+                  type="button"
+                  className="home-dash-client-row"
+                  onClick={() => {
+                    setHomeSelectedProjectId(s.project.id);
+                    setCurrentProject(s.project.id);
+                    setClientInboxOpen(true);
+                  }}
+                >
+                  <span className="home-dash-client-name">{s.project.name}</span>
+                  <span className="home-dash-client-action">Open client inbox</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm home-dash-panel-cta"
+          onClick={() => setClientInboxOpen(true)}
+        >
+          View notifications
+        </button>
+      </section>
 
       <div className="home-dash-grid">
         {/* Projects */}
@@ -152,16 +129,12 @@ export default function HomeView({
         >
           <div className="home-dash-panel-head">
             <h2 className="home-dash-panel-title">Projects</h2>
-            <span className="home-dash-panel-meta">
-              {n === 1 ? "1 open" : `${n} open`}
-            </span>
           </div>
           <ul className="home-dash-project-list">
-            {orderedFlat.map((summary) => {
+            {visibleProjects.map((summary) => {
               const p = summary.project;
               const isFocus = p.id === focus.project.id;
               const unread = !!summary.hasUnreadClient;
-              const client = clientOf(summary);
               return (
                 <li key={p.id}>
                   <button
@@ -171,9 +144,7 @@ export default function HomeView({
                     }${unread ? " has-unread" : ""}`}
                     onClick={() => {
                       setHomeSelectedProjectId(p.id);
-                      if (n === 1) {
-                        openProjectWhereLeftOff(p.id);
-                      }
+                      openProjectWhereLeftOff(p.id);
                     }}
                   >
                     {/* Specimen edge — the project's own palette, on the card
@@ -215,9 +186,6 @@ export default function HomeView({
                         />
                       ) : null}
                     </span>
-                    {client ? (
-                      <span className="home-dash-project-client">{client}</span>
-                    ) : null}
                     <span
                       className={`home-dash-project-next${
                         summary.pathFull ? " is-done" : ""
@@ -225,25 +193,29 @@ export default function HomeView({
                     >
                       {listRowNext(summary)}
                     </span>
-                    <span className="home-dash-mini-path" aria-hidden="true">
-                      {summary.rows.map((r) => (
-                        <i
-                          key={r.id}
-                          className={
-                            r.done
-                              ? "is-done"
-                              : summary.nextGap?.id === r.id
-                                ? "is-current"
-                                : ""
-                          }
-                        />
-                      ))}
-                    </span>
                   </button>
                 </li>
               );
             })}
           </ul>
+          <div className="home-dash-project-actions">
+            {orderedFlat.length > visibleProjects.length && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setActiveView("clients")}
+              >
+                View all projects
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm home-dash-new-project"
+              onClick={() => setActiveView("create")}
+            >
+              + New project
+            </button>
+          </div>
         </section>
 
         {/* The "Up next" panel used to sit here and it said nothing new. It
@@ -266,16 +238,10 @@ export default function HomeView({
         >
           <div className="home-dash-panel-head">
             <h2 className="home-dash-panel-title">Due soon</h2>
-            <span className="home-dash-panel-meta">
-              {(upcomingDeadlines || []).length
-                ? `${Math.min(5, upcomingDeadlines.length)} coming`
-                : "None"}
-            </span>
           </div>
           {(upcomingDeadlines || []).length === 0 ? (
             <p className="home-dash-panel-empty">
-              No project or task dues yet. Set one on Deadlines when a date
-              matters.
+              Nothing due in the next 30 days.
             </p>
           ) : (
             <ul className="home-dash-due-list">
@@ -312,93 +278,11 @@ export default function HomeView({
           )}
           <button
             type="button"
-            className="btn btn-ghost btn-sm home-dash-panel-cta"
+            className="btn btn-secondary btn-sm home-dash-panel-cta"
             onClick={() => setActiveView("calendar")}
           >
-            Full deadlines
+            Full calendar <span aria-hidden="true">&gt;</span>
           </button>
-        </section>
-
-        {/* Client needs you */}
-        <section className="home-dash-panel" aria-label="Client activity">
-          <div className="home-dash-panel-head">
-            <h2 className="home-dash-panel-title">Client</h2>
-            <span className="home-dash-panel-meta">
-              {needsYouList.length ? "Waiting on you" : "Quiet"}
-            </span>
-          </div>
-          {needsYouList.length === 0 ? (
-            <p className="home-dash-panel-empty">
-              No unread client activity across open projects.
-            </p>
-          ) : (
-            <ul className="home-dash-client-list">
-              {needsYouList.map((s) => (
-                <li key={s.project.id}>
-                  <button
-                    type="button"
-                    className="home-dash-client-row"
-                    onClick={() => {
-                      setHomeSelectedProjectId(s.project.id);
-                      setCurrentProject(s.project.id);
-                      setClientInboxOpen(true);
-                    }}
-                  >
-                    <span className="home-dash-client-name">
-                      {s.project.name}
-                    </span>
-                    <span className="home-dash-client-action">Open inbox</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm home-dash-panel-cta"
-            onClick={() => setClientInboxOpen(true)}
-          >
-            Client inbox
-          </button>
-        </section>
-
-        {/* Ready to ship */}
-        <section className="home-dash-panel" aria-label="Ready to ship">
-          <div className="home-dash-panel-head">
-            <h2 className="home-dash-panel-title">Ready to ship</h2>
-            <span className="home-dash-panel-meta">
-              {readyList.length
-                ? `${readyList.length} pack${readyList.length === 1 ? "" : "s"}`
-                : "None yet"}
-            </span>
-          </div>
-          {readyList.length === 0 ? (
-            <p className="home-dash-panel-empty">
-              When a pack is ready for handoff, it shows up here.
-            </p>
-          ) : (
-            <ul className="home-dash-client-list">
-              {readyList.map((s) => (
-                <li key={s.project.id}>
-                  <button
-                    type="button"
-                    className="home-dash-client-row"
-                    onClick={() => {
-                      setCurrentProject(s.project.id);
-                      setActiveView("finish");
-                    }}
-                  >
-                    <span className="home-dash-client-name">
-                      {s.project.name}
-                    </span>
-                    <span className="home-dash-client-action">
-                      Open {labelForStepId("deliver")}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
         </section>
 
         {/* Hours worked — private workLog only */}
@@ -408,68 +292,36 @@ export default function HomeView({
         >
           <div className="home-dash-panel-head">
             <h2 className="home-dash-panel-title">Hours worked</h2>
-            <span className="home-dash-panel-meta">
-              {studioHours.rangeLabel}
-            </span>
-          </div>
-          <div
-            className="home-dash-hours-ranges"
-            role="tablist"
-            aria-label="Hours range"
-          >
-            {HOURS_RANGES.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                role="tab"
-                aria-selected={homeHoursRange === r.id}
-                className={`home-dash-hours-range${
-                  homeHoursRange === r.id ? " is-active" : ""
-                }`}
-                onClick={() => setHomeHoursRange(r.id)}
+            <label className="home-dash-hours-menu">
+              <span className="sr-only">Hours range</span>
+              <select
+                value={homeHoursRange}
+                onChange={(event) => setHomeHoursRange(event.target.value)}
               >
-                {r.label}
-              </button>
-            ))}
+                {HOURS_RANGES.map((range) => (
+                  <option key={range.id} value={range.id}>
+                    {range.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           {studioHours.total <= 0 ? (
-            <p className="home-dash-panel-empty">
-              No clocked hours in this range. Time on the work clock shows up
-              here (private — not the invoice).
+            <p className="home-dash-hours-total" aria-live="polite">
+              <strong>0h</strong>
+              <span className="home-dash-hours-range-note">
+                {" "}· {studioHours.rangeLabel}
+              </span>
             </p>
           ) : (
             <>
-              <p className="home-dash-hours-total">
-                {hoursLoggedWords(studioHours.total)}
+              <p className="home-dash-hours-total" aria-live="polite">
+                <strong>{exactHours(studioHours.total)}</strong>
                 <span className="home-dash-hours-range-note">
                   {" "}
                   · {studioHours.rangeLabel}
                 </span>
               </p>
-              <div
-                className={`home-dash-hours-bars${
-                  homeHoursRange === "month" ? " is-dense" : ""
-                }`}
-                role="img"
-                aria-label={`${hoursLoggedWords(studioHours.total)} · ${studioHours.rangeLabel}`}
-              >
-                {studioHours.buckets.map((b) => (
-                  <div key={b.key} className="home-dash-hours-col">
-                    <div
-                      className={`home-dash-hours-bar${
-                        b.fill ? " is-filled" : ""
-                      }`}
-                      style={{ height: `${b.hPx}px` }}
-                      title={
-                        b.fill
-                          ? `${b.label}: ${formatHoursWorked(b.hours)}h`
-                          : undefined
-                      }
-                    />
-                    <span className="home-dash-hours-label">{b.label}</span>
-                  </div>
-                ))}
-              </div>
             </>
           )}
         </section>

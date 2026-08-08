@@ -297,8 +297,8 @@ export default function ResearchView({
                 <p className="research-status" role="status">
                   {starred > 0
                     ? starred >= 6
-                      ? '★ pack full'
-                      : `★ ${starred} in pack · room for ${6 - starred}`
+                      ? 'Shortlist full'
+                      : `${starred} shortlisted · room for ${6 - starred}`
                     : deskMood.length === 0
                       ? 'Nothing pinned yet'
                       : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
@@ -320,10 +320,10 @@ export default function ResearchView({
                       deskMood
                         .filter((m) => m.inPack)
                         .forEach((p) => toggleMoodPinInPack(p.id))
-                      flashToast('Pack cleared — pin notes are kept')
+                      flashToast('Shortlist cleared — pin notes are kept')
                     }}
                   >
-                    Unstar all
+                    Clear shortlist
                   </button>
                 ) : deskMood.some((m) => !m.inPack) ? (
                   <button
@@ -338,10 +338,13 @@ export default function ResearchView({
                         const r = toggleMoodPinInPack(p.id)
                         if (r.ok && r.inPack) added++
                       }
-                      if (!added) flashToast('Client pack is full (6 pictures max)')
+                      if (!added)
+                        flashToast(
+                          'Shortlist is full (6 references maximum)'
+                        )
                     }}
                   >
-                    Star the rest
+                    Add up to 6
                   </button>
                 ) : null}
                 {words ? (
@@ -461,7 +464,7 @@ export default function ResearchView({
                       onClick={submitBoardUrl}
                       disabled={!boardUrl.trim() || boardUrlBusy}
                     >
-                      {boardUrlBusy ? 'Adding…' : 'Add'}
+                      {boardUrlBusy ? 'Adding link…' : 'Add link'}
                     </button>
                   </div>
                 </div>
@@ -487,7 +490,7 @@ export default function ResearchView({
                       className="btn btn-secondary"
                       onClick={submitBoardNote}
                     >
-                      Add
+                      Add note
                     </button>
                   </div>
                 </div>
@@ -546,7 +549,7 @@ export default function ResearchView({
                   <div className="empty-state empty-state-craft research-empty">
                     <p className="empty-state-subtitle">
                       Drop an image here, or use Upload, URL or Note above.
-                      Colours, links and notes live on the wall too — and
+                      Colors, links and notes live on the wall too — and
                       anything the client sends lands here.
                     </p>
                   </div>
@@ -559,8 +562,8 @@ export default function ResearchView({
                       const isLink = !isImage && !isColor && Boolean(item.link)
                       const face = pinFaceStyle(item)
                       const starTitle = item.inPack
-                        ? 'Remove from pack'
-                        : 'Add to pack (max 6)'
+                        ? 'Remove from shortlist'
+                        : 'Add to shortlist (6 maximum)'
                       return (
                         <article
                           key={item.id}
@@ -619,7 +622,9 @@ export default function ResearchView({
                               className={`research-pin-star${item.inPack ? ' is-on' : ''}`}
                               title={starTitle}
                               aria-label={
-                                item.inPack ? 'In pack — remove' : 'Add to pack'
+                                item.inPack
+                                  ? 'Remove from shortlist'
+                                  : 'Add to shortlist'
                               }
                               aria-pressed={!!item.inPack}
                               onClick={() => {
@@ -627,10 +632,14 @@ export default function ResearchView({
                                 if (!r.ok)
                                   flashToast(
                                     r.error ||
-                                      'Client pack is full (6 pictures max)'
+                                      'Shortlist is full (6 references maximum)'
                                   )
                                 else
-                                  flashMicro(r.inPack ? '★ pack' : '☆ pack')
+                                  flashMicro(
+                                    r.inPack
+                                      ? 'Added to shortlist'
+                                      : 'Removed from shortlist'
+                                  )
                               }}
                             >
                               {item.inPack ? '★' : '☆'}
@@ -747,11 +756,14 @@ export default function ResearchView({
                                         onClick={() => {
                                           const r = setPackHeroPin(item.id)
                                           if (!r.ok)
-                                            flashToast(r.error || 'Could not set hero')
+                                            flashToast(
+                                              r.error ||
+                                                'Could not set the main image'
+                                            )
                                           else flashMicro('Main picture set')
                                         }}
                                       >
-                                        Hero
+                                        Make main image
                                       </button>
                                     </>
                                   )}
@@ -970,7 +982,9 @@ export default function ResearchView({
                   onClick={() => {
                     const r = toggleMoodPinInPack(boardLightbox.id)
                     if (!r.ok)
-                      flashToast(r.error || 'Client pack is full (6 pictures max)')
+                      flashToast(
+                        r.error || 'Shortlist is full (6 references maximum)'
+                      )
                     else {
                       setBoardLightbox((p) =>
                         p ? { ...p, inPack: r.inPack } : null
@@ -978,7 +992,9 @@ export default function ResearchView({
                     }
                   }}
                 >
-                  {boardLightbox.inPack ? '★ Pack' : '☆ Pack'}
+                  {boardLightbox.inPack
+                    ? 'Remove from shortlist'
+                    : 'Add to shortlist'}
                 </button>
               </div>
             </div>

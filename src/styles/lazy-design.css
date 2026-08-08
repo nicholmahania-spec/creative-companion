@@ -1220,13 +1220,66 @@
   box-shadow: none;
 }
 
-/* Identity — one sub-screen at a time (Mark → Words → Colour → Type → Preview). */
+/* Identity — live result beside one focused editor. */
 .design-studio.system-view {
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: none;
   gap: 0;
+}
+
+.design-identity-head {
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.design-identity-head-text {
+  min-width: 0;
+}
+
+.identity-utilities {
+  position: relative;
+  flex: 0 1 auto;
+}
+
+.identity-utilities > summary {
+  min-height: var(--tap-min, 2.75rem);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.identity-utilities > summary::-webkit-details-marker {
+  display: none;
+}
+
+.identity-utilities[open] .brand-template-actions {
+  margin-top: var(--space-2);
+}
+
+.design-identity-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(22rem, 0.8fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.design-live-artboard {
+  position: sticky;
+  top: var(--space-3);
+  min-width: 0;
+  max-height: calc(100vh - 8rem);
+  overflow: auto;
+}
+
+.design-identity-editor {
+  min-width: 0;
 }
 
 /* Sub-screen map — text pills, not a second card grid */
@@ -1269,13 +1322,6 @@
   box-shadow: inset 0 -2px 0 var(--text-primary);
 }
 
-.identity-subnav-num {
-  font-family: var(--font-display);
-  letter-spacing: 0.02em;
-  opacity: 0.65;
-  font-weight: 500;
-}
-
 .app.deep .identity-subnav-btn.is-active {
   background: var(--bg-muted);
 }
@@ -1315,7 +1361,7 @@
   margin-top: var(--space-5);
   padding-top: var(--space-4);
   border-top: 1px solid var(--border-subtle);
-  max-width: 65ch;
+  max-width: none;
 }
 
 .design-preview-notes.is-secondary {
@@ -1342,38 +1388,34 @@
   margin-top: var(--space-1);
 }
 
-/* Artboard owns Preview — full width, first fold */
-.design-studio .design-artboard-bottom {
-  margin-top: 0;
-}
-
 .design-studio .design-edit-column {
   width: 100%;
   min-width: 0;
   flex: 1 1 auto;
 }
 
-/* Full sheet after the form — natural height, page scrolls with it */
-.design-studio .design-artboard-bottom {
-  width: 100%;
-  max-width: none;
-  margin: var(--space-5) 0 0;
-  max-height: none;
-  height: auto;
-  overflow: visible;
-  position: static;
-  z-index: auto;
-  background: var(--ts-panel, var(--bg-elevated, #ffffff));
-  box-shadow: none;
-}
-
-.app.deep .design-studio .design-artboard-bottom {
-  background: var(--ts-panel, var(--bg-elevated, #2f2f2f));
-  border-color: var(--border-subtle);
-}
-
 .design-studio .path-continue-row.design-path-footer {
   width: 100%;
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .design-identity-head {
+    display: block;
+  }
+
+  .identity-utilities {
+    margin-top: var(--space-3);
+  }
+
+  .design-identity-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .design-live-artboard {
+    position: static;
+    max-height: 42vh;
+  }
 }
 
 .design-studio .role-pick-chip {

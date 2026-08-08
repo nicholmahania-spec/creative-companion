@@ -48,7 +48,7 @@ const BUDGET = {
      Not held at 410 — the "budgets are not padded" case below fails on a
      budget above the real count, and banking a spare override is exactly the
      silent refill this ratchet exists to prevent. */
-  'src/styles/shell.css': 409,
+  'src/styles/shell.css': 408,
   'src/styles/lazy-buddy.css': 40,
   'src/styles/lazy-settings.css': 36,
   'src/styles/lazy-design.css': 18,

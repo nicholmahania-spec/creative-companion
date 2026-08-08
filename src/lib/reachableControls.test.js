@@ -86,10 +86,10 @@ describe('a crash shows a screen, not a white page', () => {
   })
 })
 
-describe('Settings has exactly one door, in the sidebar Studio band', () => {
+describe('Settings has exactly one door, in the persistent header', () => {
   const app = read('App.jsx')
 
-  it('reaches Settings from the Studio band', () => {
+  it('reaches Settings from the header', () => {
     /* History, so the next rewrite keeps the invariant rather than the
        markup: Settings' door has moved twice — out of a Tools menu that
        clipped its own bottom rows, onto a header button (desktop) plus a
@@ -102,7 +102,7 @@ describe('Settings has exactly one door, in the sidebar Studio band', () => {
        literal word "Settings" once, and a correct change turned it red —
        tests have to derive too. */
     expect(app).toMatch(
-      /journey-goto-row[\s\S]{0,300}setActiveView\('settings'\)[\s\S]{0,260}toolsLabelForView\('settings'\)/
+      /header-account-trigger[\s\S]{0,300}setActiveView\('settings'\)[\s\S]{0,260}toolsLabelForView\('settings'\)/
     )
   })
 

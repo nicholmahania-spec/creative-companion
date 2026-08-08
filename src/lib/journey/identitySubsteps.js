@@ -6,11 +6,11 @@
  */
 
 export const IDENTITY_SUBSTEPS = [
-  { id: 'logo', label: 'Mark' },
+  { id: 'logo', label: 'Logo' },
   { id: 'essentials', label: 'Words' },
-  { id: 'colors', label: 'Colour' },
+  { id: 'colors', label: 'Color' },
   { id: 'type', label: 'Type' },
-  { id: 'preview', label: 'Preview' },
+  { id: 'preview', label: 'Pack' },
 ]
 
 export const IDENTITY_SUBSTEP_IDS = IDENTITY_SUBSTEPS.map((s) => s.id)

@@ -41,9 +41,9 @@ export const SURVEY_KINDS = [
 /** Scale answers. Five points, worded — not numbered, per the no-numbers rule. */
 export const SURVEY_SCALE = [
   'Not at all',
-  'Not really',
+  'A little',
+  'Somewhat',
   'Mostly',
-  'Yes',
   'Completely',
 ]
 
@@ -59,7 +59,7 @@ const MID = [
 const POST = [
   { id: 'brief_met', text: 'Did the finished work do what you originally asked for?', type: 'scale' },
   { id: 'review_clear', text: 'Was the review process clear and collaborative?', type: 'scale' },
-  { id: 'handover_usable', text: 'Have the files and guidelines been usable without asking us?', type: 'scale' },
+  { id: 'handover_usable', text: 'Did you need help using the files or guidelines?', type: 'scale' },
   { id: 'timeline', text: 'Did the timings match what you were told at the start?', type: 'scale' },
   { id: 'best_part', text: 'What part of working together went best?', type: 'text' },
   { id: 'friction', text: 'Where did it feel like hard work for you?', type: 'text' },
@@ -91,9 +91,9 @@ export function surveyKindLabel(kind) {
  * date — "sent 3 days ago" is exactly the shape the work clock ruled out.
  */
 export function surveyLine(status) {
-  if (status === 'submitted') return 'Survey — answered'
-  if (status === 'sent') return 'Survey — with the client'
-  return 'Survey — not sent'
+  if (status === 'submitted') return 'Client answered the survey'
+  if (status === 'sent') return 'Survey sent — waiting for the client'
+  return 'Survey not sent'
 }
 
 /**

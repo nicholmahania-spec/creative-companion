@@ -156,7 +156,7 @@ describe('applicationColourLine', () => {
       palette: [NAVY, RUST],
       labelFor: roleLabel,
     })
-    expect(line).toBe('None of your palette colours turn up in this one.')
+    expect(line).toBe('None of your palette colors turn up in this one.')
   })
 
   it('distinguishes a mono piece from a broken file', () => {

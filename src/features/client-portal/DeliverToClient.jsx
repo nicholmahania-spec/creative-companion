@@ -161,7 +161,7 @@ export default function DeliverToClient({
           className="btn btn-secondary btn-sm"
           onClick={() => onOpenPortalPanel?.()}
         >
-          Set up their link
+          Set up client dashboard
         </button>
       </section>
     )
@@ -189,7 +189,7 @@ export default function DeliverToClient({
             attachment in a thread.
           </p>
           <button type="button" className="btn btn-primary" onClick={startPreview}>
-            Ready to send it
+            Preview what the client will get
           </button>
         </>
       )}
@@ -228,7 +228,11 @@ export default function DeliverToClient({
               onClick={send}
               disabled={busy}
             >
-              {busy ? 'Sending…' : clientName ? `Send it to ${clientName}` : 'Send it'}
+              {busy
+                ? 'Sending client package…'
+                : clientName
+                  ? `Send client package to ${clientName}`
+                  : 'Send client package'}
             </button>
             <button
               type="button"
@@ -236,7 +240,7 @@ export default function DeliverToClient({
               onClick={() => setPreviewing(false)}
               disabled={busy}
             >
-              Not yet
+              Back to Assets
             </button>
           </div>
         </>
@@ -278,7 +282,7 @@ export default function DeliverToClient({
 
           <div className="finish-secondary-row">
             <button type="button" className="btn btn-secondary btn-sm" onClick={copyLink}>
-              Copy the link
+              Copy reveal link
             </button>
             <button
               type="button"
@@ -286,7 +290,7 @@ export default function DeliverToClient({
               onClick={takeBack}
               disabled={busy}
             >
-              Take it back
+              Take back client access
             </button>
             <button
               type="button"
@@ -294,7 +298,7 @@ export default function DeliverToClient({
               onClick={startPreview}
               disabled={busy}
             >
-              Send it again
+              Resend client package
             </button>
           </div>
         </>

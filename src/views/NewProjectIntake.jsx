@@ -24,7 +24,7 @@ import '../styles/lazy-create.css'
 const ENGAGEMENT = [
   { id: 'new', label: 'Starting from scratch — no brand yet' },
   { id: 'rebrand', label: 'Rebranding — replacing what exists now' },
-  { id: 'extend', label: 'Adding to a brand that already works' },
+  { id: 'extend', label: 'Adding to an existing brand' },
 ]
 /* Legends name a CATEGORY, not a state. "Included" over a column of empty
    boxes read as a claim the boxes contradicted — and the boxes mean the
@@ -315,7 +315,9 @@ export default function NewProjectIntake({
               onClick={sendBrief}
               disabled={busy}
             >
-              {busy ? 'Creating…' : 'Or send the client a form to fill in first'}
+              {busy
+                ? 'Creating project and brief link…'
+                : 'Create project and copy brief link'}
             </button>
           </p>
         </div>

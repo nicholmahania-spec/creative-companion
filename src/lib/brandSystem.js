@@ -46,7 +46,7 @@ export const ROLE_JOBS = {
   accent2: 'Second accent — charts, tags, category marks',
   accent3: 'Third accent — used sparingly',
   neutral: 'Rules, dividers, muted panels, secondary type',
-  neutral2: 'Second neutral — deeper greys and fills',
+  neutral2: 'Second neutral — deeper grays and fills',
   quiet: 'Page backgrounds, cards, breathing room',
 }
 

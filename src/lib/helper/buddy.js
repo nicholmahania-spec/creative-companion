@@ -139,30 +139,30 @@ export function minutesAtDesk(sessionStart, now = Date.now()) {
 }
 
 const GREETINGS = [
-  'Coach · Critique · Stuck · Break',
-  'One step. Open me if stuck.',
-  'Path + breaks. Ready.',
+  'Need a next step? I’m here.',
+  'Open me when the next move is fuzzy.',
+  'I can coach, critique, or help you pause.',
 ]
 
-const WATER = ['Water · then one decision.', 'Sip · back to the step.', '3 sips · continue.']
+const WATER = ['Have some water, then make one decision.', 'Take a sip, then return to the step.', 'Three sips, then carry on.']
 
-const FOOD = ['Eat · then decide.', 'Snack first · then type.', 'Food · then palette.']
+const FOOD = ['Eat first. Decide after.', 'Have a snack, then come back.', 'Food first. The palette can wait.']
 
-const BATHROOM = ['Stand · walk · return.', 'Step away · fresh eyes.', 'Break · one call after.']
+const BATHROOM = ['Stand up, step away, then return.', 'Take a bathroom break and come back fresh.', 'Step away. Make one call when you return.']
 
-const PROGRESS_STEP = ['Step done.', 'Checked · next when ready.', 'Done.']
+const PROGRESS_STEP = ['That step is done.', 'Checked off. Continue when you’re ready.', 'Done.']
 
-const PROGRESS_TIMER = ['Timer on · one job.', 'Focus · this step only.', 'Timer · one decision.']
+const PROGRESS_TIMER = ['Timer on. One job for now.', 'Stay with this step until the timer ends.', 'Use this session for one decision.']
 
 const STUCK = [
-  'One-line job · then tiny action.',
-  'Who is it for? · ugly first pass.',
-  'Shrink the step · ship minimum.',
+  'Name the job in one line, then take the smallest action.',
+  'Ask who it is for, then make an unpolished first pass.',
+  'Make the step smaller and finish the minimum useful version.',
 ]
 
-const IDLE = ['Step · Coach · or water.', 'Type · layout · or copy.', 'Ready · pick one move.']
+const IDLE = ['Choose one step, ask for coaching, or get some water.', 'Work on type, layout, or copy — just one.', 'Pick one move when you’re ready.']
 
-const PRAISE = ['Small step wins.', 'Messy first pass OK.', 'One step > chaos.']
+const PRAISE = ['A small step still counts.', 'A messy first pass is enough.', 'One finished step beats a perfect plan.']
 
 const TIME_BLIND = [
   (clock, desk) => `${clock} · desk ${desk}`,
@@ -538,34 +538,34 @@ export function activityTip(activity = {}) {
   const isMicro = !!activity.isMicroStep
   const focusOn = !!activity.isFocusRunning
 
-  if (focusOn) return step ? `Timer · only ${step}` : 'Timer · one action'
+  if (focusOn) return step ? `Stay with ${step} for this timer.` : 'Use this timer for one action.'
   if (view === 'studio') {
     return step
-      ? `Research · pins that constrain ${step}`
+        ? `Find references that help you decide ${step}.`
       : pins > 0
-        ? `Curate · then Sketch`
-        : 'Pin 2–3 · why · Sketch'
+        ? `Choose the useful references, then move on.`
+        : 'Add two or three references and note why they help.'
   }
-  if (view === 'brand') return `Design · one layer on ${project}`
-  if (view === 'spark') return step ? `Spark → help ${step}?` : 'Spark → A/B/C → Sketch'
-  if (view === 'review') return 'Show · ask · notes'
-  if (view === 'finish') return 'PDF · handoff · learn'
-  if (view === 'insights') return step ? `Timer for ${step}` : 'Sketch step · then timer'
+  if (view === 'brand') return `Work on one part of ${project}’s identity.`
+  if (view === 'spark') return step ? `Could a new direction help with ${step}?` : 'Make several ideas, then choose up to three.'
+  if (view === 'review') return 'Show the work, ask a clear question, and save the answer.'
+  if (view === 'finish') return 'Check the PDF, write the handoff, then download.'
+  if (view === 'insights') return step ? `Use this timer for ${step}.` : 'Choose a step before you start the timer.'
   if (view === 'calendar') {
-    return hasDeadline ? `Deadline · work back` : 'Set due · Sketch'
+    return hasDeadline ? 'Work backwards from the deadline.' : 'Add a deadline when the date matters.'
   }
-  if (view === 'project') return 'Goal · who · Research'
-  if (view === 'settings') return 'Backup · then path'
+  if (view === 'project') return 'Write the goal and audience before you research.'
+  if (view === 'settings') return 'Finish the setting, then return to the path.'
 
   if (view === 'flow' || !view) {
     if (!step) {
-      return done > 0 ? 'Queue empty · next step' : `No step · capture one`
+      return done > 0 ? 'The queue is empty. Add the next step.' : 'No step yet. Capture one small action.'
     }
-    if (dueSoon) return `${step} · ship minimum`
-    if (isMicro) return `${step} · finish · check`
-    if (energy === 'low') return `${step} · labels/contrast only`
-    if (queue >= 5) return `${queue} waiting · only ${step}`
-    return `${step} · one lane only`
+    if (dueSoon) return `${step}: finish the smallest useful version.`
+    if (isMicro) return `Finish ${step}, then check it off.`
+    if (energy === 'low') return `${step}: do labels and contrast only.`
+    if (queue >= 5) return `${queue} steps are waiting. Work on ${step} only.`
+    return `Stay with ${step} for now.`
   }
 
   return pick(IDLE)
@@ -610,11 +610,11 @@ export function hyperfocusLine(minutesWorking) {
 }
 
 export function confirmLine(kind) {
-  if (kind === 'water') return 'Water · one decision'
-  if (kind === 'food') return 'Food · ready'
-  if (kind === 'bathroom') return 'Back · one call'
-  if (kind === 'break') return 'Break · reset'
-  return 'OK'
+  if (kind === 'water') return 'Water done. Pick one decision.'
+  if (kind === 'food') return 'Food done. Continue when you’re ready.'
+  if (kind === 'bathroom') return 'Welcome back. Make one call.'
+  if (kind === 'break') return 'Break done. Start gently.'
+  return 'Done.'
 }
 
 export function whatTimeLine(sessionStart, now = Date.now()) {

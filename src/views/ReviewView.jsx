@@ -42,7 +42,6 @@ export default function ReviewView({
   const ready = packReadiness(packSnap)
   const reviewChecks = ready.checks.filter((c) => !REVIEW_GAP_SKIP.has(c.id))
   const miss = reviewChecks.filter((c) => !c.ok)
-  const okCount = reviewChecks.filter((c) => c.ok).length
   const [activePrompt, setActivePrompt] = useState(0)
 
   const goal = activeProject?.detective?.goal
@@ -96,11 +95,11 @@ export default function ReviewView({
         </div>
         {miss.length === 0 ? (
           <span className="review-status-chip is-ready" aria-live="polite">
-            Ready · {okCount}/{reviewChecks.length}
+            Ready to review
           </span>
         ) : (
           <span className="review-status-chip is-gaps" aria-live="polite">
-            Gaps · {miss.length} left
+            {miss.length} gap{miss.length === 1 ? '' : 's'} to review
           </span>
         )}
         {/* The focus timer used to be duplicated here. It never worked on
@@ -118,8 +117,7 @@ export default function ReviewView({
         <div className="review-edit-column">
           <section className="panel brand-section review-feedback-hero">
             <div className="brand-section-label">
-              Notes
-              <span className="sketch-feedback-shared-hint"> (shared with Touchpoints)</span>
+              Project notes
             </div>
             <div className="field-block review-notes-block">
               <label className="field-label sr-only" htmlFor="feedback-notes">
@@ -133,7 +131,7 @@ export default function ReviewView({
                 onChange={(e) =>
                   updateBrandField('feedbackNotes', e.target.value)
                 }
-                placeholder="Change · why · keep"
+                placeholder="What should change, why, and what should stay?"
               />
             </div>
 
@@ -172,7 +170,7 @@ export default function ReviewView({
           {miss.length > 0 && (
             <section className="panel brand-section review-ready-panel">
               <div className="brand-section-label">
-                Fix · {miss.length} gap{miss.length === 1 ? '' : 's'}
+                Review {miss.length} gap{miss.length === 1 ? '' : 's'}
               </div>
               <ul className="pack-ready-list review-ready-list">
                 {miss.slice(0, 6).map((c) => (

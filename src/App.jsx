@@ -151,6 +151,14 @@ import {
 
 const CLOUD = isSupabaseConfigured()
 
+const PROJECT_STOP_DETAIL = {
+  define: 'Project brief',
+  research: 'Reference wall',
+  design: 'Brand system',
+  sketch: 'Mockups',
+  deliver: 'Project files',
+}
+
 function App() {
   // ——— Zustand (persisted studio state) ———
   // projects: ignore detective/discovery for equality so Define typing does
@@ -816,18 +824,23 @@ function App() {
   const upcomingDeadlines = useMemo(() => {
     const rows = []
     ;(projects || []).forEach((p) => {
-      if (!p.deadline) return
+      const days = daysUntil(p.deadline)
+      if (!p.deadline || p.archived || days == null || days > 30) return
       rows.push({
         kind: 'project',
         id: p.id,
         name: p.name,
         date: p.deadline,
         urgency: deadlineUrgency(p.deadline),
-        days: daysUntil(p.deadline),
+        days,
       })
     })
     ;(tasks || [])
-      .filter((t) => t.dueDate && !t.completed)
+      .filter((t) => {
+        const project = (projects || []).find((p) => p.id === t.projectId)
+        const days = daysUntil(t.dueDate)
+        return t.dueDate && !t.completed && !project?.archived && days != null && days <= 30
+      })
       .forEach((t) => {
         rows.push({
           kind: 'task',
@@ -2538,7 +2551,7 @@ function App() {
       // Track export action
       // XP stays in Progress HUD — success toast stays human leave-behind language
       flashToast(
-        kind === 'backup' ? 'Backup saved' : 'Client pack saved',
+        kind === 'backup' ? 'Backup saved' : 'Client package saved',
         { important: true }
       )
     }
@@ -2590,7 +2603,7 @@ function App() {
           )
           finishOk('Everything (zip)')
         } else if (result.cancelled) {
-          flashToast('Save cancelled')
+          flashToast('Save canceled')
         } else {
           flashToast(
             result.error || 'Download did not finish — try again?'
@@ -2633,7 +2646,7 @@ function App() {
             )
           }
         } else if (result.cancelled) {
-          flashToast('Save cancelled')
+          flashToast('Save canceled')
         } else {
           flashToast(result.error || 'Download did not finish — try again?')
         }
@@ -2660,7 +2673,7 @@ function App() {
             flashToast('Saved — but no logo image was in it yet')
           }
         } else if (result.cancelled) {
-          flashToast('Save cancelled')
+          flashToast('Save canceled')
         } else {
           flashToast(result.error || 'Download did not finish — try again?')
         }
@@ -2692,7 +2705,7 @@ function App() {
              signal and it disappears; the note stays on screen next to the
              button with a way to finish the job. */
           setLastExportNote('Not saved — you closed the save box. Download anyway?')
-          flashToast('Save cancelled')
+          flashToast('Save canceled')
         } else {
           setLastExportNote(`Not saved — ${result.error || 'the PDF did not finish'}. Try again?`)
           flashToast(result.error || 'Could not finish that PDF — try again?')
@@ -2733,7 +2746,7 @@ function App() {
           )
           finishOk('Preview PDF')
         } else if (result.cancelled) {
-          flashToast('Save cancelled')
+          flashToast('Save canceled')
         } else {
           flashToast(result.error || 'Could not finish that PDF — try again?')
         }
@@ -2747,7 +2760,7 @@ function App() {
           if (result.ok) {
             finishOk('Brand HTML')
           } else if (result.cancelled) {
-            flashToast('Save cancelled')
+            flashToast('Save canceled')
           } else {
             flashToast(result.error || 'Download did not finish — try again?')
           }
@@ -2760,7 +2773,7 @@ function App() {
         .then((result) => {
           if (result.ok) finishOk('Brand Markdown')
           else if (result.cancelled)
-            flashToast('Save cancelled')
+            flashToast('Save canceled')
           else flashToast(result.error || 'Download did not finish — try again?')
           return result
         })
@@ -2771,7 +2784,7 @@ function App() {
         .then((result) => {
           if (result.ok) finishOk('Brand JSON')
           else if (result.cancelled) {
-            flashToast('Save cancelled')
+            flashToast('Save canceled')
           } else {
             flashToast(result.error || 'Download did not finish — try again?')
           }
@@ -2785,7 +2798,7 @@ function App() {
       return downloadWorkspaceBackup(exportAllData(), handlePromise)
         .then((result) => {
           if (result.ok) finishOk('Workspace backup')
-          else if (result.cancelled) flashToast('Save cancelled')
+          else if (result.cancelled) flashToast('Save canceled')
           else {
             flashToast(result.error || 'Download did not finish — try again?')
           }
@@ -3093,6 +3106,9 @@ function App() {
     )
   }
 
+  // The fifth stop is the current project's file library. The legacy
+  // `finish` screen is a Client package subview of that same stop, so both
+  // keep Assets highlighted without making two destinations named Assets.
   const journeyActive = journeyIdForView(activeView)
   const journeyNext = getNextJourney(activeView)
   /** Rail label on Identity: next sub-screen, else Touchpoints (path next). */
@@ -3203,7 +3219,8 @@ function App() {
           <button
             type="button"
             className="header-menu-toggle"
-            aria-label={navOpen ? 'Close menu' : 'Open menu'}
+            id="tools-menu-button"
+            aria-label={navOpen ? 'Close navigation' : 'Open navigation'}
             aria-expanded={navOpen}
             onClick={() => setNavOpen((v) => !v)}
           >
@@ -3216,7 +3233,7 @@ function App() {
               in headerBack above. The old header project-rename inputs are
               gone from here — rename lives on the project screen's title now
               (owner's call), where the name is visible in place. */}
-          {headerBack ? (
+          {false && headerBack ? (
             <button
               type="button"
               className="header-back"
@@ -3249,10 +3266,16 @@ function App() {
               actual risk. Hidden on Tools pages: the back label already
               names the return point and the work there isn't project-scoped
               in the same way. */}
-          {journeyActive && activeProject && (
-            <span className="header-context">{activeProject.name}</span>
-          )}
           <div className="header-actions">
+            <button
+              type="button"
+              className="header-account-trigger"
+              aria-current={activeView === 'home' ? 'page' : undefined}
+              onClick={() => setActiveView('home')}
+            >
+              <HeaderIcon name="home" />
+              <span>{toolsLabelForView('home')}</span>
+            </button>
             {/* Labelled, not a 5th identical glyph. This is the highest-
                 frequency control in the app; as an icon among icons it would
                 cost a five-way scan on every open, resolved only by hovering
@@ -3260,24 +3283,6 @@ function App() {
                 something in it — otherwise the list doesn't exist between
                 opens and re-checking it depends on remembering to. No badge
                 at zero: a "0" reads as a scoreboard of nothing done. */}
-            <button
-              type="button"
-              className="header-todo-pill"
-              onClick={() => setRunningTodoPanelOpen(true)}
-              aria-label={
-                openTodoCount
-                  ? `To-do list, ${openTodoCount} open`
-                  : 'To-do list, nothing open'
-              }
-            >
-              <HeaderIcon name="list" />
-              <span>To-do</span>
-              {openTodoCount > 0 && (
-                <span className="header-todo-count" aria-hidden="true">
-                  {openTodoCount}
-                </span>
-              )}
-            </button>
             {/* Same chip, same place, on every screen — whether or not this
                 project has a client link yet. One target to learn, and the
                 only entry point to client activity. */}
@@ -3285,15 +3290,25 @@ function App() {
               hasUnread={clientInbox.hasUnread}
               onOpen={() => setClientInboxOpen(true)}
             />
+            <button
+              type="button"
+              className="header-account-trigger"
+              aria-label="Directory"
+              aria-current={activeView === 'clients' ? 'page' : undefined}
+              title="Directory"
+              onClick={() => setActiveView('clients')}
+            >
+              <HeaderIcon name="directory" />
+            </button>
             {/* No project name input or <select> here anymore. The rename
                 input moved to the project screen's title (visible in place);
                 a <select> would hide every other project behind a dropdown.
                 The sidebar list is the switcher — always visible, one click,
                 with progress counts — and .header-context answers "which
                 project am I in". */}
-            {(workRunning || isFocusRunning || (CLOUD && syncState === 'error')) && (
+            {(isFocusRunning || (CLOUD && syncState === 'error')) && (
             <div className="header-status-slot">
-            {workRunning && (
+            {false && workRunning && (
               <button
                 type="button"
                 className="work-clock-chip"
@@ -3416,34 +3431,19 @@ function App() {
                 decision. Errors keep their own retry chip above. */}
             {/* Local: pulse after persist writes. Cloud: syncState. Never a
                 hardcoded permanent “Saved” when storage is blocked. */}
-            {!storageBlockedRef.current &&
-              (CLOUD
-                ? syncState !== 'error' && (
-                    <span className="header-saved" aria-live="polite">
-                      <span className="header-saved-dot" aria-hidden="true" />
-                      {syncState === 'syncing' ? 'Saving…' : 'Saved'}
-                    </span>
-                  )
-                : (
-                    <span className="header-saved" aria-live="polite">
-                      <span className="header-saved-dot" aria-hidden="true" />
-                      {savePulse ? 'Saving…' : 'Saved'}
-                    </span>
-                  ))}
-
             {/* Account — rightmost. Identity + theme + Settings + sign out/lock.
                 Not a second Settings surface: full prefs stay on Settings. */}
-            <AccountMenu
-              open={accountOpen}
-              onOpen={() => setAccountOpen(true)}
-              onClose={() => setAccountOpen(false)}
-              accessName={accessName}
-              theme={theme}
-              toggleTheme={toggleTheme}
-              onOpenSettings={() => setActiveView('settings')}
-              onSignOut={handleSignOut}
-              cloud={CLOUD}
-            />
+            <button
+              type="button"
+              className="header-account-trigger"
+              aria-label="Settings"
+              aria-current={activeView === 'settings' ? 'page' : undefined}
+              onClick={() => setActiveView('settings')}
+              title="Settings"
+            >
+              <HeaderIcon name="settings" />
+              <span className="sr-only">{toolsLabelForView('settings')}</span>
+            </button>
 
           </div>
         </div>
@@ -3458,7 +3458,7 @@ function App() {
           still carries the step list). Answers "where am I" by position, and
           the one button names its own destination so the seven-way choice
           collapses to a zero-decision default. */}
-      {journeyActive && (
+      {false && journeyActive && (
         <nav className="step-rail" aria-label="Process position">
           <ol className="step-rail-list">
             {pathSteps.map((step) => {
@@ -3612,85 +3612,24 @@ function App() {
               second Settings map. */}
           {/* Studio = multi-project destinations. Path steps below = This project. */}
           <div className="journey-goto-section" aria-label="Studio">
-            <span className="journey-goto-heading">Studio</span>
-            <button
-              type="button"
-              className="journey-goto-row"
-              onClick={() => {
-                setActiveView('home')
-                setNavOpen(false)
-              }}
-            >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M4 11.5 12 4l8 7.5" />
-                <path d="M6 10v9h12v-9" />
-              </svg>
-              {toolsLabelForView('home')}
-            </button>
-            <button
-              type="button"
-              className="journey-goto-row"
-              onClick={() => {
-                setActiveView('calendar')
-                setNavOpen(false)
-              }}
-            >
-              <HeaderIcon name="calendar" />
-              {toolsLabelForView('calendar')}
-            </button>
-            <button
-              type="button"
-              className="journey-goto-row"
-              onClick={() => {
-                setActiveView('clients')
-                setNavOpen(false)
-              }}
-            >
-              <HeaderIcon name="people" />
-              {toolsLabelForView('clients')}
-            </button>
-            <button
-              type="button"
-              className="journey-goto-row"
-              onClick={() => {
-                setActiveView('settings')
-                setNavOpen(false)
-              }}
-            >
-              <HeaderIcon name="settings" />
-              {toolsLabelForView('settings')}
-            </button>
-            <button
-              type="button"
-              className="journey-goto-row"
-              aria-expanded={moreOpen}
-              aria-haspopup="menu"
-              // Set only while the menu exists (it renders conditionally) —
-              // a static aria-controls would point at a missing id when
-              // closed.
-              aria-controls={moreOpen ? 'tools-menu' : undefined}
-              id="tools-menu-button"
-              ref={toolsButtonRef}
-              onClick={() => {
-                setMoreOpen(true)
-                setNavOpen(false)
-              }}
-            >
-              <HeaderIcon name="tools" />
-              Tools
-            </button>
+            {!storageBlockedRef.current &&
+              (CLOUD
+                ? syncState !== 'error' && (
+                    <span className="header-saved sidebar-saved" aria-live="polite">
+                      <span className="header-saved-dot" aria-hidden="true" />
+                      {syncState === 'syncing' ? 'Saving…' : 'Saved'}
+                    </span>
+                  )
+                : (
+                    <span className="header-saved sidebar-saved" aria-live="polite">
+                      <span className="header-saved-dot" aria-hidden="true" />
+                      {savePulse ? 'Saving…' : 'Saved'}
+                    </span>
+                  ))}
           </div>
-          <div className="journey-projects-section" aria-label="Your projects">
+          {/* Project switching lives in Clients. Keeping the same directory in
+              persistent chrome created two competing project maps. */}
+          {false && <div className="journey-projects-section" aria-label="Your projects">
             <div className="journey-projects-head">
               <span className="journey-projects-heading">Projects</span>
               <button
@@ -3829,23 +3768,42 @@ function App() {
                 ))}
               </select>
             )}
-          </div>
+          </div>}
           <div className="journey-path-section" aria-label="This project path">
-            <span className="journey-path-heading">This project</span>
+            <span className="journey-path-heading">
+              {activeProject?.name || 'Project'}
+            </span>
             {activeProject ? (
-              <button
-                type="button"
-                className={`journey-goto-row journey-desk-row${
-                  activeView === 'desk' ? ' is-current' : ''
-                }`}
-                onClick={() => {
-                  setActiveView('desk')
-                  setNavOpen(false)
-                }}
-              >
-                <HeaderIcon name="desk" />
-                Desk
-              </button>
+              <>
+                <button
+                  type="button"
+                  className={`journey-goto-row journey-desk-row${
+                    activeView === 'desk' ? ' is-current' : ''
+                  }`}
+                  onClick={() => {
+                    setActiveView('desk')
+                    setNavOpen(false)
+                  }}
+                >
+                  <HeaderIcon name="desk" />
+                  Client Desk
+                </button>
+                <button
+                  type="button"
+                  className="journey-goto-row journey-desk-row"
+                  onClick={() => {
+                    setRunningTodoPanelOpen(true)
+                    setNavOpen(false)
+                  }}
+                  aria-label={openTodoCount ? `Project to-do list, ${openTodoCount} open` : 'Project to-do list, nothing open'}
+                >
+                  <HeaderIcon name="list" />
+                  To-do
+                  {openTodoCount > 0 && (
+                    <span className="header-todo-count" aria-hidden="true">{openTodoCount}</span>
+                  )}
+                </button>
+              </>
             ) : (
               <p className="journey-path-empty">
                 Open a project to see its path.
@@ -3894,26 +3852,86 @@ function App() {
                         }
                       }}
                       aria-current={active ? 'step' : undefined}
-                      aria-label={`${label}${hasContent ? ', has content' : ''}`}
+                      aria-label={`${label} · ${PROJECT_STOP_DETAIL[step.id]}${hasContent ? ', has content' : ''}`}
                     >
                       <span className="journey-node" aria-hidden="true">
-                        {hasContent && !active ? (
-                          <span className="journey-check">✓</span>
-                        ) : (
-                          <PathStepIcon id={step.id} />
-                        )}
+                        <PathStepIcon id={step.id} />
                       </span>
-                      <span className="journey-num" aria-hidden="true">
-                        {hasContent && !active
-                          ? '✓'
-                          : String(step.num).padStart(2, '0')}
+                      <span className="journey-label">
+                        <span>{label}</span>
+                        <span className="journey-project-tool-detail">
+                          {PROJECT_STOP_DETAIL[step.id]}
+                        </span>
                       </span>
-                      <span className="journey-label">{label}</span>
                     </button>
                   </li>
                 )
               })}
             </ol>
+            <button
+              type="button"
+              className={`journey-step journey-step-child journey-brand-book-row${activeView === 'book' ? ' is-active' : ''}`}
+              aria-current={activeView === 'book' ? 'page' : undefined}
+              disabled={!activeProject}
+              onClick={() => {
+                if (!activeProject) return
+                setActiveView('book')
+                setNavOpen(false)
+              }}
+            >
+              <span className="journey-child-icon" aria-hidden="true">
+                <HeaderIcon name="book" />
+              </span>
+              <span className="journey-label">{toolsLabelForView('book')}</span>
+            </button>
+            <button
+              type="button"
+              className={`journey-step journey-step-child${activeView === 'finish' ? ' is-active' : ''}`}
+              aria-current={activeView === 'finish' ? 'page' : undefined}
+              disabled={!activeProject}
+              onClick={() => {
+                if (!activeProject) return
+                setActiveView('finish')
+                setNavOpen(false)
+              }}
+            >
+              <span className="journey-child-icon" aria-hidden="true">
+                <HeaderIcon name="download" />
+              </span>
+              <span className="journey-label">Brand package</span>
+            </button>
+            <div className="journey-visible-tools" aria-label="Tools">
+              <span className="journey-path-heading">Tools</span>
+              {[
+                ['calendar', 'calendar', 'Calendar'],
+                ['insights', 'timer', 'Timer'],
+                ['spark', 'ideate', 'Ideate'],
+                ['review', 'review', 'Review'],
+              ].map(([view, icon, label]) => (
+                <button
+                  key={view}
+                  type="button"
+                  className={`journey-step journey-step-child${activeView === view ? ' is-active' : ''}`}
+                  aria-current={activeView === view ? 'page' : undefined}
+                  onClick={() => {
+                    setActiveView(view)
+                    setNavOpen(false)
+                  }}
+                >
+                  <span className="journey-child-icon" aria-hidden="true"><HeaderIcon name={icon} /></span>
+                  <span className="journey-label">{label}</span>
+                </button>
+              ))}
+              <span className="journey-path-heading journey-project-actions-heading">Project actions</span>
+              <button type="button" className="journey-step journey-step-child" disabled={!activeProject} onClick={() => { setOverviewSharePanelOpen(true); setNavOpen(false) }}>
+                <span className="journey-child-icon" aria-hidden="true"><HeaderIcon name="share" /></span>
+                <span className="journey-label">Share design brief</span>
+              </button>
+              <button type="button" className="journey-step journey-step-child" disabled={!activeProject} onClick={() => { setHoursPanelOpen(true); setNavOpen(false) }}>
+                <span className="journey-child-icon" aria-hidden="true"><HeaderIcon name="invoice" /></span>
+                <span className="journey-label">Hours and invoice</span>
+              </button>
+            </div>
           </div>
           {/* Only when actually in a Tools menu view — never "Tools · Home" */}
           {isToolsMenuView(activeView) && (
@@ -4014,6 +4032,9 @@ function App() {
           setClientInboxOpen={setClientInboxOpen}
           listRowNext={listRowNext}
           upcomingDeadlines={upcomingDeadlines}
+          archiveProject={archiveProject}
+          unarchiveProject={unarchiveProject}
+          deleteProject={handleDeleteProjectById}
           forcedBreak={forcedBreak}
           setSessionComplete={setSessionComplete}
           setFocusLeft={setFocusLeft}
@@ -4128,7 +4149,6 @@ function App() {
           ·
         </span>
         <span className="app-footer-meta">
-          {accessName ? `${accessName} · ` : ''}
           {CLOUD
             ? syncState === 'syncing'
               ? 'Syncing…'
@@ -4247,7 +4267,7 @@ function App() {
           aria-haspopup="menu" and this is a menu. It used to claim both —
           promising a focus trap it never implemented, over a role="menu"
           whose arrow keys it also never implemented. */}
-      {moreOpen && (
+      {false && moreOpen && (
         <div
           className="export-overlay tools-overlay"
           role="presentation"
@@ -4274,7 +4294,7 @@ function App() {
               className="more-menu"
               role="menu"
               id="tools-menu"
-              aria-labelledby="tools-menu-button"
+              aria-label="Tools"
               onKeyDown={onToolsKeyDown}
             >
               {/* role="menu" may only own menuitem, group and separator, so
@@ -4294,11 +4314,11 @@ function App() {
                 tabIndex={-1}
                 className="more-menu-item"
                 onClick={() => {
-                  setActiveView('book')
+                  setActiveView('calendar')
                   setMoreOpen(false)
                 }}
               >
-                <HeaderIcon name="book" /> {toolsLabelForView('book')}
+                <HeaderIcon name="calendar" /> {toolsLabelForView('calendar')}
               </button>
               <button
                 type="button"
@@ -4367,7 +4387,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <HeaderIcon name="share" /> Share Strategy form
+                <HeaderIcon name="share" /> Share project brief
               </button>
               <button
                 type="button"
@@ -4403,7 +4423,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <HeaderIcon name="question" /> Discovery brief
+                <HeaderIcon name="question" /> Project brief
               </button>
               </div>
             </div>
@@ -4580,7 +4600,7 @@ function App() {
                   setQuickCaptureOpen(false)
                 }}
               >
-                Add
+                Capture note
               </button>
             </div>
             {/* Closing keeps the text — it is already saved. Escape here is
@@ -4693,7 +4713,7 @@ function App() {
                 onClick={() => runExport('pdf')}
                 disabled={exportBusy}
               >
-                Brand book PDF
+                Download brand book PDF
               </button>
               <button
                 type="button"
@@ -4707,9 +4727,9 @@ function App() {
             <details className="export-more-formats no-print">
               <summary>More</summary>
               <div className="finish-more-formats-list">
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('html')}>HTML</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('md')}>MD</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('json')}>JSON</button>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('html')}>Download HTML</button>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('md')}>Download Markdown</button>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('json')}>Download project data</button>
                 <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('print')}>Print</button>
               </div>
             </details>
