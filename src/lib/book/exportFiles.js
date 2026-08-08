@@ -7,7 +7,7 @@
  * for PDF, and keep HTML/MD/JSON paths fully synchronous when possible.
  */
 
-import { pinFaceCssText, pinVisualKind } from '../moodPins'
+import { pinFaceCssText } from '../moodPins'
 import {
   resolvedGrid,
   resolvedPageBackgrounds,
@@ -16,10 +16,8 @@ import {
   resolvedTypeScale,
 } from './bookBuilder'
 import { toISODate } from '../dates'
-import { mapPaletteRoles, normalizeHex, bestTextOn } from '../color'
 import {
   DETECTIVE_CHAPTERS,
-  formatDetectiveAnswer,
   filledDetectiveChapters,
   progressItemInScope,
 } from '../brief/detectiveBrief'
@@ -35,35 +33,10 @@ import {
 } from '../deliver/naming'
 import {
   appendSystemMarkdown,
-  buildColorSystem,
   buildCssTokens,
   buildJsonTokens,
-  logoDontsList,
-  decisionLineFromPack,
-  DEFAULT_LOGO_CLEARSPACE,
-  DEFAULT_LOGO_MIN_SIZE,
-  TYPE_SCALE,
-  ROLE_JOBS,
   colorSpec,
 } from '../brandSystem'
-
-// Typographic scale and vertical rhythm system
-const BASE_UNIT = 4  // 4px base unit for vertical rhythm
-const SPACING = {
-  xs: BASE_UNIT,      // 4px
-  sm: BASE_UNIT * 2,  // 8px
-  md: BASE_UNIT * 3,  // 12px
-  lg: BASE_UNIT * 4,  // 16px
-  xl: BASE_UNIT * 5,  // 20px
-  '2xl': BASE_UNIT * 6, // 24px
-  '3xl': BASE_UNIT * 7, // 28px
-  '4xl': BASE_UNIT * 8  // 32px
-}
-const LINE_HEIGHT = {
-  tight: 1.2,   // For headings
-  normal: 1.5,  // For body text
-  relaxed: 1.6  // For captions/notes
-}
 
 /** Safe filename from a project title */
 export function slugifyFilename(name, fallback = 'creative-companion') {

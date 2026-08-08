@@ -7,15 +7,10 @@ import {
   lazy,
   useCallback,
   useMemo,
-  useState,
-  useRef,
-  useEffect,
 } from 'react'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
-import { getProcessPhase } from '../lib/journey/processGuide'
 import { formatShortDate, urgencyLabel } from '../lib/dates'
-import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
   formatDecisionLine,
   latestDecision,

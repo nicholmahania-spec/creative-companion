@@ -32,6 +32,7 @@ import {
   packReadiness,
 } from '../lib/book/exportFiles'
 import { weekFromWorkLog, hoursLoggedWords } from '../lib/billing/workWeek'
+import { DELIVERABLE_OPTIONS } from '../lib/brief/detectiveBrief'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
 import YoursOnlyPanel from '../components/YoursOnlyPanel'
 import '../styles/lazy-desk.css'

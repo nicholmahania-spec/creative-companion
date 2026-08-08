@@ -100,9 +100,15 @@ describe('Settings has exactly one door, in the persistent header', () => {
 
        Matches the label being DERIVED, not spelled. This asserted the
        literal word "Settings" once, and a correct change turned it red —
-       tests have to derive too. */
+       tests have to derive too.
+
+       Moved again: the door now lives inside the header Account menu
+       (AccountMenu.jsx renders the Settings item; test below pins that file's
+       content). Here we assert only that the header renders that menu with its
+       Settings action wired to the settings view — the invariant "one Settings
+       door, reached from the persistent header" holds wherever the markup goes. */
     expect(app).toMatch(
-      /header-account-trigger[\s\S]{0,300}setActiveView\('settings'\)[\s\S]{0,260}toolsLabelForView\('settings'\)/
+      /<AccountMenu[\s\S]{0,400}onOpenSettings=\{[^}]*setActiveView\('settings'\)/
     )
   })
 

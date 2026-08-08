@@ -6,7 +6,6 @@ import {
   useCallback,
   lazy,
   Suspense,
-  Fragment,
 } from 'react'
 import useAppStore from './store/useAppStore'
 import { useWorkClock } from './lib/useWorkClock'
@@ -61,7 +60,6 @@ import {
 import {
   JOURNEY_STEPS,
   PATH_STEP_COUNT,
-  PATH_VIEWS,
   labelForView,
   labelForStepId,
   journeyIdForView,
@@ -105,13 +103,7 @@ import {
   slugifyFilename,
 } from './lib/book/exportFiles'
 import {
-  hoursForRange,
-  workLogsFromProjects,
-  formatHoursWorked,
-  hoursLoggedWords,
-  HOURS_RANGES,
 } from './lib/billing/workWeek'
-import LogoLockup from './components/LogoLockup'
 import HeaderIcon from './components/HeaderIcon'
 import AccountMenu from './components/AccountMenu'
 import PullToRefresh from './components/PullToRefresh'
@@ -131,7 +123,6 @@ import { guessRunningTodoStage } from './lib/billing/runningTodoStages'
 import { installAutoGrow } from './lib/autoGrow'
 import { chooseLift, collectBlockers, maxLiftFor } from './lib/fabClearance'
 import { useModalFocus } from './lib/useModalFocus'
-import { useMenuKeyboard } from './lib/useMenuKeyboard'
 import useIsMobile from './lib/useIsMobile'
 import {
   isSessionOpen,
@@ -179,14 +170,6 @@ function App() {
     (...a) => useAppStore.getState().setCurrentProject(...a),
     []
   )
-  const updateProjectBrief = useCallback(
-    (...a) => useAppStore.getState().updateProjectBrief(...a),
-    []
-  )
-  const toggleProjectStep = useCallback(
-    (...a) => useAppStore.getState().toggleProjectStep(...a),
-    []
-  )
   const updateDetective = useCallback(
     (...a) => useAppStore.getState().updateDetective(...a),
     []
@@ -197,10 +180,6 @@ function App() {
   )
   const setProjectPalette = useCallback(
     (...a) => useAppStore.getState().setProjectPalette(...a),
-    []
-  )
-  const bumpDesignVersion = useCallback(
-    (...a) => useAppStore.getState().bumpDesignVersion(...a),
     []
   )
   const toggleTheme = useCallback(
@@ -226,10 +205,6 @@ function App() {
   )
   const updateTaskTitle = useCallback(
     (...a) => useAppStore.getState().updateTaskTitle(...a),
-    []
-  )
-  const updateTaskMeta = useCallback(
-    (...a) => useAppStore.getState().updateTaskMeta(...a),
     []
   )
   const updateTaskWhy = useCallback(
@@ -315,10 +290,6 @@ function App() {
   )
   const clearToEmpty = useCallback(
     (...a) => useAppStore.getState().clearToEmpty(...a),
-    []
-  )
-  const renameProject = useCallback(
-    (...a) => useAppStore.getState().renameProject(...a),
     []
   )
   const setLogoImage = useCallback(
@@ -473,13 +444,8 @@ function App() {
   const toolsMenuRef = useRef(null)
   const toolsButtonRef = useRef(null)
   const closeMore = useCallback(() => setMoreOpen(false), [])
-  const { onKeyDown: onToolsKeyDown, dismiss: dismissTools } = useMenuKeyboard(
-    moreOpen,
-    { menuRef: toolsMenuRef, triggerRef: toolsButtonRef, onClose: closeMore }
-  )
   const [accountOpen, setAccountOpen] = useState(false)
   const [openProjectMenuId, setOpenProjectMenuId] = useState(null)
-  const [restoreSelect, setRestoreSelect] = useState('')
   const [navOpen, setNavOpen] = useState(false)
   const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
@@ -784,7 +750,6 @@ function App() {
   }, [activeProject, deskTasks, deskMood, projectPalette])
   /** Path steps full ≠ pack ready — Home must not overclaim ship readiness. */
   const pathStepsFull = pathDoneCount >= PATH_STEP_COUNT
-  const brandBookReady = pathStepsFull && !leaveBehindThin
   const completedCount = doneTasks.length
 
   const projectDeadline = activeProject?.deadline || ''
@@ -1027,26 +992,6 @@ function App() {
    * Identity: rail Continue and footer Next share one rule — advance
    * Mark→…→Preview, then path Touchpoints. Elsewhere: path next stop.
    */
-  const advancePathOrIdentity = useCallback(() => {
-    if (activeView === 'brand') {
-      const cur = resolveIdentitySubstep(
-        useAppStore.getState().projects.find(
-          (p) => p.id === useAppStore.getState().currentProjectId
-        )?.identitySubstep
-      )
-      const nextSub = nextIdentitySubstep(cur)
-      if (nextSub) {
-        useAppStore.getState().updateBrandField('identitySubstep', nextSub.id)
-        flashMicro(`Going to ${nextSub.label}`)
-        return
-      }
-      const pathNext = getNextJourney('brand')
-      if (pathNext) goToProcessStep(pathNext, { micro: 'open' })
-      return
-    }
-    const pathNext = getNextJourney(activeView)
-    if (pathNext) goToProcessStep(pathNext, { micro: 'open' })
-  }, [activeView, goToProcessStep])
 
   /** Earliest incomplete step — reuses buildPathProgressCtx (same filters as strip) */
   const goToNextProcessGap = useCallback(() => {
@@ -1129,7 +1074,6 @@ function App() {
   })
 
   const activeProjects = (projects || []).filter((p) => !p.archived)
-  const archivedProjects = (projects || []).filter((p) => p.archived)
 
   /** Project ids with unread client activity (boolean only — no counts). */
   const projectsWithClientUnread = useMemo(() => {
@@ -1200,7 +1144,6 @@ function App() {
     [projectsSummary, activeProjects]
   )
 
-  const showClientHeadings = showClientHeadingsFor(projectGroups)
 
   /** Flat project order for Home default-select (same as grouped lists). */
   const homeOrderedSummaries = useMemo(
@@ -1231,24 +1174,6 @@ function App() {
     []
   )
 
-  const projectPills = (
-    <div className="project-pills" role="tablist" aria-label="Project">
-      {activeProjects.map((p) => (
-        <button
-          key={p.id}
-          type="button"
-          role="tab"
-          aria-selected={activeProjectId === p.id}
-          onClick={() => selectProject(p.id)}
-          className={
-            activeProjectId === p.id ? 'project-pill is-active' : 'project-pill'
-          }
-        >
-          {p.name}
-        </button>
-      ))}
-    </div>
-  )
 
   // Keyboard: Esc dismiss overlays (priority: topmost first)
   useEffect(() => {
@@ -1459,7 +1384,7 @@ function App() {
      per project. Its two pieces of state, five refs and six effects lived
      here; nothing outside App ever read any of them, and these two values
      are all the app consumes. See src/lib/useWorkClock.js. */
-  const { workRunning, sessionLabel } = useWorkClock({
+  const { sessionLabel } = useWorkClock({
     activeView,
     activeProjectId,
     forcedBreak,
@@ -1481,10 +1406,6 @@ function App() {
   /* Stages switched off for this project — object permanence for the rail:
      a stop that is simply absent is invisible, and invisible is how a
      designer ends up wondering whether the app lost something. */
-  const offSteps = useMemo(() => {
-    const on = new Set(pathSteps.map((s) => s.id))
-    return JOURNEY_STEPS.filter((s) => !on.has(s.id))
-  }, [pathSteps])
 
   // Focus countdown — when a Pomodoro ends, force a break
   useEffect(() => {
@@ -3116,14 +3037,6 @@ function App() {
     activeView === 'brand'
       ? nextIdentitySubstep(activeProject?.identitySubstep) || journeyNext
       : null
-  const stepRailContinueLabel =
-    activeView === 'brand'
-      ? identityRailNext?.label || journeyNext?.label
-      : journeyNext?.label
-  const stepRailContinueVisible =
-    activeView === 'brand'
-      ? !!(identityRailNext || journeyNext)
-      : !!journeyNext
 
   /* Header back affordance — one stable header whose contents adapt per view
      (2026 design handoff). Derivation, not a per-view lookup table:
@@ -3136,37 +3049,6 @@ function App() {
      - Timer keeps its "started from Research" return path and clears the
        flag on the way out, same as the in-view chip it replaces.
      Labels always come from labelForView() — journeySingleSource guards. */
-  const headerBack = (() => {
-    if (activeView === 'home') return null
-    const pathFallback = activeProject
-      ? activeProject.lastView || 'project'
-      : 'home'
-    let target
-    if (journeyActive) {
-      target = getPrevJourney(activeView)?.view || 'home'
-    } else if (activeView === 'insights' && timerFocusSource === 'research') {
-      target = 'studio'
-    } else if (activeView === 'clients' || activeView === 'create') {
-      target = 'home'
-    } else if (activeView === 'clientRecord') {
-      target = 'clients'
-    } else if (activeView === 'desk') {
-      target = 'home'
-    } else {
-      target = pathFallback
-    }
-    return {
-      label: labelForView(target),
-      go: () => {
-        if (activeView === 'insights') setTimerFocusSource(null)
-        setActiveView(target)
-        // The header stays tappable above the open mobile drawer (z-70 vs
-        // 60), so back must close it like every other navigating control —
-        // else the destination loads underneath a still-open drawer.
-        setNavOpen(false)
-      },
-    }
-  })()
 
   return (
     <div
@@ -3233,32 +3115,6 @@ function App() {
               in headerBack above. The old header project-rename inputs are
               gone from here — rename lives on the project screen's title now
               (owner's call), where the name is visible in place. */}
-          {false && headerBack ? (
-            <button
-              type="button"
-              className="header-back"
-              onClick={headerBack.go}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-              {headerBack.label}
-            </button>
-          ) : (
-            <div className="brand-block">
-              <LogoLockup className="logo" reduceMotion={reduceMotion} />
-            </div>
-          )}
           {/* Which project am I in — read-only context, all widths. The old
               mobile title carried this answer (as an input); with rename
               moved to the project screen this span keeps the answer ambient
@@ -3308,30 +3164,6 @@ function App() {
                 project am I in". */}
             {(isFocusRunning || (CLOUD && syncState === 'error')) && (
             <div className="header-status-slot">
-            {false && workRunning && (
-              <button
-                type="button"
-                className="work-clock-chip"
-                /* Opens the clock's OWN record. This opened the Timer view,
-                   which undid the separation at the last step: you clicked a
-                   readout of hours already worked and landed on a countdown,
-                   which reads as the clock having started something. */
-                onClick={() => setWorkLogPanelOpen(true)}
-                title="Clocked work time — runs by itself while you work"
-              >
-                {/* The CLOCK: hours at work, kept automatically. Counts up,
-                    in minutes not mm:ss — a seconds digit changing every
-                    second is motion in the corner of the eye all day, and it
-                    is finer than any decision it informs. No icon: this is
-                    not a control, it is a readout. */}
-                Working
-                {/* Split out so a narrow header can drop the detail and keep
-                    the readout whole. Capping the chip and letting it ellipsis
-                    spent the same width to render "Workin…" — the detail was
-                    already lost, and the project name was paying for it. */}
-                <span className="work-clock-chip-detail"> · {sessionLabel}</span>
-              </button>
-            )}
             {/* The TIMER: separate chip, separate job, and only here because
                 you switched it on. The clock records; the timer is the thing
                 you reach for when time blindness needs help. They were one
@@ -3433,17 +3265,17 @@ function App() {
                 hardcoded permanent “Saved” when storage is blocked. */}
             {/* Account — rightmost. Identity + theme + Settings + sign out/lock.
                 Not a second Settings surface: full prefs stay on Settings. */}
-            <button
-              type="button"
-              className="header-account-trigger"
-              aria-label="Settings"
-              aria-current={activeView === 'settings' ? 'page' : undefined}
-              onClick={() => setActiveView('settings')}
-              title="Settings"
-            >
-              <HeaderIcon name="settings" />
-              <span className="sr-only">{toolsLabelForView('settings')}</span>
-            </button>
+            <AccountMenu
+              open={accountOpen}
+              onOpen={() => setAccountOpen(true)}
+              onClose={() => setAccountOpen(false)}
+              accessName={accessName}
+              theme={theme}
+              toggleTheme={toggleTheme}
+              onOpenSettings={() => setActiveView('settings')}
+              onSignOut={handleSignOut}
+              cloud={CLOUD}
+            />
 
           </div>
         </div>
@@ -3458,106 +3290,6 @@ function App() {
           still carries the step list). Answers "where am I" by position, and
           the one button names its own destination so the seven-way choice
           collapses to a zero-decision default. */}
-      {false && journeyActive && (
-        <nav className="step-rail" aria-label="Process position">
-          <ol className="step-rail-list">
-            {pathSteps.map((step) => {
-              const active = journeyActive === step.id
-              const label = step.label
-              const done =
-                !active &&
-                pathStepHasContent(step.id, {
-                  project: activeProject,
-                  moodItems: deskMood,
-                  tasks: deskTasks,
-                  sparkIndex,
-                  palette: projectPalette,
-                })
-              return (
-                <li key={step.id}>
-                  <button
-                    type="button"
-                    className={`step-rail-step${active ? ' is-active' : ''}${
-                      done ? ' is-done' : ''
-                    }`}
-                    onClick={() => setActiveView(step.view)}
-                    aria-current={active ? 'step' : undefined}
-                    aria-label={`Step ${step.num}: ${label}${done ? ', done' : ''}`}
-                    title={`${label} · key ${step.num}`}
-                  >
-                    {done && (
-                      <span className="step-rail-check" aria-hidden="true">✓</span>
-                    )}
-                    {label}
-                  </button>
-                </li>
-              )
-            })}
-          </ol>
-          {/* Stages this project has switched off, and the way back.
-              At the rail's TAIL because that is where the absence is felt —
-              you reach the end and notice a stop that was never there. In
-              Settings it would be a per-project fact wearing an app-preference
-              coat, findable only by remembering it exists rather than by
-              looking. One muted line naming them together, not a row each: a
-              list of off-stages is a list of decisions.
-              (adhd-executive-function-advisor, 2026-08-05.) */}
-          {offSteps.length > 0 && (
-            <p className="step-rail-off">
-              <span className="step-rail-off-text">
-                {offSteps.map((s) => s.label).join(' and ')}{' '}
-                {offSteps.length === 1 ? 'is' : 'are'} off
-              </span>
-              {offSteps.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className="step-rail-off-on"
-                  onClick={() => toggleProjectStep(activeProject?.id, s.id)}
-                >
-                  {offSteps.length > 1 ? `turn on ${s.label}` : 'turn on'}
-                </button>
-              ))}
-            </p>
-          )}
-          {/* Sequential forward. On Identity, same advance as footer Next
-              (sub-screens then Touchpoints) — never skip craft screens.
-              Elsewhere: next path stop. Home still uses pathNextGap. */}
-          {stepRailContinueVisible && stepRailContinueLabel && (
-            <button
-              type="button"
-              /* is-earned: the gradient ring fires ONLY when the stop you are
-                 on is complete — a reward you caused, not standing chrome
-                 (advisor: rarity is the mechanism; a permanent chromatic
-                 accent habituates in days and taxes attention forever).
-                 Static always, one per screen, never on destructive or
-                 client-facing controls. */
-              /* Secondary: in-page Next is the solid primary (one forward). */
-              className={`btn btn-secondary step-rail-cta${
-                journeyActive && thisStepFilled ? ' is-earned' : ''
-              }`}
-              onClick={() => advancePathOrIdentity()}
-            >
-              {/* "Continue → X" is deliberate, and this was briefly renamed to
-                  "Next · X" on a bad reading of two things.
-
-                  DESIGN_GRAMMAR G1.3 is explicit: "One primary CTA per page
-                  job; path Next solid; rail Continue secondary." The pair is
-                  the rule, and the two names are how the rule distinguishes
-                  them — the footer is the solid primary, this is the quiet
-                  second route to the same stop.
-
-                  The WCAG argument for renaming was also wrong. SC 3.2.4
-                  Consistent Identification governs the same component named
-                  differently ACROSS a set of pages; both of these are already
-                  internally consistent across every path stop. Two distinct
-                  controls on one page carrying different labels is not that
-                  criterion, and citing it here overstated the case. */}
-              Continue → {stepRailContinueLabel}
-            </button>
-          )}
-        </nav>
-      )}
 
       {/* The Activity table used to render here beside the HUD. It could not
           show a true row in any configuration: without Supabase the hook
@@ -3629,146 +3361,6 @@ function App() {
           </div>
           {/* Project switching lives in Clients. Keeping the same directory in
               persistent chrome created two competing project maps. */}
-          {false && <div className="journey-projects-section" aria-label="Your projects">
-            <div className="journey-projects-head">
-              <span className="journey-projects-heading">Projects</span>
-              <button
-                type="button"
-                className="journey-projects-add"
-                onClick={() => {
-                  // Opens the new-project intake (name + 3 quick answers)
-                  // instead of creating a blank project instantly.
-                  setActiveView('create')
-                  setNavOpen(false)
-                }}
-                aria-label="New project"
-                title="New project"
-              >
-                +
-              </button>
-            </div>
-            <ul className="journey-projects-list">
-              {projectGroups.length === 0 && (
-                <li className="journey-projects-empty" role="status">
-                  <p className="journey-projects-empty-copy">No projects yet.</p>
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm"
-                    onClick={() => {
-                      setActiveView('create')
-                      setNavOpen(false)
-                    }}
-                  >
-                    New project
-                  </button>
-                </li>
-              )}
-              {projectGroups.map((group) => (
-                <Fragment key={group.key}>
-                  {showClientHeadings && group.clientName && (
-                    <li className="journey-projects-group-head" role="presentation">
-                      {group.clientName}
-                    </li>
-                  )}
-                  {group.projects.map((summary) => {
-                const p = summary.project
-                const isActive = p.id === activeProjectId
-                const menuOpen = openProjectMenuId === p.id
-                // Sidebar: name only. "Next: Strategy" fought the project
-                // name for attention and looked like a second row of chrome
-                // (Home still uses listRowNext for its denser list).
-                return (
-                  <li key={p.id} className="journey-project-row-wrap">
-                    <button
-                      type="button"
-                      className={`journey-project-row${isActive ? ' is-active' : ''}`}
-                      onClick={() => openProjectWhereLeftOff(p.id)}
-                      aria-current={isActive ? 'true' : undefined}
-                    >
-                      <span className="journey-project-row-name">{p.name}</span>
-                    </button>
-                    <div className="journey-project-row-menu-wrap">
-                      <button
-                        type="button"
-                        className="journey-project-row-menu-btn"
-                        aria-haspopup="menu"
-                        aria-expanded={menuOpen}
-                        aria-label={`Project actions for “${p.name}”`}
-                        title="Project actions"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setOpenProjectMenuId(menuOpen ? null : p.id)
-                        }}
-                      >
-                        ⋯
-                      </button>
-                      {menuOpen && (
-                        <div
-                          className="journey-project-row-menu"
-                          role="menu"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="project-menu-item"
-                            onClick={() => {
-                              const r = archiveProject(p.id)
-                              if (!r.ok) {
-                                flashToast(r.error || 'Could not archive that')
-                              } else if (r.empty) {
-                                flashToast('Archived — no open projects')
-                                setActiveView('create')
-                              } else {
-                                flashToast('Project archived')
-                              }
-                              setOpenProjectMenuId(null)
-                            }}
-                          >
-                            Archive project
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="project-menu-item project-menu-danger"
-                            onClick={() => {
-                              setOpenProjectMenuId(null)
-                              handleDeleteProjectById(p.id, p.name)
-                            }}
-                          >
-                            Delete project
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </li>
-                )
-                  })}
-                </Fragment>
-              ))}
-            </ul>
-            {archivedProjects.length > 0 && (
-              <select
-                className="journey-projects-restore"
-                value={restoreSelect}
-                onChange={(e) => {
-                  const id = e.target.value
-                  if (!id) return
-                  unarchiveProject(Number(id) || id)
-                  selectProject(Number(id) || id)
-                  setRestoreSelect('')
-                }}
-                aria-label="Restore archived project"
-              >
-                <option value="">Restore archived…</option>
-                {archivedProjects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>}
           <div className="journey-path-section" aria-label="This project path">
             <span className="journey-path-heading">
               {activeProject?.name || 'Project'}
@@ -4267,169 +3859,6 @@ function App() {
           aria-haspopup="menu" and this is a menu. It used to claim both —
           promising a focus trap it never implemented, over a role="menu"
           whose arrow keys it also never implemented. */}
-      {false && moreOpen && (
-        <div
-          className="export-overlay tools-overlay"
-          role="presentation"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) dismissTools()
-          }}
-        >
-          <div className="export-panel tools-panel">
-            <div className="export-panel-header">
-              <h3 id="tools-menu-title" style={{ margin: 0 }}>
-                Tools
-              </h3>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                aria-label="Close tools"
-                onClick={dismissTools}
-              >
-                ×
-              </button>
-            </div>
-            <div
-              ref={toolsMenuRef}
-              className="more-menu"
-              role="menu"
-              id="tools-menu"
-              aria-label="Tools"
-              onKeyDown={onToolsKeyDown}
-            >
-              {/* role="menu" may only own menuitem, group and separator, so
-                  each heading names a role="group" instead of sitting loose
-                  in the menu where AT could drop or misread it. */}
-              <div
-                className="more-menu-group"
-                role="group"
-                aria-labelledby="tools-group-goto"
-              >
-                <p className="more-menu-group-label" id="tools-group-goto">
-                  Go to
-                </p>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setActiveView('calendar')
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="calendar" /> {toolsLabelForView('calendar')}
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setActiveView('assets')
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="library" /> {toolsLabelForView('assets')}
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setActiveView('insights')
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="timer" /> Timer
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setActiveView('spark')
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="ideate" /> Ideate
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setActiveView('review')
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="review" /> Review
-              </button>
-              </div>
-              <div
-                className="more-menu-group"
-                role="group"
-                aria-labelledby="tools-group-project"
-              >
-                <p className="more-menu-group-label" id="tools-group-project">
-                  This project
-                </p>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setOverviewSharePanelOpen(true)
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="share" /> Share project brief
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  openExportPanel()
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="download" /> Export
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setHoursPanelOpen(true)
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="invoice" /> Hours &amp; invoice
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setDiscoveryPanelOpen(true)
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="question" /> Project brief
-              </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {shortcutsOpen && (
         <div
