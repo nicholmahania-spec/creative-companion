@@ -93,14 +93,19 @@ test.describe('Soft Signal demo', () => {
        Design loaded, and the wall's own pack count is asserted in the
        Research leg of this same walk. */
     /* Brand book fields seeded.
-       Promise is on the artboard now, which renders on every Identity screen
-       — so this needs no navigation at all. It reached for `#msg-promise` on
-       a Words sub-screen that had to be opened first; that screen is gone and
-       the field is a labelled input on the direction sheet. */
-    await expect(page.getByRole('textbox', { name: 'Promise' })).toHaveValue(
-      /.{10,}/,
-      { timeout: 5000 }
-    )
+       Promise is on the artboard, which renders on every Identity screen — so
+       this needs no navigation at all. It reached for `#msg-promise` on a
+       Words sub-screen that had to be opened first; that screen is gone.
+
+       And it is REPORTED now, not asked: the brief owns Promise, so the sheet
+       renders the effective value as text rather than as a box for the
+       designer to answer a question the client already answered. There is no
+       textbox left to have a value, so this asserts the seeded sentence is on
+       the sheet — which is what "the demo's brand words reach Identity" meant
+       all along, and says it about the words rather than about the widget. */
+    await expect(
+      page.locator('#system-artboard .artboard-messaging')
+    ).toContainText('calmer than they started', { timeout: 5000 })
     /* Imagery is documentation, so it moved to Handover with the rest of the
        handover notes. */
     await openIdentitySubstep(page, 'handover')
