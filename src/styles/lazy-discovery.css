@@ -1,0 +1,156 @@
+/* Visual Discovery — the comparison IS the interaction, so the two samples get
+   the space and everything else stays out of the way. No cards, no borders
+   around the block: it already sits inside a brief chapter that frames it. */
+
+.vd {
+  margin: var(--space-4) 0 0;
+}
+
+.vd-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.vd-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.vd-cats {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.vd-cat {
+  border: 1px solid var(--border-subtle);
+  background: none;
+  border-radius: var(--radius);
+  padding: 0.35rem 0.55rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+/* Selected state carries weight and a border as well as ink, so it does not
+   depend on color alone. */
+.vd-cat.is-on {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Side by side is the whole point — two things you can actually compare.
+   It stays two columns on a phone: stacking them turns a comparison into a
+   scroll, and you cannot choose between things you cannot see together. */
+.vd-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.vd-option {
+  position: relative;
+  min-width: 0;
+}
+
+.vd-pick {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  cursor: pointer;
+}
+
+.vd-pick:hover {
+  border-color: var(--text-primary);
+}
+
+.vd-pick:focus-visible {
+  outline: 2px solid var(--dopamine);
+  outline-offset: 2px;
+}
+
+.vd-type {
+  /* --fs-6 doubled: the letterforms are the stimulus, so they get real size.
+     Uses the scale rather than a one-off — see `scaleRatchet`. */
+  font-size: calc(var(--fs-6) * 2);
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.vd-color {
+  display: block;
+  width: 100%;
+  height: 4.5rem;
+  border-radius: var(--radius);
+}
+
+.vd-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.vd-fav {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--text-muted);
+  padding: 0;
+}
+
+.vd-foot {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.vd-count {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.vd-read {
+  margin-top: var(--space-3);
+}
+
+.vd-read-head {
+  margin: 0 0 var(--space-2);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.vd-lines {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+}
+
+.vd-verdict {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.vd-empty {
+  margin: var(--space-3) 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

@@ -305,6 +305,19 @@ export function brandIdentityDefaults() {
    * display; only the client's half is the brief.
    */
   designerSurfaces: [],
+  /**
+   * Visual Discovery — a log of which of two shown samples was preferred.
+   *
+   * NOT A SECOND BRIEF. It holds no strategic answer and no brand decision:
+   * `choices` records references to what was shown and what was chosen, and
+   * everything a designer reads is DERIVED from it by
+   * `lib/discovery/observations.js`. `verdict` records whether the person
+   * agreed with the observation — agreement, not a decision.
+   *
+   * Deliberately NOT `directions`: that field is the Ideate A/B/C slots and
+   * Phase 3's Directions will need the name.
+   */
+  visualDiscovery: { choices: [], verdict: null },
   /** Optional wordmark text (falls back to project name) */
   logoWordmark: '',
   /** Clearspace / min-size / lockup guidance */
@@ -2852,6 +2865,79 @@ const useAppStore = create(
         return makeRef(snapshot.kind, snapshot.id)
       },
 
+      /* ── Visual Discovery ─────────────────────────────────────────────
+         Show two things, record which was preferred. The choice stores
+         REFERENCES to both samples — never the letterforms or the hex — so
+         the log stays a few bytes per comparison and a sample can only ever
+         mean one thing. */
+      recordDiscoveryChoice: ({ category, shown, chose }, projectId) =>
+        set((state) => {
+          const pair = (Array.isArray(shown) ? shown : []).map(String)
+          const picked = String(chose || '')
+          /* Choosing something that was not on screen is not a preference. */
+          if (pair.length !== 2 || !pair.includes(picked)) return state
+          const owner = projectId ?? state.currentProjectId
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const vd = p.visualDiscovery || { choices: [], verdict: null }
+              const prev = vd.choices || []
+              const entry = {
+                id: `vd_${prev.length}_${picked}`,
+                category: String(category || ''),
+                shown: pair,
+                chose: picked,
+                at: new Date().toISOString(),
+              }
+              return {
+                ...p,
+                visualDiscovery: {
+                  ...vd,
+                  choices: [...prev, entry],
+                  /* A new choice invalidates an agreement about the old set —
+                     the observation it was agreeing with has moved. */
+                  verdict: null,
+                },
+              }
+            }),
+          }
+        }),
+
+      /** Agreement or disagreement with the observation. Not a brand decision. */
+      setDiscoveryVerdict: (status, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          const ok = status === 'accepted' || status === 'rejected'
+          return {
+            projects: state.projects.map((p) =>
+              p.id === owner
+                ? {
+                    ...p,
+                    visualDiscovery: {
+                      ...(p.visualDiscovery || { choices: [] }),
+                      verdict: ok
+                        ? { status, at: new Date().toISOString() }
+                        : null,
+                    },
+                  }
+                : p
+            ),
+          }
+        }),
+
+      /** Start over. The choices go; nothing else in the project is touched. */
+      clearDiscovery: (projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          return {
+            projects: state.projects.map((p) =>
+              p.id === owner
+                ? { ...p, visualDiscovery: { choices: [], verdict: null } }
+                : p
+            ),
+          }
+        }),
+
       /* ── Favorites ────────────────────────────────────────────────────
          `favorite` and `inPack` are two different facts and were one boolean.
 
@@ -3426,7 +3512,7 @@ const useAppStore = create(
           }
         },
       },
-      version: 6,
+      version: 7,
       migrate: (persisted, fromVersion) => {
         // Keep real user data; only normalize missing arrays
         if (!persisted || typeof persisted !== 'object') {
@@ -3504,6 +3590,12 @@ const useAppStore = create(
                   designerSurfaces: Array.isArray(p.designerSurfaces)
                     ? p.designerSurfaces
                     : [],
+                  /* v7: additive. An older project has no discovery log; empty
+                     rather than absent, so no reader needs a null branch. */
+                  visualDiscovery:
+                    p.visualDiscovery && Array.isArray(p.visualDiscovery.choices)
+                      ? p.visualDiscovery
+                      : { choices: [], verdict: null },
                   directions:
                     Array.isArray(p.directions) && p.directions.length >= 3
                       ? p.directions
