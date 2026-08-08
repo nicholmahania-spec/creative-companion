@@ -20,6 +20,7 @@ export default function ResearchView({
   deskMood = [],
   activeProjectId = null,
   brandWords = '',
+  competitors = '',
   projectPalette = [],
   setActiveView,
   flashToast,
@@ -249,6 +250,37 @@ export default function ResearchView({
   const starred = deskMood.filter((m) => m.inPack).length
   const words = String(brandWords || '').trim()
 
+  /* The competitors the client named, made useful instead of unread.
+     Grepped across src/, `detective.competitors` reached exactly two modules
+     — the brand brain and the brief composer — and no research surface at
+     all. The one place a designer would act on "who else is out there" is the
+     wall, and the wall did not know they existed.
+
+     Reference AND one tap, not a form. Each name is a button that drops a
+     note pin already titled with that competitor, so looking one up and
+     writing down what you saw costs no categorisation — the same
+     "the surface IS the filing" move `ApplicationCheck` makes on Touchpoints.
+     Capped at six because this is a reference strip, not a second wall. */
+  const competitorNames = useMemo(
+    () =>
+      String(competitors || '')
+        .split(/[,;/|\n]+/)
+        .map((c) => c.trim())
+        .filter((c) => c.length > 1 && c.length <= 40)
+        .slice(0, 6),
+    [competitors]
+  )
+
+  /* Named already means there is a pin whose note starts with them — so the
+     strip stops offering a slot that exists, without keeping a second record
+     of which ones were done. */
+  const competitorPinned = useMemo(() => {
+    const notes = (deskMood || []).map((m) =>
+      String(m?.note || '').toLowerCase()
+    )
+    return (name) => notes.some((n) => n.startsWith(name.toLowerCase()))
+  }, [deskMood])
+
   /* Arriving here starts the CLOCK, not the timer.
    *
    * The work clock runs itself in App for any stage view — that is clocking
@@ -349,6 +381,46 @@ export default function ResearchView({
                     Words · {words.slice(0, 64)}
                     {words.length > 64 ? '…' : ''}
                   </p>
+                ) : null}
+                {competitorNames.length > 0 ? (
+                  <div
+                    className="research-competitors"
+                    role="group"
+                    aria-label="Competitors the client named"
+                  >
+                    <span className="research-competitors-label">
+                      They named
+                    </span>
+                    {competitorNames.map((name) => {
+                      const done = competitorPinned(name)
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          className={`research-competitor${done ? ' is-pinned' : ''}`}
+                          disabled={done}
+                          title={
+                            done
+                              ? `${name} is already on the wall`
+                              : `Start a note about ${name}`
+                          }
+                          onClick={() => {
+                            addMoodPin({
+                              type: 'note',
+                              note: `${name} — `,
+                              projectId: activeProjectId,
+                            })
+                            notifyAction?.('Pin added', 'mood_pin', {
+                              label: 'Competitor note',
+                            })
+                            flashMicro?.(`${name} — note added, write what you saw`)
+                          }}
+                        >
+                          {name}
+                        </button>
+                      )
+                    })}
+                  </div>
                 ) : null}
               </div>
               <div className="research-studio-actions">

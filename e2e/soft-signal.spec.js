@@ -93,21 +93,17 @@ test.describe('Soft Signal demo', () => {
        Design loaded, and the wall's own pack count is asserted in the
        Research leg of this same walk. */
     /* Brand book fields seeded.
-       This used to say "the editor is a flat column now — every section is
-       always mounted, so there are no tabs to click first". That stopped
-       being true when Identity was split into Mark → Words → Colour → Type →
-       Preview (commit 20d21a1): the messaging fields live on the Words
-       sub-screen and are not mounted until it is opened, so #msg-promise
-       simply did not exist and the walk died here.
-
-       Sub-screen labels come from IDENTITY_SUBSTEPS rather than being typed,
-       so a rename moves this with it instead of breaking it. The helper is
-       shared — process-walk hit the same wall on `#brand-tagline`. */
-    await openIdentitySubstep(page, 'essentials')
-    await expect(page.locator('#msg-promise')).toHaveValue(/.{10,}/, {
-      timeout: 5000,
-    })
-    await openIdentitySubstep(page, 'preview')
+       Promise is on the artboard now, which renders on every Identity screen
+       — so this needs no navigation at all. It reached for `#msg-promise` on
+       a Words sub-screen that had to be opened first; that screen is gone and
+       the field is a labelled input on the direction sheet. */
+    await expect(page.getByRole('textbox', { name: 'Promise' })).toHaveValue(
+      /.{10,}/,
+      { timeout: 5000 }
+    )
+    /* Imagery is documentation, so it moved to Handover with the rest of the
+       handover notes. */
+    await openIdentitySubstep(page, 'handover')
     await expect(page.locator('#img-style')).toHaveValue(/.{5,}/, {
       timeout: 5000,
     })

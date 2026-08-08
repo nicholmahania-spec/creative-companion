@@ -12,7 +12,7 @@ import {
   EDGE_ORDER,
   nearestEdgeStop,
 } from '../lib/book/bookBuilder'
-import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES } from '../lib/book/bookContent'
+import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES, fieldHome } from '../lib/book/bookContent'
 import { currentBrandPack } from '../lib/book/currentPack'
 import { downloadBrandPackVectorPdf } from '../lib/book/exportFiles'
 import { bookSectionIds, bookPlan, FOUNDATION_PAGES, SECTION_PAGES } from '../lib/book/bookDocument'
@@ -226,36 +226,52 @@ function PillToggle({ id, label, checked, onChange }) {
 
 /* The book's own words, editable from the book.
    The panel above this edits how the book LOOKS — fonts, palette, page
-   backgrounds. Its words lived in other views entirely, so writing the book
-   meant leaving it. These fields write to exactly the answers the PDF is
-   built from, so an edit here changes the page beside it and the file the
-   client receives, with nothing to sync.
+   backgrounds. This shows the WORDS the pages print.
 
-   Rows are derived from PAGE_FIELDS rather than listed again here — the same
-   declaration the page prints from — so a field cannot end up printable and
-   uneditable, or editable and never printed.
+   READ-ONLY, WITH A ROUTE. It used to render an editable textarea per field,
+   which made the builder a fourth place to type the same fact: the client
+   answers in the brief, the designer sharpens it on Identity's direction
+   sheet, and then a third box here wrote to whichever store the read happened
+   to prefer. Nothing on screen said which box the PDF would use. (Owner,
+   2026-08-08: the builder is an OUTPUT surface, not another authoring
+   location.)
 
-   Empty fields are shown, not hidden. A page that is missing because you have
-   not answered for it yet is exactly the thing you need to see in order to
-   answer; hiding the input until content exists is the chicken-and-egg version
-   of the collapsed-panel problem. */
-function BookTextFields({ pageId, x, onChange }) {
+   So each row states the resolved value — the same `readField` the page
+   prints from, so this cannot disagree with the PDF — names where that answer
+   is written, and takes you there in one press.
+
+   Empty fields are still SHOWN, not hidden. A page that is missing because
+   nobody has answered for it is exactly the thing you need to see in order to
+   go and answer it; hiding the row until content exists is the
+   chicken-and-egg version of the collapsed-panel problem.
+
+   Rows are derived from PAGE_FIELDS — the same declaration the page prints
+   from — so a field cannot end up printable and invisible here. */
+function BookTextFields({ pageId, x, onOpen }) {
   const rows = (PAGE_FIELDS[pageId] || []).filter((f) => !f.editedElsewhere);
   if (!rows.length) return null;
   return (
     <>
       {rows.map((f) => {
-        const id = `bbb-txt-${pageId}-${f.field}`;
+        const value = readField(f, x);
+        const home = fieldHome(f);
         return (
-          <div className="bbb-field" key={f.field}>
-            <label htmlFor={id}>{f.label}</label>
-            <textarea
-              id={id}
-              className="bbb-textarea"
-              rows={2}
-              value={readField(f, x)}
-              onChange={(e) => onChange(f, e.target.value)}
-            />
+          <div className="bbb-field bbb-read" key={f.field}>
+            <span className="bbb-read-label">{f.label}</span>
+            {/* An unanswered line reads as WAITING, not as content — the same
+                em-dash rule the direction sheet follows. */}
+            <p className={`bbb-read-value${value ? '' : ' is-empty'}`}>
+              {value || '—'}
+            </p>
+            {home && onOpen && (
+              <button
+                type="button"
+                className="text-link bbb-read-link"
+                onClick={() => onOpen(home.view, home.section)}
+              >
+                {value ? `Edit on ${home.label}` : `Write it on ${home.label}`}
+              </button>
+            )}
           </div>
         );
       })}
@@ -833,7 +849,7 @@ const GAP_DESTINATION = {
   handoff: 'finish',
 }
 
-export default function BrandBookBuilderView({ setActiveView }) {
+export default function BrandBookBuilderView({ setActiveView, goSystemSection }) {
   const activeProject = useAppStore((s) =>
     s.projects.find((p) => p.id === s.currentProjectId)
   )
@@ -842,7 +858,6 @@ export default function BrandBookBuilderView({ setActiveView }) {
   const setBookBuilder = useAppStore((s) => s.setBookBuilder)
   const setPaletteTokens = useAppStore((s) => s.setPaletteTokens)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
-  const updateDetective = useAppStore((s) => s.updateDetective)
   const renameProject = useAppStore((s) => s.renameProject)
 
   const project = activeProject || {}
@@ -1069,13 +1084,19 @@ export default function BrandBookBuilderView({ setActiveView }) {
      will actually appear rather than a copy of it. */
   const bookX = bookPlan(pack).inputs;
 
-  /* One writer for both homes. Which store a book answer lives in is not
-     guessable from its name — Story, USP and tone of voice are on the brief,
-     the rest are on the project — and writing to the wrong one silently does
-     nothing, because the read prefers the other. PAGE_FIELDS carries the
-     answer so no call site has to know. */
-  const writeBookField = (f, value) =>
-    f.scope === 'detective' ? updateDetective(f.field, value) : updateBrandField(f.field, value);
+  /* Take me to where this answer is written.
+     Replaces `writeBookField`, which wrote a third copy of facts the brief
+     and Identity already own. Identity targets go through `goSystemSection`
+     so the sub-screen resolution and the deep-link highlight are the ones
+     `resolveIdentitySubstep` already defines — spelling a substep id here
+     would be a second map to keep in step. */
+  const openFieldHome = (view, section) => {
+    if (view === 'brand' && typeof goSystemSection === 'function') {
+      goSystemSection(section || null);
+      return;
+    }
+    setActiveView?.(view);
+  };
 
   /* Primary / Accent / Ink / Paper from roles + named tokens for the colour page. */
   const roleColors = (() => {
@@ -1495,7 +1516,7 @@ export default function BrandBookBuilderView({ setActiveView }) {
           if (!rows.length) return null;
           return (
             <Section key={pg.id} title={pg.title || pg.name || pg.label}>
-              <BookTextFields pageId={pg.id} x={bookX} onChange={writeBookField} />
+              <BookTextFields pageId={pg.id} x={bookX} onOpen={openFieldHome} />
             </Section>
           );
         })}

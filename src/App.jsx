@@ -774,9 +774,11 @@ function App() {
     })
     return !!packReadiness(pack).thin
   }, [activeProject, deskTasks, deskMood, projectPalette])
-  /** Path steps full ≠ pack ready — Home must not overclaim ship readiness. */
-  const pathStepsFull = pathDoneCount >= PATH_STEP_COUNT
-  const brandBookReady = pathStepsFull && !leaveBehindThin
+  /* `pathStepsFull` / `brandBookReady` were computed here and consumed by
+     NOTHING — the only surviving reference was a comment in DeskView. Dead
+     since whatever removed their last reader; found while tracing the
+     step-completion model on 2026-08-08. `leaveBehindThin` is still real and
+     is passed down below. */
   const completedCount = doneTasks.length
 
   const projectDeadline = activeProject?.deadline || ''

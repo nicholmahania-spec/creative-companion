@@ -7311,12 +7311,6 @@ body:has(.app.deep)::after {
   font-size: 0.78rem;
 }
 
-@media (max-width: 899px) {
-.design-studio .design-preview-rail {
-    order: -1;
-  }
-}
-
 .review-notes-input {
   min-height: 8rem;
   border-radius: var(--radius-sm) !important;

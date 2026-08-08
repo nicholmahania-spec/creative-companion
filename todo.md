@@ -6,7 +6,79 @@
 
 ---
 
-## Identity rework — Block A shipped, Blocks B–F await approval (2026-08-08)
+## Identity rework — Blocks A–F shipped (2026-08-08)
+
+**Shipped in B/C:** the artboard is the workspace — editable, on every tool
+screen, left on wide and first on mobile. Words and Preview are gone as
+screens; Handover is new. `logoConcepts[]` gives the mark a real
+add → compare → star loop, and only the starred concept reaches a client.
+Dashboard: loose ends stopped counting your own to-do list and the client's
+blank brief answers, the Desk artboard stopped using the composed brief as a
+type specimen, and the unasked three-gap list is gone.
+
+**Shipped in D/E/F:** the Type bench sets both faces as a real hierarchy
+(display → caption) at real sizes on the brand's paper, in the brand's own
+sentences, with stand-in lines marked as such. The Brand Book Builder's word
+fields are read-only and route to where each answer is authored — it is an
+output surface now, not a fourth place to type the same fact. `competitors`
+reaches Research as a strip that drops a pre-titled note pin per name. The
+Asset library tool is **Library**, ending the "Assets" collision with stop 5.
+
+## The dashboard, reworked (2026-08-08)
+
+The earlier pass kept three things on the argument that the code depended on
+them. The owner rejected that reasoning — *"an implementation dependency is
+not proof that those controls belong in the product"* — and traced properly,
+two of the three were scaffolding.
+
+**The rail's checklist is gone**, replaced by five **workspace cards** — all
+five stops, always, in path order, each saying what is ESTABLISHED there
+("1 starred · 3 pins", the palette and mark themselves on Identity) and
+navigating straight in. No ticks, no fractions, no skipped state.
+
+Deleted: `upcomingStops`, `doneStops`, `skippedStops`, `finished`,
+`progressLabel`, the open-task rows, the Done list, and — end to end —
+`stepsNotNeeded` + `toggleStepNotNeeded`. That field was read by one file and
+existed only to prune the leftovers list.
+
+Also deleted: `pathStepsFull` / `brandBookReady` in `App.jsx`, computed and
+consumed by nothing. Lint ratchet 137 → 136.
+
+**What survived, and why it is not the same argument as before.**
+`setStepDone` writes `pathDone`, which feeds `pathStepHasContent` →
+`pathFirstGap` — i.e. it decides which stop the app *suggests*. Every
+condition behind that is a proxy, so a mark drawn in Illustrator or a stage
+agreed on the phone is invisible and the wrong stop would stay next forever.
+That is real project state. It is one quiet link now, worded as a correction
+("Not next — X is handled") rather than a completion tick.
+
+**The mobile question, answered rather than assumed.** The horizontal step
+rail renders only when `journeyActive` is set, so it never appears on the
+Desk; the sidebar collapses to a centered dialog behind the menu button below
+768px. The leftovers list really was the only Desk-native route to a
+workspace on a phone — which is why the fix was to give the Desk real
+navigation, not to keep the duplicate. Verified at 390px: all five cards
+navigate, no horizontal overflow.
+
+**Both remaining items done (owner, 2026-08-08).** The "This week" hours bars
+are removed — PRD §11 defers the time view, and seven bars of logged hours
+answer none of the four questions this screen exists for. Not replaced; the
+space belongs to nothing. `weekFromWorkLog` / `hoursLoggedWords` stay in
+`billing/workWeek` because Home still reads them.
+
+The artboard foot's quiet "Open Assets" link is gone — a third action in a row
+that already had a primary and a secondary, and a duplicate of the Assets
+workspace card. The primary still becomes "Open Assets — pack ready" when the
+pack is ready and there is no gap; that is that state's next action, not a
+second route.
+
+**The dashboard pass is complete.**
+
+**Deferred by the owner:** Touchpoints' first fold, PRD §12.
+
+---
+
+## Identity rework — the original Block A record (2026-08-08)
 
 Full audit and plan are in the session that produced this. Block A (data
 ownership only, no IA change) is done: positioning owns its own field,
@@ -16,10 +88,7 @@ raises the contrast bar, version chrome reachable from every Identity screen.
 **Blocks B–F are NOT approved yet. Do not start them.** Recorded so the intent
 survives the session:
 
-- **B — the artboard becomes the workspace.** `BrandArtboard`'s `editable`
-  branch is fully wired and unreachable (`editable={false}` at all call sites);
-  the artboard renders only on the `preview` sub-screen, so PRD §12's "the
-  artboard is readable first" is failing today.
+- **B — DONE.** The artboard is the workspace, editable, on every screen.
 - **OWNER CLARIFICATION, 2026-08-08 — read before building B.** *"Do not
   interpret 'artboard' as a nicely formatted summary of project information."*
   It is the visual workspace the identity is BUILT and EVALUATED against: mark,
@@ -27,8 +96,8 @@ survives the session:
   applications all changing live as the editors are used. Placing today's
   static information sheet beside today's forms preserves the exact problem
   the rework exists to fix.
-- **C** — `logoConcepts[]` per the spec further down this file. Unstarred
-  concepts must never reach the client package.
+- **C — DONE.** `logoConcepts[]` shipped; `logoConcepts.test.js` asserts the
+  rejected marks never reach the pack, and are never carried into a template.
 - **D** — Type specimen bench: real hierarchy at real sizes in the brand's own
   colors, not two font names.
 - **E** — one always-present Handover screen; genuine-convention defaults

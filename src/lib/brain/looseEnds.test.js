@@ -30,7 +30,9 @@ describe('the clear state', () => {
   })
 
   it('offers no clear line when there is something open', () => {
-    const r = looseEnds({ project: project(), tasks: [{ id: 1, completed: false }] })
+    const r = looseEnds({
+      project: project({ revisionRounds: [{ id: 1 }] }),
+    })
     expect(clearLine(r)).toBe('')
   })
 
@@ -43,15 +45,23 @@ describe('the clear state', () => {
 })
 
 describe('what counts as waiting', () => {
-  it('counts open tasks, not finished ones', () => {
+  /**
+   * Changed 2026-08-08. This used to assert that open tasks ARE loose ends.
+   * They are not waiting on anybody — they are your own plan, they already
+   * have a panel on this screen and a queue on Touchpoints, and counting
+   * them here meant the number went UP as work got broken into steps. A
+   * readout that punishes planning is worse than no readout.
+   */
+  it('does not count your own to-do list', () => {
     const r = looseEnds({
       project: project(),
       tasks: [
         { id: 1, completed: false },
-        { id: 2, completed: true },
+        { id: 2, completed: false },
       ],
     })
-    expect(r.ends.find((e) => e.id === 'tasks').count).toBe(1)
+    expect(r.ends.find((e) => e.id === 'tasks')).toBeUndefined()
+    expect(r.clear).toBe(true)
   })
 
   it('counts unread client rows for THIS project only', () => {
@@ -96,9 +106,43 @@ describe('what counts as waiting', () => {
     expect(r.ends.find((e) => e.id === 'feedback').count).toBe(1)
   })
 
-  it('counts required brief answers nobody gave', () => {
+  /**
+   * The brief is the CLIENT's intake surface. An unanswered question on a
+   * project that was never sent is work that has not started, and listing it
+   * here turned the client's questions into the designer's chores on the
+   * designer's own workspace ("Write the goal in the brief"). Strategy
+   * already shows what is blank, without the framing.
+   */
+  it('does not make the client’s blank answers the designer’s chores', () => {
     const r = looseEnds({ project: { id: 'p1', detective: {} } })
-    expect(r.ends.find((e) => e.id === 'brief').count).toBeGreaterThan(0)
+    expect(r.ends.find((e) => e.id === 'brief')).toBeUndefined()
+  })
+
+  it('does report the client owing answers once the brief has been sent', () => {
+    // Now it IS waiting on somebody, and says so.
+    const r = looseEnds({
+      project: {
+        id: 'p1',
+        detective: {},
+        discoveryShareId: 'share-1',
+        discoveryShareStatus: 'pending',
+      },
+    })
+    const row = r.ends.find((e) => e.id === 'brief')
+    expect(row.count).toBeGreaterThan(0)
+    expect(row.label).toMatch(/waiting on the client/i)
+  })
+
+  it('stops reporting it once the client has submitted', () => {
+    const r = looseEnds({
+      project: {
+        id: 'p1',
+        detective: {},
+        discoveryShareId: 'share-1',
+        discoveryShareStatus: 'submitted',
+      },
+    })
+    expect(r.ends.find((e) => e.id === 'brief')).toBeUndefined()
   })
 
   it('does not treat ordinary unfinished design work as a loose end', () => {
@@ -115,14 +159,20 @@ describe('what counts as waiting', () => {
 describe('robustness', () => {
   it('handles being called with nothing', () => {
     expect(() => looseEnds()).not.toThrow()
-    expect(looseEnds().ends.some((e) => e.id === 'brief')).toBe(true)
+    // Nothing known means nothing is waiting on anyone — "clear" is honest
+    // here, and inventing a gap for an empty argument would be the
+    // ambient-reproach failure in miniature.
+    expect(looseEnds().clear).toBe(true)
   })
 
   it('gives every end somewhere to go', () => {
     const r = looseEnds({
-      project: project({ revisionRounds: [{ id: 1 }] }),
-      tasks: [{ id: 1, completed: false }],
+      project: project({
+        revisionRounds: [{ id: 1 }],
+        feedbackLog: [{ issue: 'Mark reads heavy', decision: '' }],
+      }),
     })
+    expect(r.ends.length).toBeGreaterThan(0)
     for (const e of r.ends) expect(e.view).toBeTruthy()
   })
 })

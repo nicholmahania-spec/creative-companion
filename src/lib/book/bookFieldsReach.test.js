@@ -126,7 +126,7 @@ const EXEMPT = {
   colorRoleWhy: 'feeds a completion gate, not a deliverable',
   /* Optional Assets ship polish — not path-done (audit 2026-08-03). */
   deliverWordsChecked: 'optional ship polish checkboxes, not a deliverable',
-  /* UI resume only — which Mark/Words/Colour/Type/Preview screen was last. */
+  /* UI resume only — which Mark/Color/Type/Handover screen was last. */
   identitySubstep: 'resume position on Identity, not a deliverable field',
   /* `touchpointApps` was exempted here until 2026-08-05. It is no longer
      written through `updateBrandField` at all — it is plain project state read
@@ -134,9 +134,13 @@ const EXEMPT = {
      documentation for a decision that no longer applies. Removed rather than
      kept "just in case": that is precisely the stale-exemption case the last
      test in this file exists to catch, and it was failing on it. */
-  /* Studio approval fact on Mark — object permanence for “which route they
-     picked.” Not printed in the client book (internal recovery). */
-  logoClientChose: 'studio approval note, not a pack field',
+  /* `logoClientChose` was exempted here until 2026-08-08. Its text box is
+     gone: which route was chosen is now the starred concept in
+     `logoConcepts`, which is the actual thing rather than a note about it.
+     The stored field stays for projects that already filled it in, but
+     nothing writes it any more, so it never reaches this check — the same
+     stale-exemption case `touchpointApps` hit above, and the reason the last
+     test in this file exists. */
 }
 describe('every editable brand field reaches something the client gets', () => {
   const sources = allSource().map((p) => readFileSync(p, 'utf8'))

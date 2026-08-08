@@ -114,7 +114,15 @@ export function toolsLabelForView(view) {
     case 'book':
       return 'Brand book'
     case 'assets':
-      return 'Asset library'
+      /* "Library", not "Asset library".
+         Path stop 5 is labelled **Assets** (view `finish`), and this Tool is
+         view `assets` — so the nav carried two entries a word apart while
+         their view ids were the exact opposite way round. A designer reading
+         "Assets" in the rail and "Asset library" in the Tools menu has no way
+         to know which one holds the file they are looking for. The stop's
+         label is settled (DESIGN_GRAMMAR G1) and client-facing, so the Tool
+         is the one that moves. It shares no word with the stop now. */
+      return 'Library'
     case 'settings':
       return 'Settings'
     case 'concept':

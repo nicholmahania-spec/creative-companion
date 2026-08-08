@@ -101,11 +101,6 @@
   color: var(--text-muted);
 }
 
-.desk-progress-strong {
-  color: var(--text-primary);
-  font-weight: 700;
-}
-
 .desk-next-meta {
   display: flex;
   flex-wrap: wrap;
@@ -770,63 +765,6 @@
   overflow-wrap: break-word;
 }
 
-/* This week — real workLog only */
-.desk-week-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-2);
-  height: 4rem;
-}
-
-.desk-week-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-.desk-week-bar {
-  width: 100%;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  background: var(--bg-muted);
-}
-
-.desk-week-bar.is-filled {
-  background: var(--text-primary);
-  border-color: var(--text-primary);
-}
-
-.desk-week-day {
-  font-size: var(--fs-1);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-}
-
-.desk-week-date {
-  font-size: var(--fs-1);
-  font-weight: 500;
-  color: var(--text-muted);
-  opacity: 0.7;
-}
-
-/* Today is the only column anyone looks for first. */
-.desk-week-col.is-today .desk-week-day,
-.desk-week-col.is-today .desk-week-date {
-  color: var(--text-primary);
-  opacity: 1;
-}
-
-.desk-week-total {
-  margin: 0;
-  font-size: var(--fs-1);
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
 /* Dark */
 .app.deep .desk-grid,
 .app.deep .desk-main,
@@ -842,10 +780,6 @@
   color: #fff;
 }
 
-.app.deep .desk-week-bar.is-filled {
-  background: var(--text-primary);
-}
-
 /* ── Check my brand ───────────────────────────────────────────────────────
    Quiet by default. The status line and the three shortcuts are the only
    thing on screen until the toggle is pressed, so an unfinished brand never
@@ -856,7 +790,6 @@
   color: var(--text-muted);
 }
 
-.desk-check-short,
 .desk-check-list,
 .desk-check-facts {
   display: flex;
@@ -865,13 +798,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.desk-check-short li {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
 }
 
 .desk-check-gap {
@@ -897,7 +823,6 @@
 }
 
 .desk-check-todo,
-.desk-check-group,
 .desk-check-group-count,
 .desk-check-fact-source {
   font-size: var(--fs-1);
@@ -1084,4 +1009,119 @@
 .desk-private-notes {
   min-height: 4.5rem;
   resize: vertical;
+}
+
+/* ── Brand book builder: words are read here, written elsewhere ──────────
+   The builder is an output surface. Each row states the value the PDF will
+   print, names where that answer is authored, and goes there. */
+
+.bbb-field.bbb-read {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.bbb-read-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.bbb-read-value {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* An unanswered line reads as waiting, not as content — the em-dash rule the
+   direction sheet already follows. */
+.bbb-read-value.is-empty {
+  color: var(--text-muted);
+}
+
+.bbb-read-link {
+  justify-self: start;
+  font-size: var(--fs-1);
+}
+
+/* ── Workspaces ──────────────────────────────────────────────────────────
+   Five cards, always all five, in path order. Orientation + navigation +
+   what is established — not five miniature dashboards, and not a checklist.
+   No ticks, no counts of things undone, no skipped state. */
+
+.desk-stop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.desk-stop {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.desk-stop:hover {
+  background: var(--bg-canvas);
+  border-color: var(--border-subtle);
+}
+
+.desk-stop:focus-visible {
+  outline: 2px solid var(--dopamine);
+  outline-offset: 1px;
+}
+
+/* The one the gap card is pointing at. A hairline, not a badge: it marks
+   where you are being sent, and it is already said in words above. */
+.desk-stop.is-next {
+  border-color: var(--border-strong);
+  background: var(--bg-canvas);
+}
+
+.desk-stop-name {
+  font-weight: 600;
+}
+
+/* What is established there. Never a fraction of things left to do. */
+.desk-stop-line {
+  grid-column: 1;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+
+/* Identity earns the visual: the palette and the mark ARE the established
+   thing, and a sentence about them is strictly worse than seeing them. */
+.desk-stop-brand {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.desk-stop-mark {
+  width: 1.25rem;
+  height: 1.25rem;
+  object-fit: contain;
+  margin-right: var(--space-1);
+}
+
+.desk-stop-swatch {
+  width: 0.75rem;
+  height: 1.25rem;
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
 }

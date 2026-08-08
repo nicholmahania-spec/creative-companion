@@ -113,21 +113,19 @@ test.describe('Process walk (artifacts)', () => {
     // 5 Design — tagline (craft) + version bump
     await stepByIdIn(path, 'design').click()
     await expect(headingForStep(page, 'design').first()).toBeVisible()
-    /* Tagline lives on Identity's Words sub-screen, which is mounted only
-       while open — `#brand-tagline` does not exist on arrival at Design.
-       Same wall soft-signal hit on `#msg-promise` after 20d21a1 split
-       Identity into Mark → Words → Colour → Type → Preview. */
-    await openIdentitySubstep(page, 'essentials')
-    await page.locator('#brand-tagline').fill('Calm direction you can hand over')
-    /* Bump is on Preview, not Words — the two fields this test touches live on
-       different Identity sub-screens, so filling the tagline leaves you one
-       screen away from the control that versions it. */
-    await openIdentitySubstep(page, 'preview')
-    /* The bump button carries its action in visible text now ("Bump · v1"),
-       not just the version readout. */
-    await page.getByRole('button', { name: /^Bump · v1$/ }).click()
+    /* The tagline is on the artboard, which is on screen the moment Identity
+       opens — no tab to click first. This used to need
+       `openIdentitySubstep(page, 'essentials')` because the words lived on a
+       Words form; that screen is gone. */
+    await page
+      .getByRole('textbox', { name: 'Tagline' })
+      .fill('Calm direction you can hand over')
+    /* Versions live on Handover — the "what ships" screen — rather than on a
+       Preview tab that existed only so you could look at your own work. */
+    await openIdentitySubstep(page, 'handover')
+    await page.getByRole('button', { name: /^Save a version · v1$/ }).click()
     await expect(
-      page.getByRole('button', { name: /^Bump · v[2-9]$/ })
+      page.getByRole('button', { name: /^Save a version · v[2-9]$/ })
     ).toBeVisible({ timeout: 5000 })
 
     // 6 Review — pack readiness + feedback notes

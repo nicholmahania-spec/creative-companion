@@ -19,9 +19,14 @@ If a screen fights these, the screen is wrong — not the grammar.
 |---|--------|------|-----|
 | 1 | **Strategy** | `project` | Client + brief. Form-only — no mood board. |
 | 2 | **Research** | `studio` | One wall of refs; ★ up to 6 for the pack. |
-| 3 | **Identity** | `brand` | Mark → Words → Color → Type → Preview. |
+| 3 | **Identity** | `brand` | Persistent editable artboard + Mark · Color · Type · Handover. |
 | 4 | **Touchpoints** | `flow` | Applications from the brief; note or “looks right”. |
 | 5 | **Assets** | `finish` | Preview leave-behind → one download + handoff. |
+
+**The Tool called `assets` is *Library*, not "Asset library".** Stop 5 is
+**Assets** (view `finish`) and the Tool is view `assets` — the ids run the
+opposite way to the labels, so two nav entries a word apart were unreadable.
+The stop's label is settled and client-facing; the Tool moved.
 
 **Derive, never restate.** Use `JOURNEY_STEPS`, `labelForStepId`, `labelForView`, `PATH_STEP_COUNT`.  
 Ideate (`spark`) and Review are **Tools**, not path siblings. Timer, Calendar, Clients, Settings, Brand Book Builder — Tools.
@@ -81,7 +86,7 @@ Icon-only is a **closed list** (close, nav, arrows when paged thing is named, se
 |---------|--------|
 | **Strategy** | Title · quiet status · brief form · path continue |
 | **Research** | Title · framed wall / drop plane · pack stars |
-| **Identity** | Subnav · one sub-screen · artboard · continue |
+| **Identity** | Subnav · artboard (left on wide, FIRST on mobile) beside one tool screen · continue |
 | **Touchpoints** | Title · application cards · continue |
 | **Assets** | Title · preview (full page fit) · download + handoff · secondary below |
 | **Desk** | Artboard + pack pins + brief · rail: client · path gap primary · resume secondary if different |

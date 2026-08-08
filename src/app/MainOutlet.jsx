@@ -310,6 +310,7 @@ export default function MainOutlet(p) {
         deskMood={deskMood}
         activeProjectId={activeProjectId}
         brandWords={activeProject?.detective?.brandWords || ''}
+        competitors={activeProject?.detective?.competitors || ''}
         projectPalette={projectPalette}
         forcedBreak={forcedBreak}
         setActiveView={setActiveView}
@@ -439,13 +440,6 @@ export default function MainOutlet(p) {
         onOpenView={setActiveView}
         onOpenSection={goSystemSection}
         onOpenClientInbox={() => setClientInboxOpen(true)}
-        onToggleTask={toggleTask}
-        onToggleNotNeeded={(stepId) =>
-          activeProject &&
-          useAppStore
-            .getState()
-            .toggleStepNotNeeded(activeProject.id, stepId)
-        }
         onMarkStepDone={(stepId, done) =>
           activeProject &&
           useAppStore.getState().setStepDone(stepId, done, activeProject.id)
@@ -492,7 +486,13 @@ export default function MainOutlet(p) {
     /* The builder's "not in the book yet" list names the stop each gap is
        waiting on. It could say so but not take you there, which made it a
        list of things you cannot act on. */
-    return wrap('book', <BrandBookBuilderView setActiveView={setActiveView} />)
+    return wrap(
+      'book',
+      <BrandBookBuilderView
+        setActiveView={setActiveView}
+        goSystemSection={goSystemSection}
+      />
+    )
   }
 
   if (activeView === 'assets') {

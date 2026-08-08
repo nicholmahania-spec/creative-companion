@@ -59,6 +59,14 @@ derive it · should a design action produce it first. Only four noes earn a new
 field. Documentation is the by-product of a decision, never the thing that
 produces one.
 
+**1b. The brand book builder is an OUTPUT surface** (owner, 2026-08-08).
+
+Its word fields are read-only and link to where each answer is authored
+(`FIELD_HOMES` in `bookContent.js`). Do not give it editable copies again: the
+client answers in the brief, the designer sharpens on Identity's direction
+sheet, and a third box here made "which one does the PDF read?" unanswerable
+from the screen.
+
 **2. American English, everywhere a user can read it** (G9.1).
 
 color · favorite · organize · customize · behavior · center · labeled ·
@@ -248,8 +256,11 @@ hours, scope dashboards above the work). Demote contract/planning
   (`.research-artboard` frame + auto-flow grid inside — not free pan/zoom
   placement, not a bare document empty state)
 - Identity: `src/views/DesignView.jsx`, `src/styles/lazy-design.css`,
-  `.main:has(.design-studio)` full width; artboard primary; quiet status;
-  Next + Back footer
+  `.main:has(.design-studio)` full width; **`.design-workspace` is a
+  two-column grid — the editable artboard is the left column on wide and the
+  FIRST block on mobile, present on every tool screen**; quiet status;
+  Next + Back footer. There is no Words screen and no Preview destination:
+  the words are edited on the sheet, and a preview is not an activity.
 - Do not reintroduce: chapter rail on The brief, start-here multi-chip ramp,
   interview CTA that only focuses the first field, project-name band when
   sidebar/header already name the project; Research 980/1160px centered caps;

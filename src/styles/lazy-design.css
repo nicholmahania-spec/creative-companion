@@ -691,16 +691,6 @@
   object-fit: contain;
 }
 
-.artboard-logo-clear {
-  font-size: 0.72rem !important;
-  color: inherit !important;
-  opacity: 0.85;
-}
-
-.artboard-logo-upload {
-  margin: 0.5rem 0 0.75rem;
-}
-
 .export-artboard-wrap {
   max-height: min(70vh, 720px);
   overflow: auto;
@@ -753,7 +743,8 @@
   margin-bottom: 1rem;
 }
 
-/* Identity is single-column now — no side artboard grid (see .design-studio). */
+/* Identity is a two-column workspace again — see .design-workspace at the
+   end of this file. The single-column era is what broke PRD §12. */
 
 .pack-view .pack-preview-artboard {
   background: #FAFAFA;
@@ -1212,14 +1203,6 @@
   color: var(--text-muted);
 }
 
-.design-preview-rail {
-  padding: 0.75rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--ts-border, var(--border-subtle));
-  background: var(--ts-panel, #FFFFFF);
-  box-shadow: none;
-}
-
 /* Identity — one sub-screen at a time (Mark → Words → Colour → Type → Preview). */
 .design-studio.system-view {
   display: flex;
@@ -1269,13 +1252,6 @@
   box-shadow: inset 0 -2px 0 var(--text-primary);
 }
 
-.identity-subnav-num {
-  font-family: var(--font-display);
-  letter-spacing: 0.02em;
-  opacity: 0.65;
-  font-weight: 500;
-}
-
 .app.deep .identity-subnav-btn.is-active {
   background: var(--bg-muted);
 }
@@ -1310,66 +1286,10 @@
   gap: var(--space-2);
 }
 
-/* Secondary to the artboard — always visible, never a second primary job */
-.design-preview-notes {
-  margin-top: var(--space-5);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--border-subtle);
-  max-width: 65ch;
-}
-
-.design-preview-notes.is-secondary {
-  opacity: 0.95;
-}
-
-.design-preview-notes-lede {
-  margin: 0 0 var(--space-3);
-  font-size: var(--fs-2);
-  font-weight: 500;
-  color: var(--text-muted);
-  max-width: 65ch;
-}
-
-.design-preview-notes-title {
-  margin: var(--space-4) 0 var(--space-2);
-  font-size: var(--fs-2);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--text-secondary);
-}
-
-.design-preview-notes .design-preview-notes-title:first-of-type {
-  margin-top: var(--space-1);
-}
-
-/* Artboard owns Preview — full width, first fold */
-.design-studio .design-artboard-bottom {
-  margin-top: 0;
-}
-
 .design-studio .design-edit-column {
   width: 100%;
   min-width: 0;
   flex: 1 1 auto;
-}
-
-/* Full sheet after the form — natural height, page scrolls with it */
-.design-studio .design-artboard-bottom {
-  width: 100%;
-  max-width: none;
-  margin: var(--space-5) 0 0;
-  max-height: none;
-  height: auto;
-  overflow: visible;
-  position: static;
-  z-index: auto;
-  background: var(--ts-panel, var(--bg-elevated, #ffffff));
-  box-shadow: none;
-}
-
-.app.deep .design-studio .design-artboard-bottom {
-  background: var(--ts-panel, var(--bg-elevated, #2f2f2f));
-  border-color: var(--border-subtle);
 }
 
 .design-studio .path-continue-row.design-path-footer {
@@ -2051,4 +1971,408 @@
 .logo-donts-use {
   margin-top: 0.45rem;
   font-size: var(--fs-1);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Identity workspace — artboard left, tools right (2026-08-08)
+
+   Replaces the single column that quarantined the artboard behind a fifth
+   tab. The sheet is the workspace, so it is on screen while every decision
+   is made. PRD §12: readable first — left on wide, FIRST on mobile.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.design-workspace {
+  display: grid;
+  /* The sheet gets the larger share. It is the thing being judged; the tools
+     are controls, and controls do not need reading measure. */
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+  width: 100%;
+}
+
+.design-artboard-column {
+  min-width: 0;
+  /* Follows you down a long tool column instead of scrolling away. The whole
+     point is that a color change is visible at the moment it is made. */
+  position: sticky;
+  top: var(--space-4);
+  max-height: calc(100vh - var(--space-7));
+  overflow: auto;
+  padding: var(--space-3);
+  border: 1px solid var(--ts-border, var(--border-subtle));
+  border-radius: var(--radius);
+  background: var(--ts-panel, var(--bg-elevated));
+}
+
+.app.deep .design-artboard-column {
+  background: var(--ts-panel, var(--bg-elevated));
+  border-color: var(--border-subtle);
+}
+
+.design-artboard-column.is-deep-link-focus {
+  outline: 2px solid var(--dopamine);
+  outline-offset: 2px;
+}
+
+/* Below the grid breakpoint the sheet comes FIRST and stops being sticky —
+   a sticky element that fills the viewport on a phone is a trap. */
+@media (max-width: 60rem) {
+  .design-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .design-artboard-column {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    order: -1;
+  }
+}
+
+/* ── Editable sheet ──────────────────────────────────────────────────────
+   An editable region styled as finished artwork is a weak signifier —
+   measurably slower to find (NN/g 2017, 71 participants) — and the app's own
+   grammar (G2) says important chrome stays visible. Every editable line
+   therefore keeps a persistent label AND a visible edge. */
+
+.artboard-word-kicker {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* Provenance. Information, never a control: no button, no confirm, no tint
+   that reads as "unverified". It removes itself the moment the designer
+   types, because the line stops being the client's at that point. */
+.artboard-from-brief {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.artboard-brief-input,
+.artboard-tagline-input {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: transparent;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.artboard-brief-input:hover,
+.artboard-tagline-input:hover {
+  border-color: var(--border-strong);
+}
+
+.artboard-brief-input:focus-visible,
+.artboard-tagline-input:focus-visible {
+  outline: 2px solid var(--dopamine);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+/* A line still in the client's words reads a shade quieter than one the
+   designer wrote — enough to tell them apart at a glance, not enough to look
+   like a warning. */
+.artboard-brief-input.is-from-brief {
+  color: var(--text-secondary);
+  border-style: dashed;
+}
+
+.artboard-messaging {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* ── Mark: concepts ──────────────────────────────────────────────────────
+   Two or three marks, one starred. Add → see → compare → choose. */
+
+.mark-concepts-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.mark-concepts-hint {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.mark-concept-grid {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--space-3);
+}
+
+.mark-concept {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+
+/* The chosen one is obvious without a badge shouting it. */
+.mark-concept.is-chosen {
+  border-color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--text-primary);
+}
+
+/* Marks are judged against paper, not against app chrome, and a mark is
+   frequently white — on the workspace surface it would vanish. This is a
+   picture of what the client receives, so it follows the ink-and-paper rule
+   (G4.4) and does NOT theme. */
+.mark-concept-frame {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+}
+
+.mark-concept-frame img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.mark-concept-blank {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--paper-edge);
+}
+
+.mark-concept-star {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+}
+
+.mark-concept-star.is-on {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--ts-ink, var(--bg-card));
+  cursor: default;
+}
+
+.mark-concept-star:focus-visible {
+  outline: 2px solid var(--dopamine);
+  outline-offset: 2px;
+}
+
+.mark-concept-name,
+.mark-concept-why {
+  font-size: var(--fs-1);
+}
+
+.mark-concept-remove {
+  align-self: flex-start;
+  font-size: var(--fs-1);
+}
+
+.mark-concept.is-add {
+  padding: 0;
+  border: 1px dashed var(--border-strong);
+  background: transparent;
+}
+
+.mark-concept-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 100%;
+  min-height: 11rem;
+  padding: var(--space-4);
+  cursor: pointer;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.mark-concept-add:hover {
+  color: var(--text-primary);
+}
+
+.mark-concept-add-plus {
+  font-size: var(--fs-4);
+  line-height: 1;
+  font-weight: 500;
+}
+
+.mark-concept-add-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+}
+
+.mark-concept-add:focus-within {
+  outline: 2px solid var(--dopamine);
+  outline-offset: 2px;
+}
+
+/* ── Mark: the old identity, and the mark at size ───────────────────────── */
+
+.mark-existing,
+.mark-sizes {
+  margin-top: var(--space-4);
+}
+
+.mark-existing-row,
+.mark-size-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+}
+
+.mark-existing-item {
+  margin: 0;
+  max-width: 8rem;
+}
+
+.mark-existing-item img {
+  max-width: 100%;
+  max-height: 4rem;
+  object-fit: contain;
+}
+
+.mark-size-item {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mark-size-item img {
+  width: auto;
+  object-fit: contain;
+}
+
+.mark-size-item figcaption {
+  font-size: var(--fs-1);
+  color: var(--paper-ink);
+  opacity: 0.7;
+}
+
+/* ── Handover ───────────────────────────────────────────────────────────── */
+
+.design-handover-lead {
+  margin: 0 0 var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-2);
+}
+
+.design-handover-title {
+  margin: var(--space-5) 0 var(--space-2);
+  font-size: var(--fs-2);
+  font-weight: 700;
+}
+
+.design-handover-versions {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.design-handover-versions .version-controls {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+/* The client asked for this bar — said once, above the rows, and before there
+   are any rows. Stated, not alarmed: this is information about a target, not
+   a failure. */
+.readability-strict-note {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  padding: var(--space-2) var(--space-3);
+  border-left: 2px solid var(--dopamine);
+  background: var(--bg-canvas);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+/* ── Type specimen bench ─────────────────────────────────────────────────
+   The pairing as a hierarchy, at real sizes, on the brand's paper. The sheet
+   does NOT theme (G4.4) — it is a picture of printed and rendered work, and
+   a body face judged on a themed grey panel reads as two different decisions
+   depending on whether the designer happens to be in deep mode. */
+
+.type-specimen {
+  margin-top: var(--space-4);
+}
+
+.type-specimen-sheet {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius);
+  border: 1px solid var(--paper-edge);
+  overflow-wrap: anywhere;
+}
+
+.type-specimen-rung {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* Which rung and which of the two faces set it — so a pairing that reads
+   wrong can be traced to the face that did it. Small, and in the paper's own
+   ink at low opacity rather than a workspace token, which would not survive
+   on a dark brand background. */
+.type-specimen-meta {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.55;
+}
+
+.type-specimen-line {
+  margin: 0;
+  min-width: 0;
+}
+
+/* Stand-in copy reads quieter than the brand's own sentences, so nobody
+   mistakes filler for a decision somebody made. */
+.type-specimen-line.is-fallback {
+  opacity: 0.45;
+}
+
+.type-specimen-note {
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 40rem) {
+  .type-specimen-sheet {
+    padding: var(--space-4);
+  }
 }

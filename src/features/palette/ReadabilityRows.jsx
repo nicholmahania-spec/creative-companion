@@ -34,7 +34,7 @@ const ROW_LABEL = {
   'text-on-quiet': 'Body text on your background',
   'text-on-cover': 'Body text on your cover color',
   'accent-on-quiet': 'Accent on your background',
-  'accent-on-cover': 'Accent on your cover colour',
+  'accent-on-cover': 'Accent on your cover color',
 }
 
 /* The pair ids encode which role is on which side — 'accent-on-quiet' is the
@@ -59,21 +59,33 @@ export default function ReadabilityRows({
 }) {
   const pairs = roleContrastPairs(roles || {}, { strict })
 
+  /* The raised bar is stated BEFORE the rows, and before there are any rows.
+     It sat after the no-pairs early return, so on the screen where it matters
+     most — a palette with no roles assigned yet, the moment the designer is
+     about to choose them — the app knew the client had asked for AAA and said
+     nothing. Measured in a browser: strict was true, the note rendered zero
+     times. */
+  const note =
+    strict && strictNote ? (
+      <p className="readability-strict-note" role="status">
+        {strictNote}
+      </p>
+    ) : null
+
   if (!pairs.length) {
     return (
-      <p className="panel-hint">
-        Give a color a job above and its readability shows up here.
-      </p>
+      <>
+        {note}
+        <p className="panel-hint">
+          Give a color a job above and its readability shows up here.
+        </p>
+      </>
     )
   }
 
   return (
     <>
-      {strict && strictNote ? (
-        <p className="readability-strict-note" role="status">
-          {strictNote}
-        </p>
-      ) : null}
+      {note}
       <ul className="readability-rows" aria-label="Readability">
       {pairs.map((pair) => {
         const routes = pair.ok ? [] : resolutionsFor(pair.fg, pair.bg, pair.need)

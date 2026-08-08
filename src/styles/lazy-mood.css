@@ -1039,3 +1039,54 @@
 .research-continue {
   justify-content: flex-end;
 }
+/* ── Competitors the client named ────────────────────────────────────────
+   Reference, and one tap to start a note about one. The brief collected
+   these and nothing on a research surface ever read them; this is the strip
+   that closes that. Quiet — it sits under the status line, not beside the
+   wall's own controls, because it is context rather than a tool of its own. */
+
+.research-competitors {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.research-competitors-label {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.research-competitor {
+  font: inherit;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.research-competitor:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.research-competitor:focus-visible {
+  outline: 2px solid var(--dopamine);
+  outline-offset: 2px;
+}
+
+/* Already on the wall. Struck through rather than hidden: the client named
+   them, and a name that vanishes once handled loses the record of who was
+   asked about. Not styled as an error or a tick — just spent. */
+.research-competitor.is-pinned {
+  cursor: default;
+  opacity: 0.5;
+  text-decoration: line-through;
+  border-style: dashed;
+}

@@ -51,7 +51,9 @@ const BUDGET = {
   'src/styles/shell.css': 409,
   'src/styles/lazy-buddy.css': 40,
   'src/styles/lazy-settings.css': 36,
-  'src/styles/lazy-design.css': 18,
+  /* 18 → 16: deleting the Preview sub-screen's rules took two of them
+     with it. The budget only moves DOWN. */
+  'src/styles/lazy-design.css': 16,
   'src/styles/lazy-sketch.css': 0,
   'src/styles/lazy-worklog.css': 0,
   'src/styles/lazy-define.css': 18,

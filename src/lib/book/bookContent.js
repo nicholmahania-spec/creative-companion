@@ -1,6 +1,8 @@
 import { filledDetectiveChapters } from '../brief/detectiveBrief'
 import { bookPlan } from './bookDocument'
 import { touchpointLabel } from '../journey/touchpoints'
+import { labelForStepId } from '../journey/journey'
+import { IDENTITY_SUBSTEPS } from '../journey/identitySubsteps'
 
 /**
  * The brand book's content, page by page, built only from answers that exist.
@@ -53,6 +55,84 @@ function fields(pairs) {
  * print but cannot be typed into. Offering an edit box that quietly recomputes
  * over your typing would be a control that does not do its thing.
  */
+/**
+ * WHERE EACH ANSWER IS AUTHORED.
+ *
+ * Every field below already has exactly one home — the brief for the client's
+ * answers, Identity for the brand's own words and mark notes, Assets for the
+ * handoff. The builder used to render a second editable copy of all of them,
+ * which made it a fourth place to type the same fact (brief → Identity →
+ * builder) and left "which box does the PDF read?" unanswerable from the
+ * screen. Owner, 2026-08-08: *the Brand Book builder should become an
+ * OUTPUT/DOCUMENTATION surface, not another authoring location.*
+ *
+ * So the builder now SHOWS the resolved value and links here. `view` is a
+ * view id App accepts; `section` is an Identity deep link resolved by
+ * `resolveIdentitySubstep`.
+ */
+/* Labels are DERIVED, never spelled. A path stop's words live in
+   `journey.js` and an Identity screen's in `identitySubsteps.js`; restating
+   either here is the defect `journeySingleSource.test.js` exists to catch,
+   and it caught this line. */
+const identityLabel = (id) =>
+  IDENTITY_SUBSTEPS.find((s) => s.id === id)?.label || labelForStepId('design')
+
+export const FIELD_HOMES = {
+  /* The brief — the client's own answers. */
+  detective: { view: 'project', label: labelForStepId('define') },
+  /* Identity: the words live on the direction sheet, which renders on every
+     Identity screen, so they all point at the sheet. */
+  positioning: { view: 'brand', section: 'positioning', label: 'the sheet' },
+  voice: { view: 'brand', section: 'voice', label: 'the sheet' },
+  messagingPromise: { view: 'brand', section: 'messaging', label: 'the sheet' },
+  messagingProof: { view: 'brand', section: 'messaging', label: 'the sheet' },
+  messagingPersonality: {
+    view: 'brand',
+    section: 'messaging',
+    label: 'the sheet',
+  },
+  doUse: { view: 'brand', section: 'words', label: 'the sheet' },
+  dontUse: { view: 'brand', section: 'words', label: 'the sheet' },
+  /* Identity: the mark and its handover notes. */
+  logoDirection: { view: 'brand', section: 'logo', label: identityLabel('logo') },
+  logoWordmark: { view: 'brand', section: 'logo', label: identityLabel('logo') },
+  logoClearspace: {
+    view: 'brand',
+    section: 'handover',
+    label: identityLabel('handover'),
+  },
+  imageryStyle: {
+    view: 'brand',
+    section: 'imagery',
+    label: identityLabel('handover'),
+  },
+  imageryDo: {
+    view: 'brand',
+    section: 'imagery',
+    label: identityLabel('handover'),
+  },
+  imageryDont: {
+    view: 'brand',
+    section: 'imagery',
+    label: identityLabel('handover'),
+  },
+  /* The last stop — written at the end, with the pack. */
+  handoffNote: { view: 'finish', label: labelForStepId('deliver') },
+  learnings: { view: 'finish', label: labelForStepId('deliver') },
+}
+
+/**
+ * The home for one PAGE_FIELDS row.
+ * Brief-scoped fields all live on the brief; project-scoped ones are looked
+ * up by name. A field with no entry returns null and the builder shows it
+ * read-only with no link rather than inventing a destination.
+ */
+export function fieldHome(f) {
+  if (!f) return null
+  if (f.scope === 'detective') return FIELD_HOMES.detective
+  return FIELD_HOMES[f.field] || null
+}
+
 export const PAGE_FIELDS = {
   voice: [
     /* Prints on the page, but the builder already has a Tagline input at the

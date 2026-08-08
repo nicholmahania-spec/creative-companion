@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   bestTextOn,
   fontFamilyFromLabel,
@@ -8,11 +8,73 @@ import {
 } from '../lib/color'
 import { BRAND_ROLE_KEYS, BRAND_ROLE_LABELS } from '../lib/color'
 import { colorSpec } from '../lib/brandSystem'
-import { downscaleDataUrl, pinFaceStyle } from '../lib/moodPins'
+import { pinFaceStyle } from '../lib/moodPins'
 import { creditedFooter } from '../lib/book/exportFiles'
 import { hasAnswer } from '../lib/brand/directionValue'
+import { BRIEF_PROVENANCE, effectiveWord } from '../lib/brand/briefWords'
 
 const formatCmyk = (hex) => colorSpec(hex)?.cmyk || ''
+
+/**
+ * A kicker that says where the line under it came from.
+ *
+ * The suffix is the WHOLE provenance mechanism — no button, no confirm, no
+ * "unconfirmed" tint. It disappears on its own the moment the designer types,
+ * because at that point the line is not from the brief any more. See
+ * `briefWords.js` for why an accept step would be the wrong shape.
+ */
+function WordKicker({ children, fromBrief }) {
+  return (
+    <div className="kicker artboard-word-kicker">
+      {children}
+      {fromBrief && (
+        <span className="artboard-from-brief"> · {BRIEF_PROVENANCE}</span>
+      )}
+    </div>
+  )
+}
+
+/**
+ * One editable line on the sheet.
+ *
+ * ALWAYS CARRIES A VISIBLE LABEL, in both modes. A placeholder is guidance
+ * you can only read while you have written nothing — this file's own
+ * `logo-donts` comment made that argument once already — and an editable
+ * region styled as finished artwork is a weak signifier that measurably costs
+ * people time to find (NN/g, 2017). The label plus the input's own edge is
+ * what makes it obviously a thing you can type in rather than a thing that
+ * was printed.
+ */
+function ArtboardLine({
+  label,
+  project,
+  field,
+  onChange,
+  editable,
+  placeholder,
+  rows = 2,
+  style,
+}) {
+  const { value, fromBrief } = effectiveWord(project, field)
+  return (
+    <>
+      <WordKicker fromBrief={fromBrief}>{label}</WordKicker>
+      {editable ? (
+        <textarea
+          className={`artboard-brief-input${fromBrief ? ' is-from-brief' : ''}`}
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          placeholder={placeholder}
+          rows={rows}
+          aria-label={label}
+          style={style}
+        />
+      ) : (
+        <DirectionValue value={value} />
+      )}
+    </>
+  )
+}
 
 /* The vocabulary, not a private copy. This listed four jobs with the OLD
    wording — the client's leave-behind sheet (captured by both the raster
@@ -72,11 +134,11 @@ export default function BrandArtboard({
   onVoiceChange,
   onDoChange,
   onDontChange,
+  onPromiseChange,
+  onProofChange,
+  onPersonalityChange,
   onRoleAssign,
-  onLogoImage,
-  onClearLogoImage,
 }) {
-  const fileRef = useRef(null)
   const [assignRole, setAssignRole] = useState('cover')
   const autoRoles = useMemo(() => mapPaletteRoles(palette), [palette])
   const roles = {
@@ -123,29 +185,46 @@ export default function BrandArtboard({
         {project.logoImage ? (
           <div className="artboard-logo-row">
             <img className="artboard-logo-img" src={project.logoImage} alt="" />
-            {editable && (
-              <button
-                type="button"
-                className="text-link artboard-logo-clear"
-                onClick={() => onClearLogoImage?.()}
-              >
-                Remove mark
-              </button>
-            )}
           </div>
         ) : null}
+        {/* The CLIENT's name, not the project's.
+            PRD §4.1: `detective.clientName` is the project's identity and
+            wins in exports, export filenames and the portal. This sheet is a
+            picture of what the client receives, and it was headed "My
+            project" — the studio's internal label for the job — in the
+            largest type on the page, on the one surface where that reads as
+            the brand's own name. `project.name` stays as the fallback for a
+            project with no client record yet. */}
         <h1 className="direction-title" style={{ color: 'inherit' }}>
-          {project.name || 'Untitled project'}
+          {String(project.detective?.clientName || '').trim() ||
+            project.name ||
+            'Untitled project'}
         </h1>
         {editable ? (
-          <input
-            className="artboard-tagline-input"
-            value={project.tagline || ''}
-            onChange={(e) => onTaglineChange?.(e.target.value)}
-            placeholder="Tagline — one line people remember"
-            style={{ color: coverFg, borderColor: `${coverFg}44` }}
-            aria-label="Tagline"
-          />
+          <>
+            {/* Positioning and Voice below both carry a persistent kicker;
+                this had only a placeholder and an aria-label, so once a
+                tagline was typed the cover showed one unlabelled sentence and
+                a designer returning next week had to infer from position what
+                that line was and where it goes downstream. Recognition, not
+                recall — and it is the only label on the sheet that has to sit
+                on the brand's own cover colour, so it takes its ink from
+                `coverFg` rather than from a token that would fight it. */}
+            <div
+              className="kicker artboard-word-kicker artboard-cover-kicker"
+              style={{ color: coverFg, opacity: 0.7 }}
+            >
+              Tagline
+            </div>
+            <input
+              className="artboard-tagline-input"
+              value={project.tagline || ''}
+              onChange={(e) => onTaglineChange?.(e.target.value)}
+              placeholder="One line people remember"
+              style={{ color: coverFg, borderColor: `${coverFg}55` }}
+              aria-label="Tagline"
+            />
+          </>
         ) : (
           /* Same "unanswered reads as waiting" rule as the lines below, but
              it cannot use --text-muted: this sits on the brand's own cover
@@ -168,36 +247,24 @@ export default function BrandArtboard({
           `brief` is the auto-composed summary of the client's answers —
           "Client: X Goal: Y Story: Z" run together with no punctuation — and
           printing that under a heading promising a positioning statement is
-          the defect `exportFiles.js` already corrected for the brand book.
-          The sheet now says the same thing the book says: the designer's own
-          line, or the waiting em-dash when there isn't one yet. */}
-      <div className="kicker">Positioning</div>
-      {editable ? (
-        <textarea
-          className="artboard-brief-input"
-          value={project.positioning || ''}
-          onChange={(e) => onPositioningChange?.(e.target.value)}
-          placeholder="Who · outcome · constraint"
-          rows={2}
-          aria-label="Positioning"
-        />
-      ) : (
-        <DirectionValue value={project.positioning} />
-      )}
+          the defect `exportFiles.js` already corrected for the brand book. */}
+      <ArtboardLine
+        label="Positioning"
+        project={project}
+        field="positioning"
+        onChange={onPositioningChange}
+        editable={editable}
+        placeholder="Who · outcome · constraint"
+      />
 
-      <div className="kicker">Voice</div>
-      {editable ? (
-        <textarea
-          className="artboard-brief-input"
-          value={project.voice || ''}
-          onChange={(e) => onVoiceChange?.(e.target.value)}
-          placeholder="How we sound"
-          rows={2}
-          aria-label="Voice"
-        />
-      ) : (
-        <DirectionValue value={project.voice} />
-      )}
+      <ArtboardLine
+        label="Voice"
+        project={project}
+        field="voice"
+        onChange={onVoiceChange}
+        editable={editable}
+        placeholder="How we sound"
+      />
 
       <div className="kicker">Palette roles</div>
       {editable && (
@@ -354,43 +421,16 @@ export default function BrandArtboard({
         </>
       )}
 
-      {editable && (
-        <div className="artboard-logo-upload">
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => fileRef.current?.click()}
-          >
-            {project.logoImage ? 'Replace mark image' : 'Upload mark image'}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/svg+xml,image/*"
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              e.target.value = ''
-              if (!file) return
-              if (file.size > 2.5 * 1024 * 1024) {
-                onLogoImage?.({ error: 'Mark image must be under 2.5MB' })
-                return
-              }
-              const reader = new FileReader()
-              /* Downscale before it reaches the store. A 2.5MB mark becomes
-                 ~3.3MB of base64 in localStorage, against a ~5MB origin
-                 budget — one logo could exhaust it. downscaleDataUrl passes
-                 non-images through untouched and returns the original on any
-                 failure, so this cannot lose the upload. */
-              reader.onload = async () => {
-                const dataUrl = await downscaleDataUrl(reader.result, file.type)
-                onLogoImage?.({ ok: true, dataUrl })
-              }
-              reader.readAsDataURL(file)
-            }}
-          />
-        </div>
-      )}
+      {/* MARK UPLOAD IS NOT ON THE SHEET, and neither is removing one.
+          Both controls lived here, unreachable, while `editable` was false at
+          every call site. Switching the sheet on made them real — and axe
+          immediately caught the file input having no accessible name
+          (`label`, critical). They are deleted rather than labelled: Mark
+          owns adding, choosing and removing a mark through the concept strip,
+          and a second upload route on the sheet would be exactly the
+          duplicate editor this rework exists to remove. The "Remove mark"
+          button was worse than unlabelled — no caller passes
+          `onClearLogoImage`, so it rendered and did nothing. */}
 
       {/* Business card specimen — only when there is a real contact to put
           on it. Render nothing (no placeholder card, no "add a contact"
@@ -477,61 +517,70 @@ export default function BrandArtboard({
         )
       })()}
 
-      {(project.messagingPromise ||
+      {/* Editable in place, and shown even when empty — this used to render
+          only if one of the three already had a value, so the three lines the
+          brand book prints under "Messaging" had no editor anywhere on the
+          identity workspace unless something had already filled them. All
+          three resolve the client's own brief answer as the effective value
+          (`briefWords.js`); typing writes the designer's override. */}
+      {(editable ||
+        project.messagingPromise ||
         project.messagingProof ||
-        project.messagingPersonality) && (
-        <>
-          <div className="kicker">Messaging</div>
-          <ul className="brand-messaging-list">
-            {project.messagingPromise ? (
-              <li>
-                <strong>Promise</strong> — {project.messagingPromise}
-              </li>
-            ) : null}
-            {project.messagingProof ? (
-              <li>
-                <strong>Proof</strong> — {project.messagingProof}
-              </li>
-            ) : null}
-            {project.messagingPersonality ? (
-              <li>
-                <strong>Personality</strong> — {project.messagingPersonality}
-              </li>
-            ) : null}
-          </ul>
-        </>
+        project.messagingPersonality ||
+        project.detective?.messagingPromise ||
+        project.detective?.messagingProof ||
+        project.detective?.brandAsPerson) && (
+        <div className="artboard-messaging">
+          <ArtboardLine
+            label="Promise"
+            project={project}
+            field="messagingPromise"
+            onChange={onPromiseChange}
+            editable={editable}
+            placeholder="What you always deliver"
+          />
+          <ArtboardLine
+            label="Proof"
+            project={project}
+            field="messagingProof"
+            onChange={onProofChange}
+            editable={editable}
+            placeholder="What backs it up"
+          />
+          <ArtboardLine
+            label="Personality"
+            project={project}
+            field="messagingPersonality"
+            onChange={onPersonalityChange}
+            editable={editable}
+            placeholder="If the brand were a person"
+          />
+        </div>
       )}
 
       <div className="export-do-dont">
         <div>
-          <div className="kicker">Do</div>
-          {editable ? (
-            <textarea
-              className="artboard-brief-input"
-              value={project.doUse || ''}
-              onChange={(e) => onDoChange?.(e.target.value)}
-              placeholder="What to use…"
-              rows={2}
-              aria-label="Do"
-            />
-          ) : (
-            <DirectionValue value={project.doUse} />
-          )}
+          <ArtboardLine
+            label="Do"
+            project={project}
+            field="doUse"
+            onChange={onDoChange}
+            editable={editable}
+            placeholder="What to use…"
+          />
         </div>
         <div>
-          <div className="kicker">Don&apos;t</div>
-          {editable ? (
-            <textarea
-              className="artboard-brief-input"
-              value={project.dontUse || ''}
-              onChange={(e) => onDontChange?.(e.target.value)}
-              placeholder="What to avoid…"
-              rows={2}
-              aria-label="Don't"
-            />
-          ) : (
-            <DirectionValue value={project.dontUse} />
-          )}
+          {/* Don't resolves the client's "anything you definitely don't
+              want?" answer. Do has no brief source and correctly has none —
+              nothing in the brief asks what TO do. */}
+          <ArtboardLine
+            label="Don't"
+            project={project}
+            field="dontUse"
+            onChange={onDontChange}
+            editable={editable}
+            placeholder="What to avoid…"
+          />
         </div>
       </div>
 
